@@ -25,6 +25,11 @@ interface Group
     /**
      * @return bool
      */
+    public function is_history_group();
+
+    /**
+     * @return bool
+     */
     public function is_vod_group();
 
     /**

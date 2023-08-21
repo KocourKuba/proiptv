@@ -26,7 +26,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function __construct(Default_Dune_Plugin $plugin)
     {
-        parent::__construct(self::ID, $plugin, $plugin->GET_TV_CHANNEL_LIST_FOLDER_VIEWS());
+        parent::__construct(self::ID, $plugin);
 
         $plugin->create_screen($this);
     }
@@ -93,7 +93,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         switch ($user_input->control_id) {
             case ACTION_PLAY_FOLDER:
                 try {
-                    $this->plugin->GenerateStreamUrl($plugin_cookies, -1, $channel);
+                    $this->plugin->GenerateStreamUrl(-1, $channel);
                 } catch (Exception $ex) {
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
@@ -103,7 +103,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::tv_play($media_url);
 
             case ACTION_ADD_FAV:
-                $opt_type = $this->plugin->tv->is_favorite_channel_id($channel_id, $plugin_cookies) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $opt_type = $this->plugin->tv->is_favorite_channel_id($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->tv->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
                 return Action_Factory::invalidate_folders(array(self::get_media_url_str($media_url->group_id)));
 
@@ -200,7 +200,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_EXTERNAL_PLAYER:
                 try {
-                    $url = $this->plugin->GenerateStreamUrl($plugin_cookies, -1, $channel);
+                    $url = $this->plugin->GenerateStreamUrl(-1, $channel);
                     $url = str_replace("ts://", "", $url);
                     $param_pos = strpos($url, '|||dune_params');
                     $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
@@ -267,5 +267,259 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         return $items;
+    }
+
+    /**
+     * @return array[]
+     */
+    public function GET_FOLDER_VIEWS()
+    {
+        return array(
+            // 4x3 with title
+            array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 4,
+                    ViewParams::num_rows => 3,
+                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_order => 0,
+                    ViewParams::paint_details => false,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_base => Default_Dune_Plugin::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => Default_Dune_Plugin::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => Default_Dune_Plugin::SANDWICH_COVER,
+                    ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::item_paint_caption => true,
+                    ViewItemParams::icon_scale_factor => 1.25,
+                    ViewItemParams::icon_sel_scale_factor => 1.5,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+
+            // 3x3 without title
+            array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 3,
+                    ViewParams::num_rows => 3,
+                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_order => 0,
+                    ViewParams::paint_details => false,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_base => Default_Dune_Plugin::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => Default_Dune_Plugin::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => Default_Dune_Plugin::SANDWICH_COVER,
+                    ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::item_paint_caption => true,
+                    ViewItemParams::icon_scale_factor => 1.25,
+                    ViewItemParams::icon_sel_scale_factor => 1.5,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+
+            // 4x4 without title
+            array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 4,
+                    ViewParams::num_rows => 4,
+                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_order => 0,
+                    ViewParams::paint_details => false,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_base => Default_Dune_Plugin::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => Default_Dune_Plugin::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => Default_Dune_Plugin::SANDWICH_COVER,
+                    ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::item_paint_caption => false,
+                    ViewItemParams::icon_scale_factor => 1.0,
+                    ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+
+            // 5x4 without title
+            array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 5,
+                    ViewParams::num_rows => 4,
+                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_order => 0,
+                    ViewParams::paint_details => false,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_base => Default_Dune_Plugin::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => Default_Dune_Plugin::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => Default_Dune_Plugin::SANDWICH_COVER,
+                    ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::item_paint_caption => false,
+                    ViewItemParams::icon_scale_factor => 1.0,
+                    ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+
+            // 2x10 title list view with right side icon
+            array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 2,
+                    ViewParams::num_rows => 10,
+                    ViewParams::background_path => $this->plugin_info['app_background'],
+                    ViewParams::background_order => 0,
+                    ViewParams::paint_details => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_dx => 10,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? 60 : 84,
+                    ViewItemParams::icon_height => $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? 60 : 48,
+                    ViewItemParams::item_caption_width => 485,
+                    ViewItemParams::item_caption_font_size => FONT_SIZE_SMALL,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+
+            // 1x10 title list view with right side icon
+            array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 1,
+                    ViewParams::num_rows => 10,
+                    ViewParams::paint_icon_selection_box=> true,
+                    ViewParams::paint_details => true,
+                    ViewParams::paint_details_box_background => true,
+                    ViewParams::paint_content_box_background => true,
+                    ViewParams::paint_scrollbar => true,
+                    ViewParams::paint_widget => true,
+                    ViewParams::paint_help_line => true,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
+                    ViewParams::background_path=> $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_order => 0,
+                    ViewParams::item_detailed_info_text_color => 11,
+                    ViewParams::item_detailed_info_auto_line_break => true,
+                    ViewParams::optimize_full_screen_background => true,
+                    ViewParams::zoom_detailed_icon => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_width => 50,
+                    ViewItemParams::icon_height => 50,
+                    ViewItemParams::icon_dx => 26,
+                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
+                    ViewItemParams::item_caption_width => 1060,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+        );
     }
 }

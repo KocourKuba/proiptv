@@ -25,26 +25,29 @@ class M3uParser
     private $m3u_info;
 
     /**
-     * @param $file_name
+     * @param string $file_name
+     * @param bool $force
      */
-    public function setupParser($file_name)
+    public function setupParser($file_name, $force = false)
     {
-        $this->m3u_file = null;
-        $this->file_name = $file_name;
-        unset($this->m3u_entries);
-        $this->m3u_entries = array();
-        $this->m3u_info = new Entry();
+        if ($this->file_name !== $file_name || $force) {
+            $this->m3u_file = null;
+            $this->file_name = $file_name;
+            unset($this->m3u_entries);
+            $this->m3u_entries = array();
+            $this->m3u_info = null;
 
-        try {
-            $file = new SplFileObject($file_name);
-        } catch (Exception $ex) {
-            hd_print(__METHOD__ . ": Can't read file: $file_name");
-            return;
+            try {
+                $file = new SplFileObject($file_name);
+            } catch (Exception $ex) {
+                hd_print(__METHOD__ . ": Can't read file: $file_name");
+                return;
+            }
+
+            $file->setFlags(SplFileObject::DROP_NEW_LINE);
+
+            $this->m3u_file = $file;
         }
-
-        $file->setFlags(SplFileObject::DROP_NEW_LINE);
-
-        $this->m3u_file = $file;
     }
 
     /**
@@ -70,7 +73,7 @@ class M3uParser
 
             // only one ExtM3U entry!
             if ($entry->isExtM3U()) {
-                if (!$this->m3u_info->isExtM3U()) {
+                if ($this->m3u_info === null) {
                     $this->m3u_info = $entry;
                 }
                 continue;
@@ -112,7 +115,7 @@ class M3uParser
 
             // only one ExtM3U entry!
             if ($entry->isExtM3U()) {
-                if (!$this->m3u_info->isExtM3U()) {
+                if ($this->m3u_info === null) {
                     $this->m3u_info = $entry;
                 }
                 continue;
@@ -154,17 +157,17 @@ class M3uParser
 
             // only one ExtM3U entry!
             if ($entry->isExtM3U()) {
-                if (!$this->m3u_info->isExtM3U()) {
+                if ($this->m3u_info === null) {
                     $this->m3u_info = $entry;
                 }
-                continue;
+            } else {
+                $this->m3u_entries[] = $entry;
             }
 
-            $this->m3u_entries[] = $entry;
             $entry = new Entry();
         }
 
-        hd_print(__METHOD__ . ": parseInMemory " . (microtime(1) - $t) . " secs");
+        hd_print(__METHOD__ . ": parseInMemory " . (microtime(1) - $t) . " sec. Entries: " . $this->getEntriesCount());
         return true;
     }
 

@@ -78,6 +78,6 @@ class ExtInf
      */
     public function getAttribute($name)
     {
-        return empty($this->attributes) ? '' : $this->attributes->getAttribute($name);
+        return $this->attributes === null ? '' : $this->attributes->getAttribute($name);
     }
 }

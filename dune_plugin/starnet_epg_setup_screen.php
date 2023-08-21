@@ -17,6 +17,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const SETUP_ACTION_EPG_FONT_SIZE = 'epg_font_size';
     const SETUP_ACTION_EPG_SHIFT = 'epg_shift';
     const SETUP_ACTION_EPG_PARSE_ALL = 'epg_parse_all';
+    const SETUP_ACTION_EPG_URL_PATH = 'epg_url_path';
+    const SETUP_ACTION_EPG_URL_APPLY = 'epg_url_apply';
 
     private static $on_off_ops = array
     (
@@ -81,10 +83,12 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        hd_print(__METHOD__);
+        //hd_print(__METHOD__);
         $defs = array();
 
         $remove_icon = $this->plugin->get_image_path('brush.png');
+
+        $this->plugin->InitPlaylist();
 
         //////////////////////////////////////
         // Plugin name
@@ -96,41 +100,50 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $epg_source_ops[PARAM_EPG_INTERNAL] = self::$on_off_ops[PARAM_EPG_INTERNAL];
         $epg_source_ops[PARAM_EPG_EXTERNAL] = self::$on_off_ops[PARAM_EPG_EXTERNAL];
 
-        $source = $this->plugin->get_settings($plugin_cookies, PARAM_EPG_SOURCE, PARAM_EPG_INTERNAL);
+        $source = $this->plugin->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_INTERNAL);
         Control_Factory::add_combobox($defs, $this, null,
-            self::SETUP_ACTION_EPG_SOURCE, TR::t('setup_epg_source'),
+            self::SETUP_ACTION_EPG_SOURCE, TR::t('setup_epg_type'),
             $source, $epg_source_ops, self::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // XMLTV sources
-        $this->plugin->InitPlaylist($plugin_cookies);
 
         if ($source === PARAM_EPG_INTERNAL) {
             $sources = $this->plugin->m3u_parser->getXmltvSources();
-            $source_idx = $this->plugin->get_settings($plugin_cookies, PARAM_EPG_INTERNAL_IDX, 0);
+            $idx_type = PARAM_EPG_INTERNAL_IDX;
         } else {
-            $sources = $this->plugin->get_settings($plugin_cookies,PARAM_CUSTOM_XMLTV_SOURCES);
-            $source_idx = $this->plugin->get_settings($plugin_cookies, PARAM_EPG_EXTERNAL_IDX, 0);
+            $sources = $this->plugin->get_settings(PARAM_CUSTOM_XMLTV_SOURCES);
+            $idx_type = PARAM_EPG_EXTERNAL_IDX;
         }
 
-        if (empty($sources)) {
+        $source_idx = $this->plugin->get_settings($idx_type, 0);
+        $display_path = array();
+        foreach ($sources as $item) {
+            $display_path[] = HD::string_ellipsis($item);
+        }
+
+        if (empty($display_path)) {
             Control_Factory::add_label($defs, TR::t('setup_xmltv_epg_source'), TR::t('no'));
         } else {
-            if (!isset($sources[$source_idx])) {
-                $source_idx = array_search(reset($sources), $sources);
-                hd_print(__METHOD__ . ": selected idx $source_idx");
+            if (count($display_path) > 1) {
+                Control_Factory::add_combobox($defs, $this, null,
+                    self::SETUP_ACTION_XMLTV_EPG_IDX, TR::t('setup_xmltv_epg_source'),
+                    $source_idx, $display_path, self::CONTROLS_WIDTH, true);
+            } else {
+                Control_Factory::add_label($defs, TR::t('setup_xmltv_epg_source'), $display_path[0]);
+                $this->plugin->set_parameters($idx_type, 0);
             }
-            Control_Factory::add_combobox($defs, $this, null,
-                self::SETUP_ACTION_XMLTV_EPG_IDX, TR::t('setup_xmltv_epg_source'),
-                $source_idx, $sources, self::CONTROLS_WIDTH, true);
 
             if ($source === PARAM_EPG_EXTERNAL) {
-                Control_Factory::add_image_button($defs, $this, null, ACTION_RELOAD,
-                    TR::t('setup_add_xmltv_epg'), TR::t('add'), $this->plugin->get_image_path('link.png'));
+                Control_Factory::add_image_button($defs, $this, null, ACTION_ITEM_ADD,
+                    TR::t('setup_add_xmltv_epg'), TR::t('add'), $this->plugin->get_image_path('link.png'), self::CONTROLS_WIDTH);
+
+                Control_Factory::add_image_button($defs, $this, null, ACTION_ITEM_DELETE,
+                    TR::t('setup_delete_xmltv_epg'), TR::t('delete'), $this->plugin->get_image_path('brush.png'), self::CONTROLS_WIDTH);
             }
 
             Control_Factory::add_image_button($defs, $this, null, ACTION_RELOAD,
-                TR::t('setup_reload_xmltv_epg'), TR::t('refresh'), $this->plugin->get_image_path('refresh.png'));
+                TR::t('setup_reload_xmltv_epg'), TR::t('refresh'), $this->plugin->get_image_path('refresh.png'), self::CONTROLS_WIDTH);
         }
 
         if (!isset($plugin_cookies->{self::SETUP_ACTION_EPG_PARSE_ALL})) {
@@ -144,16 +157,12 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         // EPG cache dir
         $xcache_dir = Epg_Manager::get_xcache_dir($plugin_cookies);
         $free_size = TR::t('setup_storage_info__1', HD::get_storage_size(dirname($xcache_dir)));
-        $max_size = is_apk() ? 45 : 36;
-        if (strlen($xcache_dir) > $max_size) {
-            $xcache_dir = "..." . substr($xcache_dir, strlen($xcache_dir) - $max_size);
-        }
-
+        $xcache_dir = HD::string_ellipsis($xcache_dir);
         if (is_apk()) {
             Control_Factory::add_label($defs, $free_size, $xcache_dir);
         } else {
             Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_CHANGE_XMLTV_CACHE_PATH,
-                $free_size, $xcache_dir, $this->plugin->get_image_path('folder.png'));
+                $free_size, $xcache_dir, $this->plugin->get_image_path('folder.png'), self::CONTROLS_WIDTH);
         }
 
         //////////////////////////////////////
@@ -233,16 +242,16 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         switch ($control_id) {
             case self::SETUP_ACTION_EPG_SOURCE:
                 $val = $user_input->{$control_id};
-                $this->plugin->put_settings($plugin_cookies, PARAM_EPG_SOURCE, $val);
+                $this->plugin->set_settings(PARAM_EPG_SOURCE, $val);
                 hd_print(__METHOD__ . ": Selected epg source: $val");
                 break;
 
             case self::SETUP_ACTION_XMLTV_EPG_IDX:
                 $val = $user_input->{$control_id};
-                $source = $this->plugin->get_settings($plugin_cookies, PARAM_EPG_SOURCE, PARAM_EPG_INTERNAL);
-                $used_idx = ($source === PARAM_EPG_INTERNAL) ? PARAM_EPG_INTERNAL_IDX : PARAM_EPG_EXTERNAL_IDX;
-                $this->plugin->put_settings($plugin_cookies, $used_idx, $val);
+                $source = $this->plugin->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_INTERNAL);
+                $this->plugin->set_settings(($source === PARAM_EPG_INTERNAL) ? PARAM_EPG_INTERNAL_IDX : PARAM_EPG_EXTERNAL_IDX, $val);
                 hd_print(__METHOD__ . ": Selected xmltv epg idx: $val for $source");
+                $this->plugin->UpdateXmltvSource();
                 break;
 
             case self::SETUP_ACTION_CHANGE_XMLTV_CACHE_PATH:
@@ -283,6 +292,61 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
+            case ACTION_ITEM_ADD:
+                $defs = array();
+                Control_Factory::add_vgap($defs, 20);
+                Control_Factory::add_text_field($defs, $this, null, self::SETUP_ACTION_EPG_URL_PATH, '',
+                    'http://', false, false, false, true, self::CONTROLS_WIDTH);
+
+                Control_Factory::add_vgap($defs, 50);
+
+                Control_Factory::add_close_dialog_and_apply_button($defs, $this, null,
+                    self::SETUP_ACTION_EPG_URL_APPLY, TR::t('ok'), 300);
+                Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+                Control_Factory::add_vgap($defs, 10);
+
+                return Action_Factory::show_dialog(TR::t('setup_channels_src_link_caption'), $defs, true);
+
+            case self::SETUP_ACTION_EPG_URL_APPLY: // handle streaming settings dialog result
+                if (isset($user_input->{self::SETUP_ACTION_EPG_URL_PATH})
+                    && preg_match("|https?://.+|", $user_input->{self::SETUP_ACTION_EPG_URL_PATH})) {
+
+                    $xmltv_url = $user_input->{self::SETUP_ACTION_EPG_URL_PATH};
+                    $sources = $this->plugin->get_settings(PARAM_CUSTOM_XMLTV_SOURCES);
+                    if (in_array($xmltv_url, $sources)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_xmltv_source_exist'));
+                    }
+
+                    $result = false;
+                    $tmp_filename = get_temp_path('test_xmltv.tmp');
+                    try {
+                        HD::http_save_document($xmltv_url, $tmp_filename);
+                        $sources[] = $xmltv_url;
+                        hd_print(__METHOD__ . ": added new xmltv source: $xmltv_url");
+                        $this->plugin->set_settings(PARAM_CUSTOM_XMLTV_SOURCES, $sources);
+                        $result = true;
+                    } catch (Exception $ex) {
+                        hd_print(__METHOD__ . ": Failed to download xmltv source from: $xmltv_url");
+                    }
+
+                    if (file_exists($tmp_filename)) {
+                        unlink($tmp_filename);
+                    }
+
+                    if (!$result) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'));
+                    }
+                }
+                break;
+
+            case ACTION_ITEM_DELETE:
+                $sources = $this->plugin->get_settings(PARAM_CUSTOM_XMLTV_SOURCES);
+                $source_idx = $this->plugin->get_settings(PARAM_EPG_EXTERNAL_IDX);
+                hd_print(__METHOD__ . ": Remove epg idx: $source_idx ($sources[$source_idx])");
+                unset($sources[$source_idx]);
+                $this->plugin->set_settings(PARAM_CUSTOM_XMLTV_SOURCES, $sources);
+                break;
+
             case ACTION_RESET_DEFAULT:
                 hd_print(__METHOD__ . ": " . ACTION_RESET_DEFAULT);
                 $this->plugin->epg_man->clear_epg_cache($plugin_cookies);
@@ -301,14 +365,13 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RELOAD:
                 hd_print(__METHOD__ . ": " . ACTION_RELOAD);
+                $this->plugin->tv->unload_channels();
+                $this->plugin->UpdateXmltvSource();
                 $this->plugin->epg_man->clear_epg_cache($plugin_cookies);
                 $res = $this->plugin->epg_man->is_xmltv_cache_valid($plugin_cookies);
                 if (!empty($res)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'),
-                        Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)),
-                        $res, self::CONTROLS_WIDTH);
+                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'));
                 }
-
                 break;
         }
 

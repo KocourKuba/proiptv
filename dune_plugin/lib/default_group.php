@@ -38,7 +38,7 @@ class Default_Group implements Group
      * @param string $title
      * @param string $icon_url
      */
-    public function __construct($id, $title, $icon_url, $_adult = false)
+    public function __construct($id, $title, $icon_url, $adult = false)
     {
         if (is_null($icon_url)) {
             $icon_url = 'gui_skin://small_icons/iptv.aai';
@@ -47,7 +47,7 @@ class Default_Group implements Group
         $this->_id = $id;
         $this->_title = $title;
         $this->_icon_url = $icon_url;
-        $this->_adult = $_adult;
+        $this->_adult = $adult;
 
         $this->_channels = new Hashed_Array();
     }

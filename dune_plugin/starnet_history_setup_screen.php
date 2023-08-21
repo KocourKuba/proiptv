@@ -50,7 +50,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        hd_print(__METHOD__);
+        //hd_print(__METHOD__);
         $defs = array();
 
         $folder_icon = $this->plugin->get_image_path('folder.png');
@@ -66,11 +66,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 
         $history_path = $this->get_history_path($plugin_cookies);
         hd_print(__METHOD__ . ": history path: $history_path");
-        $max_size = is_apk() ? 45 : 36;
-        $display_path = $history_path;
-        if (strlen($history_path) > $max_size) {
-            $display_path = "..." . substr($display_path, strlen($display_path) - $max_size);
-        }
+        $display_path = HD::string_ellipsis($history_path);
 
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_HISTORY_CHANGE_FOLDER, TR::t('setup_history_folder_path'), $display_path, $folder_icon, self::CONTROLS_WIDTH);

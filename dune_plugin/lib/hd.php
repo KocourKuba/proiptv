@@ -660,7 +660,7 @@ class HD
      * @param boolean $preserve_keys
      * @return array|mixed
      */
-    public static function get_data_items($path, $preserve_keys = false, $json = true)
+    public static function get_data_items($path, $preserve_keys = true, $json = true)
     {
         return self::get_items(get_data_path($path), $preserve_keys, $json);
     }
@@ -670,7 +670,7 @@ class HD
      * @param boolean $preserve_keys
      * @return array|mixed
      */
-    public static function get_items($path, $preserve_keys = false, $json = true)
+    public static function get_items($path, $preserve_keys = true, $json = true)
     {
         if (file_exists($path)) {
             $contents = file_get_contents($path);
@@ -855,5 +855,15 @@ class HD
             $result .= $char;
         }
         return base64_encode($result);
+    }
+
+    public static function string_ellipsis($string)
+    {
+        $max_size = is_apk() ? 45 : 36;
+        if (strlen($string) > $max_size) {
+            $string = "..." . substr($string, strlen($string) - $max_size);
+        }
+
+        return $string;
     }
 }

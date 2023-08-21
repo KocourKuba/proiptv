@@ -24,17 +24,12 @@ class Entry
     /**
      * @var string
      */
-    private $path;
+    private $path = '';
 
     /**
      * @var string
      */
-    private $group_title;
-
-    /**
-     * @var string
-     */
-    private $parsed_title;
+    private $group_title = '';
 
     /**
      * @return boolean
@@ -129,7 +124,7 @@ class Entry
      */
     public function getTitle()
     {
-        return $this->extInf !== null ? $this->extInf->getTitle() : '';
+        return $this->isExtInf() ? $this->extInf->getTitle() : '';
     }
 
     /**
@@ -138,8 +133,8 @@ class Entry
     public function getGroupTitle()
     {
         if (empty($this->group_title)) {
-            $group_title = ($this->extGrp !== null) ? $this->extGrp->getGroup() : '';
-            if (empty($group_title)) {
+            $this->group_title = $this->isExtGrp() ? $this->extGrp->getGroup() : '';
+            if (empty($this->group_title)) {
                 $this->group_title = $this->getAttribute('group-title');
                 if (empty($this->group_title) || $this->group_title === "null") {
                     $this->group_title = TR::load_string('no_category');
@@ -160,14 +155,67 @@ class Entry
          */
         static $tags = array("CUID", "channel-id", "tvg-chno", "tvg-name");
 
-        foreach ($tags as $tag) {
-            $entry_id = $this->getAttribute($tag);
-            if (!empty($entry_id)) {
-                return $entry_id;
-            }
+        $tag = $this->getAnyAttribute($tags);
+
+        return empty($tag) ? $this->getTitle() : $tag;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEntryIcon()
+    {
+        /*
+         * attributes contains picon information
+		 * "tvg-logo", "url-logo"
+         */
+        static $tags = array("tvg-logo", "url-logo");
+
+        return $this->getAnyAttribute($tags);
+    }
+
+    /**
+     * @return string
+     */
+    public function getCatchup()
+    {
+        /*
+         * attributes contains catchup information
+		 * "catchup", "catchup-type"
+         */
+        static $tags = array("catchup", "catchup-type");
+
+        return $this->getAnyAttribute($tags);
+    }
+
+    /**
+     * @return string
+     */
+    public function getCatchupSource()
+    {
+        /*
+         * attributes contains catchup information
+		 * "catchup", "catchup-type"
+         */
+        static $tags = array("catchup-source", "catchup-template");
+
+        return $this->getAnyAttribute($tags);
+    }
+
+    /**
+     * @return array
+     */
+    public function getAttributes()
+    {
+        if ($this->isExtInf()) {
+            return $this->extInf->getAttributes()->getAttributes();
         }
 
-        return $this->getTitle();
+        if ($this->isExtM3U()) {
+            return $this->extM3U->getAttributes()->getAttributes();
+        }
+
+        return array();
     }
 
     /**

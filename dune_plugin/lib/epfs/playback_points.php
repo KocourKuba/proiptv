@@ -138,7 +138,7 @@ class Playback_Points
             }
 
             $storage = $path . self::TV_HISTORY_ITEMS;
-            $points = HD::get_items($storage, true);
+            $points = HD::get_items($storage);
             hd_print(__METHOD__ . ": " . count($points) . " from: $storage");
             while (count($points) > 7) {
                 array_pop($points);

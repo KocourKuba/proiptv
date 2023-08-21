@@ -1,9 +1,9 @@
 <dune_plugin>
     <type>php</type>
     <name>proiptv</name>
-    <caption>Pro IPTV</caption>
-    <icon_url>icons/default_logo.png</icon_url>
-    <background>icons/default_bg.png</background>
+    <caption>ProIPTV</caption>
+    <icon_url>plugin_file://icons/default_logo.png</icon_url>
+    <background>plugin_file://icons/default_bg.png</background>
     <version>0.5</version>
     <version_index>17092023</version_index>
     <release_date>17.09.2023</release_date>
@@ -46,8 +46,8 @@
         <entry_point>
             <parent_media_url>root://tv</parent_media_url>
             <media_url>tv_groups</media_url>
-            <caption>{plugin_caption}</caption>
-            <icon_url>{plugin_logo}</icon_url>
+            <caption>ProIPTV</caption>
+            <icon_url>plugin_file://icons/default_logo.png</icon_url>
             <actions>
                 <key_enter>
                     <type>plugin_handle_user_input</type>
@@ -145,8 +145,8 @@
         <entry_point>
             <parent_media_url>setup://applications</parent_media_url>
             <media_url>setup</media_url>
-            <caption>{plugin_caption}</caption>
-            <icon_url>{plugin_logo}</icon_url>
+            <caption>ProIPTV</caption>
+            <icon_url>plugin_file://icons/default_logo.png</icon_url>
             <actions>
                 <key_enter>
                     <type>plugin_open_folder</type>

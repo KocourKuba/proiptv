@@ -216,7 +216,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             );
         } else {
 
-            $fav_channels = $this->plugin->tv->get_fav_channel_ids($plugin_cookies);
+            $fav_channels = $this->plugin->tv->get_fav_channel_ids();
             $is_first_channel = ($channel_id === reset($fav_channels));
             // green button image (B) 52x50
             $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
@@ -502,7 +502,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         $channel_id = $media_url->channel_id;
                         hd_print(__METHOD__ . ": Selected channel id: $channel_id");
 
-                        $is_in_favorites = in_array($channel_id, $this->plugin->tv->get_fav_channel_ids($plugin_cookies));
+                        $is_in_favorites = in_array($channel_id, $this->plugin->tv->get_fav_channel_ids());
                         $caption = $is_in_favorites ? TR::t('delete') : TR::t('add');
                         $add_action = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 
@@ -547,7 +547,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (!isset($media_url->group_id) || $media_url->group_id === Default_Dune_Plugin::PLAYBACK_HISTORY_GROUP_ID)
                     break;
 
-                $fav_channel_ids = $this->plugin->tv->get_fav_channel_ids($plugin_cookies);
+                $fav_channel_ids = $this->plugin->tv->get_fav_channel_ids();
                 $is_in_favorites = in_array($media_url->channel_id, $fav_channel_ids);
 
                 if ($control_id === PLUGIN_FAVORITES_OP_ADD) {
@@ -608,7 +608,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_EXTERNAL_PLAYER:
                 try {
                     $url = $this->plugin->GenerateStreamUrl(
-                        $plugin_cookies,
                         isset($media_url->archive_tm) ? $media_url->archive_tm : -1,
                         $this->plugin->tv->get_channel($media_url->channel_id));
                     $url = str_replace("ts://", "", $url);
@@ -779,7 +778,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
 
         $rows = array();
-        $fav_channel_ids = $this->plugin->tv->get_fav_channel_ids($plugin_cookies);
+        $fav_channel_ids = $this->plugin->tv->get_fav_channel_ids();
         foreach ($groups as $group) {
             $items = array();
 
@@ -833,7 +832,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
 
         $rows = array();
-        $fav_channel_ids = $this->plugin->tv->get_fav_channel_ids($plugin_cookies);
+        $fav_channel_ids = $this->plugin->tv->get_fav_channel_ids();
         $show_all = !isset($plugin_cookies->show_all) || $plugin_cookies->show_all === 'yes';
         /** @var Default_Group $group */
         foreach ($groups as $group) {

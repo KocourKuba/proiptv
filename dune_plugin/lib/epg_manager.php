@@ -1,5 +1,6 @@
 <?php
 require_once 'hd.php';
+require_once 'epg_params.php';
 
 class Epg_Manager
 {
@@ -32,8 +33,13 @@ class Epg_Manager
      */
     public function set_xmltv_url($xmltv_url)
     {
-        $this->xmltv_url = $xmltv_url;
-        hd_print(__METHOD__ . ": xmltv url $this->xmltv_url");
+        if ($this->xmltv_url !== $xmltv_url) {
+            $this->xmltv_url = $xmltv_url;
+            hd_print(__METHOD__ . ": xmltv url $this->xmltv_url");
+            // reset memory cache and data
+            unset($this->epg_cache, $this->xmltv_data, $this->xmltv_index);
+            $this->epg_cache = array();
+        }
     }
 
     /**
@@ -90,7 +96,7 @@ class Epg_Manager
      */
     public function get_xml_cached_file_index($plugin_cookies)
     {
-        return self::get_xcache_dir($plugin_cookies) . $this->get_xml_cached_filename($plugin_cookies) . '.index';
+        return self::get_xcache_dir($plugin_cookies) . $this->get_xml_cached_filename() . '.index';
     }
 
     /**
@@ -183,7 +189,7 @@ class Epg_Manager
      */
     public function get_epg_xmltv($id, $plugin_cookies)
     {
-        if (!$this->is_xml_cache_set($plugin_cookies)) {
+        if (!$this->is_xml_cache_set()) {
             throw new Exception("xmltv file is not set");
         }
 
@@ -364,7 +370,7 @@ class Epg_Manager
             && $plugin_cookies->{Starnet_Epg_Setup_Screen::SETUP_ACTION_EPG_PARSE_ALL} === SetupControlSwitchDefs::switch_on;
 
         $file_object = null;
-        $cache_file = $this->get_xml_cached_filename($plugin_cookies);
+        $cache_file = $this->get_xml_cached_filename();
         $cache_dir = self::get_xcache_dir($plugin_cookies);
         $lock_file = "$cache_dir$cache_file.lock";
         try {

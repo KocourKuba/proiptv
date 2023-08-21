@@ -14,11 +14,11 @@ abstract class Abstract_Regular_Screen implements Screen
 
     ///////////////////////////////////////////////////////////////////////
 
-    protected function __construct($id, Default_Dune_Plugin $plugin, $folder_views)
+    protected function __construct($id, Default_Dune_Plugin $plugin)
     {
         $this->id = $id;
         $this->plugin = $plugin;
-        $this->folder_views = $folder_views;
+        $this->folder_views = $this->GET_FOLDER_VIEWS();
         $this->set_default_folder_view_index_attr_name();
     }
 
@@ -112,4 +112,9 @@ abstract class Abstract_Regular_Screen implements Screen
 
         return $idx;
     }
+
+    /**
+     * @return array[]
+     */
+    abstract public function GET_FOLDER_VIEWS();
 }
