@@ -56,6 +56,18 @@ interface Channel
     public function is_protected();
 
     /**
+     * is disabled (hided)
+     * @return bool
+     */
+    public function is_disabled();
+
+    /**
+     * set disabled (hide)
+     * @param bool $disabled
+     * @return void
+     */
+    public function set_disabled($disabled);
+    /**
      * primary EPG source
      * @return string
      */

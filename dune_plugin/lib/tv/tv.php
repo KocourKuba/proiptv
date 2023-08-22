@@ -3,12 +3,12 @@
 interface Tv
 {
     /**
-     * @return Hashed_Array
+     * @return Hashed_Array<Channel>
      */
     public function get_channels();
 
     /**
-     * @return Hashed_Array
+     * @return Hashed_Array<Group>
      */
     public function get_groups();
 

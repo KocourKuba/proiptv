@@ -8,18 +8,24 @@
 class Hashed_Array implements Iterator
 {
     /**
-     * @var integer[]
+     * @var integer
+     */
+    private $pos = 0;
+
+    /**
+     * @var array
      */
     private $seq = array();
+
     /**
      * @var TValue[]
      */
     private $map = array();
 
-    /**
-     * @var integer
-     */
-    private $pos = 0;
+    public function __sleep()
+    {
+        return array('pos', 'seq', 'map');
+    }
 
     /**
      * @return integer
@@ -33,7 +39,7 @@ class Hashed_Array implements Iterator
      * @param integer $ndx
      * @return TValue|null
      */
-    public function get_by_ndx($ndx)
+    public function get_by_idx($ndx)
     {
         return $this->get($this->seq[$ndx]);
     }

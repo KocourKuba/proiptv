@@ -164,7 +164,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
                 }
 
-                $zoom_data = HD::get_data_items(Starnet_Tv::CHANNELS_ZOOM, true);
+                $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                 $current_idx = isset($zoom_data[$channel_id]) ? $zoom_data[$channel_id] : DuneVideoZoomPresets::not_set;
 
                 hd_print(__METHOD__ . ": Current idx: $current_idx");
@@ -185,7 +185,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if (isset($user_input->{ACTION_ZOOM_SELECT})) {
 
                     $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
-                    $zoom_data = HD::get_data_items(Starnet_Tv::CHANNELS_ZOOM, true);
+                    $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                     if ($zoom_select === DuneVideoZoomPresets::not_set) {
                         hd_print(__METHOD__ . ": Zoom preset removed for channel: $channel_id");
                         unset ($zoom_data[$channel_id]);
@@ -194,7 +194,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         $zoom_data[$channel_id] = $zoom_select;
                     }
 
-                    HD::put_data_items(Starnet_Tv::CHANNELS_ZOOM, $zoom_data);
+                    $this->plugin->set_settings(PARAM_CHANNELS_ZOOM, $zoom_data);
                 }
                 break;
 
@@ -251,19 +251,36 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        try {
-            $this->plugin->tv->ensure_channels_loaded($plugin_cookies);
-        } catch (Exception $e) {
-            hd_print(__METHOD__ . ": Failed loading playlist! " . $e->getMessage());
-            return array();
-        }
-
-        $group = $this->plugin->tv->get_group($media_url->group_id);
-
         $items = array();
 
-        foreach ($group->get_group_channels() as $channel) {
-            $items[] = $this->get_regular_folder_item($group, $channel, $plugin_cookies);
+        try {
+            $this->plugin->tv->ensure_channels_loaded($plugin_cookies);
+            $this_group = $this->plugin->tv->get_group($media_url->group_id);
+            if (is_null($this_group)) {
+                throw new Exception('group not found');
+            }
+
+            if ($this_group->is_all_channels_group()) {
+                /** @var Channel $channel */
+                foreach($this->plugin->tv->get_channels() as $channel) {
+                    if ($channel->is_disabled()) continue;
+
+                    foreach ($channel->get_groups() as $group) {
+                        if ($group->is_disabled()) continue;
+
+                        $items[] = $this->get_regular_folder_item($this_group, $channel, $plugin_cookies);
+                    }
+                }
+            } else {
+                /** @var Channel $channel */
+                foreach ($this_group->get_group_channels() as $channel) {
+                    if ($channel->is_disabled()) continue;
+
+                    $items[] = $this->get_regular_folder_item($this_group, $channel, $plugin_cookies);
+                }
+            }
+        } catch (Exception $e) {
+            hd_print(__METHOD__ . ": Failed collect folder items! " . $e->getMessage());
         }
 
         return $items;

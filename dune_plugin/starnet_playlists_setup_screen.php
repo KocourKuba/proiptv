@@ -67,7 +67,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         // playlists
         $playlist_idx = $this->plugin->get_parameters(PARAM_PLAYLIST_IDX, 0);
         $display_path = array();
-        $playlists = array_values($this->plugin->get_parameters(PARAM_PLAYLISTS, array()));
+        $playlists = $this->plugin->get_parameters(PARAM_PLAYLISTS, array());
         foreach ($playlists as $item) {
             $display_path[] = HD::string_ellipsis($item);
         }

@@ -155,9 +155,9 @@ class Entry
          */
         static $tags = array("CUID", "channel-id", "tvg-chno", "tvg-name");
 
-        $tag = $this->getAnyAttribute($tags);
+        $ch_id = $this->getAnyAttribute($tags);
 
-        return empty($tag) ? $this->getTitle() : $tag;
+        return empty($ch_id) ? $this->getTitle() : $ch_id;
     }
 
     /**
@@ -252,5 +252,22 @@ class Entry
         }
 
         return '';
+    }
+
+    /**
+     * @param array $attrs
+     * @return array
+     */
+    public function getAllAttributes($attrs)
+    {
+        $ret = array();
+        foreach ($attrs as $attr) {
+            $val = $this->getAttribute($attr);
+            if (empty($val)) continue;
+
+            $ret[$attr] = $val;
+        }
+
+        return $ret;
     }
 }

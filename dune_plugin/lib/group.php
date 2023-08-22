@@ -43,6 +43,23 @@ interface Group
     public function is_adult_group();
 
     /**
+     * @param bool $adult
+     * @return void
+     */
+    public function set_adult($adult);
+
+    /**
+     * @return bool
+     */
+    public function is_disabled();
+
+    /**
+     * @param bool $disabled
+     * @return void
+     */
+    public function set_disabled($disabled);
+
+    /**
      * @return Hashed_Array
      */
     public function get_group_channels();

@@ -22,24 +22,16 @@ class Default_Dune_Plugin implements DunePlugin
     // views constants
     const ALL_CHANNEL_GROUP_ID = '##all_channels##';
     const ALL_CHANNEL_GROUP_CAPTION = '%tr%plugin_all_channels';
-    const ALL_CHANNEL_GROUP_ICON_PATH = 'plugin_file://icons/all.png';
-
     const FAV_CHANNEL_GROUP_ID = '##favorites##';
     const FAV_CHANNEL_GROUP_CAPTION = '%tr%plugin_favorites';
-    const FAV_CHANNEL_GROUP_ICON_PATH = 'plugin_file://icons/fav.png';
-
     const PLAYBACK_HISTORY_GROUP_ID = '##playback_history_tv_group##';
     const PLAYBACK_HISTORY_CAPTION = '%tr%plugin_history';
-    const PLAYBACK_HISTORY_GROUP_ICON_PATH = 'plugin_file://icons/history.png';
 
     /////////////////////////////////////////////////////////////////////////////
     // views variables
     const TV_SANDWICH_WIDTH = 245;
     const TV_SANDWICH_HEIGHT = 140;
-    const VOD_SANDWICH_WIDTH = 190;
-    const VOD_SANDWICH_HEIGHT = 290;
-    const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/channel_unset.png';
-    const DEFAULT_GROUP_ICON_PATH = 'plugin_file://icons/group.png';
+    const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 
     /**
      * @var array
@@ -69,6 +61,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     private $settings;
 
+    /**
+     * @var array
+     */
+    private $parameters;
     /**
      * @var Starnet_Tv
      */
@@ -418,7 +414,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $hash = $this->GetPlaylistHash();
         if (!isset($this->settings[$hash])) {
-            $this->settings[$hash] = HD::get_items(get_data_path($hash));
+            $this->settings[$hash] = HD::get_items(get_data_path($hash), true, false);
         }
 
         return isset($this->settings[$hash][$type]) ? $this->settings[$hash][$type] : $default;
@@ -434,7 +430,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $hash = $this->GetPlaylistHash();
         $this->settings[$hash][$type] = $val;
-        HD::put_data_items($hash, $this->settings[$hash]);
+        HD::put_data_items($hash, $this->settings[$hash], false);
     }
 
     /**
@@ -457,12 +453,12 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_parameters($type, $default = null)
     {
-        if (!isset($this->settings[PLUGIN_PARAMS])) {
-            $this->settings[PLUGIN_PARAMS] = HD::get_data_items(PLUGIN_PARAMS);
+        if (!isset($this->parameters)) {
+            $this->parameters = HD::get_data_items(PLUGIN_PARAMS);
             hd_print(__METHOD__ . " : Loaded common parameters");
         }
 
-        return isset($this->settings[PLUGIN_PARAMS][$type]) ? $this->settings[PLUGIN_PARAMS][$type] : $default;
+        return isset($this->parameters[$type]) ? $this->parameters[$type] : $default;
     }
 
     /**
@@ -473,8 +469,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_parameters($type, $val)
     {
-        $this->settings[PLUGIN_PARAMS][$type] = $val;
-        HD::put_data_items(PLUGIN_PARAMS, $this->settings[PLUGIN_PARAMS]);
+        $this->parameters[$type] = $val;
+        HD::put_data_items(PLUGIN_PARAMS, $this->parameters);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -661,17 +657,6 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param Channel $a
-     * @param Channel $b
-     * @return int
-     */
-    public static function sort_channels_cb($a, $b)
-    {
-        // Sort by channel numbers.
-        return strnatcasecmp($a->get_number(), $b->get_number());
-    }
-
-    /**
      * @return string
      */
     public function get_last_error()
@@ -693,7 +678,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function create_setup_header(&$defs)
     {
         Control_Factory::add_vgap($defs, -10);
-        Control_Factory::add_label($defs, "ProIPTV by sharky72 [-----------------------]",
+        Control_Factory::add_label($defs, "ProIPTV by sharky72 [---------------------]",
             " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
             20);
     }

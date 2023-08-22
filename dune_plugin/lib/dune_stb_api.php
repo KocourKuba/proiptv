@@ -71,6 +71,7 @@ const ACTION_ITEM_UP = 'item_up';
 const ACTION_ITEM_DOWN = 'item_down';
 const ACTION_ITEM_DELETE = 'item_delete';
 const ACTION_ITEMS_CLEAR = 'items_clear';
+const ACTION_ITEMS_SORT = 'items_sort';
 const ACTION_SETTINGS = 'settings';
 const ACTION_EPG_SETTINGS = 'epg_settings';
 const ACTION_CHANNELS_SETTINGS = 'channels_settings';
@@ -97,19 +98,22 @@ const PLUGIN_PARAMS = "common";
 const PARAM_PLAYLISTS = 'playlists';
 const PARAM_PLAYLIST_IDX = 'playlist_idx';
 const PARAM_FAVORITES = 'favorites';
-const PARAM_DISABLED_GROUPS = 'disabled_groups';
+const PARAM_GROUPS_ORDER = 'groups_order';
 const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
 const PARAM_EPG_SOURCE = 'epg_source_';
 const PARAM_EPG_INTERNAL = 'epg_internal';
+const PARAM_EPG_PARSE_ALL = 'epg_parse_all';
 const PARAM_EPG_INTERNAL_IDX = 'epg_internal_idx';
 const PARAM_EPG_EXTERNAL = 'epg_external';
 const PARAM_EPG_EXTERNAL_IDX = 'epg_external_idx';
 const PARAM_XMLTV_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_CUSTOM_XMLTV_SOURCES = 'custom_xmltv_sources';
 const PARAM_DUNE_PARAMS = 'dune_params';
+const PARAM_CHANNELS_ZOOM = 'channels_zoom';
+
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage/';
 

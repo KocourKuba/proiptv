@@ -56,7 +56,12 @@ class Default_Channel implements Channel
     /**
      * @var bool
      */
-    protected $_is_protected;
+    protected $_protected;
+
+    /**
+     * @var bool
+     */
+    protected $_disabled;
 
     /**
      * @var string first epg
@@ -89,14 +94,13 @@ class Default_Channel implements Channel
      * @param int $number
      * @param string $epg_id
      * @param string $tvg_id
-     * @param bool $is_protected
+     * @param bool $protected
      * @param int $timeshift_hours
-     * @param array $ext_params
      */
     public function __construct($id, $channel_id, $title, $icon_url,
                                 $streaming_url, $archive_url,
                                 $archive, $number, $epg_id, $tvg_id,
-                                $is_protected, $timeshift_hours, $ext_params = null)
+                                $protected, $timeshift_hours)
     {
         $this->_id = $id;
         $this->_channel_id = $channel_id;
@@ -109,9 +113,10 @@ class Default_Channel implements Channel
         $this->_number = $number;
         $this->_epg_id = $epg_id;
         $this->_tvg_id = $tvg_id;
-        $this->_is_protected = $is_protected;
+        $this->_protected = $protected;
         $this->_timeshift_hours = $timeshift_hours;
-        $this->_ext_params = $ext_params;
+        $this->_disabled = false;
+        $this->_ext_params = array();
     }
 
     /**
@@ -191,7 +196,24 @@ class Default_Channel implements Channel
      */
     public function is_protected()
     {
-        return $this->_is_protected;
+        return $this->_protected;
+    }
+
+    /**
+     * is disabled (hided)
+     * @return bool
+     */
+    public function is_disabled()
+    {
+        return $this->_disabled;
+    }
+
+    /**
+     * set disabled (hided)
+     */
+    public function set_disabled($disabled)
+    {
+        $this->_disabled = $disabled;
     }
 
     /**

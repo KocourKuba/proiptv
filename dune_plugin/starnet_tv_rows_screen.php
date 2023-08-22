@@ -510,7 +510,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                             $this->create_menu_item($common_menu, $caption, "$this->images_path/star.png", $add_action);
                         }
 
-                        $zoom_data = HD::get_data_items(Starnet_Tv::CHANNELS_ZOOM, true);
+                        $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                         $current_idx = (string)(isset($zoom_data[$channel_id]) ? $zoom_data[$channel_id] : DuneVideoZoomPresets::not_set);
 
                         //hd_print(__METHOD__ . ": Current idx: $current_idx");
@@ -593,7 +593,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 $channel_id = $media_url->channel_id;
                 $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
-                $zoom_data = HD::get_data_items(Starnet_Tv::CHANNELS_ZOOM, true);
+                $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                 if ($zoom_select === DuneVideoZoomPresets::not_set) {
                     hd_print(__METHOD__ . ": Zoom preset removed for channel: $channel_id");
                     unset ($zoom_data[$channel_id]);
@@ -602,7 +602,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $zoom_data[$channel_id] = $zoom_select;
                 }
 
-                HD::put_data_items(Starnet_Tv::CHANNELS_ZOOM, $zoom_data);
+                $this->plugin->set_settings(PARAM_CHANNELS_ZOOM, $zoom_data);
                 return Starnet_Epfs_Handler::invalidate_folders();
 
             case ACTION_EXTERNAL_PLAYER:

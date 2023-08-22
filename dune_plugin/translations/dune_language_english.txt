@@ -186,6 +186,7 @@ tv_screen_channels_setup = Playlists setup
 tv_screen_subscription = Subscription
 tv_screen_information = Information
 tv_screen_hide_group = Hide category
+tv_screen_sort_group = Sort category by name
 tv_screen_continue = Continue
 tv_screen_continue_view = Continue playback
 tv_screen_zoom_not_set = Not set

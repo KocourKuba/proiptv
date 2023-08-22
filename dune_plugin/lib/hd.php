@@ -699,9 +699,7 @@ class HD
      */
     public static function put_items($path, $items, $json = true)
     {
-        $data = $json ? json_encode($items) : serialize($items);
-        $written = file_put_contents($path, $data);
-        hd_print("$written bytes written to $path");
+        file_put_contents($path, $json ? json_encode($items) : serialize($items));
     }
 
     /**

@@ -12,6 +12,6 @@ class Favorites_Group extends Default_Group
     {
         parent::__construct($id, $title, $icon_url);
 
-        $this->is_favorite = true;
+        $this->_favorite = true;
     }
 }

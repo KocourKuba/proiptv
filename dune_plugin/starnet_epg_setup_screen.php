@@ -112,7 +112,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             $sources = $this->plugin->m3u_parser->getXmltvSources();
             $idx_type = PARAM_EPG_INTERNAL_IDX;
         } else {
-            $sources = $this->plugin->get_settings(PARAM_CUSTOM_XMLTV_SOURCES);
+            $sources = $this->plugin->get_settings(PARAM_CUSTOM_XMLTV_SOURCES, array());
             $idx_type = PARAM_EPG_EXTERNAL_IDX;
         }
 
@@ -146,12 +146,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 TR::t('setup_reload_xmltv_epg'), TR::t('refresh'), $this->plugin->get_image_path('refresh.png'), self::CONTROLS_WIDTH);
         }
 
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_EPG_PARSE_ALL})) {
-            $plugin_cookies->{self::SETUP_ACTION_EPG_PARSE_ALL} = SetupControlSwitchDefs::switch_off;
-        }
+        $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_EPG_PARSE_ALL, TR::t('setup_epg_parse_all'), self::$off_on_ops[$plugin_cookies->{self::SETUP_ACTION_EPG_PARSE_ALL}],
-            $this->plugin->get_image_path(self::$off_on_img[$plugin_cookies->{self::SETUP_ACTION_EPG_PARSE_ALL}]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_EPG_PARSE_ALL, TR::t('setup_epg_parse_all'), self::$off_on_ops[$parse_all],
+            $this->plugin->get_image_path(self::$off_on_img[$parse_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG cache dir
@@ -280,10 +278,12 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case self::SETUP_ACTION_EPG_PARSE_ALL:
-                $plugin_cookies->{$control_id} = ($plugin_cookies->{$control_id} === SetupControlSwitchDefs::switch_on)
+                $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
+                $parse_all = ($parse_all === SetupControlSwitchDefs::switch_on)
                     ? SetupControlSwitchDefs::switch_off
                     : SetupControlSwitchDefs::switch_on;
-                hd_print(__METHOD__ . ": $control_id: " . $plugin_cookies->{$control_id});
+                $this->plugin->set_settings(PARAM_EPG_PARSE_ALL, $parse_all);
+                hd_print(__METHOD__ . ": $control_id: $parse_all");
                 break;
 
             case self::SETUP_ACTION_CLEAR_EPG_CACHE:
