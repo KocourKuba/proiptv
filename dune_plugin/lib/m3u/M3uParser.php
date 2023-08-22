@@ -326,6 +326,8 @@ class M3uParser
     {
         $xmltv_urls = array();
         foreach (array('url-tvg', 'x-tvg-url') as $attr) {
+            if (is_null($this->m3u_info)) break;
+
             $tag_value = $this->m3u_info->getAttribute($attr);
             $urls = explode(',', $tag_value);
             foreach ($urls as $key => $url) {

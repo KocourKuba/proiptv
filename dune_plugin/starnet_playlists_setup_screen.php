@@ -108,7 +108,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case 2: // m3u folder
                 if (!is_apk()) {
                     Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_CHOOSE_PL_FOLDER,
-                        TR::t('setup_channels_src_folder_path'), TR::t('setup_channels_src_folder'), $folder_icon, self::CONTROLS_WIDTH);
+                        TR::t('setup_channels_src_folder_path'), TR::t('setup_channels_add_caption'), $folder_icon, self::CONTROLS_WIDTH);
                 }
                 break;
             case 3: // user defined list

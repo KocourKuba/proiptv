@@ -138,7 +138,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->screens = array();
         $this->new_ui_support = HD::rows_api_support();
         $this->m3u_parser = new M3uParser();
-        $this->epg_man = new Epg_Manager();
+        $this->epg_man = new Epg_Manager($this);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -588,19 +588,18 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function UpdateXmltvSource()
     {
-        $source = $this->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_INTERNAL);
+        $source = $this->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_SOURCE_INTERNAL);
 
-        if ($source === PARAM_EPG_INTERNAL) {
+        if ($source === PARAM_EPG_SOURCE_INTERNAL) {
             $sources = $this->m3u_parser->getXmltvSources();
-            $used_idx = PARAM_EPG_INTERNAL_IDX;
         } else {
             $sources = $this->get_settings(PARAM_CUSTOM_XMLTV_SOURCES);
-            $used_idx = PARAM_EPG_EXTERNAL_IDX;
         }
 
-        $epg_idx = $this->get_settings($used_idx, 0);
-        if (isset($sources[$epg_idx])) {
-            $this->epg_man->set_xmltv_url($sources[$epg_idx]);
+        $epg_idx = $this->get_settings(PARAM_EPG_IDX, array());
+        $idx = isset($epg_idx[$source]) ? $epg_idx[$source] : 0;
+        if (isset($sources[$idx])) {
+            $this->epg_man->set_xmltv_url($sources[$idx]);
         } else {
             hd_print("no xmltv source defined for this playlist");
         }
@@ -678,7 +677,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function create_setup_header(&$defs)
     {
         Control_Factory::add_vgap($defs, -10);
-        Control_Factory::add_label($defs, "ProIPTV by sharky72 [---------------------]",
+        Control_Factory::add_label($defs, "[ ´¯¤¤¯(ºº)¯¤¤¯` ] ProIPTV by sharky72",
             " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
             20);
     }

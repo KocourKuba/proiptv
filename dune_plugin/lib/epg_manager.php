@@ -5,6 +5,11 @@ require_once 'epg_params.php';
 class Epg_Manager
 {
     /**
+     * @var Default_Dune_Plugin
+     */
+    protected $plugin;
+
+    /**
      * contains memory epg cache
      * @var array
      */
@@ -27,6 +32,11 @@ class Epg_Manager
      * @var array
      */
     public $xmltv_index;
+
+    public function __construct(Default_Dune_Plugin $plugin)
+    {
+        $this->plugin = $plugin;
+    }
 
     /**
      * @param $xmltv_url string
@@ -366,9 +376,7 @@ class Epg_Manager
 
         hd_print(__METHOD__ . ": Cached file index: $cached_file_index is not valid need reindex");
 
-        $parse_all = isset($plugin_cookies->{Starnet_Epg_Setup_Screen::SETUP_ACTION_EPG_PARSE_ALL})
-            && $plugin_cookies->{Starnet_Epg_Setup_Screen::SETUP_ACTION_EPG_PARSE_ALL} === SetupControlSwitchDefs::switch_on;
-
+        $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
         $file_object = null;
         $cache_file = $this->get_xml_cached_filename();
         $cache_dir = self::get_xcache_dir($plugin_cookies);
@@ -470,7 +478,28 @@ class Epg_Manager
         $this->epg_cache = array();
 
         $dir = self::get_xcache_dir($plugin_cookies);
-        hd_print(__METHOD__ . ": clear cache dir: $dir");
+        $path = "$dir{$this->get_xml_cached_filename()}*.*";
+        hd_print(__METHOD__ . ": clear cache files: $path");
+        foreach (glob($path) as $file) {
+            if (!is_dir($file)) {
+                unlink($file);
+            }
+        }
+        HD::ShowMemoryUsage();
+        hd_print(__METHOD__ . ": Storage space in cache dir: " . HD::get_storage_size($dir));
+    }
+
+    /**
+     * clear memory cache
+     * @param $plugin_cookies
+     */
+    public function clear_all_epg_cache($plugin_cookies)
+    {
+        unset($this->epg_cache, $this->xmltv_data, $this->xmltv_index);
+        $this->epg_cache = array();
+
+        $dir = self::get_xcache_dir($plugin_cookies);
+        hd_print(__METHOD__ . ": clear entire cache dir: $dir");
         $files = array_diff(scandir($dir), array('.','..'));
         foreach ($files as $file) {
             if (!is_dir("$dir/$file")) {

@@ -24,8 +24,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     (
         SetupControlSwitchDefs::switch_small => '%tr%setup_small',
         SetupControlSwitchDefs::switch_normal => '%tr%setup_normal',
-        PARAM_EPG_INTERNAL => '%tr%setup_internal',
-        PARAM_EPG_EXTERNAL => '%tr%setup_external',
+        PARAM_EPG_SOURCE_INTERNAL => '%tr%setup_internal',
+        PARAM_EPG_SOURCE_EXTERNAL => '%tr%setup_external',
     );
 
     private static $on_off_img = array
@@ -97,10 +97,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // EPG Source
         $epg_source_ops = array();
-        $epg_source_ops[PARAM_EPG_INTERNAL] = self::$on_off_ops[PARAM_EPG_INTERNAL];
-        $epg_source_ops[PARAM_EPG_EXTERNAL] = self::$on_off_ops[PARAM_EPG_EXTERNAL];
+        $epg_source_ops[PARAM_EPG_SOURCE_INTERNAL] = self::$on_off_ops[PARAM_EPG_SOURCE_INTERNAL];
+        $epg_source_ops[PARAM_EPG_SOURCE_EXTERNAL] = self::$on_off_ops[PARAM_EPG_SOURCE_EXTERNAL];
 
-        $source = $this->plugin->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_INTERNAL);
+        $source = $this->plugin->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_SOURCE_INTERNAL);
         Control_Factory::add_combobox($defs, $this, null,
             self::SETUP_ACTION_EPG_SOURCE, TR::t('setup_epg_type'),
             $source, $epg_source_ops, self::CONTROLS_WIDTH, true);
@@ -108,15 +108,15 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // XMLTV sources
 
-        if ($source === PARAM_EPG_INTERNAL) {
+        if ($source === PARAM_EPG_SOURCE_INTERNAL) {
             $sources = $this->plugin->m3u_parser->getXmltvSources();
-            $idx_type = PARAM_EPG_INTERNAL_IDX;
         } else {
             $sources = $this->plugin->get_settings(PARAM_CUSTOM_XMLTV_SOURCES, array());
-            $idx_type = PARAM_EPG_EXTERNAL_IDX;
         }
 
-        $source_idx = $this->plugin->get_settings($idx_type, 0);
+        $source_idx = $this->plugin->get_settings(PARAM_EPG_IDX, array());
+        $idx = isset($source_idx[$source]) ? $source_idx[$source] : 0;
+
         $display_path = array();
         foreach ($sources as $item) {
             $display_path[] = HD::string_ellipsis($item);
@@ -128,13 +128,14 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             if (count($display_path) > 1) {
                 Control_Factory::add_combobox($defs, $this, null,
                     self::SETUP_ACTION_XMLTV_EPG_IDX, TR::t('setup_xmltv_epg_source'),
-                    $source_idx, $display_path, self::CONTROLS_WIDTH, true);
+                    $idx, $display_path, self::CONTROLS_WIDTH, true);
             } else {
                 Control_Factory::add_label($defs, TR::t('setup_xmltv_epg_source'), $display_path[0]);
-                $this->plugin->set_parameters($idx_type, 0);
+                $source_idx[$source] = 0;
+                $this->plugin->set_parameters(PARAM_EPG_IDX, $source_idx);
             }
 
-            if ($source === PARAM_EPG_EXTERNAL) {
+            if ($source === PARAM_EPG_SOURCE_EXTERNAL) {
                 Control_Factory::add_image_button($defs, $this, null, ACTION_ITEM_ADD,
                     TR::t('setup_add_xmltv_epg'), TR::t('add'), $this->plugin->get_image_path('link.png'), self::CONTROLS_WIDTH);
 
@@ -245,10 +246,11 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case self::SETUP_ACTION_XMLTV_EPG_IDX:
-                $val = $user_input->{$control_id};
-                $source = $this->plugin->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_INTERNAL);
-                $this->plugin->set_settings(($source === PARAM_EPG_INTERNAL) ? PARAM_EPG_INTERNAL_IDX : PARAM_EPG_EXTERNAL_IDX, $val);
-                hd_print(__METHOD__ . ": Selected xmltv epg idx: $val for $source");
+                $source = $this->plugin->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_SOURCE_INTERNAL);
+                $source_idx = $this->plugin->get_settings(PARAM_EPG_IDX, array());
+                $source_idx[$source] = $user_input->{$control_id};
+                $this->plugin->set_settings(PARAM_EPG_IDX, $source_idx);
+                hd_print(__METHOD__ . ": Selected xmltv epg idx: $source_idx[$source] for $source");
                 $this->plugin->UpdateXmltvSource();
                 break;
 
@@ -341,15 +343,17 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_ITEM_DELETE:
                 $sources = $this->plugin->get_settings(PARAM_CUSTOM_XMLTV_SOURCES);
-                $source_idx = $this->plugin->get_settings(PARAM_EPG_EXTERNAL_IDX);
-                hd_print(__METHOD__ . ": Remove epg idx: $source_idx ($sources[$source_idx])");
-                unset($sources[$source_idx]);
+                $source_idx = $this->plugin->get_settings(PARAM_EPG_IDX, array());
+                $idx = isset($source_idx[PARAM_EPG_SOURCE_EXTERNAL]) ? $source_idx[PARAM_EPG_SOURCE_EXTERNAL] : 0;
+                hd_print(__METHOD__ . ": Remove epg idx: $idx ($sources[$idx])");
+                unset($sources[$idx]);
+                $sources = array_values($sources);
                 $this->plugin->set_settings(PARAM_CUSTOM_XMLTV_SOURCES, $sources);
                 break;
 
             case ACTION_RESET_DEFAULT:
                 hd_print(__METHOD__ . ": " . ACTION_RESET_DEFAULT);
-                $this->plugin->epg_man->clear_epg_cache($plugin_cookies);
+                $this->plugin->epg_man->clear_all_epg_cache($plugin_cookies);
                 $data = MediaURL::make(array('filepath' => get_data_path("epg_cache")));
                 Epg_Manager::set_xcache_dir($plugin_cookies, $data);
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', Epg_Manager::get_xcache_dir($plugin_cookies)),
@@ -358,7 +362,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 hd_print(__METHOD__ . ": " . ACTION_FOLDER_SELECTED . " $data->filepath");
-                $this->plugin->epg_man->clear_epg_cache($plugin_cookies);
+                $this->plugin->epg_man->clear_all_epg_cache($plugin_cookies);
                 Epg_Manager::set_xcache_dir($plugin_cookies, $data);
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);

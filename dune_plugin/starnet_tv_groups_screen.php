@@ -175,6 +175,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $show_history = (!isset($plugin_cookies->show_history) || $plugin_cookies->show_history === 'yes');
 
         $special_groups = $this->plugin->tv->get_special_groups();
+        if (is_null($special_groups)) {
+            return $items;
+        }
         /** @var Group $group */
         foreach ($special_groups as $group) {
             $icons_param = array(

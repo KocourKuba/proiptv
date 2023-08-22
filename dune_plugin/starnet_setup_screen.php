@@ -30,8 +30,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         SetupControlSwitchDefs::switch_off => 'off.png',
         SetupControlSwitchDefs::switch_small => 'on.png',
         SetupControlSwitchDefs::switch_normal => 'off.png',
-        PARAM_EPG_INTERNAL => 'off.png',
-        PARAM_EPG_EXTERNAL => 'on.png',
+        PARAM_EPG_SOURCE_INTERNAL => 'off.png',
+        PARAM_EPG_SOURCE_EXTERNAL => 'on.png',
     );
 
     ///////////////////////////////////////////////////////////////////////
