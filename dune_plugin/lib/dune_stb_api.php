@@ -94,11 +94,19 @@ const ACTION_CLEAR_PLAYBACK_POINTS = 'clear_playback_points';
 const ACTION_CLEAR_FAVORITES = 'clear_favorites';
 const ACTION_RESET_DEFAULT = 'reset_default';
 
+# Special groups ID
+const FAV_CHANNEL_GROUP_ID = '##favorites##';
+const ALL_CHANNEL_GROUP_ID = '##all_channels##';
+const PLAYBACK_HISTORY_GROUP_ID = '##playback_history_tv_group##';
+
+# Common parameters
 const PLUGIN_PARAMS = "common";
 const PARAM_PLAYLISTS = 'playlists';
 const PARAM_PLAYLIST_IDX = 'playlist_idx';
 const PARAM_FAVORITES = 'favorites';
 const PARAM_GROUPS_ORDER = 'groups_order';
+const PARAM_DISABLED_GROUPS = 'disabled_groups';
+const PARAM_CHANNELS_ORDER = '_channels_order';
 const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';

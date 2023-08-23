@@ -127,6 +127,7 @@ setup_channels_src_label = Папка со списками каналов
 setup_channels_src_folder_path = Задать папку со M3U файлами
 setup_channels_src_internet_path = Добавить ссылку в список каналов
 setup_channels_src_remove_playlist = Удалить выбраный плейлист
+setup_channels_src_reset_playlist = Сбросить настройки плейлиста
 setup_channels_src_direct_link = Задать ссылку на список каналов
 setup_channels_src_playlists = Список плейлистов
 setup_channels_src_no_playlists = Нет плейлистов!!!
@@ -136,6 +137,7 @@ setup_channels_src_link_caption = Ссылка на списки каналов
 setup_channels_src_playlists_added__1 = Добавлено %s плейлистов
 reset_default = Сбросить по умолчанию
 setup_channels_add_caption = Добавить
+setup_channels_yes_no_msg = Вы уверены?
 custom = Произвольный
 
 entry_not_available = Для этой приставки эта функция недоступна!

@@ -22,11 +22,6 @@ class Hashed_Array implements Iterator
      */
     private $map = array();
 
-    public function __sleep()
-    {
-        return array('pos', 'seq', 'map');
-    }
-
     /**
      * @return integer
      */
@@ -62,7 +57,7 @@ class Hashed_Array implements Iterator
      */
     public function get($key)
     {
-        return isset($this->map[$key]) ? $this->map[$key] : null;
+        return $this->has($key) ? $this->map[$key] : null;
     }
 
     /**

@@ -121,7 +121,8 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
         if (!self::$enabled)
             return null;
 
-        hd_print(__METHOD__ . ": first run " . ($first_run ? "yes" : "no"));
+        if ($first_run)
+            hd_print(__METHOD__ . ": first run");
 
         Playback_Points::load_points(
             smb_tree::get_folder_info($plugin_cookies, PARAM_HISTORY_PATH),
@@ -137,8 +138,8 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
         }
 
         $cold_run = !is_file(self::warmed_up_path());
-        hd_print(__METHOD__ . ": Cold run: " . ($cold_run ? "yes" : "no"));
         if ($cold_run) {
+            hd_print(__METHOD__ . ": Cold run");
             file_put_contents(self::warmed_up_path(), '');
         }
 

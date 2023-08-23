@@ -30,11 +30,6 @@ interface Group
     /**
      * @return bool
      */
-    public function is_vod_group();
-
-    /**
-     * @return bool
-     */
     public function is_all_channels_group();
 
     /**
@@ -63,4 +58,9 @@ interface Group
      * @return Hashed_Array
      */
     public function get_group_channels();
+
+    /**
+     * @return Ordered_Array
+     */
+    public function get_items_order();
 }

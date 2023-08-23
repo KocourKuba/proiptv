@@ -58,7 +58,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
 
         if (!isset($user_input->selected_media_url)) {
             return null;
@@ -92,10 +92,10 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     Action_Factory::update_regular_folder($range, true));
 
 			case ACTION_ADD_FAV:
-				$is_favorite = $this->plugin->tv->is_favorite_channel_id($channel_id, $plugin_cookies);
+				$is_favorite = $this->plugin->tv->get_favorites()->in_order($channel_id);
 				$opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
-				$this->plugin->tv->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
+				$this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
 				return Action_Factory::show_title_dialog($message);
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -173,7 +173,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array(
                         'channel_id' => $channel_id,
-                        'group_id' => Default_Dune_Plugin::PLAYBACK_HISTORY_GROUP_ID,
+                        'group_id' => PLAYBACK_HISTORY_GROUP_ID,
                         'archive_tm' => $channel_ts
                     )
                 ),

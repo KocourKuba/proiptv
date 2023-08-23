@@ -25,14 +25,26 @@ class Default_Group implements Group
      * @var boolean
      */
     protected $_disabled;
+    /**
+     * @var boolean
+     */
     protected $_favorite = false;
-    protected $all_group = false;
+    /**
+     * @var boolean
+     */
+    protected $_all_group = false;
+    /**
+     * @var boolean
+     */
     protected $_history = false;
-    protected $_vod_group = false;
     /**
      * @var Hashed_Array
      */
     protected $_channels;
+    /**
+     * @var Ordered_Array
+     */
+    protected $_channels_order;
 
     /**
      * @param string $id
@@ -56,11 +68,12 @@ class Default_Group implements Group
         $this->_disabled = $disabled;
 
         $this->_channels = new Hashed_Array();
+        $this->_channels_order = new Ordered_Array();
     }
 
     public function __sleep()
     {
-        return array('_id', '_title', '_icon_url', '_adult', '_disabled', '_favorite', 'all_group', '_history', '_vod_group');
+        return array('_id', '_title', '_icon_url', '_adult', '_disabled', '_favorite', 'all_group', '_history', '_channels_order');
     }
 
     public function __wakeup()
@@ -111,17 +124,9 @@ class Default_Group implements Group
     /**
      * @return bool
      */
-    public function is_vod_group()
-    {
-        return $this->_vod_group;
-    }
-
-    /**
-     * @return bool
-     */
     public function is_all_channels_group()
     {
-        return $this->all_group;
+        return $this->_all_group;
     }
 
     /**
@@ -167,10 +172,21 @@ class Default_Group implements Group
     }
 
     /**
+     * @return Ordered_Array
+     */
+    public function get_items_order()
+    {
+        return $this->_channels_order;
+    }
+
+    /**
      * @param Channel $channel
      */
     public function add_channel(Channel $channel)
     {
         $this->_channels->put($channel);
+        if (!$channel->is_disabled() && !$this->is_all_channels_group()) {
+            $this->_channels_order->add_item($channel->get_id());
+        }
     }
 }

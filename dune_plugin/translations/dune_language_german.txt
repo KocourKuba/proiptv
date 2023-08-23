@@ -128,6 +128,7 @@ setup_channels_src_label = Ordner mit Senderliste
 setup_channels_src_folder_path = Select folder with M3U files
 setup_channels_src_internet_path = Add URL to the Channels list
 setup_channels_src_remove_playlist = Remove selected playlist
+setup_channels_src_reset_playlist = Reset playlist settings
 setup_channels_src_direct_link = URL zur Kanalliste festlegen:
 setup_channels_src_playlists = Playlists
 setup_channels_src_no_playlists = Keine Playlists!!!
@@ -137,6 +138,7 @@ setup_channels_src_link_caption = URL für die Kanalliste
 setup_channels_src_playlists_added__1 = Added %s playlists
 reset_default = Zurücksetzen
 setup_channels_add_caption = Add
+setup_channels_yes_no_msg = Are you sure?
 custom = Brauch
 
 entry_not_available = Diese Funktion ist für dieses Gerät nicht verfügbar!

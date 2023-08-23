@@ -26,16 +26,14 @@ class Base_Epfs_Handler
     private static function do_write_epf_data($path, $data, $epf_id)
 	{
         $tmp_path = "$path.tmp";
+		//hd_print(__METHOD__ . ": Write epf for $epf_id to $path (" . strlen($data) . ' bytes)');
 
         if (false === file_put_contents($tmp_path, $data)) {
             hd_print(__METHOD__ . ": Failed to write tmp file: $tmp_path");
         } else if (!rename($tmp_path, $path)) {
             hd_print(__METHOD__ . ": Failed to rename $tmp_path to $path");
             unlink($tmp_path);
-            return;
         }
-
-		hd_print(__METHOD__ . ": Write epf for $epf_id to $path (" . strlen($data) . ' bytes)');
 	}
 
 	////////////////////////////////////////////////////////////////////////////

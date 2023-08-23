@@ -63,7 +63,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
+        $min_sel = $this->get_special_groups_count($plugin_cookies);
+        $group_id = MediaURL::decode($user_input->selected_media_url)->group_id;
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
         switch ($user_input->control_id) {
             case ACTION_OPEN_FOLDER:
@@ -72,40 +75,39 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $has_error = $this->plugin->get_last_error();
                 if (!empty($has_error)) {
                     $this->plugin->set_last_error('');
-                    return Action_Factory::show_title_dialog(TR::t('err_load_any'), $post_action, $has_error);
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_any'), $post_action, $has_error);
                 }
 
                 return $post_action;
 
             case ACTION_ITEM_UP:
+                if (!$this->plugin->tv->get_groups_order()->arrange_item($group_id, Ordered_Array::UP))
+                    return null;
+
+                $user_input->sel_ndx--;
+                if ($user_input->sel_ndx < $min_sel) {
+                    $user_input->sel_ndx = $min_sel;
+                }
+                break;
+
             case ACTION_ITEM_DOWN:
-                // TODO not yet implemented
+                if (!$this->plugin->tv->get_groups_order()->arrange_item($group_id, Ordered_Array::DOWN))
+                    return null;
+
+                $groups_cnt = $min_sel + $this->plugin->tv->get_groups_order()->size();
+                $user_input->sel_ndx++;
+                if ($user_input->sel_ndx >= $groups_cnt) {
+                    $user_input->sel_ndx = $groups_cnt - 1;
+                }
+                break;
+
+            case ACTION_ITEM_DELETE:
+                hd_print(__METHOD__ . ": Hide $group_id");
+                $this->plugin->tv->disable_group($group_id);
                 break;
 
             case ACTION_ITEMS_SORT:
-                $groups = $this->plugin->tv->get_groups();
-                $groups->usort(array(__CLASS__, "sort_groups_cb"));
-                $this->plugin->set_settings(PARAM_GROUPS_ORDER, $groups);
-
-                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-                $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                return Starnet_Epfs_Handler::invalidate_folders(null,
-                    Action_Factory::update_regular_folder($range, true));
-
-            case ACTION_ITEM_DELETE:
-                if (isset($user_input->selected_media_url)) {
-                    $media_url = MediaURL::decode($user_input->selected_media_url);
-                    $group = $this->plugin->tv->get_group($media_url->group_id);
-                    $group->set_disabled(true);
-                    $this->plugin->set_settings(PARAM_GROUPS_ORDER, $this->plugin->tv->get_groups());
-
-                    $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-                    $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                    return Starnet_Epfs_Handler::invalidate_folders(null,
-                        Action_Factory::update_regular_folder($range, true));
-                }
+                $this->plugin->tv->get_groups_order()->sort_order();
                 break;
 
             case ACTION_SETTINGS:
@@ -149,9 +151,25 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
 
                 return Action_Factory::show_popup_menu($menu_items);
+            default:
+                return null;
         }
 
-        return null;
+        $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
+        $post_action = Action_Factory::close_and_run(
+            Action_Factory::open_folder(
+                $user_input->parent_media_url,
+                null,
+                null,
+                null,
+                Action_Factory::update_regular_folder($range, true, $user_input->sel_ndx)
+            )
+        );
+
+        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        $post_action = Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url), $post_action);
+
+        return Action_Factory::invalidate_folders(array(self::get_media_url_str()), $post_action);
     }
 
     /**
@@ -174,61 +192,81 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $show_favorites = (!isset($plugin_cookies->show_favorites) || $plugin_cookies->show_favorites === 'yes');
         $show_history = (!isset($plugin_cookies->show_history) || $plugin_cookies->show_history === 'yes');
 
-        $special_groups = $this->plugin->tv->get_special_groups();
-        if (is_null($special_groups)) {
-            return $items;
-        }
         /** @var Group $group */
-        foreach ($special_groups as $group) {
-            $icons_param = array(
-                ViewItemParams::icon_path => $group->get_icon_url(),
-                ViewItemParams::item_detailed_icon_path => $group->get_icon_url()
-            );
-
-            if ($show_favorites && $group->is_favorite_group()) {
+        if ($show_favorites) {
+            $group = $this->plugin->tv->get_special_group(FAV_CHANNEL_GROUP_ID);
+            if (!is_null($group)) {
                 $items[] = array(
                     PluginRegularFolderItem::media_url => Starnet_Tv_Favorites_Screen::get_media_url_str(),
-                    PluginRegularFolderItem::caption => Default_Dune_Plugin::FAV_CHANNEL_GROUP_CAPTION,
-                    PluginRegularFolderItem::view_item_params => $icons_param
-                );
-            } else if ($show_all && $group->is_all_channels_group()) {
-                $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_str(
-                        Default_Dune_Plugin::ALL_CHANNEL_GROUP_ID),
-                    PluginRegularFolderItem::caption => Default_Dune_Plugin::ALL_CHANNEL_GROUP_CAPTION,
-                    PluginRegularFolderItem::view_item_params => $icons_param
-                );
-            } else if ($show_history && $group->is_history_group()) {
-                $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_TV_History_Screen::get_media_url_str(),
-                    PluginRegularFolderItem::caption => Default_Dune_Plugin::PLAYBACK_HISTORY_CAPTION,
-                    PluginRegularFolderItem::view_item_params => $icons_param
-                );
-            }
-        }
-
-        /** @var Group $group */
-        $groups = $this->plugin->tv->get_groups();
-        if ($groups !== null) {
-            foreach ($groups as $group) {
-                //hd_print("group: {$group->get_title()} , icon: {$group->get_icon_url()}");
-                if ($group->is_disabled()) continue;
-
-                $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_str($group->get_id()),
                     PluginRegularFolderItem::caption => $group->get_title(),
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::icon_path => $group->get_icon_url(),
                         ViewItemParams::item_detailed_icon_path => $group->get_icon_url()
-                    ),
+                        )
+                    );
+            }
+        }
+
+        if ($show_all) {
+            $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
+            if (!is_null($group)) {
+                $items[] = array(
+                    PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_str(ALL_CHANNEL_GROUP_ID),
+                    PluginRegularFolderItem::caption => $group->get_title(),
+                    PluginRegularFolderItem::view_item_params => array(
+                        ViewItemParams::icon_path => $group->get_icon_url(),
+                        ViewItemParams::item_detailed_icon_path => $group->get_icon_url()
+                    )
                 );
             }
+        }
+
+        if ($show_history) {
+            $group = $this->plugin->tv->get_special_group(PLAYBACK_HISTORY_GROUP_ID);
+            if (!is_null($group)) {
+                $items[] = array(
+                    PluginRegularFolderItem::media_url => Starnet_TV_History_Screen::get_media_url_str(),
+                    PluginRegularFolderItem::caption => $group->get_title(),
+                    PluginRegularFolderItem::view_item_params => array(
+                        ViewItemParams::icon_path => $group->get_icon_url(),
+                        ViewItemParams::item_detailed_icon_path => $group->get_icon_url()
+                    )
+                );
+            }
+        }
+
+        /** @var Group $group */
+        foreach ($this->plugin->tv->get_groups_order()->get_order() as $item) {
+            //hd_print("group: {$group->get_title()} , icon: {$group->get_icon_url()}");
+            $group = $this->plugin->tv->get_group($item);
+            if (is_null($group) || $group->is_disabled()) continue;
+
+            $items[] = array(
+                PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_str($group->get_id()),
+                PluginRegularFolderItem::caption => $group->get_title(),
+                PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::icon_path => $group->get_icon_url(),
+                    ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
+                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
+                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
+                    ViewItemParams::item_detailed_info => "{$group->get_title()}|Каналы: " . $group->get_items_order()->size(),
+                ),
+            );
         }
 
         //hd_print("Loaded items " . count($items));
         return $items;
     }
 
+    private function get_special_groups_count($plugin_cookies)
+    {
+        $groups_cnt = 0;
+        if (!isset($plugin_cookies->show_all) || $plugin_cookies->show_all === 'yes') $groups_cnt++;
+        if (!isset($plugin_cookies->show_favorites) || $plugin_cookies->show_favorites === 'yes') $groups_cnt++;
+        if (!isset($plugin_cookies->show_history) || $plugin_cookies->show_history === 'yes') $groups_cnt++;
+
+        return $groups_cnt;
+    }
 /*
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
@@ -238,15 +276,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         return $folder_view;
     }
 */
-    /**
-     * @param string $a
-     * @param string $b
-     * @return int
-     */
-    public static function sort_groups_cb($a, $b)
-    {
-        return strnatcasecmp($a, $b);
-    }
 
     /**
      * @return array[]

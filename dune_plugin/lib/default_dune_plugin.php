@@ -20,11 +20,8 @@ class Default_Dune_Plugin implements DunePlugin
 
     /////////////////////////////////////////////////////////////////////////////
     // views constants
-    const ALL_CHANNEL_GROUP_ID = '##all_channels##';
     const ALL_CHANNEL_GROUP_CAPTION = '%tr%plugin_all_channels';
-    const FAV_CHANNEL_GROUP_ID = '##favorites##';
     const FAV_CHANNEL_GROUP_CAPTION = '%tr%plugin_favorites';
-    const PLAYBACK_HISTORY_GROUP_ID = '##playback_history_tv_group##';
     const PLAYBACK_HISTORY_CAPTION = '%tr%plugin_history';
 
     /////////////////////////////////////////////////////////////////////////////
@@ -356,17 +353,16 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $channel_id
      * @param $plugin_cookies
      * @return array
-     * @throws Exception
      */
     public function change_tv_favorites($op_type, $channel_id, &$plugin_cookies)
     {
         if (is_null($this->tv)) {
             hd_print(__METHOD__ . ': TV is not supported');
             HD::print_backtrace();
-            throw new Exception('TV is not supported');
+            return array();
         }
 
-        return $this->tv->change_tv_favorites($op_type, $channel_id, $plugin_cookies);
+        return $this->tv->change_favorites($op_type, $channel_id, $plugin_cookies);
     }
 
     ///////////////////////////////////////////////////////////////////////

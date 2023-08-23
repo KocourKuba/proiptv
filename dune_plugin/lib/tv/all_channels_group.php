@@ -12,6 +12,6 @@ class All_Channels_Group extends Default_Group
     {
         parent::__construct($id, $title, $icon_url);
 
-        $this->all_group = true;
+        $this->_all_group = true;
     }
 }

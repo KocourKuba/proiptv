@@ -13,7 +13,10 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     const SETUP_ACTION_IMPORT_LIST = 'import_list';
     const SETUP_ACTION_CHANNELS_URL_PATH = 'channels_url_path';
     const SETUP_ACTION_ADD_URL_DLG = 'add_url_dialog';
-    const SETUP_ACTION_REMOVE_PLAYLIST = 'remove_playlist';
+    const SETUP_ACTION_REMOVE_PLAYLIST_DLG = 'remove_playlist';
+    const SETUP_ACTION_REMOVE_PLAYLIST_APPLY = 'remove_playlist_apply';
+    const SETUP_ACTION_RESET_PLAYLIST_DLG = 'reset_playlist';
+    const SETUP_ACTION_RESET_PLAYLIST_APPLY = 'reset_playlist_apply';
     const SETUP_ACTION_CHANNELS_URL_APPLY = 'channels_url_apply';
     ///////////////////////////////////////////////////////////////////////
 
@@ -55,9 +58,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //hd_print(__METHOD__);
         $defs = array();
 
-        $folder_icon = $this->plugin->get_image_path('folder.png');
         $web_icon = $this->plugin->get_image_path('web.png');
-        $link_icon = $this->plugin->get_image_path('link.png');
 
         //////////////////////////////////////
         // Plugin name
@@ -85,7 +86,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         if (!empty($display_path)) {
-            Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_REMOVE_PLAYLIST,
+            Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_REMOVE_PLAYLIST_DLG,
                 TR::t('setup_channels_src_remove_playlist'), TR::t('delete'), $web_icon, self::CONTROLS_WIDTH);
         }
 
@@ -108,14 +109,20 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case 2: // m3u folder
                 if (!is_apk()) {
                     Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_CHOOSE_PL_FOLDER,
-                        TR::t('setup_channels_src_folder_path'), TR::t('setup_channels_add_caption'), $folder_icon, self::CONTROLS_WIDTH);
+                        TR::t('setup_channels_src_folder_path'), TR::t('setup_channels_add_caption'),
+                        $this->plugin->get_image_path('folder.png'), self::CONTROLS_WIDTH);
                 }
                 break;
             case 3: // user defined list
                 Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_IMPORT_LIST,
-                    TR::t('setup_channels_src_list'), TR::t('setup_channels_add_caption'), $link_icon, self::CONTROLS_WIDTH);
+                    TR::t('setup_channels_src_list'), TR::t('setup_channels_add_caption'),
+                    $this->plugin->get_image_path('link.png'), self::CONTROLS_WIDTH);
                 break;
         }
+
+        Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_RESET_PLAYLIST_DLG,
+            TR::t('setup_channels_src_reset_playlist'), TR::t('clear'),
+            $this->plugin->get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 10);
 
@@ -163,7 +170,10 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 }
                 return $action;
 
-            case self::SETUP_ACTION_REMOVE_PLAYLIST:
+            case self::SETUP_ACTION_REMOVE_PLAYLIST_DLG:
+                return Action_Factory::show_confirmation_dialog(TR::t('setup_channels_yes_no_msg'), $this, self::SETUP_ACTION_REMOVE_PLAYLIST_APPLY);
+
+            case self::SETUP_ACTION_REMOVE_PLAYLIST_APPLY:
                 $playlists = $this->plugin->get_parameters(PARAM_PLAYLISTS, array());
                 hd_print(__METHOD__ . ": total playlists: " . count($playlists));
                 $idx = $this->plugin->get_parameters(PARAM_PLAYLIST_IDX, 0);
@@ -181,6 +191,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     hd_print(__METHOD__ . ": Bad index: $idx");
                 }
                 break;
+
+            case self::SETUP_ACTION_RESET_PLAYLIST_DLG:
+                return Action_Factory::show_confirmation_dialog(TR::t('setup_channels_yes_no_msg'), $this, self::SETUP_ACTION_RESET_PLAYLIST_APPLY);
+
+            case self::SETUP_ACTION_RESET_PLAYLIST_APPLY: // handle streaming settings dialog result
+                $this->plugin->remove_settings();
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::SETUP_ACTION_PLAYLIST_SOURCE:
                 $this->plugin->set_parameters(self::SETUP_ACTION_PLAYLIST_SOURCE, $user_input->{$control_id});

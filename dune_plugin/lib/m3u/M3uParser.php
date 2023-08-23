@@ -167,7 +167,7 @@ class M3uParser
             $entry = new Entry();
         }
 
-        hd_print(__METHOD__ . ": parseInMemory " . (microtime(1) - $t) . " sec. Entries: " . $this->getEntriesCount());
+        hd_print(__METHOD__ . ": parseInMemory " . (microtime(1) - $t) . " sec.");
         return true;
     }
 

@@ -69,7 +69,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
      */
     private function get_update_action($sel_increment, $user_input, &$plugin_cookies)
     {
-        $num_favorites = count($this->plugin->tv->get_fav_channel_ids());
+        $num_favorites = $this->plugin->tv->get_favorites()->size();
 
         $sel_ndx = $user_input->sel_ndx + $sel_increment;
         if ($sel_ndx < 0) {
@@ -105,7 +105,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
 
         if (!isset($user_input->selected_media_url)) {
             return null;
@@ -174,7 +174,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         }
 
         $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
-        $this->plugin->tv->change_tv_favorites($fav_op_type, $channel_id, $plugin_cookies);
+        $this->plugin->change_tv_favorites($fav_op_type, $channel_id, $plugin_cookies);
         return $this->get_update_action($inc, $user_input, $plugin_cookies);
     }
 
@@ -187,11 +187,9 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        $fav_channel_ids = $this->plugin->tv->get_fav_channel_ids();
-
         $items = array();
 
-        foreach ($fav_channel_ids as $channel_id) {
+        foreach ($this->plugin->tv->get_favorites()->get_order() as $channel_id) {
             if (!preg_match('/\S/', $channel_id)) {
                 continue;
             }
@@ -199,7 +197,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             $channel = $this->plugin->tv->get_channel($channel_id);
             if (is_null($channel)) {
                 hd_print(__METHOD__ . ": Unknown channel $channel_id");
-                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id, $plugin_cookies);
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id, $plugin_cookies);
                 continue;
             }
 
@@ -207,7 +205,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             (
                 PluginRegularFolderItem::media_url => MediaURL::encode(array(
                         'channel_id' => $channel->get_id(),
-                        'group_id' => Default_Dune_Plugin::FAV_CHANNEL_GROUP_ID)
+                        'group_id' => FAV_CHANNEL_GROUP_ID)
                 ),
                 PluginRegularFolderItem::caption => $channel->get_title(),
                 PluginRegularFolderItem::view_item_params => array(
@@ -318,7 +316,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 (
                     ViewParams::num_cols => 2,
                     ViewParams::num_rows => 10,
-                    ViewParams::background_path => $this->plugin_info['app_background'],
+                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
                     ViewParams::background_order => 0,
                     ViewParams::paint_details => true,
                 ),

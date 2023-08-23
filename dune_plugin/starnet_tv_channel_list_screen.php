@@ -53,7 +53,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             GUI_EVENT_KEY_SETUP      => $action_settings,
         );
 
-        if ((string)$media_url->group_id === Default_Dune_Plugin::ALL_CHANNEL_GROUP_ID) {
+        if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
             $search_action = User_Input_Handler_Registry::create_action($this, ACTION_CREATE_SEARCH, TR::t('search'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
             $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
@@ -103,8 +103,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::tv_play($media_url);
 
             case ACTION_ADD_FAV:
-                $opt_type = $this->plugin->tv->is_favorite_channel_id($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-                $this->plugin->tv->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
+                $opt_type = $this->plugin->tv->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
                 return Action_Factory::invalidate_folders(array(self::get_media_url_str($media_url->group_id)));
 
             case ACTION_SETTINGS:
@@ -239,7 +239,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 ViewItemParams::icon_path => $channel->get_icon_url(),
                 ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
             ),
-            PluginRegularFolderItem::starred => $this->plugin->tv->is_favorite_channel_id($channel->get_id(), $plugin_cookies),
+            PluginRegularFolderItem::starred => $this->plugin->tv->get_favorites()->in_order($channel->get_id()),
         );
     }
 
@@ -465,7 +465,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 (
                     ViewParams::num_cols => 2,
                     ViewParams::num_rows => 10,
-                    ViewParams::background_path => $this->plugin_info['app_background'],
+                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
                     ViewParams::background_order => 0,
                     ViewParams::paint_details => true,
                 ),
