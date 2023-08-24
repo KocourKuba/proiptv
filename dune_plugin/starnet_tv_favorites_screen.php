@@ -62,43 +62,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     }
 
     /**
-     * @param int $sel_increment
-     * @param $user_input
-     * @param &$plugin_cookies
-     * @return array
-     */
-    private function get_update_action($sel_increment, $user_input, &$plugin_cookies)
-    {
-        $num_favorites = $this->plugin->tv->get_favorites()->size();
-
-        $sel_ndx = $user_input->sel_ndx + $sel_increment;
-        if ($sel_ndx < 0) {
-            $sel_ndx = 0;
-        }
-        if ($sel_ndx >= $num_favorites) {
-            $sel_ndx = $num_favorites - 1;
-        }
-
-        $post_action = Action_Factory::close_and_run(
-            Action_Factory::open_folder(
-                $user_input->parent_media_url,
-                null,
-                null,
-                null,
-                Action_Factory::update_regular_folder(
-                    HD::create_regular_folder_range($this->get_all_folder_items(MediaURL::decode($user_input->parent_media_url), $plugin_cookies)),
-                    true,
-                    $sel_ndx)
-            )
-        );
-
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        $post_action = Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url), $post_action);
-
-        return Action_Factory::invalidate_folders(array(Starnet_Tv_Groups_Screen::get_media_url_str()), $post_action);
-    }
-
-    /**
      * @param $user_input
      * @param $plugin_cookies
      * @return array|null
@@ -111,25 +74,31 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             return null;
         }
 
+        $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
         switch ($user_input->control_id) {
+
             case ACTION_ITEM_UP:
-                $fav_op_type = PLUGIN_FAVORITES_OP_MOVE_UP;
-                $inc = -1;
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $channel_id, $plugin_cookies);
+                $user_input->sel_ndx--;
+                if ($user_input->sel_ndx < 0) {
+                    $user_input->sel_ndx = 0;
+                }
                 break;
 
             case ACTION_ITEM_DOWN:
-                $fav_op_type = PLUGIN_FAVORITES_OP_MOVE_DOWN;
-                $inc = 1;
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $channel_id, $plugin_cookies);
+                $user_input->sel_ndx++;
+                if ($user_input->sel_ndx >= $this->plugin->tv->get_favorites()->size()) {
+                    $user_input->sel_ndx = $this->plugin->tv->get_favorites()->size() - 1;
+                }
                 break;
 
             case ACTION_ITEM_DELETE:
-                $fav_op_type = PLUGIN_FAVORITES_OP_REMOVE;
-                $inc = 0;
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id, $plugin_cookies);
                 break;
 
             case ACTION_ITEMS_CLEAR:
-                $fav_op_type = ACTION_CLEAR_FAVORITES;
-                $inc = 0;
+                $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $channel_id, $plugin_cookies);
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -173,9 +142,24 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return null;
         }
 
-        $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
-        $this->plugin->change_tv_favorites($fav_op_type, $channel_id, $plugin_cookies);
-        return $this->get_update_action($inc, $user_input, $plugin_cookies);
+        $post_action = Action_Factory::close_and_run(
+            Action_Factory::open_folder(
+                $user_input->parent_media_url,
+                null,
+                null,
+                null,
+                Action_Factory::update_regular_folder(
+                    HD::create_regular_folder_range($this->get_all_folder_items(MediaURL::decode($user_input->parent_media_url), $plugin_cookies)),
+                    true,
+                    $user_input->sel_ndx)
+            )
+        );
+
+        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        $post_action = Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url), $post_action);
+
+        return Action_Factory::invalidate_folders(array(Starnet_Tv_Groups_Screen::get_media_url_str()), $post_action);
+
     }
 
     ///////////////////////////////////////////////////////////////////////

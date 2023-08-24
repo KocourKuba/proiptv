@@ -90,8 +90,8 @@ const ACTION_ZOOM_SELECT = 'zoom_select';
 const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_REFRESH_SCREEN = 'refresh_screen';
 const ACTION_REMOVE_PLAYBACK_POINT = 'remove_playback_point';
-const ACTION_CLEAR_PLAYBACK_POINTS = 'clear_playback_points';
-const ACTION_CLEAR_FAVORITES = 'clear_favorites';
+const ACTION_ITEMS_CLEAR_PLAYBACK_POINTS = 'clear_playback_points';
+const ACTION_ITEMS_CLEAR = 'clear_favorites';
 const ACTION_RESET_DEFAULT = 'reset_default';
 
 # Special groups ID
@@ -1598,6 +1598,7 @@ function dump_input_handler($method, $user_input)
 {
     hd_print($method);
     foreach ($user_input as $key => $value) {
-        hd_print("  $key => $value");
+        $decoded_value = html_entity_decode(preg_replace("/(\\\u([0-9A-Fa-f]{4}))/", "&#x\\2;", $value), ENT_NOQUOTES, 'UTF-8');
+        hd_print("  $key => $decoded_value");
     }
 }

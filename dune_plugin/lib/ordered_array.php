@@ -124,6 +124,7 @@ class Ordered_Array
     {
         $key = array_search($id, $this->order);
         if ($key !== false) {
+            hd_print(__METHOD__ . ": remove: $id");
             $removed = array_splice($this->order, $key, 1);
             if (count($removed) !== 0) {
                 $this->save();
@@ -151,7 +152,7 @@ class Ordered_Array
     public function arrange_item($id, $direction)
     {
         $k = array_search($id, $this->order);
-        //hd_print(__METHOD__ . ": move group_id: $group_id from idx: $k to direction: $direction");
+        hd_print(__METHOD__ . ": move group_id: $id from idx: $k to direction: $direction");
 
         if ($k === false || $direction === 0)
             return false;

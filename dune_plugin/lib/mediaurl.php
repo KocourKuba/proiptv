@@ -1,8 +1,15 @@
 <?php
 
+/**
+ * @property mixed|null $channel_id
+ * @property mixed|null $group_id
+ */
 class MediaURL
 {
     // Original media-url string.
+    /**
+     * @var mixed|null
+     */
     private $str;
 
     // If media-url string contains map, it's decoded here.

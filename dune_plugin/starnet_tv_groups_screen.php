@@ -207,11 +207,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
         }
 
-        if ($show_all) {
-            $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
+        if ($show_history) {
+            $group = $this->plugin->tv->get_special_group(PLAYBACK_HISTORY_GROUP_ID);
             if (!is_null($group)) {
                 $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_str(ALL_CHANNEL_GROUP_ID),
+                    PluginRegularFolderItem::media_url => Starnet_TV_History_Screen::get_media_url_str(),
                     PluginRegularFolderItem::caption => $group->get_title(),
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::icon_path => $group->get_icon_url(),
@@ -221,11 +221,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
         }
 
-        if ($show_history) {
-            $group = $this->plugin->tv->get_special_group(PLAYBACK_HISTORY_GROUP_ID);
+        if ($show_all) {
+            $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
             if (!is_null($group)) {
                 $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_TV_History_Screen::get_media_url_str(),
+                    PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_str(ALL_CHANNEL_GROUP_ID),
                     PluginRegularFolderItem::caption => $group->get_title(),
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::icon_path => $group->get_icon_url(),
@@ -249,7 +249,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
                     ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
                     ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
-                    ViewItemParams::item_detailed_info => "{$group->get_title()}|Каналы: " . $group->get_items_order()->size(),
+                    ViewItemParams::item_detailed_info => $group->get_title(),
                 ),
             );
         }

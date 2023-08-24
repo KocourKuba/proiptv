@@ -57,6 +57,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $search_action = User_Input_Handler_Registry::create_action($this, ACTION_CREATE_SEARCH, TR::t('search'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
             $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
+        } else {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
         }
 
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
@@ -87,8 +90,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         $media_url = MediaURL::decode($user_input->selected_media_url);
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $channel_id = $media_url->channel_id;
+        $parent_group_id = $media_url->group_id;
+        $group = $this->plugin->tv->get_group($parent_group_id);
         $channel = $this->plugin->tv->get_channel($channel_id);
+        if (is_null($group) || is_null($channel))
+            return null;
 
         switch ($user_input->control_id) {
             case ACTION_PLAY_FOLDER:
@@ -105,7 +113,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_ADD_FAV:
                 $opt_type = $this->plugin->tv->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
-                return Action_Factory::invalidate_folders(array(self::get_media_url_str($media_url->group_id)));
+                return Action_Factory::invalidate_folders(array(self::get_media_url_str($parent_group_id)));
 
             case ACTION_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
@@ -124,7 +132,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $defs = array();
                 $find_text = $user_input->{ACTION_NEW_SEARCH};
                 $q = false;
-                $group = $this->plugin->tv->get_group($media_url->group_id);
                 foreach ($group->get_group_channels() as $idx => $tv_channel) {
                     $ch_title = $tv_channel->get_title();
                     $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
@@ -148,13 +155,67 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_JUMP_TO_CHANNEL:
                 $ndx = (int)$user_input->number;
-                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-                $parent_media_url->group_id = $media_url->group_id;
+                $parent_media_url->group_id = $parent_group_id;
                 $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
                 return Action_Factory::update_regular_folder($range, true, $ndx);
 
+            case ACTION_ITEM_UP:
+                if (!$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
+                    return null;
+
+                $user_input->sel_ndx--;
+                if ($user_input->sel_ndx < 0) {
+                    $user_input->sel_ndx = 0;
+                }
+                return $this->update_current_folder($user_input, $parent_group_id, $parent_media_url);
+
+            case ACTION_ITEM_DOWN:
+                if (!$group->get_items_order()->arrange_item($channel_id, Ordered_Array::DOWN))
+                    return null;
+
+                $groups_cnt = $group->get_items_order()->size();
+                $user_input->sel_ndx++;
+                if ($user_input->sel_ndx >= $groups_cnt) {
+                    $user_input->sel_ndx = $groups_cnt - 1;
+                }
+                return $this->update_current_folder($user_input, $parent_group_id, $parent_media_url);
+
+            case ACTION_ITEM_DELETE:
+                hd_print(__METHOD__ . ": Hide $channel_id");
+                $channel->set_disabled(true);
+                if ($group->is_all_channels_group()) {
+                    foreach ($this->plugin->tv->get_groups() as $group) {
+                        $group->get_items_order()->remove_item($channel_id);
+                    }
+                } else {
+                    $group->get_items_order()->remove_item($channel_id);
+                }
+
+                return $this->update_current_folder($user_input, $parent_group_id, $parent_media_url);
+
+            case ACTION_ITEMS_SORT:
+                $group->get_items_order()->sort_order();
+                return $this->update_current_folder($user_input, $parent_group_id, $parent_media_url);
+
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    ACTION_ITEM_DELETE,
+                    TR::t('tv_screen_hide_channel'),
+                    'gui_skin://button_icons/cancel.aai'
+                );
+
+                if (!$group->is_all_channels_group()) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                        ACTION_ITEMS_SORT,
+                        TR::t('tv_screen_sort_group'),
+                        'gui_skin://button_icons/proceed.aai'
+                    );
+
+                    $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
+                }
+
                 if (is_android() && !is_apk()) {
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         ACTION_EXTERNAL_PLAYER,
@@ -220,6 +281,25 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         return null;
     }
 
+    public function update_current_folder($user_input, $group_id, $media_url)
+    {
+        $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
+        $post_action = Action_Factory::close_and_run(
+            Action_Factory::open_folder(
+                $user_input->parent_media_url,
+                null,
+                null,
+                null,
+                Action_Factory::update_regular_folder($range, true, $user_input->sel_ndx)
+            )
+        );
+
+        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        $post_action = Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url), $post_action);
+
+        return Action_Factory::invalidate_folders(array(self::get_media_url_str($group_id)), $post_action);
+    }
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -260,8 +340,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 throw new Exception('group not found');
             }
 
+            /** @var Channel $channel */
             if ($this_group->is_all_channels_group()) {
-                /** @var Channel $channel */
                 foreach($this->plugin->tv->get_channels() as $channel) {
                     if ($channel->is_disabled()) continue;
 
@@ -272,8 +352,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     }
                 }
             } else {
-                /** @var Channel $channel */
-                foreach ($this_group->get_group_channels() as $channel) {
+                foreach ($this_group->get_items_order()->get_order() as $item) {
+                    $channel = $this->plugin->tv->get_channel($item);
+                    //hd_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));;
                     if ($channel->is_disabled()) continue;
 
                     $items[] = $this->get_regular_folder_item($this_group, $channel, $plugin_cookies);

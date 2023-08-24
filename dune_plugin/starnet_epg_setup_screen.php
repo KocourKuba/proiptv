@@ -13,7 +13,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const SETUP_ACTION_XMLTV_EPG_IDX = 'xmltv_epg_idx';
     const SETUP_ACTION_CHANGE_XMLTV_CACHE_PATH = 'xmltv_cache_path';
     const SETUP_ACTION_EPG_CACHE_TTL = 'epg_cache_ttl';
-    const SETUP_ACTION_CLEAR_EPG_CACHE = 'clear_epg_cache';
+    const SETUP_ACTION_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
     const SETUP_ACTION_EPG_FONT_SIZE = 'epg_font_size';
     const SETUP_ACTION_EPG_SHIFT = 'epg_shift';
     const SETUP_ACTION_EPG_PARSE_ALL = 'epg_parse_all';
@@ -184,7 +184,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // clear epg cache
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear'), TR::t('clear'),
+            self::SETUP_ACTION_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear'), TR::t('clear'),
             $remove_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
@@ -288,7 +288,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 hd_print(__METHOD__ . ": $control_id: $parse_all");
                 break;
 
-            case self::SETUP_ACTION_CLEAR_EPG_CACHE:
+            case self::SETUP_ACTION_ITEMS_CLEAR_EPG_CACHE:
                 $this->plugin->epg_man->clear_epg_cache($plugin_cookies);
                 $this->plugin->tv->unload_channels();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),

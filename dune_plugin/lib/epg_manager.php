@@ -130,17 +130,14 @@ class Epg_Manager
                 return $this->epg_cache[$epg_id][$day_start_ts];
             }
 
-            hd_print(__METHOD__ . ": Epg url: $this->xmltv_url");
             hd_print(__METHOD__ . ": Try to load EPG ID: '$epg_id' for channel '{$channel->get_id()}' ({$channel->get_title()})");
-
-            hd_print(__METHOD__ . ": Fetching EPG ID: '$epg_id' from xmltv");
             $program_epg = $this->get_epg_xmltv($epg_id, $plugin_cookies);
             $counts = count($program_epg);
             if ($counts === 0) {
                 throw new Exception("Empty or no EPG data for " . $channel->get_id());
             }
 
-            hd_print(__METHOD__ . ": Total $counts EPG entries loaded");
+            //hd_print(__METHOD__ . ": Total $counts EPG entries loaded");
 
             // filter out epg only for selected day
             $day_end_ts = $day_start_ts + 86400;
@@ -160,7 +157,7 @@ class Epg_Manager
                 throw new Exception("No EPG data for " . $channel->get_id());
             }
 
-            hd_print(__METHOD__ . ": Store day epg to memory cache");
+            //hd_print(__METHOD__ . ": Store day epg to memory cache");
             $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
 
             return $day_epg;
@@ -205,7 +202,7 @@ class Epg_Manager
 
         if (empty($this->xmltv_index)) {
             $index_file = $this->get_xml_cached_file_index($plugin_cookies);
-            hd_print(__METHOD__ . ": load index from file '$index_file'");
+            //hd_print(__METHOD__ . ": load index from file '$index_file'");
             $data = json_decode(file_get_contents($index_file), true);
             if (false !== $data) {
                 $this->xmltv_index = $data;
@@ -222,7 +219,7 @@ class Epg_Manager
             }
 
             $channel_index = self::get_xcache_dir($plugin_cookies) . $this->xmltv_index[$id];
-            hd_print(__METHOD__ . "Check channel $id index: $channel_index");
+            //hd_print(__METHOD__ . "Check channel $id index: $channel_index");
             if (!file_exists($channel_index)) {
                 throw new Exception("index for channel $id not found: $channel_index");
             }

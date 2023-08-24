@@ -581,7 +581,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return Starnet_Epfs_Handler::invalidate_folders();
 
             case ACTION_ITEMS_CLEAR:
-            case ACTION_CLEAR_PLAYBACK_POINTS:
+            case ACTION_ITEMS_CLEAR_PLAYBACK_POINTS:
                 if ($media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
@@ -589,7 +589,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if ($media_url->group_id === FAV_CHANNEL_GROUP_ID) {
-                    return $this->plugin->change_tv_favorites(ACTION_CLEAR_FAVORITES, $media_url->channel_id, $plugin_cookies);
+                    return $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $media_url->channel_id, $plugin_cookies);
                 }
 
                 break;

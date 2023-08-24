@@ -186,6 +186,7 @@ tv_screen_not_found = Ничего не найдено.
 tv_screen_channels_setup = Настройки плейлистов
 tv_screen_subscription = Подписка
 tv_screen_information = Информация
+tv_screen_hide_channel = Скрыть канал
 tv_screen_hide_group = Скрыть категорию
 tv_screen_sort_group = Сортировать по имени
 tv_screen_continue = Продолжить

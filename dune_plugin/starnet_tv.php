@@ -264,17 +264,17 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 }
                 break;
 
-            case ACTION_CLEAR_FAVORITES:
-                hd_print(__METHOD__ . ": Clear favorites");
-                $favorites->clear();
-                break;
-
             case PLUGIN_FAVORITES_OP_MOVE_UP:
                 $favorites->arrange_item($channel_id, Ordered_Array::UP);
                 break;
 
             case PLUGIN_FAVORITES_OP_MOVE_DOWN:
                 $favorites->arrange_item($channel_id, Ordered_Array::DOWN);
+                break;
+
+            case ACTION_ITEMS_CLEAR:
+                hd_print(__METHOD__ . ": Clear favorites");
+                $favorites->clear();
                 break;
         }
 
