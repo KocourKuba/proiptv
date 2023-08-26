@@ -184,11 +184,6 @@ class HD
         self::$user_agent = '';
     }
 
-    public static function set_plugin_dev_code($code)
-    {
-        self::$dev_code = $code;
-    }
-
     /**
      * @param $url string
      * @param $opts array
@@ -418,22 +413,7 @@ class HD
 
     public static function send_log_to_developer($plugin_cookies, &$error = null)
     {
-        $product = get_product_id();
-        $firmware_version = get_raw_firmware_version();
-
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, "https://www.howsmyssl.com/a/check");
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_USERAGENT, "DuneHD/1.0 (product_id: $product; firmware_version: $firmware_version)");
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-
-        $response = curl_exec($ch);
-        curl_close($ch);
         hd_print(__METHOD__ . ": Cookies:\n" . base64_encode(gzcompress(serialize($plugin_cookies), 9)));
-        hd_print(__METHOD__ . ": PHP TLS Support:\n" . base64_encode(gzcompress($response, 9)));
 
         $serial = get_serial_number();
         if (empty($serial)) {
@@ -441,7 +421,7 @@ class HD
             $serial = 'XX-XX-XX-XX-XX';
         }
         $timestamp = format_datetime('Ymd_His', time());
-        $zip_file_name = "{$serial}_$timestamp.zip";
+        $zip_file_name = "proiptv_{$serial}_$timestamp.zip";
         hd_print(__METHOD__ . ": Prepare archive $zip_file_name for send");
         $zip_file = get_temp_path($zip_file_name);
         $apk_subst = getenv('FS_PREFIX');
@@ -456,11 +436,8 @@ class HD
         }
 
         $paths = array(
-            get_install_path("config.json"),
-            get_install_path("dune_plugin.xml"),
-            get_temp_path("*.xml"),
-            get_temp_path("*.json"),
-            get_temp_path("*.m3u?"),
+            get_data_path("*.settings"),
+            get_temp_path("*.parameters"),
             "$apk_subst/tmp/run/shell.*",
             $plugin_logs,
         );
@@ -489,7 +466,7 @@ class HD
 
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
-                self::http_put_document(base64_decode(self::$dev_code, true) . $zip_file_name, $handle, filesize($zip_file));
+                self::http_put_document($zip_file_name, $handle, filesize($zip_file));
                 hd_print(__METHOD__ . ": Log file sent");
                 $ret = true;
             }
