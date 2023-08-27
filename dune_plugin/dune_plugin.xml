@@ -5,9 +5,9 @@
     <caption>ProIPTV</caption>
     <icon_url>plugin_file://icons/default_logo.png</icon_url>
     <background>plugin_file://icons/default_bg.png</background>
-    <version>0.52</version>
-    <version_index>202308272000</version_index>
-    <release_date>2023.08.27</release_date>
+    <version>0.53</version>
+    <version_index>202308280044</version_index>
+    <release_date>2023.08.28</release_date>
     <global_actions>
         <boot_end>
             <type>plugin_system</type>
@@ -173,4 +173,4 @@
         <default>240</default>
         <get_epg_day>30</get_epg_day>
     </operation_timeout>
-<plugin_version_descriptor><release_date>2023.08.27</release_date><version_index>2023082719</version_index></plugin_version_descriptor></dune_plugin>
+</dune_plugin>
