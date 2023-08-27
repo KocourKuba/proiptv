@@ -101,7 +101,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         switch ($user_input->control_id) {
             case ACTION_PLAY_FOLDER:
                 try {
-                    $this->plugin->GenerateStreamUrl(-1, $channel);
+                    $this->plugin->generate_stream_url(-1, $channel);
                 } catch (Exception $ex) {
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
@@ -156,8 +156,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_JUMP_TO_CHANNEL:
                 $ndx = (int)$user_input->number;
                 $parent_media_url->group_id = $parent_group_id;
-                $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
-                return Action_Factory::update_regular_folder($range, true, $ndx);
+                return Action_Factory::update_regular_folder(
+                    $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
+                    true,
+                    $ndx);
 
             case ACTION_ITEM_UP:
                 if (!$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
@@ -167,7 +169,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($user_input->sel_ndx < 0) {
                     $user_input->sel_ndx = 0;
                 }
-                return $this->update_current_folder($user_input, $parent_group_id, $parent_media_url);
+                return $this->update_current_folder($user_input, $parent_group_id);
 
             case ACTION_ITEM_DOWN:
                 if (!$group->get_items_order()->arrange_item($channel_id, Ordered_Array::DOWN))
@@ -178,7 +180,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($user_input->sel_ndx >= $groups_cnt) {
                     $user_input->sel_ndx = $groups_cnt - 1;
                 }
-                return $this->update_current_folder($user_input, $parent_group_id, $parent_media_url);
+                return $this->update_current_folder($user_input, $parent_group_id);
 
             case ACTION_ITEM_DELETE:
                 hd_print(__METHOD__ . ": Hide $channel_id");
@@ -191,11 +193,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $group->get_items_order()->remove_item($channel_id);
                 }
 
-                return $this->update_current_folder($user_input, $parent_group_id, $parent_media_url);
+                return $this->update_current_folder($user_input, $parent_group_id);
 
             case ACTION_ITEMS_SORT:
                 $group->get_items_order()->sort_order();
-                return $this->update_current_folder($user_input, $parent_group_id, $parent_media_url);
+                return $this->update_current_folder($user_input, $parent_group_id);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
@@ -203,14 +205,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     ACTION_ITEM_DELETE,
                     TR::t('tv_screen_hide_channel'),
-                    'gui_skin://button_icons/cancel.aai'
+                    $this->plugin->get_image_path('remove.png')
                 );
 
                 if (!$group->is_all_channels_group()) {
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         ACTION_ITEMS_SORT,
-                        TR::t('tv_screen_sort_group'),
-                        'gui_skin://button_icons/proceed.aai'
+                        TR::t('sort_items'),
+                        $this->plugin->get_image_path('sort.png')
                     );
 
                     $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
@@ -261,7 +263,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_EXTERNAL_PLAYER:
                 try {
-                    $url = $this->plugin->GenerateStreamUrl(-1, $channel);
+                    $url = $this->plugin->generate_stream_url(-1, $channel);
                     $url = str_replace("ts://", "", $url);
                     $param_pos = strpos($url, '|||dune_params');
                     $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
@@ -281,16 +283,19 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         return null;
     }
 
-    public function update_current_folder($user_input, $group_id, $media_url)
+    public function update_current_folder($user_input, $group_id)
     {
-        $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $post_action = Action_Factory::close_and_run(
             Action_Factory::open_folder(
                 $user_input->parent_media_url,
                 null,
                 null,
                 null,
-                Action_Factory::update_regular_folder($range, true, $user_input->sel_ndx)
+                Action_Factory::update_regular_folder(
+                    $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
+                    true,
+                    $user_input->sel_ndx)
             )
         );
 
@@ -370,7 +375,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     /**
      * @return array[]
      */
-    public function GET_FOLDER_VIEWS()
+    public function get_folder_views()
     {
         return array(
             // 4x3 with title
@@ -563,6 +568,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     ViewItemParams::item_caption_width => 485,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_SMALL,
                     ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array
@@ -589,12 +596,18 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     ViewParams::paint_scrollbar => true,
                     ViewParams::paint_widget => true,
                     ViewParams::paint_help_line => true,
+                    ViewItemParams::icon_dx => 10,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? 60 : 84,
+                    ViewItemParams::icon_height => $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? 60 : 48,
                     ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
                     ViewParams::background_path=> $this->plugin->plugin_info['app_background'],
                     ViewParams::background_order => 0,
                     ViewParams::item_detailed_info_text_color => 11,
                     ViewParams::item_detailed_info_auto_line_break => true,
                     ViewParams::optimize_full_screen_background => true,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
                     ViewParams::zoom_detailed_icon => true,
                 ),
 

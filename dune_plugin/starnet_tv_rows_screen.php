@@ -612,7 +612,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_EXTERNAL_PLAYER:
                 try {
-                    $url = $this->plugin->GenerateStreamUrl(
+                    $url = $this->plugin->generate_stream_url(
                         isset($media_url->archive_tm) ? $media_url->archive_tm : -1,
                         $this->plugin->tv->get_channel($media_url->channel_id));
                     $url = str_replace("ts://", "", $url);

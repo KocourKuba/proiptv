@@ -39,6 +39,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @var bool
      */
     public $new_ui_support;
+
     /**
      * @var M3uParser
      */
@@ -48,6 +49,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @var Epg_Manager
      */
     public $epg_man;
+
     /**
      * @var string
      */
@@ -62,6 +64,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @var array
      */
     private $parameters;
+
     /**
      * @var Starnet_Tv
      */
@@ -113,6 +116,11 @@ class Default_Dune_Plugin implements DunePlugin
     public $folder_screen;
 
     /**
+     * @var Starnet_Edit_List_Screen
+     */
+    public $edit_list_screen;
+
+    /**
      * @var Starnet_Tv_Favorites_Screen
      */
     public $tv_favorites_screen;
@@ -126,6 +134,16 @@ class Default_Dune_Plugin implements DunePlugin
      * @var array|Screen[]
      */
     private $screens;
+
+    /**
+     * @var Ordered_Array
+     */
+    private $playlists;
+
+    /**
+     * @var int
+     */
+    private $playlist_idx = -1;
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -408,9 +426,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_settings($type, $default = null)
     {
-        $hash = $this->GetPlaylistHash();
+        $hash = $this->get_playlist_hash();
         if (!isset($this->settings[$hash])) {
-            $this->settings[$hash] = HD::get_items(get_data_path($hash), true, false);
+            $this->settings[$hash] = HD::get_items(get_data_path("$hash.settings"), true, false);
+            //hd_print(__METHOD__ . ": loaded $hash.settings");
         }
 
         return isset($this->settings[$hash][$type]) ? $this->settings[$hash][$type] : $default;
@@ -424,9 +443,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_settings($type, $val)
     {
-        $hash = $this->GetPlaylistHash();
+        $hash = $this->get_playlist_hash();
         $this->settings[$hash][$type] = $val;
-        HD::put_data_items($hash, $this->settings[$hash], false);
+        HD::put_data_items("$hash.settings", $this->settings[$hash], false);
+        //hd_print(__METHOD__ . ": saved $hash.settings");
     }
 
     /**
@@ -434,9 +454,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function remove_settings()
     {
-        $hash = $this->GetPlaylistHash();
+        $hash = $this->get_playlist_hash();
         unset($this->settings[$hash]);
-        HD::erase_data_items($hash);
+        hd_print(__METHOD__ . ": remove $hash.settings");
+        HD::erase_data_items("$hash.settings");
     }
 
     /**
@@ -449,12 +470,23 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_parameters($type, $default = null)
     {
+        $default_type = gettype($default);
         if (!isset($this->parameters)) {
-            $this->parameters = HD::get_data_items(PLUGIN_PARAMS);
-            hd_print(__METHOD__ . " : Loaded common parameters");
+            $this->parameters = HD::get_data_items(PLUGIN_PARAMS, true, false);
+            hd_print(__METHOD__ . " : First load: " . PLUGIN_PARAMS);
         }
 
-        return isset($this->parameters[$type]) ? $this->parameters[$type] : $default;
+        if (!isset($this->parameters[$type])) {
+            return $default;
+        }
+
+        $param_type = gettype($this->parameters[$type]);
+        if ($default_type === 'object' && $param_type !== $default_type) {
+            hd_print(__METHOD__ . " : default: $default_type param: $param_type");
+            return $default;
+        }
+
+        return $this->parameters[$type];
     }
 
     /**
@@ -465,8 +497,9 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_parameters($type, $val)
     {
+        //hd_print(__METHOD__ . ": Saved: $type to: " . PLUGIN_PARAMS);
         $this->parameters[$type] = $val;
-        HD::put_data_items(PLUGIN_PARAMS, $this->parameters);
+        HD::put_data_items(PLUGIN_PARAMS, $this->parameters, false);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -480,11 +513,14 @@ class Default_Dune_Plugin implements DunePlugin
      *
      * @return bool
      */
-    public function InitPlaylist()
+    public function init_playlist()
     {
         // first check if playlist in cache
+        if ($this->get_playlists()->size() === 0)
+            return false;
+
         $force = false;
-        $tmp_file = $this->GetPlaylistCache();
+        $tmp_file = $this->get_playlist_cache();
         if (file_exists($tmp_file)) {
             $mtime = filemtime($tmp_file);
             if (time() - $mtime > 3600) {
@@ -497,7 +533,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                $url = $this->GetPlaylist();
+                $url = $this->get_current_playlist();
                 if (empty($url)) {
                     hd_print(__METHOD__ . ": Tv playlist not defined");
                     throw new Exception('Tv playlist not defined');
@@ -524,7 +560,7 @@ class Default_Dune_Plugin implements DunePlugin
                 if ($count === 0) {
                     $this->set_last_error("Пустой плейлист!");
                     hd_print(__METHOD__ . ": $this->last_error");
-                    $this->ClearPlaylistCache();
+                    $this->clear_playlist_cache();
                     throw new Exception("Empty playlist");
                 }
 
@@ -540,20 +576,79 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @return Ordered_Array
+     */
+    public function get_playlists()
+    {
+        if (is_null($this->playlists)) {
+            $this->playlists = $this->get_parameters(PARAM_PLAYLISTS, new Ordered_Array());
+            $this->playlists->set_callback($this, PARAM_PLAYLISTS, 'parameters');
+        }
+
+        return $this->playlists;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_playlists_idx()
+    {
+        if ($this->playlist_idx === -1) {
+            $this->playlist_idx = $this->get_parameters(PARAM_PLAYLIST_IDX, 0);
+        }
+
+        return $this->playlist_idx;
+    }
+
+    /**
+     * @oaram int $idx
+     */
+    public function set_playlists_idx($idx)
+    {
+        $this->playlist_idx = $idx;
+        $this->set_parameters(PARAM_PLAYLIST_IDX, $this->playlist_idx);
+    }
+
+    /**
+     * $param int $idx
      * @return string
      */
-    public function GetPlaylistCache()
+    public function get_playlist($idx)
     {
-        return get_temp_path($this->GetPlaylistHash() . "_playlist.m3u8");
+        return $this->get_playlists()->get_item_by_idx($idx);
+    }
+
+    /**
+     * @return string
+     */
+    public function get_current_playlist()
+    {
+        return $this->get_playlist($this->get_playlists_idx());
+    }
+
+    /**
+     * @return string
+     */
+    public function get_playlist_hash()
+    {
+        return hash('crc32', $this->get_current_playlist());
+    }
+
+    /**
+     * @return string
+     */
+    public function get_playlist_cache()
+    {
+        return get_temp_path($this->get_playlist_hash() . "_playlist.m3u8");
     }
 
     /**
      * Clear downloaded playlist
      * @return void
      */
-    public function ClearPlaylistCache()
+    public function clear_playlist_cache()
     {
-        $tmp_file = $this->GetPlaylistCache();
+        $tmp_file = $this->get_playlist_cache();
         hd_print(__METHOD__ . ": $tmp_file");
         if (file_exists($tmp_file)) {
             copy($tmp_file, $tmp_file . ".m3u");
@@ -561,28 +656,20 @@ class Default_Dune_Plugin implements DunePlugin
         }
     }
 
-    /**
-     * @return string
-     */
-    public function GetPlaylist()
+    public function get_special_groups_count($plugin_cookies)
     {
-        $playlists = $this->get_parameters(PARAM_PLAYLISTS, array());
-        $idx = $this->get_parameters(PARAM_PLAYLIST_IDX, 0);
-        return isset($playlists[$idx]) ? $playlists[$idx] : '';
-    }
+        $groups_cnt = 0;
+        if (!isset($plugin_cookies->show_all) || $plugin_cookies->show_all === 'yes') $groups_cnt++;
+        if (!isset($plugin_cookies->show_favorites) || $plugin_cookies->show_favorites === 'yes') $groups_cnt++;
+        if (!isset($plugin_cookies->show_history) || $plugin_cookies->show_history === 'yes') $groups_cnt++;
 
-    /**
-     * @return string
-     */
-    public function GetPlaylistHash()
-    {
-        return hash('crc32', $this->GetPlaylist());
+        return $groups_cnt;
     }
 
     /**
      * @return void
      */
-    public function UpdateXmltvSource()
+    public function update_xmltv_source()
     {
         $source = $this->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_SOURCE_INTERNAL);
 
@@ -609,7 +696,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @return string
      * @throws Exception
      */
-    public function GenerateStreamUrl($archive_ts, Channel $channel)
+    public function generate_stream_url($archive_ts, Channel $channel)
     {
         // replace all macros
         if ((int)$archive_ts <= 0) {
@@ -620,14 +707,23 @@ class Default_Dune_Plugin implements DunePlugin
             $replaces[catchup_params::CU_UTC] = $archive_ts;
             $replaces[catchup_params::CU_CURRENT_UTC] = $now;
             $replaces[catchup_params::CU_TIMESTAMP] = $now;
+            $replaces[catchup_params::CU_END] = $now;
             $replaces[catchup_params::CU_UTCEND] = $now;
             $replaces[catchup_params::CU_OFFSET] = $now - $archive_ts;
             $replaces[catchup_params::CU_DURATION] = 14400;
-            $replaces[catchup_params::CU_YEAR] = date('Y', $archive_ts);
-            $replaces[catchup_params::CU_MONTH] = date('m', $archive_ts);
-            $replaces[catchup_params::CU_DAY] = date('d', $archive_ts);
-            $replaces[catchup_params::CU_HOUR] = date('H', $archive_ts);
-            $replaces[catchup_params::CU_MINUTE] = date('M', $archive_ts);
+            $replaces[catchup_params::CU_DURMIN] = 240;
+            $replaces[catchup_params::CU_YEAR]  = $replaces[catchup_params::CU_START_YEAR]  = date('Y', $archive_ts);
+            $replaces[catchup_params::CU_MONTH] = $replaces[catchup_params::CU_START_MONTH] = date('m', $archive_ts);
+            $replaces[catchup_params::CU_DAY]   = $replaces[catchup_params::CU_START_DAY]   = date('d', $archive_ts);
+            $replaces[catchup_params::CU_HOUR]  = $replaces[catchup_params::CU_START_HOUR]  = date('H', $archive_ts);
+            $replaces[catchup_params::CU_MIN]   = $replaces[catchup_params::CU_START_MIN]   = date('M', $archive_ts);
+            $replaces[catchup_params::CU_SEC]   = $replaces[catchup_params::CU_START_SEC]   = date('S', $archive_ts);
+            $replaces[catchup_params::CU_END_YEAR]  = date('Y', $now);
+            $replaces[catchup_params::CU_END_MONTH] = date('m', $now);
+            $replaces[catchup_params::CU_END_DAY]   = date('d', $now);
+            $replaces[catchup_params::CU_END_HOUR]  = date('H', $now);
+            $replaces[catchup_params::CU_END_MIN]   = date('M', $now);
+            $replaces[catchup_params::CU_END_SEC]   = date('S', $now);
 
             $stream_url = $channel->get_archive_url();
             foreach ($replaces as $key => $value) {
@@ -673,7 +769,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function create_setup_header(&$defs)
     {
         Control_Factory::add_vgap($defs, -10);
-        Control_Factory::add_label($defs, "[ ´¯¤¤¯(ºº)¯¤¤¯` ] ProIPTV by sharky72",
+        Control_Factory::add_label($defs, "ProIPTV by sharky72  [ ´¯¤¤¯(ºº)¯¤¤¯` ]",
             " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
             20);
     }

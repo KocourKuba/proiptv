@@ -18,6 +18,7 @@ require_once 'starnet_tv_channel_list_screen.php';
 require_once 'starnet_tv_favorites_screen.php';
 require_once 'starnet_tv_history_screen.php';
 require_once 'starnet_epfs_handler.php';
+require_once 'starnet_edit_list_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
 {
@@ -58,6 +59,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->history_setup_screen = new Starnet_History_Setup_Screen($this);
 
         $this->folder_screen = new Starnet_Folder_Screen($this);
+        $this->edit_list_screen = new Starnet_Edit_List_Screen($this);
 
         Playback_Points::init();
         Starnet_Epfs_Handler::init($this);

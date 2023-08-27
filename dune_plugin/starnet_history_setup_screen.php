@@ -109,14 +109,14 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 
         switch ($control_id) {
             case self::SETUP_ACTION_HISTORY_CHANGE_FOLDER:
-                $media_url = MediaURL::encode(
+                $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'save_data' => self::ID,
                         'windowCounter' => 1,
                     )
                 );
-                return Action_Factory::open_folder($media_url, TR::t('setup_history_folder_path'));
+                return Action_Factory::open_folder($media_url_str, TR::t('setup_history_folder_path'));
 
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::make(array('filepath' => get_data_path()));
@@ -127,7 +127,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case self::SETUP_ACTION_COPY_TO_DATA:
                 $history_path = $this->get_history_path($plugin_cookies);
                 hd_print(__METHOD__ . ": copy to: $history_path");
-                if (!self::CopyData(get_data_path(Playback_Points::TV_HISTORY_ITEMS), $history_path)) {
+                if (!self::CopyData(get_data_path(TV_HISTORY_ITEMS), $history_path)) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -136,7 +136,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case self::SETUP_ACTION_COPY_TO_PLUGIN:
                 $history_path = $this->get_history_path($plugin_cookies);
                 hd_print(__METHOD__ . ": copy to: " . get_data_path());
-                if (!self::CopyData($history_path . Playback_Points::TV_HISTORY_ITEMS, get_data_path())) {
+                if (!self::CopyData($history_path . TV_HISTORY_ITEMS, get_data_path())) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 

@@ -122,7 +122,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             case ACTION_EXTERNAL_PLAYER:
                 try {
                     $channel = $this->plugin->tv->get_channel(MediaURL::decode($user_input->selected_media_url)->channel_id);
-                    $url = $this->plugin->GenerateStreamUrl(-1, $channel);
+                    $url = $this->plugin->generate_stream_url(-1, $channel);
                     $url = str_replace("ts://", "", $url);
                     $param_pos = strpos($url, '|||dune_params');
                     $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
@@ -142,6 +142,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return null;
         }
 
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $post_action = Action_Factory::close_and_run(
             Action_Factory::open_folder(
                 $user_input->parent_media_url,
@@ -149,7 +150,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 null,
                 null,
                 Action_Factory::update_regular_folder(
-                    HD::create_regular_folder_range($this->get_all_folder_items(MediaURL::decode($user_input->parent_media_url), $plugin_cookies)),
+                    HD::create_regular_folder_range($this->get_all_folder_items($parent_media_url, $plugin_cookies)),
                     true,
                     $user_input->sel_ndx)
             )
@@ -206,7 +207,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     /**
      * @return array[]
      */
-    public function GET_FOLDER_VIEWS()
+    public function get_folder_views()
     {
         return array(
             // 4x3 with title

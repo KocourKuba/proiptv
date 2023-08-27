@@ -45,6 +45,7 @@ abstract class Abstract_Controls_Screen implements Screen
         (
             PluginControlsFolderView::defs => $defs,
             PluginControlsFolderView::initial_sel_ndx => -1,
+            PluginControlsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
             PluginControlsFolderView::params => array(
                 PluginFolderViewParams::paint_path_box => true,
                 PluginFolderViewParams::paint_content_box_background => true,
@@ -64,11 +65,11 @@ abstract class Abstract_Controls_Screen implements Screen
     /**
      * @param MediaURL $media_url
      * @param $plugin_cookies
-     * @return array
+     * @return array|null
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return array();
+        return null;
     }
 
     /**

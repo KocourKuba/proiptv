@@ -3,6 +3,16 @@
 /**
  * @property mixed|null $channel_id
  * @property mixed|null $group_id
+ * @property mixed|null $source_window_id
+ * @property mixed|null $id
+ * @property mixed|null $type
+ * @property mixed|null $save_data
+ * @property mixed|null $save_file
+ * @property mixed|null $filepath
+ * @property mixed|null $windowCounter
+ * @property mixed|null $end_action
+ * @property mixed|null $extension
+ * @property mixed|null $caption
  */
 class MediaURL
 {

@@ -12,8 +12,6 @@ require_once 'lib/dune_stb_api.php';
 
 class Playback_Points
 {
-    const TV_HISTORY_ITEMS = 'tv_history_items';
-
     /**
      * @var Playback_Points
      */
@@ -89,7 +87,7 @@ class Playback_Points
             return;
         }
 
-        $storage = $path . self::TV_HISTORY_ITEMS;
+        $storage = $path . TV_HISTORY_ITEMS;
         hd_print(__METHOD__ . ": " . count($this->points) . " to: $storage");
         HD::put_items($storage, $this->points);
     }
@@ -101,7 +99,7 @@ class Playback_Points
     private function erase_point($path, $id)
     {
         hd_print(__METHOD__ . ": erase " . ($id !== null ? $id : "all"));
-        $path .= self::TV_HISTORY_ITEMS;
+        $path .= TV_HISTORY_ITEMS;
         if ($id === null) {
             $this->points = array();
             HD::erase_items($path);
@@ -137,7 +135,7 @@ class Playback_Points
                 return;
             }
 
-            $storage = $path . self::TV_HISTORY_ITEMS;
+            $storage = $path . TV_HISTORY_ITEMS;
             $points = HD::get_items($storage);
             //hd_print(__METHOD__ . ": " . count($points) . " from: $storage");
             while (count($points) > 7) {

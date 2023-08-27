@@ -154,7 +154,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
             if (!empty($media_url->save_data)) {
                 $actions[GUI_EVENT_KEY_A_RED] = $open_folder;
-                $actions[GUI_EVENT_KEY_C_YELLOW] = $create_folder;
+                if (!isset($media_url->read_only)) {
+                    $actions[GUI_EVENT_KEY_C_YELLOW] = $create_folder;
+                }
                 $actions[GUI_EVENT_KEY_D_BLUE] = $save_folder;
                 $actions[GUI_EVENT_KEY_RIGHT] = $save_folder;
             }
@@ -398,7 +400,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     $post_action = User_Input_Handler_Registry::create_action_screen($url->save_data, ACTION_RESET_DEFAULT);
                 }
 
-                return (is_newer_versions() !== false) ? Action_Factory::replace_path($parent_url->windowCounter, null, $post_action) : $post_action;
+                return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
 
             case self::ACTION_GET_FOLDER_NAME:
                 $defs = array();
@@ -461,7 +463,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 }
 
                 $caption = $selected_url->caption;
-                $selected_url = self::get_media_url_str(
+                $selected_url_str = self::get_media_url_str(
                     'file_list',
                     $selected_url->caption,
                     key($q),
@@ -474,7 +476,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     $selected_url->save_data,
                     $selected_url->save_file
                 );
-                return Action_Factory::open_folder($selected_url, $caption);
+                return Action_Factory::open_folder($selected_url_str, $caption);
 
             case self::ACTION_SMB_SETUP:
                 $smb_view = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
@@ -620,7 +622,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     /**
      * @return array
      */
-    public function GET_FOLDER_VIEWS()
+    public function get_folder_views()
     {
         if (defined('ViewParams::details_box_width')) {
             $view[] = array(

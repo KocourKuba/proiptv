@@ -9,17 +9,26 @@ class Ordered_Array
      */
     protected $order = array();
     /**
-     * @var string
-     */
-    protected $param_name;
-    /**
      * @var Default_Dune_Plugin
      */
     protected $plugin;
     /**
+     * @var string
+     */
+    protected $param_name;
+    /**
+     * @var array
+     */
+    protected $accessor = 'settings';
+    /**
      * @var bool
      */
     protected $save_delay = false;
+
+    /**
+     * @var int
+     */
+    protected $saved_pos = 0;
 
     public function __sleep()
     {
@@ -39,8 +48,10 @@ class Ordered_Array
      */
     public function save()
     {
-        if (!$this->save_delay && is_callable(array($this->plugin, 'set_settings'))) {
-            $this->plugin->set_settings($this->param_name, $this->order);
+        $set = "set_$this->accessor";
+        if (!$this->save_delay && is_callable(array($this->plugin, $set))) {
+            $this->plugin->{$set}($this->param_name, $this->order);
+            //hd_print(__METHOD__ . ": $set: $this->param_name ({$this->size()})");
         }
     }
 
@@ -49,21 +60,44 @@ class Ordered_Array
      */
     public function load()
     {
-        if (is_callable(array($this->plugin, 'get_settings'))) {
-            $this->order = $this->plugin->get_settings($this->param_name, array());
+        $get = "get_$this->accessor";
+        if (is_callable(array($this->plugin, $get))) {
+            $this->order = $this->plugin->{$get}($this->param_name, array());
+            //hd_print(__METHOD__ . ": $get: $this->param_name ({$this->size()})");
         }
     }
 
     /**
      * @param Object $obj
      * @param string $param_name
+     * @param string $method
      * @return void
      */
-    public function set_callback($obj, $param_name)
+    public function set_callback($obj, $param_name, $method = null)
     {
         $this->plugin = $obj;
         $this->param_name = $param_name;
+        if (!is_null($method)) {
+            $this->accessor = $method;
+        }
+
         $this->load();
+    }
+
+    /**
+     * @return int
+     */
+    public function get_saved_pos()
+    {
+        return $this->saved_pos;
+    }
+
+    /**
+     * @param int $pos
+     */
+    public function set_saved_pos($pos)
+    {
+        $this->saved_pos = $pos;
     }
 
     /**
@@ -80,6 +114,7 @@ class Ordered_Array
     public function clear()
     {
         $this->order = array();
+        $this->saved_pos = 0;
         $this->save();
     }
 
@@ -89,16 +124,6 @@ class Ordered_Array
     public function get_order()
     {
         return $this->order;
-    }
-
-    /**
-     * @param array $order
-     * @return void
-     */
-    public function set_order($order)
-    {
-        $this->order = $order;
-        $this->save();
     }
 
     /**
@@ -124,15 +149,43 @@ class Ordered_Array
     {
         $key = array_search($id, $this->order);
         if ($key !== false) {
+            $selected_item = $this->get_selected_item();
             hd_print(__METHOD__ . ": remove: $id");
             $removed = array_splice($this->order, $key, 1);
             if (count($removed) !== 0) {
+                $this->update_saved_pos($selected_item);
                 $this->save();
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * @param int $idx
+     * @return bool
+     */
+    public function remove_item_by_idx($idx)
+    {
+        $selected_item = $this->get_selected_item();
+        $removed = array_splice($this->order, $idx, 1);
+        if (count($removed) !== 0) {
+            $this->update_saved_pos($selected_item);
+            $this->save();
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $idx
+     * @return string
+     */
+    public function get_item_by_idx($idx)
+    {
+        return isset($this->order[$idx]) ? $this->order[$idx] : '';
     }
 
     /**
@@ -151,8 +204,9 @@ class Ordered_Array
      */
     public function arrange_item($id, $direction)
     {
+        $selected_item = $this->get_selected_item();
         $k = array_search($id, $this->order);
-        hd_print(__METHOD__ . ": move group_id: $id from idx: $k to direction: $direction");
+        hd_print(__METHOD__ . ": move id: $id from idx: $k to direction: $direction");
 
         if ($k === false || $direction === 0)
             return false;
@@ -169,6 +223,7 @@ class Ordered_Array
             return false;
         }
 
+        $this->update_saved_pos($selected_item);
         $this->save();
         return true;
     }
@@ -178,8 +233,32 @@ class Ordered_Array
      */
     public function sort_order()
     {
+        $selected_item = $this->get_selected_item();
         usort($this->order, array(__CLASS__, "sort_array_cb"));
+        $this->update_saved_pos($selected_item);
         $this->save();
+    }
+
+    /**
+     * @return string|null
+     */
+    public function get_selected_item()
+    {
+        return isset($this->order[$this->saved_pos]) ? $this->order[$this->saved_pos] : null;
+    }
+
+    /**
+     * @param string $item
+     * @return void
+     */
+    private function update_saved_pos($item)
+    {
+        if ($item === null) {
+            $this->saved_pos = 0;
+        } else {
+            $key = array_search($item, $this->order);
+            $this->saved_pos = ($key !== false) ? $key : 0;
+        }
     }
 
     /**

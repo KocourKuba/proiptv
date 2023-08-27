@@ -3,11 +3,11 @@
 class Action_Factory
 {
     /**
-     * @param null $media_url_str
+     * @param string|null $media_url_str
      * @param string|null $caption
-     * @param null $id
-     * @param null $sel_id
-     * @param null $post_action
+     * @param string|null $id
+     * @param int|null $sel_id
+     * @param array|null $post_action
      * @param bool $keep_osd_context
      * @return array
      */

@@ -133,9 +133,9 @@ class Entry
     public function getGroupTitle()
     {
         if (empty($this->group_title)) {
-            $this->group_title = $this->isExtGrp() ? $this->extGrp->getGroup() : '';
+            $this->group_title = $this->getAttribute('group-title');
             if (empty($this->group_title)) {
-                $this->group_title = $this->getAttribute('group-title');
+            $this->group_title = $this->isExtGrp() ? $this->extGrp->getGroup() : '';
                 if (empty($this->group_title) || $this->group_title === "null") {
                     $this->group_title = TR::load_string('no_category');
                 }
@@ -153,11 +153,11 @@ class Entry
          * Tags used to get entry ID
 		 * "CUID", "channel-id", "tvg-chno", "tvg-name", "name",
          */
-        static $tags = array("CUID", "channel-id", "tvg-chno", "tvg-name");
+        static $tags = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number", "tvg-name");
 
         $ch_id = $this->getAnyAttribute($tags);
 
-        return empty($ch_id) ? $this->getTitle() : $ch_id;
+        return empty($ch_id) ? null : $ch_id;
     }
 
     /**

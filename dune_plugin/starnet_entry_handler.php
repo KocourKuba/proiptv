@@ -51,11 +51,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case 'do_setup':
                 hd_print(__METHOD__ . ": do setup");
-                return Action_Factory::open_folder('setup', TR::t('entry_setup'));
+                return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
 
             case 'do_channels_setup':
                 hd_print(__METHOD__ . ": do channels setup");
-                return Action_Factory::open_folder('channels_setup', TR::t('tv_screen_channels_setup'));
+                return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::ID, TR::t('tv_screen_channels_setup'));
 
             case 'do_send_log':
                 hd_print(__METHOD__ . ": do_send_log");
@@ -79,6 +79,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 switch ($user_input->action_id) {
                     case 'launch':
+                        if ($this->plugin->get_playlists()->size() === 0) {
+                            hd_print(__METHOD__ . ": Open setup");
+                            return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::ID, TR::t('tv_screen_channels_setup'));
+                        }
+
                         //hd_print("auto_play: $plugin_cookies->auto_play");
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {

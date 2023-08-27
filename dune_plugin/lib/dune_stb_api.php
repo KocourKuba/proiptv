@@ -72,6 +72,7 @@ const ACTION_ITEM_DOWN = 'item_down';
 const ACTION_ITEM_DELETE = 'item_delete';
 const ACTION_ITEMS_CLEAR = 'items_clear';
 const ACTION_ITEMS_SORT = 'items_sort';
+const ACTION_ITEMS_EDIT = 'items_edit';
 const ACTION_SETTINGS = 'settings';
 const ACTION_EPG_SETTINGS = 'epg_settings';
 const ACTION_CHANNELS_SETTINGS = 'channels_settings';
@@ -91,7 +92,6 @@ const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_REFRESH_SCREEN = 'refresh_screen';
 const ACTION_REMOVE_PLAYBACK_POINT = 'remove_playback_point';
 const ACTION_ITEMS_CLEAR_PLAYBACK_POINTS = 'clear_playback_points';
-const ACTION_ITEMS_CLEAR = 'clear_favorites';
 const ACTION_RESET_DEFAULT = 'reset_default';
 
 # Special groups ID
@@ -100,7 +100,7 @@ const ALL_CHANNEL_GROUP_ID = '##all_channels##';
 const PLAYBACK_HISTORY_GROUP_ID = '##playback_history_tv_group##';
 
 # Common parameters
-const PLUGIN_PARAMS = "common";
+const PLUGIN_PARAMS = "common.parameters";
 const PARAM_PLAYLISTS = 'playlists';
 const PARAM_PLAYLIST_IDX = 'playlist_idx';
 const PARAM_FAVORITES = 'favorites';
@@ -111,6 +111,7 @@ const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
+const TV_HISTORY_ITEMS = '_tv_history_items';
 const PARAM_EPG_SOURCE = 'epg_source';
 const PARAM_EPG_PARSE_ALL = 'epg_parse_all';
 const PARAM_EPG_SOURCE_INTERNAL = 'epg_internal';
@@ -120,6 +121,7 @@ const PARAM_XMLTV_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_CUSTOM_XMLTV_SOURCES = 'custom_xmltv_sources';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_CHANNELS_ZOOM = 'channels_zoom';
+const PARAM_USER_CATCHUP = 'user_catchup';
 
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage/';
@@ -197,6 +199,49 @@ const DEF_LABEL_TEXT_COLOR_GAINSBORO    = 23; #0xe0e0e0	Light light light grey		
 const CMD_STATUS_GREP = '" /firmware/ext_command/cgi-bin/do | grep "command_status" | sed -n "s|^<param name=\"command_status\" value=\"(.*)\"/>|\1|p"';
 
 ///////////////////////////////////////////////////////////////////////////////
+
+class KnownCatchupSourceTags
+{
+    const cu_unknown     = 'unknown';
+    const cu_default     = 'default'; // only replace variables
+    const cu_shift       = 'shift'; // ?utc=startUnix&lutc=nowUnix
+    const cu_append      = 'append'; // appending value specified in catchup-source attribute to the base channel url
+    const cu_archive     = 'archive'; // ?archive=startUnix&archive_end=toUnix
+    const cu_timeshift   = 'timeshift'; // timeshift=startUnix&timenow=nowUnix
+    const cu_flussonic   = 'flussonic';
+    const cu_xstreamcode = 'xs'; // xtream codes
+
+    public static $catchup_tags = array(
+        self::cu_default => array('default'),
+        self::cu_shift => array('shift', 'archive'),
+        self::cu_append => array('append'),
+        self::cu_archive => array('archive'),
+        self::cu_timeshift => array('timeshift'),
+        self::cu_flussonic => array('flussonic', 'flussonic-hls', 'fs', 'flussonic-ts'),
+        self::cu_xstreamcode => array('xc'),
+    );
+
+    /**
+     * @param $tag
+     * @param mixed $value
+     * @return bool
+     */
+    public static function is_tag($tag, $value)
+    {
+        if (!isset(self::$catchup_tags[$tag]))
+            return false;
+
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if (in_array($item, self::$catchup_tags[$tag])) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return in_array($value, self::$catchup_tags[$tag]);
+    }
+}
 
 class SetupControlSwitchDefs
 {

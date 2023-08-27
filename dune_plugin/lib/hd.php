@@ -438,6 +438,7 @@ class HD
         $paths = array(
             get_data_path("*.settings"),
             get_temp_path("*.parameters"),
+            get_temp_path("*.m3u?"),
             "$apk_subst/tmp/run/shell.*",
             $plugin_logs,
         );

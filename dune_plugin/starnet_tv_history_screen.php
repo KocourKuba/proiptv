@@ -78,18 +78,22 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 				$sel_ndx = $user_input->sel_ndx + 1;
 				if ($sel_ndx < 0)
 					$sel_ndx = 0;
-				$range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
                 Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return Starnet_Epfs_Handler::invalidate_folders(null,
-                    Action_Factory::update_regular_folder($range, true, $sel_ndx));
+                    Action_Factory::update_regular_folder(
+                        $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
+                        true,
+                        $sel_ndx));
 
             case ACTION_ITEMS_CLEAR:
                 Playback_Points::clear(smb_tree::get_folder_info($plugin_cookies, PARAM_HISTORY_PATH));
                 $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-                $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
                 Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return Starnet_Epfs_Handler::invalidate_folders(null,
-                    Action_Factory::update_regular_folder($range, true));
+                    Action_Factory::update_regular_folder(
+                        $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
+                        true,
+                        0));
 
 			case ACTION_ADD_FAV:
 				$is_favorite = $this->plugin->tv->get_favorites()->in_order($channel_id);
@@ -113,7 +117,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
             case ACTION_EXTERNAL_PLAYER:
                 try {
                     $channel = $this->plugin->tv->get_channel(MediaURL::decode($user_input->selected_media_url)->channel_id);
-                    $url = $this->plugin->GenerateStreamUrl(
+                    $url = $this->plugin->generate_stream_url(
                         isset($media_url->archive_tm) ? $media_url->archive_tm : -1,
                         $channel);
                     $url = str_replace("ts://", "", $url);
@@ -193,7 +197,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
     /**
      * @return array[]
      */
-    public function GET_FOLDER_VIEWS()
+    public function get_folder_views()
     {
         return array(
             // 1x10 title list view with right side icon
