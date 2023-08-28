@@ -2,7 +2,7 @@
 $plugin_info = 'dune_plugin.xml';
 $release_date = date('Y.m.d');
 $version = $argv[1];
-$version_index = date('YmdH');
+$version_index = date('ymdHi');
 
 $xml = file_get_contents("dune_plugin/$plugin_info");
 $xml = preg_replace("|<version>(.*)</version>|", "<version>$version</version>", $xml);
