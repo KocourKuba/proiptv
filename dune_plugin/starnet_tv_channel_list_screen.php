@@ -193,22 +193,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $group->get_items_order()->remove_item($channel_id);
                 }
 
+                $this->plugin->tv->get_disabled_channels()->add_item($channel_id);
+
                 return $this->update_current_folder($user_input, $parent_group_id);
 
             case ACTION_ITEMS_SORT:
                 $group->get_items_order()->sort_order();
                 return $this->update_current_folder($user_input, $parent_group_id);
-
-            case ACTION_ITEMS_EDIT:
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => self::ID,
-                        'end_action' => ACTION_RELOAD,
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_edit_hidden_channels'));
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
@@ -225,17 +216,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         TR::t('sort_items'),
                         $this->plugin->get_image_path('sort.png')
                     );
-
-                    $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
                 }
 
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_ITEMS_EDIT,
-                    TR::t('tv_screen_edit_hidden_channels'),
-                    $this->plugin->get_image_path('edit.png')
-                );
-
                 if (is_android() && !is_apk()) {
+                    $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         ACTION_EXTERNAL_PLAYER,
                         TR::t('vod_screen_external_player'),
@@ -246,8 +230,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                 $current_idx = isset($zoom_data[$channel_id]) ? $zoom_data[$channel_id] : DuneVideoZoomPresets::not_set;
-
-                hd_print(__METHOD__ . ": Current idx: $current_idx");
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
                     $add_param[ACTION_ZOOM_SELECT] = (string)$idx;
 
@@ -298,7 +280,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_RELOAD:
                 hd_print(__METHOD__ . ": reload");
-                return $this->plugin->tv->reload_channels($this, $plugin_cookies);
+                $this->plugin->tv->unload_channels();
+                return $this->update_current_folder($user_input, $parent_group_id);
+                //return $this->plugin->tv->reload_channels($this, $plugin_cookies, $this->update_current_folder($user_input, $parent_group_id));
         }
 
         return null;
@@ -306,24 +290,25 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
     public function update_current_folder($user_input, $group_id)
     {
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $post_action = Action_Factory::close_and_run(
-            Action_Factory::open_folder(
-                $user_input->parent_media_url,
-                null,
-                null,
-                null,
-                Action_Factory::update_regular_folder(
-                    $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
-                    true,
-                    $user_input->sel_ndx)
+        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+
+        return Action_Factory::invalidate_folders(
+            array(Starnet_Tv_Groups_Screen::ID, self::get_media_url_str($group_id)),
+            Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url),
+                Action_Factory::close_and_run(
+                    Action_Factory::open_folder(
+                        $user_input->parent_media_url,
+                        null,
+                        null,
+                        null,
+                        Action_Factory::update_regular_folder(
+                            $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies),
+                            true,
+                            $user_input->sel_ndx)
+                    )
+                )
             )
         );
-
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        $post_action = Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url), $post_action);
-
-        return Action_Factory::invalidate_folders(array(self::get_media_url_str($group_id)), $post_action);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -331,10 +316,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     /**
      * @param Group $group
      * @param Channel $channel
-     * @param $plugin_cookies
      * @return array
      */
-    private function get_regular_folder_item($group, $channel, &$plugin_cookies)
+    private function get_regular_folder_item($group, $channel)
     {
         return array
         (
@@ -357,6 +341,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
+        hd_print(__METHOD__ . ": media url: " . $media_url->get_media_url_str());
+        HD::print_backtrace();
+
         $items = array();
 
         try {
@@ -374,7 +361,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     foreach ($channel->get_groups() as $group) {
                         if ($group->is_disabled()) continue;
 
-                        $items[] = $this->get_regular_folder_item($this_group, $channel, $plugin_cookies);
+                        $items[] = $this->get_regular_folder_item($this_group, $channel);
                     }
                 }
             } else {
@@ -383,7 +370,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     //hd_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));;
                     if ($channel->is_disabled()) continue;
 
-                    $items[] = $this->get_regular_folder_item($this_group, $channel, $plugin_cookies);
+                    $items[] = $this->get_regular_folder_item($this_group, $channel);
                 }
             }
         } catch (Exception $e) {

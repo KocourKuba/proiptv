@@ -5,6 +5,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 {
     const ID = 'edit_list';
 
+    const ACTION_PLAYLIST = 'playlist';
+    const ACTION_EPG_LIST = 'epg_list';
+    const ACTION_GROUPS = 'groups';
+    const ACTION_CHANNELS = 'channels';
+
     const DLG_CONTROLS_WIDTH = 850;
 
     const SETUP_ACTION_CLEAR_APPLY = 'clear_apply';
@@ -55,7 +60,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         //hd_print(__METHOD__);
         $actions = array();
 
-        if ($media_url->source_window_id === Starnet_Playlists_Setup_Screen::ID) {
+        if ($media_url->edit_list === self::ACTION_PLAYLIST) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
         }
@@ -76,11 +81,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         dump_input_handler(__METHOD__, $user_input);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $id = MediaURL::decode($user_input->selected_media_url)->id;
-        $order = $this->get_order($parent_media_url->source_window_id);
+        $order = $this->get_edit_order($parent_media_url);
 
         switch ($user_input->control_id) {
             case ACTION_ITEM_UP:
+                $id = MediaURL::decode($user_input->selected_media_url)->id;
                 if (!$order->arrange_item($id, Ordered_Array::UP))
                     return null;
 
@@ -91,6 +96,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DOWN:
+                $id = MediaURL::decode($user_input->selected_media_url)->id;
                 if (!$order->arrange_item($id, Ordered_Array::DOWN))
                     return null;
 
@@ -102,10 +108,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DELETE:
-                if ($parent_media_url->source_window_id === Starnet_Playlists_Setup_Screen::ID) {
+                if ($parent_media_url->edit_list === self::ACTION_PLAYLIST) {
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::SETUP_ACTION_REMOVE_PLAYLIST_APPLY);
                 }
 
+                $id = MediaURL::decode($user_input->selected_media_url)->id;
                 $order->remove_item($id);
                 break;
 
@@ -133,8 +140,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::replace_path($parent_media_url->windowCounter, null, $post_action);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                if ($parent_media_url->source_window_id === Starnet_Playlists_Setup_Screen::ID
-                    || $parent_media_url->source_window_id === Starnet_Epg_Setup_Screen::ID) {
+                if ($parent_media_url->edit_list === self::ACTION_PLAYLIST
+                    || $parent_media_url->edit_list === self::ACTION_EPG_LIST) {
 
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                         self::SETUP_ACTION_ADD_URL_DLG,
@@ -272,17 +279,38 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         //hd_print(__METHOD__);
         //hd_print(__METHOD__ . $media_url->get_media_url_str());
 
-        $order = $this->get_order($media_url->source_window_id);
+        $order = $this->get_edit_order($media_url);
         $items = array();
         foreach ($order->get_order() as $item) {
             //hd_print("order item media url: " . self::get_media_url_str($item));
+            $title = $item;
+            if ($media_url->edit_list === self::ACTION_CHANNELS) {
+                if ($media_url->group_id === FAV_CHANNEL_GROUP_ID || $media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) break;
+
+                $channel = $this->plugin->tv->get_channel($item);
+                if (is_null($channel)) continue;
+
+                if ($media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
+
+                    $group = $this->plugin->tv->get_group($media_url->group_id);
+                    if (is_null($group) || ($channel = $group->get_group_channels()->get($item)) === null) continue;
+
+                    $title = $channel->get_title();
+                } else {
+                    $title = $channel->get_title();
+                    foreach($channel->get_groups() as $group) {
+                        $title .= " | " . $group->get_title();
+                    }
+                }
+            }
+
             $items[] = array(
                 PluginRegularFolderItem::media_url => self::get_media_url_str($item),
-                PluginRegularFolderItem::caption => $item,
+                PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
                     ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
-                    ViewItemParams::item_detailed_info => $item,
+                    ViewItemParams::item_detailed_info => $title,
                 ),
             );
         }
@@ -357,19 +385,30 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         );
     }
 
-    private function get_order($source_window_id)
+    /**
+     * @param $media_url
+     * @return Ordered_Array
+     */
+    private function get_edit_order($media_url)
     {
-        if ($source_window_id === Starnet_Tv_Groups_Screen::ID) {
-            $order = $this->plugin->tv->get_disabled_groups();
-        } else if ($source_window_id === Starnet_Tv_Channel_List_Screen::ID) {
-            $order = $this->plugin->tv->get_disabled_channels();
-        } else if ($source_window_id === Starnet_Playlists_Setup_Screen::ID) {
-            $order = $this->plugin->get_playlists();
-        } else if ($source_window_id === Starnet_Epg_Setup_Screen::ID) {
-            $order = new Ordered_Array();
-            $order->set_callback($this->plugin, PARAM_CUSTOM_XMLTV_SOURCES);
-        } else {
-            $order = new Ordered_Array();
+        //hd_print(__METHOD__ . ": media url: " . $media_url->get_media_url_str());
+
+        switch ($media_url->edit_list) {
+            case self::ACTION_PLAYLIST:
+                $order = $this->plugin->get_playlists();
+                break;
+            case self::ACTION_EPG_LIST:
+                $order = new Ordered_Array();
+                $order->set_callback($this->plugin, PARAM_CUSTOM_XMLTV_SOURCES);
+                break;
+            case self::ACTION_GROUPS:
+                $order = $this->plugin->tv->get_disabled_groups();
+                break;
+            case self::ACTION_CHANNELS:
+                $order = $this->plugin->tv->get_disabled_channels();
+                break;
+            default:
+                $order = new Ordered_Array();
         }
 
         return $order;

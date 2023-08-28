@@ -20,9 +20,9 @@ class Default_Dune_Plugin implements DunePlugin
 
     /////////////////////////////////////////////////////////////////////////////
     // views constants
-    const ALL_CHANNEL_GROUP_CAPTION = '%tr%plugin_all_channels';
-    const FAV_CHANNEL_GROUP_CAPTION = '%tr%plugin_favorites';
-    const PLAYBACK_HISTORY_CAPTION = '%tr%plugin_history';
+    const ALL_CHANNEL_GROUP_CAPTION = 'plugin_all_channels';
+    const FAV_CHANNEL_GROUP_CAPTION = 'plugin_favorites';
+    const PLAYBACK_HISTORY_CAPTION  = 'plugin_history';
 
     /////////////////////////////////////////////////////////////////////////////
     // views variables

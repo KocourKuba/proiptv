@@ -10,7 +10,10 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public static function get_media_url_str()
     {
-        return MediaURL::encode(array('screen_id' => self::ID));
+        return MediaURL::encode(array(
+                'screen_id' => self::ID,
+                'is_history' => true)
+        );
     }
 
     ///////////////////////////////////////////////////////////////////////

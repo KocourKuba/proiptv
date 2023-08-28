@@ -189,7 +189,7 @@ tv_screen_subscription = Подписка
 tv_screen_information = Информация
 tv_screen_hide_channel = Скрыть канал
 tv_screen_hide_group = Скрыть категорию
-tv_screen_edit_hidden_group = Редактировать скрытые группы
+tv_screen_edit_hidden_group = Редактировать скрытые категории
 tv_screen_edit_hidden_channels = Редактировать скрытые каналы
 tv_screen_continue = Продолжить
 tv_screen_continue_view = Продолжить просмотр
@@ -203,6 +203,7 @@ tv_screen_zoom_make_taller = Увеличение высоты
 tv_screen_zoom_cut_edges = Обрезка краев
 tv_screen_zoom_full_enlarge = Полный экран
 tv_screen_zoom_full_stretch = Растяжение на весь экран
+tv_screen_group_info__3 = %s|Каналов: %s|Скрыто: %s
 
 edit_list_added__1 = Добавлено файлов: %s
 edit_list_no_files = Нет файлов!!!

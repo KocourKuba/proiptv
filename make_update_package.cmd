@@ -6,6 +6,9 @@ for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
 
 php -f update.php %VERSION%.%BUILD%
 
+choice /T 5 /D N /M "Upload"
+if ERRORLEVEL 1 goto :EOF
+
 set /p CREDS=<creds.txt
 echo %CREDS%
 "C:\Program Files (x86)\WinSCP\WinSCP.com" ^

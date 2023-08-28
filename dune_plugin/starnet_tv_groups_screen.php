@@ -68,8 +68,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         dump_input_handler(__METHOD__, $user_input);
         $min_sel = $this->plugin->get_special_groups_count($plugin_cookies);
-        $group_id = MediaURL::decode($user_input->selected_media_url)->group_id;
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $sel_media_url = MediaURL::decode($user_input->selected_media_url);
 
         switch ($user_input->control_id) {
             case ACTION_OPEN_FOLDER:
@@ -84,7 +83,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $post_action;
 
             case ACTION_ITEM_UP:
-                if (!$this->plugin->tv->get_groups_order()->arrange_item($group_id, Ordered_Array::UP))
+                if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::UP))
                     return null;
 
                 $user_input->sel_ndx--;
@@ -94,7 +93,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DOWN:
-                if (!$this->plugin->tv->get_groups_order()->arrange_item($group_id, Ordered_Array::DOWN))
+                if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::DOWN))
                     return null;
 
                 $groups_cnt = $min_sel + $this->plugin->tv->get_groups_order()->size();
@@ -105,8 +104,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DELETE:
-                hd_print(__METHOD__ . ": Hide $group_id");
-                $this->plugin->tv->disable_group($group_id);
+                hd_print(__METHOD__ . ": Hide $sel_media_url->group_id");
+                $this->plugin->tv->disable_group($sel_media_url->group_id);
                 break;
 
             case ACTION_ITEMS_SORT:
@@ -118,11 +117,25 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => self::ID,
+                        'edit_list' => Starnet_Edit_List_Screen::ACTION_GROUPS,
                         'end_action' => ACTION_RELOAD,
                         'windowCounter' => 1,
                     )
                 );
                 return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_edit_hidden_group'));
+
+            case ACTION_ITEMS_EDIT . "2":
+                $media_url_str = MediaURL::encode(
+                    array(
+                        'screen_id' => Starnet_Edit_List_Screen::ID,
+                        'source_window_id' => self::ID,
+                        'edit_list' => Starnet_Edit_List_Screen::ACTION_CHANNELS,
+                        'group_id' => $sel_media_url->group_id,
+                        'end_action' => ACTION_RELOAD,
+                        'windowCounter' => 1,
+                    )
+                );
+                return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_edit_hidden_channels'));
 
             case ACTION_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
@@ -137,6 +150,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_APPLY);
 
             case self::ACTION_CONFIRM_APPLY:
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 $return_action = $actions[GUI_EVENT_KEY_RETURN];
                 unset($actions[GUI_EVENT_KEY_RETURN]);
@@ -146,11 +160,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             //return Action_Factory::show_main_screen();
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_ITEM_DELETE,
-                    TR::t('tv_screen_hide_group'),
-                    $this->plugin->get_image_path('hide.png')
-                );
+                if (isset($sel_media_url->group_id) && $sel_media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                        ACTION_ITEM_DELETE,
+                        TR::t('tv_screen_hide_group'),
+                        $this->plugin->get_image_path('hide.png')
+                    );
+                }
 
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     ACTION_ITEMS_SORT,
@@ -158,11 +174,32 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->get_image_path('sort.png')
                 );
 
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_ITEMS_EDIT,
-                    TR::t('tv_screen_edit_hidden_group'),
-                    $this->plugin->get_image_path('edit.png')
-                );
+                $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
+
+                if ($this->plugin->tv->get_disabled_groups()->size()) {
+                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                        ACTION_ITEMS_EDIT,
+                        TR::t('tv_screen_edit_hidden_group'),
+                        $this->plugin->get_image_path('edit.png')
+                    );
+                }
+
+                if (isset($sel_media_url->group_id)) {
+                    $has_hidden = false;
+                    if ($sel_media_url->group_id === ALL_CHANNEL_GROUP_ID) {
+                        $has_hidden = $this->plugin->tv->get_disabled_channels()->size() !== 0;
+                    } else if (($group = $this->plugin->tv->get_group($sel_media_url->group_id)) !== null) {
+                        $has_hidden = $group->get_group_channels()->size() !== $group->get_items_order()->size();
+                    }
+
+                    if ($has_hidden) {
+                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                            ACTION_ITEMS_EDIT . "2",
+                            TR::t('tv_screen_edit_hidden_channels'),
+                            $this->plugin->get_image_path('edit.png')
+                        );
+                    }
+                }
 
                 $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
 
@@ -182,27 +219,29 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RELOAD:
                 hd_print(__METHOD__ . ": reload");
-                return $this->plugin->tv->reload_channels($this, $plugin_cookies);
+                $this->plugin->tv->unload_channels();
+                break;
 
             default:
                 return null;
         }
 
-        $post_action = Action_Factory::close_and_run(
-            Action_Factory::open_folder(
-                $user_input->parent_media_url,
-                null,
-                null,
-                null,
-                Action_Factory::update_regular_folder(
-                    $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
-                    true,
-                    $user_input->sel_ndx)
+        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        return Starnet_Epfs_Handler::invalidate_folders(
+            array($user_input->parent_media_url),
+            Action_Factory::close_and_run(
+                Action_Factory::open_folder(
+                    $user_input->parent_media_url,
+                    null,
+                    null,
+                    null,
+                    Action_Factory::update_regular_folder(
+                        $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies),
+                        true,
+                        $user_input->sel_ndx)
+                )
             )
         );
-
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        return Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url), $post_action);
     }
 
     /**
@@ -262,7 +301,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     PluginRegularFolderItem::caption => $group->get_title(),
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::icon_path => $group->get_icon_url(),
-                        ViewItemParams::item_detailed_icon_path => $group->get_icon_url()
+                        ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
+                        ViewItemParams::item_detailed_info => TR::t('tv_screen_group_info__3',
+                            $group->get_title(),
+                            $this->plugin->tv->get_channels()->size(),
+                            $this->plugin->tv->get_disabled_channels()->size()
+                        ),
                     )
                 );
             }
@@ -280,9 +324,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $group->get_icon_url(),
                     ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
+                    ViewItemParams::item_detailed_info => TR::t('tv_screen_group_info__3',
+                        $group->get_title(),
+                        $group->get_group_channels()->size(),
+                        $group->get_group_channels()->size() - $group->get_items_order()->size()
+                    ),
                     ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
                     ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
-                    ViewItemParams::item_detailed_info => $group->get_title(),
                 ),
             );
         }

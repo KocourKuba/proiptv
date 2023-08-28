@@ -21,6 +21,7 @@
  * @property mixed|null $no_internet
  * @property mixed|null $user
  * @property mixed|null $password
+ * @property mixed|null $edit_list
  */
 class MediaURL
 {

@@ -237,9 +237,9 @@ class Starnet_Tv implements Tv, User_Input_Handler
             Starnet_Tv_Channel_List_Screen::get_media_url_str(ALL_CHANNEL_GROUP_ID));
 
         Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        $post_action = Starnet_Epfs_Handler::invalidate_folders($media_urls);
-
-        return Action_Factory::invalidate_folders($media_urls, $post_action);
+        return Action_Factory::invalidate_folders(
+            $media_urls,
+            Starnet_Epfs_Handler::invalidate_folders($media_urls));
     }
 
     /**
@@ -328,13 +328,13 @@ class Starnet_Tv implements Tv, User_Input_Handler
         // All channels category
         $this->special_groups->put(new All_Channels_Group(
             ALL_CHANNEL_GROUP_ID,
-            Default_Dune_Plugin::ALL_CHANNEL_GROUP_CAPTION,
+            TR::load_string(Default_Dune_Plugin::ALL_CHANNEL_GROUP_CAPTION),
             self::ALL_CHANNEL_GROUP_ICON_PATH));
 
         // Favorites group
         $favorites_group = new Favorites_Group(
             FAV_CHANNEL_GROUP_ID,
-            Default_Dune_Plugin::FAV_CHANNEL_GROUP_CAPTION,
+            TR::load_string(Default_Dune_Plugin::FAV_CHANNEL_GROUP_CAPTION),
             self::FAV_CHANNEL_GROUP_ICON_PATH);
         $favorites_group->get_items_order()->set_callback($this->plugin, PARAM_FAVORITES);
         $this->special_groups->put($favorites_group);
@@ -342,7 +342,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
         // History channels category
         $this->special_groups->put(new History_Group(
             PLAYBACK_HISTORY_GROUP_ID,
-            Default_Dune_Plugin::PLAYBACK_HISTORY_CAPTION,
+            TR::load_string(Default_Dune_Plugin::PLAYBACK_HISTORY_CAPTION),
             self::PLAYBACK_HISTORY_GROUP_ICON_PATH));
 
         $this->groups_order->set_save_delay(true);
@@ -397,14 +397,9 @@ class Starnet_Tv implements Tv, User_Input_Handler
                     $channel_id = hash('crc32', $entry->getPath());
                 }
             }
-            // ignore disabled channel
-            $channel_name = $entry->getTitle();
-            if ($this->disabled_channels->in_order($channel_id)) {
-                hd_print(__METHOD__ . ": Channel $channel_name is disabled");
-                continue;
-            }
 
             // if group is not registered it was disabled
+            $channel_name = $entry->getTitle();
             $group_title = $entry->getGroupTitle();
             if ($this->groups->has($group_title) === false) {
                 hd_print(__METHOD__ . ": Channel $channel_name in disabled group $group_title");
@@ -498,6 +493,13 @@ class Starnet_Tv implements Tv, User_Input_Handler
                     $protected,
                     (int)$entry->getAttribute('tvg-shift')
                 );
+
+                // ignore disabled channel
+                if ($this->disabled_channels->in_order($channel_id)) {
+                    hd_print(__METHOD__ . ": Channel $channel_name is disabled");
+                    $channel->set_disabled(true);
+                }
+
                 //hd_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));
                 $this->channels->put($channel);
 
@@ -525,9 +527,10 @@ class Starnet_Tv implements Tv, User_Input_Handler
     /**
      * @param User_Input_Handler $handler
      * @param $plugin_cookies
+     * @param $post_action
      * @return array
      */
-    public function reload_channels(User_Input_Handler $handler, &$plugin_cookies)
+    public function reload_channels(User_Input_Handler $handler, &$plugin_cookies, $post_action = null)
     {
         hd_print(__METHOD__ . ": Reload channels");
         $this->plugin->clear_playlist_cache();
@@ -547,7 +550,8 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 Starnet_Playlists_Setup_Screen::ID,
             ),
             Starnet_Epfs_Handler::invalidate_folders(null,
-            User_Input_Handler_Registry::create_action($handler, RESET_CONTROLS_ACTION_ID)));
+                $post_action !== null ? $post_action : User_Input_Handler_Registry::create_action($handler, RESET_CONTROLS_ACTION_ID))
+        );
     }
 
     /**
