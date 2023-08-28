@@ -126,6 +126,7 @@ setup_history_cleared = Verlaufsinformationen gelöscht
 setup_copy_to_data = In den ausgewählten Ordner kopieren
 setup_copy_to_plugin = In den Plugin-Ordner kopieren
 setup_copy_done = Kopieren erledigt
+setup_ask_exit = Confirm exit plugin
 
 setup_channels_src_direct = Direkte Internet-URL
 setup_channels_src_combo = Quelle der Senderliste

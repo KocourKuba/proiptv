@@ -125,6 +125,7 @@ setup_history_cleared = History info cleared
 setup_copy_to_data = Copy to the selected folder
 setup_copy_to_plugin = Copy to plugin folder
 setup_copy_done = Copy done
+setup_ask_exit = Confirm exit plugin
 
 setup_channels_src_direct = Direct Internet URL
 setup_channels_src_combo = Channels list source

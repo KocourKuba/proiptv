@@ -125,6 +125,7 @@ setup_history_cleared = История просмотра очищена
 setup_copy_to_data = Копировать в выбраную папку
 setup_copy_to_plugin = Копировать в папку плагина
 setup_copy_done = Данные скопированы
+setup_ask_exit = Подтверждение выхода из плагина
 
 setup_channels_src_direct = Прямая Интернет ссылка
 setup_channels_src_combo = Источник списка каналов

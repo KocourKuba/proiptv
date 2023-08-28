@@ -12,6 +12,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     const SETUP_ACTION_SHOW_ALL = 'show_all';
     const SETUP_ACTION_SHOW_FAVORITES = 'show_favorites';
     const SETUP_ACTION_SHOW_HISTORY = 'show_history';
+    const SETUP_ACTION_ASK_EXIT = 'ask_exit';
 
     private static $on_off_ops = array
     (
@@ -80,6 +81,13 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->get_image_path(self::$on_off_img[$plugin_cookies->{self::SETUP_ACTION_SHOW_TV}]), self::CONTROLS_WIDTH);
         }
 
+        if (!isset($plugin_cookies->{self::SETUP_ACTION_ASK_EXIT})) {
+            $plugin_cookies->{self::SETUP_ACTION_ASK_EXIT} = SetupControlSwitchDefs::switch_on;
+        }
+        Control_Factory::add_image_button($defs, $this, null,
+            self::SETUP_ACTION_ASK_EXIT, TR::t('setup_ask_exit'), self::$on_off_ops[$plugin_cookies->{self::SETUP_ACTION_ASK_EXIT}],
+            $this->plugin->get_image_path(self::$on_off_img[$plugin_cookies->{self::SETUP_ACTION_ASK_EXIT}]), self::CONTROLS_WIDTH);
+
         //////////////////////////////////////
         // show all channels category
         if (!isset($plugin_cookies->{self::SETUP_ACTION_SHOW_ALL})) {
@@ -141,6 +149,12 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                     self::toggle_param($plugin_cookies, $control_id);
                 }
                 break;
+
+            case self::SETUP_ACTION_ASK_EXIT:
+                self::toggle_param($plugin_cookies, $control_id);
+                return Action_Factory::invalidate_folders(
+                    array(Starnet_Tv_Groups_Screen::ID),
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case self::SETUP_ACTION_SHOW_ALL:
             case self::SETUP_ACTION_SHOW_FAVORITES:
