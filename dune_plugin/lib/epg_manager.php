@@ -294,50 +294,52 @@ class Epg_Manager
             $last_mod_file = HD::http_save_document($this->xmltv_url, $tmp_filename);
             hd_print(__METHOD__ . ": Last changed time on server: " . date("Y-m-d H:s", $last_mod_file));
 
-            if (preg_match('|\.gz|', $this->xmltv_url)) {
-                hd_print(__METHOD__ . ": unpack $tmp_filename");
-                $gz = gzopen($tmp_filename, 'rb');
-                if (!$gz) {
-                    throw new Exception("Failed to open $tmp_filename");
-                }
+            if (preg_match("/\.(xml.gz|xml|gz|zip)(?:\??.*)?$/i", $this->xmltv_url, $m)) {
+                if (strcasecmp($m[1], 'gz') || strcasecmp($m[1], 'xml.gz')) {
+                    hd_print(__METHOD__ . ": unpack $tmp_filename");
+                    $gz = gzopen($tmp_filename, 'rb');
+                    if (!$gz) {
+                        throw new Exception("Failed to open $tmp_filename");
+                    }
 
-                $dest = fopen($cached_file, 'wb');
-                if (!$dest) {
-                    throw new Exception("Failed to open $cached_file");
-                }
+                    $dest = fopen($cached_file, 'wb');
+                    if (!$dest) {
+                        throw new Exception("Failed to open $cached_file");
+                    }
 
-                $res = stream_copy_to_stream($gz, $dest);
-                gzclose($gz);
-                fclose($dest);
-                unlink($tmp_filename);
-                if ($res === false) {
-                    throw new Exception("Failed to unpack $tmp_filename to $cached_file");
-                }
-                hd_print(__METHOD__ . ": $res bytes written to $cached_file");
-            } else if (preg_match('|\.zip|', $this->xmltv_url)) {
-                hd_print(__METHOD__ . ": unzip $tmp_filename");
-                $unzip = new ZipArchive();
-                $out = $unzip->open($tmp_filename);
-                if ($out !== true) {
-                    throw new Exception("Failed to unzip $tmp_filename (error code: $out)");
-                }
-                $filename = $unzip->getNameIndex(0);
-                if (empty($filename)) {
+                    $res = stream_copy_to_stream($gz, $dest);
+                    gzclose($gz);
+                    fclose($dest);
+                    unlink($tmp_filename);
+                    if ($res === false) {
+                        throw new Exception("Failed to unpack $tmp_filename to $cached_file");
+                    }
+                    hd_print(__METHOD__ . ": $res bytes written to $cached_file");
+                } else if (strcasecmp($m[1], 'zip')) {
+                    hd_print(__METHOD__ . ": unzip $tmp_filename");
+                    $unzip = new ZipArchive();
+                    $out = $unzip->open($tmp_filename);
+                    if ($out !== true) {
+                        throw new Exception("Failed to unzip $tmp_filename (error code: $out)");
+                    }
+                    $filename = $unzip->getNameIndex(0);
+                    if (empty($filename)) {
+                        $unzip->close();
+                        throw new Exception("empty zip file $tmp_filename");
+                    }
+
+                    $unzip->extractTo(self::get_xcache_dir($plugin_cookies));
                     $unzip->close();
-                    throw new Exception("empty zip file $tmp_filename");
-                }
 
-                $unzip->extractTo(self::get_xcache_dir($plugin_cookies));
-                $unzip->close();
-
-                rename($filename, $cached_file);
-                $size = filesize($cached_file);
-                hd_print(__METHOD__ . ": $size bytes written to $cached_file");
-            } else {
-                if (file_exists($cached_file)) {
-                    unlink($cached_file);
+                    rename($filename, $cached_file);
+                    $size = filesize($cached_file);
+                    hd_print(__METHOD__ . ": $size bytes written to $cached_file");
+                } else {
+                    if (file_exists($cached_file)) {
+                        unlink($cached_file);
+                    }
+                    rename($tmp_filename, $cached_file);
                 }
-                rename($tmp_filename, $cached_file);
             }
 
             if (file_exists($cached_file_index)) {

@@ -277,9 +277,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case self::SETUP_ACTION_EPG_PARSE_ALL:
                 $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
-                $parse_all = ($parse_all === SetupControlSwitchDefs::switch_on)
-                    ? SetupControlSwitchDefs::switch_off
-                    : SetupControlSwitchDefs::switch_on;
+                $parse_all = ($parse_all === SetupControlSwitchDefs::switch_off)
+                    ? SetupControlSwitchDefs::switch_on
+                    : SetupControlSwitchDefs::switch_off;
                 $this->plugin->set_settings(PARAM_EPG_PARSE_ALL, $parse_all);
                 hd_print(__METHOD__ . ": $control_id: $parse_all");
                 break;
