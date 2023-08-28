@@ -1,7 +1,5 @@
-<?php /** @noinspection ALL */
+<?php
 /** @noinspection ALL */
-/** @noinspection ALL */
-/** @noinspection PropertyInitializationFlawsInspection */
 
 ///////////////////////////////////////////////////////////////////////////
 

@@ -1,4 +1,5 @@
-<?php /** @noinspection ALL */
+<?php
+/** @noinspection ALL */
 ///////////////////////////////////////////////////////////////////////////
 
 const FEW_BUTTONS_REMOTE_TYPE_NONE = 0;
