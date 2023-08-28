@@ -17,7 +17,7 @@ class PaneParams
 	const info_height				    = 640;
 	const vod_width				        = 1120;
 	const vod_height				    = 630;
-	const vod_bg_url				    = '/bg.png';
+	const vod_bg_url				    = '/bg.jpg';
 	const vod_mask_url		    	    = '/mask.png';
 	const max_items_in_row	    	    = 7;
 	const ch_num_font_color	    	    = '#EFAA16FF';
