@@ -19,12 +19,6 @@ class Default_Dune_Plugin implements DunePlugin
     const SANDWICH_COVER = 'cut_icon://{name=sandwich_cover}';
 
     /////////////////////////////////////////////////////////////////////////////
-    // views constants
-    const ALL_CHANNEL_GROUP_CAPTION = 'plugin_all_channels';
-    const FAV_CHANNEL_GROUP_CAPTION = 'plugin_favorites';
-    const PLAYBACK_HISTORY_CAPTION  = 'plugin_history';
-
-    /////////////////////////////////////////////////////////////////////////////
     // views variables
     const TV_SANDWICH_WIDTH = 245;
     const TV_SANDWICH_HEIGHT = 140;
@@ -790,6 +784,6 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_image_path($image = null)
     {
-        return get_install_path("/img/" . ($image === null ?: $image));
+        return get_install_path("/img/" . ($image === null ?: ltrim($image, '/')));
     }
 }

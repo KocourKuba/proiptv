@@ -153,7 +153,7 @@ class Entry
          * Tags used to get entry ID
 		 * "CUID", "channel-id", "tvg-chno", "tvg-name", "name",
          */
-        static $tags = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number", "tvg-name");
+        static $tags = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number");
 
         $ch_id = $this->getAnyAttribute($tags);
 

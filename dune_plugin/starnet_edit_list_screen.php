@@ -143,36 +143,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($parent_media_url->edit_list === self::ACTION_PLAYLIST
                     || $parent_media_url->edit_list === self::ACTION_EPG_LIST) {
 
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        self::SETUP_ACTION_ADD_URL_DLG,
-                        TR::t('edit_list_internet_path'),
-                        $this->plugin->get_image_path('link.png')
-                    );
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        self::SETUP_ACTION_CHOOSE_FOLDER,
-                        TR::t('edit_list_folder_path'),
-                        $this->plugin->get_image_path('folder.png')
-                    );
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        self::SETUP_ACTION_IMPORT_LIST,
-                        TR::t('edit_list_import_list'),
-                        $this->plugin->get_image_path('web_files.png')
-                    );
-
-                    $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
-
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_ITEMS_SORT,
-                        TR::t('sort_items'),
-                        $this->plugin->get_image_path('sort.png')
-                    );
+                    $this->create_menu_item($menu_items, self::SETUP_ACTION_ADD_URL_DLG, TR::t('edit_list_internet_path'),"link.png");
+                    $this->create_menu_item($menu_items, self::SETUP_ACTION_CHOOSE_FOLDER, TR::t('edit_list_folder_path'),"folder.png");
+                    $this->create_menu_item($menu_items, self::SETUP_ACTION_IMPORT_LIST, TR::t('edit_list_import_list'), "web_files.png");
+                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                    $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                 }
 
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_ITEMS_CLEAR,
-                    TR::t('clear'),
-                    $this->plugin->get_image_path('brush.png')
-                );
+                $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear'),"brush.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -412,5 +390,23 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         return $order;
+    }
+
+    /**
+     * @param $menu_items array
+     * @param $action_id string
+     * @param $caption string
+     * @param $icon string
+     * @param $add_params array|null
+     * @return void
+     */
+    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
+    {
+        if ($action_id === GuiMenuItemDef::is_separator) {
+            $menu_items[] = array($action_id => true);
+        } else {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                $action_id, $caption, ($icon === null) ? null : $this->plugin->get_image_path($icon), $add_params);
+        }
     }
 }

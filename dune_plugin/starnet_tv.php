@@ -12,9 +12,6 @@ require_once 'starnet_setup_screen.php';
 class Starnet_Tv implements Tv, User_Input_Handler
 {
     const ID = 'tv';
-    const ALL_CHANNEL_GROUP_ICON_PATH = 'plugin_file://icons/all_folder.png';
-    const FAV_CHANNEL_GROUP_ICON_PATH = 'plugin_file://icons/favorite_folder.png';
-    const PLAYBACK_HISTORY_GROUP_ICON_PATH = 'plugin_file://icons/history_folder.png';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -108,17 +105,11 @@ class Starnet_Tv implements Tv, User_Input_Handler
     {
         $channels = $this->get_channels();
         if ($channels === null) {
-            hd_print(__METHOD__ . ": Channels no loaded");
+            hd_print(__METHOD__ . ": Channels not loaded");
             return null;
         }
 
-        $channel = $this->channels->get($channel_id);
-
-        if (is_null($channel)) {
-            hd_print(__METHOD__ . ": Unknown channel: $channel_id");
-        }
-
-        return $channel;
+        return $this->channels->get($channel_id);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -315,6 +306,8 @@ class Starnet_Tv implements Tv, User_Input_Handler
             return;
         }
 
+        $this->plugin->playback_points->load_points(true);
+
         $m3u_info = $this->plugin->m3u_parser->getM3uInfo();
         $global_catchup = $m3u_info->getCatchup();
         $global_catchup_source = $m3u_info->getCatchupSource();
@@ -326,27 +319,17 @@ class Starnet_Tv implements Tv, User_Input_Handler
             $global_catchup_source = $user_catchup;
         }
         // All channels category
-        $this->special_groups->put(new All_Channels_Group(
-            ALL_CHANNEL_GROUP_ID,
-            TR::load_string(Default_Dune_Plugin::ALL_CHANNEL_GROUP_CAPTION),
-            self::ALL_CHANNEL_GROUP_ICON_PATH));
+        $this->special_groups->put(new All_Channels_Group());
 
         // Favorites group
-        $favorites_group = new Favorites_Group(
-            FAV_CHANNEL_GROUP_ID,
-            TR::load_string(Default_Dune_Plugin::FAV_CHANNEL_GROUP_CAPTION),
-            self::FAV_CHANNEL_GROUP_ICON_PATH);
+        $favorites_group = new Favorites_Group();
         $favorites_group->get_items_order()->set_callback($this->plugin, PARAM_FAVORITES);
         $this->special_groups->put($favorites_group);
 
         // History channels category
-        $this->special_groups->put(new History_Group(
-            PLAYBACK_HISTORY_GROUP_ID,
-            TR::load_string(Default_Dune_Plugin::PLAYBACK_HISTORY_CAPTION),
-            self::PLAYBACK_HISTORY_GROUP_ICON_PATH));
+        $this->special_groups->put(new History_Group());
 
         $this->groups_order->set_save_delay(true);
-        //foreach ($this->groups_order->get_order() as $item) hd_print("loaded: $item");
 
         // Collect categories from playlist
         $pl_entries = $this->plugin->m3u_parser->getM3uEntries();
@@ -389,13 +372,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
         foreach ($pl_entries as $entry) {
             $channel_id = $entry->getEntryId();
             if ($channel_id === null) {
-                $channel_id = $entry->getAttribute("tvg-id");
-                if ((empty($channel_id)) || $this->channels->has($channel_id)) {
-                    $channel_id = $entry->getTitle();
-                }
-                if ($this->channels->has($channel_id)) {
-                    $channel_id = hash('crc32', $entry->getPath());
-                }
+                $channel_id = hash('crc32', $entry->getPath());
             }
 
             // if group is not registered it was disabled
@@ -412,7 +389,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
             $channel = $this->channels->get($channel_id);
             if (!is_null($channel)) {
                 foreach ($channel->get_groups() as $group) {
-                    hd_print(__METHOD__ . ": Channel $channel_name already exist in category: " . $group->get_title() . " (" . $group->get_id() . ")");
+                    hd_print(__METHOD__ . ": Channel id: $channel_id ($channel_name) already exist in category: {$group->get_title()}");
                 }
             } else {
                 //hd_print(__METHOD__ . ": attributes: " . serialize($entry->getAttributes()));
@@ -787,7 +764,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
             PluginTvInfo::channels => $channels,
 
             PluginTvInfo::favorites_supported => true,
-            PluginTvInfo::favorites_icon_url => self::FAV_CHANNEL_GROUP_ICON_PATH,
+            PluginTvInfo::favorites_icon_url => Favorites_Group::FAV_CHANNEL_GROUP_ICON_PATH,
 
             PluginTvInfo::initial_channel_id => (string)$media_url->channel_id,
             PluginTvInfo::initial_group_id => $initial_group_id,

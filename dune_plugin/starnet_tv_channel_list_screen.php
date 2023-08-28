@@ -204,41 +204,25 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
 
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_ITEM_DELETE,
-                    TR::t('tv_screen_hide_channel'),
-                    $this->plugin->get_image_path('remove.png')
-                );
+                $this->create_menu_item($menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'),"remove.png");
 
                 if (!$group->is_all_channels_group()) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_ITEMS_SORT,
-                        TR::t('sort_items'),
-                        $this->plugin->get_image_path('sort.png')
-                    );
+                    $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'),"sort.png");
                 }
 
                 if (is_android() && !is_apk()) {
-                    $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_EXTERNAL_PLAYER,
-                        TR::t('vod_screen_external_player'),
-                        'gui_skin://small_icons/playback.aai'
-                    );
-                    $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
+                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                    $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('vod_screen_external_player'), "play.png");
+                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                 }
 
                 $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                 $current_idx = isset($zoom_data[$channel_id]) ? $zoom_data[$channel_id] : DuneVideoZoomPresets::not_set;
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-                    $add_param[ACTION_ZOOM_SELECT] = (string)$idx;
 
-                    $icon_url = null;
-                    if ((string)$idx === (string)$current_idx) {
-                        $icon_url = "gui_skin://button_icons/proceed.aai";
-                    }
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, ACTION_ZOOM_APPLY,
-                        $zoom_item, $icon_url, $add_param);
+                    $this->create_menu_item($menu_items, ACTION_ZOOM_APPLY, $zoom_item,
+                        ((string)$idx === (string)$current_idx) ? "aspect.png" : null,
+                        array(ACTION_ZOOM_SELECT => (string)$idx));
                 }
 
                 return Action_Factory::show_popup_menu($menu_items);
@@ -341,8 +325,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_print(__METHOD__ . ": media url: " . $media_url->get_media_url_str());
-        HD::print_backtrace();
+        //hd_print(__METHOD__ . ": media url: " . $media_url->get_media_url_str());
 
         $items = array();
 
@@ -640,5 +623,23 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 ),
             ),
         );
+    }
+
+    /**
+     * @param $menu_items array
+     * @param $action_id string
+     * @param $caption string
+     * @param $icon string
+     * @param $add_params array|null
+     * @return void
+     */
+    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
+    {
+        if ($action_id === GuiMenuItemDef::is_separator) {
+            $menu_items[] = array($action_id => true);
+        } else {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                $action_id, $caption, ($icon === null) ? null : $this->plugin->get_image_path($icon), $add_params);
+        }
     }
 }

@@ -16,8 +16,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private $removed_playback_point;
     private $clear_playback_points = false;
 
-    private $images_path;
-
     public $need_update_epf_mapping_flag = false;
 
     ///////////////////////////////////////////////////////////////////////////
@@ -25,8 +23,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     public function __construct(Default_Dune_Plugin $plugin)
     {
         parent::__construct(self::ID, $plugin);
-
-        $this->images_path = get_install_path('img');
     }
 
     /**
@@ -340,23 +336,23 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $history_rows = $this->get_history_rows($plugin_cookies);
         if (!is_null($history_rows)) {
             $rows = array_merge($rows, $history_rows);
-            hd_print(__METHOD__ . ": added history: " . count($history_rows) . " rows");
+            //hd_print(__METHOD__ . ": added history: " . count($history_rows) . " rows");
         }
 
         $favorites_rows = $this->get_favorites_rows($plugin_cookies);
         if (!is_null($favorites_rows)) {
-            hd_print(__METHOD__ . ": added favorites: " . count($favorites_rows) . " rows");
+            //hd_print(__METHOD__ . ": added favorites: " . count($favorites_rows) . " rows");
             $rows = array_merge($rows, $favorites_rows);
         }
 
         $all_channels_rows = $this->get_all_channels_row($plugin_cookies);
         if (!is_null($all_channels_rows)) {
             $rows = array_merge($rows, $all_channels_rows);
-            hd_print(__METHOD__ . ": added all channels: " . count($all_channels_rows) . " rows");
+            //hd_print(__METHOD__ . ": added all channels: " . count($all_channels_rows) . " rows");
         }
 
         $rows = array_merge($rows, $channels_rows);
-        hd_print(__METHOD__ . ": added channels: " . count($channels_rows) . " rows");
+        //hd_print(__METHOD__ . ": added channels: " . count($channels_rows) . " rows");
 
         $pane = Rows_Factory::pane(
             $rows,
@@ -424,8 +420,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $def_params,
             $sel_params,
             $inactive_params,
-            $this->images_path . RowsItemsParams::icon_loading_url,
-            $this->images_path . RowsItemsParams::icon_loading_failed_url,
+            $this->plugin->get_image_path(RowsItemsParams::icon_loading_url),
+            $this->plugin->get_image_path(RowsItemsParams::icon_loading_failed_url),
             RowsItemsParams::caption_max_num_lines,
             RowsItemsParams::caption_line_spacing,
             Rows_Factory::margins(6, 2, 2, 2)
@@ -453,7 +449,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
 
         if (isset($user_input->item_id)) {
             $media_url_str = $user_input->item_id;
@@ -499,36 +495,34 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $user_input->folder_key,
                     $user_input->item_id,
                     $info_children['defs'],
-                    empty($info_children['fanart_url']) ? $this->images_path . PaneParams::vod_bg_url : $info_children['fanart_url'],
-                    $this->images_path . PaneParams::vod_bg_url,
-                    $this->images_path . PaneParams::vod_mask_url,
+                    empty($info_children['fanart_url']) ? $this->plugin->get_image_path(PaneParams::vod_bg_url) : $info_children['fanart_url'],
+                    $this->plugin->get_image_path(PaneParams::vod_bg_url),
+                    $this->plugin->get_image_path(PaneParams::vod_mask_url),
                     array("plugin_tv://" . get_plugin_name() . "/$user_input->item_id")
                 );
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->choose_playlist)) {
-                    hd_print(__METHOD__ . ": Create playlist menu");
                     $menu_items = array();
+                    $cur = $this->plugin->get_current_playlist();
                     foreach ($this->plugin->get_playlists()->get_order() as $key => $playlist) {
                         if ($key !== 0 && ($key % 15) === 0)
-                            $this->create_menu_item($menu_items, null, null, GuiMenuItemDef::is_separator);
+                            $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
 
+                        $icon = ($cur !== $playlist) ? null : "link.png";
                         $ar = explode('/', $playlist);
                         $playlist = end($ar);
-                        hd_print(__METHOD__ . ": Menu item: $key => $playlist");
-                        $this->create_menu_item($menu_items, $playlist, null, ACTION_FOLDER_SELECTED, array('playlist_idx' => $key));
+                        $this->create_menu_item($menu_items, ACTION_FOLDER_SELECTED, $playlist, $icon, array('playlist_idx' => $key));
                     }
                     return Action_Factory::show_popup_menu($menu_items);
                 }
 
-                hd_print(__METHOD__ . ": Create common menu");
                 if (isset($user_input->selected_item_id)) {
-
                     $common_menu = array();
                     if ($media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) {
-                        $this->create_menu_item($menu_items, TR::t('delete'), "$this->images_path/remove.png", ACTION_REMOVE_PLAYBACK_POINT);
+                        $this->create_menu_item($menu_items, ACTION_REMOVE_PLAYBACK_POINT, TR::t('delete'), "remove.png");
                     } else if ($media_url->group_id === FAV_CHANNEL_GROUP_ID) {
-                        $this->create_menu_item($menu_items, TR::t('delete'), "$this->images_path/star.png", PLUGIN_FAVORITES_OP_REMOVE);
+                        $this->create_menu_item($menu_items, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete'), "star.png");
                     } else {
                         $channel_id = $media_url->channel_id;
                         hd_print(__METHOD__ . ": Selected channel id: $channel_id");
@@ -538,16 +532,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         $add_action = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 
                         if (is_apk()) {
-                            $this->create_menu_item($common_menu, $caption, "$this->images_path/star.png", $add_action);
+                            $this->create_menu_item($common_menu, $add_action, $caption, "star.png");
                         }
 
-                        $this->create_menu_item($common_menu,
-                            TR::t('tv_screen_hide_channel'),
-                            "$this->images_path/remove.png",
-                            ACTION_ITEM_DELETE);
+                        $this->create_menu_item($common_menu, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
 
                         if ($media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
-                            $this->create_menu_item($menu_items, TR::t('sort_items'), "$this->images_path/sort.png", ACTION_ITEMS_SORT);
+                            $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                         }
 
                         $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
@@ -555,37 +546,38 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                         //hd_print(__METHOD__ . ": Current idx: $current_idx");
 
-                        $this->create_menu_item($common_menu, null, null, GuiMenuItemDef::is_separator);
+                        $this->create_menu_item($common_menu, GuiMenuItemDef::is_separator);
 
                         foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-                            $this->create_menu_item($common_menu, $zoom_item,
-                                strcmp($idx, $current_idx) === 0 ? "gui_skin://button_icons/proceed.aai" : null,
-                                ACTION_ZOOM_APPLY, array(ACTION_ZOOM_SELECT => (string)$idx));
+                            $this->create_menu_item($common_menu, ACTION_ZOOM_APPLY, $zoom_item,
+                                strcmp($idx, $current_idx) !== 0 ? null : "aspect.png",
+                                array(ACTION_ZOOM_SELECT => (string)$idx));
                         }
                     }
 
                     if (!is_apk()) {
-                        $this->create_menu_item($menu_items, TR::t('vod_screen_external_player'), "gui_skin://small_icons/playback.aai", ACTION_EXTERNAL_PLAYER);
+                        $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('vod_screen_external_player'), "play.png");
                     }
-                    $this->create_menu_item($menu_items, null, null, GuiMenuItemDef::is_separator);
+                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                     $menu_items = array_merge($menu_items, $common_menu);
                 } else {
                     if ($media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) {
-                        $this->create_menu_item($menu_items, TR::t('clear_history'), $this->images_path . '/brush.png', ACTION_ITEMS_CLEAR);
+                        $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
                     } else if ($media_url->group_id === FAV_CHANNEL_GROUP_ID) {
-                        $this->create_menu_item($menu_items, TR::t('clear_favorites'), $this->images_path . '/star.png', ACTION_ITEMS_CLEAR);
+                        $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "star.png");
                     } else if ($media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
-                        $this->create_menu_item($menu_items, TR::t('tv_screen_hide_group'), $this->images_path . '/hide.png', ACTION_ITEM_DELETE);
+                        $this->create_menu_item($menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'),"hide.png");
                     }
 
                     if ($this->plugin->get_playlists()->size()) {
-                        $this->create_menu_item($menu_items, null, null, GuiMenuItemDef::is_separator);
-                        $this->create_menu_item($menu_items, TR::t('setup_channels_src_playlists'), $this->images_path . '/playlist.png', ACTION_CHANGE_PLAYLIST);
+                        $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                        $this->create_menu_item($menu_items, ACTION_CHANGE_PLAYLIST, TR::t('setup_channels_src_playlists'),"playlist.png");
                     }
                 }
 
-                $this->create_menu_item($menu_items, null, null, GuiMenuItemDef::is_separator);
-                $this->create_menu_item($menu_items, TR::t('refresh'), "$this->images_path/refresh.png", ACTION_REFRESH_SCREEN);
+                $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                $this->create_menu_item($menu_items, ACTION_REFRESH_SCREEN, TR::t('refresh'),"refresh.png");
+
                 return Action_Factory::show_popup_menu($menu_items);
 
             case PLUGIN_FAVORITES_OP_ADD:
@@ -710,22 +702,19 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
     /**
      * @param $menu_items array
+     * @param $action_id string
      * @param $caption string
      * @param $icon string
-     * @param $action_id string
      * @param $add_params array|null
      * @return void
      */
-    private function create_menu_item(&$menu_items, $caption, $icon, $action_id, $add_params = null)
+    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
     {
         if ($action_id === GuiMenuItemDef::is_separator) {
-            $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
+            $menu_items[] = array($action_id => true);
         } else {
-            $menu_items[] = array(
-                GuiMenuItemDef::caption => $caption,
-                GuiMenuItemDef::icon_url => $icon,
-                GuiMenuItemDef::action => User_Input_Handler_Registry::create_action($this, $action_id, null, $add_params),
-            );
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                $action_id, $caption, ($icon === null) ? null : $this->plugin->get_image_path($icon), $add_params);
         }
     }
 
@@ -940,7 +929,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         Rows_Factory::add_regular_sticker_image(
             $fav_stickers,
-            $this->images_path . RowsItemsParams::fav_sticker_icon_url,
+            $this->plugin->get_image_path(RowsItemsParams::fav_sticker_icon_url),
             Rows_Factory::r(
                 $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
                 2,
@@ -1010,7 +999,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             Rows_Factory::add_regular_sticker_image(
                 $fav_stickers,
-                $this->images_path . RowsItemsParams::fav_sticker_icon_url,
+                $this->plugin->get_image_path(RowsItemsParams::fav_sticker_icon_url),
                 Rows_Factory::r(
                     $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
                     2,

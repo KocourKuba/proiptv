@@ -112,8 +112,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     ACTION_EXTERNAL_PLAYER,
                     TR::t('vod_screen_external_player'),
-                    'gui_skin://small_icons/playback.aai'
-                );
+                    $this->plugin->get_image_path("play.png"));
 
                 return Action_Factory::show_popup_menu($menu_items);
 

@@ -167,27 +167,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($sel_media_url->group_id) && $sel_media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_ITEM_DELETE,
-                        TR::t('tv_screen_hide_group'),
-                        $this->plugin->get_image_path('hide.png')
-                    );
+                    $this->create_menu_item($menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'),"hide.png");
                 }
 
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_ITEMS_SORT,
-                    TR::t('sort_items'),
-                    $this->plugin->get_image_path('sort.png')
-                );
-
-                $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
+                $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
+                $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
 
                 if ($this->plugin->tv->get_disabled_groups()->size()) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_ITEMS_EDIT,
-                        TR::t('tv_screen_edit_hidden_group'),
-                        $this->plugin->get_image_path('edit.png')
-                    );
+                    $this->create_menu_item($menu_items, ACTION_ITEMS_EDIT, TR::t('tv_screen_edit_hidden_group'), "edit.png");
                 }
 
                 if (isset($sel_media_url->group_id)) {
@@ -199,27 +186,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
 
                     if ($has_hidden) {
-                        $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                            ACTION_ITEMS_EDIT . "2",
-                            TR::t('tv_screen_edit_hidden_channels'),
-                            $this->plugin->get_image_path('edit.png')
-                        );
+                        $this->create_menu_item($menu_items, ACTION_ITEMS_EDIT . "2", TR::t('tv_screen_edit_hidden_channels'),"edit.png");
                     }
                 }
 
-                $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
-
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_CHANNELS_SETTINGS,
-                    TR::t('tv_screen_channels_setup'),
-                    $this->plugin->get_image_path('playlist.png')
-                );
-
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_EPG_SETTINGS,
-                    TR::t('setup_epg_settings'),
-                    $this->plugin->get_image_path('epg.png')
-                );
+                $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                $this->create_menu_item($menu_items, ACTION_CHANNELS_SETTINGS, TR::t('tv_screen_channels_setup'),"playlist.png");
+                $this->create_menu_item($menu_items,ACTION_EPG_SETTINGS, TR::t('setup_epg_settings'),"epg.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -486,5 +459,23 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
         );
+    }
+
+    /**
+     * @param $menu_items array
+     * @param $action_id string
+     * @param $caption string
+     * @param $icon string
+     * @param $add_params array|null
+     * @return void
+     */
+    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
+    {
+        if ($action_id === GuiMenuItemDef::is_separator) {
+            $menu_items[] = array($action_id => true);
+        } else {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                $action_id, $caption, ($icon === null) ? null : $this->plugin->get_image_path($icon), $add_params);
+        }
     }
 }

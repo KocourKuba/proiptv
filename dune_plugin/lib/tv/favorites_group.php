@@ -3,14 +3,14 @@ require_once 'lib/default_group.php';
 
 class Favorites_Group extends Default_Group
 {
-    /**
-     * @param $id
-     * @param string $title
-     * @param string $icon_url
-     */
-    public function __construct($id, $title, $icon_url)
+    const FAV_CHANNEL_GROUP_ICON_PATH = 'plugin_file://icons/favorite_folder.png';
+    const FAV_CHANNEL_GROUP_CAPTION = 'plugin_favorites';
+
+    public function __construct()
     {
-        parent::__construct($id, $title, $icon_url);
+        parent::__construct(FAV_CHANNEL_GROUP_ID,
+            TR::load_string(self::FAV_CHANNEL_GROUP_CAPTION),
+            self::FAV_CHANNEL_GROUP_ICON_PATH);
 
         $this->_favorite = true;
     }

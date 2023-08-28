@@ -102,20 +102,12 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items = array();
                 if (is_android() && !is_apk()) {
-                    $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                        ACTION_EXTERNAL_PLAYER,
-                        TR::t('vod_screen_external_player'),
-                        'gui_skin://small_icons/playback.aai'
-                    );
-                    $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
+                    $this->create_menu_item($menu_items,ACTION_EXTERNAL_PLAYER, TR::t('vod_screen_external_player'), "play.png");
+                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                 }
 
-                $menu_items[] = array(
-                    GuiMenuItemDef::caption => TR::t('clear_favorites'),
-                    GuiMenuItemDef::action => User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR)
-                );
+                $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), null);
 
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -374,5 +366,23 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 ),
             ),
         );
+    }
+
+    /**
+     * @param $menu_items array
+     * @param $action_id string
+     * @param $caption string
+     * @param $icon string
+     * @param $add_params array|null
+     * @return void
+     */
+    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
+    {
+        if ($action_id === GuiMenuItemDef::is_separator) {
+            $menu_items[] = array($action_id => true);
+        } else {
+            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                $action_id, $caption, ($icon === null) ? null : $this->plugin->get_image_path($icon), $add_params);
+        }
     }
 }

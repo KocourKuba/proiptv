@@ -75,8 +75,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 hd_print(__METHOD__ . ": plugin_entry $user_input->action_id");
                 clearstatcache();
-                $this->plugin->playback_points->load_points(true);
-
                 switch ($user_input->action_id) {
                     case 'launch':
                         if ($this->plugin->get_playlists()->size() === 0) {

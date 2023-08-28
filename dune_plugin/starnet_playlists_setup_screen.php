@@ -184,7 +184,11 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
                 $this->plugin->set_settings(PARAM_SQUARE_ICONS, $new_val);
                 hd_print(__METHOD__ . ": new " . PARAM_SQUARE_ICONS . ": $new_val");
-                break;
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                return Starnet_Epfs_Handler::invalidate_folders(
+                    null,
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
+                );
 
             case self::SETUP_ACTION_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::SETUP_ACTION_RESET_PLAYLIST_APPLY);
