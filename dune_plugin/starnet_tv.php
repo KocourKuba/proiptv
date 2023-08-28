@@ -292,14 +292,9 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $this->channels = new Hashed_Array();
         $this->special_groups = new Hashed_Array();
 
-        $this->groups_order = new Ordered_Array();
-        $this->groups_order->set_callback($this->plugin, PARAM_GROUPS_ORDER);
-
-        $this->disabled_groups = new Ordered_Array();
-        $this->disabled_groups->set_callback($this->plugin, PARAM_DISABLED_GROUPS);
-
-        $this->disabled_channels = new Ordered_Array();
-        $this->disabled_channels->set_callback($this->plugin, PARAM_DISABLED_CHANNELS);
+        $this->groups_order = new Ordered_Array($this->plugin, PARAM_GROUPS_ORDER);
+        $this->disabled_groups = new Ordered_Array($this->plugin, PARAM_DISABLED_GROUPS);
+        $this->disabled_channels = new Ordered_Array($this->plugin, PARAM_DISABLED_CHANNELS);
 
         // first check if playlist in cache
         if (!$this->plugin->init_playlist()) {
@@ -322,13 +317,13 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $this->special_groups->put(new All_Channels_Group());
 
         // Favorites group
-        $favorites_group = new Favorites_Group();
-        $favorites_group->get_items_order()->set_callback($this->plugin, PARAM_FAVORITES);
+        $favorites_group = new Favorites_Group($this->plugin);
         $this->special_groups->put($favorites_group);
 
         // History channels category
         $this->special_groups->put(new History_Group());
 
+        // suppress save after add group
         $this->groups_order->set_save_delay(true);
 
         // Collect categories from playlist
@@ -339,7 +334,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
 
             // using title as id
             $group_logo = $entry->getAttribute('group-logo');
-            $group = new Default_Group(null, $title, empty($group_logo) ? null : $group_logo);
+            $group = new Default_Group($this->plugin, null, $title, empty($group_logo) ? null : $group_logo);
             $adult = (strpos($title, "зрослы") !== false
                 || strpos($title, "adult") !== false
                 || strpos($title, "18+") !== false
@@ -356,18 +351,17 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 $this->groups_order->add_item($title);
             }
 
-            $group->get_items_order()->set_callback($this->plugin, $title . PARAM_CHANNELS_ORDER);
             // disable save
             $group->get_items_order()->set_save_delay(true);
             $this->groups->put($group);
         }
+
         // enable save
         $this->groups_order->set_save_delay(false);
         $this->groups_order->save();
 
         // Read channels
         $epg_ids = array();
-        $this->channels = new Hashed_Array();
         $number = 0;
         foreach ($pl_entries as $entry) {
             $channel_id = $entry->getEntryId();

@@ -8,7 +8,7 @@ class History_Group extends Default_Group
 
     public function __construct()
     {
-        parent::__construct(PLAYBACK_HISTORY_GROUP_ID,
+        parent::__construct(null,PLAYBACK_HISTORY_GROUP_ID,
             TR::load_string(self::PLAYBACK_HISTORY_CAPTION),
             self::PLAYBACK_HISTORY_GROUP_ICON_PATH);
 

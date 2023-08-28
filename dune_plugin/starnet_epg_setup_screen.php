@@ -109,7 +109,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         if ($source === PARAM_EPG_SOURCE_INTERNAL) {
             $sources = $this->plugin->m3u_parser->getXmltvSources();
         } else {
-            $order = $this->plugin->get_settings(PARAM_CUSTOM_XMLTV_SOURCES, new Ordered_Array());
+            $order = new Ordered_Array($this->plugin, PARAM_CUSTOM_XMLTV_SOURCES);
             $sources = $order->get_order();
         }
 

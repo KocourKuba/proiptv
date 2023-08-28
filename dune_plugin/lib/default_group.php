@@ -47,12 +47,19 @@ class Default_Group implements Group
     protected $_channels_order;
 
     /**
+     * @var Default_Dune_Plugin
+     */
+    protected $plugin;
+
+    /**
      * @param string $id
      * @param string $title
      * @param string $icon_url
      */
-    public function __construct($id, $title, $icon_url = null, $adult = false, $disabled = false)
+    public function __construct($plugin, $id, $title, $icon_url = null, $adult = false, $disabled = false)
     {
+        $this->plugin = $plugin;
+
         if (is_null($icon_url)) {
             $icon_url = self::DEFAULT_GROUP_ICON_PATH;
         }
@@ -68,7 +75,7 @@ class Default_Group implements Group
         $this->_disabled = $disabled;
 
         $this->_channels = new Hashed_Array();
-        $this->_channels_order = new Ordered_Array();
+        $this->_channels_order = new Ordered_Array($this->plugin, $this->_title . PARAM_CHANNELS_ORDER);
     }
 
     public function __sleep()

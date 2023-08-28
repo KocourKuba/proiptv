@@ -376,8 +376,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $order = $this->plugin->get_playlists();
                 break;
             case self::ACTION_EPG_LIST:
-                $order = new Ordered_Array();
-                $order->set_callback($this->plugin, PARAM_CUSTOM_XMLTV_SOURCES);
+                $order = new Ordered_Array($this->plugin, PARAM_CUSTOM_XMLTV_SOURCES);
                 break;
             case self::ACTION_GROUPS:
                 $order = $this->plugin->tv->get_disabled_groups();

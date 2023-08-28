@@ -30,6 +30,11 @@ class Ordered_Array
      */
     protected $saved_pos = 0;
 
+    public function __construct($plugin = null, $param_name = null, $method = null)
+    {
+        $this->set_callback($plugin, $param_name, $method);
+    }
+
     public function __sleep()
     {
         return array('order');

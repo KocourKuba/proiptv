@@ -580,8 +580,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_playlists()
     {
         if (is_null($this->playlists)) {
-            $this->playlists = $this->get_parameters(PARAM_PLAYLISTS, new Ordered_Array());
-            $this->playlists->set_callback($this, PARAM_PLAYLISTS, 'parameters');
+            $this->playlists = $this->get_parameters(PARAM_PLAYLISTS, new Ordered_Array($this, PARAM_PLAYLISTS, 'parameters'));
         }
 
         return $this->playlists;
@@ -680,7 +679,7 @@ class Default_Dune_Plugin implements DunePlugin
         if ($source === PARAM_EPG_SOURCE_INTERNAL) {
             $sources = $this->m3u_parser->getXmltvSources();
         } else {
-            $sources = $this->get_settings(PARAM_CUSTOM_XMLTV_SOURCES);
+            $sources = $this->get_settings(PARAM_CUSTOM_XMLTV_SOURCES, array());
         }
 
         $epg_idx = $this->get_settings(PARAM_EPG_IDX, array());
