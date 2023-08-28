@@ -61,7 +61,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->folder_screen = new Starnet_Folder_Screen($this);
         $this->edit_list_screen = new Starnet_Edit_List_Screen($this);
 
-        $this-$this->playback_points = new Playback_Points($this);
+        $this->playback_points = new Playback_Points($this);
         Starnet_Epfs_Handler::init($this);
 
         hd_print(__METHOD__ . ": Init done.");

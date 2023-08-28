@@ -664,11 +664,16 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_special_groups_count($plugin_cookies)
     {
         $groups_cnt = 0;
-        if (!isset($plugin_cookies->show_all) || $plugin_cookies->show_all === 'yes') $groups_cnt++;
-        if (!isset($plugin_cookies->show_favorites) || $plugin_cookies->show_favorites === 'yes') $groups_cnt++;
-        if (!isset($plugin_cookies->show_history) || $plugin_cookies->show_history === 'yes') $groups_cnt++;
+        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL)) $groups_cnt++;
+        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_FAVORITES)) $groups_cnt++;
+        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_HISTORY)) $groups_cnt++;
 
         return $groups_cnt;
+    }
+
+    public function is_special_groups_enabled($plugin_cookies, $id)
+    {
+        return (!isset($plugin_cookies->{$id}) || $plugin_cookies->{$id} === SetupControlSwitchDefs::switch_on);
     }
 
     /**

@@ -73,6 +73,7 @@ class TitleRowsParams
 class RowsItemsParams
 {
 	const width						= 250;
+    const width_sq					= 178;
 	const height					= 230;
 	const icon_width				= 230;
     const icon_width_sq				= 158;

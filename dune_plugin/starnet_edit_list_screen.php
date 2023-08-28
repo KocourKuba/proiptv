@@ -79,7 +79,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $order = $this->get_edit_order($parent_media_url);
 

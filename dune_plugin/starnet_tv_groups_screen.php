@@ -72,7 +72,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
         $min_sel = $this->plugin->get_special_groups_count($plugin_cookies);
         $sel_media_url = MediaURL::decode($user_input->selected_media_url);
 
@@ -266,9 +266,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return $items;
         }
 
-        $show_all = (!isset($plugin_cookies->show_all) || $plugin_cookies->show_all === 'yes');
-        $show_favorites = (!isset($plugin_cookies->show_favorites) || $plugin_cookies->show_favorites === 'yes');
-        $show_history = (!isset($plugin_cookies->show_history) || $plugin_cookies->show_history === 'yes');
+        $show_all = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL);
+        $show_favorites = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_FAVORITES);
+        $show_history = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_HISTORY);
 
         /** @var Group $group */
         if ($show_favorites) {

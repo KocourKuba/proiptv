@@ -208,7 +208,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $dx += 55;
             $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
-                Default_Dune_Plugin::FAV_CHANNEL_GROUP_CAPTION,
+                TR::load_string(Default_Dune_Plugin::FAV_CHANNEL_GROUP_CAPTION),
                 1,
                 PaneParams::fav_btn_font_color,
                 PaneParams::fav_btn_font_size
@@ -333,19 +333,23 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $history_rows = $this->get_history_rows($plugin_cookies);
         if (!is_null($history_rows)) {
             $rows = array_merge($rows, $history_rows);
+            hd_print(__METHOD__ . ": added history: " . count($history_rows) . " rows");
         }
 
         $favorites_rows = $this->get_favorites_rows($plugin_cookies);
         if (!is_null($favorites_rows)) {
+            hd_print(__METHOD__ . ": added favorites: " . count($favorites_rows) . " rows");
             $rows = array_merge($rows, $favorites_rows);
         }
 
         $all_channels_rows = $this->get_all_channels_row($plugin_cookies);
         if (!is_null($all_channels_rows)) {
             $rows = array_merge($rows, $all_channels_rows);
+            hd_print(__METHOD__ . ": added all channels: " . count($all_channels_rows) . " rows");
         }
 
         $rows = array_merge($rows, $channels_rows);
+        hd_print(__METHOD__ . ": added channels: " . count($channels_rows) . " rows");
 
         $pane = Rows_Factory::pane(
             $rows,
@@ -655,13 +659,15 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
     /**
      * @param $plugin_cookies
-     * @return array
+     * @return array|null
      */
     private function get_history_rows($plugin_cookies)
     {
-        //hd_print("Starnet_Tv_Rows_Screen::get_history_rows");
-        if (isset($plugin_cookies->show_history) && $plugin_cookies->show_history !== 'yes')
+        //hd_print(__METHOD__);
+        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_HISTORY)) {
+            hd_print(__METHOD__ . ": History group disabled");
             return null;
+        }
 
         if ($this->clear_playback_points) {
             $this->clear_playback_points = false;
@@ -777,11 +783,17 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_favorites_rows($plugin_cookies)
     {
-        //hd_print("Starnet_Tv_Rows_Screen::get_favorites_rows");
-        if (isset($plugin_cookies->show_favorites) && $plugin_cookies->show_favorites !== 'yes')
+        //hd_print(__METHOD__);
+        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_FAVORITES)) {
+            hd_print(__METHOD__ . ": Favorites group disabled");
             return null;
+        }
 
         $group = $this->plugin->tv->get_special_group(FAV_CHANNEL_GROUP_ID);
+        if (is_null($group)) {
+            hd_print(__METHOD__ . ": Favorites group not found");
+            return null;
+        }
 
         $fav_count = $this->plugin->tv->get_favorites()->size();
         $fav_idx = 0;
@@ -824,25 +836,30 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_all_channels_row($plugin_cookies)
     {
-        //hd_print("Starnet_Tv_Rows_Screen::get_regular_rows");
-        if (isset($plugin_cookies->show_all) && $plugin_cookies->show_all !== 'yes')
+        //hd_print(__METHOD__);
+        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL)) {
+            hd_print(__METHOD__ . ": All channels group disabled");
             return null;
+        }
 
         /** @var Default_Group $group */
         $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
-        if (is_null($group))
+        if (is_null($group)) {
+            hd_print(__METHOD__ . ": All channels group not found");
             return null;
+        }
 
         /** @var Channel $channel */
         $rows = array();
         $items = array();
         $fav_stickers = null;
+        $row_item_width = $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? RowsItemsParams::width_sq : RowsItemsParams::width;
 
         Rows_Factory::add_regular_sticker_rect(
             $fav_stickers,
             RowsItemsParams::fav_sticker_bg_color,
             Rows_Factory::r(
-                RowsItemsParams::width - RowsItemsParams::fav_sticker_bg_width - 21,
+                $row_item_width - RowsItemsParams::fav_sticker_bg_width - 21,
                 0,
                 RowsItemsParams::fav_sticker_bg_width,
                 RowsItemsParams::fav_sticker_bg_width));
@@ -851,12 +868,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $fav_stickers,
             $this->images_path . RowsItemsParams::fav_sticker_icon_url,
             Rows_Factory::r(
-                RowsItemsParams::width - RowsItemsParams::fav_sticker_icon_width - 23,
+                $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
                 2,
                 RowsItemsParams::fav_sticker_icon_width,
                 RowsItemsParams::fav_sticker_icon_height));
 
-        foreach ($group->get_group_channels() as $channel) {
+        foreach ($this->plugin->tv->get_channels() as $channel) {
             if ($channel->is_disabled()) continue;
 
             Rows_Factory::add_regular_item(
@@ -898,6 +915,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
 
         $rows = array();
+        $row_item_width = $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? RowsItemsParams::width_sq : RowsItemsParams::width;
         /** @var Default_Group $group */
         /** @var Channel $channel */
         foreach ($this->plugin->tv->get_groups_order()->get_order() as $group_id) {
@@ -906,11 +924,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $items = array();
             $fav_stickers = null;
+
             Rows_Factory::add_regular_sticker_rect(
                 $fav_stickers,
                 RowsItemsParams::fav_sticker_bg_color,
                 Rows_Factory::r(
-                    RowsItemsParams::width - RowsItemsParams::fav_sticker_bg_width - 21,
+                    $row_item_width - RowsItemsParams::fav_sticker_bg_width - 21,
                     0,
                     RowsItemsParams::fav_sticker_bg_width,
                     RowsItemsParams::fav_sticker_bg_width));
@@ -919,7 +938,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $fav_stickers,
                 $this->images_path . RowsItemsParams::fav_sticker_icon_url,
                 Rows_Factory::r(
-                    RowsItemsParams::width - RowsItemsParams::fav_sticker_icon_width - 23,
+                    $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
                     2,
                     RowsItemsParams::fav_sticker_icon_width,
                     RowsItemsParams::fav_sticker_icon_height));
