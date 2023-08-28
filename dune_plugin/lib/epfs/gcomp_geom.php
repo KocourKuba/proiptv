@@ -12,10 +12,10 @@ class GComp_Geom
         return $arr;
     }
 
-    public static function align($x=0, $y=0,
-        $use_base_width=null, $use_base_height=null,
-        $halign=null, $valign=null, $base_halign=null, $base_valign=null,
-        $base_to_prev=false, $base_id=null)
+    public static function align($x = 0, $y = 0,
+        $use_base_width = null, $use_base_height = null,
+        $halign = null, $valign = null, $base_halign = null, $base_valign = null,
+        $base_to_prev = false, $base_id = null)
     {
         $arr = array();
         if ($x)

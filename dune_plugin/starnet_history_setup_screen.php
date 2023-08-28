@@ -64,7 +64,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
         //////////////////////////////////////
         // history
 
-        $history_path = $this->get_history_path($plugin_cookies);
+        $history_path = $this->get_history_path();
         hd_print(__METHOD__ . ": history path: $history_path");
         $display_path = HD::string_ellipsis($history_path);
 
@@ -121,38 +121,38 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::make(array('filepath' => get_data_path()));
                 hd_print(__METHOD__ . ": do set history folder to default: $data->filepath");
-                smb_tree::set_folder_info($plugin_cookies, $data, PARAM_HISTORY_PATH);
+                $this->set_history_path(get_data_path());
                 return $action_reload;
 
             case self::SETUP_ACTION_COPY_TO_DATA:
-                $history_path = $this->get_history_path($plugin_cookies);
+                $history_path = $this->get_history_path();
                 hd_print(__METHOD__ . ": copy to: $history_path");
-                if (!self::CopyData(get_data_path(TV_HISTORY_ITEMS), $history_path)) {
+                if (!self::CopyData(get_data_path("*" . TV_HISTORY_ITEMS), $history_path)) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
 
             case self::SETUP_ACTION_COPY_TO_PLUGIN:
-                $history_path = $this->get_history_path($plugin_cookies);
+                $history_path = $this->get_history_path();
                 hd_print(__METHOD__ . ": copy to: " . get_data_path());
-                if (!self::CopyData($history_path . TV_HISTORY_ITEMS, get_data_path())) {
+                if (!self::CopyData($history_path . "*" . TV_HISTORY_ITEMS, get_data_path())) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
 
             case self::SETUP_ACTION_TV_HISTORY_CLEAR:
-                $history_path = $this->get_history_path($plugin_cookies);
-                hd_print(__METHOD__ . ": do clear TV history in $history_path");
-                Playback_Points::clear($history_path);
+                hd_print(__METHOD__ . ": do clear TV history");
+                $this->plugin->playback_points->clear_points();
 
                 return Action_Factory::show_title_dialog(TR::t('setup_history_cleared'), $action_reload);
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 hd_print(__METHOD__ . ": " . ACTION_FOLDER_SELECTED . " $data->filepath");
-                smb_tree::set_folder_info($plugin_cookies, $data, PARAM_HISTORY_PATH);
+                $this->set_history_path($data->filepath);
+
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
@@ -165,9 +165,22 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
     }
 
-    private function get_history_path($plugin_cookies)
+    private function get_history_path()
     {
-        return smb_tree::get_folder_info($plugin_cookies, PARAM_HISTORY_PATH);
+        $path = $this->plugin->get_parameters(PARAM_HISTORY_PATH, get_data_path());
+        if (substr($path, -1) !== '/') {
+            $path .= '/';
+        }
+
+        return $path;
+    }
+
+    private function set_history_path($path)
+    {
+        if (substr($path, -1) !== '/') {
+            $path .= '/';
+        }
+        $this->plugin->set_parameters(PARAM_HISTORY_PATH, $path);
     }
 
     public static function CopyData($sourcePath, $destPath){

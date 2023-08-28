@@ -1,14 +1,10 @@
 @echo off
 setlocal
 
-del update_proiptv.tar.gz
-pushd dune_plugin
-C:\UTIL\UnixUtil\tar.exe -cf ..\update_proiptv.tar *
-popd
+set /p VERSION=<version.txt
+for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
 
-7z a update_proiptv.tar.gz update_proiptv.tar >nul
-del update_proiptv.tar
-php -f update.php
+php -f update.php %VERSION%.%BUILD%
 
 set /p CREDS=<creds.txt
 echo %CREDS%

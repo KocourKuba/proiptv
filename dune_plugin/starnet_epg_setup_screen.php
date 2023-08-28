@@ -181,7 +181,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         // clear epg cache
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear'), TR::t('clear'),
-            $remove_icon = $this->plugin->get_image_path('brush.png'), self::CONTROLS_WIDTH);
+            $this->plugin->get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg font size

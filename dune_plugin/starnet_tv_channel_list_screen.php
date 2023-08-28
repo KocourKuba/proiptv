@@ -199,6 +199,17 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $group->get_items_order()->sort_order();
                 return $this->update_current_folder($user_input, $parent_group_id);
 
+            case ACTION_ITEMS_EDIT:
+                $media_url_str = MediaURL::encode(
+                    array(
+                        'screen_id' => Starnet_Edit_List_Screen::ID,
+                        'source_window_id' => self::ID,
+                        'end_action' => ACTION_RELOAD,
+                        'windowCounter' => 1,
+                    )
+                );
+                return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_edit_hidden_channels'));
+
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
 
@@ -217,6 +228,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                     $menu_items[] = array(GuiMenuItemDef::is_separator => true,);
                 }
+
+                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
+                    ACTION_ITEMS_EDIT,
+                    TR::t('tv_screen_edit_hidden_channels'),
+                    $this->plugin->get_image_path('edit.png')
+                );
 
                 if (is_android() && !is_apk()) {
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
@@ -278,6 +295,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
                 break;
+
+            case ACTION_RELOAD:
+                hd_print(__METHOD__ . ": reload");
+                return $this->plugin->tv->reload_channels($this, $plugin_cookies);
         }
 
         return null;

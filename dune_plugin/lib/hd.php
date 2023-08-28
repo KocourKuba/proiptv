@@ -411,10 +411,8 @@ class HD
 
     ///////////////////////////////////////////////////////////////////////
 
-    public static function send_log_to_developer($plugin_cookies, &$error = null)
+    public static function send_log_to_developer(&$error = null)
     {
-        hd_print(__METHOD__ . ": Cookies:\n" . base64_encode(gzcompress(serialize($plugin_cookies), 9)));
-
         $serial = get_serial_number();
         if (empty($serial)) {
             hd_print(__METHOD__ . ": Unable to get DUNE serial.");
@@ -467,7 +465,7 @@ class HD
 
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
-                self::http_put_document($zip_file_name, $handle, filesize($zip_file));
+                self::http_put_document(base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name, $handle, filesize($zip_file));
                 hd_print(__METHOD__ . ": Log file sent");
                 $ret = true;
             }

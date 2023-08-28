@@ -60,8 +60,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case 'do_send_log':
                 hd_print(__METHOD__ . ": do_send_log");
                 $error_msg = '';
-                $msg = HD::send_log_to_developer($plugin_cookies, $error_msg) ? TR::t('entry_log_sent') : TR::t('entry_log_not_sent') . " $error_msg";
-                return Action_Factory::show_title_dialog($msg);
+                $msg = HD::send_log_to_developer($error_msg) ? TR::t('entry_log_sent') : TR::t('entry_log_not_sent');
+                return Action_Factory::show_title_dialog($msg, null, $error_msg);
 
             case 'do_clear_epg':
                 $this->plugin->epg_man->clear_all_epg_cache($plugin_cookies);
@@ -75,7 +75,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 hd_print(__METHOD__ . ": plugin_entry $user_input->action_id");
                 clearstatcache();
-                Playback_Points::load_points(smb_tree::get_folder_info($plugin_cookies, PARAM_HISTORY_PATH));
+                $this->plugin->playback_points->load_points(true);
 
                 switch ($user_input->action_id) {
                     case 'launch':

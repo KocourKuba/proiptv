@@ -44,7 +44,8 @@ password = Passwort
 time_zone = Zeitzone
 yes_no_confirm_msg = Are you sure?
 sort_items = Sort by name
-reset_default = Zurücksetzen
+reset_default = Zurücksetzen to default
+popup_help = Popup menu for additional options
 custom = Brauch
 
 plugin_all_channels = Alle Kanäle
@@ -199,6 +200,7 @@ tv_screen_information = Information
 tv_screen_hide_channel = Hide channel
 tv_screen_hide_group = Hide category
 tv_screen_edit_hidden_group = Edit hidden group
+tv_screen_edit_hidden_channels = Edit hidden channels
 tv_screen_continue = Weitermachen
 tv_screen_continue_view = Setzen Sie die Wiedergabe fort
 tv_screen_zoom_not_set = Nicht eingestellt

@@ -13,34 +13,81 @@ require_once 'lib/dune_stb_api.php';
 class Playback_Points
 {
     /**
-     * @var Playback_Points
-     */
-    private static $instance;
-
-    /**
      * @var string
      */
     private $curr_point_id;
 
     /**
-     * @var MediaURL[]|mixed
+     * @var array
      */
     private $points;
 
+    /**
+     * @var Default_Dune_Plugin
+     */
+    private $plugin;
+
     ///////////////////////////////////////////////////////////////////////////
+
+    public function __construct($plugin)
+    {
+        $this->plugin = $plugin;
+    }
+
+    /**
+     * @return array
+     */
+    public function get_all()
+    {
+        return $this->points;
+    }
+
+    /**
+     * @param bool $force
+     * @return void
+     */
+    public function load_points($force = false)
+    {
+        if (!isset($this->points) || $force) {
+            $path = $this->get_playback_points_file();
+            if (empty($path)) {
+                return;
+            }
+
+            $this->points = HD::get_items($path);
+            //hd_print(__METHOD__ . ": " . count($points) . " from: $storage");
+            while (count($this->points) > 7) {
+                array_pop($this->points);
+            }
+        }
+    }
+
+    /**
+     * @return void
+     */
+    public function save()
+    {
+        $path = $this->get_playback_points_file();
+        if (empty($path)) {
+            return;
+        }
+
+        hd_print(__METHOD__ . ": " . count($this->points) . " to: $path");
+        HD::put_items($path, $this->points);
+    }
 
     /**
      * @param string|null $id
      */
-    private function update_point($id)
+    public function update_point($id)
     {
-        //hd_print("Playback_Points::update_point");
+        //hd_print(__METHOD__);
 
         if ($this->curr_point_id === null && $id === null)
             return;
 
         // update point for selected channel
-        $id = ($id === null) ? $id : $this->curr_point_id;
+        $id = ($id !== null) ? $id : $this->curr_point_id;
 
         if (isset($this->points[$id])) {
             $player_state = get_player_state_assoc();
@@ -49,7 +96,7 @@ class Playback_Points
 
                 // if channel does support archive do not update current point
                 $this->points[$id] += ($this->points[$id] !== 0) ? $player_state['playback_position'] : 0;
-                //hd_print("Playback_Points::update_point channel_id $id at time mark: {$this->points[$id]}");
+                //hd_print(__METHOD__ . ": channel_id $id at time mark: {$this->points[$id]}");
             }
         }
     }
@@ -58,7 +105,7 @@ class Playback_Points
      * @param string $channel_id
      * @param integer $archive_ts
      */
-    private function push_point($channel_id, $archive_ts)
+    public function push_point($channel_id, $archive_ts)
     {
         $player_state = get_player_state_assoc();
         if (isset($player_state['player_state']) && $player_state['player_state'] !== 'navigator') {
@@ -74,115 +121,43 @@ class Playback_Points
                 if (count($this->points) > 7) {
                     array_pop($this->points);
                 }
+                $this->save();
             }
         }
     }
 
     /**
+     * @param string $id
      */
-    private function save_points($path)
+    public function erase_point($id)
     {
-        if (!is_dir($path)) {
-            hd_print(__METHOD__ . ": save path not exist: $path");
-            return;
-        }
-
-        $storage = $path . TV_HISTORY_ITEMS;
-        hd_print(__METHOD__ . ": " . count($this->points) . " to: $storage");
-        HD::put_items($storage, $this->points);
+        hd_print(__METHOD__ . ": erase $id");
+        unset($this->points[$id]);
+        $this->save();
     }
 
     /**
-     * @param string $path
-     * @param string $id
+     * @return void
      */
-    private function erase_point($path, $id)
+    public function clear_points()
     {
-        hd_print(__METHOD__ . ": erase " . ($id !== null ? $id : "all"));
-        $path .= TV_HISTORY_ITEMS;
-        if ($id === null) {
-            $this->points = array();
-            HD::erase_items($path);
-        } else {
-            unset($this->points[$id]);
-            HD::put_items($path, $this->points);
-        }
+        hd_print(__METHOD__);
+        $this->points = array();
+        $this->save();
     }
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * @return void
+     * @return string
      */
-    public static function init()
+    private function get_playback_points_file()
     {
-        if (is_null(self::$instance)) {
-            self::$instance = new self();
-        }
-    }
-
-    /**
-     * @return void
-     */
-    public static function load_points($path, $force = false)
-    {
-        if (is_null(self::$instance)) {
-            self::init();
+        $path = $this->plugin->get_parameters(PARAM_HISTORY_PATH, get_data_path());
+        if (!is_dir($path)) {
+            hd_print(__METHOD__ . ": load path not exist: $path");
+            return '';
         }
 
-        if (!isset(self::$instance->points) || $force) {
-            if (!is_dir($path)) {
-                hd_print(__METHOD__ . ": load path not exist: $path");
-                return;
-            }
-
-            $storage = $path . TV_HISTORY_ITEMS;
-            $points = HD::get_items($storage);
-            //hd_print(__METHOD__ . ": " . count($points) . " from: $storage");
-            while (count($points) > 7) {
-                array_pop($points);
-            }
-
-            self::$instance->points = $points;
-        }
-    }
-
-    /**
-     * @return void
-     */
-    public static function clear($path, $id = null)
-    {
-        self::$instance->erase_point($path, $id);
-    }
-
-    /**
-     * @return void
-     */
-    public static function update($id = null)
-    {
-        self::$instance->update_point($id);
-    }
-
-    /**
-     * @param $channel_id
-     * @param $archive_ts
-     */
-    public static function push($channel_id, $archive_ts)
-    {
-        self::$instance->push_point($channel_id, $archive_ts);
-    }
-
-    /**
-     */
-    public static function save($path)
-    {
-        self::$instance->save_points($path);
-    }
-
-    /**
-     * @return MediaURL[]|mixed
-     */
-    public static function get_all()
-    {
-        return self::$instance->points;
+        return $path . $this->plugin->get_playlist_hash() . TV_HISTORY_ITEMS;
     }
 }

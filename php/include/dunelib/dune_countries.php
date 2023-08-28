@@ -1,4 +1,6 @@
-<?php
+<?php /** @noinspection ALL */
+
+/** @noinspection PropertyInitializationFlawsInspection */
 
 class DuneCountries
 {

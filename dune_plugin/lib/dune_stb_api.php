@@ -209,7 +209,7 @@ class KnownCatchupSourceTags
     const cu_archive     = 'archive'; // ?archive=startUnix&archive_end=toUnix
     const cu_timeshift   = 'timeshift'; // timeshift=startUnix&timenow=nowUnix
     const cu_flussonic   = 'flussonic';
-    const cu_xstreamcode = 'xs'; // xtream codes
+    const cu_xstreamcode = 'xs'; // xstream codes
 
     public static $catchup_tags = array(
         self::cu_default => array('default'),

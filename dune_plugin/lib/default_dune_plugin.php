@@ -51,21 +51,6 @@ class Default_Dune_Plugin implements DunePlugin
     public $epg_man;
 
     /**
-     * @var string
-     */
-    protected $last_error;
-
-    /**
-     * @var array
-     */
-    private $settings;
-
-    /**
-     * @var array
-     */
-    private $parameters;
-
-    /**
      * @var Starnet_Tv
      */
     public $tv;
@@ -131,6 +116,11 @@ class Default_Dune_Plugin implements DunePlugin
     public $tv_history_screen;
 
     /**
+     * @var Playback_Points
+     */
+    public $playback_points;
+
+    /**
      * @var array|Screen[]
      */
     private $screens;
@@ -144,6 +134,21 @@ class Default_Dune_Plugin implements DunePlugin
      * @var int
      */
     private $playlist_idx = -1;
+
+    /**
+     * @var string
+     */
+    protected $last_error;
+
+    /**
+     * @var array
+     */
+    private $settings;
+
+    /**
+     * @var array
+     */
+    private $parameters;
 
     ///////////////////////////////////////////////////////////////////////
 

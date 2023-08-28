@@ -13,7 +13,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
     ///////////////////////////////////////////////////////////////////////////
 
-    private $remove_playback_point;
     private $removed_playback_point;
     private $clear_playback_points = false;
 
@@ -464,7 +463,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         switch ($control_id) {
             case GUI_EVENT_TIMER:
                 // rising after playback end + 100 ms
-                Playback_Points::update();
+                $this->plugin->playback_points->update_point(null);
                 Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return Starnet_Epfs_Handler::invalidate_folders();
 
@@ -584,6 +583,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_ITEMS_CLEAR_PLAYBACK_POINTS:
                 if ($media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
+                    $this->plugin->playback_points->clear_points();
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                     return Starnet_Epfs_Handler::invalidate_folders();
                 }
@@ -664,7 +664,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
 
         if ($this->clear_playback_points) {
-            Playback_Points::clear(smb_tree::get_folder_info($plugin_cookies, PARAM_HISTORY_PATH));
             $this->clear_playback_points = false;
             return null;
         }
@@ -673,7 +672,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $now = time();
         $rows = array();
         $watched = array();
-        foreach (Playback_Points::get_all() as $channel_id => $channel_ts) {
+        foreach ($this->plugin->playback_points->get_all() as $channel_id => $channel_ts) {
             if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
 
             $prog_info = $this->plugin->tv->get_program_info($channel_id, $channel_ts, $plugin_cookies);
@@ -711,9 +710,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (isset($this->removed_playback_point))
                     if ($this->removed_playback_point === $id) {
                         $this->removed_playback_point = null;
-                        Playback_Points::clear(
-                            smb_tree::get_folder_info($plugin_cookies, PARAM_HISTORY_PATH),
-                            $item['channel_id']);
+                        $this->plugin->playback_points->erase_point($item['channel_id']);
                         continue;
                     }
 

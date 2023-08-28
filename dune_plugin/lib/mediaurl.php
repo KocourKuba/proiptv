@@ -13,6 +13,14 @@
  * @property mixed|null $end_action
  * @property mixed|null $extension
  * @property mixed|null $caption
+ * @property mixed|null $nfs_protocol
+ * @property mixed|null $is_favorite
+ * @property int|mixed|null $archive_tm
+ * @property mixed|null $err
+ * @property mixed|null $ip_path
+ * @property mixed|null $no_internet
+ * @property mixed|null $user
+ * @property mixed|null $password
  */
 class MediaURL
 {
