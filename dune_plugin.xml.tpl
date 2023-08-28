@@ -4,8 +4,8 @@
     <caption>ProIPTV</caption>
     <icon_url>plugin_file://icons/default_logo.png</icon_url>
     <background>plugin_file://icons/default_bg.png</background>
-    <version>0.55.14</version>
-    <version_index>2308281647</version_index>
+    <version>0.55.15</version>
+    <version_index>2308281717</version_index>
     <release_date>2023.08.28</release_date>
     <global_actions>
         <boot_end>
