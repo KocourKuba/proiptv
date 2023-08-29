@@ -72,8 +72,12 @@ class Playback_Points
             return;
         }
 
-        hd_print(__METHOD__ . ": " . count($this->points) . " to: $path");
-        HD::put_items($path, $this->points);
+        if (count($this->points) !== 0) {
+            hd_print(__METHOD__ . ": " . count($this->points) . " to: $path");
+            HD::put_items($path, $this->points);
+        } else if (file_exists($path)) {
+            unlink($path);
+        }
     }
 
     /**

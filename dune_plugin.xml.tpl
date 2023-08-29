@@ -4,9 +4,9 @@
     <caption>ProIPTV</caption>
     <icon_url>plugin_file://icons/default_logo.png</icon_url>
     <background>plugin_file://icons/default_bg.png</background>
-    <version>0.55.15</version>
-    <version_index>2308281717</version_index>
-    <release_date>2023.08.28</release_date>
+    <version>0.0.0</version>
+    <version_index>0</version_index>
+    <release_date>2023.08.01</release_date>
     <global_actions>
         <boot_end>
             <type>plugin_system</type>
@@ -14,6 +14,14 @@
                 <run_string>bin/update_suppliers.sh</run_string>
             </data>
         </boot_end>
+        <uninstall>
+            <type>plugin_handle_user_input</type>
+            <params>
+                <handler_id>entry_handler</handler_id>
+                <control_id>plugin_entry</control_id>
+                <action_id>uninstall</action_id>
+            </params>
+        </uninstall>
     </global_actions>
     <params>
         <program>starnet.php</program>

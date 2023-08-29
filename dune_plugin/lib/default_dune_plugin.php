@@ -460,6 +460,26 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * remove all settings and clear cache when uninstall plugin
+     */
+    public function uninstall_plugin()
+    {
+        $this->epg_man->clear_all_epg_cache();
+
+        if ($this->get_parameters(PARAM_HISTORY_PATH) === get_data_path()) {
+            $this->playback_points->clear_points();
+        }
+
+        foreach (array_keys($this->settings) as $hash) {
+            unset($this->settings[$hash]);
+            hd_print(__METHOD__ . ": remove $hash.settings");
+            HD::erase_data_items("$hash.settings");
+        }
+
+        HD::erase_data_items(PLUGIN_PARAMS);
+    }
+
+    /**
      * Get plugin parameters
      * Parameters does not depend on playlists and used globally
      *
