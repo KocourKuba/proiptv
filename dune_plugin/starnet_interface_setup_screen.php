@@ -13,6 +13,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     const SETUP_ACTION_SHOW_FAVORITES = 'show_favorites';
     const SETUP_ACTION_SHOW_HISTORY = 'show_history';
     const SETUP_ACTION_ASK_EXIT = 'ask_exit';
+    const SETUP_ACTION_EPG_FONT_SIZE = 'epg_font_size';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -114,6 +115,16 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             self::SETUP_ACTION_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
             $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
 
+        //////////////////////////////////////
+        // epg font size
+        $font_size = $this->plugin->get_settings(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+        $font_ops_translated[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
+        $font_ops_translated[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
+
+        Control_Factory::add_image_button($defs, $this, null,
+            self::SETUP_ACTION_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
+
         return $defs;
     }
 
@@ -156,6 +167,10 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case self::SETUP_ACTION_SHOW_HISTORY:
                 self::toggle_param($plugin_cookies, $control_id);
                 return $this->plugin->tv->reload_channels($this, $plugin_cookies);
+
+            case self::SETUP_ACTION_EPG_FONT_SIZE:
+                $this->plugin->toggle_setting(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

@@ -14,7 +14,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const SETUP_ACTION_CHANGE_XMLTV_CACHE_PATH = 'xmltv_cache_path';
     const SETUP_ACTION_EPG_CACHE_TTL = 'epg_cache_ttl';
     const SETUP_ACTION_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
-    const SETUP_ACTION_EPG_FONT_SIZE = 'epg_font_size';
     const SETUP_ACTION_EPG_SHIFT = 'epg_shift';
     const SETUP_ACTION_EPG_PARSE_ALL = 'epg_parse_all';
     const SETUP_ACTION_EPG_URL_PATH = 'epg_url_path';
@@ -153,16 +152,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             $this->plugin->get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // epg font size
-        $font_size = $this->plugin->get_settings(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
-        $font_ops_translated[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
-        $font_ops_translated[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
-
-        Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
         // epg time shift
         /*
         $show_epg_shift_ops = array();
@@ -242,10 +231,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case self::SETUP_ACTION_EPG_SHIFT:
                 $this->plugin->set_settings(PARAM_EPG_SHIFT, $user_input->{$control_id});
-                break;
-
-            case self::SETUP_ACTION_EPG_FONT_SIZE:
-                $this->plugin->toggle_setting(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
                 break;
 
             case self::SETUP_ACTION_EPG_PARSE_ALL:
