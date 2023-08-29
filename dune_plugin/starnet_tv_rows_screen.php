@@ -375,7 +375,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             PaneParams::vod_width, PaneParams::vod_height
         );
 
-        $icon_width = $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? RowsItemsParams::icon_width_sq : RowsItemsParams::icon_width;
+        $square_icons = ($this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $icon_width = $square_icons ? RowsItemsParams::icon_width_sq : RowsItemsParams::icon_width;
         $icon_prop = $icon_width / RowsItemsParams::icon_height;
 
         $def_params = Rows_Factory::variable_params(
@@ -917,7 +918,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $rows = array();
         $items = array();
         $fav_stickers = null;
-        $row_item_width = $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? RowsItemsParams::width_sq : RowsItemsParams::width;
+        $square_icons = ($this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $row_item_width = $square_icons ? RowsItemsParams::width_sq : RowsItemsParams::width;
 
         Rows_Factory::add_regular_sticker_rect(
             $fav_stickers,
@@ -978,8 +980,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
 
         $rows = array();
-        $row_item_width = $this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on
-            ? RowsItemsParams::width_sq : RowsItemsParams::width;
+        $square_icons = ($this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $row_item_width = $square_icons ? RowsItemsParams::width_sq : RowsItemsParams::width;
 
         /** @var Default_Group $group */
         /** @var Channel $channel */

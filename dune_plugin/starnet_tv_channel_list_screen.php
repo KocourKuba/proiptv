@@ -368,6 +368,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_folder_views()
     {
+        $square_icons = ($this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $background = $this->plugin->plugin_info['app_background'];
+
         return array(
             // 4x3 with title
             array
@@ -378,7 +381,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 (
                     ViewParams::num_cols => 4,
                     ViewParams::num_rows => 3,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::paint_details => false,
                     ViewParams::paint_sandwich => true,
@@ -419,7 +422,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 (
                     ViewParams::num_cols => 3,
                     ViewParams::num_rows => 3,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::paint_details => false,
                     ViewParams::paint_sandwich => true,
@@ -460,7 +463,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 (
                     ViewParams::num_cols => 4,
                     ViewParams::num_rows => 4,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::paint_details => false,
                     ViewParams::paint_sandwich => true,
@@ -501,7 +504,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 (
                     ViewParams::num_cols => 5,
                     ViewParams::num_rows => 4,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::paint_details => false,
                     ViewParams::paint_sandwich => true,
@@ -542,7 +545,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 (
                     ViewParams::num_cols => 2,
                     ViewParams::num_rows => 10,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::paint_details => true,
                 ),
@@ -554,8 +557,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     ViewItemParams::icon_valign => VALIGN_CENTER,
                     ViewItemParams::icon_dx => 10,
                     ViewItemParams::icon_dy => -5,
-                    ViewItemParams::icon_width => $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? 60 : 84,
-                    ViewItemParams::icon_height => $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? 60 : 48,
+                    ViewItemParams::icon_width => $square_icons ? 60 : 84,
+                    ViewItemParams::icon_height => $square_icons ? 60 : 48,
                     ViewItemParams::item_caption_width => 485,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_SMALL,
                     ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
@@ -589,10 +592,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     ViewParams::paint_help_line => true,
                     ViewItemParams::icon_dx => 10,
                     ViewItemParams::icon_dy => -5,
-                    ViewItemParams::icon_width => $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? 60 : 84,
-                    ViewItemParams::icon_height => $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? 60 : 48,
+                    ViewItemParams::icon_width => $square_icons ? 60 : 84,
+                    ViewItemParams::icon_height => $square_icons ? 60 : 48,
                     ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
-                    ViewParams::background_path=> $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_path=> $background,
                     ViewParams::background_order => 0,
                     ViewParams::item_detailed_info_text_color => 11,
                     ViewParams::item_detailed_info_auto_line_break => true,
