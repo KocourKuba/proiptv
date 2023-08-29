@@ -1,11 +1,11 @@
 /.idea
 /*.zip
 /*.log
+/*.tar
 /*.gz
 /*.m3u
 /*.m3u8
+/*.xml
 /*.xmltv
-/update_proiptv.xml
 /creds.txt
-/update_proiptv.tar
 /dune_plugin/dune_plugin.xml

@@ -1,10 +1,10 @@
 @echo off
 setlocal
 
-set /p VERSION=<version.txt
+set /p VERSION=<build\version.txt
 for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
 
-php -f update.php %VERSION% %BUILD%
+php -f build\update.php %VERSION% %BUILD%
 
 pushd dune_plugin
 7z a ..\dune_plugin_proiptv.zip >nul
@@ -16,6 +16,10 @@ echo.
 
 choice /T 5 /D N /M "Upload"
 if ERRORLEVEL 2 goto :EOF
+
+echo copy to Dropbox
+copy /Y dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
+echo.
 
 set /p CREDS=<creds.txt
 echo %CREDS%
