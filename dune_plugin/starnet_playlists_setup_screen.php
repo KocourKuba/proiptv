@@ -164,7 +164,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case self::SETUP_ACTION_USER_CATCHUP:
                 $this->plugin->set_settings(PARAM_USER_CATCHUP, $new_value);
-                break;
+                $this->plugin->tv->unload_channels();
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::SETUP_ACTION_SQUARE_ICONS:
                 $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
