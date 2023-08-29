@@ -310,9 +310,10 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $this->plugin->update_xmltv_source();
 
         $user_catchup = $this->plugin->get_settings(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
-        if (empty($global_catchup_source) && $user_catchup !== KnownCatchupSourceTags::cu_unknown) {
-            $global_catchup_source = $user_catchup;
+        if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
+            $global_catchup = $user_catchup;
         }
+
         // All channels category
         $this->special_groups->put(new All_Channels_Group());
 
