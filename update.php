@@ -48,8 +48,8 @@ $packed_plugin = 'dune_plugin_proiptv.zip';
 $update_tar = 'update_proiptv.tar';
 $update_file = 'update_proiptv.tar.gz';
 $release_date = date('Y.m.d');
-$version = $argv[1];
-$version_index = date('YmdH');
+$version = $argv[1].$argv[2];
+$version_index = $argv[2];
 
 $xml = file_get_contents("$plugin_info.tpl");
 $xml = preg_replace("|<version>(.*)</version>|", "<version>$version</version>", $xml);
