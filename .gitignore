@@ -2,6 +2,9 @@
 /*.zip
 /*.log
 /*.gz
+/*.m3u
+/*.m3u8
+/*.xmltv
 /update_proiptv.xml
 /creds.txt
 /update_proiptv.tar
