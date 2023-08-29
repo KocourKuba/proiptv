@@ -60,6 +60,8 @@ class Epg_Manager
     public function init_cache_dir()
     {
         $this->cache_dir = smb_tree::get_folder_info($this->plugin->get_parameters(PARAM_XMLTV_CACHE_PATH), get_data_path("epg_cache/"));
+        get_paved_path($this->cache_dir);
+        hd_print(__METHOD__ . ": cache dir: $this->cache_dir");
     }
 
     /**
@@ -197,7 +199,7 @@ class Epg_Manager
             }
 
             hd_print(__METHOD__ . ": Storage space in cache dir: " . HD::get_storage_size(dirname($cached_xmltv_file)));
-            $tmp_filename = $cached_xmltv_file . 'tmp';
+            $tmp_filename = $cached_xmltv_file . '.tmp';
             $last_mod_file = HD::http_save_document($this->xmltv_url, $tmp_filename);
             hd_print(__METHOD__ . ": Last changed time on server: " . date("Y-m-d H:s", $last_mod_file));
 
