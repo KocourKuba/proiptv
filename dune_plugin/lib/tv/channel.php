@@ -69,15 +69,9 @@ interface Channel
     public function set_disabled($disabled);
     /**
      * primary EPG source
-     * @return string
+     * @return array
      */
-    public function get_epg_id();
-
-    /**
-     * secondary EPG source
-     * @return string
-     */
-    public function get_tvg_id();
+    public function get_epg_ids();
 
     /**
      * @return int

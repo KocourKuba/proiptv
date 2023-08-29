@@ -49,7 +49,7 @@ $update_tar = 'update_proiptv.tar';
 $update_file = 'update_proiptv.tar.gz';
 $release_date = date('Y.m.d');
 $version = $argv[1];
-$version_index = date('ymdHi');
+$version_index = date('YmdH');
 
 $xml = file_get_contents("$plugin_info.tpl");
 $xml = preg_replace("|<version>(.*)</version>|", "<version>$version</version>", $xml);

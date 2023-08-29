@@ -394,7 +394,11 @@ class Starnet_Tv implements Tv, User_Input_Handler
                     $icon_url = $icon_url_base . $icon_url;
                 }
 
-                $epg_id = $entry->getAnyAttribute(self::$tvg_id);
+                $epg_ids = $entry->getAllAttributes(self::$tvg_id);
+                if (empty($epg_ids)) {
+                    $epg_ids[] = $channel_name;
+                }
+                $epg_ids = array_unique($epg_ids);
 
                 $used_tag = '';
                 $archive = (int)$entry->getAnyAttribute(self::$tvg_archive, $used_tag);
@@ -452,15 +456,13 @@ class Starnet_Tv implements Tv, User_Input_Handler
 
                 $channel = new Default_Channel(
                     $channel_id,
-                    $channel_id,
-                    $entry->getTitle(),
+                    $channel_name,
                     $icon_url,
                     $entry->getPath(),
                     $archive_url,
                     $archive,
                     $number,
-                    $epg_id,
-                    $channel_name,
+                    $epg_ids,
                     $protected,
                     (int)$entry->getAttribute('tvg-shift')
                 );
@@ -474,8 +476,9 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 //hd_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));
                 $this->channels->put($channel);
 
-                $epg_ids[$epg_id] = '';
-                $epg_ids[$channel_name] = '';
+                foreach ($epg_ids as $epg_id) {
+                    $epg_ids[$epg_id] = '';
+                }
 
                 // Link group and channel.
                 $channel->add_group($parent_group);

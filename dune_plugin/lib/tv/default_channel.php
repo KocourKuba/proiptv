@@ -11,11 +11,6 @@ class Default_Channel implements Channel
     /**
      * @var string
      */
-    protected $_channel_id;
-
-    /**
-     * @var string
-     */
     protected $_title;
 
     /**
@@ -64,14 +59,9 @@ class Default_Channel implements Channel
     protected $_disabled;
 
     /**
-     * @var string first epg
+     * @var array first epg
      */
-    protected $_epg_id;
-
-    /**
-     * @var string secondary epg
-     */
-    protected $_tvg_id;
+    protected $_epg_ids;
 
     /**
      * @var int
@@ -85,25 +75,22 @@ class Default_Channel implements Channel
 
     /**
      * @param string $id
-     * @param string $channel_id
      * @param string $title
      * @param string $icon_url
      * @param string $streaming_url
      * @param string $archive_url
      * @param int $archive
      * @param int $number
-     * @param string $epg_id
-     * @param string $tvg_id
+     * @param array $epg_ids
      * @param bool $protected
      * @param int $timeshift_hours
      */
-    public function __construct($id, $channel_id, $title, $icon_url,
+    public function __construct($id, $title, $icon_url,
                                 $streaming_url, $archive_url,
-                                $archive, $number, $epg_id, $tvg_id,
+                                $archive, $number, $epg_ids,
                                 $protected, $timeshift_hours)
     {
         $this->_id = $id;
-        $this->_channel_id = $channel_id;
         $this->_title = $title;
         $this->_icon_url = $icon_url;
         $this->_streaming_url = $streaming_url;
@@ -111,8 +98,7 @@ class Default_Channel implements Channel
         $this->_groups = array();
         $this->_archive = ($archive > 0) ? $archive : 0;
         $this->_number = $number;
-        $this->_epg_id = $epg_id;
-        $this->_tvg_id = $tvg_id;
+        $this->_epg_ids = $epg_ids;
         $this->_protected = $protected;
         $this->_timeshift_hours = $timeshift_hours;
         $this->_disabled = false;
@@ -126,15 +112,6 @@ class Default_Channel implements Channel
     public function get_id()
     {
         return $this->_id;
-    }
-
-    /**
-     * get channel id
-     * @return string
-     */
-    public function get_channel_id()
-    {
-        return $this->_channel_id;
     }
 
     /**
@@ -235,21 +212,12 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get EPG id (secondary)
-     * @return string
+     * get EPG id
+     * @return array
      */
-    public function get_tvg_id()
+    public function get_epg_ids()
     {
-        return $this->_tvg_id;
-    }
-
-    /**
-     * get EPG id (primary)
-     * @return string
-     */
-    public function get_epg_id()
-    {
-        return $this->_epg_id;
+        return $this->_epg_ids;
     }
 
     /**
