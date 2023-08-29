@@ -667,7 +667,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
      */
     public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
     {
-        $epg_font_size = isset($plugin_cookies->epg_font_size) ? $plugin_cookies->epg_font_size : SetupControlSwitchDefs::switch_normal;
+        $font_size = $this->plugin->get_parameters(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
         $show_all = (!isset($plugin_cookies->{Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL})
                 || $plugin_cookies->{Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL} === SetupControlSwitchDefs::switch_on);
         //$t = microtime(1);
@@ -775,7 +775,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
 
             PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
 
-            PluginTvInfo::epg_font_size => $epg_font_size,
+            PluginTvInfo::epg_font_size => $font_size,
 
             PluginTvInfo::actions => $this->get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(1000),

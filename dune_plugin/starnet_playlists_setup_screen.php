@@ -15,18 +15,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
     ///////////////////////////////////////////////////////////////////////
 
-    private static $on_off_ops = array
-    (
-        SetupControlSwitchDefs::switch_on => '%tr%yes',
-        SetupControlSwitchDefs::switch_off => '%tr%no',
-    );
-
-    private static $on_off_img = array
-    (
-        SetupControlSwitchDefs::switch_on => 'on.png',
-        SetupControlSwitchDefs::switch_off => 'off.png',
-    );
-
     /**
      * @return false|string
      */
@@ -108,8 +96,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         $square_icons = $this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_SQUARE_ICONS, TR::t('setup_channels_square_icons'), self::$on_off_ops[$square_icons],
-            $this->plugin->get_image_path(self::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_SQUARE_ICONS, TR::t('setup_channels_square_icons'), SetupControlSwitchDefs::$on_off_translated[$square_icons],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
 
         Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_RESET_PLAYLIST_DLG,
             TR::t('setup_channels_src_reset_playlist'), TR::t('clear'),
@@ -190,6 +178,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::SETUP_ACTION_RESET_PLAYLIST_APPLY);
 
             case self::SETUP_ACTION_RESET_PLAYLIST_APPLY: // handle streaming settings dialog result
+                $this->plugin->tv->unload_channels();
+                $this->plugin->epg_man->clear_epg_cache();
                 $this->plugin->remove_settings();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 

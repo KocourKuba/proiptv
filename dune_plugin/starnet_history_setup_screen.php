@@ -9,7 +9,6 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
     const ID = 'history_setup';
 
     const SETUP_ACTION_HISTORY_CHANGE_FOLDER = 'history_change_folder';
-    const SETUP_ACTION_TV_HISTORY_CLEAR = 'history_clear_tv';
     const SETUP_ACTION_COPY_TO_DATA = 'copy_to_data';
     const SETUP_ACTION_COPY_TO_PLUGIN = 'copy_to_plugin';
 
@@ -80,7 +79,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
         }
 
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_TV_HISTORY_CLEAR, TR::t('setup_tv_history_clear'), TR::t('clear'), $remove_icon, self::CONTROLS_WIDTH);
+            ACTION_ITEMS_CLEAR, TR::t('setup_tv_history_clear'), TR::t('clear'), $remove_icon, self::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -142,7 +141,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
 
-            case self::SETUP_ACTION_TV_HISTORY_CLEAR:
+            case ACTION_ITEMS_CLEAR:
                 hd_print(__METHOD__ . ": do clear TV history");
                 $this->plugin->playback_points->clear_points();
 

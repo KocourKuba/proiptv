@@ -20,12 +20,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const SETUP_ACTION_EPG_URL_PATH = 'epg_url_path';
     const SETUP_ACTION_EPG_URL_APPLY = 'epg_url_apply';
 
-    private static $on_off_img = array
-    (
-        SetupControlSwitchDefs::switch_on => 'on.png',
-        SetupControlSwitchDefs::switch_off => 'off.png',
-    );
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -121,13 +115,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 TR::t('setup_edit_xmltv_list'), TR::t('edit'), $this->plugin->get_image_path('edit.png'), self::CONTROLS_WIDTH);
         }
 
-        $source_ops[SetupControlSwitchDefs::switch_on] = '%tr%yes';
-        $source_ops[SetupControlSwitchDefs::switch_off] = '%tr%no';
-
         $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_EPG_PARSE_ALL, TR::t('setup_epg_parse_all'), $source_ops[$parse_all],
-            $this->plugin->get_image_path(self::$on_off_img[$parse_all]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_EPG_PARSE_ALL, TR::t('setup_epg_parse_all'), SetupControlSwitchDefs::$on_off_translated[$parse_all],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$parse_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG cache dir
@@ -150,7 +141,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $epg_cache_ops[5] = 5;
         $epg_cache_ops[7] = 7;
 
-        $cache_ttl = $this->plugin->get_parameters(PARAM_EPG_CACHE_TTL, 3);
+        $cache_ttl = $this->plugin->get_settings(PARAM_EPG_CACHE_TTL, 3);
         Control_Factory::add_combobox($defs, $this, null,
             self::SETUP_ACTION_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
             $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
@@ -163,13 +154,13 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // epg font size
-        $font_size = $this->plugin->get_parameters(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_normal);
-        $font_ops[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
-        $font_ops[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
+        $font_size = $this->plugin->get_settings(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+        $font_ops_translated[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
+        $font_ops_translated[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
 
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops[$font_size],
-            $this->plugin->get_image_path(self::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg time shift

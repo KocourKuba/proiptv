@@ -13,16 +13,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
     const SETUP_ACTION_BUF_TIME = 'buf_time';
     const SETUP_ACTION_DELAY_TIME = 'delay_time';
 
-    private static $on_off_ops = array(
-        SetupControlSwitchDefs::switch_on => '%tr%yes',
-        SetupControlSwitchDefs::switch_off => '%tr%no',
-    );
-
-    private static $on_off_img = array(
-        SetupControlSwitchDefs::switch_on => 'on.png',
-        SetupControlSwitchDefs::switch_off => 'off.png',
-    );
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -72,18 +62,20 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         if (!isset($plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY}))
             $plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY} = SetupControlSwitchDefs::switch_off;
 
+        $value = $plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_AUTO_PLAY, TR::t('setup_autostart'), self::$on_off_ops[$plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY}],
-            $this->plugin->get_image_path(self::$on_off_img[$plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY}]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_AUTO_PLAY, TR::t('setup_autostart'), SetupControlSwitchDefs::$on_off_translated[$value],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // auto resume
         if (!isset($plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME}))
             $plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME} = SetupControlSwitchDefs::switch_on;
 
+        $value = $plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_AUTO_RESUME, TR::t('setup_continue_play'),  self::$on_off_ops[$plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME}],
-            $this->plugin->get_image_path(self::$on_off_img[$plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME}]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_AUTO_RESUME, TR::t('setup_continue_play'),  SetupControlSwitchDefs::$on_off_translated[$value],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // buffering time

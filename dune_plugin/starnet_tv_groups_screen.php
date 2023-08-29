@@ -8,6 +8,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ID = 'tv_groups';
 
     const ACTION_CONFIRM_APPLY = 'apply_dlg';
+    const ACTION_EPG_SETTINGS = 'epg_settings';
+    const ACTION_CHANNELS_SETTINGS = 'channels_settings';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -146,10 +148,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
-            case ACTION_CHANNELS_SETTINGS:
+            case self::ACTION_CHANNELS_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::get_media_url_str(), TR::t('tv_screen_channels_setup'));
 
-            case ACTION_EPG_SETTINGS:
+            case self::ACTION_EPG_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Epg_Setup_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
             case GUI_EVENT_KEY_RETURN:
@@ -191,8 +193,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
-                $this->create_menu_item($menu_items, ACTION_CHANNELS_SETTINGS, TR::t('tv_screen_channels_setup'),"playlist.png");
-                $this->create_menu_item($menu_items,ACTION_EPG_SETTINGS, TR::t('setup_epg_settings'),"epg.png");
+                $this->create_menu_item($menu_items, self::ACTION_CHANNELS_SETTINGS, TR::t('tv_screen_channels_setup'),"playlist.png");
+                $this->create_menu_item($menu_items,self::ACTION_EPG_SETTINGS, TR::t('setup_epg_settings'),"epg.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 

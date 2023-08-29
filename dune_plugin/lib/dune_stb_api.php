@@ -66,33 +66,26 @@ const PLAYBACK_PCR_DISCONTINUITY = 'pcr_discontinuity';
 const PLAYBACK_MEDIA_OPEN_FAILED = 'media_open_failed';
 
 # Common actions
-const ACTION_ITEM_ADD = 'item_add';
-const ACTION_ITEM_UP = 'item_up';
-const ACTION_ITEM_DOWN = 'item_down';
-const ACTION_ITEM_DELETE = 'item_delete';
-const ACTION_ITEMS_CLEAR = 'items_clear';
-const ACTION_ITEMS_SORT = 'items_sort';
-const ACTION_ITEMS_EDIT = 'items_edit';
-const ACTION_SETTINGS = 'settings';
-const ACTION_EPG_SETTINGS = 'epg_settings';
-const ACTION_CHANNELS_SETTINGS = 'channels_settings';
 const ACTION_ADD_FAV = 'add_favorite';
-const ACTION_JUMP_TO_CHANNEL = 'jump_to_channel';
-const ACTION_CREATE_SEARCH = 'create_search';
-const ACTION_NEW_SEARCH = 'new_search';
-const ACTION_RUN_SEARCH = 'run_search';
-const ACTION_RELOAD = 'reload';
-const ACTION_FOLDER_SELECTED = 'folder_selected';
 const ACTION_CHANGE_PLAYLIST = 'change_playlist';
 const ACTION_EXTERNAL_PLAYER = 'use_external_player';
+const ACTION_FOLDER_SELECTED = 'folder_selected';
+const ACTION_ITEM_ADD = 'item_add';
+const ACTION_ITEM_DELETE = 'item_delete';
+const ACTION_ITEM_DOWN = 'item_down';
+const ACTION_ITEM_REMOVE = 'item_remove';
+const ACTION_ITEM_UP = 'item_up';
+const ACTION_ITEMS_CLEAR = 'items_clear';
+const ACTION_ITEMS_EDIT = 'items_edit';
+const ACTION_ITEMS_SORT = 'items_sort';
 const ACTION_OPEN_FOLDER = 'open_folder';
 const ACTION_PLAY_FOLDER = 'play_folder';
-const ACTION_ZOOM_SELECT = 'zoom_select';
-const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_REFRESH_SCREEN = 'refresh_screen';
-const ACTION_REMOVE_PLAYBACK_POINT = 'remove_playback_point';
-const ACTION_ITEMS_CLEAR_PLAYBACK_POINTS = 'clear_playback_points';
+const ACTION_RELOAD = 'reload';
 const ACTION_RESET_DEFAULT = 'reset_default';
+const ACTION_SETTINGS = 'settings';
+const ACTION_ZOOM_APPLY = 'zoom_apply';
+const ACTION_ZOOM_SELECT = 'zoom_select';
 
 # Special groups ID
 const FAV_CHANNEL_GROUP_ID = '##favorites##';
@@ -250,8 +243,18 @@ class SetupControlSwitchDefs
 {
     const switch_on  = 'yes';
     const switch_off = 'no';
-    const switch_normal  = 'normal';
-    const switch_small = 'small';
+
+    public static $on_off_translated = array
+    (
+        self::switch_on => '%tr%yes',
+        self::switch_off => '%tr%no',
+    );
+
+    public static $on_off_img = array
+    (
+        self::switch_on => 'on.png',
+        self::switch_off => 'off.png',
+    );
 }
 
 # Video zoom values for media_url string (|||dune_params|||zoom:value)

@@ -14,18 +14,6 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     const SETUP_ACTION_SHOW_HISTORY = 'show_history';
     const SETUP_ACTION_ASK_EXIT = 'ask_exit';
 
-    private static $on_off_ops = array
-    (
-        SetupControlSwitchDefs::switch_on => '%tr%yes',
-        SetupControlSwitchDefs::switch_off => '%tr%no',
-    );
-
-    private static $on_off_img = array
-    (
-        SetupControlSwitchDefs::switch_on => 'on.png',
-        SetupControlSwitchDefs::switch_off => 'off.png',
-    );
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -79,8 +67,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
             $show_tv = $plugin_cookies->{self::SETUP_ACTION_SHOW_TV};
             Control_Factory::add_image_button($defs, $this, null,
-                self::SETUP_ACTION_SHOW_TV, TR::t('setup_show_in_main'), self::$on_off_ops[$show_tv],
-                $this->plugin->get_image_path(self::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
+                self::SETUP_ACTION_SHOW_TV, TR::t('setup_show_in_main'), SetupControlSwitchDefs::$on_off_translated[$show_tv],
+                $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
         }
 
         if (!isset($plugin_cookies->{self::SETUP_ACTION_ASK_EXIT})) {
@@ -89,8 +77,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         $ask_exit = $plugin_cookies->{self::SETUP_ACTION_ASK_EXIT};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_ASK_EXIT, TR::t('setup_ask_exit'), self::$on_off_ops[$ask_exit],
-            $this->plugin->get_image_path(self::$on_off_img[$ask_exit]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_ASK_EXIT, TR::t('setup_ask_exit'), SetupControlSwitchDefs::$on_off_translated[$ask_exit],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$ask_exit]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show all channels category
@@ -100,8 +88,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         $show_all = $plugin_cookies->{self::SETUP_ACTION_SHOW_ALL};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_SHOW_ALL, TR::t('setup_show_all_channels'), self::$on_off_ops[$show_all],
-            $this->plugin->get_image_path(self::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show favorites category
@@ -111,8 +99,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         $show_fav = $plugin_cookies->{self::SETUP_ACTION_SHOW_FAVORITES};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_SHOW_FAVORITES, TR::t('setup_show_favorites'), self::$on_off_ops[$show_fav],
-            $this->plugin->get_image_path(self::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
 
 
         //////////////////////////////////////
@@ -123,8 +111,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         $show_history = $plugin_cookies->{self::SETUP_ACTION_SHOW_HISTORY};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_SHOW_HISTORY, TR::t('setup_show_history'), self::$on_off_ops[$show_history],
-            $this->plugin->get_image_path(self::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
+            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
 
         return $defs;
     }

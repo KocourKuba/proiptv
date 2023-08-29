@@ -5,6 +5,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 {
     const ID = 'tv_channel_list';
 
+    const ACTION_NEW_SEARCH = 'new_search';
+    const ACTION_CREATE_SEARCH = 'create_search';
+    const ACTION_RUN_SEARCH = 'run_search';
+    const ACTION_JUMP_TO_CHANNEL = 'jump_to_channel';
+
     /**
      * @param string $group_id
      * @return false|string
@@ -54,7 +59,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         );
 
         if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
-            $search_action = User_Input_Handler_Registry::create_action($this, ACTION_CREATE_SEARCH, TR::t('search'));
+            $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
             $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
         } else {
@@ -118,19 +123,19 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
-            case ACTION_CREATE_SEARCH:
+            case self::ACTION_CREATE_SEARCH:
                 $defs = array();
-                Control_Factory::add_text_field($defs, $this, null, ACTION_NEW_SEARCH, '',
+                Control_Factory::add_text_field($defs, $this, null, self::ACTION_NEW_SEARCH, '',
                     $channel->get_title(), false, false, true, true, 1300, false, true);
                 Control_Factory::add_vgap($defs, 500);
                 return Action_Factory::show_dialog(TR::t('tv_screen_search_channel'), $defs, true, 1300);
 
-            case ACTION_NEW_SEARCH:
-                return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, ACTION_RUN_SEARCH));
+            case self::ACTION_NEW_SEARCH:
+                return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, self::ACTION_RUN_SEARCH));
 
-            case ACTION_RUN_SEARCH:
+            case self::ACTION_RUN_SEARCH:
                 $defs = array();
-                $find_text = $user_input->{ACTION_NEW_SEARCH};
+                $find_text = $user_input->{self::ACTION_NEW_SEARCH};
                 $q = false;
                 foreach ($group->get_group_channels() as $idx => $tv_channel) {
                     $ch_title = $tv_channel->get_title();
@@ -140,7 +145,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         hd_print(__METHOD__ . ": found channel: $ch_title, idx: " . $idx);
                         $add_params['number'] = $idx;
                         Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
-                            ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
+                            self::ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
                     }
                 }
 
@@ -148,12 +153,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
                     Control_Factory::add_vgap($defs, 20);
                     Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, null,
-                        ACTION_CREATE_SEARCH, '', TR::t('new_search'), 300);
+                        self::ACTION_CREATE_SEARCH, '', TR::t('new_search'), 300);
                 }
 
                 return Action_Factory::show_dialog(TR::t('search'), $defs, true);
 
-            case ACTION_JUMP_TO_CHANNEL:
+            case self::ACTION_JUMP_TO_CHANNEL:
                 $ndx = (int)$user_input->number;
                 $parent_media_url->group_id = $parent_group_id;
                 return Action_Factory::update_regular_folder(

@@ -632,7 +632,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_ITEMS_CLEAR:
-            case ACTION_ITEMS_CLEAR_PLAYBACK_POINTS:
                 if ($media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
                     $this->plugin->playback_points->clear_points();

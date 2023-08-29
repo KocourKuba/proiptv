@@ -16,24 +16,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     const SETUP_ACTION_STREAMING_SCREEN = 'streaming_screen';
     const SETUP_ACTION_HISTORY_SCREEN = 'history_screen';
 
-    private static $on_off_ops = array
-    (
-        SetupControlSwitchDefs::switch_on => '%tr%yes',
-        SetupControlSwitchDefs::switch_off => '%tr%no',
-        SetupControlSwitchDefs::switch_small => '%tr%setup_small',
-        SetupControlSwitchDefs::switch_normal => '%tr%setup_normal',
-    );
-
-    private static $on_off_img = array
-    (
-        SetupControlSwitchDefs::switch_on => 'on.png',
-        SetupControlSwitchDefs::switch_off => 'off.png',
-        SetupControlSwitchDefs::switch_small => 'on.png',
-        SetupControlSwitchDefs::switch_normal => 'off.png',
-        PARAM_EPG_SOURCE_INTERNAL => 'off.png',
-        PARAM_EPG_SOURCE_EXTERNAL => 'on.png',
-    );
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
