@@ -147,6 +147,21 @@ class Ordered_Array
     }
 
     /**
+     * @param array $ids
+     * @return void
+     */
+    public function add_items($ids)
+    {
+        foreach ($ids as $id) {
+            if (!$this->in_order($id)) {
+                $this->order[] = $id;
+            }
+        }
+
+        $this->save();
+    }
+
+    /**
      * @param string $id
      * @return bool
      */

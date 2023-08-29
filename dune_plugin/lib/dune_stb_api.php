@@ -1545,15 +1545,25 @@ function get_active_skin_path()
     return '';
 }
 
+# Returns the specified path (no trailing slash), creating directories along the way
 function get_paved_path($path, $dir_mode = 0777)
 {
-    # Returns the specified path (no trailing slash), creating directories along the way
-
-    if (!file_exists($path) && !mkdir($path, $dir_mode, true) && !is_dir($path)) {
+    if (!create_path($path, $dir_mode)) {
         hd_print(__METHOD__ . ": Directory '$path' was not created");
     }
 
     return rtrim($path, '/');
+}
+
+# creating directories along the way
+function create_path($path, $dir_mode = 0777)
+{
+    if (!file_exists($path) && !mkdir($path, $dir_mode, true) && !is_dir($path)) {
+        hd_print(__METHOD__ . ": Directory '$path' was not created");
+        return false;
+    }
+
+    return true;
 }
 
 function json_encode_unicode($data)
@@ -1652,4 +1662,34 @@ function dump_input_handler($method, $user_input)
         $decoded_value = html_entity_decode(preg_replace("/(\\\u([0-9A-Fa-f]{4}))/", "&#x\\2;", $value), ENT_NOQUOTES, 'UTF-8');
         hd_print("  $key => $decoded_value");
     }
+}
+
+/**
+ * Replace for glob (not works with non ansi symbols in path)
+ *
+ * @param $path
+ * @param $ext
+ * @param bool $exclude_dir
+ * @return array
+ */
+function glob_dir($path, $ext = null, $exclude_dir = true)
+{
+    $list = array();
+    $path = rtrim($path, '/');
+    if (is_dir($path)) {
+        $files = array_diff(scandir($path), array('.', '..'));
+        if ($ext !== null) {
+            $files = preg_grep("/\.$ext$/i", $files);
+        }
+
+        if ($files !== false) {
+            foreach ($files as $file) {
+                $full_path = "$path/$file";
+                if ($exclude_dir && !is_file($full_path)) continue;
+
+                $list[] = $full_path;
+            }
+        }
+    }
+    return $list;
 }

@@ -250,7 +250,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                         'source_window_id' => self::ID,
                         'edit_list' => Starnet_Edit_List_Screen::ACTION_EPG_LIST,
                         'end_action' => ACTION_RELOAD,
-                        'extension' => '|\.(gz|xml|zip)$|i',
+                        'extension' => 'gz|xml|zip',
                         'windowCounter' => 1,
                     )
                 );

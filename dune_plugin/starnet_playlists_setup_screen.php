@@ -156,7 +156,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                         'source_window_id' => self::ID,
                         'edit_list' => Starnet_Edit_List_Screen::ACTION_PLAYLIST,
                         'end_action' => ACTION_RELOAD,
-                        'extension' => '|\.(m3u8?)$|i',
+                        'extension' => 'm3u|m3u8',
                         'windowCounter' => 1,
                     )
                 );

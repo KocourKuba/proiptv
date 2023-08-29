@@ -145,7 +145,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $this->create_menu_item($menu_items, self::SETUP_ACTION_ADD_URL_DLG, TR::t('edit_list_internet_path'),"link.png");
                     $this->create_menu_item($menu_items, self::SETUP_ACTION_CHOOSE_FOLDER, TR::t('edit_list_folder_path'),"folder.png");
-                    $this->create_menu_item($menu_items, self::SETUP_ACTION_IMPORT_LIST, TR::t('edit_list_import_list'), "web_files.png");
+                    //$this->create_menu_item($menu_items, self::SETUP_ACTION_IMPORT_LIST, TR::t('edit_list_import_list'), "web_files.png");
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                     $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                 }
@@ -197,19 +197,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                hd_print(__METHOD__ . ": " . ACTION_FOLDER_SELECTED . " $data->filepath");
-                $files = preg_grep($parent_media_url->extension, glob("$data->filepath/*.*"));
+                //hd_print(__METHOD__ . ": " . ACTION_FOLDER_SELECTED . " $data->filepath");
+                $files = glob_dir($data->filepath, $parent_media_url->extension);
                 if (empty($files)) {
                     return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
                 }
 
                 $old_count = $order->size();
-                foreach ($files as $file) {
-                    //hd_print("file: $file");
-                    if (is_file($file) && !$order->in_order($file)) {
-                        $order->add_item($file);
-                    }
-                }
+                $order->add_items($files);
 
                 return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', $order->size() - $old_count),
                     Action_Factory::invalidate_folders(array(self::ID), Action_Factory::update_regular_folder(

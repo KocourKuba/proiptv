@@ -478,7 +478,7 @@ class HD
         }
 
         if (is_resource($handle)) {
-            fclose($handle);
+            @fclose($handle);
         }
         @unlink($zip_file);
 

@@ -60,7 +60,7 @@ class Epg_Manager
     public function init_cache_dir()
     {
         $this->cache_dir = smb_tree::get_folder_info($this->plugin->get_parameters(PARAM_XMLTV_CACHE_PATH), get_data_path("epg_cache/"));
-        get_paved_path($this->cache_dir);
+        create_path($this->cache_dir);
         hd_print(__METHOD__ . ": cache dir: $this->cache_dir");
     }
 
@@ -97,7 +97,7 @@ class Epg_Manager
         }
 
         if (!isset($this->xmltv_picons)) {
-            hd_print(__METHOD__ . "Load picons: " . $this->get_picons_index_name());
+            hd_print(__METHOD__ . ": Load picons from: " . $this->get_picons_index_name());
             $this->xmltv_picons = json_decode(file_get_contents($this->get_picons_index_name()), true);
         }
 
