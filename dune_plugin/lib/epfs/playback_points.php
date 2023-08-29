@@ -158,6 +158,6 @@ class Playback_Points
             return '';
         }
 
-        return $path . $this->plugin->get_playlist_hash() . TV_HISTORY_ITEMS;
+        return $path . $this->plugin->get_playlist_hash() . PARAM_TV_HISTORY_ITEMS;
     }
 }

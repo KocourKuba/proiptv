@@ -463,12 +463,10 @@ class smb_tree
     }
 
     /**
-     * @param $plugin_cookies
      * @param $selected_url MediaURL
-     * @param $param string
-     * @return void
+     * @return string encoded path
      */
-    public static function set_folder_info(&$plugin_cookies, $selected_url, $param)
+    public static function set_folder_info(&$selected_url)
     {
         if (!isset($selected_url->ip_path) || $selected_url->ip_path === false) {
             $save_folder['filepath'] = $selected_url->filepath;
@@ -480,26 +478,25 @@ class smb_tree
             $save_folder[$selected_url->ip_path]['password'] = isset($selected_url->password) ? $selected_url->password : false;
         }
 
-        $plugin_cookies->{$param} = json_encode($save_folder);
+        return json_encode($save_folder);
     }
 
     /**
-     * @param $plugin_cookies
-     * @param $param string
-     * @param $default string|null
-     * @return string
+     * @param string $encoded_data
+     * @param string|null $default
+     * @return string // real path with trailing '/'
      */
-    public static function get_folder_info($plugin_cookies, $param, $default = null)
+    public static function get_folder_info($encoded_data, $default = null)
     {
         if ($default === null) {
             $default = get_data_path();
         }
 
-        if (empty($plugin_cookies->{$param})) {
+        if (empty($encoded_data)) {
             return $default;
         }
 
-        $settings = json_decode($plugin_cookies->{$param}, true);
+        $settings = json_decode($encoded_data, true);
         if (isset($settings['filepath'])) {
             $select_folder = $settings['filepath'];
         } else {

@@ -204,7 +204,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $dx += 55;
             $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
-                TR::load_string(Default_Dune_Plugin::FAV_CHANNEL_GROUP_CAPTION),
+                TR::load_string(Favorites_Group::FAV_CHANNEL_GROUP_CAPTION),
                 1,
                 PaneParams::fav_btn_font_color,
                 PaneParams::fav_btn_font_size
@@ -325,9 +325,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
+        hd_print(__METHOD__);
         $rows = array();
 
-        $channels_rows = $this->get_regular_rows($plugin_cookies);
+        $channels_rows = $this->get_regular_rows();
         if (is_null($channels_rows)) {
             hd_print(__METHOD__ . ": no channels rows");
             return null;
@@ -967,18 +968,19 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @param $plugin_cookies
      * @return array|null
      */
-    private function get_regular_rows($plugin_cookies)
+    private function get_regular_rows()
     {
-        //hd_print("Starnet_Tv_Rows_Screen::get_regular_rows");
+        hd_print(__METHOD__);
         $groups = $this->plugin->tv->get_groups();
         if (is_null($groups))
             return null;
 
         $rows = array();
-        $row_item_width = $this->plugin->get_settings(PARAM_SQUARE_ICONS) ? RowsItemsParams::width_sq : RowsItemsParams::width;
+        $row_item_width = $this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on
+            ? RowsItemsParams::width_sq : RowsItemsParams::width;
+
         /** @var Default_Group $group */
         /** @var Channel $channel */
         foreach ($this->plugin->tv->get_groups_order()->get_order() as $group_id) {

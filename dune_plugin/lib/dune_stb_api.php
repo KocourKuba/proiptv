@@ -111,17 +111,20 @@ const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
-const TV_HISTORY_ITEMS = '_tv_history_items';
 const PARAM_EPG_SOURCE = 'epg_source';
 const PARAM_EPG_PARSE_ALL = 'epg_parse_all';
 const PARAM_EPG_SOURCE_INTERNAL = 'epg_internal';
 const PARAM_EPG_SOURCE_EXTERNAL = 'epg_external';
+const PARAM_EPG_CACHE_TTL = 'epg_cache_ttl';
+const PARAM_EPG_SHIFT = 'epg_shift';
+const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_IDX = 'epg_idx';
 const PARAM_XMLTV_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_CUSTOM_XMLTV_SOURCES = 'custom_xmltv_sources';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_CHANNELS_ZOOM = 'channels_zoom';
 const PARAM_USER_CATCHUP = 'user_catchup';
+const PARAM_TV_HISTORY_ITEMS = '_tv_history_items';
 
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage/';

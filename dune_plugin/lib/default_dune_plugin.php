@@ -501,6 +501,24 @@ class Default_Dune_Plugin implements DunePlugin
         HD::put_data_items(PLUGIN_PARAMS, $this->parameters, false);
     }
 
+    public function toggle_setting($param, $default)
+    {
+        $old = $this->get_settings($param, $default);
+        $new = ($old === SetupControlSwitchDefs::switch_on)
+            ? SetupControlSwitchDefs::switch_off
+            : SetupControlSwitchDefs::switch_on;
+        $this->set_settings($param, $new);
+    }
+
+    public function toggle_parameter($param, $default)
+    {
+        $old = $this->get_parameters($param, $default);
+        $new = ($old === SetupControlSwitchDefs::switch_on)
+            ? SetupControlSwitchDefs::switch_off
+            : SetupControlSwitchDefs::switch_on;
+        $this->set_parameters($param, $new);
+    }
+
     ///////////////////////////////////////////////////////////////////////
     //
     // Methods
@@ -670,6 +688,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * tell epg manager to reload xmltv source
      * @return void
      */
     public function update_xmltv_source()
@@ -686,6 +705,7 @@ class Default_Dune_Plugin implements DunePlugin
         $idx = isset($epg_idx[$source]) ? $epg_idx[$source] : 0;
         if (isset($sources[$idx])) {
             $this->epg_man->set_xmltv_url($sources[$idx]);
+            $this->epg_man->index_xmltv_channels();
         } else {
             hd_print("no xmltv source defined for this playlist");
         }

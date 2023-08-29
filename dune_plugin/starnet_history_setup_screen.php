@@ -127,7 +127,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case self::SETUP_ACTION_COPY_TO_DATA:
                 $history_path = $this->get_history_path();
                 hd_print(__METHOD__ . ": copy to: $history_path");
-                if (!self::CopyData(get_data_path("*" . TV_HISTORY_ITEMS), $history_path)) {
+                if (!self::CopyData(get_data_path("*" . PARAM_TV_HISTORY_ITEMS), $history_path)) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -136,7 +136,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case self::SETUP_ACTION_COPY_TO_PLUGIN:
                 $history_path = $this->get_history_path();
                 hd_print(__METHOD__ . ": copy to: " . get_data_path());
-                if (!self::CopyData($history_path . "*" . TV_HISTORY_ITEMS, get_data_path())) {
+                if (!self::CopyData($history_path . "*" . PARAM_TV_HISTORY_ITEMS, get_data_path())) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 

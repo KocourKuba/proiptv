@@ -20,30 +20,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const SETUP_ACTION_EPG_URL_PATH = 'epg_url_path';
     const SETUP_ACTION_EPG_URL_APPLY = 'epg_url_apply';
 
-    private static $on_off_ops = array
-    (
-        SetupControlSwitchDefs::switch_small => '%tr%setup_small',
-        SetupControlSwitchDefs::switch_normal => '%tr%setup_normal',
-        PARAM_EPG_SOURCE_INTERNAL => '%tr%setup_internal',
-        PARAM_EPG_SOURCE_EXTERNAL => '%tr%setup_external',
-    );
-
     private static $on_off_img = array
     (
-        SetupControlSwitchDefs::switch_small => 'on.png',
-        SetupControlSwitchDefs::switch_normal => 'off.png',
-    );
-
-    private static $off_on_ops = array
-    (
-        SetupControlSwitchDefs::switch_off => '%tr%no',
-        SetupControlSwitchDefs::switch_on => '%tr%yes',
-    );
-
-    private static $off_on_img = array
-    (
-        SetupControlSwitchDefs::switch_off => 'off.png',
         SetupControlSwitchDefs::switch_on => 'on.png',
+        SetupControlSwitchDefs::switch_off => 'off.png',
     );
 
     ///////////////////////////////////////////////////////////////////////
@@ -94,10 +74,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // EPG Source
-        $epg_source_ops = array();
-        $epg_source_ops[PARAM_EPG_SOURCE_INTERNAL] = self::$on_off_ops[PARAM_EPG_SOURCE_INTERNAL];
-        $epg_source_ops[PARAM_EPG_SOURCE_EXTERNAL] = self::$on_off_ops[PARAM_EPG_SOURCE_EXTERNAL];
-
+        $epg_source_ops[PARAM_EPG_SOURCE_INTERNAL] = '%tr%setup_internal';
+        $epg_source_ops[PARAM_EPG_SOURCE_EXTERNAL] = '%tr%setup_external';
         $source = $this->plugin->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_SOURCE_INTERNAL);
         Control_Factory::add_combobox($defs, $this, null,
             self::SETUP_ACTION_EPG_SOURCE, TR::t('setup_epg_type'),
@@ -143,14 +121,17 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 TR::t('setup_edit_xmltv_list'), TR::t('edit'), $this->plugin->get_image_path('edit.png'), self::CONTROLS_WIDTH);
         }
 
-        $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
+        $source_ops[SetupControlSwitchDefs::switch_on] = '%tr%yes';
+        $source_ops[SetupControlSwitchDefs::switch_off] = '%tr%no';
+
+        $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_EPG_PARSE_ALL, TR::t('setup_epg_parse_all'), self::$off_on_ops[$parse_all],
-            $this->plugin->get_image_path(self::$off_on_img[$parse_all]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_EPG_PARSE_ALL, TR::t('setup_epg_parse_all'), $source_ops[$parse_all],
+            $this->plugin->get_image_path(self::$on_off_img[$parse_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG cache dir
-        $xcache_dir = Epg_Manager::get_xcache_dir($plugin_cookies);
+        $xcache_dir = smb_tree::get_folder_info($this->plugin->get_parameters(PARAM_XMLTV_CACHE_PATH), get_data_path("epg_cache/"));
         $free_size = TR::t('setup_storage_info__1', HD::get_storage_size(dirname($xcache_dir)));
         $xcache_dir = HD::string_ellipsis($xcache_dir);
         if (is_apk()) {
@@ -169,13 +150,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $epg_cache_ops[5] = 5;
         $epg_cache_ops[7] = 7;
 
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_EPG_CACHE_TTL})) {
-            $plugin_cookies->{self::SETUP_ACTION_EPG_CACHE_TTL} = 3;
-        }
-
+        $cache_ttl = $this->plugin->get_parameters(PARAM_EPG_CACHE_TTL, 3);
         Control_Factory::add_combobox($defs, $this, null,
             self::SETUP_ACTION_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
-            $plugin_cookies->{self::SETUP_ACTION_EPG_CACHE_TTL}, $epg_cache_ops, self::CONTROLS_WIDTH, true);
+            $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // clear epg cache
@@ -185,13 +163,13 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // epg font size
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_EPG_FONT_SIZE})) {
-            $plugin_cookies->{self::SETUP_ACTION_EPG_FONT_SIZE} = SetupControlSwitchDefs::switch_normal;
-        }
+        $font_size = $this->plugin->get_parameters(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_normal);
+        $font_ops[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
+        $font_ops[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
 
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_EPG_FONT_SIZE, TR::t('setup_epg_font'), self::$on_off_ops[$plugin_cookies->{self::SETUP_ACTION_EPG_FONT_SIZE}],
-            $this->plugin->get_image_path(self::$on_off_img[$plugin_cookies->{self::SETUP_ACTION_EPG_FONT_SIZE}]), self::CONTROLS_WIDTH);
+            self::SETUP_ACTION_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops[$font_size],
+            $this->plugin->get_image_path(self::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg time shift
@@ -236,9 +214,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         switch ($control_id) {
             case self::SETUP_ACTION_EPG_SOURCE:
-                $val = $user_input->{$control_id};
-                $this->plugin->set_settings(PARAM_EPG_SOURCE, $val);
-                hd_print(__METHOD__ . ": Selected epg source: $val");
+                $new = $user_input->{$control_id};
+                $this->plugin->set_settings(PARAM_EPG_SOURCE, $new);
+                hd_print(__METHOD__ . ": Selected epg source: $new");
                 break;
 
             case self::SETUP_ACTION_XMLTV_EPG_IDX:
@@ -247,6 +225,11 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $source_idx[$source] = $user_input->{$control_id};
                 $this->plugin->set_settings(PARAM_EPG_IDX, $source_idx);
                 hd_print(__METHOD__ . ": Selected xmltv epg idx: $source_idx[$source] for $source");
+                $res = $this->plugin->epg_man->is_xmltv_cache_valid();
+                if (!empty($res)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'));
+                }
+
                 $this->plugin->update_xmltv_source();
                 break;
 
@@ -263,30 +246,24 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::open_folder($media_url_str, TR::t('setup_epg_xmltv_cache_caption'));
 
             case self::SETUP_ACTION_EPG_CACHE_TTL:
+                $this->plugin->set_parameters(PARAM_EPG_CACHE_TTL, $user_input->{$control_id});
+                break;
+
             case self::SETUP_ACTION_EPG_SHIFT:
-                $plugin_cookies->{$control_id} = $user_input->{$control_id};
-                hd_print(__METHOD__ . ": $control_id: " . $plugin_cookies->{$control_id});
+                $this->plugin->set_settings(PARAM_EPG_SHIFT, $user_input->{$control_id});
                 break;
 
             case self::SETUP_ACTION_EPG_FONT_SIZE:
-                $plugin_cookies->{$control_id} = ($plugin_cookies->{$control_id} === SetupControlSwitchDefs::switch_small)
-                    ? SetupControlSwitchDefs::switch_normal
-                    : SetupControlSwitchDefs::switch_small;
-                hd_print(__METHOD__ . ": $control_id: " . $plugin_cookies->{$control_id});
+                $this->plugin->toggle_setting(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
                 break;
 
             case self::SETUP_ACTION_EPG_PARSE_ALL:
-                $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
-                $parse_all = ($parse_all === SetupControlSwitchDefs::switch_off)
-                    ? SetupControlSwitchDefs::switch_on
-                    : SetupControlSwitchDefs::switch_off;
-                $this->plugin->set_settings(PARAM_EPG_PARSE_ALL, $parse_all);
-                hd_print(__METHOD__ . ": $control_id: $parse_all");
+                $this->plugin->toggle_setting(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
                 break;
 
             case self::SETUP_ACTION_ITEMS_CLEAR_EPG_CACHE:
                 $this->plugin->tv->unload_channels();
-                $this->plugin->epg_man->clear_epg_cache($plugin_cookies);
+                $this->plugin->epg_man->clear_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
@@ -305,29 +282,33 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RESET_DEFAULT:
                 hd_print(__METHOD__ . ": " . ACTION_RESET_DEFAULT);
-                $this->plugin->epg_man->clear_all_epg_cache($plugin_cookies);
-                $data = MediaURL::make(array('filepath' => get_data_path("epg_cache")));
-                Epg_Manager::set_xcache_dir($plugin_cookies, $data);
-                return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', Epg_Manager::get_xcache_dir($plugin_cookies)),
+                $this->plugin->epg_man->clear_all_epg_cache();
+
+                $data = MediaURL::make(array('filepath' => get_data_path("epg_cache/")));
+                $this->plugin->set_parameters(PARAM_XMLTV_CACHE_PATH, smb_tree::set_folder_info( $data));
+                return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', get_data_path("epg_cache/")),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 hd_print(__METHOD__ . ": " . ACTION_FOLDER_SELECTED . " $data->filepath");
-                $this->plugin->epg_man->clear_all_epg_cache($plugin_cookies);
-                Epg_Manager::set_xcache_dir($plugin_cookies, $data);
+                $this->plugin->epg_man->clear_all_epg_cache();
+                $this->plugin->set_parameters(PARAM_XMLTV_CACHE_PATH, smb_tree::set_folder_info( $data));
+                $this->plugin->epg_man->init_cache_dir();
+
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
             case ACTION_RELOAD:
                 hd_print(__METHOD__ . ": " . ACTION_RELOAD);
                 $this->plugin->tv->unload_channels();
-                $this->plugin->update_xmltv_source();
-                $this->plugin->epg_man->clear_epg_cache($plugin_cookies);
-                $res = $this->plugin->epg_man->is_xmltv_cache_valid($plugin_cookies);
+                $res = $this->plugin->epg_man->is_xmltv_cache_valid();
+                $this->plugin->epg_man->clear_epg_cache();
                 if (!empty($res)) {
                     return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'));
                 }
+
+                $this->plugin->update_xmltv_source();
                 break;
         }
 

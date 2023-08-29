@@ -64,6 +64,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return Action_Factory::show_title_dialog($msg, null, $error_msg);
 
             case 'do_clear_epg':
+                $this->plugin->epg_man->init_cache_dir($plugin_cookies);
                 $this->plugin->epg_man->clear_all_epg_cache($plugin_cookies);
                 $this->plugin->tv->unload_channels();
                 return Action_Factory::clear_rows_info_cache(Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared')));
@@ -75,11 +76,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 hd_print(__METHOD__ . ": plugin_entry $user_input->action_id");
                 clearstatcache();
+                $this->plugin->epg_man->init_cache_dir($plugin_cookies);
                 switch ($user_input->action_id) {
                     case 'launch':
                         if ($this->plugin->get_playlists()->size() === 0) {
-                            hd_print(__METHOD__ . ": Open setup");
-                            return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::ID, TR::t('tv_screen_channels_setup'));
+                            return User_Input_Handler_Registry::create_action($this, 'do_setup');
                         }
 
                         //hd_print("auto_play: $plugin_cookies->auto_play");

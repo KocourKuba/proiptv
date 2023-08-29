@@ -387,18 +387,22 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 }
             } else {
                 //hd_print(__METHOD__ . ": attributes: " . serialize($entry->getAttributes()));
+                $epg_ids = $entry->getAllAttributes(self::$tvg_id);
+                $epg_ids[] = $channel_name;
+                if (!empty($epg_ids)) {
+                    $epg_ids = array_unique($epg_ids);
+                }
+
                 $icon_url = $entry->getEntryIcon();
                 if (empty($icon_url)) {
-                    $icon_url = "plugin_file://icons/channel_unset.png";
+                    $icon_url = $this->plugin->epg_man->get_picon($epg_ids);
+                    if (empty($icon_url)) {
+                        hd_print(__METHOD__ . ": picon for $channel_name not found");
+                        $icon_url = "plugin_file://icons/default_channel.png";
+                    }
                 } else if (!empty($icon_url_base) && !preg_match("|https?://|", $icon_url)) {
                     $icon_url = $icon_url_base . $icon_url;
                 }
-
-                $epg_ids = $entry->getAllAttributes(self::$tvg_id);
-                if (empty($epg_ids)) {
-                    $epg_ids[] = $channel_name;
-                }
-                $epg_ids = array_unique($epg_ids);
 
                 $used_tag = '';
                 $archive = (int)$entry->getAnyAttribute(self::$tvg_archive, $used_tag);
@@ -495,7 +499,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
 
         hd_print(__METHOD__ . ": Loaded: channels: {$this->channels->size()}, groups: {$this->groups_order->size()} ({$this->groups->size()})");
 
-        $this->plugin->epg_man->index_xmltv_file($plugin_cookies, $epg_ids);
+        $this->plugin->epg_man->index_xmltv_file($epg_ids);
     }
 
     /**
@@ -615,7 +619,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $day_start_ts -= get_local_time_zone_offset();
 
         //hd_print(__METHOD__ . ": day_start timestamp: $day_start_ts (" . format_datetime("Y-m-d H:i", $day_start_ts) . ")");
-        $day_epg_items = $this->plugin->epg_man->get_day_epg_items($channel, $day_start_ts, $plugin_cookies);
+        $day_epg_items = $this->plugin->epg_man->get_day_epg_items($channel, $day_start_ts);
         if ($day_epg_items !== false) {
             // get personal time shift for channel
             $time_shift = 3600 * ($channel->get_timeshift_hours() + (isset($plugin_cookies->epg_shift) ? $plugin_cookies->epg_shift : 0));

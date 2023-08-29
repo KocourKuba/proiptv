@@ -10,6 +10,9 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
     const SETUP_ACTION_RESET_PLAYLIST_DLG = 'reset_playlist';
     const SETUP_ACTION_RESET_PLAYLIST_APPLY = 'reset_playlist_apply';
+    const SETUP_ACTION_SQUARE_ICONS = PARAM_SQUARE_ICONS;
+    const SETUP_ACTION_USER_CATCHUP = PARAM_USER_CATCHUP;
+
     ///////////////////////////////////////////////////////////////////////
 
     private static $on_off_ops = array
@@ -100,12 +103,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         $catchup_ops[KnownCatchupSourceTags::cu_flussonic] = KnownCatchupSourceTags::cu_flussonic;
         $catchup_ops[KnownCatchupSourceTags::cu_xstreamcode] = KnownCatchupSourceTags::cu_xstreamcode;
         $catchup_idx = $this->plugin->get_parameters(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
-        Control_Factory::add_combobox($defs, $this, null, PARAM_USER_CATCHUP,
+        Control_Factory::add_combobox($defs, $this, null, self::SETUP_ACTION_USER_CATCHUP,
             TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, self::CONTROLS_WIDTH, true);
 
         $square_icons = $this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SQUARE_ICONS, TR::t('setup_channels_square_icons'), self::$on_off_ops[$square_icons],
+            self::SETUP_ACTION_SQUARE_ICONS, TR::t('setup_channels_square_icons'), self::$on_off_ops[$square_icons],
             $this->plugin->get_image_path(self::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
 
         Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_RESET_PLAYLIST_DLG,
@@ -171,19 +174,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 );
                 return Action_Factory::open_folder($media_url_str, TR::t('setup_channels_src_edit_playlists'));
 
-            case PARAM_USER_CATCHUP:
+            case self::SETUP_ACTION_USER_CATCHUP:
                 $this->plugin->set_settings(PARAM_USER_CATCHUP, $new_value);
                 break;
 
-            case PARAM_SQUARE_ICONS:
-                $old_val = $this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
-                hd_print(__METHOD__ . ": old " . PARAM_SQUARE_ICONS . ": $old_val");
-                $new_val = ($old_val === SetupControlSwitchDefs::switch_off)
-                    ? SetupControlSwitchDefs::switch_on
-                    : SetupControlSwitchDefs::switch_off;
-
-                $this->plugin->set_settings(PARAM_SQUARE_ICONS, $new_val);
-                hd_print(__METHOD__ . ": new " . PARAM_SQUARE_ICONS . ": $new_val");
+            case self::SETUP_ACTION_SQUARE_ICONS:
+                $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
                 Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return Starnet_Epfs_Handler::invalidate_folders(
                     null,
