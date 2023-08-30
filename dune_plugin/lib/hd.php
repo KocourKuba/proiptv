@@ -425,29 +425,25 @@ class HD
         $apk_subst = getenv('FS_PREFIX');
         $plugin_name = get_plugin_name();
 
-        if (file_exists("$apk_subst/D/dune_plugin_logs/$plugin_name.log")) {
-            $plugin_logs = "$apk_subst/D/dune_plugin_logs/$plugin_name.*";
-        } else if (file_exists("$apk_subst/D/dune_plugin_logs/$plugin_name.log")) {
-            $plugin_logs = "$apk_subst/tmp/mnt/D/dune_plugin_logs/$plugin_name.*";
-        } else {
-            $plugin_logs = "$apk_subst/tmp/run/$plugin_name.*";
-        }
-
         $paths = array(
+            get_data_path("*.parameters"),
             get_data_path("*.settings"),
-            get_temp_path("*.parameters"),
             get_temp_path("*.m3u?"),
             "$apk_subst/tmp/run/shell.*",
-            $plugin_logs,
         );
+
+        if (file_exists("$apk_subst/D/dune_plugin_logs/$plugin_name.log")) {
+            $paths[] = "$apk_subst/D/dune_plugin_logs/$plugin_name.*";
+        } else if (file_exists("$apk_subst/D/dune_plugin_logs/$plugin_name.log")) {
+            $paths[] = "$apk_subst/tmp/mnt/D/dune_plugin_logs/$plugin_name.*";
+        } else {
+            $paths[] = "$apk_subst/tmp/run/$plugin_name.*";
+        }
 
         $files = array();
         foreach ($paths as $path) {
-            //hd_print("search for $path");
             foreach (glob($path) as $file) {
-                //hd_print("file: $file");
-                if (is_file($file) && filesize($file) > 10) {
-                    //hd_print("file found: $file");
+                if (is_file($file) && filesize($file) > 0) {
                     $files[] = $file;
                 }
             }

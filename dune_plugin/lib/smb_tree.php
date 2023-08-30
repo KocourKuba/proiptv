@@ -514,10 +514,6 @@ class smb_tree
             $select_folder = $default;
         }
 
-        if (substr($select_folder, -1) !== '/') {
-            $select_folder .= '/';
-        }
-
-        return $select_folder;
+        return get_slash_trailed_path($select_folder);
     }
 }

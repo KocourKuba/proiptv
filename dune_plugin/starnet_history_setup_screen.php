@@ -126,7 +126,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case self::SETUP_ACTION_COPY_TO_DATA:
                 $history_path = $this->get_history_path();
                 hd_print(__METHOD__ . ": copy to: $history_path");
-                if (!self::CopyData(get_data_path("*" . PARAM_TV_HISTORY_ITEMS), $history_path)) {
+                if (!self::CopyData(get_data_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -135,7 +135,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case self::SETUP_ACTION_COPY_TO_PLUGIN:
                 $history_path = $this->get_history_path();
                 hd_print(__METHOD__ . ": copy to: " . get_data_path());
-                if (!self::CopyData($history_path . "*" . PARAM_TV_HISTORY_ITEMS, get_data_path())) {
+                if (!self::CopyData($history_path, "*" . PARAM_TV_HISTORY_ITEMS, get_data_path())) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -166,30 +166,22 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 
     private function get_history_path()
     {
-        $path = $this->plugin->get_parameters(PARAM_HISTORY_PATH, get_data_path());
-        if (substr($path, -1) !== '/') {
-            $path .= '/';
-        }
-
-        return $path;
+        return get_slash_trailed_path($this->plugin->get_parameters(PARAM_HISTORY_PATH, get_data_path()));
     }
 
     private function set_history_path($path)
     {
-        if (substr($path, -1) !== '/') {
-            $path .= '/';
-        }
-        $this->plugin->set_parameters(PARAM_HISTORY_PATH, $path);
+        $this->plugin->set_parameters(PARAM_HISTORY_PATH, get_slash_trailed_path($path));
     }
 
-    public static function CopyData($sourcePath, $destPath){
+    public static function CopyData($sourcePath, $source_pattern, $destPath){
         if (empty($sourcePath) || empty($destPath)) {
             hd_print(__METHOD__ . ": sourceDir = $sourcePath | destDir = $destPath");
             return false;
         }
 
-        foreach (glob($sourcePath) as $file) {
-            $dest_file = $destPath . basename($file);
+        foreach (glob_dir($sourcePath, $source_pattern) as $file) {
+            $dest_file = $destPath . $file;
             hd_print(__METHOD__ . ": copy $file to $dest_file");
             if (!copy($file, $dest_file))
                 return false;

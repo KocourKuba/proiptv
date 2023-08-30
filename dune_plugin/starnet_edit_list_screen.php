@@ -198,7 +198,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 //hd_print(__METHOD__ . ": " . ACTION_FOLDER_SELECTED . " $data->filepath");
-                $files = glob_dir($data->filepath, $parent_media_url->extension);
+                $files = glob_dir($data->filepath, "/\.$parent_media_url->extension$/i");
                 if (empty($files)) {
                     return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
                 }

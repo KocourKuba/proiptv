@@ -500,16 +500,12 @@ class Epg_Manager
         unset($this->epg_cache, $this->xmltv_data, $this->xmltv_index);
         $this->epg_cache = array();
 
-        $dir = $this->cache_dir;
-        $path = "$dir{$this->get_internal_name()}*.*";
-        hd_print(__METHOD__ . ": clear cache files: $path");
-        foreach (glob($path) as $file) {
-            if (!is_dir($file)) {
-                unlink($file);
-            }
+        hd_print(__METHOD__ . ": clear cache files: {$this->get_internal_name()}*");
+        foreach (glob_dir($this->cache_dir, "/^{$this->get_internal_name()}.*$/i") as $file) {
+            unlink($file);
         }
-        HD::ShowMemoryUsage();
-        hd_print(__METHOD__ . ": Storage space in cache dir: " . HD::get_storage_size($dir));
+
+        hd_print(__METHOD__ . ": Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
 
     /**
@@ -524,14 +520,11 @@ class Epg_Manager
 
         $dir = $this->cache_dir;
         hd_print(__METHOD__ . ": clear entire cache dir: $dir");
-        $files = array_diff(scandir($dir), array('.','..'));
-        foreach ($files as $file) {
-            if (!is_dir("$dir/$file")) {
-                unlink("$dir/$file");
-            }
+        foreach (glob_dir($this->cache_dir) as $file) {
+            unlink($file);
         }
-        HD::ShowMemoryUsage();
-        hd_print(__METHOD__ . ": Storage space in cache dir: " . HD::get_storage_size($dir));
+
+        hd_print(__METHOD__ . ": Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
 
     ///////////////////////////////////////////////////////////////////////////////

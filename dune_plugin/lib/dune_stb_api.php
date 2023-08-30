@@ -1555,6 +1555,15 @@ function get_paved_path($path, $dir_mode = 0777)
     return rtrim($path, '/');
 }
 
+function get_slash_trailed_path($path)
+{
+    if (!empty($path) && substr($path, -1) !== '/') {
+        $path .= '/';
+    }
+
+    return $path;
+}
+
 # creating directories along the way
 function create_path($path, $dir_mode = 0777)
 {
@@ -1668,18 +1677,18 @@ function dump_input_handler($method, $user_input)
  * Replace for glob (not works with non ansi symbols in path)
  *
  * @param $path
- * @param $ext
+ * @param $pattern
  * @param bool $exclude_dir
  * @return array
  */
-function glob_dir($path, $ext = null, $exclude_dir = true)
+function glob_dir($path, $pattern = null, $exclude_dir = true)
 {
     $list = array();
     $path = rtrim($path, '/');
     if (is_dir($path)) {
         $files = array_diff(scandir($path), array('.', '..'));
-        if ($ext !== null) {
-            $files = preg_grep("/\.$ext$/i", $files);
+        if ($pattern !== null) {
+            $files = preg_grep($pattern, $files);
         }
 
         if ($files !== false) {

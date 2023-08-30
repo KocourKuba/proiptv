@@ -522,7 +522,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 return Action_Factory::close_dialog_and_run($do_mkdir);
 
             case self::ACTION_DO_MKDIR:
-                if (!mkdir($concurrentDirectory = $parent_url->filepath . '/' . $user_input->{self::ACTION_CREATE_FOLDER}) && !is_dir($concurrentDirectory)) {
+                if (!create_path($parent_url->filepath . '/' . $user_input->{self::ACTION_CREATE_FOLDER})) {
                     return Action_Factory::show_title_dialog(TR::t('err_cant_create_folder'));
                 }
                 return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
