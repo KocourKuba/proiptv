@@ -217,7 +217,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 if (is_android() && !is_apk()) {
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
-                    $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('vod_screen_external_player'), "play.png");
+                    $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), "play.png");
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                 }
 

@@ -558,7 +558,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     }
 
                     if (!is_apk()) {
-                        $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('vod_screen_external_player'), "play.png");
+                        $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), "play.png");
                     }
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                     $menu_items = array_merge($menu_items, $common_menu);
