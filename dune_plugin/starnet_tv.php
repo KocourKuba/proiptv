@@ -227,7 +227,6 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $media_urls = array(Starnet_Tv_Favorites_Screen::get_media_url_str(),
             Starnet_Tv_Channel_List_Screen::get_media_url_str(ALL_CHANNEL_GROUP_ID));
 
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
         return Action_Factory::invalidate_folders(
             $media_urls,
             Starnet_Epfs_Handler::invalidate_folders($media_urls));
@@ -398,7 +397,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 if (empty($icon_url)) {
                     $icon_url = $this->plugin->epg_man->get_picon($epg_ids);
                     if (empty($icon_url)) {
-                        hd_print(__METHOD__ . ": picon for $channel_name not found");
+                        //hd_print(__METHOD__ . ": picon for $channel_name not found");
                         $icon_url = "plugin_file://icons/default_channel.png";
                     }
                 } else if (!empty($icon_url_base) && !preg_match("|https?://|", $icon_url)) {

@@ -35,22 +35,20 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
+
+        $actions = array();
+
         $action_play = Action_Factory::tv_play();
+        $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
+        $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        $move_backward_favorite_action = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-        $move_forward_favorite_action = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-        $remove_favorite_action = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
-        $show_popup = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_KEY_B_GREEN]    = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+        $actions[GUI_EVENT_KEY_C_YELLOW]   = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+        $actions[GUI_EVENT_KEY_D_BLUE]     = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
-        return array
-        (
-            GUI_EVENT_KEY_ENTER      => $action_play,
-            GUI_EVENT_KEY_PLAY       => $action_play,
-            GUI_EVENT_KEY_B_GREEN    => $move_backward_favorite_action,
-            GUI_EVENT_KEY_C_YELLOW   => $move_forward_favorite_action,
-            GUI_EVENT_KEY_D_BLUE     => $remove_favorite_action,
-            GUI_EVENT_KEY_POPUP_MENU => $show_popup,
-        );
+        return $actions;
     }
 
     /**
@@ -74,31 +72,37 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             return null;
         }
 
+        $sel_ndx = $user_input->sel_ndx;
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
         switch ($user_input->control_id) {
 
             case ACTION_ITEM_UP:
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $channel_id, $plugin_cookies);
-                $user_input->sel_ndx--;
-                if ($user_input->sel_ndx < 0) {
-                    $user_input->sel_ndx = 0;
+                $sel_ndx--;
+                if ($sel_ndx < 0) {
+                    $sel_ndx = 0;
                 }
+                $this->need_update_eps = true;
                 break;
 
             case ACTION_ITEM_DOWN:
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $channel_id, $plugin_cookies);
-                $user_input->sel_ndx++;
-                if ($user_input->sel_ndx >= $this->plugin->tv->get_favorites()->size()) {
-                    $user_input->sel_ndx = $this->plugin->tv->get_favorites()->size() - 1;
+                $sel_ndx++;
+                if ($sel_ndx >= $this->plugin->tv->get_favorites()->size()) {
+                    $sel_ndx = $this->plugin->tv->get_favorites()->size() - 1;
                 }
+                $this->need_update_eps = true;
                 break;
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id, $plugin_cookies);
+                $this->need_update_eps = true;
                 break;
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $channel_id, $plugin_cookies);
+                $this->need_update_eps = true;
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -113,7 +117,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
             case ACTION_EXTERNAL_PLAYER:
                 try {
-                    $channel = $this->plugin->tv->get_channel(MediaURL::decode($user_input->selected_media_url)->channel_id);
+                    $channel = $this->plugin->tv->get_channel($channel_id);
                     $url = $this->plugin->generate_stream_url(-1, $channel);
                     $url = str_replace("ts://", "", $url);
                     $param_pos = strpos($url, '|||dune_params');
@@ -130,29 +134,14 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 }
                 return null;
 
+            case GUI_EVENT_KEY_RETURN:
+                return $this->update_epfs_data($plugin_cookies, Action_Factory::close_and_run());
+
             default:
                 return null;
         }
 
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $post_action = Action_Factory::close_and_run(
-            Action_Factory::open_folder(
-                $user_input->parent_media_url,
-                null,
-                null,
-                null,
-                Action_Factory::update_regular_folder(
-                    HD::create_regular_folder_range($this->get_all_folder_items($parent_media_url, $plugin_cookies)),
-                    true,
-                    $user_input->sel_ndx)
-            )
-        );
-
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        $post_action = Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url), $post_action);
-
-        return Action_Factory::invalidate_folders(array(Starnet_Tv_Groups_Screen::get_media_url_str()), $post_action);
-
+        return $this->update_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
     }
 
     ///////////////////////////////////////////////////////////////////////

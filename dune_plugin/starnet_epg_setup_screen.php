@@ -211,7 +211,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 }
 
                 $this->plugin->update_xmltv_source();
-                break;
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::SETUP_ACTION_CHANGE_XMLTV_CACHE_PATH:
                 $media_url_str = MediaURL::encode(

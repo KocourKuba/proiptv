@@ -239,7 +239,7 @@ class Ordered_Array
     {
         $selected_item = $this->get_selected_item();
         $k = array_search($id, $this->order);
-        hd_print(__METHOD__ . ": move id: $id from idx: $k to direction: $direction");
+        //hd_print(__METHOD__ . ": move id: $id from idx: $k to direction: $direction");
 
         if ($k === false || $direction === 0)
             return false;

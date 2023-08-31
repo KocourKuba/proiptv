@@ -325,7 +325,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
-        hd_print(__METHOD__);
+        //hd_print(__METHOD__);
         $rows = array();
 
         $channels_rows = $this->get_regular_rows();
@@ -437,6 +437,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         return array(
+            GUI_EVENT_KEY_PLAY                => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY),
             GUI_EVENT_KEY_ENTER               => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
             GUI_EVENT_KEY_B_GREEN             => User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_UP),
             GUI_EVENT_KEY_C_YELLOW            => User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_DOWN),
@@ -474,6 +475,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $this->plugin->playback_points->update_point(null);
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
+            case GUI_EVENT_KEY_PLAY:
             case GUI_EVENT_KEY_ENTER:
                 $tv_play_action = Action_Factory::tv_play($media_url);
 
@@ -522,7 +524,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (isset($user_input->selected_item_id)) {
                     $common_menu = array();
                     if ($media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) {
-                        $this->create_menu_item($menu_items, ACTION_REMOVE_PLAYBACK_POINT, TR::t('delete'), "remove.png");
+                        $this->create_menu_item($menu_items, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");
                     } else if ($media_url->group_id === FAV_CHANNEL_GROUP_ID) {
                         $this->create_menu_item($menu_items, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete'), "star.png");
                     } else {
@@ -592,6 +594,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $control_id = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 }
 
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return $this->plugin->change_tv_favorites($control_id, $media_url->channel_id, $plugin_cookies);
 
             case PLUGIN_FAVORITES_OP_MOVE_UP:
@@ -599,6 +602,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (isset($user_input->selected_item_id)) {
                     if (isset($media_url->group_id)) {
                         if ($media_url->group_id === FAV_CHANNEL_GROUP_ID) {
+                            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                             return $this->plugin->change_tv_favorites($control_id, $media_url->channel_id, $plugin_cookies);
                         }
 
@@ -627,7 +631,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return Starnet_Epfs_Handler::invalidate_folders();
 
-            case ACTION_REMOVE_PLAYBACK_POINT:
+            case ACTION_ITEM_REMOVE:
                 $this->removed_playback_point = $media_url->get_raw_string();
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
@@ -639,6 +643,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if ($media_url->group_id === FAV_CHANNEL_GROUP_ID) {
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                     return $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $media_url->channel_id, $plugin_cookies);
                 }
 
@@ -973,7 +978,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_regular_rows()
     {
-        hd_print(__METHOD__);
+        //hd_print(__METHOD__);
         $groups = $this->plugin->tv->get_groups();
         if (is_null($groups))
             return null;

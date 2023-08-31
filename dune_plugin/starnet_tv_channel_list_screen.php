@@ -57,6 +57,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             GUI_EVENT_KEY_POPUP_MENU => $show_popup,
             GUI_EVENT_KEY_SETUP      => $action_settings,
         );
+        $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
         if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
             $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
@@ -100,6 +101,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $parent_group_id = $media_url->group_id;
         $group = $this->plugin->tv->get_group($parent_group_id);
         $channel = $this->plugin->tv->get_channel($channel_id);
+        $sel_ndx = $user_input->sel_ndx;
+
         if (is_null($group) || is_null($channel))
             return null;
 
@@ -113,12 +116,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return Action_Factory::tv_play($media_url);
+                return $this->update_epfs_data($plugin_cookies, Action_Factory::tv_play($media_url));
 
             case ACTION_ADD_FAV:
                 $opt_type = $this->plugin->tv->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
-                return Action_Factory::invalidate_folders(array(self::get_media_url_str($parent_group_id)));
+                $this->need_update_eps = true;
+                break;
 
             case ACTION_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
@@ -159,33 +163,30 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::show_dialog(TR::t('search'), $defs, true);
 
             case self::ACTION_JUMP_TO_CHANNEL:
-                $ndx = (int)$user_input->number;
-                $parent_media_url->group_id = $parent_group_id;
-                return Action_Factory::update_regular_folder(
-                    $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
-                    true,
-                    $ndx);
+                return $this->update_current_folder($parent_media_url->group_id, $plugin_cookies, $user_input->number);
 
             case ACTION_ITEM_UP:
                 if (!$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
                     return null;
 
-                $user_input->sel_ndx--;
-                if ($user_input->sel_ndx < 0) {
-                    $user_input->sel_ndx = 0;
+                $sel_ndx--;
+                if ($sel_ndx < 0) {
+                    $sel_ndx = 0;
                 }
-                return $this->update_current_folder($user_input, $parent_group_id);
+                $this->need_update_eps = true;
+                break;
 
             case ACTION_ITEM_DOWN:
                 if (!$group->get_items_order()->arrange_item($channel_id, Ordered_Array::DOWN))
                     return null;
 
                 $groups_cnt = $group->get_items_order()->size();
-                $user_input->sel_ndx++;
-                if ($user_input->sel_ndx >= $groups_cnt) {
-                    $user_input->sel_ndx = $groups_cnt - 1;
+                $sel_ndx++;
+                if ($sel_ndx >= $groups_cnt) {
+                    $sel_ndx = $groups_cnt - 1;
                 }
-                return $this->update_current_folder($user_input, $parent_group_id);
+                $this->need_update_eps = true;
+                break;
 
             case ACTION_ITEM_DELETE:
                 hd_print(__METHOD__ . ": Hide $channel_id");
@@ -199,12 +200,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $this->plugin->tv->get_disabled_channels()->add_item($channel_id);
-
-                return $this->update_current_folder($user_input, $parent_group_id);
+                $this->need_update_eps = true;
+                break;
 
             case ACTION_ITEMS_SORT:
                 $group->get_items_order()->sort_order();
-                return $this->update_current_folder($user_input, $parent_group_id);
+                $this->need_update_eps = true;
+                break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
@@ -224,7 +226,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                 $current_idx = isset($zoom_data[$channel_id]) ? $zoom_data[$channel_id] : DuneVideoZoomPresets::not_set;
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-
                     $this->create_menu_item($menu_items, ACTION_ZOOM_APPLY, $zoom_item,
                         ((string)$idx === (string)$current_idx) ? "aspect.png" : null,
                         array(ACTION_ZOOM_SELECT => (string)$idx));
@@ -271,33 +272,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 hd_print(__METHOD__ . ": reload");
                 $this->plugin->tv->unload_channels();
                 return $this->update_current_folder($user_input, $parent_group_id);
-                //return $this->plugin->tv->reload_channels($this, $plugin_cookies, $this->update_current_folder($user_input, $parent_group_id));
+
+            case GUI_EVENT_KEY_RETURN:
+                return $this->update_epfs_data($plugin_cookies, Action_Factory::close_and_run());
         }
 
-        return null;
-    }
-
-    public function update_current_folder($user_input, $group_id)
-    {
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-
-        return Action_Factory::invalidate_folders(
-            array(Starnet_Tv_Groups_Screen::ID, self::get_media_url_str($group_id)),
-            Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url),
-                Action_Factory::close_and_run(
-                    Action_Factory::open_folder(
-                        $user_input->parent_media_url,
-                        null,
-                        null,
-                        null,
-                        Action_Factory::update_regular_folder(
-                            $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies),
-                            true,
-                            $user_input->sel_ndx)
-                    )
-                )
-            )
-        );
+        return $this->update_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
     }
 
     ///////////////////////////////////////////////////////////////////////
