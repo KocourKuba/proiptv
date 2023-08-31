@@ -98,7 +98,7 @@ class Epg_Manager
 
         if (!isset($this->xmltv_picons)) {
             hd_print(__METHOD__ . ": Load picons from: " . $this->get_picons_index_name());
-            $this->xmltv_picons = json_decode(file_get_contents($this->get_picons_index_name()), true);
+            $this->xmltv_picons = HD::ReadContentFromFile($this->get_picons_index_name());
         }
 
         return isset($this->xmltv_picons[$epg_id]) ? $this->xmltv_picons[$epg_id] : null;
@@ -203,7 +203,7 @@ class Epg_Manager
             $last_mod_file = HD::http_save_document($this->xmltv_url, $tmp_filename);
             hd_print(__METHOD__ . ": Last changed time on server: " . date("Y-m-d H:s", $last_mod_file));
 
-            if (preg_match("/\.(xml.gz|xml|gz|zip)(?:\??.*)?$/i", $this->xmltv_url, $m)) {
+            if (preg_match("/\.(xml.gz|xml|xmltv|gz|zip)(?:\??.*)?$/i", $this->xmltv_url, $m)) {
                 if (strcasecmp($m[1], 'gz') || strcasecmp($m[1], 'xml.gz')) {
                     hd_print(__METHOD__ . ": unpack $tmp_filename");
                     $gz = gzopen($tmp_filename, 'rb');
@@ -293,7 +293,7 @@ class Epg_Manager
         $channels_file = $this->get_channels_index_name();
         if (file_exists($channels_file)) {
             hd_print(__METHOD__ . ": Load cache channels index: $channels_file");
-            $this->xmltv_channels = json_decode(file_get_contents($channels_file), true);
+            $this->xmltv_channels = HD::ReadContentFromFile($channels_file);
             return;
         }
 
@@ -355,8 +355,8 @@ class Epg_Manager
                 }
             }
 
-            file_put_contents($channels_file, json_encode($channels_map));
-            file_put_contents($this->get_picons_index_name(), json_encode($picons_map));
+            HD::StoreContentToFile($channels_file, $channels_map);
+            HD::StoreContentToFile($this->get_picons_index_name(), $picons_map);
 
         } catch (Exception $ex) {
             hd_print(__METHOD__ . ": " . $ex->getMessage());
@@ -392,9 +392,9 @@ class Epg_Manager
         $index_file = $this->get_epg_index_name();
         if (file_exists($channels_file) && file_exists($index_file)) {
             hd_print(__METHOD__ . ": Load cache channels index: $channels_file");
-            $this->xmltv_channels = json_decode(file_get_contents($channels_file), true);
+            $this->xmltv_channels = HD::ReadContentFromFile($channels_file);
             hd_print(__METHOD__ . ": Load cache file index: $index_file");
-            $this->xmltv_index = json_decode(file_get_contents($index_file), true);
+            $this->xmltv_index = HD::ReadContentFromFile($index_file);
             return;
         }
 
@@ -452,7 +452,7 @@ class Epg_Manager
                         if (!empty($xmltv_data)) {
                             $index_name = $cache_file . "_" . hash("crc32", $prev_channel) . '.index';
                             $xmltv_index[$prev_channel] = $index_name;
-                            file_put_contents("$cache_dir$index_name", json_encode($xmltv_data));
+                            HD::StoreContentToFile("$cache_dir$index_name", $xmltv_data);
                         }
 
                         $prev_channel = $channel;
@@ -466,13 +466,13 @@ class Epg_Manager
             if (!empty($prev_channel) && !empty($xmltv_data)) {
                 $index_name = $cache_file . "_" . hash("crc32", $prev_channel) . '.index';
                 $xmltv_index[$prev_channel] = $index_name;
-                file_put_contents("$cache_dir$index_name", json_encode($xmltv_data));
+                HD::StoreContentToFile("$cache_dir$index_name", $xmltv_data);
                 unset($xmltv_data);
             }
 
             if (!empty($xmltv_index)) {
                 hd_print(__METHOD__ . ": Save index: $index_file");
-                file_put_contents($index_file, json_encode($xmltv_index));
+                HD::StoreContentToFile($index_file, $xmltv_index);
                 $this->xmltv_index = $xmltv_index;
             }
 
@@ -502,6 +502,26 @@ class Epg_Manager
 
         hd_print(__METHOD__ . ": clear cache files: {$this->get_internal_name()}*");
         foreach (glob_dir($this->cache_dir, "/^{$this->get_internal_name()}.*$/i") as $file) {
+            unlink($file);
+        }
+
+        hd_print(__METHOD__ . ": Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+    }
+
+    /**
+     * clear memory cache and cache for selected xmltv source
+     *
+     * @param $uri
+     * @return void
+     */
+    public function clear_epg_cache_by_uri($uri)
+    {
+        unset($this->epg_cache, $this->xmltv_data, $this->xmltv_index);
+        $this->epg_cache = array();
+
+        $filename = hash('crc32', $uri);
+        hd_print(__METHOD__ . ": clear cache files: $filename*");
+        foreach (glob_dir($this->cache_dir, "/^$filename.*$/i") as $file) {
             unlink($file);
         }
 
@@ -593,7 +613,7 @@ class Epg_Manager
         if (empty($this->xmltv_channels)) {
             $index_file = $this->get_channels_index_name();
             //hd_print(__METHOD__ . ": load index from file '$index_file'");
-            $data = json_decode(file_get_contents($index_file), true);
+            $data = HD::ReadContentFromFile($index_file);
             if (false !== $data) {
                 $this->xmltv_channels = $data;
             }
@@ -622,7 +642,7 @@ class Epg_Manager
         if (empty($this->xmltv_index)) {
             $index_file = $this->get_epg_index_name();
             //hd_print(__METHOD__ . ": load index from file '$index_file'");
-            $data = json_decode(file_get_contents($index_file), true);
+            $data = HD::ReadContentFromFile($index_file);
             if (false !== $data) {
                 $this->xmltv_index = $data;
             }
@@ -648,7 +668,7 @@ class Epg_Manager
                 throw new Exception("index for channel $channel_id not found: $channel_index");
             }
 
-            $this->xmltv_data[$channel_id] = json_decode(file_get_contents($channel_index), true);
+            $this->xmltv_data[$channel_id] = HD::ReadContentFromFile($channel_index);
         }
 
         $file_object = $this->open_xmltv_file();

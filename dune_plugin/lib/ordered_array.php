@@ -114,6 +114,8 @@ class Ordered_Array
     }
 
     /**
+     * clear order and save changes
+     *
      * @return void
      */
     public function clear()
@@ -121,6 +123,17 @@ class Ordered_Array
         $this->order = array();
         $this->saved_pos = 0;
         $this->save();
+    }
+
+    /**
+     * clear order but do not save changes!
+     *
+     * @return void
+     */
+    public function zap()
+    {
+        $this->order = array();
+        $this->saved_pos = 0;
     }
 
     /**

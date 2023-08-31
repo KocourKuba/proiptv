@@ -211,7 +211,7 @@ class HD
             }
         }
 
-        hd_print(__METHOD__ . ": HTTP fetching $url");
+        hd_print(__METHOD__ . ": HTTP fetching '$url'");
 
         $content = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -265,7 +265,7 @@ class HD
             }
         }
 
-        hd_print(__METHOD__ . ": HTTP fetching $url");
+        hd_print(__METHOD__ . ": HTTP fetching '$url'");
 
         try {
             $result = curl_exec($ch);

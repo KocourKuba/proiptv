@@ -111,7 +111,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
-                        'save_data' => self::ID,
+                        'choose_folder' => self::ID,
                         'windowCounter' => 1,
                     )
                 );

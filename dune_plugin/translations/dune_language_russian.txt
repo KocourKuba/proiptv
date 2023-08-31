@@ -158,13 +158,17 @@ tv_screen_group_info__3 = %s|Каналов: %s|Скрыто: %s
 tv_screen_external_player = Проиграть внешним плейером
 
 edit_list_added__1 = Добавлено файлов: %s
+edit_list_added__2 = Добавлено файлов: %s из: %s
+edit_list_empty_file = Пустой файл!!!
 edit_list_no_files = Нет файлов!!!
 edit_link_caption = Ссылка
 edit_list_internet_path = Добавить ссылку
+edit_list_file = Выбрать файл
 edit_list_folder_path = Выбрать папку с файлами
 edit_list_import_list = Импорт файла с ссылками
 edit_list_src_folder = Папка с файлами
 edit_list_src_list = Файл со содержащий список
+edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Нажмите Popup Menu на пульте для добавления файлов}
 
 warn_msg2__1 = Отсутствуют или неполные данные для формирования ссылки.\nВозможно не введены данные для просмотра или канал отсутствует в подписке.\n %s
 

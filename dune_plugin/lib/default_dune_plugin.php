@@ -718,7 +718,8 @@ class Default_Dune_Plugin implements DunePlugin
         if ($source === PARAM_EPG_SOURCE_INTERNAL) {
             $sources = $this->m3u_parser->getXmltvSources();
         } else {
-            $sources = $this->get_settings(PARAM_CUSTOM_XMLTV_SOURCES, array());
+            $order = new Ordered_Array($this, PARAM_CUSTOM_XMLTV_SOURCES);
+            $sources = $order->get_order();
         }
 
         $epg_idx = $this->get_settings(PARAM_EPG_IDX, array());
@@ -727,6 +728,7 @@ class Default_Dune_Plugin implements DunePlugin
             $this->epg_man->set_xmltv_url($sources[$idx]);
             $this->epg_man->index_xmltv_channels();
         } else {
+            $this->epg_man->set_xmltv_url(null);
             hd_print("no xmltv source defined for this playlist");
         }
     }
@@ -781,7 +783,12 @@ class Default_Dune_Plugin implements DunePlugin
             $stream_url .= "|||dune_params|||$dune_params";
         }
 
-        return HD::make_ts($stream_url);
+        if (!preg_match('/\.' . VIDEO_PATTERN . '$/i', $stream_url)
+            && !preg_match('/\.' . AUDIO_PATTERN . '$/i', $stream_url)) {
+            return HD::make_ts($stream_url);
+        }
+
+        return $stream_url;
     }
 
     ///////////////////////////////////////////////////////////////////////

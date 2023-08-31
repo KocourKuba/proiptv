@@ -219,7 +219,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'parent_id' => self::ID,
                         'allow_network' => false,
-                        'save_data' => self::ID,
+                        'choose_folder' => self::ID,
                         'windowCounter' => 1,
                     )
                 );
@@ -248,9 +248,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => self::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::ACTION_EPG_LIST,
+                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_TYPE_EPG_LIST,
                         'end_action' => ACTION_RELOAD,
-                        'extension' => 'gz|xml|zip',
+                        'extension' => EPG_PATTERN,
                         'windowCounter' => 1,
                     )
                 );
@@ -278,14 +278,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_RELOAD:
                 hd_print(__METHOD__ . ": " . ACTION_RELOAD);
                 $this->plugin->tv->unload_channels();
-                $res = $this->plugin->epg_man->is_xmltv_cache_valid();
-                $this->plugin->epg_man->clear_epg_cache();
-                if (!empty($res)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'));
-                }
-
                 $this->plugin->update_xmltv_source();
-                break;
+                return $this->plugin->tv->reload_channels($this, $plugin_cookies);
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

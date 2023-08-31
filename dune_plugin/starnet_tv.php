@@ -272,9 +272,9 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $this->channels = null;
         $this->groups = null;
         $this->special_groups = null;
-        $this->groups_order = null;
-        $this->disabled_groups = null;
-        $this->disabled_channels = null;
+        $this->groups_order->zap();
+        $this->disabled_groups->zap();
+        $this->disabled_channels->zap();
     }
 
     /**

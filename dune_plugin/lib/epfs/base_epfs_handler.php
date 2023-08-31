@@ -44,7 +44,7 @@ class Base_Epfs_Handler
      */
     protected static function read_epf_data($epf_id)
     {
-        return file_exists($path = self::get_epf_path($epf_id)) ? json_decode(file_get_contents($path)) : null;
+        return file_exists($path = self::get_epf_path($epf_id)) ? HD::ReadContentFromFile($path, false) : null;
     }
 
     /**

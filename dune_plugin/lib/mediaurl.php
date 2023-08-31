@@ -1,27 +1,28 @@
 <?php
 
 /**
- * @property mixed|null $channel_id
- * @property mixed|null $group_id
- * @property mixed|null $source_window_id
- * @property mixed|null $id
- * @property mixed|null $type
- * @property mixed|null $save_data
- * @property mixed|null $save_file
- * @property mixed|null $filepath
- * @property mixed|null $windowCounter
+ * @property mixed|null $channel_id // Channel ID
+ * @property mixed|null $group_id // Group ID
+ * @property string|null $source_window_id // Window ID called this screen
+ * @property mixed|null $id // ID
+ * @property mixed|null $type // Type of selected media url or extension of selected file
+ * @property mixed|null $choose_folder // Action 'choose folder'
+ * @property mixed|null $choose_file // Action 'choose file'
+ * @property mixed|null $filepath // real path of selected folder or file
+ * @property mixed|null $windowCounter // Index of current window, start from 1
  * @property mixed|null $end_action
- * @property mixed|null $extension
- * @property mixed|null $caption
- * @property mixed|null $nfs_protocol
- * @property mixed|null $is_favorite
- * @property int|mixed|null $archive_tm
- * @property mixed|null $err
- * @property mixed|null $ip_path
- * @property mixed|null $no_internet
- * @property mixed|null $user
- * @property mixed|null $password
- * @property mixed|null $edit_list
+ * @property mixed|null $extension // pattern for show files with specified extension
+ * @property mixed|null $caption // Caption of the selected media url
+ * @property bool|null  $allow_network // Allow to use network folders NFS/SMB for Starnet_Folder_Screen
+ * @property mixed|null $nfs_protocol // symbolic name of NFS protocol
+ * @property bool|null $is_favorite // Is selected media url point to the favorite folder
+ * @property int|mixed|null $archive_tm // timestamp of the archive position playback, -1 live broadcast
+ * @property mixed|null $err // error
+ * @property mixed|null $ip_path // ip address or name of NFS/SMB server, used in Starnet_Folder_Screen
+ * @property mixed|null $no_internet // is not valid EPS screen
+ * @property mixed|null $user // login, used in Starnet_Folder_Screen
+ * @property mixed|null $password // password, used in Starnet_Folder_Screen
+ * @property mixed|null $edit_list // type of Starnet_Edit_List_Screen (playlist, epg, hidden groups/channels)
  */
 class MediaURL
 {

@@ -70,6 +70,7 @@ const ACTION_ADD_FAV = 'add_favorite';
 const ACTION_CHANGE_PLAYLIST = 'change_playlist';
 const ACTION_EXTERNAL_PLAYER = 'use_external_player';
 const ACTION_FOLDER_SELECTED = 'folder_selected';
+const ACTION_FILE_SELECTED = 'file_selected';
 const ACTION_ITEM_ADD = 'item_add';
 const ACTION_ITEM_DELETE = 'item_delete';
 const ACTION_ITEM_DOWN = 'item_down';
@@ -118,6 +119,13 @@ const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_CHANNELS_ZOOM = 'channels_zoom';
 const PARAM_USER_CATCHUP = 'user_catchup';
 const PARAM_TV_HISTORY_ITEMS = '_tv_history_items';
+
+# Media types patterns
+const AUDIO_PATTERN = 'mp3|ac3|wma|ogg|ogm|m4a|aif|iff|mid|mpa|ra|wav|flac|ape|vorbis|aac|a52';
+const VIDEO_PATTERN = 'avi|mp4|mpg|mpeg|divx|m4v|3gp|asf|wmv|mkv|mov|ogv|vob|flv|ts|3g2|swf|ps|qt|m2ts';
+const IMAGE_PATTERN = 'png|jpg|jpeg|bmp|gif|psd|pspimage|thm|tif|yuf|svg|aai|ico|djpg|dbmp|dpng|image_file.aai';
+const PLAYLIST_PATTERN = 'm3u|m3u8';
+const EPG_PATTERN = 'xml|xmltv|gz';
 
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage/';
