@@ -226,7 +226,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::open_folder($media_url_str, TR::t('setup_epg_xmltv_cache_caption'));
 
             case self::SETUP_ACTION_EPG_CACHE_TTL:
-                $this->plugin->set_parameters(PARAM_EPG_CACHE_TTL, $user_input->{$control_id});
+                $this->plugin->set_settings(PARAM_EPG_CACHE_TTL, $user_input->{$control_id});
                 break;
 
             case self::SETUP_ACTION_EPG_SHIFT:
