@@ -43,6 +43,14 @@ class Playback_Points
     }
 
     /**
+     * @return int
+     */
+    public function size()
+    {
+        return count($this->points);
+    }
+
+    /**
      * @param bool $force
      * @return void
      */
