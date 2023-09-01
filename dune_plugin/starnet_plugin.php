@@ -3,6 +3,7 @@
 
 require_once 'lib/hd.php';
 require_once 'lib/default_dune_plugin.php';
+require_once 'lib/json_serializer.php';
 
 require_once 'starnet_entry_handler.php';
 require_once 'starnet_tv_groups_screen.php';
@@ -64,6 +65,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->playback_points = new Playback_Points($this);
         Starnet_Epfs_Handler::init($this);
 
-        hd_print(__METHOD__ . ": Init done.");
+        hd_debug_print("Init done.");
     }
 }

@@ -42,7 +42,7 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
-        hd_print(__METHOD__);
+        hd_debug_print();
         $defs = array();
 
         $caption = $media_url->no_internet ? TR::t('err_no_internet') : TR::t('loading');
@@ -72,7 +72,7 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
      */
     public function get_folder_view_for_epf($no_internet, &$plugin_cookies)
     {
-        hd_print(__METHOD__);
+        hd_debug_print();
         $media_url = MediaURL::decode(self::get_media_url_str($no_internet));
 
         return $this->get_folder_view($media_url, $plugin_cookies);

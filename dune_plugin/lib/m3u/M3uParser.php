@@ -1,28 +1,27 @@
 <?php
-
 require_once 'Entry.php';
 
-class M3uParser
+class M3uParser extends Json_Serializer
 {
     /**
      * @var string
      */
-    private $file_name;
+    protected $file_name;
+
+    /**
+     * @var Entry[]
+     */
+    protected $m3u_entries;
+
+    /**
+     * @var Entry
+     */
+    protected $m3u_info;
 
     /**
      * @var SplFileObject
      */
     private $m3u_file;
-
-    /**
-     * @var Entry[]
-     */
-    private $m3u_entries;
-
-    /**
-     * @var Entry
-     */
-    private $m3u_info;
 
     /**
      * @param string $file_name
@@ -35,12 +34,12 @@ class M3uParser
             $this->file_name = $file_name;
             unset($this->m3u_entries);
             $this->m3u_entries = array();
-            $this->m3u_info = null;
+            $this->m3u_info = new Entry();
 
             try {
                 $file = new SplFileObject($file_name);
             } catch (Exception $ex) {
-                hd_print(__METHOD__ . ": Can't read file: $file_name");
+                hd_debug_print("Can't read file: $file_name");
                 return;
             }
 
@@ -60,7 +59,7 @@ class M3uParser
     public function parseFile()
     {
         if ($this->m3u_file === null) {
-            hd_print(__METHOD__ . ": Bad file");
+            hd_debug_print("Bad file");
             return false;
         }
 
@@ -69,21 +68,15 @@ class M3uParser
         $t = microtime(1);
         $entry = new Entry();
         foreach($this->m3u_file as $line) {
-            if (!$this->parseLine($line, $entry)) continue;
-
-            // only one ExtM3U entry!
-            if ($entry->isExtM3U()) {
-                if ($this->m3u_info === null) {
-                    $this->m3u_info = $entry;
-                }
-                continue;
+            // something wrong or not supported
+            if ($this->parseLine($line, $entry)) {
+                // stream url
+                $this->m3u_entries[] = $entry;
+                $entry = new Entry();
             }
-
-            $this->m3u_entries[] = $entry;
-            $entry = new Entry();
         }
 
-        hd_print(__METHOD__ . ": parseFile " . (microtime(1) - $t) . " secs");
+        hd_debug_print("parseFile " . (microtime(1) - $t) . " secs");
         return true;
     }
 
@@ -101,7 +94,7 @@ class M3uParser
     {
         $data = array();
         if ($this->m3u_file === null) {
-            hd_print(__METHOD__ . ": Bad file");
+            hd_debug_print("Bad file");
             return $data;
         }
 
@@ -111,27 +104,19 @@ class M3uParser
         $entry = new Entry();
         $pos = $this->m3u_file->ftell();
         while (!$this->m3u_file->eof()) {
-            if (!$this->parseLine($this->m3u_file->fgets(), $entry)) continue;
-
-            // only one ExtM3U entry!
-            if ($entry->isExtM3U()) {
-                if ($this->m3u_info === null) {
-                    $this->m3u_info = $entry;
+            if ($this->parseLineFast($this->m3u_file->fgets(), $entry)) {
+                $group_name = $entry->getGroupTitle();
+                if (!array_key_exists($group_name, $data)) {
+                    $data[$group_name] = array();
                 }
-                continue;
-            }
 
-            $group_name = $entry->getGroupTitle();
-            if (!array_key_exists($group_name, $data)) {
-                $data[$group_name] = array();
+                $data[$group_name][] = $pos;
+                $entry = new Entry();
+                $pos = $this->m3u_file->ftell();
             }
-
-            $data[$group_name][] = $pos;
-            $entry = new Entry();
-            $pos = $this->m3u_file->ftell();
         }
 
-        hd_print(__METHOD__ . ": indexFile " . (microtime(1) - $t) . " secs");
+        hd_debug_print("indexFile " . (microtime(1) - $t) . " secs");
         return $data;
     }
 
@@ -144,7 +129,7 @@ class M3uParser
     public function parseInMemory()
     {
         if (!file_exists($this->file_name)) {
-            hd_print(__METHOD__ . ": Can't read file: $this->file_name");
+            hd_debug_print("Can't read file: $this->file_name");
             return false;
         }
 
@@ -153,21 +138,18 @@ class M3uParser
 
         $entry = new Entry();
         foreach($lines as $line) {
-            if (!$this->parseLine($line, $entry)) continue;
-
-            // only one ExtM3U entry!
-            if ($entry->isExtM3U()) {
-                if ($this->m3u_info === null) {
+            // if parsed line is not path or is not header tag parse next line
+            if ($this->parseLine($line, $entry)) {
+                if ($entry->isM3U_Header()) {
                     $this->m3u_info = $entry;
+                } else {
+                    $this->m3u_entries[] = $entry;
                 }
-            } else {
-                $this->m3u_entries[] = $entry;
+                $entry = new Entry();
             }
-
-            $entry = new Entry();
         }
 
-        hd_print(__METHOD__ . ": parseInMemory " . (microtime(1) - $t) . " sec.");
+        hd_debug_print("parseInMemory " . (microtime(1) - $t) . " sec.");
         return true;
     }
 
@@ -180,7 +162,7 @@ class M3uParser
     public function getEntryByIdx($idx)
     {
         if ($this->m3u_file === null) {
-            hd_print(__METHOD__ . ": Bad file");
+            hd_debug_print("Bad file");
             return null;
         }
         $this->m3u_file->fseek((int)$idx);
@@ -203,7 +185,7 @@ class M3uParser
     public function getTitleByIdx($idx)
     {
         if ($this->m3u_file === null) {
-            hd_print(__METHOD__ . ": Bad file");
+            hd_debug_print("Bad file");
             return null;
         }
 
@@ -212,12 +194,13 @@ class M3uParser
             $line = trim($this->m3u_file->fgets());
             if (empty($line)) continue;
 
-            if (!self::isTag($line)) break;
+            if (!isLineTag($line)) break;
 
-            if (self::isExtInf($line)) {
+            if (isExtInf($line)) {
                 $entry = new Entry();
-                $entry->setExtInf(new ExtInf($line, false));
-                return $entry->getTitle();
+                $tag = new ExtTagDefault();
+                $entry->addTag($tag->parseFullData($line));
+                return $entry->getEntryTitle();
             }
         }
 
@@ -228,6 +211,7 @@ class M3uParser
 
     /**
      * Parse one line
+     * return true if line is a url or parsed tag is header tag
      *
      * @param string $line
      * @param Entry& $entry
@@ -240,59 +224,48 @@ class M3uParser
             return false;
         }
 
-        if (self::isTag($line)) {
-            if (self::isExtM3u($line)) {
-                $entry->setExtM3u(new ExtM3U($line));
-                return true;
-            }
-
-            if (self::isExtInf($line)) {
-                $entry->setExtInf(new ExtInf($line));
-            } else if (self::isExtGrp($line)) {
-                $entry->setExtGrp(new ExtGrp($line));
-            }
-        } else {
+        $tag = $entry->parseExtTag($line, true);
+        if (is_null($tag)) {
+            // untagged line must be a stream url
             $entry->setPath($line);
             return true;
         }
 
-        return false;
+        return $entry->isM3U_Header();
     }
 
     /**
+     * Parse one line
+     * return true if line is a url or parsed tag is header tag
+     *
      * @param string $line
+     * @param Entry& $entry
      * @return bool
      */
-    protected static function isTag($line)
+    protected function parseLineFast($line, &$entry)
     {
-        return !empty($line) && $line[0] === '#';
+        $line = trim($line);
+        if (empty($line)) {
+            return false;
+        }
+
+        $tag = $entry->parseExtTag($line, false);
+        hd_debug_print(json_encode($tag));
+        if (is_null($tag)) {
+            // untagged line must be a stream url
+            $entry->setPath($line);
+            return true;
+        }
+
+        return $entry->isM3U_Header();
     }
 
     /**
-     * @param string $line
-     * @return bool
+     * @return Entry
      */
-    protected static function isExtM3u($line)
+    public function getM3uInfo()
     {
-        return stripos($line, '#EXTM3U') === 0;
-    }
-
-    /**
-     * @param string $line
-     * @return bool
-     */
-    protected static function isExtInf($line)
-    {
-        return stripos($line, '#EXTINF:') === 0;
-    }
-
-    /**
-     * @param string $line
-     * @return bool
-     */
-    protected static function isExtGrp($line)
-    {
-        return stripos($line, '#EXTGRP:') === 0;
+        return $this->m3u_info;
     }
 
     /**
@@ -312,11 +285,28 @@ class M3uParser
     }
 
     /**
-     * @return Entry
+     * Returns headers attributes from specified tag
+     * If tag not specified try to search in all available tags
+     *
+     * @param string|null $tag
+     * @return array|null
      */
-    public function getM3uInfo()
+    public function getHeaderAttributes($tag = null)
     {
-        return $this->m3u_info;
+        return $this->m3u_info->getEntryAttributes($tag);
+    }
+
+    /**
+     * Returns headers attribute from specified tag
+     * If tag not specified try to search specified attribute in all available tags
+     *
+     * @param string|array $name
+     * @param string|null $tag
+     * @return string|null
+     */
+    public function getHeaderAttribute($name, $tag = null)
+    {
+        return is_array($name) ? $this->m3u_info->getAnyEntryAttribute($name, $tag) : $this->m3u_info->getEntryAttribute($name, $tag);
     }
 
     /**
@@ -325,14 +315,11 @@ class M3uParser
     public function getXmltvSources()
     {
         $xmltv_urls = array();
-        foreach (array('url-tvg', 'x-tvg-url') as $attr) {
-            if (is_null($this->m3u_info)) break;
-
-            $tag_value = $this->m3u_info->getAttribute($attr);
-            $urls = explode(',', $tag_value);
-            foreach ($urls as $key => $url) {
+        $tvg_attrs = $this->m3u_info->getEpgSources();
+        foreach ($tvg_attrs as $value) {
+            $urls = explode(',', $value);
+            foreach ($urls as $url) {
                 if (!empty($url) && preg_match("|https?://|", $url)) {
-                    hd_print(__METHOD__ . ": $attr-$key: $url");
                     $xmltv_urls[] = $url;
                 }
             }

@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUndefinedClassInspection */
 
 ###############################################################################
 #
@@ -129,6 +129,12 @@ const EPG_PATTERN = 'xml|xmltv|gz';
 
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage/';
+
+const LOG_LEVEL_FATAL = 0;
+const LOG_LEVEL_ERROR = 1;
+const LOG_LEVEL_WARN  = 2;
+const LOG_LEVEL_INFO  = 3;
+const LOG_LEVEL_DEBUG = 4;
 
 # Hard-coded constants.
 if (!defined('FONT_SIZE_LARGE')) define('FONT_SIZE_LARGE', 4);
@@ -767,7 +773,7 @@ function send_ir_code($key)
         return shell_exec('echo ' . DuneIrControl::$key_codes[$key] . ' > /proc/ir/button');
     }
 
-    hd_print(__METHOD__ . ": Error in class " . get_class($this) . "::" . __FUNCTION__ . "! Code of key '$key' not found in base!");
+    hd_debug_print("Error in class " . get_class($this) . "::" . __FUNCTION__ . "! Code of key '$key' not found in base!");
     return '0';
 }
 
@@ -784,7 +790,7 @@ function send_ir_code_return_status($key)
         return get_shell_exec($cmd);
     }
 
-    hd_print(__METHOD__ . ": Error in class " . get_class($this) . "::" . __FUNCTION__ . "! Code of key '$key' not found in base!");
+    hd_debug_print("Error in class " . get_class($this) . "::" . __FUNCTION__ . "! Code of key '$key' not found in base!");
     return '0';
 }
 
@@ -1473,12 +1479,12 @@ function get_plugin_manifest_info()
     try {
         $manifest_path = get_install_path("dune_plugin.xml");
         if (!file_exists($manifest_path)) {
-            throw new Exception(__METHOD__ . ": Plugin manifest not found!");
+            throw new Exception("Plugin manifest not found!");
         }
 
         $xml = HD::parse_xml_file($manifest_path);
         if ($xml === null) {
-            throw new Exception(__METHOD__ . ": Empty plugin manifest!");
+            throw new Exception("Empty plugin manifest!");
         }
 
         $result['app_name'] = (string)$xml->name;
@@ -1494,7 +1500,7 @@ function get_plugin_manifest_info()
             $result[$node_name] = json_decode(json_encode($xml->xpath("//$node_name")), true);
         }
     } catch (Exception $ex) {
-        hd_print($ex->getMessage());
+        hd_debug_print($ex->getMessage());
     }
 
     return $result;
@@ -1549,7 +1555,7 @@ function get_active_skin_path()
         return rtrim(trim(preg_replace('/^.*=/', '', file_get_contents('/tmp/dune_skin_dir.txt'))), '/');
     }
 
-    hd_print("Error in class " . __METHOD__ . " ! Can not determine the path to the active skin.");
+    hd_debug_print("Error in class " . __METHOD__ . " ! Can not determine the path to the active skin.");
     return '';
 }
 
@@ -1557,7 +1563,7 @@ function get_active_skin_path()
 function get_paved_path($path, $dir_mode = 0777)
 {
     if (!create_path($path, $dir_mode)) {
-        hd_print(__METHOD__ . ": Directory '$path' was not created");
+        hd_debug_print("Directory '$path' was not created");
     }
 
     return rtrim($path, '/');
@@ -1576,7 +1582,7 @@ function get_slash_trailed_path($path)
 function create_path($path, $dir_mode = 0777)
 {
     if (!file_exists($path) && !mkdir($path, $dir_mode, true) && !is_dir($path)) {
-        hd_print(__METHOD__ . ": Directory '$path' was not created");
+        hd_debug_print("Directory '$path' was not created");
         return false;
     }
 
@@ -1649,7 +1655,7 @@ function get_system_language_string_value($string_key)
         }
     }
 
-    hd_print("Error in class " . __METHOD__ . " ! Not found value for key '$string_key'!");
+    hd_debug_print("Error in class " . __METHOD__ . " ! Not found value for key '$string_key'!");
     return '';
 }
 
@@ -1668,7 +1674,7 @@ function debug_print(/*mixed $var1, $var2...*/)
             }
         }
 
-        hd_print("Debug alert! " . rtrim($chain, '->') . (empty($var) ? '' : ' >> ') . ltrim($var, "\n"));
+        hd_debug_print("Debug alert! " . rtrim($chain, '->') . (empty($var) ? '' : ' >> ') . ltrim($var, "\n"));
     }
 }
 
@@ -1709,4 +1715,47 @@ function glob_dir($path, $pattern = null, $exclude_dir = true)
         }
     }
     return $list;
+}
+
+/**
+ * This is more efficient then merge_array in the loops
+ *
+ * @param array $ar1
+ * @param array|null $ar2
+ * @return array
+ */
+function safe_merge_array($ar1, $ar2)
+{
+    if (is_array($ar2)) {
+        foreach ($ar2 as $key => $itm) {
+            $ar1[$key] = $itm;
+        }
+    }
+
+    return $ar1;
+}
+
+function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
+{
+    $bt = debug_backtrace();
+    $caller = array_shift($bt);
+    $caller_name = array_shift($bt);
+    if (isset($caller_name['class']))
+        if (method_exists($val, '__toString')) {
+            hd_print("{$caller_name['class']}:{$caller_name['function']} ({$caller['line']}): $val");
+        } else {
+            hd_print("{$caller_name['class']}:{$caller_name['function']} ({$caller['line']}): " . raw_json_encode($val));
+        }
+    else
+        hd_print("{$caller_name['function']} ({$caller['line']}): $val");
+}
+
+function raw_json_encode($arr)
+{
+    $pattern = "/\\\\u([0-9a-fA-F]{4})/";
+    $callback = function ($m) {
+        return html_entity_decode("&#x$m[1];", ENT_QUOTES, 'UTF-8');
+    };
+
+    return str_replace('\\/', '/', preg_replace_callback($pattern, $callback, json_encode($arr)));
 }

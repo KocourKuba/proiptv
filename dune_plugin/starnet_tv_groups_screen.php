@@ -47,7 +47,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         // if token not set force to open setup screen
-        //hd_print(__METHOD__);
+        //hd_debug_print();
 
         $actions = array();
 
@@ -113,7 +113,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DELETE:
-                hd_print(__METHOD__ . ": Hide $sel_media_url->group_id");
+                hd_debug_print("Hide $sel_media_url->group_id");
                 $this->plugin->tv->disable_group($sel_media_url->group_id);
                 $this->need_update_eps = true;
                 break;
@@ -200,7 +200,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_APPLY);
 
             case ACTION_RELOAD:
-                hd_print(__METHOD__ . ": reload");
+                hd_debug_print("reload");
                 $this->plugin->tv->unload_channels();
                 break;
 
@@ -218,12 +218,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_print(__METHOD__ . ": get_all_folder_items");
+        //hd_debug_print("get_all_folder_items");
         $items = array();
         try {
             $this->plugin->tv->ensure_channels_loaded($plugin_cookies);
         } catch (Exception $e) {
-            hd_print(__METHOD__ . ": Channels not loaded");
+            hd_debug_print("Channels not loaded");
             return $items;
         }
 
@@ -281,7 +281,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         /** @var Group $group */
         foreach ($this->plugin->tv->get_groups_order()->get_order() as $item) {
-            //hd_print("group: {$group->get_title()} , icon: {$group->get_icon_url()}");
+            //hd_debug_print("group: {$group->get_title()} , icon: {$group->get_icon_url()}");
             $group = $this->plugin->tv->get_group($item);
             if (is_null($group) || $group->is_disabled()) continue;
 
@@ -302,7 +302,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             );
         }
 
-        //hd_print("Loaded items " . count($items));
+        //hd_debug_print("Loaded items " . count($items));
         return $items;
     }
 

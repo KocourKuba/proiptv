@@ -111,7 +111,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                 }
 
-                $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), null);
+                $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -123,11 +123,11 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                     $param_pos = strpos($url, '|||dune_params');
                     $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
                     $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
-                    hd_print(__METHOD__ . ": play movie in the external player: $cmd");
+                    hd_debug_print("play movie in the external player: $cmd");
                     exec($cmd, $output);
-                    hd_print(__METHOD__ . ": external player exec result code" . HD::ArrayToStr($output));
+                    hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
                 } catch (Exception $ex) {
-                    hd_print(__METHOD__ . ": Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
@@ -162,7 +162,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
             $channel = $this->plugin->tv->get_channel($channel_id);
             if (is_null($channel)) {
-                hd_print(__METHOD__ . ": Unknown channel $channel_id");
+                hd_debug_print("Unknown channel $channel_id");
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id, $plugin_cookies);
                 continue;
             }

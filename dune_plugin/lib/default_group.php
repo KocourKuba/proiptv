@@ -1,7 +1,8 @@
 <?php
 require_once 'group.php';
+require_once 'json_serializer.php';
 
-class Default_Group implements Group
+class Default_Group extends Json_Serializer implements Group
 {
     const DEFAULT_GROUP_ICON_PATH = 'plugin_file://icons/default_group.png';
 

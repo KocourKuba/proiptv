@@ -15,8 +15,6 @@ class HD
 
     private static $plugin_user_agent;
 
-    private static $dev_code;
-
     private static $token = '05ba6358d39c4f298f43024b654b7387';
 
     ///////////////////////////////////////////////////////////////////////
@@ -117,14 +115,14 @@ class HD
         if (is_array($opts)) {
             foreach ($opts as $k => $v) {
                 if (is_array($v)) {
-                    hd_print(str_repeat(' ', $ident) . "$k : array");
+                    hd_debug_print(str_repeat(' ', $ident) . "$k : array");
                     self::print_array($v, $ident + 4);
                 } else {
-                    hd_print(str_repeat(' ', $ident) . "$k : $v");
+                    hd_debug_print(str_repeat(' ', $ident) . "$k : $v");
                 }
             }
         } else {
-            hd_print(str_repeat(' ', $ident) . $opts);
+            hd_debug_print(str_repeat(' ', $ident) . $opts);
         }
     }
 
@@ -167,7 +165,7 @@ class HD
         }
 
         self::$user_agent = self::$plugin_user_agent;
-        hd_print(__METHOD__ . ": HTTP UserAgent: " . self::$user_agent);
+        hd_debug_print("HTTP UserAgent: " . self::$user_agent);
     }
 
     public static function get_dune_user_agent()
@@ -211,20 +209,20 @@ class HD
             }
         }
 
-        hd_print(__METHOD__ . ": HTTP fetching '$url'");
+        hd_debug_print("HTTP fetching '$url'");
 
         $content = curl_exec($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if ($content === false) {
-            $err_msg = __METHOD__ . ": HTTP error: $http_code (" . curl_error($ch) . ')';
-            hd_print($err_msg);
+            $err_msg = "HTTP error: $http_code (" . curl_error($ch) . ')';
+            hd_debug_print($err_msg);
             throw new Exception($err_msg);
         }
 
         if ($http_code >= 300) {
-            $err_msg = __METHOD__ . ": HTTP request failed ($http_code): " . self::http_status_code_to_string($http_code);
-            hd_print($err_msg);
+            $err_msg = "HTTP request failed ($http_code): " . self::http_status_code_to_string($http_code);
+            hd_debug_print($err_msg);
             throw new Exception($err_msg);
         }
 
@@ -265,7 +263,7 @@ class HD
             }
         }
 
-        hd_print(__METHOD__ . ": HTTP fetching '$url'");
+        hd_debug_print("HTTP fetching '$url'");
 
         try {
             $result = curl_exec($ch);
@@ -415,12 +413,12 @@ class HD
     {
         $serial = get_serial_number();
         if (empty($serial)) {
-            hd_print(__METHOD__ . ": Unable to get DUNE serial.");
+            hd_debug_print("Unable to get DUNE serial.");
             $serial = 'XX-XX-XX-XX-XX';
         }
         $timestamp = format_datetime('Ymd_His', time());
         $zip_file_name = "proiptv_{$serial}_$timestamp.zip";
-        hd_print(__METHOD__ . ": Prepare archive $zip_file_name for send");
+        hd_debug_print("Prepare archive $zip_file_name for send");
         $zip_file = get_temp_path($zip_file_name);
         $apk_subst = getenv('FS_PREFIX');
         $plugin_name = get_plugin_name();
@@ -462,12 +460,12 @@ class HD
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
                 self::http_put_document(base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name, $handle, filesize($zip_file));
-                hd_print(__METHOD__ . ": Log file sent");
+                hd_debug_print("Log file sent");
                 $ret = true;
             }
         } catch (Exception $ex) {
             $msg = ": Unable to upload log: " . $ex->getMessage();
-            hd_print(__METHOD__ . $msg);
+            hd_debug_print($msg);
             if ($error !== null) {
                 $error = $msg;
             }
@@ -491,8 +489,8 @@ class HD
         $xml = simplexml_load_string($doc);
 
         if ($xml === false) {
-            hd_print("Error: can not parse XML document.");
-            hd_print("XML-text: $doc.");
+            hd_debug_print("Error: can not parse XML document.");
+            hd_debug_print("XML-text: $doc.");
             throw new Exception('Illegal XML document');
         }
 
@@ -509,8 +507,8 @@ class HD
         $xml = simplexml_load_string(file_get_contents($path));
 
         if ($xml === false) {
-            hd_print(__METHOD__ . ": Error: can't parse XML document.");
-            hd_print(__METHOD__ . ": path to XML: $path");
+            hd_debug_print("Error: can't parse XML document.");
+            hd_debug_print("path to XML: $path");
             throw new Exception('Illegal XML document');
         }
 
@@ -649,7 +647,7 @@ class HD
             $items = $json ? json_decode($contents, true) : unserialize($contents);
             $items = is_null($items) ? array() : $items;
         } else {
-            //hd_print(__METHOD__ . ": $path not exist");
+            //hd_debug_print("$path not exist");
             $items = array();
         }
 
@@ -688,7 +686,7 @@ class HD
     public static function erase_items($path)
     {
         if (file_exists($path)) {
-            hd_print("$path deleted");
+            hd_debug_print("$path deleted");
             unlink($path);
         }
     }
@@ -737,12 +735,12 @@ class HD
             $doc = self::http_get_document($url, $opts);
             $contents = json_decode($doc, $to_array);
             if ($contents === null || $contents === false) {
-                hd_print("failed to decode json");
-                hd_print("doc: $doc");
+                hd_debug_print("failed to decode json");
+                hd_debug_print("doc: $doc");
                 return false;
             }
         } catch (Exception $ex) {
-            hd_print(__METHOD__ . ": Unable to load url: " . $ex->getMessage());
+            hd_debug_print("Unable to load url: " . $ex->getMessage());
             return false;
         }
 
@@ -756,7 +754,7 @@ class HD
     public static function StoreContentToFile($path, $content)
     {
         if (empty($path)) {
-            hd_print(__METHOD__ . ": Path not set");
+            hd_debug_print("Path not set");
         } else {
             file_put_contents($path, json_encode($content));
         }
@@ -769,7 +767,7 @@ class HD
     public static function ReadContentFromFile($path, $assoc = true)
     {
         if (empty($path) || !file_exists($path)) {
-            hd_print(__METHOD__ . ": Path not exists: $path");
+            hd_debug_print("Path not exists: $path");
             return false;
         }
 
@@ -778,7 +776,7 @@ class HD
 
     public static function ShowMemoryUsage()
     {
-        hd_print("Memory usage: " . round(memory_get_usage(true) / 1024) . "kb / " . ini_get('memory_limit'));
+        hd_debug_print("Memory usage: " . round(memory_get_usage(true) / 1024) . "kb / " . ini_get('memory_limit'));
     }
 
     public static function array_unshift_assoc(&$arr, $key, $val)

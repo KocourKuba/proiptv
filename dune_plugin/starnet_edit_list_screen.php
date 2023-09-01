@@ -61,7 +61,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_print(__METHOD__);
+        //hd_debug_print();
         $actions = array();
         if ($this->get_edit_order($media_url)->size()) {
             if ($media_url->edit_list === self::SCREEN_TYPE_PLAYLIST) {
@@ -232,7 +232,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
                     foreach ($lines as $line) {
                         $line = trim($line);
-                        hd_print("imported: '$line'");
+                        hd_debug_print("imported: '$line'");
                         if (preg_match('|https?://|', $line)) {
                             $order->add_item($line);
                         }
@@ -311,13 +311,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_print(__METHOD__);
-        //hd_print(__METHOD__ . $media_url->get_media_url_str());
+        //hd_debug_print();
+        //hd_debug_print($media_url->get_media_url_str());
 
         $order = $this->get_edit_order($media_url);
         $items = array();
         foreach ($order->get_order() as $item) {
-            //hd_print("order item media url: " . self::get_media_url_str($item));
+            //hd_debug_print("order item media url: " . self::get_media_url_str($item));
             $title = $item;
             if ($media_url->edit_list === self::ACTION_CHANNELS) {
                 if ($media_url->group_id === FAV_CHANNEL_GROUP_ID || $media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) break;
@@ -350,15 +350,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             );
         }
 
-        //hd_print("Loaded items " . count($items));
+        //hd_debug_print("Loaded items " . count($items));
         return $items;
     }
 
     /*
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_print(__METHOD__);
-        //hd_print(__METHOD__ . $media_url->get_media_url_str());
+        hd_debug_print();
+        //hd_debug_print($media_url->get_media_url_str());
 
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
         if ($this->get_edit_order($media_url)->size() === 0) {
@@ -444,7 +444,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     private function get_edit_order($media_url)
     {
-        //hd_print(__METHOD__ . ": media url: " . $media_url->get_media_url_str());
+        //hd_debug_print($media_url->get_media_url_str());
 
         switch ($media_url->edit_list) {
             case self::SCREEN_TYPE_PLAYLIST:

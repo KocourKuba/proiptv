@@ -54,7 +54,7 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
         self::$epf_id = $plugin->plugin_info['app_name'];
         self::$no_internet_epfs = self::$epf_id . '.no_internet';
 
-        hd_print(__METHOD__ . ": epf_id: " . self::$epf_id);
+        hd_debug_print("epf_id: " . self::$epf_id);
         parent::initialize(self::$epf_id);
 
         self::$tv_rows_screen = new Starnet_Tv_Rows_Screen($plugin);
@@ -122,20 +122,20 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
             return null;
 
         if ($first_run)
-            hd_print(__METHOD__ . ": first run");
+            hd_debug_print("first run");
 
         self::ensure_no_internet_epfs_created($first_run, $plugin_cookies);
 
         try {
             $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies);
         } catch (Exception $e) {
-            hd_print(__METHOD__ . ": Exception while generating epf: " . $e->getMessage());
+            hd_debug_print("Exception while generating epf: " . $e->getMessage());
             return null;
         }
 
         $cold_run = !is_file(self::warmed_up_path());
         if ($cold_run) {
-            hd_print(__METHOD__ . ": Cold run");
+            hd_debug_print("Cold run");
             file_put_contents(self::warmed_up_path(), '');
         }
 

@@ -56,7 +56,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        //hd_print(__METHOD__);
+        //hd_debug_print();
         $defs = array();
 
         $this->plugin->init_playlist();
@@ -189,14 +189,14 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
-            hd_print(__METHOD__ . ": Setup: changing $control_id value to $new_value");
+            hd_debug_print("Setup: changing $control_id value to $new_value");
         }
 
         switch ($control_id) {
             case self::SETUP_ACTION_EPG_SOURCE:
                 $new = $user_input->{$control_id};
                 $this->plugin->set_settings(PARAM_EPG_SOURCE, $new);
-                hd_print(__METHOD__ . ": Selected epg source: $new");
+                hd_debug_print("Selected epg source: $new");
                 break;
 
             case self::SETUP_ACTION_XMLTV_EPG_IDX:
@@ -204,7 +204,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $source_idx = $this->plugin->get_settings(PARAM_EPG_IDX, array());
                 $source_idx[$source] = $user_input->{$control_id};
                 $this->plugin->set_settings(PARAM_EPG_IDX, $source_idx);
-                hd_print(__METHOD__ . ": Selected xmltv epg idx: $source_idx[$source] for $source");
+                hd_debug_print("Selected xmltv epg idx: $source_idx[$source] for $source");
                 $res = $this->plugin->epg_man->is_xmltv_cache_valid();
                 if (!empty($res)) {
                     return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'));
@@ -257,7 +257,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::open_folder($media_url_str, TR::t('setup_edit_xmltv_list'));
 
             case ACTION_RESET_DEFAULT:
-                hd_print(__METHOD__ . ": " . ACTION_RESET_DEFAULT);
+                hd_debug_print(ACTION_RESET_DEFAULT);
                 $this->plugin->epg_man->clear_all_epg_cache();
 
                 $data = MediaURL::make(array('filepath' => get_data_path("epg_cache/")));
@@ -267,7 +267,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                hd_print(__METHOD__ . ": " . ACTION_FOLDER_SELECTED . " $data->filepath");
+                hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
                 $this->plugin->epg_man->clear_all_epg_cache();
                 $this->plugin->set_parameters(PARAM_XMLTV_CACHE_PATH, smb_tree::set_folder_info( $data));
                 $this->plugin->epg_man->init_cache_dir();
@@ -276,7 +276,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
             case ACTION_RELOAD:
-                hd_print(__METHOD__ . ": " . ACTION_RELOAD);
+                hd_debug_print(ACTION_RELOAD);
                 $this->plugin->tv->unload_channels();
                 $this->plugin->update_xmltv_source();
                 return $this->plugin->tv->reload_channels($this, $plugin_cookies);

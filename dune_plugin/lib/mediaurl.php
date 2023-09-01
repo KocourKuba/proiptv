@@ -124,16 +124,6 @@ class MediaURL
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
 
-    public static function raw_json_encode($arr)
-    {
-        $pattern = "/\\\\u([0-9a-fA-F]{4})/";
-        $callback = function ($m) {
-            return html_entity_decode("&#x$m[1];", ENT_QUOTES, 'UTF-8');
-        };
-
-        return str_replace('\\/', '/', preg_replace_callback($pattern, $callback, json_encode($arr)));
-    }
-
     /**
      * @param array $m
      * @param bool $raw_encode
@@ -141,7 +131,7 @@ class MediaURL
      */
     public static function encode($m, $raw_encode = false)
     {
-        return $raw_encode ? self::raw_json_encode($m) : json_encode($m);
+        return $raw_encode ? raw_json_encode($m) : json_encode($m);
     }
 
     ///////////////////////////////////////////////////////////////////////

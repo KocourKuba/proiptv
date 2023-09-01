@@ -30,15 +30,15 @@ class dune_config
         hd_restore_warnings();
 
         if ($lines === false) {
-            hd_print(__METHOD__ . ": Configuration file '$conf_file_path' does not exist.");
+            hd_debug_print("Configuration file '$conf_file_path' does not exist.");
             return false;
         }
 
-        hd_print(__METHOD__ . ": Reading configuration from '$conf_file_path'...");
+        hd_debug_print("Reading configuration from '$conf_file_path'...");
 
         foreach ($lines as $i => $iValue) {
             if (preg_match('/^ *(\S+) *= *(\S+)$/', $iValue, $matches) !== 1) {
-                hd_print(
+                hd_debug_print(
                     "Warning: line " . ($i + 1) . ": unknown format. " .
                     "Data: '" . $iValue . "'.");
                 continue;
@@ -85,7 +85,7 @@ class dune_config
     public function set_default($key, $value)
     {
         if (!isset($this->data[$key])) {
-            hd_print(__METHOD__ . ": Warning: no value for key '$key'. Using default: '$value'");
+            hd_debug_print("Warning: no value for key '$key'. Using default: '$value'");
             $this->__set($key, $value);
         }
     }

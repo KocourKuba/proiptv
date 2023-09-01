@@ -55,7 +55,7 @@ class Playback_Points
             }
 
             $this->points = HD::get_items($path);
-            //hd_print(__METHOD__ . ": " . count($points) . " from: $storage");
+            //hd_debug_print(count($points) . " from: $storage");
             while (count($this->points) > 7) {
                 array_pop($this->points);
             }
@@ -73,7 +73,7 @@ class Playback_Points
         }
 
         if (count($this->points) !== 0) {
-            hd_print(__METHOD__ . ": " . count($this->points) . " to: $path");
+            hd_debug_print(count($this->points) . " to: $path");
             HD::put_items($path, $this->points);
         } else if (file_exists($path)) {
             unlink($path);
@@ -85,7 +85,7 @@ class Playback_Points
      */
     public function update_point($id)
     {
-        //hd_print(__METHOD__);
+        //hd_debug_print();
 
         if ($this->curr_point_id === null && $id === null)
             return;
@@ -100,7 +100,7 @@ class Playback_Points
 
                 // if channel does support archive do not update current point
                 $this->points[$id] += ($this->points[$id] !== 0) ? $player_state['playback_position'] : 0;
-                //hd_print(__METHOD__ . ": channel_id $id at time mark: {$this->points[$id]}");
+                //hd_debug_print("channel_id $id at time mark: {$this->points[$id]}");
             }
         }
     }
@@ -115,7 +115,7 @@ class Playback_Points
         if (isset($player_state['player_state']) && $player_state['player_state'] !== 'navigator') {
             if (!isset($player_state['last_playback_event']) || ($player_state['last_playback_event'] !== PLAYBACK_PCR_DISCONTINUITY)) {
 
-                hd_print(__METHOD__ . ": channel_id $channel_id time mark: $archive_ts");
+                hd_debug_print("channel_id $channel_id time mark: $archive_ts");
                 $this->curr_point_id = $channel_id;
 
                 if (isset($this->points[$channel_id])) {
@@ -135,7 +135,7 @@ class Playback_Points
      */
     public function erase_point($id)
     {
-        hd_print(__METHOD__ . ": erase $id");
+        hd_debug_print("erase $id");
         unset($this->points[$id]);
         $this->save();
     }
@@ -145,7 +145,7 @@ class Playback_Points
      */
     public function clear_points()
     {
-        hd_print(__METHOD__);
+        hd_debug_print();
         $this->points = array();
         $this->save();
     }
@@ -158,7 +158,7 @@ class Playback_Points
     {
         $path = $this->plugin->get_parameters(PARAM_HISTORY_PATH, get_data_path());
         if (!is_dir($path)) {
-            hd_print(__METHOD__ . ": load path not exist: $path");
+            hd_debug_print("load path not exist: $path");
             return '';
         }
 

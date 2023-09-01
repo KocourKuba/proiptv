@@ -48,7 +48,7 @@ abstract class Abstract_Regular_Screen implements Screen
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_print("----> count: " . count($this->folder_views));
+        //hd_debug_print("----> count: " . count($this->folder_views));
 
         $idx = $this->get_folder_view_index($plugin_cookies);
         $folder_views = $this->get_folder_views();

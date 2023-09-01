@@ -132,7 +132,7 @@ class Control_Factory_Ext extends Control_Factory
                 }
             } else {
                 unset($indexed_colors_map[$idx]);
-                hd_print(__METHOD__ . ": Warning in " . get_class(self::$instance) . "! Wrong colors map value $argb_color, color index $idx is skipped.");
+                hd_debug_print("Warning in " . get_class(self::$instance) . "! Wrong colors map value $argb_color, color index $idx is skipped.");
             }
         }
     }

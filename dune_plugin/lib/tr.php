@@ -33,7 +33,7 @@ class TR
                 $params .= "<p>$arg_list[$i]</p>";
             }
             $str = "%ext%<key_global>$arg_list[0]$params</key_global>";
-            hd_print($str);
+            hd_debug_print($str);
         } else if ($num_args === 1) {
             $str = "%tr%$arg_list[0]";
         } else {
@@ -57,7 +57,7 @@ class TR
                 return trim($m[1]);
         }
 
-        hd_print(__METHOD__ . "Value for key '$string_key' is not found!");
+        //hd_debug_print("Value for key '$string_key' is not found!");
 
         return $string_key;
     }

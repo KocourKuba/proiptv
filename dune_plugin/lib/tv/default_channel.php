@@ -34,7 +34,7 @@ class Default_Channel implements Channel
     protected $_archive_url;
 
     /**
-     * @var array|Group[]
+     * @var Group[]
      */
     protected $_groups;
 

@@ -50,7 +50,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        hd_print(__METHOD__);
+        hd_debug_print();
         $defs = array();
 
         //////////////////////////////////////
@@ -130,7 +130,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
-            hd_print(__METHOD__ . ": Setup: changing $control_id value to $new_value");
+            hd_debug_print("Setup: changing $control_id value to $new_value");
         }
 
         switch ($control_id) {
@@ -140,13 +140,13 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
                     ? SetupControlSwitchDefs::switch_on
                     : SetupControlSwitchDefs::switch_off;
 
-                hd_print(__METHOD__ . ": $control_id: " . $plugin_cookies->{$control_id});
+                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id});
                 break;
 
             case self::SETUP_ACTION_BUF_TIME:
             case self::SETUP_ACTION_DELAY_TIME:
                 $plugin_cookies->{$control_id} = $user_input->{$control_id};
-                hd_print(__METHOD__ . ": $control_id: " . $plugin_cookies->{$control_id});
+                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id});
                 break;
         }
 

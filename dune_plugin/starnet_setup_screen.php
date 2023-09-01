@@ -53,7 +53,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        hd_print(__METHOD__);
+        hd_debug_print();
         $text_icon = $this->plugin->get_image_path('text.png');
         $setting_icon = $this->plugin->get_image_path('settings.png');
 

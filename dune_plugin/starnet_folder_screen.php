@@ -80,7 +80,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_file_list(&$plugin_cookies, $dir)
     {
-        //hd_print(__METHOD__ . ": $dir");
+        //hd_debug_print("$dir");
         $smb_shares = new smb_tree();
         $fileData['folder'] = array();
         $fileData['file'] = array();
@@ -132,7 +132,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_print(__METHOD__ . ": " . $media_url->get_raw_string());
+        //hd_debug_print($media_url->get_raw_string());
         $actions = array();
 
         $fs_action = User_Input_Handler_Registry::create_action($this, self::ACTION_FS);
@@ -185,7 +185,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
-        //hd_print(__METHOD__ . ": $from_ndx, " . $media_url->get_raw_string());
+        //hd_debug_print("$from_ndx, " . $media_url->get_raw_string());
         $err = false;
         $source_window_id = isset($media_url->source_window_id) ? $media_url->source_window_id : false;
         $dir = empty($media_url->filepath) ? "/tmp/mnt" : $media_url->filepath;
@@ -332,7 +332,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             );
         }
 
-        //hd_print("folder items: " . count($items));
+        //hd_debug_print("folder items: " . count($items));
         return array(
             PluginRegularFolderRange::total => count($items),
             PluginRegularFolderRange::more_items_available => false,
@@ -462,7 +462,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
             case ACTION_OPEN_FOLDER:
                 $path = $parent_url->filepath;
-                hd_print(__METHOD__ . ": open_folder: $path");
+                hd_debug_print("open_folder: $path");
                 if (preg_match('|^/tmp/mnt/storage/|', $path)) {
                     $path = preg_replace('|^/tmp/mnt/storage/|', 'storage_name://', $path);
                 } else if (isset($parent_url->ip_path)) {
@@ -478,7 +478,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     }
                 }
                 $url = 'embedded_app://{name=file_browser}{url=' . $path . '}{caption=File Browser}';
-                //hd_print("smt_tree::open_folder launch url: $url");
+                //hd_debug_print("smt_tree::open_folder launch url: $url");
                 return Action_Factory::launch_media_url($url);
 
             case self::ACTION_NEW_SMB_DATA:
@@ -608,7 +608,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function do_get_mount_smb_err_defs($err, $caption, $ip_path, $user, $password)
     {
-        //hd_print(__METHOD__ . ': do_get_mount_smb_err_defs');
+        //'do_get_mount_smb_err_defs');
         $defs = array();
         Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $err, 4);
         Control_Factory::add_label($defs, TR::t('folder_screen_smb'), $caption);
@@ -629,7 +629,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     protected function GetSMBAccessDefs(array &$defs, $user, $password)
     {
-        //hd_print(__METHOD__ . ': GetSMBAccessDefs');
+        //'GetSMBAccessDefs');
         Control_Factory::add_text_field($defs, $this, null,
             'new_user',
             TR::t('folder_screen_user'),

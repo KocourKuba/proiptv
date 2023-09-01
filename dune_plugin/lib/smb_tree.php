@@ -46,7 +46,7 @@ class smb_tree
     private function execute($args = '')
     {
         $cmd = '/tango/firmware/bin/smbtree ' . $this->get_auth_options() . ' ' . $this->get_debug_level() . ' ' . $args;
-        //hd_print("smbtree exec: $cmd");
+        //hd_debug_print("smbtree exec: $cmd");
         $process = proc_open($cmd, $this->descriptor_spec, $pipes, '/tmp', $this->env);
 
         if (is_resource($process)) {
@@ -203,7 +203,7 @@ class smb_tree
         $my_ip = get_ip_address();
         $server_shares_smb = $this->get_server_shares_smb();
         foreach ($server_shares_smb as $k => $v) {
-            //hd_print("server shares: $k");
+            //hd_debug_print("server shares: $k");
             $out = shell_exec(self::get_nmblookup_path() . ' "' . $k . '" -R');
             if (preg_match('/(.*) (.*)<00>/', $out, $matches)) {
                 if ($my_ip === $matches[1]) {
@@ -264,7 +264,7 @@ class smb_tree
 
         $xml = simplexml_load_string(file_get_contents($path));
         if ($xml === false) {
-            hd_print(__METHOD__ . ": Error parsing $path.");
+            hd_debug_print("Error parsing $path.");
             return false;
         }
 
@@ -327,7 +327,7 @@ class smb_tree
                 if ($wr === false) {
                     $fn = '/tmp/mnt/smb/' . $n;
                     if (!file_exists($fn) && !mkdir($fn, 0777, true) && !is_dir($fn)) {
-                        hd_print(__METHOD__ . ": Directory '$fn' was not created");
+                        hd_debug_print("Directory '$fn' was not created");
                     }
                     $ret_code = exec("mount -t cifs -o username=$username,password=$password,posixpaths,rsize=32768,wsize=130048 \"$k\" \"$fn\" 2>&1 &");
                 } else {
@@ -440,7 +440,7 @@ class smb_tree
                 if ($wr === false) {
                     $fn = '/tmp/mnt/network/' . $n;
                     if (!file_exists($fn) && !mkdir($fn, 0777, true) && !is_dir($fn)) {
-                        hd_print(__METHOD__ . ": Directory '$fn' was not created");
+                        hd_debug_print("Directory '$fn' was not created");
                     }
                     $q = shell_exec("mount -t nfs -o " . $vel['protocol'] . " $k $fn 2>&1");
                 } else {

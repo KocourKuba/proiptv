@@ -50,7 +50,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        hd_print(__METHOD__);
+        hd_debug_print();
         $defs = array();
 
         //////////////////////////////////////
@@ -133,13 +133,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
-            hd_print(__METHOD__ . ": changing $control_id value to $new_value");
+            hd_debug_print("changing $control_id value to $new_value");
         }
 
         switch ($control_id) {
 
             case ACTION_CHANGE_PLAYLIST:
-                hd_print(__METHOD__ . ": Change playlist index: $new_value");
+                hd_debug_print("Change playlist index: $new_value");
                 $old_value = $this->plugin->get_playlists_idx();
                 $this->plugin->set_playlists_idx($new_value);
                 $action = $this->plugin->tv->reload_channels($this, $plugin_cookies);
@@ -185,7 +185,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:
-                hd_print(__METHOD__ . ": reload");
+                hd_debug_print("reload");
                 return $this->plugin->tv->reload_channels($this, $plugin_cookies);
         }
 

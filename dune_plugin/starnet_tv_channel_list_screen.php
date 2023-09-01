@@ -45,7 +45,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_print(__METHOD__ . ": " . $media_url->get_raw_string());
+        //hd_debug_print($media_url->get_raw_string());
 
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_FOLDER);
         $action_settings = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS);
@@ -146,7 +146,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
                     if ($s !== false) {
                         $q = true;
-                        hd_print(__METHOD__ . ": found channel: $ch_title, idx: " . $idx);
+                        hd_debug_print("found channel: $ch_title, idx: " . $idx);
                         $add_params['number'] = $idx;
                         Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
                             self::ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
@@ -189,7 +189,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEM_DELETE:
-                hd_print(__METHOD__ . ": Hide $channel_id");
+                hd_debug_print("Hide $channel_id");
                 $channel->set_disabled(true);
                 if ($group->is_all_channels_group()) {
                     foreach ($this->plugin->tv->get_groups() as $group) {
@@ -239,10 +239,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
                     $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                     if ($zoom_select === DuneVideoZoomPresets::not_set) {
-                        hd_print(__METHOD__ . ": Zoom preset removed for channel: $channel_id");
+                        hd_debug_print("Zoom preset removed for channel: $channel_id");
                         unset ($zoom_data[$channel_id]);
                     } else {
-                        hd_print(__METHOD__ . ": Zoom preset $zoom_select for channel: $channel_id");
+                        hd_debug_print("Zoom preset $zoom_select for channel: $channel_id");
                         $zoom_data[$channel_id] = $zoom_select;
                     }
 
@@ -257,11 +257,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $param_pos = strpos($url, '|||dune_params');
                     $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
                     $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
-                    hd_print(__METHOD__ . ": play movie in the external player: $cmd");
+                    hd_debug_print("play movie in the external player: $cmd");
                     exec($cmd, $output);
-                    hd_print(__METHOD__ . ": external player exec result code" . HD::ArrayToStr($output));
+                    hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
                 } catch (Exception $ex) {
-                    hd_print(__METHOD__ . ": Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
@@ -269,7 +269,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_RELOAD:
-                hd_print(__METHOD__ . ": reload");
+                hd_debug_print("reload");
                 $this->plugin->tv->unload_channels();
                 return $this->update_current_folder($user_input, $parent_group_id);
 
@@ -310,7 +310,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_print(__METHOD__ . ": media url: " . $media_url->get_media_url_str());
+        //hd_debug_print("media url: " . $media_url->get_media_url_str());
 
         $items = array();
 
@@ -335,14 +335,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             } else {
                 foreach ($this_group->get_items_order()->get_order() as $item) {
                     $channel = $this->plugin->tv->get_channel($item);
-                    //hd_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));;
+                    //hd_debug_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));;
                     if ($channel->is_disabled()) continue;
 
                     $items[] = $this->get_regular_folder_item($this_group, $channel);
                 }
             }
         } catch (Exception $e) {
-            hd_print(__METHOD__ . ": Failed collect folder items! " . $e->getMessage());
+            hd_debug_print("Failed collect folder items! " . $e->getMessage());
         }
 
         return $items;

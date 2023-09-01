@@ -126,11 +126,11 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     $param_pos = strpos($url, '|||dune_params');
                     $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
                     $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
-                    hd_print(__METHOD__ . ": play movie in the external player: $cmd");
+                    hd_debug_print("play movie in the external player: $cmd");
                     exec($cmd, $output);
-                    hd_print(__METHOD__ . ": external player exec result code" . HD::ArrayToStr($output));
+                    hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
                 } catch (Exception $ex) {
-                    hd_print(__METHOD__ . ": Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
@@ -152,7 +152,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_print(__METHOD__ . ": get_all_folder_items");
+        //hd_debug_print("get_all_folder_items");
 
         $items = array();
         $now = time();

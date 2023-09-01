@@ -1,6 +1,7 @@
 <?php
+require_once 'json_serializer.php';
 
-class Ordered_Array
+class Ordered_Array extends Json_Serializer
 {
     const UP = -1;
     const DOWN = 1;
@@ -56,7 +57,7 @@ class Ordered_Array
         $set = "set_$this->accessor";
         if (!$this->save_delay && is_callable(array($this->plugin, $set))) {
             $this->plugin->{$set}($this->param_name, $this->order);
-            //hd_print(__METHOD__ . ": $set: $this->param_name ({$this->size()})");
+            //hd_debug_print("$set: $this->param_name ({$this->size()})");
         }
     }
 
@@ -68,7 +69,7 @@ class Ordered_Array
         $get = "get_$this->accessor";
         if (is_callable(array($this->plugin, $get))) {
             $this->order = $this->plugin->{$get}($this->param_name, array());
-            //hd_print(__METHOD__ . ": $get: $this->param_name ({$this->size()})");
+            //hd_debug_print("$get: $this->param_name ({$this->size()})");
         }
     }
 
@@ -183,7 +184,7 @@ class Ordered_Array
         $key = array_search($id, $this->order);
         if ($key !== false) {
             $selected_item = $this->get_selected_item();
-            hd_print(__METHOD__ . ": remove: $id");
+            hd_debug_print("remove: $id");
             $removed = array_splice($this->order, $key, 1);
             if (count($removed) !== 0) {
                 $this->update_saved_pos($selected_item);
@@ -239,7 +240,7 @@ class Ordered_Array
     {
         $selected_item = $this->get_selected_item();
         $k = array_search($id, $this->order);
-        //hd_print(__METHOD__ . ": move id: $id from idx: $k to direction: $direction");
+        //hd_debug_print("move id: $id from idx: $k to direction: $direction");
 
         if ($k === false || $direction === 0)
             return false;

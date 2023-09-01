@@ -70,7 +70,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $channel = $this->plugin->tv->get_channel($channel_id);
         if (is_null($channel)) {
-            hd_print(__METHOD__ . ": Unknown channel $channel_id");
+            hd_debug_print("Unknown channel $channel_id");
             return null;
         }
 
@@ -105,7 +105,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         if (is_null($epg_data = $this->plugin->tv->get_program_info($channel_id, -1, $plugin_cookies))) {
 
-            hd_print(__METHOD__ . ": no epg data");
+            hd_debug_print("no epg data");
             $channel_desc = $channel->get_desc();
             if (!empty($channel_desc)) {
                 $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $y);
@@ -121,7 +121,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
         } else {
 
-            //foreach ($epg_data as $key=>$value) hd_print("$key => $value");
+            //foreach ($epg_data as $key=>$value) hd_debug_print("$key => $value");
             $program = (object)array();
             $program->time = sprintf("%s - %s",
                 gmdate('H:i', $epg_data[PluginTvEpgProgram::start_tm_sec] + get_local_time_zone_offset()),
@@ -325,35 +325,35 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
-        //hd_print(__METHOD__);
+        //hd_debug_print();
         $rows = array();
 
         $channels_rows = $this->get_regular_rows();
         if (is_null($channels_rows)) {
-            hd_print(__METHOD__ . ": no channels rows");
+            hd_debug_print("no channels rows");
             return null;
         }
 
         $history_rows = $this->get_history_rows($plugin_cookies);
         if (!is_null($history_rows)) {
             $rows = array_merge($rows, $history_rows);
-            //hd_print(__METHOD__ . ": added history: " . count($history_rows) . " rows");
+            //hd_debug_print("added history: " . count($history_rows) . " rows");
         }
 
         $favorites_rows = $this->get_favorites_rows($plugin_cookies);
         if (!is_null($favorites_rows)) {
-            //hd_print(__METHOD__ . ": added favorites: " . count($favorites_rows) . " rows");
+            //hd_debug_print("added favorites: " . count($favorites_rows) . " rows");
             $rows = array_merge($rows, $favorites_rows);
         }
 
         $all_channels_rows = $this->get_all_channels_row($plugin_cookies);
         if (!is_null($all_channels_rows)) {
             $rows = array_merge($rows, $all_channels_rows);
-            //hd_print(__METHOD__ . ": added all channels: " . count($all_channels_rows) . " rows");
+            //hd_debug_print("added all channels: " . count($all_channels_rows) . " rows");
         }
 
         $rows = array_merge($rows, $channels_rows);
-        //hd_print(__METHOD__ . ": added channels: " . count($channels_rows) . " rows");
+        //hd_debug_print("added channels: " . count($channels_rows) . " rows");
 
         $pane = Rows_Factory::pane(
             $rows,
@@ -529,7 +529,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         $this->create_menu_item($menu_items, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete'), "star.png");
                     } else {
                         $channel_id = $media_url->channel_id;
-                        hd_print(__METHOD__ . ": Selected channel id: $channel_id");
+                        hd_debug_print("Selected channel id: $channel_id");
 
                         $is_in_favorites = $this->plugin->tv->get_favorites()->in_order($channel_id);
                         $caption = $is_in_favorites ? TR::t('delete') : TR::t('add');
@@ -548,7 +548,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                         $current_idx = (string)(isset($zoom_data[$channel_id]) ? $zoom_data[$channel_id] : DuneVideoZoomPresets::not_set);
 
-                        //hd_print(__METHOD__ . ": Current idx: $current_idx");
+                        //hd_debug_print("Current idx: $current_idx");
 
                         $this->create_menu_item($common_menu, GuiMenuItemDef::is_separator);
 
@@ -650,12 +650,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 break;
 
             case ACTION_ITEM_DELETE:
-                hd_print(__METHOD__ . ": Hide $media_url->group_id");
+                hd_debug_print("Hide $media_url->group_id");
                 $this->plugin->tv->disable_group($media_url->group_id);
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_CHANGE_PLAYLIST:
-                hd_print(__METHOD__ . ": Start event popup menu for playlist");
+                hd_debug_print("Start event popup menu for playlist");
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array('choose_playlist' => true));
 
             case ACTION_FOLDER_SELECTED:
@@ -672,10 +672,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
                 $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
                 if ($zoom_select === DuneVideoZoomPresets::not_set) {
-                    hd_print(__METHOD__ . ": Zoom preset removed for channel: $channel_id");
+                    hd_debug_print("Zoom preset removed for channel: $channel_id");
                     unset ($zoom_data[$channel_id]);
                 } else {
-                    hd_print(__METHOD__ . ": Zoom preset $zoom_select for channel: $channel_id");
+                    hd_debug_print("Zoom preset $zoom_select for channel: $channel_id");
                     $zoom_data[$channel_id] = $zoom_select;
                 }
 
@@ -691,11 +691,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $param_pos = strpos($url, '|||dune_params');
                     $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
                     $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
-                    hd_print(__METHOD__ . ": play movie in the external player: $cmd");
+                    hd_debug_print("play movie in the external player: $cmd");
                     exec($cmd, $output);
-                    hd_print(__METHOD__ . ": external player exec result code" . HD::ArrayToStr($output));
+                    hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
                 } catch (Exception $ex) {
-                    hd_print(__METHOD__ . ": Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
@@ -732,9 +732,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_history_rows($plugin_cookies)
     {
-        //hd_print(__METHOD__);
+        //hd_debug_print();
         if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_HISTORY)) {
-            hd_print(__METHOD__ . ": History group disabled");
+            hd_debug_print("History group disabled");
             return null;
         }
 
@@ -767,7 +767,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
             }
 
-            //hd_print("Starnet_Tv_Rows_Screen::get_history_rows: channel id: $channel_id (epg: '$title') time mark: $channel_ts progress: " . $progress * 100 . "%");
+            //hd_debug_print("Starnet_Tv_Rows_Screen::get_history_rows: channel id: $channel_id (epg: '$title') time mark: $channel_ts progress: " . $progress * 100 . "%");
             $watched[(string)$channel_id] = array(
                 'channel_id' => $channel_id,
                 'archive_tm' => $channel_ts,
@@ -781,7 +781,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         foreach ($watched as $item) {
             if (!is_null($channel = $this->plugin->tv->get_channel($item['channel_id']))) {
                 $id = json_encode(array('group_id' => PLAYBACK_HISTORY_GROUP_ID, 'channel_id' => $item['channel_id'], 'archive_tm' => $item['archive_tm']));
-                //hd_print("MediaUrl info for {$item['channel_id']} - $id");
+                //hd_debug_print("MediaUrl info for {$item['channel_id']} - $id");
                 if (isset($this->removed_playback_point))
                     if ($this->removed_playback_point === $id) {
                         $this->removed_playback_point = null;
@@ -842,7 +842,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
         }
 
-        //hd_print(__METHOD__ . ": History rows: " . count($rows));
+        //hd_debug_print("History rows: " . count($rows));
         return $rows;
     }
 
@@ -852,15 +852,15 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_favorites_rows($plugin_cookies)
     {
-        //hd_print(__METHOD__);
+        //hd_debug_print();
         if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_FAVORITES)) {
-            hd_print(__METHOD__ . ": Favorites group disabled");
+            hd_debug_print("Favorites group disabled");
             return null;
         }
 
         $group = $this->plugin->tv->get_special_group(FAV_CHANNEL_GROUP_ID);
         if (is_null($group)) {
-            hd_print(__METHOD__ . ": Favorites group not found");
+            hd_debug_print("Favorites group not found");
             return null;
         }
 
@@ -895,7 +895,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
         }
 
-        //hd_print(__METHOD__ . ": Favorites rows: " . count($rows));
+        //hd_debug_print("Favorites rows: " . count($rows));
         return $rows;
     }
 
@@ -905,16 +905,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_all_channels_row($plugin_cookies)
     {
-        //hd_print(__METHOD__);
+        //hd_debug_print();
         if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL)) {
-            hd_print(__METHOD__ . ": All channels group disabled");
+            hd_debug_print("All channels group disabled");
             return null;
         }
 
         /** @var Default_Group $group */
         $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
         if (is_null($group)) {
-            hd_print(__METHOD__ . ": All channels group not found");
+            hd_debug_print("All channels group not found");
             return null;
         }
 
@@ -969,7 +969,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
         }
 
-        //hd_print(__METHOD__ . ": All channels rows: " . count($rows));
+        //hd_debug_print("All channels rows: " . count($rows));
         return $rows;
     }
 
@@ -978,7 +978,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_regular_rows()
     {
-        //hd_print(__METHOD__);
+        //hd_debug_print();
         $groups = $this->plugin->tv->get_groups();
         if (is_null($groups))
             return null;
@@ -1042,7 +1042,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
         }
 
-        //hd_print(__METHOD__ . ": Regular rows: " . count($rows));
+        //hd_debug_print("Regular rows: " . count($rows));
         return $rows;
     }
 
