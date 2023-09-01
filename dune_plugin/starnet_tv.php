@@ -783,7 +783,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
 
             PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
 
-            PluginTvInfo::epg_font_size => $font_size,
+            PluginTvInfo::epg_font_size => ($font_size === SetupControlSwitchDefs::switch_on) ? PLUGIN_FONT_SMALL : PLUGIN_FONT_NORMAL,
 
             PluginTvInfo::actions => $this->get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(1000),

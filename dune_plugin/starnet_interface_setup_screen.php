@@ -117,7 +117,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // epg font size
-        $font_size = $this->plugin->get_settings(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+        $font_size = $this->plugin->get_parameters(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
         $font_ops_translated[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
         $font_ops_translated[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
 
@@ -152,12 +152,12 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         switch ($control_id) {
             case self::SETUP_ACTION_SHOW_TV:
                 if (!is_apk()) {
-                    self::toggle_param($plugin_cookies, $control_id);
+                    self::toggle_cookie_param($plugin_cookies, $control_id);
                 }
                 break;
 
             case self::SETUP_ACTION_ASK_EXIT:
-                self::toggle_param($plugin_cookies, $control_id);
+                self::toggle_cookie_param($plugin_cookies, $control_id);
                 return Action_Factory::invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
@@ -165,18 +165,18 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case self::SETUP_ACTION_SHOW_ALL:
             case self::SETUP_ACTION_SHOW_FAVORITES:
             case self::SETUP_ACTION_SHOW_HISTORY:
-                self::toggle_param($plugin_cookies, $control_id);
+                self::toggle_cookie_param($plugin_cookies, $control_id);
                 return $this->plugin->tv->reload_channels($this, $plugin_cookies);
 
             case self::SETUP_ACTION_EPG_FONT_SIZE:
-                $this->plugin->toggle_setting(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+                $this->plugin->toggle_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
                 break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
     }
 
-    private static function toggle_param($plugin_cookies, $param)
+    private static function toggle_cookie_param($plugin_cookies, $param)
     {
         $plugin_cookies->{$param} = ($plugin_cookies->{$param} === SetupControlSwitchDefs::switch_off)
             ? SetupControlSwitchDefs::switch_on
