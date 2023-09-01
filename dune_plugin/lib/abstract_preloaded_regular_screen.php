@@ -5,7 +5,7 @@ require_once 'abstract_regular_screen.php';
 
 abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
 {
-    protected $need_update_eps = false;
+    protected $need_update_epfs = false;
 
     /**
      * @param MediaURL $media_url
@@ -46,8 +46,8 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
      */
     public function update_epfs_data($plugin_cookies, $post_action = null)
     {
-        if ($this->need_update_eps) {
-            $this->need_update_eps = false;
+        if ($this->need_update_epfs) {
+            $this->need_update_epfs = false;
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
             $post_action = Starnet_Epfs_Handler::invalidate_folders(null, $post_action);
         }

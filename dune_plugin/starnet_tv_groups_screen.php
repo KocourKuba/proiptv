@@ -97,7 +97,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($sel_idx < $min_sel) {
                     $sel_idx = $min_sel;
                 }
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -109,18 +109,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($sel_idx >= $groups_cnt) {
                     $sel_idx = $groups_cnt - 1;
                 }
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEM_DELETE:
                 hd_debug_print("Hide $sel_media_url->group_id");
                 $this->plugin->tv->disable_group($sel_media_url->group_id);
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEMS_SORT:
                 $this->plugin->tv->get_groups_order()->sort_order();
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEMS_EDIT:

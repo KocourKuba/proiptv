@@ -83,7 +83,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 if ($sel_ndx < 0) {
                     $sel_ndx = 0;
                 }
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -92,17 +92,17 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 if ($sel_ndx >= $this->plugin->tv->get_favorites()->size()) {
                     $sel_ndx = $this->plugin->tv->get_favorites()->size() - 1;
                 }
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id, $plugin_cookies);
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $channel_id, $plugin_cookies);
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:

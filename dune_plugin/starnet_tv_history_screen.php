@@ -87,13 +87,13 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 				$sel_ndx++;
 				if ($sel_ndx < 0)
 					$sel_ndx = 0;
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->playback_points->clear_points();
                 $sel_ndx = 0;
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
 			case ACTION_ADD_FAV:
@@ -101,7 +101,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 				$opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
 				$this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
 
 				return Action_Factory::show_title_dialog($message, $this->update_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 

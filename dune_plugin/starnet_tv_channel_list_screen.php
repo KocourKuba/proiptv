@@ -121,7 +121,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_ADD_FAV:
                 $opt_type = $this->plugin->tv->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_SETTINGS:
@@ -173,7 +173,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($sel_ndx < 0) {
                     $sel_ndx = 0;
                 }
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -185,7 +185,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($sel_ndx >= $groups_cnt) {
                     $sel_ndx = $groups_cnt - 1;
                 }
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -200,12 +200,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $this->plugin->tv->get_disabled_channels()->add_item($channel_id);
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case ACTION_ITEMS_SORT:
                 $group->get_items_order()->sort_order();
-                $this->need_update_eps = true;
+                $this->need_update_epfs = true;
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:

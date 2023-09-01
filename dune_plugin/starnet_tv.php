@@ -508,6 +508,8 @@ class Starnet_Tv implements Tv, User_Input_Handler
         hd_debug_print("Loaded: channels: {$this->channels->size()}, groups: {$this->groups_order->size()} ({$this->groups->size()})");
 
         $this->plugin->epg_man->index_xmltv_file($epg_ids);
+
+        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
     }
 
     /**
