@@ -143,8 +143,11 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         }
 
         if (empty($media_url->filepath)) {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
-                self::ACTION_SMB_SETUP, TR::t('folder_screen_smb_settings'));
+            if ($media_url->allow_network) {
+                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
+                    self::ACTION_SMB_SETUP, TR::t('folder_screen_smb_settings'));
+            }
+
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
                 self::ACTION_RESET_FOLDER, TR::t('reset_default'));
         } else if ($media_url->filepath !== '/tmp/mnt/storage' &&
@@ -536,9 +539,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             case self::ACTION_SAVE_SMB_SETUP:
                 $smb_view_ops = array();
                 $smb_view = 1;
-                $smb_view_ops[1] = TR::t('folder_screen_net_folders');
-                $smb_view_ops[2] = TR::t('folder_screen_net_folders_smb');
-                $smb_view_ops[3] = TR::t('folder_screen_search_smb');
+                $smb_view_ops[1] = TR::load_string('folder_screen_net_folders');
+                $smb_view_ops[2] = TR::load_string('folder_screen_net_folders_smb');
+                $smb_view_ops[3] = TR::load_string('folder_screen_search_smb');
                 if (isset($user_input->smb_view)) {
                     $smb_view = $user_input->smb_view;
                     $plugin_cookies->{self::ACTION_SMB_SETUP} = $user_input->smb_view;
