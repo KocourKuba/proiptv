@@ -14,6 +14,7 @@ require_once 'm3u/M3uParser.php';
 
 class Default_Dune_Plugin implements DunePlugin
 {
+    const AUTHOR_LOGO = "ProIPTV by sharky72  [ ´¯¤¤¯(ºº)¯¤¤¯` ]";
     const SANDWICH_BASE = 'gui_skin://special_icons/sandwich_base.aai';
     const SANDWICH_MASK = 'cut_icon://{name=sandwich_mask}';
     const SANDWICH_COVER = 'cut_icon://{name=sandwich_cover}';
@@ -830,22 +831,13 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $defs
+     * @param array $defs
      */
     public function create_setup_header(&$defs)
     {
         Control_Factory::add_vgap($defs, -10);
-        Control_Factory::add_label($defs, "ProIPTV by sharky72  [ ´¯¤¤¯(ºº)¯¤¤¯` ]",
+        Control_Factory::add_label($defs, self::AUTHOR_LOGO,
             " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
             20);
-    }
-
-    /**
-     * @param string $image
-     * @return string
-     */
-    public function get_image_path($image = null)
-    {
-        return get_install_path("/img/" . ($image === null ?: ltrim($image, '/')));
     }
 }

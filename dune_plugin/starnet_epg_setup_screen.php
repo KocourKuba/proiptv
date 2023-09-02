@@ -106,18 +106,18 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             }
 
             Control_Factory::add_image_button($defs, $this, null, ACTION_RELOAD,
-                TR::t('setup_reload_xmltv_epg'), TR::t('refresh'), $this->plugin->get_image_path('refresh.png'), self::CONTROLS_WIDTH);
+                TR::t('setup_reload_xmltv_epg'), TR::t('refresh'), get_image_path('refresh.png'), self::CONTROLS_WIDTH);
         }
 
         if ($source === PARAM_EPG_SOURCE_EXTERNAL) {
             Control_Factory::add_image_button($defs, $this, null, ACTION_ITEMS_EDIT,
-                TR::t('setup_edit_xmltv_list'), TR::t('edit'), $this->plugin->get_image_path('edit.png'), self::CONTROLS_WIDTH);
+                TR::t('setup_edit_xmltv_list'), TR::t('edit'), get_image_path('edit.png'), self::CONTROLS_WIDTH);
         }
 
         $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_EPG_PARSE_ALL, TR::t('setup_epg_parse_all'), SetupControlSwitchDefs::$on_off_translated[$parse_all],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$parse_all]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$parse_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG cache dir
@@ -128,7 +128,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             Control_Factory::add_label($defs, $free_size, $xcache_dir);
         } else {
             Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_CHANGE_XMLTV_CACHE_PATH,
-                $free_size, $xcache_dir, $this->plugin->get_image_path('folder.png'), self::CONTROLS_WIDTH);
+                $free_size, $xcache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
         }
 
         //////////////////////////////////////
@@ -149,7 +149,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         // clear epg cache
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear'), TR::t('clear'),
-            $this->plugin->get_image_path('brush.png'), self::CONTROLS_WIDTH);
+            get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg time shift

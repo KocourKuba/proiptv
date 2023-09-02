@@ -52,9 +52,9 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
         //hd_debug_print();
         $defs = array();
 
-        $folder_icon = $this->plugin->get_image_path('folder.png');
-        $remove_icon = $this->plugin->get_image_path('brush.png');
-        $refresh_icon = $this->plugin->get_image_path('refresh.png');
+        $folder_icon = get_image_path('folder.png');
+        $remove_icon = get_image_path('brush.png');
+        $refresh_icon = get_image_path('refresh.png');
 
         //////////////////////////////////////
         // Plugin name

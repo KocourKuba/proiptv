@@ -158,14 +158,16 @@ class Control_Factory
      * @param array &$defs
      * @param string $caption
      * @param int $width
+     * @param bool $caption_centered
      */
-    public static function add_close_dialog_button(&$defs, $caption, $width)
+    public static function add_close_dialog_button(&$defs, $caption, $width, $caption_centered = false)
     {
         $defs[] = array
         (
             GuiControlDef::name => 'close',
             GuiControlDef::title => null,
             GuiControlDef::kind => GUI_CONTROL_BUTTON,
+            GuiControlDef::params => array('button_caption_centered' => $caption_centered),
             GuiControlDef::specific_def => array
             (
                 GuiButtonDef::caption => $caption,

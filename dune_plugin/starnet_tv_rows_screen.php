@@ -422,8 +422,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $def_params,
             $sel_params,
             $inactive_params,
-            $this->plugin->get_image_path(RowsItemsParams::icon_loading_url),
-            $this->plugin->get_image_path(RowsItemsParams::icon_loading_failed_url),
+            get_image_path(RowsItemsParams::icon_loading_url),
+            get_image_path(RowsItemsParams::icon_loading_failed_url),
             RowsItemsParams::caption_max_num_lines,
             RowsItemsParams::caption_line_spacing,
             Rows_Factory::margins(6, 2, 2, 2)
@@ -499,9 +499,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $user_input->folder_key,
                     $user_input->item_id,
                     $info_children['defs'],
-                    empty($info_children['fanart_url']) ? $this->plugin->get_image_path(PaneParams::vod_bg_url) : $info_children['fanart_url'],
-                    $this->plugin->get_image_path(PaneParams::vod_bg_url),
-                    $this->plugin->get_image_path(PaneParams::vod_mask_url),
+                    empty($info_children['fanart_url']) ? get_image_path(PaneParams::vod_bg_url) : $info_children['fanart_url'],
+                    get_image_path(PaneParams::vod_bg_url),
+                    get_image_path(PaneParams::vod_mask_url),
                     array("plugin_tv://" . get_plugin_name() . "/$user_input->item_id")
                 );
 
@@ -720,7 +720,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $menu_items[] = array($action_id => true);
         } else {
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                $action_id, $caption, ($icon === null) ? null : $this->plugin->get_image_path($icon), $add_params);
+                $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
         }
     }
 
@@ -936,7 +936,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         Rows_Factory::add_regular_sticker_image(
             $fav_stickers,
-            $this->plugin->get_image_path(RowsItemsParams::fav_sticker_icon_url),
+            get_image_path(RowsItemsParams::fav_sticker_icon_url),
             Rows_Factory::r(
                 $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
                 2,
@@ -1007,7 +1007,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             Rows_Factory::add_regular_sticker_image(
                 $fav_stickers,
-                $this->plugin->get_image_path(RowsItemsParams::fav_sticker_icon_url),
+                get_image_path(RowsItemsParams::fav_sticker_icon_url),
                 Rows_Factory::r(
                     $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
                     2,

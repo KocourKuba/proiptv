@@ -69,7 +69,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             $show_tv = $plugin_cookies->{self::SETUP_ACTION_SHOW_TV};
             Control_Factory::add_image_button($defs, $this, null,
                 self::SETUP_ACTION_SHOW_TV, TR::t('setup_show_in_main'), SetupControlSwitchDefs::$on_off_translated[$show_tv],
-                $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
+                get_image_path(SetupControlSwitchDefs::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
         }
 
         if (!isset($plugin_cookies->{self::SETUP_ACTION_ASK_EXIT})) {
@@ -79,7 +79,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         $ask_exit = $plugin_cookies->{self::SETUP_ACTION_ASK_EXIT};
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_ASK_EXIT, TR::t('setup_ask_exit'), SetupControlSwitchDefs::$on_off_translated[$ask_exit],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$ask_exit]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$ask_exit]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show all channels category
@@ -90,7 +90,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         $show_all = $plugin_cookies->{self::SETUP_ACTION_SHOW_ALL};
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show favorites category
@@ -101,7 +101,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         $show_fav = $plugin_cookies->{self::SETUP_ACTION_SHOW_FAVORITES};
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
 
 
         //////////////////////////////////////
@@ -113,7 +113,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         $show_history = $plugin_cookies->{self::SETUP_ACTION_SHOW_HISTORY};
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg font size
@@ -123,7 +123,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
 
         return $defs;
     }

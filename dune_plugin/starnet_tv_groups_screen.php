@@ -466,7 +466,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $menu_items[] = array($action_id => true);
         } else {
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                $action_id, $caption, ($icon === null) ? null : $this->plugin->get_image_path($icon), $add_params);
+                $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
         }
     }
 }

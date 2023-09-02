@@ -177,11 +177,11 @@ class Control_Factory_Ext extends Control_Factory
             }
 
             if (empty($path)) {
-                self::add_smart_label($defs, null, '<gap width=20/><icon>' . PLUGIN_IMG_PATH . '/drive.png</icon><text size=small> ' . $dir . '</text>');
+                self::add_smart_label($defs, null, '<gap width=20/><icon>' . get_image_path('drive.png') . '</icon><text size=small> ' . $dir . '</text>');
             } else {
                 if ((($c - $i + (int)!empty($n)) > $max_visible_lines)) {
                     if (empty($n)) {
-                        self::add_smart_label($defs, null, '<gap width=50/><icon>' . PLUGIN_IMG_PATH . '/pass.png</icon><text size=small> </text>');
+                        self::add_smart_label($defs, null, '<gap width=50/><icon>' . get_image_path('pass.png') . '</icon><text size=small> </text>');
                         self::add_vgap($defs, -34);
                     }
 
@@ -190,7 +190,7 @@ class Control_Factory_Ext extends Control_Factory
                     continue;
                 }
 
-                self::add_smart_label($defs, null, '<gap width=' . (20 + 35 * ($i - $n)) . '/><icon>' . PLUGIN_IMG_PATH . (($i < $c - 1) ? '/folder.png' : '/file.png') . '</icon><text size=small>' . $dir . '</text>');
+                self::add_smart_label($defs, null, '<gap width=' . (20 + 35 * ($i - $n)) . '/><icon>' . get_image_path((($i < $c - 1) ? 'folder.png' : 'file.png')) . '</icon><text size=small>' . $dir . '</text>');
             }
 
             self::add_vgap($defs, -34);

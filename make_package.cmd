@@ -14,7 +14,7 @@ echo copy to Diskstation
 copy /Y dune_plugin_proiptv.zip \\DISKSTATION\Downloads\ >nul
 echo.
 
-choice /T 3 /D N /M "Upload"
+choice /T 2 /D N /M "Upload"
 if ERRORLEVEL 2 goto :EOF
 
 echo copy to Dropbox

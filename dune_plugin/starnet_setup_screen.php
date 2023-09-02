@@ -54,13 +54,22 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     public function do_get_control_defs(&$plugin_cookies)
     {
         hd_debug_print();
-        $text_icon = $this->plugin->get_image_path('text.png');
-        $setting_icon = $this->plugin->get_image_path('settings.png');
+
+        $setting_icon = get_image_path('settings.png');
 
         $defs = array();
+
         //////////////////////////////////////
         // Plugin name
-        $this->plugin->create_setup_header($defs);
+        Control_Factory::add_vgap($defs, -10);
+        Control_Factory::add_image_button($defs, $this, null,
+            ACTION_PLUGIN_INFO,
+            Default_Dune_Plugin::AUTHOR_LOGO,
+            " v.{$this->plugin->plugin_info['app_version']} [{$this->plugin->plugin_info['app_release_date']}]",
+            get_image_path('info.png'),
+            Abstract_Controls_Screen::CONTROLS_WIDTH);
+
+        Control_Factory::add_vgap($defs, 16);
 
         //////////////////////////////////////
         // Interface settings
@@ -93,7 +102,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         //////////////////////////////////////
         // adult channel password
         Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_ADULT_PASS_DLG,
-            TR::t('setup_adult_title'), TR::t('setup_adult_change'), $text_icon, self::CONTROLS_WIDTH);
+            TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -144,9 +153,33 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         //dump_input_handler(__METHOD__, $user_input);
+        static $history_txt;
+
+        if (empty($history_txt)) {
+            $history_txt = @file_get_contents(get_install_path('changelog.txt'));
+            $history_txt = preg_replace('/\n$/U', '', $history_txt);
+        }
 
         $control_id = $user_input->control_id;
         switch ($control_id) {
+            case ACTION_PLUGIN_INFO:
+                Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
+                Control_Factory::add_vgap($defs, 20);
+
+                $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  Прокрутка страниц</text>",
+                    1200,
+                    get_image_path('page_plus_btn.png'),
+                    get_image_path('page_minus_btn.png'),
+                    DEF_LABEL_TEXT_COLOR_SILVER
+                );
+                Control_Factory::add_smart_label($defs, null, $text);
+                Control_Factory::add_vgap($defs, -80);
+
+                Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+                Control_Factory::add_vgap($defs, 10);
+
+                return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
+
             case self::SETUP_ACTION_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(Starnet_Interface_Setup_Screen::get_media_url_str(), TR::t('setup_interface_title'));
 

@@ -88,6 +88,7 @@ const ACTION_SETTINGS = 'settings';
 const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_ZOOM_SELECT = 'zoom_select';
 const ACTION_EMPTY = 'empty';
+const ACTION_PLUGIN_INFO = 'plugin_info';
 
 # Special groups ID
 const FAV_CHANNEL_GROUP_ID = '##favorites##';
@@ -1479,6 +1480,15 @@ function get_plugin_name()
     return DuneSystem::$properties['plugin_name'];
 }
 
+/**
+ * @param string $image
+ * @return string
+ */
+function get_image_path($image = null)
+{
+    return get_install_path("/img/" . ($image === null ?: ltrim($image, '/')));
+}
+
 function get_plugin_manifest_info()
 {
     $result = array();
@@ -1748,7 +1758,7 @@ function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
     $caller_name = array_shift($bt);
     if (isset($caller_name['class'])) {
         $prefix = sprintf("(%s) %s:%s: ",
-            str_pad($caller['line'], 4, ' ', STR_PAD_LEFT),
+            str_pad($caller['line'], 4, ' ', STR_PAD_RIGHT),
             $caller_name['class'],
             $caller_name['function']);
 
@@ -1757,7 +1767,7 @@ function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
         }
     } else {
         $prefix = sprintf("(%s) %s: ",
-            str_pad($caller['line'], 4, ' ', STR_PAD_LEFT),
+            str_pad($caller['line'], 4, ' ', STR_PAD_RIGHT),
             $caller_name['function']);
     }
 

@@ -59,7 +59,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // Plugin name
-        $this->plugin->create_setup_header($defs);
+        $this->plugin->create_setup_header($defs, $this);
 
         //////////////////////////////////////
         // playlists
@@ -86,7 +86,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         Control_Factory::add_image_button($defs, $this, null,
             ACTION_ITEMS_EDIT, TR::t('setup_channels_src_edit_playlists'), TR::t('edit'),
-            $this->plugin->get_image_path('edit.png'), self::CONTROLS_WIDTH);
+            get_image_path('edit.png'), self::CONTROLS_WIDTH);
 
         $catchup_ops[KnownCatchupSourceTags::cu_unknown] = TR::t('by_default');
         $catchup_ops[KnownCatchupSourceTags::cu_default] = KnownCatchupSourceTags::cu_default;
@@ -100,16 +100,16 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_EXT_PARAMS_DLG, TR::t('setup_channels_ext_params'), TR::t('edit'),
-            $this->plugin->get_image_path('web.png'), self::CONTROLS_WIDTH);
+            get_image_path('web.png'), self::CONTROLS_WIDTH);
 
         $square_icons = $this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_SQUARE_ICONS, TR::t('setup_channels_square_icons'), SetupControlSwitchDefs::$on_off_translated[$square_icons],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
 
         Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_RESET_PLAYLIST_DLG,
             TR::t('setup_channels_src_reset_playlist'), TR::t('clear'),
-            $this->plugin->get_image_path('brush.png'), self::CONTROLS_WIDTH);
+            get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 10);
 

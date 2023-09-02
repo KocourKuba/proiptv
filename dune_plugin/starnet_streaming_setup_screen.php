@@ -65,7 +65,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $value = $plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY};
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_AUTO_PLAY, TR::t('setup_autostart'), SetupControlSwitchDefs::$on_off_translated[$value],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // auto resume
@@ -75,7 +75,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $value = $plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME};
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_AUTO_RESUME, TR::t('setup_continue_play'),  SetupControlSwitchDefs::$on_off_translated[$value],
-            $this->plugin->get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // buffering time
