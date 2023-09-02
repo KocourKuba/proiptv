@@ -153,6 +153,10 @@ class Default_Dune_Plugin implements DunePlugin
         $this->new_ui_support = HD::rows_api_support();
         $this->m3u_parser = new M3uParser();
         $this->epg_man = new Epg_Manager($this);
+        $user_agent = $this->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
+        if ($user_agent !== HD::get_dune_user_agent()) {
+            HD::set_dune_user_agent($user_agent);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -775,12 +779,25 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
-        $dune_params = $this->get_settings(PARAM_DUNE_PARAMS);
-        if (!empty($dune_params)) {
+        $ext_params = $channel->get_ext_params();
+        if (isset($ext_params[PARAM_DUNE_PARAMS])) {
             //hd_debug_print("Additional dune params: $dune_params");
-            $dune_params = trim($dune_params, '|');
-            $stream_url .= "|||dune_params|||$dune_params";
+
+            $dune_params = "";
+            foreach ($ext_params[PARAM_DUNE_PARAMS] as $key => $value) {
+                if (!empty($dune_params)) {
+                    $dune_params .= ",";
+                }
+
+                $dune_params .= "$key:$value";
+            }
+
+            if (!empty($dune_params)) {
+                $stream_url .= "|||dune_params|||$dune_params";
+            }
         }
+
+        hd_debug_print($stream_url);
 
         if (!preg_match('/\.' . VIDEO_PATTERN . '$/i', $stream_url)
             && !preg_match('/\.' . AUDIO_PATTERN . '$/i', $stream_url)) {

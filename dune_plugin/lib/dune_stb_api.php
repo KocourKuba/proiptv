@@ -120,6 +120,11 @@ const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_CHANNELS_ZOOM = 'channels_zoom';
 const PARAM_USER_CATCHUP = 'user_catchup';
 const PARAM_TV_HISTORY_ITEMS = '_tv_history_items';
+const PARAM_USER_AGENT = 'user_agent';
+
+# HTTP params
+const USER_AGENT = 'User-Agent';
+const REFERER = 'Referer';
 
 # Media types patterns
 const AUDIO_PATTERN = 'mp3|ac3|wma|ogg|ogm|m4a|aif|iff|mid|mpa|ra|wav|flac|ape|vorbis|aac|a52';
@@ -1742,12 +1747,18 @@ function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
     $caller = array_shift($bt);
     $caller_name = array_shift($bt);
     if (isset($caller_name['class'])) {
-        $prefix = "({$caller['line']}) {$caller_name['class']}:{$caller_name['function']}: ";
+        $prefix = sprintf("(%s) %s:%s: ",
+            str_pad($caller['line'], 4, ' ', STR_PAD_LEFT),
+            $caller_name['class'],
+            $caller_name['function']);
+
         if (!is_null($val) && !method_exists($val, '__toString')) {
             $val = raw_json_encode($val);
         }
     } else {
-        $prefix = "({$caller['line']}) {$caller_name['function']}: ";
+        $prefix = sprintf("(%s) %s: ",
+            str_pad($caller['line'], 4, ' ', STR_PAD_LEFT),
+            $caller_name['function']);
     }
 
     if ($val === null) {

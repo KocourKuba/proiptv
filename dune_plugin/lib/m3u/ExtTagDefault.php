@@ -10,9 +10,9 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     protected $tag_name;
 
     /**
-     * @var string $tag_value
+     * @var array $tag_values
      */
-    protected $tag_value;
+    protected $tag_values;
 
     /**
      * @var array $attributes
@@ -46,17 +46,33 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     /**
      * @inheritDoc
      */
-    public function getTagValue()
+    public function getTagValues()
     {
-        return $this->tag_value;
+        return $this->tag_values;
     }
 
     /**
      * @inheritDoc
      */
-    public function setTagValue($tag_value)
+    public function getTagValue($idx = 0)
     {
-        $this->tag_value = $tag_value;
+        return isset($this->tag_values[$idx]) ? $this->tag_values[$idx] : null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setTagValue($tag_value, $idx = 0)
+    {
+        $this->tag_values[$idx] = $tag_value;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function addTagValue($tag_value)
+    {
+        $this->tag_values[] = $tag_value;
     }
 
     /**
@@ -132,9 +148,9 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
             $this->setTagName($m[1]);
             if ($this->isTag(TAG_EXTINF)) {
                 $split = explode(',', $m[2]);
-                $this->setTagValue(end($split));
+                $this->setTagValue(trim(end($split)));
             } else {
-                $this->setTagValue($m[2]);
+                $this->setTagValue(trim($m[2]));
             }
             $this->parseTagAttributes($m[2]);
         }

@@ -94,6 +94,9 @@ setup_channels_src_no_playlists = Keine Playlists!!!
 setup_channels_src_playlist = Playlist-Quelle
 setup_channels_archive_type = Playlist archive type
 setup_channels_square_icons = Channel uses square icons
+setup_channels_ext_params = Additional parameters
+setup_channels_user_agent = HTTP User-Agent
+setup_channels_dune_params = dune_params
 
 entry_not_available = Diese Funktion ist für dieses Gerät nicht verfügbar!
 entry_send_log = Protokoll an den Entwickler senden

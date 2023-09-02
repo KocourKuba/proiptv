@@ -834,4 +834,14 @@ class HD
 
         return $string;
     }
+
+    /**
+     * case insensitive search in array
+     * @param $needle
+     * @param $haystack
+     * @return false|int|string
+     */
+    public static function array_search_i($needle, $haystack) {
+        return array_search(strtolower($needle), array_map('strtolower', $haystack));
+    }
 }

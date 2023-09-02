@@ -171,6 +171,34 @@ class Starnet_Tv implements Tv, User_Input_Handler
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @throws Exception
+     */
+    public function handle_user_input(&$user_input, &$plugin_cookies)
+    {
+        //dump_input_handler(__METHOD__, $user_input);
+
+        if (!isset($user_input->control_id)) {
+            return null;
+        }
+
+        $channel_id = $user_input->plugin_tv_channel_id;
+
+        $this->plugin->playback_points->update_point($channel_id);
+
+        if ($user_input->control_id === GUI_EVENT_PLAYBACK_STOP
+            && $this->plugin->new_ui_support
+            && (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed))) {
+
+            $this->plugin->playback_points->save();
+            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+            return Starnet_Epfs_Handler::invalidate_folders(null,
+                Action_Factory::invalidate_folders(array(Starnet_TV_History_Screen::get_media_url_str())));
+        }
+
+        return null;
+    }
+
+    /**
      * @param string $group_id
      * @return Group|mixed
      */
@@ -301,6 +329,11 @@ class Starnet_Tv implements Tv, User_Input_Handler
             return;
         }
 
+        $ch_useragent = $this->plugin->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
+        if ($ch_useragent !== HD::get_dune_user_agent()) {
+            HD::set_dune_user_agent($ch_useragent);
+        }
+
         $this->plugin->playback_points->load_points(true);
 
         $catchup['global'] = $this->plugin->m3u_parser->getM3uInfo()->getCatchup();
@@ -344,12 +377,12 @@ class Starnet_Tv implements Tv, User_Input_Handler
             $group->set_adult($adult);
             if ($this->disabled_groups->in_order($group->get_id())) {
                 $group->set_disabled(true);
-                hd_debug_print("Hide  category # $title");
-            } else if ($this->groups_order->in_order($group->get_id())) {
-                hd_debug_print("Known category # $title");
-            } else {
-                hd_debug_print("New   category # $title");
+                hd_debug_print("Hidden category # $title");
+            } else if (!$this->groups_order->in_order($group->get_id())) {
+                hd_debug_print("New    category # $title");
                 $this->groups_order->add_item($title);
+//            } else {
+//                hd_debug_print("Known category # $title");
             }
 
             $playlist_groups->add_item($title);
@@ -387,6 +420,11 @@ class Starnet_Tv implements Tv, User_Input_Handler
             if ($this->groups->has($group_title) === false) {
                 hd_debug_print("Channel $channel_name in disabled group $group_title");
                 continue;
+            }
+
+            if (empty($channel_name)) {
+                hd_print("Bad entry: " . $entry);
+                $channel_name = "no name";
             }
 
             $number++;
@@ -458,6 +496,50 @@ class Starnet_Tv implements Tv, User_Input_Handler
                     }
                 }
 
+                $ext_params[PARAM_DUNE_PARAMS] = $this->plugin->get_settings(PARAM_DUNE_PARAMS);
+
+                $ext_tag = $entry->getEntryTag(TAG_EXTHTTP);
+                if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
+                    foreach ($ext_http_values as $key => $value) {
+                        $ext_params[TAG_EXTHTTP][strtolower($key)] = $value;
+                    }
+
+                    if (isset($ext_params[TAG_EXTHTTP]['user-agent'])) {
+                        //hd_debug_print(TAG_EXTHTTP . " Channel: $channel_name uses custom User-Agent: '{$ext_params[TAG_EXTHTTP]['user-agent']}'");
+                        $ch_useragent = "User-Agent: " . $ext_params[TAG_EXTHTTP]['user-agent'];
+                    }
+                }
+
+                $ext_tag = $entry->getEntryTag(TAG_EXTVLCOPT);
+                if ($ext_tag !== null) {
+                    foreach ($ext_tag->getTagValues() as $value) {
+                        $pair = explode('=', $value);
+                        $ext_params[TAG_EXTVLCOPT][strtolower(trim($pair[0]))] = trim($pair[1]);
+                    }
+
+                    if (isset($ext_params[TAG_EXTVLCOPT]['http-user-agent'])) {
+                        //hd_debug_print(TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_params[TAG_EXTVLCOPT]['http-user-agent']}'");
+                        $ch_useragent = "User-Agent: " . $ext_params[TAG_EXTVLCOPT]['http-user-agent'];
+                    }
+                }
+
+                if (!empty($ch_useragent)) {
+                    // escape commas for dune_params
+                    if (strpos($ch_useragent, ",,") !== false) {
+                        $ch_useragent = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $ch_useragent);
+                    } else {
+                        $ch_useragent = str_replace(",", ",,", $ch_useragent);
+                    }
+
+                    $ch_useragent = urlencode($ch_useragent);
+                    if (isset($ext_params[PARAM_DUNE_PARAMS]['http_headers'])) {
+                        $ext_params[PARAM_DUNE_PARAMS]['http_headers'] .= $ch_useragent;
+                    } else {
+                        $ext_params[PARAM_DUNE_PARAMS]['http_headers'] = $ch_useragent;
+                    }
+
+                    unset($ch_useragent);
+                }
 
                 /** @var Group $parent_group */
                 $parent_group = $this->groups->get($group_title);
@@ -477,7 +559,8 @@ class Starnet_Tv implements Tv, User_Input_Handler
                     $number,
                     $epg_ids,
                     $protected,
-                    (int)$entry->getEntryAttribute('tvg-shift', TAG_EXTINF)
+                    (int)$entry->getEntryAttribute('tvg-shift', TAG_EXTINF),
+                    $ext_params
                 );
 
                 // ignore disabled channel
@@ -808,33 +891,5 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
 
         return $actions;
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function handle_user_input(&$user_input, &$plugin_cookies)
-    {
-        //dump_input_handler(__METHOD__, $user_input);
-
-        if (!isset($user_input->control_id)) {
-            return null;
-        }
-
-        $channel_id = $user_input->plugin_tv_channel_id;
-
-        $this->plugin->playback_points->update_point($channel_id);
-
-        if ($user_input->control_id === GUI_EVENT_PLAYBACK_STOP
-            && $this->plugin->new_ui_support
-            && (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed))) {
-
-            $this->plugin->playback_points->save();
-            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-            return Starnet_Epfs_Handler::invalidate_folders(null,
-                Action_Factory::invalidate_folders(array(Starnet_TV_History_Screen::get_media_url_str())));
-        }
-
-        return null;
     }
 }

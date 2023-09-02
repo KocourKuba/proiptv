@@ -197,7 +197,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $new = $user_input->{$control_id};
                 $this->plugin->set_settings(PARAM_EPG_SOURCE, $new);
                 hd_debug_print("Selected epg source: $new");
-                break;
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::SETUP_ACTION_XMLTV_EPG_IDX:
                 $source = $this->plugin->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_SOURCE_INTERNAL);
@@ -210,7 +210,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                     return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'));
                 }
 
-                $this->plugin->update_xmltv_source();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::SETUP_ACTION_CHANGE_XMLTV_CACHE_PATH:

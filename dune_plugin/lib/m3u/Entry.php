@@ -74,7 +74,11 @@ class Entry extends Json_Serializer
      */
     public function addTag($tag)
     {
-        $this->tags[$tag->getTagName()] = $tag;
+        if (isset($this->tags[$tag->getTagName()])) {
+            $this->tags[$tag->getTagName()]->addTagValue($tag->getTagValue());
+        } else {
+            $this->tags[$tag->getTagName()] = $tag;
+        }
     }
 
     /**

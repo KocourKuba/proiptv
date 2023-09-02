@@ -12,6 +12,10 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     const SETUP_ACTION_RESET_PLAYLIST_APPLY = 'reset_playlist_apply';
     const SETUP_ACTION_SQUARE_ICONS = PARAM_SQUARE_ICONS;
     const SETUP_ACTION_USER_CATCHUP = PARAM_USER_CATCHUP;
+    const SETUP_ACTION_EXT_PARAMS_DLG = 'ext_params';
+    const SETUP_ACTION_EXT_PARAMS_APPLY = 'ext_params_apply';
+    const CONTROL_ACTION_USER_AGENT = 'user_agent';
+    const CONTROL_ACTION_DUNE_PARAMS = 'dune_params';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -94,6 +98,10 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         Control_Factory::add_combobox($defs, $this, null, self::SETUP_ACTION_USER_CATCHUP,
             TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, self::CONTROLS_WIDTH, true);
 
+        Control_Factory::add_image_button($defs, $this, null,
+            self::SETUP_ACTION_EXT_PARAMS_DLG, TR::t('setup_channels_ext_params'), TR::t('edit'),
+            $this->plugin->get_image_path('web.png'), self::CONTROLS_WIDTH);
+
         $square_icons = $this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
             self::SETUP_ACTION_SQUARE_ICONS, TR::t('setup_channels_square_icons'), SetupControlSwitchDefs::$on_off_translated[$square_icons],
@@ -116,6 +124,41 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
         return $this->do_get_control_defs($plugin_cookies);
+    }
+
+    /**
+     * adult pass dialog defs
+     * @return array
+     */
+    public function do_get_ext_params_control_defs()
+    {
+        $defs = array();
+
+        Control_Factory::add_vgap($defs, 20);
+
+        $user_agent = $this->plugin->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
+        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_ACTION_USER_AGENT, TR::t('setup_channels_user_agent'),
+            $user_agent, false, false, 0, 1, 1200, 0);
+
+        $dune_params = $this->plugin->get_settings(PARAM_DUNE_PARAMS, array());
+        $dune_params_str = '';
+        foreach ($dune_params as $param) {
+            if (!empty($dune_params_str)) {
+                $dune_params_str .= '|';
+            }
+            $dune_params_str .= $param;
+        }
+
+        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_ACTION_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
+            $dune_params_str, false, false, 0, 1, 1200, 0);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, self::SETUP_ACTION_EXT_PARAMS_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        return $defs;
     }
 
     /**
@@ -182,6 +225,34 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->tv->unload_channels();
                 $this->plugin->epg_man->clear_epg_cache();
                 $this->plugin->remove_settings();
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
+            case self::SETUP_ACTION_EXT_PARAMS_DLG:
+                return Action_Factory::show_dialog(TR::t('setup_channels_ext_params'), $this->do_get_ext_params_control_defs(), true);
+
+            case self::SETUP_ACTION_EXT_PARAMS_APPLY: // handle pass dialog result
+                $user_agent = $user_input->{self::CONTROL_ACTION_USER_AGENT};
+                if ($user_agent !== HD::get_dune_user_agent()) {
+                    $this->plugin->set_settings(PARAM_USER_AGENT, $user_agent);
+                    HD::set_dune_user_agent($user_agent);
+                }
+
+                $dune_params_text = $user_input->{self::CONTROL_ACTION_DUNE_PARAMS};
+                $dune_params = explode(',', $dune_params_text);
+                foreach ($dune_params as $param) {
+                    $dune_params = explode(':', $param);
+                    if (strpos($dune_params[1], ",,") !== false) {
+                        $dune_params[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $dune_params[1]);
+                    } else {
+                        $dune_params[1] = str_replace(",", ",,", $dune_params[1]);
+                    }
+
+                    $params_array[$dune_params[0]] = $dune_params[1];
+                }
+                if (!empty($params_array)) {
+                    $this->plugin->set_settings(PARAM_DUNE_PARAMS, $params_array);
+                }
+
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:

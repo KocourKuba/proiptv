@@ -20,15 +20,26 @@ interface ExtTag
     public function setTagName($tag_name);
 
     /**
+     * @return array
+     */
+    public function getTagValues();
+
+    /**
      * @return string
      */
-    public function getTagValue();
+    public function getTagValue($idx = 0);
 
     /**
      * @param string $tag_value;
      * @return void
      */
-    public function setTagValue($tag_value);
+    public function setTagValue($tag_value, $idx = 0);
+
+    /**
+     * @param string $tag_value;
+     * @return void
+     */
+    public function addTagValue($tag_value);
 
     /**
      * @param string $data;

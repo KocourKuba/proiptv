@@ -93,6 +93,9 @@ setup_channels_src_no_playlists = Нет плейлистов!!!
 setup_channels_src_playlist = Источник плейлистов
 setup_channels_archive_type = Тип архива для плейлиста
 setup_channels_square_icons = Квадратные иконки каналов
+setup_channels_ext_params = Дополнительные параметры
+setup_channels_user_agent = HTTP User-Agent
+setup_channels_dune_params = dune_params
 
 entry_not_available = Для этой приставки эта функция недоступна!
 entry_send_log = Отправить лог разработчику

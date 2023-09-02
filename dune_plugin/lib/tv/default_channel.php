@@ -88,7 +88,7 @@ class Default_Channel implements Channel
     public function __construct($id, $title, $icon_url,
                                 $streaming_url, $archive_url,
                                 $archive, $number, $epg_ids,
-                                $protected, $timeshift_hours)
+                                $protected, $timeshift_hours, $ext_params = array())
     {
         $this->_id = $id;
         $this->_title = $title;
@@ -102,7 +102,7 @@ class Default_Channel implements Channel
         $this->_protected = $protected;
         $this->_timeshift_hours = $timeshift_hours;
         $this->_disabled = false;
-        $this->_ext_params = array();
+        $this->_ext_params = $ext_params;
     }
 
     /**
