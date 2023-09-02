@@ -87,6 +87,7 @@ const ACTION_RESET_DEFAULT = 'reset_default';
 const ACTION_SETTINGS = 'settings';
 const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_ZOOM_SELECT = 'zoom_select';
+const ACTION_EMPTY = 'empty';
 
 # Special groups ID
 const FAV_CHANNEL_GROUP_ID = '##favorites##';
@@ -1740,14 +1741,23 @@ function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
     $bt = debug_backtrace();
     $caller = array_shift($bt);
     $caller_name = array_shift($bt);
-    if (isset($caller_name['class']))
-        if (method_exists($val, '__toString')) {
-            hd_print("{$caller_name['class']}:{$caller_name['function']} ({$caller['line']}): $val");
-        } else {
-            hd_print("{$caller_name['class']}:{$caller_name['function']} ({$caller['line']}): " . raw_json_encode($val));
+    if (isset($caller_name['class'])) {
+        $prefix = "({$caller['line']}) {$caller_name['class']}:{$caller_name['function']}: ";
+        if (!is_null($val) && !method_exists($val, '__toString')) {
+            $val = raw_json_encode($val);
         }
-    else
-        hd_print("{$caller_name['function']} ({$caller['line']}): $val");
+    } else {
+        $prefix = "({$caller['line']}) {$caller_name['function']}: ";
+    }
+
+    if ($val === null) {
+        $val = '';
+    }
+    else if (is_bool($val)) {
+        $val = $val ? 'true' : 'false';
+    }
+
+    hd_print($prefix . $val);
 }
 
 function raw_json_encode($arr)

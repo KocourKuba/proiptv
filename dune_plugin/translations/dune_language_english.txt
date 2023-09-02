@@ -147,6 +147,7 @@ edit_list_import_list = Import file with list of URLs
 edit_list_src_folder = Folder with files
 edit_list_src_list = File with list
 edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Press Popup Menu on Remote to add items}
+edit_list_add = Press Popup menu
 
 tv_screen_zoom_channel = Channel zoom
 tv_screen_search_channel = Enter name or part of the name for search

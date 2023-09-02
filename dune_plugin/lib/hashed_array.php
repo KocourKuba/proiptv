@@ -81,6 +81,14 @@ class Hashed_Array implements Iterator
         return isset($this->map[$key]);
     }
 
+    /**
+     * @return array
+     */
+    public function keys()
+    {
+        return array_keys($this->map);
+    }
+
     public function usort($callback_name)
     {
         usort($this->seq, $callback_name);

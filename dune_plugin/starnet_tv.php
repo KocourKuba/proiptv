@@ -303,14 +303,14 @@ class Starnet_Tv implements Tv, User_Input_Handler
 
         $this->plugin->playback_points->load_points(true);
 
-        $catchup[] = $this->plugin->m3u_parser->getM3uInfo()->getCatchup();
+        $catchup['global'] = $this->plugin->m3u_parser->getM3uInfo()->getCatchup();
         $global_catchup_source = $this->plugin->m3u_parser->getM3uInfo()->getCatchupSource();
         $icon_url_base = $this->plugin->m3u_parser->getHeaderAttribute('url-logo', TAG_EXTM3U);
         $this->plugin->update_xmltv_source();
 
         $user_catchup = $this->plugin->get_settings(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
         if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
-            $catchup[0] = $user_catchup;
+            $catchup['global'] = $user_catchup;
         }
 
         // All channels category
@@ -375,6 +375,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $this->groups_order->save();
 
         // Read channels
+        $playlist_group_channels = array();
         $epg_ids = array();
         $number = 0;
         foreach ($pl_entries as $entry) {
@@ -423,7 +424,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
 
                 $archive_url = '';
                 if ($archive !== 0) {
-                    $catchup[] = $entry->getCatchup();
+                    $catchup['channel'] = $entry->getCatchup();
                     $archive_url = $entry->getCatchupSource();
                     if (empty($archive_url) && !empty($global_catchup_source)) {
                         $archive_url = $global_catchup_source;
@@ -486,6 +487,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 }
 
                 //hd_debug_print("channel: " . $channel->get_title());
+                $playlist_group_channels[$parent_group->get_id()][] = $channel_id;
                 $this->channels->put($channel);
 
                 foreach ($epg_ids as $epg_id) {
@@ -498,14 +500,22 @@ class Starnet_Tv implements Tv, User_Input_Handler
             }
         }
 
+        // cleanup order if saved group removed from playlist
         // enable save for each group
         /** @var Group $group */
         foreach ($this->groups as $group) {
+            $orphans_channels = array_diff($group->get_items_order()->get_order(), $playlist_group_channels[$group->get_id()]);
+            foreach ($orphans_channels as $channel_id) {
+                hd_debug_print("Remove orphaned channel id: $channel_id");
+                $group->get_items_order()->remove_item($channel_id);
+            }
+
             $group->get_items_order()->set_save_delay(false);
             $group->get_items_order()->save();
         }
 
-        hd_debug_print("Loaded: channels: {$this->channels->size()}, groups: {$this->groups_order->size()} ({$this->groups->size()})");
+        hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channels()->size()}");
+        hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->groups_order->size()));
 
         $this->plugin->epg_man->index_xmltv_file($epg_ids);
 

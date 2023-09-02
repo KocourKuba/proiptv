@@ -69,6 +69,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
             }
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        } else {
+            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_EMPTY, TR::t('edit_list_add'));
         }
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -84,7 +86,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        //dump_input_handler(__METHOD__, $user_input);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $order = $this->get_edit_order($parent_media_url);
 
@@ -150,6 +151,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::replace_path($parent_media_url->windowCounter, null, $post_action);
 
             case GUI_EVENT_KEY_POPUP_MENU:
+                $menu_items = array();
                 if ($parent_media_url->edit_list === self::SCREEN_TYPE_PLAYLIST
                     || $parent_media_url->edit_list === self::SCREEN_TYPE_EPG_LIST) {
 
@@ -167,12 +169,16 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     unset($add_param['action']);
                     $this->create_menu_item($menu_items, self::SETUP_ACTION_CHOOSE_FOLDER, TR::t('edit_list_folder_path'), "folder.png", $add_param);
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
-                    $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
+                    if ($order->size()) {
+                        $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
+                    }
                 }
 
-                $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear'),"brush.png");
+                if ($order->size()) {
+                    $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+                }
 
-                return Action_Factory::show_popup_menu($menu_items);
+                return !empty($menu_items) ? Action_Factory::show_popup_menu($menu_items) : null;
 
             case self::SETUP_ACTION_ADD_URL_DLG:
                 $defs = array();
