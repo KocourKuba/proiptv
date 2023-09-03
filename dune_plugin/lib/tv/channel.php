@@ -45,9 +45,9 @@ interface Channel
 
     /**
      * is channel support archive playback
-     * @return bool
+     * @return int
      */
-    public function has_archive();
+    public function get_archive();
 
     /**
      * is protected (adult)
@@ -56,7 +56,7 @@ interface Channel
     public function is_protected();
 
     /**
-     * is disabled (hided)
+     * is disabled (hidden)
      * @return bool
      */
     public function is_disabled();

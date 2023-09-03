@@ -286,7 +286,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
      */
     public function ensure_channels_loaded($plugin_cookies)
     {
-        hd_debug_print();
+        //hd_debug_print();
         if (!isset($this->channels)) {
             $this->load_channels($plugin_cookies);
         }
@@ -669,7 +669,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
             }
 
             if (!$channel->is_protected()) {
-                $now = $channel->has_archive() ? time() : 0;
+                $now = $channel->get_archive() > 0 ? time() : 0;
                 $this->plugin->playback_points->push_point($channel_id, ($archive_ts !== -1 ? $archive_ts : $now));
             }
 
@@ -808,7 +808,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 PluginTvChannel::icon_url => $channel->get_icon_url(),
                 PluginTvChannel::number => $channel->get_number(),
 
-                PluginTvChannel::have_archive => $channel->has_archive(),
+                PluginTvChannel::have_archive => $channel->get_archive() > 0,
                 PluginTvChannel::is_protected => $channel->is_protected(),
 
                 // set default epg range

@@ -106,8 +106,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get id (hash)
-     * @return string
+     * @inheritDoc
      */
     public function get_id()
     {
@@ -115,8 +114,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get channel title
-     * @return string
+     * @inheritDoc
      */
     public function get_title()
     {
@@ -124,8 +122,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get channel desc
-     * @return string
+     * @inheritDoc
      */
     public function get_desc()
     {
@@ -133,8 +130,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * set channel desc
-     * @param string $desc
+     * @inheritDoc
      */
     public function set_desc($desc)
     {
@@ -142,7 +138,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * @return string
+     * @inheritDoc
      */
     public function get_icon_url()
     {
@@ -150,8 +146,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get groups array
-     * @return array
+     * @inheritDoc
      */
     public function get_groups()
     {
@@ -159,8 +154,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get channel number
-     * @return int
+     * @inheritDoc
      */
     public function get_number()
     {
@@ -168,8 +162,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * is channel protected (adult)
-     * @return bool
+     * @inheritDoc
      */
     public function is_protected()
     {
@@ -177,8 +170,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * is disabled (hided)
-     * @return bool
+     * @inheritDoc
      */
     public function is_disabled()
     {
@@ -186,7 +178,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * set disabled (hided)
+     * @inheritDoc
      */
     public function set_disabled($disabled)
     {
@@ -194,17 +186,15 @@ class Default_Channel implements Channel
     }
 
     /**
-     * is channel has archive playback
-     * @return bool
+     * @inheritDoc
      */
-    public function has_archive()
+    public function get_archive()
     {
-        return $this->_archive > 0;
+        return $this->_archive;
     }
 
     /**
-     * get timeshift
-     * @return int
+     * @inheritDoc
      */
     public function get_timeshift_hours()
     {
@@ -212,8 +202,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get EPG id
-     * @return array
+     * @inheritDoc
      */
     public function get_epg_ids()
     {
@@ -221,8 +210,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * how many epg reads from the past
-     * @return int
+     * @inheritDoc
      */
     public function get_past_epg_days()
     {
@@ -230,8 +218,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * how many epg reads forward
-     * @return int
+     * @inheritDoc
      */
     public function get_future_epg_days()
     {
@@ -239,8 +226,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * how many second playback from the past
-     * @return int
+     * @inheritDoc
      */
     public function get_archive_past_sec()
     {
@@ -248,7 +234,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * @return int
+     * @inheritDoc
      */
     public function get_archive_delay_sec()
     {
@@ -256,8 +242,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get custom stream url
-     * @return string
+     * @inheritDoc
      */
     public function get_url()
     {
@@ -265,8 +250,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * custom archive stream url template
-     * @return string
+     * @inheritDoc
      */
     public function get_archive_url()
     {
@@ -274,8 +258,7 @@ class Default_Channel implements Channel
     }
 
     /**
-     * get additional parameters (filled from provider m3u8)
-     * @return array
+     * @inheritDoc
      */
     public function get_ext_params()
     {

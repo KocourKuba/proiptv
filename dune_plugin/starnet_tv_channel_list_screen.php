@@ -272,6 +272,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             (
                 ViewItemParams::icon_path => $channel->get_icon_url(),
                 ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
+                ViewItemParams::item_detailed_info => TR::t('tv_screen_channel_info__2',
+                    $channel->get_title(),
+                    $channel->get_archive()
+                ),
             ),
             PluginRegularFolderItem::starred => $this->plugin->tv->get_favorites()->in_order($channel->get_id()),
         );

@@ -1756,23 +1756,24 @@ function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
     $bt = debug_backtrace();
     $caller = array_shift($bt);
     $caller_name = array_shift($bt);
+    $prefix = "(" . str_pad($caller['line'], 4) . ") ";
     if (isset($caller_name['class'])) {
-        $prefix = sprintf("(%s) %s:%s: ",
-            str_pad($caller['line'], 4),
-            $caller_name['class'],
-            $caller_name['function']);
-
         if (!is_null($val) && !method_exists($val, '__toString')) {
             $val = raw_json_encode($val);
         }
-    } else {
-        $prefix = sprintf("(%s) %s: ",
-            str_pad($caller['line'], 4),
-            $caller_name['function']);
+        $prefix .= "{$caller_name['class']}:";
     }
+    $prefix .= "{$caller_name['function']}(): ";
 
     if ($val === null) {
         $val = '';
+        $parent_caller = array_shift($bt);
+        $prefix .= "called from: (". str_pad($caller_name['line'], 4) . ") ";
+        if (isset($parent_caller['class'])) {
+            $prefix .= "{$parent_caller['class']}:";
+        }
+
+        $prefix .= "{$parent_caller['function']}(): ";
     }
     else if (is_bool($val)) {
         $val = $val ? 'true' : 'false';

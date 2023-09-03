@@ -160,6 +160,7 @@ tv_screen_zoom_cut_edges = Обрезка краев
 tv_screen_zoom_full_enlarge = Полный экран
 tv_screen_zoom_full_stretch = Растяжение на весь экран
 tv_screen_group_info__3 = %s|Каналов: %s|Скрыто: %s
+tv_screen_channel_info__2 = %s|Архив: %s дней
 tv_screen_external_player = Проиграть внешним плейером
 
 edit_list_added__1 = Добавлено файлов: %s
