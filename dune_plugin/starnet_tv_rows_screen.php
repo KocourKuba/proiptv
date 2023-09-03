@@ -728,7 +728,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_history_rows($plugin_cookies)
     {
         //hd_debug_print();
-        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_HISTORY)) {
+        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_HISTORY)) {
             hd_debug_print("History group disabled");
             return null;
         }
@@ -848,7 +848,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_favorites_rows($plugin_cookies)
     {
         //hd_debug_print();
-        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_FAVORITES)) {
+        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_FAVORITES)) {
             hd_debug_print("Favorites group disabled");
             return null;
         }
@@ -901,7 +901,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_all_channels_row($plugin_cookies)
     {
         //hd_debug_print();
-        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL)) {
+        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_ALL)) {
             hd_debug_print("All channels group disabled");
             return null;
         }

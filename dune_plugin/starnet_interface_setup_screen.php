@@ -8,12 +8,12 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 {
     const ID = 'interface_setup';
 
-    const SETUP_ACTION_SHOW_TV = 'show_tv';
-    const SETUP_ACTION_SHOW_ALL = 'show_all';
-    const SETUP_ACTION_SHOW_FAVORITES = 'show_favorites';
-    const SETUP_ACTION_SHOW_HISTORY = 'show_history';
-    const SETUP_ACTION_ASK_EXIT = 'ask_exit';
-    const SETUP_ACTION_EPG_FONT_SIZE = 'epg_font_size';
+    const CONTROL_SHOW_TV = 'show_tv';
+    const CONTROL_SHOW_ALL = 'show_all';
+    const CONTROL_SHOW_FAVORITES = 'show_favorites';
+    const CONTROL_SHOW_HISTORY = 'show_history';
+    const CONTROL_ASK_EXIT = 'ask_exit';
+    const CONTROL_EPG_FONT_SIZE = 'epg_font_size';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -34,57 +34,57 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // Show in main screen
         if (!is_apk()) {
-            if (!isset($plugin_cookies->{self::SETUP_ACTION_SHOW_TV})) {
-                $plugin_cookies->{self::SETUP_ACTION_SHOW_TV} = SetupControlSwitchDefs::switch_on;
+            if (!isset($plugin_cookies->{self::CONTROL_SHOW_TV})) {
+                $plugin_cookies->{self::CONTROL_SHOW_TV} = SetupControlSwitchDefs::switch_on;
             }
 
-            $show_tv = $plugin_cookies->{self::SETUP_ACTION_SHOW_TV};
+            $show_tv = $plugin_cookies->{self::CONTROL_SHOW_TV};
             Control_Factory::add_image_button($defs, $this, null,
-                self::SETUP_ACTION_SHOW_TV, TR::t('setup_show_in_main'), SetupControlSwitchDefs::$on_off_translated[$show_tv],
+                self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SetupControlSwitchDefs::$on_off_translated[$show_tv],
                 get_image_path(SetupControlSwitchDefs::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
         }
 
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_ASK_EXIT})) {
-            $plugin_cookies->{self::SETUP_ACTION_ASK_EXIT} = SetupControlSwitchDefs::switch_on;
+        if (!isset($plugin_cookies->{self::CONTROL_ASK_EXIT})) {
+            $plugin_cookies->{self::CONTROL_ASK_EXIT} = SetupControlSwitchDefs::switch_on;
         }
 
-        $ask_exit = $plugin_cookies->{self::SETUP_ACTION_ASK_EXIT};
+        $ask_exit = $plugin_cookies->{self::CONTROL_ASK_EXIT};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_ASK_EXIT, TR::t('setup_ask_exit'), SetupControlSwitchDefs::$on_off_translated[$ask_exit],
+            self::CONTROL_ASK_EXIT, TR::t('setup_ask_exit'), SetupControlSwitchDefs::$on_off_translated[$ask_exit],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$ask_exit]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show all channels category
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_SHOW_ALL})) {
-            $plugin_cookies->{self::SETUP_ACTION_SHOW_ALL} = SetupControlSwitchDefs::switch_on;
+        if (!isset($plugin_cookies->{self::CONTROL_SHOW_ALL})) {
+            $plugin_cookies->{self::CONTROL_SHOW_ALL} = SetupControlSwitchDefs::switch_on;
         }
 
-        $show_all = $plugin_cookies->{self::SETUP_ACTION_SHOW_ALL};
+        $show_all = $plugin_cookies->{self::CONTROL_SHOW_ALL};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
+            self::CONTROL_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show favorites category
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_SHOW_FAVORITES})) {
-            $plugin_cookies->{self::SETUP_ACTION_SHOW_FAVORITES} = SetupControlSwitchDefs::switch_on;
+        if (!isset($plugin_cookies->{self::CONTROL_SHOW_FAVORITES})) {
+            $plugin_cookies->{self::CONTROL_SHOW_FAVORITES} = SetupControlSwitchDefs::switch_on;
         }
 
-        $show_fav = $plugin_cookies->{self::SETUP_ACTION_SHOW_FAVORITES};
+        $show_fav = $plugin_cookies->{self::CONTROL_SHOW_FAVORITES};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
+            self::CONTROL_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
 
 
         //////////////////////////////////////
         // show history category
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_SHOW_HISTORY})) {
-            $plugin_cookies->{self::SETUP_ACTION_SHOW_HISTORY} = SetupControlSwitchDefs::switch_on;
+        if (!isset($plugin_cookies->{self::CONTROL_SHOW_HISTORY})) {
+            $plugin_cookies->{self::CONTROL_SHOW_HISTORY} = SetupControlSwitchDefs::switch_on;
         }
 
-        $show_history = $plugin_cookies->{self::SETUP_ACTION_SHOW_HISTORY};
+        $show_history = $plugin_cookies->{self::CONTROL_SHOW_HISTORY};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
+            self::CONTROL_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
@@ -94,7 +94,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         $font_ops_translated[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
 
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
+            self::CONTROL_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
 
         return $defs;
@@ -122,25 +122,25 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         switch ($control_id) {
-            case self::SETUP_ACTION_SHOW_TV:
+            case self::CONTROL_SHOW_TV:
                 if (!is_apk()) {
                     self::toggle_cookie_param($plugin_cookies, $control_id);
                 }
                 break;
 
-            case self::SETUP_ACTION_ASK_EXIT:
+            case self::CONTROL_ASK_EXIT:
                 self::toggle_cookie_param($plugin_cookies, $control_id);
                 return Action_Factory::invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
-            case self::SETUP_ACTION_SHOW_ALL:
-            case self::SETUP_ACTION_SHOW_FAVORITES:
-            case self::SETUP_ACTION_SHOW_HISTORY:
+            case self::CONTROL_SHOW_ALL:
+            case self::CONTROL_SHOW_FAVORITES:
+            case self::CONTROL_SHOW_HISTORY:
                 self::toggle_cookie_param($plugin_cookies, $control_id);
                 return $this->plugin->tv->reload_channels($this, $plugin_cookies);
 
-            case self::SETUP_ACTION_EPG_FONT_SIZE:
+            case self::CONTROL_EPG_FONT_SIZE:
                 $this->plugin->toggle_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
                 break;
         }

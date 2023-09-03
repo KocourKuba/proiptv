@@ -241,13 +241,12 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param $plugin_cookies
-     * @return void
-     * @throws Exception
+     * @return bool
      */
     public function load_channels($plugin_cookies)
     {
         if (isset($this->channels)) {
-            return;
+            return true;
         }
 
         hd_debug_print();
@@ -275,7 +274,7 @@ class Starnet_Tv implements User_Input_Handler
 
         // first check if playlist in cache
         if (!$this->plugin->init_playlist()) {
-            return;
+            return false;
         }
 
         $dune_useragent = $this->plugin->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
@@ -543,6 +542,8 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->epg_man->index_xmltv_file($epg_ids);
 
         Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+
+        return true;
     }
 
     /**
@@ -556,10 +557,8 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print();
         $this->plugin->clear_playlist_cache();
         $this->unload_channels();
-        try {
-            $this->load_channels($plugin_cookies);
-        } catch (Exception $e) {
-            hd_debug_print("Reload channel list failed: $plugin_cookies->playlist_idx");
+        if (!$this->load_channels($plugin_cookies)) {
+            hd_debug_print("Channels not loaded!");
             return null;
         }
 
@@ -587,7 +586,9 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("channel: $channel_id archive_ts: $archive_ts, protect code: $protect_code");
 
         try {
-            $this->load_channels($plugin_cookies);
+            if (!$this->load_channels($plugin_cookies)) {
+                throw new Exception("Channels not loaded!");
+            }
 
             $pass_sex = isset($plugin_cookies->pass_sex) ? $plugin_cookies->pass_sex : '0000';
             // get channel by hash
@@ -639,11 +640,14 @@ class Starnet_Tv implements User_Input_Handler
     public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
     {
         $font_size = $this->plugin->get_parameters(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
-        $show_all = (!isset($plugin_cookies->{Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL})
-                || $plugin_cookies->{Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL} === SetupControlSwitchDefs::switch_on);
+        $show_all = (!isset($plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_SHOW_ALL})
+                || $plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_SHOW_ALL} === SetupControlSwitchDefs::switch_on);
         //$t = microtime(1);
 
-        $this->load_channels($plugin_cookies);
+        if (!$this->load_channels($plugin_cookies)) {
+            hd_debug_print("Channels not loaded!");
+            return array();
+        }
         $this->playback_runtime = PHP_INT_MAX;
 
         $channels = array();

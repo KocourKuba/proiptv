@@ -8,9 +8,9 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 {
     const ID = 'history_setup';
 
-    const SETUP_ACTION_HISTORY_CHANGE_FOLDER = 'history_change_folder';
-    const SETUP_ACTION_COPY_TO_DATA = 'copy_to_data';
-    const SETUP_ACTION_COPY_TO_PLUGIN = 'copy_to_plugin';
+    const CONTROL_HISTORY_CHANGE_FOLDER = 'history_change_folder';
+    const CONTROL_COPY_TO_DATA = 'copy_to_data';
+    const CONTROL_COPY_TO_PLUGIN = 'copy_to_plugin';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -40,14 +40,14 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
         $display_path = HD::string_ellipsis($history_path);
 
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_HISTORY_CHANGE_FOLDER, TR::t('setup_history_folder_path'), $display_path, $folder_icon, self::CONTROLS_WIDTH);
+            self::CONTROL_HISTORY_CHANGE_FOLDER, TR::t('setup_history_folder_path'), $display_path, $folder_icon, self::CONTROLS_WIDTH);
 
         if ($history_path !== get_data_path()) {
             Control_Factory::add_image_button($defs, $this, null,
-                self::SETUP_ACTION_COPY_TO_DATA, TR::t('setup_copy_to_data'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
+                self::CONTROL_COPY_TO_DATA, TR::t('setup_copy_to_data'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
 
             Control_Factory::add_image_button($defs, $this, null,
-                self::SETUP_ACTION_COPY_TO_PLUGIN, TR::t('setup_copy_to_plugin'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
+                self::CONTROL_COPY_TO_PLUGIN, TR::t('setup_copy_to_plugin'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
         }
 
         Control_Factory::add_image_button($defs, $this, null,
@@ -79,7 +79,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
         }
 
         switch ($control_id) {
-            case self::SETUP_ACTION_HISTORY_CHANGE_FOLDER:
+            case self::CONTROL_HISTORY_CHANGE_FOLDER:
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
@@ -95,7 +95,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
                 $this->set_history_path(get_data_path());
                 return $action_reload;
 
-            case self::SETUP_ACTION_COPY_TO_DATA:
+            case self::CONTROL_COPY_TO_DATA:
                 $history_path = $this->get_history_path();
                 hd_debug_print("copy to: $history_path");
                 if (!self::CopyData(get_data_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
@@ -104,7 +104,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
 
-            case self::SETUP_ACTION_COPY_TO_PLUGIN:
+            case self::CONTROL_COPY_TO_PLUGIN:
                 $history_path = $this->get_history_path();
                 hd_debug_print("copy to: " . get_data_path());
                 if (!self::CopyData($history_path, "*" . PARAM_TV_HISTORY_ITEMS, get_data_path())) {

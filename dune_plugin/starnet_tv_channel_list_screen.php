@@ -294,10 +294,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $items = array();
 
         try {
-            $this->plugin->tv->load_channels($plugin_cookies);
+            if (!$this->plugin->tv->load_channels($plugin_cookies)) {
+                throw new Exception("Channels not loaded!");
+            }
+
             $this_group = $this->plugin->tv->get_group($media_url->group_id);
             if (is_null($this_group)) {
-                throw new Exception('group not found');
+                throw new Exception("Group $media_url->group_id not found");
             }
 
             /** @var Channel $channel */

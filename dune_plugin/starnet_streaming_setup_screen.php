@@ -8,10 +8,10 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 {
     const ID = 'stream_setup';
 
-    const SETUP_ACTION_AUTO_RESUME = 'auto_resume';
-    const SETUP_ACTION_AUTO_PLAY = 'auto_play';
-    const SETUP_ACTION_BUF_TIME = 'buf_time';
-    const SETUP_ACTION_DELAY_TIME = 'delay_time';
+    const CONTROL_AUTO_RESUME = 'auto_resume';
+    const CONTROL_AUTO_PLAY = 'auto_play';
+    const CONTROL_BUF_TIME = 'buf_time';
+    const CONTROL_DELAY_TIME = 'delay_time';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -31,22 +31,22 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // auto play
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY}))
-            $plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY} = SetupControlSwitchDefs::switch_off;
+        if (!isset($plugin_cookies->{self::CONTROL_AUTO_PLAY}))
+            $plugin_cookies->{self::CONTROL_AUTO_PLAY} = SetupControlSwitchDefs::switch_off;
 
-        $value = $plugin_cookies->{self::SETUP_ACTION_AUTO_PLAY};
+        $value = $plugin_cookies->{self::CONTROL_AUTO_PLAY};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_AUTO_PLAY, TR::t('setup_autostart'), SetupControlSwitchDefs::$on_off_translated[$value],
+            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SetupControlSwitchDefs::$on_off_translated[$value],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // auto resume
-        if (!isset($plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME}))
-            $plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME} = SetupControlSwitchDefs::switch_on;
+        if (!isset($plugin_cookies->{self::CONTROL_AUTO_RESUME}))
+            $plugin_cookies->{self::CONTROL_AUTO_RESUME} = SetupControlSwitchDefs::switch_on;
 
-        $value = $plugin_cookies->{self::SETUP_ACTION_AUTO_RESUME};
+        $value = $plugin_cookies->{self::CONTROL_AUTO_RESUME};
         Control_Factory::add_image_button($defs, $this, null,
-            self::SETUP_ACTION_AUTO_RESUME, TR::t('setup_continue_play'),  SetupControlSwitchDefs::$on_off_translated[$value],
+            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'),  SetupControlSwitchDefs::$on_off_translated[$value],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
@@ -60,9 +60,9 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $show_buf_time_ops[5000] = TR::t('setup_buffer_sec__1', "5");
         $show_buf_time_ops[10000] = TR::t('setup_buffer_sec__1', "10");
 
-        $buf_time = isset($plugin_cookies->{self::SETUP_ACTION_BUF_TIME}) ? $plugin_cookies->{self::SETUP_ACTION_BUF_TIME} : 1000;
+        $buf_time = isset($plugin_cookies->{self::CONTROL_BUF_TIME}) ? $plugin_cookies->{self::CONTROL_BUF_TIME} : 1000;
         Control_Factory::add_combobox($defs, $this, null,
-            self::SETUP_ACTION_BUF_TIME, TR::t('setup_buffer_time'),
+            self::CONTROL_BUF_TIME, TR::t('setup_buffer_time'),
             $buf_time, $show_buf_time_ops, self::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
@@ -76,9 +76,9 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $show_delay_time_ops[3*60] = TR::t('setup_buffer_sec__1', "180");
         $show_delay_time_ops[5*60] = TR::t('setup_buffer_sec__1', "300");
 
-        $delay_time = isset($plugin_cookies->{self::SETUP_ACTION_DELAY_TIME}) ? $plugin_cookies->{self::SETUP_ACTION_DELAY_TIME} : 60;
+        $delay_time = isset($plugin_cookies->{self::CONTROL_DELAY_TIME}) ? $plugin_cookies->{self::CONTROL_DELAY_TIME} : 60;
         Control_Factory::add_combobox($defs, $this, null,
-            self::SETUP_ACTION_DELAY_TIME, TR::t('setup_delay_time'),
+            self::CONTROL_DELAY_TIME, TR::t('setup_delay_time'),
             $delay_time, $show_delay_time_ops, self::CONTROLS_WIDTH, true);
 
         return $defs;
@@ -106,8 +106,8 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         switch ($control_id) {
-            case self::SETUP_ACTION_AUTO_PLAY:
-            case self::SETUP_ACTION_AUTO_RESUME:
+            case self::CONTROL_AUTO_PLAY:
+            case self::CONTROL_AUTO_RESUME:
                 $plugin_cookies->{$control_id} = ($plugin_cookies->{$control_id} === SetupControlSwitchDefs::switch_off)
                     ? SetupControlSwitchDefs::switch_on
                     : SetupControlSwitchDefs::switch_off;
@@ -115,8 +115,8 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
                 hd_debug_print("$control_id: " . $plugin_cookies->{$control_id});
                 break;
 
-            case self::SETUP_ACTION_BUF_TIME:
-            case self::SETUP_ACTION_DELAY_TIME:
+            case self::CONTROL_BUF_TIME:
+            case self::CONTROL_DELAY_TIME:
                 $plugin_cookies->{$control_id} = $user_input->{$control_id};
                 hd_debug_print("$control_id: " . $plugin_cookies->{$control_id});
                 break;

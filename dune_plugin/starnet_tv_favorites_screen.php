@@ -10,10 +10,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
      */
     public static function get_media_url_str()
     {
-        return MediaURL::encode(array(
-                'screen_id' => static::ID,
-                'is_favorites' => true)
-        );
+        return MediaURL::encode(array('screen_id' => static::ID, 'is_favorites' => true));
     }
 
     ///////////////////////////////////////////////////////////////////////

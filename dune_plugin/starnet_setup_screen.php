@@ -8,13 +8,13 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 {
     const ID = 'setup';
 
-    const SETUP_ACTION_ADULT_PASS_DLG = 'adult_pass_dialog';
-    const SETUP_ACTION_ADULT_PASS_APPLY = 'adult_pass_apply';
-    const SETUP_ACTION_INTERFACE_SCREEN = 'interface_screen';
-    const SETUP_ACTION_CHANNELS_SCREEN = 'channels_screen';
-    const SETUP_ACTION_EPG_SCREEN = 'epg_screen';
-    const SETUP_ACTION_STREAMING_SCREEN = 'streaming_screen';
-    const SETUP_ACTION_HISTORY_SCREEN = 'history_screen';
+    const CONTROL_ADULT_PASS_DLG = 'adult_pass_dialog';
+    const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
+    const CONTROL_INTERFACE_SCREEN = 'interface_screen';
+    const CONTROL_CHANNELS_SCREEN = 'channels_screen';
+    const CONTROL_EPG_SCREEN = 'epg_screen';
+    const CONTROL_STREAMING_SCREEN = 'streaming_screen';
+    const CONTROL_HISTORY_SCREEN = 'history_screen';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -45,35 +45,35 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         //////////////////////////////////////
         // Interface settings
-        Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_INTERFACE_SCREEN,
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_INTERFACE_SCREEN,
             TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Channels settings
-        Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_CHANNELS_SCREEN,
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANNELS_SCREEN,
             TR::t('tv_screen_channels_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG settings
-        Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_EPG_SCREEN,
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_EPG_SCREEN,
             TR::t('setup_epg_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Streaming settings
-        Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_STREAMING_SCREEN,
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_STREAMING_SCREEN,
             TR::t('setup_streaming_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // History view info location
         if (!is_apk()) {
             Control_Factory::add_image_button($defs, $this, null,
-                self::SETUP_ACTION_HISTORY_SCREEN,
+                self::CONTROL_HISTORY_SCREEN,
                 TR::t('setup_history_folder_path'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
         }
 
         //////////////////////////////////////
         // adult channel password
-        Control_Factory::add_image_button($defs, $this, null, self::SETUP_ACTION_ADULT_PASS_DLG,
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_ADULT_PASS_DLG,
             TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
 
         return $defs;
@@ -109,7 +109,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         Control_Factory::add_vgap($defs, 50);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, self::SETUP_ACTION_ADULT_PASS_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, self::ACTION_ADULT_PASS_DLG_APPLY, TR::t('ok'), 300);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
 
@@ -153,26 +153,26 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
                 return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
 
-            case self::SETUP_ACTION_INTERFACE_SCREEN: // show interface settings dialog
+            case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(Starnet_Interface_Setup_Screen::get_media_url_str(), TR::t('setup_interface_title'));
 
-            case self::SETUP_ACTION_CHANNELS_SCREEN: // show epg settings dialog
+            case self::CONTROL_CHANNELS_SCREEN: // show epg settings dialog
                 return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::get_media_url_str(), TR::t('tv_screen_channels_setup'));
 
-            case self::SETUP_ACTION_EPG_SCREEN: // show epg settings dialog
+            case self::CONTROL_EPG_SCREEN: // show epg settings dialog
                 return Action_Factory::open_folder(Starnet_Epg_Setup_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
-            case self::SETUP_ACTION_STREAMING_SCREEN: // show streaming settings dialog
+            case self::CONTROL_STREAMING_SCREEN: // show streaming settings dialog
                 return Action_Factory::open_folder(Starnet_Streaming_Setup_Screen::get_media_url_str(), TR::t('setup_streaming_settings'));
 
-            case self::SETUP_ACTION_HISTORY_SCREEN:
+            case self::CONTROL_HISTORY_SCREEN:
                 return Action_Factory::open_folder(Starnet_History_Setup_Screen::get_media_url_str(), TR::t('setup_history_change_folder'));
 
-            case self::SETUP_ACTION_ADULT_PASS_DLG: // show pass dialog
+            case self::CONTROL_ADULT_PASS_DLG: // show pass dialog
                 $defs = $this->do_get_pass_control_defs();
                 return Action_Factory::show_dialog(TR::t('setup_adult_password'), $defs, true);
 
-            case self::SETUP_ACTION_ADULT_PASS_APPLY: // handle pass dialog result
+            case self::ACTION_ADULT_PASS_DLG_APPLY: // handle pass dialog result
                 $need_reload = false;
                 if ($user_input->pass1 !== $plugin_cookies->pass_sex) {
                     $msg = TR::t('err_wrong_old_password');

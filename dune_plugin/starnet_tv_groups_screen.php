@@ -7,7 +7,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 {
     const ID = 'tv_groups';
 
-    const ACTION_CONFIRM_APPLY = 'apply_dlg';
+    const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
     const ACTION_EPG_SETTINGS = 'epg_settings';
     const ACTION_CHANNELS_SETTINGS = 'channels_settings';
 
@@ -23,13 +23,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         // if token not set force to open setup screen
         //hd_debug_print();
 
+        if (!$this->plugin->tv->load_channels($plugin_cookies)) {
+            hd_debug_print("Channels not loaded!");
+        }
+
         $actions = array();
 
         $actions[GUI_EVENT_KEY_ENTER]      = User_Input_Handler_Registry::create_action($this, ACTION_OPEN_FOLDER);
         $actions[GUI_EVENT_KEY_PLAY]       = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_FOLDER);
         $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        if (!is_null($order = $this->plugin->tv->get_groups_order()) && $order->size() !== 0) {
+        $order = $this->plugin->tv->get_groups_order();
+        if (!is_null($order) && $order->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
         }
@@ -105,7 +110,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => static::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::ACTION_GROUPS,
+                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_TYPE_GROUPS,
                         'end_action' => ACTION_RELOAD,
                         'windowCounter' => 1,
                     )
@@ -117,7 +122,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => static::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::ACTION_CHANNELS,
+                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_TYPE_CHANNELS,
                         'group_id' => $sel_media_url->group_id,
                         'end_action' => ACTION_RELOAD,
                         'windowCounter' => 1,
@@ -134,7 +139,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case self::ACTION_EPG_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Epg_Setup_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
-            case self::ACTION_CONFIRM_APPLY:
+            case self::ACTION_CONFIRM_DLG_APPLY:
                 return Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run());
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -169,12 +174,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_RETURN:
-                if (isset($plugin_cookies->{Starnet_Interface_Setup_Screen::SETUP_ACTION_ASK_EXIT})
-                    && $plugin_cookies->{Starnet_Interface_Setup_Screen::SETUP_ACTION_ASK_EXIT} === SetupControlSwitchDefs::switch_off) {
+                if (isset($plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_ASK_EXIT})
+                    && $plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_ASK_EXIT} === SetupControlSwitchDefs::switch_off) {
                     return $this->update_epfs_data($plugin_cookies, Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run()));
                 }
 
-                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_APPLY);
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
@@ -197,16 +202,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         //hd_debug_print("get_all_folder_items");
         $items = array();
-        try {
-            $this->plugin->tv->load_channels($plugin_cookies);
-        } catch (Exception $e) {
-            hd_debug_print("Channels not loaded");
+        if (!$this->plugin->tv->load_channels($plugin_cookies)) {
+            hd_debug_print("Channels not loaded!");
             return $items;
         }
 
-        $show_all = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL);
-        $show_favorites = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_FAVORITES);
-        $show_history = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_HISTORY);
+        $show_all = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_ALL);
+        $show_favorites = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_FAVORITES);
+        $show_history = $this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_HISTORY);
 
         /** @var Group $group */
         if ($show_favorites) {

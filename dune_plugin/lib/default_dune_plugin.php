@@ -800,9 +800,9 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_special_groups_count($plugin_cookies)
     {
         $groups_cnt = 0;
-        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL)) $groups_cnt++;
-        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_FAVORITES)) $groups_cnt++;
-        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_HISTORY)) $groups_cnt++;
+        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_ALL)) $groups_cnt++;
+        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_FAVORITES)) $groups_cnt++;
+        if ($this->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_HISTORY)) $groups_cnt++;
 
         return $groups_cnt;
     }
