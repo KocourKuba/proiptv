@@ -67,7 +67,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $this->plugin->epg_man->init_cache_dir();
                 $this->plugin->epg_man->clear_all_epg_cache();
                 $this->plugin->tv->unload_channels();
-                return Action_Factory::clear_rows_info_cache(Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared')));
+                $action = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
+                if (HD::rows_api_support()) {
+                    $action = Action_Factory::clear_rows_info_cache($action);
+                }
+
+                return $action;
 
             case 'plugin_entry':
                 if (!isset($user_input->action_id)) {
