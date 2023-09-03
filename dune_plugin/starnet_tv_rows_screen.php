@@ -20,11 +20,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
     ///////////////////////////////////////////////////////////////////////////
 
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-    }
-
     /**
      * @param $pane
      * @param $rows_before
@@ -304,7 +299,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function get_folder_view_for_epf(&$plugin_cookies)
     {
-        $media_url = MediaURL::decode(self::ID);
+        $media_url = MediaURL::decode(static::ID);
         $this->plugin->tv->get_tv_info($media_url, $plugin_cookies);
 
         return $this->get_folder_view($media_url, $plugin_cookies);

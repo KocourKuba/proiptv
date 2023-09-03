@@ -14,26 +14,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      * @param string $group_id
      * @return false|string
      */
-    public static function get_media_url_str($group_id)
+    public static function get_media_url_string($group_id)
     {
-        return MediaURL::encode(
-            array
-            (
-                'screen_id' => self::ID,
-                'group_id' => $group_id,
-            ));
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -71,14 +54,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         return $actions;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
     }
 
     /**

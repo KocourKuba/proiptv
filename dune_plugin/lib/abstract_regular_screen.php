@@ -5,7 +5,7 @@ require_once 'screen.php';
 
 abstract class Abstract_Regular_Screen implements Screen
 {
-    private $id;
+    const ID = 'abstract_regular_screen';
 
     private $folder_view_index_attr_name;
 
@@ -13,11 +13,29 @@ abstract class Abstract_Regular_Screen implements Screen
 
     ///////////////////////////////////////////////////////////////////////
 
-    protected function __construct($id, Default_Dune_Plugin $plugin)
+    public function __construct(Default_Dune_Plugin $plugin)
     {
-        $this->id = $id;
         $this->plugin = $plugin;
+        $this->plugin->create_screen($this);
         $this->set_default_folder_view_index_attr_name();
+    }
+
+    public static function get_id()
+    {
+        return static::ID;
+    }
+
+    public static function get_handler_id()
+    {
+        return static::get_id() . '_handler';
+    }
+
+    /**
+     * @return false|string
+     */
+    public static function get_media_url_str()
+    {
+        return MediaURL::encode(array('screen_id' => static::ID));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -29,14 +47,7 @@ abstract class Abstract_Regular_Screen implements Screen
 
     protected function set_default_folder_view_index_attr_name()
     {
-        $this->folder_view_index_attr_name = "screen." . $this->id . ".view_idx";
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    public function get_id()
-    {
-        return $this->id;
+        $this->folder_view_index_attr_name = "screen." . static::ID . ".view_idx";
     }
 
     ///////////////////////////////////////////////////////////////////////

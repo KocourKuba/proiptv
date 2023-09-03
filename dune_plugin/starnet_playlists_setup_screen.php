@@ -20,34 +20,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @return false|string
-     */
-    public static function get_media_url_str()
-    {
-        return MediaURL::encode(array('screen_id' => self::ID));
-    }
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
      * defs for all controls on screen
      * @param $plugin_cookies
      * @return array
@@ -59,7 +31,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // Plugin name
-        $this->plugin->create_setup_header($defs, $this);
+        $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
         // playlists
@@ -196,7 +168,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => self::ID,
+                        'source_window_id' => static::ID,
                         'edit_list' => Starnet_Edit_List_Screen::SCREEN_TYPE_PLAYLIST,
                         'end_action' => ACTION_RELOAD,
                         'extension' => 'm3u|m3u8',
@@ -212,11 +184,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case self::SETUP_ACTION_SQUARE_ICONS:
                 $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                return Starnet_Epfs_Handler::invalidate_folders(
-                    null,
-                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
-                );
+                $this->need_update_epfs = true;
+                return $this->update_epfs_data($plugin_cookies, Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case self::SETUP_ACTION_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::SETUP_ACTION_RESET_PLAYLIST_APPLY);

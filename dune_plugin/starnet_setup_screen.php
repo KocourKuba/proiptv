@@ -19,34 +19,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @return false|string
-     */
-    public static function get_media_url_str()
-    {
-        return MediaURL::encode(array('screen_id' => self::ID));
-    }
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
      * defs for all controls on screen
      * @param $plugin_cookies
      * @return array
@@ -156,7 +128,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         static $history_txt;
 
         if (empty($history_txt)) {
-            $history_txt = @file_get_contents(get_install_path('changelog.txt'));
+            $history_txt = file_get_contents(get_install_path('changelog.txt'));
             $history_txt = preg_replace('/\n$/U', '', $history_txt);
         }
 
@@ -166,11 +138,12 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
                 Control_Factory::add_vgap($defs, 20);
 
-                $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  Прокрутка страниц</text>",
+                $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
                     1200,
                     get_image_path('page_plus_btn.png'),
                     get_image_path('page_minus_btn.png'),
-                    DEF_LABEL_TEXT_COLOR_SILVER
+                    DEF_LABEL_TEXT_COLOR_SILVER,
+                    TR::load_string('scroll_page')
                 );
                 Control_Factory::add_smart_label($defs, null, $text);
                 Control_Factory::add_vgap($defs, -80);

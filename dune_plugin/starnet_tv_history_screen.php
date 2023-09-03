@@ -10,23 +10,10 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public static function get_media_url_str()
     {
-        return MediaURL::encode(array(
-                'screen_id' => self::ID,
-                'is_history' => true)
-        );
+        return MediaURL::encode(array('screen_id' => static::ID, 'is_history' => true));
     }
 
     ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
 
     /**
      * @param MediaURL $media_url
@@ -50,14 +37,6 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         }
 
         return $actions;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID;
     }
 
     /**

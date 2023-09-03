@@ -5,7 +5,7 @@ require_once 'rows_screen.php';
 
 abstract class Abstract_Rows_Screen implements Rows_Screen
 {
-    private $id;
+    const ID = 'abstract_rows_screen';
 
     protected $plugin;
 
@@ -13,9 +13,8 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
 
     ///////////////////////////////////////////////////////////////////////
 
-    protected function __construct($id, Default_Dune_Plugin $plugin)
+    public function __construct(Default_Dune_Plugin $plugin)
     {
-        $this->id = $id;
         $this->plugin = $plugin;
     }
 
@@ -31,14 +30,14 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
 
     ///////////////////////////////////////////////////////////////////////
 
-    public function get_handler_id()
+    public static function get_id()
     {
-    	return $this->id . '_handler';
+        return static::ID;
     }
 
-    public function get_id()
+    public static function get_handler_id()
     {
-    	return $this->id;
+    	return static::get_id() . '_handler';
     }
 
     public function get_category()

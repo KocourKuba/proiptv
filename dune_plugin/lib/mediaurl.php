@@ -1,6 +1,7 @@
 <?php
 
 /**
+ * @property mixed|null $screen_id // Screen ID, used to find screen handler
  * @property mixed|null $channel_id // Channel ID
  * @property mixed|null $group_id // Group ID
  * @property string|null $source_window_id // Window ID called this screen

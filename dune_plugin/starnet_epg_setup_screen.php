@@ -22,34 +22,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @return false|string
-     */
-    public static function get_media_url_str()
-    {
-        return MediaURL::encode(array('screen_id' => self::ID));
-    }
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
      * EPG dialog defs
      * @param $plugin_cookies
      * @return array
@@ -216,9 +188,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
-                        'parent_id' => self::ID,
+                        'parent_id' => static::ID,
                         'allow_network' => false,
-                        'choose_folder' => self::ID,
+                        'choose_folder' => static::ID,
                         'windowCounter' => 1,
                     )
                 );
@@ -246,7 +218,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => self::ID,
+                        'source_window_id' => static::ID,
                         'edit_list' => Starnet_Edit_List_Screen::SCREEN_TYPE_EPG_LIST,
                         'end_action' => ACTION_RELOAD,
                         'extension' => EPG_PATTERN,

@@ -25,17 +25,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     private $counter = 0;
 
     /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
-
-    /**
-     * @param string $id
      * @param string $caption
      * @param string $source_window_id
      * @param string $filepath
@@ -50,13 +39,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      * @param int|null $windowCounter
      * @return false|string
      */
-    public static function get_media_url_str($id, $caption, $source_window_id, $filepath, $type, $ip_path, $user, $password, $nfs_protocol, $err, $choose_folder, $choose_file, $windowCounter = null)
+    protected static function get_media_url_string($caption, $source_window_id, $filepath, $type, $ip_path, $user, $password, $nfs_protocol, $err, $choose_folder, $choose_file, $windowCounter = null)
     {
         return MediaURL::encode
         (
             array
             (
-                'screen_id' => $id,
+                'screen_id' => static::ID,
                 'caption' => $caption,
                 'source_window_id' => $source_window_id,
                 'filepath' => $filepath,
@@ -115,14 +104,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         }
 
         return $fileData;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
     }
 
     /**
@@ -299,8 +280,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 $items[] = array
                 (
                     PluginRegularFolderItem::caption => $caption,
-                    PluginRegularFolderItem::media_url => self::get_media_url_str(
-                        self::ID,
+                    PluginRegularFolderItem::media_url => self::get_media_url_string(
                         $caption,
                         $source_window_id,
                         $filepath,
@@ -501,8 +481,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 }
 
                 $caption = $selected_url->caption;
-                $selected_url_str = self::get_media_url_str(
-                    self::ID,
+                $selected_url_str = self::get_media_url_string(
                     $selected_url->caption,
                     $selected_url->source_window_id,
                     key($q),

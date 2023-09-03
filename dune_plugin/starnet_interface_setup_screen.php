@@ -18,34 +18,6 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @return false|string
-     */
-    public static function get_media_url_str()
-    {
-        return MediaURL::encode(array('screen_id' => self::ID));
-    }
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
      * interface dialog defs
      * @param $plugin_cookies
      * @return array

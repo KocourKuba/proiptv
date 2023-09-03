@@ -15,34 +15,6 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @return false|string
-     */
-    public static function get_media_url_str()
-    {
-        return MediaURL::encode(array('screen_id' => self::ID));
-    }
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
      * defs for all controls on screen
      * @param $plugin_cookies
      * @return array
@@ -111,7 +83,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
-                        'choose_folder' => self::ID,
+                        'choose_folder' => static::ID,
                         'windowCounter' => 1,
                     )
                 );

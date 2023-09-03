@@ -600,7 +600,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $count = $this->m3u_parser->getEntriesCount();
                 if ($count === 0) {
                     $this->set_last_error("Пустой плейлист!");
-                    hd_debug_print((string)$this->last_error);
+                    hd_debug_print($this->last_error);
                     $this->clear_playlist_cache();
                     throw new Exception("Empty playlist");
                 }
@@ -780,6 +780,11 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
+        if (!preg_match('/\.' . VIDEO_PATTERN . '$/i', $stream_url)
+            && !preg_match('/\.' . AUDIO_PATTERN . '$/i', $stream_url)) {
+            $stream_url = HD::make_ts($stream_url);
+        }
+
         $ext_params = $channel->get_ext_params();
         if (isset($ext_params[PARAM_DUNE_PARAMS])) {
             //hd_debug_print("Additional dune params: $dune_params");
@@ -796,13 +801,6 @@ class Default_Dune_Plugin implements DunePlugin
             if (!empty($dune_params)) {
                 $stream_url .= "|||dune_params|||$dune_params";
             }
-        }
-
-        hd_debug_print($stream_url);
-
-        if (!preg_match('/\.' . VIDEO_PATTERN . '$/i', $stream_url)
-            && !preg_match('/\.' . AUDIO_PATTERN . '$/i', $stream_url)) {
-            return HD::make_ts($stream_url);
         }
 
         return $stream_url;

@@ -29,6 +29,7 @@ yes_no_confirm_msg = Вы уверены?
 sort_items = Сортировать по имени
 reset_default = Сбросить по умолчанию
 custom = Произвольный
+scroll_page = Прокрутка страницы
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное

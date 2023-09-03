@@ -82,9 +82,9 @@ class Starnet_Tv implements Tv, User_Input_Handler
         User_Input_Handler_Registry::get_instance()->register_handler($this);
     }
 
-    public function get_handler_id()
+    public static function get_handler_id()
     {
-        return self::ID . '_handler';
+        return static::ID . '_handler';
     }
 
     /**
@@ -253,7 +253,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
         }
 
         $media_urls = array(Starnet_Tv_Favorites_Screen::get_media_url_str(),
-            Starnet_Tv_Channel_List_Screen::get_media_url_str(ALL_CHANNEL_GROUP_ID));
+            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID));
 
         return Action_Factory::invalidate_folders(
             $media_urls,
@@ -286,6 +286,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
      */
     public function ensure_channels_loaded($plugin_cookies)
     {
+        hd_debug_print();
         if (!isset($this->channels)) {
             $this->load_channels($plugin_cookies);
         }
@@ -312,6 +313,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
      */
     public function load_channels($plugin_cookies)
     {
+        hd_debug_print();
         if (!isset($plugin_cookies->pass_sex)) {
             $plugin_cookies->pass_sex = '0000';
         }

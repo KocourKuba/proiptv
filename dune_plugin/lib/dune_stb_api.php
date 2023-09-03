@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpUndefinedClassInspection */
+<?php
 
 ###############################################################################
 #
@@ -1758,7 +1758,7 @@ function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
     $caller_name = array_shift($bt);
     if (isset($caller_name['class'])) {
         $prefix = sprintf("(%s) %s:%s: ",
-            str_pad($caller['line'], 4, ' ', STR_PAD_RIGHT),
+            str_pad($caller['line'], 4),
             $caller_name['class'],
             $caller_name['function']);
 
@@ -1767,7 +1767,7 @@ function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
         }
     } else {
         $prefix = sprintf("(%s) %s: ",
-            str_pad($caller['line'], 4, ' ', STR_PAD_RIGHT),
+            str_pad($caller['line'], 4),
             $caller_name['function']);
     }
 

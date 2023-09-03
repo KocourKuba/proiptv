@@ -14,32 +14,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
-    }
-
-    /**
-     * @return false|string
-     */
-    public static function get_media_url_str()
-    {
-        return MediaURL::encode(array('screen_id' => self::ID));
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param $plugin_cookies
      * @return array
@@ -130,7 +104,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => self::ID,
+                        'source_window_id' => static::ID,
                         'edit_list' => Starnet_Edit_List_Screen::ACTION_GROUPS,
                         'end_action' => ACTION_RELOAD,
                         'windowCounter' => 1,
@@ -142,7 +116,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => self::ID,
+                        'source_window_id' => static::ID,
                         'edit_list' => Starnet_Edit_List_Screen::ACTION_CHANNELS,
                         'group_id' => $sel_media_url->group_id,
                         'end_action' => ACTION_RELOAD,
@@ -267,7 +241,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
             if (!is_null($group)) {
                 $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_str(ALL_CHANNEL_GROUP_ID),
+                    PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID),
                     PluginRegularFolderItem::caption => $group->get_title(),
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::icon_path => $group->get_icon_url(),
@@ -289,7 +263,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             if (is_null($group) || $group->is_disabled()) continue;
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_str($group->get_id()),
+                PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
                 PluginRegularFolderItem::caption => $group->get_title(),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $group->get_icon_url(),
@@ -457,16 +431,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      * @param $action_id string
      * @param $caption string
      * @param $icon string
-     * @param $add_params array|null
      * @return void
      */
-    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
+    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null)
     {
         if ($action_id === GuiMenuItemDef::is_separator) {
             $menu_items[] = array($action_id => true);
         } else {
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
+                $action_id, $caption, ($icon === null) ? null : get_image_path($icon));
         }
     }
 }

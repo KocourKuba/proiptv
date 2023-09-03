@@ -5,7 +5,7 @@ interface Screen
     /**
      * @return string
      */
-    public function get_id();
+    public static function get_id();
 
     /**
      * @param MediaURL $media_url

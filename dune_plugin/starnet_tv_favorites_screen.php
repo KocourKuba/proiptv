@@ -12,18 +12,9 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     public static function get_media_url_str()
     {
         return MediaURL::encode(array(
-                'screen_id' => self::ID,
+                'screen_id' => static::ID,
                 'is_favorites' => true)
         );
-    }
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-        $plugin->create_screen($this);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -51,14 +42,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         }
 
         return $actions;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
     }
 
     /**
@@ -367,16 +350,15 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
      * @param $action_id string
      * @param $caption string
      * @param $icon string
-     * @param $add_params array|null
      * @return void
      */
-    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
+    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null)
     {
         if ($action_id === GuiMenuItemDef::is_separator) {
             $menu_items[] = array($action_id => true);
         } else {
             $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
+                $action_id, $caption, ($icon === null) ? null : get_image_path($icon));
         }
     }
 }

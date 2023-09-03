@@ -28,33 +28,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-
-        $plugin->create_screen($this);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_handler_id()
-    {
-        return self::ID . '_handler';
-    }
-
-    /**
-     * @param string $id
-     * @return false|string
-     */
-    public static function get_media_url_str($id)
-    {
-        return MediaURL::encode(array('screen_id' => self::ID, 'id' => $id));
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param $plugin_cookies
      * @return array
@@ -212,8 +185,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
-                        'parent_id' => self::ID,
-                        'source_window_id' => self::ID,
+                        'parent_id' => static::ID,
+                        'source_window_id' => static::ID,
                         'choose_file' => array(
                             'action' => $user_input->action,
                             'extension'	=> $user_input->extension,
@@ -248,7 +221,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
 
                     return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $order->size() - $old_count, count($lines)),
-                        Action_Factory::invalidate_folders(array(self::ID), Action_Factory::update_regular_folder(
+                        Action_Factory::invalidate_folders(array(static::ID), Action_Factory::update_regular_folder(
                             $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
                             true,
                             $user_input->sel_ndx))
@@ -268,8 +241,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
-                        'parent_id' => self::ID,
-                        'source_window_id' => self::ID,
+                        'parent_id' => static::ID,
+                        'source_window_id' => static::ID,
                         'choose_folder' => array(
                             'extension'	=> $user_input->extension,
                         ),
@@ -291,7 +264,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $order->add_items($file);
 
                 return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', $order->size() - $old_count),
-                    Action_Factory::invalidate_folders(array(self::ID), Action_Factory::update_regular_folder(
+                    Action_Factory::invalidate_folders(array(static::ID), Action_Factory::update_regular_folder(
                         $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
                         true,
                         $user_input->sel_ndx))
@@ -302,7 +275,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         // refresh current screen
-        return Action_Factory::invalidate_folders(array(self::ID), Action_Factory::update_regular_folder(
+        return Action_Factory::invalidate_folders(array(static::ID), Action_Factory::update_regular_folder(
             $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
             true,
             $user_input->sel_ndx)
@@ -322,7 +295,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $order = $this->get_edit_order($media_url);
         $items = array();
         foreach ($order->get_order() as $item) {
-            //hd_debug_print("order item media url: " . self::get_media_url_str($item));
             $title = $item;
             if ($media_url->edit_list === self::ACTION_CHANNELS) {
                 if ($media_url->group_id === FAV_CHANNEL_GROUP_ID || $media_url->group_id === PLAYBACK_HISTORY_GROUP_ID) break;
@@ -345,7 +317,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => self::get_media_url_str($item),
+                PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $item)),
                 PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,

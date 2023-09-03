@@ -54,7 +54,7 @@ class Base_Epfs_Handler
 	protected static function write_epf_view($epf_id, $folder_view)
 	{
 		if ($folder_view) {
-            self::do_write_epf_data(self::get_epf_path($epf_id), json_encode($folder_view), $epf_id);
+            self::do_write_epf_data(self::get_epf_path($epf_id), json_encode($folder_view));
         }
 	}
 

@@ -11,20 +11,6 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
 
     ///////////////////////////////////////////////////////////////////////
 
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        parent::__construct(self::ID, $plugin);
-    }
-
-    /**
-     * @param $no_internet
-     * @return false|string
-     */
-    public static function get_media_url_str($no_internet)
-    {
-        return MediaURL::encode(array('no_internet' => $no_internet));
-    }
-
     /**
      * @param MediaURL $media_url
      * @param $plugin_cookies
@@ -73,7 +59,7 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
     public function get_folder_view_for_epf($no_internet, &$plugin_cookies)
     {
         hd_debug_print();
-        $media_url = MediaURL::decode(self::get_media_url_str($no_internet));
+        $media_url = MediaURL::make(array('no_internet' => $no_internet));
 
         return $this->get_folder_view($media_url, $plugin_cookies);
     }
