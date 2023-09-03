@@ -23,6 +23,11 @@ class M3uParser extends Json_Serializer
      */
     private $m3u_file;
 
+    public function __construct()
+    {
+        $this->m3u_info = new Entry();
+    }
+
     /**
      * @param string $file_name
      * @param bool $force
@@ -32,7 +37,7 @@ class M3uParser extends Json_Serializer
         if ($this->file_name !== $file_name || $force) {
             $this->m3u_file = null;
             $this->file_name = $file_name;
-            unset($this->m3u_entries);
+            unset($this->m3u_entries, $this->m3u_info);
             $this->m3u_entries = array();
             $this->m3u_info = new Entry();
 
