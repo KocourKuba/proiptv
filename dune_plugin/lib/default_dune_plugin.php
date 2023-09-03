@@ -2,7 +2,6 @@
 ///////////////////////////////////////////////////////////////////////////
 
 require_once 'tr.php';
-require_once 'tv/tv.php';
 require_once 'mediaurl.php';
 require_once 'user_input_handler_registry.php';
 require_once 'action_factory.php';
@@ -324,7 +323,7 @@ class Default_Dune_Plugin implements DunePlugin
             throw new Exception('TV is not supported');
         }
 
-        return $this->tv->get_tv_stream_url($media_url, $plugin_cookies);
+        return $media_url;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -365,7 +364,58 @@ class Default_Dune_Plugin implements DunePlugin
             throw new Exception('TV is not supported');
         }
 
-        return $this->tv->get_day_epg($channel_id, $day_start_tm_sec, $plugin_cookies);
+        $day_epg = array();
+
+        try {
+            // get channel by hash
+            $channel = $this->tv->get_channel($channel_id);
+        } catch (Exception $ex) {
+            hd_debug_print("Can't get channel with ID: $channel_id");
+            return $day_epg;
+        }
+
+        // correct day start to local timezone
+        $day_start_tm_sec -= get_local_time_zone_offset();
+
+        //hd_debug_print("day_start timestamp: $day_start_ts (" . format_datetime("Y-m-d H:i", $day_start_ts) . ")");
+        $day_epg_items = $this->epg_man->get_day_epg_items($channel, $day_start_tm_sec);
+        if ($day_epg_items !== false) {
+            // get personal time shift for channel
+            $time_shift = 3600 * ($channel->get_timeshift_hours() + (isset($plugin_cookies->epg_shift) ? $plugin_cookies->epg_shift : 0));
+            //hd_debug_print("EPG time shift $time_shift");
+            foreach ($day_epg_items as $time => $value) {
+                $tm_start = (int)$time + $time_shift;
+                $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
+                $day_epg[] = array
+                (
+                    PluginTvEpgProgram::start_tm_sec => $tm_start,
+                    PluginTvEpgProgram::end_tm_sec => $tm_end,
+                    PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
+                    PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
+                );
+
+                //hd_debug_print(format_datetime("m-d H:i", $tm_start) . " - " . format_datetime("m-d H:i", $tm_end) . " {$value[Epg_Params::EPG_NAME]}");
+            }
+        }
+
+        return $day_epg;
+    }
+
+    public function get_program_info($channel_id, $program_ts, $plugin_cookies)
+    {
+        $program_ts = ($program_ts > 0 ? $program_ts : time());
+        //hd_debug_print("for $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts));
+        $day_start = date("Y-m-d", $program_ts);
+        $day_ts = strtotime($day_start) + get_local_time_zone_offset();
+        $day_epg = $this->get_day_epg($channel_id, $day_ts, $plugin_cookies);
+        foreach ($day_epg as $item) {
+            if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
+                return $item;
+            }
+        }
+
+        hd_debug_print("No entries found for time $program_ts");
+        return null;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -384,7 +434,7 @@ class Default_Dune_Plugin implements DunePlugin
             return array();
         }
 
-        return $this->tv->change_favorites($op_type, $channel_id, $plugin_cookies);
+        return $this->change_favorites($op_type, $channel_id);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -694,6 +744,57 @@ class Default_Dune_Plugin implements DunePlugin
             copy($tmp_file, $tmp_file . ".m3u");
             unlink($tmp_file);
         }
+    }
+
+    /**
+     * @return Ordered_Array
+     */
+    public function get_favorites()
+    {
+        return $this->tv->get_special_group(FAV_CHANNEL_GROUP_ID)->get_items_order();
+    }
+
+    /**
+     * @param string $fav_op_type
+     * @param string $channel_id
+     * @return array
+     */
+    public function change_favorites($fav_op_type, $channel_id)
+    {
+        $favorites = $this->get_favorites();
+        switch ($fav_op_type) {
+            case PLUGIN_FAVORITES_OP_ADD:
+                if ($favorites->add_item($channel_id)) {
+                    hd_debug_print("Add channel $channel_id to favorites");
+                }
+                break;
+
+            case PLUGIN_FAVORITES_OP_REMOVE:
+                if ($favorites->remove_item($channel_id)) {
+                    hd_debug_print("Remove channel $channel_id from favorites");
+                }
+                break;
+
+            case PLUGIN_FAVORITES_OP_MOVE_UP:
+                $favorites->arrange_item($channel_id, Ordered_Array::UP);
+                break;
+
+            case PLUGIN_FAVORITES_OP_MOVE_DOWN:
+                $favorites->arrange_item($channel_id, Ordered_Array::DOWN);
+                break;
+
+            case ACTION_ITEMS_CLEAR:
+                hd_debug_print("Clear favorites");
+                $favorites->clear();
+                break;
+        }
+
+        $media_urls = array(Starnet_Tv_Favorites_Screen::get_media_url_str(),
+            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID));
+
+        return Action_Factory::invalidate_folders(
+            $media_urls,
+            Starnet_Epfs_Handler::invalidate_folders($media_urls));
     }
 
     public function get_special_groups_count($plugin_cookies)

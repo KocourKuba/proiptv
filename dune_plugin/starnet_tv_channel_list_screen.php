@@ -94,7 +94,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->update_epfs_data($plugin_cookies, Action_Factory::tv_play($media_url));
 
             case ACTION_ADD_FAV:
-                $opt_type = $this->plugin->tv->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $opt_type = $this->plugin->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
                 $this->need_update_epfs = true;
                 break;
@@ -277,7 +277,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $channel->get_archive()
                 ),
             ),
-            PluginRegularFolderItem::starred => $this->plugin->tv->get_favorites()->in_order($channel->get_id()),
+            PluginRegularFolderItem::starred => $this->plugin->get_favorites()->in_order($channel->get_id()),
         );
     }
 
@@ -294,7 +294,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $items = array();
 
         try {
-            $this->plugin->tv->ensure_channels_loaded($plugin_cookies);
+            $this->plugin->tv->load_channels($plugin_cookies);
             $this_group = $this->plugin->tv->get_group($media_url->group_id);
             if (is_null($this_group)) {
                 throw new Exception('group not found');

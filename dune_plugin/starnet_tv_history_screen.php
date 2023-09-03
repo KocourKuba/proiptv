@@ -78,7 +78,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 break;
 
 			case ACTION_ADD_FAV:
-				$is_favorite = $this->plugin->tv->get_favorites()->in_order($channel_id);
+				$is_favorite = $this->plugin->get_favorites()->in_order($channel_id);
 				$opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
 				$this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
@@ -140,7 +140,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         foreach ($this->plugin->playback_points->get_all() as $channel_id => $channel_ts) {
             if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
 
-            $prog_info = $this->plugin->tv->get_program_info($channel_id, $channel_ts, $plugin_cookies);
+            $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
             $description = '';
             if (is_null($prog_info)) {
                 $title = $channel->get_title();

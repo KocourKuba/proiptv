@@ -1,7 +1,6 @@
 <?php
 require_once 'lib/hashed_array.php';
 require_once 'lib/ordered_array.php';
-require_once 'lib/tv/tv.php';
 require_once 'lib/tv/default_channel.php';
 require_once 'lib/tv/all_channels_group.php';
 require_once 'lib/tv/favorites_group.php';
@@ -9,7 +8,7 @@ require_once 'lib/tv/history_group.php';
 require_once 'lib/tv/default_epg_item.php';
 require_once 'starnet_setup_screen.php';
 
-class Starnet_Tv implements Tv, User_Input_Handler
+class Starnet_Tv implements User_Input_Handler
 {
     const ID = 'tv';
 
@@ -170,6 +169,14 @@ class Starnet_Tv implements Tv, User_Input_Handler
 
     ///////////////////////////////////////////////////////////////////////
 
+    public function get_action_map()
+    {
+        $actions = array();
+        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
+
+        return $actions;
+    }
+
     /**
      * @throws Exception
      */
@@ -216,81 +223,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
         return $group;
     }
 
-    /**
-     * @param string $fav_op_type
-     * @param string $channel_id
-     * @param $plugin_cookies
-     * @return array
-     */
-    public function change_favorites($fav_op_type, $channel_id, &$plugin_cookies)
-    {
-        $favorites = $this->get_favorites();
-        switch ($fav_op_type) {
-            case PLUGIN_FAVORITES_OP_ADD:
-                if ($favorites->add_item($channel_id)) {
-                    hd_debug_print("Add channel $channel_id to favorites");
-                }
-                break;
-
-            case PLUGIN_FAVORITES_OP_REMOVE:
-                if ($favorites->remove_item($channel_id)) {
-                    hd_debug_print("Remove channel $channel_id from favorites");
-                }
-                break;
-
-            case PLUGIN_FAVORITES_OP_MOVE_UP:
-                $favorites->arrange_item($channel_id, Ordered_Array::UP);
-                break;
-
-            case PLUGIN_FAVORITES_OP_MOVE_DOWN:
-                $favorites->arrange_item($channel_id, Ordered_Array::DOWN);
-                break;
-
-            case ACTION_ITEMS_CLEAR:
-                hd_debug_print("Clear favorites");
-                $favorites->clear();
-                break;
-        }
-
-        $media_urls = array(Starnet_Tv_Favorites_Screen::get_media_url_str(),
-            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID));
-
-        return Action_Factory::invalidate_folders(
-            $media_urls,
-            Starnet_Epfs_Handler::invalidate_folders($media_urls));
-    }
-
-    /**
-     * @return Ordered_Array
-     */
-    public function get_favorites()
-    {
-        return $this->get_special_group(FAV_CHANNEL_GROUP_ID)->get_items_order();
-    }
-
     ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * Special method for callback in Ordered_Array
-     * @return void
-     */
-    public function save_favorites_order()
-    {
-        $this->plugin->set_settings(PARAM_FAVORITES, $this->get_special_group(FAV_CHANNEL_GROUP_ID)->get_items_order());
-    }
-
-    /**
-     * @param $plugin_cookies
-     * @return void
-     * @throws Exception
-     */
-    public function ensure_channels_loaded($plugin_cookies)
-    {
-        //hd_debug_print();
-        if (!isset($this->channels)) {
-            $this->load_channels($plugin_cookies);
-        }
-    }
 
     /**
      * @return void
@@ -313,7 +246,12 @@ class Starnet_Tv implements Tv, User_Input_Handler
      */
     public function load_channels($plugin_cookies)
     {
+        if (isset($this->channels)) {
+            return;
+        }
+
         hd_debug_print();
+
         if (!isset($plugin_cookies->pass_sex)) {
             $plugin_cookies->pass_sex = '0000';
         }
@@ -638,16 +576,6 @@ class Starnet_Tv implements Tv, User_Input_Handler
     }
 
     /**
-     * @param string $playback_url
-     * @param $plugin_cookies
-     * @return string
-     */
-    public function get_tv_stream_url($playback_url, &$plugin_cookies)
-    {
-        return $playback_url;
-    }
-
-    /**
      * @param string $channel_id
      * @param int $archive_ts
      * @param string $protect_code
@@ -659,7 +587,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
         hd_debug_print("channel: $channel_id archive_ts: $archive_ts, protect code: $protect_code");
 
         try {
-            $this->ensure_channels_loaded($plugin_cookies);
+            $this->load_channels($plugin_cookies);
 
             $pass_sex = isset($plugin_cookies->pass_sex) ? $plugin_cookies->pass_sex : '0000';
             // get channel by hash
@@ -703,68 +631,6 @@ class Starnet_Tv implements Tv, User_Input_Handler
     }
 
     /**
-     * @param string $channel_id
-     * @param integer $day_start_ts
-     * @param $plugin_cookies
-     * @return array
-     */
-    public function get_day_epg($channel_id, $day_start_ts, &$plugin_cookies)
-    {
-        $day_epg = array();
-
-        try {
-            // get channel by hash
-            $channel = $this->get_channel($channel_id);
-        } catch (Exception $ex) {
-            hd_debug_print("Can't get channel with ID: $channel_id");
-            return $day_epg;
-        }
-
-        // correct day start to local timezone
-        $day_start_ts -= get_local_time_zone_offset();
-
-        //hd_debug_print("day_start timestamp: $day_start_ts (" . format_datetime("Y-m-d H:i", $day_start_ts) . ")");
-        $day_epg_items = $this->plugin->epg_man->get_day_epg_items($channel, $day_start_ts);
-        if ($day_epg_items !== false) {
-            // get personal time shift for channel
-            $time_shift = 3600 * ($channel->get_timeshift_hours() + (isset($plugin_cookies->epg_shift) ? $plugin_cookies->epg_shift : 0));
-            //hd_debug_print("EPG time shift $time_shift");
-            foreach ($day_epg_items as $time => $value) {
-                $tm_start = (int)$time + $time_shift;
-                $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
-                $day_epg[] = array
-                (
-                    PluginTvEpgProgram::start_tm_sec => $tm_start,
-                    PluginTvEpgProgram::end_tm_sec => $tm_end,
-                    PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
-                    PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
-                );
-
-                //hd_debug_print(format_datetime("m-d H:i", $tm_start) . " - " . format_datetime("m-d H:i", $tm_end) . " {$value[Epg_Params::EPG_NAME]}");
-            }
-        }
-
-        return $day_epg;
-    }
-
-    public function get_program_info($channel_id, $program_ts, $plugin_cookies)
-    {
-        $program_ts = ($program_ts > 0 ? $program_ts : time());
-        hd_debug_print("for $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts));
-        $day_start = date("Y-m-d", $program_ts);
-        $day_ts = strtotime($day_start) + get_local_time_zone_offset();
-        $day_epg = $this->get_day_epg($channel_id, $day_ts, $plugin_cookies);
-        foreach ($day_epg as $item) {
-            if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
-                return $item;
-            }
-        }
-
-        hd_debug_print("No entries found for time $program_ts");
-        return null;
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param $plugin_cookies
      * @return array
@@ -777,7 +643,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
                 || $plugin_cookies->{Starnet_Interface_Setup_Screen::SETUP_ACTION_SHOW_ALL} === SetupControlSwitchDefs::switch_on);
         //$t = microtime(1);
 
-        $this->ensure_channels_loaded($plugin_cookies);
+        $this->load_channels($plugin_cookies);
         $this->playback_runtime = PHP_INT_MAX;
 
         $channels = array();
@@ -876,7 +742,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
             PluginTvInfo::initial_group_id => $initial_group_id,
 
             PluginTvInfo::initial_is_favorite => $initial_is_favorite,
-            PluginTvInfo::favorite_channel_ids => $this->get_favorites()->get_order(),
+            PluginTvInfo::favorite_channel_ids => $this->plugin->get_favorites()->get_order(),
 
             PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
 
@@ -885,13 +751,5 @@ class Starnet_Tv implements Tv, User_Input_Handler
             PluginTvInfo::actions => $this->get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
-    }
-
-    public function get_action_map()
-    {
-        $actions = array();
-        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
-
-        return $actions;
     }
 }

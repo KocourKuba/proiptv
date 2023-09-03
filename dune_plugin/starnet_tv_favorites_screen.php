@@ -1,6 +1,5 @@
 <?php
 require_once 'lib/abstract_preloaded_regular_screen.php';
-require_once 'lib/tv/tv.php';
 
 class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
 {
@@ -34,7 +33,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        if ($this->plugin->tv->get_favorites()->size() !== 0) {
+        if ($this->plugin->get_favorites()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
@@ -74,8 +73,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             case ACTION_ITEM_DOWN:
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $channel_id, $plugin_cookies);
                 $sel_ndx++;
-                if ($sel_ndx >= $this->plugin->tv->get_favorites()->size()) {
-                    $sel_ndx = $this->plugin->tv->get_favorites()->size() - 1;
+                if ($sel_ndx >= $this->plugin->get_favorites()->size()) {
+                    $sel_ndx = $this->plugin->get_favorites()->size() - 1;
                 }
                 $this->need_update_epfs = true;
                 break;
@@ -140,7 +139,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     {
         $items = array();
 
-        foreach ($this->plugin->tv->get_favorites()->get_order() as $channel_id) {
+        foreach ($this->plugin->get_favorites()->get_order() as $channel_id) {
             if (!preg_match('/\S/', $channel_id)) {
                 continue;
             }

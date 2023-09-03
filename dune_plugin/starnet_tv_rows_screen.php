@@ -98,7 +98,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         ///////////// start_time, end_time, genre, country, person /////////////////
 
-        if (is_null($epg_data = $this->plugin->tv->get_program_info($channel_id, -1, $plugin_cookies))) {
+        if (is_null($epg_data = $this->plugin->get_program_info($channel_id, -1, $plugin_cookies))) {
 
             hd_debug_print("no epg data");
             $channel_desc = $channel->get_desc();
@@ -207,7 +207,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         } else {
 
             if ($group_id === FAV_CHANNEL_GROUP_ID) {
-                $order = $this->plugin->tv->get_favorites()->get_order();
+                $order = $this->plugin->get_favorites()->get_order();
             } else {
                 /** @var Group $group */
                 $group = $this->plugin->tv->get_group($group_id);
@@ -526,7 +526,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         $channel_id = $media_url->channel_id;
                         hd_debug_print("Selected channel id: $channel_id");
 
-                        $is_in_favorites = $this->plugin->tv->get_favorites()->in_order($channel_id);
+                        $is_in_favorites = $this->plugin->get_favorites()->in_order($channel_id);
                         $caption = $is_in_favorites ? TR::t('delete') : TR::t('add');
                         $add_action = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 
@@ -585,7 +585,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     break;
 
                 if ($control_id === PLUGIN_FAVORITES_OP_ADD) {
-                    $is_in_favorites = $this->plugin->tv->get_favorites()->in_order($media_url->channel_id);
+                    $is_in_favorites = $this->plugin->get_favorites()->in_order($media_url->channel_id);
                     $control_id = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 }
 
@@ -745,7 +745,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         foreach ($this->plugin->playback_points->get_all() as $channel_id => $channel_ts) {
             if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
 
-            $prog_info = $this->plugin->tv->get_program_info($channel_id, $channel_ts, $plugin_cookies);
+            $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
             $progress = 0;
 
             if (is_null($prog_info)) {
@@ -859,10 +859,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        $fav_count = $this->plugin->tv->get_favorites()->size();
+        $fav_count = $this->plugin->get_favorites()->size();
         $fav_idx = 0;
         $rows = array();
-        foreach ($this->plugin->tv->get_favorites()->get_order() as $channel_id) {
+        foreach ($this->plugin->get_favorites()->get_order() as $channel_id) {
             $channel = $this->plugin->tv->get_channel($channel_id);
             if (is_null($channel) || $channel->is_disabled()) continue;
 
@@ -946,7 +946,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 json_encode(array('group_id' => $group->get_id(), 'channel_id' => $channel->get_id())),
                 $channel->get_icon_url(),
                 $channel->get_title(),
-                $this->plugin->tv->get_favorites()->in_order($channel->get_id()) ? $fav_stickers : null
+                $this->plugin->get_favorites()->in_order($channel->get_id()) ? $fav_stickers : null
             );
         }
 
@@ -1018,7 +1018,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     json_encode(array('group_id' => $group->get_id(), 'channel_id' => $channel->get_id())),
                     $channel->get_icon_url(),
                     $channel->get_title(),
-                    $this->plugin->tv->get_favorites()->in_order($channel->get_id()) ? $fav_stickers : null
+                    $this->plugin->get_favorites()->in_order($channel->get_id()) ? $fav_stickers : null
                 );
             }
 
