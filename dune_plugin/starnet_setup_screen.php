@@ -139,7 +139,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 Control_Factory::add_vgap($defs, 20);
 
                 $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-                    1200,
+                    1160,
                     get_image_path('page_plus_btn.png'),
                     get_image_path('page_minus_btn.png'),
                     DEF_LABEL_TEXT_COLOR_SILVER,
