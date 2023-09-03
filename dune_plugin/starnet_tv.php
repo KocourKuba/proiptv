@@ -324,15 +324,25 @@ class Starnet_Tv implements Tv, User_Input_Handler
         $this->disabled_groups = new Ordered_Array($this->plugin, PARAM_DISABLED_GROUPS);
         $this->disabled_channels = new Ordered_Array($this->plugin, PARAM_DISABLED_CHANNELS);
 
+        // All channels category
+        $this->special_groups->put(new All_Channels_Group());
+
+        // Favorites group
+        $this->special_groups->put(new Favorites_Group($this->plugin));
+
+        // History channels category
+        $this->special_groups->put(new History_Group());
+
         // first check if playlist in cache
         if (!$this->plugin->init_playlist()) {
             return;
         }
 
-        $ch_useragent = $this->plugin->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
-        if ($ch_useragent !== HD::get_dune_user_agent()) {
-            HD::set_dune_user_agent($ch_useragent);
+        $dune_useragent = $this->plugin->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
+        if ($dune_useragent !== HD::get_dune_user_agent()) {
+            HD::set_dune_user_agent($dune_useragent);
         }
+        $ch_useragent = $dune_useragent;
 
         $this->plugin->playback_points->load_points(true);
 
@@ -345,16 +355,6 @@ class Starnet_Tv implements Tv, User_Input_Handler
         if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
             $catchup['global'] = $user_catchup;
         }
-
-        // All channels category
-        $this->special_groups->put(new All_Channels_Group());
-
-        // Favorites group
-        $favorites_group = new Favorites_Group($this->plugin);
-        $this->special_groups->put($favorites_group);
-
-        // History channels category
-        $this->special_groups->put(new History_Group());
 
         // suppress save after add group
         $this->groups_order->set_save_delay(true);
@@ -531,7 +531,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
                         $ch_useragent = str_replace(",", ",,", $ch_useragent);
                     }
 
-                    $ch_useragent = urlencode($ch_useragent);
+                    $ch_useragent = rawurlencode("User-Agent: " . $ch_useragent);
                     if (isset($ext_params[PARAM_DUNE_PARAMS]['http_headers'])) {
                         $ext_params[PARAM_DUNE_PARAMS]['http_headers'] .= $ch_useragent;
                     } else {
@@ -613,7 +613,7 @@ class Starnet_Tv implements Tv, User_Input_Handler
      */
     public function reload_channels(User_Input_Handler $handler, &$plugin_cookies, $post_action = null)
     {
-        hd_debug_print("Reload channels");
+        hd_debug_print();
         $this->plugin->clear_playlist_cache();
         $this->unload_channels();
         try {
