@@ -188,9 +188,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
-                        'parent_id' => static::ID,
+                        'source_window_id' => static::ID,
                         'allow_network' => false,
                         'choose_folder' => static::ID,
+                        'end_action' => ACTION_RELOAD,
                         'windowCounter' => 1,
                     )
                 );

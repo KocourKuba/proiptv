@@ -40,8 +40,10 @@ class User_Input_Handler_Registry
     public static function create_action_screen($screen_id, $name, $caption = null, $add_params = null)
     {
         $handler = self::get_instance()->get_registered_handler($screen_id . "_handler");
-        if (is_null($handler))
+        if (is_null($handler)) {
+            hd_debug_print("No handler registered for {$screen_id}_handler");
             return null;
+        }
 
         $params = array(
             'handler_id' => $handler->get_handler_id(),

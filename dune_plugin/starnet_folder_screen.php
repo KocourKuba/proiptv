@@ -247,6 +247,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     $icon_file = self::get_folder_icon($caption, $filepath);
                     $type = $item_type;
                 } else if ($item_type === self::SELECTED_TYPE_FILE) {
+                    if (!isset($media_url->extension)) {
+                        continue;
+                    }
+
                     $caption = $k;
                     $icon_file = self::get_file_icon($caption);
                     $size = HD::get_filesize_str($v['size']);
