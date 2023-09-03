@@ -21,6 +21,9 @@ echo.
 choice /T 2 /D N /M "Upload"
 if ERRORLEVEL 2 goto :EOF
 
+echo create GIT tag
+git tag %VERSION%.%BUILD%
+
 echo copy to Dropbox
 copy /Y dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
 echo.
