@@ -634,7 +634,10 @@ class Default_Dune_Plugin implements DunePlugin
                 if (preg_match('|https?://|', $url)) {
                     $contents = HD::http_get_document($url);
                 } else {
-                    $contents = file_get_contents($url);
+                    $contents = @file_get_contents($url);
+                    if ($contents === false) {
+                        throw new Exception("Can't read playlist: $url");
+                    }
                 }
                 file_put_contents($tmp_file, $contents);
             }
