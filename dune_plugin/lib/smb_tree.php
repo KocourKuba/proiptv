@@ -229,6 +229,7 @@ class smb_tree
             return false;
         }
 
+        /** @noinspection PhpUndefinedFunctionInspection */
         $pid = posix_getpid();
         $path = "$dir_path/$cmd_name.$pid-$cmd_id.cmd";
         $tmp_path = "$path.tmp";
