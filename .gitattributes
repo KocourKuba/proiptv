@@ -1,0 +1,4 @@
+﻿dune_plugin\translations\*.txt eol=lf
+build\*.tpl eol=lf
+build\*.xml eol=lf
+build\*.cmd eol=crlf

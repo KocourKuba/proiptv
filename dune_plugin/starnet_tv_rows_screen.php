@@ -540,16 +540,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                             $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                         }
 
-                        $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
-                        $current_idx = (string)(isset($zoom_data[$channel_id]) ? $zoom_data[$channel_id] : DuneVideoZoomPresets::not_set);
-
-                        //hd_debug_print("Current idx: $current_idx");
-
                         $this->create_menu_item($common_menu, GuiMenuItemDef::is_separator);
 
+                        $zoom_data = $this->plugin->tv->get_channel_zoom($channel_id);
                         foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-                            $this->create_menu_item($common_menu, ACTION_ZOOM_APPLY, $zoom_item,
-                                strcmp($idx, $current_idx) !== 0 ? null : "aspect.png",
+                            $this->create_menu_item($common_menu, ACTION_ZOOM_APPLY, TR::t($zoom_item),
+                                strcmp($idx, $zoom_data) !== 0 ? null : "aspect.png",
                                 array(ACTION_ZOOM_SELECT => (string)$idx));
                         }
                     }
@@ -656,25 +652,17 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_FOLDER_SELECTED:
                 if (isset($user_input->playlist_idx)) {
                     $this->plugin->get_playlists()->set_saved_pos($user_input->playlist_idx);
-                    return $this->plugin->tv->reload_channels($this, $plugin_cookies, Starnet_Epfs_Handler::invalidate_folders());
+                    return $this->plugin->tv->reload_channels($this, $plugin_cookies);
                 }
                 break;
 
             case ACTION_ZOOM_APPLY:
-                if (!isset($user_input->{ACTION_ZOOM_SELECT})) break;
-
                 $channel_id = $media_url->channel_id;
-                $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
-                $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
-                if ($zoom_select === DuneVideoZoomPresets::not_set) {
-                    hd_debug_print("Zoom preset removed for channel: $channel_id");
-                    unset ($zoom_data[$channel_id]);
-                } else {
-                    hd_debug_print("Zoom preset $zoom_select for channel: $channel_id");
-                    $zoom_data[$channel_id] = $zoom_select;
+                if (isset($user_input->{ACTION_ZOOM_SELECT})) {
+                    $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
+                    $this->plugin->tv->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
                 }
 
-                $this->plugin->set_settings(PARAM_CHANNELS_ZOOM, $zoom_data);
                 return Starnet_Epfs_Handler::invalidate_folders();
 
             case ACTION_EXTERNAL_PLAYER:

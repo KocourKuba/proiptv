@@ -304,16 +304,16 @@ class DuneVideoZoomPresets
     );
 
     public static $zoom_ops = array(
-        DuneVideoZoomPresets::not_set => '%tr%tv_screen_zoom_not_set',
-        DuneVideoZoomPresets::normal => '%tr%tv_screen_zoom_normal',
-        DuneVideoZoomPresets::enlarge => '%tr%tv_screen_zoom_enlarge',
-        DuneVideoZoomPresets::make_wider => '%tr%tv_screen_zoom_make_wider',
-        DuneVideoZoomPresets::fill_screen => '%tr%tv_screen_zoom_fill_screen',
-        DuneVideoZoomPresets::full_fill_screen => '%tr%tv_screen_zoom_full_fill_screen',
-        DuneVideoZoomPresets::make_taller => '%tr%tv_screen_zoom_make_taller',
-        DuneVideoZoomPresets::cut_edges => '%tr%tv_screen_zoom_cut_edges',
-        DuneVideoZoomPresets::full_enlarge => '%tr%tv_screen_zoom_full_enlarge',
-        DuneVideoZoomPresets::full_stretch => '%tr%tv_screen_zoom_full_stretch'
+        DuneVideoZoomPresets::not_set => 'tv_screen_zoom_not_set',
+        DuneVideoZoomPresets::normal => 'tv_screen_zoom_normal',
+        DuneVideoZoomPresets::enlarge => 'tv_screen_zoom_enlarge',
+        DuneVideoZoomPresets::make_wider => 'tv_screen_zoom_make_wider',
+        DuneVideoZoomPresets::fill_screen => 'tv_screen_zoom_fill_screen',
+        DuneVideoZoomPresets::full_fill_screen => 'tv_screen_zoom_full_fill_screen',
+        DuneVideoZoomPresets::make_taller => 'tv_screen_zoom_make_taller',
+        DuneVideoZoomPresets::cut_edges => 'tv_screen_zoom_cut_edges',
+        DuneVideoZoomPresets::full_enlarge => 'tv_screen_zoom_full_enlarge',
+        DuneVideoZoomPresets::full_stretch => 'tv_screen_zoom_full_stretch'
     );
 }
 

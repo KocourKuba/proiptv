@@ -68,6 +68,11 @@ class Starnet_Tv implements User_Input_Handler
      */
     protected $disabled_channels;
 
+    /**
+     * @var Hashed_Array
+     */
+    protected $channels_zoom;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -77,14 +82,6 @@ class Starnet_Tv implements User_Input_Handler
     {
         $this->plugin = $plugin;
         $this->playback_url_is_stream_url = false;
-
-        $this->groups = new Hashed_Array();
-        $this->channels = new Hashed_Array();
-        $this->special_groups = new Hashed_Array();
-
-        $this->groups_order = new Ordered_Array();
-        $this->disabled_groups = new Ordered_Array();
-        $this->disabled_channels = new Ordered_Array();
 
         User_Input_Handler_Registry::get_instance()->register_handler($this);
     }
@@ -143,6 +140,9 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_groups_order()
     {
+        if (is_null($this->groups_order)) {
+            $this->groups_order = new Ordered_Array($this->plugin, PARAM_GROUPS_ORDER);
+        }
         return $this->groups_order;
     }
 
@@ -151,6 +151,9 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_disabled_groups()
     {
+        if (is_null($this->disabled_groups)) {
+            $this->disabled_groups = new Ordered_Array($this->plugin, PARAM_DISABLED_GROUPS);
+        }
         return $this->disabled_groups;
     }
 
@@ -159,8 +162,8 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function disable_group($group_id)
     {
-        $this->disabled_groups->add_item($group_id);
-        $this->groups_order->remove_item($group_id);
+        $this->get_disabled_groups()->add_item($group_id);
+        $this->get_groups_order()->remove_item($group_id);
 
         if (($group = $this->groups->get($group_id)) !== null) {
             $group->set_disabled(true);
@@ -172,7 +175,47 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_disabled_channels()
     {
+        if (is_null($this->disabled_channels)) {
+            $this->disabled_channels = new Ordered_Array($this->plugin, PARAM_DISABLED_CHANNELS);
+        }
         return $this->disabled_channels;
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_channels_zoom()
+    {
+        if (is_null($this->channels_zoom)) {
+            $this->channels_zoom = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, new Hashed_Array());
+        }
+        return $this->channels_zoom;
+    }
+
+
+    /**
+     * @return string
+     */
+    public function get_channel_zoom($channel_id)
+    {
+        $zoom = $this->get_channels_zoom()->get($channel_id);
+        return is_null($zoom) ? DuneVideoZoomPresets::not_set : $zoom;
+    }
+
+    /**
+     * @param string $channel_id
+     * @param string|null $preset
+     * @return void
+     */
+    public function set_channel_zoom($channel_id, $preset)
+    {
+        if ($preset === null) {
+            $this->get_channels_zoom()->erase($channel_id);
+        } else {
+            $this->get_channels_zoom()->set_by_id($channel_id, $preset);
+        }
+
+        $this->plugin->set_settings(PARAM_CHANNELS_ZOOM, $this->get_channels_zoom());
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -201,13 +244,11 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->playback_points->update_point($channel_id);
 
         if ($user_input->control_id === GUI_EVENT_PLAYBACK_STOP
-            && $this->plugin->new_ui_support
             && (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed))) {
 
             $this->plugin->playback_points->save();
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-            return Starnet_Epfs_Handler::invalidate_folders(null,
-                Action_Factory::invalidate_folders(array(Starnet_TV_History_Screen::get_media_url_str())));
+            return Starnet_Epfs_Handler::invalidate_folders(array(Starnet_TV_History_Screen::ID));
         }
 
         return null;
@@ -242,9 +283,11 @@ class Starnet_Tv implements User_Input_Handler
         $this->channels = null;
         $this->groups = null;
         $this->special_groups = null;
-        $this->groups_order->zap();
-        $this->disabled_groups->zap();
-        $this->disabled_channels->zap();
+
+        $this->groups_order = null;
+        $this->disabled_groups = null;
+        $this->disabled_channels = null;
+        $this->channels_zoom = null;
     }
 
     /**
@@ -266,10 +309,6 @@ class Starnet_Tv implements User_Input_Handler
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
         $this->special_groups = new Hashed_Array();
-
-        $this->groups_order = new Ordered_Array($this->plugin, PARAM_GROUPS_ORDER);
-        $this->disabled_groups = new Ordered_Array($this->plugin, PARAM_DISABLED_GROUPS);
-        $this->disabled_channels = new Ordered_Array($this->plugin, PARAM_DISABLED_CHANNELS);
 
         // All channels category
         $this->special_groups->put(new All_Channels_Group());
@@ -298,7 +337,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         // suppress save after add group
-        $this->groups_order->set_save_delay(true);
+        $this->get_groups_order()->set_save_delay(true);
 
         // Collect categories from playlist
         $playlist_groups = new Ordered_Array();
@@ -316,12 +355,12 @@ class Starnet_Tv implements User_Input_Handler
                 || strpos($title, "xxx") !== false);
 
             $group->set_adult($adult);
-            if ($this->disabled_groups->in_order($group->get_id())) {
+            if ($this->get_disabled_groups()->in_order($group->get_id())) {
                 $group->set_disabled(true);
                 hd_debug_print("Hidden category # $title");
-            } else if (!$this->groups_order->in_order($group->get_id())) {
+            } else if (!$this->get_groups_order()->in_order($group->get_id())) {
                 hd_debug_print("New    category # $title");
-                $this->groups_order->add_item($title);
+                $this->get_groups_order()->add_item($title);
 //            } else {
 //                hd_debug_print("Known category # $title");
             }
@@ -334,19 +373,19 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         // cleanup order if saved group removed from playlist
-        if ($this->groups_order->size() !== 0) {
-            $orphans_groups = array_diff($this->groups_order->get_order(), $playlist_groups->get_order());
+        if ($this->get_groups_order()->size() !== 0) {
+            $orphans_groups = array_diff($this->get_groups_order()->get_order(), $playlist_groups->get_order());
             foreach ($orphans_groups as $group) {
                 hd_debug_print("Remove orphaned group: $group");
-                $this->groups_order->remove_item($group);
-                $this->disabled_groups->remove_item($group);
+                $this->get_groups_order()->remove_item($group);
+                $this->get_disabled_groups()->remove_item($group);
             }
         }
         unset($playlist_groups);
 
         // enable save
-        $this->groups_order->set_save_delay(false);
-        $this->groups_order->save();
+        $this->get_groups_order()->set_save_delay(false);
+        $this->get_groups_order()->save();
 
         // Read channels
         $playlist_group_channels = array();
@@ -505,7 +544,7 @@ class Starnet_Tv implements User_Input_Handler
                 );
 
                 // ignore disabled channel
-                if ($this->disabled_channels->in_order($channel_id)) {
+                if ($this->get_disabled_channels()->in_order($channel_id)) {
                     hd_debug_print("Channel $channel_name is disabled");
                     $channel->set_disabled(true);
                 }
@@ -539,7 +578,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channels()->size()}");
-        hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->groups_order->size()));
+        hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->get_groups_order()->size()));
 
         $this->plugin->epg_man->index_xmltv_file($epg_ids);
 
@@ -565,14 +604,11 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        return Action_Factory::invalidate_folders(
-            array(
+        return Starnet_Epfs_Handler::invalidate_folders(array(
                 Starnet_Tv_Groups_Screen::ID,
                 Starnet_Tv_Channel_List_Screen::ID,
-                Starnet_Playlists_Setup_Screen::ID,
-            ),
-            Starnet_Epfs_Handler::invalidate_folders(null,
-                $post_action !== null ? $post_action : User_Input_Handler_Registry::create_action($handler, RESET_CONTROLS_ACTION_ID))
+                Starnet_Playlists_Setup_Screen::ID),
+            $post_action !== null ? $post_action : User_Input_Handler_Registry::create_action($handler, RESET_CONTROLS_ACTION_ID)
         );
     }
 
@@ -607,20 +643,14 @@ class Starnet_Tv implements User_Input_Handler
             // update url if play archive or different type of the stream
             $url = $this->plugin->generate_stream_url($archive_ts, $channel);
 
-            $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
-            if (isset($zoom_data[$channel_id])) {
-                $zoom_preset = $zoom_data[$channel_id];
-                hd_debug_print("zoom_preset: $zoom_preset");
-            } else if (!is_android() && !is_apk()) {
+            $zoom_preset = $this->get_channel_zoom($channel_id);
+            if (!is_null($zoom_preset) && !is_android() && !is_apk()) {
                 $zoom_preset = DuneVideoZoomPresets::normal;
                 hd_debug_print("zoom_preset: reset to normal $zoom_preset");
-            } else {
-                $zoom_preset = '-';
-                //hd_debug_print("zoom_preset: not applicable");
             }
 
-            if ($zoom_preset !== '-') {
-                $url .= (strpos($url, "|||dune_params") === false ? "|||dune_params|||" : ",");
+            if (!is_null($zoom_preset)) {
+                $url .= (strpos($url, "|||dune_params|||") === false ? "|||dune_params|||" : ",");
                 $url .= "zoom:$zoom_preset";
             }
 

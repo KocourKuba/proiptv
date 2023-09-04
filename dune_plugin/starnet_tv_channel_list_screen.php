@@ -198,11 +198,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                 }
 
-                $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
-                $current_idx = isset($zoom_data[$channel_id]) ? $zoom_data[$channel_id] : DuneVideoZoomPresets::not_set;
+                $zoom_data = $this->plugin->tv->get_channel_zoom($channel_id);
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-                    $this->create_menu_item($menu_items, ACTION_ZOOM_APPLY, $zoom_item,
-                        ((string)$idx === (string)$current_idx) ? "aspect.png" : null,
+                    $this->create_menu_item($menu_items, ACTION_ZOOM_APPLY, TR::t($zoom_item),
+                        strcmp($idx, $zoom_data) !== 0 ? null : "aspect.png",
                         array(ACTION_ZOOM_SELECT => (string)$idx));
                 }
 
@@ -210,18 +209,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ZOOM_APPLY:
                 if (isset($user_input->{ACTION_ZOOM_SELECT})) {
-
                     $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
-                    $zoom_data = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, array());
-                    if ($zoom_select === DuneVideoZoomPresets::not_set) {
-                        hd_debug_print("Zoom preset removed for channel: $channel_id");
-                        unset ($zoom_data[$channel_id]);
-                    } else {
-                        hd_debug_print("Zoom preset $zoom_select for channel: $channel_id");
-                        $zoom_data[$channel_id] = $zoom_select;
-                    }
-
-                    $this->plugin->set_settings(PARAM_CHANNELS_ZOOM, $zoom_data);
+                    $this->plugin->tv->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
                 }
                 break;
 
@@ -264,6 +253,15 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     private function get_regular_folder_item($group, $channel)
     {
+        $zoom_data = $this->plugin->tv->get_channel_zoom($channel->get_id());
+        if ($zoom_data === DuneVideoZoomPresets::not_set) {
+            $detailed_info = TR::t('tv_screen_channel_info__2', $channel->get_title(), $channel->get_archive());
+        } else {
+            $detailed_info = TR::t('tv_screen_channel_info__3',
+                $channel->get_title(), $channel->get_archive(),
+                TR::load_string(DuneVideoZoomPresets::$zoom_ops[$zoom_data]));
+        }
+
         return array
         (
             PluginRegularFolderItem::media_url => MediaURL::encode(array('channel_id' => $channel->get_id(), 'group_id' => $group->get_id())),
@@ -272,10 +270,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             (
                 ViewItemParams::icon_path => $channel->get_icon_url(),
                 ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
-                ViewItemParams::item_detailed_info => TR::t('tv_screen_channel_info__2',
-                    $channel->get_title(),
-                    $channel->get_archive()
-                ),
+                ViewItemParams::item_detailed_info => $detailed_info,
             ),
             PluginRegularFolderItem::starred => $this->plugin->get_favorites()->in_order($channel->get_id()),
         );

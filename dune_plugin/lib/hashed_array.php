@@ -73,6 +73,32 @@ class Hashed_Array implements Iterator
     }
 
     /**
+     * @param TKey $id
+     * @param TValue $item
+     */
+    public function set_by_id($id, $item)
+    {
+        if (!$this->has($id)) {
+            $this->seq[] = $id;
+        }
+        $this->map[$id] = $item;
+    }
+
+    /**
+     * @param TKey $id
+     */
+    public function erase($id)
+    {
+        if ($this->has($id)) {
+            $keys = array_keys($this->seq, $id);
+            foreach ($keys as $key) {
+                unset($this->seq[$key]);
+            }
+            unset($this->map[$id]);
+        }
+    }
+
+    /**
      * @param mixed $key
      * @return bool
      */
