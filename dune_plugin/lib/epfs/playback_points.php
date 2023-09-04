@@ -93,7 +93,7 @@ class Playback_Points
      */
     public function update_point($id)
     {
-        //hd_debug_print();
+        //hd_debug_print($id);
 
         if ($this->curr_point_id === null && $id === null)
             return;

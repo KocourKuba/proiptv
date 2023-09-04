@@ -475,7 +475,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $tv_play_action = Action_Factory::tv_play($media_url);
 
                 if (isset($user_input->action_origin)) {
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                     return Action_Factory::close_and_run(Starnet_Epfs_Handler::invalidate_folders(null, $tv_play_action));
                 }
 
@@ -667,16 +666,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_EXTERNAL_PLAYER:
                 try {
-                    $url = $this->plugin->generate_stream_url(
-                        isset($media_url->archive_tm) ? $media_url->archive_tm : -1,
-                        $this->plugin->tv->get_channel($media_url->channel_id));
-                    $url = str_replace("ts://", "", $url);
-                    $param_pos = strpos($url, '|||dune_params');
-                    $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
-                    $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
-                    hd_debug_print("play movie in the external player: $cmd");
-                    exec($cmd, $output);
-                    hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
+                    $this->plugin->external_player_exec($media_url->channel_id, isset($media_url->archive_tm) ? $media_url->archive_tm : -1);
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),

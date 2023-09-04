@@ -784,12 +784,10 @@ class Default_Dune_Plugin implements DunePlugin
                 break;
         }
 
-        $media_urls = array(Starnet_Tv_Favorites_Screen::get_media_url_str(),
-            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID));
-
-        return Action_Factory::invalidate_folders(
-            $media_urls,
-            Starnet_Epfs_Handler::invalidate_folders($media_urls));
+        return Starnet_Epfs_Handler::invalidate_folders(array(
+            Starnet_Tv_Favorites_Screen::ID,
+            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
+        );
     }
 
     public function get_special_groups_count($plugin_cookies)
@@ -874,13 +872,18 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * Generate url from template with macros substitution
      * Make url ts wrapped
+     * @param string $channel_id
      * @param int $archive_ts
-     * @param Channel $channel
      * @return string
      * @throws Exception
      */
-    public function generate_stream_url($archive_ts, Channel $channel)
+    public function generate_stream_url($channel_id, $archive_ts = -1)
     {
+        $channel = $this->tv->get_channel($channel_id);
+        if (is_null($channel)) {
+            throw new Exception("Channel with id: $channel_id not found");
+        }
+
         // replace all macros
         if ((int)$archive_ts <= 0) {
             $stream_url = $channel->get_url();
@@ -912,6 +915,10 @@ class Default_Dune_Plugin implements DunePlugin
             foreach ($replaces as $key => $value) {
                 $stream_url = str_replace($key, $value, $stream_url);
             }
+        }
+
+        if (empty($stream_url)) {
+            throw new Exception("Empty url!");
         }
 
         if (!preg_match('/\.' . VIDEO_PATTERN . '$/i', $stream_url)
@@ -971,5 +978,22 @@ class Default_Dune_Plugin implements DunePlugin
         Control_Factory::add_label($defs, self::AUTHOR_LOGO,
             " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
             20);
+    }
+
+    /**
+     * @param string $channel_id
+     * @param int $archive_ts
+     * @throws Exception
+     */
+    public function external_player_exec($channel_id, $archive_ts = -1)
+    {
+        $url = $this->generate_stream_url($channel_id, $archive_ts);
+        $url = str_replace("ts://", "", $url);
+        $param_pos = strpos($url, '|||dune_params');
+        $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
+        $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
+        hd_debug_print("play movie in the external player: $cmd");
+        exec($cmd, $output);
+        hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
     }
 }

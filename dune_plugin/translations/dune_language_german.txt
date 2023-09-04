@@ -177,7 +177,7 @@ tv_screen_zoom_full_enlarge = Vollständige Vergrößerung
 tv_screen_zoom_full_stretch = Volle Strecke
 tv_screen_group_info__3 = %s|Channels: %s|Hidden: %s
 tv_screen_channel_info__2 = %s|Archive: %s day(s)
-tv_screen_channel_info__3 = %s|Archive: %s day(s)|Aspect: %s
+tv_screen_channel_info__3 = %s|Archive: %s day(s)|Aspect ratio: %s
 tv_screen_external_player = externer Player
 
 warn_msg2__1 = Fehlende oder nicht vollständige Daten für die URL-Generierung.\nMöglicherweise wurden keine Kontodaten eingegeben oder der Kanal ist im aktuellen Abonnement nicht vorhanden.\n %s

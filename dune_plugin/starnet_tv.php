@@ -222,10 +222,9 @@ class Starnet_Tv implements User_Input_Handler
 
     public function get_action_map()
     {
-        $actions = array();
-        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
-
-        return $actions;
+        return array(
+            GUI_EVENT_PLAYBACK_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP)
+        );
     }
 
     /**
@@ -235,20 +234,24 @@ class Starnet_Tv implements User_Input_Handler
     {
         //dump_input_handler(__METHOD__, $user_input);
 
-        if (!isset($user_input->control_id)) {
+        if (!isset($user_input->control_id))
             return null;
-        }
 
-        $channel_id = $user_input->plugin_tv_channel_id;
+        switch ($user_input->control_id) {
+            case GUI_EVENT_TIMER:
+                // rising after playback end + 100 ms
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                return Starnet_Epfs_Handler::invalidate_folders(array(Starnet_TV_History_Screen::ID));
 
-        $this->plugin->playback_points->update_point($channel_id);
+            case GUI_EVENT_PLAYBACK_STOP:
+                $this->plugin->playback_points->update_point($user_input->plugin_tv_channel_id);
 
-        if ($user_input->control_id === GUI_EVENT_PLAYBACK_STOP
-            && (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed))) {
+                if (!isset($user_input->playback_stop_pressed) && !isset($user_input->playback_power_off_needed)) break;
 
-            $this->plugin->playback_points->save();
-            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-            return Starnet_Epfs_Handler::invalidate_folders(array(Starnet_TV_History_Screen::ID));
+                $this->plugin->playback_points->save();
+                $new_actions = $this->get_action_map();
+                $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                return Action_Factory::change_behaviour($new_actions, 100);
         }
 
         return null;
@@ -621,7 +624,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_tv_playback_url($channel_id, $archive_ts, $protect_code, &$plugin_cookies)
     {
-        hd_debug_print("channel: $channel_id archive_ts: $archive_ts, protect code: $protect_code");
+        //hd_debug_print("channel: $channel_id archive_ts: $archive_ts, protect code: $protect_code");
 
         try {
             if (!$this->load_channels($plugin_cookies)) {
@@ -641,7 +644,7 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             // update url if play archive or different type of the stream
-            $url = $this->plugin->generate_stream_url($archive_ts, $channel);
+            $url = $this->plugin->generate_stream_url($channel_id, $archive_ts);
 
             $zoom_preset = $this->get_channel_zoom($channel_id);
             if (!is_null($zoom_preset) && !is_android() && !is_apk()) {

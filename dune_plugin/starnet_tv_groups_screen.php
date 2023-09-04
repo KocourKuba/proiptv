@@ -60,7 +60,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         switch ($user_input->control_id) {
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                $post_action = $this->update_epfs_data($plugin_cookies, $user_input->control_id === ACTION_OPEN_FOLDER ? Action_Factory::open_folder() : Action_Factory::tv_play());
+                $post_action = $this->update_epfs_data($plugin_cookies,
+                    null,
+                    $user_input->control_id === ACTION_OPEN_FOLDER ? Action_Factory::open_folder() : Action_Factory::tv_play());
 
                 $has_error = $this->plugin->get_last_error();
                 if (!empty($has_error)) {
@@ -79,7 +81,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($sel_idx < $min_sel) {
                     $sel_idx = $min_sel;
                 }
-                $this->need_update_epfs = true;
+                $this->invalidate_epfs();
+
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -92,19 +95,22 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($sel_idx >= $groups_cnt) {
                     $sel_idx = $groups_cnt - 1;
                 }
-                $this->need_update_epfs = true;
+                $this->invalidate_epfs();
+
                 break;
 
             case ACTION_ITEM_DELETE:
                 $sel_media_url = MediaURL::decode($user_input->selected_media_url);
                 hd_debug_print("Hide $sel_media_url->group_id");
                 $this->plugin->tv->disable_group($sel_media_url->group_id);
-                $this->need_update_epfs = true;
+                $this->invalidate_epfs();
+
                 break;
 
             case ACTION_ITEMS_SORT:
                 $this->plugin->tv->get_groups_order()->sort_order();
-                $this->need_update_epfs = true;
+                $this->invalidate_epfs();
+
                 break;
 
             case ACTION_ITEMS_EDIT:
@@ -179,7 +185,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case GUI_EVENT_KEY_RETURN:
                 if (isset($plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_ASK_EXIT})
                     && $plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_ASK_EXIT} === SetupControlSwitchDefs::switch_off) {
-                    return $this->update_epfs_data($plugin_cookies, Action_Factory::close_and_run());
+                    return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
                 }
 
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);

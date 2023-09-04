@@ -182,8 +182,9 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case self::CONTROL_SQUARE_ICONS:
                 $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
-                $this->need_update_epfs = true;
-                return $this->update_epfs_data($plugin_cookies, Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
+                $this->invalidate_epfs();
+
+                return $this->update_epfs_data($plugin_cookies, null, Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case self::CONTROL_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);

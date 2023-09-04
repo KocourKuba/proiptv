@@ -121,7 +121,7 @@ class Epg_Manager
             $epg_id = $this->get_channel_epg_id($epg_ids);
 
             if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
-                hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache ");
+                hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache");
                 return $this->epg_cache[$epg_id][$day_start_ts];
             }
 

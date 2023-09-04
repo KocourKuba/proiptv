@@ -64,7 +64,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 if ($sel_ndx < 0) {
                     $sel_ndx = 0;
                 }
-                $this->need_update_epfs = true;
+                $this->invalidate_epfs();
+
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -73,17 +74,20 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 if ($sel_ndx >= $this->plugin->get_favorites()->size()) {
                     $sel_ndx = $this->plugin->get_favorites()->size() - 1;
                 }
-                $this->need_update_epfs = true;
+                $this->invalidate_epfs();
+
                 break;
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id, $plugin_cookies);
-                $this->need_update_epfs = true;
+                $this->invalidate_epfs();
+
                 break;
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $channel_id, $plugin_cookies);
-                $this->need_update_epfs = true;
+                $this->invalidate_epfs();
+
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -98,15 +102,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
             case ACTION_EXTERNAL_PLAYER:
                 try {
-                    $channel = $this->plugin->tv->get_channel($channel_id);
-                    $url = $this->plugin->generate_stream_url(-1, $channel);
-                    $url = str_replace("ts://", "", $url);
-                    $param_pos = strpos($url, '|||dune_params');
-                    $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
-                    $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
-                    hd_debug_print("play movie in the external player: $cmd");
-                    exec($cmd, $output);
-                    hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
+                    $this->plugin->external_player_exec($channel_id);
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
@@ -116,7 +112,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return null;
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->update_epfs_data($plugin_cookies, Action_Factory::close_and_run());
+                return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
 
             default:
                 return null;
