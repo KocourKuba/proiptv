@@ -30,7 +30,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     {
         //hd_debug_print($media_url->get_raw_string());
 
-        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_FOLDER);
+        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
         $action_settings = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS);
         $show_popup = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
@@ -83,16 +83,17 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             return null;
 
         switch ($user_input->control_id) {
-            case ACTION_PLAY_FOLDER:
+            case ACTION_PLAY_ITEM:
                 try {
-                    $this->plugin->generate_stream_url($channel_id);
+                    $post_action = $this->plugin->player_exec($media_url);
                 } catch (Exception $ex) {
+                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->update_epfs_data($plugin_cookies, null, Action_Factory::tv_play($media_url));
+                return $this->update_epfs_data($plugin_cookies, null, $post_action);
 
             case ACTION_ADD_FAV:
                 $opt_type = $this->plugin->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
@@ -200,21 +201,23 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
 
-                $this->create_menu_item($menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'),"remove.png");
+                $this->create_menu_item($this, $menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'),"remove.png");
 
                 if (!$group->is_all_channels_group()) {
-                    $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'),"sort.png");
+                    $this->create_menu_item($this, $menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'),"sort.png");
                 }
 
                 if (is_android() && !is_apk()) {
-                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
-                    $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), "play.png");
-                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                    $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
+                    $is_external = $this->plugin->tv->get_channel_player($channel_id);
+                    $this->create_menu_item($this, $menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), ($is_external ? "play.png" : null));
+                    $this->create_menu_item($this, $menu_items, ACTION_INTERNAL_PLAYER, TR::t('tv_screen_internal_player'), ($is_external ? null : "play.png"));
+                    $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
                 }
 
                 $zoom_data = $this->plugin->tv->get_channel_zoom($channel_id);
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-                    $this->create_menu_item($menu_items, ACTION_ZOOM_APPLY, TR::t($zoom_item),
+                    $this->create_menu_item($this, $menu_items, ACTION_ZOOM_APPLY, TR::t($zoom_item),
                         strcmp($idx, $zoom_data) !== 0 ? null : "aspect.png",
                         array(ACTION_ZOOM_SELECT => (string)$idx));
                 }
@@ -229,14 +232,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_EXTERNAL_PLAYER:
-                try {
-                    $this->plugin->external_player_exec($channel_id);
-                } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
-                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
-                        null,
-                        TR::t('warn_msg2__1', $ex->getMessage()));
-                }
+            case ACTION_INTERNAL_PLAYER:
+                $this->plugin->tv->set_channel_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
 
             case ACTION_RELOAD:
@@ -595,23 +592,5 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 ),
             ),
         );
-    }
-
-    /**
-     * @param $menu_items array
-     * @param $action_id string
-     * @param $caption string
-     * @param $icon string
-     * @param $add_params array|null
-     * @return void
-     */
-    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
-    {
-        if ($action_id === GuiMenuItemDef::is_separator) {
-            $menu_items[] = array($action_id => true);
-        } else {
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
-        }
     }
 }

@@ -129,26 +129,26 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     || $parent_media_url->edit_list === self::SCREEN_TYPE_EPG_LIST) {
 
                     $add_param = array('extension' => $parent_media_url->extension);
-                    $this->create_menu_item($menu_items, self::ACTION_ADD_URL_DLG, TR::t('edit_list_internet_path'),"link.png");
+                    $this->create_menu_item($this, $menu_items, self::ACTION_ADD_URL_DLG, TR::t('edit_list_internet_path'),"link.png");
 
                     $add_param['action'] = $parent_media_url->edit_list === self::SCREEN_TYPE_PLAYLIST ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV;
-                    $this->create_menu_item($menu_items, self::ACTION_CHOOSE_FILE, TR::t('edit_list_file'),
+                    $this->create_menu_item($this, $menu_items, self::ACTION_CHOOSE_FILE, TR::t('edit_list_file'),
                         $parent_media_url->edit_list === self::SCREEN_TYPE_PLAYLIST ? "m3u_file.png" : "xmltv_file.png", $add_param);
 
                     $add_param['action'] = self::ACTION_FILE_TEXT_LIST;
                     $add_param['extension'] = 'txt|lst';
-                    $this->create_menu_item($menu_items, self::ACTION_CHOOSE_FILE, TR::t('edit_list_import_list'), "text_file.png", $add_param);
+                    $this->create_menu_item($this, $menu_items, self::ACTION_CHOOSE_FILE, TR::t('edit_list_import_list'), "text_file.png", $add_param);
 
                     unset($add_param['action']);
-                    $this->create_menu_item($menu_items, self::ACTION_CHOOSE_FOLDER, TR::t('edit_list_folder_path'), "folder.png", $add_param);
-                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                    $this->create_menu_item($this, $menu_items, self::ACTION_CHOOSE_FOLDER, TR::t('edit_list_folder_path'), "folder.png", $add_param);
+                    $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
                     if ($order->size()) {
-                        $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
+                        $this->create_menu_item($this, $menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                     }
                 }
 
                 if ($order->size()) {
-                    $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+                    $this->create_menu_item($this, $menu_items, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
                 }
 
                 return !empty($menu_items) ? Action_Factory::show_popup_menu($menu_items) : null;
@@ -442,23 +442,5 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         return $order;
-    }
-
-    /**
-     * @param $menu_items array
-     * @param $action_id string
-     * @param $caption string
-     * @param $icon string
-     * @param $add_params array|null
-     * @return void
-     */
-    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
-    {
-        if ($action_id === GuiMenuItemDef::is_separator) {
-            $menu_items[] = array($action_id => true);
-        } else {
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
-        }
     }
 }

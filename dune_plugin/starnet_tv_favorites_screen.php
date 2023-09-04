@@ -24,8 +24,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     {
 
         $actions = array();
+        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
 
-        $action_play = Action_Factory::tv_play();
         $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -55,11 +55,23 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $sel_ndx = $user_input->sel_ndx;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
+        $media_url = MediaURL::decode($user_input->selected_media_url);
+
         switch ($user_input->control_id) {
+            case ACTION_PLAY_ITEM:
+                try {
+                    $post_action = $this->plugin->player_exec($media_url);
+                } catch (Exception $ex) {
+                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
+                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
+                        null,
+                        TR::t('warn_msg2__1', $ex->getMessage()));
+                }
+
+                return $this->update_epfs_data($plugin_cookies, null, $post_action);
 
             case ACTION_ITEM_UP:
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $channel_id, $plugin_cookies);
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $media_url->channel_id, $plugin_cookies);
                 $sel_ndx--;
                 if ($sel_ndx < 0) {
                     $sel_ndx = 0;
@@ -69,7 +81,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 break;
 
             case ACTION_ITEM_DOWN:
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $channel_id, $plugin_cookies);
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $media_url->channel_id, $plugin_cookies);
                 $sel_ndx++;
                 if ($sel_ndx >= $this->plugin->get_favorites()->size()) {
                     $sel_ndx = $this->plugin->get_favorites()->size() - 1;
@@ -79,37 +91,20 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 break;
 
             case ACTION_ITEM_DELETE:
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id, $plugin_cookies);
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $media_url->channel_id, $plugin_cookies);
                 $this->invalidate_epfs();
 
                 break;
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $channel_id, $plugin_cookies);
+                $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $media_url->channel_id, $plugin_cookies);
                 $this->invalidate_epfs();
 
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                if (is_android() && !is_apk()) {
-                    $this->create_menu_item($menu_items,ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), "play.png");
-                    $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
-                }
-
-                $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
-
+                $this->create_menu_item($this, $menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 return Action_Factory::show_popup_menu($menu_items);
-
-            case ACTION_EXTERNAL_PLAYER:
-                try {
-                    $this->plugin->external_player_exec($channel_id);
-                } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
-                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
-                        null,
-                        TR::t('warn_msg2__1', $ex->getMessage()));
-                }
-                return null;
 
             case GUI_EVENT_KEY_RETURN:
                 return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
@@ -335,22 +330,5 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 ),
             ),
         );
-    }
-
-    /**
-     * @param $menu_items array
-     * @param $action_id string
-     * @param $caption string
-     * @param $icon string
-     * @return void
-     */
-    private function create_menu_item(&$menu_items, $action_id, $caption = null, $icon = null)
-    {
-        if ($action_id === GuiMenuItemDef::is_separator) {
-            $menu_items[] = array($action_id => true);
-        } else {
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                $action_id, $caption, ($icon === null) ? null : get_image_path($icon));
-        }
     }
 }

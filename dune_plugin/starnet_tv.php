@@ -73,6 +73,11 @@ class Starnet_Tv implements User_Input_Handler
      */
     protected $channels_zoom;
 
+    /**
+     * @var Ordered_Array
+     */
+    protected $channel_player;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -218,6 +223,35 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->set_settings(PARAM_CHANNELS_ZOOM, $this->get_channels_zoom());
     }
 
+    /**
+     * @return bool
+     */
+    public function get_channel_player($channel_id)
+    {
+        if (is_null($this->channel_player)) {
+            $this->channel_player = new Ordered_Array($this->plugin, PARAM_CHANNEL_PLAYER);
+        }
+        return $this->channel_player->in_order($channel_id);
+    }
+
+    /**
+     * @param string $channel_id
+     * @param bool $external
+     * @return void
+     */
+    public function set_channel_player($channel_id, $external)
+    {
+        if (is_null($this->channel_player)) {
+            $this->channel_player = new Ordered_Array($this->plugin, PARAM_CHANNEL_PLAYER);
+        }
+
+        if ($external) {
+            $this->channel_player->add_item($channel_id);
+        } else {
+            $this->channel_player->remove_item($channel_id);
+        }
+    }
+
     ///////////////////////////////////////////////////////////////////////
 
     public function get_action_map()
@@ -291,6 +325,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->disabled_groups = null;
         $this->disabled_channels = null;
         $this->channels_zoom = null;
+        $this->channel_player = null;
     }
 
     /**

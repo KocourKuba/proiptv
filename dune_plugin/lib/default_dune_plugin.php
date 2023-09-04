@@ -981,13 +981,18 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param string $channel_id
+     * @param MediaURL $media_url
      * @param int $archive_ts
      * @throws Exception
      */
-    public function external_player_exec($channel_id, $archive_ts = -1)
+    public function player_exec($media_url, $archive_ts = -1)
     {
-        $url = $this->generate_stream_url($channel_id, $archive_ts);
+        $url = $this->generate_stream_url($media_url->channel_id, $archive_ts);
+
+        if (!$this->tv->get_channel_player($media_url->channel_id)) {
+            return Action_Factory::tv_play($media_url);
+        }
+
         $url = str_replace("ts://", "", $url);
         $param_pos = strpos($url, '|||dune_params');
         $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
@@ -995,5 +1000,6 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print("play movie in the external player: $cmd");
         exec($cmd, $output);
         hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
+        return null;
     }
 }

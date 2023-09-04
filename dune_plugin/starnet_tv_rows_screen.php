@@ -541,6 +541,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                         $this->create_menu_item($common_menu, GuiMenuItemDef::is_separator);
 
+                        if (is_android() && !is_apk()) {
+                            $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                            $is_external = $this->plugin->tv->get_channel_player($channel_id);
+                            $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), ($is_external ? "play.png" : null));
+                            $this->create_menu_item($menu_items, ACTION_INTERNAL_PLAYER, TR::t('tv_screen_internal_player'), ($is_external ? null : "play.png"));
+                            $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+                        }
+
                         $zoom_data = $this->plugin->tv->get_channel_zoom($channel_id);
                         foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
                             $this->create_menu_item($common_menu, ACTION_ZOOM_APPLY, TR::t($zoom_item),
@@ -549,9 +557,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         }
                     }
 
-                    if (!is_apk()) {
-                        $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), "play.png");
-                    }
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                     $menu_items = array_merge($menu_items, $common_menu);
                 } else {
@@ -665,19 +670,15 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return Starnet_Epfs_Handler::invalidate_folders();
 
             case ACTION_EXTERNAL_PLAYER:
-                try {
-                    $this->plugin->external_player_exec($media_url->channel_id, isset($media_url->archive_tm) ? $media_url->archive_tm : -1);
-                } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
-                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
-                        null,
-                        TR::t('warn_msg2__1', $ex->getMessage()));
-                }
+            case ACTION_INTERNAL_PLAYER:
+                $this->plugin->tv->set_channel_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
         }
 
         return null;
     }
+
+    ////////////////////////////////////////////////////////////////////////////
 
     /**
      * @param $menu_items array
@@ -696,8 +697,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
         }
     }
-
-    ////////////////////////////////////////////////////////////////////////////
 
     /**
      * @param $plugin_cookies

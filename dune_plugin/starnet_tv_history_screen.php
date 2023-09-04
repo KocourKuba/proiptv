@@ -16,9 +16,9 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
     {
         $actions = array();
 
-        $action_open_folder = User_Input_Handler_Registry::create_action($this, ACTION_OPEN_FOLDER);
-        $actions[GUI_EVENT_KEY_ENTER]  = $action_open_folder;
-        $actions[GUI_EVENT_KEY_PLAY]   = $action_open_folder;
+        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
+        $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
+        $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
         if ($this->plugin->playback_points->size() !== 0) {
@@ -51,8 +51,17 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         switch ($user_input->control_id)
 		{
-            case ACTION_OPEN_FOLDER:
-                return $this->update_epfs_data($plugin_cookies, null, Action_Factory::tv_play($media_url));
+            case ACTION_PLAY_ITEM:
+                try {
+                    $post_action = $this->plugin->player_exec($media_url);
+                } catch (Exception $ex) {
+                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
+                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
+                        null,
+                        TR::t('warn_msg2__1', $ex->getMessage()));
+                }
+
+                return $this->update_epfs_data($plugin_cookies, null, $post_action);
 
 			case ACTION_ITEM_DELETE:
                 $this->plugin->playback_points->erase_point($channel_id);
@@ -81,26 +90,9 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 				return Action_Factory::show_title_dialog($message, $this->update_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                if (!is_android() || is_apk())
-                    return null;
-
-                $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
-                    ACTION_EXTERNAL_PLAYER,
-                    TR::t('tv_screen_external_player'),
-                    get_image_path("play.png"));
+                $this->create_menu_item($this, $menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
-
-            case ACTION_EXTERNAL_PLAYER:
-                try {
-                    $this->plugin->external_player_exec($channel_id, isset($media_url->archive_tm) ? $media_url->archive_tm : -1);
-                } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
-                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
-                        null,
-                        TR::t('warn_msg2__1', $ex->getMessage()));
-                }
-                return null;
 
             case GUI_EVENT_KEY_RETURN:
                 return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());

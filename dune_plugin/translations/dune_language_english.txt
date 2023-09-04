@@ -178,6 +178,7 @@ tv_screen_group_info__3 = %s|Channels: %s|Hidden: %s
 tv_screen_channel_info__2 = %s|Archive: %s day(s)
 tv_screen_channel_info__3 = %s|Archive: %s day(s)|Aspect ratio: %s
 tv_screen_external_player = Play by external player
+tv_screen_internal_player = Play by internal player
 
 warn_msg2__1 = Missed or not full data for URL generation.\nPossible not entered account data or channel not present in the current subscription.\n %s
 
