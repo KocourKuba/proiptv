@@ -43,6 +43,9 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         hd_print("----------------------------------------------------");
 
+        $this->epg_man->init_cache_dir();
+        $this->init_user_agent();
+
         User_Input_Handler_Registry::get_instance()->register_handler(new Starnet_Entry_Handler($this));
 
         $this->tv = new Starnet_Tv($this);

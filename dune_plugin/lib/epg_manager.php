@@ -54,7 +54,6 @@ class Epg_Manager
     public function __construct(Default_Dune_Plugin $plugin)
     {
         $this->plugin = $plugin;
-        $this->init_cache_dir();
     }
 
     public function init_cache_dir()

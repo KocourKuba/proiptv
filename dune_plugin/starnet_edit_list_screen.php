@@ -262,21 +262,23 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $order->add_items($file);
 
                 return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', $order->size() - $old_count),
-                    Action_Factory::invalidate_folders(array(static::ID), Action_Factory::update_regular_folder(
-                        $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
-                        true,
-                        $user_input->sel_ndx))
-                    );
+                    Action_Factory::invalidate_folders(array(static::ID),
+                        Action_Factory::update_regular_folder(
+                            $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
+                            true,
+                            $user_input->sel_ndx))
+                );
 
             default:
                 return null;
         }
 
         // refresh current screen
-        return Action_Factory::invalidate_folders(array(static::ID), Action_Factory::update_regular_folder(
-            $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
-            true,
-            $user_input->sel_ndx)
+        return Action_Factory::invalidate_folders(array(static::ID),
+            Action_Factory::update_regular_folder(
+                $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
+                true,
+                $user_input->sel_ndx)
         );
     }
 
@@ -332,10 +334,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     /*
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print();
+        //hd_debug_print();
         //hd_debug_print($media_url->get_media_url_str());
 
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
+
         if ($this->get_edit_order($media_url)->size() === 0) {
             $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] =
                 TR::t('edit_list_add_prompt__3', 300, 300, DEF_LABEL_TEXT_COLOR_YELLOW);
@@ -426,7 +429,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $order = $this->plugin->get_playlists();
                 break;
             case self::SCREEN_TYPE_EPG_LIST:
-                $order = new Ordered_Array($this->plugin, PARAM_CUSTOM_XMLTV_SOURCES);
+                $order = $this->plugin->get_xmltv_source();
                 break;
             case self::SCREEN_TYPE_GROUPS:
                 $order = $this->plugin->tv->get_disabled_groups();

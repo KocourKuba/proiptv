@@ -36,7 +36,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // playlists
-        $playlist_idx = $this->plugin->get_playlists_idx();
+        $playlist_idx = $this->plugin->get_playlists()->get_saved_pos();
         $display_path = array();
         foreach ($this->plugin->get_playlists()->get_order() as $item) {
             $display_path[] = HD::string_ellipsis($item);
@@ -45,13 +45,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             Control_Factory::add_label($defs, TR::t('setup_channels_src_playlists'), TR::t('setup_channels_src_no_playlists'));
         } else if (count($display_path) > 1) {
             if ($playlist_idx >= count($display_path)) {
-                $this->plugin->set_playlists_idx(0);
+                $this->plugin->get_playlists()->set_saved_pos(0);
             }
             Control_Factory::add_combobox($defs, $this, null, ACTION_CHANGE_PLAYLIST,
                 TR::t('setup_channels_src_playlists'), $playlist_idx, $display_path, self::CONTROLS_WIDTH, true);
         } else {
             Control_Factory::add_label($defs, TR::t('setup_channels_src_playlists'), $display_path[0]);
-            $this->plugin->set_playlists_idx(0);
+            $this->plugin->get_playlists()->set_saved_pos(0);
         }
 
         //////////////////////////////////////
@@ -149,21 +149,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
-            hd_debug_print("changing $control_id value to $new_value");
         }
 
         switch ($control_id) {
 
             case ACTION_CHANGE_PLAYLIST:
-                hd_debug_print("Change playlist index: $new_value");
-                $old_value = $this->plugin->get_playlists_idx();
-                $this->plugin->set_playlists_idx($new_value);
-                $action = $this->plugin->tv->reload_channels($this, $plugin_cookies);
-                if ($action === null) {
-                    $this->plugin->set_playlists_idx($old_value);
-                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'));
-                }
-                return $action;
+                $this->plugin->get_playlists()->set_saved_pos($new_value);
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_ITEMS_EDIT:
                 $media_url_str = MediaURL::encode(
@@ -176,7 +168,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                         'windowCounter' => 1,
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_channels_src_edit_playlists'));
+
+                return Action_Factory::open_folder($media_url_str,
+                    TR::t('setup_channels_src_edit_playlists'),
+                    null,
+                    $this->plugin->get_playlists()->get_selected_item()
+                );
 
             case self::CONTROL_USER_CATCHUP:
                 $this->plugin->set_settings(PARAM_USER_CATCHUP, $new_value);
@@ -227,7 +224,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
-                return $this->plugin->tv->reload_channels($this, $plugin_cookies);
+                $action = $this->plugin->tv->reload_channels($this, $plugin_cookies);
+                return ($action === null) ? Action_Factory::show_title_dialog(TR::t('err_load_playlist')) : $action;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

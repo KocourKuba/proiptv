@@ -98,7 +98,6 @@ const PLAYBACK_HISTORY_GROUP_ID = '##playback_history_tv_group##';
 # Common parameters
 const PLUGIN_PARAMS = "common.parameters";
 const PARAM_PLAYLISTS = 'playlists';
-const PARAM_PLAYLIST_IDX = 'playlist_idx';
 const PARAM_FAVORITES = 'favorites';
 const PARAM_GROUPS_ORDER = 'groups_order';
 const PARAM_DISABLED_GROUPS = 'disabled_groups';
@@ -107,14 +106,14 @@ const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
-const PARAM_EPG_SOURCE = 'epg_source';
+const PARAM_EPG_SOURCE_TYPE = 'epg_source';
 const PARAM_EPG_PARSE_ALL = 'epg_parse_all';
 const PARAM_EPG_SOURCE_INTERNAL = 'epg_internal';
 const PARAM_EPG_SOURCE_EXTERNAL = 'epg_external';
 const PARAM_EPG_CACHE_TTL = 'epg_cache_ttl';
 const PARAM_EPG_SHIFT = 'epg_shift';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
-const PARAM_EPG_IDX = 'epg_idx';
+const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_XMLTV_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_CUSTOM_XMLTV_SOURCES = 'custom_xmltv_sources';
 const PARAM_DUNE_PARAMS = 'dune_params';
@@ -1450,31 +1449,37 @@ function get_zoom_value($preset)
 # Storage access
 ###############################################################################
 
+/** @noinspection PhpUndefinedClassInspection */
 function get_temp_path($path = '')
 {
     return DuneSystem::$properties['tmp_dir_path'] . '/' . $path;
 }
 
+/** @noinspection PhpUndefinedClassInspection */
 function get_data_path($path = '')
 {
     return DuneSystem::$properties['data_dir_path'] . '/' . $path;
 }
 
+/** @noinspection PhpUndefinedClassInspection */
 function get_install_path($path = '')
 {
     return DuneSystem::$properties['install_dir_path'] . '/' . $path;
 }
 
+/** @noinspection PhpUndefinedClassInspection */
 function get_plugin_cgi_url($path = '')
 {
     return DuneSystem::$properties['plugin_cgi_url'] . $path;
 }
 
+/** @noinspection PhpUndefinedClassInspection */
 function get_plugin_www_url($path = '')
 {
     return DuneSystem::$properties['plugin_www_url'] . $path;
 }
 
+/** @noinspection PhpUndefinedClassInspection */
 function get_plugin_name()
 {
     return DuneSystem::$properties['plugin_name'];
@@ -1605,6 +1610,7 @@ function create_path($path, $dir_mode = 0777)
     return true;
 }
 
+/** @noinspection PhpUnusedParameterInspection */
 function json_encode_unicode($data)
 {
     # Analog of json_encode() with the JSON_UNESCAPED_UNICODE option available in PHP 5.4.0 and higher
@@ -1638,6 +1644,8 @@ function print_sysinfo()
         'PHP Version' => PHP_VERSION,
         'libCURL Version' => "{$values['version']} ({$values['ssl_version']})",
     );
+
+    /** @noinspection PhpUndefinedClassInspection */
     $table = array_merge($table, DuneSystem::$properties);
 
     $max = 0;

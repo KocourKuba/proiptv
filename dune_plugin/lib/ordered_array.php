@@ -38,7 +38,7 @@ class Ordered_Array extends Json_Serializer
 
     public function __sleep()
     {
-        return array('order');
+        return array('order', 'saved_pos');
     }
 
     /**
@@ -104,6 +104,10 @@ class Ordered_Array extends Json_Serializer
     public function set_saved_pos($pos)
     {
         $this->saved_pos = $pos;
+        if ($pos >= $this->size()) {
+            $this->saved_pos = 0;
+        }
+        $this->save();
     }
 
     /**
@@ -188,7 +192,6 @@ class Ordered_Array extends Json_Serializer
             $removed = array_splice($this->order, $key, 1);
             if (count($removed) !== 0) {
                 $this->update_saved_pos($selected_item);
-                $this->save();
                 return true;
             }
         }
@@ -206,7 +209,6 @@ class Ordered_Array extends Json_Serializer
         $removed = array_splice($this->order, $idx, 1);
         if (count($removed) !== 0) {
             $this->update_saved_pos($selected_item);
-            $this->save();
             return true;
         }
 
@@ -258,7 +260,6 @@ class Ordered_Array extends Json_Serializer
         }
 
         $this->update_saved_pos($selected_item);
-        $this->save();
         return true;
     }
 
@@ -270,7 +271,6 @@ class Ordered_Array extends Json_Serializer
         $selected_item = $this->get_selected_item();
         usort($this->order, array(__CLASS__, "sort_array_cb"));
         $this->update_saved_pos($selected_item);
-        $this->save();
     }
 
     /**
@@ -288,11 +288,13 @@ class Ordered_Array extends Json_Serializer
     private function update_saved_pos($item)
     {
         if ($item === null) {
-            $this->saved_pos = 0;
+            $pos = 0;
         } else {
             $key = array_search($item, $this->order);
-            $this->saved_pos = ($key !== false) ? $key : 0;
+            $pos = ($key !== false) ? $key : 0;
         }
+
+        $this->set_saved_pos($pos);
     }
 
     /**

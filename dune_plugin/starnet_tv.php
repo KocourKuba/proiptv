@@ -78,6 +78,14 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin = $plugin;
         $this->playback_url_is_stream_url = false;
 
+        $this->groups = new Hashed_Array();
+        $this->channels = new Hashed_Array();
+        $this->special_groups = new Hashed_Array();
+
+        $this->groups_order = new Ordered_Array();
+        $this->disabled_groups = new Ordered_Array();
+        $this->disabled_channels = new Ordered_Array();
+
         User_Input_Handler_Registry::get_instance()->register_handler($this);
     }
 
@@ -276,12 +284,6 @@ class Starnet_Tv implements User_Input_Handler
         if (!$this->plugin->init_playlist()) {
             return false;
         }
-
-        $dune_useragent = $this->plugin->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
-        if ($dune_useragent !== HD::get_dune_user_agent()) {
-            HD::set_dune_user_agent($dune_useragent);
-        }
-        $ch_useragent = $dune_useragent;
 
         $this->plugin->playback_points->load_points(true);
 

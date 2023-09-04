@@ -503,7 +503,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->choose_playlist)) {
                     $menu_items = array();
-                    $cur = $this->plugin->get_current_playlist();
+                    $cur = $this->plugin->get_playlists()->get_selected_item();
                     foreach ($this->plugin->get_playlists()->get_order() as $key => $playlist) {
                         if ($key !== 0 && ($key % 15) === 0)
                             $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
@@ -655,7 +655,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_FOLDER_SELECTED:
                 if (isset($user_input->playlist_idx)) {
-                    $this->plugin->set_playlists_idx($user_input->playlist_idx);
+                    $this->plugin->get_playlists()->set_saved_pos($user_input->playlist_idx);
                     return $this->plugin->tv->reload_channels($this, $plugin_cookies, Starnet_Epfs_Handler::invalidate_folders());
                 }
                 break;

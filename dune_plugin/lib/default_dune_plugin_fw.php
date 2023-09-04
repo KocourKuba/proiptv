@@ -42,7 +42,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
 
         if (is_null($plugin)) {
             try {
-                hd_debug_print("Instantiating plugin...");
+                hd_print("Instantiating plugin...");
                 $plugin = $this->create_plugin();
                 hd_debug_print("Plugin instance created.");
             } catch (Exception $e) {

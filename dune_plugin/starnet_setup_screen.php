@@ -22,6 +22,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
      * defs for all controls on screen
      * @param $plugin_cookies
      * @return array
+     * @noinspection PhpUnusedParameterInspection
      */
     public function do_get_control_defs(&$plugin_cookies)
     {

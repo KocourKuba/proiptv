@@ -125,9 +125,9 @@ class Default_Dune_Plugin implements DunePlugin
     private $playlists;
 
     /**
-     * @var int
+     * @var array
      */
-    private $playlist_idx = -1;
+    private $xmltv_sources;
 
     /**
      * @var string
@@ -153,10 +153,6 @@ class Default_Dune_Plugin implements DunePlugin
         $this->new_ui_support = HD::rows_api_support();
         $this->m3u_parser = new M3uParser();
         $this->epg_man = new Epg_Manager($this);
-        $user_agent = $this->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
-        if ($user_agent !== HD::get_dune_user_agent()) {
-            HD::set_dune_user_agent($user_agent);
-        }
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -483,10 +479,21 @@ class Default_Dune_Plugin implements DunePlugin
         $hash = $this->get_playlist_hash();
         if (!isset($this->settings[$hash])) {
             $this->settings[$hash] = HD::get_items(get_data_path("$hash.settings"), true, false);
-            //hd_debug_print("loaded $hash.settings");
+            hd_debug_print("First load: $hash.settings");
         }
 
-        return isset($this->settings[$hash][$type]) ? $this->settings[$hash][$type] : $default;
+        if (!isset($this->settings[$hash][$type])) {
+            return $default;
+        }
+
+        $default_type = gettype($default);
+        $param_type = gettype($this->settings[$hash][$type]);
+        if ($default_type === 'object' && $param_type !== $default_type) {
+            hd_debug_print("Settings type requested: $default_type. But $param_type loaded");
+            return $default;
+        }
+
+        return $this->settings[$hash][$type];
     }
 
     /**
@@ -544,7 +551,6 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_parameters($type, $default = null)
     {
-        $default_type = gettype($default);
         if (!isset($this->parameters)) {
             $this->parameters = HD::get_data_items(PLUGIN_PARAMS, true, false);
             hd_debug_print("First load: " . PLUGIN_PARAMS);
@@ -554,8 +560,10 @@ class Default_Dune_Plugin implements DunePlugin
             return $default;
         }
 
+        $default_type = gettype($default);
         $param_type = gettype($this->parameters[$type]);
         if ($default_type === 'object' && $param_type !== $default_type) {
+            hd_debug_print("Param type requested: $default_type. But $param_type loaded");
             return $default;
         }
 
@@ -610,6 +618,8 @@ class Default_Dune_Plugin implements DunePlugin
         if ($this->get_playlists()->size() === 0)
             return false;
 
+        $this->init_user_agent();
+
         $force = false;
         $tmp_file = $this->get_playlist_cache();
         if (file_exists($tmp_file)) {
@@ -624,7 +634,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                $url = $this->get_current_playlist();
+                $url = $this->get_playlists()->get_selected_item();
                 if (empty($url)) {
                     hd_debug_print("Tv playlist not defined");
                     throw new Exception('Tv playlist not defined');
@@ -670,36 +680,26 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @return void
+     */
+    public function init_user_agent()
+    {
+        $user_agent = $this->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
+        if ($user_agent !== HD::get_dune_user_agent()) {
+            HD::set_dune_user_agent($user_agent);
+        }
+    }
+
+    /**
      * @return Ordered_Array
      */
     public function get_playlists()
     {
         if (is_null($this->playlists)) {
-            $this->playlists = $this->get_parameters(PARAM_PLAYLISTS, new Ordered_Array($this, PARAM_PLAYLISTS, 'parameters'));
+            $this->playlists = new Ordered_Array($this, PARAM_PLAYLISTS, 'parameters');
         }
 
         return $this->playlists;
-    }
-
-    /**
-     * @return int
-     */
-    public function get_playlists_idx()
-    {
-        if ($this->playlist_idx === -1) {
-            $this->playlist_idx = $this->get_parameters(PARAM_PLAYLIST_IDX, 0);
-        }
-
-        return $this->playlist_idx;
-    }
-
-    /**
-     * @oaram int $idx
-     */
-    public function set_playlists_idx($idx)
-    {
-        $this->playlist_idx = $idx;
-        $this->set_parameters(PARAM_PLAYLIST_IDX, $this->playlist_idx);
     }
 
     /**
@@ -714,17 +714,9 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return string
      */
-    public function get_current_playlist()
-    {
-        return $this->get_playlist($this->get_playlists_idx());
-    }
-
-    /**
-     * @return string
-     */
     public function get_playlist_hash()
     {
-        return hash('crc32', $this->get_current_playlist());
+        return hash('crc32', $this->get_playlists()->get_selected_item());
     }
 
     /**
@@ -816,28 +808,66 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * set xmltv source
+     * @param $idx
+     * @param $xmltv_sources
+     * @return void
+     */
+    public function set_xmltv_source($idx, $xmltv_sources)
+    {
+        $this->xmltv_sources[$idx] = $xmltv_sources;
+    }
+
+    /**
+     * set xmltv source
+     * @return Ordered_Array|null
+     */
+    public function get_xmltv_source()
+    {
+        $source_type = $this->get_xmltv_source_type();
+        return isset($this->xmltv_sources[$source_type]) ? $this->xmltv_sources[$source_type] : null;
+    }
+
+    /**
+     * get xmltv source type
+     * @return string
+     */
+    public function get_xmltv_source_type()
+    {
+        return $this->get_settings(PARAM_EPG_SOURCE_TYPE, PARAM_EPG_SOURCE_INTERNAL);
+    }
+
+    /**
+     * set xmltv source type
+     * @param string $type
+     */
+    public function set_xmltv_source_type($type)
+    {
+        $this->set_settings(PARAM_EPG_SOURCE_TYPE, $type);
+    }
+
+    /**
      * tell epg manager to reload xmltv source
      * @return void
      */
     public function update_xmltv_source()
     {
-        $source = $this->get_settings(PARAM_EPG_SOURCE, PARAM_EPG_SOURCE_INTERNAL);
-
-        if ($source === PARAM_EPG_SOURCE_INTERNAL) {
-            $sources = $this->m3u_parser->getXmltvSources();
-        } else {
-            $order = new Ordered_Array($this, PARAM_CUSTOM_XMLTV_SOURCES);
-            $sources = $order->get_order();
+        $m3u_xmltv_sources = new Ordered_Array();
+        foreach ($this->m3u_parser->getXmltvSources() as $source) {
+            $m3u_xmltv_sources->add_item($source);
         }
 
-        $epg_idx = $this->get_settings(PARAM_EPG_IDX, array());
-        $idx = isset($epg_idx[$source]) ? $epg_idx[$source] : 0;
-        if (isset($sources[$idx])) {
-            $this->epg_man->set_xmltv_url($sources[$idx]);
-            $this->epg_man->index_xmltv_channels();
-        } else {
+        $m3u_xmltv_sources->set_saved_pos($this->get_settings(PARAM_INTERNAL_EPG_IDX, 0));
+        $this->set_xmltv_source(PARAM_EPG_SOURCE_INTERNAL, $m3u_xmltv_sources);
+        $this->set_xmltv_source(PARAM_EPG_SOURCE_EXTERNAL, new Ordered_Array($this, PARAM_CUSTOM_XMLTV_SOURCES));
+
+        $source = $this->get_xmltv_source();
+        if (is_null($source)) {
             $this->epg_man->set_xmltv_url(null);
             hd_debug_print("no xmltv source defined for this playlist");
+        } else {
+            $this->epg_man->set_xmltv_url($source->get_selected_item());
+            $this->epg_man->index_xmltv_channels();
         }
     }
 
