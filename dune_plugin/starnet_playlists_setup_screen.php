@@ -23,6 +23,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
      * defs for all controls on screen
      * @param $plugin_cookies
      * @return array
+     * @noinspection PhpUnusedParameterInspection
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
@@ -114,11 +115,11 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         $dune_params = $this->plugin->get_settings(PARAM_DUNE_PARAMS, array());
         $dune_params_str = '';
-        foreach ($dune_params as $param) {
+        foreach ($dune_params as $key => $param) {
             if (!empty($dune_params_str)) {
-                $dune_params_str .= '|';
+                $dune_params_str .= ',';
             }
-            $dune_params_str .= $param;
+            $dune_params_str .= "$key:$param";
         }
 
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
