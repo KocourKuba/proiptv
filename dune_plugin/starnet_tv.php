@@ -506,11 +506,11 @@ class Starnet_Tv implements User_Input_Handler
                             && preg_match("|^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$|", $entry->getPath(), $m)) {
                             $extension = $m[5] ?: '.ts';
                             $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[4].$extension";
+                        } else {
+                            $archive = 0;
                         }
                     } else if (!preg_match("|https?://|", $archive_url)){
                         $archive_url = $entry->getPath() . $archive_url;
-                    } else {
-                        $archive = 0;
                     }
                 }
 
@@ -687,7 +687,7 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("zoom_preset: reset to normal $zoom_preset");
             }
 
-            if (!is_null($zoom_preset)) {
+            if (!is_null($zoom_preset) && $zoom_preset !== DuneVideoZoomPresets::not_set) {
                 $url .= (strpos($url, "|||dune_params|||") === false ? "|||dune_params|||" : ",");
                 $url .= "zoom:$zoom_preset";
             }
