@@ -90,7 +90,7 @@
                         </action>
                     </menu_item>
                     <menu_item>
-                        <caption>%tr%tv_screen_channels_setup</caption>
+                        <caption>%tr%tv_screen_playlists_setup</caption>
                         <icon_url>gui_skin://small_icons/playlist_file.aai</icon_url>
                         <action>
                             <type>plugin_handle_user_input</type>

@@ -8,8 +8,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 {
     const ID = 'channels_setup';
 
-    const CONTROL_SQUARE_ICONS = PARAM_SQUARE_ICONS;
-    const CONTROL_USER_CATCHUP = PARAM_USER_CATCHUP;
     const CONTROL_RESET_PLAYLIST_DLG = 'reset_playlist';
     const ACTION_RESET_PLAYLIST_DLG_APPLY = 'reset_playlist_apply';
     const CONTROL_EXT_PARAMS_DLG = 'ext_params';
@@ -62,22 +60,22 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             get_image_path('edit.png'), self::CONTROLS_WIDTH);
 
         $catchup_ops[KnownCatchupSourceTags::cu_unknown] = TR::t('by_default');
-        $catchup_ops[KnownCatchupSourceTags::cu_default] = KnownCatchupSourceTags::cu_default;
+        //$catchup_ops[KnownCatchupSourceTags::cu_default] = KnownCatchupSourceTags::cu_default;
         $catchup_ops[KnownCatchupSourceTags::cu_shift] = KnownCatchupSourceTags::cu_shift;
-        $catchup_ops[KnownCatchupSourceTags::cu_append] = KnownCatchupSourceTags::cu_append;
+        //$catchup_ops[KnownCatchupSourceTags::cu_append] = KnownCatchupSourceTags::cu_append;
         $catchup_ops[KnownCatchupSourceTags::cu_flussonic] = KnownCatchupSourceTags::cu_flussonic;
         $catchup_ops[KnownCatchupSourceTags::cu_xstreamcode] = KnownCatchupSourceTags::cu_xstreamcode;
-        $catchup_idx = $this->plugin->get_settings(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
-        Control_Factory::add_combobox($defs, $this, null, self::CONTROL_USER_CATCHUP,
+        $catchup_idx = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
+        Control_Factory::add_combobox($defs, $this, null, PARAM_USER_CATCHUP,
             TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, self::CONTROLS_WIDTH, true);
 
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_EXT_PARAMS_DLG, TR::t('setup_channels_ext_params'), TR::t('edit'),
             get_image_path('web.png'), self::CONTROLS_WIDTH);
 
-        $square_icons = $this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
+        $square_icons = $this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_SQUARE_ICONS, TR::t('setup_channels_square_icons'), SetupControlSwitchDefs::$on_off_translated[$square_icons],
+            PARAM_SQUARE_ICONS, TR::t('setup_channels_square_icons'), SetupControlSwitchDefs::$on_off_translated[$square_icons],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
 
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_RESET_PLAYLIST_DLG,
@@ -109,11 +107,11 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         Control_Factory::add_vgap($defs, 20);
 
-        $user_agent = $this->plugin->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
+        $user_agent = $this->plugin->get_setting(PARAM_USER_AGENT, HD::get_dune_user_agent());
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_USER_AGENT, TR::t('setup_channels_user_agent'),
             $user_agent, false, false, 0, 1, 1200, 0);
 
-        $dune_params = $this->plugin->get_settings(PARAM_DUNE_PARAMS, array());
+        $dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
         $dune_params_str = '';
         foreach ($dune_params as $key => $param) {
             if (!empty($dune_params_str)) {
@@ -142,7 +140,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        //dump_input_handler(__METHOD__, $user_input);
+        dump_input_handler(__METHOD__, $user_input);
 
         $control_id = $user_input->control_id;
         $new_value = '';
@@ -155,15 +153,20 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case ACTION_CHANGE_PLAYLIST:
                 $this->plugin->get_playlists()->set_saved_pos($new_value);
+                $this->plugin->save();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_ITEMS_EDIT:
+                $this->plugin->set_pospone_save(true, 'parameters');
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => static::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_TYPE_PLAYLIST,
+                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST,
                         'end_action' => ACTION_RELOAD,
+                        'cancel_action' => RESET_CONTROLS_ACTION_ID,
+                        'allow_order' => true,
+                        'postpone_save' => 'parameters',
                         'extension' => 'm3u|m3u8',
                         'windowCounter' => 1,
                     )
@@ -175,12 +178,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     $this->plugin->get_playlists()->get_selected_item()
                 );
 
-            case self::CONTROL_USER_CATCHUP:
-                $this->plugin->set_settings(PARAM_USER_CATCHUP, $new_value);
+            case PARAM_USER_CATCHUP:
+                $this->plugin->set_setting(PARAM_USER_CATCHUP, $new_value);
                 $this->plugin->tv->unload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
-            case self::CONTROL_SQUARE_ICONS:
+            case PARAM_SQUARE_ICONS:
                 $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
                 $this->invalidate_epfs();
 
@@ -201,7 +204,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case self::ACTION_EXT_PARAMS_DLG_APPLY: // handle pass dialog result
                 $user_agent = $user_input->{self::CONTROL_USER_AGENT};
                 if ($user_agent !== HD::get_dune_user_agent()) {
-                    $this->plugin->set_settings(PARAM_USER_AGENT, $user_agent);
+                    $this->plugin->set_setting(PARAM_USER_AGENT, $user_agent);
                     HD::set_dune_user_agent($user_agent);
                 }
 
@@ -218,13 +221,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     $params_array[$dune_params[0]] = $dune_params[1];
                 }
                 if (!empty($params_array)) {
-                    $this->plugin->set_settings(PARAM_DUNE_PARAMS, $params_array);
+                    $this->plugin->set_setting(PARAM_DUNE_PARAMS, $params_array);
                 }
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:
-                hd_debug_print("reload");
+                hd_debug_print(ACTION_RELOAD);
                 $action = $this->plugin->tv->reload_channels($this, $plugin_cookies);
                 return ($action === null) ? Action_Factory::show_title_dialog(TR::t('err_load_playlist')) : $action;
         }

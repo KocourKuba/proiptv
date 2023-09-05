@@ -120,13 +120,19 @@ class Hashed_Array implements Iterator
         usort($this->seq, $callback_name);
     }
 
-    public function rewind()
+    public function clear()
     {
         $this->pos = 0;
+        unset($this->seq, $this->map);
+        $this->seq = array();
+        $this->map = array();
     }
 
+    /////////////////////////////////////////////////////////////////////
+    /// Iterator implementation
+
     /**
-     * @return TValue
+     * @inheritDoc
      */
     public function current()
     {
@@ -134,23 +140,34 @@ class Hashed_Array implements Iterator
     }
 
     /**
-     * @return integer
+     * @inheritDoc
      */
-    public function key()
-    {
-        return $this->pos;
-    }
-
     public function next()
     {
         ++$this->pos;
     }
 
     /**
-     * @return bool
+     * @inheritDoc
+     */
+    public function key()
+    {
+        return $this->pos;
+    }
+
+    /**
+     * @inheritDoc
      */
     public function valid()
     {
         return $this->pos < count($this->seq);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rewind()
+    {
+        $this->pos = 0;
     }
 }

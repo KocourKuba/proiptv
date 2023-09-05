@@ -114,26 +114,32 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_EDIT:
+                $this->plugin->set_pospone_save();
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => static::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_TYPE_GROUPS,
+                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS,
                         'end_action' => ACTION_RELOAD,
+                        'cancel_action' => ACTION_REFRESH_SCREEN,
+                        'postpone_save' => 'settings',
                         'windowCounter' => 1,
                     )
                 );
                 return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_edit_hidden_group'));
 
             case ACTION_ITEMS_EDIT . "2":
+                $this->plugin->set_pospone_save();
                 $sel_media_url = MediaURL::decode($user_input->selected_media_url);
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => static::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_TYPE_CHANNELS,
+                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS,
                         'group_id' => $sel_media_url->group_id,
                         'end_action' => ACTION_RELOAD,
+                        'cancel_action' => ACTION_REFRESH_SCREEN,
+                        'postpone_save' => 'settings',
                         'windowCounter' => 1,
                     )
                 );
@@ -143,7 +149,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
             case self::ACTION_CHANNELS_SETTINGS:
-                return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::get_media_url_str(), TR::t('tv_screen_channels_setup'));
+                return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::get_media_url_str(), TR::t('tv_screen_playlists_setup'));
 
             case self::ACTION_EPG_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Epg_Setup_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
@@ -177,7 +183,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
-                $this->create_menu_item($this, $menu_items, self::ACTION_CHANNELS_SETTINGS, TR::t('tv_screen_channels_setup'),"playlist.png");
+                $this->create_menu_item($this, $menu_items, self::ACTION_CHANNELS_SETTINGS, TR::t('tv_screen_playlists_setup'),"playlist.png");
                 $this->create_menu_item($this, $menu_items,self::ACTION_EPG_SETTINGS, TR::t('setup_epg_settings'),"epg.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
@@ -193,6 +199,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->unload_channels();
+                break;
+
+            case ACTION_REFRESH_SCREEN:
                 break;
 
             default:
@@ -222,7 +231,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         /** @var Group $group */
         if ($show_favorites) {
-            $group = $this->plugin->tv->get_special_group(FAV_CHANNEL_GROUP_ID);
+            $group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
             if (!is_null($group)) {
                 $items[] = array(
                     PluginRegularFolderItem::media_url => Starnet_Tv_Favorites_Screen::get_media_url_str(),
@@ -236,7 +245,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         if ($show_history) {
-            $group = $this->plugin->tv->get_special_group(PLAYBACK_HISTORY_GROUP_ID);
+            $group = $this->plugin->tv->get_special_group(HISTORY_GROUP_ID);
             if (!is_null($group)) {
                 $items[] = array(
                     PluginRegularFolderItem::media_url => Starnet_TV_History_Screen::get_media_url_str(),

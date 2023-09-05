@@ -10,8 +10,8 @@
 #
 ###############################################################################
 
-require_once 'lib/dune_stb_api.php';
-require_once 'lib/action_factory.php';
+require_once 'dune_stb_api.php';
+require_once 'action_factory.php';
 
 ///////////////////////////////////////////////////////////////////////////////
 

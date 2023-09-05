@@ -139,12 +139,12 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 
     private function get_history_path()
     {
-        return get_slash_trailed_path($this->plugin->get_parameters(PARAM_HISTORY_PATH, get_data_path()));
+        return get_slash_trailed_path($this->plugin->get_parameter(PARAM_HISTORY_PATH, get_data_path()));
     }
 
     private function set_history_path($path)
     {
-        $this->plugin->set_parameters(PARAM_HISTORY_PATH, get_slash_trailed_path($path));
+        $this->plugin->set_parameter(PARAM_HISTORY_PATH, get_slash_trailed_path($path));
     }
 
     public static function CopyData($sourcePath, $source_pattern, $destPath){

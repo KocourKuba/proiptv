@@ -10,8 +10,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
     const CONTROL_AUTO_RESUME = 'auto_resume';
     const CONTROL_AUTO_PLAY = 'auto_play';
-    const CONTROL_BUF_TIME = 'buf_time';
-    const CONTROL_DELAY_TIME = 'delay_time';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -60,10 +58,14 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $show_buf_time_ops[5000] = TR::t('setup_buffer_sec__1', "5");
         $show_buf_time_ops[10000] = TR::t('setup_buffer_sec__1', "10");
 
-        $buf_time = isset($plugin_cookies->{self::CONTROL_BUF_TIME}) ? $plugin_cookies->{self::CONTROL_BUF_TIME} : 1000;
-        Control_Factory::add_combobox($defs, $this, null,
-            self::CONTROL_BUF_TIME, TR::t('setup_buffer_time'),
-            $buf_time, $show_buf_time_ops, self::CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs,
+            $this,
+            null,
+            PARAM_BUFFERING_TIME, TR::t('setup_buffer_time'),
+            $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000),
+            $show_buf_time_ops,
+            self::CONTROLS_WIDTH,
+            true);
 
         //////////////////////////////////////
         // archive delay time
@@ -76,10 +78,15 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $show_delay_time_ops[3*60] = TR::t('setup_buffer_sec__1', "180");
         $show_delay_time_ops[5*60] = TR::t('setup_buffer_sec__1', "300");
 
-        $delay_time = isset($plugin_cookies->{self::CONTROL_DELAY_TIME}) ? $plugin_cookies->{self::CONTROL_DELAY_TIME} : 60;
-        Control_Factory::add_combobox($defs, $this, null,
-            self::CONTROL_DELAY_TIME, TR::t('setup_delay_time'),
-            $delay_time, $show_delay_time_ops, self::CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs,
+            $this,
+            null,
+            PARAM_ARCHIVE_DELAY_TIME,
+            TR::t('setup_delay_time'),
+            $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60),
+            $show_delay_time_ops,
+            self::CONTROLS_WIDTH,
+            true);
 
         return $defs;
     }
@@ -115,10 +122,10 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
                 hd_debug_print("$control_id: " . $plugin_cookies->{$control_id});
                 break;
 
-            case self::CONTROL_BUF_TIME:
-            case self::CONTROL_DELAY_TIME:
-                $plugin_cookies->{$control_id} = $user_input->{$control_id};
-                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id});
+            case PARAM_BUFFERING_TIME:
+            case PARAM_ARCHIVE_DELAY_TIME:
+                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
+                hd_debug_print("$control_id: " . $user_input->{$control_id});
                 break;
         }
 

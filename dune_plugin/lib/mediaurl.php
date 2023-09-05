@@ -11,7 +11,8 @@
  * @property mixed|null $choose_file // Action 'choose file'
  * @property mixed|null $filepath // real path of selected folder or file
  * @property mixed|null $windowCounter // Index of current window, start from 1
- * @property mixed|null $end_action
+ * @property mixed|null $end_action // action called for parent window
+ * @property mixed|null $cancel_action // action called for parent window
  * @property mixed|null $extension // pattern for show files with specified extension
  * @property mixed|null $caption // Caption of the selected media url
  * @property bool|null  $allow_network // Allow to use network folders NFS/SMB for Starnet_Folder_Screen
@@ -24,6 +25,8 @@
  * @property mixed|null $user // login, used in Starnet_Folder_Screen
  * @property mixed|null $password // password, used in Starnet_Folder_Screen
  * @property mixed|null $edit_list // type of Starnet_Edit_List_Screen (playlist, epg, hidden groups/channels)
+ * @property bool|null $allow_order // allow order items, used in Starnet_Edit_List_Screen
+ * @property string|null $postpone_save // name of controlled postpone save status
  */
 class MediaURL
 {

@@ -50,84 +50,14 @@ class Default_Dune_Plugin implements DunePlugin
     public $tv;
 
     /**
-     * @var Starnet_Tv_Groups_Screen
+     * @var array
      */
-    public $tv_groups_screen;
-
-    /**
-     * @var Starnet_Tv_Channel_List_Screen
-     */
-    public $tv_channels_screen;
-
-    /**
-     * @var Starnet_Setup_Screen
-     */
-    public $main_setup_screen;
-
-    /**
-     * @var Starnet_Playlists_Setup_Screen
-     */
-    public $channels_setup_screen;
-
-    /**
-     * @var Starnet_Interface_Setup_Screen
-     */
-    public $interface_setup_screen;
-
-    /**
-     * @var Starnet_Epg_Setup_Screen
-     */
-    public $epg_setup_screen;
-
-    /**
-     * @var Starnet_Streaming_Setup_Screen
-     */
-    public $stream_setup_screen;
-
-    /**
-     * @var Starnet_History_Setup_Screen
-     */
-    public $history_setup_screen;
-
-    /**
-     * @var Starnet_Folder_Screen
-     */
-    public $folder_screen;
-
-    /**
-     * @var Starnet_Edit_List_Screen
-     */
-    public $edit_list_screen;
-
-    /**
-     * @var Starnet_Tv_Favorites_Screen
-     */
-    public $tv_favorites_screen;
-
-    /**
-     * @var Starnet_TV_History_Screen
-     */
-    public $tv_history_screen;
+    protected $screens;
 
     /**
      * @var Playback_Points
      */
     public $playback_points;
-
-    /**
-     * @var array|Screen[]
-     */
-    private $screens;
-
-    /**
-     * @var Ordered_Array
-     */
-    private $playlists;
-
-    /**
-     * @var array
-     */
-    private $xmltv_sources;
 
     /**
      * @var string
@@ -144,15 +74,28 @@ class Default_Dune_Plugin implements DunePlugin
      */
     private $parameters;
 
+    /**
+     * @var array
+     */
+    private $postpone_save;
+
+    /**
+     * @var array
+     */
+    private $is_durty;
+
     ///////////////////////////////////////////////////////////////////////
 
     protected function __construct()
     {
+        $this->postpone_save = array('parameters' => false, 'settings' => false);
+        $this->is_durty = array('parameters' => false, 'settings' => false);
+
         $this->plugin_info = get_plugin_manifest_info();
-        $this->screens = array();
         $this->new_ui_support = HD::rows_api_support();
         $this->m3u_parser = new M3uParser();
         $this->epg_man = new Epg_Manager($this);
+        $this->load('parameters');
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -462,10 +405,32 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     ///////////////////////////////////////////////////////////////////////
+    // Settings storage methods
     //
-    // Parameters and settings storage implementation
-    //
-    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * Block or release save settings action
+     * If released will perform save action
+     *
+     * @param bool $snooze
+     * @param string $item
+     */
+    public function set_pospone_save($snooze = true, $item = 'settings')
+    {
+        $this->postpone_save[$item] = $snooze;
+        if (!$snooze)
+            $this->save($item);
+    }
+
+    /**
+     * Is settings contains unsaved changes
+     *
+     * @return bool
+     */
+    public function is_durty($item = 'settings')
+    {
+        return $this->is_durty[$item];
+    }
 
     /**
      * Get settings for selected playlist
@@ -474,26 +439,22 @@ class Default_Dune_Plugin implements DunePlugin
      * @param mixed|null $default
      * @return mixed
      */
-    public function get_settings($type, $default = null)
+    public function get_setting($type, $default = null)
     {
-        $hash = $this->get_playlist_hash();
-        if (!isset($this->settings[$hash])) {
-            $this->settings[$hash] = HD::get_items(get_data_path("$hash.settings"), true, false);
-            hd_debug_print("First load: $hash.settings");
+        $this->load('settings');
+
+        if (!isset($this->settings[$type])) {
+            $this->settings[$type] = $default;
+        } else {
+            $default_type = gettype($default);
+            $param_type = gettype($this->settings[$type]);
+            if ($default_type === 'object' && $param_type !== $default_type) {
+                hd_debug_print("Settings type requested: $default_type. But $param_type loaded. Reset to default");
+                $this->settings[$type] = $default;
+            }
         }
 
-        if (!isset($this->settings[$hash][$type])) {
-            return $default;
-        }
-
-        $default_type = gettype($default);
-        $param_type = gettype($this->settings[$hash][$type]);
-        if ($default_type === 'object' && $param_type !== $default_type) {
-            hd_debug_print("Settings type requested: $default_type. But $param_type loaded");
-            return $default;
-        }
-
-        return $this->settings[$hash][$type];
+        return $this->settings[$type];
     }
 
     /**
@@ -502,12 +463,10 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $type
      * @param mixed $val
      */
-    public function set_settings($type, $val)
+    public function set_setting($type, $val)
     {
-        $hash = $this->get_playlist_hash();
-        $this->settings[$hash][$type] = $val;
-        HD::put_data_items("$hash.settings", $this->settings[$hash], false);
-        //hd_debug_print("saved $hash.settings");
+        $this->settings[$type] = $val;
+        $this->save();
     }
 
     /**
@@ -515,30 +474,56 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function remove_settings()
     {
+        unset($this->settings);
         $hash = $this->get_playlist_hash();
-        unset($this->settings[$hash]);
         hd_debug_print("remove $hash.settings");
         HD::erase_data_items("$hash.settings");
     }
 
+    ///////////////////////////////////////////////////////////////////////
+    // Parameters storage methods
+
     /**
-     * remove all settings and clear cache when uninstall plugin
+     * load plugin/playlist settings
+     *
+     * @param string $item
+     * @param bool $force
+     * @return void
      */
-    public function uninstall_plugin()
+    public function load($item, $force = false)
     {
-        $this->epg_man->clear_all_epg_cache();
-
-        if ($this->get_parameters(PARAM_HISTORY_PATH) === get_data_path()) {
-            $this->playback_points->clear_points();
+        if ($force) {
+            unset($this->settings);
         }
 
-        foreach (array_keys($this->settings) as $hash) {
-            unset($this->settings[$hash]);
-            hd_debug_print("remove $hash.settings");
-            HD::erase_data_items("$hash.settings");
+        $name = ($item === 'settings' ? $this->get_playlist_hash() : 'common') . '.settings';
+
+        if (!isset($this->{$item})) {
+            $this->{$item} = HD::get_data_items($name, true, false);
+            hd_debug_print("Load: $name");
+        }
+    }
+
+    /**
+     * save plugin/playlist settings
+     *
+     * @return void
+     */
+    public function save($item = 'settings')
+    {
+        $name = ($item === 'settings' ? $this->get_playlist_hash() : 'common') . '.settings';
+
+        if (isset($this->{$item})) {
+            if ($this->postpone_save[$item]) {
+                $this->is_durty[$item] = true;
+                //hd_debug_print("Save $item postponed");
+            } else if ($this->is_durty[$item]) {
+                HD::put_data_items($name, $this->{$item}, false);
+                hd_debug_print("Save: $name");
+                $this->is_durty[$item] = false;
+            }
         }
 
-        HD::erase_data_items(PLUGIN_PARAMS);
     }
 
     /**
@@ -549,22 +534,19 @@ class Default_Dune_Plugin implements DunePlugin
      * @param mixed|null $default
      * @return mixed
      */
-    public function get_parameters($type, $default = null)
+    public function get_parameter($type, $default = null)
     {
-        if (!isset($this->parameters)) {
-            $this->parameters = HD::get_data_items(PLUGIN_PARAMS, true, false);
-            hd_debug_print("First load: " . PLUGIN_PARAMS);
-        }
+        $this->load('parameters');
 
         if (!isset($this->parameters[$type])) {
-            return $default;
-        }
-
-        $default_type = gettype($default);
-        $param_type = gettype($this->parameters[$type]);
-        if ($default_type === 'object' && $param_type !== $default_type) {
-            hd_debug_print("Param type requested: $default_type. But $param_type loaded");
-            return $default;
+            $this->parameters[$type] = $default;
+        } else {
+            $default_type = gettype($default);
+            $param_type = gettype($this->parameters[$type]);
+            if ($default_type === 'object' && $param_type !== $default_type) {
+                hd_debug_print("Parameter type requested: $default_type. But $param_type loaded. Reset to default");
+                $this->parameters[$type] = $default;
+            }
         }
 
         return $this->parameters[$type];
@@ -576,36 +558,32 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $type
      * @param mixed $val
      */
-    public function set_parameters($type, $val)
+    public function set_parameter($type, $val)
     {
-        //hd_debug_print("Saved: $type to: " . PLUGIN_PARAMS);
         $this->parameters[$type] = $val;
-        HD::put_data_items(PLUGIN_PARAMS, $this->parameters, false);
+        $this->save('parameters');
     }
 
     public function toggle_setting($param, $default)
     {
-        $old = $this->get_settings($param, $default);
+        $old = $this->get_setting($param, $default);
         $new = ($old === SetupControlSwitchDefs::switch_on)
             ? SetupControlSwitchDefs::switch_off
             : SetupControlSwitchDefs::switch_on;
-        $this->set_settings($param, $new);
+        $this->set_setting($param, $new);
     }
 
     public function toggle_parameter($param, $default)
     {
-        $old = $this->get_parameters($param, $default);
+        $old = $this->get_parameter($param, $default);
         $new = ($old === SetupControlSwitchDefs::switch_on)
             ? SetupControlSwitchDefs::switch_off
             : SetupControlSwitchDefs::switch_on;
-        $this->set_parameters($param, $new);
+        $this->set_parameter($param, $new);
     }
 
     ///////////////////////////////////////////////////////////////////////
-    //
     // Methods
-    //
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * Initialize and parse selected playlist
@@ -684,10 +662,30 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function init_user_agent()
     {
-        $user_agent = $this->get_settings(PARAM_USER_AGENT, HD::get_dune_user_agent());
+        $user_agent = $this->get_setting(PARAM_USER_AGENT, HD::get_dune_user_agent());
         if ($user_agent !== HD::get_dune_user_agent()) {
             HD::set_dune_user_agent($user_agent);
         }
+    }
+
+    /**
+     * remove all settings and clear cache when uninstall plugin
+     */
+    public function uninstall_plugin()
+    {
+        $this->epg_man->clear_all_epg_cache();
+
+        if ($this->get_parameter(PARAM_HISTORY_PATH) === get_data_path()) {
+            $this->playback_points->clear_points();
+        }
+
+        foreach (array_keys($this->settings) as $hash) {
+            unset($this->settings[$hash]);
+            hd_debug_print("remove $hash.settings");
+            HD::erase_data_items("$hash.settings");
+        }
+
+        HD::erase_data_items(PLUGIN_PARAMS);
     }
 
     /**
@@ -695,11 +693,15 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_playlists()
     {
-        if (is_null($this->playlists)) {
-            $this->playlists = new Ordered_Array($this, PARAM_PLAYLISTS, 'parameters');
-        }
+        return $this->get_parameter(PARAM_PLAYLISTS, new Ordered_Array());
+    }
 
-        return $this->playlists;
+    /**
+     * @var Ordered_Array $playlists
+     */
+    public function set_playlists($playlists)
+    {
+        $this->set_parameter(PARAM_PLAYLISTS, $playlists);
     }
 
     /**
@@ -746,7 +748,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_favorites()
     {
-        return $this->tv->get_special_group(FAV_CHANNEL_GROUP_ID)->get_items_order();
+        return $this->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order();
     }
 
     /**
@@ -807,23 +809,70 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * set xmltv source
-     * @param $idx
      * @param $xmltv_sources
      * @return void
      */
-    public function set_xmltv_source($idx, $xmltv_sources)
+    public function set_xmltv_sources($xmltv_sources)
     {
-        $this->xmltv_sources[$idx] = $xmltv_sources;
+        switch ($this->get_xmltv_source_type()) {
+            case PARAM_EPG_SOURCE_EXTERNAL:
+                $this->set_setting(PARAM_CUSTOM_XMLTV_SOURCES, $xmltv_sources);
+                $this->save();
+                break;
+            case PARAM_EPG_SOURCE_INTERNAL:
+                hd_debug_print("Save internal EPG source type not supported");
+                break;
+            default:
+                hd_debug_print("Unknown EPG source type requested");
+                break;
+        }
     }
 
     /**
      * set xmltv source
-     * @return Ordered_Array|null
+     * @return Ordered_Array
      */
-    public function get_xmltv_source()
+    public function get_xmltv_sources()
     {
-        $source_type = $this->get_xmltv_source_type();
-        return isset($this->xmltv_sources[$source_type]) ? $this->xmltv_sources[$source_type] : null;
+        $sources = new Ordered_Array();
+        switch ($this->get_xmltv_source_type()) {
+            case PARAM_EPG_SOURCE_INTERNAL:
+                $sources = $this->m3u_parser->getXmltvSources();
+                $sources->set_saved_pos($this->get_setting(PARAM_INTERNAL_EPG_IDX, 0));
+                break;
+            case PARAM_EPG_SOURCE_EXTERNAL:
+                $sources = $this->get_setting(PARAM_CUSTOM_XMLTV_SOURCES, new Ordered_Array());
+                break;
+            default:
+                hd_debug_print("Unknown EPG source type requested");
+                break;
+        }
+
+        return $sources;
+    }
+
+    /**
+     * set xmltv source idx
+     * @param $idx
+     * @return void
+     */
+    public function set_xmltv_source_idx($idx)
+    {
+        switch ($this->get_xmltv_source_type()) {
+            case PARAM_EPG_SOURCE_INTERNAL:
+                $this->m3u_parser->getXmltvSources()->set_saved_pos($idx);
+                $this->set_setting(PARAM_INTERNAL_EPG_IDX, $idx);
+                break;
+            case PARAM_EPG_SOURCE_EXTERNAL:
+                $sources = $this->get_setting(PARAM_CUSTOM_XMLTV_SOURCES, new Ordered_Array());
+                $sources->set_saved_pos($idx);
+                $this->set_setting(PARAM_CUSTOM_XMLTV_SOURCES, $sources);
+                break;
+            default:
+                hd_debug_print("Unknown EPG source type requested");
+                break;
+        }
+        $this->save();
     }
 
     /**
@@ -832,7 +881,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_xmltv_source_type()
     {
-        return $this->get_settings(PARAM_EPG_SOURCE_TYPE, PARAM_EPG_SOURCE_INTERNAL);
+        return $this->get_setting(PARAM_EPG_SOURCE_TYPE, PARAM_EPG_SOURCE_INTERNAL);
     }
 
     /**
@@ -841,7 +890,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_xmltv_source_type($type)
     {
-        $this->set_settings(PARAM_EPG_SOURCE_TYPE, $type);
+        $this->set_setting(PARAM_EPG_SOURCE_TYPE, $type);
     }
 
     /**
@@ -850,21 +899,11 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function update_xmltv_source()
     {
-        $m3u_xmltv_sources = new Ordered_Array();
-        foreach ($this->m3u_parser->getXmltvSources() as $source) {
-            $m3u_xmltv_sources->add_item($source);
-        }
-
-        $m3u_xmltv_sources->set_saved_pos($this->get_settings(PARAM_INTERNAL_EPG_IDX, 0));
-        $this->set_xmltv_source(PARAM_EPG_SOURCE_INTERNAL, $m3u_xmltv_sources);
-        $this->set_xmltv_source(PARAM_EPG_SOURCE_EXTERNAL, new Ordered_Array($this, PARAM_CUSTOM_XMLTV_SOURCES));
-
-        $source = $this->get_xmltv_source();
-        if (is_null($source)) {
-            $this->epg_man->set_xmltv_url(null);
+        $url = $this->get_xmltv_sources()->get_selected_item();
+        $this->epg_man->set_xmltv_url($url);
+        if (is_null($url)) {
             hd_debug_print("no xmltv source defined for this playlist");
         } else {
-            $this->epg_man->set_xmltv_url($source->get_selected_item());
             $this->epg_man->index_xmltv_channels();
         }
     }
@@ -984,7 +1023,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $url = $this->generate_stream_url($media_url->channel_id, $archive_ts);
 
-        if (!$this->tv->get_channel_player($media_url->channel_id)) {
+        if (!$this->tv->is_channel_for_ext_player($media_url->channel_id)) {
             return Action_Factory::tv_play($media_url);
         }
 

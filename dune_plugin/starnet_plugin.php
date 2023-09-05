@@ -50,22 +50,23 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         $this->tv = new Starnet_Tv($this);
 
-        $this->tv_groups_screen = new Starnet_Tv_Groups_Screen($this);
-        $this->tv_channels_screen = new Starnet_Tv_Channel_List_Screen($this);
-        $this->tv_favorites_screen = new Starnet_Tv_Favorites_Screen($this);
-        $this->tv_history_screen = new Starnet_TV_History_Screen($this);
+        $this->create_screen(new Starnet_Tv_Groups_Screen($this));
+        $this->create_screen(new Starnet_Tv_Channel_List_Screen($this));
+        $this->create_screen(new Starnet_Tv_Favorites_Screen($this));
+        $this->create_screen(new Starnet_TV_History_Screen($this));
 
-        $this->main_setup_screen = new Starnet_Setup_Screen($this);
-        $this->channels_setup_screen = new Starnet_Playlists_Setup_Screen($this);
-        $this->interface_setup_screen = new Starnet_Interface_Setup_Screen($this);
-        $this->epg_setup_screen = new Starnet_Epg_Setup_Screen($this);
-        $this->stream_setup_screen = new Starnet_Streaming_Setup_Screen($this);
-        $this->history_setup_screen = new Starnet_History_Setup_Screen($this);
+        $this->create_screen(new Starnet_Setup_Screen($this));
+        $this->create_screen(new Starnet_Playlists_Setup_Screen($this));
+        $this->create_screen(new Starnet_Interface_Setup_Screen($this));
+        $this->create_screen(new Starnet_Epg_Setup_Screen($this));
+        $this->create_screen(new Starnet_Streaming_Setup_Screen($this));
+        $this->create_screen(new Starnet_History_Setup_Screen($this));
 
-        $this->folder_screen = new Starnet_Folder_Screen($this);
-        $this->edit_list_screen = new Starnet_Edit_List_Screen($this);
+        $this->create_screen(new Starnet_Folder_Screen($this));
+        $this->create_screen(new Starnet_Edit_List_Screen($this));
 
         $this->playback_points = new Playback_Points($this);
+
         Starnet_Epfs_Handler::init($this);
 
         hd_debug_print("Init done.");

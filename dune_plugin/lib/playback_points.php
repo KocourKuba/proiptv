@@ -5,8 +5,8 @@
 # Idea: Brigadir (forum.mydune.ru)
 # Modification: sharky72
 
-require_once 'lib/mediaurl.php';
-require_once 'lib/dune_stb_api.php';
+require_once 'mediaurl.php';
+require_once 'dune_stb_api.php';
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -32,6 +32,7 @@ class Playback_Points
     public function __construct($plugin)
     {
         $this->plugin = $plugin;
+        $this->load_points();
     }
 
     /**
@@ -59,6 +60,7 @@ class Playback_Points
         if (!isset($this->points) || $force) {
             $path = $this->get_playback_points_file();
             if (empty($path)) {
+                $this->points = array();
                 return;
             }
 
@@ -164,7 +166,7 @@ class Playback_Points
      */
     private function get_playback_points_file()
     {
-        $path = $this->plugin->get_parameters(PARAM_HISTORY_PATH, get_data_path());
+        $path = $this->plugin->get_parameter(PARAM_HISTORY_PATH, get_data_path());
         if (!is_dir($path)) {
             hd_debug_print("load path not exist: $path");
             return '';

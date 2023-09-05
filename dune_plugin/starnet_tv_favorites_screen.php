@@ -143,7 +143,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             (
                 PluginRegularFolderItem::media_url => MediaURL::encode(array(
                         'channel_id' => $channel->get_id(),
-                        'group_id' => FAV_CHANNEL_GROUP_ID)
+                        'group_id' => FAVORITES_GROUP_ID)
                 ),
                 PluginRegularFolderItem::caption => $channel->get_title(),
                 PluginRegularFolderItem::view_item_params => array(
@@ -162,7 +162,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
      */
     public function get_folder_views()
     {
-        $square_icons = ($this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $square_icons = ($this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
         $background = $this->plugin->plugin_info['app_background'];
 
         return array(

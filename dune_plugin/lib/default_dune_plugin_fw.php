@@ -1,7 +1,7 @@
 <?php
 ///////////////////////////////////////////////////////////////////////////
 
-require_once 'lib/tr.php';
+require_once 'tr.php';
 require_once 'action_factory.php';
 require_once 'dune_exception.php';
 

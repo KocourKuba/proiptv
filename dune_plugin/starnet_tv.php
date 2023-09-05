@@ -1,12 +1,9 @@
 <?php
 require_once 'lib/hashed_array.php';
 require_once 'lib/ordered_array.php';
-require_once 'lib/tv/default_channel.php';
-require_once 'lib/tv/all_channels_group.php';
-require_once 'lib/tv/favorites_group.php';
-require_once 'lib/tv/history_group.php';
-require_once 'lib/tv/default_epg_item.php';
-require_once 'starnet_setup_screen.php';
+require_once 'lib/default_group.php';
+require_once 'lib/default_channel.php';
+require_once 'lib/default_epg_item.php';
 
 class Starnet_Tv implements User_Input_Handler
 {
@@ -53,31 +50,6 @@ class Starnet_Tv implements User_Input_Handler
      */
     protected $special_groups;
 
-    /**
-     * @var Ordered_Array
-     */
-    protected $groups_order;
-
-    /**
-     * @var Ordered_Array
-     */
-    protected $disabled_groups;
-
-    /**
-     * @var Ordered_Array
-     */
-    protected $disabled_channels;
-
-    /**
-     * @var Hashed_Array
-     */
-    protected $channels_zoom;
-
-    /**
-     * @var Ordered_Array
-     */
-    protected $channel_player;
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -85,10 +57,32 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function __construct(Starnet_Plugin $plugin)
     {
+        User_Input_Handler_Registry::get_instance()->register_handler($this);
+
         $this->plugin = $plugin;
         $this->playback_url_is_stream_url = false;
+        $this->special_groups = new Hashed_Array();
 
-        User_Input_Handler_Registry::get_instance()->register_handler($this);
+        // All channels category
+        $this->special_groups->put(new Default_Group($this->plugin,
+            ALL_CHANNEL_GROUP_ID,
+            TR::load_string('plugin_all_channels'),
+            'plugin_file://icons/all_folder.png',
+            null));
+
+        // Favorites groupse
+        $this->special_groups->put(new Default_Group($this->plugin,
+            FAVORITES_GROUP_ID,
+            TR::load_string('plugin_favorites'),
+            'plugin_file://icons/favorite_folder.png',
+            PARAM_FAVORITES));
+
+        // History channels category
+        $this->special_groups->put(new Default_Group($this->plugin,
+            HISTORY_GROUP_ID,
+            TR::load_string('plugin_history'),
+            'plugin_file://icons/history_folder.png',
+            null));
     }
 
     public static function get_handler_id()
@@ -145,10 +139,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_groups_order()
     {
-        if (is_null($this->groups_order)) {
-            $this->groups_order = new Ordered_Array($this->plugin, PARAM_GROUPS_ORDER);
-        }
-        return $this->groups_order;
+        return $this->plugin->get_setting(PARAM_GROUPS_ORDER, new Ordered_Array());
     }
 
     /**
@@ -156,10 +147,16 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_disabled_groups()
     {
-        if (is_null($this->disabled_groups)) {
-            $this->disabled_groups = new Ordered_Array($this->plugin, PARAM_DISABLED_GROUPS);
-        }
-        return $this->disabled_groups;
+        return $this->plugin->get_setting(PARAM_DISABLED_GROUPS, new Ordered_Array());
+    }
+
+    /**
+     * @param Ordered_Array $groups
+     * @return void
+     */
+    public function set_disabled_groups($groups)
+    {
+        $this->plugin->set_setting(PARAM_DISABLED_GROUPS, $groups);
     }
 
     /**
@@ -180,10 +177,16 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_disabled_channels()
     {
-        if (is_null($this->disabled_channels)) {
-            $this->disabled_channels = new Ordered_Array($this->plugin, PARAM_DISABLED_CHANNELS);
-        }
-        return $this->disabled_channels;
+        return $this->plugin->get_setting(PARAM_DISABLED_CHANNELS, new Ordered_Array());
+    }
+
+    /**
+     * @param Ordered_Array $channels
+     * @return void
+     */
+    public function set_disabled_channels($channels)
+    {
+        $this->plugin->set_setting(PARAM_DISABLED_CHANNELS, $channels);
     }
 
     /**
@@ -191,10 +194,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_channels_zoom()
     {
-        if (is_null($this->channels_zoom)) {
-            $this->channels_zoom = $this->plugin->get_settings(PARAM_CHANNELS_ZOOM, new Hashed_Array());
-        }
-        return $this->channels_zoom;
+        return $this->plugin->get_setting(PARAM_CHANNELS_ZOOM, new Ordered_Array());
     }
 
 
@@ -220,18 +220,23 @@ class Starnet_Tv implements User_Input_Handler
             $this->get_channels_zoom()->set_by_id($channel_id, $preset);
         }
 
-        $this->plugin->set_settings(PARAM_CHANNELS_ZOOM, $this->get_channels_zoom());
+        $this->plugin->set_setting(PARAM_CHANNELS_ZOOM, $this->get_channels_zoom());
+    }
+
+    /**
+     * @return Ordered_Array
+     */
+    public function get_channels_for_ext_player()
+    {
+        return $this->plugin->get_setting(PARAM_CHANNEL_PLAYER, new Ordered_Array());
     }
 
     /**
      * @return bool
      */
-    public function get_channel_player($channel_id)
+    public function is_channel_for_ext_player($channel_id)
     {
-        if (is_null($this->channel_player)) {
-            $this->channel_player = new Ordered_Array($this->plugin, PARAM_CHANNEL_PLAYER);
-        }
-        return $this->channel_player->in_order($channel_id);
+        return $this->get_channels_for_ext_player()->in_order($channel_id);
     }
 
     /**
@@ -239,17 +244,17 @@ class Starnet_Tv implements User_Input_Handler
      * @param bool $external
      * @return void
      */
-    public function set_channel_player($channel_id, $external)
+    public function set_channel_for_ext_player($channel_id, $external)
     {
-        if (is_null($this->channel_player)) {
-            $this->channel_player = new Ordered_Array($this->plugin, PARAM_CHANNEL_PLAYER);
-        }
+        $ext_player = $this->get_channels_for_ext_player();
 
         if ($external) {
-            $this->channel_player->add_item($channel_id);
+            $ext_player->add_item($channel_id);
         } else {
-            $this->channel_player->remove_item($channel_id);
+            $ext_player->remove_item($channel_id);
         }
+
+        $this->plugin->set_setting(PARAM_CHANNEL_PLAYER, $ext_player);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -317,15 +322,10 @@ class Starnet_Tv implements User_Input_Handler
     public function unload_channels()
     {
         hd_debug_print();
-        $this->channels = null;
-        $this->groups = null;
-        $this->special_groups = null;
-
-        $this->groups_order = null;
-        $this->disabled_groups = null;
-        $this->disabled_channels = null;
-        $this->channels_zoom = null;
-        $this->channel_player = null;
+        unset($this->channels, $this->groups);
+        foreach($this->special_groups as $group) {
+            $group->get_group_channels()->clear();
+        }
     }
 
     /**
@@ -344,38 +344,33 @@ class Starnet_Tv implements User_Input_Handler
             $plugin_cookies->pass_sex = '0000';
         }
 
-        $this->groups = new Hashed_Array();
-        $this->channels = new Hashed_Array();
-        $this->special_groups = new Hashed_Array();
-
-        // All channels category
-        $this->special_groups->put(new All_Channels_Group());
-
-        // Favorites group
-        $this->special_groups->put(new Favorites_Group($this->plugin));
-
-        // History channels category
-        $this->special_groups->put(new History_Group());
+        $this->plugin->load('settings', true);
 
         // first check if playlist in cache
         if (!$this->plugin->init_playlist()) {
             return false;
         }
 
-        $this->plugin->playback_points->load_points(true);
+        $this->groups = new Hashed_Array();
+        $this->channels = new Hashed_Array();
 
         $catchup['global'] = $this->plugin->m3u_parser->getM3uInfo()->getCatchup();
         $global_catchup_source = $this->plugin->m3u_parser->getM3uInfo()->getCatchupSource();
         $icon_url_base = $this->plugin->m3u_parser->getHeaderAttribute('url-logo', TAG_EXTM3U);
+
         $this->plugin->update_xmltv_source();
 
-        $user_catchup = $this->plugin->get_settings(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
+        hd_debug_print("Build categories and channels...");
+
+        $this->plugin->playback_points->load_points(true);
+
+        $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
         if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
             $catchup['global'] = $user_catchup;
         }
 
         // suppress save after add group
-        $this->get_groups_order()->set_save_delay(true);
+        $this->plugin->set_pospone_save();
 
         // Collect categories from playlist
         $playlist_groups = new Ordered_Array();
@@ -386,7 +381,7 @@ class Starnet_Tv implements User_Input_Handler
 
             // using title as id
             $group_logo = $entry->getEntryAttribute('group-logo');
-            $group = new Default_Group($this->plugin, null, $title, empty($group_logo) ? null : $group_logo);
+            $group = new Default_Group($this->plugin, $title, null, empty($group_logo) ? null : $group_logo);
             $adult = (strpos($title, "зрослы") !== false
                 || strpos($title, "adult") !== false
                 || strpos($title, "18+") !== false
@@ -406,8 +401,8 @@ class Starnet_Tv implements User_Input_Handler
             $playlist_groups->add_item($title);
 
             // disable save
-            $group->get_items_order()->set_save_delay(true);
             $this->groups->put($group);
+            $this->plugin->save();
         }
 
         // cleanup order if saved group removed from playlist
@@ -418,12 +413,9 @@ class Starnet_Tv implements User_Input_Handler
                 $this->get_groups_order()->remove_item($group);
                 $this->get_disabled_groups()->remove_item($group);
             }
+            $this->plugin->save();
         }
         unset($playlist_groups);
-
-        // enable save
-        $this->get_groups_order()->set_save_delay(false);
-        $this->get_groups_order()->save();
 
         // Read channels
         $playlist_group_channels = array();
@@ -514,7 +506,7 @@ class Starnet_Tv implements User_Input_Handler
                     }
                 }
 
-                $ext_params[PARAM_DUNE_PARAMS] = $this->plugin->get_settings(PARAM_DUNE_PARAMS);
+                $ext_params[PARAM_DUNE_PARAMS] = $this->plugin->get_setting(PARAM_DUNE_PARAMS);
 
                 $ext_tag = $entry->getEntryTag(TAG_EXTHTTP);
                 if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
@@ -610,13 +602,12 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("Remove orphaned channel id: $channel_id");
                 $group->get_items_order()->remove_item($channel_id);
             }
-
-            $group->get_items_order()->set_save_delay(false);
-            $group->get_items_order()->save();
         }
 
         hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channels()->size()}");
         hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->get_groups_order()->size()));
+
+        $this->plugin->set_pospone_save(false);
 
         $this->plugin->epg_man->index_xmltv_file($epg_ids);
 
@@ -634,7 +625,7 @@ class Starnet_Tv implements User_Input_Handler
     public function reload_channels(User_Input_Handler $handler, &$plugin_cookies, $post_action = null)
     {
         hd_debug_print();
-        $this->plugin->clear_playlist_cache();
+
         $this->unload_channels();
         if (!$this->load_channels($plugin_cookies)) {
             hd_debug_print("Channels not loaded!");
@@ -709,7 +700,10 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
     {
-        $font_size = $this->plugin->get_parameters(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+        $epg_font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on
+            ? PLUGIN_FONT_SMALL
+            : PLUGIN_FONT_NORMAL;
+
         $show_all = (!isset($plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_SHOW_ALL})
                 || $plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_SHOW_ALL} === SetupControlSwitchDefs::switch_on);
         //$t = microtime(1);
@@ -756,10 +750,10 @@ class Starnet_Tv implements User_Input_Handler
                 PluginTvChannel::future_epg_days => $channel->get_future_epg_days(),
 
                 PluginTvChannel::archive_past_sec => $channel->get_archive_past_sec(),
-                PluginTvChannel::archive_delay_sec => (isset($plugin_cookies->delay_time) ? $plugin_cookies->delay_time : 60),
+                PluginTvChannel::archive_delay_sec => $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60),
 
                 // Buffering time
-                PluginTvChannel::buffering_ms => (isset($plugin_cookies->buf_time) ? $plugin_cookies->buf_time : 1000),
+                PluginTvChannel::buffering_ms => $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000),
                 PluginTvChannel::timeshift_hours => $channel->get_timeshift_hours(),
 
                 PluginTvChannel::playback_url_is_stream_url => $this->playback_url_is_stream_url,
@@ -810,7 +804,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::channels => $channels,
 
             PluginTvInfo::favorites_supported => true,
-            PluginTvInfo::favorites_icon_url => Favorites_Group::FAV_CHANNEL_GROUP_ICON_PATH,
+            PluginTvInfo::favorites_icon_url => $this->get_special_group(FAVORITES_GROUP_ID)->get_icon_url(),
 
             PluginTvInfo::initial_channel_id => (string)$media_url->channel_id,
             PluginTvInfo::initial_group_id => $initial_group_id,
@@ -820,7 +814,7 @@ class Starnet_Tv implements User_Input_Handler
 
             PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
 
-            PluginTvInfo::epg_font_size => ($font_size === SetupControlSwitchDefs::switch_on) ? PLUGIN_FONT_SMALL : PLUGIN_FONT_NORMAL,
+            PluginTvInfo::epg_font_size => $epg_font_size,
 
             PluginTvInfo::actions => $this->get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(1000),

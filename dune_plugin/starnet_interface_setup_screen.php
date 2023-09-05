@@ -89,12 +89,12 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // epg font size
-        $font_size = $this->plugin->get_parameters(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+        $font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
         $font_ops_translated[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
         $font_ops_translated[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
 
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
+            PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
 
         return $defs;
@@ -140,7 +140,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 self::toggle_cookie_param($plugin_cookies, $control_id);
                 return $this->plugin->tv->reload_channels($this, $plugin_cookies);
 
-            case self::CONTROL_EPG_FONT_SIZE:
+            case PARAM_EPG_FONT_SIZE:
                 $this->plugin->toggle_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
                 break;
         }

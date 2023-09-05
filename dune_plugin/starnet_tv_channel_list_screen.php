@@ -209,7 +209,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 if (is_android() && !is_apk()) {
                     $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
-                    $is_external = $this->plugin->tv->get_channel_player($channel_id);
+                    $is_external = $this->plugin->tv->is_channel_for_ext_player($channel_id);
                     $this->create_menu_item($this, $menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), ($is_external ? "play.png" : null));
                     $this->create_menu_item($this, $menu_items, ACTION_INTERNAL_PLAYER, TR::t('tv_screen_internal_player'), ($is_external ? null : "play.png"));
                     $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
@@ -233,7 +233,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_EXTERNAL_PLAYER:
             case ACTION_INTERNAL_PLAYER:
-                $this->plugin->tv->set_channel_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
+                $this->plugin->tv->set_channel_for_ext_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
 
             case ACTION_RELOAD:
@@ -334,7 +334,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_folder_views()
     {
-        $square_icons = ($this->plugin->get_settings(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $square_icons = ($this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
         $background = $this->plugin->plugin_info['app_background'];
 
         return array(

@@ -10,85 +10,9 @@ class Ordered_Array extends Json_Serializer
      */
     protected $order = array();
     /**
-     * @var Default_Dune_Plugin
-     */
-    protected $plugin;
-    /**
-     * @var string
-     */
-    protected $param_name;
-    /**
-     * @var array
-     */
-    protected $accessor = 'settings';
-    /**
-     * @var bool
-     */
-    protected $save_delay = false;
-
-    /**
      * @var int
      */
     protected $saved_pos = 0;
-
-    public function __construct($plugin = null, $param_name = null, $method = null)
-    {
-        $this->set_callback($plugin, $param_name, $method);
-    }
-
-    public function __sleep()
-    {
-        return array('order', 'saved_pos');
-    }
-
-    /**
-     * @param bool $val
-     */
-    public function set_save_delay($val)
-    {
-        $this->save_delay = $val;
-    }
-
-    /**
-     * @return void
-     */
-    public function save()
-    {
-        $set = "set_$this->accessor";
-        if (!$this->save_delay && is_callable(array($this->plugin, $set))) {
-            $this->plugin->{$set}($this->param_name, $this->order);
-            //hd_debug_print("$set: $this->param_name ({$this->size()})");
-        }
-    }
-
-    /**
-     * @return void
-     */
-    public function load()
-    {
-        $get = "get_$this->accessor";
-        if (is_callable(array($this->plugin, $get))) {
-            $this->order = $this->plugin->{$get}($this->param_name, array());
-            //hd_debug_print("$get: $this->param_name ({$this->size()})");
-        }
-    }
-
-    /**
-     * @param Object $obj
-     * @param string $param_name
-     * @param string $method
-     * @return void
-     */
-    public function set_callback($obj, $param_name, $method = null)
-    {
-        $this->plugin = $obj;
-        $this->param_name = $param_name;
-        if (!is_null($method)) {
-            $this->accessor = $method;
-        }
-
-        $this->load();
-    }
 
     /**
      * @return int
@@ -107,7 +31,6 @@ class Ordered_Array extends Json_Serializer
         if ($pos >= $this->size()) {
             $this->saved_pos = 0;
         }
-        $this->save();
     }
 
     /**
@@ -127,7 +50,6 @@ class Ordered_Array extends Json_Serializer
     {
         $this->order = array();
         $this->saved_pos = 0;
-        $this->save();
     }
 
     /**
@@ -160,7 +82,6 @@ class Ordered_Array extends Json_Serializer
         }
 
         $this->order[] = $id;
-        $this->save();
         return true;
     }
 
@@ -175,8 +96,6 @@ class Ordered_Array extends Json_Serializer
                 $this->order[] = $id;
             }
         }
-
-        $this->save();
     }
 
     /**

@@ -58,7 +58,7 @@ class Epg_Manager
 
     public function init_cache_dir()
     {
-        $this->cache_dir = smb_tree::get_folder_info($this->plugin->get_parameters(PARAM_XMLTV_CACHE_PATH), get_data_path("epg_cache/"));
+        $this->cache_dir = smb_tree::get_folder_info($this->plugin->get_parameter(PARAM_XMLTV_CACHE_PATH), get_data_path("epg_cache/"));
         create_path($this->cache_dir);
         hd_debug_print("cache dir: $this->cache_dir");
     }
@@ -183,7 +183,7 @@ class Epg_Manager
                 hd_debug_print("Cached xmltv file not exist");
             } else {
                 $check_time_file = filemtime($cached_xmltv_file);
-                $max_cache_time = 3600 * 24 * $this->plugin->get_settings(PARAM_EPG_CACHE_TTL, 3);
+                $max_cache_time = 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
                 if ($check_time_file && $check_time_file + $max_cache_time > time()) {
                     hd_debug_print("Cached file: $cached_xmltv_file is not expired " . date("Y-m-d H:s", $check_time_file));
                     return '';
@@ -399,7 +399,7 @@ class Epg_Manager
 
         hd_debug_print("Cached file index: $index_file is not valid need reindex");
 
-        $parse_all = $this->plugin->get_settings(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
+        $parse_all = $this->plugin->get_setting(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
         $cache_file = $this->get_internal_name();
         $cache_dir = $this->cache_dir;
         $lock_file = "$cache_dir$cache_file.lock";

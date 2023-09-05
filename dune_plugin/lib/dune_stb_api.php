@@ -93,9 +93,9 @@ const ACTION_EMPTY = 'empty';
 const ACTION_PLUGIN_INFO = 'plugin_info';
 
 # Special groups ID
-const FAV_CHANNEL_GROUP_ID = '##favorites##';
+const FAVORITES_GROUP_ID = '##favorites##';
 const ALL_CHANNEL_GROUP_ID = '##all_channels##';
-const PLAYBACK_HISTORY_GROUP_ID = '##playback_history_tv_group##';
+const HISTORY_GROUP_ID = '##playback_history_tv_group##';
 
 # Common parameters
 const PLUGIN_PARAMS = "common.parameters";
@@ -103,7 +103,7 @@ const PARAM_PLAYLISTS = 'playlists';
 const PARAM_FAVORITES = 'favorites';
 const PARAM_GROUPS_ORDER = 'groups_order';
 const PARAM_DISABLED_GROUPS = 'disabled_groups';
-const PARAM_CHANNELS_ORDER = '_channels_order';
+const PARAM_CHANNELS_ORDER = 'channels_order_';
 const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
@@ -124,6 +124,8 @@ const PARAM_CHANNEL_PLAYER = 'channel_player';
 const PARAM_USER_CATCHUP = 'user_catchup';
 const PARAM_TV_HISTORY_ITEMS = '_tv_history_items';
 const PARAM_USER_AGENT = 'user_agent';
+const PARAM_BUFFERING_TIME = 'buffering_time';
+const PARAM_ARCHIVE_DELAY_TIME = 'archive_delay_time';
 
 # HTTP params
 const USER_AGENT = 'User-Agent';
@@ -1705,6 +1707,11 @@ function debug_print(/*mixed $var1, $var2...*/)
     }
 }
 
+/**
+ * @param string $method
+ * @param Object $user_input
+ * @return void
+ */
 function dump_input_handler($method, $user_input)
 {
     hd_print($method);

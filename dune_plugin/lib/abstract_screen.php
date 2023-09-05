@@ -11,7 +11,6 @@ class Abstract_Screen implements Screen
     public function __construct(Default_Dune_Plugin $plugin)
     {
         $this->plugin = $plugin;
-        $plugin->create_screen($this);
     }
 
     public static function get_handler_id()

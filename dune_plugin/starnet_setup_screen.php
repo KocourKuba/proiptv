@@ -11,7 +11,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     const CONTROL_ADULT_PASS_DLG = 'adult_pass_dialog';
     const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
-    const CONTROL_CHANNELS_SCREEN = 'channels_screen';
+    const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_EPG_SCREEN = 'epg_screen';
     const CONTROL_STREAMING_SCREEN = 'streaming_screen';
     const CONTROL_HISTORY_SCREEN = 'history_screen';
@@ -51,8 +51,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         //////////////////////////////////////
         // Channels settings
-        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANNELS_SCREEN,
-            TR::t('tv_screen_channels_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_PLAYLISTS_SCREEN,
+            TR::t('tv_screen_playlists_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG settings
@@ -157,8 +157,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(Starnet_Interface_Setup_Screen::get_media_url_str(), TR::t('setup_interface_title'));
 
-            case self::CONTROL_CHANNELS_SCREEN: // show epg settings dialog
-                return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::get_media_url_str(), TR::t('tv_screen_channels_setup'));
+            case self::CONTROL_PLAYLISTS_SCREEN: // show epg settings dialog
+                return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::get_media_url_str(), TR::t('tv_screen_playlists_setup'));
 
             case self::CONTROL_EPG_SCREEN: // show epg settings dialog
                 return Action_Factory::open_folder(Starnet_Epg_Setup_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
@@ -189,7 +189,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                     $msg = TR::t('setup_pass_not_changed');
                 }
 
-                return Action_Factory::show_title_dialog($msg, $need_reload ? $this->plugin->tv->reload_channels($this, $plugin_cookies) : null);
+                return Action_Factory::show_title_dialog($msg,
+                    $need_reload ? $this->plugin->tv->reload_channels($this, $plugin_cookies) : null);
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

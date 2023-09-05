@@ -10,42 +10,36 @@ class Default_Group extends Json_Serializer implements Group
      * @var string
      */
     protected $_id;
+
     /**
      * @var string
      */
     protected $_title;
+
     /**
      * @var string
      */
     protected $_icon_url;
+
     /**
      * @var boolean
      */
     protected $_adult;
+
     /**
      * @var boolean
      */
     protected $_disabled;
-    /**
-     * @var boolean
-     */
-    protected $_favorite = false;
-    /**
-     * @var boolean
-     */
-    protected $_all_group = false;
-    /**
-     * @var boolean
-     */
-    protected $_history = false;
+
     /**
      * @var Hashed_Array
      */
     protected $_channels;
+
     /**
-     * @var Ordered_Array
+     * @var string
      */
-    protected $_channels_order;
+    protected $_order_settings;
 
     /**
      * @var Default_Dune_Plugin
@@ -53,40 +47,37 @@ class Default_Group extends Json_Serializer implements Group
     protected $plugin;
 
     /**
+     * @param $plugin
      * @param string $id
      * @param string $title
-     * @param string $icon_url
+     * @param string|null $icon_url
+     * @param string|null $order_prefix
      */
-    public function __construct($plugin, $id, $title, $icon_url = null, $adult = false, $disabled = false)
+    public function __construct($plugin, $id, $title, $icon_url = null, $order_prefix = PARAM_CHANNELS_ORDER)
     {
         $this->plugin = $plugin;
 
         if (is_null($icon_url)) {
-            $icon_url = self::DEFAULT_GROUP_ICON_PATH;
+            $icon_url = static::DEFAULT_GROUP_ICON_PATH;
         }
 
-        if (is_null($id)) {
-            $id = $title;
+        if (is_null($title)) {
+            $title = $id;
         }
 
         $this->_id = $id;
         $this->_title = $title;
         $this->_icon_url = $icon_url;
-        $this->_adult = $adult;
-        $this->_disabled = $disabled;
+        $this->_adult = false;
+        $this->_disabled = false;
+        $this->_order_settings = is_null($order_prefix) ? null : ($order_prefix . $this->_id);
 
         $this->_channels = new Hashed_Array();
-        $this->_channels_order = new Ordered_Array($this->plugin, $this->_title . PARAM_CHANNELS_ORDER);
     }
 
     public function __sleep()
     {
-        return array('_id', '_title', '_icon_url', '_adult', '_disabled', '_favorite', 'all_group', '_history', '_channels_order');
-    }
-
-    public function __wakeup()
-    {
-        $this->_channels = new Hashed_Array();
+        return array('_id', '_title', '_icon_url', '_adult', '_disabled');
     }
 
     /**
@@ -118,7 +109,7 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function is_favorite_group()
     {
-        return $this->_favorite;
+        return ($this->_id === FAVORITES_GROUP_ID);
     }
 
     /**
@@ -126,7 +117,7 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function is_history_group()
     {
-        return $this->_history;
+        return ($this->_id === HISTORY_GROUP_ID);
     }
 
     /**
@@ -134,7 +125,7 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function is_all_channels_group()
     {
-        return $this->_all_group;
+        return ($this->_id === ALL_CHANNEL_GROUP_ID);
     }
 
     /**
@@ -184,7 +175,11 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function get_items_order()
     {
-        return $this->_channels_order;
+        if (is_null($this->_order_settings)) {
+            return new Ordered_Array();
+        }
+
+        return $this->plugin->get_setting($this->_order_settings, new Ordered_Array());
     }
 
     /**
@@ -194,7 +189,7 @@ class Default_Group extends Json_Serializer implements Group
     {
         $this->_channels->put($channel);
         if (!$channel->is_disabled() && !$this->is_all_channels_group()) {
-            $this->_channels_order->add_item($channel->get_id());
+            $this->get_items_order()->add_item($channel->get_id());
         }
     }
 }

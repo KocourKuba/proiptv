@@ -19,6 +19,11 @@ class M3uParser extends Json_Serializer
     protected $m3u_info;
 
     /**
+     * @var Ordered_Array
+     */
+    protected $xmltv_sources;
+
+    /**
      * @var SplFileObject
      */
     private $m3u_file;
@@ -36,6 +41,7 @@ class M3uParser extends Json_Serializer
     {
         if ($this->file_name !== $file_name || $force) {
             $this->m3u_file = null;
+            $this->xmltv_sources = null;
             $this->file_name = $file_name;
             unset($this->m3u_entries, $this->m3u_info);
             $this->m3u_entries = array();
@@ -315,21 +321,22 @@ class M3uParser extends Json_Serializer
     }
 
     /**
-     * @return array
+     * @return Ordered_Array
      */
     public function getXmltvSources()
     {
-        $xmltv_urls = array();
-        $tvg_attrs = $this->m3u_info->getEpgSources();
-        foreach ($tvg_attrs as $value) {
-            $urls = explode(',', $value);
-            foreach ($urls as $url) {
-                if (!empty($url) && preg_match("|https?://|", $url)) {
-                    $xmltv_urls[] = $url;
+        if (is_null($this->xmltv_sources)) {
+            $this->xmltv_sources = new Ordered_Array();
+            foreach ($this->m3u_info->getEpgSources() as $value) {
+                $urls = explode(',', $value);
+                foreach ($urls as $url) {
+                    if (!empty($url) && preg_match("|https?://|", $url)) {
+                        $this->xmltv_sources->add_item($url);
+                    }
                 }
             }
         }
 
-        return $xmltv_urls;
+        return $this->xmltv_sources;
     }
 }
