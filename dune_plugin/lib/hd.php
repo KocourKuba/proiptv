@@ -716,8 +716,12 @@ class HD
      */
     public static function make_ts($url)
     {
-        if (strpos($url, 'http://ts://') === false) {
-            $url = str_replace('http://', 'http://ts://', $url);
+        if (!preg_match("|^https?://ts://|", $url)) {
+            if (preg_match("/\.mp4(?=\?|$)/i", $url)) {
+                $url = preg_replace("|^(https?)://|", "$1://mp4://", $url);
+            } else if (preg_match("/\.ts(?=\?|$)/i", $url)) {
+                $url = preg_replace("|^(https?)://|", "$1://ts://", $url);
+            }
         }
 
         return $url;

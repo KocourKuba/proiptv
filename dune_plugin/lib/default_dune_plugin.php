@@ -921,11 +921,6 @@ class Default_Dune_Plugin implements DunePlugin
             throw new Exception("Empty url!");
         }
 
-        if (!preg_match('/\.' . VIDEO_PATTERN . '$/i', $stream_url)
-            && !preg_match('/\.' . AUDIO_PATTERN . '$/i', $stream_url)) {
-            $stream_url = HD::make_ts($stream_url);
-        }
-
         $ext_params = $channel->get_ext_params();
         if (isset($ext_params[PARAM_DUNE_PARAMS])) {
             //hd_debug_print("Additional dune params: $dune_params");
@@ -944,7 +939,7 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
-        return $stream_url;
+        return HD::make_ts($stream_url);
     }
 
     ///////////////////////////////////////////////////////////////////////
