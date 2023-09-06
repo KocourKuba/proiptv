@@ -622,12 +622,12 @@ class Starnet_Tv implements User_Input_Handler
                 $url .= "zoom:$zoom_preset";
             }
 
-            hd_debug_print($url);
         } catch (Exception $ex) {
             hd_debug_print("Exception: " . $ex->getMessage());
             $url = '';
         }
 
+        hd_debug_print($url);
         return $url;
     }
 
@@ -717,6 +717,7 @@ class Starnet_Tv implements User_Input_Handler
         foreach ($this->plugin->get_groups_order()->get_order() as $id) {
             $group = $this->groups->get($id);
             if ($group !== null && !$group->is_disabled()) {
+                $group_icon = $group->get_icon_url();
                 $groups[] = array
                 (
                     PluginTvGroup::id => $group->get_id(),
