@@ -526,7 +526,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         $this->create_menu_item($menu_items, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete'), "star.png");
                     } else {
                         $channel_id = $media_url->channel_id;
-                        hd_debug_print("Selected channel id: $channel_id");
+                        //hd_debug_print("Selected channel id: $channel_id");
 
                         $is_in_favorites = $this->plugin->get_favorites()->in_order($channel_id);
                         $caption = $is_in_favorites ? TR::t('delete') : TR::t('add');
@@ -547,17 +547,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         if (is_android() && !is_apk()) {
                             $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                             $is_external = $this->plugin->is_channel_for_ext_player($channel_id);
-                            $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), ($is_external ? "play.png" : null));
-                            $this->create_menu_item($menu_items, ACTION_INTERNAL_PLAYER, TR::t('tv_screen_internal_player'), ($is_external ? null : "play.png"));
+                            $this->create_menu_item($menu_items,
+                                ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), ($is_external ? "play.png" : null));
+                            $this->create_menu_item($menu_items,
+                                ACTION_INTERNAL_PLAYER, TR::t('tv_screen_internal_player'), ($is_external ? null : "play.png"));
                             $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                         }
 
-                        $zoom_data = $this->plugin->get_channel_zoom($channel_id);
-                        foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-                            $this->create_menu_item($common_menu, ACTION_ZOOM_APPLY, TR::t($zoom_item),
-                                strcmp($idx, $zoom_data) !== 0 ? null : "aspect.png",
-                                array(ACTION_ZOOM_SELECT => (string)$idx));
-                        }
+                        $this->create_menu_item($common_menu, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ration'), "aspect.png");
                     }
 
                     $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
@@ -578,7 +575,22 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
+
+                $this->create_menu_item($menu_items, ACTION_ZOOM_POPUP_MENU, TR::t('tv_screen_toggle_icons_aspect'));
                 $this->create_menu_item($menu_items, ACTION_REFRESH_SCREEN, TR::t('refresh'),"refresh.png");
+
+                return Action_Factory::show_popup_menu($menu_items);
+
+            case ACTION_ZOOM_POPUP_MENU:
+                $menu_items = array();
+                $zoom_data = $this->plugin->get_channel_zoom($media_url->channel_id);
+                foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
+                    $this->create_menu_item($common_menu,
+                        ACTION_ZOOM_APPLY,
+                        TR::t($zoom_item),
+                        (strcmp($idx, $zoom_data) !== 0 ? null : "check.png"),
+                        array(ACTION_ZOOM_SELECT => (string)$idx));
+                }
 
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -680,6 +692,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_INTERNAL_PLAYER:
                 $this->plugin->set_channel_for_ext_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
+
+            case ACTION_TOGGLE_ICONS_TYPE:
+                $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
+                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
         }
 
         return null;

@@ -204,15 +204,22 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
                 }
 
-                $zoom_data = $this->plugin->get_channel_zoom($channel_id);
+                $this->create_menu_item($this,$menu_items, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ration'), "aspect.png");
+
+                return Action_Factory::show_popup_menu($menu_items);
+
+            case ACTION_ZOOM_POPUP_MENU:
+                $menu_items = array();
+                $zoom_data = $this->plugin->get_channel_zoom($media_url->channel_id);
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-                    $this->create_menu_item($this, $menu_items, ACTION_ZOOM_APPLY, TR::t($zoom_item),
-                        strcmp($idx, $zoom_data) !== 0 ? null : "aspect.png",
+                    $this->create_menu_item($this, $menu_items,
+                        ACTION_ZOOM_APPLY,
+                        TR::t($zoom_item),
+                        (strcmp($idx, $zoom_data) !== 0 ? null : "check.png"),
                         array(ACTION_ZOOM_SELECT => (string)$idx));
                 }
 
                 return Action_Factory::show_popup_menu($menu_items);
-
             case ACTION_ZOOM_APPLY:
                 if (isset($user_input->{ACTION_ZOOM_SELECT})) {
                     $zoom_select = $user_input->{ACTION_ZOOM_SELECT};

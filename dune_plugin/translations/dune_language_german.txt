@@ -29,7 +29,8 @@ yes_no_confirm_msg = Are you sure?
 sort_items = Sort by name
 reset_default = Zurücksetzen to default
 custom = Brauch
-scroll_page = Прокрутка страницы
+scroll_page = Scroll page
+video_aspect_ration = Video aspect ration
 
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten
@@ -181,6 +182,7 @@ tv_screen_channel_info__2 = %s|Archive: %s day(s)
 tv_screen_channel_info__3 = %s|Archive: %s day(s)|Aspect ratio: %s
 tv_screen_external_player = externer Player
 tv_screen_internal_player = Play by internal player
+tv_screen_toggle_icons_aspect = Toggle icons proportions
 
 warn_msg2__1 = Fehlende oder nicht vollständige Daten für die URL-Generierung.\nMöglicherweise wurden keine Kontodaten eingegeben oder der Kanal ist im aktuellen Abonnement nicht vorhanden.\n %s
 

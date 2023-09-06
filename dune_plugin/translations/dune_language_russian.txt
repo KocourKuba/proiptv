@@ -30,6 +30,7 @@ sort_items = Сортировать по имени
 reset_default = Сбросить по умолчанию
 custom = Произвольный
 scroll_page = Прокрутка страницы
+video_aspect_ration = Масштабирование изображения
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное
@@ -165,6 +166,7 @@ tv_screen_channel_info__2 = %s|Архив: %s дней
 tv_screen_channel_info__3 = %s|Архив: %s дней|Масштаб: %s
 tv_screen_external_player = Воспроизводить внешним плейером
 tv_screen_internal_player = Воспроизводить внутренним плейером
+tv_screen_toggle_icons_aspect = Изменить пропорции иконок
 
 edit_list_added__1 = Добавлено файлов: %s
 edit_list_added__2 = Добавлено файлов: %s из: %s
