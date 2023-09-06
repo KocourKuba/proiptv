@@ -74,16 +74,15 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         Control_Factory::add_combobox($defs, $this, null, PARAM_USER_CATCHUP,
             TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, self::CONTROLS_WIDTH, true);
 
+        //////////////////////////////////////
+        // additional parameters
+
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_EXT_PARAMS_DLG, TR::t('setup_channels_ext_params'), TR::t('edit'),
             get_image_path('web.png'), self::CONTROLS_WIDTH);
 
-        if (HD::rows_api_support()) {
-            $square_icons = $this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
-            Control_Factory::add_image_button($defs, $this, null,
-                PARAM_SQUARE_ICONS, TR::t('setup_channels_square_icons'), SetupControlSwitchDefs::$on_off_translated[$square_icons],
-                get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
-        }
+        //////////////////////////////////////
+        // reset playlist settings
 
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_RESET_PLAYLIST_DLG,
             TR::t('setup_channels_src_reset_playlist'), TR::t('clear'),
@@ -190,12 +189,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->set_setting(PARAM_USER_CATCHUP, $new_value);
                 $this->plugin->tv->unload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-
-            case PARAM_SQUARE_ICONS:
-                $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
-                $this->invalidate_epfs();
-
-                return $this->update_epfs_data($plugin_cookies, null, Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case self::CONTROL_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
