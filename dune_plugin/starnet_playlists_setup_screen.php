@@ -156,6 +156,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case ACTION_CHANGE_PLAYLIST:
                 $this->plugin->get_playlists()->set_saved_pos($new_value);
                 $this->plugin->save();
+                //$this->plugin->set_playlists_idx($new_value);
+
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_ITEMS_EDIT:

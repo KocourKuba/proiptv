@@ -73,14 +73,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
-        $parent_group_id = $media_url->group_id;
-        $group = $this->plugin->tv->get_group($parent_group_id);
-
         $channel_id = $media_url->channel_id;
         $sel_ndx = $user_input->sel_ndx;
-
-        if (is_null($group))
-            return null;
 
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
@@ -124,6 +118,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $defs = array();
                 $find_text = $user_input->{self::ACTION_NEW_SEARCH};
                 $q = false;
+                if (is_null($group = $this->plugin->tv->get_group($media_url->group_id)))
+                    break;
+
                 foreach ($group->get_group_channels() as $idx => $tv_channel) {
                     $ch_title = $tv_channel->get_title();
                     $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
@@ -149,7 +146,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->update_current_folder($parent_media_url->group_id, $plugin_cookies, $user_input->number);
 
             case ACTION_ITEM_UP:
-                if (!$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
+                $group = $this->plugin->tv->get_group($media_url->group_id);
+                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
                     return null;
 
                 $sel_ndx--;
@@ -161,7 +159,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEM_DOWN:
-                if (!$group->get_items_order()->arrange_item($channel_id, Ordered_Array::DOWN))
+                $group = $this->plugin->tv->get_group($media_url->group_id);
+                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::DOWN))
                     return null;
 
                 $groups_cnt = $group->get_items_order()->size();
@@ -174,28 +173,17 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEM_DELETE:
-                hd_debug_print("Hide $channel_id");
-                if (!is_null($channel = $this->plugin->tv->get_channel($channel_id))) {
-                    $channel->set_disabled(true);
-                }
-
-                if ($group->is_all_channels_group()) {
-                    foreach ($this->plugin->tv->get_groups() as $group) {
-                        $group->get_items_order()->remove_item($channel_id);
-                    }
-                } else {
-                    $group->get_items_order()->remove_item($channel_id);
-                }
-
-                $this->plugin->get_disabled_channels()->add_item($channel_id);
+                $this->plugin->tv->disable_channel($channel_id, $media_url->group_id);
                 $this->invalidate_epfs();
 
                 break;
 
             case ACTION_ITEMS_SORT:
-                $group->get_items_order()->sort_order();
-                $this->invalidate_epfs();
-
+                $group = $this->plugin->tv->get_group($media_url->group_id);
+                if (!is_null($group)) {
+                    $group->get_items_order()->sort_order();
+                    $this->invalidate_epfs();
+                }
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -203,7 +191,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $this->create_menu_item($this, $menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'),"remove.png");
 
-                if (!$group->is_all_channels_group()) {
+                $group = $this->plugin->tv->get_group($media_url->group_id);
+                if (!is_null($group) && !$group->is_all_channels_group()) {
                     $this->create_menu_item($this, $menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'),"sort.png");
                 }
 
@@ -239,7 +228,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->unload_channels();
-                return $this->update_current_folder($user_input, $parent_group_id);
+                return $this->update_current_folder($user_input, $media_url->group_id);
 
             case GUI_EVENT_KEY_RETURN:
                 return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
@@ -270,8 +259,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         (
             PluginRegularFolderItem::media_url => MediaURL::encode(array('channel_id' => $channel->get_id(), 'group_id' => $group->get_id())),
             PluginRegularFolderItem::caption => $channel->get_title(),
-            PluginRegularFolderItem::view_item_params => array
-            (
+            PluginRegularFolderItem::view_item_params => array(
                 ViewItemParams::icon_path => $channel->get_icon_url(),
                 ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
                 ViewItemParams::item_detailed_info => $detailed_info,
@@ -334,275 +322,16 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_folder_views()
     {
-        $background = $this->plugin->plugin_info['app_background'];
-
         return array(
+            $this->plugin->get_screen_view('icons_4x3_caption'),
+            $this->plugin->get_screen_view('icons_5x3_caption'),
+            $this->plugin->get_screen_view('icons_3x3_no_caption'),
+            $this->plugin->get_screen_view('icons_4x4_no_caption'),
+            $this->plugin->get_screen_view('icons_5x4_no_caption'),
 
-            // 4x3 with title
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 4,
-                    ViewParams::num_rows => 3,
-                    ViewParams::background_path => $background,
-                    ViewParams::background_order => 0,
-                    ViewParams::paint_details => false,
-                    ViewParams::paint_sandwich => true,
-                    ViewParams::sandwich_base => Default_Dune_Plugin::SANDWICH_BASE,
-                    ViewParams::sandwich_mask => Default_Dune_Plugin::SANDWICH_MASK,
-                    ViewParams::sandwich_cover => Default_Dune_Plugin::SANDWICH_COVER,
-                    ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
-                    ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
-                    ViewParams::sandwich_icon_upscale_enabled => true,
-                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                ),
-
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_layout => HALIGN_CENTER,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::item_paint_caption => true,
-                    ViewItemParams::icon_scale_factor => 1.25,
-                    ViewItemParams::icon_sel_scale_factor => 1.5,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::icon_keep_aspect_ratio => true,
-                ),
-
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
-            ),
-
-            // 3x3 without title
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 3,
-                    ViewParams::num_rows => 3,
-                    ViewParams::background_path => $background,
-                    ViewParams::background_order => 0,
-                    ViewParams::paint_details => false,
-                    ViewParams::paint_sandwich => true,
-                    ViewParams::sandwich_base => Default_Dune_Plugin::SANDWICH_BASE,
-                    ViewParams::sandwich_mask => Default_Dune_Plugin::SANDWICH_MASK,
-                    ViewParams::sandwich_cover => Default_Dune_Plugin::SANDWICH_COVER,
-                    ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
-                    ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
-                    ViewParams::sandwich_icon_upscale_enabled => true,
-                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                ),
-
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_layout => HALIGN_CENTER,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::item_paint_caption => true,
-                    ViewItemParams::icon_scale_factor => 1.25,
-                    ViewItemParams::icon_sel_scale_factor => 1.5,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                ),
-
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
-            ),
-
-            // 4x4 without title
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 4,
-                    ViewParams::num_rows => 4,
-                    ViewParams::background_path => $background,
-                    ViewParams::background_order => 0,
-                    ViewParams::paint_details => false,
-                    ViewParams::paint_sandwich => true,
-                    ViewParams::sandwich_base => Default_Dune_Plugin::SANDWICH_BASE,
-                    ViewParams::sandwich_mask => Default_Dune_Plugin::SANDWICH_MASK,
-                    ViewParams::sandwich_cover => Default_Dune_Plugin::SANDWICH_COVER,
-                    ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
-                    ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
-                    ViewParams::sandwich_icon_upscale_enabled => true,
-                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                ),
-
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_layout => HALIGN_CENTER,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::item_paint_caption => false,
-                    ViewItemParams::icon_scale_factor => 1.0,
-                    ViewItemParams::icon_sel_scale_factor => 1.2,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                ),
-
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
-            ),
-
-            // 5x4 without title
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 5,
-                    ViewParams::num_rows => 4,
-                    ViewParams::background_path => $background,
-                    ViewParams::background_order => 0,
-                    ViewParams::paint_details => false,
-                    ViewParams::paint_sandwich => true,
-                    ViewParams::sandwich_base => Default_Dune_Plugin::SANDWICH_BASE,
-                    ViewParams::sandwich_mask => Default_Dune_Plugin::SANDWICH_MASK,
-                    ViewParams::sandwich_cover => Default_Dune_Plugin::SANDWICH_COVER,
-                    ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
-                    ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
-                    ViewParams::sandwich_icon_upscale_enabled => true,
-                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                ),
-
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_layout => HALIGN_CENTER,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::item_paint_caption => false,
-                    ViewItemParams::icon_scale_factor => 1.0,
-                    ViewItemParams::icon_sel_scale_factor => 1.2,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH
-                ),
-
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
-            ),
-
-            // 1x12 list view with info
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 1,
-                    ViewParams::num_rows => 12,
-                    ViewParams::paint_scrollbar => true,
-                    ViewParams::paint_widget => true,
-                    ViewParams::paint_help_line => true,
-                    ViewParams::paint_details => true,
-                    ViewParams::paint_details_box_background => true,
-                    ViewParams::paint_content_box_background => true,
-                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
-                    ViewParams::background_path => $background,
-                    ViewParams::background_order => 0,
-                    ViewParams::item_detailed_info_text_color => 11,
-                    ViewParams::item_detailed_info_auto_line_break => true,
-                    ViewParams::optimize_full_screen_background => true,
-                    ViewParams::sandwich_icon_upscale_enabled => true,
-                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                    ViewParams::zoom_detailed_icon => false,
-                ),
-
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_layout => HALIGN_LEFT,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_dx => 20,
-                    ViewItemParams::icon_dy => -5,
-                    ViewItemParams::icon_width => 70,
-                    ViewItemParams::icon_height => 50,
-                    ViewItemParams::item_caption_dx => 30,
-                    ViewItemParams::item_caption_width => 1100,
-                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
-                    ViewItemParams::icon_keep_aspect_ratio => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                ),
-
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                ),
-            ),
-
-            // 2x12 title list view with right side icon
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 2,
-                    ViewParams::num_rows => 12,
-                    ViewParams::paint_scrollbar => true,
-                    ViewParams::paint_widget => true,
-                    ViewParams::paint_help_line => true,
-                    ViewParams::paint_details => true,
-                    ViewParams::paint_details_box_background => true,
-                    ViewParams::paint_content_box_background => true,
-                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
-                    ViewParams::background_path => $background,
-                    ViewParams::background_order => 0,
-                    ViewParams::item_detailed_info_text_color => 11,
-                    ViewParams::item_detailed_info_auto_line_break => true,
-                    ViewParams::optimize_full_screen_background => true,
-                    ViewParams::sandwich_icon_upscale_enabled => true,
-                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                    ViewParams::zoom_detailed_icon => false,
-                ),
-
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_layout => HALIGN_LEFT,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_dx => 20,
-                    ViewItemParams::icon_dy => -5,
-                    ViewItemParams::icon_width => 70, //$square_icons ? 50 : 70,
-                    ViewItemParams::icon_height => 50,
-                    ViewItemParams::item_caption_dx => 74,
-                    ViewItemParams::item_caption_width => 550,
-                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
-                    ViewItemParams::icon_keep_aspect_ratio => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                ),
-
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                ),
-            ),
-
+            $this->plugin->get_screen_view('list_1x12_info'),
+            $this->plugin->get_screen_view('list_2x12_info'),
+            $this->plugin->get_screen_view('list_3x12_no_info'),
         );
     }
 }

@@ -56,11 +56,11 @@ class Default_Group extends Json_Serializer implements Group
     public function __construct($plugin, $id, $title, $icon_url = null, $order_prefix = PARAM_CHANNELS_ORDER)
     {
         $this->plugin = $plugin;
-
+/*
         if (is_null($icon_url)) {
             $icon_url = static::DEFAULT_GROUP_ICON_PATH;
         }
-
+*/
         if (is_null($title)) {
             $title = $id;
         }
@@ -102,6 +102,14 @@ class Default_Group extends Json_Serializer implements Group
     public function get_icon_url()
     {
         return $this->_icon_url;
+    }
+
+    /**
+     * @param string $icon_url
+     */
+    public function set_icon_url($icon_url)
+    {
+        $this->_icon_url = $icon_url;
     }
 
     /**
@@ -182,6 +190,13 @@ class Default_Group extends Json_Serializer implements Group
         return $this->plugin->get_setting($this->_order_settings, new Ordered_Array());
     }
 
+    /**
+     * @param  Ordered_Array $order
+     */
+    public function set_items_order($order)
+    {
+        $this->plugin->set_setting($this->_order_settings, $order);
+    }
     /**
      * @param Channel $channel
      */

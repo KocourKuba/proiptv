@@ -18,6 +18,11 @@ interface Group
     public function get_icon_url();
 
     /**
+     * @param string $icon_url
+     */
+    public function set_icon_url($icon_url);
+
+    /**
      * @return bool
      */
     public function is_favorite_group();
@@ -63,4 +68,9 @@ interface Group
      * @return Ordered_Array
      */
     public function get_items_order();
+
+    /**
+     * @param Ordered_Array $order
+     */
+    public function set_items_order($order);
 }

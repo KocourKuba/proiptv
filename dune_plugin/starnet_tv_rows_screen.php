@@ -642,14 +642,17 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 if ($media_url->group_id === FAVORITES_GROUP_ID) {
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                    return $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, $media_url->channel_id, $plugin_cookies);
+                    return $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null, $plugin_cookies);
                 }
 
                 break;
 
             case ACTION_ITEM_DELETE:
-                hd_debug_print("Hide $media_url->group_id");
-                $this->plugin->tv->disable_group($media_url->group_id);
+                if (isset($user_input->selected_item_id)) {
+                    $this->plugin->tv->disable_channel($media_url->channel_id, $media_url->group_id);
+                } else {
+                    $this->plugin->tv->disable_group($media_url->group_id);
+                }
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_CHANGE_PLAYLIST:
@@ -659,6 +662,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_FOLDER_SELECTED:
                 if (isset($user_input->playlist_idx)) {
                     $this->plugin->get_playlists()->set_saved_pos($user_input->playlist_idx);
+                    $this->plugin->save(PLUGIN_PARAMETERS);
                     return $this->plugin->tv->reload_channels($this, $plugin_cookies);
                 }
                 break;
@@ -708,7 +712,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_history_rows($plugin_cookies)
     {
         //hd_debug_print();
-        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_HISTORY)) {
+        if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_HISTORY)) {
             hd_debug_print("History group disabled");
             return null;
         }
@@ -828,7 +832,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_favorites_rows($plugin_cookies)
     {
         //hd_debug_print();
-        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_FAVORITES)) {
+        if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES)) {
             hd_debug_print("Favorites group disabled");
             return null;
         }
@@ -881,7 +885,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_all_channels_row($plugin_cookies)
     {
         //hd_debug_print();
-        if (!$this->plugin->is_special_groups_enabled($plugin_cookies, Starnet_Interface_Setup_Screen::CONTROL_SHOW_ALL)) {
+        if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL)) {
             hd_debug_print("All channels group disabled");
             return null;
         }

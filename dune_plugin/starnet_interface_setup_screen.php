@@ -9,10 +9,6 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     const ID = 'interface_setup';
 
     const CONTROL_SHOW_TV = 'show_tv';
-    const CONTROL_SHOW_ALL = 'show_all';
-    const CONTROL_SHOW_FAVORITES = 'show_favorites';
-    const CONTROL_SHOW_HISTORY = 'show_history';
-    const CONTROL_ASK_EXIT = 'ask_exit';
     const CONTROL_EPG_FONT_SIZE = 'epg_font_size';
 
     ///////////////////////////////////////////////////////////////////////
@@ -44,47 +40,30 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 get_image_path(SetupControlSwitchDefs::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
         }
 
-        if (!isset($plugin_cookies->{self::CONTROL_ASK_EXIT})) {
-            $plugin_cookies->{self::CONTROL_ASK_EXIT} = SetupControlSwitchDefs::switch_on;
-        }
-
-        $ask_exit = $plugin_cookies->{self::CONTROL_ASK_EXIT};
+        $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_ASK_EXIT, TR::t('setup_ask_exit'), SetupControlSwitchDefs::$on_off_translated[$ask_exit],
+            PARAM_ASK_EXIT, TR::t('setup_ask_exit'), SetupControlSwitchDefs::$on_off_translated[$ask_exit],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$ask_exit]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show all channels category
-        if (!isset($plugin_cookies->{self::CONTROL_SHOW_ALL})) {
-            $plugin_cookies->{self::CONTROL_SHOW_ALL} = SetupControlSwitchDefs::switch_on;
-        }
-
-        $show_all = $plugin_cookies->{self::CONTROL_SHOW_ALL};
+        $show_all = $this->plugin->get_parameter(PARAM_SHOW_ALL, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
+            PARAM_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show favorites category
-        if (!isset($plugin_cookies->{self::CONTROL_SHOW_FAVORITES})) {
-            $plugin_cookies->{self::CONTROL_SHOW_FAVORITES} = SetupControlSwitchDefs::switch_on;
-        }
-
-        $show_fav = $plugin_cookies->{self::CONTROL_SHOW_FAVORITES};
+        $show_fav = $this->plugin->get_parameter(PARAM_SHOW_FAVORITES, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
+            PARAM_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
-
 
         //////////////////////////////////////
         // show history category
-        if (!isset($plugin_cookies->{self::CONTROL_SHOW_HISTORY})) {
-            $plugin_cookies->{self::CONTROL_SHOW_HISTORY} = SetupControlSwitchDefs::switch_on;
-        }
-
-        $show_history = $plugin_cookies->{self::CONTROL_SHOW_HISTORY};
+        $show_history = $this->plugin->get_parameter(PARAM_SHOW_HISTORY, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
+            PARAM_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
@@ -128,16 +107,16 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 }
                 break;
 
-            case self::CONTROL_ASK_EXIT:
-                self::toggle_cookie_param($plugin_cookies, $control_id);
+            case PARAM_ASK_EXIT:
+                $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
                 return Action_Factory::invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
-            case self::CONTROL_SHOW_ALL:
-            case self::CONTROL_SHOW_FAVORITES:
-            case self::CONTROL_SHOW_HISTORY:
-                self::toggle_cookie_param($plugin_cookies, $control_id);
+            case PARAM_SHOW_ALL:
+            case PARAM_SHOW_FAVORITES:
+            case PARAM_SHOW_HISTORY:
+                $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
                 return $this->plugin->tv->reload_channels($this, $plugin_cookies);
 
             case PARAM_EPG_FONT_SIZE:

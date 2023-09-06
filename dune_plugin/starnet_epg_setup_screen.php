@@ -144,7 +144,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
 
         $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
         $control_id = $user_input->control_id;
@@ -162,9 +162,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_XMLTV_EPG_IDX:
-                $idx = $user_input->{$control_id};
-                $this->plugin->set_xmltv_source_idx($idx);
-                hd_debug_print("Selected xmltv epg idx: $idx");
+                $this->plugin->set_xmltv_source_idx($user_input->{$control_id});
+                hd_debug_print("Selected xmltv epg idx: " . $user_input->{$control_id});
                 $res = $this->plugin->epg_man->is_xmltv_cache_valid();
                 if (!empty($res)) {
                     return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'));

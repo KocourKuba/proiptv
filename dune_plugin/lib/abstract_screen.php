@@ -33,6 +33,7 @@ class Abstract_Screen implements Screen
     public function update_epfs_data($plugin_cookies, $media_urls, $post_action = null)
     {
         if ($this->need_update_epfs) {
+            $this->plugin->save();
             $this->need_update_epfs = false;
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
         }

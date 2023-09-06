@@ -451,7 +451,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     private function get_edit_order($media_url)
     {
-        //hd_debug_print($media_url->get_media_url_str());
+        hd_debug_print($media_url->get_media_url_str());
 
         switch ($media_url->edit_list) {
             case self::SCREEN_EDIT_PLAYLIST:

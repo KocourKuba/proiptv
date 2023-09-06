@@ -27,7 +27,7 @@ class Ordered_Array extends Json_Serializer
      */
     public function set_saved_pos($pos)
     {
-        $this->saved_pos = $pos;
+        $this->saved_pos = (int)$pos;
         if ($pos >= $this->size()) {
             $this->saved_pos = 0;
         }
