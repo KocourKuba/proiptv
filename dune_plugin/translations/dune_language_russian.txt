@@ -31,6 +31,8 @@ reset_default = Сбросить по умолчанию
 custom = Произвольный
 scroll_page = Прокрутка страницы
 video_aspect_ration = Масштабирование изображения
+change_group_icon = Изменить иконку категории
+change_background = Изменить обои
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное

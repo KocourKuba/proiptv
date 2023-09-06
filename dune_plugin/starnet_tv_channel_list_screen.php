@@ -143,7 +143,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::show_dialog(TR::t('search'), $defs, true);
 
             case self::ACTION_JUMP_TO_CHANNEL:
-                return $this->update_current_folder($parent_media_url->group_id, $plugin_cookies, $user_input->number);
+                return $this->invalidate_current_folder($parent_media_url->group_id, $plugin_cookies, $user_input->number);
 
             case ACTION_ITEM_UP:
                 $group = $this->plugin->tv->get_group($media_url->group_id);
@@ -235,13 +235,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->unload_channels();
-                return $this->update_current_folder($user_input, $media_url->group_id);
+                return $this->invalidate_current_folder($user_input, $media_url->group_id);
 
             case GUI_EVENT_KEY_RETURN:
                 return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
         }
 
-        return $this->update_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
     }
 
     ///////////////////////////////////////////////////////////////////////

@@ -413,18 +413,20 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
                 $post_action = null;
                 if ($url->choose_folder !== false) {
-                    $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id, ACTION_FOLDER_SELECTED,
-                        '', array('selected_data' => $url->get_media_url_str()));
+                    $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id,
+                        ACTION_FOLDER_SELECTED,
+                        '',
+                        array('selected_data' => $url->get_media_url_str()));
                 }
 
                 return (is_newer_versions() !== false) ? Action_Factory::replace_path($parent_url->windowCounter, null, $post_action) : $post_action;
 
             case self::ACTION_RESET_FOLDER:
                 $url = isset($selected_url->filepath) ? $selected_url : $parent_url;
-                $post_action = null;
-                if ($url->choose_folder !== false) {
-                    $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id, ACTION_RESET_DEFAULT);
-                }
+                $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id,
+                    ACTION_RESET_DEFAULT,
+                '',
+                    array('selected_data' => $url->get_media_url_str()));
 
                 return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
 
@@ -542,15 +544,15 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public static function get_file_icon($ref)
     {
-        if (preg_match('/\.' . AUDIO_PATTERN . '$/i', $ref)) {
+        if (preg_match('/\.(' . AUDIO_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/audio_file.aai';
-        } else if (preg_match('/\.' . VIDEO_PATTERN . '$/i', $ref)) {
+        } else if (preg_match('/\.(' . VIDEO_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/video_file.aai';
-        } else if (preg_match('/\.' . IMAGE_PATTERN . '$/i', $ref)) {
+        } else if (preg_match('/\.(' . IMAGE_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/image_file.aai';
-        } else if (preg_match('/\.' . PLAYLIST_PATTERN . '$/i', $ref)) {
+        } else if (preg_match('/\.(' . PLAYLIST_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/playlist_file.aai';
-        } else if (preg_match('/\.' . EPG_PATTERN . '$/i', $ref)) {
+        } else if (preg_match('/\.(' . EPG_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/subtitles_settings.aai';
         } else if (preg_match('/\.txt$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/language_settings.aai';
@@ -642,76 +644,11 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_folder_views()
     {
-        if (defined('ViewParams::details_box_width')) {
-            $view[] = array(
-                PluginRegularFolderView::async_icon_loading => false,
-                PluginRegularFolderView::view_params => array(
-                    ViewParams::num_cols => 1,
-                    ViewParams::num_rows => 12,
-                    ViewParams::paint_content_box_background => false,
-                    ViewParams::paint_icon_selection_box => true,
-                    ViewParams::paint_details_box_background => false,
-                    ViewParams::icon_selection_box_width => 770,
-                    ViewParams::paint_path_box_background => false,
-                    ViewParams::paint_widget_background => false,
-                    ViewParams::paint_details => true,
-                    ViewParams::paint_item_info_in_details => true,
-                    ViewParams::details_box_width => 900,
-                    ViewParams::paint_scrollbar => false,
-                    ViewParams::content_box_padding_right => 500,
-                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
-                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
-                    ViewParams::background_order => 0,
-                    ViewParams::background_height => 1080,
-                    ViewParams::background_width => 1920,
-                    ViewParams::optimize_full_screen_background => true,
-                ),
-                PluginRegularFolderView::base_view_item_params => array(
-                    ViewItemParams::item_layout => 0,
-                    ViewItemParams::icon_width => 30,
-                    ViewItemParams::icon_height => 50,
-                    ViewItemParams::item_caption_dx => 55,
-                    ViewItemParams::icon_dx => 5,
-                    ViewItemParams::icon_sel_scale_factor => 1.01,
-                    ViewItemParams::icon_keep_aspect_ratio => true,
-                    ViewItemParams::icon_sel_dx => 6,
-                    ViewItemParams::item_paint_caption => true,
-                    ViewItemParams::icon_valign => 1,
-                ),
-                PluginRegularFolderView::not_loaded_view_item_params => array(),
-            );
-        }
-
-        $view[] = array(
-            PluginRegularFolderView::view_params => array(
-                ViewParams::num_cols => 1,
-                ViewParams::num_rows => 10,
-                ViewParams::paint_details => true,
-                ViewParams::paint_item_info_in_details => true,
-                ViewParams::detailed_icon_scale_factor => 0.5,
-                ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
-                ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
-                ViewParams::item_detailed_info_auto_line_break => true
-            ),
-            PluginRegularFolderView::base_view_item_params => array(
-                ViewItemParams::item_paint_icon => true,
-                ViewItemParams::icon_sel_scale_factor => 1.2,
-                ViewItemParams::item_layout => HALIGN_LEFT,
-                ViewItemParams::icon_valign => VALIGN_CENTER,
-                ViewItemParams::icon_dx => 10,
-                ViewItemParams::icon_dy => -5,
-                ViewItemParams::icon_width => 50,
-                ViewItemParams::icon_height => 50,
-                ViewItemParams::icon_sel_margin_top => 0,
-                ViewItemParams::item_paint_caption => true,
-                ViewItemParams::item_caption_width => 1100,
-                ViewItemParams::item_detailed_icon_path => 'missing://'
-            ),
-            PluginRegularFolderView::not_loaded_view_item_params => array(),
-            PluginRegularFolderView::async_icon_loading => false,
-            PluginRegularFolderView::timer => Action_Factory::timer(5000),
+        return array(
+            $this->plugin->get_screen_view('list_1x12_info'),
+            $this->plugin->get_screen_view('list_2x12_info'),
+            $this->plugin->get_screen_view('icons_5x4_no_caption'),
+            $this->plugin->get_screen_view('icons_4x4_no_caption'),
         );
-        return $view;
     }
 }

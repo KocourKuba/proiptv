@@ -93,6 +93,8 @@ const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_ZOOM_SELECT = 'zoom_select';
 const ACTION_EMPTY = 'empty';
 const ACTION_PLUGIN_INFO = 'plugin_info';
+const ACTION_CHANGE_GROUP_ICON = 'change_group_icon';
+const ACTION_CHANGE_BACKGROUND = 'change_background';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';
@@ -133,6 +135,8 @@ const PARAM_TV_HISTORY_ITEMS = '_tv_history_items';
 const PARAM_USER_AGENT = 'user_agent';
 const PARAM_BUFFERING_TIME = 'buffering_time';
 const PARAM_ARCHIVE_DELAY_TIME = 'archive_delay_time';
+const PARAM_GROUPS_ICONS = 'groups_icons';
+const PARAM_PLUGIN_BACKGROUND = 'plugin_background';
 
 # HTTP params
 const USER_AGENT = 'User-Agent';
@@ -1464,31 +1468,31 @@ function get_zoom_value($preset)
 /** @noinspection PhpUndefinedClassInspection */
 function get_temp_path($path = '')
 {
-    return DuneSystem::$properties['tmp_dir_path'] . '/' . $path;
+    return DuneSystem::$properties['tmp_dir_path'] . '/' . ltrim($path, '/');
 }
 
 /** @noinspection PhpUndefinedClassInspection */
 function get_data_path($path = '')
 {
-    return DuneSystem::$properties['data_dir_path'] . '/' . $path;
+    return DuneSystem::$properties['data_dir_path'] . '/' . ltrim($path, '/');
 }
 
 /** @noinspection PhpUndefinedClassInspection */
 function get_install_path($path = '')
 {
-    return DuneSystem::$properties['install_dir_path'] . '/' . $path;
+    return DuneSystem::$properties['install_dir_path'] . '/' . ltrim($path, '/');
 }
 
 /** @noinspection PhpUndefinedClassInspection */
 function get_plugin_cgi_url($path = '')
 {
-    return DuneSystem::$properties['plugin_cgi_url'] . $path;
+    return DuneSystem::$properties['plugin_cgi_url'] . ltrim($path, '/');
 }
 
 /** @noinspection PhpUndefinedClassInspection */
 function get_plugin_www_url($path = '')
 {
-    return DuneSystem::$properties['plugin_www_url'] . $path;
+    return DuneSystem::$properties['plugin_www_url'] . ltrim($path, '/');
 }
 
 /** @noinspection PhpUndefinedClassInspection */
@@ -1501,9 +1505,20 @@ function get_plugin_name()
  * @param string $image
  * @return string
  */
-function get_image_path($image = null)
+function get_image_path($image = '')
 {
-    return get_install_path("/img/" . ($image === null ?: ltrim($image, '/')));
+    return get_install_path("img/" . ltrim($image, '/'));
+}
+
+/**
+ * @param string $image
+ * @return string
+ */
+function get_cached_image_path($image = '')
+{
+    $cache_image_path = get_data_path("cached_img/");
+    create_path($cache_image_path);
+    return $cache_image_path . ltrim($image, '/');
 }
 
 function get_plugin_manifest_info()

@@ -11,6 +11,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_EPG_SETTINGS = 'epg_settings';
     const ACTION_CHANNELS_SETTINGS = 'channels_settings';
 
+    const DEFAULT_GROUP_ICON_PATH = 'plugin_file://icons/default_group.png';
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -57,7 +59,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         //dump_input_handler(__METHOD__, $user_input);
 
-        $sel_idx = $user_input->sel_ndx;
+        $sel_ndx = $user_input->sel_ndx;
         if (isset($user_input->selected_media_url)) {
             $sel_media_url = MediaURL::decode($user_input->selected_media_url);
         } else {
@@ -94,9 +96,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
 
                 $min_sel = $this->plugin->get_special_groups_count();
-                $sel_idx--;
-                if ($sel_idx < $min_sel) {
-                    $sel_idx = $min_sel;
+                $sel_ndx--;
+                if ($sel_ndx < $min_sel) {
+                    $sel_ndx = $min_sel;
                 }
                 $this->invalidate_epfs();
 
@@ -107,9 +109,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
 
                 $groups_cnt = $this->plugin->get_special_groups_count() + $this->plugin->get_groups_order()->size();
-                $sel_idx++;
-                if ($sel_idx >= $groups_cnt) {
-                    $sel_idx = $groups_cnt - 1;
+                $sel_ndx++;
+                if ($sel_ndx >= $groups_cnt) {
+                    $sel_ndx = $groups_cnt - 1;
                 }
                 $this->invalidate_epfs();
 
@@ -178,6 +180,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->create_menu_item($this, $menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                 $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
 
+                $this->create_menu_item($this, $menu_items, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'),"image.png");
+                $this->create_menu_item($this, $menu_items, ACTION_CHANGE_BACKGROUND, TR::t('change_background'),"image.png");
+                $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
+
                 if ($this->plugin->get_disabled_groups()->size()) {
                     $this->create_menu_item($this,
                         $menu_items,
@@ -209,6 +215,68 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return Action_Factory::show_popup_menu($menu_items);
 
+            case ACTION_CHANGE_GROUP_ICON:
+            case ACTION_CHANGE_BACKGROUND:
+                $media_url_str = MediaURL::encode(
+                    array(
+                        'screen_id' => Starnet_Folder_Screen::ID,
+                        'source_window_id' => static::ID,
+                        'choose_file' => array(
+                            'action' => $user_input->control_id,
+                            'extension'	=> 'png|jpg',
+                        ),
+                        'allow_network' => !is_apk(),
+                        'read_only' => true,
+                        'windowCounter' => 1,
+                    )
+                );
+                return Action_Factory::open_folder($media_url_str, TR::t('edit_list_file'));
+
+            case ACTION_FILE_SELECTED:
+                $data = MediaURL::decode($user_input->selected_data);
+                $cached_image = get_cached_image_path($data->caption);
+                hd_print("copy from: $data->filepath to: $cached_image");
+                if (!copy($data->filepath, $cached_image)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                }
+
+                if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
+                    hd_debug_print("Set image $cached_image as background");
+                    $this->plugin->set_setting(PARAM_PLUGIN_BACKGROUND, $cached_image);
+                    $this->plugin->create_screen_views();
+                    $this->plugin->save();
+                } else if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
+                    $group = $this->plugin->tv->get_group($sel_media_url->group_id);
+                    if (is_null($group)) break;
+
+                    hd_debug_print("Assign icon: $cached_image to group: $sel_media_url->group_id");
+                    $group->set_icon_url($cached_image);
+                    $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
+                    $group_icons->set_by_id($sel_media_url->group_id, $cached_image);
+                    $this->plugin->save();
+                }
+                break;
+
+            case ACTION_RESET_DEFAULT:
+                $data = MediaURL::decode($user_input->selected_data);
+                if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
+                    hd_debug_print("Set background to default");
+                    $this->plugin->remove_setting(PARAM_PLUGIN_BACKGROUND);
+                    $this->plugin->create_screen_views();
+                    $this->plugin->save();
+                } else if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
+                    $group = $this->plugin->tv->get_group($sel_media_url->group_id);
+                    if (is_null($group)) break;
+
+                    hd_debug_print("Reset icon for group: $sel_media_url->group_id to default");
+                    $group->set_icon_url(null);
+                    /** @var Hashed_Array $group_icons */
+                    $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
+                    $group_icons->erase($sel_media_url->group_id);
+                    $this->plugin->save();
+                }
+                break;
+
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->unload_channels();
@@ -219,7 +287,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
         }
 
-        return $this->update_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $sel_idx);
+        return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $sel_ndx);
     }
 
     /**
@@ -269,7 +337,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $group = $this->plugin->tv->get_group($item);
             if (is_null($group) || $group->is_disabled()) continue;
 
-            $group_url = $group->get_icon_url() !== null ? $group->get_icon_url() : Default_Group::DEFAULT_GROUP_ICON_PATH;
+            $group_url = $group->get_icon_url() !== null ? $group->get_icon_url() : self::DEFAULT_GROUP_ICON_PATH;
             $items[] = array(
                 PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
                 PluginRegularFolderItem::caption => $group->get_title(),

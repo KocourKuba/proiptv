@@ -85,9 +85,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
 				$this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
                 $this->invalidate_epfs();
-
-
-				return Action_Factory::show_title_dialog($message, $this->update_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
+				return Action_Factory::show_title_dialog($message, $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $this->create_menu_item($this, $menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
@@ -98,7 +96,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
         }
 
-        return $this->update_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
     }
 
     /**

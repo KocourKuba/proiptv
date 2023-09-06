@@ -22,7 +22,6 @@ class Default_Dune_Plugin implements DunePlugin
     // views variables
     const TV_SANDWICH_WIDTH = 245;
     const TV_SANDWICH_HEIGHT = 140;
-    const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 
     /**
      * @var array
@@ -467,6 +466,17 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $this->settings[$type] = $val;
         $this->is_durty[PLUGIN_SETTINGS] = true;
+        $this->save();
+    }
+
+    /**
+     * Remove setting for selected playlist
+     *
+     * @param string $type
+     */
+    public function remove_setting($type)
+    {
+        unset($this->settings[$type]);
         $this->save();
     }
 
@@ -1148,6 +1158,16 @@ class Default_Dune_Plugin implements DunePlugin
         return null;
     }
 
+    public function get_background_image()
+    {
+        $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND, $this->plugin_info['app_background']);
+        if (!file_exists($background)) {
+            $background = $this->plugin_info['app_background'];
+        }
+
+        return $background;
+    }
+
     ///////////////////////////////////////////////////////////////////////
     //
     // Screen views parameters
@@ -1161,7 +1181,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function create_screen_views()
     {
-        $background = $this->plugin_info['app_background'];
+        $background = $this->get_background_image();
 
         $this->screens_views = array(
 
@@ -1203,13 +1223,11 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
                     ViewItemParams::icon_keep_aspect_ratio => true,
-                    //ViewItemParams::icon_path => self::DEFAULT_CHANNEL_ICON_PATH,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array
                 (
                     ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => 'missing://',
                 ),
             ),
@@ -1384,13 +1402,11 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => false,
                     ViewItemParams::icon_scale_factor => 1.0,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
-                    //ViewItemParams::icon_path => self::DEFAULT_CHANNEL_ICON_PATH
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array
                 (
                     ViewItemParams::item_paint_icon => true,
-                    //ViewItemParams::icon_path => self::DEFAULT_CHANNEL_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => 'missing://',
                 ),
             ),
@@ -1424,13 +1440,11 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => false,
                     ViewItemParams::icon_scale_factor => 1.0,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
-                    //ViewItemParams::icon_path => self::DEFAULT_CHANNEL_ICON_PATH,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array
                 (
                     ViewItemParams::item_paint_icon => true,
-                    //ViewItemParams::icon_path => self::DEFAULT_CHANNEL_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => 'missing://',
                 ),
             ),
@@ -1463,7 +1477,6 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => true,
                     ViewItemParams::icon_scale_factor => 1.25,
                     ViewItemParams::icon_sel_scale_factor => 1.5,
-                    //ViewItemParams::icon_path => self::DEFAULT_CHANNEL_ICON_PATH,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
@@ -1497,13 +1510,11 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => true,
                     ViewItemParams::icon_scale_factor => 1.25,
                     ViewItemParams::icon_sel_scale_factor => 1.5,
-                    //ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array
                 (
                     ViewItemParams::item_paint_icon => true,
-                    //ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => 'missing://',
                 ),
             ),

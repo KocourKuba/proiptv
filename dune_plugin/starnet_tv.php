@@ -13,6 +13,7 @@ class Starnet_Tv implements User_Input_Handler
 
     public static $tvg_id = array('tvg-id', 'tvg-name');
     public static $tvg_archive = array('catchup-days', 'catchup-time', 'timeshift', 'arc-timeshift', 'arc-time', 'tvg-rec');
+    const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -298,6 +299,8 @@ class Starnet_Tv implements User_Input_Handler
             $catchup['global'] = $user_catchup;
         }
 
+        /** @var Hashed_Array $group_icons */
+        $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
         // suppress save after add group
         $this->plugin->set_pospone_save();
 
@@ -309,7 +312,7 @@ class Starnet_Tv implements User_Input_Handler
             if ($this->groups->has($title)) continue;
 
             // using title as id
-            $group = new Default_Group($this->plugin, $title, null, null);
+            $group = new Default_Group($this->plugin, $title, null, $group_icons->get($title));
             $adult = (strpos($title, "зрослы") !== false
                 || strpos($title, "adult") !== false
                 || strpos($title, "18+") !== false
@@ -386,7 +389,7 @@ class Starnet_Tv implements User_Input_Handler
                     $icon_url = $this->plugin->epg_man->get_picon($epg_ids);
                     if (empty($icon_url)) {
                         //hd_debug_print("picon for $channel_name not found");
-                        $icon_url = "plugin_file://icons/default_channel.png";
+                        $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
                     }
                 } else if (!empty($icon_url_base) && !preg_match("|https?://|", $icon_url)) {
                     $icon_url = $icon_url_base . $icon_url;

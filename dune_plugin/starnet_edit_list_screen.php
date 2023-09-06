@@ -293,21 +293,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::change_behaviour(
                     $this->get_action_map($parent_media_url,$plugin_cookies),
                     0,
-                    Action_Factory::invalidate_folders(array(static::ID),
-                        Action_Factory::update_regular_folder(
-                            $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
-                            true,
-                            $user_input->sel_ndx)
-                    )
+                    $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx)
                 );
         }
 
         // refresh current screen
-        return Action_Factory::invalidate_folders(array(static::ID),
-            Action_Factory::update_regular_folder(
-                $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
-                true,
-                $user_input->sel_ndx));
+        return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
     }
 
     /**
@@ -355,7 +346,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             );
         }
 
-        //hd_debug_print("Loaded items " . count($items));
         return $items;
     }
 
@@ -383,65 +373,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_folder_views()
     {
-        //hd_debug_print();
         return array(
-
-            // 1x12 list view with info
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 1,
-                    ViewParams::num_rows => 12,
-                    ViewParams::paint_details => false,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
-                    ViewParams::background_order => 0,
-                    ViewParams::background_height => 1080,
-                    ViewParams::background_width => 1920,
-                    ViewParams::optimize_full_screen_background => true,
-                ),
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => false,
-                    ViewItemParams::item_layout => HALIGN_LEFT,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::item_caption_dx => 20,
-                    ViewItemParams::item_caption_width => 1700,
-                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
-                ),
-                PluginRegularFolderView::not_loaded_view_item_params => array(),
-            ),
-
-            // 3x10 list view
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 3,
-                    ViewParams::num_rows => 10,
-                    ViewParams::paint_details => false,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
-                    ViewParams::background_order => 0,
-                    ViewParams::background_height => 1080,
-                    ViewParams::background_width => 1920,
-                    ViewParams::optimize_full_screen_background => true,
-                ),
-
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => false,
-                    ViewItemParams::item_layout => HALIGN_LEFT,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::item_caption_dx => 20,
-                    ViewItemParams::item_caption_width => 485,
-                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
-                ),
-
-                PluginRegularFolderView::not_loaded_view_item_params => array(),
-            ),
+            $this->plugin->get_screen_view('list_1x12_info'),
+            $this->plugin->get_screen_view('list_2x12_info'),
+            $this->plugin->get_screen_view('list_3x12_no_info'),
+            $this->plugin->get_screen_view('icons_4x3_caption'),
+            $this->plugin->get_screen_view('icons_5x3_caption'),
         );
     }
 

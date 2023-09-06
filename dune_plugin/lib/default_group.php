@@ -4,8 +4,6 @@ require_once 'json_serializer.php';
 
 class Default_Group extends Json_Serializer implements Group
 {
-    const DEFAULT_GROUP_ICON_PATH = 'plugin_file://icons/default_group.png';
-
     /**
      * @var string
      */
@@ -56,11 +54,7 @@ class Default_Group extends Json_Serializer implements Group
     public function __construct($plugin, $id, $title, $icon_url = null, $order_prefix = PARAM_CHANNELS_ORDER)
     {
         $this->plugin = $plugin;
-/*
-        if (is_null($icon_url)) {
-            $icon_url = static::DEFAULT_GROUP_ICON_PATH;
-        }
-*/
+
         if (is_null($title)) {
             $title = $id;
         }

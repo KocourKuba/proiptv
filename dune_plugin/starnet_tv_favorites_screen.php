@@ -113,7 +113,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return null;
         }
 
-        return $this->update_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
     }
 
     ///////////////////////////////////////////////////////////////////////

@@ -35,7 +35,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
             PluginControlsFolderView::params => array(
                 PluginFolderViewParams::paint_path_box => true,
                 PluginFolderViewParams::paint_content_box_background => true,
-                PluginFolderViewParams::background_url => $this->plugin->plugin_info['app_background'],
+                PluginFolderViewParams::background_url => $this->plugin->get_background_image(),
             ),
         );
 
