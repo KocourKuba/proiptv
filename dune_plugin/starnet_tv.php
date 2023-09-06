@@ -390,7 +390,10 @@ class Starnet_Tv implements User_Input_Handler
                             $extension = $m[5] ?: '.ts';
                             $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[4].$extension";
                         } else {
-                            $archive = 0;
+                            // if no info about catchup, use 'shift'
+                            $archive_url = $entry->getPath()
+                                . ((strpos($entry->getPath(), '?') !== false) ? '&' : '?')
+                                . 'utc=${start}&lutc=${timestamp}';
                         }
                     } else if (!preg_match("|https?://|", $archive_url)){
                         $archive_url = $entry->getPath() . $archive_url;
