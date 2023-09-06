@@ -33,12 +33,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
         $action_settings = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS);
         $show_popup = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $show_info = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
 
         $actions = array(
             GUI_EVENT_KEY_ENTER      => $action_play,
             GUI_EVENT_KEY_PLAY       => $action_play,
             GUI_EVENT_KEY_POPUP_MENU => $show_popup,
             GUI_EVENT_KEY_SETUP      => $action_settings,
+            GUI_EVENT_KEY_INFO       => $show_info,
         );
         $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
@@ -205,6 +207,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $this->create_menu_item($this,$menu_items, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ration'), "aspect.png");
+                $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
+
+                $this->create_menu_item($this,$menu_items, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), "info.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -231,6 +236,59 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_INTERNAL_PLAYER:
                 $this->plugin->set_channel_for_ext_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
+
+            case GUI_EVENT_KEY_INFO:
+                $channel = $this->plugin->tv->get_channel($channel_id);
+                if (is_null($channel)) {
+                    return null;
+                }
+
+                $info  = "ID: {$channel->get_id()}\n";
+                $info .= "Name: {$channel->get_title()}\n";
+                $info .= "Archive: " . var_export($channel->get_archive(), true) . " day's\n";
+                $info .= "Protected: " . var_export($channel->is_protected(), true) . "\n";
+                $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . "\n";
+                $groups = array();
+                foreach ($channel->get_groups() as $group) {
+                    $groups[] = $group->get_id();
+                }
+                $info .= "Categories: " . implode(', ', $groups) . "\n\n";
+
+                $lines = wrap_string_to_lines($channel->get_icon_url(), 70);
+                $info .= "Icon URL: " . implode("\n", $lines) . "\n";
+                $info .= (count($lines) > 1 ? "\n" : "");
+
+                $lines = wrap_string_to_lines($channel->get_url(), 70);
+                $info .= "Live URL: " . implode("\n", $lines) . "\n";
+                $info .= (count($lines) > 1 ? "\n" : "");
+
+                $lines = wrap_string_to_lines($channel->get_archive_url(), 70);
+                $info .= "Archive URL: " . implode("\n", $lines) . "\n";
+                $info .= (count($lines) > 1 ? "\n" : "");
+
+                $params = array();
+                foreach ($channel->get_ext_params() as $key => $param) {
+                    $params = "$key: " . str_replace("\/", "/", json_encode($param)) . "\n";
+                }
+                $info .= "Params: $params\n";
+
+                Control_Factory::add_multiline_label($defs, null, $info, 12);
+                Control_Factory::add_vgap($defs, 20);
+
+                $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+                    1160,
+                    get_image_path('page_plus_btn.png'),
+                    get_image_path('page_minus_btn.png'),
+                    DEF_LABEL_TEXT_COLOR_SILVER,
+                    TR::load_string('scroll_page')
+                );
+                Control_Factory::add_smart_label($defs, null, $text);
+                Control_Factory::add_vgap($defs, -80);
+
+                Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+                Control_Factory::add_vgap($defs, 10);
+
+                return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1700);
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");

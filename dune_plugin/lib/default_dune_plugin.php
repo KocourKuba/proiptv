@@ -989,7 +989,7 @@ class Default_Dune_Plugin implements DunePlugin
         if ($preset === null) {
             $channels_zoom->erase($channel_id);
         } else {
-            $channels_zoom->set_by_id($channel_id, $preset);
+            $channels_zoom->set($channel_id, $preset);
         }
 
         $this->set_setting(PARAM_CHANNELS_ZOOM, $channels_zoom);

@@ -41,12 +41,12 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @param TKey $id
      * @param TValue $item
      */
-    public function put($item)
+    public function put($id, $item)
     {
-        $id = $item->get_id();
-        if (!$this->has($item->get_id())) {
+        if (!$this->has($id)) {
             $this->seq[] = $id;
             $this->map[$id] = $item;
         }
@@ -62,24 +62,12 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @param TValue $item
-     */
-    public function set($item)
-    {
-        $id = $item->get_id();
-        if (!$this->has($item->get_id())) {
-            $this->seq[] = $id;
-        }
-        $this->map[$id] = $item;
-    }
-
-    /**
      * @param TKey $id
      * @param TValue $item
      */
-    public function set_by_id($id, $item)
+    public function set($id, $item)
     {
-        if (!$this->has($id)) {
+        if (!$this->has($item->get_id())) {
             $this->seq[] = $id;
         }
         $this->map[$id] = $item;

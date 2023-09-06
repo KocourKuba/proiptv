@@ -33,6 +33,7 @@ scroll_page = Прокрутка страницы
 video_aspect_ration = Масштабирование изображения
 change_group_icon = Изменить иконку категории
 change_background = Изменить обои
+channel_info_dlg = Информация о канале
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное

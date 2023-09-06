@@ -7,7 +7,6 @@ basedir=`cd "$thisdir/.." && pwd`
 plugin_name=`basename $basedir`
 
 dirpath="$FS_PREFIX/tmp/tv_app_suppliers"
-filepath="$dirpath/$plugin_name"
 
 [ -e "$dirpath" ] || mkdir "$dirpath"
 

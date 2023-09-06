@@ -335,13 +335,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             //hd_debug_print("added history: " . count($history_rows) . " rows");
         }
 
-        $favorites_rows = $this->get_favorites_rows($plugin_cookies);
+        $favorites_rows = $this->get_favorites_rows();
         if (!is_null($favorites_rows)) {
             //hd_debug_print("added favorites: " . count($favorites_rows) . " rows");
             $rows = array_merge($rows, $favorites_rows);
         }
 
-        $all_channels_rows = $this->get_all_channels_row($plugin_cookies);
+        $all_channels_rows = $this->get_all_channels_row();
         if (!is_null($all_channels_rows)) {
             $rows = array_merge($rows, $all_channels_rows);
             //hd_debug_print("added all channels: " . count($all_channels_rows) . " rows");
@@ -846,10 +846,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @param $plugin_cookies
      * @return array|null
      */
-    private function get_favorites_rows($plugin_cookies)
+    private function get_favorites_rows()
     {
         //hd_debug_print();
         if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES)) {
@@ -899,10 +898,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @param $plugin_cookies
      * @return array|null
      */
-    private function get_all_channels_row($plugin_cookies)
+    private function get_all_channels_row()
     {
         //hd_debug_print();
         if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL)) {
@@ -917,7 +915,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        /** @var Channel $channel */
         $rows = array();
         $items = array();
         $fav_stickers = null;
@@ -942,6 +939,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 RowsItemsParams::fav_sticker_icon_width,
                 RowsItemsParams::fav_sticker_icon_height));
 
+        /** @var Channel $channel */
         foreach ($this->plugin->tv->get_channels() as $channel) {
             if ($channel->is_disabled()) continue;
 

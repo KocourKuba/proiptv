@@ -255,7 +255,7 @@ class Starnet_Tv implements User_Input_Handler
             'plugin_file://icons/favorite_folder.png',
             PARAM_FAVORITES);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES));
-        $this->special_groups->put($special_group);
+        $this->special_groups->put($special_group->get_id(), $special_group);
 
 
         // History channels category
@@ -265,7 +265,7 @@ class Starnet_Tv implements User_Input_Handler
             'plugin_file://icons/history_folder.png',
             null);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_HISTORY));
-        $this->special_groups->put($special_group);
+        $this->special_groups->put($special_group->get_id(), $special_group);
 
         // All channels category
         $special_group = new Default_Group($this->plugin,
@@ -274,7 +274,7 @@ class Starnet_Tv implements User_Input_Handler
             'plugin_file://icons/all_folder.png',
             null);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL));
-        $this->special_groups->put($special_group);
+        $this->special_groups->put($special_group->get_id(), $special_group);
 
         // first check if playlist in cache
         if (!$this->plugin->init_playlist()) {
@@ -332,7 +332,7 @@ class Starnet_Tv implements User_Input_Handler
             $playlist_groups->add_item($title);
 
             // disable save
-            $this->groups->put($group);
+            $this->groups->put($group->get_id(), $group);
             $this->plugin->save();
         }
 
@@ -520,7 +520,7 @@ class Starnet_Tv implements User_Input_Handler
 
                 //hd_debug_print("channel: " . $channel->get_title());
                 $playlist_group_channels[$parent_group->get_id()][] = $channel_id;
-                $this->channels->put($channel);
+                $this->channels->put($channel->get_id(), $channel);
 
                 foreach ($epg_ids as $epg_id) {
                     $epg_ids[$epg_id] = '';

@@ -33,6 +33,7 @@ scroll_page = Scroll page
 video_aspect_ration = Video aspect ration
 change_group_icon = Change category icons
 change_background = Change background image
+channel_info_dlg = Channel info
 
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten

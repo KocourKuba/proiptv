@@ -38,8 +38,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("Plugin date:         " . $this->plugin_info['app_release_date']);
         hd_print("LocalTime            " . format_datetime('Y-m-d H:i', time()));
         hd_print("TimeZone             " . getTimeZone());
-        hd_print("Daylight             " . (date('I') ? 'yes' : 'no'));
-        hd_print("New UI support       " . (HD::rows_api_support() ? "yes" : "no"));
+        hd_print("Daylight             " . var_export(date('I'), true));
+        hd_print("New UI support       " . var_export(HD::rows_api_support(), true));
 
         hd_print("----------------------------------------------------");
 

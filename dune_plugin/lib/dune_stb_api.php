@@ -95,6 +95,7 @@ const ACTION_EMPTY = 'empty';
 const ACTION_PLUGIN_INFO = 'plugin_info';
 const ACTION_CHANGE_GROUP_ICON = 'change_group_icon';
 const ACTION_CHANGE_BACKGROUND = 'change_background';
+const ACTION_CHANNEL_INFO = 'channel_info';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';
@@ -1638,7 +1639,7 @@ function create_path($path, $dir_mode = 0777)
 }
 
 /** @noinspection PhpUnusedParameterInspection */
-function json_encode_unicode($data)
+function json_encode_unicode($data, $flags = 0)
 {
     # Analog of json_encode() with the JSON_UNESCAPED_UNICODE option available in PHP 5.4.0 and higher
 
@@ -1830,4 +1831,17 @@ function raw_json_encode($arr)
     };
 
     return str_replace('\\/', '/', preg_replace_callback($pattern, $callback, json_encode($arr)));
+}
+
+function wrap_string_to_lines($str, $max_chars)
+{
+    return array_slice(
+        explode("\n",
+            iconv('Windows-1251', 'UTF-8',
+                wordwrap(iconv('UTF-8', 'Windows-1251',
+                    trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $str))),
+                    $max_chars, "\n", true))
+        ),
+        0, 2
+    );
 }
