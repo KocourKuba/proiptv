@@ -36,9 +36,14 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         // playlists
         $playlist_idx = $this->plugin->get_playlists()->get_saved_pos();
         $display_path = array();
-        foreach ($this->plugin->get_playlists()->get_order() as $item) {
-            $display_path[] = HD::string_ellipsis($item);
+        foreach ($this->plugin->get_playlists()->get_order() as $playlist) {
+            if (($pos = strpos($playlist, '?')) !== false) {
+                $playlist = substr($playlist, 0, $pos);
+            }
+            $ar = explode('/', $playlist);
+            $display_path[] = end($ar);
         }
+
         if (empty($display_path)) {
             Control_Factory::add_label($defs, TR::t('setup_channels_src_playlists'), TR::t('setup_channels_src_no_playlists'));
         } else if (count($display_path) > 1) {

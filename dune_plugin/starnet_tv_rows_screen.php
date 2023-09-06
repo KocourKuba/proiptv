@@ -511,6 +511,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                             $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
 
                         $icon = ($cur !== $playlist) ? null : "link.png";
+
+                        if (($pos = strpos($playlist, '?')) !== false) {
+                            $playlist = substr($playlist, 0, $pos);
+                        }
                         $ar = explode('/', $playlist);
                         $playlist = end($ar);
                         $this->create_menu_item($menu_items, ACTION_FOLDER_SELECTED, $playlist, $icon, array('playlist_idx' => $key));
