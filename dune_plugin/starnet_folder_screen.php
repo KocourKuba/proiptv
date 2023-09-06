@@ -260,7 +260,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     $type = $item_type;
                     $path_parts = pathinfo($caption);
                     if (isset($media_url->choose_file->extension)) {
-                        $info = TR::t('folder_screen_select_file__3', $caption, $size, $caption);
+                        $info = TR::t('folder_screen_select_file__2', $caption, $size);
                         if ($icon_file === 'gui_skin://small_icons/image_file.aai') {
                             $detailed_icon = $filepath;
                         }
@@ -647,8 +647,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         return array(
             $this->plugin->get_screen_view('list_1x12_info'),
             $this->plugin->get_screen_view('list_2x12_info'),
-            $this->plugin->get_screen_view('icons_5x4_no_caption'),
-            $this->plugin->get_screen_view('icons_4x4_no_caption'),
+            $this->plugin->get_screen_view('icons_5x3_caption'),
+            $this->plugin->get_screen_view('icons_4x3_caption'),
         );
     }
 }
