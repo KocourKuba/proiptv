@@ -704,11 +704,12 @@ class Starnet_Tv implements User_Input_Handler
 
         $group = $this->get_special_group(ALL_CHANNEL_GROUP_ID);
         if (!is_null($group) && !$group->is_disabled()) {
+            $group_icon = $group->get_icon_url();
             $groups[] = array
             (
                 PluginTvGroup::id => $group->get_id(),
                 PluginTvGroup::caption => $group->get_title(),
-                PluginTvGroup::icon_url => $group->get_icon_url()
+                PluginTvGroup::icon_url => is_null($group_icon) ? Starnet_Tv_Groups_Screen::DEFAULT_GROUP_ICON_PATH: $group_icon
             );
         }
 
@@ -720,7 +721,7 @@ class Starnet_Tv implements User_Input_Handler
                 (
                     PluginTvGroup::id => $group->get_id(),
                     PluginTvGroup::caption => $group->get_title(),
-                    PluginTvGroup::icon_url => $group->get_icon_url()
+                    PluginTvGroup::icon_url => is_null($group_icon) ? Starnet_Tv_Groups_Screen::DEFAULT_GROUP_ICON_PATH: $group_icon
                 );
             }
         }
