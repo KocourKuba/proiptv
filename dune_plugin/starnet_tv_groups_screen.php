@@ -31,9 +31,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $actions[GUI_EVENT_KEY_ENTER]      = User_Input_Handler_Registry::create_action($this, ACTION_OPEN_FOLDER);
         $actions[GUI_EVENT_KEY_PLAY]       = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_FOLDER);
-        $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        $order = $this->plugin->tv->get_groups_order();
+        $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU]   = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
+
+        $order = $this->plugin->get_groups_order();
         if (!is_null($order) && $order->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
@@ -54,10 +56,20 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         //dump_input_handler(__METHOD__, $user_input);
-        $min_sel = $this->plugin->get_special_groups_count($plugin_cookies);
+
         $sel_idx = $user_input->sel_ndx;
 
-        switch ($user_input->control_id) {
+        switch ($user_input->control_id)
+        {
+            case GUI_EVENT_KEY_TOP_MENU:
+            case GUI_EVENT_KEY_RETURN:
+                if (isset($plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_ASK_EXIT})
+                    && $plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_ASK_EXIT} === SetupControlSwitchDefs::switch_off) {
+                    return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
+                }
+
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
+
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
                 $post_action = $this->update_epfs_data($plugin_cookies,
@@ -74,9 +86,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEM_UP:
                 $sel_media_url = MediaURL::decode($user_input->selected_media_url);
-                if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::UP))
+                if (!$this->plugin->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::UP))
                     return null;
 
+                $min_sel = $this->plugin->get_special_groups_count($plugin_cookies);
                 $sel_idx--;
                 if ($sel_idx < $min_sel) {
                     $sel_idx = $min_sel;
@@ -87,10 +100,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEM_DOWN:
                 $sel_media_url = MediaURL::decode($user_input->selected_media_url);
-                if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::DOWN))
+                if (!$this->plugin->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::DOWN))
                     return null;
 
-                $groups_cnt = $min_sel + $this->plugin->tv->get_groups_order()->size();
+                $groups_cnt = $this->plugin->get_special_groups_count($plugin_cookies) + $this->plugin->get_groups_order()->size();
                 $sel_idx++;
                 if ($sel_idx >= $groups_cnt) {
                     $sel_idx = $groups_cnt - 1;
@@ -108,7 +121,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_SORT:
-                $this->plugin->tv->get_groups_order()->sort_order();
+                $this->plugin->get_groups_order()->sort_order();
                 $this->invalidate_epfs();
 
                 break;
@@ -122,7 +135,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS,
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => ACTION_REFRESH_SCREEN,
-                        'postpone_save' => 'settings',
+                        'postpone_save' => PLUGIN_SETTINGS,
                         'windowCounter' => 1,
                     )
                 );
@@ -139,7 +152,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'group_id' => $sel_media_url->group_id,
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => ACTION_REFRESH_SCREEN,
-                        'postpone_save' => 'settings',
+                        'postpone_save' => PLUGIN_SETTINGS,
                         'windowCounter' => 1,
                     )
                 );
@@ -165,14 +178,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->create_menu_item($this, $menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                 $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
 
-                if ($this->plugin->tv->get_disabled_groups()->size()) {
+                if ($this->plugin->get_disabled_groups()->size()) {
                     $this->create_menu_item($this, $menu_items, ACTION_ITEMS_EDIT, TR::t('tv_screen_edit_hidden_group'), "edit.png");
                 }
 
                 if (isset($sel_media_url->group_id)) {
                     $has_hidden = false;
                     if ($sel_media_url->group_id === ALL_CHANNEL_GROUP_ID) {
-                        $has_hidden = $this->plugin->tv->get_disabled_channels()->size() !== 0;
+                        $has_hidden = $this->plugin->get_disabled_channels()->size() !== 0;
                     } else if (($group = $this->plugin->tv->get_group($sel_media_url->group_id)) !== null) {
                         $has_hidden = $group->get_group_channels()->size() !== $group->get_items_order()->size();
                     }
@@ -188,22 +201,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return Action_Factory::show_popup_menu($menu_items);
 
-            case GUI_EVENT_KEY_RETURN:
-                if (isset($plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_ASK_EXIT})
-                    && $plugin_cookies->{Starnet_Interface_Setup_Screen::CONTROL_ASK_EXIT} === SetupControlSwitchDefs::switch_off) {
-                    return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
-                }
-
-                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
-
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->unload_channels();
                 break;
 
             case ACTION_REFRESH_SCREEN:
-                break;
-
             default:
                 return null;
         }
@@ -270,7 +273,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         ViewItemParams::item_detailed_info => TR::t('tv_screen_group_info__3',
                             $group->get_title(),
                             $this->plugin->tv->get_channels()->size(),
-                            $this->plugin->tv->get_disabled_channels()->size()
+                            $this->plugin->get_disabled_channels()->size()
                         ),
                     )
                 );
@@ -278,7 +281,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         /** @var Group $group */
-        foreach ($this->plugin->tv->get_groups_order()->get_order() as $item) {
+        foreach ($this->plugin->get_groups_order()->get_order() as $item) {
             //hd_debug_print("group: {$group->get_title()} , icon: {$group->get_icon_url()}");
             $group = $this->plugin->tv->get_group($item);
             if (is_null($group) || $group->is_disabled()) continue;
@@ -309,6 +312,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_folder_views()
     {
+        $background = $this->plugin->plugin_info['app_background'];
+
         return array(
 
             // 1x12 list view with info
@@ -320,7 +325,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     ViewParams::num_cols => 1,
                     ViewParams::num_rows => 12,
                     ViewParams::paint_details => true,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::paint_details_box_background => true,
+                    ViewParams::paint_content_box_background => true,
+                    ViewParams::paint_scrollbar => true,
+                    ViewParams::paint_widget => true,
+                    ViewParams::paint_help_line => true,
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::background_height => 1080,
                     ViewParams::background_width => 1920,
@@ -336,14 +346,53 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     ViewItemParams::icon_dx => 20,
                     ViewItemParams::icon_dy => -5,
                     ViewItemParams::icon_width => 50,
-                    ViewItemParams::icon_height => 55,
+                    ViewItemParams::icon_height => 50,
+                    ViewItemParams::item_caption_dx => 30,
+                    ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
-                    ViewItemParams::item_caption_width => 1100
                 ),
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            // 3x10 list view
+            // 2x12 list view with info
+            array
+            (
+                PluginRegularFolderView::async_icon_loading => false,
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 2,
+                    ViewParams::num_rows => 12,
+                    ViewParams::paint_details => true,
+                    ViewParams::paint_details_box_background => true,
+                    ViewParams::paint_content_box_background => true,
+                    ViewParams::paint_scrollbar => true,
+                    ViewParams::paint_widget => true,
+                    ViewParams::paint_help_line => true,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                ),
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_dx => 20,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 50,
+                    ViewItemParams::icon_height => 50,
+                    ViewItemParams::item_caption_dx => 74,
+                    ViewItemParams::item_caption_width => 550,
+                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
+                ),
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
+            ),
+
+            // 3x12 list view without info
             array
             (
                 PluginRegularFolderView::async_icon_loading => true,
@@ -351,29 +400,35 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 PluginRegularFolderView::view_params => array
                 (
                     ViewParams::num_cols => 3,
-                    ViewParams::num_rows => 10,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
-                    ViewParams::background_order => 0,
+                    ViewParams::num_rows => 12,
                     ViewParams::paint_details => false,
-                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
                     ViewParams::sandwich_icon_upscale_enabled => true,
                     ViewParams::sandwich_icon_keep_aspect_ratio => true,
                 ),
 
                 PluginRegularFolderView::base_view_item_params => array
                 (
-                    ViewItemParams::item_paint_icon => false,
+                    ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::item_caption_width => 485,
+                    ViewItemParams::icon_dx => 20,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 50,
+                    ViewItemParams::icon_height => 50,
+                    ViewItemParams::item_caption_dx => 97,
+                    ViewItemParams::item_caption_width => 600,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
-                    ViewItemParams::item_caption_dx => 50,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
-            // small with caption
+            // small icons with caption
             array
             (
                 PluginRegularFolderView::async_icon_loading => false,
@@ -390,7 +445,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     ViewParams::sandwich_width => Default_Dune_Plugin::TV_SANDWICH_WIDTH,
                     ViewParams::sandwich_height => Default_Dune_Plugin::TV_SANDWICH_HEIGHT,
                     ViewParams::content_box_padding_left => 70,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::sandwich_icon_upscale_enabled => true,
                     ViewParams::sandwich_icon_keep_aspect_ratio => true,
@@ -418,7 +473,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 (
                     ViewParams::num_cols => 4,
                     ViewParams::num_rows => 3,
-                    ViewParams::background_path => $this->plugin->plugin_info['app_background'],
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::paint_details => false,
                     ViewParams::paint_sandwich => true,

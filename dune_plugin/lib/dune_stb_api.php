@@ -98,7 +98,8 @@ const ALL_CHANNEL_GROUP_ID = '##all_channels##';
 const HISTORY_GROUP_ID = '##playback_history_tv_group##';
 
 # Common parameters
-const PLUGIN_PARAMS = "common.parameters";
+const PLUGIN_PARAMETERS = "parameters";
+const PLUGIN_SETTINGS = "settings";
 const PARAM_PLAYLISTS = 'playlists';
 const PARAM_FAVORITES = 'favorites';
 const PARAM_GROUPS_ORDER = 'groups_order';

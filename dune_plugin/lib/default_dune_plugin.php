@@ -30,11 +30,6 @@ class Default_Dune_Plugin implements DunePlugin
     public $plugin_info;
 
     /**
-     * @var bool
-     */
-    public $new_ui_support;
-
-    /**
      * @var M3uParser
      */
     public $m3u_parser;
@@ -88,14 +83,13 @@ class Default_Dune_Plugin implements DunePlugin
 
     protected function __construct()
     {
-        $this->postpone_save = array('parameters' => false, 'settings' => false);
-        $this->is_durty = array('parameters' => false, 'settings' => false);
+        $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
+        $this->is_durty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
 
         $this->plugin_info = get_plugin_manifest_info();
-        $this->new_ui_support = HD::rows_api_support();
         $this->m3u_parser = new M3uParser();
         $this->epg_man = new Epg_Manager($this);
-        $this->load('parameters');
+        $this->load(PLUGIN_PARAMETERS);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -415,7 +409,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @param bool $snooze
      * @param string $item
      */
-    public function set_pospone_save($snooze = true, $item = 'settings')
+    public function set_pospone_save($snooze = true, $item = PLUGIN_SETTINGS)
     {
         $this->postpone_save[$item] = $snooze;
         if (!$snooze)
@@ -427,7 +421,7 @@ class Default_Dune_Plugin implements DunePlugin
      *
      * @return bool
      */
-    public function is_durty($item = 'settings')
+    public function is_durty($item = PLUGIN_SETTINGS)
     {
         return $this->is_durty[$item];
     }
@@ -441,7 +435,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_setting($type, $default = null)
     {
-        $this->load('settings');
+        $this->load(PLUGIN_SETTINGS);
 
         if (!isset($this->settings[$type])) {
             $this->settings[$type] = $default;
@@ -466,6 +460,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_setting($type, $val)
     {
         $this->settings[$type] = $val;
+        $this->is_durty[PLUGIN_SETTINGS] = true;
         $this->save();
     }
 
@@ -496,7 +491,7 @@ class Default_Dune_Plugin implements DunePlugin
             unset($this->settings);
         }
 
-        $name = ($item === 'settings' ? $this->get_playlist_hash() : 'common') . '.settings';
+        $name = ($item === PLUGIN_SETTINGS ? $this->get_playlist_hash() : 'common') . '.settings';
 
         if (!isset($this->{$item})) {
             $this->{$item} = HD::get_data_items($name, true, false);
@@ -509,21 +504,17 @@ class Default_Dune_Plugin implements DunePlugin
      *
      * @return void
      */
-    public function save($item = 'settings')
+    public function save($item = PLUGIN_SETTINGS)
     {
-        $name = ($item === 'settings' ? $this->get_playlist_hash() : 'common') . '.settings';
+        $name = ($item === PLUGIN_SETTINGS ? $this->get_playlist_hash() : 'common') . '.settings';
 
-        if (isset($this->{$item})) {
-            if ($this->postpone_save[$item]) {
-                $this->is_durty[$item] = true;
-                //hd_debug_print("Save $item postponed");
-            } else if ($this->is_durty[$item]) {
-                HD::put_data_items($name, $this->{$item}, false);
-                hd_debug_print("Save: $name");
-                $this->is_durty[$item] = false;
-            }
+        if (!isset($this->{$item})) {
+            hd_debug_print("this->$item is not set!");
+        } else if (!$this->postpone_save[$item] && $this->is_durty($item)) {
+            HD::put_data_items($name, $this->{$item}, false);
+            hd_debug_print("Save: $name");
+            $this->is_durty[$item] = false;
         }
-
     }
 
     /**
@@ -536,7 +527,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_parameter($type, $default = null)
     {
-        $this->load('parameters');
+        $this->load(PLUGIN_PARAMETERS);
 
         if (!isset($this->parameters[$type])) {
             $this->parameters[$type] = $default;
@@ -561,7 +552,8 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_parameter($type, $val)
     {
         $this->parameters[$type] = $val;
-        $this->save('parameters');
+        $this->is_durty[PLUGIN_PARAMETERS] = true;
+        $this->save(PLUGIN_PARAMETERS);
     }
 
     public function toggle_setting($param, $default)
@@ -685,7 +677,7 @@ class Default_Dune_Plugin implements DunePlugin
             HD::erase_data_items("$hash.settings");
         }
 
-        HD::erase_data_items(PLUGIN_PARAMS);
+        HD::erase_data_items("common.settings");
     }
 
     /**
@@ -815,13 +807,15 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_xmltv_sources($xmltv_sources)
     {
         switch ($this->get_xmltv_source_type()) {
+            case PARAM_EPG_SOURCE_INTERNAL:
+                hd_debug_print("Save internal EPG source type not supported");
+                break;
+
             case PARAM_EPG_SOURCE_EXTERNAL:
                 $this->set_setting(PARAM_CUSTOM_XMLTV_SOURCES, $xmltv_sources);
                 $this->save();
                 break;
-            case PARAM_EPG_SOURCE_INTERNAL:
-                hd_debug_print("Save internal EPG source type not supported");
-                break;
+
             default:
                 hd_debug_print("Unknown EPG source type requested");
                 break;
@@ -906,6 +900,116 @@ class Default_Dune_Plugin implements DunePlugin
         } else {
             $this->epg_man->index_xmltv_channels();
         }
+    }
+
+    /**
+     * @return Ordered_Array
+     */
+    public function get_groups_order()
+    {
+        return $this->get_setting(PARAM_GROUPS_ORDER, new Ordered_Array());
+    }
+
+    /**
+     * @return Ordered_Array
+     */
+    public function get_disabled_groups()
+    {
+        return $this->get_setting(PARAM_DISABLED_GROUPS, new Ordered_Array());
+    }
+
+    /**
+     * @param Ordered_Array $groups
+     * @return void
+     */
+    public function set_disabled_groups($groups)
+    {
+        $this->set_setting(PARAM_DISABLED_GROUPS, $groups);
+    }
+
+    /**
+     * @return Ordered_Array
+     */
+    public function get_disabled_channels()
+    {
+        return $this->get_setting(PARAM_DISABLED_CHANNELS, new Ordered_Array());
+    }
+
+    /**
+     * @param Ordered_Array $channels
+     * @return void
+     */
+    public function set_disabled_channels($channels)
+    {
+        $this->set_setting(PARAM_DISABLED_CHANNELS, $channels);
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_channels_zoom()
+    {
+        return $this->get_setting(PARAM_CHANNELS_ZOOM, new Hashed_Array());
+    }
+
+
+    /**
+     * @return string
+     */
+    public function get_channel_zoom($channel_id)
+    {
+        $zoom = $this->get_channels_zoom()->get($channel_id);
+        return is_null($zoom) ? DuneVideoZoomPresets::not_set : $zoom;
+    }
+
+    /**
+     * @param string $channel_id
+     * @param string|null $preset
+     * @return void
+     */
+    public function set_channel_zoom($channel_id, $preset)
+    {
+        if ($preset === null) {
+            $this->get_channels_zoom()->erase($channel_id);
+        } else {
+            $this->get_channels_zoom()->set_by_id($channel_id, $preset);
+        }
+
+        $this->set_setting(PARAM_CHANNELS_ZOOM, $this->get_channels_zoom());
+    }
+
+    /**
+     * @return Ordered_Array
+     */
+    public function get_channels_for_ext_player()
+    {
+        return $this->get_setting(PARAM_CHANNEL_PLAYER, new Ordered_Array());
+    }
+
+    /**
+     * @return bool
+     */
+    public function is_channel_for_ext_player($channel_id)
+    {
+        return $this->get_channels_for_ext_player()->in_order($channel_id);
+    }
+
+    /**
+     * @param string $channel_id
+     * @param bool $external
+     * @return void
+     */
+    public function set_channel_for_ext_player($channel_id, $external)
+    {
+        $ext_player = $this->get_channels_for_ext_player();
+
+        if ($external) {
+            $ext_player->add_item($channel_id);
+        } else {
+            $ext_player->remove_item($channel_id);
+        }
+
+        $this->set_setting(PARAM_CHANNEL_PLAYER, $ext_player);
     }
 
     /**
@@ -1023,7 +1127,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $url = $this->generate_stream_url($media_url->channel_id, $archive_ts);
 
-        if (!$this->tv->is_channel_for_ext_player($media_url->channel_id)) {
+        if (!$this->is_channel_for_ext_player($media_url->channel_id)) {
             return Action_Factory::tv_play($media_url);
         }
 

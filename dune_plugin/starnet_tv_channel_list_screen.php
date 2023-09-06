@@ -187,7 +187,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $group->get_items_order()->remove_item($channel_id);
                 }
 
-                $this->plugin->tv->get_disabled_channels()->add_item($channel_id);
+                $this->plugin->get_disabled_channels()->add_item($channel_id);
                 $this->invalidate_epfs();
 
                 break;
@@ -209,13 +209,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 if (is_android() && !is_apk()) {
                     $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
-                    $is_external = $this->plugin->tv->is_channel_for_ext_player($channel_id);
+                    $is_external = $this->plugin->is_channel_for_ext_player($channel_id);
                     $this->create_menu_item($this, $menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), ($is_external ? "play.png" : null));
                     $this->create_menu_item($this, $menu_items, ACTION_INTERNAL_PLAYER, TR::t('tv_screen_internal_player'), ($is_external ? null : "play.png"));
                     $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
                 }
 
-                $zoom_data = $this->plugin->tv->get_channel_zoom($channel_id);
+                $zoom_data = $this->plugin->get_channel_zoom($channel_id);
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
                     $this->create_menu_item($this, $menu_items, ACTION_ZOOM_APPLY, TR::t($zoom_item),
                         strcmp($idx, $zoom_data) !== 0 ? null : "aspect.png",
@@ -227,13 +227,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_ZOOM_APPLY:
                 if (isset($user_input->{ACTION_ZOOM_SELECT})) {
                     $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
-                    $this->plugin->tv->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
+                    $this->plugin->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
                 }
                 break;
 
             case ACTION_EXTERNAL_PLAYER:
             case ACTION_INTERNAL_PLAYER:
-                $this->plugin->tv->set_channel_for_ext_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
+                $this->plugin->set_channel_for_ext_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
 
             case ACTION_RELOAD:
@@ -257,7 +257,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     private function get_regular_folder_item($group, $channel)
     {
-        $zoom_data = $this->plugin->tv->get_channel_zoom($channel->get_id());
+        $zoom_data = $this->plugin->get_channel_zoom($channel->get_id());
         if ($zoom_data === DuneVideoZoomPresets::not_set) {
             $detailed_info = TR::t('tv_screen_channel_info__2', $channel->get_title(), $channel->get_archive());
         } else {
@@ -334,10 +334,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function get_folder_views()
     {
-        $square_icons = ($this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
         $background = $this->plugin->plugin_info['app_background'];
 
         return array(
+
             // 4x3 with title
             array
             (
@@ -369,6 +369,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     ViewItemParams::icon_scale_factor => 1.25,
                     ViewItemParams::icon_sel_scale_factor => 1.5,
                     ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array
@@ -502,45 +503,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 ),
             ),
 
-            // 2x10 title list view with right side icon
-            array
-            (
-                PluginRegularFolderView::async_icon_loading => true,
-
-                PluginRegularFolderView::view_params => array
-                (
-                    ViewParams::num_cols => 2,
-                    ViewParams::num_rows => 10,
-                    ViewParams::background_path => $background,
-                    ViewParams::background_order => 0,
-                    ViewParams::paint_details => true,
-                ),
-
-                PluginRegularFolderView::base_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_layout => HALIGN_LEFT,
-                    ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_dx => 10,
-                    ViewItemParams::icon_dy => -5,
-                    ViewItemParams::icon_width => $square_icons ? 60 : 84,
-                    ViewItemParams::icon_height => $square_icons ? 60 : 48,
-                    ViewItemParams::item_caption_width => 485,
-                    ViewItemParams::item_caption_font_size => FONT_SIZE_SMALL,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewParams::sandwich_icon_upscale_enabled => true,
-                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                ),
-
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
-            ),
-
-            // 1x10 title list view with right side icon
+            // 1x12 list view with info
             array
             (
                 PluginRegularFolderView::async_icon_loading => true,
@@ -548,27 +511,22 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 PluginRegularFolderView::view_params => array
                 (
                     ViewParams::num_cols => 1,
-                    ViewParams::num_rows => 10,
-                    ViewParams::paint_icon_selection_box=> true,
-                    ViewParams::paint_details => true,
-                    ViewParams::paint_details_box_background => true,
-                    ViewParams::paint_content_box_background => true,
+                    ViewParams::num_rows => 12,
                     ViewParams::paint_scrollbar => true,
                     ViewParams::paint_widget => true,
                     ViewParams::paint_help_line => true,
-                    ViewItemParams::icon_dx => 10,
-                    ViewItemParams::icon_dy => -5,
-                    ViewItemParams::icon_width => $square_icons ? 60 : 84,
-                    ViewItemParams::icon_height => $square_icons ? 60 : 48,
-                    ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
-                    ViewParams::background_path=> $background,
+                    ViewParams::paint_details => true,
+                    ViewParams::paint_details_box_background => true,
+                    ViewParams::paint_content_box_background => true,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
+                    ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::item_detailed_info_text_color => 11,
                     ViewParams::item_detailed_info_auto_line_break => true,
                     ViewParams::optimize_full_screen_background => true,
                     ViewParams::sandwich_icon_upscale_enabled => true,
                     ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                    ViewParams::zoom_detailed_icon => true,
+                    ViewParams::zoom_detailed_icon => false,
                 ),
 
                 PluginRegularFolderView::base_view_item_params => array
@@ -576,11 +534,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_width => 50,
+                    ViewItemParams::icon_dx => 20,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 70,
                     ViewItemParams::icon_height => 50,
-                    ViewItemParams::icon_dx => 26,
+                    ViewItemParams::item_caption_dx => 30,
+                    ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
-                    ViewItemParams::item_caption_width => 1060,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                     ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
                 ),
 
@@ -588,9 +549,60 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 (
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                    ViewItemParams::item_detailed_icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
                 ),
             ),
+
+            // 2x12 title list view with right side icon
+            array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 2,
+                    ViewParams::num_rows => 12,
+                    ViewParams::paint_scrollbar => true,
+                    ViewParams::paint_widget => true,
+                    ViewParams::paint_help_line => true,
+                    ViewParams::paint_details => true,
+                    ViewParams::paint_details_box_background => true,
+                    ViewParams::paint_content_box_background => true,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::item_detailed_info_text_color => 11,
+                    ViewParams::item_detailed_info_auto_line_break => true,
+                    ViewParams::optimize_full_screen_background => true,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                    ViewParams::zoom_detailed_icon => false,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_dx => 20,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 70, //$square_icons ? 50 : 70,
+                    ViewItemParams::icon_height => 50,
+                    ViewItemParams::item_caption_dx => 74,
+                    ViewItemParams::item_caption_width => 550,
+                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => Default_Dune_Plugin::DEFAULT_CHANNEL_ICON_PATH,
+                ),
+            ),
+
         );
     }
 }

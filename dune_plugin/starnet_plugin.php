@@ -39,7 +39,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("LocalTime            " . format_datetime('Y-m-d H:i', time()));
         hd_print("TimeZone             " . getTimeZone());
         hd_print("Daylight             " . (date('I') ? 'yes' : 'no'));
-        hd_print("New UI support       " . ($this->new_ui_support ? "yes" : "no"));
+        hd_print("New UI support       " . (HD::rows_api_support() ? "yes" : "no"));
 
         hd_print("----------------------------------------------------");
 

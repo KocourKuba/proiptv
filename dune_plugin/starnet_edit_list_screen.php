@@ -48,9 +48,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
 
-        $exit_action = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        $actions[GUI_EVENT_KEY_RETURN] = $exit_action;
-        $actions[GUI_EVENT_KEY_TOP_MENU] = $exit_action;
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
 
         return $actions;
     }
@@ -63,11 +62,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $order = $this->get_edit_order($parent_media_url);
 
         switch ($user_input->control_id) {
+            case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
 
                 if (!isset($parent_media_url->postpone_save)) {
@@ -461,10 +461,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $order = $this->plugin->get_xmltv_sources();
                 break;
             case self::SCREEN_EDIT_GROUPS:
-                $order = $this->plugin->tv->get_disabled_groups();
+                $order = $this->plugin->get_disabled_groups();
                 break;
             case self::SCREEN_EDIT_CHANNELS:
-                $order = $this->plugin->tv->get_disabled_channels();
+                $order = $this->plugin->get_disabled_channels();
                 break;
             default:
                 $order = new Ordered_Array();
@@ -490,10 +490,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->plugin->set_xmltv_sources($order);
                 break;
             case self::SCREEN_EDIT_GROUPS:
-                $this->plugin->tv->set_disabled_groups($order);
+                $this->plugin->set_disabled_groups($order);
                 break;
             case self::SCREEN_EDIT_CHANNELS:
-                $this->plugin->tv->set_disabled_channels($order);
+                $this->plugin->set_disabled_channels($order);
                 break;
             default:
         }

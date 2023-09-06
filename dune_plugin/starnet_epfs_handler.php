@@ -47,7 +47,7 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
      */
     public static function init(Default_Dune_Plugin $plugin)
     {
-        self::$enabled = $plugin->new_ui_support;
+        self::$enabled = HD::rows_api_support();
         if (!self::$enabled)
             return;
 

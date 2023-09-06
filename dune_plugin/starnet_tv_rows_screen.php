@@ -386,12 +386,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             RowsItemsParams::caption_font_size
         );
 
+        $sel_icon_width = $icon_width + 12;
+        $sel_icon_height = round(($icon_width + 12) / $icon_prop);
         $sel_params = Rows_Factory::variable_params(
             RowsItemsParams::width,
             RowsItemsParams::height,
             5,
-            $icon_width + 12,
-            round(($icon_width + 12) / $icon_prop),
+            $sel_icon_width,
+            $sel_icon_height,
             0,
             RowsItemsParams::caption_dy + 10,
             RowsItemsParams::sel_caption_color,
@@ -401,12 +403,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $width = round((RowsItemsParams::width * PaneParams::max_items_in_row - PaneParams::group_list_width) / PaneParams::max_items_in_row);
         $inactive_icon_width = round(($icon_width * PaneParams::max_items_in_row - PaneParams::group_list_width) / PaneParams::max_items_in_row)
             + round((RowsItemsParams::width - $icon_width) / $icon_prop);
+        $inactive_icon_height = round($inactive_icon_width / $icon_prop) - 10;
 
         $inactive_params = Rows_Factory::variable_params(
             $width,
             round($width / RowsItemsParams::width * RowsItemsParams::height), 0,
             $inactive_icon_width,
-            round($inactive_icon_width / $icon_prop) - 10,
+            $inactive_icon_height,
             0,
             RowsItemsParams::caption_dy,
             RowsItemsParams::inactive_caption_color,
@@ -543,13 +546,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                         if (is_android() && !is_apk()) {
                             $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
-                            $is_external = $this->plugin->tv->is_channel_for_ext_player($channel_id);
+                            $is_external = $this->plugin->is_channel_for_ext_player($channel_id);
                             $this->create_menu_item($menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), ($is_external ? "play.png" : null));
                             $this->create_menu_item($menu_items, ACTION_INTERNAL_PLAYER, TR::t('tv_screen_internal_player'), ($is_external ? null : "play.png"));
                             $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
                         }
 
-                        $zoom_data = $this->plugin->tv->get_channel_zoom($channel_id);
+                        $zoom_data = $this->plugin->get_channel_zoom($channel_id);
                         foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
                             $this->create_menu_item($common_menu, ACTION_ZOOM_APPLY, TR::t($zoom_item),
                                 strcmp($idx, $zoom_data) !== 0 ? null : "aspect.png",
@@ -611,7 +614,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     }
                 } else {
                     $direction = $control_id === PLUGIN_FAVORITES_OP_MOVE_UP ? Ordered_Array::UP : Ordered_Array::DOWN;
-                    if ($this->plugin->tv->get_groups_order()->arrange_item($media_url->group_id, $direction)) {
+                    if ($this->plugin->get_groups_order()->arrange_item($media_url->group_id, $direction)) {
                         return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                     }
                 }
@@ -664,14 +667,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $channel_id = $media_url->channel_id;
                 if (isset($user_input->{ACTION_ZOOM_SELECT})) {
                     $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
-                    $this->plugin->tv->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
+                    $this->plugin->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
                 }
 
                 return Starnet_Epfs_Handler::invalidate_folders();
 
             case ACTION_EXTERNAL_PLAYER:
             case ACTION_INTERNAL_PLAYER:
-                $this->plugin->tv->set_channel_for_ext_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
+                $this->plugin->set_channel_for_ext_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
         }
 
@@ -961,7 +964,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         /** @var Default_Group $group */
         /** @var Channel $channel */
-        foreach ($this->plugin->tv->get_groups_order()->get_order() as $group_id) {
+        foreach ($this->plugin->get_groups_order()->get_order() as $group_id) {
             $group = $groups->get($group_id);
             if (is_null($group)) continue;
 

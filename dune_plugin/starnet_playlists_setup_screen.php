@@ -73,10 +73,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             self::CONTROL_EXT_PARAMS_DLG, TR::t('setup_channels_ext_params'), TR::t('edit'),
             get_image_path('web.png'), self::CONTROLS_WIDTH);
 
-        $square_icons = $this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SQUARE_ICONS, TR::t('setup_channels_square_icons'), SetupControlSwitchDefs::$on_off_translated[$square_icons],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
+        if (HD::rows_api_support()) {
+            $square_icons = $this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
+            Control_Factory::add_image_button($defs, $this, null,
+                PARAM_SQUARE_ICONS, TR::t('setup_channels_square_icons'), SetupControlSwitchDefs::$on_off_translated[$square_icons],
+                get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icons]), self::CONTROLS_WIDTH);
+        }
 
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_RESET_PLAYLIST_DLG,
             TR::t('setup_channels_src_reset_playlist'), TR::t('clear'),
@@ -140,7 +142,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        //dump_input_handler(__METHOD__, $user_input);
 
         $control_id = $user_input->control_id;
         $new_value = '';
@@ -157,7 +159,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_ITEMS_EDIT:
-                $this->plugin->set_pospone_save(true, 'parameters');
+                $this->plugin->set_pospone_save(true, PLUGIN_PARAMETERS);
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
@@ -166,7 +168,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => RESET_CONTROLS_ACTION_ID,
                         'allow_order' => true,
-                        'postpone_save' => 'parameters',
+                        'postpone_save' => PLUGIN_PARAMETERS,
                         'extension' => 'm3u|m3u8',
                         'windowCounter' => 1,
                     )
