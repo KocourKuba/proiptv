@@ -217,7 +217,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             'action' => $user_input->action,
                             'extension'	=> $user_input->extension,
                         ),
-                        'allow_network' => !is_apk(),
+                        'allow_network' => $user_input->action === self::ACTION_FILE_TEXT_LIST,
                         'read_only' => true,
                         'windowCounter' => 1,
                     )
@@ -268,7 +268,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'choose_folder' => array(
                             'extension'	=> $user_input->extension,
                         ),
-                        'allow_network' => !is_apk(),
+                        'allow_network' => false,
                         'read_only' => true,
                         'windowCounter' => 1,
                     )
