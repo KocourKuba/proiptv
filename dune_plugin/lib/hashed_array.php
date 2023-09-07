@@ -2,8 +2,8 @@
 require_once 'json_serializer.php';
 
 /**
- * @template TValue
  * @template TKey
+ * @template TValue
  * @implements Iterator<TKey, TValue>
  */
 class Hashed_Array extends Json_Serializer implements Iterator

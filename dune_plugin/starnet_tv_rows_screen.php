@@ -908,7 +908,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        /** @var Default_Group $group */
+        /** @var Group $group */
         $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
         if (is_null($group)) {
             hd_debug_print("All channels group not found");
@@ -984,7 +984,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $square_icons = ($this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
         $row_item_width = $square_icons ? RowsItemsParams::width_sq : RowsItemsParams::width;
 
-        /** @var Default_Group $group */
+        /** @var Group $group */
         /** @var Channel $channel */
         foreach ($this->plugin->get_groups_order()->get_order() as $group_id) {
             $group = $groups->get($group_id);
