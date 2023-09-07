@@ -187,7 +187,7 @@ class Epg_Manager
                 $check_time_file = filemtime($cached_xmltv_file);
                 $max_cache_time = 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
                 if ($check_time_file && $check_time_file + $max_cache_time > time()) {
-                    hd_debug_print("Cached file: $cached_xmltv_file is not expired " . date("Y-m-d H:s", $check_time_file));
+                    hd_debug_print("Cached file: $cached_xmltv_file is not expired " . date("Y-m-d H:s", $check_time_file), LOG_LEVEL_DEBUG);
                     return '';
                 }
 
