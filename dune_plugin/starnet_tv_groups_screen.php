@@ -251,8 +251,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     hd_debug_print("Assign icon: $cached_image to group: $sel_media_url->group_id");
                     $group->set_icon_url($cached_image);
+                    /** @var Hashed_Array $group_icons */
                     $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
-                    $group_icons->set_by_id($sel_media_url->group_id, $cached_image);
+                    $group_icons->set($sel_media_url->group_id, $cached_image);
                     $this->plugin->save();
                 }
                 break;
