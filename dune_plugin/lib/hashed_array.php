@@ -67,7 +67,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function set($id, $item)
     {
-        if (!$this->has($item->get_id())) {
+        if (!$this->has($id)) {
             $this->seq[] = $id;
         }
         $this->map[$id] = $item;
