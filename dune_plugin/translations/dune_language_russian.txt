@@ -28,6 +28,7 @@ by_default = По умолчанию
 yes_no_confirm_msg = Вы уверены?
 sort_items = Сортировать по имени
 reset_default = Сбросить по умолчанию
+reset_sort_default = Сбросить сортировку по умолчанию
 custom = Произвольный
 scroll_page = Прокрутка страницы
 video_aspect_ration = Масштабирование изображения

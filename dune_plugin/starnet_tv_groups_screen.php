@@ -112,20 +112,24 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($sel_ndx >= $groups_cnt) {
                     $sel_ndx = $groups_cnt - 1;
                 }
-                $this->invalidate_epfs();
 
+                $this->invalidate_epfs();
                 break;
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->tv->disable_group($sel_media_url->group_id);
                 $this->invalidate_epfs();
-
                 break;
 
             case ACTION_ITEMS_SORT:
                 $this->plugin->get_groups_order()->sort_order();
                 $this->invalidate_epfs();
+                break;
 
+            case ACTION_RESET_ITEMS_SORT:
+                $this->plugin->get_groups_order()->clear();
+                $this->plugin->tv->reload_channels($plugin_cookies);
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 break;
 
             case ACTION_ITEMS_EDIT:
@@ -177,6 +181,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->create_menu_item($this, $menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
+                $this->create_menu_item($this, $menu_items, ACTION_RESET_ITEMS_SORT, TR::t('reset_sort_default'), "brush.png");
                 $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
 
                 $this->create_menu_item($this, $menu_items, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'),"image.png");

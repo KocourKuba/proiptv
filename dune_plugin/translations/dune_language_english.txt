@@ -28,6 +28,7 @@ by_default = By default
 yes_no_confirm_msg = Are you sure?
 sort_items = Sort by name
 reset_default = Reset to default
+reset_sort_default = Reset sort order to default
 custom = Custom
 scroll_page = Scroll page
 video_aspect_ration = Video aspect ration

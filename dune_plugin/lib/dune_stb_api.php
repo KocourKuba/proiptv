@@ -80,6 +80,7 @@ const ACTION_ITEM_UP = 'item_up';
 const ACTION_ITEMS_CLEAR = 'items_clear';
 const ACTION_ITEMS_EDIT = 'items_edit';
 const ACTION_ITEMS_SORT = 'items_sort';
+const ACTION_RESET_ITEMS_SORT = 'reset_items_sort';
 const ACTION_OPEN_FOLDER = 'open_folder';
 const ACTION_PLAY_FOLDER = 'play_folder';
 const ACTION_PLAY_ITEM = 'play_item';
