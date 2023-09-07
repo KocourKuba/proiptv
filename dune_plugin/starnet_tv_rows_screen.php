@@ -686,7 +686,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->plugin->save(PLUGIN_PARAMETERS);
                     $this->plugin->tv->reload_channels($plugin_cookies);
 
-                    Action_Factory::invalidate_all_folders($plugin_cookies);
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                    return Starnet_Epfs_Handler::invalidate_folders();
                 }
                 break;
 

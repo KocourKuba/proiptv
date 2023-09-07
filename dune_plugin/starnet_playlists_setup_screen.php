@@ -65,9 +65,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             get_image_path('edit.png'), self::CONTROLS_WIDTH);
 
         $catchup_ops[KnownCatchupSourceTags::cu_unknown] = TR::t('by_default');
-        //$catchup_ops[KnownCatchupSourceTags::cu_default] = KnownCatchupSourceTags::cu_default;
         $catchup_ops[KnownCatchupSourceTags::cu_shift] = KnownCatchupSourceTags::cu_shift;
-        //$catchup_ops[KnownCatchupSourceTags::cu_append] = KnownCatchupSourceTags::cu_append;
         $catchup_ops[KnownCatchupSourceTags::cu_flussonic] = KnownCatchupSourceTags::cu_flussonic;
         $catchup_ops[KnownCatchupSourceTags::cu_xstreamcode] = KnownCatchupSourceTags::cu_xstreamcode;
         $catchup_idx = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);

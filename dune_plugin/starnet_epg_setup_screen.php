@@ -86,12 +86,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $xcache_dir = smb_tree::get_folder_info($this->plugin->get_parameter(PARAM_XMLTV_CACHE_PATH), get_data_path("epg_cache/"));
         $free_size = TR::t('setup_storage_info__1', HD::get_storage_size(dirname($xcache_dir)));
         $xcache_dir = HD::string_ellipsis($xcache_dir);
-        if (is_apk()) {
-            Control_Factory::add_label($defs, $free_size, $xcache_dir);
-        } else {
-            Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_XMLTV_CACHE_PATH,
-                $free_size, $xcache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
-        }
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_XMLTV_CACHE_PATH,
+            $free_size, $xcache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG cache
