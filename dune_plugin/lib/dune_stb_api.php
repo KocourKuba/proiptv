@@ -500,6 +500,17 @@ function get_raw_firmware_version()
     return $result;
 }
 
+function get_log_level()
+{
+    $level = (int)getenv("LOG_LEVEL");
+    return empty($level) ? LOG_LEVEL_INFO : $level;
+}
+
+function set_log_level($level)
+{
+    putenv("LOG_LEVEL=$level");
+}
+
 /**
  * return firmware version
  * @return array
@@ -1733,10 +1744,14 @@ function debug_print(/*mixed $var1, $var2...*/)
 /**
  * @param string $method
  * @param Object $user_input
+ * @param int $level
  * @return void
  */
-function dump_input_handler($method, $user_input)
+function dump_input_handler($method, $user_input, $level = LOG_LEVEL_DEBUG)
 {
+    if ($level > get_log_level())
+        return;
+
     hd_print($method);
     foreach ($user_input as $key => $value) {
         $decoded_value = html_entity_decode(preg_replace("/(\\\u([0-9A-Fa-f]{4}))/", "&#x\\2;", $value), ENT_NOQUOTES, 'UTF-8');
@@ -1794,6 +1809,9 @@ function safe_merge_array($ar1, $ar2)
 
 function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
 {
+    if ($level > get_log_level())
+        return;
+
     $bt = debug_backtrace();
     $caller = array_shift($bt);
     $caller_name = array_shift($bt);

@@ -139,9 +139,9 @@ class Epg_Manager
             // filter out epg only for selected day
             $day_end_ts = $day_start_ts + 86400;
 
-            //$date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
-            //$date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-            //hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
+            $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
+            $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
+            hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l", LOG_LEVEL_DEBUG);
 
             $day_epg = array();
             foreach ($program_epg as $time_start => $entry) {
@@ -154,7 +154,7 @@ class Epg_Manager
                 throw new Exception("No EPG data for " . $channel->get_id());
             }
 
-            //hd_debug_print("Store day epg to memory cache");
+            hd_debug_print("Store day epg to memory cache", LOG_LEVEL_DEBUG);
             $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
 
             return $day_epg;
@@ -349,7 +349,7 @@ class Epg_Manager
 
                 foreach ($xml_node->getElementsByTagName('icon') as $tag) {
                     $picon = $tag->getAttribute('src');
-                    //hd_debug_print("channel id: $channel_id picon: $picon");
+                    hd_debug_print("channel id: $channel_id picon: $picon", LOG_LEVEL_DEBUG);
                     if (preg_match("|https?://|", $picon)) {
                         $picons_map[$channel_id] = $picon;
                     }

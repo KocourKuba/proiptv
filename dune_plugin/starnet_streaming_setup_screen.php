@@ -20,7 +20,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        hd_debug_print();
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
         $defs = array();
 
         //////////////////////////////////////
@@ -103,13 +103,13 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        //dump_input_handler(__METHOD__, $user_input);
+        dump_input_handler(__METHOD__, $user_input);
 
         $control_id = $user_input->control_id;
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
-            hd_debug_print("Setup: changing $control_id value to $new_value");
+            hd_debug_print("Setup: changing $control_id value to $new_value", LOG_LEVEL_DEBUG);
         }
 
         switch ($control_id) {
@@ -119,13 +119,13 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
                     ? SetupControlSwitchDefs::switch_on
                     : SetupControlSwitchDefs::switch_off;
 
-                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id});
+                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, LOG_LEVEL_DEBUG);
                 break;
 
             case PARAM_BUFFERING_TIME:
             case PARAM_ARCHIVE_DELAY_TIME:
                 $this->plugin->set_parameter($control_id, $user_input->{$control_id});
-                hd_debug_print("$control_id: " . $user_input->{$control_id});
+                hd_debug_print("$control_id: " . $user_input->{$control_id}, LOG_LEVEL_DEBUG);
                 break;
         }
 

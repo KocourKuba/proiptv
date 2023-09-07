@@ -65,7 +65,7 @@ class Playback_Points
             }
 
             $this->points = HD::get_items($path);
-            //hd_debug_print(count($points) . " from: $storage");
+            hd_debug_print(count($this->points) . " from: $path", LOG_LEVEL_DEBUG);
             while (count($this->points) > 7) {
                 array_pop($this->points);
             }
@@ -83,7 +83,7 @@ class Playback_Points
         }
 
         if (count($this->points) !== 0) {
-            hd_debug_print(count($this->points) . " to: $path");
+            //hd_debug_print(count($this->points) . " to: $path");
             HD::put_items($path, $this->points);
         } else if (file_exists($path)) {
             unlink($path);
@@ -110,7 +110,7 @@ class Playback_Points
 
                 // if channel does support archive do not update current point
                 $this->points[$id] += ($this->points[$id] !== 0) ? $player_state['playback_position'] : 0;
-                //hd_debug_print("channel_id $id at time mark: {$this->points[$id]}");
+                hd_debug_print("channel_id $id at time mark: {$this->points[$id]}", LOG_LEVEL_DEBUG);
             }
         }
     }
@@ -125,7 +125,7 @@ class Playback_Points
         if (isset($player_state['player_state']) && $player_state['player_state'] !== 'navigator') {
             if (!isset($player_state['last_playback_event']) || ($player_state['last_playback_event'] !== PLAYBACK_PCR_DISCONTINUITY)) {
 
-                hd_debug_print("channel_id $channel_id time mark: $archive_ts");
+                //hd_debug_print("channel_id $channel_id time mark: $archive_ts");
                 $this->curr_point_id = $channel_id;
 
                 if (isset($this->points[$channel_id])) {

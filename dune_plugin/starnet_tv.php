@@ -175,7 +175,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        //dump_input_handler(__METHOD__, $user_input);
+        dump_input_handler(__METHOD__, $user_input);
 
         if (!isset($user_input->control_id))
             return null;
@@ -462,7 +462,7 @@ class Starnet_Tv implements User_Input_Handler
                     }
 
                     if (isset($ext_params[TAG_EXTVLCOPT]['http-user-agent'])) {
-                        //hd_debug_print(TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_params[TAG_EXTVLCOPT]['http-user-agent']}'");
+                        hd_debug_print(TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_params[TAG_EXTVLCOPT]['http-user-agent']}'", LOG_LEVEL_DEBUG);
                         $ch_useragent = "User-Agent: " . $ext_params[TAG_EXTVLCOPT]['http-user-agent'];
                     }
                 }

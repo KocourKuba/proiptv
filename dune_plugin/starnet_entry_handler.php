@@ -31,7 +31,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        //dump_input_handler(__METHOD__, $user_input);
+        dump_input_handler(__METHOD__, $user_input);
 
         if (!isset($user_input->control_id)) {
             return null;
@@ -89,7 +89,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         $this->plugin->clear_playlist_cache();
-                        //hd_debug_print("auto_play: $plugin_cookies->auto_play");
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
                             hd_debug_print("launch play");
@@ -115,7 +114,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return $action;
 
                     case 'auto_resume':
-                        //hd_debug_print("auto_resume: $plugin_cookies->auto_resume");
                         if ((int)$user_input->mandatory_playback !== 1
                             || (isset($plugin_cookies->auto_resume) && $plugin_cookies->auto_resume === SetupControlSwitchDefs::switch_off)) {
                             break;

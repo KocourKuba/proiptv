@@ -50,7 +50,7 @@ class M3uParser extends Json_Serializer
             try {
                 $file = new SplFileObject($file_name);
             } catch (Exception $ex) {
-                hd_debug_print("Can't read file: $file_name");
+                hd_debug_print("Can't read file: $file_name", LOG_LEVEL_ERROR);
                 return;
             }
 
@@ -70,7 +70,7 @@ class M3uParser extends Json_Serializer
     public function parseFile()
     {
         if ($this->m3u_file === null) {
-            hd_debug_print("Bad file");
+            hd_debug_print("Bad file", LOG_LEVEL_ERROR);
             return false;
         }
 
@@ -105,7 +105,7 @@ class M3uParser extends Json_Serializer
     {
         $data = array();
         if ($this->m3u_file === null) {
-            hd_debug_print("Bad file");
+            hd_debug_print("Bad file", LOG_LEVEL_ERROR);
             return $data;
         }
 
@@ -140,7 +140,7 @@ class M3uParser extends Json_Serializer
     public function parseInMemory()
     {
         if (!file_exists($this->file_name)) {
-            hd_debug_print("Can't read file: $this->file_name");
+            hd_debug_print("Can't read file: $this->file_name", LOG_LEVEL_ERROR);
             return false;
         }
 
@@ -173,7 +173,7 @@ class M3uParser extends Json_Serializer
     public function getEntryByIdx($idx)
     {
         if ($this->m3u_file === null) {
-            hd_debug_print("Bad file");
+            hd_debug_print("Bad file", LOG_LEVEL_ERROR);
             return null;
         }
         $this->m3u_file->fseek((int)$idx);
@@ -196,7 +196,7 @@ class M3uParser extends Json_Serializer
     public function getTitleByIdx($idx)
     {
         if ($this->m3u_file === null) {
-            hd_debug_print("Bad file");
+            hd_debug_print("Bad file", LOG_LEVEL_ERROR);
             return null;
         }
 
@@ -261,7 +261,7 @@ class M3uParser extends Json_Serializer
         }
 
         $tag = $entry->parseExtTag($line, false);
-        hd_debug_print(json_encode($tag));
+        hd_debug_print(json_encode($tag), LOG_LEVEL_DEBUG);
         if (is_null($tag)) {
             // untagged line must be a stream url
             $entry->setPath($line);
