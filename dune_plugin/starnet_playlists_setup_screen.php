@@ -204,22 +204,24 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case self::ACTION_EXT_PARAMS_DLG_APPLY: // handle pass dialog result
                 $user_agent = $user_input->{self::CONTROL_USER_AGENT};
-                if ($user_agent !== HD::get_dune_user_agent()) {
+                if (!empty($user_agent) && $user_agent !== HD::get_dune_user_agent()) {
                     $this->plugin->set_setting(PARAM_USER_AGENT, $user_agent);
                     HD::set_dune_user_agent($user_agent);
                 }
 
-                $dune_params_text = $user_input->{self::CONTROL_DUNE_PARAMS};
-                $dune_params = explode(',', $dune_params_text);
+                $dune_params = explode(',', $user_input->{self::CONTROL_DUNE_PARAMS});
                 foreach ($dune_params as $param) {
-                    $dune_params = explode(':', $param);
-                    if (strpos($dune_params[1], ",,") !== false) {
-                        $dune_params[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $dune_params[1]);
+                    $param_pair = explode(':', $param);
+                    if (empty($param_pair) || count($param_pair) < 2) continue;
+
+                    $param_pair[0] = trim($param_pair[0]);
+                    if (strpos($param_pair[1], ",,") !== false) {
+                        $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
                     } else {
-                        $dune_params[1] = str_replace(",", ",,", $dune_params[1]);
+                        $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
                     }
 
-                    $params_array[$dune_params[0]] = $dune_params[1];
+                    $params_array[$param_pair[0]] = $param_pair[1];
                 }
                 if (!empty($params_array)) {
                     $this->plugin->set_setting(PARAM_DUNE_PARAMS, $params_array);
