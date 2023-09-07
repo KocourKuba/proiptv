@@ -35,19 +35,19 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @template Channel
-     * @var Hashed_Array<Channel>
+     * @var Hashed_Array<string, Channel>
      */
     protected $channels;
 
     /**
      * @template Group
-     * @var Hashed_Array<Group>
+     * @var Hashed_Array<string, Group>
      */
     protected $groups;
 
     /**
      * @template Group
-     * @var Hashed_Array<Group>
+     * @var Hashed_Array<string, Group>
      */
     protected $special_groups;
 
@@ -281,6 +281,16 @@ class Starnet_Tv implements User_Input_Handler
             return false;
         }
 
+        /** @var Group $special_group */
+        /** @var Hashed_Array<string, string> $group_icons */
+        $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
+        foreach ($this->special_groups as $special_group) {
+            $group_icon = $group_icons->get($special_group->get_id());
+            if (!is_null($group_icon)) {
+                $special_group->set_icon_url($group_icon);
+            }
+        }
+
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
 
@@ -299,8 +309,6 @@ class Starnet_Tv implements User_Input_Handler
             $catchup['global'] = $user_catchup;
         }
 
-        /** @var Hashed_Array $group_icons */
-        $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
         // suppress save after add group
         $this->plugin->set_pospone_save();
 

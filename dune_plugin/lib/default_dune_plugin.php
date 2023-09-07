@@ -1264,6 +1264,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_caption_dx => 30,
                     ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
@@ -1300,6 +1301,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_caption_dx => 74,
                     ViewItemParams::item_caption_width => 550,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
@@ -1333,6 +1335,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_caption_dx => 97,
                     ViewItemParams::item_caption_width => 600,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
@@ -1367,6 +1370,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => true,
                     ViewItemParams::icon_scale_factor => 1.2,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
@@ -1402,13 +1406,10 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => false,
                     ViewItemParams::icon_scale_factor => 1.0,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
             // 4x4 without title
@@ -1440,13 +1441,10 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => false,
                     ViewItemParams::icon_scale_factor => 1.0,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
             'icons_4x3_caption' => array(
@@ -1477,6 +1475,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => true,
                     ViewItemParams::icon_scale_factor => 1.25,
                     ViewItemParams::icon_sel_scale_factor => 1.5,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
@@ -1510,13 +1509,10 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => true,
                     ViewItemParams::icon_scale_factor => 1.25,
                     ViewItemParams::icon_sel_scale_factor => 1.5,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
-                PluginRegularFolderView::not_loaded_view_item_params => array
-                (
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
         );
