@@ -4,6 +4,11 @@ require_once 'json_serializer.php';
 
 class Default_Group extends Json_Serializer implements Group
 {
+    const DEFAULT_GROUP_ICON_PATH = 'plugin_file://icons/default_group.png';
+    const DEFAULT_FAVORITE_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
+    const DEFAULT_HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
+    const DEFAULT_ALL_CHANNELS_GROUP_ICON = 'plugin_file://icons/all_folder.png';
+
     /**
      * @var string
      */

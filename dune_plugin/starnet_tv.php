@@ -9,11 +9,12 @@ class Starnet_Tv implements User_Input_Handler
 {
     const ID = 'tv';
 
+    const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
+
     ///////////////////////////////////////////////////////////////////////
 
     public static $tvg_id = array('tvg-id', 'tvg-name');
     public static $tvg_archive = array('catchup-days', 'catchup-time', 'timeshift', 'arc-timeshift', 'arc-time', 'tvg-rec');
-    const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -252,7 +253,7 @@ class Starnet_Tv implements User_Input_Handler
         $special_group = new Default_Group($this->plugin,
             FAVORITES_GROUP_ID,
             TR::load_string('plugin_favorites'),
-            'plugin_file://icons/favorite_folder.png',
+            Default_Group::DEFAULT_FAVORITE_GROUP_ICON,
             PARAM_FAVORITES);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES));
         $this->special_groups->put($special_group->get_id(), $special_group);
@@ -262,7 +263,7 @@ class Starnet_Tv implements User_Input_Handler
         $special_group = new Default_Group($this->plugin,
             HISTORY_GROUP_ID,
             TR::load_string('plugin_history'),
-            'plugin_file://icons/history_folder.png',
+            Default_Group::DEFAULT_HISTORY_GROUP_ICON,
             null);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_HISTORY));
         $this->special_groups->put($special_group->get_id(), $special_group);
@@ -271,7 +272,7 @@ class Starnet_Tv implements User_Input_Handler
         $special_group = new Default_Group($this->plugin,
             ALL_CHANNEL_GROUP_ID,
             TR::load_string('plugin_all_channels'),
-            'plugin_file://icons/all_folder.png',
+            Default_Group::DEFAULT_ALL_CHANNELS_GROUP_ICON,
             null);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL));
         $this->special_groups->put($special_group->get_id(), $special_group);
@@ -717,7 +718,7 @@ class Starnet_Tv implements User_Input_Handler
             (
                 PluginTvGroup::id => $group->get_id(),
                 PluginTvGroup::caption => $group->get_title(),
-                PluginTvGroup::icon_url => is_null($group_icon) ? Starnet_Tv_Groups_Screen::DEFAULT_GROUP_ICON_PATH: $group_icon
+                PluginTvGroup::icon_url => is_null($group_icon) ? Default_Group::DEFAULT_GROUP_ICON_PATH: $group_icon
             );
         }
 
@@ -730,7 +731,7 @@ class Starnet_Tv implements User_Input_Handler
                 (
                     PluginTvGroup::id => $group->get_id(),
                     PluginTvGroup::caption => $group->get_title(),
-                    PluginTvGroup::icon_url => is_null($group_icon) ? Starnet_Tv_Groups_Screen::DEFAULT_GROUP_ICON_PATH: $group_icon
+                    PluginTvGroup::icon_url => is_null($group_icon) ? Default_Group::DEFAULT_GROUP_ICON_PATH: $group_icon
                 );
             }
         }

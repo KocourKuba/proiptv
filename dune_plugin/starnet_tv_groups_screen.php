@@ -11,8 +11,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_EPG_SETTINGS = 'epg_settings';
     const ACTION_CHANNELS_SETTINGS = 'channels_settings';
 
-    const DEFAULT_GROUP_ICON_PATH = 'plugin_file://icons/default_group.png';
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -261,7 +259,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
-                    hd_debug_print("Set background to default");
+                    hd_debug_print("Set background to default", LOG_LEVEL_DEBUG);
                     $this->plugin->remove_setting(PARAM_PLUGIN_BACKGROUND);
                     $this->plugin->create_screen_views();
                     $this->plugin->save();
@@ -269,9 +267,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group = $this->plugin->tv->get_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
-                    hd_debug_print("Reset icon for group: $sel_media_url->group_id to default");
-                    $group->set_icon_url(null);
-                    /** @var Hashed_Array $group_icons */
+                    hd_debug_print("Reset icon for group: $sel_media_url->group_id to default", LOG_LEVEL_DEBUG);
+
+                    if ($group->is_favorite_group()) {
+                        $group->set_icon_url(Default_Group::DEFAULT_FAVORITE_GROUP_ICON);
+                    } else if ($group->is_favorite_group()) {
+                        $group->set_icon_url(Default_Group::DEFAULT_HISTORY_GROUP_ICON);
+                    } else if ($group->is_all_channels_group()) {
+                        $group->set_icon_url(Default_Group::DEFAULT_ALL_CHANNELS_GROUP_ICON);
+                    } else {
+                        $group->set_icon_url(Default_Group::DEFAULT_GROUP_ICON_PATH);
+                    }
+                    /** @var Hashed_Array<string> $group_icons */
                     $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
                     $group_icons->erase($sel_media_url->group_id);
                     $this->plugin->save();
@@ -338,7 +345,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $group = $this->plugin->tv->get_group($item);
             if (is_null($group) || $group->is_disabled()) continue;
 
-            $group_url = $group->get_icon_url() !== null ? $group->get_icon_url() : self::DEFAULT_GROUP_ICON_PATH;
+            $group_url = $group->get_icon_url() !== null ? $group->get_icon_url() : Default_Group::DEFAULT_GROUP_ICON_PATH;
             $items[] = array(
                 PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
                 PluginRegularFolderItem::caption => $group->get_title(),
