@@ -253,9 +253,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     }
 
                     $caption = $k;
-                    $icon_file = self::get_file_icon($caption);
-                    $size = HD::get_filesize_str($v['size']);
                     $filepath = $v['filepath'];
+                    $size = HD::get_filesize_str($v['size']);
+                    $icon_file = self::get_file_icon($filepath);
                     $info = TR::t('folder_screen_file__2', $caption, $size);
                     $type = $item_type;
                     $path_parts = pathinfo($caption);
@@ -548,6 +548,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             $file_icon = 'gui_skin://small_icons/audio_file.aai';
         } else if (preg_match('/\.(' . VIDEO_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/video_file.aai';
+        } else if (preg_match('/\.(' . IMAGE_PREVIEW_PATTERN . ')$/i', $ref)) {
+            $file_icon = $ref;
         } else if (preg_match('/\.(' . IMAGE_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/image_file.aai';
         } else if (preg_match('/\.(' . PLAYLIST_PATTERN . ')$/i', $ref)) {
