@@ -329,6 +329,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group->get_title(),
                     $this->plugin->tv->get_channels()->size(),
                     $this->plugin->get_disabled_channels()->size());
+            } else if ($group->is_history_group()) {
+                $item_detailed_info = $group->get_title();
             } else {
                 $item_detailed_info = TR::t('tv_screen_group_info__2',
                     $group->get_title(),
@@ -336,7 +338,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
+                PluginRegularFolderItem::media_url => $group->get_media_url_str(),
                 PluginRegularFolderItem::caption => $group->get_title(),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $group->get_icon_url(),
@@ -354,7 +356,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             $group_url = $group->get_icon_url() !== null ? $group->get_icon_url() : Default_Group::DEFAULT_GROUP_ICON_PATH;
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
+                PluginRegularFolderItem::media_url => $group->get_media_url_str(),
                 PluginRegularFolderItem::caption => $group->get_title(),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $group_url,

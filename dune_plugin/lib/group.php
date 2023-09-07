@@ -73,4 +73,9 @@ interface Group
      * @param Ordered_Array $order
      */
     public function set_items_order($order);
+
+    /**
+     * @return string;
+     */
+    public function get_media_url_str();
 }

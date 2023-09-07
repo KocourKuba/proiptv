@@ -80,7 +80,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return string
+     * @inheritDoc
      */
     public function get_id()
     {
@@ -88,7 +88,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return string
+     * @inheritDoc
      */
     public function get_title()
     {
@@ -96,7 +96,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return string
+     * @inheritDoc
      */
     public function get_icon_url()
     {
@@ -104,7 +104,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @param string $icon_url
+     * @inheritDoc
      */
     public function set_icon_url($icon_url)
     {
@@ -112,7 +112,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      */
     public function is_favorite_group()
     {
@@ -120,7 +120,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      */
     public function is_history_group()
     {
@@ -128,7 +128,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      */
     public function is_all_channels_group()
     {
@@ -136,7 +136,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      */
     public function is_adult_group()
     {
@@ -144,8 +144,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @param bool $adult
-     * @return void
+     * @inheritDoc
      */
     public function set_adult($adult)
     {
@@ -153,7 +152,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return bool
+     * @inheritDoc
      */
     public function is_disabled()
     {
@@ -161,8 +160,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @param bool $disabled
-     * @return void
+     * @inheritDoc
      */
     public function set_disabled($disabled)
     {
@@ -170,7 +168,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return Hashed_Array
+     * @inheritDoc
      */
     public function get_group_channels()
     {
@@ -178,7 +176,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @return Ordered_Array
+     * @inheritDoc
      */
     public function get_items_order()
     {
@@ -190,12 +188,32 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @param  Ordered_Array $order
+     * @inheritDoc
      */
     public function set_items_order($order)
     {
         $this->plugin->set_setting($this->_order_settings, $order);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_media_url_str()
+    {
+        if ($this->is_favorite_group()) {
+            return Starnet_Tv_Favorites_Screen::get_media_url_str();
+        }
+
+        if ($this->is_history_group()) {
+            return Starnet_TV_History_Screen::get_media_url_str();
+        }
+
+        return Starnet_Tv_Channel_List_Screen::get_media_url_string($this->get_id());
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// Methods
+
     /**
      * @param Channel $channel
      */
