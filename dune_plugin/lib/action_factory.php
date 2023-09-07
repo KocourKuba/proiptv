@@ -416,6 +416,26 @@ class Action_Factory
     }
 
     /**
+     * @param $plugin_cookies
+     * @param array|null $post_action
+     * @return array|null
+     */
+    public static function invalidate_all_folders($plugin_cookies, $post_action = null)
+    {
+        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+
+        return Starnet_Epfs_Handler::invalidate_folders(array(
+            Starnet_Tv_Groups_Screen::ID,
+            Starnet_Tv_Channel_List_Screen::ID,
+            Starnet_Tv_Favorites_Screen::ID,
+            Starnet_TV_History_Screen::ID,
+            Starnet_Playlists_Setup_Screen::ID,
+            Starnet_Epg_Setup_Screen::ID),
+            $post_action
+        );
+    }
+
+    /**
      * @param string $text_above
      * @param string|null $text_color
      * @param bool $text_halo

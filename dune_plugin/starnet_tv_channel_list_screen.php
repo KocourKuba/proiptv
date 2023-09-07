@@ -66,7 +66,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         if (!isset($user_input->selected_media_url)) {
             return null;
@@ -248,6 +249,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $info .= "Archive: " . var_export($channel->get_archive(), true) . " day's\n";
                 $info .= "Protected: " . var_export($channel->is_protected(), true) . "\n";
                 $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . "\n";
+                $info .= "Timeshift hours: {$channel->get_timeshift_hours()}\n";
                 $groups = array();
                 foreach ($channel->get_groups() as $group) {
                     $groups[] = $group->get_id();
@@ -292,7 +294,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
-                $this->plugin->tv->unload_channels();
+                $this->plugin->tv->reload_channels($plugin_cookies);
                 return $this->invalidate_current_folder($user_input, $media_url->group_id);
 
             case GUI_EVENT_KEY_RETURN:

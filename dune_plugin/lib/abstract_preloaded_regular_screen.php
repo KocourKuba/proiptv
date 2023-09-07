@@ -20,7 +20,25 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
      */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
-        return HD::create_regular_folder_range($this->get_all_folder_items($media_url, $plugin_cookies), $from_ndx);
+        $items = $this->get_all_folder_items($media_url, $plugin_cookies);
+        $count = count($items);
+        $total = $from_ndx + $count;
+
+        if ($from_ndx >= $total) {
+            $from_ndx = $total;
+            $items = array();
+        } else if ($from_ndx + $count > $total) {
+            array_splice($items, $total - $from_ndx);
+        }
+
+        return array
+        (
+            PluginRegularFolderRange::total => $total,
+            PluginRegularFolderRange::more_items_available => false,
+            PluginRegularFolderRange::from_ndx => (int)$from_ndx,
+            PluginRegularFolderRange::count => count($items),
+            PluginRegularFolderRange::items => $items
+        );
     }
 
     /**

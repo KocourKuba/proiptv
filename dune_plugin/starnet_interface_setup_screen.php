@@ -91,7 +91,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         $control_id = $user_input->control_id;
         if (isset($user_input->action_type, $user_input->{$control_id})
@@ -117,7 +118,10 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case PARAM_SHOW_FAVORITES:
             case PARAM_SHOW_HISTORY:
                 $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
-                return $this->plugin->tv->reload_channels($this, $plugin_cookies);
+                $this->plugin->tv->reload_channels($plugin_cookies);
+
+                return Action_Factory::invalidate_all_folders($plugin_cookies,
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case PARAM_EPG_FONT_SIZE:
                 $this->plugin->toggle_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);

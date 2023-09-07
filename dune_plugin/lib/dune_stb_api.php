@@ -1743,17 +1743,15 @@ function debug_print(/*mixed $var1, $var2...*/)
 }
 
 /**
- * @param string $method
  * @param Object $user_input
  * @param int $level
  * @return void
  */
-function dump_input_handler($method, $user_input, $level = LOG_LEVEL_DEBUG)
+function dump_input_handler($user_input, $level = LOG_LEVEL_DEBUG)
 {
     if ($level > get_log_level())
         return;
 
-    hd_print($method);
     foreach ($user_input as $key => $value) {
         $decoded_value = html_entity_decode(preg_replace("/(\\\u([0-9A-Fa-f]{4}))/", "&#x\\2;", $value), ENT_NOQUOTES, 'UTF-8');
         hd_print("  $key => $decoded_value");

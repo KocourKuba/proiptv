@@ -55,7 +55,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         $sel_ndx = $user_input->sel_ndx;
         if (isset($user_input->selected_media_url)) {
@@ -136,7 +137,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS,
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => ACTION_REFRESH_SCREEN,
-                        'postpone_save' => PLUGIN_SETTINGS,
+                        'save_data' => PLUGIN_SETTINGS,
                         'windowCounter' => 1,
                     )
                 );
@@ -152,7 +153,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'group_id' => $sel_media_url->group_id,
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => ACTION_REFRESH_SCREEN,
-                        'postpone_save' => PLUGIN_SETTINGS,
+                        'save_data' => PLUGIN_SETTINGS,
                         'windowCounter' => 1,
                     )
                 );
@@ -287,10 +288,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
-                $this->plugin->tv->unload_channels();
+                $this->plugin->tv->reload_channels($plugin_cookies);
                 break;
 
             case ACTION_REFRESH_SCREEN:
+                break;
             default:
                 return null;
         }

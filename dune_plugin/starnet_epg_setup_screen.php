@@ -144,7 +144,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
         $control_id = $user_input->control_id;
@@ -208,7 +209,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                         'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST,
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => RESET_CONTROLS_ACTION_ID,
-                        'postpone_save' => PLUGIN_SETTINGS,
+                        'save_data' => PLUGIN_SETTINGS,
                         'extension' => EPG_PATTERN,
                         'windowCounter' => 1,
                     )
@@ -236,7 +237,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                return $this->plugin->tv->reload_channels($this, $plugin_cookies,
+                $this->plugin->tv->reload_channels($plugin_cookies);
+                return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
         }
 

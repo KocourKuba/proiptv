@@ -78,38 +78,6 @@ class HD
 
     ///////////////////////////////////////////////////////////////////////
 
-    /**
-     * @param array $items
-     * @param int $from_ndx
-     * @param int $total
-     * @param bool $more_items_available
-     * @return array
-     */
-    public static function create_regular_folder_range($items, $from_ndx = 0, $total = -1, $more_items_available = false)
-    {
-        if ($total === -1) {
-            $total = $from_ndx + count($items);
-        }
-
-        if ($from_ndx >= $total) {
-            $from_ndx = $total;
-            $items = array();
-        } else if ($from_ndx + count($items) > $total) {
-            array_splice($items, $total - $from_ndx);
-        }
-
-        return array
-        (
-            PluginRegularFolderRange::total => (int)$total,
-            PluginRegularFolderRange::more_items_available => $more_items_available,
-            PluginRegularFolderRange::from_ndx => (int)$from_ndx,
-            PluginRegularFolderRange::count => count($items),
-            PluginRegularFolderRange::items => $items
-        );
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
     public static function print_array($opts, $ident = 0)
     {
         if (is_array($opts)) {

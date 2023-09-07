@@ -450,7 +450,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         if (isset($user_input->item_id)) {
             $media_url_str = $user_input->item_id;
@@ -679,7 +680,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (isset($user_input->playlist_idx)) {
                     $this->plugin->get_playlists()->set_saved_pos($user_input->playlist_idx);
                     $this->plugin->save(PLUGIN_PARAMETERS);
-                    return $this->plugin->tv->reload_channels($this, $plugin_cookies);
+                    $this->plugin->tv->reload_channels($plugin_cookies);
+
+                    Action_Factory::invalidate_all_folders($plugin_cookies);
                 }
                 break;
 
@@ -908,7 +911,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        /** @var Group $group */
         $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
         if (is_null($group)) {
             hd_debug_print("All channels group not found");

@@ -125,7 +125,9 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
+
         static $history_txt;
 
         if (empty($history_txt)) {
@@ -189,8 +191,12 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                     $msg = TR::t('setup_pass_not_changed');
                 }
 
+                if ($need_reload) {
+                    $this->plugin->tv->reload_channels($plugin_cookies);
+                }
+
                 return Action_Factory::show_title_dialog($msg,
-                    $need_reload ? $this->plugin->tv->reload_channels($this, $plugin_cookies) : null);
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

@@ -6,7 +6,7 @@ require_once 'lib/user_input_handler.php';
 
 class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
 {
-    const ID = 'channels_setup';
+    const ID = 'playlist_setup';
 
     const CONTROL_RESET_PLAYLIST_DLG = 'reset_playlist';
     const ACTION_RESET_PLAYLIST_DLG_APPLY = 'reset_playlist_apply';
@@ -146,7 +146,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         $control_id = $user_input->control_id;
         $new_value = '';
@@ -173,7 +174,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => RESET_CONTROLS_ACTION_ID,
                         'allow_order' => true,
-                        'postpone_save' => PLUGIN_PARAMETERS,
+                        'save_data' => PLUGIN_PARAMETERS,
                         'extension' => 'm3u|m3u8',
                         'windowCounter' => 1,
                     )
@@ -187,14 +188,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_USER_CATCHUP:
                 $this->plugin->set_setting(PARAM_USER_CATCHUP, $new_value);
-                $this->plugin->tv->unload_channels();
+                $this->plugin->tv->reload_channels($plugin_cookies);
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY: // handle streaming settings dialog result
-                $this->plugin->tv->unload_channels();
                 $this->plugin->epg_man->clear_epg_cache();
                 $this->plugin->remove_settings();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
@@ -231,8 +231,16 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                $action = $this->plugin->tv->reload_channels($this, $plugin_cookies);
-                return ($action === null) ? Action_Factory::show_title_dialog(TR::t('err_load_playlist')) : $action;
+                $result = $this->plugin->tv->reload_channels($plugin_cookies);
+                $action = Action_Factory::invalidate_all_folders($plugin_cookies,
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
+                );
+
+                if (!$result) {
+                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $action);
+                }
+
+                return $action;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

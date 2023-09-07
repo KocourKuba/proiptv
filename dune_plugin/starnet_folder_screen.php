@@ -261,9 +261,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     $path_parts = pathinfo($caption);
                     if (isset($media_url->choose_file->extension)) {
                         $info = TR::t('folder_screen_select_file__2', $caption, $size);
-                        if ($icon_file === 'gui_skin://small_icons/image_file.aai') {
-                            $detailed_icon = $filepath;
-                        }
+                        $detailed_icon = $icon_file;
 
                         if (isset($path_parts['extension'])
                             && preg_match("/^{$media_url->choose_file->extension}$/i", $path_parts['extension'])) {
@@ -278,7 +276,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     continue;
                 }
 
-                if (empty($detailed_icon)) {
+                if (!empty($detailed_icon)) {
                     $detailed_icon = str_replace('small_icons', 'large_icons', $icon_file);
                 }
 
@@ -337,7 +335,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         if (!isset($user_input->selected_media_url)) {
             return null;

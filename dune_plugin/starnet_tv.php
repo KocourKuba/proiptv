@@ -176,7 +176,8 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         if (!isset($user_input->control_id))
             return null;
@@ -228,6 +229,8 @@ class Starnet_Tv implements User_Input_Handler
     {
         hd_debug_print();
         unset($this->channels, $this->groups);
+        $this->channels = null;
+        $this->groups = null;
         $this->special_groups->clear();
     }
 
@@ -237,7 +240,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function load_channels($plugin_cookies)
     {
-        if (isset($this->channels)) {
+        if (!is_null($this->channels)) {
             return true;
         }
 
@@ -503,7 +506,10 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 $group_logo = $entry->getEntryAttribute('group-logo');
-                if (!empty($group_logo) && $parent_group->get_icon_url() === null) {
+                if (!empty($group_logo)
+                    && $parent_group->get_icon_url() === null
+                    && !preg_match("|https?://|", $group_logo)) {
+                    $group_logo = empty($icon_url_base) ? Default_Group::DEFAULT_GROUP_ICON_PATH : ($icon_url_base . $group_logo);
                     $parent_group->set_icon_url($group_logo);
                 }
 
@@ -559,34 +565,19 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->epg_man->index_xmltv_file($epg_ids);
 
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-
         return true;
     }
 
     /**
-     * @param User_Input_Handler $handler
      * @param $plugin_cookies
-     * @param $post_action
-     * @return array
+     * @return bool
      */
-    public function reload_channels(User_Input_Handler $handler, &$plugin_cookies, $post_action = null)
+    public function reload_channels(&$plugin_cookies)
     {
         hd_debug_print();
 
         $this->unload_channels();
-        if (!$this->load_channels($plugin_cookies)) {
-            hd_debug_print("Channels not loaded!");
-            return null;
-        }
-
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        return Starnet_Epfs_Handler::invalidate_folders(array(
-                Starnet_Tv_Groups_Screen::ID,
-                Starnet_Tv_Channel_List_Screen::ID,
-                Starnet_Playlists_Setup_Screen::ID),
-            $post_action !== null ? $post_action : User_Input_Handler_Registry::create_action($handler, RESET_CONTROLS_ACTION_ID)
-        );
+        return $this->load_channels($plugin_cookies);
     }
 
     /**

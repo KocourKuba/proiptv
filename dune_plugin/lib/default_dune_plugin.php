@@ -138,6 +138,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     protected function get_screen_by_id($screen_id)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
         if (isset($this->screens[$screen_id])) {
             hd_debug_print("'$screen_id'", LOG_LEVEL_DEBUG);
             return $this->screens[$screen_id];
@@ -175,7 +176,6 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
         return User_Input_Handler_Registry::get_instance()->handle_user_input($user_input, $plugin_cookies);
     }
 
@@ -187,9 +187,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_folder_view($media_url, &$plugin_cookies)
     {
-        hd_debug_print("MediaUrl: $media_url", LOG_LEVEL_DEBUG);
         $decoded_media_url = MediaURL::decode($media_url);
-
         return $this->get_screen_by_url($decoded_media_url)->get_folder_view($decoded_media_url, $plugin_cookies);
     }
 
@@ -1200,6 +1198,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewParams::paint_scrollbar => true,
                     ViewParams::paint_widget => true,
                     ViewParams::paint_help_line => true,
+                    ViewParams::help_line_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
                     ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
                     ViewParams::background_path=> $background,
                     ViewParams::background_order => 0,

@@ -18,7 +18,8 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_debug_print("----> count: " . count($this->folder_views));
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
 
         $folder_views = $this->get_folder_views();
         $folder_view = $folder_views[$this->get_folder_view_index($plugin_cookies)];

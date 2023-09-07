@@ -30,6 +30,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
     {
         parent::__construct();
 
+        set_log_level(LOG_LEVEL_DEBUG);
+
         print_sysinfo();
 
         hd_print("----------------------------------------------------");

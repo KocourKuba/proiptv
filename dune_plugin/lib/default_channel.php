@@ -90,6 +90,8 @@ class Default_Channel implements Channel
                                 $archive, $number, $epg_ids,
                                 $protected, $timeshift_hours, $ext_params = array())
     {
+        $this->_disabled = false;
+
         $this->_id = $id;
         $this->_title = $title;
         $this->_icon_url = $icon_url;
@@ -101,7 +103,6 @@ class Default_Channel implements Channel
         $this->_epg_ids = $epg_ids;
         $this->_protected = $protected;
         $this->_timeshift_hours = $timeshift_hours;
-        $this->_disabled = false;
         $this->_ext_params = $ext_params;
     }
 

@@ -31,7 +31,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        dump_input_handler(__METHOD__, $user_input);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        dump_input_handler($user_input);
 
         if (!isset($user_input->control_id)) {
             return null;
@@ -55,7 +56,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case 'do_channels_setup':
                 hd_debug_print("do channels setup", LOG_LEVEL_DEBUG);
-                return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::ID, TR::t('tv_screen_playlists_setup'));
+                $media_url_str = MediaURL::make(array('screen_id' => Starnet_Playlists_Setup_Screen::ID, 'source_window_id' => self::ID));
+                return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_playlists_setup'));
 
             case 'do_send_log':
                 hd_debug_print("do_send_log", LOG_LEVEL_DEBUG);

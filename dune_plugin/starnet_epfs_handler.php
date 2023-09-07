@@ -104,10 +104,12 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
      */
     public static function invalidate_folders($media_urls = null, $post_action = null)
     {
-        if (!self::$enabled)
-            return $post_action;
+        if (self::$enabled) {
+            $arr = array_merge(array(self::$epf_id), (is_array($media_urls) ? $media_urls : array()));
+        } else {
+            $arr = $media_urls;
+        }
 
-        $arr = array_merge(array(self::$epf_id), (is_array($media_urls) ? $media_urls : array()));
         return Action_Factory::invalidate_folders($arr, $post_action);
     }
 

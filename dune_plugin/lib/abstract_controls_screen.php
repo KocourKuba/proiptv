@@ -25,6 +25,9 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+
         $defs = $this->get_control_defs($media_url, $plugin_cookies);
 
         $folder_view = array
