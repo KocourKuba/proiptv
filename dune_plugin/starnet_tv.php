@@ -494,7 +494,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 $group_logo = $entry->getEntryAttribute('group-logo');
-                if (!empty($group_logo) && $parent_group->get_icon_url() !== null) {
+                if (!empty($group_logo) && $parent_group->get_icon_url() === null) {
                     $parent_group->set_icon_url($group_logo);
                 }
 
