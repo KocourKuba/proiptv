@@ -176,6 +176,30 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run());
 
             case GUI_EVENT_KEY_POPUP_MENU:
+                if (isset($user_input->choose_playlist)) {
+                    $menu_items = array();
+                    $cur = $this->plugin->get_playlists()->get_saved_pos();
+                    foreach ($this->plugin->get_playlists()->get_order() as $key => $playlist) {
+                        if ($key !== 0 && ($key % 15) === 0)
+                            $this->create_menu_item($this,$menu_items, GuiMenuItemDef::is_separator);
+
+                        if (($pos = strpos($playlist, '?')) !== false) {
+                            $playlist = substr($playlist, 0, $pos);
+                        }
+                        $ar = explode('/', $playlist);
+                        $playlist = end($ar);
+
+                        $this->create_menu_item($this,
+                            $menu_items,
+                            ACTION_PLAYLIST_SELECTED,
+                            $playlist,
+                            ($cur !== $key) ? null : "check.png",
+                            array('playlist_idx' => $key));
+                    }
+
+                    return Action_Factory::show_popup_menu($menu_items);
+                }
+
                 if (isset($sel_media_url->group_id) && !in_array($sel_media_url->group_id, array(ALL_CHANNEL_GROUP_ID, HISTORY_GROUP_ID, FAVORITES_GROUP_ID))) {
                     $this->create_menu_item($this, $menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'),"hide.png");
                 }
@@ -214,10 +238,24 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
-                $this->create_menu_item($this, $menu_items, self::ACTION_CHANNELS_SETTINGS, TR::t('tv_screen_playlists_setup'),"playlist.png");
+                $this->create_menu_item($this, $menu_items, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'),"playlist.png");
                 $this->create_menu_item($this, $menu_items,self::ACTION_EPG_SETTINGS, TR::t('setup_epg_settings'),"epg.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
+
+            case ACTION_CHANGE_PLAYLIST:
+                hd_debug_print("Start event popup menu for playlist");
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array('choose_playlist' => true));
+
+            case ACTION_PLAYLIST_SELECTED:
+                if (isset($user_input->playlist_idx)) {
+                    $this->plugin->get_playlists()->set_saved_pos($user_input->playlist_idx);
+                    $this->plugin->save(PLUGIN_PARAMETERS);
+                    $this->plugin->tv->reload_channels($plugin_cookies);
+
+                    Action_Factory::invalidate_all_folders($plugin_cookies);
+                }
+                break;
 
             case ACTION_CHANGE_GROUP_ICON:
             case ACTION_CHANGE_BACKGROUND:

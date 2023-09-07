@@ -35,6 +35,7 @@ video_aspect_ration = Video aspect ration
 change_group_icon = Change category icons
 change_background = Change background image
 channel_info_dlg = Channel info
+change_playlist = Change playlist
 
 plugin_all_channels = All channels
 plugin_favorites = Favorites

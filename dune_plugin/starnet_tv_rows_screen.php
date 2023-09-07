@@ -506,20 +506,24 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->choose_playlist)) {
                     $menu_items = array();
-                    $cur = $this->plugin->get_playlists()->get_selected_item();
+                    $cur = $this->plugin->get_playlists()->get_saved_pos();
                     foreach ($this->plugin->get_playlists()->get_order() as $key => $playlist) {
                         if ($key !== 0 && ($key % 15) === 0)
                             $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
-
-                        $icon = ($cur !== $playlist) ? null : "link.png";
 
                         if (($pos = strpos($playlist, '?')) !== false) {
                             $playlist = substr($playlist, 0, $pos);
                         }
                         $ar = explode('/', $playlist);
                         $playlist = end($ar);
-                        $this->create_menu_item($menu_items, ACTION_FOLDER_SELECTED, $playlist, $icon, array('playlist_idx' => $key));
+
+                        $this->create_menu_item($menu_items,
+                            ACTION_PLAYLIST_SELECTED,
+                            $playlist,
+                            ($cur !== $key) ? null : "check.png",
+                            array('playlist_idx' => $key));
                     }
+
                     return Action_Factory::show_popup_menu($menu_items);
                 }
 
@@ -575,7 +579,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                     if ($this->plugin->get_playlists()->size()) {
                         $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
-                        $this->create_menu_item($menu_items, ACTION_CHANGE_PLAYLIST, TR::t('setup_channels_src_playlists'),"playlist.png");
+                        $this->create_menu_item($menu_items, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'),"playlist.png");
                     }
                 }
 
@@ -676,7 +680,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 hd_debug_print("Start event popup menu for playlist");
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array('choose_playlist' => true));
 
-            case ACTION_FOLDER_SELECTED:
+            case ACTION_PLAYLIST_SELECTED:
                 if (isset($user_input->playlist_idx)) {
                     $this->plugin->get_playlists()->set_saved_pos($user_input->playlist_idx);
                     $this->plugin->save(PLUGIN_PARAMETERS);

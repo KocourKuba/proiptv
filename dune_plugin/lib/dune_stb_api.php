@@ -71,6 +71,7 @@ const ACTION_CHANGE_PLAYLIST = 'change_playlist';
 const ACTION_EXTERNAL_PLAYER = 'use_external_player';
 const ACTION_INTERNAL_PLAYER = 'use_internal_player';
 const ACTION_FOLDER_SELECTED = 'folder_selected';
+const ACTION_PLAYLIST_SELECTED = 'playlist_selected';
 const ACTION_FILE_SELECTED = 'file_selected';
 const ACTION_ITEM_ADD = 'item_add';
 const ACTION_ITEM_DELETE = 'item_delete';
