@@ -580,7 +580,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
 
-                $this->create_menu_item($menu_items, ACTION_ZOOM_POPUP_MENU, TR::t('tv_screen_toggle_icons_aspect'));
+                $this->create_menu_item($menu_items, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'));
                 $this->create_menu_item($menu_items, ACTION_REFRESH_SCREEN, TR::t('refresh'),"refresh.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
