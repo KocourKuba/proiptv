@@ -92,13 +92,17 @@ class Default_Dune_Plugin implements DunePlugin
 
     protected function __construct()
     {
+        $this->load(PLUGIN_PARAMETERS, true);
+
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->is_durty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
 
         $this->plugin_info = get_plugin_manifest_info();
         $this->m3u_parser = new M3uParser();
         $this->epg_man = new Epg_Manager($this);
-        $this->load(PLUGIN_PARAMETERS, true);
+        $debug = $this->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
+        set_log_level($debug ? LOG_LEVEL_DEBUG: LOG_LEVEL_INFO);
+
         $this->create_screen_views();
     }
 

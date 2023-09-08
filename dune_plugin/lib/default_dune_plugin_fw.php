@@ -69,7 +69,9 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
 
         try {
             $out_data = $this->invoke_operation($plugin, $call_ctx);
-        } catch (Dune_Exception $e) {
+        }
+        /** @noinspection PhpRedundantCatchClauseInspection */
+        catch (Dune_Exception $e) {
             hd_debug_print("Error: DuneException caught: " . $e->getMessage());
             return
                 array

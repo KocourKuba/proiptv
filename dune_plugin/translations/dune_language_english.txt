@@ -94,6 +94,7 @@ setup_copy_to_plugin = Copy to plugin folder
 setup_copy_done = Copy done
 setup_ask_exit = Confirm exit plugin
 setup_changelog = History of changes
+setup_debug = Enable debug logging
 
 setup_channels_src_reset_playlist = Reset playlist settings
 setup_channels_src_edit_playlists = Edit Playlists

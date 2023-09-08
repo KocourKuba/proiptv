@@ -77,6 +77,13 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_ADULT_PASS_DLG,
             TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
 
+        //////////////////////////////////////
+        // debugging
+        $debug_state = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SetupControlSwitchDefs::$on_off_translated[$debug_state],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$debug_state]), self::CONTROLS_WIDTH);
+
         return $defs;
     }
 
@@ -197,6 +204,13 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
                 return Action_Factory::show_title_dialog($msg,
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
+
+            case PARAM_ENABLE_DEBUG:
+                $this->plugin->toggle_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
+                $debug = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
+                set_log_level($debug ? LOG_LEVEL_DEBUG: LOG_LEVEL_INFO);
+                hd_debug_print("Debug logging: " . var_export($debug, true));
+                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

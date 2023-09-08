@@ -140,6 +140,7 @@ const PARAM_BUFFERING_TIME = 'buffering_time';
 const PARAM_ARCHIVE_DELAY_TIME = 'archive_delay_time';
 const PARAM_GROUPS_ICONS = 'groups_icons';
 const PARAM_PLUGIN_BACKGROUND = 'plugin_background';
+const PARAM_ENABLE_DEBUG = 'enable_debug';
 
 # HTTP params
 const USER_AGENT = 'User-Agent';
