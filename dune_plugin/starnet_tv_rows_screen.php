@@ -532,20 +532,20 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     if ($media_url->group_id === HISTORY_GROUP_ID) {
                         $this->create_menu_item($menu_items, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");
                     } else if ($media_url->group_id === FAVORITES_GROUP_ID) {
-                        $this->create_menu_item($menu_items, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete'), "star.png");
+                        $this->create_menu_item($menu_items, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), "star.png");
                     } else {
                         $channel_id = $media_url->channel_id;
                         //hd_debug_print("Selected channel id: $channel_id");
 
                         $is_in_favorites = $this->plugin->get_favorites()->in_order($channel_id);
-                        $caption = $is_in_favorites ? TR::t('delete') : TR::t('add');
+                        $caption = $is_in_favorites ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
                         $add_action = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+
+                        $this->create_menu_item($menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
 
                         if (is_apk()) {
                             $this->create_menu_item($common_menu, $add_action, $caption, "star.png");
                         }
-
-                        $this->create_menu_item($common_menu, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
 
                         if ($media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
                             $this->create_menu_item($menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
@@ -572,7 +572,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     if ($media_url->group_id === HISTORY_GROUP_ID) {
                         $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
                     } else if ($media_url->group_id === FAVORITES_GROUP_ID) {
-                        $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "star.png");
+                        $this->create_menu_item($menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                     } else if ($media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
                         $this->create_menu_item($menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'),"hide.png");
                     }
@@ -585,7 +585,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 $this->create_menu_item($menu_items, GuiMenuItemDef::is_separator);
 
-                $this->create_menu_item($menu_items, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'));
+                $this->create_menu_item($menu_items, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'),"image.png");
                 $this->create_menu_item($menu_items, ACTION_REFRESH_SCREEN, TR::t('refresh'),"refresh.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
@@ -613,16 +613,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $control_id = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 }
 
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                return $this->plugin->change_tv_favorites($control_id, $media_url->channel_id, $plugin_cookies);
+                $this->plugin->change_tv_favorites($control_id, $media_url->channel_id);
+                return $this->plugin->update_epfs_data($plugin_cookies);
 
             case PLUGIN_FAVORITES_OP_MOVE_UP:
             case PLUGIN_FAVORITES_OP_MOVE_DOWN:
                 if (isset($user_input->selected_item_id)) {
                     if (isset($media_url->group_id)) {
                         if ($media_url->group_id === FAVORITES_GROUP_ID) {
-                            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                            return $this->plugin->change_tv_favorites($control_id, $media_url->channel_id, $plugin_cookies);
+                            $this->plugin->change_tv_favorites($control_id, $media_url->channel_id);
+                            return $this->plugin->update_epfs_data($plugin_cookies);
                         }
 
                         if ($media_url->group_id !== HISTORY_GROUP_ID && $media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
@@ -647,8 +647,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_REFRESH_SCREEN:
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                return Starnet_Epfs_Handler::invalidate_folders();
+                $this->plugin->invalidate_epfs();
+                return $this->plugin->update_epfs_data($plugin_cookies);
 
             case ACTION_ITEM_REMOVE:
                 $this->removed_playback_point = $media_url->get_raw_string();
@@ -662,8 +662,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if ($media_url->group_id === FAVORITES_GROUP_ID) {
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                    return $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null, $plugin_cookies);
+                    $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null);
+                    $this->plugin->invalidate_epfs();
+                    return $this->plugin->update_epfs_data($plugin_cookies);
                 }
 
                 break;
@@ -686,8 +687,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->plugin->save(PLUGIN_PARAMETERS);
                     $this->plugin->tv->reload_channels($plugin_cookies);
 
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                    return Starnet_Epfs_Handler::invalidate_folders();
+                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
                 break;
 

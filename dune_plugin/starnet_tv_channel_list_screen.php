@@ -90,13 +90,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->update_epfs_data($plugin_cookies, null, $post_action);
+                return $this->plugin->update_epfs_data($plugin_cookies, null, $post_action);
 
             case ACTION_ADD_FAV:
                 $opt_type = $this->plugin->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-                $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
-                $this->invalidate_epfs();
-
+                $this->plugin->change_tv_favorites($opt_type, $channel_id);
                 break;
 
             case ACTION_SETTINGS:
@@ -157,7 +155,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($sel_ndx < 0) {
                     $sel_ndx = 0;
                 }
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
 
                 break;
 
@@ -171,13 +169,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($sel_ndx >= $groups_cnt) {
                     $sel_ndx = $groups_cnt - 1;
                 }
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
 
                 break;
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->tv->disable_channel($channel_id, $media_url->group_id);
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
 
                 break;
 
@@ -185,7 +183,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $group = $this->plugin->tv->get_group($media_url->group_id);
                 if (!is_null($group)) {
                     $group->get_items_order()->sort_order();
-                    $this->invalidate_epfs();
+                    $this->plugin->invalidate_epfs();
                 }
                 break;
 
@@ -298,7 +296,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->invalidate_current_folder($user_input, $media_url->group_id);
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
+                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);

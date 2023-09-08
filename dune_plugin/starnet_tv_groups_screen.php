@@ -74,11 +74,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
 
-                return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
+                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                $post_action = $this->update_epfs_data($plugin_cookies,
+                $post_action = $this->plugin->update_epfs_data($plugin_cookies,
                     null,
                     $user_input->control_id === ACTION_OPEN_FOLDER ? Action_Factory::open_folder() : Action_Factory::tv_play());
 
@@ -99,7 +99,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($sel_ndx < $min_sel) {
                     $sel_ndx = $min_sel;
                 }
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
 
                 break;
 
@@ -113,24 +113,23 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $sel_ndx = $groups_cnt - 1;
                 }
 
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
                 break;
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->tv->disable_group($sel_media_url->group_id);
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
                 break;
 
             case ACTION_ITEMS_SORT:
                 $this->plugin->get_groups_order()->sort_order();
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
                 break;
 
             case ACTION_RESET_ITEMS_SORT:
                 $this->plugin->get_groups_order()->clear();
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                break;
+                return $this->plugin->update_epfs_data($plugin_cookies);
 
             case ACTION_ITEMS_EDIT:
                 $this->plugin->set_pospone_save();

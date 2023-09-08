@@ -185,8 +185,8 @@ class Starnet_Tv implements User_Input_Handler
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
                 // rising after playback end + 100 ms
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                return Starnet_Epfs_Handler::invalidate_folders(array(Starnet_TV_History_Screen::ID));
+                $this->plugin->invalidate_epfs();
+                return $this->plugin->update_epfs_data($plugin_cookies, array(Starnet_TV_History_Screen::ID));
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $this->plugin->playback_points->update_point($user_input->plugin_tv_channel_id);
@@ -232,6 +232,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->channels = null;
         $this->groups = null;
         $this->special_groups->clear();
+        $this->plugin->invalidate_epfs();
     }
 
     /**

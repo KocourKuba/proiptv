@@ -124,7 +124,7 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
             return null;
 
         if ($first_run)
-            hd_debug_print("first run");
+            hd_debug_print("First run", LOG_LEVEL_DEBUG);
 
         self::ensure_no_internet_epfs_created($first_run, $plugin_cookies);
 
@@ -137,7 +137,7 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
 
         $cold_run = !is_file(self::warmed_up_path());
         if ($cold_run) {
-            hd_debug_print("Cold run");
+            hd_debug_print("Cold run", LOG_LEVEL_DEBUG);
             file_put_contents(self::warmed_up_path(), '');
         }
 

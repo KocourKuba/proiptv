@@ -83,6 +83,11 @@ class Default_Dune_Plugin implements DunePlugin
      */
     protected $is_durty;
 
+    /**
+     * @var bool
+     */
+    protected $need_update_epfs = false;
+
     ///////////////////////////////////////////////////////////////////////
 
     protected function __construct()
@@ -115,6 +120,27 @@ class Default_Dune_Plugin implements DunePlugin
         } else {
             hd_debug_print(get_class($object) . ": Screen class is illegal. get_id method not defined!", LOG_LEVEL_ERROR);
         }
+    }
+
+    public function invalidate_epfs()
+    {
+        $this->need_update_epfs = true;
+    }
+
+    /**
+     * @param $plugin_cookies
+     * @param array|null $media_urls
+     * @param null $post_action
+     * @return array
+     */
+    public function update_epfs_data($plugin_cookies, $media_urls = null, $post_action = null)
+    {
+        if ($this->need_update_epfs) {
+            $this->save();
+            $this->need_update_epfs = false;
+            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        }
+        return Starnet_Epfs_Handler::invalidate_folders($media_urls, $post_action);
     }
 
     /**
@@ -357,12 +383,13 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @override
      * @param string $op_type
      * @param string $channel_id
      * @param $plugin_cookies
      * @return array
      */
-    public function change_tv_favorites($op_type, $channel_id, &$plugin_cookies)
+    public function change_tv_favorites($op_type, $channel_id, &$plugin_cookies = null)
     {
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported", LOG_LEVEL_ERROR);
@@ -370,7 +397,40 @@ class Default_Dune_Plugin implements DunePlugin
             return array();
         }
 
-        return $this->change_favorites($op_type, $channel_id);
+        $favorites = $this->get_favorites();
+        switch ($op_type) {
+            case PLUGIN_FAVORITES_OP_ADD:
+                if ($favorites->add_item($channel_id)) {
+                    hd_debug_print("Add channel $channel_id to favorites", LOG_LEVEL_DEBUG);
+                }
+                break;
+
+            case PLUGIN_FAVORITES_OP_REMOVE:
+                if ($favorites->remove_item($channel_id)) {
+                    hd_debug_print("Remove channel $channel_id from favorites", LOG_LEVEL_DEBUG);
+                }
+                break;
+
+            case PLUGIN_FAVORITES_OP_MOVE_UP:
+                $favorites->arrange_item($channel_id, Ordered_Array::UP);
+                break;
+
+            case PLUGIN_FAVORITES_OP_MOVE_DOWN:
+                $favorites->arrange_item($channel_id, Ordered_Array::DOWN);
+                break;
+
+            case ACTION_ITEMS_CLEAR:
+                hd_debug_print("Clear favorites", LOG_LEVEL_DEBUG);
+                $favorites->clear();
+                break;
+        }
+
+        $this->invalidate_epfs();
+
+        return Starnet_Epfs_Handler::invalidate_folders(array(
+            Starnet_Tv_Favorites_Screen::ID,
+            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
+        );
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -755,47 +815,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_favorites()
     {
         return $this->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order();
-    }
-
-    /**
-     * @param string $fav_op_type
-     * @param string $channel_id
-     * @return array
-     */
-    public function change_favorites($fav_op_type, $channel_id)
-    {
-        $favorites = $this->get_favorites();
-        switch ($fav_op_type) {
-            case PLUGIN_FAVORITES_OP_ADD:
-                if ($favorites->add_item($channel_id)) {
-                    hd_debug_print("Add channel $channel_id to favorites", LOG_LEVEL_DEBUG);
-                }
-                break;
-
-            case PLUGIN_FAVORITES_OP_REMOVE:
-                if ($favorites->remove_item($channel_id)) {
-                    hd_debug_print("Remove channel $channel_id from favorites", LOG_LEVEL_DEBUG);
-                }
-                break;
-
-            case PLUGIN_FAVORITES_OP_MOVE_UP:
-                $favorites->arrange_item($channel_id, Ordered_Array::UP);
-                break;
-
-            case PLUGIN_FAVORITES_OP_MOVE_DOWN:
-                $favorites->arrange_item($channel_id, Ordered_Array::DOWN);
-                break;
-
-            case ACTION_ITEMS_CLEAR:
-                hd_debug_print("Clear favorites", LOG_LEVEL_DEBUG);
-                $favorites->clear();
-                break;
-        }
-
-        return Starnet_Epfs_Handler::invalidate_folders(array(
-            Starnet_Tv_Favorites_Screen::ID,
-            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
-        );
     }
 
     public function get_special_groups_count()

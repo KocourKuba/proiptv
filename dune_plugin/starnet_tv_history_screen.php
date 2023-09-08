@@ -62,7 +62,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->update_epfs_data($plugin_cookies, null, $post_action);
+                return $this->plugin->update_epfs_data($plugin_cookies, null, $post_action);
 
 			case ACTION_ITEM_DELETE:
                 $this->plugin->playback_points->erase_point($channel_id);
@@ -70,13 +70,13 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 				$sel_ndx++;
 				if ($sel_ndx < 0)
 					$sel_ndx = 0;
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
                 break;
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->playback_points->clear_points();
                 $sel_ndx = 0;
-                $this->invalidate_epfs();
+                $this->plugin->invalidate_epfs();
 
                 break;
 
@@ -84,9 +84,8 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 				$is_favorite = $this->plugin->get_favorites()->in_order($channel_id);
 				$opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
-				$this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
-                $this->invalidate_epfs();
-				return Action_Factory::show_title_dialog($message, $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
+				return Action_Factory::show_title_dialog($message,
+                    $this->plugin->change_tv_favorites($opt_type, $channel_id));
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $this->create_menu_item($this, $menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
@@ -94,7 +93,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
+                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);

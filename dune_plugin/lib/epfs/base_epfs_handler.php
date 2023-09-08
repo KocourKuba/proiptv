@@ -28,9 +28,9 @@ class Base_Epfs_Handler
 		//hd_debug_print("Write epf for $epf_id to $path (" . strlen($data) . ' bytes)');
 
         if (false === file_put_contents($tmp_path, $data)) {
-            hd_debug_print("Failed to write tmp file: $tmp_path");
+            hd_debug_print("Failed to write tmp file: $tmp_path", LOG_LEVEL_ERROR);
         } else if (!rename($tmp_path, $path)) {
-            hd_debug_print("Failed to rename $tmp_path to $path");
+            hd_debug_print("Failed to rename $tmp_path to $path", LOG_LEVEL_ERROR);
             unlink($tmp_path);
         }
 	}
