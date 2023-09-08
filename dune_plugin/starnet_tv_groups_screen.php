@@ -275,7 +275,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                $cached_image = get_cached_image_path($data->caption);
+                $cached_image = get_cached_image_path("{$this->plugin->get_playlist_hash()}_$data->caption");
                 hd_print("copy from: $data->filepath to: $cached_image");
                 if (!copy($data->filepath, $cached_image)) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));

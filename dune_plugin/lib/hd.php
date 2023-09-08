@@ -799,7 +799,7 @@ class HD
 
     public static function string_ellipsis($string)
     {
-        $max_size = is_apk() ? 45 : 36;
+        $max_size = 36;
         if (strlen($string) > $max_size) {
             $string = "..." . substr($string, strlen($string) - $max_size);
         }

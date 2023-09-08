@@ -547,6 +547,9 @@ class Default_Dune_Plugin implements DunePlugin
         $hash = $this->get_playlist_hash();
         hd_debug_print("remove $hash.settings", LOG_LEVEL_DEBUG);
         HD::erase_data_items("$hash.settings");
+        foreach (glob_dir(get_cached_image_path(), "/^$hash.*$/i") as $file) {
+            unlink($file);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////
