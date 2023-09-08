@@ -507,10 +507,17 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 $group_logo = $entry->getEntryAttribute('group-logo');
-                if (!empty($group_logo)
-                    && $parent_group->get_icon_url() === null
-                    && !preg_match("|https?://|", $group_logo)) {
-                    $group_logo = empty($icon_url_base) ? Default_Group::DEFAULT_GROUP_ICON_PATH : ($icon_url_base . $group_logo);
+                if (!empty($group_logo) && $parent_group->get_icon_url() === null) {
+                    hd_debug_print("Found new picon from 'group-logo' for category: {$parent_group->get_title()} : $group_logo", LOG_LEVEL_DEBUG);
+                    if (!preg_match("|^https?://|", $group_logo)) {
+                        if (!empty($icon_url_base)) {
+                            $group_logo = $icon_url_base . $group_logo;
+                        } else {
+                            $group_logo = Default_Group::DEFAULT_GROUP_ICON_PATH;
+                        }
+                    }
+
+                    hd_debug_print("Set picon: $group_logo", LOG_LEVEL_DEBUG);
                     $parent_group->set_icon_url($group_logo);
                 }
 
