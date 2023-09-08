@@ -58,11 +58,14 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $show_buf_time_ops[5000] = TR::t('setup_buffer_sec__1', "5");
         $show_buf_time_ops[10000] = TR::t('setup_buffer_sec__1', "10");
 
+        $buffering = $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000);
+        hd_debug_print("Current buffering: $buffering");
         Control_Factory::add_combobox($defs,
             $this,
             null,
-            PARAM_BUFFERING_TIME, TR::t('setup_buffer_time'),
-            $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000),
+            PARAM_BUFFERING_TIME,
+            TR::t('setup_buffer_time'),
+            $buffering,
             $show_buf_time_ops,
             self::CONTROLS_WIDTH,
             true);
@@ -78,12 +81,14 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $show_delay_time_ops[3*60] = TR::t('setup_buffer_sec__1', "180");
         $show_delay_time_ops[5*60] = TR::t('setup_buffer_sec__1', "300");
 
+        $delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
+        hd_debug_print("Current archive delay: $delay");
         Control_Factory::add_combobox($defs,
             $this,
             null,
             PARAM_ARCHIVE_DELAY_TIME,
             TR::t('setup_delay_time'),
-            $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60),
+            $delay,
             $show_delay_time_ops,
             self::CONTROLS_WIDTH,
             true);
@@ -116,17 +121,16 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         switch ($control_id) {
             case self::CONTROL_AUTO_PLAY:
             case self::CONTROL_AUTO_RESUME:
+                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, LOG_LEVEL_DEBUG);
                 $plugin_cookies->{$control_id} = ($plugin_cookies->{$control_id} === SetupControlSwitchDefs::switch_off)
                     ? SetupControlSwitchDefs::switch_on
                     : SetupControlSwitchDefs::switch_off;
-
-                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, LOG_LEVEL_DEBUG);
                 break;
 
             case PARAM_BUFFERING_TIME:
             case PARAM_ARCHIVE_DELAY_TIME:
-                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 hd_debug_print("$control_id: " . $user_input->{$control_id}, LOG_LEVEL_DEBUG);
+                $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
                 break;
         }
 
