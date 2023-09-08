@@ -101,7 +101,7 @@
                         </action>
                     </menu_item>
                     <menu_item>
-                        <caption>%tr%entry_epg_cache_clear</caption>
+                        <caption>%tr%entry_epg_cache_clear_all</caption>
                         <icon_url>gui_skin://small_icons/subtitles_settings.aai</icon_url>
                         <action>
                             <type>plugin_handle_user_input</type>

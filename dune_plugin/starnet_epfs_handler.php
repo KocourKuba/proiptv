@@ -54,7 +54,7 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
         self::$epf_id = $plugin->plugin_info['app_name'];
         self::$no_internet_epfs = self::$epf_id . '.no_internet';
 
-        hd_debug_print("epf_id: " . self::$epf_id);
+        hd_debug_print("epf_id: '" . self::$epf_id . "'", LOG_LEVEL_DEBUG);
         parent::initialize(self::$epf_id);
 
         self::$tv_rows_screen = new Starnet_Tv_Rows_Screen($plugin);

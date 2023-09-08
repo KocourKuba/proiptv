@@ -96,7 +96,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $this->create_menu_item($this, $menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_RETURN:
@@ -120,7 +120,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     {
         $items = array();
 
-        foreach ($this->plugin->get_favorites()->get_order() as $channel_id) {
+        foreach ($this->plugin->get_favorites() as $channel_id) {
             if (!preg_match('/\S/', $channel_id)) {
                 continue;
             }

@@ -88,7 +88,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     $this->plugin->change_tv_favorites($opt_type, $channel_id));
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $this->create_menu_item($this, $menu_items, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 

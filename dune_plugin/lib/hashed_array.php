@@ -11,17 +11,26 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * @var integer
      */
-    private $pos = 0;
+    protected $pos = 0;
 
     /**
      * @var array
      */
-    private $seq = array();
+    protected $seq = array();
 
     /**
      * @var TValue[]
      */
-    private $map = array();
+    protected $map = array();
+
+    /**
+     * Default hashing algorithm
+     * @return string
+     */
+    public static function hash($item)
+    {
+        return empty($item) ? '' : hash('crc32', $item);
+    }
 
     /**
      * @return integer
@@ -41,14 +50,18 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @param TKey $id
      * @param TValue $item
+     * @param TKey|null $key
      */
-    public function put($id, $item)
+    public function put($item, $key = null)
     {
-        if (!$this->has($id)) {
-            $this->seq[] = $id;
-            $this->map[$id] = $item;
+        if (is_null($key)) {
+            $key = self::hash($item);
+        }
+
+        if (!$this->has($key)) {
+            $this->seq[] = $key;
+            $this->map[$key] = $item;
         }
     }
 
@@ -62,28 +75,28 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @param TKey $id
+     * @param TKey $key
      * @param TValue $item
      */
-    public function set($id, $item)
+    public function set($key, $item)
     {
-        if (!$this->has($id)) {
-            $this->seq[] = $id;
+        if (!$this->has($key)) {
+            $this->seq[] = $key;
         }
-        $this->map[$id] = $item;
+        $this->map[$key] = $item;
     }
 
     /**
-     * @param TKey $id
+     * @param TKey $key
      */
-    public function erase($id)
+    public function erase($key)
     {
-        if ($this->has($id)) {
-            $keys = array_keys($this->seq, $id);
-            foreach ($keys as $key) {
-                unset($this->seq[$key]);
+        if ($this->has($key)) {
+            $all_keys = array_keys($this->seq, $key);
+            foreach ($all_keys as $k) {
+                unset($this->seq[$k]);
             }
-            unset($this->map[$id]);
+            unset($this->map[$key]);
         }
     }
 
@@ -102,6 +115,14 @@ class Hashed_Array extends Json_Serializer implements Iterator
     public function keys()
     {
         return array_keys($this->map);
+    }
+
+    /**
+     * @return array
+     */
+    public function order()
+    {
+        return $this->seq;
     }
 
     public function usort($callback_name)
@@ -141,7 +162,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function key()
     {
-        return $this->pos;
+        return $this->seq[$this->pos];
     }
 
     /**

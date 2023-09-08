@@ -36,7 +36,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         // playlists
         $playlist_idx = $this->plugin->get_playlists()->get_saved_pos();
         $display_path = array();
-        foreach ($this->plugin->get_playlists()->get_order() as $playlist) {
+        foreach ($this->plugin->get_playlists() as $playlist) {
             if (($pos = strpos($playlist, '?')) !== false) {
                 $playlist = substr($playlist, 0, $pos);
             }

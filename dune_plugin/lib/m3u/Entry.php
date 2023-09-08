@@ -259,7 +259,7 @@ class Entry extends Json_Serializer
 
         $ch_id = $this->getAnyEntryAttribute($tags);
 
-        return empty($ch_id) ? hash('crc32', $this->getPath()) : $ch_id;
+        return empty($ch_id) ? Hashed_Array::hash($this->getPath()) : $ch_id;
     }
 
     /**

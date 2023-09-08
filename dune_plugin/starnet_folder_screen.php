@@ -113,7 +113,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_debug_print($media_url->get_raw_string());
+        hd_debug_print($media_url->get_raw_string(), LOG_LEVEL_DEBUG);
         $actions = array();
 
         $fs_action = User_Input_Handler_Registry::create_action($this, self::ACTION_FS);
@@ -169,7 +169,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
-        //hd_debug_print("$from_ndx, " . $media_url->get_raw_string());
+        hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), LOG_LEVEL_DEBUG);
+
         $err = false;
         $source_window_id = isset($media_url->source_window_id) ? $media_url->source_window_id : false;
         $dir = empty($media_url->filepath) ? "/tmp/mnt" : $media_url->filepath;
@@ -228,20 +229,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         $caption = $k;
                     }
 
-/*
-                    if ($filepath !== '/tmp/mnt/storage' &&
-                        $filepath !== '/tmp/mnt/network' &&
-                        $filepath !== '/tmp/mnt/smb' &&
-                        $media_url->filepath !== '/tmp/mnt/storage' &&
-                        $media_url->filepath !== '/tmp/mnt/network' &&
-                        $media_url->filepath !== '/tmp/mnt/smb' &&
-                        $media_url->choose_folder !== false
-                    ) {
-                        $info = TR::t('folder_screen_select__1', $caption);
-                    } else {
-                        $info = TR::t('folder_screen_folder__1', $caption);
-                    }
-*/
                     $info = TR::t('folder_screen_folder__1', $caption);
                     $filepath = $v['filepath'];
                     $icon_file = self::get_folder_icon($caption, $filepath);
@@ -276,7 +263,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     continue;
                 }
 
-                if (!empty($detailed_icon)) {
+                if (empty($detailed_icon)) {
+                    $detailed_icon = $icon_file;
+                } else {
                     $detailed_icon = str_replace('small_icons', 'large_icons', $icon_file);
                 }
 

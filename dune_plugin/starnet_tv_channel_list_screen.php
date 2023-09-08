@@ -190,25 +190,36 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
 
-                $this->create_menu_item($this, $menu_items, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'),"remove.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
 
                 $group = $this->plugin->tv->get_group($media_url->group_id);
                 if (!is_null($group) && !$group->is_all_channels_group()) {
-                    $this->create_menu_item($this, $menu_items, ACTION_ITEMS_SORT, TR::t('sort_items'),"sort.png");
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                 }
 
                 if (is_android() && !is_apk()) {
-                    $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                     $is_external = $this->plugin->is_channel_for_ext_player($channel_id);
-                    $this->create_menu_item($this, $menu_items, ACTION_EXTERNAL_PLAYER, TR::t('tv_screen_external_player'), ($is_external ? "play.png" : null));
-                    $this->create_menu_item($this, $menu_items, ACTION_INTERNAL_PLAYER, TR::t('tv_screen_internal_player'), ($is_external ? null : "play.png"));
-                    $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        ACTION_EXTERNAL_PLAYER,
+                        TR::t('tv_screen_external_player'),
+                        ($is_external ? "play.png" : null)
+                    );
+
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        ACTION_INTERNAL_PLAYER,
+                        TR::t('tv_screen_internal_player'),
+                        ($is_external ? null : "play.png")
+                    );
+
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 }
 
-                $this->create_menu_item($this,$menu_items, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ration'), "aspect.png");
-                $this->create_menu_item($this, $menu_items, GuiMenuItemDef::is_separator);
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ration'), "aspect.png");
 
-                $this->create_menu_item($this,$menu_items, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), "info.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+
+                $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), "info.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -216,7 +227,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $menu_items = array();
                 $zoom_data = $this->plugin->get_channel_zoom($media_url->channel_id);
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
-                    $this->create_menu_item($this, $menu_items,
+                    $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_ZOOM_APPLY,
                         TR::t($zoom_item),
                         (strcmp($idx, $zoom_data) !== 0 ? null : "check.png"),
@@ -367,7 +378,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     }
                 }
             } else {
-                foreach ($this_group->get_items_order()->get_order() as $item) {
+                foreach ($this_group->get_items_order() as $item) {
                     $channel = $this->plugin->tv->get_channel($item);
                     //hd_debug_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));;
                     if (is_null($channel) || $channel->is_disabled()) continue;

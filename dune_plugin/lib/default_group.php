@@ -219,7 +219,7 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function add_channel(Channel $channel)
     {
-        $this->_channels->put($channel->get_id(), $channel);
+        $this->_channels->put($channel, $channel->get_id());
         if (!$channel->is_disabled() && !$this->is_all_channels_group()) {
             $this->get_items_order()->add_item($channel->get_id());
         }

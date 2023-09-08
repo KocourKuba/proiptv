@@ -183,13 +183,13 @@ class HD
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if ($content === false) {
-            $err_msg = "HTTP error: $http_code (" . curl_error($ch) . ')';
+            $err_msg = "Fetch $url failed. HTTP error: $http_code (" . curl_error($ch) . ')';
             hd_debug_print($err_msg);
             throw new Exception($err_msg);
         }
 
         if ($http_code >= 300) {
-            $err_msg = "HTTP request failed ($http_code): " . self::http_status_code_to_string($http_code);
+            $err_msg = "Fetch $url failed. HTTP request failed ($http_code): " . self::http_status_code_to_string($http_code);
             hd_debug_print($err_msg);
             throw new Exception($err_msg);
         }
@@ -797,9 +797,16 @@ class HD
         return base64_encode($result);
     }
 
-    public static function string_ellipsis($string)
+    /**
+     * @param string $string
+     * @param int $max_size
+     * @return string
+     */
+    public static function string_ellipsis($string, $max_size = 36)
     {
-        $max_size = 36;
+        if (is_null($string))
+            return "";
+
         if (strlen($string) > $max_size) {
             $string = "..." . substr($string, strlen($string) - $max_size);
         }

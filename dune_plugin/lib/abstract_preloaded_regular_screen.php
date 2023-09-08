@@ -70,23 +70,4 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
             $sel_ndx)
         );
     }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param array $menu_items
-     * @param string $action_id
-     * @param string $caption
-     * @param string $icon
-     * @param $add_params array|null
-     * @return void
-     */
-    public function create_menu_item($handler, &$menu_items, $action_id, $caption = null, $icon = null, $add_params = null)
-    {
-        if ($action_id === GuiMenuItemDef::is_separator) {
-            $menu_items[] = array($action_id => true);
-        } else {
-            $menu_items[] = User_Input_Handler_Registry::create_popup_item($handler,
-                $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
-        }
-    }
 }

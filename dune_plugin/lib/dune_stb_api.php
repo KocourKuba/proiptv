@@ -98,6 +98,8 @@ const ACTION_PLUGIN_INFO = 'plugin_info';
 const ACTION_CHANGE_GROUP_ICON = 'change_group_icon';
 const ACTION_CHANGE_BACKGROUND = 'change_background';
 const ACTION_CHANNEL_INFO = 'channel_info';
+const ACTION_CHANGE_EPG_SOURCE = 'change_epg_source';
+const ACTION_EPG_SOURCE_SELECTED = 'epg_source_selected';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';
@@ -120,16 +122,14 @@ const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
-const PARAM_EPG_SOURCE_TYPE = 'epg_source';
 const PARAM_EPG_PARSE_ALL = 'epg_parse_all';
-const PARAM_EPG_SOURCE_INTERNAL = 'epg_internal';
-const PARAM_EPG_SOURCE_EXTERNAL = 'epg_external';
 const PARAM_EPG_CACHE_TTL = 'epg_cache_ttl';
 const PARAM_EPG_SHIFT = 'epg_shift';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_XMLTV_CACHE_PATH = 'xmltv_cache_path';
-const PARAM_CUSTOM_XMLTV_SOURCES = 'custom_xmltv_sources';
+const PARAM_EXT_XMLTV_SOURCES = 'ext_xmltv_sources';
+const PARAM_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_CHANNELS_ZOOM = 'channels_zoom';
 const PARAM_CHANNEL_PLAYER = 'channel_player';
@@ -235,6 +235,11 @@ const DEF_LABEL_TEXT_COLOR_GAINSBORO    = 23; #0xe0e0e0	Light light light grey		
 const CMD_STATUS_GREP = '" /firmware/ext_command/cgi-bin/do | grep "command_status" | sed -n "s|^<param name=\"command_status\" value=\"(.*)\"/>|\1|p"';
 
 ///////////////////////////////////////////////////////////////////////////////
+
+class LogSeverity
+{
+    public static $severity = LOG_LEVEL_INFO;
+}
 
 class KnownCatchupSourceTags
 {
@@ -503,15 +508,10 @@ function get_raw_firmware_version()
     return $result;
 }
 
-function get_log_level()
-{
-    $level = (int)getenv("LOG_LEVEL");
-    return empty($level) ? LOG_LEVEL_INFO : $level;
-}
-
 function set_log_level($level)
 {
-    putenv("LOG_LEVEL=$level");
+    hd_print("Set logging severity: $level");
+    LogSeverity::$severity = $level;
 }
 
 /**
@@ -1751,7 +1751,7 @@ function debug_print(/*mixed $var1, $var2...*/)
  */
 function dump_input_handler($user_input, $level = LOG_LEVEL_DEBUG)
 {
-    if ($level > get_log_level())
+    if ($level > LogSeverity::$severity)
         return;
 
     foreach ($user_input as $key => $value) {
@@ -1810,7 +1810,7 @@ function safe_merge_array($ar1, $ar2)
 
 function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
 {
-    if ($level > get_log_level())
+    if ($level > LogSeverity::$severity)
         return;
 
     $bt = debug_backtrace();

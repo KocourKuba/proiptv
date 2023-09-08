@@ -36,6 +36,7 @@ change_group_icon = Изменить иконку категории
 change_background = Изменить обои
 channel_info_dlg = Информация о канале
 change_playlist = Сменить плейлист
+change_epg_source = Сменить источник EPG
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное
@@ -110,6 +111,7 @@ entry_send_log = Отправить лог разработчику
 entry_log_sent = Лог отправлен!
 entry_log_not_sent = Лог не отправлен!
 entry_epg_cache_clear = Очистить кэш EPG
+entry_epg_cache_clear_all = Очистить весь кэш EPG
 entry_epg_cache_cleared = Кэш EPG очищен
 entry_reboot = Перезагрузить плейер
 entry_reboot_need = Требуется перезагрузка

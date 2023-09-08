@@ -1,10 +1,21 @@
 <?php
 require_once 'json_serializer.php';
 
-class Ordered_Array extends Json_Serializer
+/**
+ * @template TKey
+ * @template TValue
+ * @implements Iterator<TKey, TValue>
+ */
+class Ordered_Array extends Json_Serializer implements Iterator
 {
     const UP = -1;
     const DOWN = 1;
+
+    /**
+     * @var integer
+     */
+    protected $pos = 0;
+
     /**
      * @var array
      */
@@ -204,7 +215,7 @@ class Ordered_Array extends Json_Serializer
      * @param string $item
      * @return void
      */
-    private function update_saved_pos($item)
+    public function update_saved_pos($item)
     {
         if ($item === null) {
             $pos = 0;
@@ -224,5 +235,48 @@ class Ordered_Array extends Json_Serializer
     protected static function sort_array_cb($a, $b)
     {
         return strnatcasecmp($a, $b);
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    /// Iterator implementation
+
+    /**
+     * @inheritDoc
+     */
+    public function current()
+    {
+        return $this->order[$this->pos];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function next()
+    {
+        ++$this->pos;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function key()
+    {
+        return $this->pos;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function valid()
+    {
+        return $this->pos < count($this->order);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function rewind()
+    {
+        $this->pos = 0;
     }
 }

@@ -98,7 +98,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->plugin_info = get_plugin_manifest_info();
         $this->m3u_parser = new M3uParser();
         $this->epg_man = new Epg_Manager($this);
-        $this->load(PLUGIN_PARAMETERS);
+        $this->load(PLUGIN_PARAMETERS, true);
         $this->create_screen_views();
     }
 
@@ -428,8 +428,8 @@ class Default_Dune_Plugin implements DunePlugin
         $this->invalidate_epfs();
 
         return Starnet_Epfs_Handler::invalidate_folders(array(
-            Starnet_Tv_Favorites_Screen::ID,
-            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
+                Starnet_Tv_Favorites_Screen::ID,
+                Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
         );
     }
 
@@ -565,14 +565,15 @@ class Default_Dune_Plugin implements DunePlugin
     public function load($item, $force = false)
     {
         if ($force) {
-            unset($this->settings);
+            unset($this->{$item});
         }
 
-        $name = ($item === PLUGIN_SETTINGS ? $this->get_playlist_hash() : 'common') . '.settings';
+        $name = (($item === PLUGIN_SETTINGS) ? $this->get_playlist_hash() : 'common') . '.settings';
 
         if (!isset($this->{$item})) {
-            $this->{$item} = HD::get_data_items($name, true, false);
             hd_debug_print("Load: $name", LOG_LEVEL_DEBUG);
+            $this->{$item} = HD::get_data_items($name, true, false);
+            foreach ($this->{$item} as $key => $param) hd_debug_print("$key => $param", LOG_LEVEL_DEBUG);
         }
     }
 
@@ -589,7 +590,7 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print("this->$item is not set!", LOG_LEVEL_DEBUG);
         } else if (!$this->postpone_save[$item]) {
             HD::put_data_items($name, $this->{$item}, false);
-            hd_debug_print("Save: $name", LOG_LEVEL_DEBUG);
+            hd_debug_print("Save: $name:", LOG_LEVEL_DEBUG);
             $this->is_durty[$item] = false;
         }
     }
@@ -607,6 +608,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->load(PLUGIN_PARAMETERS);
 
         if (!isset($this->parameters[$type])) {
+            hd_debug_print("load default $type", LOG_LEVEL_DEBUG);
             $this->parameters[$type] = $default;
         } else {
             $default_type = gettype($default);
@@ -787,7 +789,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_playlist_hash()
     {
-        return hash('crc32', $this->get_playlists()->get_selected_item());
+        return Hashed_Array::hash($this->get_playlists()->get_selected_item());
     }
 
     /**
@@ -836,106 +838,73 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * set xmltv source
-     * @param $xmltv_sources
+     * get external xmltv sources
+     *
+     * @return Hashed_Array
+     */
+    public function get_ext_xmltv_sources()
+    {
+        return $this->get_parameter(PARAM_EXT_XMLTV_SOURCES, new Hashed_Array());
+    }
+
+    /**
+     * set external xmltv sources
+     *
+     * @param Hashed_Array $xmltv_sources
      * @return void
      */
-    public function set_xmltv_sources($xmltv_sources)
+    public function set_ext_xmltv_sources($xmltv_sources)
     {
-        switch ($this->get_xmltv_source_type()) {
-            case PARAM_EPG_SOURCE_INTERNAL:
-                hd_debug_print("Save internal EPG source type not supported");
-                break;
-
-            case PARAM_EPG_SOURCE_EXTERNAL:
-                $this->set_setting(PARAM_CUSTOM_XMLTV_SOURCES, $xmltv_sources);
-                $this->save();
-                break;
-
-            default:
-                hd_debug_print("Unknown EPG source type requested");
-                break;
-        }
+        hd_debug_print($xmltv_sources, LOG_LEVEL_DEBUG);
+        $this->set_parameter(PARAM_EXT_XMLTV_SOURCES, $xmltv_sources);
     }
 
     /**
-     * set xmltv source
-     * @return Ordered_Array
+     * get all xmltv source
+     *
+     * @return Hashed_Array
      */
-    public function get_xmltv_sources()
+    public function get_all_xmltv_sources()
     {
-        $sources = new Ordered_Array();
-        switch ($this->get_xmltv_source_type()) {
-            case PARAM_EPG_SOURCE_INTERNAL:
-                $sources = $this->m3u_parser->getXmltvSources();
-                $sources->set_saved_pos($this->get_setting(PARAM_INTERNAL_EPG_IDX, 0));
-                break;
-            case PARAM_EPG_SOURCE_EXTERNAL:
-                $sources = $this->get_setting(PARAM_CUSTOM_XMLTV_SOURCES, new Ordered_Array());
-                break;
-            default:
-                hd_debug_print("Unknown EPG source type requested");
-                break;
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        /** @var Hashed_Array $sources */
+        $xmltv_sources = new Hashed_Array();
+        foreach ($this->m3u_parser->getXmltvSources() as $source) {
+            $xmltv_sources->put($source);
+        }
+        foreach ($this->get_ext_xmltv_sources() as $key => $source) {
+            $xmltv_sources->put($source, $key);
         }
 
-        return $sources;
+        return $xmltv_sources;
     }
 
     /**
-     * set xmltv source idx
-     * @param int $idx
-     * @return void
-     */
-    public function set_xmltv_source_idx($idx)
-    {
-        switch ($this->get_xmltv_source_type()) {
-            case PARAM_EPG_SOURCE_INTERNAL:
-                $this->m3u_parser->getXmltvSources()->set_saved_pos($idx);
-                $this->set_setting(PARAM_INTERNAL_EPG_IDX, $idx);
-                break;
-            case PARAM_EPG_SOURCE_EXTERNAL:
-                $sources = $this->get_xmltv_sources();
-                $sources->set_saved_pos($idx);
-                $this->set_setting(PARAM_CUSTOM_XMLTV_SOURCES, $sources);
-                break;
-            default:
-                hd_debug_print("Unknown EPG source type requested");
-                break;
-        }
-        $this->save();
-    }
-
-    /**
-     * get xmltv source type
      * @return string
      */
-    public function get_xmltv_source_type()
+    public function get_active_xmltv_source_key()
     {
-        return $this->get_setting(PARAM_EPG_SOURCE_TYPE, PARAM_EPG_SOURCE_INTERNAL);
+        return $this->get_parameter(PARAM_XMLTV_SOURCE_KEY, '');
     }
 
     /**
-     * set xmltv source type
-     * @param string $type
-     */
-    public function set_xmltv_source_type($type)
-    {
-        $this->set_setting(PARAM_EPG_SOURCE_TYPE, $type);
-    }
-
-    /**
-     * tell epg manager to reload xmltv source
+     * @param string $source
      * @return void
      */
-    public function update_xmltv_source()
+    public function set_active_xmltv_source($source)
     {
-        $url = $this->get_xmltv_sources()->get_selected_item();
-        $this->epg_man->set_xmltv_url($url);
-        if (is_null($url)) {
-            hd_debug_print("no xmltv source defined for this playlist");
-        } else {
-            $this->epg_man->index_xmltv_channels();
+        if (!empty($source)) {
+            $this->set_parameter(PARAM_XMLTV_SOURCE_KEY, Hashed_Array::hash($source));
         }
+    }
+
+    /**
+     * @param string $key
+     * @return void
+     */
+    public function set_active_xmltv_source_key($key)
+    {
+        $this->set_parameter(PARAM_XMLTV_SOURCE_KEY, $key);
     }
 
     /**
@@ -1197,6 +1166,74 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_screen_view($name)
     {
         return isset($this->screens_views[$name]) ? $this->screens_views[$name] : array();
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $action_id
+     * @param string $caption
+     * @param string $icon
+     * @param $add_params array|null
+     * @return array
+     */
+    public function create_menu_item($handler, $action_id, $caption = null, $icon = null, $add_params = null)
+    {
+        if ($action_id === GuiMenuItemDef::is_separator) {
+            return array($action_id => true);
+        }
+
+        return User_Input_Handler_Registry::create_popup_item($handler,
+            $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function playlist_menu($handler)
+    {
+        $menu_items = array();
+
+        $cur = $this->get_playlists()->get_saved_pos();
+        foreach ($this->get_playlists() as $key => $playlist) {
+            if ($key !== 0 && ($key % 15) === 0)
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+
+            if (($pos = strpos($playlist, '?')) !== false) {
+                $playlist = substr($playlist, 0, $pos);
+            }
+
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_PLAYLIST_SELECTED,
+                HD::string_ellipsis($playlist),
+                ($cur !== $key) ? null : "check.png",
+                array('list_idx' => $key));
+        }
+
+        return $menu_items;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function epg_source_menu($handler)
+    {
+        $menu_items = array();
+
+        $sources = $this->get_all_xmltv_sources();
+        $source_key = $this->get_active_xmltv_source_key();
+
+        foreach ($sources as $key => $item) {
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_EPG_SOURCE_SELECTED,
+                HD::string_ellipsis($item),
+                ($source_key === $key) ? "check.png" : null,
+                array('list_idx' => $key)
+            );
+        }
+
+        return $menu_items;
     }
 
     public function create_screen_views()

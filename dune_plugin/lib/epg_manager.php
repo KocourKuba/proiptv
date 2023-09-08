@@ -175,8 +175,8 @@ class Epg_Manager
     public function is_xmltv_cache_valid()
     {
         try {
-            if (!$this->is_xml_cache_set()) {
-                throw new Exception("Cached xmltv file is not set");
+            if (empty($this->xmltv_url)) {
+                throw new Exception("XMTLV EPG url not set");
             }
 
             $cached_xmltv_file = $this->get_cached_filename();
@@ -195,10 +195,6 @@ class Epg_Manager
                 unlink($cached_xmltv_file);
             }
 
-            if (empty($this->xmltv_url)) {
-                throw new Exception("XMTLV EPG url not set");
-            }
-
             hd_debug_print("Storage space in cache dir: " . HD::get_storage_size(dirname($cached_xmltv_file)));
             $tmp_filename = $cached_xmltv_file . '.tmp';
             $last_mod_file = HD::http_save_document($this->xmltv_url, $tmp_filename);
@@ -209,12 +205,12 @@ class Epg_Manager
                     hd_debug_print("unpack $tmp_filename");
                     $gz = gzopen($tmp_filename, 'rb');
                     if (!$gz) {
-                        throw new Exception("Failed to open $tmp_filename");
+                        throw new Exception("Failed to open $tmp_filename for $this->xmltv_url");
                     }
 
                     $dest = fopen($cached_xmltv_file, 'wb');
                     if (!$dest) {
-                        throw new Exception("Failed to open $cached_xmltv_file");
+                        throw new Exception("Failed to open $cached_xmltv_file for $this->xmltv_url");
                     }
 
                     $res = stream_copy_to_stream($gz, $dest);
@@ -381,7 +377,7 @@ class Epg_Manager
      * @param $epg_ids array
      * @return void
      */
-    public function index_xmltv_file($epg_ids)
+    public function index_xmltv_program($epg_ids)
     {
         $res = $this->is_xmltv_cache_valid();
         if (!empty($res)) {
@@ -413,22 +409,24 @@ class Epg_Manager
             file_put_contents($lock_file, '');
 
             $this->index_xmltv_channels();
+            hd_debug_print("Load indexes loaded: " . count($this->xmltv_channels));
+            hd_debug_print("Start indexing EPG program for channels");
 
             $t = microtime(1);
 
             $file_object = $this->open_xmltv_file();
 
-            $prev_channel = '';
+            $prev_channel = null;
             $xmltv_index = array();
             $xmltv_data = array();
             while (!$file_object->eof()) {
                 $pos = $file_object->ftell();
                 $line = $file_object->fgets();
-                if (strpos($line, "<programme") === false) {
+                if (strpos($line, '<programme') === false) {
                     continue;
                 }
 
-                $ch_start = strpos($line, 'channel="');
+                $ch_start = strpos($line, 'channel="', 11);
                 if ($ch_start === false) {
                     continue;
                 }
@@ -447,11 +445,11 @@ class Epg_Manager
                 }
 
                 if ($prev_channel !== $channel) {
-                    if (empty($prev_channel)) {
+                    if (is_null($prev_channel)) {
                         $prev_channel = $channel;
                     } else {
                         if (!empty($xmltv_data)) {
-                            $index_name = $cache_file . "_" . hash("crc32", $prev_channel) . '.index';
+                            $index_name = $cache_file . "_" . Hashed_Array::hash($prev_channel) . '.index';
                             $xmltv_index[$prev_channel] = $index_name;
                             HD::StoreContentToFile("$cache_dir$index_name", $xmltv_data);
                         }
@@ -465,14 +463,15 @@ class Epg_Manager
             }
 
             if (!empty($prev_channel) && !empty($xmltv_data)) {
-                $index_name = $cache_file . "_" . hash("crc32", $prev_channel) . '.index';
+                $index_name = $cache_file . "_" . Hashed_Array::hash($prev_channel) . '.index';
                 $xmltv_index[$prev_channel] = $index_name;
+                hd_debug_print("Save index: $index_file", LOG_LEVEL_DEBUG);
                 HD::StoreContentToFile("$cache_dir$index_name", $xmltv_data);
                 unset($xmltv_data);
             }
 
             if (!empty($xmltv_index)) {
-                hd_debug_print("Save index: $index_file");
+                hd_debug_print("Save index: $index_file", LOG_LEVEL_DEBUG);
                 HD::StoreContentToFile($index_file, $xmltv_index);
                 $this->xmltv_index = $xmltv_index;
             }
@@ -520,8 +519,8 @@ class Epg_Manager
         unset($this->epg_cache, $this->xmltv_data, $this->xmltv_index);
         $this->epg_cache = array();
 
-        $filename = hash('crc32', $uri);
-        hd_debug_print("clear cache files: $filename*");
+        $filename = Hashed_Array::hash($uri);
+        hd_debug_print("clear cache files: $filename*", LOG_LEVEL_DEBUG);
         foreach (glob_dir($this->cache_dir, "/^$filename.*$/i") as $file) {
             unlink($file);
         }
@@ -565,7 +564,7 @@ class Epg_Manager
      */
     protected function get_internal_name()
     {
-        return empty($this->xmltv_url) ? '' : hash('crc32', $this->xmltv_url);
+        return empty($this->xmltv_url) ? '' : Hashed_Array::hash($this->xmltv_url);
     }
 
     /**

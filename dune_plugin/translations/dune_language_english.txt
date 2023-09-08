@@ -36,6 +36,7 @@ change_group_icon = Change category icons
 change_background = Change background image
 channel_info_dlg = Channel info
 change_playlist = Change playlist
+change_epg_source = Change EPG source
 
 plugin_all_channels = All channels
 plugin_favorites = Favorites
@@ -110,6 +111,7 @@ entry_send_log = Send log to the developer
 entry_log_sent = Log sent successfully!
 entry_log_not_sent = Sent log failed!
 entry_epg_cache_clear = Clear EPG cache
+entry_epg_cache_clear_all = Clear entire EPG cache
 entry_epg_cache_cleared = EPG cache cleared
 entry_reboot = Reboot Dune
 entry_reboot_need = Reboot required
