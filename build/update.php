@@ -18,8 +18,8 @@ class ExtendedZip extends ZipArchive {
                 continue;
 
             // Proceed according to type
-            $path = $dirname . '/' . $filename;
-            $local_path = $local_name ? ($local_name . '/' . $filename) : $filename;
+            $path = $dirname . DIRECTORY_SEPARATOR . $filename;
+            $local_path = $local_name ? ($local_name . DIRECTORY_SEPARATOR . $filename) : $filename;
             if (is_dir($path)) {
                 // Directory: add & recurse
                 $this->addEmptyDir($local_path);

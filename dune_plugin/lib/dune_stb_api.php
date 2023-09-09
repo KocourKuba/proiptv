@@ -1484,31 +1484,31 @@ function get_zoom_value($preset)
 /** @noinspection PhpUndefinedClassInspection */
 function get_temp_path($path = '')
 {
-    return DuneSystem::$properties['tmp_dir_path'] . '/' . ltrim($path, '/');
+    return DuneSystem::$properties['tmp_dir_path'] . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
 }
 
 /** @noinspection PhpUndefinedClassInspection */
 function get_data_path($path = '')
 {
-    return DuneSystem::$properties['data_dir_path'] . '/' . ltrim($path, '/');
+    return DuneSystem::$properties['data_dir_path'] . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
 }
 
 /** @noinspection PhpUndefinedClassInspection */
 function get_install_path($path = '')
 {
-    return DuneSystem::$properties['install_dir_path'] . '/' . ltrim($path, '/');
+    return DuneSystem::$properties['install_dir_path'] . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
 }
 
 /** @noinspection PhpUndefinedClassInspection */
 function get_plugin_cgi_url($path = '')
 {
-    return DuneSystem::$properties['plugin_cgi_url'] . ltrim($path, '/');
+    return DuneSystem::$properties['plugin_cgi_url'] . ltrim($path, DIRECTORY_SEPARATOR);
 }
 
 /** @noinspection PhpUndefinedClassInspection */
 function get_plugin_www_url($path = '')
 {
-    return DuneSystem::$properties['plugin_www_url'] . ltrim($path, '/');
+    return DuneSystem::$properties['plugin_www_url'] . ltrim($path, DIRECTORY_SEPARATOR);
 }
 
 /** @noinspection PhpUndefinedClassInspection */
@@ -1523,7 +1523,7 @@ function get_plugin_name()
  */
 function get_image_path($image = '')
 {
-    return get_install_path("img/" . ltrim($image, '/'));
+    return get_install_path("img" . DIRECTORY_SEPARATOR . ltrim($image, DIRECTORY_SEPARATOR));
 }
 
 /**
@@ -1532,9 +1532,9 @@ function get_image_path($image = '')
  */
 function get_cached_image_path($image = '')
 {
-    $cache_image_path = get_data_path("cached_img/");
+    $cache_image_path = get_data_path("cached_img");
     create_path($cache_image_path);
-    return $cache_image_path . ltrim($image, '/');
+    return $cache_image_path . DIRECTORY_SEPARATOR . ltrim($image, DIRECTORY_SEPARATOR);
 }
 
 function get_plugin_manifest_info()
@@ -1616,7 +1616,7 @@ function get_active_skin_path()
     # Returns the path to the directory of the active skin (no trailing slash)
 
     if (file_exists('/tmp/dune_skin_dir.txt')) {
-        return rtrim(trim(preg_replace('/^.*=/', '', file_get_contents('/tmp/dune_skin_dir.txt'))), '/');
+        return rtrim(trim(preg_replace('/^.*=/', '', file_get_contents('/tmp/dune_skin_dir.txt'))), DIRECTORY_SEPARATOR);
     }
 
     hd_debug_print("Error in class " . __METHOD__ . " ! Can not determine the path to the active skin.");
@@ -1630,13 +1630,13 @@ function get_paved_path($path, $dir_mode = 0777)
         hd_debug_print("Directory '$path' was not created");
     }
 
-    return rtrim($path, '/');
+    return rtrim($path, DIRECTORY_SEPARATOR);
 }
 
 function get_slash_trailed_path($path)
 {
-    if (!empty($path) && substr($path, -1) !== '/') {
-        $path .= '/';
+    if (!empty($path) && substr($path, -1) !== DIRECTORY_SEPARATOR) {
+        $path .= DIRECTORY_SEPARATOR;
     }
 
     return $path;
@@ -1644,7 +1644,7 @@ function get_slash_trailed_path($path)
 
 function get_filename($path)
 {
-    $ar = explode('/', $path);
+    $ar = explode(DIRECTORY_SEPARATOR, $path);
     return (count($ar) === 1) ? $path : end($ar);
 }
 

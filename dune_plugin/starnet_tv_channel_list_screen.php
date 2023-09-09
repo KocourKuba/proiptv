@@ -299,7 +299,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $params = array();
                 foreach ($channel->get_ext_params() as $key => $param) {
-                    $params = "$key: " . str_replace("\/", "/", json_encode($param)) . "\n";
+                    $params = "$key: " . str_replace("\/", DIRECTORY_SEPARATOR, json_encode($param)) . "\n";
                 }
                 $info .= "Params: $params\n";
 

@@ -191,6 +191,7 @@ edit_list_import_list = Импорт файла с ссылками
 edit_list_src_folder = Папка с файлами
 edit_list_src_list = Файл со содержащий список
 edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Нажмите Popup Menu на пульте для добавления файлов}
+edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Долгое нажатие OK на пульте для вызова меню}
 edit_list_add = Нажмите Popup menu
 
 warn_msg2__1 = Отсутствуют или неполные данные для формирования ссылки.\nВозможно не введены данные для просмотра или канал отсутствует в подписке.\n %s

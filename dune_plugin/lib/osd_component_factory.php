@@ -105,7 +105,7 @@ class OSD_Component_Factory
         if (is_null(self::$instance))
             self::init();
 
-        $path = rtrim(self::$instance->osd_glass_path, '/');
+        $path = rtrim(self::$instance->osd_glass_path, DIRECTORY_SEPARATOR);
         $ext = self::$instance->osd_glass_manifest['ext'];
         Action_Factory::add_osd_image($comps, "$path/osd_glass_top_left.$ext", 0, 0, 1, 1);
         Action_Factory::add_osd_image($comps, "$path/osd_glass_top_right.$ext", 0, 0, 1, 1);
@@ -118,7 +118,7 @@ class OSD_Component_Factory
         Action_Factory::add_osd_image($comps, self::$instance->osd_glass_center, 0, 0, 1, 1);
 
         if (!empty(self::$instance->weather_glass_path)) {
-            $path = rtrim(self::$instance->weather_glass_path, '/');
+            $path = rtrim(self::$instance->weather_glass_path, DIRECTORY_SEPARATOR);
             $ext = self::$instance->weather_glass_manifest['ext'];
             Action_Factory::add_osd_image($comps, "$path/weather_glass_top_left.$ext", 0, 0, 1, 1);
             Action_Factory::add_osd_image($comps, "$path/weather_glass_top_right.$ext", 0, 0, 1, 1);

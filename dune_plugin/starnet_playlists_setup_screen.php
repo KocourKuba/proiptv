@@ -63,7 +63,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             if (($pos = strpos($playlist, '?')) !== false) {
                 $playlist = substr($playlist, 0, $pos);
             }
-            $ar = explode('/', $playlist);
+            $ar = explode(DIRECTORY_SEPARATOR, $playlist);
             $display_path[] = end($ar);
         }
 

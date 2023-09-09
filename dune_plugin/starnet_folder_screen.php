@@ -113,7 +113,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             while (false !== ($file = readdir($handle))) {
                 if ($file === "." || $file === "..") continue;
 
-                $absolute_filepath = $dir . '/' . $file;
+                $absolute_filepath = $dir . DIRECTORY_SEPARATOR . $file;
                 $is_match = preg_match('|^/tmp/mnt/smb/|', $absolute_filepath);
                 $is_dir = $bug_kind && $is_match ? (bool)trim(shell_exec("test -d \"$absolute_filepath\" && echo 1 || echo 0")) : is_dir($absolute_filepath);
 
@@ -455,7 +455,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 return Action_Factory::close_dialog_and_run($do_mkdir);
 
             case self::ACTION_DO_MKDIR:
-                if (!create_path($parent_url->filepath . '/' . $user_input->{self::ACTION_CREATE_FOLDER})) {
+                if (!create_path($parent_url->filepath . DIRECTORY_SEPARATOR . $user_input->{self::ACTION_CREATE_FOLDER})) {
                     return Action_Factory::show_title_dialog(TR::t('err_cant_create_folder'));
                 }
                 return Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url));

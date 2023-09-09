@@ -1107,7 +1107,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_history_path()
     {
         $path = $this->get_parameter(PARAM_HISTORY_PATH, get_data_path('history'));
-        if ($path === get_data_path('/')) {
+        if ($path === get_data_path(DIRECTORY_SEPARATOR)) {
             // reset old settings to new
             $path = get_data_path('history');
         }
