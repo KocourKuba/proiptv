@@ -341,7 +341,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 if (isset($parent_url->filepath)
                     && $parent_url->filepath !== '/tmp/mnt/smb'
                     && $parent_url->filepath !== '/tmp/mnt/network') {
-                    $invalidate = Action_Factory::invalidate_folders(array($user_input->parent_media_url));
+                    $invalidate = Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url));
                 } else {
                     $invalidate = null;
                 }
@@ -436,7 +436,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 if (!create_path($parent_url->filepath . '/' . $user_input->{self::ACTION_CREATE_FOLDER})) {
                     return Action_Factory::show_title_dialog(TR::t('err_cant_create_folder'));
                 }
-                return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
+                return Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url));
 
             case ACTION_OPEN_FOLDER:
                 $path = $parent_url->filepath;

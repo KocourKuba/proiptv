@@ -9,7 +9,6 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     const ID = 'interface_setup';
 
     const CONTROL_SHOW_TV = 'show_tv';
-    const CONTROL_EPG_FONT_SIZE = 'epg_font_size';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -76,6 +75,12 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
 
+        //////////////////////////////////////
+        // change background
+        Control_Factory::add_image_button($defs, $this, null,
+            ACTION_CHANGE_BACKGROUND, TR::t('change_background'), TR::t('edit'),
+            "image.png", self::CONTROLS_WIDTH);
+
         return $defs;
     }
 
@@ -110,7 +115,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_ASK_EXIT:
                 $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
-                return Action_Factory::invalidate_folders(
+                return Starnet_Epfs_Handler::invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
@@ -120,7 +125,49 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
                 $this->plugin->tv->reload_channels($plugin_cookies);
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies,
+                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
+
+            case ACTION_CHANGE_BACKGROUND:
+                $media_url_str = MediaURL::encode(
+                    array(
+                        'screen_id' => Starnet_Folder_Screen::ID,
+                        'source_window_id' => static::ID,
+                        'choose_file' => array(
+                            'action' => ACTION_CHANGE_BACKGROUND,
+                            'extension'	=> 'png|jpg|jpeg',
+                        ),
+                        'allow_network' => !is_apk(),
+                        'read_only' => true,
+                        'windowCounter' => 1,
+                    )
+                );
+                return Action_Factory::open_folder($media_url_str, TR::t('edit_list_file'));
+
+            case ACTION_FILE_SELECTED:
+                $data = MediaURL::decode($user_input->selected_data);
+                if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
+                    $cached_image = get_cached_image_path("{$this->plugin->get_playlist_hash()}_$data->caption");
+                    hd_print("copy from: $data->filepath to: $cached_image");
+                    if (!copy($data->filepath, $cached_image)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                    }
+
+                    hd_debug_print("Set image $cached_image as background");
+                    $this->plugin->set_background_image($cached_image);
+                    $this->plugin->create_screen_views();
+
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
+                        Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
+                }
+                break;
+
+            case ACTION_RESET_DEFAULT:
+                hd_debug_print("Background set to default");
+                $this->plugin->set_background_image(null);
+                $this->plugin->create_screen_views();
+
+                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case PARAM_EPG_FONT_SIZE:

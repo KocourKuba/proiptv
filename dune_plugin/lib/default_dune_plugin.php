@@ -162,6 +162,14 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @return array
+     */
+    public function get_screens()
+    {
+        return $this->screens;
+    }
+
+    /**
      * @param string $screen_id
      * @return Screen
      * @throws Exception
@@ -324,6 +332,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_day_epg($channel_id, $day_start_tm_sec, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported", LOG_LEVEL_ERROR);
             HD::print_backtrace();
@@ -369,6 +379,8 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function get_program_info($channel_id, $program_ts, $plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $program_ts = ($program_ts > 0 ? $program_ts : time());
         //hd_debug_print("for $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts));
         $day_start = date("Y-m-d", $program_ts);
@@ -1151,6 +1163,9 @@ class Default_Dune_Plugin implements DunePlugin
         return null;
     }
 
+    /**
+     * @return string
+     */
     public function get_background_image()
     {
         $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND, $this->plugin_info['app_background']);
@@ -1159,6 +1174,19 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         return $background;
+    }
+
+    /**
+     * @param string|null $path
+     * @return void
+     */
+    public function set_background_image($path)
+    {
+        if (is_null($path) || !file_exists($path)) {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, $this->plugin_info['app_background']);
+        } else {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, $path);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////

@@ -63,7 +63,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
      */
     public function invalidate_current_folder(MediaURL $parent_media_url, $plugin_cookies, $sel_ndx = -1)
     {
-        return Action_Factory::invalidate_folders(array(static::ID),
+        return Starnet_Epfs_Handler::invalidate_folders(array(static::ID),
             Action_Factory::update_regular_folder(
             $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
             true,

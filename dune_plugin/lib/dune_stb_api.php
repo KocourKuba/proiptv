@@ -1642,6 +1642,12 @@ function get_slash_trailed_path($path)
     return $path;
 }
 
+function get_filename($path)
+{
+    $ar = explode('/', $path);
+    return (count($ar) === 1) ? $path : end($ar);
+}
+
 # creating directories along the way
 function create_path($path, $dir_mode = 0777)
 {

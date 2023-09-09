@@ -196,7 +196,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->plugin->save(PLUGIN_PARAMETERS);
                 $this->plugin->tv->reload_channels($plugin_cookies);
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
+                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens());
 
             case ACTION_CHANGE_EPG_SOURCE:
                 hd_debug_print("Start event popup menu for epg source");
@@ -207,10 +207,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->plugin->set_active_xmltv_source_key($user_input->list_idx);
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
+                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens());
 
             case ACTION_CHANGE_GROUP_ICON:
-            case ACTION_CHANGE_BACKGROUND:
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
@@ -403,7 +402,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_BACKGROUND, TR::t('change_background'), "image.png");
 
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
