@@ -83,7 +83,7 @@ class Epg_Manager
     public function init_cache_dir()
     {
         $encoded_data = $this->plugin->get_parameter(PARAM_XMLTV_CACHE_PATH);
-        $this->cache_dir = smb_tree::get_folder_info($encoded_data, get_data_path("epg_cache/"));
+        $this->cache_dir = get_slash_trailed_path(smb_tree::get_folder_info($encoded_data, get_data_path("epg_cache")));
         create_path($this->cache_dir);
         hd_debug_print("cache dir: $this->cache_dir");
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
@@ -250,12 +250,12 @@ class Epg_Manager
                     $unzip = new ZipArchive();
                     $out = $unzip->open($tmp_filename);
                     if ($out !== true) {
-                        throw new Exception("Failed to unzip $tmp_filename (error code: $out)");
+                        throw new Exception(TR::t('err_unzip__2', $tmp_filename, $out));
                     }
                     $filename = $unzip->getNameIndex(0);
                     if (empty($filename)) {
                         $unzip->close();
-                        throw new Exception("empty zip file $tmp_filename");
+                        throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
                     }
 
                     $unzip->extractTo($this->cache_dir);

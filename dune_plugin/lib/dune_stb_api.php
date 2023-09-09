@@ -1778,7 +1778,7 @@ function dump_input_handler($user_input, $level = LOG_LEVEL_DEBUG)
 function glob_dir($path, $pattern = null, $exclude_dir = true)
 {
     $list = array();
-    $path = rtrim($path, '/');
+    $path = rtrim($path, DIRECTORY_SEPARATOR);
     if (is_dir($path)) {
         $files = array_diff(scandir($path), array('.', '..'));
         if ($pattern !== null) {
@@ -1787,7 +1787,7 @@ function glob_dir($path, $pattern = null, $exclude_dir = true)
 
         if ($files !== false) {
             foreach ($files as $file) {
-                $full_path = "$path/$file";
+                $full_path = $path . DIRECTORY_SEPARATOR . $file;
                 if ($exclude_dir && !is_file($full_path)) continue;
 
                 $list[] = $full_path;
@@ -1795,6 +1795,26 @@ function glob_dir($path, $pattern = null, $exclude_dir = true)
         }
     }
     return $list;
+}
+
+function delete_directory($dir)
+{
+    if (!file_exists($dir)) {
+        return true;
+    }
+
+    if (!is_dir($dir)) {
+        return unlink($dir);
+    }
+
+    foreach (scandir($dir) as $item) {
+        if ($item === '.' || $item === '..') continue;
+        if (!delete_directory($dir . DIRECTORY_SEPARATOR . $item)) {
+            return false;
+        }
+    }
+
+    return rmdir($dir);
 }
 
 /**

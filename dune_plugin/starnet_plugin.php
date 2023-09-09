@@ -36,7 +36,7 @@ require_once 'starnet_playlists_setup_screen.php';
 require_once 'starnet_interface_setup_screen.php';
 require_once 'starnet_epg_setup_screen.php';
 require_once 'starnet_streaming_setup_screen.php';
-require_once 'starnet_history_setup_screen.php';
+require_once 'starnet_ext_setup_screen.php';
 require_once 'starnet_folder_screen.php';
 require_once 'starnet_tv.php';
 require_once 'starnet_tv_channel_list_screen.php';
@@ -67,8 +67,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         hd_print("----------------------------------------------------");
 
-        $this->epg_man->init_cache_dir();
-        $this->init_user_agent();
+        $this->init_plugin();
 
         User_Input_Handler_Registry::get_instance()->register_handler(new Starnet_Entry_Handler($this));
 
@@ -84,12 +83,10 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Interface_Setup_Screen($this));
         $this->create_screen(new Starnet_Epg_Setup_Screen($this));
         $this->create_screen(new Starnet_Streaming_Setup_Screen($this));
-        $this->create_screen(new Starnet_History_Setup_Screen($this));
+        $this->create_screen(new Starnet_Ext_Setup_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_List_Screen($this));
-
-        $this->playback_points = new Playback_Points($this);
 
         Starnet_Epfs_Handler::init($this);
 

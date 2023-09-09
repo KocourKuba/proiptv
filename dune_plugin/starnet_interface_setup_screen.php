@@ -169,7 +169,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                         'windowCounter' => 1,
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('edit_list_file'));
+                return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);

@@ -179,7 +179,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $add_param['action'] = $parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV;
                     $menu_items[] = $this->plugin->create_menu_item($this,
-                        self::ACTION_CHOOSE_FILE, TR::t('edit_list_file'),
+                        self::ACTION_CHOOSE_FILE, TR::t('select_file'),
                         $parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST ? "m3u_file.png" : "xmltv_file.png",
                         $add_param);
 
@@ -254,7 +254,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'windowCounter' => 1,
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('edit_list_file'));
+                return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);

@@ -115,18 +115,11 @@ class Default_Dune_Plugin implements DunePlugin
 
     protected function __construct()
     {
-        $this->load(PLUGIN_PARAMETERS, true);
-
+        $this->plugin_info = get_plugin_manifest_info();
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->is_durty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
-
-        $this->plugin_info = get_plugin_manifest_info();
         $this->m3u_parser = new M3uParser();
         $this->epg_man = new Epg_Manager($this);
-        $debug = $this->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
-        set_log_level($debug ? LOG_LEVEL_DEBUG: LOG_LEVEL_INFO);
-
-        $this->create_screen_views();
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -740,6 +733,19 @@ class Default_Dune_Plugin implements DunePlugin
     // Methods
 
     /**
+     * @return void
+     */
+    public function init_plugin()
+    {
+        $this->load(PLUGIN_PARAMETERS, true);
+        $this->update_log_level();
+        $this->playback_points = new Playback_Points($this);
+        $this->epg_man->init_cache_dir();
+        $this->init_user_agent();
+        $this->create_screen_views();
+    }
+
+    /**
      * Initialize and parse selected playlist
      *
      * @return bool
@@ -831,7 +837,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $this->epg_man->clear_all_epg_cache();
 
-        if ($this->get_parameter(PARAM_HISTORY_PATH) === get_data_path()) {
+        if ($this->is_history_path_default()) {
             $this->playback_points->clear_points();
         }
 
@@ -1093,6 +1099,52 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $this->set_setting(PARAM_CHANNEL_PLAYER, $ext_player);
+    }
+
+    /**
+     * @return string
+     */
+    public function get_history_path()
+    {
+        $path = $this->get_parameter(PARAM_HISTORY_PATH, get_data_path('history'));
+        if ($path === get_data_path('/')) {
+            // reset old settings to new
+            $path = get_data_path('history');
+        }
+
+        return $path;
+    }
+
+    /**
+     * @param string|null $path
+     * @return void
+     */
+    public function set_history_path($path = null)
+    {
+        if (is_null($path)) {
+            $path = get_data_path('history');
+        }
+
+        create_path($path);
+
+        $this->set_parameter(PARAM_HISTORY_PATH, $path);
+    }
+
+    /**
+     * @return bool
+     */
+    public function is_history_path_default()
+    {
+        return  $this->get_history_path() === get_data_path('history');
+    }
+
+    /**
+     * @return void
+     */
+    public function update_log_level()
+    {
+        $debug = $this->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
+        set_log_level($debug ? LOG_LEVEL_DEBUG : LOG_LEVEL_INFO);
     }
 
     /**

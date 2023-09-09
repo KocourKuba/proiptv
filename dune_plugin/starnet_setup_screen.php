@@ -38,7 +38,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_EPG_SCREEN = 'epg_screen';
     const CONTROL_STREAMING_SCREEN = 'streaming_screen';
-    const CONTROL_HISTORY_SCREEN = 'history_screen';
+    const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -88,23 +88,14 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         //////////////////////////////////////
         // History view info location
-        if (!is_apk()) {
-            Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_HISTORY_SCREEN,
-                TR::t('setup_history_folder_path'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
-        }
+        Control_Factory::add_image_button($defs, $this, null,
+            self::CONTROL_EXT_SETUP_SCREEN,
+            TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // adult channel password
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_ADULT_PASS_DLG,
             TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
-        // debugging
-        $debug_state = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SetupControlSwitchDefs::$on_off_translated[$debug_state],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$debug_state]), self::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -195,8 +186,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             case self::CONTROL_STREAMING_SCREEN: // show streaming settings dialog
                 return Action_Factory::open_folder(Starnet_Streaming_Setup_Screen::get_media_url_str(), TR::t('setup_streaming_settings'));
 
-            case self::CONTROL_HISTORY_SCREEN:
-                return Action_Factory::open_folder(Starnet_History_Setup_Screen::get_media_url_str(), TR::t('setup_history_change_folder'));
+            case self::CONTROL_EXT_SETUP_SCREEN:
+                return Action_Factory::open_folder(Starnet_Ext_Setup_Screen::get_media_url_str(), TR::t('setup_extended_setup'));
 
             case self::CONTROL_ADULT_PASS_DLG: // show pass dialog
                 $defs = $this->do_get_pass_control_defs();
@@ -224,13 +215,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
                 return Action_Factory::show_title_dialog($msg,
                     Action_Factory::reset_controls($this->do_get_control_defs()));
-
-            case PARAM_ENABLE_DEBUG:
-                $this->plugin->toggle_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
-                $debug = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
-                set_log_level($debug ? LOG_LEVEL_DEBUG: LOG_LEVEL_INFO);
-                hd_debug_print("Debug logging: " . var_export($debug, true));
-                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());

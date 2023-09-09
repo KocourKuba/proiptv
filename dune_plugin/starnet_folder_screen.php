@@ -169,7 +169,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 }
 
                 $select_folder = User_Input_Handler_Registry::create_action($this,
-                    self::ACTION_SELECT_FOLDER, TR::t('folder_screen_select_folder'));
+                    self::ACTION_SELECT_FOLDER, TR::t('select_folder'));
 
                 $actions[GUI_EVENT_KEY_D_BLUE] = $select_folder;
                 $actions[GUI_EVENT_KEY_RIGHT] = $select_folder;

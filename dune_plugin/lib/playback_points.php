@@ -185,12 +185,12 @@ class Playback_Points
      */
     private function get_playback_points_file()
     {
-        $path = $this->plugin->get_parameter(PARAM_HISTORY_PATH, get_data_path());
-        if (!is_dir($path)) {
-            hd_debug_print("load path not exist: $path");
+        $path = $this->plugin->get_history_path();
+        if (!create_path($path)) {
+            hd_debug_print("History path not exist: $path", LOG_LEVEL_ERROR);
             return '';
         }
 
-        return $path . $this->plugin->get_playlist_hash() . PARAM_TV_HISTORY_ITEMS;
+        return get_slash_trailed_path($path) . $this->plugin->get_playlist_hash() . PARAM_TV_HISTORY_ITEMS;
     }
 }
