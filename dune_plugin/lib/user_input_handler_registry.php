@@ -64,6 +64,7 @@ class User_Input_Handler_Registry
     {
         $handler = self::get_instance()->get_registered_handler($screen_id . "_handler");
         if (is_null($handler)) {
+            hd_debug_print(null, LOG_LEVEL_DEBUG);
             hd_debug_print("No handler registered for {$screen_id}_handler");
             return null;
         }

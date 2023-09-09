@@ -189,8 +189,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_folder->action === self::ACTION_HISTORY_FOLDER) {
-                    return $this->do_restore_settings($user_input->selected_data);
+                if ($data->choose_file->action === self::ACTION_FILE_RESTORE) {
+                    return $this->do_restore_settings($data);
                 }
                 break;
 
@@ -226,8 +226,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
-                return Action_Factory::reset_controls($this->do_get_control_defs(),
-                    User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Rows_Screen::ID, ACTION_REFRESH_SCREEN));
+                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());
@@ -317,10 +316,13 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         }
 
         $this->plugin->init_plugin();
-        $this->plugin->load(PLUGIN_SETTINGS, true);
+        $this->plugin->tv->unload_channels();
+
+        $this->plugin->tv->reload_channels($plugin_cookies);
 
         return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
-            Action_Factory::reset_controls($this->do_get_control_defs()));
+            Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
+                Action_Factory::reset_controls($this->do_get_control_defs())));
     }
 
     /**
