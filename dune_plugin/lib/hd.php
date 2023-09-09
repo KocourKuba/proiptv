@@ -392,9 +392,7 @@ class HD
         $plugin_name = get_plugin_name();
 
         $paths = array(
-            get_data_path("*.parameters"),
             get_data_path("*.settings"),
-            get_temp_path("*.m3u?"),
             "$apk_subst/tmp/run/shell.*",
         );
 
