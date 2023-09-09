@@ -34,9 +34,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
     const CONTROL_AUTO_RESUME = 'auto_resume';
     const CONTROL_AUTO_PLAY = 'auto_play';
-    const CONTROL_HISTORY_CHANGE_FOLDER = 'history_change_folder';
-    const CONTROL_COPY_TO_DATA = 'copy_to_data';
-    const CONTROL_COPY_TO_PLUGIN = 'copy_to_plugin';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -50,10 +47,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         hd_debug_print(null, LOG_LEVEL_DEBUG);
 
         $defs = array();
-
-        $folder_icon = get_image_path('folder.png');
-        $remove_icon = get_image_path('brush.png');
-        $refresh_icon = get_image_path('refresh.png');
 
         //////////////////////////////////////
         // Plugin name
@@ -125,27 +118,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
             self::CONTROLS_WIDTH,
             true);
 
-        //////////////////////////////////////
-        // history
-
-        $history_path = $this->plugin->get_history_path();
-        hd_debug_print("history path: $history_path");
-        $display_path = HD::string_ellipsis(get_slash_trailed_path($history_path));
-
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_HISTORY_CHANGE_FOLDER, TR::t('setup_history_folder_path'), $display_path, $folder_icon, self::CONTROLS_WIDTH);
-
-        if (!$this->plugin->is_history_path_default()) {
-            Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_COPY_TO_DATA, TR::t('setup_copy_to_data'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
-
-            Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_COPY_TO_PLUGIN, TR::t('setup_copy_to_plugin'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
-        }
-
-        Control_Factory::add_image_button($defs, $this, null,
-            ACTION_ITEMS_CLEAR, TR::t('setup_tv_history_clear'), TR::t('clear'), $remove_icon, self::CONTROLS_WIDTH);
-
         return $defs;
     }
 
@@ -166,7 +138,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         hd_debug_print(null, LOG_LEVEL_DEBUG);
         dump_input_handler($user_input);
 
-        $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
         $control_id = $user_input->control_id;
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
@@ -188,81 +159,8 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
                 hd_debug_print("$control_id: " . $user_input->{$control_id}, LOG_LEVEL_DEBUG);
                 $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
                 break;
-
-            case self::CONTROL_HISTORY_CHANGE_FOLDER:
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'choose_folder' => static::ID,
-                        'allow_network' => !is_apk(),
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_history_folder_path'));
-
-            case ACTION_RESET_DEFAULT:
-                $data = MediaURL::make(array('filepath' => get_data_path()));
-                hd_debug_print("do set history folder to default: $data->filepath");
-                $this->plugin->set_history_path();
-                return $action_reload;
-
-            case self::CONTROL_COPY_TO_DATA:
-                $history_path = $this->plugin->get_history_path();
-                hd_debug_print("copy to: $history_path");
-                if (!$this->CopyData(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
-                }
-
-                return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
-
-            case self::CONTROL_COPY_TO_PLUGIN:
-                hd_debug_print("copy to: " . get_data_path());
-                if (!$this->CopyData($this->plugin->get_history_path(), "*" . PARAM_TV_HISTORY_ITEMS, get_data_path('history'))) {
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
-                }
-
-                return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
-
-            case ACTION_ITEMS_CLEAR:
-                hd_debug_print("do clear TV history");
-                $this->plugin->playback_points->clear_points();
-
-                return Action_Factory::show_title_dialog(TR::t('setup_history_cleared'), $action_reload);
-
-            case ACTION_FOLDER_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
-                $this->plugin->set_history_path($data->filepath);
-
-                return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
-                    $action_reload, $data->filepath, self::CONTROLS_WIDTH);
-
-            case ACTION_RELOAD:
-                hd_debug_print("reload");
-                return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies),
-                    User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Rows_Screen::ID, ACTION_REFRESH_SCREEN));
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
-    }
-
-    private function CopyData($sourcePath, $source_pattern, $destPath){
-        if (empty($sourcePath) || empty($destPath)) {
-            hd_debug_print("One of is empty: sourceDir = $sourcePath | destDir = $destPath", LOG_LEVEL_ERROR);
-            return false;
-        }
-
-        if (!create_path($destPath)) {
-            hd_debug_print("Can't create destination folder: $destPath", LOG_LEVEL_ERROR);
-            return false;
-        }
-
-        foreach (glob_dir($sourcePath, $source_pattern) as $file) {
-            $dest_file = $destPath . $file;
-            hd_debug_print("copy $file to $dest_file");
-            if (!copy($file, $dest_file))
-                return false;
-        }
-        return true;
     }
 }

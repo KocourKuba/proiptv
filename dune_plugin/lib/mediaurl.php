@@ -51,6 +51,7 @@
  * @property mixed|null $edit_list // type of Starnet_Edit_List_Screen (playlist, epg, hidden groups/channels)
  * @property bool|null $allow_order // allow order items, used in Starnet_Edit_List_Screen
  * @property string|null $postpone_save // name of controlled postpone save status
+ * @property bool|null $allow_reset // show reset to default button and call action ACTION_RESET_DEFAULT
  */
 class MediaURL
 {

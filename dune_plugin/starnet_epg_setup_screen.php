@@ -181,6 +181,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                         'source_window_id' => static::ID,
                         'allow_network' => false,
                         'choose_folder' => static::ID,
+                        'allow_reset' => true,
                         'end_action' => ACTION_RELOAD,
                         'windowCounter' => 1,
                     )

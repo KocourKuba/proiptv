@@ -153,8 +153,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     self::ACTION_SMB_SETUP, TR::t('folder_screen_smb_settings'));
             }
 
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
-                self::ACTION_RESET_FOLDER, TR::t('reset_default'));
+            if ($media_url->allow_reset) {
+                $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
+                    self::ACTION_RESET_FOLDER, TR::t('reset_default'));
+            }
         } else if ($media_url->filepath !== '/tmp/mnt/storage' &&
             $media_url->filepath !== '/tmp/mnt/network' &&
             $media_url->filepath !== '/tmp/mnt/smb') {

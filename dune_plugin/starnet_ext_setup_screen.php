@@ -34,7 +34,12 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
     const CONTROL_BACKUP = 'backup';
     const CONTROL_RESTORE = 'restore';
+    const CONTROL_HISTORY_CHANGE_FOLDER = 'change_history_folder';
+    const CONTROL_COPY_TO_DATA = 'copy_to_data';
+    const CONTROL_COPY_TO_PLUGIN = 'copy_to_plugin';
     const ACTION_FILE_RESTORE = 'restore_file';
+    const ACTION_BACKUP_FOLDER = 'backup_folder';
+    const ACTION_HISTORY_FOLDER = 'history_folder';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -49,6 +54,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         $defs = array();
 
         $folder_icon = get_image_path('folder.png');
+        $refresh_icon = get_image_path('refresh.png');
 
         //////////////////////////////////////
         // Plugin name
@@ -64,7 +70,26 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             self::CONTROL_RESTORE, TR::t('setup_restore_settings'), TR::t('select_file'), $folder_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
+        // history
+
+        $history_path = $this->plugin->get_history_path();
+        hd_debug_print("history path: $history_path");
+        $display_path = HD::string_ellipsis(get_slash_trailed_path($history_path));
+
+        Control_Factory::add_image_button($defs, $this, null,
+            self::CONTROL_HISTORY_CHANGE_FOLDER, TR::t('setup_history_folder_path'), $display_path, $folder_icon, self::CONTROLS_WIDTH);
+
+        if (!$this->plugin->is_history_path_default()) {
+            Control_Factory::add_image_button($defs, $this, null,
+                self::CONTROL_COPY_TO_DATA, TR::t('setup_copy_to_data'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
+
+            Control_Factory::add_image_button($defs, $this, null,
+                self::CONTROL_COPY_TO_PLUGIN, TR::t('setup_copy_to_plugin'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
+        }
+
+        //////////////////////////////////////
         // debugging
+
         $debug_state = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SetupControlSwitchDefs::$on_off_translated[$debug_state],
@@ -90,6 +115,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         hd_debug_print(null, LOG_LEVEL_DEBUG);
         dump_input_handler($user_input);
 
+        $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
         $control_id = $user_input->control_id;
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
@@ -104,6 +131,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_folder' => array(
+                            'action' => self::ACTION_BACKUP_FOLDER,
                             'extension'	=> 'zip',
                         ),
                         'allow_network' => !is_apk(),
@@ -128,11 +156,66 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 );
                 return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
 
+            case self::CONTROL_HISTORY_CHANGE_FOLDER:
+                $media_url_str = MediaURL::encode(
+                    array(
+                        'screen_id' => Starnet_Folder_Screen::ID,
+                        'source_window_id' => static::ID,
+                        'choose_folder' => array(
+                            'action' => self::ACTION_HISTORY_FOLDER,
+                        ),
+                        'allow_reset' => true,
+                        'allow_network' => !is_apk(),
+                        'windowCounter' => 1,
+                    )
+                );
+                return Action_Factory::open_folder($media_url_str, TR::t('setup_history_folder_path'));
+
             case ACTION_FOLDER_SELECTED:
-                return $this->do_backup_settings($user_input->selected_data);
+                $data = MediaURL::decode($user_input->selected_data);
+                if ($data->choose_folder->action === self::ACTION_HISTORY_FOLDER) {
+                    hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
+                    $this->plugin->set_history_path($data->filepath);
+
+                    return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
+                        $action_reload, $data->filepath, self::CONTROLS_WIDTH);
+                }
+
+                if ($data->choose_folder->action === self::ACTION_BACKUP_FOLDER) {
+                    return $this->do_backup_settings($data);
+                }
+
+                break;
 
             case ACTION_FILE_SELECTED:
-                return $this->do_restore_settings($user_input->selected_data);
+                $data = MediaURL::decode($user_input->selected_data);
+                if ($data->choose_folder->action === self::ACTION_HISTORY_FOLDER) {
+                    return $this->do_restore_settings($user_input->selected_data);
+                }
+                break;
+
+            case ACTION_RESET_DEFAULT:
+                $data = MediaURL::make(array('filepath' => get_data_path()));
+                hd_debug_print("do set history folder to default: $data->filepath");
+                $this->plugin->set_history_path();
+                return $action_reload;
+
+            case self::CONTROL_COPY_TO_DATA:
+                $history_path = $this->plugin->get_history_path();
+                hd_debug_print("copy to: $history_path");
+                if (!$this->copy_data(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                }
+
+                return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
+
+            case self::CONTROL_COPY_TO_PLUGIN:
+                hd_debug_print("copy to: " . get_data_path());
+                if (!$this->copy_data($this->plugin->get_history_path(), "*" . PARAM_TV_HISTORY_ITEMS, get_data_path('history'))) {
+                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                }
+
+                return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
 
             case PARAM_ENABLE_DEBUG:
                 $this->plugin->toggle_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
@@ -150,14 +233,33 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         return Action_Factory::reset_controls($this->do_get_control_defs());
     }
 
+
+    private function copy_data($sourcePath, $source_pattern, $destPath){
+        if (empty($sourcePath) || empty($destPath)) {
+            hd_debug_print("One of is empty: sourceDir = $sourcePath | destDir = $destPath", LOG_LEVEL_ERROR);
+            return false;
+        }
+
+        if (!create_path($destPath)) {
+            hd_debug_print("Can't create destination folder: $destPath", LOG_LEVEL_ERROR);
+            return false;
+        }
+
+        foreach (glob_dir($sourcePath, $source_pattern) as $file) {
+            $dest_file = $destPath . $file;
+            hd_debug_print("copy $file to $dest_file");
+            if (!copy($file, $dest_file))
+                return false;
+        }
+        return true;
+    }
+
     /**
-     * @param string $selected_data
+     * @param MediaURL $data
      * @return array
      */
-    protected function do_restore_settings($selected_data)
+    protected function do_restore_settings(MediaURL $data)
     {
-        $data = MediaURL::decode($selected_data);
-
         $temp_folder = get_temp_path("restore");
         delete_directory($temp_folder);
         $tmp_filename = get_temp_path($data->caption);
@@ -222,13 +324,11 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     }
 
     /**
-     * @param string $selected_data
+     * @param MediaURL $data
      * @return array
      */
-    protected function do_backup_settings($selected_data)
+    protected function do_backup_settings(MediaURL $data)
     {
-        $data = MediaURL::decode($selected_data);
-
         hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
         hd_debug_print("copy to: $data->filepath");
 
