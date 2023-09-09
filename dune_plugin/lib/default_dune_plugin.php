@@ -382,7 +382,7 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print(null, LOG_LEVEL_DEBUG);
 
         $program_ts = ($program_ts > 0 ? $program_ts : time());
-        //hd_debug_print("for $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts));
+        hd_debug_print("for $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), LOG_LEVEL_DEBUG);
         $day_start = date("Y-m-d", $program_ts);
         $day_ts = strtotime($day_start) + get_local_time_zone_offset();
         $day_epg = $this->get_day_epg($channel_id, $day_ts, $plugin_cookies);
@@ -392,7 +392,7 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
-        hd_debug_print("No entries found for time $program_ts");
+        hd_debug_print("No entries found for time $program_ts", LOG_LEVEL_WARN);
         return null;
     }
 

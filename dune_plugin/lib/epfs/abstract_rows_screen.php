@@ -59,7 +59,9 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
 
     public function get_folder_view_v2(MediaURL $media_url, $sel_state, &$plugin_cookies)
     {
-    	$this->set_cur_sel_state_str($sel_state);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
+        $this->set_cur_sel_state_str($sel_state);
 
         return array(
             PluginFolderView::folder_type => $this->get_folder_type(),
