@@ -1,4 +1,29 @@
 <?php
+/**
+ * The MIT License (MIT)
+ *
+ * @Author: sharky72 (https://github.com/KocourKuba)
+ * Original code from DUNE HD
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
 require_once 'lib/ext_epg_program.php';
 require_once 'lib/playback_points.php';
 
@@ -39,6 +64,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $pane[PluginRowsPane::min_row_index_for_y2] = $min_row_index_for_y2;
     }
 
+    /**
+     * @param $parent_sel_state
+     * @return MediaURL|null
+     */
     public function get_parent_media_url($parent_sel_state)
     {
         foreach (explode("\n", $parent_sel_state) as $line) {
@@ -54,6 +83,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      * @param $media_url
      * @param $plugin_cookies
      * @return array|null
+     * @throws Exception
      */
     protected function do_get_info_children($media_url, $plugin_cookies)
     {
@@ -295,6 +325,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
+     * @param $plugin_cookies
+     * @return array|null
      * @throws Exception
      */
     public function get_folder_view_for_epf(&$plugin_cookies)
@@ -305,18 +337,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         return $this->get_folder_view($media_url, $plugin_cookies);
     }
 
-    public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
-    {
-        return null;
-    }
-
-    public function get_next_folder_view(MediaURL $media_url, &$plugin_cookies)
-    {
-        return null;
-    }
-
     /**
-     * @throws Exception
+     * @inheritDoc
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
@@ -432,8 +454,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         return $pane;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+
         return array(
             GUI_EVENT_KEY_PLAY                => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY),
             GUI_EVENT_KEY_ENTER               => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
@@ -446,7 +474,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @throws Exception
+     * @inheritDoc
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
@@ -681,6 +709,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     /**
      * @param $plugin_cookies
      * @return array|null
+     * @throws Exception
      */
     private function get_history_rows($plugin_cookies)
     {
@@ -995,6 +1024,15 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         return $rows;
     }
 
+    /**
+     * @param array $items
+     * @param string $row_id
+     * @param string $title
+     * @param string $caption
+     * @param array|null $action
+     * @param string|null $color
+     * @return array
+     */
     private function create_rows($items, $row_id, $title, $caption, $action, $color = null)
     {
         $rows = array();

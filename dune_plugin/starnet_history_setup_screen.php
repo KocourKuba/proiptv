@@ -1,4 +1,28 @@
 <?php
+/**
+ * The MIT License (MIT)
+ *
+ * @Author: sharky72 (https://github.com/KocourKuba)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
 require_once 'lib/abstract_controls_screen.php';
 require_once 'lib/user_input_handler.php';
 
@@ -16,13 +40,12 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 
     /**
      * defs for all controls on screen
-     * @param $plugin_cookies
      * @return array
-     * @noinspection PhpUnusedParameterInspection
      */
-    public function do_get_control_defs(&$plugin_cookies)
+    public function do_get_control_defs()
     {
-        //hd_debug_print();
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $defs = array();
 
         $folder_icon = get_image_path('folder.png');
@@ -58,15 +81,17 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_control_defs($plugin_cookies);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        return $this->do_get_control_defs();
     }
 
+    /**
+     * @inheritDoc
+     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, LOG_LEVEL_DEBUG);
@@ -100,7 +125,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case self::CONTROL_COPY_TO_DATA:
                 $history_path = $this->get_history_path();
                 hd_debug_print("copy to: $history_path");
-                if (!self::CopyData(get_data_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
+                if (!$this->CopyData(get_data_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -109,7 +134,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
             case self::CONTROL_COPY_TO_PLUGIN:
                 $history_path = $this->get_history_path();
                 hd_debug_print("copy to: " . get_data_path());
-                if (!self::CopyData($history_path, "*" . PARAM_TV_HISTORY_ITEMS, get_data_path())) {
+                if (!$this->CopyData($history_path, "*" . PARAM_TV_HISTORY_ITEMS, get_data_path())) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -131,11 +156,11 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
-                return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies),
+                return Action_Factory::reset_controls($this->do_get_control_defs(),
                     User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Rows_Screen::ID, ACTION_REFRESH_SCREEN));
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
+        return Action_Factory::reset_controls($this->do_get_control_defs());
     }
 
     private function get_history_path()
@@ -148,7 +173,7 @@ class Starnet_History_Setup_Screen extends Abstract_Controls_Screen implements U
         $this->plugin->set_parameter(PARAM_HISTORY_PATH, get_slash_trailed_path($path));
     }
 
-    public static function CopyData($sourcePath, $source_pattern, $destPath){
+    private function CopyData($sourcePath, $source_pattern, $destPath){
         if (empty($sourcePath) || empty($destPath)) {
             hd_debug_print("sourceDir = $sourcePath | destDir = $destPath");
             return false;

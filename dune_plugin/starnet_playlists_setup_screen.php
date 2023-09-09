@@ -1,4 +1,28 @@
 <?php
+/**
+ * The MIT License (MIT)
+ *
+ * @Author: sharky72 (https://github.com/KocourKuba)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
 require_once 'lib/abstract_controls_screen.php';
 require_once 'lib/user_input_handler.php';
 
@@ -19,13 +43,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
     /**
      * defs for all controls on screen
-     * @param $plugin_cookies
      * @return array
-     * @noinspection PhpUnusedParameterInspection
      */
-    public function do_get_control_defs(&$plugin_cookies)
+    public function do_get_control_defs()
     {
-        hd_debug_print();
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $defs = array();
 
         //////////////////////////////////////
@@ -92,13 +115,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        return $this->do_get_control_defs($plugin_cookies);
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        return $this->do_get_control_defs();
     }
 
     /**
@@ -107,6 +129,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function do_get_ext_params_control_defs()
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
         $defs = array();
 
         Control_Factory::add_vgap($defs, 20);
@@ -137,10 +160,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     }
 
     /**
-     * user remote input handler Implementation of UserInputHandler
-     * @param $user_input
-     * @param $plugin_cookies
-     * @return array|null
+     * @inheritDoc
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
@@ -231,7 +251,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 hd_debug_print(ACTION_RELOAD);
                 $result = $this->plugin->tv->reload_channels($plugin_cookies);
                 $action = Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
-                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
+                    Action_Factory::reset_controls($this->do_get_control_defs())
                 );
 
                 if (!$result) {
@@ -241,6 +261,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return $action;
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
+        return Action_Factory::reset_controls($this->do_get_control_defs());
     }
 }

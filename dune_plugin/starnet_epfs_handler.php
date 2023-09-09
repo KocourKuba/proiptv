@@ -1,17 +1,48 @@
 <?php
+/**
+ * The MIT License (MIT)
+ *
+ * @Author: sharky72 (https://github.com/KocourKuba)
+ * Original code from DUNE HD
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
 ////////////////////////////////////////////////////////////////////////////////
 
 require_once "starnet_tv_rows_screen.php";
 
 require_once 'lib/dune_stb_api.php';
 require_once "lib/epfs/config.php";
-require_once "lib/epfs/base_epfs_handler.php";
 require_once "lib/epfs/dummy_epfs_screen.php";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class Starnet_Epfs_Handler extends Base_Epfs_Handler
+class Starnet_Epfs_Handler
 {
+    const EPFS_PATH = '/flashdata/plugins_epfs/';
+
+    /**
+     * @var string
+     */
+    protected static $dir_path;
+
     /**
      * @var bool
      */
@@ -37,12 +68,16 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
      */
     protected static $dummy_epf_screen;
 
+    /**
+     * @var bool
+     */
     protected static $no_internet_epfs_created = false;
 
     ////////////////////////////////////////////////////////////////////////////
 
     /**
      * @param Default_Dune_Plugin $plugin
+     * @return void
      * @throws Exception
      */
     public static function init(Default_Dune_Plugin $plugin)
@@ -55,8 +90,7 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
         self::$no_internet_epfs = self::$epf_id . '.no_internet';
 
         hd_debug_print("epf_id: '" . self::$epf_id . "'", LOG_LEVEL_DEBUG);
-        parent::initialize(self::$epf_id);
-
+        self::$dir_path = self::EPFS_PATH . self::$epf_id;
         self::$tv_rows_screen = new Starnet_Tv_Rows_Screen($plugin);
         $plugin->create_screen(self::$tv_rows_screen);
 
@@ -67,6 +101,7 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
     /**
      * @param bool $first_run
      * @param $plugin_cookies
+     * @return void
      */
     private static function ensure_no_internet_epfs_created($first_run, &$plugin_cookies)
     {
@@ -146,5 +181,98 @@ class Starnet_Epfs_Handler extends Base_Epfs_Handler
         }
 
         return Action_Factory::status(0);
+    }
+
+    /**
+     * @param string $path
+     * @param string $data
+     * @return void
+     */
+    private static function do_write_epf_data($path, $data)
+    {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
+        $tmp_path = "$path.tmp";
+
+        if (false === file_put_contents($tmp_path, $data)) {
+            hd_debug_print("Failed to write tmp file: $tmp_path", LOG_LEVEL_ERROR);
+        } else if (!rename($tmp_path, $path)) {
+            hd_debug_print("Failed to rename $tmp_path to $path", LOG_LEVEL_ERROR);
+            unlink($tmp_path);
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $epf_id
+     * @return object|null
+     */
+    protected static function read_epf_data($epf_id)
+    {
+        return file_exists($path = self::get_epf_path($epf_id)) ? HD::ReadContentFromFile($path, false) : null;
+    }
+
+    /**
+     * @param string $epf_id
+     * @param array|object $folder_view
+     * @return void
+     */
+    protected static function write_epf_view($epf_id, $folder_view)
+    {
+        if ($folder_view) {
+            self::do_write_epf_data(self::get_epf_path($epf_id), json_encode($folder_view));
+        }
+    }
+
+    /**
+     * @param string $epf_id
+     * @param array|object $folder_view
+     * @return bool
+     */
+    protected static function is_folder_view_changed($epf_id, $folder_view)
+    {
+        return (json_encode($folder_view) !== self::read_epf_data($epf_id));
+    }
+
+    protected static function get_ilang_path()
+    {
+        return self::$dir_path . '/ilang';
+    }
+
+    protected static function get_epfs_ts_path($id)
+    {
+        return self::$dir_path . "/{$id}_timestamp";
+    }
+
+    protected static function read_epfs_ts($id)
+    {
+        return is_file($path = self::get_epfs_ts_path($id)) ? file_get_contents($path) : '';
+    }
+
+    /**
+     * @param string $epf_id
+     * @return string
+     */
+    protected static function get_epf_path($epf_id)
+    {
+        return self::$dir_path . "/$epf_id.json";
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    public static function warmed_up_path()
+    {
+        return get_temp_path('epfs_warmed_up');
+    }
+
+    public static function async_worker_warmed_up_path()
+    {
+        return get_temp_path('async_worker_warmed_up');
+    }
+
+    public static function get_epfs_changed_path()
+    {
+        return get_temp_path('update_epfs_if_needed_flag');
     }
 }

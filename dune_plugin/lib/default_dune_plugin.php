@@ -1,5 +1,28 @@
 <?php
-///////////////////////////////////////////////////////////////////////////
+/**
+ * The MIT License (MIT)
+ *
+ * @Author: sharky72 (https://github.com/KocourKuba)
+ * Original code from DUNE HD
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 
 require_once 'tr.php';
 require_once 'mediaurl.php';
@@ -114,6 +137,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param $object
+     * @return void
      */
     public function create_screen($object)
     {
@@ -126,6 +150,9 @@ class Default_Dune_Plugin implements DunePlugin
         }
     }
 
+    /**
+     * @return void
+     */
     public function invalidate_epfs()
     {
         $this->need_update_epfs = true;
@@ -139,6 +166,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function update_epfs_data($plugin_cookies, $media_urls = null, $post_action = null)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         if ($this->need_update_epfs) {
             $this->save();
             $this->need_update_epfs = false;
@@ -149,6 +178,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param Screen $scr
+     * @return void
      */
     protected function add_screen(Screen $scr)
     {
@@ -158,8 +188,6 @@ class Default_Dune_Plugin implements DunePlugin
             $this->screens[$scr->get_id()] = $scr;
         }
     }
-
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @return array
@@ -177,6 +205,7 @@ class Default_Dune_Plugin implements DunePlugin
     protected function get_screen_by_id($screen_id)
     {
         hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         if (isset($this->screens[$screen_id])) {
             hd_debug_print("'$screen_id'", LOG_LEVEL_DEBUG);
             return $this->screens[$screen_id];
@@ -187,8 +216,6 @@ class Default_Dune_Plugin implements DunePlugin
         throw new Exception('Screen not found');
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-
     /**
      * @param MediaURL $media_url
      * @return Screen
@@ -196,6 +223,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     protected function get_screen_by_url(MediaURL $media_url)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $screen_id = isset($media_url->screen_id) ? $media_url->screen_id : $media_url->get_raw_string();
 
         return $this->get_screen_by_id($screen_id);
@@ -208,16 +237,20 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param $user_input
      * @param $plugin_cookies
      * @return array|null
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         return User_Input_Handler_Registry::get_instance()->handle_user_input($user_input, $plugin_cookies);
     }
 
     /**
+     * @override DunePlugin
      * @param string $media_url
      * @param $plugin_cookies
      * @return array|null
@@ -225,6 +258,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_folder_view($media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $decoded_media_url = MediaURL::decode($media_url);
         return $this->get_screen_by_url($decoded_media_url)->get_folder_view($decoded_media_url, $plugin_cookies);
     }
@@ -232,6 +267,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param string $media_url
      * @param $plugin_cookies
      * @return array|null
@@ -239,6 +275,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_next_folder_view($media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $decoded_media_url = MediaURL::decode($media_url);
 
         return $this->get_screen_by_url($decoded_media_url)->get_next_folder_view($decoded_media_url, $plugin_cookies);
@@ -247,6 +285,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param string $media_url
      * @param int $from_ndx
      * @param $plugin_cookies
@@ -255,6 +294,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_regular_folder_items($media_url, $from_ndx, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $decoded_media_url = MediaURL::decode($media_url);
 
         return $this->get_screen_by_url($decoded_media_url)->get_folder_range($decoded_media_url, $from_ndx, $plugin_cookies);
@@ -263,6 +304,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param string $media_url
      * @param $plugin_cookies
      * @return array
@@ -270,6 +312,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_tv_info($media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported", LOG_LEVEL_ERROR);
             HD::print_backtrace();
@@ -284,6 +328,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param string $media_url
      * @param $plugin_cookies
      * @return string
@@ -291,6 +336,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_tv_stream_url($media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported", LOG_LEVEL_ERROR);
             HD::print_backtrace();
@@ -303,6 +350,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param string $channel_id
      * @param int $archive_tm_sec
      * @param string $protect_code
@@ -312,6 +360,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_tv_playback_url($channel_id, $archive_tm_sec, $protect_code, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported", LOG_LEVEL_ERROR);
             HD::print_backtrace();
@@ -324,6 +374,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param string $channel_id
      * @param int $day_start_tm_sec
      * @param $plugin_cookies
@@ -340,16 +391,15 @@ class Default_Dune_Plugin implements DunePlugin
             throw new Exception('TV is not supported');
         }
 
-        $day_epg = array();
-
         try {
             // get channel by hash
             $channel = $this->tv->get_channel($channel_id);
         } catch (Exception $ex) {
             hd_debug_print("Can't get channel with ID: $channel_id", LOG_LEVEL_WARN);
-            return $day_epg;
+            return array();
         }
 
+        $day_epg = array();
         // correct day start to local timezone
         $day_start_tm_sec -= get_local_time_zone_offset();
 
@@ -377,15 +427,24 @@ class Default_Dune_Plugin implements DunePlugin
         return $day_epg;
     }
 
+    /**
+     * @override DunePlugin
+     * @param $channel_id
+     * @param $program_ts
+     * @param $plugin_cookies
+     * @return mixed|null
+     * @throws Exception
+     */
     public function get_program_info($channel_id, $program_ts, $plugin_cookies)
     {
         hd_debug_print(null, LOG_LEVEL_DEBUG);
 
         $program_ts = ($program_ts > 0 ? $program_ts : time());
-        hd_debug_print("for $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), LOG_LEVEL_DEBUG);
-        $day_start = date("Y-m-d", $program_ts);
-        $day_ts = strtotime($day_start) + get_local_time_zone_offset();
-        $day_epg = $this->get_day_epg($channel_id, $day_ts, $plugin_cookies);
+        hd_debug_print("channel ID: $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), LOG_LEVEL_DEBUG);
+        $day_epg = $this->get_day_epg($channel_id,
+            strtotime(date("Y-m-d", $program_ts)) + get_local_time_zone_offset(),
+            $plugin_cookies);
+
         foreach ($day_epg as $item) {
             if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
                 return $item;
@@ -399,7 +458,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @override
+     * @override DunePlugin
      * @param string $op_type
      * @param string $channel_id
      * @param $plugin_cookies
@@ -407,6 +466,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function change_tv_favorites($op_type, $channel_id, &$plugin_cookies = null)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported", LOG_LEVEL_ERROR);
             HD::print_backtrace();
@@ -452,6 +513,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param string $media_url
      * @param $plugin_cookies
      * @return array|null
@@ -459,7 +521,9 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_vod_info($media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
         hd_debug_print("VOD is not supported", LOG_LEVEL_ERROR);
+
         HD::print_backtrace();
         throw new Exception("VOD is not supported");
     }
@@ -467,13 +531,16 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @override DunePlugin
      * @param string $media_url
      * @param $plugin_cookies
      * @return string
      */
     public function get_vod_stream_url($media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
         hd_debug_print("VOD is not supported", LOG_LEVEL_ERROR);
+
         return '';
     }
 
@@ -760,6 +827,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function uninstall_plugin()
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $this->epg_man->clear_all_epg_cache();
 
         if ($this->get_parameter(PARAM_HISTORY_PATH) === get_data_path()) {
@@ -871,7 +940,6 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_ext_xmltv_sources($xmltv_sources)
     {
-        hd_debug_print($xmltv_sources, LOG_LEVEL_DEBUG);
         $this->set_parameter(PARAM_EXT_XMLTV_SOURCES, $xmltv_sources);
     }
 
@@ -883,6 +951,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_all_xmltv_sources()
     {
         hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         /** @var Hashed_Array $sources */
         $xmltv_sources = new Hashed_Array();
         foreach ($this->m3u_parser->getXmltvSources() as $source) {
@@ -892,6 +961,9 @@ class Default_Dune_Plugin implements DunePlugin
             $xmltv_sources->put($source, $key);
         }
 
+        foreach ($xmltv_sources as $source) {
+            hd_debug_print($source, LOG_LEVEL_DEBUG);
+        }
         return $xmltv_sources;
     }
 
@@ -901,17 +973,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_active_xmltv_source_key()
     {
         return $this->get_parameter(PARAM_XMLTV_SOURCE_KEY, '');
-    }
-
-    /**
-     * @param string $source
-     * @return void
-     */
-    public function set_active_xmltv_source($source)
-    {
-        if (!empty($source)) {
-            $this->set_parameter(PARAM_XMLTV_SOURCE_KEY, Hashed_Array::hash($source));
-        }
     }
 
     /**
@@ -1044,6 +1105,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function generate_stream_url($channel_id, $archive_ts = -1)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $channel = $this->tv->get_channel($channel_id);
         if (is_null($channel)) {
             throw new Exception("Channel with id: $channel_id not found");
@@ -1270,6 +1333,8 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function create_screen_views()
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         $background = $this->get_background_image();
 
         $this->screens_views = array(

@@ -1,4 +1,29 @@
 <?php
+/**
+ * The MIT License (MIT)
+ *
+ * @Author: Andrii Kopyniak
+ * Modification and improvements: sharky72 (https://github.com/KocourKuba)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense
+ * of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
 require_once 'lib/abstract_regular_screen.php';
 require_once 'lib/user_input_handler_registry.php';
 require_once 'lib/smb_tree.php';
@@ -69,7 +94,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_file_list(&$plugin_cookies, $dir)
     {
-        //hd_debug_print("$dir");
         $smb_shares = new smb_tree();
         $fileData['folder'] = array();
         $fileData['file'] = array();
@@ -107,13 +131,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
         hd_debug_print($media_url->get_raw_string(), LOG_LEVEL_DEBUG);
+
         $actions = array();
 
         $fs_action = User_Input_Handler_Registry::create_action($this, self::ACTION_FS);
@@ -162,13 +186,11 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param int $from_ndx
-     * @param $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
         hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), LOG_LEVEL_DEBUG);
 
         $err = false;
@@ -318,9 +340,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
-     * @param $plugin_cookies
-     * @return array|null
+     * @inheritDoc
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
@@ -634,6 +654,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function get_folder_views()
     {
+        hd_debug_print(null, LOG_LEVEL_DEBUG);
+
         return array(
             $this->plugin->get_screen_view('list_1x12_info'),
             $this->plugin->get_screen_view('list_2x12_info'),
