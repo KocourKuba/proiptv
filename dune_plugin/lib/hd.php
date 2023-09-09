@@ -377,15 +377,16 @@ class HD
 
     ///////////////////////////////////////////////////////////////////////
 
-    public static function send_log_to_developer(&$error = null)
+    public static function send_log_to_developer($ver, &$error = null)
     {
         $serial = get_serial_number();
         if (empty($serial)) {
             hd_debug_print("Unable to get DUNE serial.");
             $serial = 'XX-XX-XX-XX-XX';
         }
+        $ver = str_replace('.', '_', $ver);
         $timestamp = format_datetime('Ymd_His', time());
-        $zip_file_name = "proiptv_{$serial}_$timestamp.zip";
+        $zip_file_name = "proiptv_{$ver}_{$serial}_$timestamp.zip";
         hd_debug_print("Prepare archive $zip_file_name for send");
         $zip_file = get_temp_path($zip_file_name);
         $apk_subst = getenv('FS_PREFIX');
