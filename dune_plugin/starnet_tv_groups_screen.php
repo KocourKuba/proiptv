@@ -257,23 +257,38 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                $cached_image_name = "{$this->plugin->get_playlist_hash()}_$data->caption";
-                $cached_image = get_cached_image_path($cached_image_name);
-                hd_print("copy from: $data->filepath to: $cached_image");
-                if (!copy($data->filepath, $cached_image)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
-                }
-
                 if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
                     $group = $this->plugin->tv->get_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
-                    hd_debug_print("Assign icon: $cached_image to group: $sel_media_url->group_id");
+                    $cached_image_name = "{$this->plugin->get_playlist_hash()}_$data->caption";
+                    $cached_image = get_cached_image_path($cached_image_name);
+                    hd_print("copy from: $data->filepath to: $cached_image");
+                    if (!copy($data->filepath, $cached_image)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                    }
+
+                    $old_cached_image = $group->get_icon_url();
                     $group->set_icon_url($cached_image);
+                    hd_debug_print("Assign icon: $cached_image to group: $sel_media_url->group_id");
+
                     /** @var Hashed_Array $group_icons */
                     $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
                     $group_icons->set($sel_media_url->group_id, $cached_image_name);
                     $this->plugin->save();
+
+                    /** @var Group $known_group */
+                    if (strpos($old_cached_image, 'plugin_file://') === false) break;
+
+                    foreach ($this->plugin->tv->get_groups() as $known_group) {
+                        $icon_path = $known_group->get_icon_url();
+                        if (strpos($icon_path, 'plugin_file://') !== false) {
+                            $icons[] = $icon_path;
+                        }
+                    }
+                    if (isset($icons) && !in_array($old_cached_image, $icons)) {
+                        unlink($old_cached_image);
+                    }
                 }
                 break;
 
