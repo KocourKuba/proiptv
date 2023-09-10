@@ -157,12 +157,6 @@ const EPG_PATTERN = 'xml|xmltv|gz';
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage/';
 
-const LOG_LEVEL_FATAL = 0;
-const LOG_LEVEL_ERROR = 1;
-const LOG_LEVEL_WARN  = 2;
-const LOG_LEVEL_INFO  = 3;
-const LOG_LEVEL_DEBUG = 4;
-
 # Hard-coded constants.
 if (!defined('FONT_SIZE_LARGE')) define('FONT_SIZE_LARGE', 4);
 if (!defined('ORIENTATION_VERTICAL')) define('ORIENTATION_VERTICAL', 0);
@@ -239,7 +233,10 @@ const CMD_STATUS_GREP = '" /firmware/ext_command/cgi-bin/do | grep "command_stat
 
 class LogSeverity
 {
-    public static $severity = LOG_LEVEL_INFO;
+    /**
+     * @var bool
+     */
+    public static $severity = false;
 }
 
 class KnownCatchupSourceTags
@@ -509,9 +506,13 @@ function get_raw_firmware_version()
     return $result;
 }
 
-function set_log_level($level)
+/**
+ * @param $level
+ * @return void
+ */
+function set_debug_log($level)
 {
-    hd_print("Set logging severity: $level");
+    hd_print("Set logging severity: " . var_export($level, true));
     LogSeverity::$severity = $level;
 }
 
@@ -1756,7 +1757,7 @@ function debug_print(/*mixed $var1, $var2...*/)
  * @param int $level
  * @return void
  */
-function dump_input_handler($user_input, $level = LOG_LEVEL_DEBUG)
+function dump_input_handler($user_input, $level = true)
 {
     if ($level > LogSeverity::$severity)
         return;
@@ -1835,9 +1836,9 @@ function safe_merge_array($ar1, $ar2)
     return $ar1;
 }
 
-function hd_debug_print($val = null, $level = LOG_LEVEL_INFO)
+function hd_debug_print($val = null, $is_debug = false)
 {
-    if ($level > LogSeverity::$severity)
+    if ($is_debug === LogSeverity::$severity)
         return;
 
     $bt = debug_backtrace();

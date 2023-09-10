@@ -44,7 +44,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $defs = array();
 
@@ -126,7 +126,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         return $this->do_get_control_defs($plugin_cookies);
     }
 
@@ -135,7 +135,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         $control_id = $user_input->control_id;
@@ -148,7 +148,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         switch ($control_id) {
             case self::CONTROL_AUTO_PLAY:
             case self::CONTROL_AUTO_RESUME:
-                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, LOG_LEVEL_DEBUG);
+                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, true);
                 $plugin_cookies->{$control_id} = ($plugin_cookies->{$control_id} === SetupControlSwitchDefs::switch_off)
                     ? SetupControlSwitchDefs::switch_on
                     : SetupControlSwitchDefs::switch_off;
@@ -156,7 +156,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_BUFFERING_TIME:
             case PARAM_ARCHIVE_DELAY_TIME:
-                hd_debug_print("$control_id: " . $user_input->{$control_id}, LOG_LEVEL_DEBUG);
+                hd_debug_print("$control_id: " . $user_input->{$control_id}, true);
                 $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
                 break;
         }

@@ -48,7 +48,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
      */
     public function do_get_control_defs()
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $setting_icon = get_image_path('settings.png');
 
@@ -105,7 +105,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
      */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         return $this->do_get_control_defs();
     }
 
@@ -115,7 +115,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
      */
     public function do_get_pass_control_defs()
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $defs = array();
 
@@ -143,7 +143,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         static $history_txt;

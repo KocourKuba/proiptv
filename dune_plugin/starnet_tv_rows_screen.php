@@ -342,7 +342,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         $rows = array();
 
         $channels_rows = $this->get_regular_rows();
@@ -354,23 +354,23 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $history_rows = $this->get_history_rows($plugin_cookies);
         if (!is_null($history_rows)) {
             $rows = array_merge($rows, $history_rows);
-            hd_debug_print("added history: " . count($history_rows) . " rows", LOG_LEVEL_DEBUG);
+            hd_debug_print("added history: " . count($history_rows) . " rows", true);
         }
 
         $favorites_rows = $this->get_favorites_rows();
         if (!is_null($favorites_rows)) {
-            hd_debug_print("added favorites: " . count($favorites_rows) . " rows", LOG_LEVEL_DEBUG);
+            hd_debug_print("added favorites: " . count($favorites_rows) . " rows", true);
             $rows = array_merge($rows, $favorites_rows);
         }
 
         $all_channels_rows = $this->get_all_channels_row();
         if (!is_null($all_channels_rows)) {
             $rows = array_merge($rows, $all_channels_rows);
-            hd_debug_print("added all channels: " . count($all_channels_rows) . " rows", LOG_LEVEL_DEBUG);
+            hd_debug_print("added all channels: " . count($all_channels_rows) . " rows", true);
         }
 
         $rows = array_merge($rows, $channels_rows);
-        hd_debug_print("added channels: " . count($channels_rows) . " rows", LOG_LEVEL_DEBUG);
+        hd_debug_print("added channels: " . count($channels_rows) . " rows", true);
 
         $pane = Rows_Factory::pane(
             $rows,
@@ -459,8 +459,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         return array(
             GUI_EVENT_KEY_PLAY                => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY),
@@ -478,7 +478,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         if (isset($user_input->item_id)) {
@@ -713,7 +713,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_history_rows($plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_HISTORY)) {
             hd_debug_print("History group disabled");
             return null;
@@ -832,7 +832,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_favorites_rows()
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES)) {
             hd_debug_print("Favorites group disabled");
             return null;
@@ -884,7 +884,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_all_channels_row()
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL)) {
             hd_debug_print("All channels group disabled");
             return null;
@@ -956,7 +956,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     private function get_regular_rows()
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         $groups = $this->plugin->tv->get_groups();
         if (is_null($groups))
             return null;
@@ -1085,7 +1085,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     protected function channel_menu(MediaURL $media_url)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         if ($media_url->group_id === HISTORY_GROUP_ID) {
             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");

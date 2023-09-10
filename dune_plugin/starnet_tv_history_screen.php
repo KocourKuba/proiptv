@@ -36,8 +36,8 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         $actions = array();
 
@@ -61,7 +61,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         if (!isset($user_input->selected_media_url)) {
@@ -130,7 +130,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         hd_debug_print($media_url->get_media_url_str());
 
         $items = array();

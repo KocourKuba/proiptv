@@ -40,8 +40,8 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
      */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), true);
 
         $items = $this->get_all_folder_items($media_url, $plugin_cookies);
         $count = count($items);
@@ -72,7 +72,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
      */
     public function invalidate_current_folder2(MediaURL $parent_media_url, $plugin_cookies, $sel_ndx = -1)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         return Action_Factory::update_regular_folder(
             $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
@@ -88,7 +88,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
      */
     public function invalidate_current_folder(MediaURL $parent_media_url, $plugin_cookies, $sel_ndx = -1)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         return Starnet_Epfs_Handler::invalidate_folders(array(static::ID),
             Action_Factory::update_regular_folder(

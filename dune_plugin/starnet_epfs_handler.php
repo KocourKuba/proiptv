@@ -89,7 +89,7 @@ class Starnet_Epfs_Handler
         self::$epf_id = $plugin->plugin_info['app_name'];
         self::$no_internet_epfs = self::$epf_id . '.no_internet';
 
-        hd_debug_print("epf_id: '" . self::$epf_id . "'", LOG_LEVEL_DEBUG);
+        hd_debug_print("epf_id: '" . self::$epf_id . "'", true);
         self::$dir_path = self::EPFS_PATH . self::$epf_id;
         self::$tv_rows_screen = new Starnet_Tv_Rows_Screen($plugin);
         $plugin->create_screen(self::$tv_rows_screen);
@@ -159,7 +159,7 @@ class Starnet_Epfs_Handler
             return null;
 
         if ($first_run)
-            hd_debug_print("First run", LOG_LEVEL_DEBUG);
+            hd_debug_print("First run", true);
 
         self::ensure_no_internet_epfs_created($first_run, $plugin_cookies);
 
@@ -172,7 +172,7 @@ class Starnet_Epfs_Handler
 
         $cold_run = !is_file(self::warmed_up_path());
         if ($cold_run) {
-            hd_debug_print("Cold run", LOG_LEVEL_DEBUG);
+            hd_debug_print("Cold run", true);
             file_put_contents(self::warmed_up_path(), '');
         }
 
@@ -190,14 +190,14 @@ class Starnet_Epfs_Handler
      */
     private static function do_write_epf_data($path, $data)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $tmp_path = "$path.tmp";
 
         if (false === file_put_contents($tmp_path, $data)) {
-            hd_debug_print("Failed to write tmp file: $tmp_path", LOG_LEVEL_ERROR);
+            hd_debug_print("Failed to write tmp file: $tmp_path");
         } else if (!rename($tmp_path, $path)) {
-            hd_debug_print("Failed to rename $tmp_path to $path", LOG_LEVEL_ERROR);
+            hd_debug_print("Failed to rename $tmp_path to $path");
             unlink($tmp_path);
         }
     }

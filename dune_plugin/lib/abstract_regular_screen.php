@@ -41,8 +41,8 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         $folder_views = $this->get_folder_views();
         $folder_view = $folder_views[$this->get_folder_view_index($plugin_cookies)];
@@ -65,7 +65,7 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
      */
     public function get_next_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $idx = $this->get_folder_view_index($plugin_cookies);
         $folder_views = $this->get_folder_views();
@@ -83,7 +83,7 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
 
     private function get_folder_view_index(&$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $folder_views_index = "screen." . static::ID . ".view_idx";
         $idx = isset($plugin_cookies->{$folder_views_index}) ? $plugin_cookies->{$folder_views_index} : 0;

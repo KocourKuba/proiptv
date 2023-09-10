@@ -42,8 +42,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         if (!$this->plugin->tv->load_channels($plugin_cookies)) {
             hd_debug_print("Channels not loaded!");
@@ -74,7 +74,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         $sel_ndx = $user_input->sel_ndx;
@@ -274,7 +274,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
-                    hd_debug_print("Set background to default", LOG_LEVEL_DEBUG);
+                    hd_debug_print("Set background to default", true);
                     $this->plugin->remove_setting(PARAM_PLUGIN_BACKGROUND);
                     $this->plugin->create_screen_views();
                     $this->plugin->save();
@@ -282,7 +282,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group = $this->plugin->tv->get_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
-                    hd_debug_print("Reset icon for group: $sel_media_url->group_id to default", LOG_LEVEL_DEBUG);
+                    hd_debug_print("Reset icon for group: $sel_media_url->group_id to default", true);
 
                     if ($group->is_favorite_group()) {
                         $group->set_icon_url(Default_Group::DEFAULT_FAVORITE_GROUP_ICON);

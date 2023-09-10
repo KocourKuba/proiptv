@@ -49,7 +49,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
      */
     public function do_get_control_defs()
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $defs = array();
 
@@ -104,7 +104,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
      */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         return $this->do_get_control_defs();
     }
 
@@ -113,7 +113,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
@@ -221,7 +221,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case PARAM_ENABLE_DEBUG:
                 $this->plugin->toggle_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
                 $debug = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
-                set_log_level($debug ? LOG_LEVEL_DEBUG: LOG_LEVEL_INFO);
+                set_debug_log($debug);
                 hd_debug_print("Debug logging: " . var_export($debug, true));
                 break;
 
@@ -236,12 +236,12 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
     private function copy_data($sourcePath, $source_pattern, $destPath){
         if (empty($sourcePath) || empty($destPath)) {
-            hd_debug_print("One of is empty: sourceDir = $sourcePath | destDir = $destPath", LOG_LEVEL_ERROR);
+            hd_debug_print("One of is empty: sourceDir = $sourcePath | destDir = $destPath");
             return false;
         }
 
         if (!create_path($destPath)) {
-            hd_debug_print("Can't create destination folder: $destPath", LOG_LEVEL_ERROR);
+            hd_debug_print("Can't create destination folder: $destPath");
             return false;
         }
 
@@ -281,7 +281,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             $unzip->extractTo($temp_folder);
             $unzip->close();
         } catch (Exception $ex) {
-            hd_debug_print($ex->getMessage(), LOG_LEVEL_ERROR);
+            hd_debug_print($ex->getMessage());
             return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
         }
 
@@ -374,7 +374,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 throw new Exception(TR::t('err_copy__2'), $zip_file, "$data->filepath/$zip_file_name");
             }
         } catch (Exception $ex) {
-            hd_debug_print($ex->getMessage(), LOG_LEVEL_ERROR);
+            hd_debug_print($ex->getMessage());
             return Action_Factory::show_title_dialog(TR::t('err_backup'), null, $ex->getMessage());
         }
 

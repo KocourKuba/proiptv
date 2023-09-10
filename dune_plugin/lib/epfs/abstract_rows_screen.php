@@ -107,8 +107,8 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
      */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), true);
 
         return null;
     }
@@ -118,7 +118,7 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
      */
     public function get_next_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         return null;
     }
 
@@ -132,7 +132,7 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
      */
     public function get_folder_view_v2(MediaURL $media_url, $sel_state, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $this->set_cur_sel_state_str($sel_state);
 
@@ -156,8 +156,8 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
     	return $this->get_folder_view_v2($media_url, null, $plugin_cookies);
     }

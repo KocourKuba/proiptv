@@ -52,7 +52,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         if (!isset($user_input->control_id)) {
@@ -61,27 +61,27 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         switch ($user_input->control_id) {
             case 'do_reboot':
-                hd_debug_print("do reboot", LOG_LEVEL_DEBUG);
+                hd_debug_print("do reboot", true);
                 return Action_Factory::restart(true);
 
             case 'power_off':
-                hd_debug_print("do power off", LOG_LEVEL_DEBUG);
+                hd_debug_print("do power off", true);
                 if (is_apk()) {
                     return Action_Factory::show_title_dialog(TR::t('entry_not_available'));
                 }
                 return array(send_ir_code(GUI_EVENT_DISCRETE_POWER_OFF));
 
             case 'do_setup':
-                hd_debug_print("do setup", LOG_LEVEL_DEBUG);
+                hd_debug_print("do setup", true);
                 return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
 
             case 'do_channels_setup':
-                hd_debug_print("do channels setup", LOG_LEVEL_DEBUG);
+                hd_debug_print("do channels setup", true);
                 $media_url_str = MediaURL::make(array('screen_id' => Starnet_Playlists_Setup_Screen::ID, 'source_window_id' => self::ID));
                 return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_playlists_setup'));
 
             case 'do_send_log':
-                hd_debug_print("do_send_log", LOG_LEVEL_DEBUG);
+                hd_debug_print("do_send_log", true);
                 $error_msg = '';
                 $msg = HD::send_log_to_developer($this->plugin->plugin_info['app_version'], $error_msg) ? TR::t('entry_log_sent') : TR::t('entry_log_not_sent');
                 return Action_Factory::show_title_dialog($msg, null, $error_msg);
@@ -102,7 +102,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     break;
                 }
 
-                hd_debug_print("plugin_entry $user_input->action_id", LOG_LEVEL_DEBUG);
+                hd_debug_print("plugin_entry $user_input->action_id", true);
                 clearstatcache();
                 $this->plugin->epg_man->init_cache_dir();
                 switch ($user_input->action_id) {
@@ -124,7 +124,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         $this->plugin->clear_playlist_cache();
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
-                            hd_debug_print("launch play", LOG_LEVEL_DEBUG);
+                            hd_debug_print("launch play", true);
 
                             $media_url = null;
                             if (file_exists('/config/resume_state.properties')) {
@@ -140,7 +140,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
                             $action = Action_Factory::tv_play($media_url);
                         } else {
-                            hd_debug_print("action: launch open", LOG_LEVEL_DEBUG);
+                            hd_debug_print("action: launch open", true);
                             $action = Action_Factory::open_folder();
                         }
 
@@ -169,7 +169,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Action_Factory::tv_play($media_url);
 
                     case 'update_epfs':
-                        hd_debug_print("update_epfs", LOG_LEVEL_DEBUG);
+                        hd_debug_print("update_epfs", true);
                         return Starnet_Epfs_Handler::update_all_epfs($plugin_cookies, isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
                     case 'uninstall':

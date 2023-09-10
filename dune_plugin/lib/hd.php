@@ -731,8 +731,8 @@ class HD
             $doc = self::http_get_document($url, $opts);
             $contents = json_decode($doc, $to_array);
             if ($contents === null || $contents === false) {
-                hd_debug_print("failed to decode json", LOG_LEVEL_ERROR);
-                hd_debug_print("doc: $doc", LOG_LEVEL_DEBUG);
+                hd_debug_print("failed to decode json");
+                hd_debug_print("doc: $doc", true);
                 return false;
             }
         } catch (Exception $ex) {
@@ -750,7 +750,7 @@ class HD
     public static function StoreContentToFile($path, $content)
     {
         if (empty($path)) {
-            hd_debug_print("Path not set", LOG_LEVEL_ERROR);
+            hd_debug_print("Path not set");
         } else {
             file_put_contents($path, json_encode($content));
         }
@@ -763,7 +763,7 @@ class HD
     public static function ReadContentFromFile($path, $assoc = true)
     {
         if (empty($path) || !file_exists($path)) {
-            hd_debug_print("Path not exists: $path", LOG_LEVEL_ERROR);
+            hd_debug_print("Path not exists: $path");
             return false;
         }
 

@@ -43,7 +43,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function do_get_control_defs(&$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $defs = array();
 
@@ -114,7 +114,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         return $this->do_get_control_defs($plugin_cookies);
     }
 
@@ -123,14 +123,14 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         $control_id = $user_input->control_id;
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
-            hd_debug_print("changing $control_id value to $new_value", LOG_LEVEL_DEBUG);
+            hd_debug_print("changing $control_id value to $new_value", true);
         }
 
         switch ($control_id) {
@@ -211,6 +211,6 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             ? SetupControlSwitchDefs::switch_on
             : SetupControlSwitchDefs::switch_off;
 
-        hd_debug_print("$param: " . $plugin_cookies->{$param}, LOG_LEVEL_DEBUG);
+        hd_debug_print("$param: " . $plugin_cookies->{$param}, true);
     }
 }

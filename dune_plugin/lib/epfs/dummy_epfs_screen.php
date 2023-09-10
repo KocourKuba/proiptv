@@ -40,8 +40,8 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         return array(GUI_EVENT_KEY_ENTER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER));
     }
@@ -51,7 +51,7 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $defs = array();
 
@@ -69,7 +69,7 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         return null;
     }
@@ -81,7 +81,7 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
      */
     public function get_folder_view_for_epf($no_internet, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         $media_url = MediaURL::make(array('no_internet' => $no_internet));
 

@@ -87,7 +87,7 @@ class Playback_Points
             }
 
             $this->points = HD::get_items($path);
-            hd_debug_print(count($this->points) . " from: $path", LOG_LEVEL_DEBUG);
+            hd_debug_print(count($this->points) . " from: $path", true);
             while (count($this->points) > 7) {
                 array_pop($this->points);
             }
@@ -132,7 +132,7 @@ class Playback_Points
 
                 // if channel does support archive do not update current point
                 $this->points[$id] += ($this->points[$id] !== 0) ? $player_state['playback_position'] : 0;
-                hd_debug_print("channel_id $id at time mark: {$this->points[$id]}", LOG_LEVEL_DEBUG);
+                hd_debug_print("channel_id $id at time mark: {$this->points[$id]}", true);
             }
         }
     }
@@ -190,7 +190,7 @@ class Playback_Points
     {
         $path = $this->plugin->get_history_path();
         if (!create_path($path)) {
-            hd_debug_print("History path not exist: $path", LOG_LEVEL_ERROR);
+            hd_debug_print("History path not exist: $path");
             return '';
         }
 

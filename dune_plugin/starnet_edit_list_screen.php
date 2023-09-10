@@ -56,8 +56,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         $actions = array();
         if ($this->get_edit_order($media_url)->size()) {
@@ -81,7 +81,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
@@ -97,7 +97,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->set_pospone_save(false, $parent_media_url->save_data);
                 }
 
-                hd_debug_print("Need reload: " . var_export($need_reload, true), LOG_LEVEL_DEBUG);
+                hd_debug_print("Need reload: " . var_export($need_reload, true), true);
 
                 return Action_Factory::replace_path(
                     $parent_media_url->windowCounter,
@@ -364,8 +364,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         $order = $this->get_edit_order($media_url);
         $items = array();
@@ -417,8 +417,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
@@ -439,7 +439,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_folder_views()
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         return array(
             $this->plugin->get_screen_view('list_1x12_info'),
@@ -454,7 +454,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     private function get_edit_order($media_url)
     {
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         switch ($media_url->edit_list) {
             case self::SCREEN_EDIT_PLAYLIST:
@@ -490,7 +490,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     private function set_edit_order($media_url, $order)
     {
-        hd_debug_print($media_url->get_media_url_str(), LOG_LEVEL_DEBUG);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         switch ($media_url->edit_list) {
             case self::SCREEN_EDIT_PLAYLIST:
@@ -514,7 +514,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             default:
-                hd_debug_print("Unknown edit list type", LOG_LEVEL_WARN);
+                hd_debug_print("Unknown edit list type");
         }
     }
 }

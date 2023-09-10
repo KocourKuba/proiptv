@@ -171,7 +171,7 @@ class Epg_Manager
 
             $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
             $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-            hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l", LOG_LEVEL_DEBUG);
+            hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l", true);
 
             $day_epg = array();
             foreach ($program_epg as $time_start => $entry) {
@@ -184,7 +184,7 @@ class Epg_Manager
                 throw new Exception("No EPG data for " . $channel->get_id());
             }
 
-            hd_debug_print("Store day epg to memory cache", LOG_LEVEL_DEBUG);
+            hd_debug_print("Store day epg to memory cache", true);
             $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
 
             return $day_epg;
@@ -217,7 +217,7 @@ class Epg_Manager
                 $check_time_file = filemtime($cached_xmltv_file);
                 $max_cache_time = 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
                 if ($check_time_file && $check_time_file + $max_cache_time > time()) {
-                    hd_debug_print("Cached file: $cached_xmltv_file is not expired " . date("Y-m-d H:s", $check_time_file), LOG_LEVEL_DEBUG);
+                    hd_debug_print("Cached file: $cached_xmltv_file is not expired " . date("Y-m-d H:s", $check_time_file), true);
                     return '';
                 }
 
@@ -374,7 +374,7 @@ class Epg_Manager
 
                 foreach ($xml_node->getElementsByTagName('icon') as $tag) {
                     $picon = $tag->getAttribute('src');
-                    hd_debug_print("channel id: $channel_id picon: $picon", LOG_LEVEL_DEBUG);
+                    hd_debug_print("channel id: $channel_id picon: $picon", true);
                     if (preg_match("|https?://|", $picon)) {
                         $picons_map[$channel_id] = $picon;
                     }
@@ -479,7 +479,7 @@ class Epg_Manager
                         if (!empty($xmltv_data)) {
                             $index_name = sprintf("%s_%s.index", $this->url_hash, Hashed_Array::hash($prev_channel));
                             $xmltv_index[$prev_channel] = $index_name;
-                            hd_debug_print("Save program index: $index_name", LOG_LEVEL_DEBUG);
+                            hd_debug_print("Save program index: $index_name", true);
                             HD::StoreContentToFile($this->cache_dir . DIRECTORY_SEPARATOR . $index_name, $xmltv_data);
                             unset($xmltv_data);
                         }
@@ -494,13 +494,13 @@ class Epg_Manager
             if (!empty($prev_channel) && !empty($xmltv_data)) {
                 $index_name = sprintf("%s_%s.index", $this->url_hash, Hashed_Array::hash($prev_channel));
                 $xmltv_index[$prev_channel] = $index_name;
-                hd_debug_print("Save index: $index_name", LOG_LEVEL_DEBUG);
+                hd_debug_print("Save index: $index_name", true);
                 HD::StoreContentToFile($this->cache_dir . DIRECTORY_SEPARATOR . $index_name, $xmltv_data);
                 unset($xmltv_data);
             }
 
             if (!empty($xmltv_index)) {
-                hd_debug_print("Save index: $index_program", LOG_LEVEL_DEBUG);
+                hd_debug_print("Save index: $index_program", true);
                 HD::StoreContentToFile($index_program, $xmltv_index);
                 $this->xmltv_index = $xmltv_index;
             }
@@ -549,7 +549,7 @@ class Epg_Manager
         $this->epg_cache = array();
 
         $filename = Hashed_Array::hash($uri);
-        hd_debug_print("clear cache files: $filename*", LOG_LEVEL_DEBUG);
+        hd_debug_print("clear cache files: $filename*", true);
         foreach (glob_dir($this->cache_dir, "/^$filename.*$/i") as $file) {
             unlink($file);
         }

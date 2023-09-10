@@ -193,7 +193,7 @@ class Starnet_Tv implements User_Input_Handler
 
     public function get_action_map()
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
 
         return array(GUI_EVENT_PLAYBACK_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP));
     }
@@ -203,7 +203,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
+        hd_debug_print(null, true);
         dump_input_handler($user_input);
 
         if (!isset($user_input->control_id))
@@ -528,7 +528,7 @@ class Starnet_Tv implements User_Input_Handler
                     }
 
                     if (isset($ext_params[TAG_EXTVLCOPT]['http-user-agent'])) {
-                        hd_debug_print(TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_params[TAG_EXTVLCOPT]['http-user-agent']}'", LOG_LEVEL_DEBUG);
+                        hd_debug_print(TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_params[TAG_EXTVLCOPT]['http-user-agent']}'", true);
                         $ch_useragent = "User-Agent: " . $ext_params[TAG_EXTVLCOPT]['http-user-agent'];
                     }
                 }
@@ -561,7 +561,7 @@ class Starnet_Tv implements User_Input_Handler
 
                 $group_logo = $entry->getEntryAttribute('group-logo');
                 if (!empty($group_logo) && $parent_group->get_icon_url() === null) {
-                    hd_debug_print("Found new picon from 'group-logo' for category: {$parent_group->get_title()} : $group_logo", LOG_LEVEL_DEBUG);
+                    hd_debug_print("Found new picon from 'group-logo' for category: {$parent_group->get_title()} : $group_logo", true);
                     if (!preg_match("|^https?://|", $group_logo)) {
                         if (!empty($icon_url_base)) {
                             $group_logo = $icon_url_base . $group_logo;
@@ -570,7 +570,7 @@ class Starnet_Tv implements User_Input_Handler
                         }
                     }
 
-                    hd_debug_print("Set picon: $group_logo", LOG_LEVEL_DEBUG);
+                    hd_debug_print("Set picon: $group_logo", true);
                     $parent_group->set_icon_url($group_logo);
                 }
 
