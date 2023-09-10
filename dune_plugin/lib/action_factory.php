@@ -78,7 +78,7 @@ class Action_Factory
             //hd_debug_print("tv_play str: " . $media_url);
             $action[GuiAction::params] = array('selected_media_url' => $media_url);
         } else if (is_object($media_url)) {
-            //hd_debug_print("tv_play MediaUrl: " . $media_url->get_media_url_str());
+            //hd_debug_print("tv_play MediaUrl: " . $media_url);
             $action[GuiAction::data] = array(
                 PluginTvPlayActionData::initial_group_id => isset($media_url->group_id) ? $media_url->group_id : null,
                 PluginTvPlayActionData::initial_channel_id => isset($media_url->channel_id) ? $media_url->channel_id : null,

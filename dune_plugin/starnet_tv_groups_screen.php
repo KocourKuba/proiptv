@@ -43,7 +43,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url->get_media_url_str(), true);
+        hd_debug_print($media_url, true);
 
         $res = $this->plugin->tv->load_channels($plugin_cookies);
         if ($res === 0) {
@@ -320,7 +320,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url->get_media_url_str());
+        hd_debug_print($media_url, true);
 
         $items = array();
         $res = $this->plugin->tv->load_channels($plugin_cookies);
