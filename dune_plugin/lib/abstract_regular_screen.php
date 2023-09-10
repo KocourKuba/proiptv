@@ -42,7 +42,7 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url->get_media_url_str(), true);
+        hd_debug_print($media_url, true);
 
         $folder_views = $this->get_folder_views();
         $folder_view = $folder_views[$this->get_folder_view_index($plugin_cookies)];

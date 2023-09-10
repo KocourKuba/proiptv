@@ -66,7 +66,7 @@ class smb_tree
     private function execute($args = '')
     {
         $cmd = '/tango/firmware/bin/smbtree ' . $this->get_auth_options() . ' ' . $this->get_debug_level() . ' ' . $args;
-        //hd_debug_print("smbtree exec: $cmd");
+        hd_debug_print("smbtree exec: $cmd", true);
         $process = proc_open($cmd, $this->descriptor_spec, $pipes, '/tmp', $this->env);
 
         if (is_resource($process)) {
@@ -350,7 +350,9 @@ class smb_tree
                     if (!file_exists($fn) && !mkdir($fn, 0777, true) && !is_dir($fn)) {
                         hd_debug_print("Directory '$fn' was not created");
                     }
-                    $ret_code = exec("mount -t cifs -o username=$username,password=$password,posixpaths,rsize=32768,wsize=130048 \"$k\" \"$fn\" 2>&1 &");
+                    $exec_string = "mount -t cifs -o username=$username,password=$password,posixpaths,rsize=32768,wsize=130048 \"$k\" \"$fn\" 2>&1 &";
+                    hd_debug_print("Mount string: $exec_string", true);
+                    $ret_code = exec($exec_string);
                 } else {
                     $fn = $wr;
                 }

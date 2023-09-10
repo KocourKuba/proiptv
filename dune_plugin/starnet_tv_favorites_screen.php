@@ -134,12 +134,13 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str());
+
         $items = array();
 
         foreach ($this->plugin->get_favorites() as $channel_id) {
@@ -173,20 +174,22 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     }
 
     /**
-     * @return array[]
+     * @inheritDoc
      */
     public function get_folder_views()
     {
+        hd_debug_print(null, true);
+
         return array(
             $this->plugin->get_screen_view('icons_4x3_caption'),
             $this->plugin->get_screen_view('icons_5x3_caption'),
-            $this->plugin->get_screen_view('icons_3x3_no_caption'),
-            $this->plugin->get_screen_view('icons_4x4_no_caption'),
-            $this->plugin->get_screen_view('icons_5x4_no_caption'),
+            $this->plugin->get_screen_view('icons_3x3_caption'),
+            $this->plugin->get_screen_view('icons_4x3_no_caption'),
+            $this->plugin->get_screen_view('icons_5x3_no_caption'),
 
-            $this->plugin->get_screen_view('list_1x12_info'),
-            $this->plugin->get_screen_view('list_2x12_info'),
-            $this->plugin->get_screen_view('list_3x12_no_info'),
+            $this->plugin->get_screen_view('list_1x11_info'),
+            $this->plugin->get_screen_view('list_2x11_info'),
+            $this->plugin->get_screen_view('list_3x11_no_info'),
         );
     }
 }

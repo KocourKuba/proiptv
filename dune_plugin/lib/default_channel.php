@@ -1,7 +1,8 @@
 <?php
 require_once 'channel.php';
+require_once 'json_serializer.php';
 
-class Default_Channel implements Channel
+class Default_Channel extends Json_Serializer implements Channel
 {
     /**
      * @var string

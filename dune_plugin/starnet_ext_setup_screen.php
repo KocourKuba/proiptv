@@ -191,7 +191,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === self::ACTION_FILE_RESTORE) {
-                    return $this->do_restore_settings($data);
+                    return $this->do_restore_settings($data, $plugin_cookies);
                 }
                 break;
 
@@ -255,10 +255,11 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     }
 
     /**
+     * @param $plugin_cookies
      * @param MediaURL $data
      * @return array
      */
-    protected function do_restore_settings(MediaURL $data)
+    protected function do_restore_settings(MediaURL $data, $plugin_cookies)
     {
         $temp_folder = get_temp_path("restore");
         delete_directory($temp_folder);
@@ -316,9 +317,9 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             }
         }
 
-        $this->plugin->init_plugin();
-        $this->plugin->tv->unload_channels();
+        flush();
 
+        $this->plugin->init_plugin();
         $this->plugin->tv->reload_channels($plugin_cookies);
 
         return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
@@ -378,8 +379,9 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             return Action_Factory::show_title_dialog(TR::t('err_backup'), null, $ex->getMessage());
         }
 
-
         unlink($zip_file);
+        flush();
+
         return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
             User_Input_Handler_Registry::create_action($this, ACTION_RELOAD));
     }

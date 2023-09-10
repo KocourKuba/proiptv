@@ -45,8 +45,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         hd_debug_print($media_url->get_media_url_str(), true);
 
-        if (!$this->plugin->tv->load_channels($plugin_cookies)) {
+        $res = $this->plugin->tv->load_channels($plugin_cookies);
+        if ($res === 0) {
             hd_debug_print("Channels not loaded!");
+        } else if ($res === 1) {
+            $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         }
 
         $actions = array();
@@ -86,6 +89,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         switch ($user_input->control_id)
         {
+            case GUI_EVENT_TIMER:
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                return Action_Factory::change_behaviour(
+                    $actions,
+                    1000,
+                    Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()))
+                );
+
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SetupControlSwitchDefs::switch_on);
@@ -93,6 +105,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
 
+                $this->plugin->save(PLUGIN_PARAMETERS);
                 return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
 
             case ACTION_OPEN_FOLDER:
@@ -191,6 +204,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::open_folder(Starnet_Epg_Setup_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
             case self::ACTION_CONFIRM_DLG_APPLY:
+                $this->plugin->save(PLUGIN_PARAMETERS);
                 return Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run());
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -211,11 +225,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_PLAYLIST_SELECTED:
                 if (!isset($user_input->list_idx)) break;
 
-                $this->plugin->get_playlists()->set_saved_pos($user_input->list_idx);
-                $this->plugin->save(PLUGIN_PARAMETERS);
-                $this->plugin->tv->reload_channels($plugin_cookies);
-
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens());
+                $this->plugin->set_playlists_idx($user_input->list_idx);
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_CHANGE_EPG_SOURCE:
                 hd_debug_print("Start event popup menu for epg source");
@@ -253,12 +264,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
-                if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
-                    hd_debug_print("Set image $cached_image as background");
-                    $this->plugin->set_setting(PARAM_PLUGIN_BACKGROUND, $cached_image_name);
-                    $this->plugin->create_screen_views();
-                    $this->plugin->save();
-                } else if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
+                if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
                     $group = $this->plugin->tv->get_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
@@ -273,12 +279,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
-                    hd_debug_print("Set background to default", true);
-                    $this->plugin->remove_setting(PARAM_PLUGIN_BACKGROUND);
-                    $this->plugin->create_screen_views();
-                    $this->plugin->save();
-                } else if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
+                if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
                     $group = $this->plugin->tv->get_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
@@ -301,9 +302,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_RELOAD:
-                hd_debug_print("reload");
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                break;
+                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens());
 
             case ACTION_REFRESH_SCREEN:
                 break;
@@ -315,16 +315,16 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
-        //hd_debug_print($media_url->get_media_url_str());
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str());
 
         $items = array();
-        if (!$this->plugin->tv->load_channels($plugin_cookies)) {
+        $res = $this->plugin->tv->load_channels($plugin_cookies);
+        if ($res === 0) {
             hd_debug_print("Channels not loaded!");
             return $items;
         }
@@ -384,20 +384,39 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @return array
+     * @inheritDoc
+     */
+    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
+
+        $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
+
+        hd_debug_print("Current playlist: " . $this->plugin->get_playlists()->get_selected_item(), true);
+        $msg = TR::t('playlist_name_msg_4', 50, 300, DEF_LABEL_TEXT_COLOR_YELLOW, $this->plugin->get_playlists()->get_selected_item());
+        $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;
+
+        return $folder_view;
+    }
+
+    /**
+     * @inheritDoc
      */
     public function get_folder_views()
     {
+        hd_debug_print(null, true);
+
         return array(
-            $this->plugin->get_screen_view('list_1x12_info'),
-            $this->plugin->get_screen_view('list_2x12_info'),
-            $this->plugin->get_screen_view('list_3x12_no_info'),
+            $this->plugin->get_screen_view('list_1x11_info'),
+            $this->plugin->get_screen_view('list_2x11_info'),
+            $this->plugin->get_screen_view('list_3x11_no_info'),
 
             $this->plugin->get_screen_view('icons_4x3_caption'),
             $this->plugin->get_screen_view('icons_5x3_caption'),
-            $this->plugin->get_screen_view('icons_3x3_no_caption'),
-            $this->plugin->get_screen_view('icons_4x4_no_caption'),
-            $this->plugin->get_screen_view('icons_5x4_no_caption'),
+            $this->plugin->get_screen_view('icons_3x3_caption'),
+            $this->plugin->get_screen_view('icons_4x3_no_caption'),
+            $this->plugin->get_screen_view('icons_5x3_no_caption'),
         );
     }
 

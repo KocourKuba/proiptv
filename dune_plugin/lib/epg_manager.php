@@ -479,9 +479,16 @@ class Epg_Manager
                         if (!empty($xmltv_data)) {
                             $index_name = sprintf("%s_%s.index", $this->url_hash, Hashed_Array::hash($prev_channel));
                             $xmltv_index[$prev_channel] = $index_name;
-                            hd_debug_print("Save program index: $index_name", true);
                             HD::StoreContentToFile($this->cache_dir . DIRECTORY_SEPARATOR . $index_name, $xmltv_data);
                             unset($xmltv_data);
+
+                            if (LogSeverity::$is_debug) {
+                                $log_entries[] = $index_name;
+                                if (count($log_entries) > 20) {
+                                    hd_debug_print("Save program indexes: " . json_encode($log_entries), true);
+                                    unset($log_entries);
+                                }
+                            }
                         }
 
                         $prev_channel = $channel;
@@ -497,6 +504,11 @@ class Epg_Manager
                 hd_debug_print("Save index: $index_name", true);
                 HD::StoreContentToFile($this->cache_dir . DIRECTORY_SEPARATOR . $index_name, $xmltv_data);
                 unset($xmltv_data);
+                if (LogSeverity::$is_debug) {
+                    $log_entries[] = $index_name;
+                    hd_debug_print("Save program indexes: " . json_encode($log_entries), true);
+                    unset($log_entries);
+                }
             }
 
             if (!empty($xmltv_index)) {

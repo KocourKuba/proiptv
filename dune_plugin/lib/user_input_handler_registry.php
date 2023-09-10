@@ -134,6 +134,8 @@ class User_Input_Handler_Registry
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
+        hd_debug_print(null, true);
+
         if (!isset($user_input->handler_id)) {
             return null;
         }

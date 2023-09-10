@@ -136,7 +136,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url->get_raw_string(), true);
+        hd_debug_print($media_url, true);
 
         $actions = array();
 
@@ -193,7 +193,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), true);
+        hd_debug_print("from_ndx: $from_ndx, MediaURL: $media_url", true);
 
         $err = false;
         $source_window_id = isset($media_url->source_window_id) ? $media_url->source_window_id : false;
@@ -477,8 +477,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         $path = $prot . preg_replace("|^/tmp/mnt/network/\d|", $parent_url->ip_path . ':/', $path);
                     }
                 }
+
                 $url = 'embedded_app://{name=file_browser}{url=' . $path . '}{caption=File Browser}';
-                //hd_debug_print("smt_tree::open_folder launch url: $url");
+                hd_debug_print("smt_tree::open_folder launch url: $url", true);
                 return Action_Factory::launch_media_url($url);
 
             case self::ACTION_NEW_SMB_DATA:
@@ -609,7 +610,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public function do_get_mount_smb_err_defs($err, $caption, $ip_path, $user, $password)
     {
-        //'do_get_mount_smb_err_defs');
+        hd_debug_print(null, true);
+
         $defs = array();
         Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $err, 4);
         Control_Factory::add_label($defs, TR::t('folder_screen_smb'), $caption);
@@ -630,7 +632,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     protected function GetSMBAccessDefs(array &$defs, $user, $password)
     {
-        //'GetSMBAccessDefs');
+        hd_debug_print(null, true);
+
         Control_Factory::add_text_field($defs, $this, null,
             'new_user',
             TR::t('folder_screen_user'),
@@ -652,15 +655,15 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @return array
+     * @inheritDoc
      */
     public function get_folder_views()
     {
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('list_1x12_info'),
-            $this->plugin->get_screen_view('list_2x12_info'),
+            $this->plugin->get_screen_view('list_1x11_info'),
+            $this->plugin->get_screen_view('list_2x11_info'),
             $this->plugin->get_screen_view('icons_5x3_caption'),
             $this->plugin->get_screen_view('icons_4x3_caption'),
         );

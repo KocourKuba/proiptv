@@ -73,9 +73,6 @@ class Abstract_Screen implements Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        hd_debug_print($media_url->get_media_url_str(), true);
-
         return null;
     }
 
@@ -84,10 +81,7 @@ class Abstract_Screen implements Screen
      */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), true);
-
-        return array();
+        return null;
     }
 
     /**
@@ -95,8 +89,6 @@ class Abstract_Screen implements Screen
      */
     public function get_next_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         return array();
     }
 
@@ -105,8 +97,6 @@ class Abstract_Screen implements Screen
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        hd_debug_print($media_url->get_media_url_str(), true);
         return null;
     }
 }

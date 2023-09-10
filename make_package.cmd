@@ -1,5 +1,6 @@
 @echo off
 setlocal
+del \\DUNE4K\DuneSD\dune_plugin_logs\proiptv.log 
 
 set /p VERSION=<build\version.txt
 for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a

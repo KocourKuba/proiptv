@@ -358,9 +358,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
@@ -418,7 +416,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url->get_media_url_str(), true);
+        hd_debug_print($media_url, true);
 
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
@@ -442,9 +440,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('list_1x12_info'),
-            $this->plugin->get_screen_view('list_2x12_info'),
-            $this->plugin->get_screen_view('list_3x12_no_info'),
+            $this->plugin->get_screen_view('list_1x11_info'),
+            $this->plugin->get_screen_view('list_2x11_info'),
+            $this->plugin->get_screen_view('list_3x11_no_info'),
         );
     }
 

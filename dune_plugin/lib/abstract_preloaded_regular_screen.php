@@ -41,7 +41,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("$from_ndx, " . $media_url->get_raw_string(), true);
+        hd_debug_print("from_ndx: $from_ndx, MediaURL: $media_url", true);
 
         $items = $this->get_all_folder_items($media_url, $plugin_cookies);
         $count = count($items);

@@ -36,7 +36,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * @var integer
      */
-    protected $pos = 0;
+    private $pos = 0;
 
     /**
      * @var array

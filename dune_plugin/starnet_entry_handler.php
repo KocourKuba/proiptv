@@ -77,8 +77,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case 'do_channels_setup':
                 hd_debug_print("do channels setup", true);
-                $media_url_str = MediaURL::make(array('screen_id' => Starnet_Playlists_Setup_Screen::ID, 'source_window_id' => self::ID));
-                return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_playlists_setup'));
+                return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::ID, TR::t('tv_screen_playlists_setup'));
 
             case 'do_send_log':
                 hd_debug_print("do_send_log", true);

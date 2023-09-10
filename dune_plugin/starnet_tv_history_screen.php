@@ -123,10 +123,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
@@ -179,13 +176,15 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
     }
 
     /**
-     * @return array[]
+     * @inheritDoc
      */
     public function get_folder_views()
     {
+        hd_debug_print(null, true);
+
         return array(
-            $this->plugin->get_screen_view('list_1x10_info'),
-            $this->plugin->get_screen_view('list_1x12_info'),
+            $this->plugin->get_screen_view('list_1x11_small_info'),
+            $this->plugin->get_screen_view('list_1x11_info'),
         );
     }
 }

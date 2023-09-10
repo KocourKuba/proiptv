@@ -136,25 +136,55 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, self::ACTION_RUN_SEARCH));
 
             case self::ACTION_RUN_SEARCH:
-                $defs = array();
                 $find_text = $user_input->{self::ACTION_NEW_SEARCH};
-                $q = false;
-                if (is_null($group = $this->plugin->tv->get_group($media_url->group_id)))
+                hd_debug_print("Search in group: $parent_media_url->group_id", true);
+                $group = $this->plugin->tv->get_group($parent_media_url->group_id);
+                if (is_null($group)) {
+                    hd_debug_print("unknown parent group", true);
                     break;
+                }
 
-                foreach ($group->get_group_channels() as $idx => $tv_channel) {
-                    $ch_title = $tv_channel->get_title();
+                $defs = array();
+                $q_result = false;
+                hd_debug_print($group, true);
+
+                $idx = 0;
+                foreach($this->plugin->tv->get_channels() as $channel) {
+                    if ($channel->is_disabled()) continue;
+
+                    foreach ($channel->get_groups() as $group) {
+                        if ($group->is_disabled()) continue;
+
+                        $ch_title = $channel->get_title();
+                        hd_debug_print("Search in: $ch_title", true);
+                        $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
+                        if ($s !== false) {
+                            $q_result = true;
+                            hd_debug_print("found channel: $ch_title, idx: $idx", true);
+                            $add_params['number'] = $idx;
+                            Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
+                                self::ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
+                        }
+                        ++$idx;
+                    }
+                }
+/*
+                foreach ($this->plugin->tv->get_channels() as $idx => $channel) {
+                    if ($channel->is_disabled()) continue;
+
+                    $ch_title = $channel->get_title();
+                    hd_debug_print("Search in: $ch_title", true);
                     $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
                     if ($s !== false) {
-                        $q = true;
-                        hd_debug_print("found channel: $ch_title, idx: " . $idx);
+                        $q_result = true;
+                        hd_debug_print("found channel: $ch_title, idx: $idx", true);
                         $add_params['number'] = $idx;
                         Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
                             self::ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
                     }
                 }
-
-                if ($q === false) {
+*/
+                if ($q_result === false) {
                     Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
                     Control_Factory::add_vgap($defs, 20);
                     Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, null,
@@ -164,7 +194,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::show_dialog(TR::t('search'), $defs, true);
 
             case self::ACTION_JUMP_TO_CHANNEL:
-                return $this->invalidate_current_folder($parent_media_url->group_id, $plugin_cookies, $user_input->number);
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
 
             case ACTION_ITEM_UP:
                 $group = $this->plugin->tv->get_group($media_url->group_id);
@@ -324,13 +354,80 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                return $this->invalidate_current_folder($user_input, $media_url->group_id);
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
 
             case GUI_EVENT_KEY_RETURN:
                 return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
+
+        $items = array();
+
+        try {
+            if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
+                throw new Exception("Channels not loaded!");
+            }
+
+            $this_group = $this->plugin->tv->get_group($media_url->group_id);
+            if (is_null($this_group)) {
+                throw new Exception("Group $media_url->group_id not found");
+            }
+
+            /** @var Channel $channel */
+            if ($this_group->is_all_channels_group()) {
+                foreach($this->plugin->tv->get_channels() as $channel) {
+                    if ($channel->is_disabled()) continue;
+
+                    foreach ($channel->get_groups() as $group) {
+                        if ($group->is_disabled()) continue;
+
+                        $items[] = $this->get_folder_item($this_group, $channel);
+                    }
+                }
+            } else {
+                foreach ($this_group->get_items_order() as $item) {
+                    $channel = $this->plugin->tv->get_channel($item);
+                    //hd_debug_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));;
+                    if (is_null($channel) || $channel->is_disabled()) continue;
+
+                    $items[] = $this->get_folder_item($this_group, $channel);
+                }
+            }
+        } catch (Exception $e) {
+            hd_debug_print("Failed collect folder items! " . $e->getMessage());
+        }
+
+        return $items;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_folder_views()
+    {
+        hd_debug_print(null, true);
+
+        return array(
+            $this->plugin->get_screen_view('icons_4x3_caption'),
+            $this->plugin->get_screen_view('icons_5x3_caption'),
+            $this->plugin->get_screen_view('icons_3x3_caption'),
+            $this->plugin->get_screen_view('icons_4x3_no_caption'),
+            $this->plugin->get_screen_view('icons_5x3_no_caption'),
+
+            $this->plugin->get_screen_view('list_1x11_info'),
+            $this->plugin->get_screen_view('list_2x11_info'),
+            $this->plugin->get_screen_view('list_3x11_no_info'),
+        );
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -340,7 +437,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      * @param Channel $channel
      * @return array
      */
-    private function get_regular_folder_item($group, $channel)
+    private function get_folder_item($group, $channel)
     {
         $zoom_data = $this->plugin->get_channel_zoom($channel->get_id());
         if ($zoom_data === DuneVideoZoomPresets::not_set) {
@@ -361,73 +458,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 ViewItemParams::item_detailed_info => $detailed_info,
             ),
             PluginRegularFolderItem::starred => $this->plugin->get_favorites()->in_order($channel->get_id()),
-        );
-    }
-
-    /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return array
-     * @throws Exception
-     */
-    public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
-    {
-        //hd_debug_print("media url: " . $media_url->get_media_url_str());
-
-        $items = array();
-
-        try {
-            if (!$this->plugin->tv->load_channels($plugin_cookies)) {
-                throw new Exception("Channels not loaded!");
-            }
-
-            $this_group = $this->plugin->tv->get_group($media_url->group_id);
-            if (is_null($this_group)) {
-                throw new Exception("Group $media_url->group_id not found");
-            }
-
-            /** @var Channel $channel */
-            if ($this_group->is_all_channels_group()) {
-                foreach($this->plugin->tv->get_channels() as $channel) {
-                    if ($channel->is_disabled()) continue;
-
-                    foreach ($channel->get_groups() as $group) {
-                        if ($group->is_disabled()) continue;
-
-                        $items[] = $this->get_regular_folder_item($this_group, $channel);
-                    }
-                }
-            } else {
-                foreach ($this_group->get_items_order() as $item) {
-                    $channel = $this->plugin->tv->get_channel($item);
-                    //hd_debug_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));;
-                    if (is_null($channel) || $channel->is_disabled()) continue;
-
-                    $items[] = $this->get_regular_folder_item($this_group, $channel);
-                }
-            }
-        } catch (Exception $e) {
-            hd_debug_print("Failed collect folder items! " . $e->getMessage());
-        }
-
-        return $items;
-    }
-
-    /**
-     * @return array[]
-     */
-    public function get_folder_views()
-    {
-        return array(
-            $this->plugin->get_screen_view('icons_4x3_caption'),
-            $this->plugin->get_screen_view('icons_5x3_caption'),
-            $this->plugin->get_screen_view('icons_3x3_no_caption'),
-            $this->plugin->get_screen_view('icons_4x4_no_caption'),
-            $this->plugin->get_screen_view('icons_5x4_no_caption'),
-
-            $this->plugin->get_screen_view('list_1x12_info'),
-            $this->plugin->get_screen_view('list_2x12_info'),
-            $this->plugin->get_screen_view('list_3x12_no_info'),
         );
     }
 }

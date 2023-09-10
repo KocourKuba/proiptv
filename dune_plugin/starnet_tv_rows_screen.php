@@ -662,8 +662,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_PLAYLIST_SELECTED:
                 if (!isset($user_input->list_idx)) break;
 
-                $this->plugin->get_playlists()->set_saved_pos($user_input->list_idx);
-                $this->plugin->save(PLUGIN_PARAMETERS);
+                $this->plugin->set_playlists_idx($user_input->list_idx);
                 $this->plugin->tv->reload_channels($plugin_cookies);
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);

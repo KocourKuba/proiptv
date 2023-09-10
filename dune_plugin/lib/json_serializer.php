@@ -23,27 +23,31 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+// class to implement json serialization classes with protected variables
+// private variables can't be serialized
+// result of serialization can't be desirialized!
 class Json_Serializer
 {
     public function __toString()
     {
-        return $this->toJsonString();
+        return str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)raw_json_encode($this->_toStdClass()));
     }
 
-    /**
-     * @return string
-     */
-    public function toJsonString()
+    public function _toStdClass()
     {
         $object = new StdClass();
         $object->_class = get_class($this);
+        $serialized = method_exists($this, '__sleep') ? $this->__sleep() : array();
+
         foreach (get_object_vars($this) as $name => $value) {
-            if (is_object($value) && method_exists($value, 'toJsonString')) {
-                $object->$name = $value->toJsonString();
+            if (!empty($serialized) && !in_array($name, $serialized)) continue;
+
+            if (is_object($value) && method_exists($value, '_toStdClass')) {
+                $object->$name = $value->_toStdClass();
             } else if (is_array($value)) {
-                foreach ($value as $item) {
-                    if (is_object($item) && method_exists($item, 'toJsonString')) {
-                        $object->$name = $item->toJsonString();
+                foreach ($value as $key => $item) {
+                    if (is_object($item) && method_exists($item, '_toStdClass')) {
+                        $object->$name = $item->_toStdClass();
                     } else {
                         $object->$name = $value;
                     }
@@ -53,6 +57,6 @@ class Json_Serializer
             }
         }
 
-        return (string)raw_json_encode($object);
+        return $object;
     }
 }

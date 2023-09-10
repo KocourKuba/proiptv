@@ -264,17 +264,18 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param $plugin_cookies
-     * @return bool
+     * @return int
      */
     public function load_channels($plugin_cookies)
     {
         if (!is_null($this->channels)) {
-            return true;
+            return 1;
         }
 
         hd_debug_print();
 
         $this->plugin->load(PLUGIN_SETTINGS, true);
+        $this->plugin->create_screen_views();
 
         if (!isset($plugin_cookies->pass_sex)) {
             $plugin_cookies->pass_sex = '0000';
@@ -328,7 +329,7 @@ class Starnet_Tv implements User_Input_Handler
 
         // first check if playlist in cache
         if (!$this->plugin->init_playlist()) {
-            return false;
+            return 0;
         }
 
         $this->groups = new Hashed_Array();
@@ -626,7 +627,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->epg_man->index_xmltv_program($epg_ids);
 
-        return true;
+        return 2;
     }
 
     /**
@@ -638,7 +639,7 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print();
 
         $this->unload_channels();
-        return $this->load_channels($plugin_cookies);
+        return $this->load_channels($plugin_cookies) !== 0;
     }
 
     /**
@@ -653,7 +654,7 @@ class Starnet_Tv implements User_Input_Handler
         //hd_debug_print("channel: $channel_id archive_ts: $archive_ts, protect code: $protect_code");
 
         try {
-            if (!$this->load_channels($plugin_cookies)) {
+            if ($this->load_channels($plugin_cookies) === 0) {
                 throw new Exception("Channels not loaded!");
             }
 
@@ -709,7 +710,7 @@ class Starnet_Tv implements User_Input_Handler
 
         //$t = microtime(1);
 
-        if (!$this->load_channels($plugin_cookies)) {
+        if ($this->load_channels($plugin_cookies) === 0) {
             hd_debug_print("Channels not loaded!");
             return array();
         }

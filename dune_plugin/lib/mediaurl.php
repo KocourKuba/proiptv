@@ -24,6 +24,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+require_once 'json_serializer.php';
+
 /**
  * @property mixed|null $screen_id // Screen ID, used to find screen handler
  * @property mixed|null $channel_id // Channel ID
@@ -53,17 +55,17 @@
  * @property string|null $postpone_save // name of controlled postpone save status
  * @property bool|null $allow_reset // show reset to default button and call action ACTION_RESET_DEFAULT
  */
-class MediaURL
+class MediaURL extends Json_Serializer
 {
     // Original media-url string.
     /**
      * @var mixed|null
      */
-    private $str;
+    protected $str;
 
     // If media-url string contains map, it's decoded here.
     // Null otherwise.
-    private $map;
+    protected $map;
 
     ///////////////////////////////////////////////////////////////////////
 

@@ -195,6 +195,7 @@ tv_screen_external_player = Play by external player
 tv_screen_internal_player = Play by internal player
 tv_screen_toggle_icons_aspect = Toggle icons proportions
 
+playlist_name_msg_4 = label{x=%s}{y=%s}{color=%s}{text=Playlist: %s}
 warn_msg2__1 = Missed or not full data for URL generation.\nPossible not entered account data or channel not present in the current subscription.\n %s
 
 err_too_old_player = This DUNE HD player is too old and not supported

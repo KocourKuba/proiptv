@@ -90,6 +90,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         Starnet_Epfs_Handler::init($this);
 
-        hd_debug_print("Init done.");
+        hd_debug_print("Plugin loading complete.");
     }
 }

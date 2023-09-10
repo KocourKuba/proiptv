@@ -72,7 +72,7 @@ class Default_Group extends Json_Serializer implements Group
     /**
      * @var Default_Dune_Plugin
      */
-    protected $plugin;
+    private $plugin;
 
     /**
      * @param $plugin
@@ -97,11 +97,6 @@ class Default_Group extends Json_Serializer implements Group
         $this->_order_settings = is_null($order_prefix) ? null : ($order_prefix . $this->_id);
 
         $this->_channels = new Hashed_Array();
-    }
-
-    public function __sleep()
-    {
-        return array('_id', '_title', '_icon_url', '_adult', '_disabled');
     }
 
     /**

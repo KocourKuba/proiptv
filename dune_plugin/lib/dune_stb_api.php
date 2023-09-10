@@ -236,7 +236,7 @@ class LogSeverity
     /**
      * @var bool
      */
-    public static $severity = false;
+    public static $is_debug = false;
 }
 
 class KnownCatchupSourceTags
@@ -429,23 +429,38 @@ function is_apk(){
 }
 
 /**
- * return type of platform: android, 8670, etc.
- * @return string
+ * return type of platform: android, apk, 8670, etc.
+ * @return array
  */
-function get_platform_kind()
+function get_platform_info()
 {
-    static $platform_kind = null;
-    if (is_null($platform_kind)){
+    static $platform = null;
+
+    if (is_null($platform)){
         if (getenv("HD_APK")) {
-            $platform_kind = 'apk';
+            $platform['platform'] = 'android';
+            $platform['type'] = 'apk';
         } else {
             $ini_arr = parse_ini_file('/tmp/run/versions.txt');
             if (isset($ini_arr['platform_kind'])) {
-                $platform_kind = $ini_arr['platform_kind'];
+                $platform['platform'] = $ini_arr['platform_kind'];
+                if ($platform['platform'] === 'android') {
+                    if (isset($ini_arr['android_platform'])) {
+                        $platform['type'] = $ini_arr['android_platform'];
+                    } else {
+                        $platform['type'] = "not android";
+                    }
+                } else {
+                    $platform['platform'] = 'sigma';
+                    $platform['type'] = $platform['platform'];
+                }
+            } else {
+                $platform['platform'] = 'unknown';
+                $platform['type'] = 'unknown';
             }
         }
     }
-    return $platform_kind;
+    return $platform;
 }
 
 function get_bug_platform_kind()
@@ -453,29 +468,14 @@ function get_bug_platform_kind()
     static $bug_platform_kind = null;
 
     if (is_null($bug_platform_kind)) {
-        $v = get_platform_kind();
-        $bug_platform_kind = ($v === '8672' || $v === '8673' || $v === '8758');
+        $v = get_platform_info();
+        if ($v['platform'] !== 'android') {
+            $bug_platform_kind = ($v['type'] === '8672' || $v['type'] === '8673' || $v['type'] === '8758');
+        }
     }
     return $bug_platform_kind;
 }
 
-function get_android_platform()
-{
-    static $result = null;
-
-    if (is_null($result)) {
-        if (getenv("HD_APK")) {
-            $result = 'apk';
-        } else {
-            $ini_arr = parse_ini_file('/tmp/run/versions.txt');
-            if (isset($ini_arr['android_platform'])) {
-                $result = $ini_arr['android_platform'];
-            }
-        }
-    }
-
-    return $result;
-}
 /**
  * return product id
  * @return string
@@ -507,13 +507,13 @@ function get_raw_firmware_version()
 }
 
 /**
- * @param $level
+ * @param bool $is_debug
  * @return void
  */
-function set_debug_log($level)
+function set_debug_log($is_debug)
 {
-    hd_print("Set logging severity: " . var_export($level, true));
-    LogSeverity::$severity = $level;
+    hd_print("Set debug logging: " . var_export($is_debug, true));
+    LogSeverity::$is_debug = $is_debug;
 }
 
 /**
@@ -562,7 +562,8 @@ function get_serial_number()
  */
 function get_ip_address()
 {
-    if (get_platform_kind() === '8670') {
+    $v = get_platform_info();
+    if ($v['type'] === '8670') {
         $active_network_connection = parse_ini_file('/tmp/run/active_network_connection.txt', 0, INI_SCANNER_RAW);
         $ip = isset($active_network_connection['ip']) ? trim($active_network_connection['ip']) : '';
     } else {
@@ -583,8 +584,8 @@ function get_ip_address()
  */
 function get_dns_address()
 {
-    $platform = get_platform_kind();
-    if ($platform === 'android' || $platform === 'apk') {
+    $platform = get_platform_info();
+    if ($platform['platform'] === 'android') {
         $dns = explode(PHP_EOL, shell_exec('getprop | grep "net.dns"'));
     } else {
         $dns = explode(PHP_EOL, shell_exec('cat /etc/resolv.conf | grep "nameserver"'));
@@ -1680,14 +1681,14 @@ function json_encode_unicode($data, $flags = 0)
 function print_sysinfo()
 {
     hd_print("----------------------------------------------------");
-    $platform = get_platform_kind();
+    $platform = get_platform_info();
     $dns = get_dns_address();
     $values = curl_version();
     $table = array(
         'Dune Product' => get_product_id(),
         'Dune FW' => get_raw_firmware_version(),
         'Dune Serial' => get_serial_number(),
-        'Dune Platform' => $platform . ($platform === 'android' ? (" (" . get_android_platform() . ")") : ''),
+        'Dune Platform' => "{$platform['platform']} ({$platform['type']})",
         'Dune MAC Addr' => get_mac_address(),
         'Dune IP Addr' => get_ip_address(),
         'Dune DNS servers' => $dns,
@@ -1754,13 +1755,14 @@ function debug_print(/*mixed $var1, $var2...*/)
 
 /**
  * @param Object $user_input
- * @param int $level
  * @return void
  */
-function dump_input_handler($user_input, $level = true)
+function dump_input_handler($user_input)
 {
-    if ($level > LogSeverity::$severity)
+    if (!LogSeverity::$is_debug)
         return;
+
+    hd_debug_print(null, true);
 
     foreach ($user_input as $key => $value) {
         $decoded_value = html_entity_decode(preg_replace("/(\\\u([0-9A-Fa-f]{4}))/", "&#x\\2;", $value), ENT_NOQUOTES, 'UTF-8');
@@ -1836,9 +1838,14 @@ function safe_merge_array($ar1, $ar2)
     return $ar1;
 }
 
+/**
+ * @param mixed $val
+ * @param bool $is_debug
+ * @return void
+ */
 function hd_debug_print($val = null, $is_debug = false)
 {
-    if ($is_debug === LogSeverity::$severity)
+    if ($is_debug && !LogSeverity::$is_debug)
         return;
 
     $bt = debug_backtrace();
@@ -1847,9 +1854,9 @@ function hd_debug_print($val = null, $is_debug = false)
     $prefix = "(" . str_pad($caller['line'], 4) . ") ";
     if (isset($caller_name['class'])) {
         if (!is_null($val) && !method_exists($val, '__toString')) {
-            $val = raw_json_encode($val);
+            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)raw_json_encode($val));
         }
-        $prefix .= "{$caller_name['class']}:";
+        $prefix .= "{$caller_name['class']}::";
     }
     $prefix .= "{$caller_name['function']}(): ";
 
@@ -1877,7 +1884,7 @@ function raw_json_encode($arr)
         return html_entity_decode("&#x$m[1];", ENT_QUOTES, 'UTF-8');
     };
 
-    return str_replace(array('\\/', '\"'), array('/', '"'), preg_replace_callback($pattern, $callback, json_encode($arr)));
+    return str_replace('\\/', '/', preg_replace_callback($pattern, $callback, json_encode($arr)));
 }
 
 function wrap_string_to_lines($str, $max_chars)

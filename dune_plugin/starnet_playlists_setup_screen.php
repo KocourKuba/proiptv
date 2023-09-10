@@ -71,13 +71,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             Control_Factory::add_label($defs, TR::t('setup_channels_src_playlists'), TR::t('setup_channels_src_no_playlists'));
         } else if (count($display_path) > 1) {
             if ($playlist_idx >= count($display_path)) {
-                $this->plugin->get_playlists()->set_saved_pos(0);
+                $this->plugin->set_playlists_idx(0);
             }
             Control_Factory::add_combobox($defs, $this, null, ACTION_CHANGE_PLAYLIST,
                 TR::t('setup_channels_src_playlists'), $playlist_idx, $display_path, self::CONTROLS_WIDTH, true);
         } else {
             Control_Factory::add_label($defs, TR::t('setup_channels_src_playlists'), $display_path[0]);
-            $this->plugin->get_playlists()->set_saved_pos(0);
+            $this->plugin->set_playlists_idx(0);
         }
 
         //////////////////////////////////////
@@ -177,8 +177,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         switch ($control_id) {
 
             case ACTION_CHANGE_PLAYLIST:
-                $this->plugin->get_playlists()->set_saved_pos($new_value);
-                $this->plugin->save(PLUGIN_PARAMETERS);
+                $this->plugin->set_playlists_idx($new_value);
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
