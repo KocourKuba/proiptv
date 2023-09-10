@@ -1303,9 +1303,9 @@ class Default_Dune_Plugin implements DunePlugin
         $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND);
         if ($background === $this->plugin_info['app_background']) {
             $this->remove_setting(PARAM_PLUGIN_BACKGROUND);
-        }
-
-        if (is_null($background) || !file_exists($background)) {
+        } else if (strncmp($background, get_cached_image_path(), strlen(get_cached_image_path())) === 0) {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, basename($background));
+        } else if (is_null($background) || !file_exists(get_cached_image_path($background))) {
             $background = $this->plugin_info['app_background'];
         }
 

@@ -102,9 +102,16 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // change background
+        $background = $this->plugin->get_background_image();
+        if ($background === $this->plugin->plugin_info['app_background']) {
+            $button = TR::t('by_default');
+        } else {
+            $button = substr(basename($background), strlen($this->plugin->get_playlist_hash()) + 1);
+        }
+
         Control_Factory::add_image_button($defs, $this, null,
-            ACTION_CHANGE_BACKGROUND, TR::t('change_background'), TR::t('edit'),
-            "image.png", self::CONTROLS_WIDTH);
+            ACTION_CHANGE_BACKGROUND, TR::t('change_background'), $button,
+            get_image_path('image.png'), self::CONTROLS_WIDTH);
 
         return $defs;
     }
