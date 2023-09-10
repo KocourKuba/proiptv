@@ -230,8 +230,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 hd_debug_print(ACTION_FOLDER_SELECTED . ": $data->filepath");
+                if ($this->plugin->get_xmltv_cache_dir() === $data->filepath) break;
+
                 $this->plugin->epg_man->clear_all_epg_cache();
-                $this->plugin->set_parameter(PARAM_XMLTV_CACHE_PATH, smb_tree::set_folder_info( $data));
+                $this->plugin->set_parameter(PARAM_XMLTV_CACHE_PATH, $data->filepath);
                 $this->plugin->epg_man->init_cache_dir();
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
