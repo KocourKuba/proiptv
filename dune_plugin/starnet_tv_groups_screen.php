@@ -409,7 +409,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         return array(
             $this->plugin->get_screen_view('list_1x11_info'),
-            $this->plugin->get_screen_view('list_2x11_info'),
+            $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('list_3x11_no_info'),
 
             $this->plugin->get_screen_view('icons_4x3_caption'),

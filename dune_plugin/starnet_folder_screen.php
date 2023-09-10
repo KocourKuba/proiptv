@@ -174,7 +174,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     self::ACTION_SELECT_FOLDER, TR::t('select_folder'));
 
                 $actions[GUI_EVENT_KEY_D_BLUE] = $select_folder;
-                $actions[GUI_EVENT_KEY_RIGHT] = $select_folder;
+                $actions[GUI_EVENT_KEY_SELECT] = $select_folder;
             }
 
             if (isset($media_url->choose_file) && $media_url->choose_file !== false) {
@@ -253,7 +253,15 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         $caption = $k;
                     }
 
-                    $info = TR::t('folder_screen_folder__1', $caption);
+                    if (isset($media_url->choose_folder)) {
+                        if (isset($media_url->choose_folder->extension)) {
+                            $info = TR::t('folder_screen_select_file_shows__1', $caption);
+                        } else {
+                            $info = TR::t('folder_screen_select__1', $caption);
+                        }
+                    } else {
+                        $info = TR::t('folder_screen_folder__1', $caption);
+                    }
                     $filepath = $v['filepath'];
                     $icon_file = self::get_folder_icon($caption, $filepath);
                     $type = $item_type;
@@ -274,13 +282,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         $info = TR::t('folder_screen_select_file__2', $caption, $size);
                         $detailed_icon = $icon_file;
 
-                        if (isset($path_parts['extension'])
-                            && preg_match("/^{$media_url->choose_file->extension}$/i", $path_parts['extension'])) {
-                            $type = $media_url->choose_file->extension;
-                        } else {
+                        if (!isset($path_parts['extension'])
+                            || !preg_match("/^{$media_url->choose_file->extension}$/i", $path_parts['extension'])) {
                             // skip extension not in allowed list
                             continue;
                         }
+
+                        $type = $media_url->choose_file->extension;
                     }
                 } else {
                     // Unknown type. Not supported - not shown
@@ -320,13 +328,18 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         }
 
         if (empty($items)) {
+            if (isset($media_url->choose_folder->extension) || isset($media_url->choose_file->extension)) {
+                $info = TR::t('folder_screen_select_file_shows__1', $media_url->caption);
+            } else {
+                $info = TR::t('folder_screen_select__1', $media_url->caption);
+            }
             $items[] = array(
                 PluginRegularFolderItem::caption => '',
                 PluginRegularFolderItem::media_url => '',
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => 'gui_skin://small_icons/info.aai',
                     ViewItemParams::item_detailed_icon_path => 'gui_skin://large_icons/info.aai',
-                    ViewItemParams::item_detailed_info => TR::t('folder_screen_select_file_shows__1', $media_url->caption),
+                    ViewItemParams::item_detailed_info => $info,
                 )
             );
         }
@@ -662,8 +675,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('list_1x11_info'),
-            $this->plugin->get_screen_view('list_2x11_info'),
+            $this->plugin->get_screen_view('list_1x11_small_info'),
+            $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('icons_5x3_caption'),
             $this->plugin->get_screen_view('icons_4x3_caption'),
         );
