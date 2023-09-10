@@ -339,7 +339,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->tv->get_channels()->size(),
                     $this->plugin->get_disabled_channels()->size());
             } else if ($group->is_history_group()) {
-                $item_detailed_info = $group->get_title();
+                $item_detailed_info = TR::t('tv_screen_group_info__2',
+                    $group->get_title(),
+                    $this->plugin->get_playback_points()->size());
             } else {
                 $item_detailed_info = TR::t('tv_screen_group_info__2',
                     $group->get_title(),
@@ -394,10 +396,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
         hd_debug_print("Current playlist: " . $this->plugin->get_playlists()->get_selected_item(), true);
-        $msg = TR::t('playlist_name_msg_4', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW, $this->plugin->get_playlists()->get_selected_item());
+        $msg = TR::t('playlist_name_msg_4', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW, basename($this->plugin->get_playlists()->get_selected_item()));
         $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;
-
-        hd_debug_print($folder_view);
 
         return $folder_view;
     }

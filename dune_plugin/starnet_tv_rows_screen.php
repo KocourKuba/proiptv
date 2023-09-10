@@ -499,7 +499,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         switch ($control_id) {
             case GUI_EVENT_TIMER:
                 // rising after playback end + 100 ms
-                $this->plugin->playback_points->update_point(null);
+                $this->plugin->get_playback_points()->update_point(null);
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case GUI_EVENT_KEY_PLAY:
@@ -636,7 +636,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_ITEMS_CLEAR:
                 if ($media_url->group_id === HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
-                    $this->plugin->playback_points->clear_points();
+                    $this->plugin->get_playback_points()->clear_points();
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
 
@@ -727,7 +727,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $now = time();
         $rows = array();
         $watched = array();
-        foreach ($this->plugin->playback_points->get_all() as $channel_id => $channel_ts) {
+        foreach ($this->plugin->get_playback_points()->get_all() as $channel_id => $channel_ts) {
             if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
 
             $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
@@ -765,7 +765,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (isset($this->removed_playback_point))
                     if ($this->removed_playback_point === $id) {
                         $this->removed_playback_point = null;
-                        $this->plugin->playback_points->erase_point($item['channel_id']);
+                        $this->plugin->get_playback_points()->erase_point($item['channel_id']);
                         continue;
                     }
 

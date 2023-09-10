@@ -216,11 +216,11 @@ class Starnet_Tv implements User_Input_Handler
                 return $this->plugin->update_epfs_data($plugin_cookies, array(Starnet_TV_History_Screen::ID));
 
             case GUI_EVENT_PLAYBACK_STOP:
-                $this->plugin->playback_points->update_point($user_input->plugin_tv_channel_id);
+                $this->plugin->get_playback_points()->update_point($user_input->plugin_tv_channel_id);
 
                 if (!isset($user_input->playback_stop_pressed) && !isset($user_input->playback_power_off_needed)) break;
 
-                $this->plugin->playback_points->save();
+                $this->plugin->get_playback_points()->save();
                 $new_actions = $this->get_action_map();
                 $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
                 return Action_Factory::change_behaviour($new_actions, 100);
@@ -335,7 +335,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
 
-        $this->plugin->playback_points->load_points(true);
+        $this->plugin->get_playback_points()->load_points(true);
 
         $catchup['global'] = $this->plugin->m3u_parser->getM3uInfo()->getCatchup();
         $global_catchup_source = $this->plugin->m3u_parser->getM3uInfo()->getCatchupSource();
@@ -667,7 +667,7 @@ class Starnet_Tv implements User_Input_Handler
 
             if (!$channel->is_protected()) {
                 $now = $channel->get_archive() > 0 ? time() : 0;
-                $this->plugin->playback_points->push_point($channel_id, ($archive_ts !== -1 ? $archive_ts : $now));
+                $this->plugin->get_playback_points()->push_point($channel_id, ($archive_ts !== -1 ? $archive_ts : $now));
             }
 
             // update url if play archive or different type of the stream

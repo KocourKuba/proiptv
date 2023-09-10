@@ -46,7 +46,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        if ($this->plugin->playback_points->size() !== 0) {
+        if ($this->plugin->get_playback_points()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'));
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
@@ -88,7 +88,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return $this->plugin->update_epfs_data($plugin_cookies, null, $post_action);
 
 			case ACTION_ITEM_DELETE:
-                $this->plugin->playback_points->erase_point($channel_id);
+                $this->plugin->get_playback_points()->erase_point($channel_id);
 				$parent_media_url = MediaURL::decode($user_input->parent_media_url);
 				$sel_ndx++;
 				if ($sel_ndx < 0)
@@ -97,7 +97,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 break;
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->playback_points->clear_points();
+                $this->plugin->get_playback_points()->clear_points();
                 $sel_ndx = 0;
                 $this->plugin->invalidate_epfs();
 
@@ -132,7 +132,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         $items = array();
         $now = time();
-        foreach ($this->plugin->playback_points->get_all() as $channel_id => $channel_ts) {
+        foreach ($this->plugin->get_playback_points()->get_all() as $channel_id => $channel_ts) {
             if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
 
             $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);

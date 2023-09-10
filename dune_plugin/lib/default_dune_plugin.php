@@ -69,7 +69,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @var Playback_Points
      */
-    public $playback_points;
+    protected $playback_points;
 
     /**
      * @var array
@@ -842,6 +842,14 @@ class Default_Dune_Plugin implements DunePlugin
         if ($user_agent !== HD::get_dune_user_agent()) {
             HD::set_dune_user_agent($user_agent);
         }
+    }
+
+    /**
+     * @return Playback_Points
+     */
+    public function get_playback_points()
+    {
+        return $this->playback_points;
     }
 
     /**
