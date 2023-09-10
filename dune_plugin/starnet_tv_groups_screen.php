@@ -246,7 +246,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                $cached_image = get_cached_image_path("{$this->plugin->get_playlist_hash()}_$data->caption");
+                $cached_image_name = "{$this->plugin->get_playlist_hash()}_$data->caption";
+                $cached_image = get_cached_image_path($cached_image_name);
                 hd_print("copy from: $data->filepath to: $cached_image");
                 if (!copy($data->filepath, $cached_image)) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
@@ -254,7 +255,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
                     hd_debug_print("Set image $cached_image as background");
-                    $this->plugin->set_setting(PARAM_PLUGIN_BACKGROUND, $cached_image);
+                    $this->plugin->set_setting(PARAM_PLUGIN_BACKGROUND, $cached_image_name);
                     $this->plugin->create_screen_views();
                     $this->plugin->save();
                 } else if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
@@ -265,7 +266,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group->set_icon_url($cached_image);
                     /** @var Hashed_Array $group_icons */
                     $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
-                    $group_icons->set($sel_media_url->group_id, $cached_image);
+                    $group_icons->set($sel_media_url->group_id, $cached_image_name);
                     $this->plugin->save();
                 }
                 break;

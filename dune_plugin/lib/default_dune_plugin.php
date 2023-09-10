@@ -711,6 +711,15 @@ class Default_Dune_Plugin implements DunePlugin
         $this->save(PLUGIN_PARAMETERS);
     }
 
+    /**
+     * Remove parameter
+     * @param string $type
+     */
+    public function remove_parameter($type)
+    {
+        unset($this->parameters[$type]);
+    }
+
     public function toggle_setting($param, $default)
     {
         $old = $this->get_setting($param, $default);
@@ -826,28 +835,6 @@ class Default_Dune_Plugin implements DunePlugin
         if ($user_agent !== HD::get_dune_user_agent()) {
             HD::set_dune_user_agent($user_agent);
         }
-    }
-
-    /**
-     * remove all settings and clear cache when uninstall plugin
-     */
-    public function uninstall_plugin()
-    {
-        hd_debug_print(null, LOG_LEVEL_DEBUG);
-
-        $this->epg_man->clear_all_epg_cache();
-
-        if ($this->is_history_path_default()) {
-            $this->playback_points->clear_points();
-        }
-
-        foreach (array_keys($this->settings) as $hash) {
-            unset($this->settings[$hash]);
-            hd_debug_print("remove $hash.settings", LOG_LEVEL_DEBUG);
-            HD::erase_data_items("$hash.settings");
-        }
-
-        HD::erase_data_items("common.settings");
     }
 
     /**
@@ -1104,15 +1091,53 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return string
      */
-    public function get_history_path()
+    public function get_xmltv_cache_dir()
     {
-        $path = $this->get_parameter(PARAM_HISTORY_PATH, get_data_path('history'));
-        if ($path === get_data_path(DIRECTORY_SEPARATOR)) {
-            // reset old settings to new
-            $path = get_data_path('history');
+        $cache_dir = smb_tree::get_folder_info($this->get_parameter(PARAM_XMLTV_CACHE_PATH));
+        if (!is_null($cache_dir) && rtrim($cache_dir, DIRECTORY_SEPARATOR) === get_data_path("epg_cache")) {
+            $this->remove_parameter(PARAM_XMLTV_CACHE_PATH);
+            $cache_dir = null;
         }
 
-        return $path;
+        if (is_null($cache_dir)) {
+            $cache_dir = get_data_path("epg_cache");
+        }
+
+        return $cache_dir;
+    }
+
+    /**
+     * @param string|null $path
+     * @return void
+     */
+    public function set_xmltv_cache_dir($path)
+    {
+        if (is_null($path)) {
+            $this->remove_parameter(PARAM_XMLTV_CACHE_PATH);
+        } else {
+            $this->set_parameter(PARAM_XMLTV_CACHE_PATH, $path);
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function get_history_path()
+    {
+        $path = smb_tree::get_folder_info($this->get_parameter(PARAM_HISTORY_PATH));
+        hd_debug_print($path);
+        if (is_null($path)) {
+            $path = get_data_path('history');
+        } else {
+            $path = get_slash_trailed_path($path);
+            if ($path === get_data_path() || $path === get_data_path('history/')) {
+                // reset old settings to new
+                $this->remove_parameter(PARAM_HISTORY_PATH);
+                $path = get_data_path('history');
+            }
+        }
+
+        return rtrim($path, DIRECTORY_SEPARATOR);
     }
 
     /**
@@ -1121,21 +1146,13 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_history_path($path = null)
     {
-        if (is_null($path)) {
-            $path = get_data_path('history');
+        if (is_null($path) || $path === get_data_path('history')) {
+            $this->remove_parameter(PARAM_HISTORY_PATH);
+            return;
         }
 
         create_path($path);
-
         $this->set_parameter(PARAM_HISTORY_PATH, $path);
-    }
-
-    /**
-     * @return bool
-     */
-    public function is_history_path_default()
-    {
-        return  $this->get_history_path() === get_data_path('history');
     }
 
     /**
@@ -1283,8 +1300,12 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_background_image()
     {
-        $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND, $this->plugin_info['app_background']);
-        if (!file_exists($background)) {
+        $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND);
+        if ($background === $this->plugin_info['app_background']) {
+            $this->remove_setting(PARAM_PLUGIN_BACKGROUND);
+        }
+
+        if (is_null($background) || !file_exists($background)) {
             $background = $this->plugin_info['app_background'];
         }
 
@@ -1297,8 +1318,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_background_image($path)
     {
-        if (is_null($path) || !file_exists($path)) {
-            $this->set_setting(PARAM_PLUGIN_BACKGROUND, $this->plugin_info['app_background']);
+        if (is_null($path) || $path === $this->plugin_info['app_background'] || !file_exists($path)) {
+            $this->remove_setting(PARAM_PLUGIN_BACKGROUND);
         } else {
             $this->set_setting(PARAM_PLUGIN_BACKGROUND, $path);
         }

@@ -280,6 +280,16 @@ class Starnet_Tv implements User_Input_Handler
             $plugin_cookies->pass_sex = '0000';
         }
 
+        /** @var Hashed_Array<string, string> $custom_group_icons */
+        $custom_group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
+        // convert absolute path to filename
+        foreach($custom_group_icons as $key => $icon) {
+            if (strpos($icon, DIRECTORY_SEPARATOR) !== false) {
+                $icon = basename($icon);
+                $custom_group_icons->set($key, $icon);
+            }
+        }
+
         // Favorites groupse
         $special_group = new Default_Group($this->plugin,
             FAVORITES_GROUP_ID,
@@ -309,12 +319,10 @@ class Starnet_Tv implements User_Input_Handler
         $this->special_groups->put($special_group, $special_group->get_id());
 
         /** @var Group $special_group */
-        /** @var Hashed_Array<string, string> $group_icons */
-        $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
         foreach ($this->special_groups as $special_group) {
-            $group_icon = $group_icons->get($special_group->get_id());
+            $group_icon = $custom_group_icons->get($special_group->get_id());
             if (!is_null($group_icon)) {
-                $special_group->set_icon_url($group_icon);
+                $special_group->set_icon_url(get_cached_image_path($group_icon));
             }
         }
 
@@ -366,7 +374,11 @@ class Starnet_Tv implements User_Input_Handler
             if ($this->groups->has($title)) continue;
 
             // using title as id
-            $group = new Default_Group($this->plugin, $title, null, $group_icons->get($title));
+            $group_icon = $custom_group_icons->get($title);
+            if (!is_null($group_icon)) {
+                $group_icon = get_cached_image_path($custom_group_icons->get($title));
+            }
+            $group = new Default_Group($this->plugin, $title, null, $group_icon);
             $adult = (strpos($title, "зрослы") !== false
                 || strpos($title, "adult") !== false
                 || strpos($title, "18+") !== false

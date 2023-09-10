@@ -48,6 +48,9 @@ class Playback_Points
 
     ///////////////////////////////////////////////////////////////////////////
 
+    /**
+     * @param Default_Dune_Plugin $plugin
+     */
     public function __construct($plugin)
     {
         $this->plugin = $plugin;

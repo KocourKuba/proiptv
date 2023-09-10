@@ -8,6 +8,8 @@ copy build\changelog.txt dune_plugin\ >nul
 
 php -f build\update.php %VERSION% %BUILD%
 
+del dune_plugin_proiptv.zip >nul
+
 pushd dune_plugin
 7z a ..\dune_plugin_proiptv.zip >nul
 popd

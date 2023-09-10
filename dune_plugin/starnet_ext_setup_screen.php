@@ -79,7 +79,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_HISTORY_CHANGE_FOLDER, TR::t('setup_history_folder_path'), $display_path, $folder_icon, self::CONTROLS_WIDTH);
 
-        if (!$this->plugin->is_history_path_default()) {
+        $path = $this->plugin->get_parameter(PARAM_HISTORY_PATH);
+        if (!is_null($path)) {
             Control_Factory::add_image_button($defs, $this, null,
                 self::CONTROL_COPY_TO_DATA, TR::t('setup_copy_to_data'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
 

@@ -505,20 +505,18 @@ class smb_tree
     /**
      * @param string $encoded_data
      * @param string|null $default
-     * @return string // real path with trailing '/'
+     * @return string
      */
     public static function get_folder_info($encoded_data, $default = null)
     {
-        if ($default === null) {
-            $default = get_data_path();
-        }
-
         if (empty($encoded_data)) {
             return $default;
         }
 
-        $settings = json_decode($encoded_data, true);
-        if (isset($settings['filepath'])) {
+        $settings = @json_decode($encoded_data, true);
+        if ($settings === null) {
+            $select_folder = $encoded_data;
+        } else if (isset($settings['filepath'])) {
             $select_folder = $settings['filepath'];
         } else {
             $select_folder = '';
@@ -531,10 +529,6 @@ class smb_tree
             }
         }
 
-        if (empty($select_folder)) {
-            $select_folder = $default;
-        }
-
-        return get_slash_trailed_path($select_folder);
+        return empty($select_folder) ? $default : $select_folder;
     }
 }
