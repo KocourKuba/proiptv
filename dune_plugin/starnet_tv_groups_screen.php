@@ -25,7 +25,6 @@
 
 require_once 'lib/abstract_preloaded_regular_screen.php';
 require_once 'starnet_setup_screen.php';
-require_once 'starnet_playlists_setup_screen.php';
 
 class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
 {
@@ -48,7 +47,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $res = $this->plugin->tv->load_channels($plugin_cookies);
         if ($res === 0) {
             hd_debug_print("Channels not loaded!");
-        } else if ($res === 1) {
+        } else if ($res === 2) {
+            hd_debug_print("Channels reloaded!");
             $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         }
 
@@ -394,8 +394,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
         hd_debug_print("Current playlist: " . $this->plugin->get_playlists()->get_selected_item(), true);
-        $msg = TR::t('playlist_name_msg_4', 50, 300, DEF_LABEL_TEXT_COLOR_YELLOW, $this->plugin->get_playlists()->get_selected_item());
+        $msg = TR::t('playlist_name_msg_4', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW, $this->plugin->get_playlists()->get_selected_item());
         $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;
+
+        hd_debug_print($folder_view);
 
         return $folder_view;
     }

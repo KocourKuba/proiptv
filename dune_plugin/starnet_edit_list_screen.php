@@ -421,7 +421,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
         if ($this->get_edit_order($media_url)->size() === 0) {
-            $msg = is_apk()
+            $msg = !is_apk()
                 ? TR::t('edit_list_add_prompt__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW)
                 : TR::t('edit_list_add_prompt_apk__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW);
             $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;

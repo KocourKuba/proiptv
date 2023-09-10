@@ -1483,7 +1483,7 @@ class Default_Dune_Plugin implements DunePlugin
             ),
 
             'list_1x11_info' => array(
-                PluginRegularFolderView::async_icon_loading => false,
+                PluginRegularFolderView::async_icon_loading => true,
                 PluginRegularFolderView::view_params => array
                 (
                     ViewParams::num_cols => 1,
@@ -1524,7 +1524,7 @@ class Default_Dune_Plugin implements DunePlugin
             ),
 
             'list_2x11_small_info' => array(
-                PluginRegularFolderView::async_icon_loading => false,
+                PluginRegularFolderView::async_icon_loading => true,
                 PluginRegularFolderView::view_params => array
                 (
                     ViewParams::num_cols => 2,
@@ -1600,7 +1600,7 @@ class Default_Dune_Plugin implements DunePlugin
             ),
 
             'icons_5x3_caption' => array(
-                PluginRegularFolderView::async_icon_loading => false,
+                PluginRegularFolderView::async_icon_loading => true,
 
                 PluginRegularFolderView::view_params => array
                 (
