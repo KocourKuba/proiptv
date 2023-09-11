@@ -151,8 +151,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RESET_ITEMS_SORT:
                 $this->plugin->get_groups_order()->clear();
-                $this->plugin->tv->reload_channels($plugin_cookies);
-                return $this->plugin->update_epfs_data($plugin_cookies);
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_ITEMS_EDIT:
                 $this->plugin->set_pospone_save();
