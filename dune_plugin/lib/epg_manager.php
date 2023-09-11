@@ -685,7 +685,7 @@ class Epg_Manager
                 throw new Exception("xmltv index for channel $channel_id is not exist");
             }
 
-            $channel_index = $this->cache_dir . $this->xmltv_index[$channel_id];
+            $channel_index = $this->cache_dir . DIRECTORY_SEPARATOR . $this->xmltv_index[$channel_id];
             //hd_debug_print("Check channel $id index: $channel_index");
             if (!file_exists($channel_index)) {
                 throw new Exception("index for channel $channel_id not found: $channel_index");
