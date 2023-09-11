@@ -140,7 +140,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             $action = Action_Factory::tv_play($media_url);
                         } else {
                             hd_debug_print("action: launch open", true);
-                            $action = Action_Factory::open_folder();
+                            $action = Action_Factory::open_folder(
+                                Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
                         }
 
                         return $action;

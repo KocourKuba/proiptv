@@ -1430,6 +1430,16 @@ class Default_Dune_Plugin implements DunePlugin
         return $menu_items;
     }
 
+    public function create_plugin_title()
+    {
+        $playlist = basename($this->get_playlists()->get_selected_item());
+        $plugin_name = $this->plugin_info['app_caption'];
+        return empty($playlist) ? $plugin_name : "$plugin_name ($playlist)";
+    }
+
+    /**
+     * @return void
+     */
     public function create_screen_views()
     {
         hd_debug_print(null, true);

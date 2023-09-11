@@ -89,15 +89,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         switch ($user_input->control_id)
         {
-            case GUI_EVENT_TIMER:
-                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour(
-                    $actions,
-                    1000,
-                    Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()))
-                );
-
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SetupControlSwitchDefs::switch_on);
@@ -318,7 +309,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RELOAD:
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
+                return Action_Factory::invalidate_all_folders($plugin_cookies,
+                    Action_Factory::close_and_run(
+                        Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title())));
 
             case ACTION_REFRESH_SCREEN:
                 break;
@@ -400,9 +393,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         return $items;
     }
 
+/*
     /**
      * @inheritDoc
-     */
+     *//*
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -416,6 +410,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         return $folder_view;
     }
+*/
 
     /**
      * @inheritDoc
