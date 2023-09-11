@@ -252,7 +252,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group = $this->plugin->tv->get_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
-                    $cached_image_name = "{$this->plugin->get_playlist_hash()}_$data->caption";
+                    $cached_image_name = "{$this->plugin->get_current_playlist_hash()}_$data->caption";
                     $cached_image = get_cached_image_path($cached_image_name);
                     hd_print("copy from: $data->filepath to: $cached_image");
                     if (!copy($data->filepath, $cached_image)) {
@@ -314,7 +314,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title())));
 
             case ACTION_REFRESH_SCREEN:
-                break;
             default:
                 return null;
         }
@@ -369,7 +368,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         /** @var Group $group */
         foreach ($this->plugin->get_groups_order() as $item) {
-            //hd_debug_print("group: {$group->get_title()} , icon: {$group->get_icon_url()}");
             $group = $this->plugin->tv->get_group($item);
             if (is_null($group) || $group->is_disabled()) continue;
 
@@ -392,25 +390,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         //hd_debug_print("Loaded items " . count($items));
         return $items;
     }
-
-/*
-    /**
-     * @inheritDoc
-     *//*
-    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
-
-        $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
-
-        hd_debug_print("Current playlist: " . $this->plugin->get_playlists()->get_selected_item(), true);
-        $msg = TR::t('playlist_name_msg_4', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW, basename($this->plugin->get_playlists()->get_selected_item()));
-        $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;
-
-        return $folder_view;
-    }
-*/
 
     /**
      * @inheritDoc
@@ -485,6 +464,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         if ($this->plugin->get_all_xmltv_sources()->size()) {
             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
         }
+
+        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, TR::t('refresh'), "refresh.png");
 
         return $menu_items;
     }

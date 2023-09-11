@@ -620,7 +620,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function remove_settings()
     {
         unset($this->settings);
-        $hash = $this->get_playlist_hash();
+        $hash = $this->get_current_playlist_hash();
         hd_debug_print("remove $hash.settings", true);
         HD::erase_data_items("$hash.settings");
         foreach (glob_dir(get_cached_image_path(), "/^$hash.*$/i") as $file) {
@@ -644,7 +644,7 @@ class Default_Dune_Plugin implements DunePlugin
             $this->{$item} = null;
         }
 
-        $name = (($item === PLUGIN_SETTINGS) ? $this->get_playlist_hash() : 'common') . '.settings';
+        $name = (($item === PLUGIN_SETTINGS) ? $this->get_current_playlist_hash() : 'common') . '.settings';
 
         if (is_null($this->{$item})) {
             hd_debug_print("Load: $name", true);
@@ -660,7 +660,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function save($item = PLUGIN_SETTINGS)
     {
-        $name = ($item === PLUGIN_SETTINGS ? $this->get_playlist_hash() : 'common') . '.settings';
+        $name = ($item === PLUGIN_SETTINGS ? $this->get_current_playlist_hash() : 'common') . '.settings';
 
         if (is_null($this->{$item})) {
             hd_debug_print("this->$item is not set!", true);
@@ -774,7 +774,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $force = false;
-        $tmp_file = $this->get_playlist_cache();
+        $tmp_file = $this->get_current_playlist_cache();
         if (file_exists($tmp_file)) {
             $mtime = filemtime($tmp_file);
             if (time() - $mtime > 3600) {
@@ -787,7 +787,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                $url = $this->get_playlists()->get_selected_item();
+                $url = $this->get_current_playlist();
                 if (empty($url)) {
                     hd_debug_print("Tv playlist not defined");
                     throw new Exception("Tv playlist not defined");
@@ -889,17 +889,25 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return string
      */
-    public function get_playlist_hash()
+    public function get_current_playlist()
     {
-        return Hashed_Array::hash($this->get_playlists()->get_selected_item());
+        return $this->get_playlists()->get_selected_item();
     }
 
     /**
      * @return string
      */
-    public function get_playlist_cache()
+    public function get_current_playlist_hash()
     {
-        return get_temp_path($this->get_playlist_hash() . "_playlist.m3u8");
+        return Hashed_Array::hash($this->get_current_playlist());
+    }
+
+    /**
+     * @return string
+     */
+    public function get_current_playlist_cache()
+    {
+        return get_temp_path($this->get_current_playlist_hash() . "_playlist.m3u8");
     }
 
     /**
@@ -908,12 +916,113 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function clear_playlist_cache()
     {
-        $tmp_file = $this->get_playlist_cache();
+        $tmp_file = $this->get_current_playlist_cache();
         if (file_exists($tmp_file)) {
             hd_debug_print("remove $tmp_file", true);
             copy($tmp_file, $tmp_file . ".m3u");
             unlink($tmp_file);
         }
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_playlists_names()
+    {
+        return $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
+    }
+
+    /**
+     * @param string $item
+     * @return string
+     */
+    public function get_playlist_name($item)
+    {
+        /** @var Hashed_Array $playlist_names */
+        $playlist_names = $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
+        $name = $playlist_names->get(Hashed_Array::hash($item));
+        if (is_null($name)) {
+            $name = basename($item);
+            if (($pos = strpos($name, '?')) !== false) {
+                $name = substr($name, 0, $pos);
+            }
+        }
+
+        return $name;
+    }
+
+    /**
+     * @param string $item
+     * @param string $name
+     * @return void
+     */
+    public function set_playlist_name($item, $name)
+    {
+        /** @var Hashed_Array $playlist_names */
+        $playlist_names = $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
+        $playlist_names->set(Hashed_Array::hash($item), $name);
+        $this->set_parameter(PARAM_PLAYLISTS_NAMES, $playlist_names);
+    }
+
+    /**
+     * @param string $item
+     * @return void
+     */
+    public function remove_playlist_name($item)
+    {
+        /** @var Hashed_Array $playlist_names */
+        $playlist_names = $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
+        $playlist_names->erase(Hashed_Array::hash($item));
+        $this->set_parameter(PARAM_PLAYLISTS_NAMES, $playlist_names);
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_xmltv_sources_names()
+    {
+        return $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
+    }
+
+    /**
+     * @param string $item
+     * @return string|null
+     */
+    public function get_xmltv_source_name($item)
+    {
+        /** @var Hashed_Array $xmltv_sources */
+        $xmltv_sources = $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
+        $name = $xmltv_sources->get(Hashed_Array::hash($item));
+        if (is_null($name)) {
+            $name = HD::string_ellipsis($item);
+        }
+
+        return $name;
+    }
+
+    /**
+     * @param string $item
+     * @param string $name
+     * @return void
+     */
+    public function set_xmltv_source_name($item, $name)
+    {
+        /** @var Hashed_Array $xmltv_sources */
+        $xmltv_sources = $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
+        $xmltv_sources->set(Hashed_Array::hash($item), $name);
+        $this->set_parameter(PARAM_XMLTV_SOURCE_NAMES, $xmltv_sources);
+    }
+
+    /**
+     * @param string $item
+     * @return void
+     */
+    public function remove_xmltv_source_name($item)
+    {
+        /** @var Hashed_Array $xmltv_sources */
+        $xmltv_sources = $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
+        $xmltv_sources->erase(Hashed_Array::hash($item));
+        $this->set_parameter(PARAM_XMLTV_SOURCE_NAMES, $xmltv_sources);
     }
 
     /**
@@ -978,8 +1087,8 @@ class Default_Dune_Plugin implements DunePlugin
             $xmltv_sources->put($source, $key);
         }
 
-        foreach ($xmltv_sources as $source) {
-            hd_debug_print($source, true);
+        foreach ($xmltv_sources as $key => $source) {
+            hd_debug_print("$key => $source", true);
         }
         return $xmltv_sources;
     }
@@ -989,7 +1098,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_active_xmltv_source_key()
     {
-        return $this->get_parameter(PARAM_XMLTV_SOURCE_KEY, '');
+        return $this->get_setting(PARAM_XMLTV_SOURCE_KEY, '');
     }
 
     /**
@@ -998,7 +1107,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_active_xmltv_source_key($key)
     {
-        $this->set_parameter(PARAM_XMLTV_SOURCE_KEY, $key);
+        $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
     }
 
     /**
@@ -1393,13 +1502,9 @@ class Default_Dune_Plugin implements DunePlugin
             if ($key !== 0 && ($key % 15) === 0)
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
-            if (($pos = strpos($playlist, '?')) !== false) {
-                $playlist = substr($playlist, 0, $pos);
-            }
-
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_PLAYLIST_SELECTED,
-                HD::string_ellipsis($playlist),
+                $this->get_playlist_name($playlist),
                 ($cur !== $key) ? null : "check.png",
                 array('list_idx' => $key));
         }
@@ -1418,10 +1523,15 @@ class Default_Dune_Plugin implements DunePlugin
         $sources = $this->get_all_xmltv_sources();
         $source_key = $this->get_active_xmltv_source_key();
 
+        $idx = 0;
         foreach ($sources as $key => $item) {
+            if ($idx !== 0 && ($idx % 15) === 0)
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            $idx++;
+
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_EPG_SOURCE_SELECTED,
-                HD::string_ellipsis($item),
+                $this->get_xmltv_source_name($item),
                 ($source_key === $key) ? "check.png" : null,
                 array('list_idx' => $key)
             );
@@ -1432,9 +1542,14 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function create_plugin_title()
     {
-        $playlist = basename($this->get_playlists()->get_selected_item());
+        $name = $this->get_playlist_name($this->get_current_playlist());
+        if (is_null($name)) {
+            $name = basename($this->get_current_playlist());
+        }
         $plugin_name = $this->plugin_info['app_caption'];
-        return empty($playlist) ? $plugin_name : "$plugin_name ($playlist)";
+        $name = empty($name) ? $plugin_name : "$plugin_name ($name)";
+        hd_debug_print("plugin title: $name");
+        return $name;
     }
 
     /**

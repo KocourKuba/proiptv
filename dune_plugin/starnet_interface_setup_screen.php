@@ -106,7 +106,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         if ($background === $this->plugin->plugin_info['app_background']) {
             $button = TR::t('by_default');
         } else {
-            $button = substr(basename($background), strlen($this->plugin->get_playlist_hash()) + 1);
+            $button = substr(basename($background), strlen($this->plugin->get_current_playlist_hash()) + 1);
         }
 
         Control_Factory::add_image_button($defs, $this, null,
@@ -181,7 +181,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
-                    $cached_image = get_cached_image_path("{$this->plugin->get_playlist_hash()}_$data->caption");
+                    $cached_image = get_cached_image_path("{$this->plugin->get_current_playlist_hash()}_$data->caption");
                     hd_print("copy from: $data->filepath to: $cached_image");
                     if (!copy($data->filepath, $cached_image)) {
                         return Action_Factory::show_title_dialog(TR::t('err_copy'));

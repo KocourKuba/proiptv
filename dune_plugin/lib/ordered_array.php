@@ -179,6 +179,15 @@ class Ordered_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @param string $item
+     * @return int
+     */
+    public function get_item_pos($item)
+    {
+        return array_search($item, $this->order);
+    }
+
+    /**
      * @param string $id
      * @return bool
      */
