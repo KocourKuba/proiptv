@@ -33,6 +33,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 {
     const ID = 'epg_setup';
 
+    const ACTION_RELOAD_EPG = 'reload_epg';
     const CONTROL_EPG_SOURCE_TYPE = 'epg_source_type';
     const CONTROL_XMLTV_EPG_IDX = 'xmltv_epg_idx';
     const CONTROL_CHANGE_XMLTV_CACHE_PATH = 'xmltv_cache_path';
@@ -86,7 +87,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             TR::t('setup_edit_xmltv_list'), TR::t('edit'), get_image_path('edit.png'), self::CONTROLS_WIDTH);
 
         if ($sources->size() > 0) {
-            Control_Factory::add_image_button($defs, $this, null, ACTION_RELOAD,
+            Control_Factory::add_image_button($defs, $this, null, self::ACTION_RELOAD_EPG,
                 TR::t('setup_reload_xmltv_epg'), TR::t('refresh'), get_image_path('refresh.png'), self::CONTROLS_WIDTH);
         }
 
@@ -238,6 +239,11 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
+
+            case self::ACTION_RELOAD_EPG:
+                hd_debug_print(self::ACTION_RELOAD_EPG);
+                $this->plugin->epg_man->clear_epg_cache();
+                return $action_reload;
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
