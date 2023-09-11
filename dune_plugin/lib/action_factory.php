@@ -262,13 +262,14 @@ class Action_Factory
      * @param array $post_action
      * @return array
      */
-    public static function invalidate_folders($media_urls, $post_action = null)
+    public static function invalidate_folders($media_urls, $post_action = null, $all_except = false)
     {
         return array(
             GuiAction::handler_string_id => PLUGIN_INVALIDATE_FOLDERS_ACTION_ID,
             GuiAction::data => array(
                 PluginInvalidateFoldersActionData::media_urls => $media_urls,
                 PluginInvalidateFoldersActionData::post_action => $post_action,
+                PluginInvalidateFoldersActionData::all_except => $all_except,
             ),
         );
     }
@@ -441,14 +442,14 @@ class Action_Factory
 
     /**
      * @param $plugin_cookies
-     * @param array $screens
      * @param array|null $post_action
+     * @param array|null $except_media_urls
      * @return array|null
      */
-    public static function invalidate_all_folders($plugin_cookies, $screens, $post_action = null)
+    public static function invalidate_all_folders($plugin_cookies, $post_action = null, $except_media_urls = null)
     {
         Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        return Starnet_Epfs_Handler::invalidate_folders(empty($screens) ? null : array_keys($screens), $post_action);
+        return self::invalidate_folders($except_media_urls, $post_action, true);
     }
 
     /**

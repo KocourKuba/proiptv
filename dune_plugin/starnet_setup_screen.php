@@ -97,6 +97,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_ADULT_PASS_DLG,
             TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
 
+        hd_debug_print($defs, true);
         return $defs;
     }
 

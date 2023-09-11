@@ -45,7 +45,7 @@ class Json_Serializer
             if (is_object($value) && method_exists($value, '_toStdClass')) {
                 $object->$name = $value->_toStdClass();
             } else if (is_array($value)) {
-                foreach ($value as $key => $item) {
+                foreach ($value as $item) {
                     if (is_object($item) && method_exists($item, '_toStdClass')) {
                         $object->$name = $item->_toStdClass();
                     } else {

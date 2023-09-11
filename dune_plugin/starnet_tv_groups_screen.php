@@ -237,7 +237,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->plugin->set_active_xmltv_source_key($user_input->list_idx);
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens());
+                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case ACTION_CHANGE_GROUP_ICON:
                 $media_url_str = MediaURL::encode(
@@ -318,7 +318,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RELOAD:
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens());
+                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case ACTION_REFRESH_SCREEN:
                 break;

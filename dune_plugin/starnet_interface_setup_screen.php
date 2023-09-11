@@ -159,7 +159,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
                 $this->plugin->tv->reload_channels($plugin_cookies);
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
+                return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case ACTION_CHANGE_BACKGROUND:
@@ -191,7 +191,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                     $this->plugin->set_background_image($cached_image);
                     $this->plugin->create_screen_views();
 
-                    return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
                 }
                 break;
@@ -201,7 +201,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->set_background_image(null);
                 $this->plugin->create_screen_views();
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
+                return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case PARAM_EPG_FONT_SIZE:

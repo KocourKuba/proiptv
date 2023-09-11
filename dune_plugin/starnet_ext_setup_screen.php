@@ -323,7 +323,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         $this->plugin->tv->reload_channels($plugin_cookies);
 
         return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
-            Action_Factory::invalidate_all_folders($plugin_cookies, $this->plugin->get_screens(),
+            Action_Factory::invalidate_all_folders($plugin_cookies,
                 Action_Factory::reset_controls($this->do_get_control_defs())));
     }
 
