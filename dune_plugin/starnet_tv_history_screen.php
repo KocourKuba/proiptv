@@ -32,6 +32,15 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @param string $group_id
+     * @return false|string
+     */
+    public static function get_media_url_string($group_id)
+    {
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)

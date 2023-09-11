@@ -221,11 +221,11 @@ class Default_Group extends Json_Serializer implements Group
     public function get_media_url_str()
     {
         if ($this->is_favorite_group()) {
-            return Starnet_Tv_Favorites_Screen::get_media_url_str();
+            return Starnet_Tv_Favorites_Screen::get_media_url_string($this->get_id());
         }
 
         if ($this->is_history_group()) {
-            return Starnet_TV_History_Screen::get_media_url_str();
+            return Starnet_TV_History_Screen::get_media_url_string($this->get_id());
         }
 
         return Starnet_Tv_Channel_List_Screen::get_media_url_string($this->get_id());

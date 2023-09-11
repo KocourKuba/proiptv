@@ -30,11 +30,12 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     const ID = 'tv_favorites';
 
     /**
-     * @inheritDoc
+     * @param string $group_id
+     * @return false|string
      */
-    public static function get_media_url_str()
+    public static function get_media_url_string($group_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'is_favorites' => true));
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id, 'is_favorites' => true));
     }
 
     ///////////////////////////////////////////////////////////////////////
