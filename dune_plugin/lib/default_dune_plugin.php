@@ -1448,6 +1448,14 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @return bool
+     */
+    public function is_background_image_default()
+    {
+        return ($this->get_background_image() === $this->plugin_info['app_background']);
+    }
+
+    /**
      * @param string|null $path
      * @return void
      */
