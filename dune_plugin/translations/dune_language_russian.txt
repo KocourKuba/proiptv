@@ -194,7 +194,7 @@ edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Нажмите Popup 
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Долгое нажатие OK на пульте для вызова меню}
 edit_list_add_name = Задать имя
 
-playlist_name_msg_4 = label{x=%s}{y=%s}{color=%s}{text=Плейлист: %s}
+playlist_name_msg__1 = Текущий плейлист: %s
 warn_msg2__1 = Отсутствуют или неполные данные для формирования ссылки.\nВозможно не введены данные для просмотра или канал отсутствует в подписке.\n %s
 
 err_too_old_player = Эта DUNE HD слишком старая и не поддерживается плагином

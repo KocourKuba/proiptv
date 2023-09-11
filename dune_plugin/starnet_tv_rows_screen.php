@@ -543,6 +543,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $menu_items = $this->channel_menu($media_url);
                 } else {
                     // common popup menu
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        null,
+                        TR::t('playlist_name_msg__1', $this->plugin->get_playlist_name($this->plugin->get_current_playlist())));
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+
                     if ($media_url->group_id === HISTORY_GROUP_ID) {
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
                     } else if ($media_url->group_id === FAVORITES_GROUP_ID) {
