@@ -958,10 +958,14 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_playlist_name($item, $name)
     {
-        /** @var Hashed_Array $playlist_names */
-        $playlist_names = $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
-        $playlist_names->set(Hashed_Array::hash($item), $name);
-        $this->set_parameter(PARAM_PLAYLISTS_NAMES, $playlist_names);
+        if (empty($name)) {
+            $this->remove_parameter(PARAM_PLAYLISTS_NAMES);
+        } else {
+            /** @var Hashed_Array $playlist_names */
+            $playlist_names = $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
+            $playlist_names->set(Hashed_Array::hash($item), $name);
+            $this->set_parameter(PARAM_PLAYLISTS_NAMES, $playlist_names);
+        }
     }
 
     /**
@@ -1007,10 +1011,14 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_xmltv_source_name($item, $name)
     {
-        /** @var Hashed_Array $xmltv_sources */
-        $xmltv_sources = $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
-        $xmltv_sources->set(Hashed_Array::hash($item), $name);
-        $this->set_parameter(PARAM_XMLTV_SOURCE_NAMES, $xmltv_sources);
+        if (empty($name)) {
+            $this->remove_parameter(PARAM_XMLTV_SOURCE_NAMES);
+        } else {
+            /** @var Hashed_Array $xmltv_sources */
+            $xmltv_sources = $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
+            $xmltv_sources->set(Hashed_Array::hash($item), $name);
+            $this->set_parameter(PARAM_XMLTV_SOURCE_NAMES, $xmltv_sources);
+        }
     }
 
     /**
