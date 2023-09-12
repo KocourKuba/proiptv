@@ -65,6 +65,8 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $source_key = $this->plugin->get_active_xmltv_source_key();
         $display_sources = array();
         foreach ($sources as $key => $source) {
+            if ($source === EPG_SOURCES_SEPARATOR_TAG) continue;
+
             $display_sources[$key] = HD::string_ellipsis($source);
         }
 

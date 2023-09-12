@@ -1091,6 +1091,11 @@ class Default_Dune_Plugin implements DunePlugin
         foreach ($this->m3u_parser->getXmltvSources() as $source) {
             $xmltv_sources->put($source);
         }
+
+        if ($xmltv_sources->size() !== 0) {
+            $xmltv_sources->put(EPG_SOURCES_SEPARATOR_TAG);
+        }
+
         foreach ($this->get_ext_xmltv_sources() as $key => $source) {
             $xmltv_sources->put($source, $key);
         }
@@ -1544,6 +1549,11 @@ class Default_Dune_Plugin implements DunePlugin
             if ($idx !== 0 && ($idx % 15) === 0)
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             $idx++;
+
+            if ($item === EPG_SOURCES_SEPARATOR_TAG) {
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+                continue;
+            }
 
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_EPG_SOURCE_SELECTED,

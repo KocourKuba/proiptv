@@ -144,6 +144,8 @@ const PARAM_GROUPS_ICONS = 'groups_icons';
 const PARAM_PLUGIN_BACKGROUND = 'plugin_background';
 const PARAM_ENABLE_DEBUG = 'enable_debug';
 
+const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
+
 # HTTP params
 const USER_AGENT = 'User-Agent';
 const REFERER = 'Referer';
