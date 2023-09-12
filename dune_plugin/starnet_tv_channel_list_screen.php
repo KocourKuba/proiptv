@@ -168,22 +168,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         ++$idx;
                     }
                 }
-/*
-                foreach ($this->plugin->tv->get_channels() as $idx => $channel) {
-                    if ($channel->is_disabled()) continue;
 
-                    $ch_title = $channel->get_title();
-                    hd_debug_print("Search in: $ch_title", true);
-                    $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
-                    if ($s !== false) {
-                        $q_result = true;
-                        hd_debug_print("found channel: $ch_title, idx: $idx", true);
-                        $add_params['number'] = $idx;
-                        Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
-                            self::ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
-                    }
-                }
-*/
                 if ($q_result === false) {
                     Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
                     Control_Factory::add_vgap($defs, 20);
@@ -397,9 +382,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             } else {
                 foreach ($this_group->get_items_order() as $item) {
                     $channel = $this->plugin->tv->get_channel($item);
-                    //hd_debug_print("channel: " . str_replace(chr(0), ' ', serialize($channel)));;
                     if (is_null($channel) || $channel->is_disabled()) continue;
 
+                    //hd_debug_print("Folder item: $item", true);
                     $items[] = $this->get_folder_item($this_group, $channel);
                 }
             }
