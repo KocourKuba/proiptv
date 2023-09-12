@@ -59,6 +59,9 @@ echo "version: $version" . PHP_EOL;
 echo "version index: $version_index" . PHP_EOL;
 echo "update date $release_date" . PHP_EOL;
 file_put_contents("./dune_plugin/$plugin_info", $xml);
+$text = file_get_contents("./build/changelog.txt");
+$text = str_replace('{plugin_version}', $argv[1], $text);
+file_put_contents("./dune_plugin/changelog.txt", $text);
 
 ExtendedZip::zipTree('./dune_plugin', $packed_plugin, ZipArchive::CREATE);
 

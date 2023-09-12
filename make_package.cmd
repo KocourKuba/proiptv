@@ -5,8 +5,6 @@ del \\DUNE4K\DuneSD\dune_plugin_logs\proiptv.log
 set /p VERSION=<build\version.txt
 for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
 
-copy build\changelog.txt dune_plugin\ >nul
-
 php -f build\update.php %VERSION% %BUILD%
 
 del dune_plugin_proiptv.zip >nul
