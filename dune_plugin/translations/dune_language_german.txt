@@ -39,6 +39,8 @@ change_playlist = Change playlist
 change_epg_source = Change EPG source
 select_folder = Ordner auswählen
 select_file = Select file
+storage = Storage
+internal = Internal storage
 
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten

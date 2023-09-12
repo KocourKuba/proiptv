@@ -39,6 +39,8 @@ change_playlist = Сменить плейлист
 change_epg_source = Сменить источник EPG
 select_folder = Выбрать папку
 select_file = Выбрать файл
+storage = Системный диск
+internal = Внутреннее хранилище
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное

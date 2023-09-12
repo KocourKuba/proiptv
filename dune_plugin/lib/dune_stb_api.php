@@ -159,7 +159,8 @@ const PLAYLIST_PATTERN = 'm3u|m3u8';
 const EPG_PATTERN = 'xml|xmltv|gz';
 
 # Mounted storages path
-const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage/';
+const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage';
+const DUNE_APK_STORAGE_PATH = '/sdcard/DuneHD/Dune_backup';
 
 # Hard-coded constants.
 if (!defined('FONT_SIZE_LARGE')) define('FONT_SIZE_LARGE', 4);
@@ -1579,13 +1580,13 @@ function get_plugin_manifest_info()
 /**
  * @return array array of local storages
  */
-function get_local_storages_list()
+function get_local_storages_list($path)
 {
     $i = 0;
     $result = array();
 
-    foreach (scandir(DUNE_MOUNTED_STORAGES_PATH) as $item) {
-        if (($item === '.') || ($item === '..') || !is_dir(DUNE_MOUNTED_STORAGES_PATH . $item)) {
+    foreach (scandir($path) as $item) {
+        if (($item === '.') || ($item === '..') || !is_dir($path . DIRECTORY_SEPARATOR . $item)) {
             continue;
         }
 
