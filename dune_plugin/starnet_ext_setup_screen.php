@@ -286,21 +286,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
         }
 
-        $back_folders = array('', 'cached_img');
-        $tmp_backup = get_temp_path('backup');
-        delete_directory($tmp_backup);
-        create_path($tmp_backup);
-        foreach ($back_folders as $folder) {
-            $folder_path = get_slash_trailed_path($tmp_backup . DIRECTORY_SEPARATOR . $folder);
-            create_path($folder_path);
-            foreach (glob_dir(get_data_path($folder)) as $file) {
-                $dest = $folder_path . basename($file);
-                hd_debug_print("Copy: $file to $dest");
-                copy($file, $dest);
-                unlink($file);
-            }
-        }
-
         $dest = get_data_path();
         /** @var SplFileInfo[] $files */
         $files = new RecursiveIteratorIterator(
@@ -320,6 +305,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         flush();
 
         $this->plugin->init_plugin();
+        $this->plugin->set_xmltv_cache_dir(null);
+
         $this->plugin->tv->reload_channels($plugin_cookies);
 
         return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
