@@ -72,7 +72,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         $item = $sources->get($source_key);
         if (empty($item) && $sources->size()) {
-            $order = $sources->order();
+            $order = $sources->get_order();
             $source_key = reset($order);
         }
 

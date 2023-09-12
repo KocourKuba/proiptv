@@ -557,7 +557,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case self::SCREEN_EDIT_EPG_LIST:
                 $sources = new Hashed_Array();
                 foreach ($order as $item) {
-                    $sources->put($item);
+                    $sources->add($item);
                 }
                 $this->plugin->set_ext_xmltv_sources($sources);
                 break;

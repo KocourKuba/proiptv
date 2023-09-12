@@ -217,10 +217,30 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_ITEMS_SORT:
                 $group = $this->plugin->tv->get_group($media_url->group_id);
                 if (!is_null($group)) {
-                    $group->get_items_order()->sort_order();
+                    // group items order contain only ID of the channels
+                    $names = new Hashed_Array();
+                    /** @var Channel $channel */
+                    foreach ($group->get_items_order() as $item){
+                        $channel = $this->plugin->tv->get_channel($item);
+                        if (is_null($channel)) continue;
+
+                        $names->set($channel->get_id(), $channel->get_title());
+                    }
+                    $names->value_sort();
+                    hd_debug_print($names);
+                    $group->set_items_order(new Ordered_Array($names->get_keys()));
                     $this->plugin->invalidate_epfs();
                 }
                 break;
+
+            case ACTION_RESET_ITEMS_SORT:
+                $group = $this->plugin->tv->get_group($media_url->group_id);
+                if (is_null($group)) break;
+
+                $group->get_items_order()->clear();
+                $this->plugin->save();
+                $this->plugin->invalidate_epfs();
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
@@ -230,6 +250,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $group = $this->plugin->tv->get_group($media_url->group_id);
                 if (!is_null($group) && !$group->is_all_channels_group()) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_sort_default'), "brush.png");
                 }
 
                 if (is_android() && !is_apk()) {
@@ -339,7 +360,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->reload_channels($plugin_cookies);
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
+                return Starnet_Epfs_Handler::invalidate_folders(null,
+                    Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str())));
+                //return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
 
             case GUI_EVENT_KEY_RETURN:
                 return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());

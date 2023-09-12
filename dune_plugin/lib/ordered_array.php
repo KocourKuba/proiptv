@@ -50,6 +50,16 @@ class Ordered_Array extends Json_Serializer implements Iterator
     protected $saved_pos = 0;
 
     /**
+     * @param array|null $values
+     */
+    public function __construct($values = null)
+    {
+        if (is_array($values)) {
+            $this->order = $values;
+        }
+    }
+
+    /**
      * @return int
      */
     public function get_saved_pos()

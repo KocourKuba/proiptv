@@ -1089,15 +1089,15 @@ class Default_Dune_Plugin implements DunePlugin
         /** @var Hashed_Array $sources */
         $xmltv_sources = new Hashed_Array();
         foreach ($this->m3u_parser->getXmltvSources() as $source) {
-            $xmltv_sources->put($source);
+            $xmltv_sources->add($source);
         }
 
         if ($xmltv_sources->size() !== 0) {
-            $xmltv_sources->put(EPG_SOURCES_SEPARATOR_TAG);
+            $xmltv_sources->add(EPG_SOURCES_SEPARATOR_TAG);
         }
 
         foreach ($this->get_ext_xmltv_sources() as $key => $source) {
-            $xmltv_sources->put($source, $key);
+            $xmltv_sources->set($key, $source);
         }
 
         foreach ($xmltv_sources as $key => $source) {

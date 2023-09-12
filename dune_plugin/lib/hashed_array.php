@@ -76,13 +76,10 @@ class Hashed_Array extends Json_Serializer implements Iterator
 
     /**
      * @param TValue $item
-     * @param TKey|null $key
      */
-    public function put($item, $key = null)
+    public function add($item)
     {
-        if (is_null($key)) {
-            $key = self::hash($item);
-        }
+        $key = self::hash($item);
 
         if (!$this->has($key)) {
             $this->seq[] = $key;
@@ -137,7 +134,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * @return array
      */
-    public function keys()
+    public function get_keys()
     {
         return array_keys($this->map);
     }
@@ -145,14 +142,30 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * @return array
      */
-    public function order()
+    public function get_order()
     {
         return $this->seq;
     }
 
-    public function usort($callback_name)
+    public function key_sort()
     {
-        usort($this->seq, $callback_name);
+        uksort($this->seq, array(__CLASS__, "sort_array_cb"));
+    }
+
+    public function value_sort()
+    {
+        uasort($this->map, array(__CLASS__, "sort_array_cb"));
+        $this->seq = array_keys($this->map);
+    }
+
+    /**
+     * @param string $a
+     * @param string $b
+     * @return int
+     */
+    protected static function sort_array_cb($a, $b)
+    {
+        return strnatcasecmp($a, $b);
     }
 
     public function clear()

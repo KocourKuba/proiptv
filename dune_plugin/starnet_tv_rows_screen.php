@@ -632,6 +632,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_ITEMS_SORT:
                 $group = $this->plugin->tv->get_group($media_url->group_id);
                 $group->get_items_order()->sort_order();
+                $this->plugin->save();
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_ITEM_REMOVE:
