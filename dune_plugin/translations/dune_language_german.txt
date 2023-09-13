@@ -41,6 +41,8 @@ select_folder = Ordner auswählen
 select_file = Select file
 storage = Storage
 internal = Internal storage
+restore = Restore
+restore_all = Restore all
 
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten

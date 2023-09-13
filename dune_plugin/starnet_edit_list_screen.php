@@ -68,7 +68,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
             }
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+
+            $hidden = ($media_url->edit_list === self::SCREEN_EDIT_GROUPS || $media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
+            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
+                ACTION_ITEM_DELETE,
+                $hidden ? TR::t('restore') : TR::t('delete'));
         }
 
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
@@ -214,7 +218,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($order->size()) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+                    $hidden = ($parent_media_url->edit_list === self::SCREEN_EDIT_GROUPS || $parent_media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        ACTION_ITEMS_CLEAR,
+                        $hidden ? TR::t('restore_all') : TR::t('clear'),
+                        "brush.png");
                 }
 
                 return !empty($menu_items) ? Action_Factory::show_popup_menu($menu_items) : null;

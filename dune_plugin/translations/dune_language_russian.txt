@@ -41,6 +41,8 @@ select_folder = Выбрать папку
 select_file = Выбрать файл
 storage = Системный диск
 internal = Внутреннее хранилище
+restore = Восстановить
+restore_all = Восстановить все
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное
