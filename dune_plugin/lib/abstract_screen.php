@@ -40,7 +40,7 @@ class Abstract_Screen implements Screen
     /**
      * This is not override of User_Input_Handler interface!
      * It helper method to call inherited classes
-     * that implemens User_Input_Handler interface
+     * that implements User_Input_Handler interface
      *
      * @return string
      */

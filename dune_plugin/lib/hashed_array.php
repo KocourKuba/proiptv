@@ -88,6 +88,18 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @param TKey $key
+     * @param TValue $item
+     */
+    public function put($key, $item)
+    {
+        if (!$this->has($key)) {
+            $this->seq[] = $key;
+            $this->map[$key] = $item;
+        }
+    }
+
+    /**
      * @param mixed $key
      * @return TValue|null
      */
@@ -142,9 +154,30 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * @return array
      */
+    public function get_values()
+    {
+        return array_values($this->map);
+    }
+
+    /**
+     * @return array
+     */
     public function get_order()
     {
         return $this->seq;
+    }
+
+    /**
+     * @return array
+     */
+    public function get_ordered_values()
+    {
+        $values = array();
+        foreach ($this->seq as $key) {
+            $values[] = $this->get($key);
+        }
+
+        return $values;
     }
 
     public function key_sort()

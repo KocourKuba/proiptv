@@ -35,7 +35,7 @@ class Default_Channel extends Json_Serializer implements Channel
     protected $_archive_url;
 
     /**
-     * @var Group[]
+     * @var array[Groups]
      */
     protected $_groups;
 

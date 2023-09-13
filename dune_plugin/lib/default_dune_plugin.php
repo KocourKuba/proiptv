@@ -135,7 +135,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function create_screen($object)
     {
         if (!is_null($object) && method_exists($object, 'get_id')) {
-            //'' . get_class($object));
             $this->add_screen($object);
             User_Input_Handler_Registry::get_instance()->register_handler($object);
         } else {

@@ -1858,7 +1858,7 @@ function hd_debug_print($val = null, $is_debug = false)
     $caller_name = array_shift($bt);
     $prefix = "(" . str_pad($caller['line'], 4) . ") ";
     if (isset($caller_name['class'])) {
-        if (!is_null($val) && !method_exists($val, '__toString')) {
+        if (!is_null($val)) {
             $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)raw_json_encode($val));
         }
         $prefix .= "{$caller_name['class']}::";
