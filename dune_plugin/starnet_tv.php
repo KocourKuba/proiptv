@@ -706,9 +706,6 @@ class Starnet_Tv implements User_Input_Handler
             ? PLUGIN_FONT_SMALL
             : PLUGIN_FONT_NORMAL;
 
-
-        $show_all = $this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL);
-
         //$t = microtime(1);
 
         if ($this->load_channels($plugin_cookies) === 0) {
@@ -717,13 +714,18 @@ class Starnet_Tv implements User_Input_Handler
         }
         $this->playback_runtime = PHP_INT_MAX;
 
+        $not_show_all = $this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL);
+        //hd_debug_print("show all disabled: " . var_export($not_show_all, true), true);
         $all_channels = new Hashed_Array();
         /** @var Group $group */
         foreach ($this->groups as $group) {
             if ($group->is_disabled()) continue;
 
             $group_id_arr = new Hashed_Array();
-            $group_id_arr->set(ALL_CHANNEL_GROUP_ID, '');
+            if(!$not_show_all) {
+                $group_id_arr->put(ALL_CHANNEL_GROUP_ID, '');
+            }
+
             /** @var Group $group */
             foreach ($group->get_items_order() as $item) {
                 $channel = $this->get_channel($item);
@@ -761,33 +763,23 @@ class Starnet_Tv implements User_Input_Handler
                     )
                 );
             }
-
-            $groups = array();
-            $group = $this->get_special_group(ALL_CHANNEL_GROUP_ID);
-            if (!is_null($group) && !$group->is_disabled()) {
-                $group_icon = $group->get_icon_url();
-                $groups[] = array
-                (
-                    PluginTvGroup::id => $group->get_id(),
-                    PluginTvGroup::caption => $group->get_title(),
-                    PluginTvGroup::icon_url => is_null($group_icon) ? Default_Group::DEFAULT_GROUP_ICON_PATH: $group_icon
-                );
-            }
-
         }
 
+        $groups_order = array_merge($not_show_all ? array() : array(ALL_CHANNEL_GROUP_ID),
+            $this->plugin->get_groups_order()->get_order());
+
+        $groups = array();
         /** @var Group $group */
-        foreach ($this->plugin->get_groups_order() as $id) {
-            $group = $this->groups->get($id);
-            if ($group !== null && !$group->is_disabled()) {
-                $group_icon = $group->get_icon_url();
-                $groups[] = array
-                (
-                    PluginTvGroup::id => $group->get_id(),
-                    PluginTvGroup::caption => $group->get_title(),
-                    PluginTvGroup::icon_url => is_null($group_icon) ? Default_Group::DEFAULT_GROUP_ICON_PATH: $group_icon
-                );
-            }
+        foreach ($groups_order as $id) {
+            $group = $this->get_group($id);
+            if (is_null($group) || $group->is_disabled()) continue;
+
+            $group_icon = $group->get_icon_url();
+            $groups[] = array(
+                PluginTvGroup::id => $group->get_id(),
+                PluginTvGroup::caption => $group->get_title(),
+                PluginTvGroup::icon_url => is_null($group_icon) ? Default_Group::DEFAULT_GROUP_ICON_PATH: $group_icon
+            );
         }
 
         if (isset($media_url->is_favorites)) {
@@ -798,8 +790,10 @@ class Starnet_Tv implements User_Input_Handler
             $initial_is_favorite = 0;
         }
 
-        hd_debug_print("All groups: " . raw_json_encode($groups));
-        hd_debug_print("All channels: " . raw_json_encode($all_channels->get_ordered_values()));
+        if (LogSeverity::$is_debug) {
+            hd_debug_print("All groups: " . raw_json_encode($groups));
+            hd_debug_print("All channels: " . raw_json_encode($all_channels->get_ordered_values()));
+        }
 
         return array(
             PluginTvInfo::show_group_channels_only => true,
