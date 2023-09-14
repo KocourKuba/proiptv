@@ -43,7 +43,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /////////////////////////////////////////////////////////////////////////////
     // views variables
-    const TV_SANDWICH_WIDTH = 245;
+    const TV_SANDWICH_WIDTH = 246;
     const TV_SANDWICH_HEIGHT = 140;
 
     /**
@@ -1810,7 +1810,7 @@ class Default_Dune_Plugin implements DunePlugin
                 PluginRegularFolderView::view_params => array
                 (
                     ViewParams::num_cols => 5,
-                    ViewParams::num_rows => 4,
+                    ViewParams::num_rows => 3,
                     ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::background_height => 1080,
@@ -1835,6 +1835,82 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => false,
                     ViewItemParams::icon_scale_factor => 1.0,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
+            ),
+
+            'icons_5x4_caption' => array(
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 5,
+                    ViewParams::num_rows => 4,
+                    ViewParams::paint_details => false,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::content_box_padding_left => 70,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::sandwich_width => self::TV_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => self::TV_SANDWICH_HEIGHT,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::item_paint_caption => true,
+                    ViewItemParams::icon_scale_factor => 0.9,
+                    ViewItemParams::icon_sel_scale_factor => 1.0,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
+            ),
+
+            'icons_5x4_no_caption' => array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 5,
+                    ViewParams::num_rows => 4,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+                    ViewParams::paint_details => false,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::sandwich_width => self::TV_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => self::TV_SANDWICH_HEIGHT,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::item_paint_caption => false,
+                    ViewItemParams::icon_scale_factor => 0.9,
+                    ViewItemParams::icon_sel_scale_factor => 1.0,
                     ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
@@ -1907,8 +1983,8 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_layout => HALIGN_CENTER,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
                     ViewItemParams::item_paint_caption => false,
-                    ViewItemParams::icon_scale_factor => 1.0,
-                    ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_scale_factor => 1.2,
+                    ViewItemParams::icon_sel_scale_factor => 1.4,
                     ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 

@@ -403,10 +403,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $this->plugin->get_screen_view('list_3x11_no_info'),
 
             $this->plugin->get_screen_view('icons_4x3_caption'),
-            $this->plugin->get_screen_view('icons_5x3_caption'),
-            $this->plugin->get_screen_view('icons_3x3_caption'),
             $this->plugin->get_screen_view('icons_4x3_no_caption'),
+            $this->plugin->get_screen_view('icons_3x3_caption'),
+            $this->plugin->get_screen_view('icons_3x3_no_caption'),
+            $this->plugin->get_screen_view('icons_5x3_caption'),
             $this->plugin->get_screen_view('icons_5x3_no_caption'),
+            $this->plugin->get_screen_view('icons_5x4_caption'),
+            $this->plugin->get_screen_view('icons_5x4_no_caption'),
         );
     }
 
