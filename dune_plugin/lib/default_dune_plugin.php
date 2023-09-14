@@ -395,7 +395,10 @@ class Default_Dune_Plugin implements DunePlugin
         // correct day start to local timezone
         $day_start_tm_sec -= get_local_time_zone_offset();
 
-        hd_debug_print("day_start timestamp: $day_start_tm_sec (" . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ")", true);
+        if (LogSeverity::$is_debug) {
+            hd_debug_print("day_start timestamp: $day_start_tm_sec (" . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ")");
+        }
+
         $day_epg_items = $this->epg_man->get_day_epg_items($channel, $day_start_tm_sec);
         if ($day_epg_items !== false) {
             // get personal time shift for channel
@@ -404,15 +407,16 @@ class Default_Dune_Plugin implements DunePlugin
             foreach ($day_epg_items as $time => $value) {
                 $tm_start = (int)$time + $time_shift;
                 $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
-                $day_epg[] = array
-                (
+                $day_epg[] = array(
                     PluginTvEpgProgram::start_tm_sec => $tm_start,
                     PluginTvEpgProgram::end_tm_sec => $tm_end,
                     PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
                     PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
                 );
 
-                hd_debug_print(format_datetime("m-d H:i", $tm_start) . " - " . format_datetime("m-d H:i", $tm_end) . " {$value[Epg_Params::EPG_NAME]}", true);
+                if (LogSeverity::$is_debug) {
+                    hd_debug_print(format_datetime("m-d H:i", $tm_start) . " - " . format_datetime("m-d H:i", $tm_end) . " {$value[Epg_Params::EPG_NAME]}");
+                }
             }
         }
 
@@ -1050,9 +1054,13 @@ class Default_Dune_Plugin implements DunePlugin
         return $groups_cnt;
     }
 
-    public function is_special_groups_disabled($id)
+    /**
+     * @param string $param plugin parameter
+     * @return bool
+     */
+    public function is_special_groups_disabled($param)
     {
-        return $this->get_parameter($id, SetupControlSwitchDefs::switch_on) !== SetupControlSwitchDefs::switch_on;
+        return $this->get_parameter($param, SetupControlSwitchDefs::switch_on) !== SetupControlSwitchDefs::switch_on;
     }
 
     /**
@@ -1270,7 +1278,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_history_path()
     {
         $path = smb_tree::get_folder_info($this->get_parameter(PARAM_HISTORY_PATH));
-        hd_debug_print($path);
         if (is_null($path)) {
             $path = get_data_path('history');
         } else {
@@ -1281,6 +1288,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $path = get_data_path('history');
             }
         }
+        hd_debug_print($path, true);
 
         return rtrim($path, DIRECTORY_SEPARATOR);
     }

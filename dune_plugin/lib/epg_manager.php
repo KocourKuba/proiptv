@@ -485,7 +485,7 @@ class Epg_Manager
                             if (LogSeverity::$is_debug) {
                                 $log_entries[] = $index_name;
                                 if (count($log_entries) > 20) {
-                                    hd_debug_print("Save program indexes: " . json_encode($log_entries), true);
+                                    hd_debug_print("Save program indexes: " . json_encode($log_entries));
                                     unset($log_entries);
                                 }
                             }
@@ -504,11 +504,11 @@ class Epg_Manager
                 hd_debug_print("Save index: $index_name", true);
                 HD::StoreContentToFile($this->cache_dir . DIRECTORY_SEPARATOR . $index_name, $xmltv_data);
                 unset($xmltv_data);
+                $log_entries[] = $index_name;
                 if (LogSeverity::$is_debug) {
-                    $log_entries[] = $index_name;
-                    hd_debug_print("Save program indexes: " . json_encode($log_entries), true);
-                    unset($log_entries);
+                    hd_debug_print("Save program indexes: " . json_encode($log_entries));
                 }
+                unset($log_entries);
             }
 
             if (!empty($xmltv_index)) {
