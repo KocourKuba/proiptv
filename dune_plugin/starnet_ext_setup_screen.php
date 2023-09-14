@@ -305,7 +305,9 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         flush();
 
         $this->plugin->init_plugin();
+        hd_debug_print("Reset XMLTV cache dir to default");
         $this->plugin->set_xmltv_cache_dir(null);
+        $this->plugin->epg_man->init_cache_dir();
 
         $this->plugin->tv->reload_channels($plugin_cookies);
 
