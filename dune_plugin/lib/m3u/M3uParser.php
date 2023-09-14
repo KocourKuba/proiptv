@@ -229,9 +229,9 @@ class M3uParser extends Json_Serializer
             $line = trim($this->m3u_file->fgets());
             if (empty($line)) continue;
 
-            if (!isLineTag($line)) break;
+            if ($line[0] !== '#') break;
 
-            if (isExtInf($line)) {
+            if (stripos($line, Entry::TAG_EXTINF) === 0) {
                 $entry = new Entry();
                 $tag = new ExtTagDefault();
                 $entry->addTag($tag->parseFullData($line));

@@ -25,11 +25,15 @@
 
 require_once 'lib/json_serializer.php';
 require_once 'ExtTagDefault.php';
-require_once 'M3U_Helpers.php';
-require_once 'M3U_Helpers.php';
 
 class Entry extends Json_Serializer
 {
+    const TAG_EXTM3U    = '#EXTM3U';
+    const TAG_EXTINF    = '#EXTINF';
+    const TAG_EXTGRP    = '#EXTGRP';
+    const TAG_EXTHTTP   = '#EXTHTTP';
+    const TAG_EXTVLCOPT = '#EXTVLCOPT';
+
     /**
      * @var bool
      */
@@ -80,7 +84,7 @@ class Entry extends Json_Serializer
         }
 
         $this->addTag($parsed_tag);
-        $this->is_header = ($parsed_tag->isTag(TAG_EXTM3U));
+        $this->is_header = ($parsed_tag->isTag(self::TAG_EXTM3U));
         return $parsed_tag;
     }
 
@@ -242,7 +246,7 @@ class Entry extends Json_Serializer
      */
     public function getEntryTitle()
     {
-        $extInf = $this->getEntryTag(TAG_EXTINF);
+        $extInf = $this->getEntryTag(self::TAG_EXTINF);
         return is_null($extInf) ? null : $extInf->getTagValue();
     }
 
@@ -255,9 +259,9 @@ class Entry extends Json_Serializer
     public function getGroupTitle()
     {
         if (is_null($this->group_title)) {
-            $this->group_title = $this->getEntryAttribute('group-title', TAG_EXTINF);
+            $this->group_title = $this->getEntryAttribute('group-title', self::TAG_EXTINF);
             if (empty($this->group_title)) {
-                $exgGrp = $this->getEntryTag(TAG_EXTGRP);
+                $exgGrp = $this->getEntryTag(self::TAG_EXTGRP);
                 $this->group_title = is_null($exgGrp) ? null : $exgGrp->getTagValue();
                 if (empty($this->group_title)) {
                     $this->group_title = TR::load_string('no_category');
@@ -347,7 +351,7 @@ class Entry extends Json_Serializer
          */
         static $attrs = array("url-tvg", "x-tvg-url");
 
-        return $this->getAllEntryAttributes($attrs, TAG_EXTM3U);
+        return $this->getAllEntryAttributes($attrs, self::TAG_EXTM3U);
     }
 
     /**
@@ -358,7 +362,7 @@ class Entry extends Json_Serializer
     public function getProtectedCode() {
         static $adult_attrs = array("adult", "parent-code", "censored");
 
-        $adult_code = $this->getAnyEntryAttribute($adult_attrs, TAG_EXTINF, $used_tag);
+        $adult_code = $this->getAnyEntryAttribute($adult_attrs, self::TAG_EXTINF, $used_tag);
         if ($used_tag === "adult" && (int)$adult_code !== 1) {
             $adult_code = '';
         }

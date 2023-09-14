@@ -149,7 +149,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     public function parseData($line)
     {
         // currently duration parsing not implemented
-        if (!isLineTag($line))
+        if (empty($line) || $line[0] !== '#')
             return null;
 
         if (preg_match("/^(#[^: ]+)[:\s]?(.*)/", $line, $m)) {
@@ -165,12 +165,12 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     public function parseFullData($line)
     {
         // currently duration parsing not implemented
-        if (!isLineTag($line))
+        if (empty($line) || $line[0] !== '#')
             return null;
 
         if (preg_match("/^(#[^: ]+)[:\s]?(.*)/", $line, $m)) {
             $this->setTagName($m[1]);
-            if ($this->isTag(TAG_EXTINF)) {
+            if ($this->isTag(Entry::TAG_EXTINF)) {
                 $split = explode(',', $m[2]);
                 $this->setTagValue(trim(end($split)));
             } else {

@@ -339,7 +339,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $catchup['global'] = $this->plugin->m3u_parser->getM3uInfo()->getCatchup();
         $global_catchup_source = $this->plugin->m3u_parser->getM3uInfo()->getCatchupSource();
-        $icon_url_base = $this->plugin->m3u_parser->getHeaderAttribute('url-logo', TAG_EXTM3U);
+        $icon_url_base = $this->plugin->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
 
         $sources = $this->plugin->get_all_xmltv_sources();
         $key = $this->plugin->get_active_xmltv_source_key();
@@ -463,7 +463,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 $used_tag = '';
-                $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, TAG_EXTINF, $used_tag);
+                $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, Entry::TAG_EXTINF, $used_tag);
                 if ($used_tag === 'catchup-time') {
                     $archive /= 86400;
                 }
@@ -509,28 +509,28 @@ class Starnet_Tv implements User_Input_Handler
 
                 $ext_params[PARAM_DUNE_PARAMS] = $this->plugin->get_setting(PARAM_DUNE_PARAMS);
 
-                $ext_tag = $entry->getEntryTag(TAG_EXTHTTP);
+                $ext_tag = $entry->getEntryTag(Entry::TAG_EXTHTTP);
                 if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
                     foreach ($ext_http_values as $key => $value) {
-                        $ext_params[TAG_EXTHTTP][strtolower($key)] = $value;
+                        $ext_params[Entry::TAG_EXTHTTP][strtolower($key)] = $value;
                     }
 
-                    if (isset($ext_params[TAG_EXTHTTP]['user-agent'])) {
-                        hd_debug_print(TAG_EXTHTTP . " Channel: $channel_name uses custom User-Agent: '{$ext_params[TAG_EXTHTTP]['user-agent']}'", true);
-                        $ch_useragent = "User-Agent: " . $ext_params[TAG_EXTHTTP]['user-agent'];
+                    if (isset($ext_params[Entry::TAG_EXTHTTP]['user-agent'])) {
+                        hd_debug_print(Entry::TAG_EXTHTTP . " Channel: $channel_name uses custom User-Agent: '{$ext_params[Entry::TAG_EXTHTTP]['user-agent']}'", true);
+                        $ch_useragent = "User-Agent: " . $ext_params[Entry::TAG_EXTHTTP]['user-agent'];
                     }
                 }
 
-                $ext_tag = $entry->getEntryTag(TAG_EXTVLCOPT);
+                $ext_tag = $entry->getEntryTag(Entry::TAG_EXTVLCOPT);
                 if ($ext_tag !== null) {
                     foreach ($ext_tag->getTagValues() as $value) {
                         $pair = explode('=', $value);
-                        $ext_params[TAG_EXTVLCOPT][strtolower(trim($pair[0]))] = trim($pair[1]);
+                        $ext_params[Entry::TAG_EXTVLCOPT][strtolower(trim($pair[0]))] = trim($pair[1]);
                     }
 
-                    if (isset($ext_params[TAG_EXTVLCOPT]['http-user-agent'])) {
-                        hd_debug_print(TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_params[TAG_EXTVLCOPT]['http-user-agent']}'", true);
-                        $ch_useragent = "User-Agent: " . $ext_params[TAG_EXTVLCOPT]['http-user-agent'];
+                    if (isset($ext_params[Entry::TAG_EXTVLCOPT]['http-user-agent'])) {
+                        hd_debug_print(Entry::TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_params[Entry::TAG_EXTVLCOPT]['http-user-agent']}'", true);
+                        $ch_useragent = "User-Agent: " . $ext_params[Entry::TAG_EXTVLCOPT]['http-user-agent'];
                     }
                 }
 
@@ -585,7 +585,7 @@ class Starnet_Tv implements User_Input_Handler
                     $number,
                     $epg_ids,
                     $protected,
-                    (int)$entry->getEntryAttribute('tvg-shift', TAG_EXTINF),
+                    (int)$entry->getEntryAttribute('tvg-shift', Entry::TAG_EXTINF),
                     $ext_params
                 );
 
