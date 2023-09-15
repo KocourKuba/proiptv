@@ -340,11 +340,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
                                 $this->plugin->epg_man->set_xmltv_url($line);
                                 $res = $this->plugin->epg_man->is_xmltv_cache_valid();
-                                $this->plugin->epg_man->set_xmltv_url(null);
+                                hd_debug_print("Error load xmltv: $res");
                                 if (!empty($res)) {
                                     $error_log[] = $res;
                                     continue;
                                 }
+                                $this->plugin->set_last_error($res);
+                                $this->plugin->epg_man->set_xmltv_url(null);
                             } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                                 try {
                                     HD::http_get_document($line);

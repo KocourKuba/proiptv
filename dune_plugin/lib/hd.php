@@ -228,7 +228,7 @@ class HD
      * @param $url string
      * @param $file_name string
      * @param $opts array
-     * @return bool|mixed
+     * @return array
      * @throws Exception
      */
     public static function http_save_document($url, $file_name, $opts = null)
@@ -245,7 +245,6 @@ class HD
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 60);
         curl_setopt($ch, CURLOPT_USERAGENT, self::get_dune_user_agent());
-        curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
         curl_setopt($ch, CURLOPT_FILETIME, true);
         curl_setopt($ch, CURLOPT_FILE, $fp);
 
@@ -264,9 +263,10 @@ class HD
                 throw new Exception("curl_exec error: " . curl_error($ch));
             }
 
-            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($http_code >= 300) {
-                throw new Exception("HTTP request failed ($http_code): " . self::http_status_code_to_string($http_code));
+            $info = curl_getinfo($ch);
+            hd_debug_print(raw_json_encode($info));
+            if ($info['http_code'] >= 300) {
+                throw new Exception("HTTP request failed ({$info['http_code']}): " . self::http_status_code_to_string($info['http_code']));
             }
         } catch (Exception $ex) {
             fclose($fp);
@@ -274,12 +274,10 @@ class HD
             throw $ex;
         }
 
-        $file_time = curl_getinfo($ch, CURLINFO_FILETIME);
-
         fclose($fp);
         curl_close($ch);
 
-        return $file_time;
+        return $info;
     }
 
     /**
