@@ -105,6 +105,7 @@ const ACTION_EPG_SOURCE_SELECTED = 'epg_source_selected';
 const FAVORITES_GROUP_ID = '##favorites##';
 const ALL_CHANNEL_GROUP_ID = '##all_channels##';
 const HISTORY_GROUP_ID = '##playback_history_tv_group##';
+const CHANGED_CHANNELS_GROUP_ID = '##changed_channels_group##';
 
 # Common parameters
 const PLUGIN_PARAMETERS = "parameters";
@@ -119,6 +120,7 @@ const PARAM_ASK_EXIT = 'ask_exit';
 const PARAM_SHOW_ALL = 'show_all';
 const PARAM_SHOW_FAVORITES = 'show_favorites';
 const PARAM_SHOW_HISTORY = 'show_history';
+const PARAM_SHOW_CHANGED_CHANNELS = 'show_changed_channels';
 const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
@@ -135,6 +137,7 @@ const PARAM_XMLTV_SOURCE_NAMES = 'xmltv_source_names';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_CHANNELS_ZOOM = 'channels_zoom';
 const PARAM_CHANNEL_PLAYER = 'channel_player';
+const PARAM_KNOWN_CHANNELS = 'known_channels';
 const PARAM_USER_CATCHUP = 'user_catchup';
 const PARAM_TV_HISTORY_ITEMS = '_tv_history_items';
 const PARAM_USER_AGENT = 'user_agent';

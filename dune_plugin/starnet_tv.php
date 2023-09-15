@@ -136,7 +136,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if(!is_null($group = $this->get_group($group_id))) {
-            if ($group->is_all_channels_group()) {
+            if ($group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
                 foreach ($this->plugin->tv->get_groups() as $group) {
                     $group->get_items_order()->remove_item($channel_id);
                 }
@@ -231,7 +231,7 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param string $group_id
-     * @return Group|mixed
+     * @return Group|null
      */
     public function get_group($group_id)
     {
@@ -294,30 +294,40 @@ class Starnet_Tv implements User_Input_Handler
         // Favorites groupse
         $special_group = new Default_Group($this->plugin,
             FAVORITES_GROUP_ID,
-            TR::load_string('plugin_favorites'),
+            TR::t('plugin_favorites'),
             Default_Group::DEFAULT_FAVORITE_GROUP_ICON,
             PARAM_FAVORITES);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES));
         $this->special_groups->set($special_group->get_id(), $special_group);
 
-
         // History channels category
         $special_group = new Default_Group($this->plugin,
             HISTORY_GROUP_ID,
-            TR::load_string('plugin_history'),
+            TR::t('plugin_history'),
             Default_Group::DEFAULT_HISTORY_GROUP_ICON,
             null);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_HISTORY));
         $this->special_groups->set($special_group->get_id(), $special_group);
 
+        // History channels category
+        $special_group = new Default_Group($this->plugin,
+            CHANGED_CHANNELS_GROUP_ID,
+            TR::t('plugin_changed'),
+            Default_Group::DEFAULT_CHANGED_CHANNELS_GROUP_ICON,
+            null);
+        $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_CHANGED_CHANNELS));
+        $this->special_groups->set($special_group->get_id(), $special_group);
+
         // All channels category
         $special_group = new Default_Group($this->plugin,
             ALL_CHANNEL_GROUP_ID,
-            TR::load_string('plugin_all_channels'),
+            TR::t('plugin_all_channels'),
             Default_Group::DEFAULT_ALL_CHANNELS_GROUP_ICON,
             null);
-        $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL));
+        $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_CHANGED_CHANNELS));
         $this->special_groups->set($special_group->get_id(), $special_group);
+
+        $first_run = $this->plugin->get_known_channels()->size() === 0;
 
         /** @var Group $special_group */
         foreach ($this->special_groups as $special_group) {
@@ -392,8 +402,6 @@ class Starnet_Tv implements User_Input_Handler
             } else if (!$this->plugin->get_groups_order()->in_order($group->get_id())) {
                 hd_debug_print("New    category # $title");
                 $this->plugin->get_groups_order()->add_item($title);
-//            } else {
-//                hd_debug_print("Known category # $title");
             }
 
             $playlist_groups->add_item($title);
@@ -595,9 +603,11 @@ class Starnet_Tv implements User_Input_Handler
                     $channel->set_disabled(true);
                 }
 
-                //hd_debug_print("channel: " . $channel->get_title());
                 $playlist_group_channels[$parent_group->get_id()][] = $channel_id;
                 $this->channels->set($channel->get_id(), $channel);
+                if ($first_run) {
+                    $this->plugin->get_known_channels()->set($channel->get_id(), $channel->get_title());
+                }
 
                 foreach ($epg_ids as $epg_id) {
                     $epg_ids[$epg_id] = '';
@@ -608,6 +618,10 @@ class Starnet_Tv implements User_Input_Handler
                 $parent_group->add_channel($channel);
             }
         }
+
+        $changed = $this->plugin->get_changed_channels(null);
+
+        $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(!$changed);
 
         // cleanup order if saved group removed from playlist
         // enable save for each group

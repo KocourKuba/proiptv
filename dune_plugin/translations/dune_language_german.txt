@@ -47,6 +47,7 @@ restore_all = Restore all
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten
 plugin_history = Verlau anschauen
+plugin_changed = Changed Channels
 
 setup_small = Klein
 setup_normal = Normal
@@ -62,6 +63,7 @@ setup_show_in_main = Auf dem Hauptbildschirm anzeigen
 setup_show_all_channels = Kategorie „Alle Kanäle“ anzeigen.
 setup_show_history = Kategorie „Verlauf“ anzeigen
 setup_show_favorites = Kategorie „Favoriten“ anzeigen
+setup_show_changed_channels = Show Changed Channels category
 setup_autostart = Autoplay beim Start
 setup_continue_play = Kanal beim Start weiter abspielen
 setup_epg_type = XMLTV EPG source type

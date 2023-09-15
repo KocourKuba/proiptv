@@ -47,6 +47,7 @@ restore_all = Восстановить все
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное
 plugin_history = История просмотра
+plugin_changed = Измененные каналы
 
 setup_small = Мелкий
 setup_normal = Обычный
@@ -61,6 +62,7 @@ setup_adult_change = Изменить пароль
 setup_show_in_main = Показывать в главном меню
 setup_show_all_channels = Показывать категорию Все каналы
 setup_show_history = Показывать категорию История
+setup_show_changed_channels = Показывать категорию Измененные каналы
 setup_show_favorites = Показывать категорию Избранное
 setup_autostart = Автостарт воспроизведения
 setup_continue_play = Возобновление просмотра

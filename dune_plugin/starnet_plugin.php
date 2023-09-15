@@ -37,6 +37,7 @@ require_once 'starnet_interface_setup_screen.php';
 require_once 'starnet_epg_setup_screen.php';
 require_once 'starnet_streaming_setup_screen.php';
 require_once 'starnet_ext_setup_screen.php';
+require_once 'starnet_tv_changed_channels_screen.php';
 require_once 'starnet_folder_screen.php';
 require_once 'starnet_tv.php';
 require_once 'starnet_tv_channel_list_screen.php';
@@ -84,6 +85,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Epg_Setup_Screen($this));
         $this->create_screen(new Starnet_Streaming_Setup_Screen($this));
         $this->create_screen(new Starnet_Ext_Setup_Screen($this));
+        $this->create_screen(new Starnet_Tv_Changed_Channels_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_List_Screen($this));

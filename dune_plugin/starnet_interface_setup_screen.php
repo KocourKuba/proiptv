@@ -91,6 +91,13 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
+        // show history category
+        $show_history = $this->plugin->get_parameter(PARAM_SHOW_CHANGED_CHANNELS, SetupControlSwitchDefs::switch_on);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SetupControlSwitchDefs::$on_off_translated[$show_history],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
         // epg font size
         $font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
         $font_ops_translated[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
@@ -155,6 +162,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case PARAM_SHOW_ALL:
             case PARAM_SHOW_FAVORITES:
             case PARAM_SHOW_HISTORY:
+            case PARAM_SHOW_CHANGED_CHANNELS:
                 $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
                 $this->plugin->tv->reload_channels($plugin_cookies);
 

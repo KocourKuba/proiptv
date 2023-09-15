@@ -1180,7 +1180,6 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->get_setting(PARAM_CHANNELS_ZOOM, new Hashed_Array());
     }
 
-
     /**
      * @return string
      */
@@ -1221,6 +1220,43 @@ class Default_Dune_Plugin implements DunePlugin
     public function is_channel_for_ext_player($channel_id)
     {
         return $this->get_channels_for_ext_player()->in_order($channel_id);
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_known_channels()
+    {
+        return $this->get_setting(PARAM_KNOWN_CHANNELS, new Hashed_Array());
+    }
+
+    /**
+     * @param Hashed_Array $channels
+     */
+    public function set_known_channels($channels)
+    {
+        $this->set_setting(PARAM_KNOWN_CHANNELS, $channels);
+    }
+
+    /**
+     * @param string $type // new, removed, null or other value - total
+     * @return array
+     */
+    public function get_changed_channels($type)
+    {
+        $known_channels = $this->get_known_channels();
+        $all_channels = $this->tv->get_channels();
+        $new_channels = array_diff($all_channels->get_keys(), $known_channels->get_keys());
+        $removed_channels = array_diff($known_channels->get_keys(), $all_channels->get_keys());
+        if ($type === 'new') {
+            return $new_channels;
+        }
+
+        if ($type === 'removed') {
+            return $removed_channels;
+        }
+
+        return array_merge($new_channels, $removed_channels);
     }
 
     /**

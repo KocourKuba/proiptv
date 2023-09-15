@@ -32,6 +32,7 @@ class Default_Group extends Json_Serializer implements Group
     const DEFAULT_GROUP_ICON_PATH = 'plugin_file://icons/default_group.png';
     const DEFAULT_FAVORITE_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
     const DEFAULT_HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
+    const DEFAULT_CHANGED_CHANNELS_GROUP_ICON = 'plugin_file://icons/changed_channels.png';
     const DEFAULT_ALL_CHANNELS_GROUP_ICON = 'plugin_file://icons/all_folder.png';
 
     /**
@@ -134,25 +135,9 @@ class Default_Group extends Json_Serializer implements Group
     /**
      * @inheritDoc
      */
-    public function is_favorite_group()
+    public function is_special_group($id)
     {
-        return ($this->_id === FAVORITES_GROUP_ID);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function is_history_group()
-    {
-        return ($this->_id === HISTORY_GROUP_ID);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function is_all_channels_group()
-    {
-        return ($this->_id === ALL_CHANNEL_GROUP_ID);
+        return ($this->_id === $id);
     }
 
     /**
@@ -220,12 +205,16 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function get_media_url_str()
     {
-        if ($this->is_favorite_group()) {
+        if ($this->is_special_group(FAVORITES_GROUP_ID)) {
             return Starnet_Tv_Favorites_Screen::get_media_url_string($this->get_id());
         }
 
-        if ($this->is_history_group()) {
+        if ($this->is_special_group(HISTORY_GROUP_ID)) {
             return Starnet_TV_History_Screen::get_media_url_string($this->get_id());
+        }
+
+        if ($this->is_special_group(CHANGED_CHANNELS_GROUP_ID)) {
+            return Starnet_Tv_Changed_Channels_Screen::get_media_url_string($this->get_id());
         }
 
         return Starnet_Tv_Channel_List_Screen::get_media_url_string($this->get_id());
@@ -240,7 +229,7 @@ class Default_Group extends Json_Serializer implements Group
     public function add_channel(Channel $channel)
     {
         $this->_channels->set($channel->get_id(), $channel);
-        if (!$channel->is_disabled() && !$this->is_all_channels_group()) {
+        if (!$channel->is_disabled() && !$this->is_special_group(ALL_CHANNEL_GROUP_ID)) {
             $this->get_items_order()->add_item($channel->get_id());
         }
     }

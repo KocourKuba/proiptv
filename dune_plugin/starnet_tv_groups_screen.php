@@ -290,12 +290,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     hd_debug_print("Reset icon for group: $sel_media_url->group_id to default", true);
 
-                    if ($group->is_favorite_group()) {
+                    if ($group->is_special_group(FAVORITES_GROUP_ID)) {
                         $group->set_icon_url(Default_Group::DEFAULT_FAVORITE_GROUP_ICON);
-                    } else if ($group->is_favorite_group()) {
+                    } else if ($group->is_special_group(HISTORY_GROUP_ID)) {
                         $group->set_icon_url(Default_Group::DEFAULT_HISTORY_GROUP_ICON);
-                    } else if ($group->is_all_channels_group()) {
+                    } else if ($group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
                         $group->set_icon_url(Default_Group::DEFAULT_ALL_CHANNELS_GROUP_ICON);
+                    } else if ($group->is_special_group(CHANGED_CHANNELS_GROUP_ID)) {
+                        $group->set_icon_url(Default_Group::DEFAULT_CHANGED_CHANNELS_GROUP_ICON);
                     } else {
                         $group->set_icon_url(Default_Group::DEFAULT_GROUP_ICON_PATH);
                     }
@@ -339,15 +341,19 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         foreach ($this->plugin->tv->get_special_groups() as $group) {
             if (is_null($group) || $group->is_disabled()) continue;
 
-            if ($group->is_all_channels_group()) {
+            if ($group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
                 $item_detailed_info = TR::t('tv_screen_group_info__3',
                     $group->get_title(),
                     $this->plugin->tv->get_channels()->size(),
                     $this->plugin->get_disabled_channels()->size());
-            } else if ($group->is_history_group()) {
+            } else if ($group->is_special_group(HISTORY_GROUP_ID)) {
                 $item_detailed_info = TR::t('tv_screen_group_info__2',
                     $group->get_title(),
                     $this->plugin->get_playback_points()->size());
+            } else if ($group->is_special_group(CHANGED_CHANNELS_GROUP_ID)) {
+                $item_detailed_info = TR::t('tv_screen_group_info__2',
+                    $group->get_title(),
+                    $this->plugin->get_changed_channels(null));
             } else {
                 $item_detailed_info = TR::t('tv_screen_group_info__2',
                     $group->get_title(),

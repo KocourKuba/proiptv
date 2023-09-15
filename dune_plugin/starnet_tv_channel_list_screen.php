@@ -248,7 +248,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
 
                 $group = $this->plugin->tv->get_group($media_url->group_id);
-                if (!is_null($group) && !$group->is_all_channels_group()) {
+                if (!is_null($group) && !$group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_sort_default'), "brush.png");
                 }
@@ -392,7 +392,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
 
             /** @var Channel $channel */
-            if ($this_group->is_all_channels_group()) {
+            if ($this_group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
                 foreach($this->plugin->tv->get_channels() as $channel) {
                     if ($channel->is_disabled()) continue;
 

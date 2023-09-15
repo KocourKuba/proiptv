@@ -25,17 +25,7 @@ interface Group
     /**
      * @return bool
      */
-    public function is_favorite_group();
-
-    /**
-     * @return bool
-     */
-    public function is_history_group();
-
-    /**
-     * @return bool
-     */
-    public function is_all_channels_group();
+    public function is_special_group($id);
 
     /**
      * @return bool
