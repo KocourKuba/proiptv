@@ -207,7 +207,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $err = false;
         $source_window_id = isset($media_url->source_window_id) ? $media_url->source_window_id : false;
-        $dir = empty($media_url->filepath) ? (is_apk() ? array("/tmp/mnt", "/sdcard") : "/tmp/mnt") : $media_url->filepath;
+        $dir = empty($media_url->filepath) ? (is_android() ? array("/tmp/mnt", "/sdcard") : "/tmp/mnt") : $media_url->filepath;
         $allow_network = !isset($media_url->allow_network) || $media_url->allow_network;
         $windowCounter = isset($media_url->windowCounter) ? $media_url->windowCounter + 1 : 2;
         $ip_path = isset($media_url->ip_path) ? $media_url->ip_path : false;
