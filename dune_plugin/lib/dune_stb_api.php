@@ -451,8 +451,8 @@ function get_platform_info()
         } else {
             $ini_arr = parse_ini_file('/tmp/run/versions.txt');
             if (isset($ini_arr['platform_kind'])) {
-                $platform['platform'] = $ini_arr['platform_kind'];
-                if ($platform['platform'] === 'android') {
+                if ($ini_arr['platform_kind'] === 'android') {
+                    $platform['platform'] = $ini_arr['platform_kind'];
                     if (isset($ini_arr['android_platform'])) {
                         $platform['type'] = $ini_arr['android_platform'];
                     } else {
@@ -460,7 +460,7 @@ function get_platform_info()
                     }
                 } else {
                     $platform['platform'] = 'sigma';
-                    $platform['type'] = $platform['platform'];
+                    $platform['type'] = $platform['platform_kind'];
                 }
             } else {
                 $platform['platform'] = 'unknown';
