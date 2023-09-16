@@ -152,11 +152,12 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param $plugin_cookies
+     * @param bool $all_except
      * @param array|null $media_urls
      * @param null $post_action
      * @return array
      */
-    public function update_epfs_data($plugin_cookies, $media_urls = null, $post_action = null)
+    public function update_epfs_data($plugin_cookies, $media_urls = null, $post_action = null, $all_except = false)
     {
         hd_debug_print(null, true);
 
@@ -165,7 +166,7 @@ class Default_Dune_Plugin implements DunePlugin
             $this->need_update_epfs = false;
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
         }
-        return Starnet_Epfs_Handler::invalidate_folders($media_urls, $post_action);
+        return Starnet_Epfs_Handler::invalidate_folders($media_urls, $post_action, $all_except);
     }
 
     /**

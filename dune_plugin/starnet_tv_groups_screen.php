@@ -448,12 +448,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT, TR::t('tv_screen_edit_hidden_group'), "edit.png");
         }
 
-        if (isset($sel_media_url->group_id)) {
+        if (!is_null($group_id)) {
             $has_hidden = false;
-            if ($sel_media_url->group_id === ALL_CHANNEL_GROUP_ID) {
+            if ($group_id === ALL_CHANNEL_GROUP_ID) {
                 $has_hidden = $this->plugin->get_disabled_channels()->size() !== 0;
-            } else if (($group = $this->plugin->tv->get_group($sel_media_url->group_id)) !== null) {
+                hd_debug_print("Disabled channels: " . $this->plugin->get_disabled_channels()->size());
+            } else if (($group = $this->plugin->tv->get_group($group_id)) !== null) {
                 $has_hidden = $group->get_group_channels()->size() !== $group->get_items_order()->size();
+                hd_debug_print("Group channels: " . $group->get_group_channels()->size() . " Channels order: " . $group->get_items_order()->size());
             }
 
             if ($has_hidden) {

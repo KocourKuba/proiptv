@@ -135,9 +135,10 @@ class Starnet_Epfs_Handler
     /**
      * @param array|null $media_urls
      * @param $post_action
+     * @param bool $all_except
      * @return array
      */
-    public static function invalidate_folders($media_urls = null, $post_action = null)
+    public static function invalidate_folders($media_urls = null, $post_action = null, $all_except = false)
     {
         if (self::$enabled) {
             $arr = array_merge(array(self::$epf_id), (is_array($media_urls) ? $media_urls : array()));
@@ -145,7 +146,7 @@ class Starnet_Epfs_Handler
             $arr = $media_urls;
         }
 
-        return Action_Factory::invalidate_folders($arr, $post_action);
+        return Action_Factory::invalidate_folders($arr, $post_action, $all_except);
     }
 
     /**

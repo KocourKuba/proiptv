@@ -365,7 +365,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 //return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
+                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);

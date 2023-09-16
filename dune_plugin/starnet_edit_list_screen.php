@@ -438,7 +438,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $items = array();
         foreach ($order as $item) {
             $title = $item;
-            $detailed_info = $item;
+            $detailed_info = null;
             if ($media_url->edit_list === self::SCREEN_EDIT_CHANNELS) {
                 if ($media_url->group_id === FAVORITES_GROUP_ID || $media_url->group_id === HISTORY_GROUP_ID) break;
 
