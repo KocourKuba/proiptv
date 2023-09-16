@@ -234,13 +234,13 @@ class Rows_Factory
     }
 
     /**
-     * @param array $items
      * @param string $id
      * @param string $icon_url
      * @param string $caption
      * @param array $stickers
+     * @return array
      */
-    public static function add_regular_item(&$items, $id, $icon_url, $caption = null, $stickers = null)
+    public static function add_regular_item($id, $icon_url, $caption = null, $stickers = null)
     {
         $arr = array(
             PluginRegularItem::id => $id,
@@ -252,7 +252,7 @@ class Rows_Factory
         if (isset($stickers))
             $arr[PluginRegularItem::stickers] = $stickers;
 
-        $items[] = $arr;
+        return $arr;
     }
 
     /**
@@ -367,42 +367,33 @@ class Rows_Factory
     }
 
     /**
-     * @param array|null $stickers
      * @param string $icon_url
      * @param array $rect
-     * @return void
+     * @return array
      */
-    public static function add_regular_sticker_image(&$stickers, $icon_url, $rect)
+    public static function add_regular_sticker_image($icon_url, $rect)
     {
-        $stickers[] = array(
-            PluginRegularSticker::r => $rect,
-            PluginRegularSticker::icon_url => $icon_url
-        );
+        return array(PluginRegularSticker::r => $rect, PluginRegularSticker::icon_url => $icon_url);
     }
 
     /**
-     * @param array $stickers
      * @param string $text
      * @param array $rect
-     * @return void
+     * @return array
      */
-    public static function add_regular_sticker_text(&$stickers, $text, $rect)
+    public static function add_regular_sticker_text($text, $rect)
     {
-        $stickers[] = array(
-            PluginRegularSticker::r => $rect,
-            PluginRegularSticker::text => $text
-        );
+        return array(PluginRegularSticker::r => $rect, PluginRegularSticker::text => $text);
     }
 
     /**
-     * @param array|null $stickers
      * @param string $color # RGBA format
      * @param array $rect
-     * @return void
+     * @return array
      */
-    public static function add_regular_sticker_rect(&$stickers, $color, $rect)
+    public static function add_regular_sticker_rect($color, $rect)
     {
-        $stickers[] = array(
+        return array(
             PluginRegularSticker::r => $rect,
             PluginRegularSticker::color => GComps_Factory::rgba_to_argb($color)
         );

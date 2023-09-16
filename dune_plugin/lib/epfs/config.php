@@ -86,7 +86,9 @@ class RowsItemsParams
     const inactive_caption_color	= '#00000000';
     const caption_font_size			= 28; # size in pt
     const icon_loading_url			= 'loading.png';
+    const icon_sq_loading_url		= 'loading_square.png';
     const icon_loading_failed_url	= 'unset.png';
+    const icon_sq_loading_failed_url = 'unset_square.png';
     const fav_sticker_icon_url		= 'star.png';
     const fav_sticker_bg_width		= 40;
     const fav_sticker_bg_height		= 40;

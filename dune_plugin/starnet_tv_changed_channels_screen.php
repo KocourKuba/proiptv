@@ -126,6 +126,16 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             $channel = $this->plugin->tv->get_channel($item);
             if (is_null($channel)) continue;
 
+            $groups = array();
+            foreach ($channel->get_groups() as $group) {
+                $groups[] = $group->get_title();
+            }
+
+            $detailed_info = TR::t('tv_screen_ch_channel_info__3',
+                $channel->get_title(),
+                rtrim(implode(',', $groups), ","),
+                $channel->get_archive());
+
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array(
                         'channel_id' => $channel->get_id(),
@@ -135,6 +145,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $channel->get_icon_url(),
                     ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
+                    ViewItemParams::item_detailed_info => $detailed_info,
                 ),
                 PluginRegularFolderItem::starred => true,
             );

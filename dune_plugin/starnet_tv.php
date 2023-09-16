@@ -294,7 +294,7 @@ class Starnet_Tv implements User_Input_Handler
         // Favorites groupse
         $special_group = new Default_Group($this->plugin,
             FAVORITES_GROUP_ID,
-            TR::t('plugin_favorites'),
+            TR::load_string('plugin_favorites'),
             Default_Group::DEFAULT_FAVORITE_GROUP_ICON,
             PARAM_FAVORITES);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES));
@@ -303,7 +303,7 @@ class Starnet_Tv implements User_Input_Handler
         // History channels category
         $special_group = new Default_Group($this->plugin,
             HISTORY_GROUP_ID,
-            TR::t('plugin_history'),
+            TR::load_string('plugin_history'),
             Default_Group::DEFAULT_HISTORY_GROUP_ICON,
             null);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_HISTORY));
@@ -312,7 +312,7 @@ class Starnet_Tv implements User_Input_Handler
         // History channels category
         $special_group = new Default_Group($this->plugin,
             CHANGED_CHANNELS_GROUP_ID,
-            TR::t('plugin_changed'),
+            TR::load_string('plugin_changed'),
             Default_Group::DEFAULT_CHANGED_CHANNELS_GROUP_ICON,
             null);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_CHANGED_CHANNELS));
@@ -321,7 +321,7 @@ class Starnet_Tv implements User_Input_Handler
         // All channels category
         $special_group = new Default_Group($this->plugin,
             ALL_CHANNEL_GROUP_ID,
-            TR::t('plugin_all_channels'),
+            TR::load_string('plugin_all_channels'),
             Default_Group::DEFAULT_ALL_CHANNELS_GROUP_ICON,
             null);
         $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_CHANGED_CHANNELS));

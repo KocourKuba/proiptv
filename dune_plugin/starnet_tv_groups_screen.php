@@ -351,9 +351,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group->get_title(),
                     $this->plugin->get_playback_points()->size());
             } else if ($group->is_special_group(CHANGED_CHANNELS_GROUP_ID)) {
-                $item_detailed_info = TR::t('tv_screen_group_info__2',
+                $item_detailed_info = TR::t('tv_screen_group_changed_info__3',
                     $group->get_title(),
-                    $this->plugin->get_changed_channels(null));
+                    count($this->plugin->get_changed_channels('new')),
+                    count($this->plugin->get_changed_channels('removed')));
             } else {
                 $item_detailed_info = TR::t('tv_screen_group_info__2',
                     $group->get_title(),
@@ -392,6 +393,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             );
         }
 
+        hd_debug_print($items);
         //hd_debug_print("Loaded items " . count($items));
         return $items;
     }

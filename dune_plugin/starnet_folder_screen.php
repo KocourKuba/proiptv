@@ -219,7 +219,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $items = array();
         foreach ($this->get_file_list($plugin_cookies, $dir) as $item_type => $item) {
-            ksort($item);
+            if (isset($media_url->filepath)) {
+                ksort($item);
+            }
+
             foreach ($item as $k => $v) {
                 $detailed_icon = '';
                 if ($item_type === self::SELECTED_TYPE_SMB) {
@@ -308,7 +311,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     continue;
                 }
 
-                hd_debug_print("folder caption: $caption, path: $filepath, icon: $icon_file", true);
+                hd_debug_print("folder type: $item_type folder caption: $caption, path: $filepath, icon: $icon_file", true);
                 if (empty($detailed_icon)) {
                     $detailed_icon = str_replace('small_icons', 'large_icons', $icon_file);
                 }
@@ -615,7 +618,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             $folder_icon = "gui_skin://small_icons/smb.aai";
         } else if ($folder_type === 'smb_folder') {
             $folder_icon = "gui_skin://small_icons/network_folder.aai";
-        } else if ($folder_type === 'nfs') {
+        } else if ($folder_type === 'network') {
             $folder_icon = "gui_skin://small_icons/network.aai";
         } else if (preg_match("|/tmp/mnt/storage/usb_storage_[^/]+$|", $filepath)) {
             $folder_icon = "gui_skin://small_icons/usb.aai";
