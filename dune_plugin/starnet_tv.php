@@ -687,16 +687,18 @@ class Starnet_Tv implements User_Input_Handler
             // update url if play archive or different type of the stream
             $url = $this->plugin->generate_stream_url($channel_id, $archive_ts);
 
-            $zoom_preset = $this->plugin->get_channel_zoom($channel_id);
-            if (!is_null($zoom_preset)) {
-                if (!is_android()) {
-                    $zoom_preset = DuneVideoZoomPresets::normal;
-                    hd_debug_print("zoom_preset: reset to normal $zoom_preset");
-                }
+            if ($this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SetupControlSwitchDefs::switch_on) === SetupControlSwitchDefs::switch_on) {
+                $zoom_preset = $this->plugin->get_channel_zoom($channel_id);
+                if (!is_null($zoom_preset)) {
+                    if (!is_android()) {
+                        $zoom_preset = DuneVideoZoomPresets::normal;
+                        hd_debug_print("zoom_preset: reset to normal $zoom_preset");
+                    }
 
-                if ($zoom_preset !== DuneVideoZoomPresets::not_set) {
-                    $url .= (strpos($url, "|||dune_params|||") === false ? "|||dune_params|||" : ",");
-                    $url .= "zoom:$zoom_preset";
+                    if ($zoom_preset !== DuneVideoZoomPresets::not_set) {
+                        $url .= (strpos($url, "|||dune_params|||") === false ? "|||dune_params|||" : ",");
+                        $url .= "zoom:$zoom_preset";
+                    }
                 }
             }
         } catch (Exception $ex) {

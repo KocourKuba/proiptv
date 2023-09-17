@@ -107,6 +107,7 @@ setup_restore_settings = Восстановить из резервной коп
 setup_ask_exit = Подтверждение выхода из плагина
 setup_changelog = История изменений
 setup_debug = Включить расширенное логирование
+setup_per_channel_zoom = Включить масштабирование по каналам
 
 setup_channels_src_reset_playlist = Сбросить настройки плейлиста
 setup_channels_src_edit_playlists = Редактировать плейлисты

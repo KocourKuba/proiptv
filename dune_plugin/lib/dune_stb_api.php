@@ -146,6 +146,7 @@ const PARAM_ARCHIVE_DELAY_TIME = 'archive_delay_time';
 const PARAM_GROUPS_ICONS = 'groups_icons';
 const PARAM_PLUGIN_BACKGROUND = 'plugin_background';
 const PARAM_ENABLE_DEBUG = 'enable_debug';
+const PARAM_PER_CHANNELS_ZOOM = 'per_channels_zoom';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
 

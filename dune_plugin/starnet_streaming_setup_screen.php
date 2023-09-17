@@ -73,6 +73,13 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
             get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
+        // Per channel zoom
+        $per_channel_zoom = $this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SetupControlSwitchDefs::switch_on);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_PER_CHANNELS_ZOOM, TR::t('setup_per_channel_zoom'), SetupControlSwitchDefs::$on_off_translated[$per_channel_zoom],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$per_channel_zoom]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
         // buffering time
         $show_buf_time_ops = array();
         $show_buf_time_ops[1000] = TR::t('setup_buffer_sec_default__1', "1");
@@ -145,10 +152,10 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
             hd_debug_print("Setup: changing $control_id value to $new_value");
         }
 
+        hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, true);
         switch ($control_id) {
             case self::CONTROL_AUTO_PLAY:
             case self::CONTROL_AUTO_RESUME:
-                hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, true);
                 $plugin_cookies->{$control_id} = ($plugin_cookies->{$control_id} === SetupControlSwitchDefs::switch_off)
                     ? SetupControlSwitchDefs::switch_on
                     : SetupControlSwitchDefs::switch_off;
@@ -156,8 +163,11 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_BUFFERING_TIME:
             case PARAM_ARCHIVE_DELAY_TIME:
-                hd_debug_print("$control_id: " . $user_input->{$control_id}, true);
                 $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
+                break;
+
+            case PARAM_PER_CHANNELS_ZOOM:
+                $this->plugin->toggle_setting(PARAM_PER_CHANNELS_ZOOM, SetupControlSwitchDefs::switch_on);
                 break;
         }
 
