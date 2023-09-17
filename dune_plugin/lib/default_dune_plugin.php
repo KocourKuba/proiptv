@@ -653,7 +653,9 @@ class Default_Dune_Plugin implements DunePlugin
         if (is_null($this->{$item})) {
             hd_debug_print("Load: $name", true);
             $this->{$item} = HD::get_data_items($name, true, false);
-            foreach ($this->{$item} as $key => $param) hd_debug_print("$key => $param");
+            if (LogSeverity::$is_debug) {
+                foreach ($this->{$item} as $key => $param) hd_debug_print("$key => $param");
+            }
         }
     }
 

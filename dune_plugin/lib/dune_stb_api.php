@@ -885,6 +885,20 @@ function set_standby_mode($mode)
     return get_shell_exec($cmd);
 }
 
+/**
+ * @param string $setting
+ * @return string|null
+ */
+function get_shell_settings($setting)
+{
+    $settings = array();
+    if (file_exists('/config/settings.properties')) {
+        $settings = parse_ini_file('/config/settings.properties', 0, INI_SCANNER_RAW);
+    }
+
+    return isset($settings[$setting]) ? $settings[$setting] : '';
+}
+
 ###############################################################################
 # Playback controls
 ###############################################################################

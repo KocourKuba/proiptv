@@ -244,7 +244,7 @@ class Action_Factory
     }
 
     /**
-     * @param string $status
+     * @param int $status
      * @return array
      */
     public static function status($status)
@@ -252,7 +252,7 @@ class Action_Factory
         return array(
             GuiAction::handler_string_id => STATUS_ACTION_ID,
             GuiAction::caption => null,
-            GuiAction::data => array(StatusActionData::status => $status,),
+            GuiAction::data => array(StatusActionData::status => $status),
             GuiAction::params => null,
         );
     }

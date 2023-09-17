@@ -688,16 +688,17 @@ class Starnet_Tv implements User_Input_Handler
             $url = $this->plugin->generate_stream_url($channel_id, $archive_ts);
 
             $zoom_preset = $this->plugin->get_channel_zoom($channel_id);
-            if (!is_null($zoom_preset) && !is_android()) {
-                $zoom_preset = DuneVideoZoomPresets::normal;
-                hd_debug_print("zoom_preset: reset to normal $zoom_preset");
-            }
+            if (!is_null($zoom_preset)) {
+                if (!is_android()) {
+                    $zoom_preset = DuneVideoZoomPresets::normal;
+                    hd_debug_print("zoom_preset: reset to normal $zoom_preset");
+                }
 
-            if (!is_null($zoom_preset) && $zoom_preset !== DuneVideoZoomPresets::not_set) {
-                $url .= (strpos($url, "|||dune_params|||") === false ? "|||dune_params|||" : ",");
-                $url .= "zoom:$zoom_preset";
+                if ($zoom_preset !== DuneVideoZoomPresets::not_set) {
+                    $url .= (strpos($url, "|||dune_params|||") === false ? "|||dune_params|||" : ",");
+                    $url .= "zoom:$zoom_preset";
+                }
             }
-
         } catch (Exception $ex) {
             hd_debug_print("Exception: " . $ex->getMessage());
             $url = '';
