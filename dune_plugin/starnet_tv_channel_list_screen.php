@@ -138,45 +138,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case self::ACTION_RUN_SEARCH:
                 $find_text = $user_input->{self::ACTION_NEW_SEARCH};
                 hd_debug_print("Search in group: $parent_media_url->group_id", true);
-                $group = $this->plugin->tv->get_group($parent_media_url->group_id);
-                if (is_null($group)) {
+                $parent_group = $this->plugin->tv->get_group($parent_media_url->group_id);
+                if (is_null($parent_group)) {
                     hd_debug_print("unknown parent group", true);
                     break;
                 }
 
-                $defs = array();
-                $q_result = false;
-                hd_debug_print($group, true);
-
-                $idx = 0;
-                foreach($this->plugin->tv->get_channels() as $channel) {
-                    if ($channel->is_disabled()) continue;
-
-                    foreach ($channel->get_groups() as $group) {
-                        if ($group->is_disabled()) continue;
-
-                        $ch_title = $channel->get_title();
-                        hd_debug_print("Search in: $ch_title", true);
-                        $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
-                        if ($s !== false) {
-                            $q_result = true;
-                            hd_debug_print("found channel: $ch_title, idx: $idx", true);
-                            $add_params['number'] = $idx;
-                            Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
-                                self::ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
-                        }
-                        ++$idx;
-                    }
-                }
-
-                if ($q_result === false) {
-                    Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
-                    Control_Factory::add_vgap($defs, 20);
-                    Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, null,
-                        self::ACTION_CREATE_SEARCH, '', TR::t('new_search'), 300);
-                }
-
-                return Action_Factory::show_dialog(TR::t('search'), $defs, true);
+                return $this->do_search($parent_group, $find_text);
 
             case self::ACTION_JUMP_TO_CHANNEL:
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
@@ -249,6 +217,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $group = $this->plugin->tv->get_group($media_url->group_id);
                 if (!is_null($group) && !$group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+                    $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_CREATE_SEARCH, TR::t('search'), "search.png");
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_sort_default'), "brush.png");
                 }
@@ -400,6 +369,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         if ($group->is_disabled()) continue;
 
                         $items[] = $this->get_folder_item($this_group, $channel);
+                        break;
                     }
                 }
             } else {
@@ -470,5 +440,63 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             ),
             PluginRegularFolderItem::starred => $this->plugin->get_favorites()->in_order($channel->get_id()),
         );
+    }
+
+    /**
+     * @param Group $parent_group
+     * @param $find_text
+     * @return array
+     */
+    protected function do_search(Group $parent_group, $find_text)
+    {
+        hd_debug_print($parent_group, true);
+
+        /** @var Channel $channel */
+        $channels = array();
+        if ($parent_group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+            foreach($this->plugin->tv->get_channels() as $channel) {
+                if ($channel->is_disabled()) continue;
+
+                foreach ($channel->get_groups() as $group) {
+                    if (!$group->is_disabled()) {
+                        $channels[] = $channel;
+                        break;
+                    }
+                }
+            }
+        } else {
+            foreach ($parent_group->get_items_order() as $item) {
+                $channel = $this->plugin->tv->get_channel($item);
+                if (!is_null($channel) && !$channel->is_disabled()) {
+                    $channels[] = $channel;
+                }
+            }
+        }
+
+        $defs = array();
+        $q_result = false;
+        $idx = 0;
+        foreach ($channels as $channel) {
+            $ch_title = $channel->get_title();
+            hd_debug_print("Search in: $ch_title", true);
+            $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
+            if ($s !== false) {
+                $q_result = true;
+                hd_debug_print("found channel: $ch_title, idx: $idx", true);
+                $add_params['number'] = $idx;
+                Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
+                    self::ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
+            }
+            ++$idx;
+        }
+
+        if ($q_result === false) {
+            Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
+            Control_Factory::add_vgap($defs, 20);
+            Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, null,
+                self::ACTION_CREATE_SEARCH, '', TR::t('new_search'), 300);
+        }
+
+        return Action_Factory::show_dialog(TR::t('search'), $defs, true);
     }
 }
