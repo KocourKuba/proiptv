@@ -639,7 +639,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->set_pospone_save(false);
 
-        $this->plugin->epg_man->index_xmltv_program($epg_ids);
+        $this->plugin->epg_man->index_xmltv_program($epg_ids, $this->plugin->get_setting(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off));
 
         return 2;
     }

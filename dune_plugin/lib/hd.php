@@ -264,7 +264,7 @@ class HD
             }
 
             $info = curl_getinfo($ch);
-            hd_debug_print(raw_json_encode($info));
+            hd_debug_print(raw_json_encode($info), true);
             if ($info['http_code'] >= 300) {
                 throw new Exception("HTTP request failed ({$info['http_code']}): " . self::http_status_code_to_string($info['http_code']));
             }

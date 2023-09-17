@@ -114,7 +114,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->is_durty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->m3u_parser = new M3uParser();
-        $this->epg_man = new Epg_Manager($this);
+        $this->epg_man = new Epg_Manager();
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -751,7 +751,7 @@ class Default_Dune_Plugin implements DunePlugin
         hd_print("----------------------------------------------------");
         $this->load(PLUGIN_PARAMETERS, true);
         $this->update_log_level();
-        $this->epg_man->init_cache_dir();
+        $this->init_epg_manager();
         $this->init_playlist();
         $this->create_screen_views();
         $this->playback_points = new Playback_Points($this);
@@ -843,6 +843,16 @@ class Default_Dune_Plugin implements DunePlugin
         if ($user_agent !== HD::get_dune_user_agent()) {
             HD::set_dune_user_agent($user_agent);
         }
+    }
+
+    /**
+     * Initialize EPG Manager
+     *
+     * @return void
+     */
+    public function init_epg_manager()
+    {
+        $this->epg_man->init_cache_dir($this->get_xmltv_cache_dir(), $this->get_setting(PARAM_EPG_CACHE_TTL, 3));
     }
 
     /**

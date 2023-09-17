@@ -237,7 +237,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
                 $this->plugin->epg_man->clear_all_epg_cache();
                 $this->plugin->set_parameter(PARAM_XMLTV_CACHE_PATH, $data->filepath);
-                $this->plugin->epg_man->init_cache_dir();
+                $this->plugin->init_epg_manager();
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);

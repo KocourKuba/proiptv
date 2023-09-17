@@ -393,8 +393,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             );
         }
 
-        hd_debug_print($items);
-        //hd_debug_print("Loaded items " . count($items));
         return $items;
     }
 

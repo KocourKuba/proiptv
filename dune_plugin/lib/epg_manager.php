@@ -40,6 +40,11 @@ class Epg_Manager
     protected $cache_dir;
 
     /**
+     * @var int
+     */
+    protected $cache_ttl;
+
+    /**
      * contains memory epg cache
      * @var array
      */
@@ -81,14 +86,15 @@ class Epg_Manager
      */
     public $xmltv_picons;
 
-    public function __construct(Default_Dune_Plugin $plugin)
+    /**
+     * @param string $cache_dir
+     * @param int $cache_ttl
+     * @return void
+     */
+    public function init_cache_dir($cache_dir, $cache_ttl)
     {
-        $this->plugin = $plugin;
-    }
-
-    public function init_cache_dir()
-    {
-        $this->cache_dir = $this->plugin->get_xmltv_cache_dir();
+        $this->cache_dir = $cache_dir;
+        $this->cache_ttl = $cache_ttl;
         create_path($this->cache_dir);
         hd_debug_print("cache dir: $this->cache_dir");
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
@@ -215,7 +221,7 @@ class Epg_Manager
                 hd_debug_print("Cached xmltv file not exist");
             } else {
                 $check_time_file = filemtime($cached_xmltv_file);
-                $max_cache_time = 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
+                $max_cache_time = 3600 * 24 * $this->cache_ttl;
                 if ($check_time_file && $check_time_file + $max_cache_time > time()) {
                     hd_debug_print("Cached file: $cached_xmltv_file is not expired " . date("Y-m-d H:s", $check_time_file), true);
                     return '';
@@ -424,10 +430,11 @@ class Epg_Manager
     /**
      * indexing xmltv epg info
      *
-     * @param $epg_ids array
+     * @param array $epg_ids
+     * @param bool $parse_all
      * @return void
      */
-    public function index_xmltv_program($epg_ids)
+    public function index_xmltv_program($epg_ids, $parse_all)
     {
         $res = $this->is_xmltv_cache_valid();
         if (!empty($res)) {
@@ -449,7 +456,6 @@ class Epg_Manager
 
         hd_debug_print("Cached program index: $index_program is not valid need reindex");
 
-        $parse_all = $this->plugin->get_setting(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
         $lock_file = $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".lock";
         try {
             if (file_exists($lock_file)) {
@@ -600,12 +606,12 @@ class Epg_Manager
     {
         unset($this->epg_cache, $this->xmltv_data, $this->xmltv_index);
         $this->epg_cache = array();
-
-        hd_debug_print("clear entire cache dir: $this->cache_dir");
-        foreach (glob_dir($this->cache_dir) as $file) {
-            unlink($file);
+        if (empty($this->cache_dir)) {
+            return;
         }
 
+        hd_debug_print("clear entire cache dir: $this->cache_dir");
+        shell_exec('rm -f '. $this->cache_dir . DIRECTORY_SEPARATOR . '*');
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
 
