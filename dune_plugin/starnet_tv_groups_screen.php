@@ -105,9 +105,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     null,
                     $user_input->control_id === ACTION_OPEN_FOLDER ? Action_Factory::open_folder() : Action_Factory::tv_play());
 
-                $has_error = $this->plugin->get_last_error();
+                $has_error = HD::get_last_error();
                 if (!empty($has_error)) {
-                    $this->plugin->set_last_error('');
+                    HD::set_last_error(null);
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_any'), $post_action, $has_error);
                 }
 

@@ -845,4 +845,30 @@ class HD
     public static function array_search_i($needle, $haystack) {
         return array_search(strtolower($needle), array_map('strtolower', $haystack));
     }
+
+    /**
+     * @return string
+     */
+    public static function get_last_error()
+    {
+        $error_file = get_temp_path("last_error");
+        if (file_exists($error_file)) {
+            return file_get_contents($error_file);
+        }
+        return '';
+    }
+
+    /**
+     * @param string $error
+     */
+    public static function set_last_error($error)
+    {
+        $error_file = get_temp_path("last_error");
+
+        if (empty($error) && file_exists($error_file)) {
+            unlink($error_file);
+        } else {
+            file_put_contents($error_file, $error);
+        }
+    }
 }

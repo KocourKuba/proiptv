@@ -82,11 +82,6 @@ class Default_Dune_Plugin implements DunePlugin
     protected $screens_views;
 
     /**
-     * @var string
-     */
-    protected $last_error;
-
-    /**
      * @var array
      */
     protected $settings;
@@ -815,14 +810,14 @@ class Default_Dune_Plugin implements DunePlugin
             $this->m3u_parser->setupParser($tmp_file, $force);
             if ($this->m3u_parser->getEntriesCount() === 0) {
                 if (!$this->m3u_parser->parseInMemory()) {
-                    $this->set_last_error("Ошибка чтения плейлиста!");
+                    HD::set_last_error("Ошибка чтения плейлиста!");
                     throw new Exception("Can't read playlist");
                 }
 
                 $count = $this->m3u_parser->getEntriesCount();
                 if ($count === 0) {
-                    $this->set_last_error("Пустой плейлист!");
-                    hd_debug_print($this->last_error);
+                    HD::set_last_error("Пустой плейлист!");
+                    hd_debug_print('Empty playlist');
                     $this->clear_playlist_cache();
                     throw new Exception("Empty playlist");
                 }
@@ -1436,22 +1431,6 @@ class Default_Dune_Plugin implements DunePlugin
     // Misc.
     //
     ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @return string
-     */
-    public function get_last_error()
-    {
-        return $this->last_error;
-    }
-
-    /**
-     * @param string $error
-     */
-    public function set_last_error($error)
-    {
-        $this->last_error = $error;
-    }
 
     /**
      * @param array $defs

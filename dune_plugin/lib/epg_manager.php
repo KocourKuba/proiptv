@@ -334,7 +334,7 @@ class Epg_Manager
         $res = $this->is_xmltv_cache_valid();
         if (!empty($res)) {
             hd_debug_print("Error load xmltv: $res");
-            $this->plugin->set_last_error($res);
+            HD::set_last_error($res);
             return;
         }
 
@@ -432,7 +432,7 @@ class Epg_Manager
         $res = $this->is_xmltv_cache_valid();
         if (!empty($res)) {
             hd_debug_print("Error load xmltv: $res");
-            $this->plugin->set_last_error($res);
+            HD::set_last_error($res);
             return;
         }
 
