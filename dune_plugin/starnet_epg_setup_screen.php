@@ -38,7 +38,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const CONTROL_XMLTV_EPG_IDX = 'xmltv_epg_idx';
     const CONTROL_CHANGE_XMLTV_CACHE_PATH = 'xmltv_cache_path';
     const CONTROL_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
-    const CONTROL_EPG_PARSE_ALL = 'epg_parse_all';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -92,11 +91,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             Control_Factory::add_image_button($defs, $this, null, self::ACTION_RELOAD_EPG,
                 TR::t('setup_reload_xmltv_epg'), TR::t('refresh'), get_image_path('refresh.png'), self::CONTROLS_WIDTH);
         }
-
-        $parse_all = $this->plugin->get_setting(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_on);
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_EPG_PARSE_ALL, TR::t('setup_epg_parse_all'), SetupControlSwitchDefs::$on_off_translated[$parse_all],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$parse_all]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG cache dir
@@ -196,10 +190,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 break;
 
-            case self::CONTROL_EPG_PARSE_ALL:
-                $this->plugin->toggle_setting(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off);
-                break;
-
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $this->plugin->tv->unload_channels();
                 $this->plugin->epg_man->clear_epg_cache();
@@ -243,9 +233,33 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
             case self::ACTION_RELOAD_EPG:
-                hd_debug_print(self::ACTION_RELOAD_EPG);
                 $this->plugin->epg_man->clear_epg_cache();
-                return $action_reload;
+                hd_debug_print(self::ACTION_RELOAD_EPG);
+                $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg') . '" > /dev/null &';
+                hd_debug_print("exec: $cmd", true);
+                exec($cmd);
+                sleep(1);
+                return User_Input_Handler_Registry::create_action($this, ACTION_SHOW_INDEX_PROGRESS);
+
+            case ACTION_SHOW_INDEX_PROGRESS:
+                $counter['counter'] = 0;
+                if (isset($user_input->counter)) {
+                    $counter['counter'] = $user_input->counter + 5;
+                }
+
+                $qtime = format_duration_seconds($counter['counter']);
+                Control_Factory::add_label($defs, '', "Прошло $qtime сек.");
+
+                if ($this->plugin->epg_man->is_index_locked()) {
+                    hd_debug_print("index locked for {$counter['counter']} sec.", true);
+                    $run = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_INDEX_PROGRESS, null, $counter);
+                } else {
+                    $run = $action_reload;
+                }
+
+                $attrs[GUI_EVENT_TIMER] = Action_Factory::timer(5000);
+                $attrs['actions'] = array(GUI_EVENT_TIMER => Action_Factory::close_dialog_and_run($run));
+                return Action_Factory::show_dialog('Прогресс индексирования EPG', $defs, true, self::CONTROLS_WIDTH, $attrs);
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);

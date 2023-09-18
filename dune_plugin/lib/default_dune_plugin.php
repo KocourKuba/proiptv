@@ -1135,6 +1135,15 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_active_xmltv_source_key($key)
     {
         $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
+        $this->set_setting(PARAM_CUR_XMLTV_SOURCE, $this->get_all_xmltv_sources()->get($key));
+    }
+
+    /**
+     * @return string
+     */
+    public function get_active_xmltv_source()
+    {
+        return $this->get_setting(PARAM_CUR_XMLTV_SOURCE, '');
     }
 
     /**

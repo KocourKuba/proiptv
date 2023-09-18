@@ -195,7 +195,13 @@ class Starnet_Tv implements User_Input_Handler
     {
         hd_debug_print(null, true);
 
-        return array(GUI_EVENT_PLAYBACK_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP));
+        return array(
+            GUI_EVENT_PLAYBACK_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP),
+            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this,
+                GUI_EVENT_TIMER,
+                null,
+                $this->plugin->epg_man->is_index_locked() ? array('locked' => true) : null),
+        );
     }
 
     /**
@@ -211,9 +217,31 @@ class Starnet_Tv implements User_Input_Handler
 
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
-                // rising after playback end + 100 ms
-                $this->plugin->invalidate_epfs();
-                return $this->plugin->update_epfs_data($plugin_cookies, array(Starnet_TV_History_Screen::ID));
+                if (isset($user_input->stop_play)) {
+                    // rising after playback end + 100 ms
+                    $this->plugin->invalidate_epfs();
+                    return $this->plugin->update_epfs_data($plugin_cookies, array(Starnet_TV_History_Screen::ID));
+                }
+
+                if (isset($user_input->locked)) {
+                    if ($this->plugin->epg_man->is_index_locked()) {
+                        hd_debug_print("EPG still indexing");
+                        $new_actions = $this->get_action_map();
+                        $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this,
+                            GUI_EVENT_TIMER,
+                            null,
+                            array('locked' => true));
+
+                        return Action_Factory::change_behaviour($new_actions, 1000);
+                    }
+
+                    hd_debug_print("Refresh EPG");
+                    $channel_id = $user_input->plugin_tv_channel_id;
+                    $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
+                    $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+                    return Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg);
+                }
+                break;
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $this->plugin->get_playback_points()->update_point($user_input->plugin_tv_channel_id);
@@ -222,7 +250,11 @@ class Starnet_Tv implements User_Input_Handler
 
                 $this->plugin->get_playback_points()->save();
                 $new_actions = $this->get_action_map();
-                $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this,
+                    GUI_EVENT_TIMER,
+                    null,
+                    array('stop_play' => true));
+
                 return Action_Factory::change_behaviour($new_actions, 100);
         }
 
@@ -235,6 +267,11 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_group($group_id)
     {
+        if (is_null($this->groups)) {
+            hd_debug_print("Playlist not loaded yet. Groups not available");
+            return null;
+        }
+
         $group = $this->groups->get($group_id);
         if (is_null($group)) {
             $group = $this->special_groups->get($group_id);
@@ -425,7 +462,6 @@ class Starnet_Tv implements User_Input_Handler
 
         // Read channels
         $playlist_group_channels = array();
-        $epg_ids = array();
         $number = 0;
         foreach ($pl_entries as $entry) {
             $channel_id = $entry->getEntryId();
@@ -639,7 +675,10 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->set_pospone_save(false);
 
-        $this->plugin->epg_man->index_xmltv_program($epg_ids, $this->plugin->get_setting(PARAM_EPG_PARSE_ALL, SetupControlSwitchDefs::switch_off));
+        $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg') . '" > /dev/null &';
+        hd_debug_print("exec: $cmd");
+        exec($cmd);
+        //$this->plugin->epg_man->index_xmltv_program();
 
         return 2;
     }

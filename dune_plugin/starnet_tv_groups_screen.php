@@ -97,7 +97,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->plugin->save(PLUGIN_PARAMETERS);
-                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
+                return Action_Factory::close_and_run();
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
