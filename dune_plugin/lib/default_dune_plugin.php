@@ -930,7 +930,6 @@ class Default_Dune_Plugin implements DunePlugin
         $tmp_file = $this->get_current_playlist_cache();
         if (file_exists($tmp_file)) {
             hd_debug_print("remove $tmp_file", true);
-            copy($tmp_file, $tmp_file . ".m3u");
             unlink($tmp_file);
         }
     }
