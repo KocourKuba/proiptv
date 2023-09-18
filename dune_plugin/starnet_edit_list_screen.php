@@ -168,6 +168,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_REMOVE_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_REMOVE_PLAYLIST_DLG_APPLY:
+                if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                    $item = $order->get_item_by_idx($user_input->sel_ndx);
+                    $this->plugin->epg_man->clear_epg_cache_by_uri($item);
+                }
                 $order->remove_item_by_idx($user_input->sel_ndx);
                 $this->set_edit_order($parent_media_url, $order);
                 return User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
@@ -336,29 +340,29 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $error_log = array();
                     foreach ($lines as $line) {
                         $line = trim($line);
-                        if (preg_match('|https?://|', $line)) {
-                            if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                                $this->plugin->epg_man->set_xmltv_url($line);
-                                $res = $this->plugin->epg_man->is_xmltv_cache_valid();
-                                hd_debug_print("Error load xmltv: $res");
-                                if (!empty($res)) {
-                                    $error_log[] = $res;
-                                    continue;
-                                }
-                                HD::set_last_error($res);
-                                $this->plugin->epg_man->set_xmltv_url(null);
-                            } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                                try {
-                                    HD::http_get_document($line);
-                                } catch (Exception $ex) {
-                                    $error_log[] = $ex->getMessage();
-                                    continue;
-                                }
-                            }
+                        if ($order->in_order($line) || !preg_match('|https?://|', $line)) continue;
 
-                            $order->add_item($line);
-                            hd_debug_print("imported: '$line'");
+                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                            $this->plugin->epg_man->set_xmltv_url($line);
+                            $res = $this->plugin->epg_man->is_xmltv_cache_valid();
+                            hd_debug_print("Error load xmltv: $res");
+                            if (!empty($res)) {
+                                $error_log[] = $res;
+                                continue;
+                            }
+                            HD::set_last_error($res);
+                            $this->plugin->epg_man->set_xmltv_url(null);
+                        } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                            try {
+                                HD::http_get_document($line);
+                            } catch (Exception $ex) {
+                                $error_log[] = $ex->getMessage();
+                                continue;
+                            }
                         }
+
+                        $order->add_item($line);
+                        hd_debug_print("imported: '$line'");
                     }
 
                     $post_action = null;
