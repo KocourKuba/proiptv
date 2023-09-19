@@ -89,7 +89,7 @@ class Epg_Manager
     /**
      * @var array
      */
-    public $missed_chanels;
+    public $delayed_epg = array();
 
     /**
      * @param string $cache_dir
@@ -171,10 +171,11 @@ class Epg_Manager
 
             hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel->get_id()}' ({$channel->get_title()})");
             if ($this->get_epg_data($epg_id, $program_epg) === false) {
-                $this->missed_chanels[] = $channel->get_id();
+                hd_debug_print("EPG still indexing");
+                $this->delayed_epg[] = $channel->get_id();
                 $day_epg[$day_start_ts][Epg_Params::EPG_END] = $day_start_ts + 86400;
-                $day_epg[$day_start_ts][Epg_Params::EPG_NAME] = 'EPG not ready';
-                $day_epg[$day_start_ts][Epg_Params::EPG_DESC] = 'Still indexing';
+                $day_epg[$day_start_ts][Epg_Params::EPG_NAME] = TR::load_string('epg_not_ready');
+                $day_epg[$day_start_ts][Epg_Params::EPG_DESC] = TR::load_string('epg_not_ready_desc');
                 return $day_epg;
             }
 
@@ -261,7 +262,7 @@ class Epg_Manager
             }
 
             if (!isset($info['filetime'])) {
-                hd_debug_print("Server returns wron timestamp, bad configured server of something wrong");
+                hd_debug_print("Server returns wrong timestamp, bad configured server of something not good");
                 $last_mod_file = time();
             } else {
                 $last_mod_file = $info['filetime'];

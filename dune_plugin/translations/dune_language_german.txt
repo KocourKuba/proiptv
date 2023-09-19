@@ -206,6 +206,8 @@ tv_screen_external_player = externer Player
 tv_screen_internal_player = Play by internal player
 tv_screen_toggle_icons_aspect = Toggle icons proportions
 
+epg_not_ready = EPG not ready
+epg_not_ready_desc = EPG still indexing, please wait
 playlist_name_msg__1 = Current playlist: %s
 warn_msg2__1 = Fehlende oder nicht vollständige Daten für die URL-Generierung.\nMöglicherweise wurden keine Kontodaten eingegeben oder der Kanal ist im aktuellen Abonnement nicht vorhanden.\n %s
 

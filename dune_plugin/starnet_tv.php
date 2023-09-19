@@ -225,7 +225,6 @@ class Starnet_Tv implements User_Input_Handler
 
                 if (isset($user_input->locked)) {
                     if ($this->plugin->epg_man->is_index_locked()) {
-                        hd_debug_print("EPG still indexing");
                         $new_actions = $this->get_action_map();
                         $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this,
                             GUI_EVENT_TIMER,
@@ -236,10 +235,14 @@ class Starnet_Tv implements User_Input_Handler
                     }
 
                     hd_debug_print("Refresh EPG");
-                    $channel_id = $user_input->plugin_tv_channel_id;
-                    $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
-                    $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
-                    return Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg);
+                    $post_action = null;
+                    foreach($this->plugin->epg_man->delayed_epg as $channel) {
+                        $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
+                        $day_epg = $this->plugin->get_day_epg($channel, $day_start_ts, $plugin_cookies);
+                        $post_action = Action_Factory::update_epg($channel, true, $day_start_ts, $day_epg, $post_action);
+                    }
+                    $this->plugin->epg_man->delayed_epg = array();
+                    return $post_action;
                 }
                 break;
 
@@ -675,7 +678,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->set_pospone_save(false);
 
-        $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh.sh') . '" > /dev/null &';
+        $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
         hd_debug_print("exec: $cmd");
         exec($cmd);
         //$this->plugin->epg_man->index_xmltv_program();

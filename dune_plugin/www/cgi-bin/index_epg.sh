@@ -32,8 +32,6 @@ cgi_plugin_env
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib:/usr/lib"
 SCRIPT_FILENAME=$(echo "$SCRIPT_FILENAME" | sed -n 's/^\(\/.*\/\)\(.*\)\.sh/\1\2.php/p')
 
-echo $SCRIPT_FILENAME > "$PLUGIN_TMP_DIR_PATH/www.log"
-
 ./php-cgi
 
 ################################################################################
