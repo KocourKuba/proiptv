@@ -433,7 +433,7 @@ class Epg_Manager
     /**
      * indexing xmltv epg info
      *
-     * @return bool
+     * @return void
      */
     public function index_xmltv_program()
     {
@@ -441,19 +441,32 @@ class Epg_Manager
         if (!empty($res)) {
             hd_debug_print("Error load xmltv: $res");
             HD::set_last_error($res);
-            return false;
+            return;
         }
 
         if ($this->is_index_locked()) {
             hd_debug_print("File is indexing now, skipped");
-            return false;
+            return;
         }
 
+        $cache_valid = false;
         $index_program = $this->get_epg_index_name();
         if (file_exists($index_program)) {
             hd_debug_print("Load cache program index: $index_program");
             $this->xmltv_index = HD::ReadContentFromFile($index_program);
-            return false;
+            if ($this->xmltv_index !== false) {
+                $cache_valid = true;
+                foreach ($this->xmltv_index as $idx) {
+                    if (!file_exists($this->cache_dir . DIRECTORY_SEPARATOR . $idx)) {
+                        $cache_valid = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ($cache_valid) {
+            return;
         }
 
         try {
@@ -543,7 +556,6 @@ class Epg_Manager
 
         HD::ShowMemoryUsage();
         hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
-        return true;
     }
 
     /**
