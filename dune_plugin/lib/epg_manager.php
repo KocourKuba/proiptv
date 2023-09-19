@@ -45,12 +45,6 @@ class Epg_Manager
     protected $cache_ttl;
 
     /**
-     * contains memory epg cache
-     * @var array
-     */
-    protected $epg_cache = array();
-
-    /**
      * url to download XMLTV EPG
      * @var string
      */
@@ -119,8 +113,7 @@ class Epg_Manager
             // reset memory cache and data
             $this->xmltv_picons = null;
             $this->xmltv_channels = null;
-            unset($this->epg_cache, $this->xmltv_data, $this->xmltv_index);
-            $this->epg_cache = array();
+            unset($this->xmltv_data, $this->xmltv_index);
         }
     }
 
@@ -152,7 +145,7 @@ class Epg_Manager
      *
      * @param Channel $channel
      * @param int $day_start_ts
-     * @return array|false
+     * @return array
      * @throws Exception
      */
     public function get_day_epg_items(Channel $channel, $day_start_ts)
@@ -165,11 +158,6 @@ class Epg_Manager
 
         $day_epg = array();
         $epg_id = $this->get_channel_epg_id($epg_ids);
-
-        if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
-            hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache");
-            return $this->epg_cache[$epg_id][$day_start_ts];
-        }
 
         hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ({$channel->get_title()})");
         if ($this->get_epg_data($epg_id, $program_epg) === false) {
@@ -210,9 +198,6 @@ class Epg_Manager
                 $day_epg[$start][Epg_Params::EPG_DESC] = '';
             }
         }
-
-        hd_debug_print("Store day epg to memory cache", true);
-        $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
 
         return $day_epg;
     }
@@ -642,9 +627,7 @@ class Epg_Manager
      */
     protected function clear_epg_files($filename)
     {
-        unset($this->epg_cache, $this->xmltv_data, $this->xmltv_index);
-        $this->epg_cache = array();
-
+        unset($this->xmltv_data, $this->xmltv_index);
         if (empty($this->cache_dir)) {
             return;
         }

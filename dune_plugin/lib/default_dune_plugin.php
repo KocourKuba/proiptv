@@ -395,12 +395,7 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("day_start timestamp: $day_start_tm_sec (" . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ")");
             }
 
-            $day_epg_items = $this->epg_man->get_day_epg_items($channel, $day_start_tm_sec);
-            if ($day_epg_items === false) {
-                throw new Exception();
-            }
-
-            foreach ($day_epg_items as $time => $value) {
+            foreach ($this->epg_man->get_day_epg_items($channel, $day_start_tm_sec) as $time => $value) {
                 $tm_start = (int)$time + $time_shift;
                 $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
                 $day_epg[] = array(
