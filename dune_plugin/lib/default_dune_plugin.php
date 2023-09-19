@@ -367,39 +367,39 @@ class Default_Dune_Plugin implements DunePlugin
      * @param int $day_start_tm_sec
      * @param $plugin_cookies
      * @return array
-     * @throws Exception
      */
     public function get_day_epg($channel_id, $day_start_tm_sec, &$plugin_cookies)
     {
         hd_debug_print(null, true);
 
-        if (is_null($this->tv)) {
-            hd_debug_print("TV is not supported");
-            HD::print_backtrace();
-            throw new Exception('TV is not supported');
-        }
-
+        $day_epg = array();
         try {
+            if (is_null($this->tv)) {
+                hd_debug_print("TV is not supported");
+                HD::print_backtrace();
+                throw new Exception('TV is not supported');
+            }
+
             // get channel by hash
             $channel = $this->tv->get_channel($channel_id);
-        } catch (Exception $ex) {
-            hd_debug_print("Can't get channel with ID: $channel_id");
-            return array();
-        }
 
-        $day_epg = array();
-        // correct day start to local timezone
-        $day_start_tm_sec -= get_local_time_zone_offset();
+            // correct day start to local timezone
+            $day_start_tm_sec -= get_local_time_zone_offset();
 
-        if (LogSeverity::$is_debug) {
-            hd_debug_print("day_start timestamp: $day_start_tm_sec (" . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ")");
-        }
-
-        $day_epg_items = $this->epg_man->get_day_epg_items($channel, $day_start_tm_sec);
-        if ($day_epg_items !== false) {
             // get personal time shift for channel
             $time_shift = 3600 * ($channel->get_timeshift_hours() + (isset($plugin_cookies->epg_shift) ? $plugin_cookies->epg_shift : 0));
             hd_debug_print("EPG time shift $time_shift", true);
+            $day_start_tm_sec += $time_shift;
+
+            if (LogSeverity::$is_debug) {
+                hd_debug_print("day_start timestamp: $day_start_tm_sec (" . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ")");
+            }
+
+            $day_epg_items = $this->epg_man->get_day_epg_items($channel, $day_start_tm_sec);
+            if ($day_epg_items === false) {
+                throw new Exception();
+            }
+
             foreach ($day_epg_items as $time => $value) {
                 $tm_start = (int)$time + $time_shift;
                 $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
@@ -413,6 +413,11 @@ class Default_Dune_Plugin implements DunePlugin
                 if (LogSeverity::$is_debug) {
                     hd_debug_print(format_datetime("m-d H:i", $tm_start) . " - " . format_datetime("m-d H:i", $tm_end) . " {$value[Epg_Params::EPG_NAME]}");
                 }
+            }
+        } catch (Exception $ex) {
+            $msg = $ex->getMessage();
+            if (!empty($msg)) {
+                hd_debug_print($msg);
             }
         }
 

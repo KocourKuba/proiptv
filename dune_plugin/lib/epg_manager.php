@@ -153,67 +153,68 @@ class Epg_Manager
      * @param Channel $channel
      * @param int $day_start_ts
      * @return array|false
+     * @throws Exception
      */
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
-        try {
-            $epg_ids = $channel->get_epg_ids();
-            if (empty($epg_ids)) {
-                throw new Exception("EPG ID for channel {$channel->get_id()} ({$channel->get_title()}) not defined");
-            }
-
-            $epg_id = $this->get_channel_epg_id($epg_ids);
-
-            if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
-                hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache");
-                return $this->epg_cache[$epg_id][$day_start_ts];
-            }
-
-            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel->get_id()}' ({$channel->get_title()})");
-            if ($this->get_epg_data($epg_id, $program_epg) === false) {
-                hd_debug_print("EPG still indexing");
-                $this->delayed_epg[] = $channel->get_id();
-                $day_epg[$day_start_ts][Epg_Params::EPG_END] = $day_start_ts + 86400;
-                $day_epg[$day_start_ts][Epg_Params::EPG_NAME] = TR::load_string('epg_not_ready');
-                $day_epg[$day_start_ts][Epg_Params::EPG_DESC] = TR::load_string('epg_not_ready_desc');
-                return $day_epg;
-            }
-
-            $counts = count($program_epg);
-            if ($counts === 0) {
-                throw new Exception("Empty or no data for EPG ID: $epg_id");
-            }
-
-            hd_debug_print("Total $counts EPG entries loaded");
-
-            // filter out epg only for selected day
-            $day_end_ts = $day_start_ts + 86400;
-
-            $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
-            $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-            hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l", true);
-
-            $day_epg = array();
-            foreach ($program_epg as $time_start => $entry) {
-                if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
-                    $day_epg[$time_start] = $entry;
-                }
-            }
-
-            if (empty($day_epg)) {
-                throw new Exception("No EPG data for " . $channel->get_id());
-            }
-
-            hd_debug_print("Store day epg to memory cache", true);
-            $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
-
-            return $day_epg;
-
-        } catch (Exception $ex) {
-            hd_debug_print("Can't fetch EPG from source $this->xmltv_url : " . $ex->getMessage());
+        $epg_ids = $channel->get_epg_ids();
+        $channel_id = $channel->get_id();
+        if (empty($epg_ids)) {
+            throw new Exception("EPG ID for channel $channel_id ({$channel->get_title()}) not defined");
         }
 
-        return false;
+        $day_epg = array();
+        $epg_id = $this->get_channel_epg_id($epg_ids);
+
+        if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
+            hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache");
+            return $this->epg_cache[$epg_id][$day_start_ts];
+        }
+
+        hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ({$channel->get_title()})");
+        if ($this->get_epg_data($epg_id, $program_epg) === false) {
+            hd_debug_print("EPG still indexing");
+            $this->delayed_epg[] = $channel_id;
+            $day_epg[$day_start_ts][Epg_Params::EPG_END] = $day_start_ts + 86400;
+            $day_epg[$day_start_ts][Epg_Params::EPG_NAME] = TR::load_string('epg_not_ready');
+            $day_epg[$day_start_ts][Epg_Params::EPG_DESC] = TR::load_string('epg_not_ready_desc');
+            return $day_epg;
+        }
+
+        $counts = count($program_epg);
+        if ($counts === 0 && $channel->get_archive() === 0) {
+            throw new Exception("No data for EPG ID: $epg_id");
+        }
+
+        hd_debug_print("Total $counts EPG entries loaded");
+
+        // filter out epg only for selected day
+        $day_end_ts = $day_start_ts + 86400;
+
+        $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
+        $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
+        hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l", true);
+
+        foreach ($program_epg as $time_start => $entry) {
+            if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
+                $day_epg[$time_start] = $entry;
+            }
+        }
+
+        if (empty($day_epg)) {
+            hd_debug_print("Create fake data for non existing EPG data");
+            $n = 0;
+            for ($start = $day_start_ts; $start <= $day_start_ts + 86400; $start += 3600) {
+                $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
+                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load_string('fake_epg_program') . " " . ++$n;
+                $day_epg[$start][Epg_Params::EPG_DESC] = '';
+            }
+        }
+
+        hd_debug_print("Store day epg to memory cache", true);
+        $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
+
+        return $day_epg;
     }
 
     /**
