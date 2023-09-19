@@ -241,9 +241,9 @@ class HD
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 2);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
         curl_setopt($ch, CURLOPT_USERAGENT, self::get_dune_user_agent());
         curl_setopt($ch, CURLOPT_FILETIME, true);
         curl_setopt($ch, CURLOPT_FILE, $fp);
@@ -260,13 +260,13 @@ class HD
         try {
             $result = curl_exec($ch);
             if ($result === false) {
-                throw new Exception("curl_exec error: " . curl_error($ch));
+                throw new Exception($url . PHP_EOL . "curl_exec error: " . curl_error($ch));
             }
 
             $info = curl_getinfo($ch);
             hd_debug_print(raw_json_encode($info), true);
             if ($info['http_code'] >= 300) {
-                throw new Exception("HTTP request failed ({$info['http_code']}): " . self::http_status_code_to_string($info['http_code']));
+                throw new Exception($url . PHP_EOL . "HTTP request failed ({$info['http_code']}): " . self::http_status_code_to_string($info['http_code']));
             }
         } catch (Exception $ex) {
             fclose($fp);
@@ -417,6 +417,8 @@ class HD
 
         $paths = array(
             get_data_path("*.settings"),
+            get_temp_path("*.m3u"),
+            get_temp_path("*.m3u8"),
             "$apk_subst/tmp/run/shell.*",
         );
 
