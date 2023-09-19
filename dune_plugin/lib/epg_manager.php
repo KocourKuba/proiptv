@@ -118,6 +118,28 @@ class Epg_Manager
     }
 
     /**
+     * @return bool
+     */
+    public function is_index_locked()
+    {
+        $lock_file = $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".lock";
+        return file_exists($lock_file);
+    }
+
+    /**
+     * @param bool $lock
+     */
+    public function set_index_locked($lock)
+    {
+        $lock_file = $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".lock";
+        if ($lock) {
+            file_put_contents($lock_file, '');
+        } else if (file_exists($lock_file)) {
+            unlink($lock_file);
+        }
+    }
+
+    /**
      * Get picon associated to epg id
      *
      * @param array $epg_ids list of epg id's
@@ -125,10 +147,8 @@ class Epg_Manager
      */
     public function get_picon($epg_ids)
     {
-        try {
-            $epg_id = $this->get_channel_epg_id($epg_ids);
-        } catch (Exception $e) {
-            hd_debug_print($e->getMessage());
+        $epg_id = $this->get_map_channel_id_to_epg_id($epg_ids);
+        if (empty($epg_id)) {
             return null;
         }
 
@@ -141,37 +161,102 @@ class Epg_Manager
     }
 
     /**
-     * Try to load epg from cached file and store to memory cache
+     * Try to load epg from cached file
      *
      * @param Channel $channel
      * @param int $day_start_ts
      * @return array
-     * @throws Exception
      */
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
-        $epg_ids = $channel->get_epg_ids();
         $channel_id = $channel->get_id();
-        if (empty($epg_ids)) {
-            throw new Exception("EPG ID for channel $channel_id ({$channel->get_title()}) not defined");
-        }
 
-        $day_epg = array();
-        $epg_id = $this->get_channel_epg_id($epg_ids);
-
-        hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ({$channel->get_title()})");
-        if ($this->get_epg_data($epg_id, $program_epg) === false) {
+        if ($this->is_index_locked()) {
             hd_debug_print("EPG still indexing");
             $this->delayed_epg[] = $channel_id;
-            $day_epg[$day_start_ts][Epg_Params::EPG_END] = $day_start_ts + 86400;
-            $day_epg[$day_start_ts][Epg_Params::EPG_NAME] = TR::load_string('epg_not_ready');
-            $day_epg[$day_start_ts][Epg_Params::EPG_DESC] = TR::load_string('epg_not_ready_desc');
-            return $day_epg;
+            return array($day_start_ts => array(
+                Epg_Params::EPG_END  => $day_start_ts + 86400,
+                Epg_Params::EPG_NAME => TR::load_string('epg_not_ready'),
+                Epg_Params::EPG_DESC => TR::load_string('epg_not_ready_desc'),
+                )
+            );
         }
+
+        $program_epg = array();
+
+        try {
+            if (empty($this->xmltv_index)) {
+                $index_file = $this->get_epg_index_name();
+                //hd_debug_print("load index from file '$index_file'");
+                $data = HD::ReadContentFromFile($index_file);
+                if (false !== $data) {
+                    $this->xmltv_index = $data;
+                }
+
+                if (empty($this->xmltv_index)) {
+                    throw new Exception("load index failed '$index_file'");
+                }
+            }
+
+            $epg_id = $this->get_map_channel_id_to_epg_id($channel->get_epg_ids());
+            if (is_null($epg_id)) {
+                throw new Exception("epg id not defined");
+            }
+
+            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ({$channel->get_title()})");
+            if (!isset($this->xmltv_channels[$epg_id])) {
+                throw new Exception("xmltv index for epg $epg_id is not exist");
+            }
+
+            $channel_id = $this->xmltv_channels[$epg_id];
+            if (!isset($this->xmltv_data[$channel_id])) {
+                if (!isset($this->xmltv_index[$channel_id])) {
+                    throw new Exception("xmltv index for channel $channel_id is not exist");
+                }
+
+                $channel_index = $this->cache_dir . DIRECTORY_SEPARATOR . $this->xmltv_index[$channel_id];
+                if (!file_exists($channel_index)) {
+                    throw new Exception("index for channel $channel_id not found: $channel_index");
+                }
+
+                $content = HD::ReadContentFromFile($channel_index);
+                if ($content === false) {
+                    throw new Exception("index for channel $channel_id is broken");
+                }
+                $this->xmltv_data[$channel_id] = $content;
+            }
+
+            $file_object = $this->open_xmltv_file();
+            foreach ($this->xmltv_data[$channel_id] as $pos) {
+                $xml_str = '';
+                $file_object->fseek($pos);
+                while (!$file_object->eof()) {
+                    $line = $file_object->fgets();
+                    $xml_str .= $line . PHP_EOL;
+                    if (strpos($line, "</programme") !== false) {
+                        break;
+                    }
+                }
+
+                $xml_node = new DOMDocument();
+                $xml_node->loadXML($xml_str);
+                $xml = (array)simplexml_import_dom($xml_node);
+
+                $program_start = strtotime((string)$xml['@attributes']['start']);
+                $program_epg[$program_start][Epg_Params::EPG_END] = strtotime((string)$xml['@attributes']['stop']);
+                $program_epg[$program_start][Epg_Params::EPG_NAME] = (string)$xml['title'];
+                $program_epg[$program_start][Epg_Params::EPG_DESC] = isset($xml['desc']) ? (string)$xml['desc'] : '';
+            }
+        } catch (Exception $ex) {
+            hd_print($ex->getMessage());
+        }
+
+        ksort($program_epg);
 
         $counts = count($program_epg);
         if ($counts === 0 && $channel->get_archive() === 0) {
-            throw new Exception("No data for EPG ID: $epg_id");
+            hd_debug_print("No EPG and no archives");
+            return array();
         }
 
         hd_debug_print("Total $counts EPG entries loaded");
@@ -183,6 +268,7 @@ class Epg_Manager
         $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
         hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l", true);
 
+        $day_epg = array();
         foreach ($program_epg as $time_start => $entry) {
             if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
                 $day_epg[$time_start] = $entry;
@@ -589,46 +675,6 @@ class Epg_Manager
         $this->clear_epg_files('');
     }
 
-    /**
-     * @return bool
-     */
-    public function is_index_done()
-    {
-        $done = $this->cache_dir . DIRECTORY_SEPARATOR . "done";
-        return file_exists($done);
-    }
-
-    /**
-     * @return void
-     */
-    public function clear_index_done()
-    {
-        $done = $this->cache_dir . DIRECTORY_SEPARATOR . "done";
-        unlink($done);
-    }
-
-    /**
-     * @return bool
-     */
-    public function is_index_locked()
-    {
-        $lock_file = $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".lock";
-        return file_exists($lock_file);
-    }
-
-    /**
-     * @param bool $lock
-     */
-    public function set_index_locked($lock)
-    {
-        $lock_file = $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".lock";
-        if ($lock) {
-            file_put_contents($lock_file, '');
-        } else if (file_exists($lock_file)) {
-            unlink($lock_file);
-        }
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods
 
@@ -684,13 +730,18 @@ class Epg_Manager
 
     /**
      * @param $ids array
-     * @return string
-     * @throws Exception
+     * @return string|null
      */
-    protected function get_channel_epg_id($ids)
+    protected function get_map_channel_id_to_epg_id($ids)
     {
+        if (empty($ids)) {
+            hd_debug_print("No id's. Nothing to map");
+            return null;
+        }
+
         if (empty($this->url_hash)) {
-            throw new Exception("xmltv file is not set");
+            hd_debug_print("xmltv file is not set");
+            return null;
         }
 
         if (empty($this->xmltv_channels)) {
@@ -701,7 +752,8 @@ class Epg_Manager
             }
 
             if (empty($this->xmltv_channels)) {
-                throw new Exception("load channels index failed '$index_file'");
+                hd_debug_print("load channels index failed '$index_file'");
+                return null;
             }
         }
 
@@ -711,78 +763,8 @@ class Epg_Manager
             }
         }
 
-        throw new Exception("No mapped EPG exist");
-    }
-
-    /**
-     * @param $id string
-     * @param $ch_epg array
-     * @return bool
-     * @throws Exception
-     */
-    protected function get_epg_data($id, &$ch_epg)
-    {
-        if (empty($this->xmltv_index)) {
-            if ($this->is_index_locked()) {
-                return false;
-            }
-
-            $index_file = $this->get_epg_index_name();
-            //hd_debug_print("load index from file '$index_file'");
-            $data = HD::ReadContentFromFile($index_file);
-            if (false !== $data) {
-                $this->xmltv_index = $data;
-            }
-
-            if (empty($this->xmltv_index)) {
-                throw new Exception("load index failed '$index_file'");
-            }
-        }
-
-        if (!isset($this->xmltv_channels[$id])) {
-            throw new Exception("xmltv index for epg $id is not exist");
-        }
-
-        $channel_id = $this->xmltv_channels[$id];
-        if (!isset($this->xmltv_data[$channel_id])) {
-            if (!isset($this->xmltv_index[$channel_id])) {
-                throw new Exception("xmltv index for channel $channel_id is not exist");
-            }
-
-            $channel_index = $this->cache_dir . DIRECTORY_SEPARATOR . $this->xmltv_index[$channel_id];
-            //hd_debug_print("Check channel $id index: $channel_index");
-            if (!file_exists($channel_index)) {
-                throw new Exception("index for channel $channel_id not found: $channel_index");
-            }
-
-            $this->xmltv_data[$channel_id] = HD::ReadContentFromFile($channel_index);
-        }
-
-        $file_object = $this->open_xmltv_file();
-        $ch_epg = array();
-        foreach ($this->xmltv_data[$channel_id] as $pos) {
-            $xml_str = '';
-            $file_object->fseek($pos);
-            while (!$file_object->eof()) {
-                $line = $file_object->fgets();
-                $xml_str .= $line . PHP_EOL;
-                if (strpos($line, "</programme") !== false) {
-                    break;
-                }
-            }
-
-            $xml_node = new DOMDocument();
-            $xml_node->loadXML($xml_str);
-            $xml = (array)simplexml_import_dom($xml_node);
-
-            $program_start = strtotime((string)$xml['@attributes']['start']);
-            $ch_epg[$program_start][Epg_Params::EPG_END] = strtotime((string)$xml['@attributes']['stop']);
-            $ch_epg[$program_start][Epg_Params::EPG_NAME] = (string)$xml['title'];
-            $ch_epg[$program_start][Epg_Params::EPG_DESC] = isset($xml['desc']) ? (string)$xml['desc'] : '';
-        }
-
-        ksort($ch_epg);
-        return true;
+        hd_print("No mapped EPG exist");
+        return null;
     }
 
     /**
