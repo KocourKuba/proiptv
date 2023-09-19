@@ -235,7 +235,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case self::ACTION_RELOAD_EPG:
                 $this->plugin->epg_man->clear_epg_cache();
                 hd_debug_print(self::ACTION_RELOAD_EPG);
-                $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg') . '" > /dev/null &';
+                $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh.sh') . '" > /dev/null &';
                 hd_debug_print("exec: $cmd", true);
                 exec($cmd);
                 sleep(1);

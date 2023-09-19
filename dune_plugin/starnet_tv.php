@@ -675,7 +675,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->set_pospone_save(false);
 
-        $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg') . '" > /dev/null &';
+        $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh.sh') . '" > /dev/null &';
         hd_debug_print("exec: $cmd");
         exec($cmd);
         //$this->plugin->epg_man->index_xmltv_program();
