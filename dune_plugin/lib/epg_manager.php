@@ -338,6 +338,9 @@ class Epg_Manager
             }
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
+            if (!empty($tmp_filename) && file_exists($tmp_filename)) {
+                unlink($tmp_filename);
+            }
             $this->set_index_locked(false);
             return $ex->getMessage();
         }
