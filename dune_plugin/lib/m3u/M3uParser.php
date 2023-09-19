@@ -169,6 +169,7 @@ class M3uParser extends Json_Serializer
         }
 
         $t = microtime(1);
+        hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
         $entry = new Entry();

@@ -328,11 +328,6 @@ class Epg_Manager
                 throw new Exception("Failed to save $this->xmltv_url to $tmp_filename");
             }
 
-            $downloaded_size = filesize($tmp_filename);
-            if (isset($info['size_download']) && (int)$info['size_download'] !== (int)$downloaded_size) {
-                throw new Exception("Declared file size {$info['size_download']} and downloaded $downloaded_size not match");
-            }
-
             if (!isset($info['filetime'])) {
                 hd_debug_print("Server returns wrong timestamp, bad configured server of something not good");
                 $last_mod_file = time();
@@ -763,7 +758,7 @@ class Epg_Manager
             }
         }
 
-        hd_print("No mapped EPG exist");
+        hd_debug_print("No mapped EPG exist", true);
         return null;
     }
 

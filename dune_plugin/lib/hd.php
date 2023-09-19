@@ -26,6 +26,13 @@
 
 require_once 'dune_stb_api.php';
 
+if (!defined('JSON_UNESCAPED_SLASHES'))
+    define("JSON_UNESCAPED_SLASHES", 64);
+if (!defined('JSON_PRETTY_PRINT'))
+    define('JSON_PRETTY_PRINT', 128);
+if (!defined('JSON_UNESCAPED_UNICODE'))
+    define('JSON_UNESCAPED_UNICODE', 256);
+
 class HD
 {
     /**
@@ -131,7 +138,7 @@ class HD
             return;
 
         if (empty(self::$plugin_user_agent) || self::$plugin_user_agent === "DuneHD/1.0") {
-            self::$plugin_user_agent = "DuneHD/1.0";
+            self::$plugin_user_agent = "DuneHD/2.0";
 
             $extra_useragent = "";
             $sysinfo = file("/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
@@ -271,6 +278,7 @@ class HD
         } catch (Exception $ex) {
             fclose($fp);
             unlink($file_name);
+            flush();
             throw $ex;
         }
 
@@ -872,5 +880,100 @@ class HD
         } else {
             file_put_contents($error_file, $error);
         }
+    }
+
+    public static function pretty_json_format($json, $options = 448)
+    {
+        $pretty_print = (bool)($options & JSON_PRETTY_PRINT);
+        $unescape_unicode = (bool)($options & JSON_UNESCAPED_UNICODE);
+        $unescape_slashes = (bool)($options & JSON_UNESCAPED_SLASHES);
+
+        if (!$pretty_print && !$unescape_unicode && !$unescape_slashes) {
+            return $json;
+        }
+
+        $result = '';
+        $pos = 0;
+        $strLen = strlen($json);
+        $indentStr = ' ';
+        $newLine = PHP_EOL;
+        $outOfQuotes = true;
+        $buffer = '';
+        $noescape = true;
+
+        for ($i = 0; $i < $strLen; $i++) {
+            // take the next character in the string
+            $char = substr($json, $i, 1);
+
+            // Inside a quoted string?
+            if ('"' === $char && $noescape) {
+                $outOfQuotes = !$outOfQuotes;
+            }
+
+            if (!$outOfQuotes) {
+                $buffer .= $char;
+                $noescape = !('\\' === $char) || !$noescape;
+                continue;
+            }
+
+            if ('' !== $buffer) {
+                if ($unescape_slashes) {
+                    $buffer = str_replace('\\/', '/', $buffer);
+                }
+
+                if ($unescape_unicode && function_exists('mb_convert_encoding')) {
+                    $buffer = preg_replace_callback('/\\\\u([0-9a-fA-F]{4})/',
+                        function ($match) {
+                            return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
+                        }, $buffer);
+                }
+
+                $result .= $buffer . $char;
+                $buffer = '';
+                continue;
+            }
+
+            if (false !== strpos(" \t\r\n", $char)) {
+                continue;
+            }
+
+            if (':' === $char) {
+                // Add a space after the : character
+                $char .= ' ';
+            } else if ('}' === $char || ']' === $char) {
+                $pos--;
+                $prevChar = substr($json, $i - 1, 1);
+
+                if ('{' !== $prevChar && '[' !== $prevChar) {
+                    // If this character is the end of an element,
+                    // output a new line and indent the next line
+                    $result .= $newLine . str_repeat($indentStr, $pos);
+                } else {
+                    // Collapse empty {} and []
+                    $result = rtrim($result) . "\n\n" . $indentStr;
+                }
+            }
+
+            $result .= $char;
+
+            // If the last character was the beginning of an element,
+            // output a new line and indent the next line
+            if (',' === $char || '{' === $char || '[' === $char) {
+                $result .= $newLine;
+
+                if ('{' === $char || '[' === $char) {
+                    $pos++;
+                }
+                $result .= str_repeat($indentStr, $pos);
+            }
+        }
+
+        // If buffer not empty after formating we have an unclosed quote
+        if ($buffer !== '') {
+            //json is incorrectly formatted
+            $result = false;
+        }
+
+        return $result;
     }
 }

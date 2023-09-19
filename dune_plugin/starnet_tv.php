@@ -48,7 +48,6 @@ class Starnet_Tv implements User_Input_Handler
     protected $plugin;
 
     /**
-    /**
      * @var int
      */
     protected $playback_runtime;
@@ -570,15 +569,36 @@ class Starnet_Tv implements User_Input_Handler
 
                 $ext_tag = $entry->getEntryTag(Entry::TAG_EXTVLCOPT);
                 if ($ext_tag !== null) {
+                    $ext_vlc_opts = array();
                     foreach ($ext_tag->getTagValues() as $value) {
                         $pair = explode('=', $value);
-                        $ext_params[Entry::TAG_EXTVLCOPT][strtolower(trim($pair[0]))] = trim($pair[1]);
+                        $ext_vlc_opts[strtolower(trim($pair[0]))] = trim($pair[1]);
                     }
 
-                    if (isset($ext_params[Entry::TAG_EXTVLCOPT]['http-user-agent'])) {
-                        hd_debug_print(Entry::TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_params[Entry::TAG_EXTVLCOPT]['http-user-agent']}'", true);
-                        $ch_useragent = "User-Agent: " . $ext_params[Entry::TAG_EXTVLCOPT]['http-user-agent'];
+                    if (isset($ext_vlc_opts['http-user-agent'])) {
+                        hd_debug_print(Entry::TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_vlc_opts['http-user-agent']}'", true);
+                        $ch_useragent = "User-Agent: " . $ext_vlc_opts['http-user-agent'];
                     }
+
+                    if (isset($ext_vlc_opts['dune-params'])) {
+                        hd_debug_print(Entry::TAG_EXTVLCOPT . " Channel: $channel_name uses custom dune_params: '{$ext_vlc_opts['dune-params']}'", true);
+                        foreach ($ext_vlc_opts['dune-params'] as $param) {
+                            $param_pair = explode(':', $param);
+                            if (empty($param_pair) || count($param_pair) < 2) continue;
+
+                            $param_pair[0] = trim($param_pair[0]);
+                            if (strpos($param_pair[1], ",,") !== false) {
+                                $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
+                            } else {
+                                $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
+                            }
+
+                            $ext_params[PARAM_DUNE_PARAMS][$param_pair[0]] = $param_pair[1];
+                            unset($ext_vlc_opts['dune-params']);
+                        }
+                    }
+
+                    $ext_params[Entry::TAG_EXTVLCOPT] = $ext_vlc_opts;
                 }
 
                 if (!empty($ch_useragent)) {
