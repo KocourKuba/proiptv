@@ -361,7 +361,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             $zip->close();
             if (!copy($zip_file, "$data->filepath/$zip_file_name")) {
-                throw new Exception(TR::t('err_copy__2'), $zip_file, "$data->filepath/$zip_file_name");
+                throw new Exception(TR::t('err_copy__2', $zip_file, "$data->filepath/$zip_file_name"));
             }
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
