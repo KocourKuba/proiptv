@@ -323,8 +323,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     protected function do_backup_settings(MediaURL $data)
     {
         hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
-        hd_debug_print("copy to: $data->filepath");
-
         $timestamp = format_datetime('Y-m-d_H-i', time());
         $zip_file_name = "proiptv_backup_{$this->plugin->plugin_info['app_version']}_$timestamp.zip";
         $zip_file = get_temp_path($zip_file_name);
@@ -337,8 +335,12 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             $rootPath = get_data_path();
             $zip->addFile("{$rootPath}common.settings", "common.settings");
+            hd_debug_print("Add {$rootPath}common.settings", true);
             foreach ($this->plugin->get_playlists() as $playlist) {
                 $name = Hashed_Array::hash($playlist) . ".settings";
+                if (!file_exists($rootPath . $name)) continue;
+
+                hd_debug_print("Add $rootPath$name", true);
                 $zip->addFile("$rootPath$name", $name);
             }
 
@@ -354,16 +356,22 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 foreach ($added_folders as $folder) {
                     if (0 === strncmp($filePath, $folder, strlen($folder))) {
                         $relativePath = substr($filePath, strlen($rootPath));
+                        hd_debug_print("Add $filePath", true);
                         $zip->addFile($filePath, $relativePath);
                     }
                 }
             }
 
-            $zip->close();
-            if (!copy($zip_file, "$data->filepath/$zip_file_name")) {
+            if (!$zip->close()) {
+                throw new Exception("Error create zip file: $zip_file " . $zip->getStatusString());
+            }
+
+            hd_debug_print("copy $zip_file to: $data->filepath/$zip_file_name");
+            if (false === copy($zip_file, "$data->filepath/$zip_file_name")) {
                 throw new Exception(TR::t('err_copy__2', $zip_file, "$data->filepath/$zip_file_name"));
             }
         } catch (Exception $ex) {
+            hd_debug_print(HD::get_storage_size(get_temp_path()));
             hd_debug_print($ex->getMessage());
             return Action_Factory::show_title_dialog(TR::t('err_backup'), null, $ex->getMessage());
         }
