@@ -321,8 +321,9 @@ class Epg_Manager
 
             hd_debug_print("Storage space in cache dir: " . HD::get_storage_size(dirname($cached_xmltv_file)));
             $tmp_filename = $cached_xmltv_file . '.tmp';
-            $info = HD::http_save_document($this->xmltv_url, $tmp_filename);
-            hd_debug_print("Fetched info: " . raw_json_encode($info));
+            $cmd = get_install_path('bin/https_proxy.sh') . " '$this->xmltv_url' '$tmp_filename'";
+            hd_debug_print("Exec: $cmd", true);
+            shell_exec($cmd);
 
             if (!file_exists($tmp_filename)) {
                 throw new Exception("Failed to save $this->xmltv_url to $tmp_filename");

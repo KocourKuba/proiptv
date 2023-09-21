@@ -50,9 +50,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const CONTROL_URL_PATH = 'url_path';
     const CONTROL_SET_NAME = 'set_item_name';
 
-    const DLG_CONTROLS_WIDTH = 850;
-
-    ///////////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////////
 
     /**
      * @inheritDoc

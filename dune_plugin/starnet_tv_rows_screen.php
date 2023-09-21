@@ -713,6 +713,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (!isset($user_input->list_idx)) break;
 
                 $this->plugin->set_active_xmltv_source_key($user_input->list_idx);
+                $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($user_input->list_idx);
+                $this->plugin->set_active_xmltv_source($xmltv_source);
+
                 $this->plugin->tv->reload_channels($plugin_cookies);
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 

@@ -11,7 +11,7 @@ if [ -z "$HD_HTTP_LOCAL_PORT" ]; then
   HD_HTTP_LOCAL_PORT="80";
 fi
 
-CURL="curl"
+CURL=""
 if [ "$platform_kind" = android ]; then
   CURL="$FS_PREFIX/firmware/bin/curl"
 elif (echo "$platform_kind" | grep -E -q "864."); then

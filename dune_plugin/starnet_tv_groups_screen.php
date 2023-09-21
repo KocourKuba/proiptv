@@ -108,7 +108,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $has_error = HD::get_last_error();
                 if (!empty($has_error)) {
                     HD::set_last_error(null);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_any'), $post_action, $has_error);
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_any'), $post_action, $has_error, self::DLG_CONTROLS_WIDTH);
                 }
 
                 return $post_action;
@@ -226,6 +226,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (!isset($user_input->list_idx)) break;
 
                 $this->plugin->set_active_xmltv_source_key($user_input->list_idx);
+                $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($user_input->list_idx);
+                $this->plugin->set_active_xmltv_source($xmltv_source);
                 $this->plugin->tv->reload_channels($plugin_cookies);
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
 

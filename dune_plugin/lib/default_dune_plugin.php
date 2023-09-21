@@ -794,15 +794,20 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 hd_debug_print("m3u playlist: $url");
-                if (preg_match('|https?://|', $url)) {
-                    $contents = HD::http_get_document($url);
+                if (preg_match('|^https?://|', $url)) {
+                    $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$tmp_file'";
+                    hd_debug_print("Exec: $cmd", true);
+                    shell_exec($cmd);
+                    if (!file_exists($tmp_file)) {
+                        throw new Exception("Can't download playlist $url");
+                    }
                 } else {
                     $contents = @file_get_contents($url);
                     if ($contents === false) {
                         throw new Exception("Can't read playlist: $url");
                     }
+                    file_put_contents($tmp_file, $contents);
                 }
-                file_put_contents($tmp_file, $contents);
             }
 
             //  Is already parsed?
@@ -1134,7 +1139,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_active_xmltv_source_key($key)
     {
         $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
-        $this->set_setting(PARAM_CUR_XMLTV_SOURCE, $this->get_all_xmltv_sources()->get($key));
     }
 
     /**
@@ -1143,6 +1147,15 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_active_xmltv_source()
     {
         return $this->get_setting(PARAM_CUR_XMLTV_SOURCE, '');
+    }
+
+    /**
+     * @param string $source
+     * @return void
+     */
+    public function set_active_xmltv_source($source)
+    {
+        $this->set_setting(PARAM_CUR_XMLTV_SOURCE, $source);
     }
 
     /**

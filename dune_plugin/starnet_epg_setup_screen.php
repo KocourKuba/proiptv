@@ -168,7 +168,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case self::CONTROL_XMLTV_EPG_IDX:
                 $index = $user_input->{$control_id};
                 $this->plugin->set_active_xmltv_source_key($index);
-                hd_debug_print("Selected xmltv epg: ($index): {$this->plugin->get_all_xmltv_sources()->get($index)}");
+                $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($index);
+                $this->plugin->set_active_xmltv_source($xmltv_source);
+                hd_debug_print("Selected xmltv epg: ($index): $xmltv_source");
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_CHANGE_XMLTV_CACHE_PATH:

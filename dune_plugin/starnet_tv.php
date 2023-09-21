@@ -396,13 +396,14 @@ class Starnet_Tv implements User_Input_Handler
         if (is_null($source) && $sources->size()) {
             $sources->rewind();
             $source = $sources->current();
-            $this->plugin->set_active_xmltv_source_key($sources->key());
         }
 
         $this->plugin->epg_man->set_xmltv_url($source);
         if (is_null($source)) {
             hd_debug_print("No xmltv source defined for this playlist");
         } else {
+            $this->plugin->set_active_xmltv_source_key($sources->key());
+            $this->plugin->set_active_xmltv_source($source);
             $this->plugin->epg_man->index_xmltv_channels();
         }
 
@@ -698,6 +699,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->set_pospone_save(false);
 
+        hd_debug_print("xmltv source: " . $this->plugin->get_active_xmltv_source());
         $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
         hd_debug_print("exec: $cmd", true);
         exec($cmd);

@@ -1714,6 +1714,10 @@ function print_sysinfo()
         'libCURL Version' => "{$values['version']} ({$values['ssl_version']})",
     );
 
+    if (class_exists("SQLite3")) {
+        $table['SQLite3 Version'] = SQLite3::version();
+    }
+
     $table = array_merge($table, DuneSystem::$properties);
 
     $max = 0;
