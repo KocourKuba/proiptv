@@ -71,16 +71,22 @@ class TR
      */
     public static function load_string($string_key)
     {
-        if ($sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW)) {
-            $lang_file = self::get_translation_filename($sys_settings['interface_language']);
-            if (empty($lang_file))
-                return '';
-
-            if (($lang_txt = file_get_contents($lang_file)) && preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m))
-                return trim($m[1]);
+        $lang = 'english';
+        if (file_exists('/config/settings.properties')) {
+            $sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW);
+            if ($sys_settings !== false) {
+                $lang = $sys_settings['interface_language'];
+            }
         }
 
-        //hd_debug_print("Value for key '$string_key' is not found!");
+        $lang_file = self::get_translation_filename($lang);
+        if (empty($lang_file)) {
+            return '';
+        }
+
+        if (($lang_txt = file_get_contents($lang_file)) && preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
+            return trim($m[1]);
+        }
 
         return $string_key;
     }

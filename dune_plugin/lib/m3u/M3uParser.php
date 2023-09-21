@@ -163,6 +163,7 @@ class M3uParser extends Json_Serializer
      */
     public function parseInMemory()
     {
+        hd_debug_print();
         if (!file_exists($this->file_name)) {
             hd_debug_print("Can't read file: $this->file_name");
             return false;

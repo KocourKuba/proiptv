@@ -752,7 +752,6 @@ class Default_Dune_Plugin implements DunePlugin
         $this->load(PLUGIN_PARAMETERS, true);
         $this->update_log_level();
         $this->init_epg_manager();
-        $this->init_playlist();
         $this->create_screen_views();
         $this->playback_points = new Playback_Points($this);
         hd_debug_print("Init plugin done!");

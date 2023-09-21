@@ -236,3 +236,4 @@ err_restore = Restore error!
 err_create_zip__1 = Can't create zip file: %s
 err_unzip__2 = Failed to unzip %s (error code: %s)
 err_empty_zip__1 = Empty zip file %s
+err_unknown_file_type__1 = Unknown file type

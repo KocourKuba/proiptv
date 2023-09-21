@@ -238,7 +238,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
                 hd_debug_print("exec: $cmd", true);
                 exec($cmd);
-                sleep(1);
                 return User_Input_Handler_Registry::create_action($this, ACTION_SHOW_INDEX_PROGRESS);
 
             case ACTION_SHOW_INDEX_PROGRESS:

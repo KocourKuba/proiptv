@@ -65,7 +65,7 @@ class smb_tree
      */
     private function execute($args = '')
     {
-        $cmd = '/tango/firmware/bin/smbtree ' . $this->get_auth_options() . ' ' . $this->get_debug_level() . ' ' . $args;
+        $cmd = "/tango/firmware/bin/smbtree {$this->get_auth_options()} {$this->get_debug_level()} $args";
         hd_debug_print("smbtree exec: $cmd", true);
         $process = proc_open($cmd, $this->descriptor_spec, $pipes, '/tmp', $this->env);
 
