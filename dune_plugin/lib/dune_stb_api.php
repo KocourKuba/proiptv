@@ -462,7 +462,7 @@ function get_platform_info()
                     }
                 } else {
                     $platform['platform'] = 'sigma';
-                    $platform['type'] = $platform['platform_kind'];
+                    $platform['type'] = $ini_arr['platform_kind'];
                 }
             } else {
                 $platform['platform'] = 'unknown';
