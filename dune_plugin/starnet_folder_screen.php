@@ -151,10 +151,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $fs_action = User_Input_Handler_Registry::create_action($this, self::ACTION_FS);
         $actions[GUI_EVENT_KEY_ENTER] = $fs_action;
-
-        if (is_newer_versions() !== false) {
-            $actions[GUI_EVENT_KEY_SETUP] = Action_Factory::replace_path($media_url->windowCounter);
-        }
+        $actions[GUI_EVENT_KEY_SETUP] = Action_Factory::replace_path($media_url->windowCounter);
 
         if (empty($media_url->filepath)) {
             if ($media_url->allow_network) {
@@ -437,7 +434,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                             '', array('selected_data' => $selected_url->get_media_url_str()));
                     }
 
-                    return (is_newer_versions() !== false) ? Action_Factory::replace_path($parent_url->windowCounter, null, $post_action) : $post_action;
+                    return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
                 }
                 break;
 
@@ -458,7 +455,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         array('selected_data' => $url->get_media_url_str()));
                 }
 
-                return (is_newer_versions() !== false) ? Action_Factory::replace_path($parent_url->windowCounter, null, $post_action) : $post_action;
+                return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
 
             case self::ACTION_RESET_FOLDER:
                 $url = isset($selected_url->filepath) ? $selected_url : $parent_url;
