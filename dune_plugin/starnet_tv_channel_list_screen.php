@@ -362,26 +362,29 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 throw new Exception("Group $media_url->group_id not found");
             }
 
+            $channels_order = new Hashed_Array();
             /** @var Channel $channel */
             if ($this_group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
-                foreach($this->plugin->tv->get_channels() as $channel) {
-                    if ($channel->is_disabled()) continue;
+                foreach($this->plugin->get_groups_order() as $group_id) {
+                    $group = $this->plugin->tv->get_group($group_id);
+                    if (is_null($group)) continue;
 
-                    foreach ($channel->get_groups() as $group) {
-                        if ($group->is_disabled()) continue;
-
-                        $items[] = $this->get_folder_item($this_group, $channel);
-                        break;
+                    foreach ($group->get_items_order() as $channel_id) {
+                        $channels_order->put($channel_id, $channel_id);
                     }
                 }
             } else {
-                foreach ($this_group->get_items_order() as $item) {
-                    $channel = $this->plugin->tv->get_channel($item);
-                    if (is_null($channel) || $channel->is_disabled()) continue;
-
-                    //hd_debug_print("Folder item: $item", true);
-                    $items[] = $this->get_folder_item($this_group, $channel);
+                foreach ($this_group->get_items_order() as $channel_id) {
+                    $channels_order->put($channel_id, $channel_id);
                 }
+            }
+
+            foreach ($channels_order as $item) {
+                $channel = $this->plugin->tv->get_channel($item);
+                if (is_null($channel) || $channel->is_disabled()) continue;
+
+                //hd_debug_print("Folder item: $item", true);
+                $items[] = $this->get_folder_item($this_group, $channel);
             }
         } catch (Exception $e) {
             hd_debug_print("Failed collect folder items! " . $e->getMessage());

@@ -80,11 +80,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     public function add($item)
     {
         $key = self::hash($item);
-
-        if (!$this->has($key)) {
-            $this->seq[] = $key;
-            $this->map[$key] = $item;
-        }
+        $this->put($key, $item);
     }
 
     /**
