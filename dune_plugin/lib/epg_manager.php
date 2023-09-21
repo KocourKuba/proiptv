@@ -57,28 +57,10 @@ class Epg_Manager
     protected $url_hash;
 
     /**
-     * contains parsed epg for channel
-     * @var array
-     */
-    public $xmltv_data;
-
-    /**
      * contains index for current xmltv file
-     * @var array
+     * @var SQLite3
      */
-    public $xmltv_index;
-
-    /**
-     * contains map of channel names to channel id
-     * @var array
-     */
-    public $xmltv_channels;
-
-    /**
-     * contains map of channel id to picons
-     * @var array
-     */
-    public $xmltv_picons;
+    public $xmltv_db_index;
 
     /**
      * @var array
@@ -108,12 +90,10 @@ class Epg_Manager
     {
         if ($this->xmltv_url !== $xmltv_url) {
             $this->xmltv_url = $xmltv_url;
-            hd_debug_print("xmltv url $this->xmltv_url");
+            hd_debug_print("xmltv url: $this->xmltv_url");
             $this->url_hash = (empty($this->xmltv_url) ? '' : Hashed_Array::hash($this->xmltv_url));
-            // reset memory cache and data
-            $this->xmltv_picons = null;
-            $this->xmltv_channels = null;
-            unset($this->xmltv_data, $this->xmltv_index);
+            unset($this->xmltv_db_index);
+            $this->xmltv_db_index = null;
         }
     }
 
@@ -122,8 +102,7 @@ class Epg_Manager
      */
     public function is_index_locked()
     {
-        $lock_file = $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".lock";
-        return file_exists($lock_file);
+        return file_exists($this->get_cache_stem(".lock"));
     }
 
     /**
@@ -131,7 +110,7 @@ class Epg_Manager
      */
     public function set_index_locked($lock)
     {
-        $lock_file = $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".lock";
+        $lock_file = $this->get_cache_stem(".lock");
         if ($lock) {
             file_put_contents($lock_file, '');
         } else if (file_exists($lock_file)) {
@@ -142,20 +121,18 @@ class Epg_Manager
     /**
      * Get picon associated to epg id
      *
-     * @param string $channel_name
+     * @param string $channel_name list of epg id's
      * @return string|null
      */
     public function get_picon($channel_name)
     {
-        if (!isset($this->xmltv_picons)
-            && file_exists(get_data_path('version'))
-            && file_get_contents(get_data_path($this->url_hash . '_version')) > '1.8') {
-
-            hd_debug_print("Load picons from: " . $this->get_picons_index_name());
-            $this->xmltv_picons = HD::ReadContentFromFile($this->get_picons_index_name());
+        if (is_null($this->xmltv_db_index)) {
+            return null;
         }
 
-        return isset($this->xmltv_picons[$channel_name]) ? $this->xmltv_picons[$channel_name] : null;
+        $picon = $this->xmltv_db_index->querySingle("SELECT picon FROM channels WHERE alias='$channel_name';");
+        // We expect that only one row returned!
+        return (is_null($picon) || $picon === false) ? null : $picon;
     }
 
     /**
@@ -183,74 +160,38 @@ class Epg_Manager
         $program_epg = array();
 
         try {
-            if (empty($this->xmltv_index)) {
-                $index_file = $this->get_epg_index_name();
-                //hd_debug_print("load index from file '$index_file'");
-                $data = HD::ReadContentFromFile($index_file);
-                if (false !== $data) {
-                    $this->xmltv_index = $data;
-                }
-
-                if (empty($this->xmltv_index)) {
-                    throw new Exception("load index failed '$index_file'");
-                }
+            if ($this->xmltv_db_index === null) {
+                throw new Exception("EPG not indexed!");
             }
 
-            if (empty($this->xmltv_channels)) {
-                $index_file = $this->get_channels_index_name();
-                $this->xmltv_channels = HD::ReadContentFromFile($index_file);
-                if (empty($this->xmltv_channels)) {
-                    hd_debug_print("load channels index failed '$index_file'");
-                    $this->xmltv_channels = null;
-                    throw new Exception("load channels index failed '$index_file'");
+            $epg_ids = $channel->get_epg_ids();
+            if (empty($epg_ids)) {
+                $epg_id = $this->xmltv_db_index->querySingle("SELECT DISTINCT channel_id FROM channels WHERE alias='{$channel->get_title()}';");
+                if (is_null($epg_id) || $epg_id === false) {
+                    throw new Exception("No EPG defined for channel: $channel_id ({$channel->get_title()})");
                 }
+
+                $epg_ids[] = $epg_id;
             }
 
-            $epg_id = null;
-            foreach ($channel->get_epg_ids() as $id) {
-                if (isset($this->xmltv_channels[$id])) {
-                    $epg_id = $this->xmltv_channels[$id];
-                    break;
-                }
+            hd_debug_print("epg id's: " . json_encode($epg_ids));
+            $placeHolders = implode(',' , array_fill(0, count($epg_ids), '?'));
+            $sql = "SELECT pos FROM programs WHERE channel_id = (SELECT DISTINCT channel_id FROM channels WHERE channel_id IN ($placeHolders));";
+            $stmt = $this->xmltv_db_index->prepare($sql);
+            foreach ($epg_ids as $index => $val) {
+                $stmt->bindValue($index + 1, $val);
             }
 
-            $channel_title = $channel->get_title();
-            if (empty($epg_id)) {
-                if (!isset($this->xmltv_channels[$channel_title])) {
-                    hd_debug_print("No mapped EPG exist", true);
-                    throw new Exception("No mapped EPG exist");
-                }
-
-                $epg_id = $this->xmltv_channels[$channel_title];
+            $res = $stmt->execute();
+            if (!$res) {
+                throw new Exception("No data for epg $channel_id ({$channel->get_title()})");
             }
 
-            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
-            if (!isset($this->xmltv_channels[$epg_id])) {
-                throw new Exception("xmltv index for epg $epg_id is not exist");
-            }
-
-            $channel_id = $this->xmltv_channels[$epg_id];
-            if (!isset($this->xmltv_data[$channel_id])) {
-                if (!isset($this->xmltv_index[$channel_id])) {
-                    throw new Exception("xmltv index for channel $channel_id is not exist");
-                }
-
-                $channel_index = $this->cache_dir . DIRECTORY_SEPARATOR . $this->xmltv_index[$channel_id];
-                if (!file_exists($channel_index)) {
-                    throw new Exception("index for channel $channel_id not found: $channel_index");
-                }
-
-                $content = HD::ReadContentFromFile($channel_index);
-                if ($content === false) {
-                    throw new Exception("index for channel $channel_id is broken");
-                }
-                $this->xmltv_data[$channel_id] = $content;
-            }
-
+            hd_debug_print("Try to load EPG for channel '$channel_id' ({$channel->get_title()})");
             $file_object = $this->open_xmltv_file();
-            foreach ($this->xmltv_data[$channel_id] as $pos) {
+            while($row = $res->fetchArray(SQLITE3_NUM)){
                 $xml_str = '';
-                $file_object->fseek($pos);
+                $file_object->fseek($row[0]);
                 while (!$file_object->eof()) {
                     $line = $file_object->fgets();
                     $xml_str .= $line . PHP_EOL;
@@ -408,22 +349,13 @@ class Epg_Manager
                 throw new Exception(TR::t('err_load_xmltv_epg'));
             }
 
-            $epg_index = $this->get_epg_index_name();
-            if (file_exists($epg_index)) {
-                hd_debug_print("clear cached epg index: $epg_index");
+            $epg_index = $this->get_db_filename();
+            if ($this->xmltv_db_index !== null) {
+                $this->xmltv_db_index->exec("UPDATE status SET channels=-1, programs=-1");
+                hd_debug_print("Reset index status: $epg_index");
+            } else if (file_exists($epg_index)){
+                hd_debug_print("Remove index: $epg_index");
                 unlink($epg_index);
-            }
-
-            $channels_index = $this->get_channels_index_name();
-            if (file_exists($channels_index)) {
-                hd_debug_print("clear cached channels index: $channels_index");
-                unlink($channels_index);
-            }
-
-            $picons_index = $this->get_picons_index_name();
-            if (file_exists($picons_index)) {
-                hd_debug_print("clear cached picons index: $picons_index");
-                unlink($picons_index);
             }
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
@@ -458,23 +390,28 @@ class Epg_Manager
             return;
         }
 
-        $channels_file = $this->get_channels_index_name();
-        if (file_exists($channels_file) && file_exists(get_data_path('version'))
-            && file_get_contents(get_data_path($this->url_hash . '_version')) > '1.8') {
-
-            hd_debug_print("Load cache channels index: $channels_file");
-            $this->xmltv_channels = HD::ReadContentFromFile($channels_file);
+        $this->open_db();
+        $channels = $this->xmltv_db_index->querySingle("SELECT channels FROM status;");
+        if (!is_null($channels) && $channels !== false && $channels !== -1) {
+            hd_debug_print("EPG channels info already indexed", true);
             return;
         }
 
-        $this->xmltv_channels = array();
-        $this->xmltv_picons = array();
         $t = microtime(1);
 
         try {
             $this->set_index_locked(true);
 
-            hd_debug_print("Start reindex: $channels_file");
+            hd_debug_print("Start reindex channels...");
+            $this->open_db(true);
+
+            $this->xmltv_db_index->exec('BEGIN;');
+
+            $sql = "INSERT OR REPLACE INTO channels(alias, channel_id, picon) VALUES(?, ?, ?);";
+            $stm_alias = $this->xmltv_db_index->prepare($sql);
+            $stm_alias->bindParam(1, $alias);
+            $stm_alias->bindParam(2, $channel_id);
+            $stm_alias->bindParam(3, $picon);
 
             $file_object = $this->open_xmltv_file();
             while (!$file_object->eof()) {
@@ -504,37 +441,41 @@ class Epg_Manager
                 foreach($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
-
                 if (empty($channel_id)) continue;
 
+                $picon = '';
                 foreach ($xml_node->getElementsByTagName('icon') as $tag) {
-                    $picon = $tag->getAttribute('src');
-                    if (!preg_match("|https?://|", $picon)) {
-                        $picon = '';
+                    if (preg_match("|https?://|", $tag->getAttribute('src'))) {
+                        $picon = $tag->getAttribute('src');
                     }
                 }
 
-                $this->xmltv_channels[$channel_id] = $channel_id;
                 foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                    $this->xmltv_channels[$tag->nodeValue] = $channel_id;
-                    if (!empty($picon)) {
-                        $this->xmltv_picons[$tag->nodeValue] = $picon;
-                    }
+                    $alias = $tag->nodeValue;
+                    $stm_alias->execute();
                 }
             }
-
-            HD::StoreContentToFile($this->get_picons_index_name(), $this->xmltv_picons);
-            HD::StoreContentToFile($channels_file, $this->xmltv_channels);
-            file_put_contents(get_data_path($this->url_hash . '_version'), $this->plugin->plugin_info['app_version']);
+            $this->xmltv_db_index->exec('COMMIT;');
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
         }
 
         $this->set_index_locked(false);
 
+        $channels = $this->xmltv_db_index->querySingle("SELECT count(*) FROM channels;");
+        if (is_null($channels) || $channels === false) {
+            $channels = 0;
+        }
+
+        $this->xmltv_db_index->exec("UPDATE status SET channels='$channels';");
+
+        $picons = $this->xmltv_db_index->querySingle("SELECT count(DISTINCT picon) FROM channels WHERE picon != '';");
+        $picons = (is_null($picons) || $picons === false ? 0 : $picons);
+
         hd_debug_print("Reindexing EPG channels done: " . (microtime(1) - $t) . " secs");
-        hd_debug_print("Total channels id's: " . count($this->xmltv_channels));
-        hd_debug_print("Total picons: " . count($this->xmltv_picons));
+        hd_debug_print("Total channels id's: $channels");
+        hd_debug_print("Total picons: $picons");
+
         HD::ShowMemoryUsage();
     }
 
@@ -557,38 +498,27 @@ class Epg_Manager
             return;
         }
 
-        $cache_valid = false;
-        $index_program = $this->get_epg_index_name();
-        if (file_exists($index_program)) {
-            hd_debug_print("Load cache program index: $index_program");
-            $this->xmltv_index = HD::ReadContentFromFile($index_program);
-            if ($this->xmltv_index !== false) {
-                $cache_valid = true;
-                foreach ($this->xmltv_index as $idx) {
-                    if (!file_exists($this->cache_dir . DIRECTORY_SEPARATOR . $idx)) {
-                        $cache_valid = false;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if ($cache_valid) {
+        $this->open_db();
+        $programs = $this->xmltv_db_index->querySingle("SELECT programs FROM status;");
+        if ($programs !== -1) {
             return;
         }
 
         try {
             $this->set_index_locked(true);
 
-            hd_debug_print("Start reindex: $index_program");
+            hd_debug_print("Start reindex programs...");
 
             $t = microtime(1);
 
-            $file_object = $this->open_xmltv_file();
+            $this->open_db(false, true);
+            $this->xmltv_db_index->exec('BEGIN;');
+            $sql = "INSERT INTO programs(pos, channel_id) VALUES(?, ?);";
+            $stm = $this->xmltv_db_index->prepare($sql);
+            $stm->bindParam(1, $pos);
+            $stm->bindParam(2, $channel_id);
 
-            $prev_channel = null;
-            $xmltv_index = array();
-            $xmltv_data = array();
+            $file_object = $this->open_xmltv_file();
             while (!$file_object->eof()) {
                 $pos = $file_object->ftell();
                 $line = $file_object->fgets();
@@ -607,54 +537,17 @@ class Epg_Manager
                     continue;
                 }
 
-                $channel = substr($line, $ch_start, $ch_end - $ch_start);
-
-                if ($prev_channel !== $channel) {
-                    if (is_null($prev_channel)) {
-                        $prev_channel = $channel;
-                    } else {
-                        if (!empty($xmltv_data)) {
-                            $index_name = sprintf("%s_%s.index", $this->url_hash, Hashed_Array::hash($prev_channel));
-                            $xmltv_index[$prev_channel] = $index_name;
-                            HD::StoreContentToFile($this->cache_dir . DIRECTORY_SEPARATOR . $index_name, $xmltv_data);
-                            unset($xmltv_data);
-
-                            if (LogSeverity::$is_debug) {
-                                $log_entries[] = $index_name;
-                                if (count($log_entries) > 50) {
-                                    hd_debug_print("Save program indexes: " . json_encode($log_entries));
-                                    unset($log_entries);
-                                }
-                            }
-                        }
-
-                        $prev_channel = $channel;
-                        $xmltv_data = array();
-                    }
+                $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
+                if (!empty($channel_id)) {
+                    $stm->execute();
                 }
-                $xmltv_data[] = $pos;
             }
 
-            if (!empty($prev_channel) && !empty($xmltv_data)) {
-                $index_name = sprintf("%s_%s.index", $this->url_hash, Hashed_Array::hash($prev_channel));
-                $xmltv_index[$prev_channel] = $index_name;
-                hd_debug_print("Save index: $index_name", true);
-                HD::StoreContentToFile($this->cache_dir . DIRECTORY_SEPARATOR . $index_name, $xmltv_data);
-                unset($xmltv_data);
-                $log_entries[] = $index_name;
-                if (LogSeverity::$is_debug) {
-                    hd_debug_print("Save program indexes: " . json_encode($log_entries));
-                }
-                unset($log_entries);
-            }
+            $this->xmltv_db_index->exec('COMMIT;');
 
-            if (!empty($xmltv_index)) {
-                hd_debug_print("Save index: $index_program", true);
-                HD::StoreContentToFile($index_program, $xmltv_index);
-                $this->xmltv_index = $xmltv_index;
-            }
-
-            hd_debug_print("Total unique epg id's indexed: " . count($xmltv_index));
+            $program_entries = $this->xmltv_db_index->querySingle("SELECT count(DISTINCT channel_id) FROM programs;");
+            $this->xmltv_db_index->exec("UPDATE status SET programs='$program_entries';");
+            hd_debug_print("Total unique epg id's indexed: $program_entries");
             hd_debug_print("Reindexing EPG program done: " . (microtime(1) - $t) . " secs");
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
@@ -707,7 +600,7 @@ class Epg_Manager
      */
     protected function clear_epg_files($filename)
     {
-        unset($this->xmltv_data, $this->xmltv_index);
+        $this->xmltv_db_index = null;
         if (empty($this->cache_dir)) {
             return;
         }
@@ -723,70 +616,24 @@ class Epg_Manager
      */
     protected function get_cached_filename()
     {
-        return $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".xmltv";
+        return $this->get_cache_stem(".xmltv");
     }
 
     /**
      * @return string
      */
-    protected function get_epg_index_name()
+    protected function get_db_filename()
     {
-        return $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . ".index";
+        return $this->get_cache_stem(".db");
     }
 
     /**
+     * @param string $ext
      * @return string
      */
-    protected function get_channels_index_name()
+    protected function get_cache_stem($ext)
     {
-        return $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . "_channels.index";
-    }
-
-    /**
-     * @return string
-     */
-    protected function get_picons_index_name()
-    {
-        return $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . "_picons.index";
-    }
-
-    /**
-     * @param $ids array
-     * @return string|null
-     */
-    protected function get_map_channel_id_to_epg_id($ids)
-    {
-        if (empty($ids)) {
-            hd_debug_print("No id's. Nothing to map");
-            return null;
-        }
-
-        if (empty($this->url_hash)) {
-            hd_debug_print("xmltv file is not set");
-            return null;
-        }
-
-        if (empty($this->xmltv_channels)) {
-            $index_file = $this->get_channels_index_name();
-            $data = HD::ReadContentFromFile($index_file);
-            if (false !== $data) {
-                $this->xmltv_channels = $data;
-            }
-
-            if (empty($this->xmltv_channels)) {
-                hd_debug_print("load channels index failed '$index_file'");
-                return null;
-            }
-        }
-
-        foreach ($ids as $id) {
-            if (isset($this->xmltv_channels[$id])) {
-                return $this->xmltv_channels[$id];
-            }
-        }
-
-        hd_debug_print("No mapped EPG exist", true);
-        return null;
+        return $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . $ext;
     }
 
     /**
@@ -805,5 +652,45 @@ class Epg_Manager
         $file_object->rewind();
 
         return $file_object;
+    }
+
+    /**
+     * @return void
+     */
+    public function open_db($drop_channels = false, $drop_programs = false)
+    {
+        if ($this->xmltv_db_index !== null) {
+            return;
+        }
+
+        $index_name = $this->get_db_filename();
+        if (file_exists($index_name)) {
+            hd_debug_print("Open index db: $index_name");
+            if ($this->xmltv_db_index === null) {
+                $this->xmltv_db_index = new SQLite3($index_name, SQLITE3_OPEN_READWRITE, null);
+            }
+        } else {
+            hd_debug_print("Creating index db: $index_name");
+            $this->xmltv_db_index = new SQLite3($index_name, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE, null);
+            $this->xmltv_db_index->exec("CREATE TABLE status (channels INTEGER, programs INTEGER);");
+            $this->xmltv_db_index->exec("INSERT INTO status(channels, programs) VALUES (-1, -1);");
+            $drop_programs = $drop_channels = true;
+        }
+
+        if ($drop_channels) {
+            $this->xmltv_db_index->exec('BEGIN;');
+            $this->xmltv_db_index->exec("DROP TABLE IF EXISTS channels;");
+            $this->xmltv_db_index->exec("CREATE TABLE channels (alias STRING PRIMARY KEY NOT NULL, channel_id STRING, picon STRING);");
+            $this->xmltv_db_index->exec("UPDATE status SET channels=-1;");
+            $this->xmltv_db_index->exec('COMMIT;');
+        }
+
+        if ($drop_programs) {
+            $this->xmltv_db_index->exec('BEGIN;');
+            $this->xmltv_db_index->exec("DROP TABLE IF EXISTS programs;");
+            $this->xmltv_db_index->exec("CREATE TABLE programs (pos INTEGER UNIQUE, channel_id STRING);");
+            $this->xmltv_db_index->exec("UPDATE status SET programs=-1;");
+            $this->xmltv_db_index->exec('COMMIT;');
+        }
     }
 }
