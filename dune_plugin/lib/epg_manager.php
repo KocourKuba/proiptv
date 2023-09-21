@@ -329,19 +329,14 @@ class Epg_Manager
                 throw new Exception("Failed to save $this->xmltv_url to $tmp_filename");
             }
 
-            if (!isset($info['filetime'])) {
-                hd_debug_print("Server returns wrong timestamp, bad configured server of something not good");
-                $last_mod_file = time();
-            } else {
-                $last_mod_file = $info['filetime'];
-            }
+            hd_debug_print("Last changed time on server: " . date("Y-m-d H:s", filemtime($tmp_filename)));
 
-            hd_debug_print("Last changed time on server: " . date("Y-m-d H:s", $last_mod_file));
-
-            if (preg_match("/\.(xml.gz|xml|xmltv|gz|zip)(?:\??.*)?$/i", $this->xmltv_url, $m)) {
-                hd_debug_print("received file extension: " . raw_json_encode($m[1]));
-                if (strcasecmp($m[1], 'gz') === 0 || strcasecmp($m[1], 'xml.gz') === 0) {
-                    hd_debug_print("unpack $tmp_filename to $cached_xmltv_file");
+            if (file_exists($tmp_filename)) {
+                $handle = fopen($tmp_filename, "rb");
+                $hdr = fread($handle, 6);
+                fclose($handle);
+                if (0 === mb_strpos($hdr , "\x1f\x8b\x08")) {
+                    hd_debug_print("ungzip $tmp_filename to $cached_xmltv_file");
                     $gz = gzopen($tmp_filename, 'rb');
                     if (!$gz) {
                         throw new Exception("Failed to open $tmp_filename for $this->xmltv_url");
@@ -360,7 +355,7 @@ class Epg_Manager
                         throw new Exception("Failed to unpack $tmp_filename to $cached_xmltv_file");
                     }
                     hd_debug_print("$res bytes written to $cached_xmltv_file");
-                } else if (strcasecmp($m[1], 'zip') === 0) {
+                } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
                     hd_debug_print("unzip $tmp_filename to $cached_xmltv_file");
                     $unzip = new ZipArchive();
                     $out = $unzip->open($tmp_filename);
@@ -379,13 +374,17 @@ class Epg_Manager
                     rename($filename, $cached_xmltv_file);
                     $size = filesize($cached_xmltv_file);
                     hd_debug_print("$size bytes written to $cached_xmltv_file");
-                } else {
+                } else if (0 === mb_strpos($hdr, "<?xml")) {
                     hd_debug_print("rename $tmp_filename to $cached_xmltv_file");
                     if (file_exists($cached_xmltv_file)) {
                         unlink($cached_xmltv_file);
                     }
                     rename($tmp_filename, $cached_xmltv_file);
+                } else {
+                    throw new Exception(TR::t('err_unknown_file_type__1', $tmp_filename));
                 }
+            } else {
+                throw new Exception(TR::t('err_load_xmltv_epg'));
             }
 
             $epg_index = $this->get_epg_index_name();

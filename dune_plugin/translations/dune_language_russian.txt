@@ -102,6 +102,7 @@ setup_history_cleared = История просмотра очищена
 setup_copy_to_data = Копировать в выбраную папку
 setup_copy_to_plugin = Копировать в папку плагина
 setup_copy_done = Данные скопированы
+setup_restore_done = Резервная копия восстановлена. Плагин будет перезагружен
 setup_backup_settings = Резервная копия настроек
 setup_restore_settings = Восстановить из резервной копии
 setup_ask_exit = Подтверждение выхода из плагина
@@ -194,7 +195,6 @@ edit_list_added__1 = Добавлено файлов: %s
 edit_list_added__2 = Добавлено файлов: %s из: %s
 edit_list_empty_file = Пустой файл!!!
 edit_list_no_files = Нет файлов!!!
-edit_link_caption = Ссылка
 edit_list_internet_path = Добавить ссылку
 edit_list_folder_path = Выбрать папку с файлами
 edit_list_import_list = Импорт файла с ссылками
@@ -203,6 +203,7 @@ edit_list_src_list = Файл со содержащий список
 edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Нажмите Popup Menu на пульте для добавления файлов}
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Долгое нажатие OK на пульте для вызова меню}
 edit_list_add_name = Задать имя
+edit_list_edit_item = Редактировать
 
 epg_not_ready = Программа передач еще не готова
 epg_not_ready_desc = Идет индексирование программ передач, пожалуйста подождите

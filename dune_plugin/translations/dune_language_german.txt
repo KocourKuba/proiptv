@@ -103,6 +103,7 @@ setup_history_cleared = Verlaufsinformationen gelöscht
 setup_copy_to_data = In den ausgewählten Ordner kopieren
 setup_copy_to_plugin = In den Plugin-Ordner kopieren
 setup_copy_done = Kopieren erledigt
+setup_restore_done = Settings restored. Plugin will restart
 setup_backup_settings = Backup settings
 setup_restore_settings = Restore settings
 setup_ask_exit = Confirm exit plugin
@@ -166,7 +167,6 @@ edit_list_added__1 = Added %s files
 edit_list_added__2 = Added %s files from %s
 edit_list_empty_file = Empty file!!!
 edit_list_no_files = No files!!!
-edit_link_caption = URL
 edit_list_internet_path = Add URL to the list
 edit_list_folder_path = Select folder with files
 edit_list_import_list = Import file with list of URLs
@@ -175,6 +175,7 @@ edit_list_src_list = File with list
 edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Press Popup Menu on Remote to add items}
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Long press OK on Remote to call Popup Menu}
 edit_list_add_name = Set name
+edit_list_edit_item = Edit
 
 tv_screen_zoom_channel = Kanalzoom
 tv_screen_search_channel = Geben Sie den Namen oder einen Teil des Namens für die Suche ein

@@ -286,12 +286,17 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
         }
 
-        $dest = get_data_path();
+        rename(get_data_path('cached_img'), get_data_path('cached_img_prev'));
+        foreach (glob_dir(get_data_path(), "*.settings") as $file) {
+            rename($file, "$file.prev");
+        }
+
         /** @var SplFileInfo[] $files */
         $files = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($temp_folder, FilesystemIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST);
 
+        $dest = get_data_path();
         foreach ($files as $file) {
             if ($file->isDir()) {
                 /** @noinspection PhpUndefinedMethodInspection */
@@ -304,6 +309,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         flush();
 
+        shell_exec('rm -f '. get_data_path('*.prev'));
+        shell_exec('rm -f '. get_data_path('cached_img_prev/*'));
+        rmdir(get_data_path('cached_img_prev'));
+
         $this->plugin->init_plugin();
         hd_debug_print("Reset XMLTV cache dir to default");
         $this->plugin->set_xmltv_cache_dir(null);
@@ -311,9 +320,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         $this->plugin->tv->reload_channels($plugin_cookies);
 
-        return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
-            Action_Factory::invalidate_all_folders($plugin_cookies,
-                Action_Factory::reset_controls($this->do_get_control_defs())));
+        return Action_Factory::show_title_dialog(TR::t('setup_restore_done'), Action_Factory::show_main_screen(Action_Factory::restart()));
     }
 
     /**

@@ -43,14 +43,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_REMOVE_PLAYLIST_DLG_APPLY = 'remove_playlist_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CHOOSE_FILE = 'choose_file';
-    const ACTION_ADD_URL_DLG = 'add_url_dialog';
+    const ACTION_EDIT_ITEM_DLG = 'add_url_dialog';
     const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
-    const ACTION_SET_NAME_DLG_APPLY = 'set_name_dlg_apply';
-    const ACTION_SET_NAME = 'set_name';
     const CONTROL_URL_PATH = 'url_path';
     const CONTROL_SET_NAME = 'set_item_name';
 
-        ///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @var bool
+     */
+    protected $need_reload = false;
 
     /**
      * @inheritDoc
@@ -96,20 +99,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 if (!isset($parent_media_url->save_data)) {
-                    $need_reload = true;
+                    $this->need_reload = true;
                 } else {
-                    $need_reload = $this->plugin->is_durty($parent_media_url->save_data);
                     $this->plugin->set_pospone_save(false, $parent_media_url->save_data);
                 }
 
-                hd_debug_print("Need reload: " . var_export($need_reload, true), true);
+                hd_debug_print("Need reload: " . var_export($this->need_reload, true), true);
 
                 return Action_Factory::replace_path(
                     $parent_media_url->windowCounter,
                     null,
                     User_Input_Handler_Registry::create_action_screen(
                         $parent_media_url->source_window_id,
-                        $need_reload ? $parent_media_url->end_action : $parent_media_url->cancel_action)
+                        $this->need_reload ? $parent_media_url->end_action : $parent_media_url->cancel_action)
                 );
 
             case ACTION_ITEM_UP:
@@ -172,6 +174,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $order->remove_item_by_idx($user_input->sel_ndx);
                 $this->set_edit_order($parent_media_url, $order);
+                $this->need_reload = true;
                 return User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
 
             case ACTION_ITEMS_SORT:
@@ -185,12 +188,36 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     || $parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
 
                     if (isset($user_input->selected_media_url)) {
-                        $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_SET_NAME, TR::t('edit_list_add_name'),"edit.png");
+                        $item = MediaURL::decode($user_input->selected_media_url)->id;
+
+                        $menu_items[] = $this->plugin->create_menu_item($this,
+                            self::ACTION_EDIT_ITEM_DLG,
+                            TR::t('edit_list_edit_item'),
+                            "edit.png",
+                            array('edit_action' => 'edit', 'edit_item' => $item)
+                        );
+
+                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                            $name = $this->plugin->get_playlist_name($item);
+                        } else {
+                            $name = $this->plugin->get_xmltv_source_name($item);
+                        }
+                        $menu_items[] = $this->plugin->create_menu_item($this,
+                            self::ACTION_EDIT_ITEM_DLG,
+                            TR::t('edit_list_add_name'),
+                            "edit.png",
+                            array('edit_action' => 'set_name', 'edit_item' => $name)
+                        );
                         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                     }
 
                     $add_param = array('extension' => $parent_media_url->extension);
-                    $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ADD_URL_DLG, TR::t('edit_list_internet_path'),"link.png");
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        self::ACTION_EDIT_ITEM_DLG,
+                        TR::t('edit_list_internet_path'),
+                        "link.png",
+                        array('edit_action' => 'add_url', 'edit_item' => 'http://')
+                    );
 
                     $add_param['action'] = $parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV;
                     $menu_items[] = $this->plugin->create_menu_item($this,
@@ -229,83 +256,74 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return !empty($menu_items) ? Action_Factory::show_popup_menu($menu_items) : null;
 
-            case self::ACTION_SET_NAME:
-                $item = MediaURL::decode($user_input->selected_media_url)->id;
-                if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                    $name = $this->plugin->get_playlist_name($item);
-                } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    $name = $this->plugin->get_xmltv_source_name($item);
-                } else {
-                    break;
-                }
-
-                $defs = array();
-                Control_Factory::add_vgap($defs, 20);
-                Control_Factory::add_text_field($defs, $this, null, self::CONTROL_SET_NAME, '',
-                    $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
-
-                Control_Factory::add_vgap($defs, 50);
-
-                Control_Factory::add_close_dialog_and_apply_button($defs, $this, null,
-                    self::ACTION_SET_NAME_DLG_APPLY, TR::t('ok'), 300);
-
-                Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-                Control_Factory::add_vgap($defs, 10);
-
-                return Action_Factory::show_dialog(TR::t('edit_list_add_name'), $defs, true);
-
-            case self::ACTION_SET_NAME_DLG_APPLY: // handle streaming settings dialog result
-                if (isset($user_input->{self::CONTROL_SET_NAME})) {
-
-                    $name = $user_input->{self::CONTROL_SET_NAME};
-                    $item = MediaURL::decode($user_input->selected_media_url)->id;
-
-                    if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                        $old_name = $this->plugin->get_playlist_name($item);
-                    } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                        $old_name = $this->plugin->get_xmltv_source_name($item);
-                    } else {
-                        break;
-                    }
-
-                    if ($old_name !== $name) {
-                        $this->plugin->set_playlist_name($item, $name);
-                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                            $this->plugin->set_playlist_name($item, $name);
-                        } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                            $this->plugin->set_xmltv_source_name($item, $name);
-                        }
-                    }
-                }
-                return User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
-
-            case self::ACTION_ADD_URL_DLG:
+            case self::ACTION_EDIT_ITEM_DLG:
                 $defs = array();
                 Control_Factory::add_vgap($defs, 20);
                 Control_Factory::add_text_field($defs, $this, null, self::CONTROL_URL_PATH, '',
-                    'http://', false, false, false, true, self::DLG_CONTROLS_WIDTH);
+                    $user_input->edit_item, false, false, false, true, self::DLG_CONTROLS_WIDTH);
 
                 Control_Factory::add_vgap($defs, 50);
 
-                Control_Factory::add_close_dialog_and_apply_button($defs, $this, null,
+                Control_Factory::add_close_dialog_and_apply_button($defs, $this, array('edit_action' => $user_input->edit_action),
                     self::ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
 
                 Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
                 Control_Factory::add_vgap($defs, 10);
 
-                return Action_Factory::show_dialog(TR::t('edit_link_caption'), $defs, true);
+                switch ($user_input->edit_action) {
+                    case 'set_name':
+                        $name = TR::t('edit_list_add_name');
+                        break;
+                    case 'add_url':
+                        $name = TR::t('edit_list_internet_path');
+                        break;
+                    case 'edit':
+                        $name = TR::t('edit_list_edit_item');
+                        break;
+                    default:
+                        return null;
+                }
+                return Action_Factory::show_dialog($name, $defs, true);
 
             case self::ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
-                if (isset($user_input->{self::CONTROL_URL_PATH})
-                    && preg_match("|https?://.+$|", $user_input->{self::CONTROL_URL_PATH})) {
+                if (!isset($user_input->edit_action)) break;
 
-                    $pl = $user_input->{self::CONTROL_URL_PATH};
-                    if ($order->in_order($pl)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
-                    }
+                $name = isset($user_input->{self::CONTROL_URL_PATH}) ? $user_input->{self::CONTROL_URL_PATH} : '';
+                switch ($user_input->edit_action) {
+                    case 'set_name':
+                        $item = MediaURL::decode($user_input->selected_media_url)->id;
+                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                            $this->plugin->set_playlist_name($item, $name);
+                        } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                            $this->plugin->set_xmltv_source_name($item, $name);
+                        }
+                        break;
 
-                    $order->add_item($pl);
-                    $this->set_edit_order($parent_media_url, $order);
+                    case 'add_url':
+                        if (preg_match("|https?://.+$|", $name)) {
+                            if ($order->in_order($name)) {
+                                return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+                            }
+
+                            $order->add_item($name);
+                            $this->set_edit_order($parent_media_url, $order);
+                        }
+                        break;
+
+                    case 'edit':
+                        $item = MediaURL::decode($user_input->selected_media_url)->id;
+                        if ($order->in_order($name)) {
+                            return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+                        }
+
+                        $this->need_reload = true;
+                        $idx = $order->get_item_pos($item);
+                        $order->set_item_by_idx($idx, $name);
+                        $this->set_edit_order($parent_media_url, $order);
+                        break;
+
+                    default:
+                        return null;
                 }
                 return User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
 

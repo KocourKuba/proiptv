@@ -720,6 +720,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function remove_parameter($type)
     {
         unset($this->parameters[$type]);
+        $this->save();
     }
 
     public function toggle_setting($param, $default)

@@ -178,6 +178,15 @@ class Ordered_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @param int $idx
+     * @param string $item
+     */
+    public function set_item_by_idx($idx, $item)
+    {
+        $this->order[$idx] = $item;
+    }
+
+    /**
      * @param string $item
      * @return int
      */
