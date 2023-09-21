@@ -179,6 +179,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                             'extension'	=> 'png|jpg|jpeg',
                         ),
                         'allow_network' => !is_apk(),
+                        'allow_reset' => true,
                         'read_only' => true,
                         'windowCounter' => 1,
                     )
