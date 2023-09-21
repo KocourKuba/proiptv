@@ -7,7 +7,7 @@ cgi_plugin_env()
   plugin_name=$(basename "$plugin_root")
 
   if [ -z "$HD_HTTP_LOCAL_PORT" ]; then
-    HD_HTTP_LOCAL_PORT = "80";
+    HD_HTTP_LOCAL_PORT="80";
   fi
 
   export PLUGIN_NAME="$plugin_name"
