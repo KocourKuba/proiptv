@@ -85,15 +85,17 @@ class Epg_Manager_Sql extends Epg_Manager
                 $sql = "SELECT DISTINCT channel_id FROM channels WHERE alias=?;";
                 $stm = $this->xmltv_db_index->prepare($sql);
                 $stm->bindParam(1, $channel_title);
-                $res = $stm->execute();
-                $picon = $res->fetchArray(SQLITE3_ASSOC);
-                // We expect that only one row returned!
-                $epg_id = isset($picon['channel_id']) ? $picon['channel_id'] : null;
-                if (empty($epg_id)) {
-                    throw new Exception("No EPG defined for channel: $channel_id ($channel_title)");
-                }
 
-                $epg_ids[] = $epg_id;
+                $res = $stm->execute();
+                // We expect that only one row returned!
+                while($row = $res->fetchArray(SQLITE3_ASSOC)) {
+                    $epg_id = isset($row['channel_id']) ? $row['channel_id'] : null;
+                    if (empty($epg_id)) {
+                        throw new Exception("No EPG defined for channel: $channel_id ($channel_title)");
+                    }
+
+                    $epg_ids[] = $epg_id;
+                }
             }
 
             hd_debug_print("epg id's: " . json_encode($epg_ids));

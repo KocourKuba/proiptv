@@ -207,7 +207,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return array
+     * @return array const
      */
     public function get_screens()
     {
@@ -931,6 +931,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_playlists_idx($idx)
     {
         $this->get_playlists()->set_saved_pos($idx);
+        $this->save(PLUGIN_PARAMETERS);
     }
 
     /**
@@ -980,7 +981,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param string $item
-     * @return string
+     * @return string const
      */
     public function get_playlist_name($item)
     {
@@ -1024,14 +1025,6 @@ class Default_Dune_Plugin implements DunePlugin
         $playlist_names = $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
         $playlist_names->erase(Hashed_Array::hash($item));
         $this->set_parameter(PARAM_PLAYLISTS_NAMES, $playlist_names);
-    }
-
-    /**
-     * @return Hashed_Array
-     */
-    public function get_xmltv_sources_names()
-    {
-        return $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
     }
 
     /**
@@ -1080,7 +1073,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return Ordered_Array
+     * @return Ordered_Array const
      */
     public function get_favorites()
     {
@@ -1109,7 +1102,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * get external xmltv sources
      *
-     * @return Hashed_Array
+     * @return Hashed_Array const
      */
     public function get_ext_xmltv_sources()
     {
@@ -1130,7 +1123,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * get all xmltv source
      *
-     * @return Hashed_Array
+     * @return Hashed_Array const
      */
     public function get_all_xmltv_sources()
     {

@@ -394,6 +394,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $sources = $this->plugin->get_all_xmltv_sources();
         $key = $this->plugin->get_active_xmltv_source_key();
+        hd_debug_print("XMLTV active source key: $key");
         $source = $sources->get($key);
         if (is_null($source) && $sources->size()) {
             $sources->rewind();
@@ -401,15 +402,17 @@ class Starnet_Tv implements User_Input_Handler
             if (!is_null($source)) {
                 $this->plugin->set_active_xmltv_source($source);
                 $this->plugin->set_active_xmltv_source_key($sources->key());
+            } else {
+                hd_debug_print("No xmltv source defined for this playlist");
             }
+        } else {
+            $this->plugin->set_active_xmltv_source($source);
         }
 
-        if (is_null($source)) {
-            hd_debug_print("No xmltv source defined for this playlist");
-        } else {
-            $this->plugin->get_epg_manager()->set_xmltv_url($source);
-            $this->plugin->get_epg_manager()->index_xmltv_channels();
-        }
+        $source = $this->plugin->get_active_xmltv_source();
+        hd_debug_print("XMLTV source selected: $source");
+        $this->plugin->get_epg_manager()->set_xmltv_url($source);
+        $this->plugin->get_epg_manager()->index_xmltv_channels();
 
         hd_debug_print("Build categories and channels...");
         $t = microtime(1);
@@ -497,7 +500,7 @@ class Starnet_Tv implements User_Input_Handler
             if (is_null($channel)) {
                 $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
                 if (!empty($epg_ids)) {
-                    $epg_ids = array_unique($epg_ids);
+                    $epg_ids = array_unique(array_values($epg_ids));
                 }
 
                 $icon_url = $entry->getEntryIcon();
@@ -701,7 +704,7 @@ class Starnet_Tv implements User_Input_Handler
         HD::ShowMemoryUsage();
 
         $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
-        hd_debug_print("Run background indexing...");
+        hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
         exec($cmd);
 
         return 2;
