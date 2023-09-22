@@ -31,7 +31,7 @@ require_once 'action_factory.php';
 require_once 'control_factory.php';
 require_once 'control_factory_ext.php';
 require_once 'catchup_params.php';
-require_once 'epg_manager.php';
+require_once 'epg_manager_sql.php';
 require_once 'm3u/M3uParser.php';
 
 class Default_Dune_Plugin implements DunePlugin
@@ -57,7 +57,7 @@ class Default_Dune_Plugin implements DunePlugin
     public $m3u_parser;
 
     /**
-     * @var Epg_Manager
+     * @var Epg_Manager_Sql
      */
     public $epg_man;
 
@@ -114,7 +114,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->is_durty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->m3u_parser = new M3uParser();
-        $this->epg_man = new Epg_Manager();
+        $this->epg_man = new Epg_Manager_Sql();
     }
 
     ///////////////////////////////////////////////////////////////////////

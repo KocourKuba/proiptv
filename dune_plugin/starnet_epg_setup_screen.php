@@ -25,7 +25,7 @@
 
 require_once 'lib/abstract_controls_screen.php';
 require_once 'lib/user_input_handler.php';
-require_once 'lib/epg_manager.php';
+require_once 'lib/epg_manager_sql.php';
 
 ///////////////////////////////////////////////////////////////////////////
 

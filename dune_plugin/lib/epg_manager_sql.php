@@ -26,7 +26,7 @@
 require_once 'hd.php';
 require_once 'epg_params.php';
 
-class Epg_Manager
+class Epg_Manager_Sql
 {
     /**
      * @var Default_Dune_Plugin
