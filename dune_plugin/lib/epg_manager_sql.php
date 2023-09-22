@@ -35,6 +35,7 @@ class Epg_Manager_Sql extends Epg_Manager
 
     /**
      * @inheritDoc
+     * @override
      */
     public function get_picons()
     {
@@ -56,126 +57,7 @@ class Epg_Manager_Sql extends Epg_Manager
 
     /**
      * @inheritDoc
-     */
-    public function get_day_epg_items(Channel $channel, $day_start_ts)
-    {
-        $channel_id = $channel->get_id();
-
-        if ($this->is_index_locked()) {
-            hd_debug_print("EPG still indexing");
-            $this->delayed_epg[] = $channel_id;
-            return array($day_start_ts => array(
-                Epg_Params::EPG_END  => $day_start_ts + 86400,
-                Epg_Params::EPG_NAME => TR::load_string('epg_not_ready'),
-                Epg_Params::EPG_DESC => TR::load_string('epg_not_ready_desc'),
-                )
-            );
-        }
-
-        $program_epg = array();
-
-        try {
-            if ($this->xmltv_db_index === null) {
-                throw new Exception("EPG not indexed!");
-            }
-
-            $channel_title = $channel->get_title();
-            $epg_ids = $channel->get_epg_ids();
-            if (empty($epg_ids)) {
-                $sql = "SELECT DISTINCT channel_id FROM channels WHERE alias=?;";
-                $stm = $this->xmltv_db_index->prepare($sql);
-                $stm->bindParam(1, $channel_title);
-
-                $res = $stm->execute();
-                // We expect that only one row returned!
-                while($row = $res->fetchArray(SQLITE3_ASSOC)) {
-                    $epg_id = isset($row['channel_id']) ? $row['channel_id'] : null;
-                    if (empty($epg_id)) {
-                        throw new Exception("No EPG defined for channel: $channel_id ($channel_title)");
-                    }
-
-                    $epg_ids[] = $epg_id;
-                }
-            }
-
-            hd_debug_print("epg id's: " . json_encode($epg_ids));
-            $placeHolders = implode(',' , array_fill(0, count($epg_ids), '?'));
-            $sql = "SELECT pos FROM programs WHERE channel_id = (SELECT DISTINCT channel_id FROM channels WHERE channel_id IN ($placeHolders));";
-            $stmt = $this->xmltv_db_index->prepare($sql);
-            foreach ($epg_ids as $index => $val) {
-                $stmt->bindValue($index + 1, $val);
-            }
-
-            $res = $stmt->execute();
-            if (!$res) {
-                throw new Exception("No data for epg $channel_id ($channel_title)");
-            }
-
-            hd_debug_print("Try to load EPG for channel '$channel_id' ($channel_title)");
-            $file_object = $this->open_xmltv_file();
-            while($row = $res->fetchArray(SQLITE3_NUM)){
-                $xml_str = '';
-                $file_object->fseek($row[0]);
-                while (!$file_object->eof()) {
-                    $line = $file_object->fgets();
-                    $xml_str .= $line . PHP_EOL;
-                    if (strpos($line, "</programme") !== false) {
-                        break;
-                    }
-                }
-
-                $xml_node = new DOMDocument();
-                $xml_node->loadXML($xml_str);
-                $xml = (array)simplexml_import_dom($xml_node);
-
-                $program_start = strtotime((string)$xml['@attributes']['start']);
-                $program_epg[$program_start][Epg_Params::EPG_END] = strtotime((string)$xml['@attributes']['stop']);
-                $program_epg[$program_start][Epg_Params::EPG_NAME] = (string)$xml['title'];
-                $program_epg[$program_start][Epg_Params::EPG_DESC] = isset($xml['desc']) ? (string)$xml['desc'] : '';
-            }
-        } catch (Exception $ex) {
-            hd_print($ex->getMessage());
-        }
-
-        ksort($program_epg);
-
-        $counts = count($program_epg);
-        if ($counts === 0 && $channel->get_archive() === 0) {
-            hd_debug_print("No EPG and no archives");
-            return array();
-        }
-
-        hd_debug_print("Total $counts EPG entries loaded");
-
-        // filter out epg only for selected day
-        $day_end_ts = $day_start_ts + 86400;
-
-        $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
-        $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-        hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l", true);
-
-        $day_epg = array();
-        foreach ($program_epg as $time_start => $entry) {
-            if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
-                $day_epg[$time_start] = $entry;
-            }
-        }
-
-        if (empty($day_epg)) {
-            hd_debug_print("Create fake data for non existing EPG data");
-            $n = 0;
-            for ($start = $day_start_ts; $start <= $day_start_ts + 86400; $start += 3600) {
-                $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
-                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load_string('fake_epg_program') . " " . ++$n;
-                $day_epg[$start][Epg_Params::EPG_DESC] = '';
-            }
-        }
-
-        return $day_epg;
-    }
-
-    /**
-     * @inheritDoc
+     * @override
      */
     public function index_xmltv_channels()
     {
@@ -283,6 +165,7 @@ class Epg_Manager_Sql extends Epg_Manager
 
     /**
      * @inheritDoc
+     * @override
      */
     public function index_xmltv_program()
     {
@@ -365,6 +248,69 @@ class Epg_Manager_Sql extends Epg_Manager
     /// protected methods
 
     /**
+     * @inheritDoc
+     * @override
+     */
+    protected function clear_index()
+    {
+        parent::clear_index();
+
+        hd_debug_print("clear sqlite db");
+        unset($this->xmltv_db_index);
+        $this->xmltv_db_index = null;
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    protected function load_program_index($channel)
+    {
+        if ($this->xmltv_db_index === null) {
+            throw new Exception("EPG not indexed!");
+        }
+
+        $channel_title = $channel->get_title();
+        $epg_ids = $channel->get_epg_ids();
+        if (empty($epg_ids)) {
+            $sql = "SELECT DISTINCT channel_id FROM channels WHERE alias=?;";
+            $stm = $this->xmltv_db_index->prepare($sql);
+            $stm->bindParam(1, $channel_title);
+
+            $res = $stm->execute();
+            // We expect that only one row returned!
+            while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
+                $epg_id = isset($row['channel_id']) ? $row['channel_id'] : null;
+                if (empty($epg_id)) {
+                    throw new Exception("No EPG defined for channel: {$channel->get_id()} ($channel_title)");
+                }
+
+                $epg_ids[] = $epg_id;
+            }
+        }
+
+        hd_debug_print("epg id's: " . json_encode($epg_ids), true);
+        $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
+        $sql = "SELECT pos FROM programs WHERE channel_id = (SELECT DISTINCT channel_id FROM channels WHERE channel_id IN ($placeHolders));";
+        $stmt = $this->xmltv_db_index->prepare($sql);
+        foreach ($epg_ids as $index => $val) {
+            $stmt->bindValue($index + 1, $val);
+        }
+
+        $res = $stmt->execute();
+        if (!$res) {
+            throw new Exception("No data for epg {$channel->get_id()} ($channel_title)");
+        }
+
+        $positions = array();
+        while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
+            $positions[] = $row['pos'];
+        }
+
+        return $positions;
+    }
+
+    /**
      * @return string
      */
     protected function get_db_filename()
@@ -410,15 +356,5 @@ class Epg_Manager_Sql extends Epg_Manager
             $this->xmltv_db_index->exec("UPDATE status SET programs=-1;");
             $this->xmltv_db_index->exec('COMMIT;');
         }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    protected function clear_index()
-    {
-        hd_debug_print("clear sqlite db");
-        unset($this->xmltv_db_index);
-        $this->xmltv_db_index = null;
     }
 }

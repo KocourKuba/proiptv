@@ -164,11 +164,9 @@ class Epg_Manager
      */
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
-        $channel_id = $channel->get_id();
-
         if ($this->is_index_locked()) {
             hd_debug_print("EPG still indexing");
-            $this->delayed_epg[] = $channel_id;
+            $this->delayed_epg[] = $channel->get_id();
             return array($day_start_ts => array(
                 Epg_Params::EPG_END  => $day_start_ts + 86400,
                 Epg_Params::EPG_NAME => TR::load_string('epg_not_ready'),
@@ -180,72 +178,8 @@ class Epg_Manager
         $program_epg = array();
 
         try {
-            if (empty($this->xmltv_index)) {
-                $index_file = $this->get_epg_index_name();
-                //hd_debug_print("load index from file '$index_file'");
-                $data = HD::ReadContentFromFile($index_file);
-                if (false !== $data) {
-                    $this->xmltv_index = $data;
-                }
-
-                if (empty($this->xmltv_index)) {
-                    throw new Exception("load index failed '$index_file'");
-                }
-            }
-
-            if (empty($this->xmltv_channels)) {
-                $index_file = $this->get_channels_index_name();
-                $this->xmltv_channels = HD::ReadContentFromFile($index_file);
-                if (empty($this->xmltv_channels)) {
-                    hd_debug_print("load channels index failed '$index_file'");
-                    $this->xmltv_channels = null;
-                    throw new Exception("load channels index failed '$index_file'");
-                }
-            }
-
-            $epg_id = null;
-            foreach ($channel->get_epg_ids() as $id) {
-                if (isset($this->xmltv_channels[$id])) {
-                    $epg_id = $this->xmltv_channels[$id];
-                    break;
-                }
-            }
-
-            $channel_title = $channel->get_title();
-            if (empty($epg_id)) {
-                if (!isset($this->xmltv_channels[$channel_title])) {
-                    hd_debug_print("No mapped EPG exist", true);
-                    throw new Exception("No mapped EPG exist");
-                }
-
-                $epg_id = $this->xmltv_channels[$channel_title];
-            }
-
-            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
-            if (!isset($this->xmltv_channels[$epg_id])) {
-                throw new Exception("xmltv index for epg $epg_id is not exist");
-            }
-
-            $channel_id = $this->xmltv_channels[$epg_id];
-            if (!isset($this->xmltv_data[$channel_id])) {
-                if (!isset($this->xmltv_index[$channel_id])) {
-                    throw new Exception("xmltv index for channel $channel_id is not exist");
-                }
-
-                $channel_index = $this->cache_dir . DIRECTORY_SEPARATOR . $this->xmltv_index[$channel_id];
-                if (!file_exists($channel_index)) {
-                    throw new Exception("index for channel $channel_id not found: $channel_index");
-                }
-
-                $content = HD::ReadContentFromFile($channel_index);
-                if ($content === false) {
-                    throw new Exception("index for channel $channel_id is broken");
-                }
-                $this->xmltv_data[$channel_id] = $content;
-            }
-
             $file_object = $this->open_xmltv_file();
-            foreach ($this->xmltv_data[$channel_id] as $pos) {
+            foreach ($this->load_program_index($channel) as $pos) {
                 $xml_str = '';
                 $file_object->fseek($pos);
                 while (!$file_object->eof()) {
@@ -812,5 +746,88 @@ class Epg_Manager
     public function clear_delayed_epg()
     {
         $this->delayed_epg = array();
+    }
+
+    /**
+     * @param Channel $channel
+     * @return array
+     * @throws Exception
+     */
+    protected function load_program_index($channel)
+    {
+        $channel_id = $this->xmltv_channels[$this->get_channel_epg_id($channel)];
+        if (!isset($this->xmltv_data[$channel_id])) {
+            if (!isset($this->xmltv_index[$channel_id])) {
+                throw new Exception("xmltv index for channel $channel_id is not exist");
+            }
+
+            $channel_index = $this->cache_dir . DIRECTORY_SEPARATOR . $this->xmltv_index[$channel_id];
+            if (!file_exists($channel_index)) {
+                throw new Exception("index for channel $channel_id not found: $channel_index");
+            }
+
+            $content = HD::ReadContentFromFile($channel_index);
+            if ($content === false) {
+                throw new Exception("index for channel $channel_id is broken");
+            }
+            $this->xmltv_data[$channel_id] = $content;
+        }
+
+        return $this->xmltv_data[$channel_id];
+    }
+
+    /**
+     * @param Channel $channel
+     * @return mixed|null
+     * @throws Exception
+     */
+    protected function get_channel_epg_id(Channel $channel)
+    {
+        if (empty($this->xmltv_index)) {
+            $index_file = $this->get_epg_index_name();
+            //hd_debug_print("load index from file '$index_file'");
+            $data = HD::ReadContentFromFile($index_file);
+            if (false !== $data) {
+                $this->xmltv_index = $data;
+            }
+
+            if (empty($this->xmltv_index)) {
+                throw new Exception("load index failed '$index_file'");
+            }
+        }
+
+        if (empty($this->xmltv_channels)) {
+            $index_file = $this->get_channels_index_name();
+            $this->xmltv_channels = HD::ReadContentFromFile($index_file);
+            if (empty($this->xmltv_channels)) {
+                hd_debug_print("load channels index failed '$index_file'");
+                $this->xmltv_channels = null;
+                throw new Exception("load channels index failed '$index_file'");
+            }
+        }
+
+        $epg_id = null;
+        foreach ($channel->get_epg_ids() as $id) {
+            if (isset($this->xmltv_channels[$id])) {
+                $epg_id = $this->xmltv_channels[$id];
+                break;
+            }
+        }
+
+        $channel_title = $channel->get_title();
+        if (empty($epg_id)) {
+            if (!isset($this->xmltv_channels[$channel_title])) {
+                hd_debug_print("No mapped EPG exist", true);
+                throw new Exception("No mapped EPG exist");
+            }
+
+            $epg_id = $this->xmltv_channels[$channel_title];
+        }
+
+        hd_debug_print("Try to load EPG ID: '$epg_id' for channel_id '{$channel->get_id()}' ($channel_title)");
+        if (!isset($this->xmltv_channels[$epg_id])) {
+            throw new Exception("xmltv index for epg $epg_id is not exist");
+        }
+        return $epg_id;
     }
 }
