@@ -199,7 +199,7 @@ class Starnet_Tv implements User_Input_Handler
             GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this,
                 GUI_EVENT_TIMER,
                 null,
-                $this->plugin->epg_man->is_index_locked() ? array('locked' => true) : null),
+                $this->plugin->get_epg_manager()->is_index_locked() ? array('locked' => true) : null),
         );
     }
 
@@ -223,7 +223,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 if (isset($user_input->locked)) {
-                    if ($this->plugin->epg_man->is_index_locked()) {
+                    if ($this->plugin->get_epg_manager()->is_index_locked()) {
                         $new_actions = $this->get_action_map();
                         $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this,
                             GUI_EVENT_TIMER,
@@ -235,12 +235,12 @@ class Starnet_Tv implements User_Input_Handler
 
                     hd_debug_print("Refresh EPG");
                     $post_action = null;
-                    foreach($this->plugin->epg_man->delayed_epg as $channel) {
+                    foreach($this->plugin->get_epg_manager()->get_delayed_epg() as $channel) {
                         $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
                         $day_epg = $this->plugin->get_day_epg($channel, $day_start_ts, $plugin_cookies);
                         $post_action = Action_Factory::update_epg($channel, true, $day_start_ts, $day_epg, $post_action);
                     }
-                    $this->plugin->epg_man->delayed_epg = array();
+                    $this->plugin->get_epg_manager()->clear_delayed_epg();
                     return $post_action;
                 }
                 break;
@@ -388,9 +388,9 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->get_playback_points()->load_points(true);
 
-        $catchup['global'] = $this->plugin->m3u_parser->getM3uInfo()->getCatchup();
-        $global_catchup_source = $this->plugin->m3u_parser->getM3uInfo()->getCatchupSource();
-        $icon_url_base = $this->plugin->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
+        $catchup['global'] = $this->plugin->get_m3u_parser()->getM3uInfo()->getCatchup();
+        $global_catchup_source = $this->plugin->get_m3u_parser()->getM3uInfo()->getCatchupSource();
+        $icon_url_base = $this->plugin->get_m3u_parser()->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
 
         $sources = $this->plugin->get_all_xmltv_sources();
         $key = $this->plugin->get_active_xmltv_source_key();
@@ -407,14 +407,14 @@ class Starnet_Tv implements User_Input_Handler
         if (is_null($source)) {
             hd_debug_print("No xmltv source defined for this playlist");
         } else {
-            $this->plugin->epg_man->set_xmltv_url($source);
-            $this->plugin->epg_man->index_xmltv_channels();
+            $this->plugin->get_epg_manager()->set_xmltv_url($source);
+            $this->plugin->get_epg_manager()->index_xmltv_channels();
         }
 
         hd_debug_print("Build categories and channels...");
         $t = microtime(1);
 
-        $picons = $this->plugin->epg_man->get_picons();
+        $picons = $this->plugin->get_epg_manager()->get_picons();
 
         $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
         if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
@@ -426,7 +426,7 @@ class Starnet_Tv implements User_Input_Handler
 
         // Collect categories from playlist
         $playlist_groups = new Ordered_Array();
-        $pl_entries = $this->plugin->m3u_parser->getM3uEntries();
+        $pl_entries = $this->plugin->get_m3u_parser()->getM3uEntries();
         foreach ($pl_entries as $entry) {
             $title = $entry->getGroupTitle();
             if ($this->groups->has($title)) continue;

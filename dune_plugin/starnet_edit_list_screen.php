@@ -156,7 +156,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case self::ACTION_CLEAR_APPLY:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     foreach ($order as $item) {
-                        $this->plugin->epg_man->clear_epg_cache_by_uri($item);
+                        $this->plugin->get_epg_manager()->clear_epg_cache_by_uri($item);
                     }
                 }
                 $order->clear();
@@ -170,7 +170,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case self::ACTION_REMOVE_PLAYLIST_DLG_APPLY:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     $item = $order->get_item_by_idx($user_input->sel_ndx);
-                    $this->plugin->epg_man->clear_epg_cache_by_uri($item);
+                    $this->plugin->get_epg_manager()->clear_epg_cache_by_uri($item);
                 }
                 $order->remove_item_by_idx($user_input->sel_ndx);
                 $this->set_edit_order($parent_media_url, $order);
@@ -359,15 +359,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         if ($order->in_order($line) || !preg_match('|https?://|', $line)) continue;
 
                         if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                            $this->plugin->epg_man->set_xmltv_url($line);
-                            $res = $this->plugin->epg_man->is_xmltv_cache_valid();
+                            $this->plugin->get_epg_manager()->set_xmltv_url($line);
+                            $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
                             hd_debug_print("Error load xmltv: $res");
                             if (!empty($res)) {
                                 $error_log[] = $res;
                                 continue;
                             }
                             HD::set_last_error($res);
-                            $this->plugin->epg_man->set_xmltv_url(null);
+                            $this->plugin->get_epg_manager()->set_xmltv_url(null);
                         } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                             try {
                                 HD::http_get_document($line);

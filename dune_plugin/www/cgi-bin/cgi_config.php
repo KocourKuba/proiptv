@@ -1,4 +1,5 @@
 <?php
+/** @noinspection PhpMultipleClassDeclarationsInspection */
 error_reporting (E_ALL);
 
 function get_value_of_global_variables ($name, $key)
@@ -48,6 +49,7 @@ class epg_config
 {
     static public $cache_dir;
     static public $cache_ttl;
+    static public $cache_engine;
     static public $xmltv_url;
 
     /**
@@ -70,6 +72,12 @@ class epg_config
         set_debug_log($debug === SetupControlSwitchDefs::switch_on);
 
         self::$cache_dir = isset($parameters[PARAM_XMLTV_CACHE_PATH]) ? $parameters[PARAM_XMLTV_CACHE_PATH] : get_data_path("epg_cache");
+
+        if (class_exists('SQLite3')) {
+            self::$cache_engine = isset($parameters[PARAM_EPG_CACHE_ENGINE]) ? $parameters[PARAM_EPG_CACHE_ENGINE] : ENGINE_SQLITE;
+        } else {
+            self::$cache_engine = ENGINE_LEGACY;
+        }
 
         $name = hash('crc32', $parameters[PARAM_PLAYLISTS]->get_selected_item()) . '.settings';
         if (!file_exists(get_data_path($name))) {

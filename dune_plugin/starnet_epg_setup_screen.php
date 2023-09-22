@@ -101,6 +101,18 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             $free_size, $xcache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
+        // EPG cache engine
+        if (class_exists('SQLite3')) {
+            $cache_engine[ENGINE_SQLITE] = TR::t('setup_epg_cache_sqlite');
+            $cache_engine[ENGINE_LEGACY] = TR::t('setup_epg_cache_legacy');
+            $engine = $this->plugin->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
+
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
+                $engine, $cache_engine, self::CONTROLS_WIDTH, true);
+        }
+
+        //////////////////////////////////////
         // EPG cache
         $epg_cache_ops = array();
         $epg_cache_ops[1] = 1;
@@ -187,6 +199,15 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 );
                 return Action_Factory::open_folder($media_url_str, TR::t('setup_epg_xmltv_cache_caption'));
 
+            case PARAM_EPG_CACHE_ENGINE:
+                $this->plugin->set_parameter(PARAM_EPG_CACHE_ENGINE, $user_input->{$control_id});
+                $source = $this->plugin->get_active_xmltv_source();
+                $this->plugin->tv->unload_channels();
+                $this->plugin->get_epg_manager()->clear_all_epg_cache();
+                $this->plugin->init_plugin();
+                $this->plugin->get_epg_manager()->set_xmltv_url($source);
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
             case PARAM_EPG_CACHE_TTL:
             case PARAM_EPG_SHIFT:
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
@@ -194,7 +215,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $this->plugin->tv->unload_channels();
-                $this->plugin->epg_man->clear_epg_cache();
+                $this->plugin->get_epg_manager()->clear_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs()));
 
@@ -215,7 +236,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RESET_DEFAULT:
                 hd_debug_print(ACTION_RESET_DEFAULT);
-                $this->plugin->epg_man->clear_all_epg_cache();
+                $this->plugin->get_epg_manager()->clear_all_epg_cache();
 
                 $this->plugin->set_xmltv_cache_dir(null);
                 $default_path = $this->plugin->get_xmltv_cache_dir();
@@ -227,15 +248,15 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 hd_debug_print(ACTION_FOLDER_SELECTED . ": $data->filepath");
                 if ($this->plugin->get_xmltv_cache_dir() === $data->filepath) break;
 
-                $this->plugin->epg_man->clear_all_epg_cache();
+                $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->set_parameter(PARAM_XMLTV_CACHE_PATH, $data->filepath);
-                $this->plugin->init_epg_manager();
+                $this->plugin->init_epg_manager_cache_dir();
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
             case self::ACTION_RELOAD_EPG:
-                $this->plugin->epg_man->clear_epg_cache();
+                $this->plugin->get_epg_manager()->clear_epg_cache();
                 hd_debug_print(self::ACTION_RELOAD_EPG);
                 $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
                 hd_debug_print("exec: $cmd", true);
@@ -251,7 +272,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $qtime = format_duration_seconds($counter['counter']);
                 Control_Factory::add_label($defs, '', "Прошло $qtime сек.");
 
-                if ($this->plugin->epg_man->is_index_locked()) {
+                if ($this->plugin->get_epg_manager()->is_index_locked()) {
                     hd_debug_print("index locked for {$counter['counter']} sec.", true);
                     $run = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_INDEX_PROGRESS, null, $counter);
                 } else {

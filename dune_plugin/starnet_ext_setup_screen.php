@@ -261,7 +261,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
      */
     protected function do_restore_settings(MediaURL $data, $plugin_cookies)
     {
-        $this->plugin->epg_man->clear_all_epg_cache();
+        $this->plugin->get_epg_manager()->clear_all_epg_cache();
         $this->plugin->clear_playlist_cache();
 
         $temp_folder = get_temp_path("restore");
@@ -319,7 +319,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         $this->plugin->init_plugin();
         hd_debug_print("Reset XMLTV cache dir to default");
         $this->plugin->set_xmltv_cache_dir(null);
-        $this->plugin->init_epg_manager();
+        $this->plugin->init_epg_manager_cache_dir();
 
         $this->plugin->tv->reload_channels($plugin_cookies);
 

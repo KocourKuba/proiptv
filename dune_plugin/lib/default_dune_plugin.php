@@ -54,12 +54,12 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @var M3uParser
      */
-    public $m3u_parser;
+    protected $m3u_parser;
 
     /**
      * @var Epg_Manager|Epg_Manager_Sql
      */
-    public $epg_man;
+    protected $epg_manager;
 
     /**
      * @var Starnet_Tv
@@ -114,11 +114,6 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->is_durty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->m3u_parser = new M3uParser();
-
-        if (class_exists('SQLite3'))
-            $this->epg_man = new Epg_Manager_Sql();
-        else
-            $this->epg_man = new Epg_Manager();
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -139,6 +134,36 @@ class Default_Dune_Plugin implements DunePlugin
         } else {
             hd_debug_print(get_class($object) . ": Screen class is illegal. get_id method not defined!");
         }
+    }
+
+
+    public function init_epg_manager()
+    {
+        if (class_exists('SQLite3') && $this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE) === ENGINE_SQLITE) {
+            hd_print("Using sqlite cache engine");
+            $this->epg_manager = new Epg_Manager_Sql();
+        } else {
+            hd_print("Using legacy cache engine");
+            $this->epg_manager = new Epg_Manager();
+        }
+
+        $this->init_epg_manager_cache_dir();
+    }
+
+    /**
+     * @return M3uParser
+     */
+    public function get_m3u_parser()
+    {
+        return $this->m3u_parser;
+    }
+
+    /**
+     * @return Epg_Manager|Epg_Manager_Sql
+     */
+    public function get_epg_manager()
+    {
+        return $this->epg_manager;
     }
 
     /**
@@ -399,7 +424,7 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("day_start timestamp: $day_start_tm_sec (" . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ")");
             }
 
-            foreach ($this->epg_man->get_day_epg_items($channel, $day_start_tm_sec) as $time => $value) {
+            foreach ($this->epg_manager->get_day_epg_items($channel, $day_start_tm_sec) as $time => $value) {
                 $tm_start = (int)$time + $time_shift;
                 $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
                 $day_epg[] = array(
@@ -756,9 +781,11 @@ class Default_Dune_Plugin implements DunePlugin
         hd_print("----------------------------------------------------");
         $this->load(PLUGIN_PARAMETERS, true);
         $this->update_log_level();
+
         $this->init_epg_manager();
         $this->create_screen_views();
         $this->playback_points = new Playback_Points($this);
+
         hd_debug_print("Init plugin done!");
         hd_print("----------------------------------------------------");
     }
@@ -859,9 +886,9 @@ class Default_Dune_Plugin implements DunePlugin
      *
      * @return void
      */
-    public function init_epg_manager()
+    public function init_epg_manager_cache_dir()
     {
-        $this->epg_man->init_cache_dir($this->get_xmltv_cache_dir(), $this->get_setting(PARAM_EPG_CACHE_TTL, 3));
+        $this->epg_manager->init_cache_dir($this->get_xmltv_cache_dir(), $this->get_setting(PARAM_EPG_CACHE_TTL, 3));
     }
 
     /**

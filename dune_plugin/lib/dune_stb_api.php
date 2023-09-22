@@ -1,4 +1,10 @@
-<?php
+<?php /** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpMultipleClassDeclarationsInspection */
+/** @noinspection PhpMultipleClassDeclarationsInspection */
 
 ###############################################################################
 #
@@ -126,6 +132,7 @@ const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
+const PARAM_EPG_CACHE_ENGINE = 'epg_cache_engine';
 const PARAM_EPG_CACHE_TTL = 'epg_cache_ttl';
 const PARAM_EPG_SHIFT = 'epg_shift';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
@@ -150,6 +157,8 @@ const PARAM_ENABLE_DEBUG = 'enable_debug';
 const PARAM_PER_CHANNELS_ZOOM = 'per_channels_zoom';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
+const ENGINE_SQLITE = 'sqlite';
+const ENGINE_LEGACY = 'legacy';
 
 # HTTP params
 const USER_AGENT = 'User-Agent';

@@ -60,30 +60,30 @@ class Epg_Manager
      * contains parsed epg for channel
      * @var array
      */
-    public $xmltv_data;
+    protected $xmltv_data;
 
     /**
      * contains index for current xmltv file
      * @var array
      */
-    public $xmltv_index;
+    protected $xmltv_index;
 
     /**
      * contains map of channel names to channel id
      * @var array
      */
-    public $xmltv_channels;
+    protected $xmltv_channels;
 
     /**
      * contains map of channel id to picons
      * @var array
      */
-    public $xmltv_picons;
+    protected $xmltv_picons;
 
     /**
      * @var array
      */
-    public $delayed_epg = array();
+    protected $delayed_epg = array();
 
     /**
      * @param string $cache_dir
@@ -794,5 +794,20 @@ class Epg_Manager
         unset($this->xmltv_data, $this->xmltv_index);
         $this->xmltv_data = null;
         $this->xmltv_index = null;
+    }
+
+    /**
+     * @return array
+     */
+    public function get_delayed_epg()
+    {
+        return $this->delayed_epg;
+    }
+
+    /**
+     */
+    public function clear_delayed_epg()
+    {
+        $this->delayed_epg = array();
     }
 }
