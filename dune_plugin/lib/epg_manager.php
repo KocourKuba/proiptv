@@ -142,22 +142,20 @@ class Epg_Manager
     /**
      * Get picon associated to epg id
      *
-     * @param array $epg_ids list of epg id's
+     * @param string $channel_name
      * @return string|null
      */
-    public function get_picon($epg_ids)
+    public function get_picon($channel_name)
     {
-        $epg_id = $this->get_map_channel_id_to_epg_id($epg_ids);
-        if (empty($epg_id)) {
-            return null;
-        }
+        if (!isset($this->xmltv_picons)
+            && file_exists(get_data_path('version'))
+            && file_get_contents(get_data_path($this->url_hash . '_version')) > '1.8') {
 
-        if (!isset($this->xmltv_picons)) {
             hd_debug_print("Load picons from: " . $this->get_picons_index_name());
             $this->xmltv_picons = HD::ReadContentFromFile($this->get_picons_index_name());
         }
 
-        return isset($this->xmltv_picons[$epg_id]) ? $this->xmltv_picons[$epg_id] : null;
+        return isset($this->xmltv_picons[$channel_name]) ? $this->xmltv_picons[$channel_name] : null;
     }
 
     /**
@@ -198,12 +196,35 @@ class Epg_Manager
                 }
             }
 
-            $epg_id = $this->get_map_channel_id_to_epg_id($channel->get_epg_ids());
-            if (is_null($epg_id)) {
-                throw new Exception("epg id not defined");
+            if (empty($this->xmltv_channels)) {
+                $index_file = $this->get_channels_index_name();
+                $this->xmltv_channels = HD::ReadContentFromFile($index_file);
+                if (empty($this->xmltv_channels)) {
+                    hd_debug_print("load channels index failed '$index_file'");
+                    $this->xmltv_channels = null;
+                    throw new Exception("load channels index failed '$index_file'");
+                }
             }
 
-            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ({$channel->get_title()})");
+            $epg_id = null;
+            foreach ($channel->get_epg_ids() as $id) {
+                if (isset($this->xmltv_channels[$id])) {
+                    $epg_id = $this->xmltv_channels[$id];
+                    break;
+                }
+            }
+
+            $channel_title = $channel->get_title();
+            if (empty($epg_id)) {
+                if (!isset($this->xmltv_channels[$channel_title])) {
+                    hd_debug_print("No mapped EPG exist", true);
+                    throw new Exception("No mapped EPG exist");
+                }
+
+                $epg_id = $this->xmltv_channels[$channel_title];
+            }
+
+            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
             if (!isset($this->xmltv_channels[$epg_id])) {
                 throw new Exception("xmltv index for epg $epg_id is not exist");
             }
@@ -438,14 +459,16 @@ class Epg_Manager
         }
 
         $channels_file = $this->get_channels_index_name();
-        if (file_exists($channels_file)) {
+        if (file_exists($channels_file) && file_exists(get_data_path('version'))
+            && file_get_contents(get_data_path($this->url_hash . '_version')) > '1.8') {
+
             hd_debug_print("Load cache channels index: $channels_file");
             $this->xmltv_channels = HD::ReadContentFromFile($channels_file);
             return;
         }
 
-        $channels_map = array();
-        $picons_map = array();
+        $this->xmltv_channels = array();
+        $this->xmltv_picons = array();
         $t = microtime(1);
 
         try {
@@ -481,24 +504,28 @@ class Epg_Manager
                 foreach($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
-                if (empty($channel_id)) continue;
 
-                $channels_map[$channel_id] = $channel_id;
-                foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                    $channels_map[$tag->nodeValue] = $channel_id;
-                }
+                if (empty($channel_id)) continue;
 
                 foreach ($xml_node->getElementsByTagName('icon') as $tag) {
                     $picon = $tag->getAttribute('src');
-                    hd_debug_print("channel id: $channel_id picon: $picon", true);
-                    if (preg_match("|https?://|", $picon)) {
-                        $picons_map[$channel_id] = $picon;
+                    if (!preg_match("|https?://|", $picon)) {
+                        $picon = '';
+                    }
+                }
+
+                $this->xmltv_channels[$channel_id] = $channel_id;
+                foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
+                    $this->xmltv_channels[$tag->nodeValue] = $channel_id;
+                    if (!empty($picon)) {
+                        $this->xmltv_picons[$tag->nodeValue] = $picon;
                     }
                 }
             }
 
-            HD::StoreContentToFile($this->get_picons_index_name(), $picons_map);
-            HD::StoreContentToFile($channels_file, $channels_map);
+            HD::StoreContentToFile($this->get_picons_index_name(), $this->xmltv_picons);
+            HD::StoreContentToFile($channels_file, $this->xmltv_channels);
+            file_put_contents(get_data_path($this->url_hash . '_version'), $this->plugin->plugin_info['app_version']);
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
         }
@@ -506,8 +533,8 @@ class Epg_Manager
         $this->set_index_locked(false);
 
         hd_debug_print("Reindexing EPG channels done: " . (microtime(1) - $t) . " secs");
-        hd_debug_print("Total channels id's: " . count($channels_map));
-        hd_debug_print("Total picons: " . count($picons_map));
+        hd_debug_print("Total channels id's: " . count($this->xmltv_channels));
+        hd_debug_print("Total picons: " . count($this->xmltv_picons));
         HD::ShowMemoryUsage();
     }
 

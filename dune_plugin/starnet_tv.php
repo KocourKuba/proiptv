@@ -495,14 +495,13 @@ class Starnet_Tv implements User_Input_Handler
             } else {
                 //hd_debug_print("attributes: " . serialize($entry->getAttributes()));
                 $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
-                $epg_ids[] = $channel_name;
                 if (!empty($epg_ids)) {
                     $epg_ids = array_unique($epg_ids);
                 }
 
                 $icon_url = $entry->getEntryIcon();
                 if (empty($icon_url)) {
-                    $icon_url = $this->plugin->epg_man->get_picon($epg_ids);
+                    $icon_url = $this->plugin->epg_man->get_picon($channel_name);
                     if (empty($icon_url)) {
                         //hd_debug_print("picon for $channel_name not found");
                         $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;

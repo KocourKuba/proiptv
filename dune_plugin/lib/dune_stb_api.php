@@ -1715,7 +1715,8 @@ function print_sysinfo()
     );
 
     if (class_exists("SQLite3")) {
-        $table['SQLite3 Version'] = SQLite3::version();
+        $sqlite_ver = SQLite3::version();
+        $table['SQLite3 Version'] = $sqlite_ver['versionString'];
     }
 
     $table = array_merge($table, DuneSystem::$properties);
