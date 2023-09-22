@@ -42,7 +42,6 @@ function echoLog($str)
     $log = fopen(DuneSystem::$properties['tmp_dir_path'] . "/do.log", 'ab+');
     fwrite($log, date("[Y-m-d H:i:s] ") . $str);
     fclose($log);
-    echo "$str<br>";
 }
 
 class epg_config

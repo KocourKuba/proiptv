@@ -398,18 +398,23 @@ class Starnet_Tv implements User_Input_Handler
         if (is_null($source) && $sources->size()) {
             $sources->rewind();
             $source = $sources->current();
+            if (!is_null($source)) {
+                $this->plugin->set_active_xmltv_source($source);
+                $this->plugin->set_active_xmltv_source_key($sources->key());
+            }
         }
 
-        $this->plugin->epg_man->set_xmltv_url($source);
         if (is_null($source)) {
             hd_debug_print("No xmltv source defined for this playlist");
         } else {
-            $this->plugin->set_active_xmltv_source_key($sources->key());
-            $this->plugin->set_active_xmltv_source($source);
+            $this->plugin->epg_man->set_xmltv_url($source);
             $this->plugin->epg_man->index_xmltv_channels();
         }
 
         hd_debug_print("Build categories and channels...");
+        $t = microtime(1);
+
+        $picons = $this->plugin->epg_man->get_picons();
 
         $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
         if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
@@ -488,26 +493,17 @@ class Starnet_Tv implements User_Input_Handler
 
             /** @var Channel $channel */
             $channel = $this->channels->get($channel_id);
-            if (!is_null($channel)) {
-                foreach ($channel->get_groups() as $group) {
-                    hd_debug_print("Channel id: $channel_id ($channel_name) already exist in category: {$group->get_title()}");
-                }
-            } else {
-                //hd_debug_print("attributes: " . serialize($entry->getAttributes()));
+            if (is_null($channel)) {
                 $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
                 if (!empty($epg_ids)) {
                     $epg_ids = array_unique($epg_ids);
                 }
 
                 $icon_url = $entry->getEntryIcon();
-                if (empty($icon_url)) {
-                    $icon_url = $this->plugin->epg_man->get_picon($channel_name);
-                    if (empty($icon_url)) {
-                        //hd_debug_print("picon for $channel_name not found");
-                        $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
-                    }
-                } else if (!empty($icon_url_base) && !preg_match("|https?://|", $icon_url)) {
+                if (!empty($icon_url_base) && !preg_match("|https?://|", $icon_url)) {
                     $icon_url = $icon_url_base . $icon_url;
+                } else if (empty($icon_url)) {
+                    $icon_url = isset($picons[$channel_name]) ? $picons[$channel_name] : self::DEFAULT_CHANNEL_ICON_PATH;
                 }
 
                 $used_tag = '';
@@ -631,7 +627,6 @@ class Starnet_Tv implements User_Input_Handler
 
                 $group_logo = $entry->getEntryAttribute('group-logo');
                 if (!empty($group_logo) && $parent_group->get_icon_url() === null) {
-                    hd_debug_print("Found new picon from 'group-logo' for category: {$parent_group->get_title()} : $group_logo", true);
                     if (!preg_match("|^https?://|", $group_logo)) {
                         if (!empty($icon_url_base)) {
                             $group_logo = $icon_url_base . $group_logo;
@@ -695,16 +690,18 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->plugin->get_disabled_channels()->size()}");
-        hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->plugin->get_groups_order()->size()));
 
         $this->plugin->set_pospone_save(false);
 
-        hd_debug_print("xmltv source: " . $this->plugin->get_active_xmltv_source());
+        hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->plugin->get_disabled_channels()->size()}");
+        hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->plugin->get_groups_order()->size()));
+        hd_debug_print("------------------------------------------------------------");
+        hd_debug_print("Load channels done: " . (microtime(1) - $t) . " secs");
+        HD::ShowMemoryUsage();
+
         $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
-        hd_debug_print("exec: $cmd", true);
+        hd_debug_print("Run background indexing...");
         exec($cmd);
-        //$this->plugin->epg_man->index_xmltv_program();
 
         return 2;
     }
@@ -788,8 +785,6 @@ class Starnet_Tv implements User_Input_Handler
             ? PLUGIN_FONT_SMALL
             : PLUGIN_FONT_NORMAL;
 
-        //$t = microtime(1);
-
         if ($this->load_channels($plugin_cookies) === 0) {
             hd_debug_print("Channels not loaded!");
             return array();
@@ -797,7 +792,6 @@ class Starnet_Tv implements User_Input_Handler
         $this->playback_runtime = PHP_INT_MAX;
 
         $not_show_all = $this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL);
-        //hd_debug_print("show all disabled: " . var_export($not_show_all, true), true);
         $all_channels = new Hashed_Array();
         /** @var Group $group */
         foreach ($this->groups as $group) {

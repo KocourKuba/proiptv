@@ -57,7 +57,7 @@ class Default_Dune_Plugin implements DunePlugin
     public $m3u_parser;
 
     /**
-     * @var Epg_Manager_Sql
+     * @var Epg_Manager|Epg_Manager_Sql
      */
     public $epg_man;
 
@@ -114,7 +114,11 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->is_durty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->m3u_parser = new M3uParser();
-        $this->epg_man = new Epg_Manager_Sql();
+
+        if (class_exists('SQLite3'))
+            $this->epg_man = new Epg_Manager_Sql();
+        else
+            $this->epg_man = new Epg_Manager();
     }
 
     ///////////////////////////////////////////////////////////////////////
