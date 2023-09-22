@@ -25,6 +25,7 @@ require_once 'lib/hashed_array.php';
 
 $HD_NEW_LINE = PHP_EOL;
 $HD_OB_PREFIX = null;
+$LOG_FILE = 'do.log';
 
 function hd_print($str)
 {
@@ -40,7 +41,8 @@ function hd_print($str)
 
 function echoLog($str)
 {
-    $log = fopen(DuneSystem::$properties['tmp_dir_path'] . "/do.log", 'ab+');
+    global $LOG_FILE;
+    $log = fopen(DuneSystem::$properties['tmp_dir_path'] . "/" . $LOG_FILE, 'ab+');
     fwrite($log, date("[Y-m-d H:i:s] ") . $str);
     fclose($log);
 }
@@ -59,7 +61,8 @@ class epg_config
      */
     public static function load()
     {
-        @unlink(DuneSystem::$properties['tmp_dir_path'] . "/do.log");
+        global $LOG_FILE;
+        @unlink(DuneSystem::$properties['tmp_dir_path'] . "/" . $LOG_FILE);
 
         $parameters = HD::get_data_items('common.settings', true, false);
 
@@ -89,6 +92,7 @@ class epg_config
 
         self::$cache_ttl = isset($settings[PARAM_EPG_CACHE_TTL]) ? $settings[PARAM_EPG_CACHE_TTL] : 3;
         self::$xmltv_url = isset($settings[PARAM_CUR_XMLTV_SOURCE]) ? $settings[PARAM_CUR_XMLTV_SOURCE] : '';
+        $LOG_FILE = Hashed_Array::hash(self::$xmltv_url) . ".log";
     }
 }
 
