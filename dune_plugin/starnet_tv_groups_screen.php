@@ -123,6 +123,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $sel_ndx = $min_sel;
                 }
 
+                $this->plugin->save();
                 $this->plugin->invalidate_epfs();
                 break;
 
@@ -136,6 +137,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $sel_ndx = $groups_cnt - 1;
                 }
 
+                $this->plugin->save();
                 $this->plugin->invalidate_epfs();
                 break;
 
@@ -146,11 +148,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEMS_SORT:
                 $this->plugin->get_groups_order()->sort_order();
+                $this->plugin->save();
                 $this->plugin->invalidate_epfs();
                 break;
 
             case ACTION_RESET_ITEMS_SORT:
                 $this->plugin->get_groups_order()->clear();
+                $this->plugin->save();
+                $this->plugin->invalidate_epfs();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_ITEMS_EDIT:

@@ -451,6 +451,7 @@ class Starnet_Tv implements User_Input_Handler
                 $this->plugin->get_groups_order()->add_item($title);
             }
 
+            hd_debug_print("group: $title");
             $playlist_groups->add_item($title);
 
             // disable save
