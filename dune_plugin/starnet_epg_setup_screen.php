@@ -239,6 +239,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
 
                 $this->plugin->set_xmltv_cache_dir(null);
+                $this->plugin->init_epg_manager();
                 $default_path = $this->plugin->get_xmltv_cache_dir();
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $default_path),
                     $action_reload, $default_path, self::CONTROLS_WIDTH);
@@ -250,14 +251,16 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->set_parameter(PARAM_XMLTV_CACHE_PATH, $data->filepath);
-                $this->plugin->init_epg_manager_cache_dir();
+                $this->plugin->init_epg_manager();
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
             case self::ACTION_RELOAD_EPG:
-                $this->plugin->get_epg_manager()->clear_epg_cache();
                 hd_debug_print(self::ACTION_RELOAD_EPG);
+                $this->plugin->get_epg_manager()->clear_epg_cache();
+                $this->plugin->init_epg_manager();
+                $this->plugin->get_epg_manager()->index_xmltv_channels();
                 $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
                 hd_debug_print("exec: $cmd", true);
                 exec($cmd);

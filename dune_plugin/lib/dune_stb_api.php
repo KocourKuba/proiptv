@@ -159,6 +159,8 @@ const PARAM_PER_CHANNELS_ZOOM = 'per_channels_zoom';
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
 const ENGINE_SQLITE = 'sqlite';
 const ENGINE_LEGACY = 'legacy';
+const EPG_CACHE_SUBDIR = 'epg_cache';
+const CACHED_IMAGE_SUBDIR = 'cached_img';
 
 # HTTP params
 const USER_AGENT = 'User-Agent';
@@ -1561,7 +1563,7 @@ function get_image_path($image = '')
  */
 function get_cached_image_path($image = '')
 {
-    $cache_image_path = get_data_path("cached_img");
+    $cache_image_path = get_data_path(CACHED_IMAGE_SUBDIR);
     create_path($cache_image_path);
     return $cache_image_path . DIRECTORY_SEPARATOR . ltrim($image, DIRECTORY_SEPARATOR);
 }

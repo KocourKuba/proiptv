@@ -14,6 +14,14 @@
                 <run_string>bin/update_suppliers.sh</run_string>
             </data>
         </boot_end>
+        <install>
+            <type>plugin_handle_user_input</type>
+            <params>
+                <handler_id>entry_handler</handler_id>
+                <control_id>plugin_entry</control_id>
+                <action_id>install</action_id>
+            </params>
+        </install>
         <uninstall>
             <type>plugin_handle_user_input</type>
             <params>

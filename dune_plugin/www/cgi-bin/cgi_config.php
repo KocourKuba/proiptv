@@ -71,7 +71,7 @@ class epg_config
         $debug = isset($parameters[PARAM_ENABLE_DEBUG]) ? $parameters[PARAM_ENABLE_DEBUG] : SetupControlSwitchDefs::switch_off;
         set_debug_log($debug === SetupControlSwitchDefs::switch_on);
 
-        self::$cache_dir = isset($parameters[PARAM_XMLTV_CACHE_PATH]) ? $parameters[PARAM_XMLTV_CACHE_PATH] : get_data_path("epg_cache");
+        self::$cache_dir = isset($parameters[PARAM_XMLTV_CACHE_PATH]) ? $parameters[PARAM_XMLTV_CACHE_PATH] : get_data_path(EPG_CACHE_SUBDIR);
 
         if (class_exists('SQLite3')) {
             self::$cache_engine = isset($parameters[PARAM_EPG_CACHE_ENGINE]) ? $parameters[PARAM_EPG_CACHE_ENGINE] : ENGINE_SQLITE;

@@ -718,8 +718,9 @@ class Epg_Manager
             return;
         }
 
-        hd_debug_print("clear cache files: $filename*");
-        shell_exec('rm -f '. $this->cache_dir . DIRECTORY_SEPARATOR . "$filename*");
+        $files = $this->cache_dir . DIRECTORY_SEPARATOR . "$filename*";
+        hd_debug_print("clear cache files: $files");
+        shell_exec('rm -f '. $files);
         flush();
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
@@ -789,6 +790,8 @@ class Epg_Manager
      */
     protected function clear_index()
     {
+        hd_debug_print("clear legacy index");
+
         $this->xmltv_picons = null;
         $this->xmltv_channels = null;
         unset($this->xmltv_data, $this->xmltv_index);

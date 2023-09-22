@@ -425,8 +425,7 @@ class HD
 
         $paths = array(
             get_data_path("*.settings"),
-            get_temp_path("*.m3u"),
-            get_temp_path("*.m3u8"),
+            get_temp_path("*.*"),
             "$apk_subst/tmp/run/shell.*",
         );
 

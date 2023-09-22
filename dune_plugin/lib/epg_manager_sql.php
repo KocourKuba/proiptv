@@ -415,6 +415,7 @@ class Epg_Manager_Sql extends Epg_Manager
      */
     protected function clear_index()
     {
+        hd_debug_print("clear sqlite db");
         unset($this->xmltv_db_index);
         $this->xmltv_db_index = null;
     }

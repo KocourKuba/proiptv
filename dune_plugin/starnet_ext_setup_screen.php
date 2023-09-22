@@ -289,7 +289,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
         }
 
-        rename(get_data_path('cached_img'), get_data_path('cached_img_prev'));
+        rename(get_data_path(CACHED_IMAGE_SUBDIR), get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
         foreach (glob_dir(get_data_path(), "*.settings") as $file) {
             rename($file, "$file.prev");
         }
@@ -313,8 +313,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         flush();
 
         shell_exec('rm -f '. get_data_path('*.prev'));
-        shell_exec('rm -f '. get_data_path('cached_img_prev/*'));
-        rmdir(get_data_path('cached_img_prev'));
+        shell_exec('rm -f '. get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*'));
+        rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         $this->plugin->init_plugin();
         hd_debug_print("Reset XMLTV cache dir to default");
@@ -354,7 +354,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $zip->addFile("$rootPath$name", $name);
             }
 
-            $added_folders = array("{$rootPath}cached_img");
+            $added_folders = array($rootPath . CACHED_IMAGE_SUBDIR);
             /** @var SplFileInfo[] $files */
             $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath),
                 RecursiveIteratorIterator::SELF_FIRST);

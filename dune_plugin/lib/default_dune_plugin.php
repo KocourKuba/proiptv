@@ -715,7 +715,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->load(PLUGIN_PARAMETERS);
 
         if (!isset($this->parameters[$type])) {
-            hd_debug_print("load default: $type", true);
+            hd_debug_print("load default: $type = $default", true);
             $this->parameters[$type] = $default;
         } else {
             $default_type = gettype($default);
@@ -1342,14 +1342,14 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_xmltv_cache_dir()
     {
-        $cache_dir = smb_tree::get_folder_info($this->get_parameter(PARAM_XMLTV_CACHE_PATH));
-        if (!is_null($cache_dir) && rtrim($cache_dir, DIRECTORY_SEPARATOR) === get_data_path("epg_cache")) {
+        $cache_dir = smb_tree::get_folder_info($this->get_parameter(PARAM_XMLTV_CACHE_PATH, get_data_path(EPG_CACHE_SUBDIR)));
+        if (!is_null($cache_dir) && rtrim($cache_dir, DIRECTORY_SEPARATOR) === get_data_path(EPG_CACHE_SUBDIR)) {
             $this->remove_parameter(PARAM_XMLTV_CACHE_PATH);
             $cache_dir = null;
         }
 
         if (is_null($cache_dir)) {
-            $cache_dir = get_data_path("epg_cache");
+            $cache_dir = get_data_path(EPG_CACHE_SUBDIR);
         }
 
         return $cache_dir;
