@@ -43,7 +43,7 @@ class HD
     /**
      * @var string
      */
-    private static $user_agent;
+    private static $default_user_agent;
 
     private static $plugin_user_agent;
 
@@ -134,52 +134,56 @@ class HD
 
     public static function http_init()
     {
-        if (!empty(self::$user_agent))
+        if (!empty(self::$default_user_agent))
             return;
 
-        if (empty(self::$plugin_user_agent) || self::$plugin_user_agent === "DuneHD/1.0") {
-            self::$plugin_user_agent = "DuneHD/2.0";
+        self::$default_user_agent = "DuneHD/1.0";
 
-            $extra_useragent = "";
-            $sysinfo = file("/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
-            if ($sysinfo !== false) {
-                foreach ($sysinfo as $line) {
-                    if (preg_match("/product_id:/", $line) ||
-                        preg_match("/firmware_version:/", $line)) {
-                        $line = trim($line);
+        $extra_useragent = "";
+        $sysinfo = file("/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
+        if ($sysinfo !== false) {
+            foreach ($sysinfo as $line) {
+                if (preg_match("/product_id:/", $line) ||
+                    preg_match("/firmware_version:/", $line)) {
+                    $line = trim($line);
 
-                        if (empty($extra_useragent))
-                            $extra_useragent = " (";
-                        else
-                            $extra_useragent .= "; ";
+                    if (empty($extra_useragent))
+                        $extra_useragent = " (";
+                    else
+                        $extra_useragent .= "; ";
 
-                        $extra_useragent .= $line;
-                    }
+                    $extra_useragent .= $line;
                 }
-
-                if (!empty($extra_useragent))
-                    $extra_useragent .= ")";
             }
 
-            self::$plugin_user_agent .= $extra_useragent;
+            if (!empty($extra_useragent))
+                $extra_useragent .= ")";
         }
 
-        self::$user_agent = self::$plugin_user_agent;
-        hd_debug_print("HTTP UserAgent: " . self::$user_agent);
+        self::$default_user_agent .= $extra_useragent;
+
+        hd_debug_print("HTTP UserAgent: " . self::$default_user_agent);
+    }
+
+    public static function get_default_user_agent()
+    {
+        if (empty(self::$default_user_agent))
+            self::http_init();
+
+        return self::$default_user_agent;
     }
 
     public static function get_dune_user_agent()
     {
-        if (empty(self::$user_agent))
+        if (empty(self::$default_user_agent))
             self::http_init();
 
-        return self::$user_agent;
+        return (empty(self::$plugin_user_agent) || self::$default_user_agent === self::$plugin_user_agent) ? self::$default_user_agent : self::$plugin_user_agent;
     }
 
     public static function set_dune_user_agent($user_agent)
     {
         self::$plugin_user_agent = $user_agent;
-        self::$user_agent = '';
     }
 
     /**

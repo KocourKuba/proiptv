@@ -1460,11 +1460,28 @@ class Default_Dune_Plugin implements DunePlugin
             throw new Exception("Empty url!");
         }
 
-        $ext_params = $channel->get_ext_params();
-        if (isset($ext_params[PARAM_DUNE_PARAMS])) {
-            //hd_debug_print("Additional dune params: $dune_params");
+        if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
+            $user_agent = rawurlencode("User-Agent: " . HD::get_dune_user_agent());
+        }
 
-            $dune_params = "";
+        $ext_params = $channel->get_ext_params();
+        $dune_params = "";
+        if (isset($ext_params[PARAM_DUNE_PARAMS])) {
+            if (!empty($user_agent)) {
+                if (!isset($ext_params[PARAM_DUNE_PARAMS]['http_headers'])) {
+                    $ext_params[PARAM_DUNE_PARAMS]['http_headers'] = $user_agent;
+                } else {
+                    $pos = strpos("UserAgent:", $ext_params[PARAM_DUNE_PARAMS]['http_headers']);
+                    if ($pos === false) {
+                        $ext_params[PARAM_DUNE_PARAMS]['http_headers'] .= "," . $user_agent;
+                    }
+                }
+            }
+        } else if (!empty($user_agent)) {
+            $ext_params[PARAM_DUNE_PARAMS]['http_headers'] = $user_agent;
+        }
+
+        if (isset($ext_params[PARAM_DUNE_PARAMS])) {
             foreach ($ext_params[PARAM_DUNE_PARAMS] as $key => $value) {
                 if (!empty($dune_params)) {
                     $dune_params .= ",";
@@ -1472,7 +1489,6 @@ class Default_Dune_Plugin implements DunePlugin
 
                 $dune_params .= "$key:$value";
             }
-
             if (!empty($dune_params)) {
                 $stream_url .= "|||dune_params|||$dune_params";
             }
