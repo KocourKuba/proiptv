@@ -966,6 +966,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $tmp_file = $this->get_current_playlist_cache();
         if (file_exists($tmp_file)) {
+            $this->m3u_parser->setupParser('');
             hd_debug_print("remove $tmp_file", true);
             unlink($tmp_file);
         }
@@ -1354,7 +1355,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_xmltv_cache_dir($path)
     {
-        if (is_null($path)) {
+        if (empty($path)) {
             $this->remove_parameter(PARAM_XMLTV_CACHE_PATH);
         } else {
             $this->set_parameter(PARAM_XMLTV_CACHE_PATH, $path);

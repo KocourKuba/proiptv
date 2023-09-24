@@ -415,7 +415,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->get_epg_manager()->index_xmltv_channels();
 
         hd_debug_print("Build categories and channels...");
-        $t = microtime(1);
+        $t = microtime(true);
 
         $picons = $this->plugin->get_epg_manager()->get_picons();
 
@@ -700,7 +700,7 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->plugin->get_disabled_channels()->size()}");
         hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->plugin->get_groups_order()->size()));
         hd_debug_print("------------------------------------------------------------");
-        hd_debug_print("Load channels done: " . (microtime(1) - $t) . " secs");
+        hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
         HD::ShowMemoryUsage();
 
         $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';

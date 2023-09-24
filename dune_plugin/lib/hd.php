@@ -878,10 +878,10 @@ class HD
     {
         $error_file = get_temp_path("last_error");
 
-        if (empty($error) && file_exists($error_file)) {
-            unlink($error_file);
-        } else {
+        if (!empty($error)) {
             file_put_contents($error_file, $error);
+        } else if (file_exists($error_file)) {
+            unlink($error_file);
         }
     }
 

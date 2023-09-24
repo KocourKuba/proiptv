@@ -6,6 +6,10 @@ require_once 'lib/epg_manager_sql.php';
 hd_print("Script start");
 
 epg_config::load();
+foreach (DuneSystem::$properties as $key => $value) {
+    hd_print("$key => $value");
+}
+
 $start = microtime(true);
 if (epg_config::$cache_engine === ENGINE_SQLITE) {
     hd_print("Using sqlite cache engine");

@@ -24,26 +24,15 @@ require_once 'lib/ordered_array.php';
 require_once 'lib/hashed_array.php';
 
 $HD_NEW_LINE = PHP_EOL;
-$HD_OB_PREFIX = null;
 $LOG_FILE = 'do.log';
 
 function hd_print($str)
 {
-    global $HD_NEW_LINE, $HD_OB_PREFIX;
-    if (isset($HD_OB_PREFIX))
-    {
-        echoLog($HD_OB_PREFIX . $str . $HD_NEW_LINE);
-        ob_flush();
-    }
-    else
-        echoLog($str . $HD_NEW_LINE);
-}
+    global $HD_NEW_LINE;
 
-function echoLog($str)
-{
     global $LOG_FILE;
     $log = fopen(DuneSystem::$properties['tmp_dir_path'] . "/" . $LOG_FILE, 'ab+');
-    fwrite($log, date("[Y-m-d H:i:s] ") . $str);
+    fwrite($log, date("[Y-m-d H:i:s] ") . $str . $HD_NEW_LINE);
     fclose($log);
 }
 
@@ -67,7 +56,7 @@ class epg_config
         $parameters = HD::get_data_items('common.settings', true, false);
 
         if (!isset($parameters[PARAM_PLAYLISTS])) {
-            echoLog("No playlist defined!");
+            hd_print("No playlist defined!");
             return;
         }
 
@@ -84,7 +73,7 @@ class epg_config
 
         $name = hash('crc32', $parameters[PARAM_PLAYLISTS]->get_selected_item()) . '.settings';
         if (!file_exists(get_data_path($name))) {
-            echoLog("No settings for playlist!");
+            hd_print("No settings for playlist!");
             return;
         }
 

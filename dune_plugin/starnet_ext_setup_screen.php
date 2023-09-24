@@ -316,12 +316,11 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         shell_exec('rm -f '. get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*'));
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
-        $this->plugin->init_plugin();
+        $this->plugin->load(PLUGIN_PARAMETERS);
         hd_debug_print("Reset XMLTV cache dir to default");
         $this->plugin->set_xmltv_cache_dir(null);
-        $this->plugin->init_epg_manager_cache_dir();
-
-        $this->plugin->tv->reload_channels($plugin_cookies);
+        hd_debug_print("Reset debug logging");
+        $this->plugin->set_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
 
         return Action_Factory::show_title_dialog(TR::t('setup_restore_done'), Action_Factory::show_main_screen(Action_Factory::restart()));
     }

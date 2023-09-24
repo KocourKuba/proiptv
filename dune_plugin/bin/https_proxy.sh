@@ -10,7 +10,7 @@ if [ -z "$HD_HTTP_LOCAL_PORT" ]; then
   HD_HTTP_LOCAL_PORT="80";
 fi
 
-CURL=""
+CURL="curl"
 if [ "$platform_kind" = android ]; then
   CURL="$FS_PREFIX/firmware/bin/curl"
 elif (echo "$platform_kind" | grep -E -q "864."); then
@@ -21,6 +21,8 @@ elif (echo "$platform_kind" | grep -E -q "867."); then
   CURL="$plugin_root/bin/curl.867x"
 elif (echo "$platform_kind" | grep -E -q "87.."); then
   CURL="$plugin_root/bin/curl.87xx"
+else
+  exit;
 fi
 
 $CURL --insecure --silent --output "$2" --remote-time --location "$1" --user-agent "$user_agent"

@@ -72,15 +72,15 @@ class M3uParser extends Json_Serializer
             $this->m3u_info = new Entry();
 
             try {
-                $file = new SplFileObject($file_name);
+                if (!empty($this->file_name)){
+                    $file = new SplFileObject($this->file_name);
+                    $file->setFlags(SplFileObject::DROP_NEW_LINE);
+                    $this->m3u_file = $file;
+                }
             } catch (Exception $ex) {
-                hd_debug_print("Can't read file: $file_name");
+                hd_debug_print("Can't read file: $this->file_name");
                 return;
             }
-
-            $file->setFlags(SplFileObject::DROP_NEW_LINE);
-
-            $this->m3u_file = $file;
         }
     }
 
@@ -100,7 +100,8 @@ class M3uParser extends Json_Serializer
 
         $this->m3u_file->rewind();
 
-        $t = microtime(1);
+        $t = microtime(true);
+
         $entry = new Entry();
         foreach($this->m3u_file as $line) {
             // something wrong or not supported
@@ -112,7 +113,7 @@ class M3uParser extends Json_Serializer
         }
 
         hd_debug_print("------------------------------------------------------------");
-        hd_debug_print("parseFile " . (microtime(1) - $t) . " secs");
+        hd_debug_print("parseFile " . (microtime(true) - $t) . " secs");
         return true;
     }
 
@@ -136,7 +137,8 @@ class M3uParser extends Json_Serializer
 
         $this->m3u_file->rewind();
 
-        $t = microtime(1);
+        $t = microtime(true);
+
         $entry = new Entry();
         $pos = $this->m3u_file->ftell();
         while (!$this->m3u_file->eof()) {
@@ -153,7 +155,7 @@ class M3uParser extends Json_Serializer
         }
 
         hd_debug_print("------------------------------------------------------------");
-        hd_debug_print("indexFile " . (microtime(1) - $t) . " secs");
+        hd_debug_print("indexFile " . (microtime(true) - $t) . " secs");
         return $data;
     }
 
@@ -171,7 +173,8 @@ class M3uParser extends Json_Serializer
             return false;
         }
 
-        $t = microtime(1);
+        $t = microtime(true);
+
         hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
@@ -189,7 +192,7 @@ class M3uParser extends Json_Serializer
         }
 
         hd_debug_print("------------------------------------------------------------");
-        hd_debug_print("parseInMemory " . (microtime(1) - $t) . " sec.");
+        hd_debug_print("parseInMemory " . (microtime(true) - $t) . " sec.");
         return true;
     }
 
