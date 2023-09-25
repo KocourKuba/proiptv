@@ -316,6 +316,7 @@ class Starnet_Tv implements User_Input_Handler
         HD::set_last_error(null);
 
         $this->plugin->load(PLUGIN_SETTINGS, true);
+        $this->plugin->get_epg_manager()->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
         $this->plugin->create_screen_views();
 
         if (!isset($plugin_cookies->pass_sex)) {
@@ -412,13 +413,19 @@ class Starnet_Tv implements User_Input_Handler
         $source = $this->plugin->get_active_xmltv_source();
         hd_debug_print("XMLTV source selected: $source");
         $this->plugin->get_epg_manager()->set_xmltv_url($source);
-        $this->plugin->get_epg_manager()->index_xmltv_channels();
+        $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
+        if ($res !== -1) {
+            if ($res === 0) {
+                $this->plugin->get_epg_manager()->download_xmltv_source();
+            }
+
+            $this->plugin->get_epg_manager()->index_xmltv_channels();
+        }
 
         hd_debug_print("Build categories and channels...");
         $t = microtime(true);
 
         $picons = $this->plugin->get_epg_manager()->get_picons();
-
         $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
         if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
             $catchup['global'] = $user_catchup;
@@ -703,9 +710,11 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
         HD::ShowMemoryUsage();
 
-        $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
-        hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
-        exec($cmd);
+        if ($this->plugin->get_epg_manager()->is_xmltv_cache_valid() === 1) {
+            hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
+            $this->plugin->get_epg_manager()->start_bg_indexing();
+            sleep(1);
+        }
 
         return 2;
     }

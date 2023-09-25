@@ -866,10 +866,12 @@ class HD
     public static function get_last_error()
     {
         $error_file = get_temp_path("last_error");
+        $msg = '';
         if (file_exists($error_file)) {
-            return file_get_contents($error_file);
+            $msg = file_get_contents($error_file);
+            self::set_last_error(null);
         }
-        return '';
+        return $msg;
     }
 
     /**

@@ -22,6 +22,7 @@ DuneSystem::$properties['data_dir_path']    = get_value_of_global_variables ($_E
 set_include_path(get_include_path(). PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
 require_once 'lib/ordered_array.php';
 require_once 'lib/hashed_array.php';
+require_once 'lib/hd.php';
 
 $HD_NEW_LINE = PHP_EOL;
 $LOG_FILE = 'do.log';
@@ -29,60 +30,31 @@ $LOG_FILE = 'do.log';
 function hd_print($str)
 {
     global $HD_NEW_LINE;
-
     global $LOG_FILE;
+
     $log = fopen(DuneSystem::$properties['tmp_dir_path'] . "/" . $LOG_FILE, 'ab+');
-    fwrite($log, date("[Y-m-d H:i:s] ") . $str . $HD_NEW_LINE);
+    fwrite($log, $str . $HD_NEW_LINE);
     fclose($log);
 }
 
-class epg_config
+function get_uri_parameters()
 {
-    static public $cache_dir;
-    static public $cache_ttl;
-    static public $cache_engine;
-    static public $xmltv_url;
+    $query = getenv("QUERY_STRING");
+    $out_arr = array();
 
-    /**
-     * load plugin/playlist settings
-     *
-     * @return void
-     */
-    public static function load()
-    {
-        global $LOG_FILE;
-        @unlink(DuneSystem::$properties['tmp_dir_path'] . "/" . $LOG_FILE);
-
-        $parameters = HD::get_data_items('common.settings', true, false);
-
-        if (!isset($parameters[PARAM_PLAYLISTS])) {
-            hd_print("No playlist defined!");
-            return;
-        }
-
-        $debug = isset($parameters[PARAM_ENABLE_DEBUG]) ? $parameters[PARAM_ENABLE_DEBUG] : SetupControlSwitchDefs::switch_off;
-        set_debug_log($debug === SetupControlSwitchDefs::switch_on);
-
-        self::$cache_dir = isset($parameters[PARAM_XMLTV_CACHE_PATH]) ? $parameters[PARAM_XMLTV_CACHE_PATH] : get_data_path(EPG_CACHE_SUBDIR);
-
-        if (class_exists('SQLite3')) {
-            self::$cache_engine = isset($parameters[PARAM_EPG_CACHE_ENGINE]) ? $parameters[PARAM_EPG_CACHE_ENGINE] : ENGINE_SQLITE;
-        } else {
-            self::$cache_engine = ENGINE_LEGACY;
-        }
-
-        $name = hash('crc32', $parameters[PARAM_PLAYLISTS]->get_selected_item()) . '.settings';
-        if (!file_exists(get_data_path($name))) {
-            hd_print("No settings for playlist!");
-            return;
-        }
-
-        $settings = HD::get_data_items($name, true, false);
-
-        self::$cache_ttl = isset($settings[PARAM_EPG_CACHE_TTL]) ? $settings[PARAM_EPG_CACHE_TTL] : 3;
-        self::$xmltv_url = isset($settings[PARAM_CUR_XMLTV_SOURCE]) ? $settings[PARAM_CUR_XMLTV_SOURCE] : '';
-        $LOG_FILE = Hashed_Array::hash(self::$xmltv_url) . ".log";
+    $params = explode("&", $query);
+    if (!is_array($params)) {
+        $params = array($params);
     }
+
+    foreach ($params as $val_arg) {
+        $args = explode("=", $val_arg);
+        if (is_array($args)) {
+            $out_arr[$args[0]] = $args[1];
+        }
+    }
+
+    return $out_arr;
 }
 
 header('Content-Type: text/html; charset=utf-8');

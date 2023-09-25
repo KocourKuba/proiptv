@@ -183,7 +183,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 }
 
                 if ($data->choose_folder->action === self::ACTION_BACKUP_FOLDER) {
-                    return $this->do_backup_settings($data);
+                    return $this->do_backup_settings($data->filepath);
                 }
 
                 break;
@@ -191,7 +191,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === self::ACTION_FILE_RESTORE) {
-                    return $this->do_restore_settings($data, $plugin_cookies);
+                    return $this->do_restore_settings($data->caption, $data->filepath);
                 }
                 break;
 
@@ -255,29 +255,31 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     }
 
     /**
-     * @param $plugin_cookies
-     * @param MediaURL $data
+     * @param string $name
+     * @param string $filename
      * @return array
      */
-    protected function do_restore_settings(MediaURL $data, $plugin_cookies)
+    protected function do_restore_settings($name, $filename)
     {
         $this->plugin->get_epg_manager()->clear_all_epg_cache();
         $this->plugin->clear_playlist_cache();
 
         $temp_folder = get_temp_path("restore");
         delete_directory($temp_folder);
-        $tmp_filename = get_temp_path($data->caption);
+        $tmp_filename = get_temp_path($name);
         try {
-            if (!copy($data->filepath, $tmp_filename))
-                return Action_Factory::show_title_dialog(TR::t('err_copy'));
+            if (!copy($filename, $tmp_filename))
+                throw new Exception(TR::t('err_copy'));
 
             $unzip = new ZipArchive();
             $out = $unzip->open($tmp_filename);
             if ($out !== true) {
                 throw new Exception(TR::t('err_unzip__2', $tmp_filename, $out));
             }
-            $filename = $unzip->getNameIndex(0);
-            if (empty($filename)) {
+
+            // Check if zip is empty
+            $first_file = $unzip->getNameIndex(0);
+            if (empty($first_file)) {
                 $unzip->close();
                 throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
             }
@@ -285,9 +287,14 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             $unzip->extractTo($temp_folder);
             $unzip->close();
         } catch (Exception $ex) {
+            if (file_exists($tmp_filename)) {
+                unlink($tmp_filename);
+            }
             hd_debug_print($ex->getMessage());
             return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
         }
+
+        unlink($tmp_filename);
 
         foreach (glob_dir(get_data_path(), "/\.settings$/i") as $file) {
             hd_debug_print("rename $file to $file.prev");
@@ -320,7 +327,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         $this->plugin->load(PLUGIN_PARAMETERS, true);
         hd_debug_print("Reset XMLTV cache dir to default");
-        $this->plugin->set_xmltv_cache_dir(null);
+        $this->plugin->remove_parameter(PARAM_XMLTV_CACHE_PATH);
         hd_debug_print("Reset debug logging");
         $this->plugin->set_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
 
@@ -328,12 +335,12 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     }
 
     /**
-     * @param MediaURL $data
+     * @param string $filename
      * @return array
      */
-    protected function do_backup_settings(MediaURL $data)
+    protected function do_backup_settings($filename)
     {
-        hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
+        hd_debug_print(ACTION_FOLDER_SELECTED . " $filename");
         $timestamp = format_datetime('Y-m-d_H-i', time());
         $zip_file_name = "proiptv_backup_{$this->plugin->plugin_info['app_version']}_$timestamp.zip";
         $zip_file = get_temp_path($zip_file_name);
@@ -377,9 +384,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 throw new Exception("Error create zip file: $zip_file " . $zip->getStatusString());
             }
 
-            hd_debug_print("copy $zip_file to: $data->filepath/$zip_file_name");
-            if (false === copy($zip_file, "$data->filepath/$zip_file_name")) {
-                throw new Exception(TR::t('err_copy__2', $zip_file, "$data->filepath/$zip_file_name"));
+            $backup_path = "$filename/$zip_file_name";
+            hd_debug_print("copy $zip_file to: $backup_path");
+            if (false === copy($zip_file, $backup_path)) {
+                throw new Exception(TR::t('err_copy__2', $zip_file, $backup_path));
             }
         } catch (Exception $ex) {
             hd_debug_print(HD::get_storage_size(get_temp_path()));

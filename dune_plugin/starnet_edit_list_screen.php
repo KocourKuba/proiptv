@@ -101,6 +101,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (!isset($parent_media_url->save_data)) {
                     $this->need_reload = true;
                 } else {
+                    $this->need_reload = $this->plugin->is_durty($parent_media_url->save_data);
                     $this->plugin->set_pospone_save(false, $parent_media_url->save_data);
                 }
 
@@ -356,19 +357,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $error_log = array();
                     foreach ($lines as $line) {
                         $line = trim($line);
-                        if ($order->in_order($line) || !preg_match('|https?://|', $line)) continue;
+                        if ($order->in_order($line) || !preg_match('|^https?://|', $line)) continue;
 
                         if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                            $this->plugin->get_epg_manager()->set_xmltv_url($line);
-                            $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
-                            hd_debug_print("Error load xmltv: $res");
-                            if (!empty($res)) {
-                                $error_log[] = $res;
-                                continue;
-                            }
-                            HD::set_last_error($res);
-                            $this->plugin->get_epg_manager()->set_xmltv_url(null);
-                        } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                            return User_Input_Handler_Registry::create_action($this, ACTION_SHOW_INDEX_PROGRESS, null, array('file' => $line));
+                        }
+
+                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                             try {
                                 HD::http_get_document($line);
                             } catch (Exception $ex) {
@@ -433,6 +428,41 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', $order->size() - $old_count),
                     Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()))
                 );
+
+            case ACTION_SHOW_INDEX_PROGRESS:
+                $counter['counter'] = 0;
+                if (isset($user_input->counter)) {
+                    $counter['counter'] = $user_input->counter + 5;
+                }
+
+                $qtime = format_duration_seconds($counter['counter']);
+                Control_Factory::add_label($defs, '', "Скачивание $user_input->file");
+                Control_Factory::add_label($defs, '', "Прошло $qtime сек.");
+
+                if ($this->plugin->get_epg_manager()->is_index_locked()) {
+                    hd_debug_print("index locked for {$counter['counter']} sec.", true);
+                    $run = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_INDEX_PROGRESS, null, $counter);
+                } else {
+                    $run = User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
+                }
+
+                $attrs[GUI_EVENT_TIMER] = Action_Factory::timer(5000);
+                $attrs['actions'] = array(GUI_EVENT_TIMER => Action_Factory::close_dialog_and_run($run));
+
+                $this->plugin->get_epg_manager()->set_xmltv_url($user_input->file);
+                $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
+                if ($res === -1) {
+                    hd_debug_print("Error load xmltv: $res");
+                    $error_log[] = $res;
+                    if (!empty($error_log)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), $run, $error_log);
+                    }
+                }
+
+                HD::set_last_error(null);
+                $this->plugin->get_epg_manager()->set_xmltv_url(null);
+
+                return Action_Factory::show_dialog('Прогресс скачивания EPG', $defs, true, self::DLG_CONTROLS_WIDTH, $attrs);
 
             case RESET_CONTROLS_ACTION_ID:
                 return Action_Factory::change_behaviour(

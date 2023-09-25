@@ -756,25 +756,30 @@ function format_datetime($fmt, $ts)
 }
 
 /**
- * @param string $msecs
+ * @param string $ticks
  * @return string
  */
-function format_duration($msecs)
+function format_duration($ticks, $point = false)
 {
-    $n = (int)$msecs;
-
-    if ($n <= 0 || strlen($msecs) <= 0) {
+    $n = (int)$ticks;
+    if ($n <= 0 || strlen($ticks) <= 0) {
         return "--:--";
     }
 
-    $n /= 1000;
-    $hours = $n / 3600;
-    $remainder = $n % 3600;
-    $minutes = $remainder / 60;
-    $seconds = $remainder % 60;
+    $hours = (int)($n / 3600000);
+    $remainder = $n % 3600000;
+    $minutes = (int)($remainder / 60000);
+    $seconds = (int)(($remainder % 60000) / 1000);
+    if ($point) {
+        $msecond = $remainder % 1000;
+    }
 
     if ($hours > 0) {
         return sprintf("%d:%02d:%02d", $hours, $minutes, $seconds);
+    }
+
+    if ($point) {
+        return sprintf("%02d:%02d.%03d", $minutes, $seconds, $msecond);
     }
 
     return sprintf("%02d:%02d", $minutes, $seconds);

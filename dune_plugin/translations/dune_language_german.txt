@@ -218,6 +218,7 @@ warn_msg2__1 = Fehlende oder nicht vollständige Daten für die URL-Generierung.
 
 err_too_old_player = This DUNE HD player is too old and not supported
 err_load_playlist = Fehler beim Laden der Playlist!
+err_epg_not_set = XMLTV source not set!
 err_file_exist = File in list already exist!
 err_load_any = Fehler beim Laden der Playlist oder Kanalliste!
 err_error = Fehler!!!
@@ -241,4 +242,4 @@ err_restore = Restore error!
 err_create_zip__1 = Can't create zip file: %s
 err_unzip__2 = Failed to unzip %s (error code: %s)
 err_empty_zip__1 = Empty zip file %s
-err_unknown_file_type__1 = Unknown file type
+err_unknown_file_type = Unknown file type

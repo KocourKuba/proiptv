@@ -141,13 +141,13 @@ class Default_Dune_Plugin implements DunePlugin
     {
         if (class_exists('SQLite3') && $this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE) === ENGINE_SQLITE) {
             hd_print("Using sqlite cache engine");
-            $this->epg_manager = new Epg_Manager_Sql();
+            $this->epg_manager = new Epg_Manager_Sql($this->plugin_info['app_version']);
         } else {
             hd_print("Using legacy cache engine");
-            $this->epg_manager = new Epg_Manager();
+            $this->epg_manager = new Epg_Manager($this->plugin_info['app_version']);
         }
 
-        $this->init_epg_manager_cache_dir();
+        $this->epg_manager->init_cache_dir($this->get_xmltv_cache_dir());
     }
 
     /**
@@ -882,16 +882,6 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * Initialize EPG Manager
-     *
-     * @return void
-     */
-    public function init_epg_manager_cache_dir()
-    {
-        $this->epg_manager->init_cache_dir($this->get_xmltv_cache_dir(), $this->get_setting(PARAM_EPG_CACHE_TTL, 3));
-    }
-
-    /**
      * @return Playback_Points
      */
     public function get_playback_points()
@@ -1347,19 +1337,6 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         return $cache_dir;
-    }
-
-    /**
-     * @param string|null $path
-     * @return void
-     */
-    public function set_xmltv_cache_dir($path)
-    {
-        if (empty($path)) {
-            $this->remove_parameter(PARAM_XMLTV_CACHE_PATH);
-        } else {
-            $this->set_parameter(PARAM_XMLTV_CACHE_PATH, $path);
-        }
     }
 
     /**

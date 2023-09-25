@@ -21,9 +21,9 @@ cgi_plugin_env()
 
   if [ -d "$PERSISTFS_DATA_DIR_PATH" ]; then
     export PLUGIN_DATA_DIR_PATH="$PERSISTFS_DATA_DIR_PATH"
-  elif [ -d "$FLASHDATA_DATA_DIR_PATH" ]; then            
+  elif [ -d "$FLASHDATA_DATA_DIR_PATH" ]; then
     export PLUGIN_DATA_DIR_PATH="$FLASHDATA_DATA_DIR_PATH"
-  else                          
+  else
     export PLUGIN_DATA_DIR_PATH=
   fi
 }
@@ -33,8 +33,14 @@ cgi_plugin_env()
 ################################################################################
 cgi_plugin_env
 
+STORE_IFS=$IFS
+IFS='&'
+array=($QUERY_STRING)
+SCRIPT="${array[0]}"
+
 LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib:/usr/lib"
-SCRIPT_FILENAME=$(echo "$SCRIPT_FILENAME" | sed -n 's/^\(\/.*\/\)\(.*\)\.sh/\1\2.php/p')
+SCRIPT_FILENAME=$(echo "$SCRIPT_FILENAME" | sed -n "s/^\(\/.*\/\)\(.*\)\.sh/\1${SCRIPT}/p")
+IFS=STORE_IFS
 
 ./php-cgi
 

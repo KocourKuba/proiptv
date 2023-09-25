@@ -238,8 +238,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 hd_debug_print(ACTION_RESET_DEFAULT);
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
 
-                $this->plugin->set_xmltv_cache_dir(null);
+                $this->plugin->remove_parameter(PARAM_XMLTV_CACHE_PATH);
                 $this->plugin->init_epg_manager();
+                $this->plugin->get_epg_manager()->set_xmltv_url($this->plugin->get_active_xmltv_source());
                 $default_path = $this->plugin->get_xmltv_cache_dir();
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $default_path),
                     $action_reload, $default_path, self::CONTROLS_WIDTH);
@@ -252,6 +253,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->set_parameter(PARAM_XMLTV_CACHE_PATH, $data->filepath);
                 $this->plugin->init_epg_manager();
+                $this->plugin->get_epg_manager()->set_xmltv_url($this->plugin->get_active_xmltv_source());
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
@@ -260,31 +262,19 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 hd_debug_print(self::ACTION_RELOAD_EPG);
                 $this->plugin->get_epg_manager()->clear_epg_cache();
                 $this->plugin->init_epg_manager();
-                $this->plugin->get_epg_manager()->index_xmltv_channels();
-                $cmd = 'wget --quiet -O - "'. get_plugin_cgi_url('index_epg.sh') . '" > /dev/null &';
-                hd_debug_print("exec: $cmd", true);
-                exec($cmd);
-                return User_Input_Handler_Registry::create_action($this, ACTION_SHOW_INDEX_PROGRESS);
-
-            case ACTION_SHOW_INDEX_PROGRESS:
-                $counter['counter'] = 0;
-                if (isset($user_input->counter)) {
-                    $counter['counter'] = $user_input->counter + 5;
+                $this->plugin->get_epg_manager()->set_xmltv_url($this->plugin->get_active_xmltv_source());
+                $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
+                if ($res === -1) {
+                    return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error());
                 }
 
-                $qtime = format_duration_seconds($counter['counter']);
-                Control_Factory::add_label($defs, '', "Прошло $qtime сек.");
-
-                if ($this->plugin->get_epg_manager()->is_index_locked()) {
-                    hd_debug_print("index locked for {$counter['counter']} sec.", true);
-                    $run = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_INDEX_PROGRESS, null, $counter);
-                } else {
-                    $run = $action_reload;
+                if ($res === 0) {
+                    $res = $this->plugin->get_epg_manager()->download_xmltv_source();
+                    if ($res === -1) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error());
+                    }
                 }
-
-                $attrs[GUI_EVENT_TIMER] = Action_Factory::timer(5000);
-                $attrs['actions'] = array(GUI_EVENT_TIMER => Action_Factory::close_dialog_and_run($run));
-                return Action_Factory::show_dialog('Прогресс индексирования EPG', $defs, true, self::CONTROLS_WIDTH, $attrs);
+                return $action_reload;
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
