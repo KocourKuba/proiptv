@@ -192,7 +192,7 @@ class Action_Factory
     /**
      * @param string $title
      * @param array|null $post_action
-     * @param string|null $multiline
+     * @param array|string|null $multiline
      * @param int $preferred_width
      * @return array
      */
@@ -202,7 +202,12 @@ class Action_Factory
 
         if ($multiline !== null) {
             if ($preferred_width === 0) {
-                foreach (explode("\n", $multiline) as $line) {
+                if (is_array($multiline)) {
+                    $lines = $multiline;
+                } else {
+                    $lines = explode("\n", $multiline);
+                }
+                foreach ($lines as $line) {
                     $px = mb_strlen($line, 'UTF-8') * 21;
                     if ($px > $preferred_width)
                         $preferred_width = (int)$px;

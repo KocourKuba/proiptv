@@ -427,12 +427,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     return Action_Factory::show_dialog(TR::t('err_error_smb'), $defs, true, 1100);
                 }
 
-                if ($selected_url->choose_file->extension === $selected_url->type) {
-                    $post_action = null;
-                    if ($selected_url->choose_file !== false) {
-                        $post_action = User_Input_Handler_Registry::create_action_screen($selected_url->source_window_id,ACTION_FILE_SELECTED,
-                            '', array('selected_data' => $selected_url->get_media_url_str()));
-                    }
+                if ($selected_url->type === self::SELECTED_TYPE_FILE && $selected_url->choose_file->extension === $selected_url->type) {
+                    $post_action = User_Input_Handler_Registry::create_action_screen($selected_url->source_window_id,ACTION_FILE_SELECTED,
+                        '', array('selected_data' => $selected_url->get_media_url_str()));
 
                     return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
                 }
