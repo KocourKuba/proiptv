@@ -427,7 +427,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     return Action_Factory::show_dialog(TR::t('err_error_smb'), $defs, true, 1100);
                 }
 
-                if ($selected_url->type === self::SELECTED_TYPE_FILE && $selected_url->choose_file->extension === $selected_url->type) {
+                if ($selected_url->choose_file !== false && $selected_url->choose_file->extension === $selected_url->type) {
                     $post_action = User_Input_Handler_Registry::create_action_screen($selected_url->source_window_id,ACTION_FILE_SELECTED,
                         '', array('selected_data' => $selected_url->get_media_url_str()));
 
@@ -592,6 +592,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             $file_icon = 'gui_skin://small_icons/subtitles_settings.aai';
         } else if (preg_match('/\.txt$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/language_settings.aai';
+        } else if (preg_match('/\.zip$/i', $ref)) {
+            $file_icon = 'gui_skin://small_icons/apps.aai';
         } else {
             $file_icon = 'gui_skin://small_icons/unknown_file.aai';
         }
@@ -606,7 +608,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      */
     public static function get_folder_icon($folder_type, $filepath)
     {
-        if ($folder_type === 'storage' || $folder_type === 'internal') {
+        if ($folder_type === 'storage') {
+            $folder_icon = "gui_skin://small_icons/sd_card.aai";
+        } else if ($folder_type === 'internal') {
             $folder_icon = "gui_skin://small_icons/system_storage.aai";
         } else if ($folder_type === 'smb') {
             $folder_icon = "gui_skin://small_icons/smb.aai";

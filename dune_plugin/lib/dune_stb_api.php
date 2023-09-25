@@ -1806,8 +1806,8 @@ function dump_input_handler($user_input)
 /**
  * Replace for glob (not works with non ansi symbols in path)
  *
- * @param $path
- * @param $pattern
+ * @param string $path
+ * @param string $pattern regex pattern
  * @param bool $exclude_dir
  * @return array
  */

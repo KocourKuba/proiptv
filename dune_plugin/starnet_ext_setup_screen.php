@@ -212,7 +212,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case self::CONTROL_COPY_TO_PLUGIN:
                 hd_debug_print("copy to: " . get_data_path());
-                if (!$this->copy_data($this->plugin->get_history_path(), "*" . PARAM_TV_HISTORY_ITEMS, get_data_path('history'))) {
+                if (!$this->copy_data($this->plugin->get_history_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", get_data_path('history'))) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -289,10 +289,12 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
         }
 
-        rename(get_data_path(CACHED_IMAGE_SUBDIR), get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
-        foreach (glob_dir(get_data_path(), "*.settings") as $file) {
+        foreach (glob_dir(get_data_path(), "/\.settings$/i") as $file) {
+            hd_debug_print("rename $file to $file.prev");
             rename($file, "$file.prev");
         }
+
+        rename(get_data_path(CACHED_IMAGE_SUBDIR), get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         /** @var SplFileInfo[] $files */
         $files = new RecursiveIteratorIterator(
@@ -316,7 +318,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         shell_exec('rm -f '. get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*'));
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
-        $this->plugin->load(PLUGIN_PARAMETERS);
+        $this->plugin->load(PLUGIN_PARAMETERS, true);
         hd_debug_print("Reset XMLTV cache dir to default");
         $this->plugin->set_xmltv_cache_dir(null);
         hd_debug_print("Reset debug logging");
@@ -390,20 +392,5 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
             User_Input_Handler_Registry::create_action($this, ACTION_RELOAD));
-    }
-
-    private function CopyData($sourcePath, $source_pattern, $destPath){
-        if (empty($sourcePath) || empty($destPath)) {
-            hd_debug_print("sourceDir = $sourcePath | destDir = $destPath");
-            return false;
-        }
-
-        foreach (glob_dir($sourcePath, $source_pattern) as $file) {
-            $dest_file = $destPath . $file;
-            hd_debug_print("copy $file to $dest_file");
-            if (!copy($file, $dest_file))
-                return false;
-        }
-        return true;
     }
 }
