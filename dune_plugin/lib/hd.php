@@ -421,7 +421,8 @@ class HD
         }
         $ver = str_replace('.', '_', $ver);
         $timestamp = format_datetime('Ymd_His', time());
-        $zip_file_name = "proiptv_{$ver}_{$serial}_$timestamp.zip";
+        $model = get_product_id();
+        $zip_file_name = "proiptv_{$ver}_{$model}_{$serial}_$timestamp.zip";
         hd_debug_print("Prepare archive $zip_file_name for send");
         $zip_file = get_temp_path($zip_file_name);
         $apk_subst = getenv('FS_PREFIX');
@@ -872,7 +873,7 @@ class HD
     }
 
     /**
-     * @param string $error
+     * @param string|null $error
      */
     public static function set_last_error($error)
     {

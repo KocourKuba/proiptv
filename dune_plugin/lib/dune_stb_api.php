@@ -555,12 +555,12 @@ function get_parsed_firmware_ver()
     static $result = null;
 
     if (is_null($result)) {
-        preg_match_all('/^(\d*)_(\d*)_(\D*)(\d*)(.*)$/', get_raw_firmware_version(), $matches, PREG_SET_ORDER);
+        preg_match_all('/^(\d*)_(\d*)_(\D*)(\d*)(.*)?$/', get_raw_firmware_version(), $matches, PREG_SET_ORDER);
         $matches[0][5] = ltrim($matches[0][5], '_');
         $result = array_combine(array('string', 'build_date', 'build_number', 'rev_literal', 'rev_number', 'features'), $matches[0]);
     }
 
-    return $result;
+    return is_array($result) ? $result : array();
 }
 
 /**
@@ -1715,6 +1715,7 @@ function print_sysinfo()
     $values = curl_version();
     $table = array(
         'Dune Product' => get_product_id(),
+        'Dune Model' => get_dune_model(),
         'Dune FW' => get_raw_firmware_version(),
         'Dune Serial' => get_serial_number(),
         'Dune Platform' => "{$platform['platform']} ({$platform['type']})",
@@ -1739,6 +1740,89 @@ function print_sysinfo()
     foreach ($table as $key => $value) {
         hd_print(str_pad($key, $max + 2) . $value);
     }
+}
+
+/**
+ * @return string Model name
+ */
+function get_dune_model() {
+    static $models = array(
+        // android models
+        'boxy_apk' => 'Boxy',
+        'dune_apk' => 'Homatics Box',
+        // android models
+        'tv994a' => 'Ultra 4K Vision',
+        'tv794a' => 'Max 4K Vision',
+        'tv175v' => 'Pro Vision 4K Solo',
+        'tv494b' => 'Real Vision 4K Duo',
+        'tv175y' => 'Real Vision 4K Plus',
+        'tv175u' => 'Real Vision 4K',
+        'tv175j' => 'Pro 4K Plus II',
+        'tv175h' => 'Pro 4K II',
+        'tv175r' => 'Magic 4K Plus',
+        'tv175q' => 'Magic 4K',
+        'tv175o' => 'SmartBox 4K Plus II',
+        'tv175n' => 'SmartBox 4K Plus',
+        'tv175l' => 'SmartBox 4K',
+        'tv175x' => 'RealBox 4K',
+        'tv993a' => 'Ultra 4K',
+        'tv793a' => 'Max 4K',
+        'tv393a' => 'Pro 4K Plus',
+        'tv292b' => 'Pro 4K',
+        'tv292a' => 'Pro 4K',
+        'tv175p' => 'Traveler',
+        'tv274a' => 'Sky 4K Plus',
+        'tv174c' => 'Neo 4K T2 Plus (revsion tv174c)',
+        'tv174b' => 'Neo 4K T2 Plus (revision tv174b)',
+        'tv174a' => 'Neo 4K T2',
+        'tv175f' => 'Neo 4K Plus',
+        'tv175e' => 'Neo 4K (revision tv175e)',
+        'tv173b' => 'Neo 4K (revision tv173b)',
+
+        // sigma chipsets r11
+        // SMP8672
+        'tv303d' => 'TV 303D',
+        'tv303d2' => 'TV 303D v2',
+        'base3d' => 'Base3D',
+        'base3d2' => 'Base3D v2',
+        // SMP8674
+        'connect' => 'Connect',
+        'tv102' => 'TV 102',
+        'tv102v2' => 'TV 102 v2',
+        // SMP8756
+        'tv203' => 'TV 203',
+        'tv204' => 'TV 204',
+        // SMP8758
+        'tv205' => 'TV 205',
+        'tv206' => 'TV 206',
+        'solo4k' => 'Solo 4K',
+        'sololite' => 'Solo Lite',
+        'duo4k' => 'Duo 4K',
+        'duobase4k' => 'Duo Base 4K',
+        //
+        'hdduo' => 'Duo',
+        'hdmax' => 'Max',
+        'hdsmart_b1' => 'Smart B1',
+        'hdsmart_d1' => 'Smart D1',
+        'hdsmart_h1' => 'Smart H1',
+        'hdbase3' => 'Base 3.0',
+        'bdprime3' => 'Prime 3.0',
+
+        // sigma chipsets < r11 (not supported)
+        // SMP8670
+        'hdtv_301' => 'TV 301',
+        'hdtv_102p' => 'TV 102p',
+        'hdtv_101' => 'TV 101',
+        'hdlite_53d' => 'Lite 53D',
+        'hdbase2' => 'Base 2.0',
+        'hdcenter_sony' => 'HD Center',
+        'bdprime_sony' => 'BD Prime',
+        'hdmini' => 'Mini',
+        'hdultra' => 'Ultra',
+    );
+
+    $product_code = get_product_id();
+    return isset($models[$product_code]) ? $models[$product_code] : "Unknown model";
 }
 
 function get_canonize_string($str, $encoding = 'UTF-8')
