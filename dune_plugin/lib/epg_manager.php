@@ -145,7 +145,7 @@ class Epg_Manager
     public function get_picons()
     {
         if (!isset($this->xmltv_picons)
-            && file_exists(get_data_path('version'))
+            && file_exists(get_data_path($this->url_hash . '_version'))
             && file_get_contents(get_data_path($this->url_hash . '_version')) > '1.8') {
 
             hd_debug_print("Load picons from: " . $this->get_picons_index_name());
