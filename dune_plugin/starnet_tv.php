@@ -740,8 +740,6 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_tv_playback_url($channel_id, $archive_ts, $protect_code, &$plugin_cookies)
     {
-        //hd_debug_print("channel: $channel_id archive_ts: $archive_ts, protect code: $protect_code");
-
         try {
             if ($this->load_channels($plugin_cookies) === 0) {
                 throw new Exception("Channels not loaded!");
