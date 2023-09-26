@@ -325,9 +325,7 @@ class Epg_Manager
      */
     public function start_bg_indexing()
     {
-        $cmd = 'wget --quiet -O - "' . get_plugin_cgi_url('cgi_wrapper.sh?index_epg.php')
-            . "&log=$this->url_hash.log"
-            . '" > /dev/null &';
+        $cmd = get_install_path('bin/cgi_wrapper.sh') . " 'index_epg.php' '{$this->get_cache_stem('.log')}' &";
         hd_debug_print("exec: $cmd", true);
         exec($cmd);
     }
@@ -352,7 +350,8 @@ class Epg_Manager
             hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
             $cached_xmltv_file = $this->get_cached_filename();
             $tmp_filename = $cached_xmltv_file . '.tmp';
-            $cmd = get_install_path('bin/https_proxy.sh') . " '$this->xmltv_url' '$tmp_filename'";
+            $user_agent = HD::get_dune_user_agent();
+            $cmd = get_install_path('bin/https_proxy.sh') . " '$this->xmltv_url' '$tmp_filename' '$user_agent'";
             hd_debug_print("Exec: $cmd", true);
             shell_exec($cmd);
 

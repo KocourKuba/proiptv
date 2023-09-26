@@ -42,6 +42,7 @@ class Epg_Manager_Sql extends Epg_Manager
                     $picons[$columns['alias']] = $columns['picon'];
                 }
             }
+            $filedb->close();
         }
 
         return $picons;
@@ -59,8 +60,12 @@ class Epg_Manager_Sql extends Epg_Manager
                 $channels = $filedb->querySingle("SELECT count(*) FROM channels;");
                 if (!empty($channels) && (int)$channels !== 0) {
                     hd_debug_print("EPG channels info already indexed", true);
+                    $filedb->close();
                     return;
                 }
+
+                $filedb->close();
+                $filedb = null;
             }
 
             hd_debug_print("Start reindex channels...");
@@ -70,6 +75,10 @@ class Epg_Manager_Sql extends Epg_Manager
             $t = microtime(true);
 
             $filedb = $this->open_sqlite_db(false, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
+            if (is_null($filedb)) {
+                throw new Exception("Fatal problem: can't create database!");
+            }
+
             $filedb->exec('DROP TABLE IF EXISTS channels;');
             $filedb->exec('CREATE TABLE channels (alias STRING, channel_id STRING, picon STRING);');
             $filedb->exec('PRAGMA journal_mode=MEMORY;');
@@ -131,6 +140,8 @@ class Epg_Manager_Sql extends Epg_Manager
             $result = $filedb->querySingle('SELECT count(DISTINCT picon) FROM channels WHERE picon != "";');
             $picons = empty($result) ? 0 : (int)$result;
 
+            $filedb->close();
+
             hd_debug_print("Total channels id's: $channels");
             hd_debug_print("Total picons: $picons");
             hd_debug_print("------------------------------------------------------------");
@@ -158,6 +169,8 @@ class Epg_Manager_Sql extends Epg_Manager
                     hd_debug_print("EPG positions info already indexed", true);
                     return;
                 }
+                $filedb->close();
+                $filedb = null;
             }
 
             hd_debug_print("Start reindex positions...");
@@ -167,6 +180,10 @@ class Epg_Manager_Sql extends Epg_Manager
             $t = microtime(true);
 
             $filedb = $this->open_sqlite_db(true,SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
+            if (is_null($filedb)) {
+                throw new Exception("Fatal problem: can't create database!");
+            }
+
             $filedb->exec('DROP TABLE IF EXISTS positions;');
             $filedb->exec('CREATE TABLE positions (channel_id STRING, start INTEGER, end INTEGER);');
             $filedb->exec('PRAGMA journal_mode=WAL;');
@@ -289,6 +306,7 @@ class Epg_Manager_Sql extends Epg_Manager
                 if (is_null($channels_db)) {
                     throw new Exception("Channels db not indexed");
                 }
+
                 $stm = $channels_db->prepare('SELECT DISTINCT channel_id FROM channels WHERE alias=:alias;');
                 $stm->bindValue(":alias", $channel_title);
 

@@ -1,13 +1,10 @@
 <?php
 require_once "cgi_config.php";
-
+require_once 'lib/ordered_array.php';
+require_once 'lib/hashed_array.php';
+require_once 'lib/hd.php';
 require_once 'lib/epg_manager_sql.php';
 
-global $LOG_FILE;
-
-$params = get_uri_parameters();
-$LOG_FILE = $params['log'];
-@unlink(DuneSystem::$properties['tmp_dir_path'] . "/$LOG_FILE");
 hd_print("Script start: index_epg");
 
 $parameters = HD::get_data_items('common.settings', true, false);
