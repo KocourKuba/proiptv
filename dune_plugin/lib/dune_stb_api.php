@@ -155,6 +155,7 @@ const PARAM_GROUPS_ICONS = 'groups_icons';
 const PARAM_PLUGIN_BACKGROUND = 'plugin_background';
 const PARAM_ENABLE_DEBUG = 'enable_debug';
 const PARAM_PER_CHANNELS_ZOOM = 'per_channels_zoom';
+const PARAM_FUZZY_SEARCH_EPG = 'fuzzy_search_epg';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
 const ENGINE_SQLITE = 'sqlite';
@@ -1805,25 +1806,25 @@ function get_dune_model() {
         'duo4k' => 'Duo 4K',
         'duobase4k' => 'Duo Base 4K',
         //
-        'hdduo' => 'Duo',
-        'hdmax' => 'Max',
-        'hdsmart_b1' => 'Smart B1',
-        'hdsmart_d1' => 'Smart D1',
-        'hdsmart_h1' => 'Smart H1',
-        'hdbase3' => 'Base 3.0',
-        'bdprime3' => 'Prime 3.0',
+        'hdduo' => 'HD Duo',
+        'hdmax' => 'HD Max',
+        'hdsmart_b1' => 'HD Smart B1',
+        'hdsmart_d1' => 'HD Smart D1',
+        'hdsmart_h1' => 'HD Smart H1',
+        'hdbase3' => 'HD Base 3.0',
+        'bdprime3' => 'HD Prime 3.0',
 
         // sigma chipsets < r11 (not supported)
         // SMP8670
-        'hdtv_301' => 'TV 301',
-        'hdtv_102p' => 'TV 102p',
-        'hdtv_101' => 'TV 101',
-        'hdlite_53d' => 'Lite 53D',
-        'hdbase2' => 'Base 2.0',
+        'hdtv_301' => 'HD TV 301',
+        'hdtv_102p' => 'HD TV 102p',
+        'hdtv_101' => 'HD TV 101',
+        'hdlite_53d' => 'HD Lite 53D',
+        'hdbase2' => 'HD Base 2.0',
         'hdcenter_sony' => 'HD Center',
         'bdprime_sony' => 'BD Prime',
-        'hdmini' => 'Mini',
-        'hdultra' => 'Ultra',
+        'hdmini' => 'HD Mini',
+        'hdultra' => 'HD Ultra',
     );
 
     $product_code = get_product_id();

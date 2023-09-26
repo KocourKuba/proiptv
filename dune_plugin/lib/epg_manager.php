@@ -81,6 +81,11 @@ class Epg_Manager
     protected $delayed_epg = array();
 
     /**
+     * @var array
+     */
+    protected $fuzzy_search = false;
+
+    /**
      * @param string|null $version
      */
     public function __construct($version = null)
@@ -107,6 +112,15 @@ class Epg_Manager
     public function set_cache_ttl($cache_ttl)
     {
         $this->cache_ttl = $cache_ttl;
+    }
+
+    /**
+     * @param bool $fuzzy_search
+     * @return void
+     */
+    public function set_fuzzy_search($fuzzy_search)
+    {
+        $this->fuzzy_search = $fuzzy_search;
     }
 
     /**
@@ -766,8 +780,7 @@ class Epg_Manager
      */
     protected function load_program_index($channel)
     {
-        try
-        {
+        try {
             if (empty($this->xmltv_channels)) {
                 $index_file = $this->get_index_name(false);
                 $this->xmltv_channels = HD::ReadContentFromFile($index_file);
@@ -778,21 +791,25 @@ class Epg_Manager
             }
 
             // try found channel_id by epg_id
-            foreach ($channel->get_epg_ids() as $epg_id) {
+            $channel_title = $channel->get_title();
+            $epg_ids = $channel->get_epg_ids();
+            if (empty($epg_ids) || $this->fuzzy_search) {
+                // channel_id not exist or not found. Try to map from channel name
+                if (isset($this->xmltv_channels[$channel_title])) {
+                    $epg_ids[] = $this->xmltv_channels[$channel_title];
+                }
+            }
+
+            $epg_ids = array_unique($epg_ids);
+            foreach ($epg_ids as $epg_id) {
                 if (isset($this->xmltv_channels[$epg_id])) {
                     $channel_id = $this->xmltv_channels[$epg_id];
                     break;
                 }
             }
 
-            // channel_id not exist or not found. Try to map from channel name
             if (empty($channel_id)) {
-                $channel_title = $channel->get_title();
-                if (!isset($this->xmltv_channels[$channel_title])) {
-                    throw new Exception("No mapped EPG exist");
-                }
-
-                $channel_id = $this->xmltv_channels[$channel_title];
+                throw new Exception("index positions for epg '$channel_title' is not exist");
             }
 
             if (empty($this->xmltv_positions)) {
@@ -812,7 +829,6 @@ class Epg_Manager
             hd_debug_print($ex->getMessage());
             return array();
         }
-
 
         hd_debug_print("Info '$channel_id' for channel: '{$channel->get_title()}' ({$channel->get_id()})");
         hd_debug_print("Total positions: " . count($this->xmltv_positions[$channel_id]));

@@ -113,6 +113,13 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         }
 
         //////////////////////////////////////
+        // Fuzzy search
+        $fuzzy_search = $this->plugin->get_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_off);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_FUZZY_SEARCH_EPG, TR::t('entry_epg_fuzzy_search'), SetupControlSwitchDefs::$on_off_translated[$fuzzy_search],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$fuzzy_search]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
         // EPG cache
         $epg_cache_ops = array();
         $epg_cache_ops[1] = 1;
@@ -242,6 +249,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->init_epg_manager();
                 $this->plugin->get_epg_manager()->set_xmltv_url($this->plugin->get_active_xmltv_source());
                 $default_path = $this->plugin->get_xmltv_cache_dir();
+
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $default_path),
                     $action_reload, $default_path, self::CONTROLS_WIDTH);
 
@@ -257,6 +265,12 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
+
+            case PARAM_FUZZY_SEARCH_EPG:
+                $this->plugin->toggle_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_off);
+                $debug = $this->plugin->get_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
+                hd_debug_print("Fuzzy search: " . var_export($debug, true));
+                return $action_reload;
 
             case self::ACTION_RELOAD_EPG:
                 hd_debug_print(self::ACTION_RELOAD_EPG);

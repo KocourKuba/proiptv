@@ -129,6 +129,7 @@ entry_not_available = Diese Funktion ist für dieses Gerät nicht verfügbar!
 entry_send_log = Protokoll an den Entwickler senden
 entry_log_sent = Protokoll erfolgreich gesendet!
 entry_log_not_sent = Das gesendete Protokoll ist fehlgeschlagen!
+entry_epg_fuzzy_search = Fuzzy EPG search
 entry_epg_cache_clear = EPG-Cache leeren
 entry_epg_cache_clear_all = Clear entire EPG cache
 entry_epg_cache_cleared = EPG-Cache geleert
