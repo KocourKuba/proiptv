@@ -45,6 +45,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_CHOOSE_FILE = 'choose_file';
     const ACTION_EDIT_ITEM_DLG = 'add_url_dialog';
     const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
+    const ACTION_INVALIDATE_CURRENT_FOLDER = 'invalidate_current_folder';
     const CONTROL_URL_PATH = 'url_path';
     const CONTROL_SET_NAME = 'set_item_name';
 
@@ -64,7 +65,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print($media_url, true);
 
         $actions = array();
-        if ($this->get_edit_order($media_url)->size()) {
+        if ($this->get_edit_order($media_url->edit_list)->size()) {
             if (isset($media_url->allow_order) && $media_url->allow_order) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
@@ -93,7 +94,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         dump_input_handler($user_input);
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $order = $this->get_edit_order($parent_media_url);
+        $action_invalidate = User_Input_Handler_Registry::create_action($this,self::ACTION_INVALIDATE_CURRENT_FOLDER);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -116,20 +117,21 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
 
             case ACTION_ITEM_UP:
-                $item = MediaURL::decode($user_input->selected_media_url)->id;
-                if (!$order->arrange_item($item, Ordered_Array::UP))
+                $order = $this->get_edit_order($parent_media_url->edit_list);
+                if (!$order->arrange_item(MediaURL::decode($user_input->selected_media_url)->id, Ordered_Array::UP))
                     return null;
 
                 $user_input->sel_ndx--;
                 if ($user_input->sel_ndx < 0) {
                     $user_input->sel_ndx = 0;
                 }
-                $this->set_edit_order($parent_media_url, $order);
-                break;
+                $this->set_edit_order($parent_media_url->edit_list, $order);
+
+                return $action_invalidate;
 
             case ACTION_ITEM_DOWN:
-                $item = MediaURL::decode($user_input->selected_media_url)->id;
-                if (!$order->arrange_item($item, Ordered_Array::DOWN))
+                $order = $this->get_edit_order($parent_media_url->edit_list);
+                if (!$order->arrange_item(MediaURL::decode($user_input->selected_media_url)->id, Ordered_Array::DOWN))
                     return null;
 
                 $groups_cnt = $order->size();
@@ -137,24 +139,33 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($user_input->sel_ndx >= $groups_cnt) {
                     $user_input->sel_ndx = $groups_cnt - 1;
                 }
-                $this->set_edit_order($parent_media_url, $order);
-                break;
+                $this->set_edit_order($parent_media_url->edit_list, $order);
+
+                return $action_invalidate;
 
             case ACTION_ITEM_DELETE:
                 if ($parent_media_url->edit_list !== self::SCREEN_EDIT_PLAYLIST && $parent_media_url->edit_list !== self::SCREEN_EDIT_EPG_LIST) {
                     $item = MediaURL::decode($user_input->selected_media_url)->id;
+                    $order = $this->get_edit_order($parent_media_url->edit_list);
                     $order->remove_item($item);
-                    $this->set_edit_order($parent_media_url, $order);
+                    $this->set_edit_order($parent_media_url->edit_list, $order);
                     $this->plugin->remove_playlist_name($item);
                     return Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()));
                 }
 
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_REMOVE_PLAYLIST_DLG_APPLY);
 
+            case ACTION_ITEMS_SORT:
+                $order = $this->get_edit_order($parent_media_url->edit_list);
+                $order->sort_order();
+                $this->set_edit_order($parent_media_url->edit_list, $order);
+                return $action_invalidate;
+
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CLEAR_APPLY);
 
             case self::ACTION_CLEAR_APPLY:
+                $order = $this->get_edit_order($parent_media_url->edit_list);
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     foreach ($order as $item) {
                         $this->plugin->get_epg_manager()->clear_epg_cache_by_uri($item);
@@ -162,171 +173,24 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $order->clear();
                 $user_input->sel_ndx = 0;
-                $this->set_edit_order($parent_media_url, $order);
+                $this->set_edit_order($parent_media_url->edit_list, $order);
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case self::ACTION_REMOVE_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_REMOVE_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_REMOVE_PLAYLIST_DLG_APPLY:
-                if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    $item = $order->get_item_by_idx($user_input->sel_ndx);
-                    $this->plugin->get_epg_manager()->clear_epg_cache_by_uri($item);
-                }
-                $order->remove_item_by_idx($user_input->sel_ndx);
-                $this->set_edit_order($parent_media_url, $order);
-                $this->need_reload = true;
-                return User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
-
-            case ACTION_ITEMS_SORT:
-                $order->sort_order();
-                $this->set_edit_order($parent_media_url, $order);
-                break;
+                return $this->apply_remove_playlist_dlg($user_input, $plugin_cookies);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items = array();
-                if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST
-                    || $parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-
-                    if (isset($user_input->selected_media_url)) {
-                        $item = MediaURL::decode($user_input->selected_media_url)->id;
-
-                        $menu_items[] = $this->plugin->create_menu_item($this,
-                            self::ACTION_EDIT_ITEM_DLG,
-                            TR::t('edit_list_edit_item'),
-                            "edit.png",
-                            array('edit_action' => 'edit', 'edit_item' => $item)
-                        );
-
-                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                            $name = $this->plugin->get_playlist_name($item);
-                        } else {
-                            $name = $this->plugin->get_xmltv_source_name($item);
-                        }
-                        $menu_items[] = $this->plugin->create_menu_item($this,
-                            self::ACTION_EDIT_ITEM_DLG,
-                            TR::t('edit_list_add_name'),
-                            "edit.png",
-                            array('edit_action' => 'set_name', 'edit_item' => $name)
-                        );
-                        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    }
-
-                    $add_param = array('extension' => $parent_media_url->extension);
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        self::ACTION_EDIT_ITEM_DLG,
-                        TR::t('edit_list_internet_path'),
-                        "link.png",
-                        array('edit_action' => 'add_url', 'edit_item' => 'http://')
-                    );
-
-                    $add_param['action'] = $parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV;
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        self::ACTION_CHOOSE_FILE, TR::t('select_file'),
-                        $parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST ? "m3u_file.png" : "xmltv_file.png",
-                        $add_param);
-
-                    $add_param['action'] = self::ACTION_FILE_TEXT_LIST;
-                    $add_param['extension'] = 'txt|lst';
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        self::ACTION_CHOOSE_FILE,
-                        TR::t('edit_list_import_list'),
-                        "text_file.png",
-                        $add_param);
-
-                    unset($add_param['action']);
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        self::ACTION_CHOOSE_FOLDER,
-                        TR::t('edit_list_folder_path'),
-                        "folder.png",
-                        $add_param);
-
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    if ($order->size()) {
-                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
-                    }
-                }
-
-                if ($order->size()) {
-                    $hidden = ($parent_media_url->edit_list === self::SCREEN_EDIT_GROUPS || $parent_media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_ITEMS_CLEAR,
-                        $hidden ? TR::t('restore_all') : TR::t('clear'),
-                        "brush.png");
-                }
-
-                return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
+                return $this->create_popup_menu($user_input);
 
             case self::ACTION_EDIT_ITEM_DLG:
-                $defs = array();
-                Control_Factory::add_vgap($defs, 20);
-                Control_Factory::add_text_field($defs, $this, null, self::CONTROL_URL_PATH, '',
-                    $user_input->edit_item, false, false, false, true, self::DLG_CONTROLS_WIDTH);
-
-                Control_Factory::add_vgap($defs, 50);
-
-                Control_Factory::add_close_dialog_and_apply_button($defs, $this, array('edit_action' => $user_input->edit_action),
-                    self::ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
-
-                Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-                Control_Factory::add_vgap($defs, 10);
-
-                switch ($user_input->edit_action) {
-                    case 'set_name':
-                        $name = TR::t('edit_list_add_name');
-                        break;
-                    case 'add_url':
-                        $name = TR::t('edit_list_internet_path');
-                        break;
-                    case 'edit':
-                        $name = TR::t('edit_list_edit_item');
-                        break;
-                    default:
-                        return null;
-                }
-                return Action_Factory::show_dialog($name, $defs, true);
+                return $this->do_edit_item_dlg($user_input);
 
             case self::ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
-                if (!isset($user_input->edit_action)) break;
-
-                $name = isset($user_input->{self::CONTROL_URL_PATH}) ? $user_input->{self::CONTROL_URL_PATH} : '';
-                switch ($user_input->edit_action) {
-                    case 'set_name':
-                        $item = MediaURL::decode($user_input->selected_media_url)->id;
-                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                            $this->plugin->set_playlist_name($item, $name);
-                        } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                            $this->plugin->set_xmltv_source_name($item, $name);
-                        }
-                        break;
-
-                    case 'add_url':
-                        if (preg_match("|https?://.+$|", $name)) {
-                            if ($order->in_order($name)) {
-                                return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
-                            }
-
-                            $order->add_item($name);
-                            $this->set_edit_order($parent_media_url, $order);
-                        }
-                        break;
-
-                    case 'edit':
-                        $item = MediaURL::decode($user_input->selected_media_url)->id;
-                        if ($order->in_order($name)) {
-                            return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
-                        }
-
-                        $this->need_reload = true;
-                        $idx = $order->get_item_pos($item);
-                        $order->set_item_by_idx($idx, $name);
-                        $this->set_edit_order($parent_media_url, $order);
-                        break;
-
-                    default:
-                        return null;
-                }
-                return User_Input_Handler_Registry::create_action($this, RESET_CONTROLS_ACTION_ID);
+                return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
 
             case self::ACTION_CHOOSE_FILE:
                 $media_url_str = MediaURL::encode(
@@ -342,49 +206,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'windowCounter' => 1,
                     )
                 );
+
                 return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file->action === self::ACTION_FILE_TEXT_LIST) {
-                    $lines = file($data->filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                    if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
-                        return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
-                    }
-
-                    $old_count = $order->size();
-                    $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
-                    $error_log = array();
-                    foreach ($lines as $line) {
-                        $line = trim($line);
-                        if (!$order->in_order($line) && preg_match('|^https?://|', $line)) {
-                            $order->add_item($line);
-                            hd_debug_print("imported: '$line'");
-                        }
-                    }
-
-                    $post_action = null;
-                    if ($old_count === $order->size()) {
-                        $post_action = Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
-                    }
-
-                    if (!empty($error_log)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), $post_action, $error_log);
-                    }
-
-                    $this->set_edit_order($parent_media_url, $order);
-
-                    return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $order->size() - $old_count, count($lines)),
-                        Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()))
-                    );
-                }
-
-                if (($data->choose_file->action === self::ACTION_FILE_PLAYLIST || $data->choose_file->action === self::ACTION_FILE_XMLTV)
-                    && !$order->add_item($data->filepath)) {
-
-                    return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
-                }
-                break;
+                return $this->do_select_file($user_input, $plugin_cookies);
 
             case self::ACTION_CHOOSE_FOLDER:
                 $media_url_str = MediaURL::encode(
@@ -399,33 +225,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'windowCounter' => 1,
                     )
                 );
+
                 return Action_Factory::open_folder($media_url_str, TR::t('edit_list_src_folder'));
 
             case ACTION_FOLDER_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                $file = glob_dir($data->filepath, "/\.$parent_media_url->extension$/i");
-                if (empty($file)) {
-                    return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
-                }
+                return $this->do_select_folder($user_input);
 
-                $old_count = $order->size();
-                $order->add_items($file);
-                $this->set_edit_order($parent_media_url, $order);
-
-                return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', $order->size() - $old_count),
-                    Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()))
-                );
-
-            case RESET_CONTROLS_ACTION_ID:
-                return Action_Factory::change_behaviour(
-                    $this->get_action_map($parent_media_url,$plugin_cookies),
-                    0,
-                    $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx)
-                );
+            case self::ACTION_INVALIDATE_CURRENT_FOLDER:
+                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
         }
 
-        // refresh current screen
-        return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+        return null;
     }
 
     /**
@@ -436,7 +246,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        $order = $this->get_edit_order($media_url);
+        $order = $this->get_edit_order($media_url->edit_list);
         $items = array();
         foreach ($order as $item) {
             $title = $item;
@@ -491,7 +301,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
-        if ($this->get_edit_order($media_url)->size() === 0) {
+        if ($this->get_edit_order($media_url->edit_list)->size() === 0) {
             $msg = !is_apk()
                 ? TR::t('edit_list_add_prompt__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW)
                 : TR::t('edit_list_add_prompt_apk__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW);
@@ -517,15 +327,18 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         );
     }
 
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
     /**
-     * @param MediaURL $media_url
+     * @param string $edit_list
      * @return Ordered_Array
      */
-    private function get_edit_order($media_url)
+    protected function get_edit_order($edit_list)
     {
-        hd_debug_print($media_url, true);
+        hd_debug_print($edit_list, true);
 
-        switch ($media_url->edit_list) {
+        switch ($edit_list) {
             case self::SCREEN_EDIT_PLAYLIST:
                 $order = $this->plugin->get_playlists();
                 break;
@@ -553,15 +366,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param MediaURL $media_url
+     * @param string $edit_list
      * @param Ordered_Array $order
      * @return void
      */
-    private function set_edit_order($media_url, $order)
+    protected function set_edit_order($edit_list, $order)
     {
-        hd_debug_print($media_url, true);
+        hd_debug_print($edit_list, true);
 
-        switch ($media_url->edit_list) {
+        switch ($edit_list) {
             case self::SCREEN_EDIT_PLAYLIST:
                 $this->plugin->set_playlists($order);
                 break;
@@ -585,5 +398,287 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             default:
                 hd_debug_print("Unknown edit list type");
         }
+    }
+
+    /**
+     * @param $user_input
+     * @return array|null
+     */
+    protected function create_popup_menu($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+
+        $order_size = $this->get_edit_order($parent_media_url->edit_list)->size();
+        $menu_items = array();
+        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST
+            || $parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
+
+            if (isset($user_input->selected_media_url)) {
+                $item = MediaURL::decode($user_input->selected_media_url)->id;
+
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    self::ACTION_EDIT_ITEM_DLG,
+                    TR::t('edit_list_edit_item'),
+                    "edit.png",
+                    array('edit_action' => 'edit', 'edit_item' => $item)
+                );
+
+                if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                    $name = $this->plugin->get_playlist_name($item);
+                } else {
+                    $name = $this->plugin->get_xmltv_source_name($item);
+                }
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    self::ACTION_EDIT_ITEM_DLG,
+                    TR::t('edit_list_add_name'),
+                    "edit.png",
+                    array('edit_action' => 'set_name', 'edit_item' => $name)
+                );
+                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+            }
+
+            $add_param = array('extension' => $parent_media_url->extension);
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                self::ACTION_EDIT_ITEM_DLG,
+                TR::t('edit_list_internet_path'),
+                "link.png",
+                array('edit_action' => 'add_url', 'edit_item' => 'http://')
+            );
+
+            $add_param['action'] = $parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV;
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                self::ACTION_CHOOSE_FILE, TR::t('select_file'),
+                $parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST ? "m3u_file.png" : "xmltv_file.png",
+                $add_param);
+
+            $add_param['action'] = self::ACTION_FILE_TEXT_LIST;
+            $add_param['extension'] = 'txt|lst';
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                self::ACTION_CHOOSE_FILE,
+                TR::t('edit_list_import_list'),
+                "text_file.png",
+                $add_param);
+
+            unset($add_param['action']);
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                self::ACTION_CHOOSE_FOLDER,
+                TR::t('edit_list_folder_path'),
+                "folder.png",
+                $add_param);
+
+            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+            if ($order_size) {
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
+            }
+        }
+
+        if ($order_size) {
+            $hidden = ($parent_media_url->edit_list === self::SCREEN_EDIT_GROUPS || $parent_media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                ACTION_ITEMS_CLEAR,
+                $hidden ? TR::t('restore_all') : TR::t('clear'),
+                "brush.png");
+        }
+
+        return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
+    }
+
+    /**
+     * @param $user_input
+     * @return array|null
+     */
+    protected function do_edit_item_dlg($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_URL_PATH, '',
+            $user_input->edit_item, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, array('edit_action' => $user_input->edit_action),
+            self::ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        switch ($user_input->edit_action) {
+            case 'set_name':
+                $name = TR::t('edit_list_add_name');
+                break;
+            case 'add_url':
+                $name = TR::t('edit_list_internet_path');
+                break;
+            case 'edit':
+                $name = TR::t('edit_list_edit_item');
+                break;
+            default:
+                return null;
+        }
+
+        return Action_Factory::show_dialog($name, $defs, true);
+    }
+
+    /**
+     * @param $user_input
+     * @param $plugin_cookies
+     * @return array|null
+     */
+    protected function apply_edit_url_dlg($user_input, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $action_invalidate = User_Input_Handler_Registry::create_action($this,self::ACTION_INVALIDATE_CURRENT_FOLDER);
+        if (isset($user_input->edit_action)) {
+            return $action_invalidate;
+        }
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $order = $this->get_edit_order($parent_media_url->edit_list);
+        $name = isset($user_input->{self::CONTROL_URL_PATH}) ? $user_input->{self::CONTROL_URL_PATH} : '';
+        switch ($user_input->edit_action) {
+            case 'set_name':
+                $item = MediaURL::decode($user_input->selected_media_url)->id;
+                if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                    $this->plugin->set_playlist_name($item, $name);
+                } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                    $this->plugin->set_xmltv_source_name($item, $name);
+                }
+                break;
+
+            case 'add_url':
+                if (preg_match("|https?://.+$|", $name)) {
+                    if ($order->in_order($name)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+                    }
+
+                    $order->add_item($name);
+                    $this->set_edit_order($parent_media_url->edit_list, $order);
+                }
+                break;
+
+            case 'edit':
+                $item = MediaURL::decode($user_input->selected_media_url)->id;
+                if ($order->in_order($name)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+                }
+
+                $this->need_reload = true;
+                $idx = $order->get_item_pos($item);
+                $order->set_item_by_idx($idx, $name);
+                $this->set_edit_order($parent_media_url->edit_list, $order);
+                break;
+        }
+
+        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url,$plugin_cookies), 0, $action_invalidate);
+    }
+
+    /**
+     * @param $user_input
+     * @param $plugin_cookies
+     * @return array
+     */
+    protected function do_select_file($user_input, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $data = MediaURL::decode($user_input->selected_data);
+
+        if ($data->choose_file->action === self::ACTION_FILE_TEXT_LIST) {
+            hd_debug_print("Choosed file: $data->filepath", true);
+            $lines = file($data->filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
+                return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
+            }
+
+            $order = $this->get_edit_order($parent_media_url->edit_list);
+            $old_count = $order->size();
+            $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
+            $error_log = array();
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (!$order->in_order($line) && preg_match('|^https?://|', $line)) {
+                    $order->add_item($line);
+                    hd_debug_print("imported: '$line'");
+                }
+            }
+
+            $post_action = null;
+            if ($old_count === $order->size()) {
+                $post_action = Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
+            }
+
+            if (!empty($error_log)) {
+                return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), $post_action, $error_log);
+            }
+
+            $this->set_edit_order($parent_media_url->edit_list, $order);
+
+            return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $order->size() - $old_count, count($lines)),
+                Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()))
+            );
+        }
+
+        if ($data->choose_file->action === self::ACTION_FILE_PLAYLIST || $data->choose_file->action === self::ACTION_FILE_XMLTV) {
+            $order = $this->get_edit_order($parent_media_url->edit_list);
+            if (!$order->add_item($data->filepath)) {
+                return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+            }
+        }
+
+        return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+    }
+
+    /**
+     * @param $user_input
+     * @return array
+     */
+    protected function do_select_folder($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_data = MediaURL::decode($user_input->selected_data);
+        $file = glob_dir($selected_data->filepath, "/\.$parent_media_url->extension$/i");
+        if (empty($file)) {
+            return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
+        }
+
+        $order = $this->get_edit_order($parent_media_url->edit_list);
+        $old_count = $order->size();
+        $order->add_items($file);
+        $this->set_edit_order($parent_media_url->edit_list, $order);
+
+        return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', $order->size() - $old_count),
+            Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()))
+        );
+    }
+
+    /**
+     * @param $user_input
+     * @param $plugin_cookies
+     * @return array
+     */
+    protected function apply_remove_playlist_dlg($user_input, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $order = $this->get_edit_order($parent_media_url->edit_list);
+        if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
+            $item = $order->get_item_by_idx($user_input->sel_ndx);
+            $this->plugin->get_epg_manager()->clear_epg_cache_by_uri($item);
+        }
+        $order->remove_item_by_idx($user_input->sel_ndx);
+        $this->set_edit_order($parent_media_url->edit_list, $order);
+        $this->need_reload = true;
+
+        $action_invalidate = User_Input_Handler_Registry::create_action($this,self::ACTION_INVALIDATE_CURRENT_FOLDER);
+        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0, $action_invalidate);
     }
 }

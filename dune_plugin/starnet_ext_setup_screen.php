@@ -204,7 +204,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case self::CONTROL_COPY_TO_DATA:
                 $history_path = $this->plugin->get_history_path();
                 hd_debug_print("copy to: $history_path");
-                if (!$this->copy_data(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
+                if (!HD::copy_data(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -212,7 +212,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case self::CONTROL_COPY_TO_PLUGIN:
                 hd_debug_print("copy to: " . get_data_path());
-                if (!$this->copy_data($this->plugin->get_history_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", get_data_path('history'))) {
+                if (!HD::copy_data($this->plugin->get_history_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", get_data_path('history'))) {
                     return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
 
@@ -231,27 +231,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());
-    }
-
-
-    private function copy_data($sourcePath, $source_pattern, $destPath){
-        if (empty($sourcePath) || empty($destPath)) {
-            hd_debug_print("One of is empty: sourceDir = $sourcePath | destDir = $destPath");
-            return false;
-        }
-
-        if (!create_path($destPath)) {
-            hd_debug_print("Can't create destination folder: $destPath");
-            return false;
-        }
-
-        foreach (glob_dir($sourcePath, $source_pattern) as $file) {
-            $dest_file = $destPath . $file;
-            hd_debug_print("copy $file to $dest_file");
-            if (!copy($file, $dest_file))
-                return false;
-        }
-        return true;
     }
 
     /**

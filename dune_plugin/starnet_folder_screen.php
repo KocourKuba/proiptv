@@ -36,7 +36,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     const ACTION_SELECT_FOLDER = 'select_folder';
     const ACTION_RESET_FOLDER = 'reset_folder';
     const ACTION_CREATE_FOLDER = 'create_folder';
-    const ACTION_GET_FOLDER_NAME = 'get_folder_name';
+    const ACTION_GET_FOLDER_NAME_DLG = 'get_folder_name';
     const ACTION_DO_MKDIR = 'do_mkdir';
     const ACTION_SMB_SETUP = 'smb_setup';
     const ACTION_NEW_SMB_DATA = 'new_smb_data';
@@ -88,58 +88,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $plugin_cookies
-     * @param array $path
-     * @return array
-     */
-    public function get_file_list(&$plugin_cookies, $path)
-    {
-        if (!is_array($path)) {
-            $dirs[] = $path;
-        } else {
-            $dirs = $path;
-        }
-
-        $smb_shares = new smb_tree();
-        $fileData['folder'] = array();
-        $fileData['file'] = array();
-        foreach ($dirs as $dir) {
-            if ($dir === '/tmp/mnt/smb') {
-                $info = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
-                $s['smb'] = $smb_shares->get_mount_all_smb($info);
-                return $s;
-            }
-
-            if ($dir === '/tmp/mnt/network') {
-                $s['nfs'] = $smb_shares::get_mount_nfs();
-                return $s;
-            }
-
-            if ($dir === '/sdcard') {
-                $fileData['folder']['internal']['filepath'] = $dir . DIRECTORY_SEPARATOR;
-            } else if ($handle = opendir($dir)) {
-                $bug_kind = get_bug_platform_kind();
-                while (false !== ($file = readdir($handle))) {
-                    if ($file === "." || $file === "..") continue;
-
-                    $absolute_filepath = $dir . DIRECTORY_SEPARATOR . $file;
-                    $is_match = preg_match('|^/tmp/mnt/smb/|', $absolute_filepath);
-                    $is_dir = $bug_kind && $is_match ? (bool)trim(shell_exec("test -d \"$absolute_filepath\" && echo 1 || echo 0")) : is_dir($absolute_filepath);
-
-                    if ($is_dir === false) {
-                        $fileData['file'][$file]['size'] = ($bug_kind && $is_match) ? '' : filesize($absolute_filepath);
-                        $fileData['file'][$file]['filepath'] = $absolute_filepath;
-                    } else if ($absolute_filepath !== '/tmp/mnt/nfs' && $absolute_filepath !== '/tmp/mnt/D') {
-                        $fileData['folder'][$file]['filepath'] = $absolute_filepath;
-                    }
-                }
-                closedir($handle);
-            }
-        }
-        return $fileData;
-    }
-
-    /**
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -174,7 +122,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
                 if (!isset($media_url->read_only)) {
                     $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
-                        self::ACTION_GET_FOLDER_NAME, TR::t('folder_screen_create_folder'));
+                        self::ACTION_GET_FOLDER_NAME_DLG, TR::t('folder_screen_create_folder'));
                 }
 
                 $select_folder = User_Input_Handler_Registry::create_action($this,
@@ -215,7 +163,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         $choose_file = isset($media_url->choose_file) ? $media_url->choose_file : false;
 
         $items = array();
-        foreach ($this->get_file_list($plugin_cookies, $dir) as $item_type => $item) {
+        foreach (self::get_file_list($plugin_cookies, $dir) as $item_type => $item) {
             if (isset($media_url->filepath)) {
                 ksort($item);
             }
@@ -379,12 +327,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             return null;
         }
 
-        $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-        $selected_url = MediaURL::decode($user_input->selected_media_url);
-        $parent_url = MediaURL::decode($user_input->parent_media_url);
-
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
+                $parent_url = MediaURL::decode($user_input->parent_media_url);
                 $actions = $this->get_action_map($parent_url, $plugin_cookies);
                 if (isset($parent_url->filepath)
                     && $parent_url->filepath !== '/tmp/mnt/smb'
@@ -397,186 +342,116 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 return Action_Factory::change_behaviour($actions, 1000, $invalidate);
 
             case self::ACTION_FS:
-                if ($selected_url->type === self::SELECTED_TYPE_FOLDER) {
-                    $caption = $selected_url->caption;
-                    if ($selected_url->err === false) {
-                        return Action_Factory::open_folder($user_input->selected_media_url, $caption);
-                    }
-
-                    $defs = array();
-                    if ($selected_url->nfs_protocol !== false) {
-                        Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $selected_url->err, 3);
-                        Control_Factory::add_label($defs, TR::t('folder_screen_nfs'), $selected_url->caption);
-                        Control_Factory::add_label($defs, TR::t('folder_screen_nfs_ip'), $selected_url->ip_path);
-                        Control_Factory::add_label($defs, TR::t('folder_screen_nfs_protocol'), $selected_url->nfs_protocol);
-                        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 300);
-                        return Action_Factory::show_dialog(TR::t('err_error_nfs'), $defs, true);
-                    }
-
-                    Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $selected_url->err, 4);
-                    Control_Factory::add_label($defs, TR::t('folder_screen_smb'), $selected_url->caption);
-                    Control_Factory::add_label($defs, TR::t('folder_screen_smb_ip'), $selected_url->ip_path);
-                    if (strpos("Permission denied", $selected_url->err) !== false) {
-                        $user = isset($selected_url->user) ? $selected_url->user : '';
-                        $password = isset($selected_url->password) ? $selected_url->password : '';
-                        $this->GetSMBAccessDefs($defs, $user, $password);
-                    } else {
-                        Control_Factory::add_label($defs, '', '');
-                        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 300);
-                    }
-                    return Action_Factory::show_dialog(TR::t('err_error_smb'), $defs, true, 1100);
-                }
-
-                if ($selected_url->choose_file !== false && $selected_url->choose_file->extension === $selected_url->type) {
-                    $post_action = User_Input_Handler_Registry::create_action_screen($selected_url->source_window_id,ACTION_FILE_SELECTED,
-                        '', array('selected_data' => $selected_url->get_media_url_str()));
-
-                    return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
-                }
-                break;
+                return $this->do_action_fs($user_input);
 
             case self::ACTION_SELECT_FOLDER:
-                if ($selected_url->type === self::SELECTED_TYPE_FOLDER) {
-                    $url = $selected_url;
-                } else if ($selected_url->type === self::SELECTED_TYPE_FILE) {
-                    $url = $parent_url;
-                } else {
-                    break;
-                }
-
-                $post_action = null;
-                if ($url->choose_folder !== false) {
-                    $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id,
-                        ACTION_FOLDER_SELECTED,
-                        '',
-                        array('selected_data' => $url->get_media_url_str()));
-                }
-
-                return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
+                return $this->do_select_folder($user_input);
 
             case self::ACTION_RESET_FOLDER:
-                $url = isset($selected_url->filepath) ? $selected_url : $parent_url;
-                $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id,
-                    ACTION_RESET_DEFAULT,
-                '',
-                    array('selected_data' => $url->get_media_url_str()));
+                return $this->do_reset_folder($user_input);
 
-                return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
-
-            case self::ACTION_GET_FOLDER_NAME:
-                $defs = array();
-                Control_Factory::add_text_field($defs,
-                    $this, null,
-                    self::ACTION_CREATE_FOLDER, '',
-                    '', 0, 0, 1, 1, 1230, false, true
-                );
-                Control_Factory::add_vgap($defs, 500);
-                return Action_Factory::show_dialog(TR::t('folder_screen_choose_name'), $defs, true);
+            case self::ACTION_GET_FOLDER_NAME_DLG:
+                return $this->do_get_folder_name_dlg();
 
             case self::ACTION_CREATE_FOLDER:
-                $do_mkdir = User_Input_Handler_Registry::create_action($this, self::ACTION_DO_MKDIR);
-                return Action_Factory::close_dialog_and_run($do_mkdir);
+                return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, self::ACTION_DO_MKDIR));
 
             case self::ACTION_DO_MKDIR:
-                if (!create_path($parent_url->filepath . DIRECTORY_SEPARATOR . $user_input->{self::ACTION_CREATE_FOLDER})) {
-                    return Action_Factory::show_title_dialog(TR::t('err_cant_create_folder'));
-                }
-                return Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url));
+                return $this->do_mkdir($user_input);
 
             case ACTION_OPEN_FOLDER:
-                $path = $parent_url->filepath;
-                hd_debug_print("open_folder: $path");
-                if (preg_match('|^/tmp/mnt/storage/|', $path)) {
-                    $path = preg_replace('|^/tmp/mnt/storage/|', 'storage_name://', $path);
-                } else if (isset($parent_url->ip_path)) {
-                    if (preg_match('|^/tmp/mnt/smb/|', $path)) {
-                        if ($parent_url->user !== false && $parent_url->password !== false) {
-                            $path = 'smb://' . $parent_url->user . ':' . $parent_url->password . '@' . preg_replace("|^/tmp/mnt/smb/\d|", str_replace('//', '', $parent_url->ip_path), $path);
-                        } else {
-                            $path = 'smb:' . preg_replace("|^/tmp/mnt/smb/\d|", $parent_url->ip_path, $path);
-                        }
-                    } else if ($parent_url->nfs_protocol !== false && preg_match('|^/tmp/mnt/network/|', $path)) {
-                        $prot = ($parent_url->nfs_protocol === 'tcp') ? 'nfs-tcp://' : 'nfs-udp://';
-                        $path = $prot . preg_replace("|^/tmp/mnt/network/\d|", $parent_url->ip_path . ':/', $path);
-                    }
-                }
-
-                $url = 'embedded_app://{name=file_browser}{url=' . $path . '}{caption=File Browser}';
-                hd_debug_print("smt_tree::open_folder launch url: $url", true);
-                return Action_Factory::launch_media_url($url);
+                return $this->do_open_folder($user_input);
 
             case self::ACTION_NEW_SMB_DATA:
-                $smb_shares = new smb_tree();
-                $new_ip_smb[$selected_url->ip_path]['foldername'] = $selected_url->caption;
-                $new_ip_smb[$selected_url->ip_path]['user'] = $user_input->new_user;
-                $new_ip_smb[$selected_url->ip_path]['password'] = $user_input->new_pass;
-                $q = $smb_shares::get_mount_smb($new_ip_smb);
-                $key = 'err_' . $selected_url->caption;
-                if (isset($q[$key])) {
-                    $defs = $this->do_get_mount_smb_err_defs($q[$key]['err'],
-                        $selected_url->caption,
-                        $selected_url->ip_path,
-                        $user_input->new_user,
-                        $user_input->new_pass);
-                    return Action_Factory::show_dialog(TR::t('err_error_smb'), $defs, true, 1100);
-                }
-
-                $caption = $selected_url->caption;
-                $selected_url_str = self::get_media_url_string(
-                    $selected_url->caption,
-                    $selected_url->source_window_id,
-                    key($q),
-                    $selected_url->type,
-                    $selected_url->ip_path,
-                    $user_input->new_user,
-                    $user_input->new_pass,
-                    false,
-                    false,
-                    $selected_url->choose_folder,
-                    $selected_url->choose_file
-                );
-                return Action_Factory::open_folder($selected_url_str, $caption);
+                return $this->do_new_smb_data($user_input);
 
             case self::ACTION_SMB_SETUP:
-                $smb_view = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
-
-                $smb_view_ops[1] = TR::t('folder_screen_net_folders');
-                $smb_view_ops[2] = TR::t('folder_screen_net_folders_smb');
-                $smb_view_ops[3] = TR::t('folder_screen_search_smb');
-
-                $defs = array();
-                Control_Factory::add_combobox($defs, $this, null,
-                    'smb_view', TR::t('folder_screen_show'),
-                    $smb_view, $smb_view_ops, 0
-                );
-                $save_smb_setup = User_Input_Handler_Registry::create_action($this, self::ACTION_SAVE_SMB_SETUP);
-                Control_Factory::add_custom_close_dialog_and_apply_buffon($defs,
-                    '_do_save_smb_setup', TR::t('apply'), 250, $save_smb_setup
-                );
-
-                return Action_Factory::show_dialog(TR::t('folder_screen_search_smb_setup'), $defs, true, 1000, $attrs);
+                return $this->do_smb_setup($plugin_cookies);
 
             case self::ACTION_SAVE_SMB_SETUP:
-                $smb_view_ops = array();
-                $smb_view = 1;
-                $smb_view_ops[1] = TR::load_string('folder_screen_net_folders');
-                $smb_view_ops[2] = TR::load_string('folder_screen_net_folders_smb');
-                $smb_view_ops[3] = TR::load_string('folder_screen_search_smb');
-                if (isset($user_input->smb_view)) {
-                    $smb_view = $user_input->smb_view;
-                    $plugin_cookies->{self::ACTION_SMB_SETUP} = $user_input->smb_view;
-                }
-
-                return Action_Factory::show_title_dialog(TR::t('folder_screen_used__1', $smb_view_ops[$smb_view]));
+                return $this->do_save_smb_setup($user_input, $plugin_cookies);
         }
+
         return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_folder_views()
+    {
+        hd_debug_print(null, true);
+
+        return array(
+            $this->plugin->get_screen_view('list_1x11_small_info'),
+            $this->plugin->get_screen_view('list_2x11_small_info'),
+            $this->plugin->get_screen_view('icons_5x3_caption'),
+            $this->plugin->get_screen_view('icons_4x3_caption'),
+        );
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
+     * @param $plugin_cookies
+     * @param array $path
+     * @return array
+     */
+    protected static function get_file_list($plugin_cookies, $path)
+    {
+        hd_debug_print(null, true);
+
+        if (!is_array($path)) {
+            $dirs[] = $path;
+        } else {
+            $dirs = $path;
+        }
+
+        $smb_shares = new smb_tree();
+        $fileData['folder'] = array();
+        $fileData['file'] = array();
+        foreach ($dirs as $dir) {
+            if ($dir === '/tmp/mnt/smb') {
+                $info = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
+                $s['smb'] = $smb_shares->get_mount_all_smb($info);
+                return $s;
+            }
+
+            if ($dir === '/tmp/mnt/network') {
+                $s['nfs'] = $smb_shares::get_mount_nfs();
+                return $s;
+            }
+
+            if ($dir === '/sdcard') {
+                $fileData['folder']['internal']['filepath'] = $dir . DIRECTORY_SEPARATOR;
+            } else if ($handle = opendir($dir)) {
+                $bug_kind = get_bug_platform_kind();
+                while (false !== ($file = readdir($handle))) {
+                    if ($file === "." || $file === "..") continue;
+
+                    $absolute_filepath = $dir . DIRECTORY_SEPARATOR . $file;
+                    $is_match = preg_match('|^/tmp/mnt/smb/|', $absolute_filepath);
+                    $is_dir = $bug_kind && $is_match ? (bool)trim(shell_exec("test -d \"$absolute_filepath\" && echo 1 || echo 0")) : is_dir($absolute_filepath);
+
+                    if ($is_dir === false) {
+                        $fileData['file'][$file]['size'] = ($bug_kind && $is_match) ? '' : filesize($absolute_filepath);
+                        $fileData['file'][$file]['filepath'] = $absolute_filepath;
+                    } else if ($absolute_filepath !== '/tmp/mnt/nfs' && $absolute_filepath !== '/tmp/mnt/D') {
+                        $fileData['folder'][$file]['filepath'] = $absolute_filepath;
+                    }
+                }
+                closedir($handle);
+            }
+        }
+        return $fileData;
     }
 
     /**
      * @param string $ref
      * @return string
      */
-    public static function get_file_icon($ref)
+    protected static function get_file_icon($ref)
     {
         if (preg_match('/\.(' . AUDIO_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/audio_file.aai';
@@ -606,7 +481,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      * @param string $filepath
      * @return string
      */
-    public static function get_folder_icon($folder_type, $filepath)
+    protected static function get_folder_icon($folder_type, $filepath)
     {
         if ($folder_type === 'storage') {
             $folder_icon = "gui_skin://small_icons/sd_card.aai";
@@ -637,7 +512,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      * @param string $password
      * @return array
      */
-    public function do_get_mount_smb_err_defs($err, $caption, $ip_path, $user, $password)
+    protected function do_get_mount_smb_err_defs($err, $caption, $ip_path, $user, $password)
     {
         hd_debug_print(null, true);
 
@@ -659,7 +534,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      * @param string $user
      * @param string $password
      */
-    protected function GetSMBAccessDefs(array &$defs, $user, $password)
+    protected function GetSMBAccessDefs(&$defs, $user, $password)
     {
         hd_debug_print(null, true);
 
@@ -684,17 +559,261 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @inheritDoc
+     * @param $user_input
+     * @return array|null
      */
-    public function get_folder_views()
+    protected function do_action_fs($user_input)
     {
         hd_debug_print(null, true);
 
-        return array(
-            $this->plugin->get_screen_view('list_1x11_small_info'),
-            $this->plugin->get_screen_view('list_2x11_small_info'),
-            $this->plugin->get_screen_view('icons_5x3_caption'),
-            $this->plugin->get_screen_view('icons_4x3_caption'),
+        $selected_url = MediaURL::decode($user_input->selected_media_url);
+
+        if ($selected_url->type === self::SELECTED_TYPE_FOLDER) {
+            $caption = $selected_url->caption;
+            if ($selected_url->err === false) {
+                return Action_Factory::open_folder($user_input->selected_media_url, $caption);
+            }
+
+            $defs = array();
+            if ($selected_url->nfs_protocol !== false) {
+                Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $selected_url->err, 3);
+                Control_Factory::add_label($defs, TR::t('folder_screen_nfs'), $selected_url->caption);
+                Control_Factory::add_label($defs, TR::t('folder_screen_nfs_ip'), $selected_url->ip_path);
+                Control_Factory::add_label($defs, TR::t('folder_screen_nfs_protocol'), $selected_url->nfs_protocol);
+                Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 300);
+                return Action_Factory::show_dialog(TR::t('err_error_nfs'), $defs, true);
+            }
+
+            Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $selected_url->err, 4);
+            Control_Factory::add_label($defs, TR::t('folder_screen_smb'), $selected_url->caption);
+            Control_Factory::add_label($defs, TR::t('folder_screen_smb_ip'), $selected_url->ip_path);
+
+            if (strpos("Permission denied", $selected_url->err) !== false) {
+                $user = isset($selected_url->user) ? $selected_url->user : '';
+                $password = isset($selected_url->password) ? $selected_url->password : '';
+                $this->GetSMBAccessDefs($defs, $user, $password);
+            } else {
+                Control_Factory::add_label($defs, '', '');
+                Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 300);
+            }
+            return Action_Factory::show_dialog(TR::t('err_error_smb'), $defs, true, 1100);
+        }
+
+        if ($selected_url->choose_file !== false && $selected_url->choose_file->extension === $selected_url->type) {
+            $post_action = User_Input_Handler_Registry::create_action_screen($selected_url->source_window_id, ACTION_FILE_SELECTED,
+                '', array('selected_data' => $selected_url->get_media_url_str()));
+
+            return Action_Factory::replace_path(MediaURL::decode($user_input->parent_media_url)->windowCounter, null, $post_action);
+        }
+
+        return null;
+    }
+
+    /**
+     * @param $user_input
+     * @return array
+     */
+    protected function do_open_folder($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $parent_url = MediaURL::decode($user_input->parent_media_url);
+        $path = $parent_url->filepath;
+        hd_debug_print("open_folder: $path");
+        if (preg_match('|^/tmp/mnt/storage/|', $path)) {
+            $path = preg_replace('|^/tmp/mnt/storage/|', 'storage_name://', $path);
+        } else if (isset($parent_url->ip_path)) {
+            if (preg_match('|^/tmp/mnt/smb/|', $path)) {
+                if ($parent_url->user !== false && $parent_url->password !== false) {
+                    $path = 'smb://' . $parent_url->user . ':' . $parent_url->password . '@' . preg_replace("|^/tmp/mnt/smb/\d|", str_replace('//', '', $parent_url->ip_path), $path);
+                } else {
+                    $path = 'smb:' . preg_replace("|^/tmp/mnt/smb/\d|", $parent_url->ip_path, $path);
+                }
+            } else if ($parent_url->nfs_protocol !== false && preg_match('|^/tmp/mnt/network/|', $path)) {
+                $prot = ($parent_url->nfs_protocol === 'tcp') ? 'nfs-tcp://' : 'nfs-udp://';
+                $path = $prot . preg_replace("|^/tmp/mnt/network/\d|", $parent_url->ip_path . ':/', $path);
+            }
+        }
+
+        $url = 'embedded_app://{name=file_browser}{url=' . $path . '}{caption=File Browser}';
+        hd_debug_print("smt_tree::open_folder launch url: $url", true);
+        return Action_Factory::launch_media_url($url);
+    }
+
+    /**
+     * @param $user_input
+     * @return array
+     */
+    protected function do_new_smb_data($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $selected_url = MediaURL::decode($user_input->selected_media_url);
+
+        $smb_shares = new smb_tree();
+        $new_ip_smb[$selected_url->ip_path]['foldername'] = $selected_url->caption;
+        $new_ip_smb[$selected_url->ip_path]['user'] = $user_input->new_user;
+        $new_ip_smb[$selected_url->ip_path]['password'] = $user_input->new_pass;
+        $q = $smb_shares::get_mount_smb($new_ip_smb);
+        $key = 'err_' . $selected_url->caption;
+        if (isset($q[$key])) {
+            $defs = $this->do_get_mount_smb_err_defs($q[$key]['err'],
+                $selected_url->caption,
+                $selected_url->ip_path,
+                $user_input->new_user,
+                $user_input->new_pass);
+            return Action_Factory::show_dialog(TR::t('err_error_smb'), $defs, true, 1100);
+        }
+
+        $caption = $selected_url->caption;
+        $selected_url_str = self::get_media_url_string(
+            $selected_url->caption,
+            $selected_url->source_window_id,
+            key($q),
+            $selected_url->type,
+            $selected_url->ip_path,
+            $user_input->new_user,
+            $user_input->new_pass,
+            false,
+            false,
+            $selected_url->choose_folder,
+            $selected_url->choose_file
         );
+        return Action_Factory::open_folder($selected_url_str, $caption);
+    }
+
+    /**
+     * @param $plugin_cookies
+     * @return array
+     */
+    protected function do_smb_setup($plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
+        $smb_view = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
+
+        $smb_view_ops[1] = TR::t('folder_screen_net_folders');
+        $smb_view_ops[2] = TR::t('folder_screen_net_folders_smb');
+        $smb_view_ops[3] = TR::t('folder_screen_search_smb');
+
+        $defs = array();
+        Control_Factory::add_combobox($defs, $this, null,
+            'smb_view', TR::t('folder_screen_show'),
+            $smb_view, $smb_view_ops, 0
+        );
+
+        $save_smb_setup = User_Input_Handler_Registry::create_action($this, self::ACTION_SAVE_SMB_SETUP);
+        Control_Factory::add_custom_close_dialog_and_apply_buffon($defs,
+            '_do_save_smb_setup', TR::t('apply'), 250, $save_smb_setup
+        );
+
+        return Action_Factory::show_dialog(TR::t('folder_screen_search_smb_setup'), $defs, true, 1000, $attrs);
+    }
+
+    /**
+     * @param $user_input
+     * @param $plugin_cookies
+     * @return array
+     */
+    protected function do_save_smb_setup($user_input, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $smb_view_ops = array();
+        $smb_view = 1;
+        $smb_view_ops[1] = TR::load_string('folder_screen_net_folders');
+        $smb_view_ops[2] = TR::load_string('folder_screen_net_folders_smb');
+        $smb_view_ops[3] = TR::load_string('folder_screen_search_smb');
+        if (isset($user_input->smb_view)) {
+            $smb_view = $user_input->smb_view;
+            $plugin_cookies->{self::ACTION_SMB_SETUP} = $user_input->smb_view;
+        }
+
+        return Action_Factory::show_title_dialog(TR::t('folder_screen_used__1', $smb_view_ops[$smb_view]));
+    }
+
+    /**
+     * @return array
+     */
+    protected function do_get_folder_name_dlg()
+    {
+        hd_debug_print(null, true);
+
+        $defs = array();
+        Control_Factory::add_text_field($defs,
+            $this, null,
+            self::ACTION_CREATE_FOLDER, '',
+            '', 0, 0, 1, 1, 1230, false, true
+        );
+        Control_Factory::add_vgap($defs, 500);
+        return Action_Factory::show_dialog(TR::t('folder_screen_choose_name'), $defs, true);
+    }
+
+    /**
+     * @param $user_input
+     * @return array|null
+     */
+    protected function do_select_folder($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $selected_url = MediaURL::decode($user_input->selected_media_url);
+        $parent_url = MediaURL::decode($user_input->parent_media_url);
+
+        if ($selected_url->type === self::SELECTED_TYPE_FOLDER) {
+            $url = $selected_url;
+        } else if ($selected_url->type === self::SELECTED_TYPE_FILE) {
+            $url = $parent_url;
+        } else {
+            return null;
+        }
+
+        $post_action = null;
+        if ($url->choose_folder !== false) {
+            $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id,
+                ACTION_FOLDER_SELECTED,
+                '',
+                array('selected_data' => $url->get_media_url_str()));
+        }
+
+        return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
+    }
+
+    /**
+     * @param $user_input
+     * @return array
+     */
+    protected function do_mkdir($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $parent_url = MediaURL::decode($user_input->parent_media_url);
+
+        if (!create_path($parent_url->filepath . DIRECTORY_SEPARATOR . $user_input->{self::ACTION_CREATE_FOLDER})) {
+            return Action_Factory::show_title_dialog(TR::t('err_cant_create_folder'));
+        }
+        return Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url));
+    }
+
+    /**
+     * @param $user_input
+     * @return array|null
+     */
+    protected function do_reset_folder($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $parent_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_url = MediaURL::decode($user_input->selected_media_url);
+
+        $url = isset($selected_url->filepath) ? $selected_url : $parent_url;
+
+        $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id,
+            ACTION_RESET_DEFAULT,
+            '',
+            array('selected_data' => $url->get_media_url_str()));
+
+        return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
     }
 }

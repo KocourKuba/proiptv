@@ -982,4 +982,24 @@ class HD
 
         return $result;
     }
+
+    public static function copy_data($sourcePath, $source_pattern, $destPath){
+        if (empty($sourcePath) || empty($destPath)) {
+            hd_debug_print("One of is empty: sourceDir = $sourcePath | destDir = $destPath");
+            return false;
+        }
+
+        if (!create_path($destPath)) {
+            hd_debug_print("Can't create destination folder: $destPath");
+            return false;
+        }
+
+        foreach (glob_dir($sourcePath, $source_pattern) as $file) {
+            $dest_file = $destPath . $file;
+            hd_debug_print("copy $file to $dest_file");
+            if (!copy($file, $dest_file))
+                return false;
+        }
+        return true;
+    }
 }
