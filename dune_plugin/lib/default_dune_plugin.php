@@ -148,7 +148,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $this->epg_manager->init_cache_dir($this->get_xmltv_cache_dir());
-        $this->epg_manager->set_fuzzy_search($this->get_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_off));
+        $this->epg_manager->set_fuzzy_search($this->get_bool_parameter(PARAM_FUZZY_SEARCH_EPG, false));
     }
 
     /**
@@ -633,6 +633,29 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * Get plugin boolean parameters
+     *
+     * @param string $type
+     * @param bool $default
+     * @return bool
+     */
+    public function get_bool_setting($type, $default = true)
+    {
+        return $this->get_setting($type, $default ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
+    }
+
+    /**
+     * Set plugin boolean parameters
+     *
+     * @param string $type
+     * @param bool $val
+     */
+    public function set_bool_setting($type, $val = true)
+    {
+        $this->set_setting($type, $val ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off);
+    }
+
+    /**
      * Remove setting for selected playlist
      *
      * @param string $type
@@ -744,6 +767,30 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * Get plugin boolean parameters
+     *
+     * @param string $type
+     * @param bool $default
+     * @return bool
+     */
+    public function get_bool_parameter($type, $default = true)
+    {
+        return $this->get_parameter($type,
+                $default ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
+    }
+
+    /**
+     * Set plugin boolean parameters
+     *
+     * @param string $type
+     * @param bool $val
+     */
+    public function set_bool_parameter($type, $val = true)
+    {
+        $this->set_parameter($type, $val ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off);
+    }
+
+    /**
      * Remove parameter
      * @param string $type
      */
@@ -753,22 +800,24 @@ class Default_Dune_Plugin implements DunePlugin
         $this->save();
     }
 
-    public function toggle_setting($param, $default)
+    /**
+     * @param string $param
+     * @param bool $default
+     * @return void
+     */
+    public function toggle_setting($param, $default = true)
     {
-        $old = $this->get_setting($param, $default);
-        $new = ($old === SetupControlSwitchDefs::switch_on)
-            ? SetupControlSwitchDefs::switch_off
-            : SetupControlSwitchDefs::switch_on;
-        $this->set_setting($param, $new);
+        $this->set_bool_setting($param, !$this->get_bool_setting($param, $default));
     }
 
-    public function toggle_parameter($param, $default)
+    /**
+     * @param string $param
+     * @param bool $default
+     * @return void
+     */
+    public function toggle_parameter($param, $default = true)
     {
-        $old = $this->get_parameter($param, $default);
-        $new = ($old === SetupControlSwitchDefs::switch_on)
-            ? SetupControlSwitchDefs::switch_off
-            : SetupControlSwitchDefs::switch_on;
-        $this->set_parameter($param, $new);
+        $this->set_bool_parameter($param, !$this->get_bool_parameter($param, $default));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -782,6 +831,10 @@ class Default_Dune_Plugin implements DunePlugin
         hd_print("----------------------------------------------------");
         $this->load(PLUGIN_PARAMETERS, true);
         $this->update_log_level();
+        if (LogSeverity::$is_debug) {
+            // small hack to show parameters in log
+            $this->load(PLUGIN_PARAMETERS, true);
+        }
 
         $this->init_epg_manager();
         $this->create_screen_views();
@@ -1076,20 +1129,10 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_special_groups_count()
     {
         $groups_cnt = 0;
-        if (!$this->is_special_groups_disabled(PARAM_SHOW_ALL)) $groups_cnt++;
-        if (!$this->is_special_groups_disabled(PARAM_SHOW_FAVORITES)) $groups_cnt++;
-        if (!$this->is_special_groups_disabled(PARAM_SHOW_HISTORY)) $groups_cnt++;
-
+        foreach($this->tv->get_special_groups() as $group) {
+            if (is_null($group) || $group->is_disabled()) $groups_cnt++;
+        }
         return $groups_cnt;
-    }
-
-    /**
-     * @param string $param plugin parameter
-     * @return bool
-     */
-    public function is_special_groups_disabled($param)
-    {
-        return $this->get_parameter($param, SetupControlSwitchDefs::switch_on) !== SetupControlSwitchDefs::switch_on;
     }
 
     /**
@@ -1382,8 +1425,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function update_log_level()
     {
-        $debug = $this->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
-        set_debug_log($debug);
+        set_debug_log($this->get_bool_parameter(PARAM_ENABLE_DEBUG, false));
     }
 
     /**

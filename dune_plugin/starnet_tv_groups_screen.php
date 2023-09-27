@@ -91,8 +91,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SetupControlSwitchDefs::switch_on);
-                if ($ask_exit === SetupControlSwitchDefs::switch_on) {
+                if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
 
@@ -346,7 +345,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         /** @var Group $group */
         foreach ($this->plugin->tv->get_special_groups() as $group) {
-            if (is_null($group) || $group->is_disabled()) continue;
+            if (is_null($group)) continue;
+
+            hd_debug_print("group: {$group->get_title()} disabled: " . var_export($group->is_disabled(), true), true);
+
+            if ($group->is_disabled()) continue;
 
             if ($group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
                 $item_detailed_info = TR::t('tv_screen_group_info__3',

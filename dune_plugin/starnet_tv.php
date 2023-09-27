@@ -339,7 +339,6 @@ class Starnet_Tv implements User_Input_Handler
             TR::load_string('plugin_favorites'),
             Default_Group::DEFAULT_FAVORITE_GROUP_ICON,
             PARAM_FAVORITES);
-        $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES));
         $this->special_groups->set($special_group->get_id(), $special_group);
 
         // History channels category
@@ -348,7 +347,6 @@ class Starnet_Tv implements User_Input_Handler
             TR::load_string('plugin_history'),
             Default_Group::DEFAULT_HISTORY_GROUP_ICON,
             null);
-        $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_HISTORY));
         $this->special_groups->set($special_group->get_id(), $special_group);
 
         // History channels category
@@ -357,7 +355,6 @@ class Starnet_Tv implements User_Input_Handler
             TR::load_string('plugin_changed'),
             Default_Group::DEFAULT_CHANGED_CHANNELS_GROUP_ICON,
             null);
-        $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_CHANGED_CHANNELS));
         $this->special_groups->set($special_group->get_id(), $special_group);
 
         // All channels category
@@ -366,7 +363,6 @@ class Starnet_Tv implements User_Input_Handler
             TR::load_string('plugin_all_channels'),
             Default_Group::DEFAULT_ALL_CHANNELS_GROUP_ICON,
             null);
-        $special_group->set_disabled($this->plugin->is_special_groups_disabled(PARAM_SHOW_CHANGED_CHANNELS));
         $this->special_groups->set($special_group->get_id(), $special_group);
 
         $first_run = $this->plugin->get_known_channels()->size() === 0;
@@ -461,7 +457,6 @@ class Starnet_Tv implements User_Input_Handler
                 $this->plugin->get_groups_order()->add_item($title);
             }
 
-            hd_debug_print("group: $title");
             $playlist_groups->add_item($title);
 
             // disable save
@@ -686,9 +681,9 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        $changed = $this->plugin->get_changed_channels(null);
+        $no_changes = count($this->plugin->get_changed_channels(null)) === 0;
 
-        $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(!$changed);
+        $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled($no_changes);
 
         // cleanup order if saved group removed from playlist
         // enable save for each group
@@ -760,7 +755,7 @@ class Starnet_Tv implements User_Input_Handler
             // update url if play archive or different type of the stream
             $url = $this->plugin->generate_stream_url($channel_id, $archive_ts);
 
-            if ($this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SetupControlSwitchDefs::switch_on) === SetupControlSwitchDefs::switch_on) {
+            if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
                 $zoom_preset = $this->plugin->get_channel_zoom($channel_id);
                 if (!is_null($zoom_preset)) {
                     if (!is_android()) {
@@ -791,8 +786,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
     {
-        $epg_font_size = $this->plugin->get_parameter(
-            PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on
+        $epg_font_size = $this->plugin->get_bool_parameter(PARAM_EPG_FONT_SIZE, false)
             ? PLUGIN_FONT_SMALL
             : PLUGIN_FONT_NORMAL;
 
@@ -802,14 +796,15 @@ class Starnet_Tv implements User_Input_Handler
         }
         $this->playback_runtime = PHP_INT_MAX;
 
-        $not_show_all = $this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL);
+        $group_all = $this->get_special_group(ALL_CHANNEL_GROUP_ID);
+        $show_all = !$group_all->is_disabled();
         $all_channels = new Hashed_Array();
         /** @var Group $group */
         foreach ($this->groups as $group) {
             if ($group->is_disabled()) continue;
 
             $group_id_arr = new Hashed_Array();
-            if(!$not_show_all) {
+            if($show_all) {
                 $group_id_arr->put(ALL_CHANNEL_GROUP_ID, '');
             }
 
@@ -852,7 +847,7 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        $groups_order = array_merge($not_show_all ? array() : array(ALL_CHANNEL_GROUP_ID),
+        $groups_order = array_merge($show_all ? array(ALL_CHANNEL_GROUP_ID) : array(),
             $this->plugin->get_groups_order()->get_order());
 
         $groups = array();

@@ -403,7 +403,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             PaneParams::vod_width, PaneParams::vod_height
         );
 
-        $square_icons = ($this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
         $icon_width = $square_icons ? RowsItemsParams::icon_width_sq : RowsItemsParams::icon_width;
         $icon_prop = $icon_width / RowsItemsParams::icon_height;
 
@@ -733,7 +733,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 break;
 
             case ACTION_TOGGLE_ICONS_TYPE:
-                $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off);
+                $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, false);
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_REFRESH_SCREEN:
@@ -754,7 +754,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_history_rows($plugin_cookies)
     {
         hd_debug_print(null, true);
-        if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_HISTORY)) {
+        if (!$this->plugin->get_bool_parameter(PARAM_SHOW_HISTORY)) {
             hd_debug_print("History group disabled");
             return null;
         }
@@ -870,14 +870,15 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_favorites_rows()
     {
         hd_debug_print(null, true);
-        if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_FAVORITES)) {
-            hd_debug_print("Favorites group disabled");
-            return null;
-        }
 
         $group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
         if (is_null($group)) {
             hd_debug_print("Favorites group not found");
+            return null;
+        }
+
+        if ($group->is_disabled()) {
+            hd_debug_print("Favorites group disabled");
             return null;
         }
 
@@ -921,19 +922,20 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_changed_channels_rows()
     {
         hd_debug_print(null, true);
-        if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_CHANGED_CHANNELS)) {
+
+        $group = $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID);
+        if (is_null($group)) {
+            hd_debug_print("Changed channels group not found");
+            return null;
+        }
+
+        if ($group->is_disabled()) {
             hd_debug_print("Changed channels group disabled");
             return null;
         }
 
         $changed = $this->plugin->get_changed_channels(null);
         if (empty($changed)) {
-            return null;
-        }
-
-        $group = $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID);
-        if (is_null($group)) {
-            hd_debug_print("Changed channels group not found");
             return null;
         }
 
@@ -980,7 +982,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             );
         }
 
-        $square_icons = ($this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
 
         foreach ($removed_channels as $item) {
             $items[] = Rows_Factory::add_regular_item(
@@ -1018,10 +1020,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_all_channels_row()
     {
         hd_debug_print(null, true);
-        if ($this->plugin->is_special_groups_disabled(PARAM_SHOW_ALL)) {
-            hd_debug_print("All channels group disabled");
-            return null;
-        }
 
         $group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
         if (is_null($group)) {
@@ -1029,9 +1027,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
+        if ($group->is_disabled()) {
+            hd_debug_print("All channels group disabled");
+            return null;
+        }
+
         $rows = array();
         $items = array();
-        $square_icons = ($this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
         $row_item_width = $square_icons ? RowsItemsParams::width_sq : RowsItemsParams::width;
 
         $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
@@ -1091,7 +1094,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
 
         $rows = array();
-        $square_icons = ($this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on);
+        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
         $row_item_width = $square_icons ? RowsItemsParams::width_sq : RowsItemsParams::width;
 
         /** @var Group $group */
@@ -1255,7 +1258,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
             }
 
-            if ($this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SetupControlSwitchDefs::switch_on) === SetupControlSwitchDefs::switch_on) {
+            if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ration'), "aspect.png");
             }
         }

@@ -71,4 +71,32 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
             PluginFolderView::data => $folder_view,
         );
     }
+
+    /**
+     * @param $plugin_cookies
+     * @param string $param
+     * @param bool $default
+     * @return mixed
+     */
+    protected static function get_cookie_bool_param($plugin_cookies, $param, $default = true)
+    {
+        if (!isset($plugin_cookies->{$param}))
+            $plugin_cookies->{$param} = $default ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off;
+
+        return $plugin_cookies->{$param};
+    }
+
+    /**
+     * @param $plugin_cookies
+     * @param string $param
+     * @return void
+     */
+    protected static function toggle_cookie_param($plugin_cookies, $param)
+    {
+        $plugin_cookies->{$param} = $plugin_cookies->{$param} === SetupControlSwitchDefs::switch_off
+            ? SetupControlSwitchDefs::switch_on
+            : SetupControlSwitchDefs::switch_off;
+
+        hd_debug_print("$param: " . $plugin_cookies->{$param}, true);
+    }
 }

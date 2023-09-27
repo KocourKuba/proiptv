@@ -219,8 +219,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
 
             case PARAM_ENABLE_DEBUG:
-                $this->plugin->toggle_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
-                $debug = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
+                $this->plugin->toggle_parameter(PARAM_ENABLE_DEBUG, false);
+                $debug = $this->plugin->get_bool_parameter(PARAM_ENABLE_DEBUG);
                 set_debug_log($debug);
                 hd_debug_print("Debug logging: " . var_export($debug, true));
                 break;
@@ -329,7 +329,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         hd_debug_print("Reset XMLTV cache dir to default");
         $this->plugin->remove_parameter(PARAM_XMLTV_CACHE_PATH);
         hd_debug_print("Reset debug logging");
-        $this->plugin->set_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
+        $this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, false);
 
         return Action_Factory::show_title_dialog(TR::t('setup_restore_done'), Action_Factory::show_main_screen(Action_Factory::restart()));
     }

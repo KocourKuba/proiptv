@@ -54,20 +54,14 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // auto play
-        if (!isset($plugin_cookies->{self::CONTROL_AUTO_PLAY}))
-            $plugin_cookies->{self::CONTROL_AUTO_PLAY} = SetupControlSwitchDefs::switch_off;
-
-        $value = $plugin_cookies->{self::CONTROL_AUTO_PLAY};
+        $value = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SetupControlSwitchDefs::$on_off_translated[$value],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // auto resume
-        if (!isset($plugin_cookies->{self::CONTROL_AUTO_RESUME}))
-            $plugin_cookies->{self::CONTROL_AUTO_RESUME} = SetupControlSwitchDefs::switch_on;
-
-        $value = $plugin_cookies->{self::CONTROL_AUTO_RESUME};
+        $value = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'),  SetupControlSwitchDefs::$on_off_translated[$value],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
@@ -156,9 +150,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         switch ($control_id) {
             case self::CONTROL_AUTO_PLAY:
             case self::CONTROL_AUTO_RESUME:
-                $plugin_cookies->{$control_id} = ($plugin_cookies->{$control_id} === SetupControlSwitchDefs::switch_off)
-                    ? SetupControlSwitchDefs::switch_on
-                    : SetupControlSwitchDefs::switch_off;
+                self::toggle_cookie_param($plugin_cookies, $control_id);
                 break;
 
             case PARAM_BUFFERING_TIME:
@@ -167,7 +159,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
                 break;
 
             case PARAM_PER_CHANNELS_ZOOM:
-                $this->plugin->toggle_setting(PARAM_PER_CHANNELS_ZOOM, SetupControlSwitchDefs::switch_on);
+                $this->plugin->toggle_setting(PARAM_PER_CHANNELS_ZOOM);
                 break;
         }
 

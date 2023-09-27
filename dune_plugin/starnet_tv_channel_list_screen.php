@@ -240,7 +240,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 }
 
-                if ($this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SetupControlSwitchDefs::switch_on) === SetupControlSwitchDefs::switch_on) {
+                if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ration'), "aspect.png");
                 }
 
@@ -304,11 +304,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $info .= "Archive URL: " . implode("\n", $lines) . "\n";
                 $info .= (count($lines) > 1 ? "\n" : "");
 
-                $params = array();
-                foreach ($channel->get_ext_params() as $key => $param) {
-                    $params = "$key: " . str_replace("\/", DIRECTORY_SEPARATOR, json_encode($param)) . "\n";
+                if (!empty($ext_params[PARAM_DUNE_PARAMS])) {
+                    $info .= "Params: " . implode(",", $ext_params[PARAM_DUNE_PARAMS]) . "\n";
                 }
-                $info .= "Params: $params\n";
 
                 Control_Factory::add_multiline_label($defs, null, $info, 12);
                 Control_Factory::add_vgap($defs, 20);
@@ -427,11 +425,18 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     {
         $zoom_data = $this->plugin->get_channel_zoom($channel->get_id());
         if ($zoom_data === DuneVideoZoomPresets::not_set) {
-            $detailed_info = TR::t('tv_screen_channel_info__2', $channel->get_title(), $channel->get_archive());
-        } else {
             $detailed_info = TR::t('tv_screen_channel_info__3',
-                $channel->get_title(), $channel->get_archive(),
-                TR::load_string(DuneVideoZoomPresets::$zoom_ops[$zoom_data]));
+                $channel->get_title(),
+                $channel->get_archive(),
+                implode(", ", $channel->get_epg_ids())
+            );
+        } else {
+            $detailed_info = TR::t('tv_screen_channel_info__4',
+                $channel->get_title(),
+                $channel->get_archive(),
+                implode(", ", $channel->get_epg_ids()),
+                TR::load_string(DuneVideoZoomPresets::$zoom_ops[$zoom_data])
+                );
         }
 
         return array

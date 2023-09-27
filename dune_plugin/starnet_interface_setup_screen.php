@@ -54,11 +54,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // Show in main screen
         if (!is_apk()) {
-            if (!isset($plugin_cookies->{self::CONTROL_SHOW_TV})) {
-                $plugin_cookies->{self::CONTROL_SHOW_TV} = SetupControlSwitchDefs::switch_on;
-            }
-
-            $show_tv = $plugin_cookies->{self::CONTROL_SHOW_TV};
+            $show_tv = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_SHOW_TV);
             Control_Factory::add_image_button($defs, $this, null,
                 self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SetupControlSwitchDefs::$on_off_translated[$show_tv],
                 get_image_path(SetupControlSwitchDefs::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
@@ -154,7 +150,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 break;
 
             case PARAM_ASK_EXIT:
-                $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
+                $this->plugin->toggle_parameter($control_id);
                 return Starnet_Epfs_Handler::invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
@@ -163,7 +159,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case PARAM_SHOW_FAVORITES:
             case PARAM_SHOW_HISTORY:
             case PARAM_SHOW_CHANGED_CHANNELS:
-                $this->plugin->toggle_parameter($control_id, SetupControlSwitchDefs::switch_on);
+                $this->plugin->toggle_parameter($control_id);
                 $this->plugin->tv->reload_channels($plugin_cookies);
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
@@ -220,19 +216,10 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case PARAM_EPG_FONT_SIZE:
-                $this->plugin->toggle_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+                $this->plugin->toggle_parameter(PARAM_EPG_FONT_SIZE, false);
                 break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
-    }
-
-    private static function toggle_cookie_param($plugin_cookies, $param)
-    {
-        $plugin_cookies->{$param} = ($plugin_cookies->{$param} === SetupControlSwitchDefs::switch_off)
-            ? SetupControlSwitchDefs::switch_on
-            : SetupControlSwitchDefs::switch_off;
-
-        hd_debug_print("$param: " . $plugin_cookies->{$param}, true);
     }
 }

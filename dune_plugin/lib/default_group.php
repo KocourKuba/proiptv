@@ -161,6 +161,22 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function is_disabled()
     {
+        if ($this->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+            return !$this->plugin->get_bool_parameter(PARAM_SHOW_ALL);
+        }
+
+        if ($this->is_special_group(FAVORITES_GROUP_ID)) {
+            return !$this->plugin->get_bool_parameter(PARAM_SHOW_FAVORITES);
+        }
+
+        if ($this->is_special_group(HISTORY_GROUP_ID)) {
+            return !$this->plugin->get_bool_parameter(PARAM_SHOW_HISTORY);
+        }
+
+        if ($this->is_special_group(CHANGED_CHANNELS_GROUP_ID)) {
+            return $this->_disabled || !$this->plugin->get_bool_parameter(PARAM_SHOW_CHANGED_CHANNELS);
+        }
+
         return $this->_disabled;
     }
 

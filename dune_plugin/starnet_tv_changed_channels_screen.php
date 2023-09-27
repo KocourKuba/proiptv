@@ -131,10 +131,12 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 $groups[] = $group->get_title();
             }
 
-            $detailed_info = TR::t('tv_screen_ch_channel_info__3',
+            $detailed_info = TR::t('tv_screen_ch_channel_info__4',
                 $channel->get_title(),
                 rtrim(implode(',', $groups), ","),
-                $channel->get_archive());
+                $channel->get_archive(),
+                implode(", ", $channel->get_epg_ids())
+            );
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array(
