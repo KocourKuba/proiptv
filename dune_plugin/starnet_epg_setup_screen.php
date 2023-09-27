@@ -120,6 +120,13 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             get_image_path(SetupControlSwitchDefs::$on_off_img[$fuzzy_search]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
+        // Fake EPG
+        $fake_epg = $this->plugin->get_parameter(PARAM_FAKE_EPG, SetupControlSwitchDefs::switch_off);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SetupControlSwitchDefs::$on_off_translated[$fake_epg],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$fake_epg]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
         // EPG cache
         $epg_cache_ops = array();
         $epg_cache_ops[1] = 1;
@@ -207,12 +214,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::open_folder($media_url_str, TR::t('setup_epg_xmltv_cache_caption'));
 
             case PARAM_EPG_CACHE_ENGINE:
-                $this->plugin->set_parameter(PARAM_EPG_CACHE_ENGINE, $user_input->{$control_id});
-                $source = $this->plugin->get_active_xmltv_source();
                 $this->plugin->tv->unload_channels();
+                $this->plugin->set_parameter(PARAM_EPG_CACHE_ENGINE, $user_input->{$control_id});
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->init_plugin();
-                $this->plugin->get_epg_manager()->set_xmltv_url($source);
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case PARAM_EPG_CACHE_TTL:
@@ -244,12 +249,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_RESET_DEFAULT:
                 hd_debug_print(ACTION_RESET_DEFAULT);
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
-
                 $this->plugin->remove_parameter(PARAM_XMLTV_CACHE_PATH);
                 $this->plugin->init_epg_manager();
-                $this->plugin->get_epg_manager()->set_xmltv_url($this->plugin->get_active_xmltv_source());
-                $default_path = $this->plugin->get_xmltv_cache_dir();
 
+                $default_path = $this->plugin->get_xmltv_cache_dir();
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $default_path),
                     $action_reload, $default_path, self::CONTROLS_WIDTH);
 
@@ -261,22 +264,20 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->set_parameter(PARAM_XMLTV_CACHE_PATH, $data->filepath);
                 $this->plugin->init_epg_manager();
-                $this->plugin->get_epg_manager()->set_xmltv_url($this->plugin->get_active_xmltv_source());
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
             case PARAM_FUZZY_SEARCH_EPG:
-                $this->plugin->toggle_parameter(PARAM_FUZZY_SEARCH_EPG, false);
-                $fuzzy_search = $this->plugin->get_parameter(PARAM_FUZZY_SEARCH_EPG);
-                hd_debug_print("Fuzzy search: $fuzzy_search");
-                return $action_reload;
+            case PARAM_FAKE_EPG:
+                $this->plugin->toggle_parameter($control_id, false);
+                $this->plugin->init_epg_manager();
+                break;
 
             case self::ACTION_RELOAD_EPG:
                 hd_debug_print(self::ACTION_RELOAD_EPG);
                 $this->plugin->get_epg_manager()->clear_epg_cache();
                 $this->plugin->init_epg_manager();
-                $this->plugin->get_epg_manager()->set_xmltv_url($this->plugin->get_active_xmltv_source());
                 $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
                 if ($res === -1) {
                     return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error());

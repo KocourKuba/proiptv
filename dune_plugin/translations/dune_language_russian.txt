@@ -129,6 +129,7 @@ entry_send_log = Отправить лог разработчику
 entry_log_sent = Лог отправлен!
 entry_log_not_sent = Лог не отправлен!
 entry_epg_fuzzy_search = Нечеткий поиск EPG
+entry_epg_fake = Эмуляция отсутствующего EPG
 entry_epg_cache_clear = Очистить кэш EPG
 entry_epg_cache_clear_all = Очистить весь кэш EPG
 entry_epg_cache_cleared = Кэш EPG очищен

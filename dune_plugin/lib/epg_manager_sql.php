@@ -301,7 +301,7 @@ class Epg_Manager_Sql extends Epg_Manager
             $channel_title = $channel->get_title();
             $epg_ids = $channel->get_epg_ids();
 
-            if (empty($epg_ids) || $this->fuzzy_search) {
+            if (empty($epg_ids) || ($this->flags & EPG_FUZZY_SEARCH)) {
                 $channels_db = $this->open_sqlite_db(false);
                 if (!is_null($channels_db)) {
                     $stm = $channels_db->prepare('SELECT DISTINCT channel_id FROM channels WHERE alias=:alias;');

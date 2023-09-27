@@ -81,9 +81,9 @@ class Epg_Manager
     protected $delayed_epg = array();
 
     /**
-     * @var array
+     * @var int
      */
-    protected $fuzzy_search = false;
+    protected $flags = 0;
 
     /**
      * @param string|null $version
@@ -115,12 +115,12 @@ class Epg_Manager
     }
 
     /**
-     * @param bool $fuzzy_search
+     * @param int $flags
      * @return void
      */
-    public function set_fuzzy_search($fuzzy_search)
+    public function set_flags($flags)
     {
-        $this->fuzzy_search = $fuzzy_search;
+        $this->flags = $flags;
     }
 
     /**
@@ -256,8 +256,8 @@ class Epg_Manager
                 ));
             }
 
-            if ($channel->get_archive() === 0) {
-                hd_debug_print("No EPG and no archives");
+            if (!($this->flags & EPG_FAKE_EPG) || $channel->get_archive() === 0) {
+                hd_debug_print("No EPG for channel");
                 return $day_epg;
             }
 
@@ -793,7 +793,7 @@ class Epg_Manager
             // try found channel_id by epg_id
             $channel_title = $channel->get_title();
             $epg_ids = $channel->get_epg_ids();
-            if (empty($epg_ids) || $this->fuzzy_search) {
+            if (empty($epg_ids) || $this->flags) {
                 // channel_id not exist or not found. Try to map from channel name
                 if (isset($this->xmltv_channels[$channel_title])) {
                     $epg_ids[] = $this->xmltv_channels[$channel_title];

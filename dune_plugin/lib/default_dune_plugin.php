@@ -138,7 +138,6 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function init_epg_manager()
     {
-
         if (class_exists('SQLite3') && $this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE) === ENGINE_SQLITE) {
             hd_print("Using sqlite cache engine");
             $this->epg_manager = new Epg_Manager_Sql($this->plugin_info['app_version']);
@@ -148,7 +147,10 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $this->epg_manager->init_cache_dir($this->get_xmltv_cache_dir());
-        $this->epg_manager->set_fuzzy_search($this->get_bool_parameter(PARAM_FUZZY_SEARCH_EPG, false));
+        $flags = $this->get_bool_parameter(PARAM_FUZZY_SEARCH_EPG, false) ? EPG_FUZZY_SEARCH : 0;
+        $flags |= $this->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
+        $this->epg_manager->set_flags($flags);
+        $this->get_epg_manager()->set_xmltv_url($this->get_active_xmltv_source());
     }
 
     /**
