@@ -43,7 +43,7 @@ LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib:/usr/lib"
 
 SCRIPT=$1;
 shift 1
-exec "$php_cgi" -f "$PLUGIN_INSTALL_DIR_PATH/bin/$SCRIPT" "$@" >"$PLUGIN_TMP_DIR_PATH/error.log" 2>&1
+exec "$php_cgi" -c "$thisdir/php.ini" -f "$PLUGIN_INSTALL_DIR_PATH/bin/$SCRIPT" "$@" >"$PLUGIN_TMP_DIR_PATH/error.log" 2>&1
 
 ################################################################################
 # End

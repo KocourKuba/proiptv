@@ -189,6 +189,8 @@ class Epg_Manager_Sql extends Epg_Manager
             $filedb->exec('PRAGMA journal_mode=WAL;');
             $filedb->exec('BEGIN;');
 
+            hd_debug_print("Begin transactions...");
+
             $stm = $filedb->prepare('INSERT INTO positions(channel_id, start, end) VALUES(:channel_id, :start, :end);');
             $stm->bindParam(":channel_id", $prev_channel);
             $stm->bindParam(":start", $start);
@@ -240,6 +242,7 @@ class Epg_Manager_Sql extends Epg_Manager
                 }
             }
 
+            hd_debug_print("End transactions...");
             $filedb->exec('COMMIT;');
 
             $result = $filedb->querySingle('SELECT count(channel_id) FROM positions;');
@@ -306,6 +309,7 @@ class Epg_Manager_Sql extends Epg_Manager
                 if (!is_null($channels_db)) {
                     $stm = $channels_db->prepare('SELECT DISTINCT channel_id FROM channels WHERE alias=:alias;');
                     $stm->bindValue(":alias", $channel_title);
+                    hd_debug_print("Search channel_id by: $channel_title");
 
                     $res = $stm->execute();
                     if ($res) {

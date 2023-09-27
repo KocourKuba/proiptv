@@ -465,7 +465,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 hd_debug_print("Disabled channels: " . $this->plugin->get_disabled_channels()->size());
             } else if (($group = $this->plugin->tv->get_group($group_id)) !== null) {
                 $has_hidden = $group->get_group_channels()->size() !== $group->get_items_order()->size();
-                hd_debug_print("Group channels: " . $group->get_group_channels()->size() . " Channels order: " . $group->get_items_order()->size());
+                hd_debug_print("Group channels: " . $group->get_group_channels()->size() . " Channels order: " . $group->get_items_order()->size(), true);
             }
 
             if ($has_hidden) {

@@ -246,6 +246,7 @@ class Epg_Manager
         }
 
         if (empty($day_epg)) {
+            hd_debug_print("index {$this->get_cache_stem('.lock')} is locked: " . var_export($this->is_index_locked(), true), true);
             if ($this->is_index_locked()) {
                 hd_debug_print("EPG still indexing");
                 $this->delayed_epg[] = $channel->get_id();
@@ -586,7 +587,6 @@ class Epg_Manager
             while (!$file_object->eof()) {
                 $pos = $file_object->ftell();
                 $line = $file_object->fgets();
-
 
                 if (strpos($line, '<programme') === false) {
                     if (strpos($line, '</tv>') === false) continue;

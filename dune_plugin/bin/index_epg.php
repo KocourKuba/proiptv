@@ -60,6 +60,8 @@ if ($res === 0) {
     return;
 }
 
+flush();
+
 $epg_man->index_xmltv_positions();
 
 hd_print("Script execution time: ". format_duration(round(1000 * (microtime(true) - $start))));
