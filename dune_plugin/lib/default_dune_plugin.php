@@ -806,9 +806,9 @@ class Default_Dune_Plugin implements DunePlugin
      * @param bool $default
      * @return void
      */
-    public function toggle_setting($param, $default = true)
+    public function toggle_parameter($param, $default = true)
     {
-        $this->set_bool_setting($param, !$this->get_bool_setting($param, $default));
+        $this->set_bool_parameter($param, !$this->get_bool_parameter($param, $default));
     }
 
     /**
@@ -816,9 +816,9 @@ class Default_Dune_Plugin implements DunePlugin
      * @param bool $default
      * @return void
      */
-    public function toggle_parameter($param, $default = true)
+    public function toggle_setting($param, $default = true)
     {
-        $this->set_bool_parameter($param, !$this->get_bool_parameter($param, $default));
+        $this->set_bool_setting($param, !$this->get_bool_setting($param, $default));
     }
 
     ///////////////////////////////////////////////////////////////////////

@@ -25,13 +25,7 @@
  */
 
 require_once 'dune_stb_api.php';
-
-if (!defined('JSON_UNESCAPED_SLASHES'))
-    define("JSON_UNESCAPED_SLASHES", 64);
-if (!defined('JSON_PRETTY_PRINT'))
-    define('JSON_PRETTY_PRINT', 128);
-if (!defined('JSON_UNESCAPED_UNICODE'))
-    define('JSON_UNESCAPED_UNICODE', 256);
+require_once 'dune_plugin_constants.php';
 
 class HD
 {
