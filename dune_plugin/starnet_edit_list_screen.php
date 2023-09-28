@@ -45,7 +45,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_CHOOSE_FILE = 'choose_file';
     const ACTION_EDIT_ITEM_DLG = 'add_url_dialog';
     const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
-    const ACTION_INVALIDATE_CURRENT_FOLDER = 'invalidate_current_folder';
     const CONTROL_URL_PATH = 'url_path';
     const CONTROL_SET_NAME = 'set_item_name';
 
@@ -94,7 +93,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         dump_input_handler($user_input);
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $action_invalidate = User_Input_Handler_Registry::create_action($this,self::ACTION_INVALIDATE_CURRENT_FOLDER);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -127,7 +125,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $this->set_edit_order($parent_media_url->edit_list, $order);
 
-                return $action_invalidate;
+                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DOWN:
                 $order = $this->get_edit_order($parent_media_url->edit_list);
@@ -141,7 +139,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $this->set_edit_order($parent_media_url->edit_list, $order);
 
-                return $action_invalidate;
+                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DELETE:
                 if ($parent_media_url->edit_list !== self::SCREEN_EDIT_PLAYLIST && $parent_media_url->edit_list !== self::SCREEN_EDIT_EPG_LIST) {
@@ -159,7 +157,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $order = $this->get_edit_order($parent_media_url->edit_list);
                 $order->sort_order();
                 $this->set_edit_order($parent_media_url->edit_list, $order);
-                return $action_invalidate;
+                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CLEAR_APPLY);
@@ -230,12 +228,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
-
-            case self::ACTION_INVALIDATE_CURRENT_FOLDER:
-                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
         }
 
-        return null;
+        return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
     }
 
     /**
@@ -532,9 +527,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         hd_debug_print(null, true);
 
-        $action_invalidate = User_Input_Handler_Registry::create_action($this,self::ACTION_INVALIDATE_CURRENT_FOLDER);
         if (!isset($user_input->edit_action)) {
-            return $action_invalidate;
+            return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
         }
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
@@ -582,7 +576,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
         }
 
-        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url,$plugin_cookies), 0, $action_invalidate);
+        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url,$plugin_cookies), 0,
+            $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx));
     }
 
     /**
@@ -686,7 +681,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $this->set_edit_order($parent_media_url->edit_list, $order);
         $this->need_reload = true;
 
-        $action_invalidate = User_Input_Handler_Registry::create_action($this,self::ACTION_INVALIDATE_CURRENT_FOLDER);
-        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0, $action_invalidate);
+        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
+            $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx));
     }
 }
