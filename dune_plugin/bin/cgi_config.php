@@ -13,10 +13,10 @@ function get_value_of_global_variables ($name, $key)
 error_reporting (E_ALL & ~E_NOTICE);
 
 $HD_NEW_LINE = PHP_EOL;
+$LOG_FILE = $argv[1];
 $apk_subst = getenv('FS_PREFIX');
 $ini_arr = @parse_ini_file('$apk_subst/tmp/run/versions.txt');
-if (isset($ini_arr['platform_kind'])) {
-    $LOG_FILE = $argv[1];
+if (!empty($LOG_FILE)) {
     if (file_exists($LOG_FILE)) {
         @unlink($LOG_FILE);
     }

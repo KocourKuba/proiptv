@@ -3,12 +3,16 @@ require_once "cgi_config.php";
 
 set_include_path(get_include_path(). PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
 
+global $LOG_FILE;
+
 require_once 'lib/ordered_array.php';
 require_once 'lib/hashed_array.php';
 require_once 'lib/hd.php';
 require_once 'lib/epg_manager_sql.php';
 
 hd_print("Script start: index_epg");
+hd_print("Version: " . DuneSystem::$properties['plugin_version']);
+hd_print("Log: $LOG_FILE");
 
 $parameters = HD::get_data_items('common.settings', true, false);
 
