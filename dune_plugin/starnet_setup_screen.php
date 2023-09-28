@@ -210,7 +210,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 }
 
                 if ($need_reload) {
-                    $this->plugin->tv->reload_channels($plugin_cookies);
+                    $this->plugin->tv->unload_channels();
+                    $this->plugin->tv->load_channels($plugin_cookies);
                 }
 
                 return Action_Factory::show_title_dialog($msg,

@@ -1,9 +1,26 @@
 <?php
-/** @noinspection PhpMultipleClassDeclarationsInspection */
+
+class DuneSystem
+{
+    public static $properties = array();
+}
 
 function get_value_of_global_variables ($name, $key)
 {
     return (isset ($name[$key]) ) ? ($name[$key]) : ('');
+}
+
+error_reporting (E_ALL & ~E_NOTICE);
+
+$HD_NEW_LINE = PHP_EOL;
+$apk_subst = getenv('FS_PREFIX');
+$ini_arr = @parse_ini_file('$apk_subst/tmp/run/versions.txt');
+if (isset($ini_arr['platform_kind'])) {
+    $LOG_FILE = $argv[1];
+    if (file_exists($LOG_FILE)) {
+        @unlink($LOG_FILE);
+    }
+    date_default_timezone_set('UTC');
 }
 
 function hd_print($str)
@@ -11,24 +28,16 @@ function hd_print($str)
     global $HD_NEW_LINE;
     global $LOG_FILE;
 
-    $log = fopen($LOG_FILE, 'ab+');
-    fwrite($log, date("[Y-m-d H:i:s] ") . $str . $HD_NEW_LINE);
-    fclose($log);
+    if (!empty($LOG_FILE)) {
+        $log_file = fopen($LOG_FILE, 'ab+');
+        fwrite($log_file, date("[Y-m-d H:i:s] ") . $str . $HD_NEW_LINE);
+        fclose($log_file);
+    } else {
+        echo date("[Y-m-d H:i:s] ") . $str . $HD_NEW_LINE;
+    }
 }
 
-class DuneSystem
-{
-    public static $properties = array();
-}
-
-error_reporting (E_ALL & ~E_NOTICE);
-date_default_timezone_set('UTC');
-set_include_path(get_include_path(). PATH_SEPARATOR . get_value_of_global_variables ($_ENV, 'PLUGIN_INSTALL_DIR_PATH'));
-
-$HD_NEW_LINE = PHP_EOL;
-$LOG_FILE = $argv[1];
-@unlink($LOG_FILE);
-
+DuneSystem::$properties['plugin_version']   = $argv[2];
 DuneSystem::$properties['plugin_name']      = get_value_of_global_variables ($_ENV, 'PLUGIN_NAME');
 DuneSystem::$properties['install_dir_path'] = get_value_of_global_variables ($_ENV, 'PLUGIN_INSTALL_DIR_PATH');
 DuneSystem::$properties['tmp_dir_path']     = get_value_of_global_variables ($_ENV, 'PLUGIN_TMP_DIR_PATH');

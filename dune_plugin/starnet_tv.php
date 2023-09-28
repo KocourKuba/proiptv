@@ -216,13 +216,13 @@ class Starnet_Tv implements User_Input_Handler
 
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
+                $post_action = null;
+
                 if (isset($user_input->stop_play)) {
                     // rising after playback end + 100 ms
                     $this->plugin->invalidate_epfs();
-                    return $this->plugin->update_epfs_data($plugin_cookies, array(Starnet_TV_History_Screen::ID));
-                }
-
-                if (isset($user_input->locked)) {
+                    $post_action = $this->plugin->update_epfs_data($plugin_cookies, array(Starnet_TV_History_Screen::ID));
+                } else if (isset($user_input->locked)) {
                     if ($this->plugin->get_epg_manager()->is_index_locked()) {
                         $new_actions = $this->get_action_map();
                         $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this,
@@ -230,25 +230,26 @@ class Starnet_Tv implements User_Input_Handler
                             null,
                             array('locked' => true));
 
-                        return Action_Factory::change_behaviour($new_actions, 1000);
+                        $post_action = Action_Factory::change_behaviour($new_actions, 1000);
+                    } else {
+                        foreach($this->plugin->get_epg_manager()->get_delayed_epg() as $channel_id) {
+                            hd_debug_print("Refresh EPG for channel ID: $channel_id");
+                            $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
+                            $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+                            $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
+                        }
+                        $this->plugin->get_epg_manager()->clear_delayed_epg();
                     }
-
-                    hd_debug_print("Refresh EPG");
-                    $post_action = null;
-                    foreach($this->plugin->get_epg_manager()->get_delayed_epg() as $channel) {
-                        $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
-                        $day_epg = $this->plugin->get_day_epg($channel, $day_start_ts, $plugin_cookies);
-                        $post_action = Action_Factory::update_epg($channel, true, $day_start_ts, $day_epg, $post_action);
-                    }
-                    $this->plugin->get_epg_manager()->clear_delayed_epg();
-                    return $post_action;
                 }
-                break;
+
+                return $post_action;
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $this->plugin->get_playback_points()->update_point($user_input->plugin_tv_channel_id);
 
-                if (!isset($user_input->playback_stop_pressed) && !isset($user_input->playback_power_off_needed)) break;
+                if (!isset($user_input->playback_stop_pressed) && !isset($user_input->playback_power_off_needed)) {
+                    return null;
+                }
 
                 $this->plugin->get_playback_points()->save();
                 $new_actions = $this->get_action_map();
@@ -408,7 +409,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $source = $this->plugin->get_active_xmltv_source();
         hd_debug_print("XMLTV source selected: $source");
-        $this->plugin->get_epg_manager()->set_xmltv_url($source);
+        $this->plugin->init_epg_manager();
         $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
         if ($res !== -1) {
             if ($res === 0) {
@@ -712,18 +713,6 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         return 2;
-    }
-
-    /**
-     * @param $plugin_cookies
-     * @return bool
-     */
-    public function reload_channels(&$plugin_cookies)
-    {
-        hd_debug_print();
-
-        $this->unload_channels();
-        return $this->load_channels($plugin_cookies) !== 0;
     }
 
     /**

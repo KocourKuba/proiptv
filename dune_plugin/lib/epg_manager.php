@@ -86,23 +86,24 @@ class Epg_Manager
     protected $flags = 0;
 
     /**
-     * @param string|null $version
+     * @param string $version
+     * @param string $cache_dir
+     * @param string $name
      */
-    public function __construct($version = null)
+    public function __construct($version, $cache_dir, $name)
     {
         $this->version = $version;
-    }
-
-    /**
-     * @param string $cache_dir
-     * @return void
-     */
-    public function init_cache_dir($cache_dir)
-    {
+        $this->xmltv_url = $name;
         $this->cache_dir = $cache_dir;
+
         create_path($this->cache_dir);
-        hd_debug_print("cache dir: $this->cache_dir");
+
+        hd_debug_print("Engine: " . get_class($this));
+        hd_debug_print("Cache dir: $this->cache_dir");
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+
+        $this->url_hash = (empty($this->xmltv_url) ? '' : Hashed_Array::hash($this->xmltv_url));
+        hd_debug_print("XMLTV EPG url: $this->xmltv_url ($this->url_hash)");
     }
 
     /**
@@ -124,27 +125,12 @@ class Epg_Manager
     }
 
     /**
-     * Set url/filepath to xmltv source
-     *
-     * @param $xmltv_url string
-     */
-    public function set_xmltv_url($xmltv_url)
-    {
-        if ($this->xmltv_url !== $xmltv_url) {
-            $this->xmltv_url = $xmltv_url;
-            hd_debug_print("xmltv url $this->xmltv_url");
-            $this->url_hash = (empty($this->xmltv_url) ? '' : Hashed_Array::hash($this->xmltv_url));
-            // reset memory cache and data
-            $this->clear_index();
-        }
-    }
-
-    /**
      * @return bool
      */
     public function is_index_locked()
     {
-        return file_exists($this->get_cache_stem('.lock'));
+        $lock_dir = $this->get_cache_stem('.lock');
+        return is_dir($lock_dir);
     }
 
     /**
@@ -152,12 +138,14 @@ class Epg_Manager
      */
     public function set_index_locked($lock)
     {
-        $name = $this->get_cache_stem('.lock');
-
+        $lock_dir = $this->get_cache_stem('.lock');
         if ($lock) {
-            file_put_contents($name, '');
-        } else if (file_exists($name)) {
-            unlink($name);
+            if (!mkdir($lock_dir, 0644) && !is_dir($lock_dir)) {
+                hd_debug_print("Directory '$lock_dir' was not created");
+            }
+        } else if (is_dir($lock_dir)){
+            hd_debug_print("Unlock $lock_dir");
+            @rmdir($lock_dir);
         }
     }
 
@@ -198,11 +186,8 @@ class Epg_Manager
         hd_debug_print("Fetch entries for from: $date_start_l ($day_start_ts) to: $date_end_l ($day_end_ts)", true);
 
         try {
-            $t = microtime(true);
             $positions = $this->load_program_index($channel);
             if (!empty($positions)) {
-                hd_debug_print("Fetch positions done in: " . (microtime(true) - $t) . " secs", true);
-
                 $t = microtime(true);
                 $cached_file = $this->get_cached_filename();
                 if (!file_exists($cached_file)) {
@@ -239,15 +224,16 @@ class Epg_Manager
 
                     fclose($handle);
                 }
+                hd_debug_print("Fetch data from XMLTV cache in: " . (microtime(true) - $t) . " secs");
             }
-            hd_debug_print("Fetch data from XMLTV cache in: " . (microtime(true) - $t) . " secs", true);
         } catch (Exception $ex) {
             hd_print($ex->getMessage());
         }
 
         if (empty($day_epg)) {
-            hd_debug_print("index {$this->get_cache_stem('.lock')} is locked: " . var_export($this->is_index_locked(), true), true);
-            if ($this->is_index_locked()) {
+            $lock = $this->is_index_locked();
+            hd_debug_print("index is locked: " . var_export($lock, true));
+            if ($lock) {
                 hd_debug_print("EPG still indexing");
                 $this->delayed_epg[] = $channel->get_id();
                 return array($day_start_ts => array(
@@ -340,7 +326,7 @@ class Epg_Manager
      */
     public function start_bg_indexing()
     {
-        $cmd = get_install_path('bin/cgi_wrapper.sh') . " 'index_epg.php' '{$this->get_cache_stem('.log')}' &";
+        $cmd = get_install_path('bin/cgi_wrapper.sh') . " 'index_epg.php' '{$this->get_cache_stem('.log')}' '$this->version' &";
         hd_debug_print("exec: $cmd", true);
         exec($cmd);
     }
@@ -781,8 +767,21 @@ class Epg_Manager
     protected function load_program_index($channel)
     {
         try {
+            $t = microtime(true);
+            if (empty($this->xmltv_positions)) {
+                $index_file = $this->get_index_name(true);
+                hd_debug_print("load positions index $$index_file");
+                $data = HD::ReadContentFromFile($index_file);
+                if (empty($data)) {
+                    throw new Exception("load positions index failed '$index_file'");
+                }
+                $this->xmltv_positions = $data;
+                HD::ShowMemoryUsage();
+            }
+
             if (empty($this->xmltv_channels)) {
                 $index_file = $this->get_index_name(false);
+                hd_debug_print("load channels index $$index_file");
                 $this->xmltv_channels = HD::ReadContentFromFile($index_file);
                 if (empty($this->xmltv_channels)) {
                     $this->xmltv_channels = null;
@@ -812,26 +811,20 @@ class Epg_Manager
                 throw new Exception("index positions for epg '$channel_title' is not exist");
             }
 
-            if (empty($this->xmltv_positions)) {
-                $index_file = $this->get_index_name(true);
-                $data = HD::ReadContentFromFile($index_file);
-                if (empty($data)) {
-                    throw new Exception("load positions index failed '$index_file'");
-                }
-                $this->xmltv_positions = $data;
-                HD::ShowMemoryUsage();
-            }
-
             if (!isset($this->xmltv_positions[$channel_id])) {
                 throw new Exception("index positions for epg $channel_id is not exist");
             }
+
+            hd_debug_print("Fetch positions "
+                . count($this->xmltv_positions[$channel_id])
+                . " for '$channel_id' by channel: '{$channel->get_title()}' ({$channel->get_id()}) done in: "
+                . (microtime(true) - $t) . " secs");
+
+            return $this->xmltv_positions[$channel_id];
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
-            return array();
         }
 
-        hd_debug_print("Info '$channel_id' for channel: '{$channel->get_title()}' ({$channel->get_id()})");
-        hd_debug_print("Total positions: " . count($this->xmltv_positions[$channel_id]));
-        return $this->xmltv_positions[$channel_id];
+        return array();
     }
 }

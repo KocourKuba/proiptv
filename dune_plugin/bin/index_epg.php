@@ -1,5 +1,8 @@
 <?php
 require_once "cgi_config.php";
+
+set_include_path(get_include_path(). PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
+
 require_once 'lib/ordered_array.php';
 require_once 'lib/hashed_array.php';
 require_once 'lib/hd.php';
@@ -38,15 +41,13 @@ $xmltv_url = isset($settings[PARAM_CUR_XMLTV_SOURCE]) ? $settings[PARAM_CUR_XMLT
 
 if ($cache_engine === ENGINE_SQLITE) {
     hd_debug_print("Using sqlite cache engine");
-    $epg_man = new Epg_Manager_Sql();
+    $epg_man = new Epg_Manager_Sql(DuneSystem::$properties['plugin_version'], $cache_dir, $xmltv_url);
 } else {
     hd_debug_print("Using legacy cache engine");
-    $epg_man = new Epg_Manager();
+    $epg_man = new Epg_Manager(DuneSystem::$properties['plugin_version'], $cache_dir, $xmltv_url);
 }
 
-$epg_man->init_cache_dir($cache_dir);
 $epg_man->set_cache_ttl($cache_ttl);
-$epg_man->set_xmltv_url($xmltv_url);
 
 $start = microtime(true);
 $res = $epg_man->is_xmltv_cache_valid();
@@ -59,8 +60,6 @@ if ($res === 0) {
     hd_debug_print("XMLTV source not downloaded, nothing to parse");
     return;
 }
-
-flush();
 
 $epg_man->index_xmltv_positions();
 
