@@ -206,7 +206,7 @@ class Epg_Manager_Sql extends Epg_Manager
             $file_object = $this->open_xmltv_file();
 
             $start = 0;
-            //$i = 0;
+            $i = 0;
             $prev_channel = null;
             while (!$file_object->eof()) {
                 $pos = $file_object->ftell();
@@ -239,12 +239,10 @@ class Epg_Manager_Sql extends Epg_Manager
                         $start = $pos;
                     } else if ($prev_channel !== $channel_id) {
                         $stm->execute();
-/*
                         if (($i % 100) === 0) {
                             $filedb->exec('COMMIT;');
                             $filedb->exec('BEGIN;');
                         }
-*/
                         $prev_channel = $channel_id;
                         $start = $pos;
                     }
