@@ -881,7 +881,7 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 hd_debug_print("m3u playlist: $url");
-                if (preg_match('|^https?://|', $url)) {
+                if (preg_match(HTTP_PATTERN, $url)) {
                     $user_agent = HD::get_dune_user_agent();
                     $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$tmp_file' '$user_agent'";
                     hd_debug_print("Exec: $cmd", true);

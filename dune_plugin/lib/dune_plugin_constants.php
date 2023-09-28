@@ -112,6 +112,7 @@ const IMAGE_PREVIEW_PATTERN = 'png|jpg|jpeg|bmp|gif|aai';
 const IMAGE_PATTERN = '|psd|pspimage|thm|tif|yuf|svg|ico|djpg|dbmp|dpng';
 const PLAYLIST_PATTERN = 'm3u|m3u8';
 const EPG_PATTERN = 'xml|xmltv|gz';
+const HTTP_PATTERN = '|^(https?)://|';
 
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage';

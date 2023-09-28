@@ -533,7 +533,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
 
         $action_invalidate = User_Input_Handler_Registry::create_action($this,self::ACTION_INVALIDATE_CURRENT_FOLDER);
-        if (isset($user_input->edit_action)) {
+        if (!isset($user_input->edit_action)) {
             return $action_invalidate;
         }
 
@@ -551,18 +551,25 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case 'add_url':
-                if (preg_match("|https?://.+$|", $name)) {
-                    if ($order->in_order($name)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
-                    }
-
-                    $order->add_item($name);
-                    $this->set_edit_order($parent_media_url->edit_list, $order);
+                if (!preg_match(HTTP_PATTERN, $name)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
                 }
+
+                if ($order->in_order($name)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+                }
+
+                $order->add_item($name);
+                $this->set_edit_order($parent_media_url->edit_list, $order);
+                $this->need_reload = true;
                 break;
 
             case 'edit':
                 $item = MediaURL::decode($user_input->selected_media_url)->id;
+                if (!preg_match(HTTP_PATTERN, $name)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
+                }
+
                 if ($order->in_order($name)) {
                     return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
                 }
@@ -571,6 +578,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $idx = $order->get_item_pos($item);
                 $order->set_item_by_idx($idx, $name);
                 $this->set_edit_order($parent_media_url->edit_list, $order);
+
                 break;
         }
 
@@ -602,7 +610,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $error_log = array();
             foreach ($lines as $line) {
                 $line = trim($line);
-                if (!$order->in_order($line) && preg_match('|^https?://|', $line)) {
+                if (!$order->in_order($line) && preg_match(HTTP_PATTERN, $line)) {
                     $order->add_item($line);
                     hd_debug_print("imported: '$line'");
                 }

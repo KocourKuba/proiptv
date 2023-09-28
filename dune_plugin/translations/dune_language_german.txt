@@ -222,6 +222,7 @@ err_too_old_player = This DUNE HD player is too old and not supported
 err_load_playlist = Fehler beim Laden der Playlist!
 err_epg_not_set = XMLTV source not set!
 err_file_exist = File in list already exist!
+err_incorrect_url = Incorrect URl, must begin from http:// or https://
 err_load_any = Fehler beim Laden der Playlist oder Kanalliste!
 err_error = Fehler!!!
 err_error_nfs = NFS-Fehler!

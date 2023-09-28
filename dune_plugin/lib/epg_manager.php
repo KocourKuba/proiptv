@@ -503,7 +503,7 @@ class Epg_Manager
 
                 foreach ($xml_node->getElementsByTagName('icon') as $tag) {
                     $picon = $tag->getAttribute('src');
-                    if (!preg_match("|https?://|", $picon)) {
+                    if (!preg_match(HTTP_PATTERN, $picon)) {
                         $picon = '';
                     }
                 }

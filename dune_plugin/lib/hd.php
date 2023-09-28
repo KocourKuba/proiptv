@@ -716,9 +716,9 @@ class HD
     {
         if (!preg_match("|^https?://ts://|", $url)) {
             if (preg_match("/\.mp4(?=\?|$)/i", $url)) {
-                $url = preg_replace("|^(https?)://|", "$1://mp4://", $url);
+                $url = preg_replace(HTTP_PATTERN, "$1://mp4://", $url);
             } else if (preg_match("/\.ts(?=\?|$)/i", $url)) {
-                $url = preg_replace("|^(https?)://|", "$1://ts://", $url);
+                $url = preg_replace(HTTP_PATTERN, "$1://ts://", $url);
             }
         }
 

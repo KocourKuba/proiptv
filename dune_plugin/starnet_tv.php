@@ -507,7 +507,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 $icon_url = $entry->getEntryIcon();
-                if (!empty($icon_url_base) && !preg_match("|https?://|", $icon_url)) {
+                if (!empty($icon_url_base) && !preg_match(HTTP_PATTERN, $icon_url)) {
                     $icon_url = $icon_url_base . $icon_url;
                 } else if (empty($icon_url)) {
                     $icon_url = isset($picons[$channel_name]) ? $picons[$channel_name] : self::DEFAULT_CHANNEL_ICON_PATH;
@@ -544,7 +544,7 @@ class Starnet_Tv implements User_Input_Handler
                             && preg_match("#^(https?://[^/]+)/([^/]+)/([^/]+)\.(m3u8?|ts)(\?.+=.+)?$#", $entry->getPath(), $m)) {
                                 $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400.$m[4]$m[5]";
                         } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_xstreamcode, $catchup)
-                            && preg_match("|^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$|", $entry->getPath(), $m)) {
+                            && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $entry->getPath(), $m)) {
                             $extension = $m[5] ?: '.ts';
                             $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[4].$extension";
                         } else {
@@ -553,7 +553,7 @@ class Starnet_Tv implements User_Input_Handler
                                 . ((strpos($entry->getPath(), '?') !== false) ? '&' : '?')
                                 . 'utc=${start}&lutc=${timestamp}';
                         }
-                    } else if (!preg_match("|https?://|", $archive_url)){
+                    } else if (!preg_match(HTTP_PATTERN, $archive_url)){
                         $archive_url = $entry->getPath() . $archive_url;
                     }
                 }
@@ -634,7 +634,7 @@ class Starnet_Tv implements User_Input_Handler
 
                 $group_logo = $entry->getEntryAttribute('group-logo');
                 if (!empty($group_logo) && $parent_group->get_icon_url() === null) {
-                    if (!preg_match("|^https?://|", $group_logo)) {
+                    if (!preg_match(HTTP_PATTERN, $group_logo)) {
                         if (!empty($icon_url_base)) {
                             $group_logo = $icon_url_base . $group_logo;
                         } else {

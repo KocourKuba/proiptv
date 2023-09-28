@@ -124,7 +124,7 @@ class Epg_Manager_Sql extends Epg_Manager
 
                 $picon = '';
                 foreach ($xml_node->getElementsByTagName('icon') as $tag) {
-                    if (preg_match("|https?://|", $tag->getAttribute('src'))) {
+                    if (preg_match(HTTP_PATTERN, $tag->getAttribute('src'))) {
                         $picon = $tag->getAttribute('src');
                     }
                 }
