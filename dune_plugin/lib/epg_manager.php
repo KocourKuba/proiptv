@@ -85,6 +85,8 @@ class Epg_Manager
      */
     protected $flags = 0;
 
+    protected $index_ext = '.index';
+
     /**
      * @param string $version
      * @param string $cache_dir
@@ -658,6 +660,16 @@ class Epg_Manager
         $this->clear_epg_files('');
     }
 
+    /**
+     * clear indexes
+     *
+     * @return void
+     */
+    public function clear_epg_cache_indexes()
+    {
+        $this->clear_epg_files("*.$this->index_ext");
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods
 
@@ -704,7 +716,7 @@ class Epg_Manager
      */
     protected function get_index_name($type)
     {
-        return $this->get_cache_stem($type ? "_positions.index" : "_channels.index");
+        return $this->get_cache_stem($type ? "_positions$this->index_ext" : "_channels$this->index_ext");
     }
 
     /**
@@ -712,7 +724,7 @@ class Epg_Manager
      */
     protected function get_picons_index_name()
     {
-        return $this->get_cache_stem("_picons.index");
+        return $this->get_cache_stem("_picons$this->index_ext");
     }
 
     /**

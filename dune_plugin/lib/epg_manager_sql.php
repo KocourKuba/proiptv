@@ -27,6 +27,8 @@ require_once 'epg_manager.php';
 
 class Epg_Manager_Sql extends Epg_Manager
 {
+    protected $index_ext = '.db';
+
     /**
      * @inheritDoc
      * @override
@@ -268,15 +270,6 @@ class Epg_Manager_Sql extends Epg_Manager
 
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods
-
-    /**
-     * @param bool $type
-     * @return string|null
-     */
-    protected function get_index_name($type)
-    {
-        return $this->get_cache_stem($type ? "_positions.db" : "_channels.db");
-    }
 
     /**
      * @inheritDoc
