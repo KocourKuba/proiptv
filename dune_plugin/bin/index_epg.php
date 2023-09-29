@@ -22,7 +22,7 @@ if (!isset($parameters[PARAM_PLAYLISTS])) {
 }
 
 $debug = isset($parameters[PARAM_ENABLE_DEBUG]) ? $parameters[PARAM_ENABLE_DEBUG] : SetupControlSwitchDefs::switch_off;
-$cache_dir = isset($parameters[PARAM_XMLTV_CACHE_PATH]) ? $parameters[PARAM_XMLTV_CACHE_PATH] : get_data_path(EPG_CACHE_SUBDIR);
+$cache_dir = isset($parameters[PARAM_CACHE_PATH]) ? $parameters[PARAM_CACHE_PATH] : get_data_path(EPG_CACHE_SUBDIR);
 set_debug_log($debug === SetupControlSwitchDefs::switch_on);
 
 if (class_exists('SQLite3')) {

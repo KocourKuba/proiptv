@@ -140,10 +140,10 @@ class Default_Dune_Plugin implements DunePlugin
     {
         if (class_exists('SQLite3') && $this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE) === ENGINE_SQLITE) {
             hd_print("Using sqlite cache engine");
-            $this->epg_manager = new Epg_Manager_Sql($this->plugin_info['app_version'], $this->get_xmltv_cache_dir(), $this->get_active_xmltv_source());
+            $this->epg_manager = new Epg_Manager_Sql($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
         } else {
             hd_print("Using legacy cache engine");
-            $this->epg_manager = new Epg_Manager($this->plugin_info['app_version'], $this->get_xmltv_cache_dir(), $this->get_active_xmltv_source());
+            $this->epg_manager = new Epg_Manager($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
         }
 
         $flags = $this->get_bool_parameter(PARAM_FUZZY_SEARCH_EPG, false) ? EPG_FUZZY_SEARCH : 0;
@@ -418,7 +418,7 @@ class Default_Dune_Plugin implements DunePlugin
             $day_start_tm_sec -= get_local_time_zone_offset();
 
             // get personal time shift for channel
-            $time_shift = 3600 * ($channel->get_timeshift_hours() + (isset($plugin_cookies->epg_shift) ? $plugin_cookies->epg_shift : 0));
+            $time_shift = 3600 * ($channel->get_timeshift_hours() + $this->get_setting(PARAM_EPG_SHIFT, 0));
             hd_debug_print("EPG time shift $time_shift", true);
             $day_start_tm_sec += $time_shift;
 
@@ -525,6 +525,7 @@ class Default_Dune_Plugin implements DunePlugin
                 break;
         }
 
+        $this->set_favorites($favorites);
         $this->invalidate_epfs();
 
         return Starnet_Epfs_Handler::invalidate_folders(array(
@@ -804,21 +805,25 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @param string $param
      * @param bool $default
-     * @return void
+     * @return bool
      */
     public function toggle_parameter($param, $default = true)
     {
-        $this->set_bool_parameter($param, !$this->get_bool_parameter($param, $default));
+        $new_val = !$this->get_bool_parameter($param, $default);
+        $this->set_bool_parameter($param, $new_val);
+        return $new_val;
     }
 
     /**
      * @param string $param
      * @param bool $default
-     * @return void
+     * @return bool
      */
     public function toggle_setting($param, $default = true)
     {
-        $this->set_bool_setting($param, !$this->get_bool_setting($param, $default));
+        $new_val = !$this->get_bool_setting($param, $default);
+        $this->set_bool_setting($param, $new_val);
+        return $new_val;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -1127,6 +1132,15 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order();
     }
 
+    /**
+     * @param Ordered_Array $order
+     * @return void
+     */
+    public function set_favorites($order)
+    {
+        $this->tv->get_special_group(FAVORITES_GROUP_ID)->set_items_order($order);
+    }
+
     public function get_special_groups_count()
     {
         $groups_cnt = 0;
@@ -1370,11 +1384,11 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return string
      */
-    public function get_xmltv_cache_dir()
+    public function get_cache_dir()
     {
-        $cache_dir = smb_tree::get_folder_info($this->get_parameter(PARAM_XMLTV_CACHE_PATH, get_data_path(EPG_CACHE_SUBDIR)));
+        $cache_dir = smb_tree::get_folder_info($this->get_parameter(PARAM_CACHE_PATH, get_data_path(EPG_CACHE_SUBDIR)));
         if (!is_null($cache_dir) && rtrim($cache_dir, DIRECTORY_SEPARATOR) === get_data_path(EPG_CACHE_SUBDIR)) {
-            $this->remove_parameter(PARAM_XMLTV_CACHE_PATH);
+            $this->remove_parameter(PARAM_CACHE_PATH);
             $cache_dir = null;
         }
 

@@ -403,7 +403,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             PaneParams::vod_width, PaneParams::vod_height
         );
 
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
+        $square_icons =  $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
         $icon_width = $square_icons ? RowsItemsParams::icon_width_sq : RowsItemsParams::icon_width;
         $icon_prop = $icon_width / RowsItemsParams::icon_height;
 
@@ -985,12 +985,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             );
         }
 
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
+        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false)
+            ? RowsItemsParams::icon_sq_loading_failed_url
+            : RowsItemsParams::icon_loading_failed_url;
 
         foreach ($removed_channels as $item) {
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => $group->get_id(), 'channel_id' => $item)),
-                $square_icons ? RowsItemsParams::icon_sq_loading_failed_url : RowsItemsParams::icon_loading_failed_url,
+                $square_icons,
                 $this->plugin->get_known_channels()->get($item),
                 $removed_stickers
             );
@@ -1037,8 +1039,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $rows = array();
         $items = array();
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
-        $row_item_width = $square_icons ? RowsItemsParams::width_sq : RowsItemsParams::width;
+        $row_item_width = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false) ? RowsItemsParams::width_sq : RowsItemsParams::width;
 
         $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
             RowsItemsParams::fav_sticker_bg_color,
@@ -1097,8 +1098,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
 
         $rows = array();
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
-        $row_item_width = $square_icons ? RowsItemsParams::width_sq : RowsItemsParams::width;
+        $row_item_width = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false) ? RowsItemsParams::width_sq : RowsItemsParams::width;
 
         /** @var Group $group */
         /** @var Channel $channel */

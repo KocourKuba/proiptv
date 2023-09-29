@@ -96,8 +96,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // epg font size
         $font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
-        $font_ops_translated[SetupControlSwitchDefs::switch_on] = '%tr%setup_small';
-        $font_ops_translated[SetupControlSwitchDefs::switch_off] = '%tr%setup_normal';
+        $font_ops_translated[SetupControlSwitchDefs::switch_on] = TR::t('setup_small');
+        $font_ops_translated[SetupControlSwitchDefs::switch_off] = TR::t('setup_normal');
 
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
@@ -166,6 +166,10 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
+            case PARAM_EPG_FONT_SIZE:
+                $this->plugin->toggle_parameter(PARAM_EPG_FONT_SIZE, false);
+                break;
+
             case ACTION_CHANGE_BACKGROUND:
                 $media_url_str = MediaURL::encode(
                     array(
@@ -215,10 +219,6 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
-
-            case PARAM_EPG_FONT_SIZE:
-                $this->plugin->toggle_parameter(PARAM_EPG_FONT_SIZE, false);
-                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

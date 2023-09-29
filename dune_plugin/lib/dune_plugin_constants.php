@@ -41,6 +41,12 @@ const ACTION_RUN_FILTER = 'run_filter';
 const ACTION_CREATE_SEARCH = 'create_search';
 const ACTION_NEW_SEARCH = 'new_search';
 const ACTION_RUN_SEARCH = 'run_search';
+const ACTION_WATCHED = 'watched';
+const ACTION_QUALITY = 'quality';
+const ACTION_CHANNELS_SETTINGS = 'channels_settings';
+const ACTION_NEED_CONFIGURE = 'configure';
+const ACTION_BALANCE = 'balance';
+const ACTION_INFO = 'info';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';
@@ -52,7 +58,9 @@ const CHANGED_CHANNELS_GROUP_ID = '##changed_channels_group##';
 const PLUGIN_PARAMETERS = "parameters";
 const PLUGIN_SETTINGS = "settings";
 const PARAM_PLAYLISTS = 'playlists';
+const PARAM_PLAYLIST_IDX = 'playlist_idx';
 const PARAM_PLAYLISTS_NAMES = 'playlists_names';
+const PARAM_VOD_IDX = 'vod_idx';
 const PARAM_FAVORITES = 'favorites';
 const PARAM_GROUPS_ORDER = 'groups_order';
 const PARAM_DISABLED_GROUPS = 'disabled_groups';
@@ -68,12 +76,14 @@ const PARAM_SQUARE_ICONS = 'square_icons';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_CH_LIST_PATH = 'channels_list_path';
 const PARAM_HISTORY_PATH = 'history_path';
+const PARAM_CH_LIST_NAME = 'channels_list_name';
+const PARAM_CHANNELS_SOURCE = 'channels_source';
 const PARAM_EPG_CACHE_ENGINE = 'epg_cache_engine';
 const PARAM_EPG_CACHE_TTL = 'epg_cache_ttl';
 const PARAM_EPG_SHIFT = 'epg_shift';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
-const PARAM_XMLTV_CACHE_PATH = 'xmltv_cache_path';
+const PARAM_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_EXT_XMLTV_SOURCES = 'ext_xmltv_sources';
 const PARAM_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
 const PARAM_CUR_XMLTV_SOURCE = 'cur_xmltv_source';
@@ -93,11 +103,18 @@ const PARAM_ENABLE_DEBUG = 'enable_debug';
 const PARAM_PER_CHANNELS_ZOOM = 'per_channels_zoom';
 const PARAM_FUZZY_SEARCH_EPG = 'fuzzy_search_epg';
 const PARAM_FAKE_EPG = 'fake_epg';
+const PARAM_USE_HTTPS_PROXY = 'use_proxy';
+const PARAM_STREAM_FORMAT = 'stream_format';
+
+const PARAM_LOGIN = 'login';
+const PARAM_PASSWORD = 'password';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
+const ENGINE_JSON = 'json';
 const ENGINE_SQLITE = 'sqlite';
 const ENGINE_LEGACY = 'legacy';
 const EPG_CACHE_SUBDIR = 'epg_cache';
+const HISTORY_SUBDIR = 'history';
 const EPG_FUZZY_SEARCH = 1;
 const EPG_FAKE_EPG = 2;
 

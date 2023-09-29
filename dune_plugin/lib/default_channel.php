@@ -216,7 +216,7 @@ class Default_Channel extends Json_Serializer implements Channel
      */
     public function get_past_epg_days()
     {
-        return $this->_archive > 1 ? $this->_archive : 7;
+        return $this->_archive;
     }
 
     /**

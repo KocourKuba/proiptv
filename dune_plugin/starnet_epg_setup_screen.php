@@ -36,7 +36,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const ACTION_RELOAD_EPG = 'reload_epg';
     const CONTROL_EPG_SOURCE_TYPE = 'epg_source_type';
     const CONTROL_XMLTV_EPG_IDX = 'xmltv_epg_idx';
-    const CONTROL_CHANGE_XMLTV_CACHE_PATH = 'xmltv_cache_path';
+    const CONTROL_CHANGE_CACHE_PATH = 'xmltv_cache_path';
     const CONTROL_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
 
     ///////////////////////////////////////////////////////////////////////
@@ -94,11 +94,11 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // EPG cache dir
-        $xcache_dir = $this->plugin->get_xmltv_cache_dir();
-        $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($xcache_dir));
-        $xcache_dir = HD::string_ellipsis($xcache_dir . DIRECTORY_SEPARATOR);
-        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_XMLTV_CACHE_PATH,
-            $free_size, $xcache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
+        $cache_dir = $this->plugin->get_cache_dir();
+        $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
+        $cache_dir = HD::string_ellipsis($cache_dir . DIRECTORY_SEPARATOR);
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
+            $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // EPG cache engine
@@ -199,7 +199,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 hd_debug_print("Selected xmltv epg: ($index): $xmltv_source");
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
-            case self::CONTROL_CHANGE_XMLTV_CACHE_PATH:
+            case self::CONTROL_CHANGE_CACHE_PATH:
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
@@ -248,20 +248,20 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_RESET_DEFAULT:
                 hd_debug_print(ACTION_RESET_DEFAULT);
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
-                $this->plugin->remove_parameter(PARAM_XMLTV_CACHE_PATH);
+                $this->plugin->remove_parameter(PARAM_CACHE_PATH);
                 $this->plugin->init_epg_manager();
 
-                $default_path = $this->plugin->get_xmltv_cache_dir();
+                $default_path = $this->plugin->get_cache_dir();
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $default_path),
                     $action_reload, $default_path, self::CONTROLS_WIDTH);
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 hd_debug_print(ACTION_FOLDER_SELECTED . ": $data->filepath");
-                if ($this->plugin->get_xmltv_cache_dir() === $data->filepath) break;
+                if ($this->plugin->get_cache_dir() === $data->filepath) break;
 
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
-                $this->plugin->set_parameter(PARAM_XMLTV_CACHE_PATH, $data->filepath);
+                $this->plugin->set_parameter(PARAM_CACHE_PATH, $data->filepath);
                 $this->plugin->init_epg_manager();
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
