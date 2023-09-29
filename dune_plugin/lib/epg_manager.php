@@ -374,8 +374,10 @@ class Epg_Manager
             hd_debug_print("Last changed time on server: " . date("Y-m-d H:s", filemtime($tmp_filename)));
 
             $handle = fopen($tmp_filename, "rb");
-            $hdr = fread($handle, 6);
+            $hdr = fread($handle, 10);
             fclose($handle);
+
+            hd_debug_print("Checking signature: " . bin2hex($hdr), true);
 
             if (0 === mb_strpos($hdr , "\x1f\x8b\x08")) {
                 hd_debug_print("ungzip $tmp_filename to $cached_xmltv_file");
@@ -416,7 +418,7 @@ class Epg_Manager
                 rename($filename, $cached_xmltv_file);
                 $size = filesize($cached_xmltv_file);
                 hd_debug_print("$size bytes written to $cached_xmltv_file");
-            } else if (0 === mb_strpos($hdr, "<?xml")) {
+            } else if (false !== mb_strpos($hdr, "<?xml")) {
                 hd_debug_print("rename $tmp_filename to $cached_xmltv_file");
                 if (file_exists($cached_xmltv_file)) {
                     unlink($cached_xmltv_file);
