@@ -68,15 +68,15 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         if (empty($display_path)) {
-            Control_Factory::add_label($defs, TR::t('setup_channels_src_playlists'), TR::t('setup_channels_src_no_playlists'));
+            Control_Factory::add_label($defs, TR::t('setup_channels_src_playlist'), TR::t('setup_channels_src_no_playlists'));
         } else if (count($display_path) > 1) {
             if ($playlist_idx >= count($display_path)) {
                 $this->plugin->set_playlists_idx(0);
             }
             Control_Factory::add_combobox($defs, $this, null, ACTION_CHANGE_PLAYLIST,
-                TR::t('setup_channels_src_playlists'), $playlist_idx, $display_path, self::CONTROLS_WIDTH, true);
+                TR::t('setup_channels_src_playlist'), $playlist_idx, $display_path, self::CONTROLS_WIDTH, true);
         } else {
-            Control_Factory::add_label($defs, TR::t('setup_channels_src_playlists'), $display_path[0]);
+            Control_Factory::add_label($defs, TR::t('setup_channels_src_playlist'), $display_path[0]);
             $this->plugin->set_playlists_idx(0);
         }
 
