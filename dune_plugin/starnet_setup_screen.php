@@ -34,6 +34,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
     const CONTROL_ADULT_PASS_DLG = 'adult_pass_dialog';
     const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
+    const ACTION_DONATE_DLG = 'donate_dlg';
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_EPG_SCREEN = 'epg_screen';
@@ -65,6 +66,9 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             Abstract_Controls_Screen::CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 16);
+
+        Control_Factory::add_button($defs, $this,null, self::ACTION_DONATE_DLG,
+            TR::t('setup_donate_title'), 'QR code', self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Interface settings
@@ -107,6 +111,23 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     {
         hd_debug_print(null, true);
         return $this->do_get_control_defs();
+    }
+
+    public function do_donate_dialog()
+    {
+        hd_debug_print(null, true);
+        $img_ym = get_temp_path('qr_ym.png');
+        file_put_contents($img_ym, HD::http_get_document("http://iptv.esalecrm.net/update/QR_YM.png"));
+        $img_pp = get_temp_path('qr_pp.png');
+        file_put_contents($img_pp, HD::http_get_document("http://iptv.esalecrm.net/update/QR_PP.png"));
+
+        Control_Factory::add_vgap($defs, 50);
+        Control_Factory::add_smart_label($defs,"", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");
+        Control_Factory::add_smart_label($defs,"", "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
+        Control_Factory::add_vgap($defs, 450);
+
+        $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
+        return  Action_Factory::show_dialog("QR code",$defs,true,1150, $attrs);
     }
 
     /**
@@ -173,6 +194,9 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 Control_Factory::add_vgap($defs, 10);
 
                 return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
+
+            case self::ACTION_DONATE_DLG: // show interface settings dialog
+                return $this->do_donate_dialog();
 
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(Starnet_Interface_Setup_Screen::get_media_url_str(), TR::t('setup_interface_title'));

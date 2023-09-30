@@ -54,6 +54,7 @@ setup_small = Мелкий
 setup_normal = Обычный
 setup_internal = Встроенный
 setup_external = Внешний
+setup_donate_title = Поддержать автора
 setup_interface_title = Настройки интерфейса
 setup_change_settings = Изменить настройки
 setup_epg_settings = Настройки EPG
