@@ -134,7 +134,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         Control_Factory::add_vgap($defs, 20);
 
-        $user_agent = $this->plugin->get_setting(PARAM_USER_AGENT, HD::get_dune_user_agent());
+        $user_agent = $this->plugin->get_setting(PARAM_USER_AGENT, '');
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_USER_AGENT, TR::t('setup_channels_user_agent'),
             $user_agent, false, false, 0, 1, 1200, 0);
 
@@ -222,7 +222,10 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case self::ACTION_EXT_PARAMS_DLG_APPLY: // handle pass dialog result
                 $user_agent = $user_input->{self::CONTROL_USER_AGENT};
-                if (!empty($user_agent) && $user_agent !== HD::get_dune_user_agent()) {
+                if (empty($user_agent)) {
+                    $this->plugin->remove_setting(PARAM_USER_AGENT);
+                    HD::set_dune_user_agent(HD::get_default_user_agent());
+                } else if ($user_agent !== HD::get_default_user_agent()) {
                     $this->plugin->set_setting(PARAM_USER_AGENT, $user_agent);
                     HD::set_dune_user_agent($user_agent);
                 }

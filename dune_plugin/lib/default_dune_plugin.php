@@ -936,8 +936,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function init_user_agent()
     {
-        $user_agent = $this->get_setting(PARAM_USER_AGENT, HD::get_dune_user_agent());
-        if ($user_agent !== HD::get_dune_user_agent()) {
+        $user_agent = $this->get_setting(PARAM_USER_AGENT);
+        if (!empty($user_agent) && $user_agent !== HD::get_default_user_agent()) {
             HD::set_dune_user_agent($user_agent);
         }
     }
