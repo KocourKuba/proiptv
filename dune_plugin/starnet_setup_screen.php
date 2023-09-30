@@ -117,9 +117,9 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     {
         hd_debug_print(null, true);
         $img_ym = get_temp_path('qr_ym.png');
-        file_put_contents($img_ym, HD::http_get_document("http://iptv.esalecrm.net/update/QR_YM.png"));
+        file_put_contents($img_ym, HD::http_get_document(Default_Dune_Plugin::RESOURCE_URL . "/QR_YM.png"));
         $img_pp = get_temp_path('qr_pp.png');
-        file_put_contents($img_pp, HD::http_get_document("http://iptv.esalecrm.net/update/QR_PP.png"));
+        file_put_contents($img_pp, HD::http_get_document(Default_Dune_Plugin::RESOURCE_URL . "/QR_PP.png"));
 
         Control_Factory::add_vgap($defs, 50);
         Control_Factory::add_smart_label($defs,"", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");

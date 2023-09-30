@@ -332,6 +332,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
+     * @override
+     * @inheritDoc
+     */
+    public function get_image_archive(MediaURL $media_url)
+    {
+        return $this->plugin->get_image_archive();
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)

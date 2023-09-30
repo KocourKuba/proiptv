@@ -30,6 +30,7 @@ require_once 'user_input_handler_registry.php';
 require_once 'action_factory.php';
 require_once 'control_factory.php';
 require_once 'control_factory_ext.php';
+require_once 'default_archive.php';
 require_once 'catchup_params.php';
 require_once 'epg_manager_sql.php';
 require_once 'm3u/M3uParser.php';
@@ -40,6 +41,9 @@ class Default_Dune_Plugin implements DunePlugin
     const SANDWICH_BASE = 'gui_skin://special_icons/sandwich_base.aai';
     const SANDWICH_MASK = 'cut_icon://{name=sandwich_mask}';
     const SANDWICH_COVER = 'cut_icon://{name=sandwich_cover}';
+    const RESOURCE_URL = 'http://iptv.esalecrm.net/res';
+    const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
+    const ARCHIVE_ID = 'common';
 
     /////////////////////////////////////////////////////////////////////////////
     // views variables
@@ -1612,6 +1616,18 @@ class Default_Dune_Plugin implements DunePlugin
         } else {
             $this->set_setting(PARAM_PLUGIN_BACKGROUND, $path);
         }
+    }
+
+    public function get_icon($id)
+    {
+        $archive = $this->get_image_archive();
+
+        return is_null($archive) ? null : $archive->get_archive_url($id);
+    }
+
+    public function get_image_archive()
+    {
+        return Default_Archive::get_image_archive(self::ARCHIVE_ID,self::ARCHIVE_URL_PREFIX);
     }
 
     ///////////////////////////////////////////////////////////////////////
