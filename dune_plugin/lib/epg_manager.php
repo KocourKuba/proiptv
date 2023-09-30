@@ -344,7 +344,7 @@ class Epg_Manager
         }
 
         $ret = -1;
-            $t = microtime(true);
+        $t = microtime(true);
 
         try {
             HD::set_last_error(null);
@@ -373,6 +373,9 @@ class Epg_Manager
 
             hd_debug_print("Last changed time on server: " . date("Y-m-d H:s", filemtime($tmp_filename)));
 
+            hd_debug_print("Download xmltv source $this->xmltv_url done: " . (microtime(true) - $t) . " secs");
+            $t = microtime(true);
+
             $handle = fopen($tmp_filename, "rb");
             $hdr = fread($handle, 10);
             fclose($handle);
@@ -380,50 +383,41 @@ class Epg_Manager
             hd_debug_print("Checking signature: " . bin2hex($hdr), true);
 
             if (0 === mb_strpos($hdr , "\x1f\x8b\x08")) {
+                rename($tmp_filename, $cached_xmltv_file . '.gz');
+                $tmp_filename = $cached_xmltv_file . '.gz';
                 hd_debug_print("ungzip $tmp_filename to $cached_xmltv_file");
-                $gz = gzopen($tmp_filename, 'rb');
-                if (!$gz) {
-                    throw new Exception("Failed to open $tmp_filename for $this->xmltv_url");
+                $cmd = "cd '$this->cache_dir' && gzip -d '$tmp_filename' ";
+                system($cmd, $ret);
+                if ($ret !== 0) {
+                    throw new Exception(TR::t('err_unzip__2', $tmp_filename, $ret));
                 }
-
-                $dest = fopen($cached_xmltv_file, 'wb');
-                if (!$dest) {
-                    throw new Exception("Failed to open $cached_xmltv_file for $this->xmltv_url");
-                }
-
-                $res = stream_copy_to_stream($gz, $dest);
-                gzclose($gz);
-                fclose($dest);
-                unlink($tmp_filename);
-                if ($res === false) {
-                    throw new Exception("Failed to unpack $tmp_filename to $cached_xmltv_file");
-                }
-                hd_debug_print("$res bytes written to $cached_xmltv_file");
+                $size = filesize($cached_xmltv_file);
+                hd_debug_print("$size bytes written to $cached_xmltv_file");
             } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
                 hd_debug_print("unzip $tmp_filename to $cached_xmltv_file");
-                $unzip = new ZipArchive();
-                $out = $unzip->open($tmp_filename);
-                if ($out !== true) {
-                    throw new Exception(TR::t('err_unzip__2', $tmp_filename, $out));
-                }
-                $filename = $unzip->getNameIndex(0);
+                $filename = trim(shell_exec("unzip -lq '$tmp_filename'"));
                 if (empty($filename)) {
-                    $unzip->close();
                     throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
                 }
 
-                $unzip->extractTo($this->cache_dir);
-                $unzip->close();
+                $cmd = "cd '$this->cache_dir' && unzip -o '$tmp_filename' ";
+                system($cmd, $ret);
+                unlink($tmp_filename);
+                if ($ret !== 0) {
+                    throw new Exception(TR::t('err_unzip__2', $tmp_filename, $ret));
+                }
 
                 rename($filename, $cached_xmltv_file);
                 $size = filesize($cached_xmltv_file);
-                hd_debug_print("$size bytes written to $cached_xmltv_file");
+                hd_debug_print("$size bytes unzipped to $cached_xmltv_file");
             } else if (false !== mb_strpos($hdr, "<?xml")) {
                 hd_debug_print("rename $tmp_filename to $cached_xmltv_file");
                 if (file_exists($cached_xmltv_file)) {
                     unlink($cached_xmltv_file);
                 }
                 rename($tmp_filename, $cached_xmltv_file);
+                $size = filesize($cached_xmltv_file);
+                hd_debug_print("$size bytes written to $cached_xmltv_file");
             } else {
                 throw new Exception(TR::load_string('err_unknown_file_type'));
             }
@@ -440,7 +434,7 @@ class Epg_Manager
         $this->set_index_locked(false);
 
         hd_debug_print("------------------------------------------------------------");
-        hd_debug_print("Download xmltv source $this->xmltv_url done: " . (microtime(true) - $t) . " secs");
+        hd_debug_print("Unpack xmltv source $this->xmltv_url done: " . (microtime(true) - $t) . " secs");
 
         return $ret;
     }
