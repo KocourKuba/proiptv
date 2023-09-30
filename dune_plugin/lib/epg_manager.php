@@ -386,7 +386,7 @@ class Epg_Manager
                 rename($tmp_filename, $cached_xmltv_file . '.gz');
                 $tmp_filename = $cached_xmltv_file . '.gz';
                 hd_debug_print("ungzip $tmp_filename to $cached_xmltv_file");
-                $cmd = "cd '$this->cache_dir' && gzip -d '$tmp_filename' ";
+                $cmd = "gzip -d $tmp_filename 2>&1";
                 system($cmd, $ret);
                 if ($ret !== 0) {
                     throw new Exception(TR::t('err_unzip__2', $tmp_filename, $ret));
@@ -400,7 +400,7 @@ class Epg_Manager
                     throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
                 }
 
-                $cmd = "cd '$this->cache_dir' && unzip -o '$tmp_filename' ";
+                $cmd = "unzip -oq $tmp_filename -d $this->cache_dir 2>&1";
                 system($cmd, $ret);
                 unlink($tmp_filename);
                 if ($ret !== 0) {
