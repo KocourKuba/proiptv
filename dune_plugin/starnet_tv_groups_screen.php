@@ -163,30 +163,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => static::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS,
+                        'edit_list' => $user_input->action_edit,
+                        'group_id' => ($user_input->action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS) ? $sel_media_url->group_id : null,
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => ACTION_REFRESH_SCREEN,
                         'save_data' => PLUGIN_SETTINGS,
                         'windowCounter' => 1,
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_edit_hidden_group'));
-
-            case ACTION_ITEMS_EDIT . "2":
-                $this->plugin->set_pospone_save();
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS,
-                        'group_id' => $sel_media_url->group_id,
-                        'end_action' => ACTION_RELOAD,
-                        'cancel_action' => ACTION_REFRESH_SCREEN,
-                        'save_data' => PLUGIN_SETTINGS,
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str, TR::t('tv_screen_edit_hidden_channels'));
+                return Action_Factory::open_folder($media_url_str,
+                    ($user_input->action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS)
+                        ? TR::t('tv_screen_edit_hidden_channels')
+                        : TR::t('tv_screen_edit_hidden_group'));
 
             case ACTION_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
@@ -332,15 +320,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @override
-     * @inheritDoc
-     */
-    public function get_image_archive(MediaURL $media_url)
-    {
-        return $this->plugin->get_image_archive();
-    }
-
-    /**
      * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
@@ -466,8 +445,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
         $cnt = count($menu_items);
-        if ($this->plugin->get_disabled_groups()->size()) {
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT, TR::t('tv_screen_edit_hidden_group'), "edit.png");
+        if ($this->plugin->get_disabled_groups()->size() !== 0) {
+            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT,
+                TR::t('tv_screen_edit_hidden_group'), "edit.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
         }
 
         if (!is_null($group_id)) {
@@ -481,7 +461,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             if ($has_hidden) {
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT . "2", TR::t('tv_screen_edit_hidden_channels'), "edit.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT,
+                    TR::t('tv_screen_edit_hidden_channels'), "edit.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS) );
             }
         }
 

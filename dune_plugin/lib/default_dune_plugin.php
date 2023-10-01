@@ -177,10 +177,10 @@ class Default_Dune_Plugin implements DunePlugin
     public function init_epg_manager()
     {
         if (class_exists('SQLite3') && $this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE) === ENGINE_SQLITE) {
-            hd_print("Using sqlite cache engine");
+            hd_debug_print("Using sqlite cache engine");
             $this->epg_manager = new Epg_Manager_Sql($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
         } else {
-            hd_print("Using legacy cache engine");
+            hd_debug_print("Using legacy cache engine");
             $this->epg_manager = new Epg_Manager($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
         }
 
@@ -923,7 +923,7 @@ class Default_Dune_Plugin implements DunePlugin
                     throw new Exception("Tv playlist not defined");
                 }
 
-                hd_debug_print("m3u playlist: $url");
+                hd_debug_print("m3u playlist ({$this->get_current_playlist_hash()} - {$this->get_playlist_name($url)}): $url");
                 if (preg_match(HTTP_PATTERN, $url)) {
                     $user_agent = HD::get_dune_user_agent();
                     $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$tmp_file' '$user_agent'";
