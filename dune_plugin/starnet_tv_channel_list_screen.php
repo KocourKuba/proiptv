@@ -216,7 +216,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
 
                 $group = $this->plugin->tv->get_group($media_url->group_id);
-                if (!is_null($group) && !$group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+                if (!is_null($group) && $media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
                     $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_CREATE_SEARCH, TR::t('search'), "search.png");
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_sort_default'), "brush.png");
@@ -362,7 +362,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             $channels_order = new Hashed_Array();
             /** @var Channel $channel */
-            if ($this_group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+            if ($media_url->group_id === ALL_CHANNEL_GROUP_ID) {
                 foreach($this->plugin->get_groups_order() as $group_id) {
                     $group = $this->plugin->tv->get_group($group_id);
                     if (is_null($group)) continue;
@@ -463,7 +463,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         /** @var Channel $channel */
         $channels = array();
-        if ($parent_group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+        if ($parent_group->get_id() === ALL_CHANNEL_GROUP_ID) {
             foreach($this->plugin->tv->get_channels() as $channel) {
                 if ($channel->is_disabled()) continue;
 

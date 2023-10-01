@@ -121,7 +121,7 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function get_icon_url()
     {
-        return $this->_icon_url;
+        return empty($this->_icon_url) ? self::DEFAULT_GROUP_ICON_PATH : $this->_icon_url;
     }
 
     /**
@@ -135,9 +135,9 @@ class Default_Group extends Json_Serializer implements Group
     /**
      * @inheritDoc
      */
-    public function is_special_group($id)
+    public function is_special_group()
     {
-        return ($this->_id === $id);
+        return in_array($this->_id, array(ALL_CHANNEL_GROUP_ID, FAVORITES_GROUP_ID, HISTORY_GROUP_ID, CHANGED_CHANNELS_GROUP_ID));
     }
 
     /**
@@ -161,19 +161,19 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function is_disabled()
     {
-        if ($this->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
             return !$this->plugin->get_bool_parameter(PARAM_SHOW_ALL);
         }
 
-        if ($this->is_special_group(FAVORITES_GROUP_ID)) {
+        if ($this->_id === FAVORITES_GROUP_ID) {
             return !$this->plugin->get_bool_parameter(PARAM_SHOW_FAVORITES);
         }
 
-        if ($this->is_special_group(HISTORY_GROUP_ID)) {
+        if ($this->_id === HISTORY_GROUP_ID) {
             return !$this->plugin->get_bool_parameter(PARAM_SHOW_HISTORY);
         }
 
-        if ($this->is_special_group(CHANGED_CHANNELS_GROUP_ID)) {
+        if ($this->_id === CHANGED_CHANNELS_GROUP_ID) {
             return $this->_disabled || !$this->plugin->get_bool_parameter(PARAM_SHOW_CHANGED_CHANNELS);
         }
 
@@ -221,15 +221,15 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function get_media_url_str()
     {
-        if ($this->is_special_group(FAVORITES_GROUP_ID)) {
+        if ($this->_id === FAVORITES_GROUP_ID) {
             return Starnet_Tv_Favorites_Screen::get_media_url_string($this->get_id());
         }
 
-        if ($this->is_special_group(HISTORY_GROUP_ID)) {
+        if ($this->_id === HISTORY_GROUP_ID) {
             return Starnet_TV_History_Screen::get_media_url_string($this->get_id());
         }
 
-        if ($this->is_special_group(CHANGED_CHANNELS_GROUP_ID)) {
+        if ($this->_id === CHANGED_CHANNELS_GROUP_ID) {
             return Starnet_Tv_Changed_Channels_Screen::get_media_url_string($this->get_id());
         }
 
@@ -245,7 +245,7 @@ class Default_Group extends Json_Serializer implements Group
     public function add_channel(Channel $channel)
     {
         $this->_channels->set($channel->get_id(), $channel);
-        if (!$channel->is_disabled() && !$this->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+        if ($this->_id !== ALL_CHANNEL_GROUP_ID && !$channel->is_disabled()) {
             $this->get_items_order()->add_item($channel->get_id());
         }
     }

@@ -1713,6 +1713,9 @@ class Default_Dune_Plugin implements DunePlugin
                 array('list_idx' => $key));
         }
 
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'playlist'));
+
         return $menu_items;
     }
 
@@ -1745,6 +1748,9 @@ class Default_Dune_Plugin implements DunePlugin
                 array('list_idx' => $key)
             );
         }
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'epg'));
 
         return $menu_items;
     }

@@ -33,7 +33,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 {
     const ID = 'epg_setup';
 
-    const ACTION_RELOAD_EPG = 'reload_epg';
     const CONTROL_CHANGE_CACHE_PATH = 'xmltv_cache_path';
     const CONTROL_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
 
@@ -61,11 +60,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $sources = $this->plugin->get_all_xmltv_sources();
         Control_Factory::add_image_button($defs, $this, null, ACTION_ITEMS_EDIT,
             TR::t('setup_edit_xmltv_list'), TR::t('edit'), get_image_path('edit.png'), self::CONTROLS_WIDTH);
-
-        if ($sources->size() > 0) {
-            Control_Factory::add_image_button($defs, $this, null, self::ACTION_RELOAD_EPG,
-                TR::t('setup_reload_xmltv_epg'), TR::t('refresh'), get_image_path('refresh.png'), self::CONTROLS_WIDTH);
-        }
 
         //////////////////////////////////////
         // EPG cache dir
@@ -121,7 +115,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // clear epg cache
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear'), TR::t('clear'),
+            self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear_all'), TR::t('clear'),
             get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
@@ -211,7 +205,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $this->plugin->tv->unload_channels();
-                $this->plugin->get_epg_manager()->clear_epg_cache();
+                $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs()));
 
@@ -242,23 +236,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->toggle_parameter($control_id, false);
                 $this->plugin->init_epg_manager();
                 break;
-
-            case self::ACTION_RELOAD_EPG:
-                hd_debug_print(self::ACTION_RELOAD_EPG);
-                $this->plugin->get_epg_manager()->clear_epg_cache();
-                $this->plugin->init_epg_manager();
-                $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
-                if ($res === -1) {
-                    return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error());
-                }
-
-                if ($res === 0) {
-                    $res = $this->plugin->get_epg_manager()->download_xmltv_source();
-                    if ($res === -1) {
-                        return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error());
-                    }
-                }
-                return $action_reload;
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);

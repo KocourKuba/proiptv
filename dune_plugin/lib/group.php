@@ -25,7 +25,7 @@ interface Group
     /**
      * @return bool
      */
-    public function is_special_group($id);
+    public function is_special_group();
 
     /**
      * @return bool

@@ -135,7 +135,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if(!is_null($group = $this->get_group($group_id))) {
-            if ($group->is_special_group(ALL_CHANNEL_GROUP_ID)) {
+            if ($group_id === ALL_CHANNEL_GROUP_ID) {
                 foreach ($this->plugin->tv->get_groups() as $group) {
                     $group->get_items_order()->remove_item($channel_id);
                 }
@@ -466,6 +466,12 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         // cleanup order if saved group removed from playlist
+        $orphans_hidden_groups = array_diff($this->plugin->get_disabled_groups()->get_order(), $playlist_groups->get_order());
+        foreach ($orphans_hidden_groups as $group) {
+            hd_debug_print("Remove orphaned hidden group: $group");
+            $this->plugin->get_disabled_groups()->remove_item($group);
+        }
+
         if ($this->plugin->get_groups_order()->size() !== 0) {
             $orphans_groups = array_diff($this->plugin->get_groups_order()->get_order(), $playlist_groups->get_order());
             foreach ($orphans_groups as $group) {
@@ -473,11 +479,6 @@ class Starnet_Tv implements User_Input_Handler
                 $this->plugin->get_groups_order()->remove_item($group);
             }
 
-            $orphans_groups = array_diff($this->plugin->get_disabled_groups()->get_order(), $this->plugin->get_groups_order()->get_order());
-            foreach ($orphans_groups as $group) {
-                hd_debug_print("Remove orphaned disabled group: $group");
-                $this->plugin->get_disabled_groups()->remove_item($group);
-            }
             $this->plugin->save();
         }
         unset($playlist_groups);
@@ -638,7 +639,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 $group_logo = $entry->getEntryAttribute('group-logo');
-                if (!empty($group_logo) && $parent_group->get_icon_url() === null) {
+                if (!empty($group_logo) && $parent_group->get_icon_url() === Default_Group::DEFAULT_GROUP_ICON_PATH) {
                     if (!preg_match(HTTP_PATTERN, $group_logo)) {
                         if (!empty($icon_url_base)) {
                             $group_logo = $icon_url_base . $group_logo;

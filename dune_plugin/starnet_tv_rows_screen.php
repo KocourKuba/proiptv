@@ -742,6 +742,27 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_REFRESH_SCREEN:
                 $this->plugin->invalidate_epfs();
                 return $this->plugin->update_epfs_data($plugin_cookies);
+
+            case ACTION_RELOAD:
+                if ($user_input->reload_action === 'epg') {
+                    $this->plugin->get_epg_manager()->clear_epg_cache();
+                    $this->plugin->init_epg_manager();
+                    $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
+                    if ($res === -1) {
+                        return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error());
+                    }
+
+                    if ($res === 0) {
+                        $res = $this->plugin->get_epg_manager()->download_xmltv_source();
+                        if ($res === -1) {
+                            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error());
+                        }
+                    }
+                }
+
+                $this->plugin->tv->unload_channels();
+                $this->plugin->tv->load_channels($plugin_cookies);
+                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
         }
 
         return null;
