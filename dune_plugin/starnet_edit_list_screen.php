@@ -148,6 +148,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $order->remove_item($item);
                     $this->set_edit_order($parent_media_url->edit_list, $order);
                     $this->plugin->remove_playlist_name($item);
+                    if ($order->size() === 0) {
+                        return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+                    }
                     return Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str()));
                 }
 
