@@ -50,6 +50,10 @@ class Default_Dune_Plugin implements DunePlugin
     const TV_SANDWICH_WIDTH = 246;
     const TV_SANDWICH_HEIGHT = 140;
 
+    private $plugin_cookies = null;
+    private $internet_status = -2;
+    private $opexec_id = -1;
+
     /**
      * @var array
      */
@@ -118,6 +122,36 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->is_durty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false);
         $this->m3u_parser = new M3uParser();
+    }
+
+    public function set_plugin_cookies($plugin_cookies)
+    {
+        $this->plugin_cookies = $plugin_cookies;
+    }
+
+    public function get_plugin_cookies()
+    {
+        return $this->plugin_cookies;
+    }
+
+    public function set_internet_status($internet_status)
+    {
+        $this->internet_status = $internet_status;
+    }
+
+    public function get_internet_status()
+    {
+        return $this->internet_status;
+    }
+
+    public function set_opexec_id($opexec_id)
+    {
+        $this->opexec_id = $opexec_id;
+    }
+
+    public function get_opexec_id()
+    {
+        return $this->opexec_id;
     }
 
     ///////////////////////////////////////////////////////////////////////
