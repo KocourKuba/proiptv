@@ -471,6 +471,11 @@ class Starnet_Tv implements User_Input_Handler
             foreach ($orphans_groups as $group) {
                 hd_debug_print("Remove orphaned group: $group");
                 $this->plugin->get_groups_order()->remove_item($group);
+            }
+
+            $orphans_groups = array_diff($this->plugin->get_disabled_groups()->get_order(), $this->plugin->get_groups_order()->get_order());
+            foreach ($orphans_groups as $group) {
+                hd_debug_print("Remove orphaned disabled group: $group");
                 $this->plugin->get_disabled_groups()->remove_item($group);
             }
             $this->plugin->save();
