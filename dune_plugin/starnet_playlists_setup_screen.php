@@ -56,31 +56,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // playlists
-        $playlist_idx = $this->plugin->get_playlists()->get_saved_pos();
-        $display_path = array();
-        foreach ($this->plugin->get_playlists() as $playlist) {
-            if (($pos = strpos($playlist, '?')) !== false) {
-                $playlist = substr($playlist, 0, $pos);
-            }
-            $ar = explode(DIRECTORY_SEPARATOR, $playlist);
-            $display_path[] = end($ar);
-        }
-
-        if (empty($display_path)) {
-            Control_Factory::add_label($defs, TR::t('setup_channels_src_playlist'), TR::t('setup_channels_src_no_playlists'));
-        } else if (count($display_path) > 1) {
-            if ($playlist_idx >= count($display_path)) {
-                $this->plugin->set_playlists_idx(0);
-            }
-            Control_Factory::add_combobox($defs, $this, null, ACTION_CHANGE_PLAYLIST,
-                TR::t('setup_channels_src_playlist'), $playlist_idx, $display_path, self::CONTROLS_WIDTH, true);
-        } else {
-            Control_Factory::add_label($defs, TR::t('setup_channels_src_playlist'), $display_path[0]);
-            $this->plugin->set_playlists_idx(0);
-        }
-
-        //////////////////////////////////////
         // playlist import source
 
         Control_Factory::add_image_button($defs, $this, null,
@@ -175,11 +150,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         switch ($control_id) {
-
-            case ACTION_CHANGE_PLAYLIST:
-                $this->plugin->set_playlists_idx($new_value);
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_ITEMS_EDIT:
                 $this->plugin->set_pospone_save(true, PLUGIN_PARAMETERS);

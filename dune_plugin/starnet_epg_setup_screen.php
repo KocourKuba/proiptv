@@ -34,8 +34,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const ID = 'epg_setup';
 
     const ACTION_RELOAD_EPG = 'reload_epg';
-    const CONTROL_EPG_SOURCE_TYPE = 'epg_source_type';
-    const CONTROL_XMLTV_EPG_IDX = 'xmltv_epg_idx';
     const CONTROL_CHANGE_CACHE_PATH = 'xmltv_cache_path';
     const CONTROL_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
 
@@ -61,29 +59,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         // XMLTV sources
 
         $sources = $this->plugin->get_all_xmltv_sources();
-        $source_key = $this->plugin->get_active_xmltv_source_key();
-        $display_sources = array();
-        foreach ($sources as $key => $source) {
-            if ($source === EPG_SOURCES_SEPARATOR_TAG) continue;
-
-            $display_sources[$key] = HD::string_ellipsis($source);
-        }
-
-        $item = $sources->get($source_key);
-        if (empty($item) && $sources->size()) {
-            $order = $sources->get_order();
-            $source_key = reset($order);
-        }
-
-        $display_path = HD::string_ellipsis($sources->get($source_key));
-        if ($sources->size() > 1) {
-            Control_Factory::add_combobox($defs, $this, null,
-                self::CONTROL_XMLTV_EPG_IDX, TR::t('setup_xmltv_epg_source'),
-                $source_key, $display_sources, self::CONTROLS_WIDTH, true);
-        } else {
-            Control_Factory::add_label($defs, TR::t('setup_xmltv_epg_source'), empty($display_path) ? TR::t('no') : $display_path);
-        }
-
         Control_Factory::add_image_button($defs, $this, null, ACTION_ITEMS_EDIT,
             TR::t('setup_edit_xmltv_list'), TR::t('edit'), get_image_path('edit.png'), self::CONTROLS_WIDTH);
 
@@ -194,13 +169,20 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         }
 
         switch ($control_id) {
-            case self::CONTROL_XMLTV_EPG_IDX:
-                $index = $user_input->{$control_id};
-                $this->plugin->set_active_xmltv_source_key($index);
-                $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($index);
-                $this->plugin->set_active_xmltv_source($xmltv_source);
-                hd_debug_print("Selected xmltv epg: ($index): $xmltv_source");
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+            case ACTION_ITEMS_EDIT:
+                $media_url_str = MediaURL::encode(
+                    array(
+                        'screen_id' => Starnet_Edit_List_Screen::ID,
+                        'source_window_id' => static::ID,
+                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST,
+                        'end_action' => ACTION_RELOAD,
+                        'cancel_action' => RESET_CONTROLS_ACTION_ID,
+                        'save_data' => PLUGIN_PARAMETERS,
+                        'extension' => EPG_PATTERN,
+                        'windowCounter' => 1,
+                    )
+                );
+                return Action_Factory::open_folder($media_url_str, TR::t('setup_edit_xmltv_list'));
 
             case self::CONTROL_CHANGE_CACHE_PATH:
                 $media_url_str = MediaURL::encode(
@@ -232,21 +214,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->get_epg_manager()->clear_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs()));
-
-            case ACTION_ITEMS_EDIT:
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST,
-                        'end_action' => ACTION_RELOAD,
-                        'cancel_action' => RESET_CONTROLS_ACTION_ID,
-                        'save_data' => PLUGIN_PARAMETERS,
-                        'extension' => EPG_PATTERN,
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_edit_xmltv_list'));
 
             case ACTION_RESET_DEFAULT:
                 hd_debug_print(ACTION_RESET_DEFAULT);
