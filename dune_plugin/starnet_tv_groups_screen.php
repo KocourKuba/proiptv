@@ -220,8 +220,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->plugin->set_active_xmltv_source_key($user_input->list_idx);
                 $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($user_input->list_idx);
                 $this->plugin->set_active_xmltv_source($xmltv_source);
-                $this->plugin->tv->unload_channels();
-                $this->plugin->tv->load_channels($plugin_cookies);
+                $this->plugin->tv->reload_channels($plugin_cookies);
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
 
@@ -327,8 +326,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
                 }
 
-                $this->plugin->tv->unload_channels();
-                $this->plugin->tv->load_channels($plugin_cookies);
+                $this->plugin->tv->reload_channels($plugin_cookies);
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::close_and_run(
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title())));

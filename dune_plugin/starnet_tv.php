@@ -290,6 +290,16 @@ class Starnet_Tv implements User_Input_Handler
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @param $plugin_cookies
+     * @return int
+     */
+    public function reload_channels($plugin_cookies)
+    {
+        $this->unload_channels();
+        return $this->load_channels($plugin_cookies);
+    }
+
+    /**
      * @return void
      */
     public function unload_channels()
