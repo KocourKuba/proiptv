@@ -175,7 +175,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_USER_CATCHUP:
                 $this->plugin->set_setting(PARAM_USER_CATCHUP, $new_value);
-                $this->plugin->tv->reload_channels($plugin_cookies);
+                $this->plugin->tv->reload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_RESET_PLAYLIST_DLG:
@@ -221,7 +221,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                $result = $this->plugin->tv->reload_channels($plugin_cookies);
+                $result = $this->plugin->tv->reload_channels();
                 $action = Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );

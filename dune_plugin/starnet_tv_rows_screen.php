@@ -337,7 +337,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         hd_debug_print(null, true);
 
         $media_url = MediaURL::decode(static::ID);
-        $this->plugin->tv->get_tv_info($media_url, $plugin_cookies);
+        $this->plugin->tv->get_tv_info($media_url);
 
         return $this->get_folder_view($media_url, $plugin_cookies);
     }
@@ -628,7 +628,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         $known_channels->set($channel->get_id(), $channel->get_title());
                     }
                     $this->plugin->set_known_channels($known_channels);
-                    $this->plugin->tv->reload_channels($plugin_cookies);
+                    $this->plugin->tv->reload_channels();
                 }
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
@@ -701,7 +701,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (!isset($user_input->list_idx)) break;
 
                 $this->plugin->set_playlists_idx($user_input->list_idx);
-                $this->plugin->tv->reload_channels($plugin_cookies);
+                $this->plugin->tv->reload_channels();
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
@@ -716,7 +716,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($user_input->list_idx);
                 $this->plugin->set_active_xmltv_source($xmltv_source);
 
-                $this->plugin->tv->reload_channels($plugin_cookies);
+                $this->plugin->tv->reload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_ZOOM_APPLY:
@@ -757,7 +757,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     }
                 }
 
-                $this->plugin->tv->reload_channels($plugin_cookies);
+                $this->plugin->tv->reload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
         }
 

@@ -290,13 +290,12 @@ class Starnet_Tv implements User_Input_Handler
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $plugin_cookies
      * @return int
      */
-    public function reload_channels($plugin_cookies)
+    public function reload_channels()
     {
         $this->unload_channels();
-        return $this->load_channels($plugin_cookies);
+        return $this->load_channels();
     }
 
     /**
@@ -313,10 +312,9 @@ class Starnet_Tv implements User_Input_Handler
     }
 
     /**
-     * @param $plugin_cookies
      * @return int
      */
-    public function load_channels($plugin_cookies)
+    public function load_channels()
     {
         if (!is_null($this->channels)) {
             return 1;
@@ -330,10 +328,8 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->get_epg_manager()->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
         $this->plugin->create_screen_views();
 
-        if (!isset($plugin_cookies->pass_sex)) {
-            $plugin_cookies->pass_sex = '0000';
-        }
-
+        $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
+        $enable_protected = !empty($pass_sex);
         /** @var Hashed_Array<string, string> $custom_group_icons */
         $custom_group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
         // convert absolute path to filename
@@ -645,7 +641,7 @@ class Starnet_Tv implements User_Input_Handler
                 $protected = false;
                 $adult_code = $entry->getProtectedCode();
                 if ((!empty($adult_code)) || $parent_group->is_adult_group()) {
-                    $protected = !empty($plugin_cookies->pass_sex);
+                    $protected = $enable_protected;
                 }
 
                 $group_logo = $entry->getEntryAttribute('group-logo');
@@ -735,17 +731,16 @@ class Starnet_Tv implements User_Input_Handler
      * @param string $channel_id
      * @param int $archive_ts
      * @param string $protect_code
-     * @param $plugin_cookies
      * @return string
      */
-    public function get_tv_playback_url($channel_id, $archive_ts, $protect_code, &$plugin_cookies)
+    public function get_tv_playback_url($channel_id, $archive_ts, $protect_code)
     {
         try {
-            if ($this->load_channels($plugin_cookies) === 0) {
+            if ($this->load_channels() === 0) {
                 throw new Exception("Channels not loaded!");
             }
 
-            $pass_sex = isset($plugin_cookies->pass_sex) ? $plugin_cookies->pass_sex : '0000';
+            $pass_sex = ($this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000'));
             // get channel by hash
             $channel = $this->get_channel($channel_id);
             if ($protect_code !== $pass_sex && $channel->is_protected()) {
@@ -785,17 +780,16 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param MediaURL $media_url
-     * @param $plugin_cookies
      * @return array
      * @throws Exception
      */
-    public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
+    public function get_tv_info(MediaURL $media_url)
     {
         $epg_font_size = $this->plugin->get_bool_parameter(PARAM_EPG_FONT_SIZE, false)
             ? PLUGIN_FONT_SMALL
             : PLUGIN_FONT_NORMAL;
 
-        if ($this->load_channels($plugin_cookies) === 0) {
+        if ($this->load_channels() === 0) {
             hd_debug_print("Channels not loaded!");
             return array();
         }

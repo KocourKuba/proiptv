@@ -57,7 +57,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // XMLTV sources
 
-        $sources = $this->plugin->get_all_xmltv_sources();
         Control_Factory::add_image_button($defs, $this, null, ACTION_ITEMS_EDIT,
             TR::t('setup_edit_xmltv_list'), TR::t('edit'), get_image_path('edit.png'), self::CONTROLS_WIDTH);
 
@@ -239,7 +238,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                $this->plugin->tv->reload_channels($plugin_cookies);
+                $this->plugin->tv->reload_channels();
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs()));
         }

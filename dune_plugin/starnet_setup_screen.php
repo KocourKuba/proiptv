@@ -219,14 +219,15 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
             case self::ACTION_ADULT_PASS_DLG_APPLY: // handle pass dialog result
                 $need_reload = false;
-                if ($user_input->pass1 !== $plugin_cookies->pass_sex) {
+                $pass = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
+                if ($user_input->pass1 !== $pass) {
                     $msg = TR::t('err_wrong_old_password');
                 } else if (empty($user_input->pass2)) {
-                    $plugin_cookies->pass_sex = '';
+                    $this->plugin->remove_parameter(PARAM_ADULT_PASSWORD);
                     $msg = TR::t('setup_pass_disabled');
                     $need_reload = true;
                 } else if ($user_input->pass1 !== $user_input->pass2) {
-                    $plugin_cookies->pass_sex = $user_input->pass2;
+                    $this->plugin->set_parameter(PARAM_ADULT_PASSWORD, $user_input->pass2);
                     $msg = TR::t('setup_pass_changed');
                     $need_reload = true;
                 } else {
@@ -234,7 +235,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 }
 
                 if ($need_reload) {
-                    $this->plugin->tv->reload_channels($plugin_cookies);
+                    $this->plugin->tv->reload_channels();
                 }
 
                 return Action_Factory::show_title_dialog($msg,

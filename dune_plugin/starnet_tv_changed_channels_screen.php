@@ -95,7 +95,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                     $known_channels->set($channel->get_id(), $channel->get_title());
                 }
                 $this->plugin->set_known_channels($known_channels);
-                $this->plugin->tv->reload_channels($plugin_cookies);
+                $this->plugin->tv->reload_channels();
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
 

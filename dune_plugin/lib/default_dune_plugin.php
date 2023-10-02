@@ -50,7 +50,7 @@ class Default_Dune_Plugin implements DunePlugin
     const TV_SANDWICH_WIDTH = 246;
     const TV_SANDWICH_HEIGHT = 140;
 
-    private $plugin_cookies = null;
+    private $plugin_cookies;
     private $internet_status = -2;
     private $opexec_id = -1;
 
@@ -152,6 +152,17 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_opexec_id()
     {
         return $this->opexec_id;
+    }
+
+    public function upgrade_parameters(&$plugin_cookies)
+    {
+        $this->load(PLUGIN_PARAMETERS);
+        if (isset($plugin_cookies->pass_sex)) {
+            $this->set_parameter(PARAM_ADULT_PASSWORD, $plugin_cookies->pass_sex);
+            unset($plugin_cookies->pass_sex);
+        } else {
+            $this->set_parameter(PARAM_ADULT_PASSWORD, '0000');
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -379,7 +390,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $decoded_media_url = MediaURL::decode($media_url);
 
-        return $this->tv->get_tv_info($decoded_media_url, $plugin_cookies);
+        return $this->tv->get_tv_info($decoded_media_url);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -425,7 +436,7 @@ class Default_Dune_Plugin implements DunePlugin
             throw new Exception('TV is not supported');
         }
 
-        return $this->tv->get_tv_playback_url($channel_id, $archive_tm_sec, $protect_code, $plugin_cookies);
+        return $this->tv->get_tv_playback_url($channel_id, $archive_tm_sec, $protect_code);
     }
 
     ///////////////////////////////////////////////////////////////////////

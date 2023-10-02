@@ -57,6 +57,7 @@ const CHANGED_CHANNELS_GROUP_ID = '##changed_channels_group##';
 # Common parameters
 const PLUGIN_PARAMETERS = "parameters";
 const PLUGIN_SETTINGS = "settings";
+const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_PLAYLISTS = 'playlists';
 const PARAM_PLAYLIST_IDX = 'playlist_idx';
 const PARAM_PLAYLISTS_NAMES = 'playlists_names';

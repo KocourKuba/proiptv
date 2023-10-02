@@ -177,6 +177,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         break;
 
                     case 'install':
+                        $this->plugin->upgrade_parameters($plugin_cookies);
+                        break;
+
                     default:
                         break;
                 }
