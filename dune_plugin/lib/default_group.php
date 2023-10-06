@@ -29,11 +29,34 @@ require_once 'json_serializer.php';
 
 class Default_Group extends Json_Serializer implements Group
 {
-    const DEFAULT_GROUP_ICON_PATH = 'plugin_file://icons/default_group.png';
-    const DEFAULT_FAVORITE_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
-    const DEFAULT_HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
-    const DEFAULT_CHANGED_CHANNELS_GROUP_ICON = 'plugin_file://icons/changed_channels.png';
-    const DEFAULT_ALL_CHANNELS_GROUP_ICON = 'plugin_file://icons/all_folder.png';
+    const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';
+
+    const ALL_CHANNEL_GROUP_CAPTION = 'plugin_all_channels';
+    const ALL_CHANNEL_GROUP_ICON = 'plugin_file://icons/all_folder.png';
+
+    const FAV_CHANNEL_GROUP_CAPTION = 'plugin_favorites';
+    const FAV_CHANNEL_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
+
+    const HISTORY_GROUP_CAPTION = 'plugin_history';
+    const HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
+
+    const FAV_MOVIES_GROUP_CAPTION = 'plugin_favorites';
+    const FAV_MOVIES_GROUP_ICON = 'plugin_file://icons/fav_movie.png';
+
+    const VOD_GROUP_CAPTION = 'plugin_vod';
+    const VOD_GROUP_ICON = "plugin_file://icons/vod.png";
+
+    const SEARCH_MOVIES_GROUP_CAPTION = 'search';
+    const SEARCH_MOVIES_GROUP_ICON = 'plugin_file://icons/search_movie.png';
+
+    const FILTER_MOVIES_GROUP_CAPTION = 'filter';
+    const FILTER_MOVIES_GROUP_ICON = 'plugin_file://icons/filter_movie.png';
+
+    const HISTORY_MOVIES_GROUP_CAPTION = 'plugin_history';
+    const HISTORY_MOVIES_GROUP_ICON = 'plugin_file://icons/history_movie.png';
+
+    const CHANGED_CHANNELS_GROUP_CAPTION = 'plugin_changed';
+    const CHANGED_CHANNELS_GROUP_ICON = 'plugin_file://icons/changed_channels.png';
 
     /**
      * @var string
@@ -121,7 +144,7 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function get_icon_url()
     {
-        return empty($this->_icon_url) ? self::DEFAULT_GROUP_ICON_PATH : $this->_icon_url;
+        return empty($this->_icon_url) ? self::DEFAULT_GROUP_ICON : $this->_icon_url;
     }
 
     /**

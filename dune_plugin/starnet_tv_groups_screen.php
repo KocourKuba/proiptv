@@ -287,19 +287,19 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     switch ($sel_media_url->group_id) {
                         case ALL_CHANNEL_GROUP_ID:
-                            $group->set_icon_url(Default_Group::DEFAULT_ALL_CHANNELS_GROUP_ICON);
+                            $group->set_icon_url(Default_Group::ALL_CHANNEL_GROUP_ICON);
                             break;
                         case FAVORITES_GROUP_ID:
-                            $group->set_icon_url(Default_Group::DEFAULT_FAVORITE_GROUP_ICON);
+                            $group->set_icon_url(Default_Group::FAV_CHANNEL_GROUP_ICON);
                             break;
                         case HISTORY_GROUP_ID:
-                            $group->set_icon_url(Default_Group::DEFAULT_HISTORY_GROUP_ICON);
+                            $group->set_icon_url(Default_Group::HISTORY_GROUP_ICON);
                             break;
                         case CHANGED_CHANNELS_GROUP_ID:
-                            $group->set_icon_url(Default_Group::DEFAULT_CHANGED_CHANNELS_GROUP_ICON);
+                            $group->set_icon_url(Default_Group::CHANGED_CHANNELS_GROUP_ICON);
                             break;
                         default:
-                            $group->set_icon_url(Default_Group::DEFAULT_GROUP_ICON_PATH);
+                            $group->set_icon_url(Default_Group::DEFAULT_GROUP_ICON);
                     }
 
                     /** @var Hashed_Array<string> $group_icons */
