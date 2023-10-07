@@ -115,19 +115,24 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
     public function do_donate_dialog()
     {
-        hd_debug_print(null, true);
-        $img_ym = get_temp_path('qr_ym.png');
-        file_put_contents($img_ym, HD::http_get_document(Default_Dune_Plugin::RESOURCE_URL . "/QR_YM.png"));
-        $img_pp = get_temp_path('qr_pp.png');
-        file_put_contents($img_pp, HD::http_get_document(Default_Dune_Plugin::RESOURCE_URL . "/QR_PP.png"));
+        try {
+            hd_debug_print(null, true);
+            $img_ym = get_temp_path('qr_ym.png');
+            file_put_contents($img_ym, HD::http_get_document(Default_Dune_Plugin::RESOURCE_URL . "/QR_YM.png"));
+            $img_pp = get_temp_path('qr_pp.png');
+            file_put_contents($img_pp, HD::http_get_document(Default_Dune_Plugin::RESOURCE_URL . "/QR_PP.png"));
 
-        Control_Factory::add_vgap($defs, 50);
-        Control_Factory::add_smart_label($defs,"", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");
-        Control_Factory::add_smart_label($defs,"", "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
-        Control_Factory::add_vgap($defs, 450);
+            Control_Factory::add_vgap($defs, 50);
+            Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");
+            Control_Factory::add_smart_label($defs, "", "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
+            Control_Factory::add_vgap($defs, 450);
 
-        $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-        return  Action_Factory::show_dialog("QR code",$defs,true,1150, $attrs);
+            $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
+            return Action_Factory::show_dialog("QR code", $defs, true, 1150, $attrs);
+        } catch (Exception $ex) {
+        }
+
+        return Action_Factory::status(0);
     }
 
     /**

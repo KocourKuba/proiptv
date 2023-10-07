@@ -83,7 +83,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      * @param $media_url
      * @param $plugin_cookies
      * @return array|null
-     * @throws Exception
      */
     protected function do_get_info_children($media_url, $plugin_cookies)
     {
@@ -769,7 +768,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     /**
      * @param $plugin_cookies
      * @return array|null
-     * @throws Exception
      */
     private function get_history_rows($plugin_cookies)
     {

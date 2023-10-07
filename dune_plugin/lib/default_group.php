@@ -236,7 +236,9 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function set_items_order($order)
     {
-        $this->plugin->set_setting($this->_order_settings, $order);
+        if ($this->_order_settings !== null) {
+            $this->plugin->set_setting($this->_order_settings, $order);
+        }
     }
 
     /**
@@ -268,7 +270,7 @@ class Default_Group extends Json_Serializer implements Group
     public function add_channel(Channel $channel)
     {
         $this->_channels->set($channel->get_id(), $channel);
-        if ($this->_id !== ALL_CHANNEL_GROUP_ID && !$channel->is_disabled()) {
+        if ($this->_order_settings !== null && $this->_id !== ALL_CHANNEL_GROUP_ID && !$channel->is_disabled()) {
             $this->get_items_order()->add_item($channel->get_id());
         }
     }

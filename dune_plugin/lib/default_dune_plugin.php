@@ -505,7 +505,6 @@ class Default_Dune_Plugin implements DunePlugin
      * @param $program_ts
      * @param $plugin_cookies
      * @return mixed|null
-     * @throws Exception
      */
     public function get_program_info($channel_id, $program_ts, $plugin_cookies)
     {
