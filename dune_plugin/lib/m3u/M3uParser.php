@@ -65,11 +65,8 @@ class M3uParser extends Json_Serializer
     {
         if ($this->file_name !== $file_name || $force) {
             $this->m3u_file = null;
-            $this->xmltv_sources = null;
             $this->file_name = $file_name;
-            unset($this->m3u_entries, $this->m3u_info);
-            $this->m3u_entries = array();
-            $this->m3u_info = new Entry();
+            $this->clear_data();
 
             try {
                 if (!empty($this->file_name)){
@@ -97,6 +94,8 @@ class M3uParser extends Json_Serializer
             hd_debug_print("Bad file");
             return false;
         }
+
+        $this->clear_data();
 
         $this->m3u_file->rewind();
 
@@ -135,6 +134,8 @@ class M3uParser extends Json_Serializer
             return $data;
         }
 
+        $this->clear_data();
+
         $this->m3u_file->rewind();
 
         $t = microtime(true);
@@ -172,6 +173,8 @@ class M3uParser extends Json_Serializer
             hd_debug_print("Can't read file: $this->file_name");
             return false;
         }
+
+        $this->clear_data();
 
         $t = microtime(true);
 
@@ -370,5 +373,16 @@ class M3uParser extends Json_Serializer
         }
 
         return $this->xmltv_sources;
+    }
+
+    /**
+     * @return void
+     */
+    protected function clear_data()
+    {
+        unset($this->m3u_entries, $this->m3u_info);
+        $this->m3u_entries = array();
+        $this->m3u_info = new Entry();
+        $this->xmltv_sources = null;
     }
 }
