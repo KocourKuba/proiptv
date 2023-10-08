@@ -1277,7 +1277,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
 
             if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ration'), "aspect.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ratio'), "aspect.png");
             }
         }
 

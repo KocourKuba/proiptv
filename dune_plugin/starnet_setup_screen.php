@@ -91,7 +91,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             TR::t('setup_streaming_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // History view info location
+        // Extended settings
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_EXT_SETUP_SCREEN,
             TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
