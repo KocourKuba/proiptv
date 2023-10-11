@@ -77,59 +77,55 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             return null;
         }
 
-        $sel_ndx = $user_input->sel_ndx;
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $media_url = MediaURL::decode($user_input->selected_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
 
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
                 try {
-                    $post_action = $this->plugin->player_exec($media_url);
+                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->plugin->update_epfs_data($plugin_cookies, null, $post_action);
+                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, $post_action);
 
             case ACTION_ITEM_UP:
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $media_url->channel_id);
-                $sel_ndx--;
-                if ($sel_ndx < 0) {
-                    $sel_ndx = 0;
+                $user_input->sel_ndx--;
+                if ($user_input->sel_ndx < 0) {
+                    $user_input->sel_ndx = 0;
                 }
-                break;
+                return $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
 
             case ACTION_ITEM_DOWN:
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $media_url->channel_id);
-                $sel_ndx++;
-                if ($sel_ndx >= $this->plugin->get_favorites()->size()) {
-                    $sel_ndx = $this->plugin->get_favorites()->size() - 1;
+                $user_input->sel_ndx++;
+                if ($user_input->sel_ndx >= $this->plugin->get_favorites()->size()) {
+                    $user_input->sel_ndx = $this->plugin->get_favorites()->size() - 1;
                 }
-                break;
+                return $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
 
             case ACTION_ITEM_DELETE:
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $media_url->channel_id);
-                break;
+                $action = $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
+                if ($this->plugin->get_favorites()->size() !== 0) {
+                    return $action;
+                }
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null);
-                break;
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
-
-            default:
-                return null;
+                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
-        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
+        return null;
     }
 
     ///////////////////////////////////////////////////////////////////////

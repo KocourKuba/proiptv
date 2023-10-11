@@ -285,9 +285,7 @@ class Entry extends Json_Serializer
          */
         static $tags = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number");
 
-        $ch_id = $this->getAnyEntryAttribute($tags);
-
-        return empty($ch_id) ? Hashed_Array::hash($this->getPath()) : $ch_id;
+        return $this->getAnyEntryAttribute($tags);
     }
 
     /**

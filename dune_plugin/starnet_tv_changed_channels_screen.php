@@ -75,8 +75,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
                 try {
-                    $media_url = MediaURL::decode($user_input->selected_media_url);
-                    $post_action = $this->plugin->player_exec($media_url);
+                    $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
@@ -84,10 +84,10 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->plugin->update_epfs_data($plugin_cookies, null, $post_action);
+                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, $post_action);
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->invalidate_epfs();
+                $this->plugin->set_need_update_epfs();
                 $known_channels = $this->plugin->get_known_channels();
                 $all_channels = $this->plugin->tv->get_channels();
                 $known_channels->clear();
@@ -97,10 +97,10 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 $this->plugin->set_known_channels($known_channels);
                 $this->plugin->tv->reload_channels();
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run());
+                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return null;

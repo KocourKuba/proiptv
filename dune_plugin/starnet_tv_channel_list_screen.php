@@ -93,24 +93,24 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             return null;
         }
 
-        $media_url = MediaURL::decode($user_input->selected_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
-        $channel_id = $media_url->channel_id;
+        $channel_id = $selected_media_url->channel_id;
         $sel_ndx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
                 try {
-                    $post_action = $this->plugin->player_exec($media_url);
+                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->plugin->update_epfs_data($plugin_cookies, null, $post_action);
+                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, $post_action);
 
             case ACTION_ADD_FAV:
                 $opt_type = $this->plugin->get_favorites()->in_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
@@ -138,7 +138,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case self::ACTION_RUN_SEARCH:
                 $find_text = $user_input->{self::ACTION_NEW_SEARCH};
                 hd_debug_print("Search in group: $parent_media_url->group_id", true);
-                $parent_group = $this->plugin->tv->get_group($parent_media_url->group_id);
+                $parent_group = $parent_media_url->group_id === ALL_CHANNEL_GROUP_ID
+                    ? $this->plugin->tv->get_special_group($parent_media_url->group_id)
+                    : $this->plugin->tv->get_group($parent_media_url->group_id);
+
                 if (is_null($parent_group)) {
                     hd_debug_print("unknown parent group", true);
                     break;
@@ -150,7 +153,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
 
             case ACTION_ITEM_UP:
-                $group = $this->plugin->tv->get_group($media_url->group_id);
+                $group = $this->plugin->tv->get_group($selected_media_url->group_id);
                 if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
                     return null;
 
@@ -158,12 +161,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($sel_ndx < 0) {
                     $sel_ndx = 0;
                 }
-                $this->plugin->invalidate_epfs();
+                $this->plugin->set_need_update_epfs();
 
                 break;
 
             case ACTION_ITEM_DOWN:
-                $group = $this->plugin->tv->get_group($media_url->group_id);
+                $group = $this->plugin->tv->get_group($selected_media_url->group_id);
                 if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::DOWN))
                     return null;
 
@@ -172,42 +175,23 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if ($sel_ndx >= $groups_cnt) {
                     $sel_ndx = $groups_cnt - 1;
                 }
-                $this->plugin->invalidate_epfs();
+                $this->plugin->set_need_update_epfs();
 
                 break;
 
             case ACTION_ITEM_DELETE:
-                $this->plugin->tv->disable_channel($channel_id, $media_url->group_id);
-                $this->plugin->invalidate_epfs();
+                $this->plugin->tv->disable_channel($channel_id, $selected_media_url->group_id);
+                $this->plugin->set_need_update_epfs();
 
                 break;
 
             case ACTION_ITEMS_SORT:
-                $group = $this->plugin->tv->get_group($media_url->group_id);
-                if (!is_null($group)) {
-                    // group items order contain only ID of the channels
-                    $names = new Hashed_Array();
-                    /** @var Channel $channel */
-                    foreach ($group->get_items_order() as $item){
-                        $channel = $this->plugin->tv->get_channel($item);
-                        if (is_null($channel)) continue;
-
-                        $names->set($channel->get_id(), $channel->get_title());
-                    }
-                    $names->value_sort();
-                    hd_debug_print($names);
-                    $group->set_items_order(new Ordered_Array($names->get_keys()));
-                    $this->plugin->invalidate_epfs();
-                }
+                $this->plugin->tv->sort_group_items($selected_media_url->group_id);
                 break;
 
             case ACTION_RESET_ITEMS_SORT:
-                $group = $this->plugin->tv->get_group($media_url->group_id);
-                if (is_null($group)) break;
+                if (!$this->plugin->tv->sort_group_items($selected_media_url->group_id, true)) break;
 
-                $group->get_items_order()->clear();
-                $this->plugin->save();
-                $this->plugin->invalidate_epfs();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -215,8 +199,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
 
-                $group = $this->plugin->tv->get_group($media_url->group_id);
-                if (!is_null($group) && $media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
+                $group = $this->plugin->tv->get_group($selected_media_url->group_id);
+                if (!is_null($group) && $selected_media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
                     $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_CREATE_SEARCH, TR::t('search'), "search.png");
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_sort_default'), "brush.png");
@@ -252,7 +236,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ZOOM_POPUP_MENU:
                 $menu_items = array();
-                $zoom_data = $this->plugin->get_channel_zoom($media_url->channel_id);
+                $zoom_data = $this->plugin->get_channel_zoom($selected_media_url->channel_id);
                 foreach (DuneVideoZoomPresets::$zoom_ops as $idx => $zoom_item) {
                     $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_ZOOM_APPLY,
@@ -333,7 +317,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str())));
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->plugin->update_epfs_data($plugin_cookies, null, Action_Factory::close_and_run(), true);
+                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);

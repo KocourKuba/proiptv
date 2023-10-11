@@ -13,7 +13,7 @@ pushd dune_plugin
 7z a ..\dune_plugin_proiptv.zip >nul
 popd
 
-del dune_plugin\changelog.txt >nul
+del dune_plugin\changelog.md >nul
 
 echo copy to Diskstation
 copy /Y dune_plugin_proiptv.zip \\DISKSTATION\Downloads\ >nul

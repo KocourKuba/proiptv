@@ -32,8 +32,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 {
     const ID = 'setup';
 
-    const CONTROL_ADULT_PASS_DLG = 'adult_pass_dialog';
-    const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
     const ACTION_DONATE_DLG = 'donate_dlg';
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
@@ -96,11 +94,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             self::CONTROL_EXT_SETUP_SCREEN,
             TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
-        //////////////////////////////////////
-        // adult channel password
-        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_ADULT_PASS_DLG,
-            TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
-
         return $defs;
     }
 
@@ -136,35 +129,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     }
 
     /**
-     * adult pass dialog defs
-     * @return array
-     */
-    public function do_get_pass_control_defs()
-    {
-        hd_debug_print(null, true);
-
-        $defs = array();
-
-        $pass1 = '';
-        $pass2 = '';
-
-        Control_Factory::add_vgap($defs, 20);
-
-        Control_Factory::add_text_field($defs, $this, null, 'pass1', TR::t('setup_old_pass'),
-            $pass1, 1, true, 0, 1, 500, 0);
-        Control_Factory::add_text_field($defs, $this, null, 'pass2', TR::t('setup_new_pass'),
-            $pass2, 1, true, 0, 1, 500, 0);
-
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, self::ACTION_ADULT_PASS_DLG_APPLY, TR::t('ok'), 300);
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-        Control_Factory::add_vgap($defs, 10);
-
-        return $defs;
-    }
-
-    /**
      * @inheritDoc
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
@@ -175,7 +139,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         static $history_txt;
 
         if (empty($history_txt)) {
-            $history_txt = file_get_contents(get_install_path('changelog.txt'));
+            $history_txt = file_get_contents(get_install_path('changelog.md'));
             $history_txt = preg_replace('/\n$/U', '', $history_txt);
         }
 
@@ -200,7 +164,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
                 return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
 
-            case self::ACTION_DONATE_DLG: // show interface settings dialog
+            case self::ACTION_DONATE_DLG: // show donate QR codes
                 return $this->do_donate_dialog();
 
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
@@ -215,36 +179,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             case self::CONTROL_STREAMING_SCREEN: // show streaming settings dialog
                 return Action_Factory::open_folder(Starnet_Streaming_Setup_Screen::get_media_url_str(), TR::t('setup_streaming_settings'));
 
-            case self::CONTROL_EXT_SETUP_SCREEN:
+            case self::CONTROL_EXT_SETUP_SCREEN: // show additional settings dialog
                 return Action_Factory::open_folder(Starnet_Ext_Setup_Screen::get_media_url_str(), TR::t('setup_extended_setup'));
-
-            case self::CONTROL_ADULT_PASS_DLG: // show pass dialog
-                $defs = $this->do_get_pass_control_defs();
-                return Action_Factory::show_dialog(TR::t('setup_adult_password'), $defs, true);
-
-            case self::ACTION_ADULT_PASS_DLG_APPLY: // handle pass dialog result
-                $need_reload = false;
-                $pass = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
-                if ($user_input->pass1 !== $pass) {
-                    $msg = TR::t('err_wrong_old_password');
-                } else if (empty($user_input->pass2)) {
-                    $this->plugin->remove_parameter(PARAM_ADULT_PASSWORD);
-                    $msg = TR::t('setup_pass_disabled');
-                    $need_reload = true;
-                } else if ($user_input->pass1 !== $user_input->pass2) {
-                    $this->plugin->set_parameter(PARAM_ADULT_PASSWORD, $user_input->pass2);
-                    $msg = TR::t('setup_pass_changed');
-                    $need_reload = true;
-                } else {
-                    $msg = TR::t('setup_pass_not_changed');
-                }
-
-                if ($need_reload) {
-                    $this->plugin->tv->reload_channels();
-                }
-
-                return Action_Factory::show_title_dialog($msg,
-                    Action_Factory::reset_controls($this->do_get_control_defs()));
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());

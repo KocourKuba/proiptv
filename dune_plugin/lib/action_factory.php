@@ -75,10 +75,8 @@ class Action_Factory
             return $action;
 
         if (is_string($media_url)) {
-            //hd_debug_print("tv_play str: " . $media_url);
             $action[GuiAction::params] = array('selected_media_url' => $media_url);
         } else if (is_object($media_url)) {
-            //hd_debug_print("tv_play MediaUrl: " . $media_url);
             $action[GuiAction::data] = array(
                 PluginTvPlayActionData::initial_group_id => isset($media_url->group_id) ? $media_url->group_id : null,
                 PluginTvPlayActionData::initial_channel_id => isset($media_url->channel_id) ? $media_url->channel_id : null,
@@ -277,6 +275,28 @@ class Action_Factory
                 PluginInvalidateFoldersActionData::all_except => $all_except,
             ),
         );
+    }
+
+    /**
+     * @param array $action
+     * @param array|string $media_urls
+     * @param array|null $post_action
+     * @return array
+     */
+    public static function update_invalidate_folders($action, $media_urls, $post_action = null)
+    {
+        if ($media_urls !== null && $action[GuiAction::data][PluginInvalidateFoldersActionData::all_except] === false) {
+            if (is_array($media_urls)) {
+                $action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls]
+                    = array_merge($action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls], $media_urls);
+            } else {
+                $action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls][] = $media_urls;
+            }
+        }
+
+        $action[GuiAction::data][PluginInvalidateFoldersActionData::post_action] = $post_action;
+
+        return $action;
     }
 
     /**

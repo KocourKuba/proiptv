@@ -65,7 +65,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         $catchup_ops[KnownCatchupSourceTags::cu_unknown] = TR::t('by_default');
         $catchup_ops[KnownCatchupSourceTags::cu_shift] = KnownCatchupSourceTags::cu_shift;
         $catchup_ops[KnownCatchupSourceTags::cu_flussonic] = KnownCatchupSourceTags::cu_flussonic;
-        $catchup_ops[KnownCatchupSourceTags::cu_xstreamcode] = KnownCatchupSourceTags::cu_xstreamcode;
+        //$catchup_ops[KnownCatchupSourceTags::cu_xstreamcode] = KnownCatchupSourceTags::cu_xstreamcode;
         $catchup_idx = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
         Control_Factory::add_combobox($defs, $this, null, PARAM_USER_CATCHUP,
             TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, self::CONTROLS_WIDTH, true);

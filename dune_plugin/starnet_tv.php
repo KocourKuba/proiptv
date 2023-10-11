@@ -220,9 +220,10 @@ class Starnet_Tv implements User_Input_Handler
 
                 if (isset($user_input->stop_play)) {
                     // rising after playback end + 100 ms
-                    $this->plugin->invalidate_epfs();
-                    $post_action = $this->plugin->update_epfs_data($plugin_cookies, array(Starnet_TV_History_Screen::ID));
+                    $this->plugin->set_need_update_epfs();
+                    $post_action = $this->plugin->invalidate_epfs_folders($plugin_cookies, array(Starnet_TV_History_Screen::ID));
                 } else if (isset($user_input->locked)) {
+                    clearstatcache();
                     if ($this->plugin->get_epg_manager()->is_index_locked()) {
                         $new_actions = $this->get_action_map();
                         $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this,
@@ -275,16 +276,39 @@ class Starnet_Tv implements User_Input_Handler
             return null;
         }
 
-        $group = $this->groups->get($group_id);
-        if (is_null($group)) {
-            $group = $this->special_groups->get($group_id);
-            if (is_null($group)) {
-                hd_debug_print("Unknown group: $group_id");
-                return null;
+        return $this->groups->get($group_id);
+    }
+
+    /**
+     * @param string $group_id
+     * @param bool $reset
+     * @return bool
+     */
+    public function sort_group_items($group_id, $reset = false)
+    {
+        $group = $this->get_group($group_id);
+        if (is_null($group)) return false;
+
+        if ($reset) {
+            $group->get_items_order()->clear();
+            $this->plugin->save();
+        } else {
+            // group items order contain only ID of the channels
+            $names = new Hashed_Array();
+            /** @var Channel $channel */
+            foreach ($group->get_items_order() as $item){
+                $channel = $this->plugin->tv->get_channel($item);
+                if (!is_null($channel)) {
+                    $names->set($channel->get_id(), $channel->get_title());
+                }
             }
+            $names->value_sort();
+            $group->set_items_order(new Ordered_Array($names->get_keys()));
         }
 
-        return $group;
+        $this->plugin->set_need_update_epfs();
+
+        return true;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -308,7 +332,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->channels = null;
         $this->groups = null;
         $this->special_groups->clear();
-        $this->plugin->invalidate_epfs();
+        $this->plugin->set_need_update_epfs();
     }
 
     /**
@@ -494,6 +518,9 @@ class Starnet_Tv implements User_Input_Handler
         $number = 0;
         foreach ($pl_entries as $entry) {
             $channel_id = $entry->getEntryId();
+            if (empty($channel_id)) {
+                $channel_id = Hashed_Array::hash($entry->getPath());
+            }
 
             // if group is not registered it was disabled
             $channel_name = $entry->getEntryTitle();

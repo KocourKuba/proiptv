@@ -150,6 +150,28 @@ class Starnet_Epfs_Handler
     }
 
     /**
+     * @param array $action
+     * @param array|string $media_urls
+     * @param array|null $post_action
+     * @return array
+     */
+    public static function update_invalidate_folders($action, $media_urls, $post_action = null)
+    {
+        if ($media_urls !== null && $action[GuiAction::data][PluginInvalidateFoldersActionData::all_except] === false) {
+            if (is_array($media_urls)) {
+                $action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls]
+                    = array_merge($action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls], $media_urls);
+            } else {
+                $action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls][] = $media_urls;
+            }
+        }
+
+        $action[GuiAction::data][PluginInvalidateFoldersActionData::post_action] = $post_action;
+
+        return $action;
+    }
+
+    /**
      * @param $first_run
      * @param $plugin_cookies
      * @return array|null

@@ -100,7 +100,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                $post_action = $this->plugin->update_epfs_data($plugin_cookies,
+                $post_action = $this->plugin->invalidate_epfs_folders($plugin_cookies,
                     null,
                     $user_input->control_id === ACTION_OPEN_FOLDER ? Action_Factory::open_folder() : Action_Factory::tv_play());
 
@@ -123,7 +123,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->plugin->save();
-                $this->plugin->invalidate_epfs();
+                $this->plugin->set_need_update_epfs();
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -137,24 +137,24 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->plugin->save();
-                $this->plugin->invalidate_epfs();
+                $this->plugin->set_need_update_epfs();
                 break;
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->tv->disable_group($sel_media_url->group_id);
-                $this->plugin->invalidate_epfs();
+                $this->plugin->set_need_update_epfs();
                 break;
 
             case ACTION_ITEMS_SORT:
                 $this->plugin->get_groups_order()->sort_order();
                 $this->plugin->save();
-                $this->plugin->invalidate_epfs();
+                $this->plugin->set_need_update_epfs();
                 break;
 
             case ACTION_RESET_ITEMS_SORT:
                 $this->plugin->get_groups_order()->clear();
                 $this->plugin->save();
-                $this->plugin->invalidate_epfs();
+                $this->plugin->set_need_update_epfs();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_ITEMS_EDIT:
@@ -195,7 +195,48 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 } else if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
                     $menu_items = $this->plugin->epg_source_menu($this);
                 } else {
-                    $menu_items = $this->common_menu(isset($sel_media_url->group_id) ? $sel_media_url->group_id : null);
+                    $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
+                    $has_hidden = false;
+                    $group = $this->plugin->tv->get_group($group_id);
+                    if ($this->plugin->get_disabled_groups()->size() !== 0) {
+                        hd_debug_print("Disabled groups: " . $this->plugin->get_disabled_groups()->size(), true);
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT,
+                            TR::t('tv_screen_edit_hidden_group'), "edit.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
+                    }
+
+                    if ($group_id === ALL_CHANNEL_GROUP_ID) {
+                        $has_hidden = $this->plugin->get_disabled_channels()->size() !== 0;
+                        hd_debug_print("Disabled channels: " . $this->plugin->get_disabled_channels()->size(), true);
+                    } else if ($group !== null && $this->plugin->tv->get_special_group($group_id) === null) {
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
+                        $has_hidden = $group->get_group_channels()->size() !== $group->get_items_order()->size();
+                    }
+
+                    if ($has_hidden) {
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT,
+                            TR::t('tv_screen_edit_hidden_channels'), "edit.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS) );
+                    }
+
+                    if (!empty($menu_items)) {
+                        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    }
+
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_sort_default'), "brush.png");
+
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
+
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+
+
+                    if ($this->plugin->get_playlists()->size()) {
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
+                    }
+
+                    if ($this->plugin->get_all_xmltv_sources()->size()) {
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
+                    }
                 }
 
                 return Action_Factory::show_popup_menu($menu_items);
@@ -443,59 +484,5 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $this->plugin->get_screen_view('icons_5x4_caption'),
             $this->plugin->get_screen_view('icons_5x4_no_caption'),
         );
-    }
-
-    /**
-     * @param string $group_id
-     * @return array
-     */
-    protected function common_menu($group_id)
-    {
-        $menu_items = array();
-
-        if (($group = $this->plugin->tv->get_group($group_id)) !== null) {
-            $special = $group->is_special_group();
-            if (!$special) {
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
-            }
-
-            $has_hidden = false;
-            if ($group_id === ALL_CHANNEL_GROUP_ID) {
-                $has_hidden = $this->plugin->get_disabled_channels()->size() !== 0;
-                hd_debug_print("Disabled channels: " . $this->plugin->get_disabled_channels()->size(), true);
-            } else if ($this->plugin->get_disabled_groups()->size() !== 0) {
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT,
-                    TR::t('tv_screen_edit_hidden_group'), "edit.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
-                $has_hidden = $group->get_group_channels()->size() !== $group->get_items_order()->size();
-            }
-
-            if ($has_hidden) {
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT,
-                    TR::t('tv_screen_edit_hidden_channels'), "edit.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS) );
-            }
-        }
-
-        if (!empty($menu_items)) {
-            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-        }
-
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_items'), "sort.png");
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_sort_default'), "brush.png");
-
-        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
-
-        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-
-
-        if ($this->plugin->get_playlists()->size()) {
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
-        }
-
-        if ($this->plugin->get_all_xmltv_sources()->size()) {
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
-        }
-
-        return $menu_items;
     }
 }

@@ -134,6 +134,23 @@ class Ordered_Array extends Json_Serializer implements Iterator
 
     /**
      * @param string $id
+     * @param bool $last
+     */
+    public function insert_item($id, $last = true)
+    {
+        if ($this->in_order($id)) {
+            $this->remove_item($id);
+        }
+
+        if ($last) {
+            $this->order[] = $id;
+        } else {
+            array_unshift($this->order, $id);
+        }
+    }
+
+    /**
+     * @param string $id
      * @return bool
      */
     public function remove_item($id)

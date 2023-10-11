@@ -43,6 +43,7 @@ class ExtendedZip extends ZipArchive {
 }
 
 $plugin_info = 'dune_plugin.xml';
+$plugin_metadata = 'dune_plugin_metadata.xml';
 $update_info = 'update_proiptv.xml';
 $packed_plugin = 'dune_plugin_proiptv.zip';
 $update_tar = 'update_proiptv.tar';
@@ -59,9 +60,15 @@ echo "version: $version" . PHP_EOL;
 echo "version index: $version_index" . PHP_EOL;
 echo "update date $release_date" . PHP_EOL;
 file_put_contents("./dune_plugin/$plugin_info", $xml);
-$text = file_get_contents("./build/changelog.txt");
+
+$xml = file_get_contents("build/$plugin_metadata.tpl");
+$xml = preg_replace("|<version>(.*)</version>|", "<version>$version</version>", $xml);
+$xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
+file_put_contents("./dune_plugin/$plugin_metadata", $xml);
+
+$text = file_get_contents("./build/changelog.md");
 $text = str_replace('{plugin_version}', $argv[1], $text);
-file_put_contents("./dune_plugin/changelog.txt", $text);
+file_put_contents("./dune_plugin/changelog.md", $text);
 
 ExtendedZip::zipTree('./dune_plugin', $packed_plugin, ZipArchive::CREATE);
 

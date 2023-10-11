@@ -39,7 +39,7 @@ fi
 
 [ -f "$php_cgi" ] || exit 1
 
-LD_LIBRARY_PATH="$LD_LIBRARY_PATH:./lib:/usr/lib"
+LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/lib:/usr/lib"
 
 SCRIPT=$1;
 shift 1

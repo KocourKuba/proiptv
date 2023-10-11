@@ -220,7 +220,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return void
      */
-    public function invalidate_epfs()
+    public function set_need_update_epfs()
     {
         $this->need_update_epfs = true;
     }
@@ -232,16 +232,43 @@ class Default_Dune_Plugin implements DunePlugin
      * @param null $post_action
      * @return array
      */
-    public function update_epfs_data($plugin_cookies, $media_urls = null, $post_action = null, $all_except = false)
+    public function invalidate_epfs_folders($plugin_cookies, $media_urls = null, $post_action = null, $all_except = false)
     {
         hd_debug_print(null, true);
 
         if ($this->need_update_epfs) {
-            $this->save();
             $this->need_update_epfs = false;
+            $this->save();
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
         }
         return Starnet_Epfs_Handler::invalidate_folders($media_urls, $post_action, $all_except);
+    }
+
+    /**
+     * @param $plugin_cookies
+     * @param array|null $action
+     * @param array|null $media_urls
+     * @param array|null $post_action
+     * @return array
+     */
+    public function update_invalidate_epfs_folders($plugin_cookies, $action, $media_urls = null, $post_action = null)
+    {
+        hd_debug_print(null, true);
+
+        if ($this->need_update_epfs) {
+            $this->need_update_epfs = false;
+            $this->save();
+            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        }
+
+        $action = Action_Factory::update_invalidate_folders(
+            Action_Factory::update_invalidate_folders($action, Starnet_Tv_Rows_Screen::ID),
+            $media_urls,
+            $post_action
+        );
+
+        hd_debug_print(raw_json_encode($action));
+        return $action;
     }
 
     /**
@@ -545,39 +572,39 @@ class Default_Dune_Plugin implements DunePlugin
             return array();
         }
 
-        $favorites = $this->get_favorites();
         switch ($op_type) {
             case PLUGIN_FAVORITES_OP_ADD:
-                if ($favorites->add_item($channel_id)) {
-                    hd_debug_print("Add channel $channel_id to favorites", true);
-                }
-                break;
+                if (!$this->get_favorites()->add_item($channel_id)) break;
+
+                hd_debug_print("Add channel $channel_id to favorites", true);
+                return null;
 
             case PLUGIN_FAVORITES_OP_REMOVE:
-                if ($favorites->remove_item($channel_id)) {
-                    hd_debug_print("Remove channel $channel_id from favorites", true);
-                }
-                break;
+                if (!$this->get_favorites()->remove_item($channel_id)) break;
+
+                hd_debug_print("Remove channel $channel_id from favorites", true);
+                return null;
 
             case PLUGIN_FAVORITES_OP_MOVE_UP:
-                $favorites->arrange_item($channel_id, Ordered_Array::UP);
-                break;
+                if ($this->get_favorites()->arrange_item($channel_id, Ordered_Array::UP)) break;
+
+                return null;
 
             case PLUGIN_FAVORITES_OP_MOVE_DOWN:
-                $favorites->arrange_item($channel_id, Ordered_Array::DOWN);
-                break;
+                if ($this->get_favorites()->arrange_item($channel_id, Ordered_Array::DOWN)) break;
+
+                return null;
 
             case ACTION_ITEMS_CLEAR:
                 hd_debug_print("Clear favorites", true);
-                $favorites->clear();
+                $this->get_favorites()->clear();
                 break;
         }
 
-        $this->set_favorites($favorites);
-        $this->invalidate_epfs();
+        $this->set_need_update_epfs();
 
         return Starnet_Epfs_Handler::invalidate_folders(array(
-                Starnet_Tv_Favorites_Screen::ID,
+                Starnet_Tv_Favorites_Screen::get_media_url_string(FAVORITES_GROUP_ID),
                 Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
         );
     }
@@ -1604,7 +1631,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @param int $archive_ts
      * @throws Exception
      */
-    public function player_exec($media_url, $archive_ts = -1)
+    public function tv_player_exec($media_url, $archive_ts = -1)
     {
         $url = $this->generate_stream_url($media_url->channel_id, $archive_ts);
 
@@ -1699,8 +1726,11 @@ class Default_Dune_Plugin implements DunePlugin
             return array($action_id => true);
         }
 
-        return User_Input_Handler_Registry::create_popup_item($handler,
-            $action_id, $caption, ($icon === null) ? null : get_image_path($icon), $add_params);
+        if ($icon !== null && strpos("://", $icon) === false) {
+            $icon = get_image_path($icon);
+        }
+
+        return User_Input_Handler_Registry::create_popup_item($handler, $action_id, $caption, $icon, $add_params);
     }
 
     /**
@@ -1722,9 +1752,6 @@ class Default_Dune_Plugin implements DunePlugin
                 ($cur !== $key) ? null : "check.png",
                 array('list_idx' => $key));
         }
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'playlist'));
 
         return $menu_items;
     }
@@ -1758,9 +1785,6 @@ class Default_Dune_Plugin implements DunePlugin
                 array('list_idx' => $key)
             );
         }
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'epg'));
 
         return $menu_items;
     }

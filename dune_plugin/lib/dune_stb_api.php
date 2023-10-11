@@ -435,7 +435,7 @@ function get_parsed_firmware_ver()
     //     'string' => '150729_0139_r10_js_stb_opera33',
     //     'build_date' => '150729',
     //     'build_number' => '0139',
-    //     'rev_literal => 'r',
+    //     'rev_literal => 'r' or 'b',
     //     'rev_number' => '10',
     //     'features' => 'js_stb_opera33',
     //	)
