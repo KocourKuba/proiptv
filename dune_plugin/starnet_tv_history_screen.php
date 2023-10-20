@@ -95,7 +95,6 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
 			case ACTION_ITEM_DELETE:
                 $this->plugin->get_playback_points()->erase_point($selected_media_url->channel_id);
-                $this->set_changes();
                 if ($this->plugin->get_playback_points()->size() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
@@ -103,11 +102,10 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->get_playback_points()->clear_points();
-                $this->set_changes();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
 			case ACTION_ADD_FAV:
-				$is_favorite = $this->plugin->tv->get_favorites()->in_order($selected_media_url->channel_id);
+				$is_favorite = $this->plugin->tv->is_in_favorites($selected_media_url->channel_id);
 				$opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
                 $this->set_changes();
@@ -140,7 +138,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         $items = array();
         $now = time();
         foreach ($this->plugin->get_playback_points()->get_all() as $channel_id => $channel_ts) {
-            if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
+            if (is_null($channel = $this->plugin->tv->get_channels($channel_id))) continue;
 
             $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
             $description = '';

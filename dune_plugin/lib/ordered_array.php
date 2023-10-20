@@ -125,7 +125,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     public function add_items($ids)
     {
-        $this->order = array_unique(array_merge($this->order, $ids));
+        $this->order = array_values(array_unique(array_merge($this->order, $ids)));
     }
 
     /**

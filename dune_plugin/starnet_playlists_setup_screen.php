@@ -157,12 +157,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => static::ID,
+                        'source_media_url_str' => static::get_media_url_str(),
                         'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST,
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => RESET_CONTROLS_ACTION_ID,
-                        'allow_order' => true,
                         'save_data' => PLUGIN_PARAMETERS,
-                        'extension' => 'm3u|m3u8',
+                        'allow_order' => true,
+                        'extension' => PLAYLIST_PATTERN,
                         'windowCounter' => 1,
                     )
                 );

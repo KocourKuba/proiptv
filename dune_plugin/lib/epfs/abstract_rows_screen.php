@@ -46,17 +46,22 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
     private $has_changes = false;
 
     /**
-     * @param $value
      * @return bool
      */
-    protected function set_changes($value = true)
+    protected function set_changes()
     {
-        if ($value) {
-            $this->plugin->set_durty();
-        }
-
         $old = $this->has_changes;
-        $this->has_changes = $value;
+        $this->has_changes = true;
+        return $old;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function set_no_changes()
+    {
+        $old = $this->has_changes;
+        $this->has_changes = false;
         return $old;
     }
 

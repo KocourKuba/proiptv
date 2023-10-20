@@ -36,17 +36,24 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     private $has_changes = false;
 
     /**
-     * @param $value
+     * @param string $save_data
      * @return bool
      */
-    protected function set_changes($value = true)
+    protected function set_changes($save_data = PLUGIN_ORDERS)
     {
-        if ($value) {
-            $this->plugin->set_durty();
-        }
-
         $old = $this->has_changes;
-        $this->has_changes = $value;
+        $this->has_changes = true;
+        return $old;
+    }
+
+    /**
+     * @param string $save_data
+     * @return bool
+     */
+    protected function set_no_changes($save_data = PLUGIN_ORDERS)
+    {
+        $old = $this->has_changes;
+        $this->has_changes = false;
         return $old;
     }
 
@@ -122,7 +129,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
 
         $this->plugin->save_settings();
         if ($this->has_changes) {
-            $this->set_changes(false);
+            $this->set_no_changes();
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
         }
 
@@ -142,7 +149,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
 
         $this->plugin->save_settings();
         if ($this->has_changes) {
-            $this->set_changes(false);
+            $this->set_no_changes();
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
         }
 

@@ -339,7 +339,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         shell_exec('rm -f '. get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*'));
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
-        $this->plugin->load(PLUGIN_PARAMETERS, true);
+        $this->plugin->load_parameters(true);
         hd_debug_print("Reset XMLTV cache dir to default");
         $this->plugin->remove_parameter(PARAM_CACHE_PATH);
         hd_debug_print("Reset debug logging");

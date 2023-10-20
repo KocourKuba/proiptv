@@ -168,6 +168,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
                         'source_window_id' => static::ID,
+                        'source_media_url_str' => static::get_media_url_str(),
                         'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST,
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => RESET_CONTROLS_ACTION_ID,

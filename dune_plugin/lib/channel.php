@@ -33,7 +33,7 @@ interface Channel
     public function get_icon_url();
 
     /**
-     * @return array[Group]
+     * @return Group[]
      */
     public function get_groups();
 

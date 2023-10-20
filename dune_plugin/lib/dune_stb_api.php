@@ -1873,7 +1873,12 @@ function hd_debug_print($val = null, $is_debug = false)
     if ($val === null) {
         $val = '';
         $parent_caller = array_shift($bt);
-        $prefix .= "called from: (". str_pad($caller_name['line'], 4) . ") ";
+        if (!isset($caller_name['line'])) {
+            $prefix .= "unknown line: $caller ";
+            HD::print_backtrace();
+        } else {
+            $prefix .= "called from: (". str_pad($caller_name['line'], 4) . ") ";
+        }
         if (isset($parent_caller['class'])) {
             $prefix .= "{$parent_caller['class']}:";
         }
@@ -1908,4 +1913,65 @@ function wrap_string_to_lines($str, $max_chars)
         ),
         0, 2
     );
+}
+
+function register_all_known_events($handler, &$actions)
+{
+    $all_events = array(
+        GUI_EVENT_KEY_NEXT,
+        GUI_EVENT_KEY_PREV,
+        GUI_EVENT_KEY_FIP_NEXT,
+        GUI_EVENT_KEY_FIP_PREV,
+        GUI_EVENT_KEY_SETUP,
+        GUI_EVENT_KEY_RETURN,
+        GUI_EVENT_KEY_SELECT,
+        GUI_EVENT_KEY_CLEAR,
+        GUI_EVENT_KEY_PAUSE,
+        GUI_EVENT_KEY_FWD,
+        GUI_EVENT_KEY_REW,
+        GUI_EVENT_KEY_SLOW,
+        GUI_EVENT_KEY_STOP,
+        GUI_EVENT_KEY_TOP_MENU,
+        GUI_EVENT_KEY_POWER,
+        GUI_EVENT_KEY_EJECT,
+        GUI_EVENT_KEY_MODE,
+        GUI_EVENT_KEY_VENDOR,
+        GUI_EVENT_KEY_SHUFFLE,
+        GUI_EVENT_KEY_MUSIC,
+        GUI_EVENT_KEY_MUTE,
+        GUI_EVENT_KEY_SEARCH,
+        GUI_EVENT_KEY_ZOOM,
+        GUI_EVENT_KEY_SUBTITLE,
+        GUI_EVENT_KEY_REPEAT,
+        GUI_EVENT_KEY_AUDIO,
+        GUI_EVENT_KEY_REC,
+        GUI_EVENT_KEY_DUNE,
+        GUI_EVENT_KEY_URL,
+        GUI_EVENT_UI_ACTION,
+        GUI_EVENT_TIMER,
+        GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE,
+        GUI_EVENT_FOLDER_LEAVE,
+        GUI_EVENT_FOLDER_ENTER,
+        GUI_EVENT_FOLDER_RETURN_BACK,
+        GUI_EVENT_PLAYBACK_USER_ACTION,
+        GUI_EVENT_PLAYBACK_STATE_CHANGED,
+        GUI_EVENT_MENU_PLAYBACK_OSD_CLOSED,
+        GUI_EVENT_MENU_PLAYBACK_OSD_GOING_TO_OPEN,
+        GUI_EVENT_MENU_PLAYBACK_FINISH,
+        GUI_EVENT_MENU_EXT_APP_FINISH,
+        GUI_EVENT_WEB_BROWSER_FINISH,
+        GUI_EVENT_GOING_TO_UPDATE,
+        GUI_EVENT_GOING_TO_STOP,
+        GUI_EVENT_TOPMENU_POPUP_MENU,
+        GUI_EVENT_GOING_TO_RELOAD_ALL_FOLDERS,
+        GUI_EVENT_FAVORITES_UPDATED,
+        GUI_EVENT_SHUTDOWN,
+    );
+
+    foreach ($all_events as $action) {
+        if (!isset($actions[$action])) {
+            hd_debug_print("register event: $action");
+            $actions[$action] = User_Input_Handler_Registry::create_action($handler, $action);
+        }
+    }
 }

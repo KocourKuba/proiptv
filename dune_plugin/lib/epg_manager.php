@@ -377,12 +377,12 @@ class Epg_Manager
             $t = microtime(true);
 
             $handle = fopen($tmp_filename, "rb");
-            $hdr = fread($handle, 10);
+            $hdr = fread($handle, 8);
             fclose($handle);
 
-            hd_debug_print("Checking signature: " . bin2hex($hdr), true);
 
             if (0 === mb_strpos($hdr , "\x1f\x8b\x08")) {
+                hd_debug_print("GZ signature: " . bin2hex(substr($hdr, 0, 3)), true);
                 rename($tmp_filename, $cached_xmltv_file . '.gz');
                 $tmp_filename = $cached_xmltv_file . '.gz';
                 hd_debug_print("ungzip $tmp_filename to $cached_xmltv_file");
@@ -394,6 +394,7 @@ class Epg_Manager
                 $size = filesize($cached_xmltv_file);
                 hd_debug_print("$size bytes written to $cached_xmltv_file");
             } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
+                hd_debug_print("ZIP signature: " . bin2hex(substr($hdr, 0, 4)), true);
                 hd_debug_print("unzip $tmp_filename to $cached_xmltv_file");
                 $filename = trim(shell_exec("unzip -lq '$tmp_filename'"));
                 if (empty($filename)) {
@@ -411,6 +412,7 @@ class Epg_Manager
                 $size = filesize($cached_xmltv_file);
                 hd_debug_print("$size bytes unzipped to $cached_xmltv_file");
             } else if (false !== mb_strpos($hdr, "<?xml")) {
+                hd_debug_print("XML signature: " . substr($hdr, 0, 5), true);
                 hd_debug_print("rename $tmp_filename to $cached_xmltv_file");
                 if (file_exists($cached_xmltv_file)) {
                     unlink($cached_xmltv_file);
@@ -419,6 +421,7 @@ class Epg_Manager
                 $size = filesize($cached_xmltv_file);
                 hd_debug_print("$size bytes written to $cached_xmltv_file");
             } else {
+                hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
                 throw new Exception(TR::load_string('err_unknown_file_type'));
             }
 

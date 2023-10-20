@@ -48,6 +48,15 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     protected $map = array();
 
+    public function __sleep()
+    {
+        return array('pos', 'map');
+    }
+
+    public function __wakeup()
+    {
+        $this->seq = array_keys($this->map);
+    }
     /**
      * Default hashing algorithm
      * @return string
@@ -84,6 +93,16 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @param Hashed_Array $items
+     */
+    public function add_items($items)
+    {
+        foreach ($items as $key => $item) {
+            $this->put($key, $item);
+        }
+    }
+
+    /**
      * @param TKey $key
      * @param TValue $item
      */
@@ -102,6 +121,21 @@ class Hashed_Array extends Json_Serializer implements Iterator
     public function get($key)
     {
         return $this->has($key) ? $this->map[$key] : null;
+    }
+
+    /**
+     * @param array $keys
+     * @return Hashed_Array
+     */
+    public function filter($keys)
+    {
+        $filtered = new self();
+        foreach ($keys as $key) {
+            if ($this->has($key)) {
+                $filtered->put($key, $this->map[$key]);
+            }
+        }
+        return $filtered;
     }
 
     /**

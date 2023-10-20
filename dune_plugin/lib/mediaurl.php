@@ -30,9 +30,12 @@ require_once 'json_serializer.php';
  * @property mixed|null $screen_id // Screen ID, used to find screen handler
  * @property mixed|null $channel_id // Channel ID
  * @property mixed|null $group_id // Group ID
+ * @property mixed|null $row_id // row id (used in NewUI)
  * @property string|null $source_window_id // Window ID called this screen
+ * @property string|null $source_media_url_str // Media Url string of window called this screen
+ * @property string|null $save_data // parameter used to save data
+ * @property mixed|null $type // Folder type (used in Starnet_Folder_Screen)
  * @property mixed|null $id // ID
- * @property mixed|null $type // Type of selected media url or extension of selected file
  * @property mixed|null $choose_folder // Action 'choose folder'
  * @property mixed|null $choose_file // Action 'choose file'
  * @property mixed|null $filepath // real path of selected folder or file

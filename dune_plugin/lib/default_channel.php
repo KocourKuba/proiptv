@@ -75,6 +75,12 @@ class Default_Channel extends Json_Serializer implements Channel
     protected $_ext_params;
 
     /**
+     * @var Default_Dune_Plugin
+     */
+    private $plugin;
+
+    /**
+     * @param $plugin
      * @param string $id
      * @param string $title
      * @param string $icon_url
@@ -85,12 +91,15 @@ class Default_Channel extends Json_Serializer implements Channel
      * @param array $epg_ids
      * @param bool $protected
      * @param int $timeshift_hours
+     * @param array $ext_params
      */
-    public function __construct($id, $title, $icon_url,
+    public function __construct($plugin, $id, $title, $icon_url,
                                 $streaming_url, $archive_url,
                                 $archive, $number, $epg_ids,
                                 $protected, $timeshift_hours, $ext_params = array())
     {
+        $this->plugin = $plugin;
+
         $this->_disabled = false;
 
         $this->_id = $id;
@@ -185,6 +194,20 @@ class Default_Channel extends Json_Serializer implements Channel
     public function set_disabled($disabled)
     {
         $this->_disabled = $disabled;
+        if ($disabled) {
+            $this->plugin->tv->get_disabled_channel_ids()->add_item($this->_id);
+        } else {
+            $this->plugin->tv->get_disabled_channel_ids()->remove_item($this->_id);
+        }
+
+        foreach ($this->get_groups() as $group) {
+            if ($disabled) {
+                $group->get_items_order()->remove_item($this->_id);
+            } else {
+                $group->get_items_order()->add_item($this->_id);
+            }
+        }
+        $this->plugin->save_orders();
     }
 
     /**

@@ -89,20 +89,20 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             case ACTION_ITEMS_CLEAR:
                 $this->set_changes();
                 $all_channels = $this->plugin->tv->get_channels();
-                $this->plugin->tv->get_known_channels()->clear();
+                $order = &$this->plugin->tv->get_known_channels();
+                $order->clear();
                 foreach ($all_channels as $channel) {
-                    $this->plugin->tv->get_known_channels()->set($channel->get_id(), $channel->get_title());
+                    $order->set($channel->get_id(), $channel->get_title());
                 }
-                $this->plugin->save_settings();
-                $this->plugin->tv->reload_channels();
 
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+                $this->plugin->save_orders(true);
+                break;
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
+                break;
         }
 
-        return null;
+        return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -124,8 +124,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             hd_debug_print("Removed channels: " . raw_json_encode($removed_channels));
         }
 
-        foreach ($new_channels as $item) {
-            $channel = $this->plugin->tv->get_channel($item);
+        foreach ($this->plugin->tv->get_channels($new_channels) as $channel) {
             if (is_null($channel)) continue;
 
             $groups = array();

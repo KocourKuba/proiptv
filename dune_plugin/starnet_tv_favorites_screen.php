@@ -82,6 +82,10 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
                 try {
+                    if ($this->has_changes()) {
+                        $this->set_no_changes();
+                        $this->plugin->save_orders(true);
+                    }
                     $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
@@ -149,7 +153,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 continue;
             }
 
-            $channel = $this->plugin->tv->get_channel($channel_id);
+            $channel = $this->plugin->tv->get_channels($channel_id);
             if (is_null($channel)) {
                 hd_debug_print("Unknown channel $channel_id");
                 $this->set_changes();

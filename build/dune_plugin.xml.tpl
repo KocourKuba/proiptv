@@ -72,6 +72,7 @@
             <media_url>tv_groups</media_url>
             <caption>ProIPTV</caption>
             <icon_url>plugin_file://icons/default_logo.png</icon_url>
+			<small_icon_url>plugin_file://icons/default_logo_small.png</small_icon_url>
             <actions>
                 <key_enter>
                     <type>plugin_handle_user_input</type>
