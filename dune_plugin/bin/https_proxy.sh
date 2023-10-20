@@ -31,6 +31,6 @@ if [ -z "$USER_AGENT" ]; then
 fi
 
 #echo "Download $1 to $2" > "$PLUGIN_TMP_DIR_PATH/http_proxy.log"
-$CURL --insecure --silent --dump-header - --output "$SAVE_FILE" --remote-time --location "$URL" --user-agent "$USER_AGENT" >"$PLUGIN_TMP_DIR_PATH/http_proxy.log"
+$CURL --insecure --silent --dump-header - --output "$SAVE_FILE" --location "$URL" --user-agent "$USER_AGENT" >"$PLUGIN_TMP_DIR_PATH/http_proxy.log"
 
 exit;
