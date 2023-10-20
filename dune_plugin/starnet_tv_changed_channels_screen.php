@@ -76,7 +76,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             case ACTION_PLAY_ITEM:
                 try {
                     $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
+                    $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
@@ -84,23 +84,22 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, $post_action);
+                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->set_need_update_epfs();
-                $known_channels = $this->plugin->get_known_channels();
+                $this->set_changes();
                 $all_channels = $this->plugin->tv->get_channels();
-                $known_channels->clear();
+                $this->plugin->tv->get_known_channels()->clear();
                 foreach ($all_channels as $channel) {
-                    $known_channels->set($channel->get_id(), $channel->get_title());
+                    $this->plugin->tv->get_known_channels()->set($channel->get_id(), $channel->get_title());
                 }
-                $this->plugin->set_known_channels($known_channels);
+                $this->plugin->save_settings();
                 $this->plugin->tv->reload_channels();
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
+                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return null;
@@ -118,8 +117,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
         $items = array();
 
-        $new_channels = $this->plugin->get_changed_channels('new');
-        $removed_channels = $this->plugin->get_changed_channels('removed');
+        $new_channels = $this->plugin->tv->get_changed_channels('new');
+        $removed_channels = $this->plugin->tv->get_changed_channels('removed');
         if (LogSeverity::$is_debug) {
             hd_debug_print("New channels: " . raw_json_encode($new_channels));
             hd_debug_print("Removed channels: " . raw_json_encode($removed_channels));
@@ -162,7 +161,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                         'channel_id' => $item,
                         'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
-                PluginRegularFolderItem::caption => $this->plugin->get_known_channels()->get($item),
+                PluginRegularFolderItem::caption => $this->plugin->tv->get_known_channels()->get($item),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => Starnet_Tv::DEFAULT_CHANNEL_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => Starnet_Tv::DEFAULT_CHANNEL_ICON_PATH,

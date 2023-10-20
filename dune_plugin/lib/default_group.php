@@ -220,6 +220,34 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
+     * @return Hashed_Array
+     */
+    public function get_group_enabled_channels()
+    {
+        $channels = new Hashed_Array();
+        foreach ($this->get_group_channels() as $channel) {
+            if (is_null($channel) || $channel->is_disabled()) continue;
+            $channels->put($channel->get_id(), $channel);
+        }
+
+        return $channels;
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_group_disabled_channels()
+    {
+        $channels = new Hashed_Array();
+        foreach ($this->get_group_channels() as $channel) {
+            if (is_null($channel) || !$channel->is_disabled()) continue;
+            $channels->put($channel->get_id(), $channel);
+        }
+
+        return $channels;
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_items_order()

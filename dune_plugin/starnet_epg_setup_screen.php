@@ -163,6 +163,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         switch ($control_id) {
             case ACTION_ITEMS_EDIT:
+                $this->plugin->set_postpone_save(true, PLUGIN_PARAMETERS);
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Edit_List_Screen::ID,
@@ -238,6 +239,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
+                $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
                 $this->plugin->tv->reload_channels();
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs()));

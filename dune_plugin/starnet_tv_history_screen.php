@@ -83,7 +83,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 		{
             case ACTION_PLAY_ITEM:
                 try {
-                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
+                    $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
@@ -91,11 +91,11 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, $post_action);
+                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
 
 			case ACTION_ITEM_DELETE:
                 $this->plugin->get_playback_points()->erase_point($selected_media_url->channel_id);
-                $this->plugin->set_need_update_epfs();
+                $this->set_changes();
                 if ($this->plugin->get_playback_points()->size() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
@@ -103,15 +103,16 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->get_playback_points()->clear_points();
-                $this->plugin->set_need_update_epfs();
+                $this->set_changes();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
 			case ACTION_ADD_FAV:
-				$is_favorite = $this->plugin->get_favorites()->in_order($selected_media_url->channel_id);
+				$is_favorite = $this->plugin->tv->get_favorites()->in_order($selected_media_url->channel_id);
 				$opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
+                $this->set_changes();
 				return Action_Factory::show_title_dialog($message,
-                    $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
+                    $this->plugin->tv->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
@@ -122,7 +123,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
+                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return null;

@@ -31,6 +31,31 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     const DLG_CONTROLS_WIDTH = 850;
 
     /**
+     * @var bool
+     */
+    private $has_changes = false;
+
+    /**
+     * @param $value
+     * @return bool
+     */
+    protected function set_changes($value = true)
+    {
+        if ($value) {
+            $this->plugin->set_durty();
+        }
+
+        $old = $this->has_changes;
+        $this->has_changes = $value;
+        return $old;
+    }
+
+    protected function has_changes()
+    {
+        return $this->has_changes;
+    }
+
+    /**
      * @param MediaURL $media_url
      * @param $plugin_cookies
      * @return array
@@ -82,5 +107,52 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
             true,
             $sel_ndx)
         );
+    }
+
+    /**
+     * @param $plugin_cookies
+     * @param bool $all_except
+     * @param array|null $media_urls
+     * @param null $post_action
+     * @return array
+     */
+    public function invalidate_epfs_folders($plugin_cookies, $media_urls = null, $post_action = null, $all_except = false)
+    {
+        hd_debug_print(null, true);
+
+        $this->plugin->save_settings();
+        if ($this->has_changes) {
+            $this->set_changes(false);
+            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        }
+
+        return Starnet_Epfs_Handler::invalidate_folders($media_urls, $post_action, $all_except);
+    }
+
+    /**
+     * @param $plugin_cookies
+     * @param array|null $action
+     * @param array|null $media_urls
+     * @param array|null $post_action
+     * @return array
+     */
+    public function update_invalidate_epfs_folders($plugin_cookies, $action, $media_urls = null, $post_action = null)
+    {
+        hd_debug_print(null, true);
+
+        $this->plugin->save_settings();
+        if ($this->has_changes) {
+            $this->set_changes(false);
+            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        }
+
+        $action = Action_Factory::update_invalidate_folders(
+            Action_Factory::update_invalidate_folders($action, Starnet_Tv_Rows_Screen::ID),
+            $media_urls,
+            $post_action
+        );
+
+        hd_debug_print(raw_json_encode($action));
+        return $action;
     }
 }

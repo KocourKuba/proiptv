@@ -40,6 +40,31 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
      */
     protected $cur_sel_state;
 
+    /**
+     * @var bool
+     */
+    private $has_changes = false;
+
+    /**
+     * @param $value
+     * @return bool
+     */
+    protected function set_changes($value = true)
+    {
+        if ($value) {
+            $this->plugin->set_durty();
+        }
+
+        $old = $this->has_changes;
+        $this->has_changes = $value;
+        return $old;
+    }
+
+    protected function has_changes()
+    {
+        return $this->has_changes;
+    }
+
     ///////////////////////////////////////////////////////////////////////
 
     public function __construct(Default_Dune_Plugin $plugin)

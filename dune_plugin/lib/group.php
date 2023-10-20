@@ -55,6 +55,16 @@ interface Group
     public function get_group_channels();
 
     /**
+     * @return Hashed_Array
+     */
+    public function get_group_enabled_channels();
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_group_disabled_channels();
+
+    /**
      * @return Ordered_Array
      */
     public function get_items_order();

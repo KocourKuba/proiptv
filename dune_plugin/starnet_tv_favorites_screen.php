@@ -55,7 +55,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        if ($this->plugin->get_favorites()->size() !== 0) {
+        if ($this->plugin->tv->get_favorites()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
@@ -82,7 +82,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
                 try {
-                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
+                    $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
@@ -90,31 +90,35 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, $post_action);
+                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
 
             case ACTION_ITEM_UP:
                 $user_input->sel_ndx--;
                 if ($user_input->sel_ndx < 0) {
                     $user_input->sel_ndx = 0;
                 }
-                return $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
+                $this->set_changes();
+                return $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
 
             case ACTION_ITEM_DOWN:
                 $user_input->sel_ndx++;
-                if ($user_input->sel_ndx >= $this->plugin->get_favorites()->size()) {
-                    $user_input->sel_ndx = $this->plugin->get_favorites()->size() - 1;
+                if ($user_input->sel_ndx >= $this->plugin->tv->get_favorites()->size()) {
+                    $user_input->sel_ndx = $this->plugin->tv->get_favorites()->size() - 1;
                 }
-                return $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
+                $this->set_changes();
+                return $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
 
             case ACTION_ITEM_DELETE:
-                $action = $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
-                if ($this->plugin->get_favorites()->size() !== 0) {
+                $this->set_changes();
+                $action = $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
+                if ($this->plugin->tv->get_favorites()->size() !== 0) {
                     return $action;
                 }
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null);
+                $this->set_changes();
+                $this->plugin->tv->change_tv_favorites(ACTION_ITEMS_CLEAR, null);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -122,7 +126,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_RETURN:
-                return $this->plugin->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
+                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return null;
@@ -140,7 +144,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $items = array();
 
-        foreach ($this->plugin->get_favorites() as $channel_id) {
+        foreach ($this->plugin->tv->get_favorites() as $channel_id) {
             if (!preg_match('/\S/', $channel_id)) {
                 continue;
             }
@@ -148,7 +152,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             $channel = $this->plugin->tv->get_channel($channel_id);
             if (is_null($channel)) {
                 hd_debug_print("Unknown channel $channel_id");
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id);
+                $this->set_changes();
+                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id);
                 continue;
             }
 

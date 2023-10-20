@@ -125,11 +125,16 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     public function add_items($ids)
     {
-        foreach ($ids as $id) {
-            if (!$this->in_order($id)) {
-                $this->order[] = $id;
-            }
-        }
+        $this->order = array_unique(array_merge($this->order, $ids));
+    }
+
+    /**
+     * @param Ordered_Array $ids
+     * @return void
+     */
+    public function add_ordered_array($ids)
+    {
+        $this->add_items($ids->get_order());
     }
 
     /**
@@ -158,7 +163,6 @@ class Ordered_Array extends Json_Serializer implements Iterator
         $key = array_search($id, $this->order);
         if ($key !== false) {
             $selected_item = $this->get_selected_item();
-            hd_debug_print("remove: $id");
             $removed = array_splice($this->order, $key, 1);
             if (count($removed) !== 0) {
                 $this->update_saved_pos($selected_item);
@@ -167,6 +171,19 @@ class Ordered_Array extends Json_Serializer implements Iterator
         }
 
         return false;
+    }
+
+    /**
+     * @param array $ids
+     * @return bool
+     */
+    public function remove_items($ids)
+    {
+        $selected_item = $this->get_selected_item();
+        $size = $this->size();
+        $this->order = array_diff($this->order, $ids);
+        $this->update_saved_pos($selected_item);
+        return $size !== $this->size();
     }
 
     /**
