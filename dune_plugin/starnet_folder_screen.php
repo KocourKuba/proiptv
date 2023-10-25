@@ -132,10 +132,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 $actions[GUI_EVENT_KEY_SELECT] = $select_folder;
             }
 
-            if (isset($media_url->choose_file) && $media_url->choose_file !== false) {
-                $actions[GUI_EVENT_KEY_D_BLUE] = $fs_action;
-            }
-
             $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
         }
 
@@ -520,7 +516,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         Control_Factory::add_multiline_label($defs, TR::t('err_mount'), $err, 4);
         Control_Factory::add_label($defs, TR::t('folder_screen_smb'), $caption);
         Control_Factory::add_label($defs, TR::t('folder_screen_smb_ip'), $ip_path);
-        if (strpos("Permission denied", $err) !== false) {
+        if (strpos($err, "Permission denied") !== false) {
             $this->GetSMBAccessDefs($defs, $user, $password);
         } else {
             Control_Factory::add_label($defs, '', '');
@@ -567,6 +563,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         hd_debug_print(null, true);
 
         $selected_url = MediaURL::decode($user_input->selected_media_url);
+        if (!isset($selected_url))
+             return null;
 
         if ($selected_url->type === self::SELECTED_TYPE_FOLDER) {
             $caption = $selected_url->caption;
@@ -588,7 +586,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             Control_Factory::add_label($defs, TR::t('folder_screen_smb'), $selected_url->caption);
             Control_Factory::add_label($defs, TR::t('folder_screen_smb_ip'), $selected_url->ip_path);
 
-            if (strpos("Permission denied", $selected_url->err) !== false) {
+            if (strpos($selected_url->err, "Permission denied") !== false) {
                 $user = isset($selected_url->user) ? $selected_url->user : '';
                 $password = isset($selected_url->password) ? $selected_url->password : '';
                 $this->GetSMBAccessDefs($defs, $user, $password);

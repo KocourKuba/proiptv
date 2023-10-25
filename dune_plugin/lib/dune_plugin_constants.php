@@ -7,6 +7,8 @@ const ACTION_EXTERNAL_PLAYER = 'use_external_player';
 const ACTION_INTERNAL_PLAYER = 'use_internal_player';
 const ACTION_FOLDER_SELECTED = 'folder_selected';
 const ACTION_PLAYLIST_SELECTED = 'playlist_selected';
+const ACTION_EDIT_PROVIDER_DLG = 'select_provider';
+const ACTION_PROVIDER = 'provider';
 const ACTION_FILE_SELECTED = 'file_selected';
 const ACTION_ITEM_ADD = 'item_add';
 const ACTION_ITEM_DELETE = 'item_delete';
@@ -52,6 +54,11 @@ const ACTION_CHANNELS_SETTINGS = 'channels_settings';
 const ACTION_NEED_CONFIGURE = 'configure';
 const ACTION_BALANCE = 'balance';
 const ACTION_INFO = 'info';
+const ACTION_SORT_TYPE = 'sort_type';
+const ACTION_RESET_TYPE = 'reset_type';
+const ACTION_SORT_CHANNELS = 'channels';
+const ACTION_SORT_GROUPS = 'groups';
+const ACTION_SORT_ALL = 'all';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';
@@ -64,9 +71,11 @@ const VOD_GROUP_ID = '##mediateka##';
 const PLUGIN_PARAMETERS = "parameters";
 const PLUGIN_SETTINGS = "settings";
 const PLUGIN_ORDERS = "orders";
+const PLUGIN_CONFIG_VERSION = 'config_version';
+
 const PARAM_ADULT_PASSWORD = 'adult_password';
-const PARAM_PLAYLISTS = 'playlists';
-const PARAM_PLAYLISTS_NAMES = 'playlists_names';
+const PARAM_PLAYLIST_STORAGE = 'playlist_storage';
+const PARAM_CUR_PLAYLIST_ID = 'cur_playlist_id';
 const PARAM_VOD_IDX = 'vod_idx';
 const PARAM_FAVORITES = 'favorites';
 const PARAM_GROUPS_ORDER = 'groups_order';
@@ -96,10 +105,9 @@ const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_SOURCE = 'epg_source';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_CACHE_PATH = 'xmltv_cache_path';
-const PARAM_EXT_XMLTV_SOURCES = 'ext_xmltv_sources';
-const PARAM_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
+const PARAM_XMLTV_SOURCES = 'xmltv_sources';
+const PARAM_CUR_XMLTV_SOURCE_KEY = 'cur_xmltv_source_key';
 const PARAM_CUR_XMLTV_SOURCE = 'cur_xmltv_source';
-const PARAM_XMLTV_SOURCE_NAMES = 'xmltv_source_names';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_CHANNELS_ZOOM = 'channels_zoom';
 const PARAM_CHANNEL_PLAYER = 'channel_player';
@@ -120,8 +128,28 @@ const PARAM_STREAM_FORMAT = 'stream_format';
 const PARAM_CUSTOM_DELETE_STRING = 'custom_delete_string';
 const PARAM_CUSTOM_DELETE_REGEX = 'custom_delete_regex';
 
-const PARAM_LOGIN = 'login';
-const PARAM_PASSWORD = 'password';
+const LIST_IDX = 'list_idx';
+
+// deprecated and removed after upgrade
+const PARAM_PLAYLISTS = 'playlists';
+const PARAM_PLAYLISTS_NAMES = 'playlists_names';
+const PARAM_EXT_XMLTV_SOURCES = 'ext_xmltv_sources';
+const PARAM_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
+const PARAM_XMLTV_SOURCE_NAMES = 'xmltv_source_names';
+
+// macroses used to replace template in providers playlists
+const MACRO_LOGIN = '{LOGIN}';
+const MACRO_PASSWORD = '{PASSWORD}';
+const MACRO_SUBDOMAIN = '{SUBDOMAIN}';
+const MACRO_OTTKEY = '{OTTKEY}';
+const MACRO_TOKEN = '{TOKEN}';
+
+// provider type access
+const PROVIDER_TYPE_PIN = 'pin';
+const PROVIDER_TYPE_LOGIN = 'login';
+const PROVIDER_TYPE_LOGIN_TOKEN = 'login-token';
+const PROVIDER_TYPE_LOGIN_STOKEN = 'login-stoken';
+const PROVIDER_TYPE_OTTKEY = 'ottkey';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
 const ENGINE_JSON = 'json';
@@ -143,7 +171,8 @@ const IMAGE_PREVIEW_PATTERN = 'png|jpg|jpeg|bmp|gif|aai';
 const IMAGE_PATTERN = '|psd|pspimage|thm|tif|yuf|svg|ico|djpg|dbmp|dpng';
 const PLAYLIST_PATTERN = 'm3u|m3u8';
 const EPG_PATTERN = 'xml|xmltv|gz';
-const HTTP_PATTERN = '|^(https?)://|';
+const HTTP_PATTERN = '/^(https?):\/\/([^\?]+)\??/';
+const PROVIDER_PATTERN = '/^(.+)@(?:(.+):(.+)|(.+))$/';
 
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage';

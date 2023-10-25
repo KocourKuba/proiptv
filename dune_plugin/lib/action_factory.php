@@ -198,8 +198,8 @@ class Action_Factory
     {
         $defs = array();
 
-        if ($multiline !== null) {
-            if ($preferred_width === 0) {
+        if ($preferred_width === 0) {
+            if ($multiline !== null) {
                 if (is_array($multiline)) {
                     $lines = $multiline;
                 } else {
@@ -210,10 +210,12 @@ class Action_Factory
                     if ($px > $preferred_width)
                         $preferred_width = (int)$px;
                 }
+                Control_Factory::add_multiline_label($defs, '', $multiline, 15);
+            } else {
+                $preferred_width = (int)mb_strlen($title, 'UTF-8') * 21;
             }
-
-            Control_Factory::add_multiline_label($defs, '', $multiline, 15);
         }
+
         Control_Factory::add_custom_close_dialog_and_apply_buffon($defs, 'close_button', TR::t('ok'), 300, $post_action);
 
         return self::show_dialog($title, $defs, false, $preferred_width);

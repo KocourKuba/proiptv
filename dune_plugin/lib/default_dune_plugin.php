@@ -25,14 +25,15 @@
  */
 
 require_once 'tr.php';
+require_once 'hd.php';
 require_once 'mediaurl.php';
 require_once 'user_input_handler_registry.php';
-require_once 'action_factory.php';
-require_once 'control_factory.php';
 require_once 'control_factory_ext.php';
 require_once 'default_archive.php';
 require_once 'catchup_params.php';
 require_once 'epg_manager_sql.php';
+require_once 'provider_config.php';
+require_once 'named_storage.php';
 require_once 'm3u/M3uParser.php';
 
 class Default_Dune_Plugin implements DunePlugin
@@ -41,7 +42,8 @@ class Default_Dune_Plugin implements DunePlugin
     const SANDWICH_BASE = 'gui_skin://special_icons/sandwich_base.aai';
     const SANDWICH_MASK = 'cut_icon://{name=sandwich_mask}';
     const SANDWICH_COVER = 'cut_icon://{name=sandwich_cover}';
-    const RESOURCE_URL = 'http://iptv.esalecrm.net/res';
+    const RESOURCE_URL = 'http://iptv.esalecrm.net/res/';
+    const CONFIG_URL = 'http://iptv.esalecrm.net/update/';
     const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
     const ARCHIVE_ID = 'common';
 
@@ -53,6 +55,11 @@ class Default_Dune_Plugin implements DunePlugin
     private $plugin_cookies;
     private $internet_status = -2;
     private $opexec_id = -1;
+
+    /**
+     * @var bool
+     */
+    protected $inited = false;
 
     /**
      * @var array
@@ -114,6 +121,16 @@ class Default_Dune_Plugin implements DunePlugin
      */
     protected $is_dirty;
 
+    /**
+     * @var Hashed_Array
+     */
+    protected $providers;
+
+    /**
+     * @var string
+     */
+    protected $cur_provider;
+
     ///////////////////////////////////////////////////////////////////////
 
     protected function __construct()
@@ -122,6 +139,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false);
         $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false);
         $this->m3u_parser = new M3uParser();
+        $this->providers = new Hashed_Array();
     }
 
     public function set_plugin_cookies($plugin_cookies)
@@ -154,60 +172,62 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->opexec_id;
     }
 
-    public function upgrade_parameters(&$plugin_cookies)
+    /**
+     * @return M3uParser
+     */
+    public function get_m3u_parser()
     {
-        hd_debug_print(null, true);
+        return $this->m3u_parser;
+    }
 
-        $this->load_parameters(true);
-        $this->update_log_level();
+    /**
+     * @return Hashed_Array<Provider_Config>
+     */
+    public function get_providers()
+    {
+        return $this->providers;
+    }
 
-        if (isset($plugin_cookies->pass_sex)) {
-            $this->set_parameter(PARAM_ADULT_PASSWORD, $plugin_cookies->pass_sex);
-            unset($plugin_cookies->pass_sex);
-        } else {
-            $this->get_parameter(PARAM_ADULT_PASSWORD, '0000');
-        }
+    /**
+     * @return Provider_Config|null
+     */
+    public function get_current_provider()
+    {
+        return empty($this->cur_provider) ? null : $this->get_provider($this->cur_provider);
+    }
 
-        // Move channels orders from settings to separate storage
-
-        $playlists = $this->get_playlists();
-        for ($pos = 0; $pos < $playlists->size(); $pos++) {
-            $playlists->set_saved_pos($pos);
-
-            hd_debug_print("loading: " . $this->get_current_playlist_hash() . ".settings", true);
-
-            $this->load_settings(true);
-            $this->load_orders(true);
-            $this->set_postpone_save(true, PLUGIN_SETTINGS);
-            $this->set_postpone_save(true, PLUGIN_ORDERS);
-
-            $all_keys = array_keys($this->settings);
-            foreach ($all_keys as $key) {
-                if (strpos($key,PARAM_CHANNELS_ORDER) !== false) {
-                    hd_debug_print("load old order from: $key", true);
-                    $order = $this->get_setting($key);
-                    $id = substr($key, strlen(PARAM_CHANNELS_ORDER . '_'));
-                    $this->set_orders($id, $order);
-                    $this->remove_setting($key);
-                } else if (strpos($key,FAVORITES_GROUP_ID) !== false) {
-                    hd_debug_print("load old order from: $key", true);
-                    $order = $this->get_setting($key);
-                    $this->set_orders(FAVORITES_GROUP_ID, $order);
-                    $this->remove_setting($key);
-                } else if (in_array($key, array(PARAM_DISABLED_GROUPS, PARAM_DISABLED_CHANNELS, PARAM_KNOWN_CHANNELS, PARAM_GROUPS_ORDER))) {
-                    hd_debug_print("load old order from: $key", true);
-                    $order = $this->get_setting($key);
-                    $this->set_orders($key, $order);
-                    $this->remove_setting($key);
+    /**
+     * @return Provider_Config[]
+     */
+    public function get_enabled_providers()
+    {
+        $providers = array();
+        if (!is_null($this->providers)) {
+            foreach ($this->providers as $value) {
+                if ($value->getEnable()) {
+                    $providers[] = $value;
                 }
             }
-            $this->set_postpone_save(false, PLUGIN_SETTINGS);
-            $this->set_postpone_save(false, PLUGIN_ORDERS);
         }
 
-        $this->parameters = null;
-        $this->settings = null;
-        $this->orders = null;
+        return $providers;
+    }
+
+    /**
+     * @param string $name
+     * @return Provider_Config
+     */
+    public function get_provider($name)
+    {
+        return $this->providers->get($name);
+    }
+
+    /**
+     * @return Epg_Manager|Epg_Manager_Sql
+     */
+    public function get_epg_manager()
+    {
+        return $this->epg_manager;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -228,38 +248,6 @@ class Default_Dune_Plugin implements DunePlugin
         } else {
             hd_debug_print(get_class($object) . ": Screen class is illegal. get_id method not defined!");
         }
-    }
-
-    public function init_epg_manager()
-    {
-        if (class_exists('SQLite3') && $this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE) === ENGINE_SQLITE) {
-            hd_debug_print("Using sqlite cache engine");
-            $this->epg_manager = new Epg_Manager_Sql($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
-        } else {
-            hd_debug_print("Using legacy cache engine");
-            $this->epg_manager = new Epg_Manager($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
-        }
-
-        $flags = $this->get_bool_parameter(PARAM_FUZZY_SEARCH_EPG, false) ? EPG_FUZZY_SEARCH : 0;
-        $flags |= $this->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
-        $this->epg_manager->set_flags($flags);
-        $this->epg_manager->set_cache_ttl($this->get_setting(PARAM_EPG_CACHE_TTL, 3));
-    }
-
-    /**
-     * @return M3uParser
-     */
-    public function get_m3u_parser()
-    {
-        return $this->m3u_parser;
-    }
-
-    /**
-     * @return Epg_Manager|Epg_Manager_Sql
-     */
-    public function get_epg_manager()
-    {
-        return $this->epg_manager;
     }
 
     /**
@@ -298,7 +286,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         hd_debug_print("Error: no screen with id '$screen_id' found.");
-        HD::print_backtrace();
+        print_backtrace();
         throw new Exception('Screen not found');
     }
 
@@ -400,7 +388,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported");
-            HD::print_backtrace();
+            print_backtrace();
             throw new Exception('TV is not supported');
         }
 
@@ -424,7 +412,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported");
-            HD::print_backtrace();
+            print_backtrace();
             throw new Exception('TV is not supported');
         }
 
@@ -448,7 +436,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported");
-            HD::print_backtrace();
+            print_backtrace();
             throw new Exception('TV is not supported');
         }
 
@@ -472,12 +460,16 @@ class Default_Dune_Plugin implements DunePlugin
         try {
             if (is_null($this->tv)) {
                 hd_debug_print("TV is not supported");
-                HD::print_backtrace();
+                print_backtrace();
                 throw new Exception('TV is not supported');
             }
 
+            if (is_null($channel_id)) {
+                throw new Exception('Unknown channel id');
+            }
+
             // get channel by hash
-            $channel = $this->tv->get_channels($channel_id);
+            $channel = $this->tv->get_channel($channel_id);
             if (is_null($channel)) {
                 throw new Exception('Unknown channel');
             }
@@ -560,7 +552,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         if (is_null($this->tv)) {
             hd_debug_print("TV is not supported");
-            HD::print_backtrace();
+            print_backtrace();
             return array();
         }
 
@@ -581,7 +573,7 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print(null, true);
         hd_debug_print("VOD is not supported");
 
-        HD::print_backtrace();
+        print_backtrace();
         throw new Exception("VOD is not supported");
     }
 
@@ -708,7 +700,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->load_parameters();
 
         if (!isset($this->parameters[$param])) {
-            hd_debug_print("load default: $param = $default", true);
+            hd_debug_print("load default $param: $default", true);
             $this->parameters[$param] = $default;
         } else {
             $default_type = gettype($default);
@@ -905,7 +897,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_dirty($val = true, $item = PLUGIN_SETTINGS)
     {
-        hd_debug_print("$item: set_dirty: " . var_export($val, true), true);
+        //hd_debug_print("$item: set_dirty: " . var_export($val, true), true);
         if (!is_null($item)) {
             $this->is_dirty[$item] = $val;
         }
@@ -919,7 +911,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function load_settings($force = false)
     {
-        $this->load($this->get_current_playlist_hash() . '.settings', PLUGIN_SETTINGS, $force);
+        $this->load($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
     }
 
     /**
@@ -941,7 +933,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function load_orders($force = false)
     {
-        $this->load($this->get_current_playlist_hash() . '_' . PLUGIN_ORDERS . '.settings', PLUGIN_ORDERS, $force);
+        $this->load($this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . '.settings', PLUGIN_ORDERS, $force);
     }
 
     /**
@@ -975,7 +967,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function save_settings($force = false)
     {
-        $this->save($this->get_current_playlist_hash() . '.settings', PLUGIN_SETTINGS, $force);
+        $this->save($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
     }
 
     /**
@@ -997,7 +989,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function save_orders($force = false)
     {
-        $this->save($this->get_current_playlist_hash() . '_' . PLUGIN_ORDERS . '.settings', PLUGIN_ORDERS, $force);
+        $this->save($this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . '.settings', PLUGIN_ORDERS, $force);
     }
 
     /**
@@ -1032,7 +1024,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function remove_settings()
     {
         unset($this->settings);
-        $hash = $this->get_current_playlist_hash();
+        $hash = $this->get_active_playlist_key();
         hd_debug_print("remove $hash.settings", true);
         HD::erase_data_items("$hash.settings");
         hd_debug_print("remove {$hash}_" . PLUGIN_ORDERS . ".settings", true);
@@ -1049,22 +1041,250 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return void
      */
-    public function init_plugin()
+    public function init_plugin($force = false)
     {
+        if (!$force && $this->inited) {
+            return;
+        }
+
         hd_print("----------------------------------------------------");
+        LogSeverity::$is_debug = true;
         $this->load_parameters(true);
         $this->update_log_level();
-        if (LogSeverity::$is_debug) {
-            // small hack to show parameters in log
-            $this->load_parameters(true);
-        }
 
         $this->init_epg_manager();
         $this->create_screen_views();
         $this->playback_points = new Playback_Points($this);
 
+        if ($this->providers->size() === 0) {
+            $jsonArray = HD::DownloadJson(self::CONFIG_URL . "providers.json");
+            if (!isset($jsonArray['providers'])) {
+                hd_debug_print("Problem to download providers configuration");
+                return;
+            }
+
+            foreach ($jsonArray['providers'] as $item) {
+                if (isset($item['class'])) {
+                    $config = new $item['class']();
+                } else {
+                    $config = new Provider_Config();
+                }
+
+                foreach ($item as $key => $value) {
+                    $words = explode('_', $key);
+                    $setter = "set";
+                    foreach ($words as $word) {
+                        $setter .= ucwords($word);
+                    }
+                    if (method_exists($config, $setter)) {
+                        $config->{$setter}($value);
+                    } else {
+                        hd_debug_print("Unknown methid $setter");
+                    }
+                }
+
+                if ($config->getId() !== '') {
+                    $this->providers->set($config->getId(), $config);
+                }
+            }
+        }
+
         hd_debug_print("Init plugin done!");
         hd_print("----------------------------------------------------");
+
+        $this->inited = true;
+    }
+
+    public function upgrade_parameters(&$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $this->load_parameters(true);
+        $this->update_log_level();
+
+        if ($this->get_parameter(PLUGIN_CONFIG_VERSION) === '3') {
+            // upgrade completed
+            return;
+        }
+
+        $this->set_postpone_save(true, PLUGIN_PARAMETERS);
+
+        if (isset($plugin_cookies->pass_sex)) {
+            $this->set_parameter(PARAM_ADULT_PASSWORD, $plugin_cookies->pass_sex);
+            unset($plugin_cookies->pass_sex);
+        } else {
+            $this->get_parameter(PARAM_ADULT_PASSWORD, '0000');
+        }
+
+        // Convert playlists to Named_Storage
+        $new_storage = new Hashed_Array();
+
+        /** @var Hashed_Array $playlist_names */
+        $playlist_names = $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
+        /** @var Ordered_Array $old_playslists */
+        $old_playslists = $this->get_parameter(PARAM_PLAYLISTS, new Ordered_Array());
+        $selected = Hashed_Array::hash($old_playslists->get_selected_item());
+        $found = '';
+        foreach ($old_playslists as $playlist) {
+            hd_debug_print("upgrade playlist: $playlist", true);
+            $item = new Named_Storage();
+            $id = Hashed_Array::hash($playlist);
+            if ($id === $selected) {
+                $found = $selected;
+            }
+            $name = $playlist_names->get($id);
+            if (empty($name)) {
+                $name = $playlist;
+                if (($pos = strpos($name, '?')) !== false) {
+                    $name = substr($name, 0, $pos);
+                }
+                $name = basename($name);
+            }
+            $item->name = $name;
+            $item->value = $playlist;
+            $item->type = preg_match(HTTP_PATTERN, $playlist) ? 'link' : 'file';
+            hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, value: $item->value", true);
+            $new_storage->set($id, $item);
+        }
+
+        if (empty($found)) {
+            $new_storage->rewind();
+            $found = $new_storage->key();
+        }
+
+        $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $found);
+        $this->set_parameter(PARAM_PLAYLIST_STORAGE, $new_storage);
+
+        $this->remove_parameter(PARAM_PLAYLISTS);
+        $this->remove_parameter(PARAM_PLAYLISTS_NAMES);
+
+        // convert old type xmltv parameter
+        $new_storage = new Hashed_Array();
+        $source_names = $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
+        $type = $this->get_parameter_type(PARAM_EXT_XMLTV_SOURCES);
+        if ($type !== null) {
+            /** @var Hashed_Array $old_array */
+            $old_array = $this->get_parameter(PARAM_EXT_XMLTV_SOURCES);
+            /** @var Hashed_Array $source_names */
+            foreach ($old_array as $key => $source) {
+                hd_debug_print("($type) upgrade xmltv source: $source", true);
+                $item = new Named_Storage();
+                $id = ($type === 'Hashed_Array') ? $key : Hashed_Array::hash($source);
+                $item->value = $source;
+                $name = $source_names->get($key);
+                if (preg_match(HTTP_PATTERN, $source, $m)) {
+                    $item->type = 'link';
+                    if (empty($name)) {
+                        $name = $m[2];
+                    } else {
+                        $name = $source;
+                    }
+                }
+                $item->name = $name;
+                hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, value: $item->value", true);
+                $new_storage->put($id, $item);
+            }
+            $this->set_parameter(PARAM_XMLTV_SOURCES, $new_storage);
+            $this->remove_parameter(PARAM_EXT_XMLTV_SOURCES);
+            $this->remove_parameter(PARAM_XMLTV_SOURCE_NAMES);
+        }
+
+        $this->set_parameter(PLUGIN_CONFIG_VERSION, '3');
+        $this->save_parameters(true);
+
+        // Move channels orders from settings to separate storage
+
+        /** @var Named_Storage $playlist */
+        foreach($this->get_playlists() as $id => $playlist) {
+            $settings_name = "$id.settings";
+            $order_name = $id . '_' . PLUGIN_ORDERS . '.settings';
+            hd_debug_print("loading: $settings_name", true);
+
+            $this->load($settings_name, PLUGIN_SETTINGS, true);
+            $this->load($order_name, PLUGIN_ORDERS, true);
+
+            $this->set_postpone_save(true, PLUGIN_SETTINGS);
+            $this->set_postpone_save(true, PLUGIN_ORDERS);
+
+            $all_keys = array_keys($this->settings);
+            foreach ($all_keys as $key) {
+                if (strpos($key,PARAM_CHANNELS_ORDER) !== false) {
+                    hd_debug_print("load old order from: $key", true);
+                    $order = $this->get_setting($key);
+                    $id = substr($key, strlen(PARAM_CHANNELS_ORDER . '_'));
+                    $this->set_orders($id, $order);
+                    $this->remove_setting($key);
+                } else if (strpos($key,FAVORITES_GROUP_ID) !== false) {
+                    hd_debug_print("load old order from: $key", true);
+                    $order = $this->get_setting($key);
+                    $this->set_orders(FAVORITES_GROUP_ID, $order);
+                    $this->remove_setting($key);
+                } else if (in_array($key, array(PARAM_DISABLED_GROUPS, PARAM_DISABLED_CHANNELS, PARAM_KNOWN_CHANNELS, PARAM_GROUPS_ORDER))) {
+                    hd_debug_print("load old order from: $key", true);
+                    $order = $this->get_setting($key);
+                    $this->set_orders($key, $order);
+                    $this->remove_setting($key);
+                }
+            }
+            $this->save($settings_name, PLUGIN_SETTINGS, true);
+            $this->save($order_name, PLUGIN_ORDERS, true);
+        }
+
+        $this->parameters = null;
+        $this->settings = null;
+        $this->orders = null;
+    }
+
+    /**
+     * @param string $info
+     * @return Provider_Config|null
+     */
+    public function init_provider($info)
+    {
+        $pos = strpos($info, '@');
+        if ($pos === false) {
+            return null;
+        }
+
+        $provider_id = substr($info, 0, $pos);
+        hd_debug_print("provider id: $provider_id", true);
+        $provider = $this->get_provider($provider_id);
+        if (is_null($provider)) {
+            hd_debug_print("unknown provider");
+            return null;
+        }
+
+        if (!$provider->getEnable()) {
+            hd_debug_print("provider disabled");
+            return null;
+        }
+
+        $provider->parse_provider_creds(substr($info, $pos + 1));
+
+        return $provider;
+    }
+
+    public function init_epg_manager()
+    {
+        $this->epg_manager = null;
+        if ($this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE) === ENGINE_LEGACY) {
+            hd_debug_print("Using legacy cache engine");
+        } else if (class_exists('SQLite3')) {
+            hd_debug_print("Using sqlite cache engine");
+            $this->epg_manager = new Epg_Manager_Sql($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
+        } else {
+            hd_debug_print("Selected sqlite but system does not support it. Switch to legacy");
+            $this->set_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_LEGACY);
+        }
+
+        if (is_null($this->epg_manager)) {
+            $this->epg_manager = new Epg_Manager($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
+        }
+
+        $flags = $this->get_bool_parameter(PARAM_FUZZY_SEARCH_EPG, false) ? EPG_FUZZY_SEARCH : 0;
+        $flags |= $this->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
+        $this->epg_manager->set_flags($flags);
+        $this->epg_manager->set_cache_ttl($this->get_setting(PARAM_EPG_CACHE_TTL, 3));
     }
 
     /**
@@ -1098,25 +1318,34 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                $url = $this->get_current_playlist();
-                if (empty($url)) {
+                $item = $this->get_current_playlist();
+                if (empty($item->value)) {
                     hd_debug_print("Tv playlist not defined");
                     throw new Exception("Tv playlist not defined");
                 }
 
-                hd_debug_print("m3u playlist ({$this->get_current_playlist_hash()} - {$this->get_playlist_name($url)}): $url");
-                if (preg_match(HTTP_PATTERN, $url)) {
+                hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $item->name): $item->value");
+                if (preg_match(HTTP_PATTERN, $item->value)) {
                     $user_agent = HD::get_dune_user_agent();
-                    $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$tmp_file' '$user_agent'";
+                    $cmd = get_install_path('bin/https_proxy.sh') . " '$item->value' '$tmp_file' '$user_agent'";
                     hd_debug_print("Exec: $cmd", true);
                     shell_exec($cmd);
                     if (!file_exists($tmp_file)) {
-                        throw new Exception("Can't download playlist $url");
+                        throw new Exception("Can't download playlist $item->value");
+                    }
+                } else if (!is_null($provider = $this->init_provider($item->value))) {
+                    $provider_url = $provider->get_playlist_url();
+                    $user_agent = HD::get_dune_user_agent();
+                    $cmd = get_install_path('bin/https_proxy.sh') . " '$provider_url' '$tmp_file' '$user_agent'";
+                    hd_debug_print("Exec: $cmd", true);
+                    shell_exec($cmd);
+                    if (!file_exists($tmp_file)) {
+                        throw new Exception("Can't download playlist $provider_url");
                     }
                 } else {
-                    $contents = @file_get_contents($url);
+                    $contents = @file_get_contents($item->value);
                     if ($contents === false) {
-                        throw new Exception("Can't read playlist: $url");
+                        throw new Exception("Can't read playlist: $item->value");
                     }
                     file_put_contents($tmp_file, $contents);
                     $mtime = filemtime($tmp_file);
@@ -1124,7 +1353,7 @@ class Default_Dune_Plugin implements DunePlugin
                 }
             }
 
-            //  Is already parsed?
+            // Is already parsed?
             $this->m3u_parser->setupParser($tmp_file, $force);
             if ($this->m3u_parser->getEntriesCount() === 0) {
                 if (!$this->m3u_parser->parseInMemory()) {
@@ -1164,6 +1393,32 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * Start indexing in background and return immediately
+     * @return void
+     */
+    public function start_bg_indexing()
+    {
+        $config = array(
+            'debug' => LogSeverity::$is_debug,
+            'log_file' => $this->get_epg_manager()->get_cache_stem('.log'),
+            'version' => $this->plugin_info['app_version'],
+            'cache_dir' => $this->get_cache_dir(),
+            'cache_engine' => $this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE),
+            'cache_ttl' => $this->get_setting(PARAM_EPG_CACHE_TTL, 3),
+            'xmltv_url' => $this->get_active_xmltv_source(),
+        );
+
+        file_put_contents(get_temp_path('parse_config.json'), json_encode($config));
+
+        $cmd = get_install_path('bin/cgi_wrapper.sh') . " 'index_epg.php' &";
+        hd_debug_print("exec: $cmd", true);
+        exec($cmd);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    ///
+
+    /**
      * @return Playback_Points
      */
     public function get_playback_points()
@@ -1172,54 +1427,51 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return Ordered_Array
+     * @return Hashed_Array
      */
     public function &get_playlists()
     {
-        return $this->get_parameter(PARAM_PLAYLISTS, new Ordered_Array());
+        return $this->get_parameter(PARAM_PLAYLIST_STORAGE, new Hashed_Array());
     }
 
     /**
-     * @var Ordered_Array $playlists
+     * @param string $id
+     * @return Named_Storage
      */
-    public function set_playlists($playlists)
+    public function get_playlist($id)
     {
-        $this->set_parameter(PARAM_PLAYLISTS, $playlists);
+        return $this->get_playlists()->get($id);
     }
 
     /**
-     * $param int $idx
      * @return string
      */
-    public function get_playlist_by_idx($idx)
+    public function get_active_playlist_key()
     {
-        return $this->get_playlists()->get_item_by_idx($idx);
+        $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
+        if (empty($id) || !$this->get_playlists()->has($id)) {
+            $this->get_playlists()->rewind();
+            $id = $this->get_playlists()->key();
+        }
+
+        return $id;
     }
 
     /**
-     * $param int $idx
+     * $param string $id
      * @return void
      */
-    public function set_playlists_idx($idx)
+    public function set_active_playlist_key($id)
     {
-        $this->get_playlists()->set_saved_pos($idx);
-        $this->save_parameters(true);
+        $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
     }
 
     /**
-     * @return string
+     * @return Named_Storage
      */
     public function get_current_playlist()
     {
-        return $this->get_playlists()->get_selected_item();
-    }
-
-    /**
-     * @return string
-     */
-    public function get_current_playlist_hash()
-    {
-        return Hashed_Array::hash($this->get_current_playlist());
+        return $this->get_playlists()->get($this->get_active_playlist_key());
     }
 
     /**
@@ -1227,7 +1479,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_current_playlist_cache()
     {
-        return get_temp_path($this->get_current_playlist_hash() . "_playlist.m3u8");
+        return get_temp_path($this->get_active_playlist_key() . "_playlist.m3u8");
     }
 
     /**
@@ -1245,152 +1497,13 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return Hashed_Array
-     */
-    public function get_playlists_names()
-    {
-        return $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
-    }
-
-    /**
-     * @param Hashed_Array $names
-     */
-    public function set_playlists_names($names)
-    {
-        $this->set_parameter(PARAM_PLAYLISTS_NAMES, $names);
-    }
-
-    /**
-     * @param string $item
-     * @return string const
-     */
-    public function get_playlist_name($item)
-    {
-        $playlist_names = $this->get_playlists_names();
-        $name = $playlist_names->get(Hashed_Array::hash($item));
-        if (is_null($name)) {
-            $name = basename($item);
-            if (($pos = strpos($name, '?')) !== false) {
-                $name = substr($name, 0, $pos);
-            }
-        }
-
-        return $name;
-    }
-
-    /**
-     * @param string $item
-     * @param string $name
-     * @return void
-     */
-    public function set_playlist_name($item, $name)
-    {
-        if (empty($name)) {
-            $this->remove_parameter(PARAM_PLAYLISTS_NAMES);
-        } else {
-            $playlist_names = $this->get_playlists_names();
-            $playlist_names->set(Hashed_Array::hash($item), $name);
-            $this->set_playlists_names($playlist_names);
-        }
-    }
-
-    /**
-     * @param string $item
-     * @return void
-     */
-    public function remove_playlist_name($item)
-    {
-        $playlist_names = $this->get_playlists_names();
-        $playlist_names->erase(Hashed_Array::hash($item));
-        $this->set_playlists_names($playlist_names);
-    }
-
-    /**
-     * @return Hashed_Array
-     */
-    public function get_xmltv_source_names()
-    {
-        return $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
-    }
-
-    /**
-     * @param Hashed_Array $names
-     */
-    public function set_xmltv_source_names($names)
-    {
-        $this->set_parameter(PARAM_XMLTV_SOURCE_NAMES, $names);
-    }
-
-    /**
-     * @param string $item
-     * @return string|null
-     */
-    public function get_xmltv_source_name($item)
-    {
-        $xmltv_sources = $this->get_xmltv_source_names();
-        $name = $xmltv_sources->get(Hashed_Array::hash($item));
-        if (is_null($name)) {
-            $name = HD::string_ellipsis($item);
-        }
-
-        return $name;
-    }
-
-    /**
-     * @param string $item
-     * @param string $name
-     * @return void
-     */
-    public function set_xmltv_source_name($item, $name)
-    {
-        if (empty($name)) {
-            $this->remove_parameter(PARAM_XMLTV_SOURCE_NAMES);
-        } else {
-            $xmltv_sources = $this->get_xmltv_source_names();
-            $xmltv_sources->set(Hashed_Array::hash($item), $name);
-            $this->set_xmltv_source_names($xmltv_sources);
-        }
-    }
-
-    /**
-     * @param string $item
-     * @return void
-     */
-    public function remove_xmltv_source_name($item)
-    {
-        $xmltv_sources = $this->get_xmltv_source_names();
-        $xmltv_sources->erase(Hashed_Array::hash($item));
-        $this->set_xmltv_source_names($xmltv_sources);
-    }
-
-    /**
      * get external xmltv sources
      *
-     * @return Ordered_Array
+     * @return Hashed_Array
      */
     public function &get_ext_xmltv_sources()
     {
-        if ($this->get_parameter_type(PARAM_EXT_XMLTV_SOURCES) === 'Hashed_Array') {
-            // convert old type parameter
-            /** @var Hashed_Array $old_array */
-            $old_array = $this->get_parameter(PARAM_EXT_XMLTV_SOURCES, new Hashed_Array());
-            $new_array = new Ordered_Array();
-            $new_array->add_items($old_array->get_ordered_values());
-            $this->set_parameter(PARAM_EXT_XMLTV_SOURCES, $new_array);
-        }
-
-        return $this->get_parameter(PARAM_EXT_XMLTV_SOURCES, new Ordered_Array());
-    }
-
-    /**
-     * set external xmltv sources
-     *
-     * @param Hashed_Array $xmltv_sources
-     * @return void
-     */
-    public function set_ext_xmltv_sources($xmltv_sources)
-    {
-        $this->set_parameter(PARAM_EXT_XMLTV_SOURCES, $xmltv_sources);
+        return $this->get_parameter(PARAM_XMLTV_SOURCES, new Hashed_Array());
     }
 
     /**
@@ -1404,21 +1517,25 @@ class Default_Dune_Plugin implements DunePlugin
 
         /** @var Hashed_Array $sources */
         $xmltv_sources = new Hashed_Array();
-        foreach ($this->m3u_parser->getXmltvSources() as $source) {
-            $xmltv_sources->add($source);
+        foreach ($this->m3u_parser->getXmltvSources() as $m3u8source) {
+            if (!preg_match(HTTP_PATTERN, $m3u8source, $m)) continue;
+
+            $item = new Named_Storage();
+            $item->type = 'link';
+            $item->value = $m3u8source;
+            $item->name = $m[2];
+            $xmltv_sources->put(Hashed_Array::hash($m3u8source), $item);
         }
 
         if ($xmltv_sources->size() !== 0) {
             $xmltv_sources->add(EPG_SOURCES_SEPARATOR_TAG);
         }
 
+        /** @var Named_Storage $source */
         foreach ($this->get_ext_xmltv_sources() as $key => $source) {
             $xmltv_sources->set($key, $source);
         }
 
-        foreach ($xmltv_sources as $key => $source) {
-            hd_debug_print("$key => $source", true);
-        }
         return $xmltv_sources;
     }
 
@@ -1436,7 +1553,9 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_active_xmltv_source_key($key)
     {
+        $xmltv_source = $this->get_all_xmltv_sources()->get($key);
         $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
+        $this->set_active_xmltv_source($xmltv_source->value);
     }
 
     /**
@@ -1612,10 +1731,11 @@ class Default_Dune_Plugin implements DunePlugin
             return array($action_id => true);
         }
 
-        if ($icon !== null && strpos("://", $icon) === false) {
+        if ($icon !== null && strpos($icon,"://") === false) {
             $icon = get_image_path($icon);
         }
 
+        hd_debug_print("icon: $icon");
         return User_Input_Handler_Registry::create_popup_item($handler, $action_id, $caption, $icon, $add_params);
     }
 
@@ -1627,18 +1747,61 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $menu_items = array();
 
-        $cur = $this->get_playlists()->get_saved_pos();
-        foreach ($this->get_playlists() as $key => $playlist) {
-            if ($key !== 0 && ($key % 15) === 0)
+        $cur = $this->get_active_playlist_key();
+        $idx = 0;
+        foreach ($this->get_playlists() as $key => $item) {
+            if ($idx !== 0 && ($idx % 15) === 0) {
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            }
+            $idx++;
+
+            $icon = null;
+            if ($item->type === 'provider') {
+                $provider = $this->init_provider($item->value);
+                if (!is_null($provider)) {
+                    $icon = $provider->getLogo();
+                }
+            } else if ($item->type === 'link') {
+                $icon = "link.png";
+            } else if ($item->type === 'file') {
+                $icon = "m3u_file.png";
+            }
 
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_PLAYLIST_SELECTED,
-                $this->get_playlist_name($playlist),
-                ($cur !== $key) ? null : "check.png",
-                array('list_idx' => $key));
+                $item->name,
+                ($cur !== $key) ? $icon : "check.png",
+                array(LIST_IDX => $key));
         }
 
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'playlist'));
+
+        return $menu_items;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function all_providers_menu($handler)
+    {
+        $menu_items = array();
+
+        $idx = 0;
+        foreach ($this->get_enabled_providers() as $provider) {
+            if ($idx !== 0 && ($idx % 15) === 0) {
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            }
+            $idx++;
+
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_EDIT_PROVIDER_DLG,
+                $provider->getName(),
+                $provider->getLogo(),
+                array(ACTION_PROVIDER => $provider->getId())
+            );
+        }
         return $menu_items;
     }
 
@@ -1655,8 +1818,9 @@ class Default_Dune_Plugin implements DunePlugin
 
         $idx = 0;
         foreach ($sources as $key => $item) {
-            if ($idx !== 0 && ($idx % 15) === 0)
+            if ($idx !== 0 && ($idx % 15) === 0) {
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            }
             $idx++;
 
             if ($item === EPG_SOURCES_SEPARATOR_TAG) {
@@ -1666,11 +1830,14 @@ class Default_Dune_Plugin implements DunePlugin
 
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_EPG_SOURCE_SELECTED,
-                $this->get_xmltv_source_name($item),
+                $item->name,
                 ($source_key === $key) ? "check.png" : null,
-                array('list_idx' => $key)
+                array(LIST_IDX => $key)
             );
         }
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'epg'));
 
         return $menu_items;
     }
@@ -1683,11 +1850,16 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $menu_items = array();
 
-        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_SORT, TR::t('sort_channels'), null, array('sort_type' => 'channels'));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_SORT, TR::t('sort_groups'), null, array('sort_type' => 'groups'));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'), null, array('reset_type' => 'channels'));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'), null, array('reset_type' => 'groups'));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_all_sort'), null, array('reset_type' => 'all'));
+        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_SORT, TR::t('sort_channels'),
+            null, array(ACTION_SORT_TYPE => ACTION_SORT_CHANNELS));
+        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_SORT, TR::t('sort_groups'),
+            null, array(ACTION_SORT_TYPE => ACTION_SORT_GROUPS));
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'),
+            null, array(ACTION_RESET_TYPE => ACTION_SORT_CHANNELS));
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'),
+            null, array(ACTION_RESET_TYPE => ACTION_SORT_GROUPS));
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_all_sort'),
+            null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
         return $menu_items;
@@ -1702,6 +1874,10 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $menu_items = array();
 
+        if ($group_id === null) {
+            return $menu_items;
+        }
+
         if ($this->tv->get_special_group($group_id) === null) {
             $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
         }
@@ -1713,7 +1889,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $has_hidden_channels = false;
-        if (($group = $this->tv->get_groups($group_id)) !== null) {
+        if (!is_null($group = $this->tv->get_group($group_id))) {
             $has_hidden_channels = $group->get_group_channels()->size() !== $group->get_items_order()->size();
         } else if ($group_id === ALL_CHANNEL_GROUP_ID) {
             $has_hidden_channels = $this->tv->get_disabled_channel_ids()->size() !== 0;
@@ -1734,10 +1910,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function create_plugin_title()
     {
-        $name = $this->get_playlist_name($this->get_current_playlist());
-        if (is_null($name)) {
-            $name = basename($this->get_current_playlist());
-        }
+        $name = $this->get_current_playlist()->name;
         $plugin_name = $this->plugin_info['app_caption'];
         $name = empty($name) ? $plugin_name : "$plugin_name ($name)";
         hd_debug_print("plugin title: $name");
@@ -1790,8 +1963,8 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_width => 60,
-                    ViewItemParams::icon_height => 60,
+                    ViewItemParams::icon_width => 50,
+                    ViewItemParams::icon_height => 50,
                     ViewItemParams::icon_dx => 20,
                     ViewItemParams::icon_dy => -5,
                     ViewItemParams::item_caption_dx => 25,

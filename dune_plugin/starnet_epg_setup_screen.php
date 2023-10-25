@@ -195,8 +195,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case PARAM_EPG_CACHE_ENGINE:
                 $this->plugin->tv->unload_channels();
+                $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->set_parameter(PARAM_EPG_CACHE_ENGINE, $user_input->{$control_id});
-                $this->plugin->init_plugin();
+                $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case PARAM_EPG_CACHE_TTL:

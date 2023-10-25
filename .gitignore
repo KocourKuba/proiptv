@@ -10,4 +10,5 @@
 /creds.txt
 /dune_plugin/dune_plugin.xml
 /dune_plugin/dune_plugin_metadata.xml
+/dune_plugin/providers.json
 /cache_dir

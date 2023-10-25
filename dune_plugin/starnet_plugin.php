@@ -25,13 +25,10 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
-require_once 'lib/hd.php';
 require_once 'lib/default_dune_plugin.php';
-require_once 'lib/json_serializer.php';
 
 require_once 'starnet_entry_handler.php';
 require_once 'starnet_tv_groups_screen.php';
-require_once 'starnet_setup_screen.php';
 require_once 'starnet_playlists_setup_screen.php';
 require_once 'starnet_interface_setup_screen.php';
 require_once 'starnet_epg_setup_screen.php';
@@ -55,21 +52,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
     {
         parent::__construct();
 
-        print_sysinfo();
-
-        hd_print("----------------------------------------------------");
-        hd_print("Plugin name:         " . $this->plugin_info['app_caption']);
-        hd_print("Plugin version:      " . $this->plugin_info['app_version']);
-        hd_print("Plugin date:         " . $this->plugin_info['app_release_date']);
-        hd_print("LocalTime            " . format_datetime('Y-m-d H:i', time()));
-        hd_print("TimeZone             " . getTimeZone());
-        hd_print("Daylight             " . date('I'));
-        hd_print("New UI support       " . var_export(HD::rows_api_support(), true));
-
-        hd_print("----------------------------------------------------");
-
-        $this->init_plugin();
-
         User_Input_Handler_Registry::get_instance()->register_handler(new Starnet_Entry_Handler($this));
 
         $this->tv = new Starnet_Tv($this);
@@ -91,6 +73,18 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Edit_List_Screen($this));
 
         Starnet_Epfs_Handler::init($this);
+
+        print_sysinfo();
+
+        hd_print("----------------------------------------------------");
+        hd_print("Plugin name:         " . $this->plugin_info['app_caption']);
+        hd_print("Plugin version:      " . $this->plugin_info['app_version']);
+        hd_print("Plugin date:         " . $this->plugin_info['app_release_date']);
+        hd_print("LocalTime            " . format_datetime('Y-m-d H:i', time()));
+        hd_print("TimeZone             " . getTimeZone());
+        hd_print("Daylight             " . date('I'));
+        hd_print("New UI support       " . var_export(HD::rows_api_support(), true));
+        hd_print("----------------------------------------------------");
 
         hd_debug_print("Plugin loading complete.");
     }

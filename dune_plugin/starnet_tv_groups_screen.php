@@ -135,7 +135,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 hd_debug_print("special groups: $special_group_cnt");
                 hd_debug_print("groups: $groups_cnt");
                 hd_debug_print("sel_ndx: $sel_ndx");
-                $groups_cnt = $special_group_cnt + $groups_cnt;
+                $groups_cnt += $special_group_cnt;
                 $sel_ndx++;
                 if ($sel_ndx >= $groups_cnt) {
                     $sel_ndx = $groups_cnt - 1;
@@ -150,12 +150,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_SORT:
-                $group = $this->plugin->tv->get_groups($sel_media_url->group_id);
-                if (is_null($group) || !isset($user_input->sort_type)) {
+                $group = $this->plugin->tv->get_group($sel_media_url->group_id);
+                if (is_null($group) || !isset($user_input->{ACTION_SORT_TYPE})) {
                     return null;
                 }
 
-                if ($user_input->sort_type === 'channels') {
+                if ($user_input->{ACTION_SORT_TYPE} === ACTION_SORT_CHANNELS) {
                     $group->sort_group_items();
                 } else {
                     $this->plugin->tv->get_groups_order()->sort_order();
@@ -164,22 +164,22 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_RESET_ITEMS_SORT:
-                if (!isset($user_input->reset_type)) {
+                if (!isset($user_input->{ACTION_RESET_TYPE})) {
                     return null;
                 }
 
                 $this->plugin->save_orders();
 
                 /** @var Channel $channel */
-                switch ($user_input->reset_type) {
-                    case  'channels':
-                        if (!is_null($sel_group = $this->plugin->tv->get_groups($sel_media_url->group_id))) {
+                switch ($user_input->{ACTION_RESET_TYPE}) {
+                    case ACTION_SORT_CHANNELS:
+                        if (!is_null($sel_group = $this->plugin->tv->get_group($sel_media_url->group_id))) {
                             $sel_group->sort_group_items(true);
                             $this->set_changes();
                         }
                         break;
 
-                    case 'groups':
+                    case ACTION_SORT_GROUPS:
                         $order = &$this->plugin->tv->get_groups_order();
                         $order->clear();
                         foreach ($this->plugin->tv->get_enabled_groups() as $group) {
@@ -188,7 +188,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $this->set_changes();
                         break;
 
-                    case 'all':
+                    case ACTION_SORT_ALL:
                         $order = &$this->plugin->tv->get_groups_order();
                         $order->clear();
                         foreach ($this->plugin->tv->get_enabled_groups() as $group) {
@@ -249,13 +249,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 } else if (isset($user_input->{ACTION_SORT_POPUP})) {
                     $menu_items = $this->plugin->sort_menu($this);
                 } else {
-                    $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
-                    $menu_items = $this->plugin->edit_hidden_menu($this, $group_id);
+                    $channels = $this->plugin->tv->get_channels();
+                    if (!is_null($channels) && $channels->size() !== 0) {
+                        $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
+                        $menu_items = $this->plugin->edit_hidden_menu($this, $group_id);
 
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
+                        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    }
 
                     if ($this->plugin->get_playlists()->size()) {
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
@@ -266,17 +268,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
                 }
 
-                return Action_Factory::show_popup_menu($menu_items);
+                return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_CHANGE_PLAYLIST:
                 hd_debug_print("Start event popup menu for playlist");
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_PLAYLIST => true));
 
             case ACTION_PLAYLIST_SELECTED:
-                if (!isset($user_input->list_idx)) break;
+                if (!isset($user_input->{LIST_IDX})) break;
 
                 $this->plugin->save_orders();
-                $this->plugin->set_playlists_idx($user_input->list_idx);
+                $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_CHANGE_EPG_SOURCE:
@@ -288,14 +290,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_SORT_POPUP => true));
 
             case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->list_idx)) break;
+                if (!isset($user_input->{LIST_IDX})) break;
 
                 $this->plugin->save_orders();
-                $this->plugin->set_postpone_save(true, PLUGIN_PARAMETERS);
-                $this->plugin->set_active_xmltv_source_key($user_input->list_idx);
-                $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($user_input->list_idx);
-                $this->plugin->set_active_xmltv_source($xmltv_source);
-                $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
+                $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
@@ -319,10 +317,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
-                    $group = $this->plugin->tv->get_groups($sel_media_url->group_id);
+                    $group = $this->plugin->tv->get_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
-                    $cached_image_name = "{$this->plugin->get_current_playlist_hash()}_$data->caption";
+                    $cached_image_name = "{$this->plugin->get_active_playlist_key()}_$data->caption";
                     $cached_image = get_cached_image_path($cached_image_name);
                     hd_print("copy from: $data->filepath to: $cached_image");
                     if (!copy($data->filepath, $cached_image)) {
@@ -356,7 +354,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
-                    $group = $this->plugin->tv->get_groups($sel_media_url->group_id);
+                    $group = $this->plugin->tv->get_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
                     hd_debug_print("Reset icon for group: $sel_media_url->group_id to default", true);
@@ -415,7 +413,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
                 }
 
-                $this->plugin->tv->reload_channels();
+                if ($this->plugin->tv->reload_channels() === 0) {
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+                }
+
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::close_and_run(
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title())));
@@ -459,9 +461,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             switch ($group->get_id()) {
                 case ALL_CHANNEL_GROUP_ID:
+                    $total = 0;
+                    foreach ($this->plugin->tv->get_enabled_groups() as $egroup) {
+                        $total += $egroup->get_group_channels()->size();
+                    }
                     $item_detailed_info = TR::t('tv_screen_group_info__3',
                         $group->get_title(),
-                        $this->plugin->tv->get_channels()->size(),
+                        $total,
                         $this->plugin->tv->get_disabled_channel_ids()->size());
                     break;
 
@@ -506,7 +512,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     ViewItemParams::icon_path => $group_url,
                     ViewItemParams::item_detailed_icon_path => $group_url,
                     ViewItemParams::item_detailed_info => TR::t('tv_screen_group_info__3',
-                        $group->get_title(),
+                        str_replace('|', '¦', $group->get_title()),
                         $group->get_group_channels()->size(),
                         $group->get_group_channels()->size() - $group->get_items_order()->size()
                     ),

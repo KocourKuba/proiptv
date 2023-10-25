@@ -51,6 +51,12 @@ storage = Lagerung
 internal = intern
 restore = Wiederherstellen
 restore_all = Alles wiederherstellen
+name = Name
+url = URL
+login = Login
+password = Password
+subdomain = Subdomain
+ottkey = OTT Key
 
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten
@@ -178,7 +184,7 @@ edit_list_added__1 = %s Dateien hinzugefügt
 edit_list_added__2 = %s Dateien von %s hinzugefügt
 edit_list_empty_file = Leere Akte!!!
 edit_list_no_files = Keine Dateien!!!
-edit_list_internet_path = URL zur Liste hinzufügen
+edit_list_add_url = URL zur Liste hinzufügen
 edit_list_folder_path = Ordner mit Dateien auswählen
 edit_list_import_list = Datei mit URL-Liste importieren
 edit_list_src_folder = Ordner mit Dateien
@@ -187,6 +193,8 @@ edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Drücken Sie auf der 
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Drücken Sie lange OK auf der Fernbedienung, um das „Popup-Menü“ aufzurufen}
 edit_list_add_name = Name einsetzen
 edit_list_edit_item = Bearbeiten
+edit_list_add_provider = Add IPTV provider
+edit_list_detail_info__2 = %s|%s
 
 tv_screen_zoom_channel = Kanalzoom
 tv_screen_search_channel = Geben Sie den Namen oder einen Teil des Namens für die Suche ein

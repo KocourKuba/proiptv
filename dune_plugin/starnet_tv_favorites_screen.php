@@ -94,7 +94,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
+                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action, true);
 
             case ACTION_ITEM_UP:
                 $user_input->sel_ndx--;
@@ -102,7 +102,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                     $user_input->sel_ndx = 0;
                 }
                 $this->set_changes();
-                return $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
+                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
+                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DOWN:
                 $user_input->sel_ndx++;
@@ -110,13 +111,15 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                     $user_input->sel_ndx = $this->plugin->tv->get_favorites()->size() - 1;
                 }
                 $this->set_changes();
-                return $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
+                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
+                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DELETE:
                 $this->set_changes();
-                $action = $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
+                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
                 if ($this->plugin->tv->get_favorites()->size() !== 0) {
-                    return $action;
+                    return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+                    //return $action;
                 }
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
@@ -130,6 +133,10 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return Action_Factory::show_popup_menu($menu_items);
 
             case GUI_EVENT_KEY_RETURN:
+                if ($this->has_changes()) {
+                    $this->set_no_changes();
+                    $this->plugin->save_orders(true);
+                }
                 return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
@@ -153,7 +160,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 continue;
             }
 
-            $channel = $this->plugin->tv->get_channels($channel_id);
+            $channel = $this->plugin->tv->get_channel($channel_id);
             if (is_null($channel)) {
                 hd_debug_print("Unknown channel $channel_id");
                 $this->set_changes();

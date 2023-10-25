@@ -556,14 +556,6 @@ class HD
 
     ///////////////////////////////////////////////////////////////////////////
 
-    public static function print_backtrace()
-    {
-        hd_print("Back trace:");
-        foreach (debug_backtrace() as $f) {
-            hd_print("  - {$f['function']} at {$f['file']}:{$f['line']}");
-        }
-    }
-
     /**
      * @param string $raw_string
      * @return array|string|string[]

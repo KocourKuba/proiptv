@@ -51,6 +51,12 @@ storage = Storage
 internal = Internal storage
 restore = Restore
 restore_all = Restore all
+name = Name
+url = URL
+login = Login
+password = Password
+subdomain = Subdomain
+ottkey = OTT Key
 
 plugin_all_channels = All channels
 plugin_favorites = Favorites
@@ -177,7 +183,7 @@ edit_list_added__1 = Added %s files
 edit_list_added__2 = Added %s files from %s
 edit_list_empty_file = Empty file!!!
 edit_list_no_files = No files!!!
-edit_list_internet_path = Add URL to the list
+edit_list_add_url = Add URL to the list
 edit_list_folder_path = Select folder with files
 edit_list_import_list = Import file with list of URLs
 edit_list_src_folder = Folder with files
@@ -186,6 +192,8 @@ edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Press Popup Menu on R
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Long press OK on Remote to call Popup Menu}
 edit_list_add_name = Set name
 edit_list_edit_item = Edit
+edit_list_add_provider = Add IPTV provider
+edit_list_detail_info__2 = %s|%s
 
 tv_screen_zoom_channel = Channel zoom
 tv_screen_search_channel = Enter name or part of the name for search

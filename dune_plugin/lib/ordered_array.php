@@ -279,7 +279,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @return string|null
+     * @return mixed|null
      */
     public function get_selected_item()
     {

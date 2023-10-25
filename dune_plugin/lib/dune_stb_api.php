@@ -329,6 +329,58 @@ class DuneIrControl
 # System functions
 ###############################################################################
 
+function print_backtrace()
+{
+    hd_print("Back trace:");
+    foreach (debug_backtrace() as $f) {
+        hd_print("  - {$f['function']} at {$f['file']}:{$f['line']}");
+    }
+}
+
+/**
+ * @param mixed $val
+ * @param bool $is_debug
+ * @return void
+ */
+function hd_debug_print($val = null, $is_debug = false)
+{
+    if ($is_debug && !LogSeverity::$is_debug)
+        return;
+
+    $bt = debug_backtrace();
+    $caller = array_shift($bt);
+    $caller_name = array_shift($bt);
+    $prefix = "(" . str_pad($caller['line'], 4) . ") ";
+    if (isset($caller_name['class'])) {
+        if (!is_null($val)) {
+            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)raw_json_encode($val));
+        }
+        $prefix .= "{$caller_name['class']}::";
+    }
+    $prefix .= "{$caller_name['function']}(): ";
+
+    if ($val === null) {
+        $val = '';
+        $parent_caller = array_shift($bt);
+        if (!isset($caller_name['line'])) {
+            $prefix .= "unknown line: $caller ";
+            print_backtrace();
+        } else {
+            $prefix .= "called from: (". str_pad($caller_name['line'], 4) . ") ";
+        }
+        if (isset($parent_caller['class'])) {
+            $prefix .= "{$parent_caller['class']}:";
+        }
+
+        $prefix .= "{$parent_caller['function']}(): ";
+    }
+    else if (is_bool($val)) {
+        $val = $val ? 'true' : 'false';
+    }
+
+    hd_print($prefix . $val);
+}
+
 /**
  * return is shell is APK.
  * @return bool
@@ -1846,50 +1898,6 @@ function safe_merge_array($ar1, $ar2)
     }
 
     return $ar1;
-}
-
-/**
- * @param mixed $val
- * @param bool $is_debug
- * @return void
- */
-function hd_debug_print($val = null, $is_debug = false)
-{
-    if ($is_debug && !LogSeverity::$is_debug)
-        return;
-
-    $bt = debug_backtrace();
-    $caller = array_shift($bt);
-    $caller_name = array_shift($bt);
-    $prefix = "(" . str_pad($caller['line'], 4) . ") ";
-    if (isset($caller_name['class'])) {
-        if (!is_null($val)) {
-            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)raw_json_encode($val));
-        }
-        $prefix .= "{$caller_name['class']}::";
-    }
-    $prefix .= "{$caller_name['function']}(): ";
-
-    if ($val === null) {
-        $val = '';
-        $parent_caller = array_shift($bt);
-        if (!isset($caller_name['line'])) {
-            $prefix .= "unknown line: $caller ";
-            HD::print_backtrace();
-        } else {
-            $prefix .= "called from: (". str_pad($caller_name['line'], 4) . ") ";
-        }
-        if (isset($parent_caller['class'])) {
-            $prefix .= "{$parent_caller['class']}:";
-        }
-
-        $prefix .= "{$parent_caller['function']}(): ";
-    }
-    else if (is_bool($val)) {
-        $val = $val ? 'true' : 'false';
-    }
-
-    hd_print($prefix . $val);
 }
 
 function raw_json_encode($arr)

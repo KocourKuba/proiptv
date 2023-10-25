@@ -23,3 +23,4 @@
 *.txt text eol=lf
 *.tpl html eol=lf
 *.xml html eol=lf
+*.json text eol=lf

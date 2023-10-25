@@ -138,7 +138,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         $items = array();
         $now = time();
         foreach ($this->plugin->get_playback_points()->get_all() as $channel_id => $channel_ts) {
-            if (is_null($channel = $this->plugin->tv->get_channels($channel_id))) continue;
+            if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
 
             $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
             $description = '';

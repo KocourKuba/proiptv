@@ -57,6 +57,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     {
         $this->seq = array_keys($this->map);
     }
+
     /**
      * Default hashing algorithm
      * @return string
@@ -84,6 +85,17 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @param TKey $key
+     * @return integer|false
+     */
+    public function get_idx($key)
+    {
+        return array_search($key, $this->seq);
+    }
+
+
+    /**
+     * add item. key for item is hash of item
      * @param TValue $item
      */
     public function add($item)
@@ -93,6 +105,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Add items
+     *
      * @param Hashed_Array $items
      */
     public function add_items($items)
@@ -103,6 +117,22 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * add new item or replace existing
+     *
+     * @param TKey $key
+     * @param TValue $item
+     */
+    public function set($key, $item)
+    {
+        if (!$this->has($key)) {
+            $this->seq[] = $key;
+        }
+        $this->map[$key] = $item;
+    }
+
+    /**
+     * Add only new item to array
+     *
      * @param TKey $key
      * @param TValue $item
      */
@@ -115,7 +145,9 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @param mixed $key
+     * return value associated with key
+     *
+     * @param TKey $key
      * @return TValue|null
      */
     public function get($key)
@@ -124,7 +156,9 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @param array $keys
+     * filter array by keys, return values only match with keys
+     *
+     * @param TKey[] $keys
      * @return Hashed_Array
      */
     public function filter($keys)
@@ -140,32 +174,18 @@ class Hashed_Array extends Json_Serializer implements Iterator
 
     /**
      * @param TKey $key
-     * @param TValue $item
-     */
-    public function set($key, $item)
-    {
-        if (!$this->has($key)) {
-            $this->seq[] = $key;
-        }
-        $this->map[$key] = $item;
-    }
-
-    /**
-     * @param TKey $key
      */
     public function erase($key)
     {
         if ($this->has($key)) {
-            $all_keys = array_keys($this->seq, $key);
-            foreach ($all_keys as $k) {
-                unset($this->seq[$k]);
-            }
+            $idx = array_search($key, $this->seq);
+            array_splice($this->seq, $idx, 1);
             unset($this->map[$key]);
         }
     }
 
     /**
-     * @param mixed $key
+     * @param TKey $key
      * @return bool
      */
     public function has($key)
@@ -174,7 +194,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @return array
+     * @return TKey[]
      */
     public function get_keys()
     {

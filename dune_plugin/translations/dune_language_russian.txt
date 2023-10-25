@@ -51,6 +51,12 @@ storage = Системный диск
 internal = Внутреннее хранилище
 restore = Восстановить
 restore_all = Восстановить все
+name = Имя
+url = Ссылка
+login = Логин
+password = Пароль
+subdomain = Поддомен
+ottkey = OTT ключ
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное
@@ -212,7 +218,7 @@ edit_list_added__1 = Добавлено файлов: %s
 edit_list_added__2 = Добавлено файлов: %s из: %s
 edit_list_empty_file = Пустой файл!!!
 edit_list_no_files = Нет файлов!!!
-edit_list_internet_path = Добавить ссылку
+edit_list_add_url = Добавить ссылку
 edit_list_folder_path = Выбрать папку с файлами
 edit_list_import_list = Импорт файла с ссылками
 edit_list_src_folder = Папка с файлами
@@ -221,6 +227,8 @@ edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Нажмите Popup 
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Долгое нажатие OK на пульте для вызова меню}
 edit_list_add_name = Задать имя
 edit_list_edit_item = Редактировать
+edit_list_add_provider = Добавить провайдера IPTV
+edit_list_detail_info__2 = %s|%s
 
 epg_not_ready = Программа передач еще не готова
 epg_not_ready_desc = Идет индексирование программ передач, пожалуйста подождите

@@ -162,7 +162,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                         'end_action' => ACTION_RELOAD,
                         'cancel_action' => RESET_CONTROLS_ACTION_ID,
                         'save_data' => PLUGIN_PARAMETERS,
-                        'allow_order' => true,
                         'extension' => PLAYLIST_PATTERN,
                         'windowCounter' => 1,
                     )
@@ -171,7 +170,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return Action_Factory::open_folder($media_url_str,
                     TR::t('setup_channels_src_edit_playlists'),
                     null,
-                    $this->plugin->get_current_playlist()
+                    $this->plugin->get_active_playlist_key()
                 );
 
             case PARAM_USER_CATCHUP:

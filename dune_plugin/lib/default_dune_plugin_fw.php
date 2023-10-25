@@ -4,6 +4,7 @@
 require_once 'tr.php';
 require_once 'action_factory.php';
 require_once 'dune_exception.php';
+require_once 'dune_stb_api.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -124,4 +125,13 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
 
 ///////////////////////////////////////////////////////////////////////////
 
+function plugin_error_handler($error_type, $message, $file, $line)
+{
+    hd_print("Error intercepted");
+    print_backtrace();
+    hd_error_handler($error_type, $message, $file, $line);
+}
+
+$old_error_handler = set_error_handler('plugin_error_handler');
+hd_print("Old handler: $old_error_handler");
 DunePluginFw::$instance = new Default_Dune_Plugin_Fw();

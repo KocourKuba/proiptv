@@ -194,6 +194,6 @@ class Playback_Points
             return '';
         }
 
-        return get_slash_trailed_path($path) . $this->plugin->get_current_playlist_hash() . PARAM_TV_HISTORY_ITEMS;
+        return get_slash_trailed_path($path) . $this->plugin->get_active_playlist_key() . PARAM_TV_HISTORY_ITEMS;
     }
 }

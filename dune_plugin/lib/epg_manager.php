@@ -25,6 +25,7 @@
 
 require_once 'hd.php';
 require_once 'epg_params.php';
+require_once 'hashed_array.php';
 
 class Epg_Manager
 {
@@ -320,17 +321,6 @@ class Epg_Manager
         }
 
         return 0;
-    }
-
-    /**
-     * Start indexing in background and return immediately
-     * @return void
-     */
-    public function start_bg_indexing()
-    {
-        $cmd = get_install_path('bin/cgi_wrapper.sh') . " 'index_epg.php' '{$this->get_cache_stem('.log')}' '$this->version' &";
-        hd_debug_print("exec: $cmd", true);
-        exec($cmd);
     }
 
     /**
