@@ -763,7 +763,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if ($this->plugin->tv->reload_channels() === 0) {
-                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                    return Starnet_Epfs_Handler::invalidate_folders(null,
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
@@ -959,7 +961,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        $changed = $this->plugin->tv->get_changed_channels(null);
+        $changed = $this->plugin->tv->get_changed_channels();
         if (empty($changed)) {
             return null;
         }
@@ -1068,13 +1070,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 RowsItemsParams::fav_sticker_icon_width,
                 RowsItemsParams::fav_sticker_icon_height));
 
-        $channels_order = new Hashed_Array();
-        /** @var Group $group */
-        foreach($this->plugin->tv->get_enabled_groups() as $group) {
-            if (is_null($group)) continue;
-
-            $channels_order->add_items($group->get_group_enabled_channels());
-        }
+        $channels_order = $all_channels_group->get_group_enabled_channels();
 
         $items = array();
         foreach ($channels_order as $channel) {

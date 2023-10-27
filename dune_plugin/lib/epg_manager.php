@@ -629,17 +629,6 @@ class Epg_Manager
     }
 
     /**
-     * clear memory cache and cache for selected xmltv source
-     *
-     * @param $uri
-     * @return void
-     */
-    public function clear_epg_cache_by_uri($uri)
-    {
-        $this->clear_epg_files(Hashed_Array::hash($uri));
-    }
-
-    /**
      * clear memory cache and entire cache folder
      *
      * @return void
@@ -667,7 +656,7 @@ class Epg_Manager
      *
      * @return void
      */
-    protected function clear_epg_files($filename)
+    public function clear_epg_files($filename)
     {
         $this->clear_index();
 

@@ -226,6 +226,10 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function &get_group_channels()
     {
+        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
+            return $this->plugin->tv->get_channels();
+        }
+
         return $this->_channels;
     }
 
@@ -235,9 +239,18 @@ class Default_Group extends Json_Serializer implements Group
     public function get_group_enabled_channels()
     {
         $channels = new Hashed_Array();
-        foreach ($this->get_group_channels() as $channel) {
-            if (is_null($channel) || $channel->is_disabled()) continue;
-            $channels->put($channel->get_id(), $channel);
+        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
+            foreach ($this->plugin->tv->get_enabled_groups() as $egroup) {
+                foreach ($egroup->get_group_channels() as $channel) {
+                    if (is_null($channel) || $channel->is_disabled()) continue;
+                    $channels->put($channel->get_id(), $channel);
+                }
+            }
+        } else {
+            foreach ($this->get_group_channels() as $channel) {
+                if (is_null($channel) || $channel->is_disabled()) continue;
+                $channels->put($channel->get_id(), $channel);
+            }
         }
 
         return $channels;
@@ -249,9 +262,16 @@ class Default_Group extends Json_Serializer implements Group
     public function get_group_disabled_channels()
     {
         $channels = new Hashed_Array();
-        foreach ($this->get_group_channels() as $channel) {
-            if (is_null($channel) || !$channel->is_disabled()) continue;
-            $channels->put($channel->get_id(), $channel);
+        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
+            foreach ($this->plugin->tv->get_channels() as $channel) {
+                if (is_null($channel) || !$channel->is_disabled()) continue;
+                $channels->put($channel->get_id(), $channel);
+            }
+        } else {
+            foreach ($this->get_group_channels() as $channel) {
+                if (is_null($channel) || !$channel->is_disabled()) continue;
+                $channels->put($channel->get_id(), $channel);
+            }
         }
 
         return $channels;

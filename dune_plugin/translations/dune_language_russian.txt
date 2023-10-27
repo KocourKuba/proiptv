@@ -57,6 +57,9 @@ login = Логин
 password = Пароль
 subdomain = Поддомен
 ottkey = OTT ключ
+device = Устройство
+server = Сервер
+quality = Качество
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное

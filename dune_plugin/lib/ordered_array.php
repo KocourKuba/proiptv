@@ -181,7 +181,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
     {
         $selected_item = $this->get_selected_item();
         $size = $this->size();
-        $this->order = array_diff($this->order, $ids);
+        $this->order = array_values(array_diff($this->order, $ids));
         $this->update_saved_pos($selected_item);
         return $size !== $this->size();
     }

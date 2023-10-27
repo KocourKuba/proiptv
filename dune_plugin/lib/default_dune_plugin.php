@@ -129,7 +129,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @var string
      */
-    protected $cur_provider;
+    protected $cur_provider_id;
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -191,9 +191,18 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return Provider_Config|null
      */
-    public function get_current_provider()
+    public function get_current_provider_id()
     {
-        return empty($this->cur_provider) ? null : $this->get_provider($this->cur_provider);
+        return empty($this->cur_provider_id) ? null : $this->get_provider($this->cur_provider_id);
+    }
+
+    /**
+     * @param string|null $provider_id
+     * @return void
+     */
+    public function set_current_provider_id($provider_id)
+    {
+        $this->cur_provider_id = $provider_id;
     }
 
     /**
@@ -911,7 +920,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function load_settings($force = false)
     {
-        $this->load($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
+        $active_playlist_key = $this->get_active_playlist_key();
+        if (!empty($active_playlist_key)) {
+            $this->load($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
+        }
     }
 
     /**
@@ -950,7 +962,7 @@ class Default_Dune_Plugin implements DunePlugin
             $this->{$type} = null;
         }
 
-        if (is_null($this->{$type})) {
+        if (!isset($this->{$type})) {
             hd_debug_print("Load: $name", true);
             $this->{$type} = HD::get_data_items($name, true, false);
             if (LogSeverity::$is_debug) {
@@ -1020,16 +1032,16 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * Remove settings for selected playlist
+     * @param string $id
      */
-    public function remove_settings()
+    public function remove_settings($id)
     {
         unset($this->settings);
-        $hash = $this->get_active_playlist_key();
-        hd_debug_print("remove $hash.settings", true);
-        HD::erase_data_items("$hash.settings");
-        hd_debug_print("remove {$hash}_" . PLUGIN_ORDERS . ".settings", true);
-        HD::erase_data_items("{$hash}_" . PLUGIN_ORDERS . ".settings");
-        foreach (glob_dir(get_cached_image_path(), "/^$hash.*$/i") as $file) {
+        hd_debug_print("remove $id.settings", true);
+        HD::erase_data_items("$id.settings");
+        hd_debug_print("remove {$id}_" . PLUGIN_ORDERS . ".settings", true);
+        HD::erase_data_items("{$id}_" . PLUGIN_ORDERS . ".settings");
+        foreach (glob_dir(get_cached_image_path(), "/^$id.*$/i") as $file) {
             hd_debug_print("remove cached image: $file", true);
             unlink($file);
         }
@@ -1059,8 +1071,14 @@ class Default_Dune_Plugin implements DunePlugin
         if ($this->providers->size() === 0) {
             $jsonArray = HD::DownloadJson(self::CONFIG_URL . "providers.json");
             if (!isset($jsonArray['providers'])) {
-                hd_debug_print("Problem to download providers configuration");
-                return;
+                if (file_exists(get_data_path("providers.json"))) {
+                    $jsonArray = json_encode(file_get_contents(get_data_path("providers.json")));
+                } else {
+                    hd_debug_print("Problem to download providers configuration");
+                    return;
+                }
+            } else {
+                file_put_contents(get_data_path("providers.json"), json_encode($jsonArray));
             }
 
             foreach ($jsonArray['providers'] as $item) {
@@ -1079,12 +1097,23 @@ class Default_Dune_Plugin implements DunePlugin
                     if (method_exists($config, $setter)) {
                         $config->{$setter}($value);
                     } else {
-                        hd_debug_print("Unknown methid $setter");
+                        hd_debug_print("Unknown method $setter");
                     }
                 }
 
                 if ($config->getId() !== '') {
                     $this->providers->set($config->getId(), $config);
+                    // cache provider logo
+                    $logo = $config->getLogo();
+                    $filename = basename($logo);
+                    if (!file_exists(get_cached_image_path($filename))) {
+                        try {
+                            $data = HD::http_get_document($logo);
+                            file_put_contents(get_cached_image_path($filename), $data);
+                        } catch (Exception $ex) {
+                            hd_debug_print("failed to download provider logo: $logo");
+                        }
+                    }
                 }
             }
         }
@@ -1141,9 +1170,9 @@ class Default_Dune_Plugin implements DunePlugin
                 $name = basename($name);
             }
             $item->name = $name;
-            $item->value = $playlist;
-            $item->type = preg_match(HTTP_PATTERN, $playlist) ? 'link' : 'file';
-            hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, value: $item->value", true);
+            $item->params['uri'] = $playlist;
+            $item->type = preg_match(HTTP_PATTERN, $playlist) ? PARAM_LINK : PARAM_FILE;
+            hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, params: " . raw_json_encode($item->params), true);
             $new_storage->set($id, $item);
         }
 
@@ -1170,18 +1199,20 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("($type) upgrade xmltv source: $source", true);
                 $item = new Named_Storage();
                 $id = ($type === 'Hashed_Array') ? $key : Hashed_Array::hash($source);
-                $item->value = $source;
+                $item->params['uri'] = $source;
                 $name = $source_names->get($key);
                 if (preg_match(HTTP_PATTERN, $source, $m)) {
-                    $item->type = 'link';
+                    $item->type = PARAM_LINK;
                     if (empty($name)) {
                         $name = $m[2];
                     } else {
                         $name = $source;
                     }
+                } else {
+                    $item->type = PARAM_FILE;
                 }
                 $item->name = $name;
-                hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, value: $item->value", true);
+                hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, params: " . raw_json_encode($item->params), true);
                 $new_storage->put($id, $item);
             }
             $this->set_parameter(PARAM_XMLTV_SOURCES, $new_storage);
@@ -1236,19 +1267,12 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param string $info
+     * @param Named_Storage $info
      * @return Provider_Config|null
      */
     public function init_provider($info)
     {
-        $pos = strpos($info, '@');
-        if ($pos === false) {
-            return null;
-        }
-
-        $provider_id = substr($info, 0, $pos);
-        hd_debug_print("provider id: $provider_id", true);
-        $provider = $this->get_provider($provider_id);
+        $provider = $this->get_provider($info->params[PARAM_PROVIDER]);
         if (is_null($provider)) {
             hd_debug_print("unknown provider");
             return null;
@@ -1259,7 +1283,7 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        $provider->parse_provider_creds(substr($info, $pos + 1));
+        $provider->parse_provider_creds($info);
 
         return $provider;
     }
@@ -1319,21 +1343,28 @@ class Default_Dune_Plugin implements DunePlugin
         try {
             if ($force !== false) {
                 $item = $this->get_current_playlist();
-                if (empty($item->value)) {
+                if (empty($item->type)) {
                     hd_debug_print("Tv playlist not defined");
                     throw new Exception("Tv playlist not defined");
                 }
 
-                hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $item->name): $item->value");
-                if (preg_match(HTTP_PATTERN, $item->value)) {
-                    $user_agent = HD::get_dune_user_agent();
-                    $cmd = get_install_path('bin/https_proxy.sh') . " '$item->value' '$tmp_file' '$user_agent'";
-                    hd_debug_print("Exec: $cmd", true);
-                    shell_exec($cmd);
-                    if (!file_exists($tmp_file)) {
-                        throw new Exception("Can't download playlist $item->value");
+                hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $item->name): $item->type");
+                if ($item->type === PARAM_LINK) {
+                    if (preg_match(HTTP_PATTERN, $item->params['uri'])) {
+                        $user_agent = HD::get_dune_user_agent();
+                        $cmd = get_install_path('bin/https_proxy.sh') . " '{$item->params['uri']}' '$tmp_file' '$user_agent'";
+                        hd_debug_print("Exec: $cmd", true);
+                        shell_exec($cmd);
+                        if (!file_exists($tmp_file)) {
+                            throw new Exception("Can't download playlist {$item->params['uri']}");
+                        }
                     }
-                } else if (!is_null($provider = $this->init_provider($item->value))) {
+                } else if ($item->type === PARAM_PROVIDER) {
+                    $provider = $this->init_provider($item);
+                    if (is_null($provider)) {
+                        throw new Exception("Unable to init provider $item");
+                    }
+                    $this->set_current_provider_id($item->params[PARAM_PROVIDER]);
                     $provider_url = $provider->get_playlist_url();
                     $user_agent = HD::get_dune_user_agent();
                     $cmd = get_install_path('bin/https_proxy.sh') . " '$provider_url' '$tmp_file' '$user_agent'";
@@ -1342,14 +1373,16 @@ class Default_Dune_Plugin implements DunePlugin
                     if (!file_exists($tmp_file)) {
                         throw new Exception("Can't download playlist $provider_url");
                     }
-                } else {
-                    $contents = @file_get_contents($item->value);
+                } else if ($item->type === PARAM_FILE) {
+                    $contents = @file_get_contents($item->params['uri']);
                     if ($contents === false) {
-                        throw new Exception("Can't read playlist: $item->value");
+                        throw new Exception("Can't read playlist: {$item->params['uri']}");
                     }
                     file_put_contents($tmp_file, $contents);
                     $mtime = filemtime($tmp_file);
                     hd_debug_print("Save $tmp_file (timestamp: $mtime)");
+                } else {
+                    throw new Exception("Unknown playlist type");
                 }
             }
 
@@ -1450,8 +1483,10 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
         if (empty($id) || !$this->get_playlists()->has($id)) {
-            $this->get_playlists()->rewind();
-            $id = $this->get_playlists()->key();
+            if ($this->get_playlists()->size()) {
+                $this->get_playlists()->rewind();
+                $id = $this->get_playlists()->key();
+            }
         }
 
         return $id;
@@ -1484,11 +1519,15 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * Clear downloaded playlist
+     * @param string $playlist_id
      * @return void
      */
-    public function clear_playlist_cache()
+    public function clear_playlist_cache($playlist_id = null)
     {
-        $tmp_file = $this->get_current_playlist_cache();
+        if ($playlist_id === null) {
+            $playlist_id = $this->get_active_playlist_key();
+        }
+        $tmp_file = get_temp_path($playlist_id . "_playlist.m3u8");
         if (file_exists($tmp_file)) {
             $this->m3u_parser->setupParser('');
             hd_debug_print("remove $tmp_file", true);
@@ -1521,8 +1560,8 @@ class Default_Dune_Plugin implements DunePlugin
             if (!preg_match(HTTP_PATTERN, $m3u8source, $m)) continue;
 
             $item = new Named_Storage();
-            $item->type = 'link';
-            $item->value = $m3u8source;
+            $item->type = PARAM_LINK;
+            $item->params['uri'] = $m3u8source;
             $item->name = $m[2];
             $xmltv_sources->put(Hashed_Array::hash($m3u8source), $item);
         }
@@ -1553,9 +1592,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_active_xmltv_source_key($key)
     {
+        /** @var Named_Storage $xmltv_source */
         $xmltv_source = $this->get_all_xmltv_sources()->get($key);
         $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
-        $this->set_active_xmltv_source($xmltv_source->value);
+        $this->set_active_xmltv_source($xmltv_source->params['uri']);
     }
 
     /**
@@ -1735,6 +1775,10 @@ class Default_Dune_Plugin implements DunePlugin
             $icon = get_image_path($icon);
         }
 
+        if (file_exists(get_cached_image_path(basename($icon)))) {
+            $icon = get_cached_image_path(basename($icon));
+        }
+
         hd_debug_print("icon: $icon");
         return User_Input_Handler_Registry::create_popup_item($handler, $action_id, $caption, $icon, $add_params);
     }
@@ -1756,14 +1800,14 @@ class Default_Dune_Plugin implements DunePlugin
             $idx++;
 
             $icon = null;
-            if ($item->type === 'provider') {
-                $provider = $this->init_provider($item->value);
+            if ($item->type === PARAM_PROVIDER) {
+                $provider = $this->init_provider($item);
                 if (!is_null($provider)) {
                     $icon = $provider->getLogo();
                 }
-            } else if ($item->type === 'link') {
+            } else if ($item->type === PARAM_LINK) {
                 $icon = "link.png";
-            } else if ($item->type === 'file') {
+            } else if ($item->type === PARAM_FILE) {
                 $icon = "m3u_file.png";
             }
 
@@ -1799,7 +1843,7 @@ class Default_Dune_Plugin implements DunePlugin
                 ACTION_EDIT_PROVIDER_DLG,
                 $provider->getName(),
                 $provider->getLogo(),
-                array(ACTION_PROVIDER => $provider->getId())
+                array(PARAM_PROVIDER => $provider->getId())
             );
         }
         return $menu_items;

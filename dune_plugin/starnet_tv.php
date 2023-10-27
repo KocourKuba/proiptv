@@ -40,6 +40,9 @@ class Starnet_Tv implements User_Input_Handler
     public static $tvg_id = array('tvg-id', 'tvg-name');
     public static $tvg_archive = array('catchup-days', 'catchup-time', 'timeshift', 'arc-timeshift', 'arc-time', 'tvg-rec');
 
+    static $null_hashed_array;
+    static $null_ordered_array;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -84,6 +87,9 @@ class Starnet_Tv implements User_Input_Handler
     {
         User_Input_Handler_Registry::get_instance()->register_handler($this);
 
+        self::$null_hashed_array = new Hashed_Array();
+        self::$null_ordered_array = new Ordered_Array();
+
         $this->plugin = $plugin;
         $this->playback_url_is_stream_url = false;
         $this->groups = new Hashed_Array();
@@ -103,11 +109,11 @@ class Starnet_Tv implements User_Input_Handler
      * @param array|Ordered_Array|Hashed_Array|string|null $filter
      * @return Hashed_Array<Channel>|null
      */
-    public function get_channels($filter = null)
+    public function &get_channels($filter = null)
     {
         if ($this->channels->size() === 0) {
             hd_debug_print("Channels not loaded");
-            return null;
+            return self::$null_hashed_array;
         }
 
         if (is_null($filter)) {
@@ -128,7 +134,8 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        return null;
+        hd_debug_print("Unknown filter type");
+        return self::$null_hashed_array;
     }
 
     /**
@@ -229,20 +236,20 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("Hide channels type: $pattern");
 
         if ($group_id === ALL_CHANNEL_GROUP_ID) {
-            $channels = $this->get_enabled_channels();
+            $group = $this->get_special_group(ALL_CHANNEL_GROUP_ID);
         } else {
             $group = $this->get_group($group_id);
-            if (is_null($group)) {
-                return;
-            }
-            $channels = $group->get_group_enabled_channels();
         }
 
-        foreach ($channels as $channel) {
+        if (is_null($group)) {
+            return;
+        }
+
+        foreach ($group->get_group_enabled_channels() as $channel) {
             if ($regex) {
                 $disable = preg_match("#$pattern#", $channel->get_title());
             } else {
-                $disable = strpos($pattern, $channel->get_title()) !== false;
+                $disable = stripos($channel->get_title(), $pattern) !== false;
             }
 
             if ($disable) {
@@ -665,7 +672,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         foreach ($orphans_groups as $group) {
-            hd_debug_print("Remove orphaned hidden group: $group");
+            hd_debug_print("Remove orphaned hidden group: $group", true);
             $disabled_group->remove_item($group);
         }
 
@@ -673,16 +680,15 @@ class Starnet_Tv implements User_Input_Handler
         $playlist_groups->add_items(array(PARAM_DISABLED_GROUPS, PARAM_DISABLED_CHANNELS, PARAM_KNOWN_CHANNELS, PARAM_GROUPS_ORDER, FAVORITES_GROUP_ID));
         $orphans_groups = array_diff($this->plugin->get_order_names(), $playlist_groups->get_order());
         foreach ($orphans_groups as $orphan_group_id) {
-            hd_debug_print("Remove orphaned order for group id: $orphan_group_id");
+            hd_debug_print("Remove orphaned order for group id: $orphan_group_id", true);
             $this->plugin->remove_order($orphan_group_id);
         }
         unset($playlist_groups);
 
         // Read channels
-        $provider = $this->plugin->get_current_provider();
         $id_map = false;
         $id_parser = '';
-        if (!is_null($provider) && $provider->getIdParser() !== '') {
+        if (!is_null($provider = $this->plugin->get_current_provider_id()) && $provider->getIdParser() !== '') {
             if ($provider->getIdMap() === 'map') {
                 $id_map = true;
                 $id_parser = $provider->getIdParser();
@@ -808,7 +814,7 @@ class Starnet_Tv implements User_Input_Handler
                         hd_debug_print(Entry::TAG_EXTVLCOPT . " Channel: $channel_name uses custom dune_params: '{$ext_vlc_opts['dune-params']}'", true);
                         foreach ($ext_vlc_opts['dune-params'] as $param) {
                             $param_pair = explode(':', $param);
-                            if (empty($param_pair) || count($param_pair) < 2) continue;
+                            if (count($param_pair) < 2) continue;
 
                             $param_pair[0] = trim($param_pair[0]);
                             if (strpos($param_pair[1], ",,") !== false) {
@@ -902,22 +908,28 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        $no_changes = count($this->get_changed_channels(null)) === 0;
+        $no_changes = count($this->get_changed_channels()) === 0;
 
         $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled($no_changes);
 
         // cleanup orders if saved group removed from playlist
-        hd_debug_print("Remove orphaned channels");
+        hd_debug_print("Remove orphaned channels", true);
         /** @var Group $group */
         foreach ($this->groups as $group) {
             $orphans_channels = array_diff($group->get_items_order()->get_order(), $playlist_group_channels[$group->get_id()]);
             if (!empty($orphans_channels)) {
-                $this->plugin->set_dirty();
+                hd_debug_print("Remove from group: {$group->get_title()} total orphaned channels: " . count($orphans_channels), true);
+                $group->get_items_order()->remove_items($orphans_channels);
+                $this->plugin->set_dirty(PLUGIN_ORDERS);
             }
+        }
 
-            foreach ($orphans_channels as $channel_id) {
-                hd_debug_print("Remove orphaned channel id: $channel_id");
-                $group->get_items_order()->remove_item($channel_id);
+        if (!is_null($all_channels = $this->get_channels())) {
+            $orphans_channels = array_diff($this->get_disabled_channel_ids()->get_order(), $all_channels->get_order());
+            if (!empty($orphans_channels)) {
+                hd_debug_print("Remove total orphaned disabled channels: " . count($orphans_channels), true);
+                $this->get_disabled_channel_ids()->remove_items($orphans_channels);
+                $this->plugin->set_dirty(PLUGIN_ORDERS);
             }
         }
 
@@ -963,13 +975,14 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         $replaces = array();
-        if ((int)$archive_ts <= 0) {
-            $provider = $this->plugin->get_current_provider();
-            if (!is_null($provider) && $provider->getProviderType() === 'ottkey') {
-                $replaces[MACRO_SUBDOMAIN] = $provider->getCredential(MACRO_SUBDOMAIN);
-                $replaces[MACRO_OTTKEY] = $provider->getCredential(MACRO_OTTKEY);
-            }
-        } else {
+
+        $provider = $this->plugin->get_current_provider_id();
+        if (!is_null($provider) && $provider->getProviderType() === PROVIDER_TYPE_EDEM) {
+            $replaces['localhost'] = $provider->getCredential(MACRO_SUBDOMAIN);
+            $replaces['00000000000000'] = $provider->getCredential(MACRO_OTTKEY);
+        }
+
+        if ((int)$archive_ts > 0) {
             $now = time();
             $replaces[catchup_params::CU_START] = $archive_ts;
             $replaces[catchup_params::CU_UTC] = $archive_ts;
@@ -994,8 +1007,12 @@ class Starnet_Tv implements User_Input_Handler
             $replaces[catchup_params::CU_END_SEC]   = date('S', $now);
         }
 
+        hd_debug_print("replaces: " . raw_json_encode($replaces));
         foreach ($replaces as $key => $value) {
-            $stream_url = str_replace($key, $value, $stream_url);
+            if (strpos($stream_url, $key) !== false) {
+                hd_debug_print("replace $key to $value");
+                $stream_url = str_replace($key, $value, $stream_url);
+            }
         }
 
         if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
@@ -1342,7 +1359,7 @@ class Starnet_Tv implements User_Input_Handler
      * @param string $type // new, removed, null or other value - total
      * @return array
      */
-    public function get_changed_channels($type)
+    public function get_changed_channels($type = null)
     {
         $known_channels = $this->get_known_channels();
         $all_channels = $this->get_channels();

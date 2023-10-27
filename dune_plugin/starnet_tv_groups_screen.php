@@ -193,7 +193,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $order->clear();
                         foreach ($this->plugin->tv->get_enabled_groups() as $group) {
                             $order->add_item($group->get_id());
-                            $group->sort_group_items();
+                            $group->sort_group_items(true);
                         }
                         $this->set_changes();
                         break;
@@ -434,7 +434,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         return Action_Factory::update_regular_folder(
             $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies), true, $sel_ndx
         );
-
     }
 
     /**

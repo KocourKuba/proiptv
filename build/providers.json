@@ -72,9 +72,14 @@
       "id": "cbilling",
       "name": "Cbilling",
       "logo": "http://iptv.esalecrm.net/res/logo_cbilling.png",
-      "enable": false,
+      "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
+      "devices": {
+        "1": "1",
+        "2": "2",
+        "3": "3"
+      },
       "id_map": "map",
       "id_parser": "tvg-id",
       "provider_info": false
@@ -84,7 +89,7 @@
       "name": "iEdem/iLook",
       "logo": "http://iptv.esalecrm.net/res/logo_edem.png",
       "enable": true,
-      "provider_type": "ottkey",
+      "provider_type": "edem",
       "playlist_source": "http://epg.it999.ru/edem_epg_ico2.m3u8",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/(?:.+)\\/iptv\\/(?:.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
@@ -160,9 +165,15 @@
       "id": "kineskop",
       "name": "Kineskop Club",
       "logo": "http://iptv.esalecrm.net/res/logo_kineskop.png",
-      "enable": false,
+      "enable": true,
       "provider_type": "login",
-      "playlist_source": "http://knkp.in/{LOGIN}/{PASSWORD}/{SERVER}/1",
+      "playlist_source": "http://knkp.in/{LOGIN}/{PASSWORD}/{SERVER_ID}/1",
+      "servers": {
+        "DE": "DE",
+        "PL": "PL",
+        "US": "US",
+        "RU": "RU"
+      },
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
       "provider_info": false
@@ -182,9 +193,22 @@
       "id": "mymagic",
       "name": "MyMAGic TV",
       "logo": "http://iptv.esalecrm.net/res/logo_mymagic.png",
-      "enable": false,
+      "enable": true,
       "provider_type": "login",
       "playlist_source": "http://pl.mymagic.tv/srv/{SERVER_ID}/{QUALITY_ID}/{LOGIN}/{PASSWORD}/tv.m3u",
+      "servers": {
+        "0": "Default",
+        "1": "Germany 1",
+        "2": "Czech",
+        "3": "Germany 2",
+        "4": "Spain",
+        "5": "Netherlands",
+        "6": "France"
+      },
+      "qualities": {
+        "medium": "Medium",
+        "high": "High"
+      },
       "id_map": "",
       "id_parser": "",
       "provider_info": false
@@ -259,9 +283,13 @@
       "id": "shuratv",
       "name": "ShuraTV",
       "logo": "http://iptv.esalecrm.net/res/logo_shuratv.png",
-      "enable": false,
+      "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://pl.tvshka.net/?uid={PASSWORD}&srv={SERVER_ID}&type=halva",
+      "servers": {
+        "0": "Server 1",
+        "1": "Server 2"
+      },
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$",
       "provider_info": false
@@ -270,9 +298,16 @@
       "id": "smile",
       "name": "Smile",
       "logo": "http://iptv.esalecrm.net/res/logo_smile.png",
-      "enable": false,
+      "enable": true,
       "provider_type": "login",
       "playlist_source": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/tv.m3u?srv={SERVER_ID}",
+      "servers": {
+        "0": "Auto Select",
+        "1": "Server CZ",
+        "2": "Server DE",
+        "3": "Server NL",
+        "4": "Server RU"
+      },
       "id_map": "",
       "id_parser": "",
       "provider_info": false
@@ -316,7 +351,14 @@
       "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
       "enable": true,
       "provider_type": "pin",
-      "playlist_source": "http://cdntv.online/high/{PASSWORD}/playlist.m3u8",
+      "playlist_source": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
+      "qualities": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Medium",
+        "variant": "Adaptive",
+        "hls": "Optimal"
+      },
       "id_map": "map",
       "id_parser": "tvg-id",
       "provider_info": false
@@ -325,9 +367,21 @@
       "id": "yosso",
       "name": "Yosso TV",
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
-      "enable": false,
+      "enable": true,
       "provider_type": "login",
       "playlist_source": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}/playlist.m3u8",
+      "servers": {
+        " ": "RU (Russia, Moscow)",
+        "kfc": "KFC (Russia, Moscow)",
+        "OSTHLS": "OSTHLS (Russia, Moscow)",
+        "KRDHLS": "KRDHLS (Russia, Krasnodar)",
+        "bn": "BN (Russia, Saint-Petersburg)",
+        "BYHLS": "BYHLS (Belarus, Minsk)",
+        "de": "DE (Germany, Frankfurt/Netherlands, Amsterdam)",
+        "kz": "KZ (Kazakhstan, Almaty/Russia, Samara)",
+        "gn": "GN (Ukraine, Kiev)",
+        "RHLS": "RHLS (GlobalCache CDN)"
+      },
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/(?:.+\\/)?(?<id>.+)\\/.+$",
       "provider_info": false

@@ -11,17 +11,17 @@ class Named_Storage
     }
 
     /**
-     * @var
+     * @var string
      */
     public $type = '';
 
     /**
-     * @var
+     * @var string
      */
     public $name = '';
 
     /**
-     * @var
+     * @var array
      */
-    public $value = '';
+    public $params = array();
 }

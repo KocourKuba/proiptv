@@ -105,14 +105,29 @@ class Provider_Config
     /**
      * @var array
      */
+    protected $devices = array();
+
+    /**
+     * @var array
+     */
+    protected $servers = array();
+
+    /**
+     * @var array
+     */
+    protected $qualities = array();
+
+    /**
+     * @var array
+     */
     protected $credentials;
 
     ////////////////////////////////////////////////////////////////////////
     /// non configurable vars
     /**
-     * @var string
+     * @var Named_Storage
      */
-    private $init_string = '';
+    private $parsed_info;
 
     public function __toString()
     {
@@ -298,6 +313,54 @@ class Provider_Config
     }
 
     /**
+     * @return array
+     */
+    public function getDevices()
+    {
+        return $this->devices;
+    }
+
+    /**
+     * @param array $devices
+     */
+    public function setDevices($devices)
+    {
+        $this->devices = $devices;
+    }
+
+    /**
+     * @return array
+     */
+    public function getServers()
+    {
+        return $this->servers;
+    }
+
+    /**
+     * @param array $servers
+     */
+    public function setServers($servers)
+    {
+        $this->servers = $servers;
+    }
+
+    /**
+     * @return array
+     */
+    public function getQualities()
+    {
+        return $this->qualities;
+    }
+
+    /**
+     * @param array $qualities
+     */
+    public function setQualities($qualities)
+    {
+        $this->qualities = $qualities;
+    }
+
+    /**
      * @param string $name
      * @return string
      */
@@ -320,19 +383,12 @@ class Provider_Config
     /// Methods
 
     /**
-     * @param string $info
+     * @param Named_Storage $info
      * @return void
      */
     public function parse_provider_creds($info)
     {
-        if (empty($info) || $this->init_string === $info) {
-            return;
-        }
-
-        $this->credentials = array(MACRO_LOGIN => '', MACRO_PASSWORD => '', MACRO_SUBDOMAIN => '', MACRO_OTTKEY => '', MACRO_TOKEN => '');
-        $vars = explode(':', $info);
-        if (empty($vars)) {
-            hd_debug_print("invalid provider_info: $info", true);
+        if (!is_null($this->parsed_info) && $this->parsed_info === $info) {
             return;
         }
 
@@ -340,26 +396,42 @@ class Provider_Config
 
         switch ($this->getProviderType()) {
             case PROVIDER_TYPE_PIN:
-                $this->setCredential(MACRO_PASSWORD, $vars[0]);
+                $this->setCredential(MACRO_PASSWORD, $info->params[MACRO_PASSWORD]);
                 break;
 
             case PROVIDER_TYPE_LOGIN:
             case PROVIDER_TYPE_LOGIN_TOKEN:
             case PROVIDER_TYPE_LOGIN_STOKEN:
-                $this->setCredential(MACRO_LOGIN, $vars[0]);
-                $this->setCredential(MACRO_PASSWORD, $vars[1]);
+                $this->setCredential(MACRO_LOGIN, $info->params[MACRO_LOGIN]);
+                $this->setCredential(MACRO_PASSWORD, $info->params[MACRO_PASSWORD]);
                 if ($this->getProviderType() !== PROVIDER_TYPE_LOGIN) {
                     $this->init_token();
                 }
                 break;
 
-            case PROVIDER_TYPE_OTTKEY:
-                $this->setCredential(MACRO_SUBDOMAIN, $vars[0]);
-                $this->setCredential(MACRO_OTTKEY, $vars[1]);
+            case PROVIDER_TYPE_EDEM:
+                $this->setCredential(MACRO_SUBDOMAIN, $info->params[MACRO_SUBDOMAIN]);
+                $this->setCredential(MACRO_OTTKEY, $info->params[MACRO_OTTKEY]);
                 break;
+
+            default:
+                return;
         }
 
-        $this->init_string = $info;
+        foreach($info->params as $key => $item) {
+            switch($key) {
+                case MACRO_SERVER:
+                    $this->setCredential(MACRO_SERVER, $item);
+                    break;
+                case MACRO_DEVICE:
+                    $this->setCredential(MACRO_DEVICE, $item);
+                    break;
+                case MACRO_QUALITY:
+                    $this->setCredential(MACRO_QUALITY, $item);
+                    break;
+            }
+        }
+        $this->parsed_info = $info;
     }
 
     /**
@@ -368,17 +440,21 @@ class Provider_Config
     public function get_playlist_url()
     {
         $playlist_url = $this->getPlaylistSource();
-        foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN) as $macro) {
-            $playlist_url = str_replace($macro, $this->getCredential($macro), $playlist_url);
+        hd_debug_print("playlist template $playlist_url");
+        foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN, MACRO_DEVICE, MACRO_SERVER, MACRO_QUALITY) as $macro) {
+            if (strpos($playlist_url, $macro) === false) continue;
+            hd_debug_print("replace: $macro to " . $this->getCredential($macro), true);
+            $playlist_url = str_replace($macro, trim($this->getCredential($macro)), $playlist_url);
         }
 
+        hd_debug_print("playlist url $playlist_url");
         return $playlist_url;
     }
 
     /**
      * @return string
      */
-    protected function init_token()
+    public function init_token()
     {
         $token = $this->getCredential(MACRO_TOKEN);
         if (!empty($token)) {

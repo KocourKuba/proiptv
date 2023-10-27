@@ -183,7 +183,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY: // handle streaming settings dialog result
                 $this->plugin->get_epg_manager()->clear_epg_cache();
-                $this->plugin->remove_settings();
+                $this->plugin->remove_settings($this->plugin->get_active_playlist_key());
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_EXT_PARAMS_DLG:

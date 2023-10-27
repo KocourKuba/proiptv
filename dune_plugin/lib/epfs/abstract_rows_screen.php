@@ -46,12 +46,14 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
     private $has_changes = false;
 
     /**
+     * @param string $save_data
      * @return bool
      */
-    protected function set_changes()
+    protected function set_changes($save_data = PLUGIN_ORDERS)
     {
         $old = $this->has_changes;
         $this->has_changes = true;
+        $this->plugin->set_dirty($save_data);
         return $old;
     }
 

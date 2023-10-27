@@ -679,6 +679,8 @@ class HD
         if (file_exists($path)) {
             hd_debug_print("$path deleted");
             unlink($path);
+        } else {
+            hd_debug_print("$path not exist");
         }
     }
 

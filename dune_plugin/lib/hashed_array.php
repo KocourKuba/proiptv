@@ -161,7 +161,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * @param TKey[] $keys
      * @return Hashed_Array
      */
-    public function filter($keys)
+    public function &filter($keys)
     {
         $filtered = new self();
         foreach ($keys as $key) {

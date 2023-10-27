@@ -8,7 +8,6 @@ const ACTION_INTERNAL_PLAYER = 'use_internal_player';
 const ACTION_FOLDER_SELECTED = 'folder_selected';
 const ACTION_PLAYLIST_SELECTED = 'playlist_selected';
 const ACTION_EDIT_PROVIDER_DLG = 'select_provider';
-const ACTION_PROVIDER = 'provider';
 const ACTION_FILE_SELECTED = 'file_selected';
 const ACTION_ITEM_ADD = 'item_add';
 const ACTION_ITEM_DELETE = 'item_delete';
@@ -127,6 +126,9 @@ const PARAM_USE_HTTPS_PROXY = 'use_proxy';
 const PARAM_STREAM_FORMAT = 'stream_format';
 const PARAM_CUSTOM_DELETE_STRING = 'custom_delete_string';
 const PARAM_CUSTOM_DELETE_REGEX = 'custom_delete_regex';
+const PARAM_PROVIDER = 'provider';
+const PARAM_LINK = 'link';
+const PARAM_FILE = 'file';
 
 const LIST_IDX = 'list_idx';
 
@@ -143,13 +145,16 @@ const MACRO_PASSWORD = '{PASSWORD}';
 const MACRO_SUBDOMAIN = '{SUBDOMAIN}';
 const MACRO_OTTKEY = '{OTTKEY}';
 const MACRO_TOKEN = '{TOKEN}';
+const MACRO_DEVICE = '{DEVICE_ID}';
+const MACRO_SERVER = '{SERVER_ID}';
+const MACRO_QUALITY = '{QUALITY_ID}';
 
 // provider type access
 const PROVIDER_TYPE_PIN = 'pin';
 const PROVIDER_TYPE_LOGIN = 'login';
 const PROVIDER_TYPE_LOGIN_TOKEN = 'login-token';
 const PROVIDER_TYPE_LOGIN_STOKEN = 'login-stoken';
-const PROVIDER_TYPE_OTTKEY = 'ottkey';
+const PROVIDER_TYPE_EDEM = 'edem';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
 const ENGINE_JSON = 'json';
@@ -172,7 +177,7 @@ const IMAGE_PATTERN = '|psd|pspimage|thm|tif|yuf|svg|ico|djpg|dbmp|dpng';
 const PLAYLIST_PATTERN = 'm3u|m3u8';
 const EPG_PATTERN = 'xml|xmltv|gz';
 const HTTP_PATTERN = '/^(https?):\/\/([^\?]+)\??/';
-const PROVIDER_PATTERN = '/^(.+)@(?:(.+):(.+)|(.+))$/';
+const PROVIDER_PATTERN = '/^(.+)@(.+)$/';
 
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage';

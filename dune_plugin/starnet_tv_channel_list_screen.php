@@ -470,28 +470,16 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     }
 
     /**
-     * @param Group $parent_group
+     * @param Group $group
      * @param $find_text
      * @return array
      */
-    protected function do_search(Group $parent_group, $find_text)
+    protected function do_search(Group $group, $find_text)
     {
-        hd_debug_print($parent_group, true);
+        hd_debug_print($group, true);
 
         /** @var Channel $channel */
-        $channels = array();
-        if ($parent_group->get_id() === ALL_CHANNEL_GROUP_ID) {
-            foreach($this->plugin->tv->get_enabled_channels() as $channel) {
-                foreach ($channel->get_groups() as $group) {
-                    if (!$group->is_disabled()) {
-                        $channels[] = $channel;
-                        break;
-                    }
-                }
-            }
-        } else {
-            $channels = $parent_group->get_group_enabled_channels()->get_ordered_values();
-        }
+        $channels = $group->get_group_enabled_channels()->get_ordered_values();
 
         $defs = array();
         $q_result = false;

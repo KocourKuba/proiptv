@@ -55,7 +55,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear'));
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear'));
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
 
         return $actions;
     }
@@ -76,6 +77,9 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             case ACTION_PLAY_ITEM:
                 try {
                     $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+                    if (in_array($selected_media_url, $this->plugin->tv->get_changed_channels('removed'))) {
+                        return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'));
+                    }
                     $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
@@ -86,23 +90,47 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
                 return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
 
+            case ACTION_ITEM_DELETE:
+                $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
+                $changed = $this->plugin->tv->get_changed_channels();
+                $order = &$this->plugin->tv->get_known_channels();
+                if (in_array($channel_id, $this->plugin->tv->get_changed_channels('new')) !== false) {
+                    $channel = $this->plugin->tv->get_channel($channel_id);
+                    if (!is_null($channel)) {
+                        $order->set($channel->get_id(), $channel->get_title());
+                        $this->set_changes();
+                    }
+                } else if (in_array($channel_id, $this->plugin->tv->get_changed_channels('removed')) !== false) {
+                    $order->erase($channel_id);
+                    $this->set_changes();
+                }
+
+                unset($changed[$channel_id]);
+                if (count($changed) === 0) {
+                    $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);
+                    return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+                }
+                break;
+
             case ACTION_ITEMS_CLEAR:
                 $this->set_changes();
                 $all_channels = $this->plugin->tv->get_channels();
                 $order = &$this->plugin->tv->get_known_channels();
+                $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);
                 $order->clear();
                 foreach ($all_channels as $channel) {
                     $order->set($channel->get_id(), $channel->get_title());
                 }
 
-                $this->plugin->save_orders(true);
-                break;
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case GUI_EVENT_KEY_RETURN:
-                break;
+                $this->plugin->save_orders(true);
+                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
-        return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
+        return Action_Factory::update_regular_folder(
+            $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies), true);
     }
 
     ///////////////////////////////////////////////////////////////////////

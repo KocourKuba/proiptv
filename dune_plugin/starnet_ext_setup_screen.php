@@ -235,7 +235,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 if ($user_input->pass1 !== $pass) {
                     $msg = TR::t('err_wrong_old_password');
                 } else if (empty($user_input->pass2)) {
-                    $this->plugin->remove_parameter(PARAM_ADULT_PASSWORD);
+                    $this->plugin->set_parameter(PARAM_ADULT_PASSWORD, '');
                     $msg = TR::t('setup_pass_disabled');
                     $need_reload = true;
                 } else if ($user_input->pass1 !== $user_input->pass2) {

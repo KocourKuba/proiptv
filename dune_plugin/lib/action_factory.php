@@ -199,6 +199,7 @@ class Action_Factory
         $defs = array();
 
         if ($preferred_width === 0) {
+            $preferred_width = (int)mb_strlen($title, 'UTF-8') * 21 + 100;
             if ($multiline !== null) {
                 if (is_array($multiline)) {
                     $lines = $multiline;
@@ -211,8 +212,6 @@ class Action_Factory
                         $preferred_width = (int)$px;
                 }
                 Control_Factory::add_multiline_label($defs, '', $multiline, 15);
-            } else {
-                $preferred_width = (int)mb_strlen($title, 'UTF-8') * 21;
             }
         }
 
