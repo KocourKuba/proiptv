@@ -301,6 +301,19 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
+     * @param string $id
+     * @return bool
+     */
+    public function in_items_order($id)
+    {
+        if ($this->_order_support) {
+            return $this->plugin->get_orders($this->_id)->in_order($id);
+        }
+
+        return false;
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_media_url_str()

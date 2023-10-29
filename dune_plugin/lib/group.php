@@ -75,6 +75,12 @@ interface Group
     public function set_items_order($order);
 
     /**
+     * @param string $id
+     * @return bool
+     */
+    public function in_items_order($id);
+
+    /**
      * @return string;
      */
     public function get_media_url_str();

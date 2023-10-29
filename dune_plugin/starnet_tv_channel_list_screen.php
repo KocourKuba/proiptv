@@ -118,7 +118,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
 
             case ACTION_ADD_FAV:
-                $opt_type = $this->plugin->tv->is_in_favorites($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+                $opt_type = $fav_group->in_items_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->set_changes();
                 $this->plugin->tv->change_tv_favorites($opt_type, $channel_id);
                 break;
@@ -465,7 +466,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
                 ViewItemParams::item_detailed_info => $detailed_info,
             ),
-            PluginRegularFolderItem::starred => $this->plugin->tv->is_in_favorites($channel_id),
+            PluginRegularFolderItem::starred => $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->in_items_order($channel_id),
         );
     }
 

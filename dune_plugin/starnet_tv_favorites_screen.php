@@ -55,7 +55,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-        if ($this->plugin->tv->get_favorites()->size() !== 0) {
+        if ($this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
@@ -78,6 +78,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         }
 
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
 
         switch ($user_input->control_id) {
             case ACTION_PLAY_ITEM:
@@ -107,8 +108,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
             case ACTION_ITEM_DOWN:
                 $user_input->sel_ndx++;
-                if ($user_input->sel_ndx >= $this->plugin->tv->get_favorites()->size()) {
-                    $user_input->sel_ndx = $this->plugin->tv->get_favorites()->size() - 1;
+                if ($user_input->sel_ndx >= $fav_group->get_items_order()->size()) {
+                    $user_input->sel_ndx = $fav_group->get_items_order()->size() - 1;
                 }
                 $this->set_changes();
                 $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
@@ -117,7 +118,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             case ACTION_ITEM_DELETE:
                 $this->set_changes();
                 $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
-                if ($this->plugin->tv->get_favorites()->size() !== 0) {
+                if ($fav_group->get_items_order()->size() !== 0) {
                     return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
                     //return $action;
                 }
@@ -155,7 +156,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $items = array();
 
-        foreach ($this->plugin->tv->get_favorites() as $channel_id) {
+        foreach ($this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order() as $channel_id) {
             if (!preg_match('/\S/', $channel_id)) {
                 continue;
             }

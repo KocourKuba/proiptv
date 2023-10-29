@@ -105,7 +105,8 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
 			case ACTION_ADD_FAV:
-				$is_favorite = $this->plugin->tv->is_in_favorites($selected_media_url->channel_id);
+                $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+				$is_favorite = $fav_group->in_items_order($selected_media_url->channel_id);
 				$opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
                 $this->set_changes();

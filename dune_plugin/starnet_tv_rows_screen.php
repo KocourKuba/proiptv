@@ -236,13 +236,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 PaneParams::fav_btn_font_size
             );
         } else {
+            /** @var Group $group */
             if ($group_id === FAVORITES_GROUP_ID) {
-                $order = $this->plugin->tv->get_favorites()->get_order();
+                $group = $this->plugin->tv->get_special_group($group_id);
             } else {
-                /** @var Group $group */
                 $group = $this->plugin->tv->get_group($group_id);
-                $order = $group->get_items_order()->get_order();
             }
+            $order = $group->get_items_order()->get_order();
 
             $is_first_channel = ($channel_id === reset($order));
             // green button image (B) 52x50
@@ -580,7 +580,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     if ($control_id === PLUGIN_FAVORITES_OP_ADD) {
                         if ($this->plugin->tv->get_channel($media_url->channel_id) === null) break;
 
-                        $is_in_favorites = $this->plugin->tv->is_in_favorites($media_url->channel_id);
+                        $is_in_favorites = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->in_items_order($media_url->channel_id);
                         $control_id = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                     }
 
@@ -918,8 +918,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-
-        foreach ($this->plugin->tv->get_favorites() as $channel_id) {
+        foreach ($group->get_items_order() as $channel_id) {
             $channel = $this->plugin->tv->get_channel($channel_id);
             if (is_null($channel) || $channel->is_disabled()) continue;
 
@@ -1072,13 +1071,15 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $channels_order = $all_channels_group->get_group_enabled_channels();
 
+        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+
         $items = array();
         foreach ($channels_order as $channel) {
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => ALL_CHANNEL_GROUP_ID, 'channel_id' => $channel->get_id())),
                 $channel->get_icon_url(),
                 $channel->get_title(),
-                $this->plugin->tv->is_in_favorites($channel->get_id()) ? $fav_stickers : null
+                $fav_group->in_items_order($channel->get_id()) ? $fav_stickers : null
             );
         }
 
@@ -1121,6 +1122,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 RowsItemsParams::fav_sticker_icon_height));
 
         $rows = array();
+        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
         /** @var Group $group */
         /** @var Channel $channel */
         foreach ($this->plugin->tv->get_groups($this->plugin->tv->get_groups_order()) as $group) {
@@ -1136,7 +1138,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     json_encode(array('group_id' => $group_id, 'channel_id' => $channel_id)),
                     $channel->get_icon_url(),
                     $channel->get_title(),
-                    $this->plugin->tv->is_in_favorites($channel_id) ? $fav_stickers : null
+                    $fav_group->in_items_order($channel_id) ? $fav_stickers : null
                 );
             }
 
@@ -1300,7 +1302,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         PLUGIN_FAVORITES_OP_MOVE_DOWN, TR::t('right'), PaneParams::fav_button_yellow);
                 }
 
-                $is_in_favorites = $this->plugin->tv->is_in_favorites($media_url->channel_id);
+                $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+                $is_in_favorites = $fav_group->in_items_order($media_url->channel_id);
                 $caption = $is_in_favorites ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
                 $action = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $menu_items[] = $this->plugin->create_menu_item($this, $action, $caption, PaneParams::fav_button_blue);

@@ -40,8 +40,8 @@ class Starnet_Tv implements User_Input_Handler
     public static $tvg_id = array('tvg-id', 'tvg-name');
     public static $tvg_archive = array('catchup-days', 'catchup-time', 'timeshift', 'arc-timeshift', 'arc-time', 'tvg-rec');
 
-    static $null_hashed_array;
-    static $null_ordered_array;
+    static public $null_hashed_array;
+    static public $null_ordered_array;
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -338,32 +338,6 @@ class Starnet_Tv implements User_Input_Handler
     }
 
     /**
-     * @return Ordered_Array
-     */
-    public function get_favorites()
-    {
-        return $this->get_special_group(FAVORITES_GROUP_ID)->get_items_order();
-    }
-
-    /**
-     * @param Ordered_Array $order
-     * @return void
-     */
-    public function set_favorites($order)
-    {
-        $this->get_special_group(FAVORITES_GROUP_ID)->set_items_order($order);
-    }
-
-    /**
-     * @param string $id
-     * @return bool
-     */
-    public function is_in_favorites($id)
-    {
-        return $this->get_favorites()->in_order($id);
-    }
-
-    /**
      * @override DunePlugin
      * @param string $op_type
      * @param string $channel_id
@@ -373,32 +347,36 @@ class Starnet_Tv implements User_Input_Handler
     {
         hd_debug_print(null, true);
 
+        $fav_group = $this->get_special_group(FAVORITES_GROUP_ID);
+        if (is_null($fav_group))
+            return null;
+        $order = &$fav_group->get_items_order();
         switch ($op_type) {
             case PLUGIN_FAVORITES_OP_ADD:
-                if (!$this->get_favorites()->add_item($channel_id)) return null;
+                if (!$order->add_item($channel_id)) return null;
 
                 hd_debug_print("Add channel $channel_id to favorites", true);
                 break;
 
             case PLUGIN_FAVORITES_OP_REMOVE:
-                if (!$this->get_favorites()->remove_item($channel_id)) return null;
+                if (!$order->remove_item($channel_id)) return null;
 
                 hd_debug_print("Remove channel $channel_id from favorites", true);
                 break;
 
             case PLUGIN_FAVORITES_OP_MOVE_UP:
-                if (!$this->get_favorites()->arrange_item($channel_id, Ordered_Array::UP)) return null;
+                if (!$order->arrange_item($channel_id, Ordered_Array::UP)) return null;
 
                 break;
 
             case PLUGIN_FAVORITES_OP_MOVE_DOWN:
-                if (!$this->get_favorites()->arrange_item($channel_id, Ordered_Array::DOWN)) return null;
+                if (!$order->arrange_item($channel_id, Ordered_Array::DOWN)) return null;
 
                 break;
 
             case ACTION_ITEMS_CLEAR:
                 hd_debug_print("Clear favorites", true);
-                $this->get_favorites()->clear();
+                $order->clear();
                 break;
         }
 
@@ -1245,7 +1223,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::initial_group_id => $initial_group_id,
 
             PluginTvInfo::initial_is_favorite => $initial_is_favorite,
-            PluginTvInfo::favorite_channel_ids => $this->get_favorites()->get_order(),
+            PluginTvInfo::favorite_channel_ids => $this->get_special_group(FAVORITES_GROUP_ID)->get_items_order()->get_order(),
 
             PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
 
