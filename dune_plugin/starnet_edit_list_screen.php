@@ -704,6 +704,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (preg_match(HTTP_PATTERN, $line)) {
                         hd_debug_print("import link: '$line'", true);
                         $playlist->type = PARAM_LINK;
+                        $playlist->name = basename($line);
                         $playlist->params['uri'] = $line;
                     } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {
                         hd_debug_print("import provider $m[1]:", true);
