@@ -446,10 +446,13 @@ class Starnet_Tv implements User_Input_Handler
                 return $post_action;
 
             case GUI_EVENT_PLAYBACK_STOP:
+                $channel = $this->plugin->tv->get_channel($user_input->plugin_tv_channel_id);
+                if (is_null($channel) || $channel->is_protected()) break;
+
                 $this->plugin->get_playback_points()->update_point($user_input->plugin_tv_channel_id);
 
                 if (!isset($user_input->playback_stop_pressed) && !isset($user_input->playback_power_off_needed)) {
-                    return null;
+                    break;
                 }
 
                 $this->plugin->get_playback_points()->save();
