@@ -318,7 +318,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
                     $group = $this->plugin->tv->get_group($sel_media_url->group_id);
-                    if (is_null($group)) break;
+                    if (is_null($group)) {
+                        $group = $this->plugin->tv->get_special_group($sel_media_url->group_id);
+                        if (is_null($group)) break;
+                    }
 
                     $cached_image_name = "{$this->plugin->get_active_playlist_key()}_$data->caption";
                     $cached_image = get_cached_image_path($cached_image_name);
