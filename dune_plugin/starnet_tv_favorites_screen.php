@@ -53,7 +53,9 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
+
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
 
         if ($this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
@@ -81,12 +83,18 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
 
         switch ($user_input->control_id) {
+            case GUI_EVENT_KEY_TOP_MENU:
+            case GUI_EVENT_KEY_RETURN:
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders();
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return Action_Factory::close_and_run();
+
             case ACTION_PLAY_ITEM:
                 try {
-                    if ($this->has_changes()) {
-                        $this->set_no_changes();
-                        $this->plugin->save_orders(true);
-                    }
                     $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
@@ -95,7 +103,13 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action, true);
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders();
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return $post_action;
 
             case ACTION_ITEM_UP:
                 $user_input->sel_ndx--;
@@ -132,13 +146,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 return Action_Factory::show_popup_menu($menu_items);
-
-            case GUI_EVENT_KEY_RETURN:
-                if ($this->has_changes()) {
-                    $this->set_no_changes();
-                    $this->plugin->save_orders(true);
-                }
-                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return null;

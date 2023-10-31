@@ -49,11 +49,13 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         hd_debug_print($media_url, true);
 
         $actions = array();
-
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
+
         $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
+
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
 
         if ($this->plugin->get_playback_points()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
@@ -81,24 +83,40 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         switch ($user_input->control_id)
 		{
+            case GUI_EVENT_KEY_TOP_MENU:
+            case GUI_EVENT_KEY_RETURN:
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders();
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return Action_Factory::close_and_run();
+
             case ACTION_PLAY_ITEM:
                 try {
                     $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders();
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return $post_action;
 
 			case ACTION_ITEM_DELETE:
                 $this->plugin->get_playback_points()->erase_point($selected_media_url->channel_id);
                 if ($this->plugin->get_playback_points()->size() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
-                return Action_Factory::invalidate_folders($user_input->parent_media_url);
+                return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->get_playback_points()->clear_points();
@@ -120,9 +138,6 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 }
 
                 return Action_Factory::show_popup_menu($menu_items);
-
-            case GUI_EVENT_KEY_RETURN:
-                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return null;

@@ -96,22 +96,29 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
 
-                $this->plugin->save_orders(true);
-                return $this->invalidate_epfs_folders($plugin_cookies,null, Action_Factory::close_and_run());
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders();
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return Action_Factory::close_and_run();
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                $post_action = $this->invalidate_epfs_folders($plugin_cookies,
-                    null,
-                    $user_input->control_id === ACTION_OPEN_FOLDER ? Action_Factory::open_folder() : Action_Factory::tv_play());
-
-                $has_error = HD::get_last_error();
-                if (!empty($has_error)) {
-                    HD::set_last_error(null);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_any'), $post_action, $has_error, self::DLG_CONTROLS_WIDTH);
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders();
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
 
-                return $post_action;
+                $has_error = HD::get_last_error();
+                if (empty($has_error)) {
+                    return Action_Factory::open_folder();
+                }
+
+                HD::set_last_error(null);
+                return Action_Factory::show_title_dialog(TR::t('err_load_any'),null, $has_error, self::DLG_CONTROLS_WIDTH);
 
             case ACTION_ITEM_UP:
                 if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::UP))

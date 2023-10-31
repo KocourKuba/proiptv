@@ -128,7 +128,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     {
         hd_debug_print(null, true);
 
-        $this->plugin->save_settings();
+        $this->plugin->save_orders();
         if ($this->has_changes) {
             $this->set_no_changes();
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);

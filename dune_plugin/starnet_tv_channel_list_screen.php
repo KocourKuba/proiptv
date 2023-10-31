@@ -104,9 +104,19 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $sel_ndx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
+            case GUI_EVENT_KEY_TOP_MENU:
+            case GUI_EVENT_KEY_STOP:
+            case GUI_EVENT_KEY_RETURN:
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders();
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return Action_Factory::close_and_run();
+
             case ACTION_PLAY_ITEM:
                 try {
-                    $this->plugin->save_orders();
                     $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
@@ -115,7 +125,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders();
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return $post_action;
 
             case ACTION_ADD_FAV:
                 $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
@@ -352,11 +368,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $this->plugin->tv->reload_channels();
                 return Starnet_Epfs_Handler::invalidate_folders(array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str())));
-
-            case GUI_EVENT_KEY_TOP_MENU:
-            case GUI_EVENT_KEY_STOP:
-            case GUI_EVENT_KEY_RETURN:
-                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
 
             case ACTION_REFRESH_SCREEN:
                 break;
