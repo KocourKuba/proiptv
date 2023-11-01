@@ -191,7 +191,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return Provider_Config|null
      */
-    public function get_current_provider_id()
+    public function get_current_provider()
     {
         return empty($this->cur_provider_id) ? null : $this->get_provider($this->cur_provider_id);
     }
@@ -1564,6 +1564,23 @@ class Default_Dune_Plugin implements DunePlugin
             $item->params['uri'] = $m3u8source;
             $item->name = $m[2];
             $xmltv_sources->put(Hashed_Array::hash($m3u8source), $item);
+        }
+
+        if ($xmltv_sources->size() === 0) {
+            $provider = $this->get_current_provider();
+            if (!is_null($provider)) {
+                $sources = $provider->getXmltvSources();
+                if (!empty($sources)) {
+                    foreach ($sources as $key => $source) {
+                        if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
+                        $item = new Named_Storage();
+                        $item->type = PARAM_LINK;
+                        $item->params['uri'] = $source;
+                        $item->name = $m[2];
+                        $xmltv_sources->put(Hashed_Array::hash($source), $item);
+                    }
+                }
+            }
         }
 
         if ($xmltv_sources->size() !== 0) {

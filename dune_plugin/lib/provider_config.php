@@ -25,23 +25,37 @@
  */
 
 /*
-  "antifriz": {
-    "enable": false,
-    "provider_type": "pin",
-    "playlist_source": "https://af-play.com/playlist/{PASSWORD}.m3u8",
-    "id_map": "tvg-id",
-    "id_parser": "",
-    "provider_info": false
+ {
+      "id": "viplime",
+      "name": "VipLime",
+      "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
+      "enable": true,
+      "provider_type": "pin",
+      "playlist_source": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
+      "qualities": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Medium",
+        "variant": "Adaptive",
+        "hls": "Optimal"
+      },
+      "id_map": "map",
+      "id_parser": "tvg-id",
+      "provider_info": false
   },
-  "1ott": {
-    "enable": false,
-    "provider_type": "login-token",
-    "token_request_url": "http://list.1ott.net/PinApi/{LOGIN}/{PASSWORD}",
-    "token_response": "token",
-    "playlist_source": "http://list.1ott.net/api/{TOKEN}/high/ottplay.m3u8",
-    "id_map": "",
-    "id_parser": "/^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
-    "provider_info": false
+      "id": "1usd",
+      "name": "1usd",
+      "logo": "http://iptv.esalecrm.net/res/logo_1usd.png",
+      "enable": true,
+      "provider_type": "pin",
+      "playlist_source": "http://1usd.tv/pl-{PASSWORD}-hls",
+      "id_map": "parse",
+      "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
+      "xmltv_sources": {
+        "1": "http://epg.team/tvteam.xml.gz",
+        "2": "http://epg.team/tvteam.7.7.xml"
+      },
+      "provider_info": false
   },
 */
 
@@ -116,6 +130,11 @@ class Provider_Config
      * @var array
      */
     protected $qualities = array();
+
+    /**
+     * @var array
+     */
+    protected $xmltv_sources = array();
 
     /**
      * @var array
@@ -358,6 +377,22 @@ class Provider_Config
     public function setQualities($qualities)
     {
         $this->qualities = $qualities;
+    }
+
+    /**
+     * @return array
+     */
+    public function getXmltvSources()
+    {
+        return $this->xmltv_sources;
+    }
+
+    /**
+     * @param array $xmltv_sources
+     */
+    public function setXmltvSources($xmltv_sources)
+    {
+        $this->xmltv_sources = $xmltv_sources;
     }
 
     /**

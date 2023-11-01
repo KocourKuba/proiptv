@@ -31,8 +31,12 @@
       "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://1usd.tv/pl-{PASSWORD}-hls",
-      "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
+      "id_map": "map",
+      "id_parser": "tvg-name",
+      "xmltv_sources": {
+        "1": "http://epg.team/tvteam.xml.gz",
+        "2": "http://epg.team/tvteam.7.7.xml"
+      },
       "provider_info": false
     },
     {
@@ -42,7 +46,7 @@
       "enable": true,
       "provider_type": "login",
       "playlist_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u",
-      "id_map": "nono",
+      "id_map": "",
       "id_parser": "",
       "provider_info": false
     },
@@ -331,7 +335,11 @@
       "provider_type": "pin",
       "playlist_source": "http://tv.team/pl/11/{PASSWORD}/playlist.m3u8",
       "id_map": "map",
-      "id_parser": "tvg-id",
+      "id_parser": "tvg-name",
+      "xmltv_sources": {
+        "1": "http://epg.team/tvteam.xml.gz",
+        "2": "http://epg.team/tvteam.7.7.xml"
+      },
       "provider_info": false
     },
     {
@@ -369,18 +377,18 @@
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
       "enable": true,
       "provider_type": "login",
-      "playlist_source": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}/playlist.m3u8",
+      "playlist_source": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}playlist.m3u8",
       "servers": {
-        " ": "RU (Russia, Moscow)",
-        "kfc": "KFC (Russia, Moscow)",
-        "OSTHLS": "OSTHLS (Russia, Moscow)",
-        "KRDHLS": "KRDHLS (Russia, Krasnodar)",
-        "bn": "BN (Russia, Saint-Petersburg)",
-        "BYHLS": "BYHLS (Belarus, Minsk)",
-        "de": "DE (Germany, Frankfurt/Netherlands, Amsterdam)",
-        "kz": "KZ (Kazakhstan, Almaty/Russia, Samara)",
-        "gn": "GN (Ukraine, Kiev)",
-        "RHLS": "RHLS (GlobalCache CDN)"
+        "/": "RU (Russia, Moscow)",
+        "kfc/": "KFC (Russia, Moscow)",
+        "OSTHLS/": "OSTHLS (Russia, Moscow)",
+        "KRDHLS/": "KRDHLS (Russia, Krasnodar)",
+        "bn/": "BN (Russia, Saint-Petersburg)",
+        "BYHLS/": "BYHLS (Belarus, Minsk)",
+        "de/": "DE (Germany, Frankfurt/Netherlands, Amsterdam)",
+        "kz/": "KZ (Kazakhstan, Almaty/Russia, Samara)",
+        "gn/": "GN (Ukraine, Kiev)",
+        "RHLS/": "RHLS (GlobalCache CDN)"
       },
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/(?:.+\\/)?(?<id>.+)\\/.+$",

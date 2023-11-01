@@ -680,7 +680,7 @@ class Starnet_Tv implements User_Input_Handler
         // Read channels
         $id_map = false;
         $id_parser = '';
-        if (!is_null($provider = $this->plugin->get_current_provider_id()) && $provider->getIdParser() !== '') {
+        if (!is_null($provider = $this->plugin->get_current_provider()) && $provider->getIdParser() !== '') {
             if ($provider->getIdMap() === 'map') {
                 $id_map = true;
                 $id_parser = $provider->getIdParser();
@@ -968,7 +968,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $replaces = array();
 
-        $provider = $this->plugin->get_current_provider_id();
+        $provider = $this->plugin->get_current_provider();
         if (!is_null($provider) && $provider->getProviderType() === PROVIDER_TYPE_EDEM) {
             $replaces['localhost'] = $provider->getCredential(MACRO_SUBDOMAIN);
             $replaces['00000000000000'] = $provider->getCredential(MACRO_OTTKEY);
