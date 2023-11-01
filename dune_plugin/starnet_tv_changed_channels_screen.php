@@ -53,7 +53,9 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
         $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
+
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
 
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear'));
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
@@ -74,21 +76,33 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         }
 
         switch ($user_input->control_id) {
+            case GUI_EVENT_KEY_RETURN:
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders(true);
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run(), true);
+
             case ACTION_PLAY_ITEM:
                 try {
                     $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-                    if (in_array($selected_media_url, $this->plugin->tv->get_changed_channels('removed'))) {
-                        return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'));
-                    }
                     $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                return $this->invalidate_epfs_folders($plugin_cookies, null, $post_action);
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders(true);
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return $post_action;
 
             case ACTION_ITEM_DELETE:
                 $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
@@ -123,10 +137,6 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 }
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-
-            case GUI_EVENT_KEY_RETURN:
-                $this->plugin->save_orders(true);
-                return $this->invalidate_epfs_folders($plugin_cookies, null, Action_Factory::close_and_run(), true);
         }
 
         return Action_Factory::update_regular_folder(

@@ -897,7 +897,8 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("Remove orphaned channels", true);
         /** @var Group $group */
         foreach ($this->groups as $group) {
-            $orphans_channels = array_diff($group->get_items_order()->get_order(), $playlist_group_channels[$group->get_id()]);
+            $channels = isset($playlist_group_channels[$group->get_id()]) ? $playlist_group_channels[$group->get_id()] : array();
+            $orphans_channels = array_diff($group->get_items_order()->get_order(), $channels);
             if (!empty($orphans_channels)) {
                 hd_debug_print("Remove from group: {$group->get_title()} total orphaned channels: " . count($orphans_channels), true);
                 $group->get_items_order()->remove_items($orphans_channels);

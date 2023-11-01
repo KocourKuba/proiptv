@@ -97,7 +97,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($this->has_changes()) {
-                    $this->plugin->save_orders();
+                    $this->plugin->save_orders(true);
                     $this->set_no_changes();
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
@@ -107,7 +107,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
                 if ($this->has_changes()) {
-                    $this->plugin->save_orders();
+                    $this->plugin->save_orders(true);
                     $this->set_no_changes();
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
@@ -244,9 +244,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::open_folder(Starnet_Epg_Setup_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
             case self::ACTION_CONFIRM_DLG_APPLY:
-                $this->plugin->save_orders();
-                $post_action = Action_Factory::close_and_run();
-                return $this->invalidate_epfs_folders($plugin_cookies,null, $post_action);
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders(true);
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run());
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->{ACTION_CHANGE_PLAYLIST})) {
@@ -433,8 +437,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title())));
 
             case ACTION_REFRESH_SCREEN:
-                $this->plugin->set_postpone_save(false, PLUGIN_ORDERS);
-                return $this->invalidate_epfs_folders($plugin_cookies, array($user_input->parent_media_url));
+                if ($this->has_changes()) {
+                    $this->plugin->save_orders(true);
+                    $this->set_no_changes();
+                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                }
+
+                return Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url));
 
             case ACTION_EMPTY:
             default:

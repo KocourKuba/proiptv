@@ -758,8 +758,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if ($this->has_changes()) {
-                    $this->set_no_changes();
                     $this->plugin->save_orders(true);
+                    $this->set_no_changes();
                 }
 
                 if ($this->plugin->tv->reload_channels() === 0) {
@@ -772,8 +772,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_REFRESH_SCREEN:
                 if ($this->has_changes()) {
-                    $this->set_no_changes();
                     $this->plugin->save_orders(true);
+                    $this->set_no_changes();
                 }
                 Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return Starnet_Epfs_Handler::invalidate_folders();

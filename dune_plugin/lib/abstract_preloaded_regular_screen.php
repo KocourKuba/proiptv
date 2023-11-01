@@ -128,39 +128,12 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     {
         hd_debug_print(null, true);
 
-        $this->plugin->save_orders();
         if ($this->has_changes) {
+            $this->plugin->save_orders(true);
             $this->set_no_changes();
             Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
         }
 
         return Starnet_Epfs_Handler::invalidate_folders($media_urls, $post_action, $all_except);
-    }
-
-    /**
-     * @param $plugin_cookies
-     * @param array|null $action
-     * @param array|null $media_urls
-     * @param array|null $post_action
-     * @return array
-     */
-    public function update_invalidate_epfs_folders($plugin_cookies, $action, $media_urls = null, $post_action = null)
-    {
-        hd_debug_print(null, true);
-
-        $this->plugin->save_settings();
-        if ($this->has_changes) {
-            $this->set_no_changes();
-            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        }
-
-        $action = Action_Factory::update_invalidate_folders(
-            Action_Factory::update_invalidate_folders($action, Starnet_Tv_Rows_Screen::ID),
-            $media_urls,
-            $post_action
-        );
-
-        hd_debug_print(raw_json_encode($action));
-        return $action;
     }
 }
