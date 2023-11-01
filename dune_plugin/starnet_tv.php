@@ -222,6 +222,22 @@ class Starnet_Tv implements User_Input_Handler
         return $this->groups->get($group_id);
     }
 
+    /**
+     * returns group with selected id
+     *
+     * @param string $group_id
+     * @return Group
+     */
+    public function get_any_group($group_id)
+    {
+        $group = $this->get_group($group_id);
+        if (is_null($group)) {
+            $group = $this->get_special_group($group_id);
+        }
+
+        return $group;
+    }
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -235,12 +251,7 @@ class Starnet_Tv implements User_Input_Handler
     {
         hd_debug_print("Hide channels type: $pattern");
 
-        if ($group_id === ALL_CHANNEL_GROUP_ID) {
-            $group = $this->get_special_group(ALL_CHANNEL_GROUP_ID);
-        } else {
-            $group = $this->get_group($group_id);
-        }
-
+        $group = $this->get_any_group($group_id);
         if (is_null($group)) {
             return;
         }
@@ -1185,11 +1196,7 @@ class Starnet_Tv implements User_Input_Handler
         $groups = array();
         /** @var Group $group */
         foreach ($groups_order as $id) {
-            if ($id === ALL_CHANNEL_GROUP_ID) {
-                $group = $this->get_special_group($id);
-            } else {
-                $group = $this->get_group($id);
-            }
+            $group = $this->get_any_group($id);
             if (is_null($group) || $group->is_disabled()) continue;
 
             $group_icon = $group->get_icon_url();

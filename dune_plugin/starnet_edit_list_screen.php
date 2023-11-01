@@ -270,12 +270,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         break;
 
                     case self::SCREEN_EDIT_CHANNELS:
-                        if ($parent_media_url->group_id === ALL_CHANNEL_GROUP_ID) {
-                            $group = $this->plugin->tv->get_special_group($parent_media_url->group_id);
-                        } else {
-                            $group = $this->plugin->tv->get_group($parent_media_url->group_id);
-                        }
-
+                        $group = $this->plugin->tv->get_any_group($parent_media_url->group_id);
                         if (is_null($group)) break;
 
                         /** @var Channel $channel */
