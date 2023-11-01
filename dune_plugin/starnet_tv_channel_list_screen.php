@@ -69,7 +69,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        //$actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
 
         if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
             $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
@@ -105,7 +105,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
-            //case GUI_EVENT_KEY_STOP:
             case GUI_EVENT_KEY_RETURN:
                 $post_action = Action_Factory::close_and_run();
                 if ($this->has_changes()) {
@@ -116,6 +115,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 return $post_action;
+
+            case GUI_EVENT_KEY_STOP:
+                $this->plugin->save_orders(true);
+                $this->set_no_changes();
+                return null;
 
             case ACTION_PLAY_ITEM:
                 try {

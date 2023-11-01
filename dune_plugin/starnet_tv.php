@@ -869,7 +869,7 @@ class Starnet_Tv implements User_Input_Handler
 
                 // ignore disabled channel
                 if ($this->get_disabled_channel_ids()->in_order($channel_id)) {
-                    hd_debug_print("Channel $channel_name is disabled", true);
+                    //hd_debug_print("Channel $channel_name is disabled", true);
                     $channel->set_disabled(true);
                 }
 
@@ -889,9 +889,8 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        $no_changes = count($this->get_changed_channels()) === 0;
-
-        $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled($no_changes);
+        $changed = count($this->get_changed_channels());
+        $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled($changed === 0);
 
         // cleanup orders if saved group removed from playlist
         hd_debug_print("Remove orphaned channels", true);
@@ -918,7 +917,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->set_postpone_save(false, PLUGIN_SETTINGS);
         $this->plugin->set_postpone_save(false, PLUGIN_ORDERS);
 
-        hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channel_ids()->size()}");
+        hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channel_ids()->size()}, changed channels: $changed");
         hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->get_groups_order()->size()));
         hd_debug_print("------------------------------------------------------------");
         hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
