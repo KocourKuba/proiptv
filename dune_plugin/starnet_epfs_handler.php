@@ -116,14 +116,6 @@ class Starnet_Epfs_Handler
     }
 
     /**
-     * @return object|null
-     */
-    public static function get_epf()
-    {
-        return self::$enabled ? self::read_epf_data(self::$epf_id) : null;
-    }
-
-    /**
      * @return void
      */
     public static function need_update_epf_mapping()
@@ -150,28 +142,6 @@ class Starnet_Epfs_Handler
     }
 
     /**
-     * @param array $action
-     * @param array|string $media_urls
-     * @param array|null $post_action
-     * @return array
-     */
-    public static function update_invalidate_folders($action, $media_urls, $post_action = null)
-    {
-        if ($media_urls !== null && $action[GuiAction::data][PluginInvalidateFoldersActionData::all_except] === false) {
-            if (is_array($media_urls)) {
-                $action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls]
-                    = array_merge($action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls], $media_urls);
-            } else {
-                $action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls][] = $media_urls;
-            }
-        }
-
-        $action[GuiAction::data][PluginInvalidateFoldersActionData::post_action] = $post_action;
-
-        return $action;
-    }
-
-    /**
      * @param $first_run
      * @param $plugin_cookies
      * @return array|null
@@ -186,15 +156,9 @@ class Starnet_Epfs_Handler
 
         self::ensure_no_internet_epfs_created($first_run, $plugin_cookies);
 
-        try {
-            $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies);
-        } catch (Exception $e) {
-            hd_debug_print("Exception while generating epf: " . $e->getMessage());
-            return null;
-        }
+        $folder_view = self::$tv_rows_screen->get_folder_view_for_epf($plugin_cookies);
 
-        $cold_run = !is_file(self::warmed_up_path());
-        if ($cold_run) {
+        if (!is_file(self::warmed_up_path())) {
             hd_debug_print("Cold run", true);
             file_put_contents(self::warmed_up_path(), '');
         }
@@ -222,6 +186,8 @@ class Starnet_Epfs_Handler
         } else if (!rename($tmp_path, $path)) {
             hd_debug_print("Failed to rename $tmp_path to $path");
             unlink($tmp_path);
+        } else {
+            file_put_contents(self::get_epfs_changed_path(), '');
         }
     }
 

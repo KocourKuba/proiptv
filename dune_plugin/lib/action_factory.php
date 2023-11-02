@@ -279,28 +279,6 @@ class Action_Factory
     }
 
     /**
-     * @param array $action
-     * @param array|string $media_urls
-     * @param array|null $post_action
-     * @return array
-     */
-    public static function update_invalidate_folders($action, $media_urls, $post_action = null)
-    {
-        if ($media_urls !== null && $action[GuiAction::data][PluginInvalidateFoldersActionData::all_except] === false) {
-            if (is_array($media_urls)) {
-                $action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls]
-                    = array_merge($action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls], $media_urls);
-            } else {
-                $action[GuiAction::data][PluginInvalidateFoldersActionData::media_urls][] = $media_urls;
-            }
-        }
-
-        $action[GuiAction::data][PluginInvalidateFoldersActionData::post_action] = $post_action;
-
-        return $action;
-    }
-
-    /**
      * @param array $menu_items
      * @param int $sel_ndx
      * @return array
@@ -475,7 +453,7 @@ class Action_Factory
     public static function invalidate_all_folders($plugin_cookies, $post_action = null, $except_media_urls = null)
     {
         Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        return self::invalidate_folders($except_media_urls, $post_action, true);
+        return Starnet_Epfs_Handler::invalidate_folders($except_media_urls, $post_action, true);
     }
 
     /**

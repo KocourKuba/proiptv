@@ -326,7 +326,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     /**
      * @param $plugin_cookies
      * @return array|null
-     * @throws Exception
      */
     public function get_folder_view_for_epf(&$plugin_cookies)
     {

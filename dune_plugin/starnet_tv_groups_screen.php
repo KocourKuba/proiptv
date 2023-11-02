@@ -294,7 +294,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_PLAYLIST_SELECTED:
                 if (!isset($user_input->{LIST_IDX})) break;
 
-                $this->plugin->save_orders();
+                $this->plugin->save_orders(true);
+                $this->set_changes(false);
                 $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
@@ -309,7 +310,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EPG_SOURCE_SELECTED:
                 if (!isset($user_input->{LIST_IDX})) break;
 
-                $this->plugin->save_orders();
+                $this->plugin->save_orders(true);
+                $this->set_changes(false);
                 $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
