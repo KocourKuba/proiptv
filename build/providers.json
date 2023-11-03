@@ -172,7 +172,11 @@
       "playlist_source": "http://itv.ooo/p/{PASSWORD}/hls.m3u8",
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info": false
+      "provider_info": true,
+      "provider_info_config": {
+        "url": "http://api.itv.live//data/{PASSWORD}",
+        "root": "user_info"
+      }
     },
     {
       "id": "kineskop",
@@ -371,7 +375,11 @@
       "playlist_source": "http://vidok.tv/p/{TOKEN}",
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info": false
+      "provider_info": true,
+      "provider_info_config": {
+        "url": "http://sapi.ott.st/v2.4/json/settings?token={TOKEN}",
+        "root": "account"
+      }
     },
     {
       "id": "viplime",
