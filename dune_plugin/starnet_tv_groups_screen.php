@@ -33,6 +33,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
     const ACTION_EPG_SETTINGS = 'epg_settings';
     const ACTION_CHANNELS_SETTINGS = 'channels_settings';
+    const ACTION_INFO_DLG = 'info_dlg';
+    const ACTION_ADD_MONEY_DLG = 'add_money_dlg';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -283,6 +285,16 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if ($this->plugin->get_all_xmltv_sources()->size()) {
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
                     }
+
+                    $provider = $this->plugin->get_current_provider();
+                    if (!is_null($provider) && $provider->getProviderInfo()) {
+                        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                        $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+                        $config = $provider->getProviderInfoConfig();
+                        if (!empty($config['pay_url'])) {
+                            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_INFO_DLG, TR::t('add_money'), "pay.png");
+                        }
+                    }
                 }
 
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
@@ -440,9 +452,16 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
 
+                file_put_contents(Starnet_Epfs_Handler::get_epfs_changed_path(), '');
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::close_and_run(
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title())));
+
+            case self::ACTION_INFO_DLG:
+                return $this->do_show_subscription();
+
+            case self::ACTION_ADD_MONEY_DLG:
+                return $this->do_show_add_money();
 
             case ACTION_REFRESH_SCREEN:
                 if ($this->has_changes()) {
@@ -461,6 +480,112 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         return Action_Factory::update_regular_folder(
             $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies), true, $sel_ndx
         );
+    }
+
+    /**
+     * @return array|null
+     */
+    protected function do_show_subscription()
+    {
+        $provider = $this->plugin->get_current_provider();
+        if (is_null($provider)) {
+            return null;
+        }
+
+        $config = $provider->getProviderInfoConfig();
+        $url = $config['url'];
+        foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN) as $macro) {
+            if (strpos($url, $macro) !== false) {
+                $url = str_replace($macro, trim($provider->getCredential($macro)), $url);
+            }
+        }
+
+        $curl_headers = null;
+        if (isset($config['headers'])) {
+            $curl_headers = array();
+            foreach ($config['headers'] as $key => $header) {
+                foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN) as $macro) {
+                    if (strpos($header, $macro) !== false) {
+                        $header = str_replace($macro, trim($provider->getCredential($macro)), $header);
+                    }
+                }
+                $curl_headers[CURLOPT_HTTPHEADER][] = "$key: $header";
+            }
+        }
+
+        $json = HD::DownloadJson($url, true, $curl_headers);
+        $root = null;
+        if (isset($config['root'])) {
+            $root = $config['root'];
+        }
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        if ($json === false || (!is_null($root) && !isset($json[$root]))) {
+            hd_debug_print("Can't get account status");
+            Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
+        } else {
+            hd_debug_print("account: " . json_encode($json));
+            if (!is_null($root) && isset($json[$root])) {
+                foreach (explode(',', $root) as $key) {
+                    $json = $json[$key];
+                }
+                hd_debug_print("root: " . json_encode($json));
+            }
+
+            $ignore = isset($config['ignore_items']) ? explode(",", $config['ignore_items']) : null;
+
+            $text = '';
+            if (isset($config['sections'])) {
+                foreach (explode(',', $config['sections']) as $section) {
+                    if (isset($json[$section])) {
+                        $text .= "-------- $section --------\n" . $this->collect_account_items($json[$section], $ignore);
+                    }
+                }
+            } else {
+                $text .= $this->collect_account_items($json, $ignore);
+            }
+
+            Control_Factory::add_multiline_label($defs, null, $text, 12);
+        }
+
+        Control_Factory::add_vgap($defs, 20);
+
+        return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1400);
+    }
+
+    /**
+     * @param array $json
+     * @param array|null $ignore
+     * @return string
+     */
+    protected function collect_account_items($json, $ignore)
+    {
+        $text = '';
+        foreach ($json as $key => $value) {
+            if (!is_null($ignore) && in_array($key, $ignore)) continue;
+
+            if (is_array($value)) {
+                $t = mapped_implode(',', $value, ': ', $ignore);
+                $text .= "$key: $t\n";
+            } else {
+                if (is_bool($value)) {
+                    $value = var_export($value, true);
+                }
+                $text .= "$key: $value\n";
+            }
+        }
+
+        return $text;
+    }
+
+    /**
+     * @return array|null
+     */
+    protected function do_show_add_money()
+    {
+        return null;
     }
 
     /**

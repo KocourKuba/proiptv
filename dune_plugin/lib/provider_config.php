@@ -119,6 +119,11 @@ class Provider_Config
     /**
      * @var array
      */
+    protected $provider_info_config;
+
+    /**
+     * @var array
+     */
     protected $devices = array();
 
     /**
@@ -334,6 +339,22 @@ class Provider_Config
     /**
      * @return array
      */
+    public function getProviderInfoConfig()
+    {
+        return $this->provider_info_config;
+    }
+
+    /**
+     * @param array $provider_info_config
+     */
+    public function setProviderInfoConfig($provider_info_config)
+    {
+        $this->provider_info_config = $provider_info_config;
+    }
+
+    /**
+     * @return array
+     */
     public function getDevices()
     {
         return $this->devices;
@@ -427,7 +448,7 @@ class Provider_Config
             return;
         }
 
-        hd_debug_print("parse provider_info: $info", true);
+        hd_debug_print("parse provider_info ({$this->getProviderType()}): $info", true);
 
         switch ($this->getProviderType()) {
             case PROVIDER_TYPE_PIN:

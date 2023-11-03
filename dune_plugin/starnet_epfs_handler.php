@@ -186,8 +186,6 @@ class Starnet_Epfs_Handler
         } else if (!rename($tmp_path, $path)) {
             hd_debug_print("Failed to rename $tmp_path to $path");
             unlink($tmp_path);
-        } else {
-            file_put_contents(self::get_epfs_changed_path(), '');
         }
     }
 

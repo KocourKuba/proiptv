@@ -1070,9 +1070,9 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($this->providers->size() === 0) {
             $jsonArray = HD::DownloadJson(self::CONFIG_URL . "providers.json");
-            if (!isset($jsonArray['providers'])) {
+            if ($jsonArray === false || !isset($jsonArray['providers'])) {
                 if (file_exists(get_data_path("providers.json"))) {
-                    $jsonArray = json_encode(file_get_contents(get_data_path("providers.json")));
+                    $jsonArray = json_decode(file_get_contents(get_data_path("providers.json")), true);
                 } else {
                     hd_debug_print("Problem to download providers configuration");
                     return;
@@ -1284,6 +1284,33 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $provider->parse_provider_creds($info);
+
+        return $provider;
+    }
+
+    /**
+     * @param string $id
+     * @return Provider_Config|null
+     */
+    public function init_provider_by_playlist($id)
+    {
+        $playlist = $this->get_playlist($id);
+        if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
+            return null;
+        }
+
+        $provider = $this->get_provider($playlist->params[PARAM_PROVIDER]);
+        if (is_null($provider)) {
+            hd_debug_print("unknown provider");
+            return null;
+        }
+
+        if (!$provider->getEnable()) {
+            hd_debug_print("provider disabled");
+            return null;
+        }
+
+        $provider->parse_provider_creds($playlist);
 
         return $provider;
     }

@@ -1923,6 +1923,21 @@ function wrap_string_to_lines($str, $max_chars)
     );
 }
 
+function mapped_implode($glue, $array, $symbol, $ignore)
+{
+    if (!is_null($ignore)) {
+        $array = array_diff_key($array, array_fill_keys($ignore, ''));
+    }
+    return implode($glue, array_map(
+            function($k, $v) use($symbol) {
+                return $k . $symbol . $v;
+            },
+            array_keys($array),
+            array_values($array)
+        )
+    );
+}
+
 function register_all_known_events($handler, &$actions)
 {
     $all_events = array(

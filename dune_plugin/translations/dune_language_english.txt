@@ -15,6 +15,7 @@ refresh = Refresh
 refresh_epg = Refresh XMLTV source
 refresh_playlist = Refresh playlist
 edit = Edit
+description = Description
 search = Search
 search__1 = Search: %s
 new_search = New search
@@ -60,6 +61,14 @@ ottkey = OTT Key
 device = Device
 server = Server
 quality = Quality
+subscription = Subscription
+add_money = Add money
+show_info = Show info
+balance = Balance
+balance_not_support = Account balance information not supported
+package = Package
+packages = Packages
+no_packages = No packages
 
 plugin_all_channels = All channels
 plugin_favorites = Favorites
@@ -233,12 +242,16 @@ tv_screen_channel_info__4 = %s|Archive: %s day(s)|EPG ID: %s|Aspect ratio: %s
 tv_screen_external_player = Play by external player
 tv_screen_internal_player = Play by internal player
 tv_screen_toggle_icons_aspect = Toggle icons proportions
+tv_screen_subscription = Subscription
 
 epg_not_ready = EPG not ready
 epg_not_ready_desc = EPG is still indexing, please wait
 fake_epg_program = Program
 playlist_name_msg__1 = Current playlist: %s
+
 warn_msg2__1 = Missed or not full data for URL generation.\nPossible not entered account data or channel not present in the current subscription.\n %s
+warn_msg3 = Unable to display subscription details.
+warn_msg4 = Incorrect username or password.
 
 err_too_old_player = This DUNE HD player is too old and not supported
 err_load_playlist = Playlist loading error!

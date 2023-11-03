@@ -403,7 +403,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $icon_file = get_image_path("link.png");
                 $title = empty($playlist->name) ? $playlist->params['uri'] : $playlist->name;
                 if ($playlist->type === PARAM_PROVIDER) {
-                    hd_debug_print("init by playlist: $playlist");
                     $provider = $this->plugin->init_provider($playlist);
                     if (is_null($provider)) continue;
 
@@ -717,7 +716,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             continue;
                         }
 
-                        hd_debug_print("parse provider_info: $m[2]", true);
+                        hd_debug_print("parse imported provider_info: $m[2]", true);
 
                         switch ($provider->getProviderType()) {
                             case PROVIDER_TYPE_PIN:

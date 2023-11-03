@@ -86,7 +86,16 @@
       },
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info": false
+      "provider_info": true,
+      "provider_info_config": {
+        "url": "http://protected-api.com/auth/info",
+        "root": "data",
+        "ignore_items": "end_time,ssl,public_token,private_token",
+        "headers": {
+          "accept": "*/*",
+          "x-public-key": "{PASSWORD}"
+        }
+      }
     },
     {
       "id": "edem",
@@ -270,7 +279,12 @@
       "playlist_source": "http://list.playtv.pro/tv_live-m3u8/{LOGIN}-{PASSWORD}",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
-      "provider_info": false
+      "provider_info": true,
+      "provider_info_config": {
+        "url": "https://list.playtv.pro/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "root": "data",
+        "pay_url": ""
+      }
     },
     {
       "id": "sharavoz",
@@ -321,11 +335,17 @@
       "name": "TV Club",
       "logo": "http://iptv.esalecrm.net/res/logo_tvclub.png",
       "enable": true,
-      "provider_type": "login",
-      "playlist_source": "http://celn.shott.top/p/{S_TOKEN}",
+      "provider_type": "login-token",
+      "playlist_source": "http://celn.shott.top/p/{TOKEN}",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/(?:.+)\\/iptv\\/(?:.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
-      "provider_info": false
+      "provider_info": true,
+      "provider_info_config": {
+        "url": "http://api.iptv.so/0.9/json/account?token={TOKEN}",
+        "root": "account",
+        "sections": "info,options,settings,services",
+        "ignore_items": "id,expire"
+      }
     },
     {
       "id": "tvteam",
