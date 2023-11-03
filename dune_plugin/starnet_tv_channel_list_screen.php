@@ -504,23 +504,55 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $info .= (count($lines) > 1 ? "\n" : "");
 
         try {
-            $lines = wrap_string_to_lines($this->plugin->tv->generate_stream_url($channel_id, -1), 70);
+            $live_url = $this->plugin->tv->generate_stream_url($channel_id, -1);
+            $lines = wrap_string_to_lines($live_url, 70);
         } catch(Exception $ex) {
+            hd_debug_print($ex);
+            $live_url = '';
             $lines = wrap_string_to_lines($channel->get_url(), 70);
         }
         $info .= "Live URL: " . implode("\n", $lines) . "\n";
         $info .= (count($lines) > 1 ? "\n" : "");
 
-        try {
-            $lines = wrap_string_to_lines($this->plugin->tv->generate_stream_url($channel_id, time() - 3600), 70);
-        } catch(Exception $ex) {
-            $lines = wrap_string_to_lines($channel->get_archive_url(), 70);
+        $archive_url = $channel->get_archive_url();
+        if (!empty($archive_url)) {
+            try {
+                $url = $this->plugin->tv->generate_stream_url($channel_id, time() - 3600);
+                $lines = wrap_string_to_lines($url, 70);
+            } catch (Exception $ex) {
+                hd_debug_print($ex);
+                $lines = wrap_string_to_lines($archive_url, 70);
+            }
+
+            $info .= "Archive URL: " . implode("\n", $lines) . "\n";
+            $info .= (count($lines) > 1 ? "\n" : "");
         }
-        $info .= "Archive URL: " . implode("\n", $lines) . "\n";
-        $info .= (count($lines) > 1 ? "\n" : "");
 
         if (!empty($ext_params[PARAM_DUNE_PARAMS])) {
             $info .= "Params: " . implode(",", $ext_params[PARAM_DUNE_PARAMS]) . "\n";
+        }
+
+        if (!empty($live_url)) {
+            $descriptors = array(
+                0 => array("pipe", "r"), // stdin
+                1 => array("pipe", "w"), // sdout
+                2 => array("pipe", "w"), // stderr
+            );
+
+            $live_url = HD::fix_double_scheme_url($live_url);
+            hd_debug_print("Get media info for: $live_url");
+            $process = proc_open(
+                get_install_path("bin/media_check.sh $live_url"),
+                $descriptors,
+                $pipes);
+
+            if (is_resource($process)) {
+                $output = stream_get_contents($pipes[1]);
+                $info .= "\n$output";
+
+                fclose($pipes[1]);
+                proc_close($process);
+            }
         }
 
         Control_Factory::add_multiline_label($defs, null, $info, 12);

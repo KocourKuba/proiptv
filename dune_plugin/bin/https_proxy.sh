@@ -27,7 +27,7 @@ URL=$1
 SAVE_FILE=$2
 USER_AGENT=$3
 if [ -z "$USER_AGENT" ]; then
-  USER_AGENT="DuneHD/1.0 (product_id: $product; firmware_version: $firmware_version)"
+  USER_AGENT=$HTTP_USER_AGENT
 fi
 
 #echo "Download $1 to $2" > "$PLUGIN_TMP_DIR_PATH/http_proxy.log"

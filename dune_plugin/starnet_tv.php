@@ -999,10 +999,10 @@ class Starnet_Tv implements User_Input_Handler
             $replaces[catchup_params::CU_END_SEC]   = date('S', $now);
         }
 
-        hd_debug_print("replaces: " . raw_json_encode($replaces));
+        hd_debug_print("replaces: " . raw_json_encode($replaces), true);
         foreach ($replaces as $key => $value) {
             if (strpos($stream_url, $key) !== false) {
-                hd_debug_print("replace $key to $value");
+                hd_debug_print("replace $key to $value", true);
                 $stream_url = str_replace($key, $value, $stream_url);
             }
         }

@@ -42,6 +42,7 @@ class HD
     private static $plugin_user_agent;
 
     private static $token = '05ba6358d39c4f298f43024b654b7387';
+    const DUNE_PARAMS_MAGIC = "|||dune_params|||";
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -718,6 +719,15 @@ class HD
         }
 
         return $url;
+    }
+
+    public static function fix_double_scheme_url($url)
+    {
+        $pos = strpos($url, self::DUNE_PARAMS_MAGIC);
+        if ($pos !== false && $pos > 0)
+            $url = substr($url, 0, $pos);
+
+        return preg_replace("#(https?://)((mp4|ts)://)#", '\1', $url);
     }
 
     /**
