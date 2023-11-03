@@ -697,9 +697,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $playlist = new Named_Storage();
                     if (preg_match(HTTP_PATTERN, $line)) {
                         hd_debug_print("import link: '$line'", true);
-                        $playlist->type = PARAM_LINK;
-                        $playlist->name = basename($line);
-                        $playlist->params['uri'] = $line;
+                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                            try{
+                                $content = HD::http_get_document($line);
+                                if (strpos($content, '#EXM3U') !== 0) {
+                                    throw new Exception("Bad M3U file: $line");
+                                }
+                                $playlist->type = PARAM_LINK;
+                                $playlist->name = basename($line);
+                                $playlist->params['uri'] = $line;
+                            } catch (Exception $ex) {
+                                hd_debug_print("Problem with download playlist: " . $ex->getMessage());
+                            }
+                        }
                     } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {
                         hd_debug_print("import provider $m[1]:", true);
                         $provider = $this->plugin->get_provider($m[1]);
