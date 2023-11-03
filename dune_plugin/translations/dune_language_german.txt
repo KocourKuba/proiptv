@@ -53,13 +53,13 @@ restore = Wiederherstellen
 restore_all = Alles wiederherstellen
 name = Name
 url = URL
-login = Login
+login = Anmeldung
 password = Password
-subdomain = Subdomain
+subdomain = Passwort
 ottkey = OTT Key
-device = Device
+device = Gerät
 server = Server
-quality = Quality
+quality = Qualität
 
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten
@@ -180,8 +180,8 @@ folder_screen_search_smb_setup = Sucheinstellungen für SMB
 folder_screen_used__1 = Gebraucht: %s
 folder_screen_user = Benutzername für den SMB-Ordner
 folder_screen_password = Passwort für den SMB-Ordner
-folder_screen_saved__1 = Saved: %s
-folder_screen_playlist__1 = Selected playlist %s
+folder_screen_saved__1 = Gerettet: %s
+folder_screen_playlist__1 = Ausgewählte Playlist %s
 
 edit_list_added__1 = %s Dateien hinzugefügt
 edit_list_added__2 = %s Dateien von %s hinzugefügt
@@ -196,7 +196,7 @@ edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Drücken Sie auf der 
 edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Drücken Sie lange OK auf der Fernbedienung, um das „Popup-Menü“ aufzurufen}
 edit_list_add_name = Name einsetzen
 edit_list_edit_item = Bearbeiten
-edit_list_add_provider = Add IPTV provider
+edit_list_add_provider = IPTV-Anbieter hinzufügen
 edit_list_detail_info__2 = %s|%s
 
 tv_screen_zoom_channel = Kanalzoom
