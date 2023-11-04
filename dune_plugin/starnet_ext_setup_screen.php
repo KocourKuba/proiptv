@@ -368,10 +368,15 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             $rootPath = get_data_path();
             $zip->addFile("{$rootPath}common.settings", "common.settings");
             hd_debug_print("Add {$rootPath}common.settings", true);
-            foreach ($this->plugin->get_playlists() as $playlist) {
-                $name = Hashed_Array::hash($playlist) . ".settings";
+            foreach ($this->plugin->get_playlists() as $key => $playlist) {
+                $name = $key . ".settings";
                 if (!file_exists($rootPath . $name)) continue;
 
+                hd_debug_print("Add $rootPath$name", true);
+                $zip->addFile("$rootPath$name", $name);
+
+                $name = $key .  '_' . PLUGIN_ORDERS . ".settings";
+                if (!file_exists($rootPath . $name)) continue;
                 hd_debug_print("Add $rootPath$name", true);
                 $zip->addFile("$rootPath$name", $name);
             }
