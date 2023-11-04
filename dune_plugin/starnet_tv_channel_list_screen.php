@@ -118,7 +118,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case GUI_EVENT_KEY_STOP:
                 $this->plugin->save_orders(true);
                 $this->set_no_changes();
-                return null;
+                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -142,7 +142,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
                 $opt_type = $fav_group->in_items_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->tv->change_tv_favorites($opt_type, $channel_id);
-                $this->plugin->save_orders(true);
+                $this->set_changes();
                 break;
 
             case ACTION_SETTINGS:

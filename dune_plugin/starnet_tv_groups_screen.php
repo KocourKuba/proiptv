@@ -631,8 +631,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 case CHANGED_CHANNELS_GROUP_ID:
                     $item_detailed_info = TR::t('tv_screen_group_changed_info__3',
                         $group->get_title(),
-                        count($this->plugin->tv->get_changed_channels('new')),
-                        count($this->plugin->tv->get_changed_channels('removed')));
+                        count($this->plugin->tv->get_changed_channels_ids('new')),
+                        count($this->plugin->tv->get_changed_channels_ids('removed')));
                     break;
 
                 default:

@@ -959,14 +959,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        $changed = $this->plugin->tv->get_changed_channels();
+        $changed = $this->plugin->tv->get_changed_channels_ids();
         if (empty($changed)) {
             return null;
         }
 
-        $new_channels = $this->plugin->tv->get_changed_channels('new');
+        $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
         hd_debug_print("New channels: " . raw_json_encode($new_channels), true);
-        $removed_channels = $this->plugin->tv->get_changed_channels('removed');
+        $removed_channels = $this->plugin->tv->get_changed_channels_ids('removed');
         hd_debug_print("Removed channels: " . raw_json_encode($removed_channels), true);
 
         $bg = Rows_Factory::add_regular_sticker_rect(

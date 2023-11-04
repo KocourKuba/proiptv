@@ -115,7 +115,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return User_Input_Handler_Registry::create_action($this, 'do_setup');
                         }
 
-                        $this->plugin->clear_playlist_cache();
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
                             hd_debug_print("launch play", true);
@@ -148,7 +147,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             break;
                         }
 
-                        $this->plugin->clear_playlist_cache();
                         $media_url = null;
                         if (file_exists('/config/resume_state.properties')) {
                             $resume_state = parse_ini_file('/config/resume_state.properties', 0, INI_SCANNER_RAW);

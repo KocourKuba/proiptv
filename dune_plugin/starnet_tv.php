@@ -657,7 +657,6 @@ class Starnet_Tv implements User_Input_Handler
 
         // cleanup order if saved group removed from playlist
         // hidden groups
-        hd_debug_print("hidden groups: " . raw_json_encode($disabled_group->get_order()));
         $orphans_groups = array_diff($disabled_group->get_order(), $playlist_groups->get_order());
         if (!empty($orphans_groups)) {
             $this->plugin->set_dirty();
@@ -687,6 +686,9 @@ class Starnet_Tv implements User_Input_Handler
             } else if ($provider->getIdMap() === 'parse') {
                 $id_parser = "/{$provider->getIdParser()}/";
             }
+            hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_parser");
+        } else {
+            hd_debug_print("no provider specific id mapping, use M3U attributes");
         }
 
         $playlist_group_channels = array();
@@ -900,17 +902,20 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        $changed = count($this->get_changed_channels());
+        $changed = count($this->get_changed_channels_ids());
         $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled($changed === 0);
 
         // cleanup orders if saved group removed from playlist
-        hd_debug_print("Remove orphaned channels", true);
         /** @var Group $group */
         foreach ($this->groups as $group) {
             $channels = isset($playlist_group_channels[$group->get_id()]) ? $playlist_group_channels[$group->get_id()] : array();
             $orphans_channels = array_diff($group->get_items_order()->get_order(), $channels);
             if (!empty($orphans_channels)) {
-                hd_debug_print("Remove from group: {$group->get_title()} total orphaned channels: " . count($orphans_channels), true);
+                if (LogSeverity::$is_debug) {
+                    hd_debug_print("Remove from group: {$group->get_title()} total orphaned channels: "
+                        . count($orphans_channels) . " : " . json_encode($orphans_channels));
+                    hd_debug_print("Playlist group channels: " . json_encode($channels));
+                }
                 $group->get_items_order()->remove_items($orphans_channels);
                 $this->plugin->set_dirty(PLUGIN_ORDERS);
             }
@@ -919,7 +924,10 @@ class Starnet_Tv implements User_Input_Handler
         if (!is_null($all_channels = $this->get_channels())) {
             $orphans_channels = array_diff($this->get_disabled_channel_ids()->get_order(), $all_channels->get_order());
             if (!empty($orphans_channels)) {
-                hd_debug_print("Remove total orphaned disabled channels: " . count($orphans_channels), true);
+                if (LogSeverity::$is_debug) {
+                    hd_debug_print("Remove total orphaned disabled channels: "
+                        . count($orphans_channels) . " : " . json_encode($orphans_channels));
+                }
                 $this->get_disabled_channel_ids()->remove_items($orphans_channels);
                 $this->plugin->set_dirty(PLUGIN_ORDERS);
             }
@@ -1347,7 +1355,7 @@ class Starnet_Tv implements User_Input_Handler
      * @param string $type // new, removed, null or other value - total
      * @return array
      */
-    public function get_changed_channels($type = null)
+    public function get_changed_channels_ids($type = null)
     {
         $known_channels = $this->get_known_channels();
         $all_channels = $this->get_channels();
@@ -1355,16 +1363,16 @@ class Starnet_Tv implements User_Input_Handler
             return array();
         }
 
-        $new_channels = array_diff($all_channels->get_keys(), $known_channels->get_keys());
-        $removed_channels = array_diff($known_channels->get_keys(), $all_channels->get_keys());
         if ($type === 'new') {
-            return $new_channels;
+            return array_diff($all_channels->get_order(), $known_channels->get_order());
         }
 
         if ($type === 'removed') {
-            return $removed_channels;
+            return array_diff($known_channels->get_order(), $all_channels->get_order());
         }
 
+        $new_channels = array_diff($all_channels->get_order(), $known_channels->get_order());
+        $removed_channels = array_diff($known_channels->get_order(), $all_channels->get_order());
         return array_merge($new_channels, $removed_channels);
     }
 

@@ -106,15 +106,15 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
             case ACTION_ITEM_DELETE:
                 $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
-                $changed = $this->plugin->tv->get_changed_channels();
+                $changed = $this->plugin->tv->get_changed_channels_ids();
                 $order = &$this->plugin->tv->get_known_channels();
-                if (in_array($channel_id, $this->plugin->tv->get_changed_channels('new')) !== false) {
+                if (in_array($channel_id, $this->plugin->tv->get_changed_channels_ids('new')) !== false) {
                     $channel = $this->plugin->tv->get_channel($channel_id);
                     if (!is_null($channel)) {
                         $order->set($channel->get_id(), $channel->get_title());
                         $this->set_changes();
                     }
-                } else if (in_array($channel_id, $this->plugin->tv->get_changed_channels('removed')) !== false) {
+                } else if (in_array($channel_id, $this->plugin->tv->get_changed_channels_ids('removed')) !== false) {
                     $order->erase($channel_id);
                     $this->set_changes();
                 }
@@ -155,8 +155,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
         $items = array();
 
-        $new_channels = $this->plugin->tv->get_changed_channels('new');
-        $removed_channels = $this->plugin->tv->get_changed_channels('removed');
+        $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
+        $removed_channels = $this->plugin->tv->get_changed_channels_ids('removed');
         if (LogSeverity::$is_debug) {
             hd_debug_print("New channels: " . raw_json_encode($new_channels));
             hd_debug_print("Removed channels: " . raw_json_encode($removed_channels));

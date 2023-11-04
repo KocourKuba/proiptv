@@ -357,12 +357,13 @@
       "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
       "enable": true,
       "provider_type": "pin",
-      "playlist_source": "http://tv.team/pl/11/{PASSWORD}/playlist.m3u8",
+      "playlist_source": "https://tv.team/pl/11/{PASSWORD}/playlist.m3u8",
       "id_map": "map",
       "id_parser": "tvg-name",
       "xmltv_sources": {
         "1": "http://epg.team/tvteam.xml.gz",
-        "2": "http://epg.team/tvteam.7.7.xml"
+        "2": "http://epg.team/tvteam.3.1.xml",
+        "3": "http://epg.team/tvteam.7.7.xml"
       },
       "provider_info": false
     },

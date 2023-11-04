@@ -193,16 +193,12 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_current_provider()
     {
-        return empty($this->cur_provider_id) ? null : $this->get_provider($this->cur_provider_id);
-    }
+        $playlist = $this->get_current_playlist();
+        if (is_null($playlist)) {
+            return null;
+        }
 
-    /**
-     * @param string|null $provider_id
-     * @return void
-     */
-    public function set_current_provider_id($provider_id)
-    {
-        $this->cur_provider_id = $provider_id;
+        return ($playlist->type === PARAM_PROVIDER) ? $this->get_provider($playlist->params[PARAM_PROVIDER]) : null;
     }
 
     /**
@@ -963,7 +959,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if (!isset($this->{$type})) {
-            hd_debug_print("Load: $name", true);
+            hd_debug_print("Load ($type): $name");
             $this->{$type} = HD::get_data_items($name, true, false);
             if (LogSeverity::$is_debug) {
                 foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param), true);
@@ -1383,6 +1379,8 @@ class Default_Dune_Plugin implements DunePlugin
                         hd_debug_print("Exec: $cmd", true);
                         shell_exec($cmd);
                         if (!file_exists($tmp_file)) {
+                            $log_content = @file_get_contents(get_temp_path("http_proxy.log"));
+                            HD::set_last_error("Пустой плейлист!\n\n" . $log_content);
                             throw new Exception("Can't download playlist {$item->params['uri']}");
                         }
                     }
@@ -1391,13 +1389,15 @@ class Default_Dune_Plugin implements DunePlugin
                     if (is_null($provider)) {
                         throw new Exception("Unable to init provider $item");
                     }
-                    $this->set_current_provider_id($item->params[PARAM_PROVIDER]);
+                    hd_debug_print("set current provider: {$item->params[PARAM_PROVIDER]}");
                     $provider_url = $provider->get_playlist_url();
                     $user_agent = HD::get_dune_user_agent();
                     $cmd = get_install_path('bin/https_proxy.sh') . " '$provider_url' '$tmp_file' '$user_agent'";
                     hd_debug_print("Exec: $cmd", true);
                     shell_exec($cmd);
                     if (!file_exists($tmp_file)) {
+                        $log_content = @file_get_contents(get_temp_path("http_proxy.log"));
+                        HD::set_last_error("Пустой плейлист!\n\n" . $log_content);
                         throw new Exception("Can't download playlist $provider_url");
                     }
                 } else if ($item->type === PARAM_FILE) {
@@ -1423,8 +1423,9 @@ class Default_Dune_Plugin implements DunePlugin
 
                 $count = $this->m3u_parser->getEntriesCount();
                 if ($count === 0) {
-                    HD::set_last_error("Пустой плейлист!");
-                    hd_debug_print('Empty playlist');
+                    $content = @file_get_contents($tmp_file);
+                    HD::set_last_error("Пустой плейлист!\n\n" . $content);
+                    hd_debug_print("Empty playlist");
                     $this->clear_playlist_cache();
                     throw new Exception("Empty playlist");
                 }
