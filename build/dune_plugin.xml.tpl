@@ -140,17 +140,6 @@
                         </action>
                     </menu_item>
                     <menu_item>
-                        <caption>%tr%entry_shutdown</caption>
-                        <icon_url>gui_skin://small_icons/power.aai</icon_url>
-                        <action>
-                            <type>plugin_handle_user_input</type>
-                            <params>
-                                <handler_id>entry_handler</handler_id>
-                                <control_id>power_off</control_id>
-                            </params>
-                        </action>
-                    </menu_item>
-                    <menu_item>
                         <caption>%tr%entry_send_log</caption>
                         <icon_url>gui_skin://small_icons/web_browser.aai</icon_url>
                         <action>

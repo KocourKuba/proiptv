@@ -64,13 +64,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print("do reboot", true);
                 return Action_Factory::restart(true);
 
-            case 'power_off':
-                hd_debug_print("do power off", true);
-                if (is_apk()) {
-                    return Action_Factory::show_title_dialog(TR::t('entry_not_available'));
-                }
-                return array(send_ir_code(GUI_EVENT_DISCRETE_POWER_OFF));
-
             case 'do_setup':
                 hd_debug_print("do setup", true);
                 $this->plugin->init_plugin();
