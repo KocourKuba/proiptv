@@ -141,8 +141,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_ADD_FAV:
                 $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
                 $opt_type = $fav_group->in_items_order($channel_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-                $this->set_changes();
                 $this->plugin->tv->change_tv_favorites($opt_type, $channel_id);
+                $this->plugin->save_orders(true);
                 break;
 
             case ACTION_SETTINGS:
