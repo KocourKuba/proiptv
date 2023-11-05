@@ -124,7 +124,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return Action_Factory::invalidate_folders(
                     $reload ? array($parent_media_url->source_media_url_str) : null,
-                    Action_Factory::replace_path($parent_media_url->windowCounter, null, $post_action)
+                    Action_Factory::close_and_run($post_action)
                 );
 
             case GUI_EVENT_KEY_STOP:
@@ -651,6 +651,22 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $playlist = new Named_Storage();
         }
 
+        if (!preg_match(HTTP_PATTERN, $url)) {
+            return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
+        }
+
+        if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
+            try {
+                $contents = HD::http_download_https_proxy($url);
+                if ($contents === false || strpos($contents, '#EXTM3U') !== 0) {
+                    throw new Exception("Bad M3U file: $url\n\n$contents");
+                }
+            } catch (Exception $ex) {
+                hd_debug_print("Problem with download playlist: " . $ex->getMessage());
+                return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
+            }
+        }
+
         $playlist->name = $name;
         $playlist->params['uri'] = $url;
         $playlist->type = preg_match(HTTP_PATTERN, $url) ? PARAM_LINK : PARAM_FILE;
@@ -678,6 +694,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $data = MediaURL::decode($user_input->selected_data);
+        $order = &$this->get_edit_order($parent_media_url->edit_list);
 
         if ($data->choose_file->action === self::ACTION_FILE_TEXT_LIST) {
             hd_debug_print("Choosed file: $data->filepath", true);
@@ -686,7 +703,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
             }
 
-            $order = &$this->get_edit_order($parent_media_url->edit_list);
             $old_count = $order->size();
             $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
             foreach ($lines as $line) {
@@ -799,7 +815,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         if ($data->choose_file->action === self::ACTION_FILE_PLAYLIST || $data->choose_file->action === self::ACTION_FILE_XMLTV) {
-            $order = &$this->get_edit_order($parent_media_url->edit_list);
             $hash = Hashed_Array::hash($data->filepath);
             if ($order->has($hash)) {
                 return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
