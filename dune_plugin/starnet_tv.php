@@ -393,9 +393,15 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->set_dirty(true, PLUGIN_ORDERS);
 
+        $player_state = get_player_state_assoc();
+        if (isset($player_state['playback_state']) && $player_state['playback_state'] === PLAYBACK_PLAYING) {
+            $this->plugin->save_orders(true);
+            return Action_Factory::invalidate_folders(array(), null, true);
+        }
+
         return Starnet_Epfs_Handler::invalidate_folders(array(
-                Starnet_Tv_Favorites_Screen::get_media_url_string(FAVORITES_GROUP_ID),
-                Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
+            Starnet_Tv_Favorites_Screen::get_media_url_string(FAVORITES_GROUP_ID),
+            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
         );
     }
 
