@@ -116,24 +116,4 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
             $sel_ndx)
         );
     }
-
-    /**
-     * @param $plugin_cookies
-     * @param bool $all_except
-     * @param array|null $media_urls
-     * @param null $post_action
-     * @return array
-     */
-    public function invalidate_epfs_folders($plugin_cookies, $media_urls = null, $post_action = null, $all_except = false)
-    {
-        hd_debug_print(null, true);
-
-        if ($this->has_changes) {
-            $this->plugin->save_orders(true);
-            $this->set_no_changes();
-            Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        }
-
-        return Starnet_Epfs_Handler::invalidate_folders($media_urls, $post_action, $all_except);
-    }
 }

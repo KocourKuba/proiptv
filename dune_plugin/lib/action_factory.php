@@ -453,7 +453,8 @@ class Action_Factory
     public static function invalidate_all_folders($plugin_cookies, $post_action = null, $except_media_urls = null)
     {
         Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-        return Starnet_Epfs_Handler::invalidate_folders($except_media_urls, $post_action, true);
+
+        return self::invalidate_folders($except_media_urls, $post_action, true);
     }
 
     /**

@@ -83,7 +83,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
 
-                return Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run(), true);
+                return Action_Factory::invalidate_all_folders(null,
+                    Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run()));
 
             case ACTION_PLAY_ITEM:
                 try {

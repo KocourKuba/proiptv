@@ -1248,9 +1248,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $menu_items = $this->plugin->epg_source_menu($this);
         } else if (isset($user_input->{ACTION_SORT_POPUP})) {
             hd_debug_print("sort menu", true);
-            $media_url = MediaURL::decode($user_input->selected_item_id);
-            if ($this->plugin->tv->get_group($media_url->group_id) !== null) {
-                $menu_items = $this->plugin->sort_menu($this);
+            $media_url = MediaURL::decode($user_input->selected_row_id);
+            if (isset($media_url->row_id)) {
+                $row_id = json_decode($media_url->row_id);
+                if ($this->plugin->tv->get_group($row_id->group_id) !== null) {
+                    $menu_items = $this->plugin->sort_menu($this);
+                }
             }
         } else if (isset($user_input->selected_item_id)) {
             // popup menu for selected chennel in row

@@ -1589,8 +1589,9 @@ class Default_Dune_Plugin implements DunePlugin
             if (!is_null($provider)) {
                 $sources = $provider->getXmltvSources();
                 if (!empty($sources)) {
-                    foreach ($sources as $key => $source) {
+                    foreach ($sources as $source) {
                         if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
+
                         $item = new Named_Storage();
                         $item->type = PARAM_LINK;
                         $item->params['uri'] = $source;
