@@ -94,6 +94,11 @@ class Provider_Config
     /**
      * @var string
      */
+    protected $playlist_catchup = '';
+
+    /**
+     * @var string
+     */
     protected $id_map = '';
 
     /**
@@ -254,6 +259,22 @@ class Provider_Config
     public function setPlaylistSource($playlist_source)
     {
         $this->playlist_source = $playlist_source;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPlaylistCatchup()
+    {
+        return $this->playlist_catchup;
+    }
+
+    /**
+     * @param string $playlist_catchup
+     */
+    public function setPlaylistCatchup($playlist_catchup)
+    {
+        $this->playlist_catchup = $playlist_catchup;
     }
 
     /**

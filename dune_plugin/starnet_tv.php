@@ -586,6 +586,31 @@ class Starnet_Tv implements User_Input_Handler
         $global_catchup_source = $this->plugin->get_m3u_parser()->getM3uInfo()->getCatchupSource();
         $icon_url_base = $this->plugin->get_m3u_parser()->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
 
+        $id_map = false;
+        $id_parser = '';
+        if (!is_null($provider = $this->plugin->get_current_provider()) && $provider->getIdParser() !== '') {
+            if ($provider->getPlaylistCatchup() !== '') {
+                $catchup['global'] = $provider->getPlaylistCatchup();
+                hd_debug_print("set provider catchup: {$catchup['global']}");
+            }
+
+            if ($provider->getIdMap() === 'map') {
+                $id_map = true;
+                $id_parser = $provider->getIdParser();
+            } else if ($provider->getIdMap() === 'parse') {
+                $id_parser = "/{$provider->getIdParser()}/";
+            }
+            hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_parser");
+        } else {
+            hd_debug_print("no provider specific id mapping, use M3U attributes");
+        }
+
+        // User catchup settings has higher priority than playlist or provider settings
+        $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
+        if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
+            $catchup['global'] = $user_catchup;
+        }
+
         $source = $this->plugin->get_active_xmltv_source();
         if (empty($source)) {
             $sources = $this->plugin->get_all_xmltv_sources();
@@ -614,10 +639,6 @@ class Starnet_Tv implements User_Input_Handler
         $t = microtime(true);
 
         $picons = $this->plugin->get_epg_manager()->get_picons();
-        $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
-        if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
-            $catchup['global'] = $user_catchup;
-        }
 
         // suppress save after add group
         $this->plugin->set_postpone_save(true, PLUGIN_SETTINGS);
@@ -677,20 +698,6 @@ class Starnet_Tv implements User_Input_Handler
         unset($playlist_groups);
 
         // Read channels
-        $id_map = false;
-        $id_parser = '';
-        if (!is_null($provider = $this->plugin->get_current_provider()) && $provider->getIdParser() !== '') {
-            if ($provider->getIdMap() === 'map') {
-                $id_map = true;
-                $id_parser = $provider->getIdParser();
-            } else if ($provider->getIdMap() === 'parse') {
-                $id_parser = "/{$provider->getIdParser()}/";
-            }
-            hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_parser");
-        } else {
-            hd_debug_print("no provider specific id mapping, use M3U attributes");
-        }
-
         $playlist_group_channels = array();
         $number = 0;
         foreach ($pl_entries as $entry) {
@@ -761,11 +768,12 @@ class Starnet_Tv implements User_Input_Handler
                                 . 'archive=${start}&archive_end=${end}';
                         } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup)
                             && preg_match("#^(https?://[^/]+)/(.+)/([^/]+)\.(m3u8?|ts)(\?.+=.+)?$#", $entry->getPath(), $m)) {
-                            $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400.$m[4]$m[5]";
+                            $params = isset($m[5]) ? $m[5] : '';
+                            $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400.$m[4]$params";
                         } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_xstreamcode, $catchup)
                             && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $entry->getPath(), $m)) {
-                            $extension = $m[5] ?: '.ts';
-                            $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[4].$extension";
+                            $extension = $m[6] ?: '.ts';
+                            $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[5].$extension";
                         } else {
                             // if no info about catchup, use 'shift'
                             $archive_url = $entry->getPath()

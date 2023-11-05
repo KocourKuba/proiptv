@@ -159,6 +159,7 @@
       "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://iptv.online/play/{PASSWORD}/m3u8",
+      "playlist_catchup": "flussonic",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/play\\/(?<id>.+)\\/.+\\/.*\\.m3u8?$",
       "provider_info": false
