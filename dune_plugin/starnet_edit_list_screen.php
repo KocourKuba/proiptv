@@ -407,7 +407,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (is_null($provider)) continue;
 
                     $icon_file = $provider->getLogo();
-                    $title = $provider->getName();
+                    $title = $playlist->name;
+                    if ($playlist->name !== $provider->getName()) {
+                        $title .= " ({$provider->getName()})";
+                    }
                     $detailed_info = TR::t('edit_list_detail_info__2', $playlist->name, '');
                 } else if ($playlist->type === PARAM_LINK) {
                     $detailed_info = TR::t('edit_list_detail_info__2', $playlist->name, $playlist->params['uri']);
