@@ -146,7 +146,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                         'windowCounter' => 1,
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_history_folder_path'));
+                return Action_Factory::open_folder($media_url_str, TR::t('setup_backup_folder_path'));
 
             case self::CONTROL_RESTORE:
                 $media_url_str = MediaURL::encode(
