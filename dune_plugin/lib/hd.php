@@ -288,6 +288,65 @@ class HD
     }
 
     /**
+     * download and return contents
+     * in case of exception returns in message contents of log file
+     *
+     * @param string $url
+     * @return string|bool content of the downloaded file
+     * @throws Exception
+     */
+    public static function http_download_https_proxy($url)
+    {
+        $logfile = get_temp_path("http_proxy.log");
+        if (file_exists($logfile)) {
+            unlink($logfile);
+        }
+
+        $tmp_file = get_temp_path(Hashed_Array::hash($url));
+        $user_agent = self::get_dune_user_agent();
+        $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$tmp_file' '$user_agent' '$logfile'";
+        hd_debug_print("Exec: $cmd", true);
+        shell_exec($cmd);
+        if (!file_exists($tmp_file)) {
+            $log_content = @file_get_contents($logfile);
+            unlink($tmp_file);
+            throw new Exception("Can't download playlist $tmp_file\n\n" . $log_content);
+        }
+        $content = file_get_contents($tmp_file);
+        unlink($tmp_file);
+
+        return $content;
+    }
+
+    /**
+     * download and return contents of log file
+     * Used to download large files
+     *
+     * @param string $url
+     * @param string|null $save_file
+     * @return string|bool download log
+     * @throws Exception
+     */
+    public static function http_save_https_proxy($url, $save_file)
+    {
+        $logfile = get_temp_path("http_proxy.log");
+        if (file_exists($logfile)) {
+            unlink($logfile);
+        }
+        $user_agent = self::get_dune_user_agent();
+        $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$save_file' '$user_agent' '$logfile'";
+        hd_debug_print("Exec: $cmd", true);
+        shell_exec($cmd);
+        if (!file_exists($save_file)) {
+            $log_content = @file_get_contents($logfile);
+            unlink($save_file);
+            throw new Exception("Can't download playlist $save_file\n\n" . $log_content);
+        }
+
+        return @file_get_contents($logfile);
+    }
+
+    /**
      * @param int $code
      * @return string
      */

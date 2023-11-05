@@ -691,25 +691,23 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
             foreach ($lines as $line) {
                 $line = trim($line);
+                hd_debug_print("Load string: '$line'", true);
                 $hash = Hashed_Array::hash($line);
-                if (!$order->has($hash)) {
-                    hd_debug_print("Load string: '$line'", true);
+                if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     $playlist = new Named_Storage();
                     if (preg_match(HTTP_PATTERN, $line, $m)) {
                         hd_debug_print("import link: '$line'", true);
-                        if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                            try{
-                                $content = HD::http_get_document($line);
-                                if (strpos($content, '#EXTM3U') !== 0) {
-                                    throw new Exception("Bad M3U file: $line");
-                                }
-                                $playlist->type = PARAM_LINK;
-                                $playlist->name = basename($m[2]);
-                                $playlist->params['uri'] = $line;
-                            } catch (Exception $ex) {
-                                hd_debug_print("Problem with download playlist: " . $ex->getMessage());
-                                continue;
+                        try {
+                            $contents = HD::http_download_https_proxy($line);
+                            if ($contents === false || strpos($contents, '#EXTM3U') !== 0) {
+                                throw new Exception("Bad M3U file: $line");
                             }
+                            $playlist->type = PARAM_LINK;
+                            $playlist->name = basename($m[2]);
+                            $playlist->params['uri'] = $line;
+                        } catch (Exception $ex) {
+                            hd_debug_print("Problem with download playlist: " . $ex->getMessage());
+                            continue;
                         }
                     } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {
                         hd_debug_print("import provider $m[1]:", true);
@@ -769,12 +767,18 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         hd_debug_print("can't recognize: $line");
                         continue;
                     }
-
                     if ($order->has($hash)) {
                         hd_debug_print("already exist: $playlist", true);
                     } else {
                         hd_debug_print("imported playlist: $playlist", true);
                         $order->put($hash, $playlist);
+                    }
+                } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                    if (!$order->has($hash) && preg_match(HTTP_PATTERN, $line, $m)) {
+                        hd_debug_print("import link: '$line'");
+                        $order->put($hash, $line);
+                    } else {
+                        hd_debug_print("line skipped: '$line'");
                     }
                 }
             }

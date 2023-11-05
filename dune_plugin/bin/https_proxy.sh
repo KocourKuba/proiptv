@@ -5,7 +5,6 @@ source "$FS_PREFIX/tmp/run/versions.txt"
 thisdir=$(dirname "$0")
 plugin_root=$(builtin cd "$thisdir/.." && pwd)
 plugin_name=$(basename "$plugin_root")
-PLUGIN_TMP_DIR_PATH="$FS_PREFIX/tmp/plugins/$plugin_name"
 if [ -z "$HD_HTTP_LOCAL_PORT" ]; then
   HD_HTTP_LOCAL_PORT="80";
 fi
@@ -29,8 +28,8 @@ USER_AGENT=$3
 if [ -z "$USER_AGENT" ]; then
   USER_AGENT=$HTTP_USER_AGENT
 fi
+LOG_FILE=$4
 
-#echo "Download $1 to $2" > "$PLUGIN_TMP_DIR_PATH/http_proxy.log"
-$CURL --insecure --silent --dump-header - --output "$SAVE_FILE" --location "$URL" --user-agent "$USER_AGENT" >"$PLUGIN_TMP_DIR_PATH/http_proxy.log"
+$CURL --insecure --silent --dump-header - --output "$SAVE_FILE" --location "$URL" --user-agent "$USER_AGENT" >$LOG_FILE
 
 exit;

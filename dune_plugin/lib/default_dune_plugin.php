@@ -1372,45 +1372,35 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $item->name): $item->type");
-                if ($item->type === PARAM_LINK) {
-                    if (preg_match(HTTP_PATTERN, $item->params['uri'])) {
-                        $user_agent = HD::get_dune_user_agent();
-                        $cmd = get_install_path('bin/https_proxy.sh') . " '{$item->params['uri']}' '$tmp_file' '$user_agent'";
-                        hd_debug_print("Exec: $cmd", true);
-                        shell_exec($cmd);
-                        if (!file_exists($tmp_file)) {
-                            $log_content = @file_get_contents(get_temp_path("http_proxy.log"));
-                            HD::set_last_error("Пустой плейлист!\n\n" . $log_content);
-                            throw new Exception("Can't download playlist {$item->params['uri']}");
-                        }
-                    }
-                } else if ($item->type === PARAM_PROVIDER) {
-                    $provider = $this->init_provider($item);
-                    if (is_null($provider)) {
-                        throw new Exception("Unable to init provider $item");
-                    }
-                    hd_debug_print("set current provider: {$item->params[PARAM_PROVIDER]}");
-                    $provider_url = $provider->get_playlist_url();
-                    $user_agent = HD::get_dune_user_agent();
-                    $cmd = get_install_path('bin/https_proxy.sh') . " '$provider_url' '$tmp_file' '$user_agent'";
-                    hd_debug_print("Exec: $cmd", true);
-                    shell_exec($cmd);
-                    if (!file_exists($tmp_file)) {
-                        $log_content = @file_get_contents(get_temp_path("http_proxy.log"));
-                        HD::set_last_error("Пустой плейлист!\n\n" . $log_content);
-                        throw new Exception("Can't download playlist $provider_url");
-                    }
-                } else if ($item->type === PARAM_FILE) {
-                    $contents = @file_get_contents($item->params['uri']);
-                    if ($contents === false) {
-                        throw new Exception("Can't read playlist: {$item->params['uri']}");
-                    }
-                    file_put_contents($tmp_file, $contents);
-                    $mtime = filemtime($tmp_file);
-                    hd_debug_print("Save $tmp_file (timestamp: $mtime)");
+                if ($item->type === PARAM_FILE) {
+                    $contents = file_get_contents($item->params['uri']);
                 } else {
-                    throw new Exception("Unknown playlist type");
+                    if ($item->type === PARAM_LINK) {
+                        if (!preg_match(HTTP_PATTERN, $item->params['uri'])) {
+                            throw new Exception("Malformed playlist url: {$item->params['uri']}");
+                        }
+                        $playlist_url = $item->params['uri'];
+                    } else if ($item->type === PARAM_PROVIDER) {
+                        $provider = $this->init_provider($item);
+                        if (is_null($provider)) {
+                            throw new Exception("Unable to init provider $item");
+                        }
+                        $playlist_url = $provider->get_playlist_url();
+                    } else {
+                        throw new Exception("Unknown playlist type");
+                    }
+
+                    $contents = HD::http_download_https_proxy($playlist_url);
                 }
+
+                if ($contents === false || strpos($contents, '#EXTM3U') !== 0) {
+                    HD::set_last_error("Empty or incorrect playlist !\n\n" . $contents);
+                    throw new Exception("Can't parse playlist");
+                }
+
+                file_put_contents($tmp_file, $contents);
+                $mtime = filemtime($tmp_file);
+                hd_debug_print("Save $tmp_file (timestamp: $mtime)");
             }
 
             // Is already parsed?
@@ -1423,8 +1413,8 @@ class Default_Dune_Plugin implements DunePlugin
 
                 $count = $this->m3u_parser->getEntriesCount();
                 if ($count === 0) {
-                    $content = @file_get_contents($tmp_file);
-                    HD::set_last_error("Пустой плейлист!\n\n" . $content);
+                    $contents = @file_get_contents($tmp_file);
+                    HD::set_last_error("Пустой плейлист!\n\n" . $contents);
                     hd_debug_print("Empty playlist");
                     $this->clear_playlist_cache();
                     throw new Exception("Empty playlist");

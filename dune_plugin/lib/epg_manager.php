@@ -343,13 +343,11 @@ class Epg_Manager
             hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
             $cached_xmltv_file = $this->get_cached_filename();
             $tmp_filename = $cached_xmltv_file . '.tmp';
-            $user_agent = HD::get_dune_user_agent();
-            $cmd = get_install_path('bin/https_proxy.sh') . " '$this->xmltv_url' '$tmp_filename' '$user_agent'";
-            hd_debug_print("Exec: $cmd", true);
-            shell_exec($cmd);
-
-            $proxy_log = get_temp_path('http_proxy.log');
-            if (LogSeverity::$is_debug && file_exists($proxy_log)) {
+            if (file_exists($tmp_filename)) {
+                unlink($tmp_filename);
+            }
+            $proxy_log = HD::http_save_https_proxy($this->xmltv_url, $tmp_filename);
+            if (LogSeverity::$is_debug && $proxy_log !== false) {
                 hd_print("Read http_proxy log...");
                 $lines = file($proxy_log, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
                 foreach ($lines as $line) hd_print($line);
@@ -357,12 +355,7 @@ class Epg_Manager
                 hd_print("Read finished");
             }
 
-            if (!file_exists($tmp_filename)) {
-                throw new Exception("Failed to save $this->xmltv_url to $tmp_filename");
-            }
-
             hd_debug_print("Last changed time on server: " . date("Y-m-d H:s", filemtime($tmp_filename)));
-
             hd_debug_print("Download xmltv source $this->xmltv_url done: " . (microtime(true) - $t) . " secs");
             $t = microtime(true);
 
