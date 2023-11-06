@@ -170,7 +170,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_itv.png",
       "enable": true,
       "provider_type": "pin",
-      "playlist_source": "http://itv.ooo/p/{PASSWORD}/hls.m3u8",
+      "playlist_source": "https://itv.ooo/p/{PASSWORD}/hls.m3u8",
       "id_map": "map",
       "id_parser": "tvg-id",
       "provider_info": true,
