@@ -418,9 +418,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                 // Hashed_Array
                 /** @var Named_Storage $item */
+                if (!($item instanceof Named_Storage)) {
+                    continue;
+                }
                 $id = $key;
-                $title = $item;
-                $detailed_info = TR::t('edit_list_detail_info__2', basename($item->name), $item);
+                $title = empty($item->name) ? $item->params['uri'] : $item->name;
+                $detailed_info = TR::t('edit_list_detail_info__2', $item->name, $item->params['uri']);
                 $icon_file = get_image_path("link.png");
             } else {
                 continue;
@@ -793,9 +796,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $order->put($hash, $playlist);
                     }
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    if (!$order->has($hash) && preg_match(HTTP_PATTERN, $line, $m)) {
-                        hd_debug_print("import link: '$line'");
-                        $order->put($hash, $line);
+                    if (preg_match(HTTP_PATTERN, $line, $m)) {
+                        $old = $order->get($hash);
+                        $item = new Named_Storage();
+                        $item->params['uri'] = $line;
+                        $item->name = $m[2];
+                        if (is_null($old)) {
+                            $order->put($hash, $item);
+                            hd_debug_print("import link: '$line'");
+                        } else if (!($old instanceof Hashed_Array)) {
+                            $old_count--;
+                            $order->set($hash, $item);
+                            hd_debug_print("replace link: '$line'");
+                        }
                     } else {
                         hd_debug_print("line skipped: '$line'");
                     }
