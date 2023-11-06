@@ -624,9 +624,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case HISTORY_GROUP_ID:
-                    $item_detailed_info = TR::t('tv_screen_group_info__2',
-                        $group->get_title(),
-                        $this->plugin->get_playback_points()->size());
+                    $visible = 0;
+                    foreach ($this->plugin->get_playback_points()->get_all() as $channel_id => $channel_ts) {
+                        $channel = $this->plugin->tv->get_channel($channel_id);
+                        if (is_null($channel) || $channel->is_disabled()) continue;
+                        $visible++;
+                    }
+                    $item_detailed_info = TR::t('tv_screen_group_info__2', $group->get_title(), $visible);
                     break;
 
                 case CHANGED_CHANNELS_GROUP_ID:
