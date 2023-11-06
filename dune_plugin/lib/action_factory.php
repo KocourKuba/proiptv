@@ -454,7 +454,7 @@ class Action_Factory
     {
         Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
 
-        return self::invalidate_folders($except_media_urls, $post_action, true);
+        return Starnet_Epfs_Handler::invalidate_folders(null, self::invalidate_folders($except_media_urls, $post_action, true));
     }
 
     /**

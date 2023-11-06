@@ -99,15 +99,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
 
-                $post_action = Action_Factory::close_and_run();
-
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
-                }
-
-                return $post_action;
+            return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_DLG_APPLY);
 
             case GUI_EVENT_KEY_STOP:
                 $this->plugin->save_orders(true);
@@ -257,10 +249,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($this->has_changes()) {
                     $this->plugin->save_orders(true);
                     $this->set_no_changes();
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
 
-                return Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run());
+                return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->{ACTION_CHANGE_PLAYLIST})) {

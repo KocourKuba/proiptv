@@ -435,11 +435,7 @@ class Starnet_Tv implements User_Input_Handler
             case GUI_EVENT_TIMER:
                 $post_action = null;
 
-                if (isset($user_input->stop_play)) {
-                    // rising after playback end + 100 ms
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                    $post_action = Starnet_Epfs_Handler::invalidate_folders(array(Starnet_TV_History_Screen::ID));
-                } else if (isset($user_input->locked)) {
+                if (isset($user_input->locked)) {
                     clearstatcache();
                     if ($this->plugin->get_epg_manager()->is_index_locked()) {
                         $new_actions = $this->get_action_map();
@@ -468,18 +464,10 @@ class Starnet_Tv implements User_Input_Handler
 
                 $this->plugin->get_playback_points()->update_point($user_input->plugin_tv_channel_id);
 
-                if (!isset($user_input->playback_stop_pressed) && !isset($user_input->playback_power_off_needed)) {
-                    break;
+                if (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed)) {
+                    $this->plugin->get_playback_points()->save();
+                    return Action_Factory::invalidate_folders(array(Starnet_Tv_Groups_Screen::ID));
                 }
-
-                $this->plugin->get_playback_points()->save();
-                $new_actions = $this->get_action_map();
-                $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this,
-                    GUI_EVENT_TIMER,
-                    null,
-                    array('stop_play' => true));
-
-                return Action_Factory::change_behaviour($new_actions, 100);
         }
 
         return null;

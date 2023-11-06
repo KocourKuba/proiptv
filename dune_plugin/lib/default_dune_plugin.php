@@ -198,7 +198,7 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        return ($playlist->type === PARAM_PROVIDER) ? $this->get_provider($playlist->params[PARAM_PROVIDER]) : null;
+        return ($playlist->type === PARAM_PROVIDER) ? $this->init_provider($playlist) : null;
     }
 
     /**

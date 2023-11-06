@@ -88,7 +88,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if ($this->has_changes()) {
                     $this->plugin->save_orders(true);
                     $this->set_no_changes();
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
                 }
 
                 return Action_Factory::close_and_run();
@@ -112,6 +112,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return $post_action;
 
 			case ACTION_ITEM_DELETE:
+                $this->set_changes();
                 $this->plugin->get_playback_points()->erase_point($selected_media_url->channel_id);
                 if ($this->plugin->get_playback_points()->size() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -119,6 +120,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
 
             case ACTION_ITEMS_CLEAR:
+                $this->set_changes();
                 $this->plugin->get_playback_points()->clear_points();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
