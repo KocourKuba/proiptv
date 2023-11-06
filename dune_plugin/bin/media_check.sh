@@ -3,7 +3,7 @@
 thisdir=$(dirname "$0")
 plugin_root=$(builtin cd "$thisdir/.." && pwd)
 plugin_name=$(basename "$plugin_root")
-LOG_FILE="$FS_PREFIX/tmp/plugins/$plugin_name/media_check.log"
+LOG_FILE="/tmp/plugins/$plugin_name/media_check.log"
 
 RunWithTimeout()
 {
@@ -45,8 +45,8 @@ ProcessURL()
 
     URL="$1"
     FFMPEG_TIMEOUT_USEC=5000000
-    FFMPEG_EXE="$FS_PREFIX/firmware/scripts/ffmpeg.sh"
-    RESULT_FILE=`mktemp -p /tmp`
+    FFMPEG_EXE="/firmware/scripts/ffmpeg.sh"
+    RESULT_FILE=`mktemp -p "/tmp"`
 
     RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_EXE" -hide_banner -i "$URL" -vframes 0 -f null /dev/null >"$RESULT_FILE" 2>&1
 
@@ -54,9 +54,8 @@ ProcessURL()
     cat "$RESULT_FILE"|grep "^ *Stream #[0-9]:[0-9]:"|sed -e 's/^[ \t]*//'|sed -r "s/ \(.*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+//g"|tee -a $LOG_FILE
     rm -rf "$RESULT_FILE"
 
-    echo "`date`: ffmpeg finished with status $STATUS" >&2
     if [ "$STATUS" != 0 ]; then
-        echo "error $STATUS" | tee -a $LOG_FILE
+        echo "`date`: ffmpeg finished with status $STATUS" | tee -a $LOG_FILE
         return 1
     fi
 }

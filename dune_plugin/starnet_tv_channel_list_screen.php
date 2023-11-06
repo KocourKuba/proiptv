@@ -532,7 +532,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $info .= "Params: " . implode(",", $ext_params[PARAM_DUNE_PARAMS]) . "\n";
         }
 
-        if (!empty($live_url)) {
+        if (!empty($live_url) && !is_apk()) {
             $descriptors = array(
                 0 => array("pipe", "r"), // stdin
                 1 => array("pipe", "w"), // sdout
