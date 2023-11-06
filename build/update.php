@@ -67,7 +67,7 @@ $xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$ve
 file_put_contents("./dune_plugin/$plugin_metadata", $xml);
 
 $text = file_get_contents("./build/changelog.md");
-$text = str_replace('{plugin_version}', $argv[1], $text);
+$text = str_replace('{plugin_version}', $version, $text);
 file_put_contents("./dune_plugin/changelog.md", $text);
 
 ExtendedZip::zipTree('./dune_plugin', $packed_plugin, ZipArchive::CREATE);
