@@ -255,7 +255,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_ITEM_DELETE_CHANNELS:
                 $items = array(
                     TR::t('tv_screen_hide_plus') => "[\s(]\+\d",
-                    TR::t('tv_screen_hide_orig') => "[Oo]rig",
+                    TR::t('tv_screen_hide_orig') => "[Oo]rig|[Uu]ncomp",
                     TR::t('tv_screen_hide_50') => "\s50|FHD",
                     TR::t('tv_screen_hide_uhd') => "UHD|4[KkКк]|8[KkКк]",
                     TR::t('tv_screen_hide_string') => "custom"
