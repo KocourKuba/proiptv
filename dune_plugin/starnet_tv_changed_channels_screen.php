@@ -80,11 +80,10 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 if ($this->has_changes()) {
                     $this->plugin->save_orders(true);
                     $this->set_no_changes();
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
                 }
 
-                return Action_Factory::invalidate_all_folders(null,
-                    Starnet_Epfs_Handler::invalidate_folders(null, Action_Factory::close_and_run()));
+                return Action_Factory::close_and_run();
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -107,21 +106,23 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
             case ACTION_ITEM_DELETE:
                 $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
-                $changed = $this->plugin->tv->get_changed_channels_ids();
+                $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
+                $removed_channels = $this->plugin->tv->get_changed_channels_ids('removed');
                 $order = &$this->plugin->tv->get_known_channels();
-                if (in_array($channel_id, $this->plugin->tv->get_changed_channels_ids('new')) !== false) {
+                if (($key = array_search($channel_id, $new_channels)) !== false) {
                     $channel = $this->plugin->tv->get_channel($channel_id);
                     if (!is_null($channel)) {
                         $order->set($channel->get_id(), $channel->get_title());
                         $this->set_changes();
+                        unset($new_channels[$key]);
                     }
-                } else if (in_array($channel_id, $this->plugin->tv->get_changed_channels_ids('removed')) !== false) {
+                } else if (($key = array_search($channel_id, $removed_channels)) !== false) {
                     $order->erase($channel_id);
                     $this->set_changes();
+                    unset($removed_channels[$key]);
                 }
 
-                unset($changed[$channel_id]);
-                if (count($changed) === 0) {
+                if (count($new_channels) === 0 && count($removed_channels) === 0) {
                     $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
