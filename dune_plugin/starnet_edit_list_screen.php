@@ -419,8 +419,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 // Hashed_Array
                 /** @var Named_Storage $item */
                 $id = $key;
-                $title = empty($item->name) ? $item->params['uri'] : $item->name;
-                $detailed_info = TR::t('edit_list_detail_info__2', $item->name, $item->params['uri']);
+                $title = $item;
+                $detailed_info = TR::t('edit_list_detail_info__2', basename($item->name), $item);
                 $icon_file = get_image_path("link.png");
             } else {
                 continue;
