@@ -39,6 +39,16 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        return $actions;
+    }
+
+    /**
      * EPG dialog defs
      * @return array
      */
@@ -162,6 +172,12 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         }
 
         switch ($control_id) {
+            case GUI_EVENT_KEY_RETURN:
+            return Action_Factory::close_and_run(
+                User_Input_Handler_Registry::create_action_screen(
+                    Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, array('initial_sel_ndx' => 7))
+            );
+
             case ACTION_ITEMS_EDIT:
                 $this->plugin->set_postpone_save(true, PLUGIN_PARAMETERS);
                 $media_url_str = MediaURL::encode(

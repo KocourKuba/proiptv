@@ -69,27 +69,27 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             TR::t('setup_donate_title'), 'QR code', self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Interface settings
+        // Interface settings 3
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_INTERFACE_SCREEN,
             TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Channels settings
+        // Channels settings 5
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_PLAYLISTS_SCREEN,
             TR::t('tv_screen_playlists_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // EPG settings
+        // EPG settings 7
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_EPG_SCREEN,
             TR::t('setup_epg_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Streaming settings
+        // Streaming settings 9
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_STREAMING_SCREEN,
             TR::t('setup_streaming_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Extended settings
+        // Extended settings 11
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_EXT_SETUP_SCREEN,
             TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
@@ -181,8 +181,12 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
             case self::CONTROL_EXT_SETUP_SCREEN: // show additional settings dialog
                 return Action_Factory::open_folder(Starnet_Ext_Setup_Screen::get_media_url_str(), TR::t('setup_extended_setup'));
+
+            case RESET_CONTROLS_ACTION_ID:
+                $sel_ndx = isset($user_input->initial_sel_ndx) ? $user_input->initial_sel_ndx : -1;
+                return Action_Factory::reset_controls($this->do_get_control_defs(), null, $sel_ndx);
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs());
+        return null;
     }
 }

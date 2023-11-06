@@ -125,6 +125,16 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
     /**
      * @inheritDoc
      */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        return $actions;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -148,6 +158,12 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
         hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, true);
         switch ($control_id) {
+            case GUI_EVENT_KEY_RETURN:
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(
+                        Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, array('initial_sel_ndx' => 9))
+                );
+
             case self::CONTROL_AUTO_PLAY:
             case self::CONTROL_AUTO_RESUME:
                 self::toggle_cookie_param($plugin_cookies, $control_id);
