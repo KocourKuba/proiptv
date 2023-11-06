@@ -288,6 +288,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_INFO_DLG, TR::t('add_money'), "pay.png");
                         }
                     }
+
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'playlist'));
                 }
 
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
