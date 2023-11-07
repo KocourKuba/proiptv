@@ -1393,7 +1393,7 @@ class Default_Dune_Plugin implements DunePlugin
                     $contents = HD::http_download_https_proxy($playlist_url);
                 }
 
-                if ($contents === false || strpos($contents, '#EXTM3U') !== 0) {
+                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
                     HD::set_last_error("Empty or incorrect playlist !\n\n" . $contents);
                     throw new Exception("Can't parse playlist");
                 }

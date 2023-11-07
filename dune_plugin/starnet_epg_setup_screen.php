@@ -92,7 +92,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // Fuzzy search
-        $fuzzy_search = $this->plugin->get_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_off);
+        $fuzzy_search = $this->plugin->get_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FUZZY_SEARCH_EPG, TR::t('entry_epg_fuzzy_search'), SetupControlSwitchDefs::$on_off_translated[$fuzzy_search],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$fuzzy_search]), self::CONTROLS_WIDTH);

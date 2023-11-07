@@ -285,7 +285,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_INFO_DLG, TR::t('subscription'), "info.png");
                         $config = $provider->getProviderInfoConfig();
                         if (!empty($config['pay_url'])) {
-                            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_INFO_DLG, TR::t('add_money'), "pay.png");
+                            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ADD_MONEY_DLG, TR::t('add_money'), "pay.png");
                         }
                     }
 
@@ -580,6 +580,21 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     protected function do_show_add_money()
     {
+        try {
+            $url = "https://b.clubtv.pro/api/barcode.php?f=png&s=qr&d=HELLO%20WORLD&sf=8";
+            $img = get_temp_path('qr.png');
+            file_put_contents($img, HD::http_download_https_proxy($url));
+
+            Control_Factory::add_vgap($defs, 50);
+            Control_Factory::add_smart_label($defs, "", "<text>QR Code for pay</text>");
+            Control_Factory::add_smart_label($defs, "", "<icon>$img</icon>");
+            Control_Factory::add_vgap($defs, 50);
+
+            $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
+            return Action_Factory::show_dialog("QR code", $defs, true, 600, $attrs);
+        } catch (Exception $ex) {
+        }
+
         return null;
     }
 

@@ -348,11 +348,9 @@ class Epg_Manager
             }
             $proxy_log = HD::http_save_https_proxy($this->xmltv_url, $tmp_filename);
             if (LogSeverity::$is_debug && $proxy_log !== false) {
-                hd_print("Read http_proxy log...");
-                $lines = file($proxy_log, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                foreach ($lines as $line) hd_print($line);
-                unlink($proxy_log);
-                hd_print("Read finished");
+                hd_debug_print("Read http_proxy log...");
+                foreach (explode("\n", $proxy_log) as $line) hd_debug_print($line);
+                hd_debug_print("Read finished");
             }
 
             hd_debug_print("Last changed time on server: " . date("Y-m-d H:s", filemtime($tmp_filename)));
