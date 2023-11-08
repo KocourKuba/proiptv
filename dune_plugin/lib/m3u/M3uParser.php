@@ -143,7 +143,7 @@ class M3uParser extends Json_Serializer
         $entry = new Entry();
         $pos = $this->m3u_file->ftell();
         while (!$this->m3u_file->eof()) {
-            if ($this->parseLineFast($this->m3u_file->fgets(), $entry)) {
+            if ($this->parseLine($this->m3u_file->fgets(), $entry)) {
                 $group_name = $entry->getGroupTitle();
                 if (!array_key_exists($group_name, $data)) {
                     $data[$group_name] = array();

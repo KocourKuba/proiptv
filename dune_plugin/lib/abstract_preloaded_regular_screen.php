@@ -31,39 +31,6 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     const DLG_CONTROLS_WIDTH = 850;
 
     /**
-     * @var bool
-     */
-    private $has_changes = false;
-
-    /**
-     * @param string $save_data
-     * @return bool
-     */
-    protected function set_changes($save_data = PLUGIN_ORDERS)
-    {
-        $old = $this->has_changes;
-        $this->has_changes = true;
-        $this->plugin->set_dirty($save_data);
-        return $old;
-    }
-
-    /**
-     * @param string $save_data
-     * @return bool
-     */
-    protected function set_no_changes($save_data = PLUGIN_ORDERS)
-    {
-        $old = $this->has_changes;
-        $this->has_changes = false;
-        return $old;
-    }
-
-    protected function has_changes()
-    {
-        return $this->has_changes;
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param $plugin_cookies
      * @return array

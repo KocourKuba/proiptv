@@ -127,6 +127,16 @@ class Provider_Config
     protected $provider_info_config;
 
     /**
+     * @var bool
+     */
+    protected $vod_enabled = false;
+
+    /**
+     * @var array
+     */
+    protected $vod_config = array();
+
+    /**
      * @var array
      */
     protected $devices = array();
@@ -149,7 +159,7 @@ class Provider_Config
     /**
      * @var array
      */
-    protected $credentials;
+    protected $credentials = array();
 
     ////////////////////////////////////////////////////////////////////////
     /// non configurable vars
@@ -383,6 +393,47 @@ class Provider_Config
     }
 
     /**
+     * @return bool
+     */
+    public function getVodEnabled()
+    {
+        return $this->vod_enabled;
+    }
+
+    /**
+     * @param bool $vod_enabled
+     */
+    public function setVodEnabled($vod_enabled)
+    {
+        $this->vod_enabled = $vod_enabled;
+    }
+
+    /**
+     * @return array
+     */
+    public function getVodConfig()
+    {
+        return $this->vod_config;
+    }
+
+    /**
+     * @param array $vod_config
+     */
+    public function setVodConfig($vod_config)
+    {
+        $this->vod_config = $vod_config;
+    }
+
+    /**
+     * @param string $value
+     * @return string|array|null
+     */
+    public function getVodConfigValue($value)
+    {
+        return isset($this->vod_config[$value]) ? $this->vod_config[$value] : null;
+    }
+
+    /**
      * @return array
      */
     public function getDevices()
@@ -529,7 +580,6 @@ class Provider_Config
         hd_debug_print("playlist template $playlist_url");
         foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN, MACRO_DEVICE, MACRO_SERVER, MACRO_QUALITY) as $macro) {
             if (strpos($playlist_url, $macro) === false) continue;
-            hd_debug_print("replace: $macro to " . $this->getCredential($macro), true);
             $playlist_url = str_replace($macro, trim($this->getCredential($macro)), $playlist_url);
         }
 

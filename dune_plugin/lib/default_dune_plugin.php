@@ -52,6 +52,14 @@ class Default_Dune_Plugin implements DunePlugin
     const TV_SANDWICH_WIDTH = 246;
     const TV_SANDWICH_HEIGHT = 140;
 
+    const VOD_SANDWICH_WIDTH = 190;
+    const VOD_SANDWICH_HEIGHT = 290;
+    const VOD_CHANNEL_ICON_WIDTH = 190;
+    const VOD_CHANNEL_ICON_HEIGHT = 290;
+
+    const DEFAULT_MOV_ICON_PATH = 'plugin_file://icons/mov_unset.png';
+    const VOD_ICON_PATH = 'gui_skin://small_icons/movie.aai';
+
     private $plugin_cookies;
     private $internet_status = -2;
     private $opexec_id = -1;
@@ -67,11 +75,6 @@ class Default_Dune_Plugin implements DunePlugin
     public $plugin_info;
 
     /**
-     * @var M3uParser
-     */
-    protected $m3u_parser;
-
-    /**
      * @var Epg_Manager|Epg_Manager_Sql
      */
     protected $epg_manager;
@@ -80,6 +83,11 @@ class Default_Dune_Plugin implements DunePlugin
      * @var Starnet_Tv
      */
     public $tv;
+
+    /**
+     * @var Starnet_Vod
+     */
+    public $vod;
 
     /**
      * @var Playback_Points
@@ -114,6 +122,11 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @var array
      */
+    protected $history;
+
+    /**
+     * @var array
+     */
     protected $postpone_save;
 
     /**
@@ -136,9 +149,8 @@ class Default_Dune_Plugin implements DunePlugin
     protected function __construct()
     {
         $this->plugin_info = get_plugin_manifest_info();
-        $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false);
-        $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false);
-        $this->m3u_parser = new M3uParser();
+        $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
+        $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
         $this->providers = new Hashed_Array();
     }
 
@@ -170,14 +182,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_opexec_id()
     {
         return $this->opexec_id;
-    }
-
-    /**
-     * @return M3uParser
-     */
-    public function get_m3u_parser()
-    {
-        return $this->m3u_parser;
     }
 
     /**
@@ -265,6 +269,7 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print("Error: screen (id: " . $scr->get_id() . ") already registered.");
         } else {
             $this->screens[$scr->get_id()] = $scr;
+            hd_debug_print("Screen added: " . $scr->get_id());
         }
     }
 
@@ -856,6 +861,63 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     ///////////////////////////////////////////////////////////////////////
+    // History settings
+    //
+
+    /**
+     * Set channels order for selected playlist
+     *
+     * @param string $id
+     * @param mixed $val
+     */
+    public function set_history($id, $val)
+    {
+        $this->history[$id] = $val;
+        $this->set_dirty(true, PLUGIN_HISTORY);
+        $this->save_history();
+    }
+
+    /**
+     * Get history for selected playlist
+     *
+     * @param string $id
+     * @param mixed|null $default
+     * @return Hashed_Array<string, HistoryItem>|Ordered_Array
+     */
+    public function &get_history($id, $default = null)
+    {
+        $this->load_history();
+
+        if (!isset($this->history[$id])) {
+            $this->history[$id] = is_null($default) ? new Hashed_Array() : $default;
+        }
+
+        return $this->history[$id];
+    }
+
+    /**
+     * Remove order from storage
+     *
+     * @param string $id
+     */
+    public function remove_history($id)
+    {
+        unset($this->history[$id]);
+        $this->set_dirty(true, PLUGIN_HISTORY);
+        $this->save_history();
+    }
+
+    /**
+     * Get order names in storage
+     *
+     * @return array
+     */
+    public function get_history_names()
+    {
+        $this->load_history();
+        return is_array($this->history) ? array_keys($this->history) : array();
+    }
+    ///////////////////////////////////////////////////////////////////////
     // Storages methods
     //
 
@@ -881,6 +943,8 @@ class Default_Dune_Plugin implements DunePlugin
             $this->save_parameters();
         } else if ($item === PLUGIN_ORDERS) {
             $this->save_orders();
+        } else if ($item === PLUGIN_HISTORY) {
+            $this->save_history();
         }
     }
 
@@ -945,7 +1009,30 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * load plugin/playlist/orders settings
+     * load playlist history
+     *
+     * @param bool $force
+     * @return void
+     */
+    public function load_history($force = false)
+    {
+        $type = PLUGIN_HISTORY;
+        if ($force) {
+            $this->{$type} = null;
+        }
+
+        if (!isset($this->{$type})) {
+            $file = $this->get_history_path() . DIRECTORY_SEPARATOR . "{$this->get_active_playlist_key()}_$type.settings";
+            hd_debug_print("Load ($type): $file");
+            $this->{$type} = HD::get_items($file, true, false);
+            if (LogSeverity::$is_debug) {
+                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param), true);
+            }
+        }
+    }
+
+    /**
+     * load plugin/playlist/orders/history settings
      *
      * @param string $name
      * @param string $type
@@ -1001,6 +1088,36 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * save playlist history
+     *
+     * @param bool $force
+     * @return void
+     */
+    public function save_history($force = false)
+    {
+        $type = PLUGIN_HISTORY;
+
+        if (is_null($this->{$type})) {
+            hd_debug_print("this->$type is not set!", true);
+            return;
+        }
+
+        if ($this->postpone_save[$type] && !$force) {
+            return;
+        }
+
+        if ($force || $this->is_dirty($type)) {
+            $file = $this->get_history_path() . DIRECTORY_SEPARATOR . "{$this->get_active_playlist_key()}_$type.settings";
+            hd_debug_print("Save: $file", true);
+            if (LogSeverity::$is_debug) {
+                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param), true);
+            }
+            HD::put_items($file, $this->{$type}, false);
+            $this->set_dirty(false, $type);
+        }
+    }
+
+    /**
      * save data
      * @param string $name
      * @param string $type
@@ -1037,6 +1154,9 @@ class Default_Dune_Plugin implements DunePlugin
         HD::erase_data_items("$id.settings");
         hd_debug_print("remove {$id}_" . PLUGIN_ORDERS . ".settings", true);
         HD::erase_data_items("{$id}_" . PLUGIN_ORDERS . ".settings");
+        hd_debug_print("remove {$id}_" . PLUGIN_HISTORY . ".settings", true);
+        HD::erase_data_items("{$id}_" . PLUGIN_HISTORY . ".settings");
+
         foreach (glob_dir(get_cached_image_path(), "/^$id.*$/i") as $file) {
             hd_debug_print("remove cached image: $file", true);
             unlink($file);
@@ -1352,7 +1472,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $force = false;
-        $tmp_file = $this->get_current_playlist_cache();
+        $tmp_file = $this->get_current_playlist_cache(true);
         if (file_exists($tmp_file)) {
             $mtime = filemtime($tmp_file);
             $diff = time() - $mtime;
@@ -1406,14 +1526,14 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             // Is already parsed?
-            $this->m3u_parser->setupParser($tmp_file, $force);
-            if ($this->m3u_parser->getEntriesCount() === 0) {
-                if (!$this->m3u_parser->parseInMemory()) {
+            $this->tv->get_m3u_parser()->setupParser($tmp_file, $force);
+            if ($this->tv->get_m3u_parser()->getEntriesCount() === 0) {
+                if (!$this->tv->get_m3u_parser()->parseInMemory()) {
                     HD::set_last_error("Ошибка чтения плейлиста!");
                     throw new Exception("Can't read playlist");
                 }
 
-                $count = $this->m3u_parser->getEntriesCount();
+                $count = $this->tv->get_m3u_parser()->getEntriesCount();
                 if ($count === 0) {
                     $contents = @file_get_contents($tmp_file);
                     HD::set_last_error("Пустой плейлист!\n\n" . $contents);
@@ -1431,6 +1551,68 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         hd_debug_print("Init playlist done!");
+        return true;
+    }
+
+    /**
+     * Initialize and parse selected playlist
+     *
+     * @return bool
+     */
+    public function init_vod_playlist()
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider) || !$provider->getVodEnabled()) {
+            return false;
+        }
+
+        $vod_url = $provider->getVodConfigValue('vod_source');
+        if (empty($vod_url)) {
+            return false;
+        }
+
+        $this->init_user_agent();
+        $force = false;
+        $tmp_file = $this->get_current_playlist_cache(false);
+        if (file_exists($tmp_file)) {
+            $mtime = filemtime($tmp_file);
+            $diff = time() - $mtime;
+            if ($diff > 3600) {
+                hd_debug_print("Playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
+                unlink($tmp_file);
+                $force = true;
+            }
+        } else {
+            $force = true;
+        }
+
+        try {
+            if ($force !== false) {
+                hd_debug_print("vod source: $vod_url");
+                foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN, MACRO_DEVICE, MACRO_SERVER, MACRO_QUALITY) as $macro) {
+                    if (strpos($vod_url, $macro) === false) continue;
+                    $vod_url = str_replace($macro, $provider->getCredential($macro), $vod_url);
+                }
+
+                $contents = HD::http_download_https_proxy($vod_url);
+                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                    HD::set_last_error("Empty or incorrect playlist !\n\n" . $contents);
+                    throw new Exception("Can't parse playlist");
+                }
+
+                file_put_contents($tmp_file, $contents);
+                $mtime = filemtime($tmp_file);
+                hd_debug_print("Save $tmp_file (timestamp: $mtime)");
+            }
+
+            // Is already parsed?
+            $this->vod->get_m3u_parser()->setupParser($tmp_file, $force);
+        } catch (Exception $ex) {
+            hd_debug_print("Unable to load VOD playlist: " . $ex->getMessage());
+            return false;
+        }
+
+        hd_debug_print("Init VOD playlist done!");
         return true;
     }
 
@@ -1530,11 +1712,12 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @param bool $is_tv
      * @return string
      */
-    public function get_current_playlist_cache()
+    public function get_current_playlist_cache($is_tv)
     {
-        return get_temp_path($this->get_active_playlist_key() . "_playlist.m3u8");
+        return get_temp_path($this->get_active_playlist_key() . ($is_tv ? "_playlist.m3u8" : "_vod_playlist.m3u8"));
     }
 
     /**
@@ -1549,7 +1732,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
         $tmp_file = get_temp_path($playlist_id . "_playlist.m3u8");
         if (file_exists($tmp_file)) {
-            $this->m3u_parser->setupParser('');
+            $this->tv->get_m3u_parser()->setupParser('');
             hd_debug_print("remove $tmp_file", true);
             unlink($tmp_file);
         }
@@ -1576,7 +1759,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         /** @var Hashed_Array $sources */
         $xmltv_sources = new Hashed_Array();
-        foreach ($this->m3u_parser->getXmltvSources() as $m3u8source) {
+        foreach ($this->tv->get_m3u_parser()->getXmltvSources() as $m3u8source) {
             if (!preg_match(HTTP_PATTERN, $m3u8source, $m)) continue;
 
             $item = new Named_Storage();
@@ -2045,11 +2228,11 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_width => 50,
-                    ViewItemParams::icon_height => 50,
+                    ViewItemParams::icon_width => 70,
+                    ViewItemParams::icon_height => 70,
                     ViewItemParams::icon_dx => 20,
                     ViewItemParams::icon_dy => -5,
-                    ViewItemParams::item_caption_dx => 25,
+                    ViewItemParams::item_caption_dx => 30,
                     ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
                     ViewItemParams::icon_keep_aspect_ratio => true,
@@ -2068,6 +2251,7 @@ class Default_Dune_Plugin implements DunePlugin
                 (
                     ViewParams::num_cols => 1,
                     ViewParams::num_rows => 11,
+                    ViewParams::paint_icon_selection_box=> true,
                     ViewParams::paint_details => true,
                     ViewParams::paint_details_box_background => true,
                     ViewParams::paint_content_box_background => true,
@@ -2091,10 +2275,10 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_dx => 20,
-                    ViewItemParams::icon_dy => -5,
                     ViewItemParams::icon_width => 70,
                     ViewItemParams::icon_height => 70,
+                    ViewItemParams::icon_dx => 20,
+                    ViewItemParams::icon_dy => -5,
                     ViewItemParams::item_caption_dx => 30,
                     ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
@@ -2479,6 +2663,138 @@ class Default_Dune_Plugin implements DunePlugin
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
+            'icons_5x2_movie_no_caption' => array(
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 5,
+                    ViewParams::num_rows => 2,
+                    ViewParams::paint_details => true,
+                    ViewParams::paint_item_info_in_details => true,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::sandwich_width => self::VOD_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => self::VOD_SANDWICH_HEIGHT,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                    ViewParams::item_detailed_info_auto_line_break => true,
+                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
+                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_path => self::VOD_ICON_PATH,
+                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_dx => 10,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => self::VOD_CHANNEL_ICON_WIDTH,
+                    ViewItemParams::icon_height => self::VOD_CHANNEL_ICON_HEIGHT,
+                    ViewItemParams::icon_sel_margin_top => 0,
+                    ViewItemParams::item_paint_caption => false,
+                    ViewItemParams::item_caption_width => 1100
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+
+            'list_1x10_movie_info_normal' => array(
+                PluginRegularFolderView::async_icon_loading => true,
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 1,
+                    ViewParams::num_rows => 10,
+                    ViewParams::paint_details => true,
+                    ViewParams::paint_item_info_in_details => true,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::item_detailed_info_auto_line_break => true,
+                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
+                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
+
+                    ViewParams::paint_sandwich => false,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::sandwich_width => self::VOD_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => self::VOD_SANDWICH_HEIGHT,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_path => self::VOD_ICON_PATH,
+                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_dx => 12,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 50,
+                    ViewItemParams::icon_height => 50,
+                    ViewItemParams::icon_sel_margin_top => 0,
+                    ViewItemParams::item_paint_caption => true,
+                    ViewItemParams::item_caption_width => 1100,
+                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+
+            'list_1x12_vod_info_normal' => array(
+                PluginRegularFolderView::async_icon_loading => false,
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 1,
+                    ViewParams::num_rows => 12,
+                    ViewParams::paint_details => true,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+                ),
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_dx => 20,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 50,
+                    ViewItemParams::icon_height => 55,
+                    ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
+                    ViewItemParams::item_caption_width => 1100
+                ),
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
+            ),
         );
     }
 }

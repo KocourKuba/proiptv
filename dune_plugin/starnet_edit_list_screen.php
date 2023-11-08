@@ -123,7 +123,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
 
                 return Action_Factory::invalidate_folders(
-                    $reload ? array($parent_media_url->source_media_url_str) : null,
+                    $reload ? array($parent_media_url->source_media_url_str) : array(),
                     Action_Factory::close_and_run($post_action)
                 );
 

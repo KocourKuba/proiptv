@@ -48,7 +48,12 @@
       "playlist_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u",
       "id_map": "",
       "id_parser": "",
-      "provider_info": false
+      "provider_info": false,
+      "vod_enabled": true,
+      "vod_config": {
+        "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
+        "vod_parser": "(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$"
+      }
     },
     {
       "id": "antifriz",
@@ -59,7 +64,11 @@
       "playlist_source": "https://af-play.com/playlist/{PASSWORD}.m3u8",
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info": false
+      "provider_info": false,
+      "vod_enabled": false,
+      "vod_config": {
+        "vod_source": "http://protected-api.com"
+      }
     },
     {
       "id": "bcumedia",
@@ -95,6 +104,10 @@
           "accept": "*/*",
           "x-public-key": "{PASSWORD}"
         }
+      },
+      "vod_enabled": false,
+      "vod_config": {
+        "vod_source": "http://protected-api.com"
       }
     },
     {
@@ -109,6 +122,11 @@
       "provider_info": false,
       "provider_info_config": {
         "domain": "junior.edmonst.net"
+      },
+      "vod_enabled": false,
+      "vod_config": {
+        "vod_filters": ["years", "genre"],
+        "vod_quality": true
       }
     },
     {
@@ -131,7 +149,12 @@
       "playlist_source": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/tv.m3u",
       "id_map": "",
       "id_parser": "",
-      "provider_info": false
+      "provider_info": false,
+      "vod_enabled": true,
+      "vod_config": {
+        "vod_source": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/vodall.m3u",
+        "vod_parser": "(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$"
+      }
     },
     {
       "id": "glanz",
@@ -142,7 +165,12 @@
       "playlist_source": "http://pl.ottg.cc/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output=hls",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+$",
-      "provider_info": false
+      "provider_info": false,
+      "vod_enabled": false,
+      "vod_config": {
+        "vod_source": "http://api.ottg.cc/playlist/vod?login={LOGIN}&password={PASSWORD}",
+        "vod_filters": ["genre","from","to"]
+      }
     },
     {
       "id": "ipstream",
@@ -254,7 +282,12 @@
       "playlist_source": "http://pl.ping-tv.com/{LOGIN}/{PASSWORD}/tv.m3u",
       "id_map": "",
       "id_parser": "",
-      "provider_info": false
+      "provider_info": false,
+      "vod_enabled": true,
+      "vod_config": {
+        "vod_source": "http://pl.ping-tv.com/{LOGIN}/{PASSWORD}/vodall.m3u",
+        "vod_parser": "(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$"
+      }
     },
     {
       "id": "russkoetv",
@@ -292,6 +325,11 @@
         "url": "https://list.playtv.pro/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "root": "data",
         "pay_url": "https://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
+      },
+      "vod_enabled": false,
+      "vod_config": {
+        "vod_source": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}",
+        "vod_filters": ["genre","from","to"]
       }
     },
     {
@@ -336,7 +374,12 @@
       },
       "id_map": "",
       "id_parser": "",
-      "provider_info": false
+      "provider_info": false,
+      "vod_enabled": true,
+      "vod_config": {
+        "vod_source": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
+        "vod_parser": "(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$"
+      }
     },
     {
       "id": "tvclub",

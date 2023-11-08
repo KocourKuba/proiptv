@@ -65,12 +65,19 @@ const ALL_CHANNEL_GROUP_ID = '##all_channels##';
 const HISTORY_GROUP_ID = '##playback_history_tv_group##';
 const CHANGED_CHANNELS_GROUP_ID = '##changed_channels_group##';
 const VOD_GROUP_ID = '##mediateka##';
+const FAVORITES_MOVIE_GROUP_ID = '##movie_favorites##';
+const SEARCH_MOVIES_GROUP_ID = '##search_movie##';
+const FILTER_MOVIES_GROUP_ID = '##filter_movie##';
+const HISTORY_MOVIES_GROUP_ID = '##playback_history_vod_group##';
 
 # Common parameters
 const PLUGIN_PARAMETERS = "parameters";
 const PLUGIN_SETTINGS = "settings";
 const PLUGIN_ORDERS = "orders";
+const PLUGIN_HISTORY = "history";
 const PLUGIN_CONFIG_VERSION = 'config_version';
+const HISTORY_MOVIES = 'vod_history';
+const VOD_SEARCH_LIST = 'vod_search';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_PLAYLIST_STORAGE = 'playlist_storage';
@@ -130,6 +137,7 @@ const PARAM_CUSTOM_DELETE_REGEX = 'custom_delete_regex';
 const PARAM_PROVIDER = 'provider';
 const PARAM_LINK = 'link';
 const PARAM_FILE = 'file';
+const PARAM_VOD_DEFAULT_VARIANT = 'variant';
 
 const LIST_IDX = 'list_idx';
 const PLAYLIST_PICONS = 'playlist_picons';

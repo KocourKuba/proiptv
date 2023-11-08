@@ -763,7 +763,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 if ($this->plugin->tv->reload_channels() === 0) {
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                    return Starnet_Epfs_Handler::invalidate_folders(null,
+                    return Starnet_Epfs_Handler::invalidate_folders(array(),
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
 

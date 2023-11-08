@@ -406,6 +406,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $group->set_icon_url(Default_Group::CHANGED_CHANNELS_GROUP_ICON);
                             break;
 
+                        case VOD_GROUP_ID:
+                            $group->set_icon_url(Default_Group::VOD_GROUP_ICON);
+                            break;
+
                         default:
                             $group->set_icon_url(Default_Group::DEFAULT_GROUP_ICON);
                     }
@@ -634,7 +638,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         foreach ($this->plugin->tv->get_special_groups() as $group) {
             if (is_null($group)) continue;
 
-            hd_debug_print("group: {$group->get_title()} disabled: " . var_export($group->is_disabled(), true), true);
+            hd_debug_print("group: '{$group->get_title()}' disabled: " . var_export($group->is_disabled(), true), true);
 
             if ($group->is_disabled()) continue;
 
@@ -667,12 +671,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         count($this->plugin->tv->get_changed_channels_ids('removed')));
                     break;
 
+                case VOD_GROUP_ID:
+                    $item_detailed_info = TR::t('tv_screen_group_info', $group->get_title());
+                    break;
+
                 default:
                     $item_detailed_info = TR::t('tv_screen_group_info__2',
                         $group->get_title(),
                         $group->get_items_order()->size());
                     break;
             }
+
+            hd_debug_print("special group: " . $group->get_media_url_str(), true);
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => $group->get_media_url_str(),

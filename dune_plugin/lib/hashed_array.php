@@ -283,7 +283,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function key()
     {
-        return $this->seq[$this->pos];
+        return isset($this->seq[$this->pos]) ? $this->seq[$this->pos] : null;
     }
 
     /**

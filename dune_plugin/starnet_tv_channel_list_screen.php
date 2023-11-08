@@ -322,8 +322,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->tv->reload_channels();
-                return Starnet_Epfs_Handler::invalidate_folders(array(Starnet_Tv_Groups_Screen::ID),
-                    Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str())));
+                return Starnet_Epfs_Handler::invalidate_folders(
+                    array(Starnet_Tv_Groups_Screen::ID),
+                    Action_Factory::close_and_run(
+                        Action_Factory::open_folder($parent_media_url->get_media_url_str())
+                    )
+                );
 
             case ACTION_REFRESH_SCREEN:
                 break;

@@ -214,7 +214,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === self::ACTION_FILE_RESTORE) {
-                    return $this->do_restore_settings($data->caption, $data->filepath, $plugin_cookies);
+                    return $this->do_restore_settings($data->caption, $data->filepath);
                 }
                 break;
 
@@ -287,10 +287,9 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     /**
      * @param string $name
      * @param string $filename
-     * @param $plugin_cookies
      * @return array
      */
-    protected function do_restore_settings($name, $filename, $plugin_cookies)
+    protected function do_restore_settings($name, $filename)
     {
         $this->plugin->get_epg_manager()->clear_all_epg_cache();
         $this->plugin->clear_playlist_cache();

@@ -27,36 +27,41 @@
 require_once 'json_serializer.php';
 
 /**
- * @property mixed|null $screen_id // Screen ID, used to find screen handler
- * @property mixed|null $channel_id // Channel ID
- * @property mixed|null $group_id // Group ID
- * @property mixed|null $row_id // row id (used in NewUI)
+ * @property string|null $screen_id // Screen ID, used to find screen handler
+ * @property string|null $channel_id // Channel ID
+ * @property string|null $group_id // Group ID
+ * @property string|null $row_id // row id (used in NewUI)
  * @property string|null $source_window_id // Window ID called this screen
  * @property string|null $source_media_url_str // Media Url string of window called this screen
  * @property string|null $save_data // parameter used to save data
- * @property mixed|null $type // Folder type (used in Starnet_Folder_Screen)
- * @property mixed|null $id // ID
+ * @property string|null $type // Folder type (used in Starnet_Folder_Screen)
+ * @property string|null $id // ID
  * @property mixed|null $choose_folder // Action 'choose folder'
  * @property mixed|null $choose_file // Action 'choose file'
- * @property mixed|null $filepath // real path of selected folder or file
- * @property mixed|null $windowCounter // Index of current window, start from 1
- * @property mixed|null $end_action // action called for parent window
- * @property mixed|null $cancel_action // action called for parent window
- * @property mixed|null $extension // pattern for show files with specified extension
- * @property mixed|null $caption // Caption of the selected media url
+ * @property string|null $filepath // real path of selected folder or file
+ * @property string|null $windowCounter // Index of current window, start from 1
+ * @property string|null $end_action // action called for parent window
+ * @property string|null $cancel_action // action called for parent window
+ * @property string|null $extension // pattern for show files with specified extension
+ * @property string|null $caption // Caption of the selected media url
  * @property bool|null  $allow_network // Allow to use network folders NFS/SMB for Starnet_Folder_Screen
- * @property mixed|null $nfs_protocol // symbolic name of NFS protocol
+ * @property string|null $nfs_protocol // symbolic name of NFS protocol
  * @property bool|null $is_favorite // Is selected media url point to the favorite folder
  * @property int|mixed|null $archive_tm // timestamp of the archive position playback, -1 live broadcast
- * @property mixed|null $err // error
- * @property mixed|null $ip_path // ip address or name of NFS/SMB server, used in Starnet_Folder_Screen
- * @property mixed|null $no_internet // is not valid EPS screen
- * @property mixed|null $user // login, used in Starnet_Folder_Screen
- * @property mixed|null $password // password, used in Starnet_Folder_Screen
- * @property mixed|null $edit_list // type of Starnet_Edit_List_Screen (playlist, epg, hidden groups/channels)
+ * @property string|null $err // error
+ * @property string|null $ip_path // ip address or name of NFS/SMB server, used in Starnet_Folder_Screen
+ * @property string|null $no_internet // is not valid EPS screen
+ * @property string|null $user // login, used in Starnet_Folder_Screen
+ * @property string|null $password // password, used in Starnet_Folder_Screen
+ * @property string|null $edit_list // type of Starnet_Edit_List_Screen (playlist, epg, hidden groups/channels)
  * @property bool|null $allow_order // allow order items, used in Starnet_Edit_List_Screen
  * @property string|null $postpone_save // name of controlled postpone save status
  * @property bool|null $allow_reset // show reset to default button and call action ACTION_RESET_DEFAULT
+ * @property string|null movie_id // Movie ID
+ * @property string|null category_id // Movie Category ID
+ * @property string|null episode_id // Episode ID
+ * @property string|null genre_id // Movie Genre ID
+ * @property string|null name // search name
  */
 class MediaURL extends Json_Serializer
 {

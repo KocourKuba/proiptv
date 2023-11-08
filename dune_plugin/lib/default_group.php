@@ -40,23 +40,23 @@ class Default_Group extends Json_Serializer implements Group
     const HISTORY_GROUP_CAPTION = 'plugin_history';
     const HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
 
-    const FAV_MOVIES_GROUP_CAPTION = 'plugin_favorites';
-    const FAV_MOVIES_GROUP_ICON = 'plugin_file://icons/fav_movie.png';
-
-    const VOD_GROUP_CAPTION = 'plugin_vod';
-    const VOD_GROUP_ICON = "plugin_file://icons/vod.png";
-
-    const SEARCH_MOVIES_GROUP_CAPTION = 'search';
-    const SEARCH_MOVIES_GROUP_ICON = 'plugin_file://icons/search_movie.png';
-
-    const FILTER_MOVIES_GROUP_CAPTION = 'filter';
-    const FILTER_MOVIES_GROUP_ICON = 'plugin_file://icons/filter_movie.png';
-
-    const HISTORY_MOVIES_GROUP_CAPTION = 'plugin_history';
-    const HISTORY_MOVIES_GROUP_ICON = 'plugin_file://icons/history_movie.png';
-
     const CHANGED_CHANNELS_GROUP_CAPTION = 'plugin_changed';
     const CHANGED_CHANNELS_GROUP_ICON = 'plugin_file://icons/changed_channels.png';
+
+    const FAV_MOVIES_GROUP_CAPTION = 'plugin_favorites';
+    const FAV_MOVIES_GROUP_ICON = 'plugin_file://icons/favorite_vod_folder.png';
+
+    const VOD_GROUP_CAPTION = 'plugin_vod';
+    const VOD_GROUP_ICON = "plugin_file://icons/vod_folder.png";
+
+    const SEARCH_MOVIES_GROUP_CAPTION = 'search';
+    const SEARCH_MOVIES_GROUP_ICON = 'plugin_file://icons/search_movie_folder.png';
+
+    const FILTER_MOVIES_GROUP_CAPTION = 'filter';
+    const FILTER_MOVIES_GROUP_ICON = 'plugin_file://icons/filter_movie_folder.png';
+
+    const HISTORY_MOVIES_GROUP_CAPTION = 'plugin_history';
+    const HISTORY_MOVIES_GROUP_ICON = 'plugin_file://icons/history_vod_folder.png';
 
     /**
      * @var string
@@ -160,7 +160,17 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function is_special_group()
     {
-        return in_array($this->_id, array(ALL_CHANNEL_GROUP_ID, FAVORITES_GROUP_ID, HISTORY_GROUP_ID, CHANGED_CHANNELS_GROUP_ID));
+        return in_array($this->_id, array(
+            ALL_CHANNEL_GROUP_ID,
+            FAVORITES_GROUP_ID,
+            HISTORY_GROUP_ID,
+            CHANGED_CHANNELS_GROUP_ID,
+            VOD_GROUP_ID,
+            FAVORITES_MOVIE_GROUP_ID,
+            SEARCH_MOVIES_GROUP_ID,
+            FILTER_MOVIES_GROUP_ID,
+            )
+        );
     }
 
     /**
@@ -327,6 +337,21 @@ class Default_Group extends Json_Serializer implements Group
 
             case CHANGED_CHANNELS_GROUP_ID:
                 return Starnet_Tv_Changed_Channels_Screen::get_media_url_string(CHANGED_CHANNELS_GROUP_ID);
+
+            case VOD_GROUP_ID:
+                return Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID);
+
+            case FAVORITES_MOVIE_GROUP_ID:
+                return Starnet_Vod_Favorites_Screen::get_media_url_string(FAVORITES_MOVIE_GROUP_ID);
+
+            case HISTORY_MOVIES_GROUP_ID:
+                return Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID);
+
+            case SEARCH_MOVIES_GROUP_ID:
+                return Starnet_Vod_Search_Screen::get_media_url_string(SEARCH_MOVIES_GROUP_ID);
+
+            case FILTER_MOVIES_GROUP_ID:
+                return Starnet_Vod_Filter_Screen::get_media_url_string(FILTER_MOVIES_GROUP_ID);
         }
 
         return Starnet_Tv_Channel_List_Screen::get_media_url_string($this->get_id());

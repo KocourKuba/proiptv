@@ -78,6 +78,11 @@ class Starnet_Tv implements User_Input_Handler
      */
     protected $special_groups;
 
+    /**
+     * @var M3uParser
+     */
+    protected $m3u_parser;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -95,6 +100,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
         $this->special_groups = new Hashed_Array();
+        $this->m3u_parser = new M3uParser();
     }
 
     /**
@@ -103,6 +109,14 @@ class Starnet_Tv implements User_Input_Handler
     public static function get_handler_id()
     {
         return static::ID . '_handler';
+    }
+
+    /**
+     * @return M3uParser
+     */
+    public function get_m3u_parser()
+    {
+        return $this->m3u_parser;
     }
 
     /**
@@ -399,9 +413,10 @@ class Starnet_Tv implements User_Input_Handler
             return Action_Factory::invalidate_folders(array(), null, true);
         }
 
-        return Starnet_Epfs_Handler::invalidate_folders(array(
-            Starnet_Tv_Favorites_Screen::get_media_url_string(FAVORITES_GROUP_ID),
-            Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID))
+        return Starnet_Epfs_Handler::invalidate_folders(
+            array(Starnet_Tv_Favorites_Screen::get_media_url_string(FAVORITES_GROUP_ID),
+                Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID)
+            )
         );
     }
 
@@ -540,12 +555,21 @@ class Starnet_Tv implements User_Input_Handler
             false);
         $this->special_groups->set($special_group->get_id(), $special_group);
 
-        // History channels category
+        // Changed channels category
         $special_group = new Default_Group($this->plugin,
             CHANGED_CHANNELS_GROUP_ID,
             TR::load_string(Default_Group::CHANGED_CHANNELS_GROUP_CAPTION),
             Default_Group::CHANGED_CHANNELS_GROUP_ICON,
             false);
+        $this->special_groups->set($special_group->get_id(), $special_group);
+
+        // Vod category
+        $special_group = new Default_Group($this->plugin,
+            VOD_GROUP_ID,
+            TR::load_string(Default_Group::VOD_GROUP_CAPTION),
+            Default_Group::VOD_GROUP_ICON,
+            false);
+        $special_group->set_disabled(true);
         $this->special_groups->set($special_group->get_id(), $special_group);
 
         // All channels category
@@ -574,30 +598,37 @@ class Starnet_Tv implements User_Input_Handler
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
 
-        $this->plugin->get_playback_points()->load_points(true);
-
-        $catchup['global'] = $this->plugin->get_m3u_parser()->getM3uInfo()->getCatchup();
-        $global_catchup_source = $this->plugin->get_m3u_parser()->getM3uInfo()->getCatchupSource();
-        $icon_url_base = $this->plugin->get_m3u_parser()->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
-
         $id_map = false;
         $id_parser = '';
-        if (!is_null($provider = $this->plugin->get_current_provider()) && $provider->getIdParser() !== '') {
-            if ($provider->getPlaylistCatchup() !== '') {
-                $catchup['global'] = $provider->getPlaylistCatchup();
-                hd_debug_print("set provider catchup: {$catchup['global']}");
-            }
+        $provider = $this->plugin->get_current_provider();
+        if (!is_null($provider)) {
+            $this->plugin->vod->init_vod($provider);
+            hd_debug_print("VOD support: " . var_export($provider->getVodEnabled(), true));
+            $this->get_special_group(VOD_GROUP_ID)->set_disabled(!$provider->getVodEnabled());
 
-            if ($provider->getIdMap() === 'map') {
-                $id_map = true;
-                $id_parser = $provider->getIdParser();
-            } else if ($provider->getIdMap() === 'parse') {
-                $id_parser = "/{$provider->getIdParser()}/";
+            if ($provider->getIdParser() !== '') {
+                if ($provider->getPlaylistCatchup() !== '') {
+                    $catchup['global'] = $provider->getPlaylistCatchup();
+                    hd_debug_print("set provider catchup: {$catchup['global']}");
+                }
+
+                if ($provider->getIdMap() === 'map') {
+                    $id_map = true;
+                    $id_parser = $provider->getIdParser();
+                } else if ($provider->getIdMap() === 'parse') {
+                    $id_parser = "/{$provider->getIdParser()}/";
+                }
+                hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_parser");
+            } else {
+                hd_debug_print("no provider specific id mapping, use M3U attributes");
             }
-            hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_parser");
-        } else {
-            hd_debug_print("no provider specific id mapping, use M3U attributes");
         }
+
+        $this->plugin->get_playback_points()->load_points(true);
+
+        $catchup['global'] = $this->m3u_parser->getM3uInfo()->getCatchup();
+        $global_catchup_source = $this->m3u_parser->getM3uInfo()->getCatchupSource();
+        $icon_url_base = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
 
         // User catchup settings has higher priority than playlist or provider settings
         $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
@@ -641,7 +672,7 @@ class Starnet_Tv implements User_Input_Handler
         // Collect categories from playlist
         $disabled_group = $this->get_disabled_group_ids();
         $playlist_groups = new Ordered_Array();
-        $pl_entries = $this->plugin->get_m3u_parser()->getM3uEntries();
+        $pl_entries = $this->m3u_parser->getM3uEntries();
         foreach ($pl_entries as $entry) {
             $title = $entry->getGroupTitle();
             if ($this->groups->has($title)) continue;
@@ -683,7 +714,15 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         // orders
-        $playlist_groups->add_items(array(PARAM_DISABLED_GROUPS, PARAM_DISABLED_CHANNELS, PARAM_KNOWN_CHANNELS, PARAM_GROUPS_ORDER, FAVORITES_GROUP_ID));
+        $playlist_groups->add_items(
+            array(PARAM_DISABLED_GROUPS,
+                PARAM_DISABLED_CHANNELS,
+                PARAM_KNOWN_CHANNELS,
+                PARAM_GROUPS_ORDER,
+                FAVORITES_GROUP_ID,
+                FAVORITES_MOVIE_GROUP_ID,
+            )
+        );
         $orphans_groups = array_diff($this->plugin->get_order_names(), $playlist_groups->get_order());
         foreach ($orphans_groups as $orphan_group_id) {
             hd_debug_print("Remove orphaned order for group id: $orphan_group_id", true);
