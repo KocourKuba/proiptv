@@ -933,7 +933,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         switch ($provider->getProviderType()) {
             case PROVIDER_TYPE_PIN:
                 Control_Factory::add_text_field($defs, $this, null,
-                    self::CONTROL_PASSWORD, TR::t('password'), $provider->getCredential(MACRO_PASSWORD),
+                    self::CONTROL_PASSWORD, TR::t('token'), $provider->getCredential(MACRO_PASSWORD),
                     false, true, false, true, self::DLG_CONTROLS_WIDTH);
                 break;
 

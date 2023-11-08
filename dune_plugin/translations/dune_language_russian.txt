@@ -56,6 +56,7 @@ name = Имя
 url = Ссылка
 login = Логин
 password = Пароль
+token = Пин/Токен
 subdomain = Домен
 ottkey = OTT ключ
 device = Устройство
