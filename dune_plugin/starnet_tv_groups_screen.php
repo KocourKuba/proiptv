@@ -593,11 +593,20 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             $img = get_temp_path($this->plugin->get_active_playlist_key() . '.png');
-            file_put_contents($img, HD::http_download_https_proxy($url));
+            if (file_exists($img)) {
+                unlink($img);
+            }
 
+            file_put_contents($img, HD::http_download_https_proxy($url));
             Control_Factory::add_vgap($defs, 20);
-            Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
-            Control_Factory::add_vgap($defs, 450);
+
+            if (file_exists($img)) {
+                Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
+                Control_Factory::add_vgap($defs, 450);
+            } else {
+                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load_string('err_incorrect_access_data') . "</text>");
+                Control_Factory::add_vgap($defs, 50);
+            }
 
             $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
             return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600, $attrs);
