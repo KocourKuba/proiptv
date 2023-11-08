@@ -72,6 +72,18 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             ACTION_ITEMS_EDIT, TR::t('setup_channels_src_edit_playlists'), TR::t('edit'),
             get_image_path('edit.png'), self::CONTROLS_WIDTH);
 
+        //////////////////////////////////////
+        // picon settings
+
+        $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
+        $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
+        $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+        Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
+            TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, self::CONTROLS_WIDTH, true);
+
+        //////////////////////////////////////
+        // catchup settings
+
         $catchup_ops[KnownCatchupSourceTags::cu_unknown] = TR::t('by_default');
         $catchup_ops[KnownCatchupSourceTags::cu_shift] = KnownCatchupSourceTags::cu_shift;
         $catchup_ops[KnownCatchupSourceTags::cu_flussonic] = KnownCatchupSourceTags::cu_flussonic;
@@ -189,7 +201,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 );
 
             case PARAM_USER_CATCHUP:
-                $this->plugin->set_setting(PARAM_USER_CATCHUP, $new_value);
+            case PARAM_USE_PICONS:
+                $this->plugin->set_setting($control_id, $new_value);
                 $this->plugin->tv->reload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 

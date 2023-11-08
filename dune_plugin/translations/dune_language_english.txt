@@ -69,6 +69,8 @@ balance_not_support = Account balance information not supported
 package = Package
 packages = Packages
 no_packages = No packages
+playlist_picons = Playlist
+xmltv_picons = XMLTV
 
 plugin_all_channels = All channels
 plugin_favorites = Favorites
@@ -145,6 +147,7 @@ setup_channels_src_no_playlists = No playlists!!!
 setup_channels_src_playlist = Playlist source
 setup_channels_archive_type = Playlist archive type
 setup_channels_square_icons = Channel uses square icons
+setup_channels_picons_source = Channel icons source
 setup_channels_ext_params = Additional parameters
 setup_channels_user_agent = HTTP User-Agent
 setup_channels_dune_params = dune_params

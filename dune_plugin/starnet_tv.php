@@ -691,6 +691,7 @@ class Starnet_Tv implements User_Input_Handler
         }
         unset($playlist_groups);
 
+        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
         // Read channels
         $playlist_group_channels = array();
         $number = 0;
@@ -726,14 +727,24 @@ class Starnet_Tv implements User_Input_Handler
                     $epg_ids = array_unique(array_values($epg_ids));
                 }
 
-                $icon_url = $entry->getEntryIcon();
-                if (!empty($icon_url_base) && !preg_match(HTTP_PATTERN, $icon_url)) {
-                    $icon_url = $icon_url_base . $icon_url;
-                } else if (empty($icon_url)) {
-                    $icon_url = isset($picons[$channel_name]) ? $picons[$channel_name] : self::DEFAULT_CHANNEL_ICON_PATH;
+                $playlist_icon = $entry->getEntryIcon();
+                if (!empty($icon_url_base) && !preg_match(HTTP_PATTERN, $playlist_icon)) {
+                    $playlist_icon = $icon_url_base . $playlist_icon;
                 }
 
-                $used_tag = '';
+                $xmltv_icon = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
+
+                if ($use_playlist_picons) {
+                    $icon_url = empty($playlist_icon) ? $xmltv_icon : $playlist_icon;
+                } else {
+                    $icon_url = $xmltv_icon;
+                }
+
+                if (empty($icon_url)) {
+                    $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
+                }
+
+            $used_tag = '';
                 $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, Entry::TAG_EXTINF, $used_tag);
                 if ($used_tag === 'catchup-time') {
                     $archive /= 86400;

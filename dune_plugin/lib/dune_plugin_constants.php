@@ -112,6 +112,7 @@ const PARAM_CHANNELS_ZOOM = 'channels_zoom';
 const PARAM_CHANNEL_PLAYER = 'channel_player';
 const PARAM_KNOWN_CHANNELS = 'known_channels';
 const PARAM_USER_CATCHUP = 'user_catchup';
+const PARAM_USE_PICONS = 'use_picons';
 const PARAM_TV_HISTORY_ITEMS = '_tv_history_items';
 const PARAM_USER_AGENT = 'user_agent';
 const PARAM_BUFFERING_TIME = 'buffering_time';
@@ -131,6 +132,8 @@ const PARAM_LINK = 'link';
 const PARAM_FILE = 'file';
 
 const LIST_IDX = 'list_idx';
+const PLAYLIST_PICONS = 'playlist_picons';
+const XMLTV_PICONS = 'xmltv_picons';
 
 // deprecated and removed after upgrade
 const PARAM_PLAYLISTS = 'playlists';

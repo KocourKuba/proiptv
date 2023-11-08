@@ -69,6 +69,8 @@ balance_not_support = Информация о балансе не поддерж
 package = Пакет
 packages = Пакеты
 no_packages = Нет пакетов
+playlist_picons = Плейлист
+xmltv_picons = XMLTV
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное
@@ -145,6 +147,7 @@ setup_channels_src_no_playlists = Нет плейлистов!!!
 setup_channels_src_playlist = Источник плейлистов
 setup_channels_archive_type = Тип архива для плейлиста
 setup_channels_square_icons = Квадратные иконки каналов
+setup_channels_picons_source = Источник иконок каналов
 setup_channels_ext_params = Дополнительные параметры
 setup_channels_user_agent = HTTP User-Agent
 setup_channels_dune_params = dune_params
