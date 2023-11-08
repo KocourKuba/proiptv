@@ -291,7 +291,7 @@
       "provider_info_config": {
         "url": "https://list.playtv.pro/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "root": "data",
-        "pay_url": ""
+        "pay_url": "https://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
       }
     },
     {

@@ -579,18 +579,28 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     protected function do_show_add_money()
     {
+        $provider = $this->plugin->get_current_provider();
+        if (is_null($provider)) {
+            return null;
+        }
+
         try {
-            $url = "https://b.clubtv.pro/api/barcode.php?f=png&s=qr&d=HELLO%20WORLD&sf=8";
-            $img = get_temp_path('qr.png');
+            $url = $provider->getProviderInfoConfigValue('pay_url');
+            foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN) as $macro) {
+                if (strpos($url, $macro) !== false) {
+                    $url = str_replace($macro, trim($provider->getCredential($macro)), $url);
+                }
+            }
+
+            $img = get_temp_path($this->plugin->get_active_playlist_key() . '.png');
             file_put_contents($img, HD::http_download_https_proxy($url));
 
-            Control_Factory::add_vgap($defs, 50);
-            Control_Factory::add_smart_label($defs, "", "<text>QR Code for pay</text>");
-            Control_Factory::add_smart_label($defs, "", "<icon>$img</icon>");
-            Control_Factory::add_vgap($defs, 50);
+            Control_Factory::add_vgap($defs, 20);
+            Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
+            Control_Factory::add_vgap($defs, 450);
 
             $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-            return Action_Factory::show_dialog("QR code", $defs, true, 600, $attrs);
+            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600, $attrs);
         } catch (Exception $ex) {
         }
 
