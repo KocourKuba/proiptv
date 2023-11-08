@@ -699,7 +699,11 @@ class Starnet_Tv implements User_Input_Handler
             $channel_id = $entry->getEntryId();
             if (empty($channel_id) && !is_null($provider)) {
                 if ($id_map) {
-                    $channel_id = $entry->getEntryAttribute($id_parser);
+                    if ($id_parser === 'name') {
+                        $channel_id = $entry->getEntryTitle();
+                    } else {
+                        $channel_id = $entry->getEntryAttribute($id_parser);
+                    }
                 } else if (!empty($id_parser) && preg_match($id_parser, $entry->getPath(), $m)) {
                     $channel_id = $m['id'];
                 }

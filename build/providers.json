@@ -207,7 +207,7 @@
       "provider_type": "pin",
       "playlist_source": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u",
       "id_map": "map",
-      "id_parser": "tvg-id",
+      "id_parser": "name",
       "provider_info": false
     },
     {
