@@ -374,6 +374,15 @@ class Provider_Config
     }
 
     /**
+     * @param string $val
+     * @return string
+     */
+    public function getProviderInfoConfigValue($val)
+    {
+        return isset($this->provider_info_config[$val]) ? $this->provider_info_config[$val] : '';
+    }
+
+    /**
      * @return array
      */
     public function getDevices()

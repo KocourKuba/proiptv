@@ -765,10 +765,16 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                 break;
 
                             case PROVIDER_TYPE_EDEM:
-                                hd_debug_print("set subdomain: $vars[0]", true);
-                                $playlist->params[MACRO_SUBDOMAIN] = $vars[0];
-                                hd_debug_print("set ottkey: $vars[0]", true);
-                                $playlist->params[MACRO_OTTKEY] = $vars[1];
+                                if (isset($vars[1])) {
+                                    hd_debug_print("set subdomain: $vars[0]", true);
+                                    $playlist->params[MACRO_SUBDOMAIN] = $vars[0];
+                                    hd_debug_print("set ottkey: $vars[1]", true);
+                                    $playlist->params[MACRO_OTTKEY] = $vars[1];
+                                } else {
+                                    $playlist->params[MACRO_SUBDOMAIN] = 'junior.edmonst.net';
+                                    hd_debug_print("set ottkey: $vars[0]", true);
+                                    $playlist->params[MACRO_OTTKEY] = $vars[0];
+                                }
                                 break;
                         }
 
@@ -789,6 +795,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         hd_debug_print("can't recognize: $line");
                         continue;
                     }
+
                     if ($order->has($hash)) {
                         hd_debug_print("already exist: $playlist", true);
                     } else {
@@ -942,9 +949,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case PROVIDER_TYPE_EDEM:
-                Control_Factory::add_text_field($defs, $this, null,
-                    self::CONTROL_OTT_SUBDOMAIN, TR::t('subdomain'), $provider->getCredential(MACRO_SUBDOMAIN),
-                    false, false, false, true, self::DLG_CONTROLS_WIDTH);
+                $subdomain = $provider->getCredential(MACRO_SUBDOMAIN);
+                if (!empty($subdomain) && $subdomain !== $provider->getProviderInfoConfigValue('domain')) {
+                    Control_Factory::add_text_field($defs, $this, null,
+                        self::CONTROL_OTT_SUBDOMAIN, TR::t('subdomain'), $provider->getCredential(MACRO_SUBDOMAIN),
+                        false, false, false, true, self::DLG_CONTROLS_WIDTH);
+                }
                 Control_Factory::add_text_field($defs, $this, null,
                     self::CONTROL_OTT_KEY, TR::t('ottkey'), $provider->getCredential(MACRO_OTTKEY),
                     false, true, false, true, self::DLG_CONTROLS_WIDTH);
@@ -1033,7 +1043,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case PROVIDER_TYPE_EDEM:
-                $params[MACRO_SUBDOMAIN] = $user_input->{self::CONTROL_OTT_SUBDOMAIN};
+                if (isset($user_input->{self::CONTROL_OTT_SUBDOMAIN})) {
+                    $params[MACRO_SUBDOMAIN] = $user_input->{self::CONTROL_OTT_SUBDOMAIN};
+                } else {
+                    $params[MACRO_SUBDOMAIN] = $provider->getProviderInfoConfigValue('domain');
+                }
                 $params[MACRO_OTTKEY] = $user_input->{self::CONTROL_OTT_KEY};
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;
                 break;

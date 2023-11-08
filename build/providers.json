@@ -105,8 +105,11 @@
       "provider_type": "edem",
       "playlist_source": "http://epg.it999.ru/edem_epg_ico2.m3u8",
       "id_map": "parse",
-      "id_parser": "^https?:\\/\\/(?:.+)\\/iptv\\/(?:.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
-      "provider_info": false
+      "id_parser": "^https?:\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
+      "provider_info": false,
+      "provider_info_config": {
+        "domain": "junior.edmonst.net"
+      }
     },
     {
       "id": "filmax",

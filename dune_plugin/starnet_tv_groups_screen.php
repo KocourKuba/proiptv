@@ -283,8 +283,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (!is_null($provider) && $provider->getProviderInfo()) {
                         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                         $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_INFO_DLG, TR::t('subscription'), "info.png");
-                        $config = $provider->getProviderInfoConfig();
-                        if (!empty($config['pay_url'])) {
+                        $pay_url = $provider->getProviderInfoConfigValue('pay_url');
+                        if (!empty($pay_url)) {
                             $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ADD_MONEY_DLG, TR::t('add_money'), "pay.png");
                         }
                     }
@@ -487,8 +487,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return null;
         }
 
-        $config = $provider->getProviderInfoConfig();
-        $url = $config['url'];
+        $url = $provider->getProviderInfoConfigValue('url');
         foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN) as $macro) {
             if (strpos($url, $macro) !== false) {
                 $url = str_replace($macro, trim($provider->getCredential($macro)), $url);
