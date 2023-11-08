@@ -54,7 +54,7 @@ ProcessURL()
     cat "$RESULT_FILE"|grep "^ *Stream #[0-9]:[0-9]:"|sed -e 's/^[ \t]*//'|sed -r "s/ \(.*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+//g"|tee -a $LOG_FILE
     rm -rf "$RESULT_FILE"
 
-    if [ "$STATUS" != 0 ]; then
+    if [ "$STATUS" > 1 ]; then
         echo "`date`: ffmpeg finished with status $STATUS" | tee -a $LOG_FILE
         return 1
     fi
