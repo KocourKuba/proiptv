@@ -1114,6 +1114,8 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
+        $this->tv->unload_channels();
+
         hd_debug_print("Init plugin done!");
         hd_print("----------------------------------------------------");
 

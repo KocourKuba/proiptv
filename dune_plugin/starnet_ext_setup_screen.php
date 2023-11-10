@@ -214,7 +214,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file->action === self::ACTION_FILE_RESTORE) {
-                    return $this->do_restore_settings($data->caption, $data->filepath);
+                    return $this->do_restore_settings($data->caption, $data->filepath, $plugin_cookies);
                 }
                 break;
 
@@ -287,9 +287,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     /**
      * @param string $name
      * @param string $filename
+     * @param $plugin_cookies
      * @return array
      */
-    protected function do_restore_settings($name, $filename)
+    protected function do_restore_settings($name, $filename, $plugin_cookies)
     {
         $this->plugin->get_epg_manager()->clear_all_epg_cache();
         $this->plugin->clear_playlist_cache();
@@ -361,7 +362,16 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         hd_debug_print("Reset debug logging");
         $this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, false);
 
-        return Action_Factory::show_title_dialog(TR::t('setup_restore_done'), Action_Factory::show_main_screen(Action_Factory::restart()));
+        $this->plugin->init_plugin(true);
+
+        return Action_Factory::show_title_dialog(
+            TR::t('setup_restore_done'),
+            Action_Factory::close_and_run(
+                Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD)
+                )
+            )
+        );
     }
 
     /**

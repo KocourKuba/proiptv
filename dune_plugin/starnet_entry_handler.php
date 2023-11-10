@@ -110,7 +110,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 ));
                         }
 
-                        $this->plugin->init_plugin();
+                        $this->plugin->init_plugin(true);
                         if ($this->plugin->get_playlists()->size() === 0) {
                             return User_Input_Handler_Registry::create_action($this, 'do_setup');
                         }
@@ -141,7 +141,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return $action;
 
                     case 'auto_resume':
-                        $this->plugin->init_plugin();
+                        $this->plugin->init_plugin(true);
                         if ((int)$user_input->mandatory_playback !== 1
                             || (isset($plugin_cookies->auto_resume) && $plugin_cookies->auto_resume === SetupControlSwitchDefs::switch_off)) {
                             break;
