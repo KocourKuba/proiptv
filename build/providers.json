@@ -366,8 +366,9 @@
       "id_parser": "tvg-name",
       "xmltv_sources": {
         "1": "http://epg.team/tvteam.xml.gz",
-        "2": "http://epg.team/tvteam.3.1.xml",
-        "3": "http://epg.team/tvteam.7.7.xml"
+        "2": "http://epg.team/tvteam.3.3.xml.tar.gz",
+        "3": "http://epg.team/tvteam.5.5.xml.tar.gz",
+        "4": "http://epg.team/tvteam.7.7.xml.tar.gz"
       },
       "provider_info": false
     },
