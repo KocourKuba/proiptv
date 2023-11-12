@@ -195,7 +195,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     case self::SCREEN_EDIT_CHANNELS:
                         $channel = $this->plugin->tv->get_channel($item);
                         if (!is_null($channel)) {
-                            hd_debug_print("restore channel: {$channel->get_title()} ({$channel->get_id()})");
+                            hd_debug_print("restore channel: {$channel->get_title()} ({$channel->get_id()})", true);
                             $channel->set_disabled(false);
                         }
                         break;
@@ -203,7 +203,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     case self::SCREEN_EDIT_GROUPS:
                         $group = $this->plugin->tv->get_group($item);
                         if (!is_null($group)) {
-                            hd_debug_print("restore group: " . $group->get_id());
+                            hd_debug_print("restore group: " . $group->get_id(), true);
                             $group->set_disabled(false);
                         }
                         break;
@@ -224,7 +224,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-                hd_debug_print("edit_list: $parent_media_url->edit_list");
+                hd_debug_print("edit_list: $parent_media_url->edit_list", true);
                 /** @var Hashed_Array $order */
                 $order = &$this->get_edit_order($parent_media_url->edit_list);
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
@@ -259,7 +259,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $order = $this->get_edit_order($edit_list);
                         /** @var Named_Storage $item */
                         foreach ($order->get_keys() as $key) {
-                            hd_debug_print("item: $key");
                             if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                                 $this->plugin->get_epg_manager()->clear_epg_files($key);
                             } else if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
@@ -275,7 +274,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                         /** @var Channel $channel */
                         foreach ($group->get_group_disabled_channels() as $channel) {
-                            hd_debug_print("restore channel: {$channel->get_title()} ({$channel->get_id()})");
+                            hd_debug_print("restore channel: {$channel->get_title()} ({$channel->get_id()})", true);
                             $channel->set_disabled(false);
                         }
                         break;
@@ -283,7 +282,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     case self::SCREEN_EDIT_GROUPS:
                         /** @var Group $group */
                         foreach ($this->plugin->tv->get_groups($this->get_edit_order($edit_list)) as $group) {
-                            hd_debug_print("restore group: " . $group->get_id());
+                            hd_debug_print("restore group: " . $group->get_id(), true);
                             $group->set_disabled(false);
                         }
                         break;

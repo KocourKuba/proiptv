@@ -313,7 +313,7 @@ class Epg_Manager_Sql extends Epg_Manager
             $epg_ids = array_unique($epg_ids);
             $channel_id = $channel->get_id();
             if (!empty($epg_ids)) {
-                hd_debug_print("Load position indexes for: $channel_id ($channel_title), search epg id's: " . json_encode($epg_ids));
+                hd_debug_print("Load position indexes for: $channel_id ($channel_title), search epg id's: " . raw_json_encode($epg_ids));
                 $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
                 $stmt = $pos_db->prepare("SELECT start, end FROM positions WHERE channel_id IN ($placeHolders);");
                 if ($stmt !== false) {

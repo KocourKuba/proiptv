@@ -296,7 +296,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_CHANGE_PLAYLIST:
-                hd_debug_print("Start event popup menu for playlist");
+                hd_debug_print("Start event popup menu for playlist", true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_PLAYLIST => true));
 
             case ACTION_PLAYLIST_SELECTED:
@@ -308,11 +308,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_CHANGE_EPG_SOURCE:
-                hd_debug_print("Start event popup menu for epg source");
+                hd_debug_print("Start event popup menu for epg source", true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
 
             case ACTION_SORT_POPUP:
-                hd_debug_print("Start event popup menu for playlist");
+                hd_debug_print("Start event popup menu for playlist", true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_SORT_POPUP => true));
 
             case ACTION_EPG_SOURCE_SELECTED:
@@ -387,7 +387,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group = $this->plugin->tv->get_any_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 
-                    hd_debug_print("Reset icon for group: $sel_media_url->group_id to default", true);
+                    hd_debug_print("Reset icon for group: $sel_media_url->group_id to default");
 
                     switch ($sel_media_url->group_id) {
                         case ALL_CHANNEL_GROUP_ID:
@@ -524,12 +524,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
         } else {
-            hd_debug_print("account: " . json_encode($json));
+            hd_debug_print("account: " . raw_json_encode($json), true);
             if (!is_null($root) && isset($json[$root])) {
                 foreach (explode(',', $root) as $key) {
                     $json = $json[$key];
                 }
-                hd_debug_print("root: " . json_encode($json));
+                hd_debug_print("root: " . raw_json_encode($json), true);
             }
 
             $ignore = isset($config['ignore_items']) ? explode(",", $config['ignore_items']) : null;

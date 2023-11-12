@@ -296,7 +296,10 @@ class M3uParser extends Json_Serializer
         }
 
         $tag = $entry->parseExtTag($line, false);
-        hd_debug_print(json_encode($tag), true);
+        if (LogSeverity::$is_debug) {
+            hd_debug_print(serialize($tag));
+        }
+
         if (is_null($tag)) {
             // untagged line must be a stream url
             $entry->setPath($line);

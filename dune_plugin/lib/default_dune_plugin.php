@@ -1049,7 +1049,7 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print("Load ($type): $name");
             $this->{$type} = HD::get_data_items($name, true, false);
             if (LogSeverity::$is_debug) {
-                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param), true);
+                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
             }
         }
     }
@@ -1110,7 +1110,7 @@ class Default_Dune_Plugin implements DunePlugin
             $file = $this->get_history_path() . DIRECTORY_SEPARATOR . "{$this->get_active_playlist_key()}_$type.settings";
             hd_debug_print("Save: $file", true);
             if (LogSeverity::$is_debug) {
-                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param), true);
+                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
             }
             HD::put_items($file, $this->{$type}, false);
             $this->set_dirty(false, $type);
@@ -1137,7 +1137,9 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($force || $this->is_dirty($type)) {
             hd_debug_print("Save: $name", true);
-            foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param), true);
+            if (LogSeverity::$is_debug) {
+                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
+            }
             HD::put_data_items($name, $this->{$type}, false);
             $this->set_dirty(false, $type);
         }

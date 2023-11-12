@@ -292,7 +292,9 @@ class Epg_Manager
             $check_time_file = filemtime($cached_xmltv_file);
             $max_cache_time = 3600 * 24 * $this->cache_ttl;
             if ($check_time_file && $check_time_file + $max_cache_time > time()) {
-                hd_debug_print("Cached file: $cached_xmltv_file is not expired " . date("Y-m-d H:s", $check_time_file));
+                hd_debug_print("Cached file: $cached_xmltv_file is not expired "
+                    . date("Y-m-d H:s", $check_time_file)
+                    . " date expiration: " . date($check_time_file + $max_cache_time));
                 return 1;
             }
 
