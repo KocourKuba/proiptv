@@ -704,7 +704,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_PLAYLIST => true));
 
             case ACTION_PLAYLIST_SELECTED:
-                if (!isset($user_input->{LIST_IDX})) break;
+                if (!isset($user_input->{LIST_IDX}) || $user_input->{LIST_IDX} === $this->plugin->get_active_playlist_key()) break;
 
                 $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);

@@ -1,11 +1,11 @@
 @echo off
 setlocal
-del \\DUNE4K\DuneSD\dune_plugin_logs\proiptv.log 
+del \\DUNE4K\DuneSD\dune_plugin_logs\proiptv.log  >nul 2>&1
 
 set /p VERSION=<build\version.txt
 for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
 
-php -f build\update.php %VERSION% %BUILD%
+php -f build\update.php %VERSION% %BUILD% %1
 
 del dune_plugin_proiptv.zip >nul
 
@@ -19,7 +19,9 @@ echo copy to Diskstation
 copy /Y dune_plugin_proiptv.zip \\DISKSTATION\Downloads\ >nul
 echo.
 
-choice /T 2 /D N /M "Upload"
+if '%1' == 'debug' goto :EOF
+
+choice /T 5 /D N /M "Upload"
 if ERRORLEVEL 2 goto :EOF
 
 echo create GIT tag

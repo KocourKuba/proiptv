@@ -74,6 +74,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if ($user_input->search_actions === 'keyboard') {
                     $search_string = $media_url->genre_id;
                 } else {
+                    /** @var Ordered_Array $search_items */
                     $search_items = $this->plugin->get_history(VOD_SEARCH_LIST, new Ordered_Array());
                     $search_items->rewind();
                     $search_string = $search_items->size() === 0 ? "" : $search_items->current();
@@ -94,6 +95,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
             case ACTION_RUN_SEARCH:
                 $search_string = $user_input->{ACTION_NEW_SEARCH};
                 hd_debug_print("search string: $search_string");
+                /** @var Ordered_Array $search_items */
                 $search_items = &$this->plugin->get_history(VOD_SEARCH_LIST, new Ordered_Array());
                 $search_items->insert_item($search_string, false);
                 $this->plugin->save_history(true);
@@ -109,6 +111,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if (!isset($user_input->selected_media_url)) break;
 
                 $media_url = MediaURL::decode($user_input->selected_media_url);
+                /** @var Ordered_Array $search_items */
                 $search_items = &$this->plugin->get_history(VOD_SEARCH_LIST, new Ordered_Array());
                 switch ($user_input->control_id) {
                     case ACTION_ITEM_UP:

@@ -70,6 +70,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url->get_media_url_str(), true);
 
         if (is_null($this->category_index) || is_null($this->category_list)) {
             $this->plugin->vod->fetchVodCategories($this->category_list, $this->category_index);
@@ -77,82 +78,86 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
         $category_list = $this->category_list;
 
-        if (isset($media_url->category_id) && $media_url->category_id !== VOD_GROUP_ID) {
-            if (!isset($this->category_index[$media_url->category_id])) {
-                hd_debug_print("Error: parent category (id: $media_url->category_id) not found.");
-                return array();
-            }
-
-            $parent_category = $this->category_index[$media_url->category_id];
-            $category_list = $parent_category->get_sub_categories();
-        }
-
         $items = array();
 
-        /** @var Group $group */
-        foreach ($this->plugin->vod->get_special_groups() as $group) {
-            if (is_null($group)) continue;
-
-            hd_debug_print("group: '{$group->get_title()}' disabled: " . var_export($group->is_disabled(), true), true);
-
-            if ($group->is_disabled()) continue;
-
-            switch ($group->get_id()) {
-                case FAVORITES_MOVIE_GROUP_ID:
-                    $color = DEF_LABEL_TEXT_COLOR_GOLD;
-                    $item_detailed_info = TR::t('tv_screen_group_info__2', $group->get_title(), $group->get_items_order()->size());
-                    break;
-
-                case HISTORY_MOVIES_GROUP_ID:
-                    $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
-                    $item_detailed_info = TR::t('tv_screen_group_info__2', $group->get_title(), $this->plugin->get_history(HISTORY_MOVIES)->size());
-                    break;
-
-                default:
-                    $color = DEF_LABEL_TEXT_COLOR_GREEN;
-                    $item_detailed_info = $group->get_title();
-                    break;
-            }
-
-            hd_debug_print("special group: " . $group->get_media_url_str(), true);
-
-            $items[] = array(
-                PluginRegularFolderItem::media_url => $group->get_media_url_str(),
-                PluginRegularFolderItem::caption => $group->get_title(),
-                PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::item_caption_color => $color,
-                    ViewItemParams::icon_path => $group->get_icon_url(),
-                    ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
-                    ViewItemParams::item_detailed_info => $item_detailed_info,
-                )
-            );
-        }
-
-        if (!empty($category_list)) {
-            foreach ($category_list as $category) {
-                $category_id = $category->get_id();
-                if (!is_null($category->get_sub_categories())) {
-                    $media_url_str = self::get_media_url_string($category_id);
-                } else if ($category_id === Vod_Category::FLAG_ALL
-                    || $category_id === Vod_Category::FLAG_SEARCH
-                    || $category_id === Vod_Category::FLAG_FILTER) {
-                    // special category id's
-                    $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category_id, null);
-                } else if ($category->get_parent() !== null) {
-                    $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category->get_parent()->get_id(), $category_id);
-                } else {
-                    $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category_id, null);
+        if (isset($media_url->category_id)) {
+            if ($media_url->category_id !== VOD_GROUP_ID) {
+                if (!isset($this->category_index[$media_url->category_id])) {
+                    hd_debug_print("Error: parent category (id: $media_url->category_id) not found.");
+                    return array();
                 }
 
-                $items[] = array(
-                    PluginRegularFolderItem::media_url => $media_url_str,
-                    PluginRegularFolderItem::caption => $category->get_caption(),
-                    PluginRegularFolderItem::view_item_params => array(
-                        ViewItemParams::icon_path => $category->get_icon_path(),
-                        ViewItemParams::item_detailed_icon_path => $category->get_icon_path(),
-                    )
-                );
+                $parent_category = $this->category_index[$media_url->category_id];
+                $category_list = $parent_category->get_sub_categories();
+            } else {
+                /** @var Group $group */
+                foreach ($this->plugin->vod->get_special_groups() as $group) {
+                    if (is_null($group)) continue;
+
+                    hd_debug_print("group: '{$group->get_title()}' disabled: " . var_export($group->is_disabled(), true), true);
+
+                    if ($group->is_disabled()) continue;
+
+                    switch ($group->get_id()) {
+                        case FAVORITES_MOVIE_GROUP_ID:
+                            $color = DEF_LABEL_TEXT_COLOR_GOLD;
+                            $item_detailed_info = TR::t('tv_screen_group_info__2', $group->get_title(), $group->get_items_order()->size());
+                            break;
+
+                        case HISTORY_MOVIES_GROUP_ID:
+                            $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
+                            $item_detailed_info = TR::t('tv_screen_group_info__2', $group->get_title(), $this->plugin->get_history(HISTORY_MOVIES)->size());
+                            break;
+
+                        default:
+                            $color = DEF_LABEL_TEXT_COLOR_GREEN;
+                            $item_detailed_info = $group->get_title();
+                            break;
+                    }
+
+                    hd_debug_print("special group: " . $group->get_media_url_str(), true);
+
+                    $items[] = array(
+                        PluginRegularFolderItem::media_url => $group->get_media_url_str(),
+                        PluginRegularFolderItem::caption => $group->get_title(),
+                        PluginRegularFolderItem::view_item_params => array(
+                            ViewItemParams::item_caption_color => $color,
+                            ViewItemParams::icon_path => $group->get_icon_url(),
+                            ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
+                            ViewItemParams::item_detailed_info => $item_detailed_info,
+                        )
+                    );
+                }
             }
+        }
+
+        if (empty($category_list)) {
+            return array();
+        }
+
+        foreach ($category_list as $category) {
+            $category_id = $category->get_id();
+            if (!is_null($category->get_sub_categories())) {
+                $media_url_str = self::get_media_url_string($category_id);
+            } else if ($category_id === Vod_Category::FLAG_ALL
+                || $category_id === Vod_Category::FLAG_SEARCH
+                || $category_id === Vod_Category::FLAG_FILTER) {
+                // special category id's
+                $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category_id, null);
+            } else if ($category->get_parent() !== null) {
+                $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category->get_parent()->get_id(), $category_id);
+            } else {
+                $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category_id, null);
+            }
+
+            $items[] = array(
+                PluginRegularFolderItem::media_url => $media_url_str,
+                PluginRegularFolderItem::caption => $category->get_caption(),
+                PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::icon_path => $category->get_icon_path(),
+                    ViewItemParams::item_detailed_icon_path => $category->get_icon_path(),
+                )
+            );
         }
 
         return $items;

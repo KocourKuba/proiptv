@@ -300,11 +300,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_PLAYLIST => true));
 
             case ACTION_PLAYLIST_SELECTED:
-                if (!isset($user_input->{LIST_IDX})) break;
+                if (!isset($user_input->{LIST_IDX}) || $user_input->{LIST_IDX} === $this->plugin->get_active_playlist_key()) break;
 
                 $this->plugin->save_orders(true);
                 $this->set_changes(false);
                 $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
+
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_CHANGE_EPG_SOURCE:
@@ -491,48 +492,16 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return null;
         }
 
-        $curl_headers = null;
-        if (isset($config['headers'])) {
-            $curl_headers = array();
-            foreach ($config['headers'] as $key => $header) {
-                $curl_headers[CURLOPT_HTTPHEADER][] = "$key: " . $provider->replace_macros($header);
-            }
-        }
-
-        $json = HD::DownloadJson($provider->replace_macros($provider->getProviderInfoConfigValue('url')), true, $curl_headers);
-        $root = null;
-        if (isset($config['root'])) {
-            $root = $config['root'];
-        }
-
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if ($json === false || (!is_null($root) && !isset($json[$root]))) {
+        $data = $provider->getProviderData();
+        if (empty($data)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
         } else {
-            hd_debug_print("account: " . raw_json_encode($json), true);
-            if (!is_null($root) && isset($json[$root])) {
-                foreach (explode(',', $root) as $key) {
-                    $json = $json[$key];
-                }
-                hd_debug_print("root: " . raw_json_encode($json), true);
-            }
-
-            $ignore = isset($config['ignore_items']) ? explode(",", $config['ignore_items']) : null;
-
-            $text = '';
-            if (isset($config['sections'])) {
-                foreach (explode(',', $config['sections']) as $section) {
-                    if (isset($json[$section])) {
-                        $text .= "-------- $section --------\n" . $this->collect_account_items($json[$section], $ignore);
-                    }
-                }
-            } else {
-                $text .= $this->collect_account_items($json, $ignore);
-            }
-
+            $ignore = $provider->getProviderInfoConfigValue('ignore_items');
+            $text = $this->collect_account_items($data, is_null($ignore) ? $ignore : explode(',', $ignore));
             Control_Factory::add_multiline_label($defs, null, $text, 12);
         }
 
@@ -542,19 +511,28 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param array $json
-     * @param array|null $ignore
+     * @param array $data
+     * @param array|null $ignored
+     * @param int $deep
      * @return string
      */
-    protected function collect_account_items($json, $ignore)
+    protected function collect_account_items($data, $ignored, $deep = 0)
     {
         $text = '';
-        foreach ($json as $key => $value) {
-            if (!is_null($ignore) && in_array($key, $ignore)) continue;
+        foreach ($data as $key => $value) {
+            if (!is_null($ignored) && in_array($key, $ignored)) continue;
 
             if (is_array($value)) {
-                $t = mapped_implode(',', $value, ': ', $ignore);
-                $text .= "$key: $t\n";
+                hd_debug_print("level: $deep, key: $key data: " . raw_json_encode($value));
+                if ($deep && !is_assoc_array($value)) {
+                    $t = mapped_implode(',', $value, ': ', $ignored);
+                    $text .= "$key: $t\n";
+                } else {
+                    if (is_assoc_array($data)) {
+                        $text .= "-------- $key --------\n";
+                    }
+                    $text .= $this->collect_account_items($value, $ignored, $deep + 1);
+                }
             } else {
                 if (is_bool($value)) {
                     $value = var_export($value, true);

@@ -13,9 +13,7 @@ class vod_glanz extends vod_standard
     }
 
     /**
-     * @param string $movie_id
-     * @return Movie
-     * @throws Exception
+     * @inheritDoc
      */
     public function TryLoadMovie($movie_id)
     {
@@ -73,8 +71,7 @@ class vod_glanz extends vod_standard
     }
 
     /**
-     * @param array &$category_list
-     * @param array &$category_index
+     * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
@@ -164,9 +161,7 @@ class vod_glanz extends vod_standard
     }
 
     /**
-     * @param string $keyword
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getSearchList($keyword)
     {
@@ -190,9 +185,7 @@ class vod_glanz extends vod_standard
     }
 
     /**
-     * @param string $query_id
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getMovieList($query_id)
     {
@@ -227,9 +220,7 @@ class vod_glanz extends vod_standard
     }
 
     /**
-     * @param string $params
-     * @param $from_ndx
-     * @return array
+     * @inheritDoc
      */
     public function getFilterList($params, $from_ndx)
     {

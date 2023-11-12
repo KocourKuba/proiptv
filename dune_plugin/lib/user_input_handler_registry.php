@@ -158,11 +158,10 @@ class User_Input_Handler_Registry
     }
 
     /**
-     * @param User_Input_Handler $handler
+     * @param string $handler_id
      */
-    public function unregister_handler(User_Input_Handler $handler)
+    public function unregister_handler($handler_id)
     {
-        $handler_id = $handler->get_handler_id();
         if (isset($this->handlers[$handler_id])) {
             unset($this->handlers[$handler_id]);
         }

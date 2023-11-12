@@ -135,7 +135,7 @@ class vod_standard extends Abstract_Vod
         $this->plugin->create_screen(new Starnet_Vod_Search_Screen($this->plugin));
         $this->plugin->create_screen(new Starnet_Vod_Filter_Screen($this->plugin));
 
-        $this->vod_source = $this->provider->getVodConfigValue('vod_source');
+        $this->vod_source = $this->provider->replace_macros($this->provider->getVodConfigValue('vod_source'));
         $this->vod_pattern = $this->provider->getVodConfigValue('vod_parser');
         if (!empty($this->vod_pattern)) {
             $this->vod_pattern = "/$this->vod_pattern/";

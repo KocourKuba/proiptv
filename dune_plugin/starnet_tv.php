@@ -607,10 +607,8 @@ class Starnet_Tv implements User_Input_Handler
             if ($provider->getVodEnabled()) {
                 hd_debug_print("VOD support: " . var_export($provider->getVodEnabled(), true));
                 $vod_class = "vod_" . ($provider->getVodConfigValue('vod_custom') ? $provider->getId() : "standard");
-                $vod_file = get_install_path("vod/" . strtolower($vod_class) . ".php");
-                hd_debug_print("Used VOD class: $vod_class, file: $vod_file");
-                if (file_exists($vod_file)) {
-                    require $vod_file;
+                hd_debug_print("Used VOD class: $vod_class");
+                if (class_exists($vod_class)) {
                     $this->plugin->vod = new $vod_class($this->plugin);
                     $this->plugin->vod->init_vod($provider);
                     $this->get_special_group(VOD_GROUP_ID)->set_disabled(!$provider->getVodEnabled());

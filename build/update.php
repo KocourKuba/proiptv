@@ -49,8 +49,8 @@ $packed_plugin = 'dune_plugin_proiptv.zip';
 $update_tar = 'update_proiptv.tar';
 $update_file = 'update_proiptv.tar.gz';
 $release_date = date('Y.m.d');
-$version = "$argv[1].$argv[2]";
-$version_index = $argv[2];
+list(, $version, $version_index, $is_debug) = $argv;
+$version = "$version.$version_index";
 
 $xml = file_get_contents("build/$plugin_info.tpl");
 $xml = preg_replace("|<version>(.*)</version>|", "<version>$version</version>", $xml);
@@ -69,6 +69,8 @@ file_put_contents("./dune_plugin/$plugin_metadata", $xml);
 $text = file_get_contents("./build/changelog.md");
 $text = str_replace('{plugin_version}', $version, $text);
 file_put_contents("./dune_plugin/changelog.md", $text);
+$providers = ($is_debug === 'debug') ? "providers_debug.json" :  "providers.json";
+copy("./build/$providers", "./dune_plugin/$providers");
 
 ExtendedZip::zipTree('./dune_plugin', $packed_plugin, ZipArchive::CREATE);
 

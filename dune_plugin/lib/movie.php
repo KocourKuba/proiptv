@@ -190,6 +190,7 @@ class Movie implements User_Input_Handler
         $history_item = new HistoryItem($watched, $user_input->plugin_vod_stop_position, $user_input->plugin_vod_duration, $user_input->plugin_vod_stop_tm);
 
         hd_debug_print("add movie to history: id: $id, series: $series_idx", true);
+        /** @var Hashed_Array $history_items */
         $history_items = &$this->plugin->get_history(HISTORY_MOVIES);
         if ($history_items->has("$id:$series_idx")) {
             $history_items->erase("$id:$series_idx");
@@ -455,6 +456,7 @@ class Movie implements User_Input_Handler
 
             $pos = 0;
             $name = $series->name;
+            /** @var HistoryItem $viewed_series */
             $viewed_series = $this->plugin->get_history(HISTORY_MOVIES)->get("$media_url->movie_id:$series->id");
 
             if (!is_null($viewed_series) && $viewed_series->watched === false && $viewed_series->duration !== -1) {
@@ -469,6 +471,7 @@ class Movie implements User_Input_Handler
             }
 
             $initial_start_array[$counter] = $pos * 1000;
+            $playback_url = HD::make_ts($playback_url);
             $playback_url = $this->plugin->vod->UpdateDuneParams($playback_url);
             hd_debug_print("Playback movie: $media_url->movie_id, episode: $series->id ($variant)", true);
             hd_debug_print("Url: $playback_url from $initial_start_array[$counter]", true);

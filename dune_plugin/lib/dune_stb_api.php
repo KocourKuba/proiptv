@@ -1938,6 +1938,11 @@ function mapped_implode($glue, $array, $symbol, $ignore)
     );
 }
 
+function is_assoc_array($array){
+    $keys = array_keys($array);
+    return $keys !== array_keys($keys);
+}
+
 function register_all_known_events($handler, &$actions)
 {
     $all_events = array(

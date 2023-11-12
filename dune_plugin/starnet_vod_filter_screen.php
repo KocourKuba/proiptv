@@ -59,6 +59,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if ($user_input->filter_actions === 'keyboard') {
                     $filter_string = $media_url->genre_id;
                 } else {
+                    /** @var Ordered_Array $filter_items */
                     $filter_items = $this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
                     $filter_string = $filter_items->size() === 0 ? "" : $filter_items[0];
                 }
@@ -77,6 +78,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if (empty($filter_string)) break;
 
                 hd_debug_print("filter_screen filter string: $filter_string");
+                /** @var Ordered_Array $filter_items */
                 $filter_items = &$this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
                 $filter_items->insert_item($filter_string, false);
                 $this->plugin->save_history(true);
@@ -92,6 +94,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if (!isset($user_input->selected_media_url)) break;
 
                 $media_url = MediaURL::decode($user_input->selected_media_url);
+                /** @var Ordered_Array $filter_items */
                 $filter_items = &$this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
 
                 switch ($user_input->control_id) {
@@ -140,6 +143,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
             ),
         );
 
+        /** @var Ordered_Array $filter_items */
         foreach ($this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array()) as $item) {
             if (!empty($item)) {
                 $items[] = array(

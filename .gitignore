@@ -12,3 +12,4 @@
 /dune_plugin/dune_plugin_metadata.xml
 /dune_plugin/providers.json
 /cache_dir
+/dune_plugin/providers_debug.json

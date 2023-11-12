@@ -161,6 +161,11 @@ class Provider_Config
      */
     protected $credentials = array();
 
+    /**
+     * @var array
+     */
+    protected $provider_data = array();
+
     ////////////////////////////////////////////////////////////////////////
     /// non configurable vars
     /**
@@ -385,11 +390,11 @@ class Provider_Config
 
     /**
      * @param string $val
-     * @return string
+     * @return string|array|null
      */
     public function getProviderInfoConfigValue($val)
     {
-        return isset($this->provider_info_config[$val]) ? $this->provider_info_config[$val] : '';
+        return isset($this->provider_info_config[$val]) ? $this->provider_info_config[$val] : null;
     }
 
     /**
@@ -516,6 +521,14 @@ class Provider_Config
         $this->credentials[$name] = $value;
     }
 
+    /**
+     * @return array
+     */
+    public function getProviderData()
+    {
+        return $this->provider_data;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     /// Methods
 
@@ -541,9 +554,6 @@ class Provider_Config
             case PROVIDER_TYPE_LOGIN_STOKEN:
                 $this->setCredential(MACRO_LOGIN, $info->params[MACRO_LOGIN]);
                 $this->setCredential(MACRO_PASSWORD, $info->params[MACRO_PASSWORD]);
-                if ($this->getProviderType() !== PROVIDER_TYPE_LOGIN) {
-                    $this->init_token();
-                }
                 break;
 
             case PROVIDER_TYPE_EDEM:
@@ -553,6 +563,52 @@ class Provider_Config
 
             default:
                 return;
+        }
+
+        if ($this->getProviderType() === PROVIDER_TYPE_LOGIN_TOKEN) {
+            $this->setCredential(MACRO_TOKEN, md5(strtolower($info->params[MACRO_LOGIN]) . md5($info->params[MACRO_PASSWORD])));
+        }
+
+        $token_url = $this->getTokenRequestUrl();
+        $token = $this->getCredential(MACRO_TOKEN);
+        if (!empty($token_url) && empty($token)) {
+            $response = HD::DownloadJson($this->replace_macros($token_url));
+            $token_name = $this->getTokenResponse();
+            if ($response !== false && isset($response[$token_name])) {
+                $this->setCredential(MACRO_TOKEN, $response[$token_name]);
+            }
+        }
+
+        if ($this->getProviderInfo()) {
+            $curl_headers = null;
+            $headers = $this->getProviderInfoConfigValue('headers');
+            if (!empty($headers)) {
+                $curl_headers = array();
+                foreach ($headers as $key => $header) {
+                    $curl_headers[CURLOPT_HTTPHEADER][] = "$key: " . $this->replace_macros($header);
+                }
+                hd_debug_print("headers: " . raw_json_encode($curl_headers));
+            }
+
+            $json = HD::DownloadJson($this->replace_macros($this->getProviderInfoConfigValue('url')), true, $curl_headers);
+
+            $root = $this->getProviderInfoConfigValue('root');
+            if ($json === false || (!is_null($root) && !isset($json[$root]))) {
+                hd_debug_print("Can't get account status");
+            } else {
+                hd_debug_print("account: " . raw_json_encode($json), true);
+                if (!is_null($root) && isset($json[$root])) {
+                    foreach (explode(',', $root) as $key) {
+                        $json = $json[$key];
+                    }
+                    hd_debug_print("root: " . raw_json_encode($json), true);
+                }
+
+                foreach ($json as $key => $value) {
+                    $this->provider_data[$key] = $value;
+                }
+                hd_debug_print("info: " . raw_json_encode($this->provider_data), true);
+            }
         }
 
         foreach($info->params as $key => $item) {
@@ -597,37 +653,5 @@ class Provider_Config
         hd_debug_print("playlist url $url", true);
 
         return $url;
-    }
-
-    /**
-     * @return string
-     */
-    public function init_token()
-    {
-        $token = $this->getCredential(MACRO_TOKEN);
-        if (!empty($token)) {
-            return $token;
-        }
-
-        switch ($this->getProviderType()) {
-            case 'login-token':
-                $login = $this->getCredential(MACRO_LOGIN);
-                $password = $this->getCredential(MACRO_PASSWORD);
-                $this->setCredential(MACRO_TOKEN, md5(strtolower($login) . md5($password)));
-                break;
-
-            case 'login-stoken':
-                $token_url = $this->getTokenRequestUrl();
-                if (empty($token_url)) break;
-
-                $response = HD::DownloadJson($this->replace_macros($token_url));
-                $token_name = $this->getTokenResponse();
-                if ($response !== false && isset($response[$token_name])) {
-                    $this->setCredential(MACRO_TOKEN, $response[$token_name]);
-                }
-                break;
-        }
-
-        return $token;
     }
 }

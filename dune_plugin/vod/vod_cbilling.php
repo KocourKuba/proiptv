@@ -4,15 +4,46 @@ require_once 'vod_standard.php';
 class vod_cbilling extends vod_standard
 {
     /**
-     * @param string $movie_id
-     * @return Movie
-     * @throws Exception
+     * @var string
+     */
+    protected $server = '';
+
+    /**
+     * @var string
+     */
+    protected $token = '';
+
+    /**
+     * @inheritDoc
+     */
+    public function init_vod($provider)
+    {
+        parent::init_vod($provider);
+
+        $provider_data = $provider->getProviderData();
+        if (is_null($provider_data)) {
+            $provider->setVodEnabled(false);
+            return;
+        }
+
+        $provider->setVodEnabled(isset($provider_data['vod']) && $provider_data['vod'] !== false);
+
+        if (isset($provider_data['private_token'])) {
+            $this->token = $provider_data['private_token'];
+        }
+
+        $scheme = (isset($provider_data['ssl']) && $provider_data['ssl']) ? "https://" : "http://";
+        $this->server = $scheme . (isset($provider_data['server']) ? $provider_data['server'] : $this->vod_source);
+    }
+
+    /**
+     * @inheritDoc
      */
     public function TryLoadMovie($movie_id)
     {
         hd_debug_print($movie_id);
         $movie = new Movie($movie_id, $this->plugin);
-        $json = HD::DownloadJson($this->provider->getVodConfigValue('vod_source') . "/video/$movie_id", false);
+        $json = HD::DownloadJson("$this->vod_source/video/$movie_id", false);
         if ($json === false) {
             return $movie;
         }
@@ -42,34 +73,36 @@ class vod_cbilling extends vod_standard
             ''// budget
         );
 
-        $domain = $this->account_data['server'];
-        $token = $this->account_data['private_token'];
-        $vod_url = 'http://%s%s?token=%s';
         if (isset($movieData->seasons)) {
             foreach ($movieData->seasons as $season) {
                 $movie->add_season_data($season->number, !empty($season->name) ? $season->name : TR::t('vod_screen_season__1', $season->number), '');
                 foreach ($season->series as $episode) {
                     $name = TR::t('vod_screen_series__2', $episode->number, (empty($episode->name) ? "" : $episode->name));
-                    $playback_url = sprintf($vod_url, $domain, $episode->files[0]->url, $token);
-                    $movie->add_series_data($episode->id, $name, '', $playback_url, $season->number);
+                    $movie->add_series_data($episode->id,
+                        $name,
+                        '',
+                        "$this->server{$episode->files[0]->url}?token=$this->token",
+                        $season->number
+                    );
                 }
             }
         } else {
-            $playback_url = sprintf($vod_url, $domain, $movieData->files[0]->url, $token);
-            $movie->add_series_data($movie_id, $movieData->name, '', $playback_url);
+            $movie->add_series_data($movie_id,
+                $movieData->name,
+                '',
+                "$this->server{$movieData->files[0]->url}?token=$this->token"
+            );
         }
 
         return $movie;
     }
 
     /**
-     * @param array &$category_list
-     * @param array &$category_index
+     * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        hd_debug_print(null, true);
-        $jsonItems = HD::DownloadJson($this->GetVodListUrl(), false);
+        $jsonItems = HD::DownloadJson($this->vod_source, false);
         if ($jsonItems === false) {
             return;
         }
@@ -84,7 +117,7 @@ class vod_cbilling extends vod_standard
             $total += $node->count;
 
             // fetch genres for category
-            $genres = HD::DownloadJson($this->GetVodListUrl() . "/cat/$id/genres", false);
+            $genres = HD::DownloadJson("$this->vod_source/cat/$id/genres", false);
             if ($genres === false) {
                 continue;
             }
@@ -101,7 +134,7 @@ class vod_cbilling extends vod_standard
         }
 
         // all movies
-        $category = new Vod_Category(Vod_Category::FLAG_ALL, "Все фильмы ($total)");
+        $category = new Vod_Category(Vod_Category::FLAG_ALL, TR::t('vod_screen_all_movies__1', " ($total)"));
         array_unshift($category_list, $category);
         $category_index[Vod_Category::FLAG_ALL] = $category;
 
@@ -109,21 +142,17 @@ class vod_cbilling extends vod_standard
     }
 
     /**
-     * @param string $keyword
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getSearchList($keyword)
     {
-        $url = $this->GetVodListUrl() . "/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
+        $url = "$this->vod_source/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
         $searchRes = HD::DownloadJson($url, false);
         return $searchRes === false ? array() : $this->CollectSearchResult($searchRes);
     }
 
     /**
-     * @param string $query_id
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getMovieList($query_id)
     {
@@ -131,7 +160,7 @@ class vod_cbilling extends vod_standard
         $val = $this->get_next_page($query_id);
 
         if ($query_id === Vod_Category::FLAG_ALL) {
-            $url = "/filter/new?page=$val";
+            $url = "$this->vod_source/filter/new?page=$val";
         } else {
             $arr = explode("_", $query_id);
             if ($arr === false) {
@@ -140,15 +169,15 @@ class vod_cbilling extends vod_standard
                 $genre_id = $arr[1];
             }
 
-            $url = "/genres/$genre_id?page=$val";
+            $url = "$this->vod_source/genres/$genre_id?page=$val";
         }
 
-        $categories = HD::DownloadJson($this->GetVodListUrl() . $url, false);
+        $categories = HD::DownloadJson($url, false);
         return $categories === false ? array() : $this->CollectSearchResult($categories);
     }
 
     /**
-     * @param Object $json
+     * @param $json
      * @return array
      */
     protected function CollectSearchResult($json)

@@ -117,13 +117,14 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $movie = $this->plugin->vod->get_loaded_movie($selected_media_url->movie_id);
                 if (is_null($movie)) break;
 
+                /** @var Hashed_Array $viewed_items */
                 $viewed_items = &$this->plugin->get_history(HISTORY_MOVIES);
                 $id = "$selected_media_url->movie_id:$selected_media_url->episode_id";
                 $movie_info = $viewed_items->get($id);
                 if ((isset($user_input->{ACTION_WATCHED}) && $user_input->{ACTION_WATCHED} !== false) || is_null($movie_info)) {
                     $viewed_items->set($id, new HistoryItem(true, 0, 0, time()));
                 } else if ($movie_info->watched) {
-                    $viewed_items->remove_item($id);
+                    $viewed_items->erase($id);
                 } else {
                     $movie_info->watched = true;
                     $movie_info->date = time();
@@ -180,6 +181,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             return array();
         }
 
+        /** @var Hashed_Array $viewed_items */
         $viewed_items = $this->plugin->get_history(HISTORY_MOVIES);
         $items = array();
         foreach ($movie->series_list as $episode) {

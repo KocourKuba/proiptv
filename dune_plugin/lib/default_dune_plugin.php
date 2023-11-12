@@ -140,6 +140,11 @@ class Default_Dune_Plugin implements DunePlugin
     protected $providers;
 
     /**
+     * @var Named_Storage
+     */
+    protected $cur_provider;
+
+    /**
      * @var string
      */
     protected $cur_provider_id;
@@ -198,11 +203,23 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_current_provider()
     {
         $playlist = $this->get_current_playlist();
-        if (is_null($playlist)) {
+        if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
             return null;
         }
 
-        return ($playlist->type === PARAM_PROVIDER) ? $this->init_provider($playlist) : null;
+        if (is_null($this->cur_provider)) {
+            $this->cur_provider = $this->init_provider($playlist);
+        }
+
+        return $this->cur_provider;
+    }
+
+    /**
+     * @param Provider_Config|null $cur_provider
+     */
+    public function set_current_provider($cur_provider)
+    {
+        $this->cur_provider = $cur_provider;
     }
 
     /**
@@ -257,7 +274,9 @@ class Default_Dune_Plugin implements DunePlugin
             } else {
                 $this->screens[$object->get_id()] = $object;
                 hd_debug_print("Screen added: " . $object->get_id());
-                User_Input_Handler_Registry::get_instance()->register_handler($object);
+                if ($object instanceof User_Input_Handler) {
+                    User_Input_Handler_Registry::get_instance()->register_handler($object);
+                }
             }
         } else {
             hd_debug_print(get_class($object) . ": Screen class is illegal. get_id method not defined!");
@@ -265,13 +284,15 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $id
+     * @param string $id
      * @return void
      */
     public function destroy_screen($id)
     {
         if (isset($this->screens[$id])) {
-            User_Input_Handler_Registry::get_instance()->unregister_handler($this->screens[$id]->get_handler_id());
+            if ($this->screens[$id] instanceof User_Input_Handler) {
+                User_Input_Handler_Registry::get_instance()->unregister_handler($this->screens[$id]->get_handler_id());
+            }
             unset($this->screens[$id]);
         } else {
             hd_debug_print("Screen not exist: $id");
@@ -1192,16 +1213,28 @@ class Default_Dune_Plugin implements DunePlugin
         $this->playback_points = new Playback_Points($this);
 
         if ($this->providers->size() === 0) {
-            $jsonArray = HD::DownloadJson(self::CONFIG_URL . "providers.json");
-            if ($jsonArray === false || !isset($jsonArray['providers'])) {
-                if (file_exists(get_data_path("providers.json"))) {
-                    $jsonArray = json_decode(file_get_contents(get_data_path("providers.json")), true);
-                } else {
-                    hd_debug_print("Problem to download providers configuration");
-                    return;
-                }
+            // 1. Check local debug version
+            // 2. Try to download from web
+            // 3. Check previously downloaded web version
+            // 4. Check preinstalled version
+            // 5. Houston we have a problem
+            if (file_exists($tmp_file = get_install_path("providers_debug.json"))) {
+                $jsonArray = HD::ReadContentFromFile($tmp_file);
             } else {
-                file_put_contents(get_data_path("providers.json"), json_encode($jsonArray));
+                $tmp_file = get_data_path("providers.json");
+                $jsonArray = HD::DownloadJson(self::CONFIG_URL . "providers.json");
+                if ($jsonArray === false || !isset($jsonArray['providers'])) {
+                    if (file_exists($tmp_file)) {
+                        $jsonArray = HD::ReadContentFromFile($tmp_file);
+                    } else if (file_exists($tmp_file = get_install_path("providers.json"))) {
+                        $jsonArray = HD::ReadContentFromFile($tmp_file);
+                    } else {
+                        hd_debug_print("Problem to download providers configuration");
+                        return;
+                    }
+                } else {
+                    HD::StoreContentToFile($tmp_file, $jsonArray);
+                }
             }
 
             foreach ($jsonArray['providers'] as $item) {
@@ -1704,6 +1737,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_active_playlist_key($id)
     {
         $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
+        $this->set_current_provider(null);
     }
 
     /**
