@@ -33,7 +33,7 @@ class User_Input_Handler_Registry
     private static $instance;
 
     /**
-     * @var array|User_Input_Handler[]
+     * @var User_Input_Handler[]
      */
     private $handlers;
 
@@ -155,6 +155,17 @@ class User_Input_Handler_Registry
     {
         $handler_id = $handler->get_handler_id();
         $this->handlers[$handler_id] = $handler;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     */
+    public function unregister_handler(User_Input_Handler $handler)
+    {
+        $handler_id = $handler->get_handler_id();
+        if (isset($this->handlers[$handler_id])) {
+            unset($this->handlers[$handler_id]);
+        }
     }
 
     /**

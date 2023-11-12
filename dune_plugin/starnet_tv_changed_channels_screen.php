@@ -90,7 +90,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                     $selected_media_url = MediaURL::decode($user_input->selected_media_url);
                     $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
-                    hd_debug_print("Channel can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Channel can't be played, exception info: " . $ex->getMessage());
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
@@ -172,10 +172,11 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 $groups[] = $group->get_title();
             }
 
-            $detailed_info = TR::t('tv_screen_ch_channel_info__4',
+            $detailed_info = TR::t('tv_screen_ch_channel_info__5',
                 $channel->get_title(),
                 rtrim(implode(',', $groups), ","),
                 $channel->get_archive(),
+                $channel->get_id(),
                 implode(", ", $channel->get_epg_ids())
             );
 
@@ -185,27 +186,31 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                         'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::caption => $channel->get_title(),
+                PluginRegularFolderItem::starred => true,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $channel->get_icon_url(),
                     ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
                     ViewItemParams::item_detailed_info => $detailed_info,
                 ),
-                PluginRegularFolderItem::starred => true,
             );
         }
 
         foreach ($removed_channels as $item) {
+            $caption = $this->plugin->tv->get_known_channels()->get($item);
+            $detailed_info = TR::t('tv_screen_ch_channel_info__2', $caption, $item);
+
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array(
                         'channel_id' => $item,
                         'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
-                PluginRegularFolderItem::caption => $this->plugin->tv->get_known_channels()->get($item),
+                PluginRegularFolderItem::starred => false,
+                PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => Starnet_Tv::DEFAULT_CHANNEL_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => Starnet_Tv::DEFAULT_CHANNEL_ICON_PATH,
+                    ViewItemParams::item_detailed_info => $detailed_info,
                 ),
-                PluginRegularFolderItem::starred => false,
             );
         }
 

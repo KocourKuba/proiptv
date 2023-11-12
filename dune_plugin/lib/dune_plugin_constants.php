@@ -78,6 +78,7 @@ const PLUGIN_HISTORY = "history";
 const PLUGIN_CONFIG_VERSION = 'config_version';
 const HISTORY_MOVIES = 'vod_history';
 const VOD_SEARCH_LIST = 'vod_search';
+const VOD_FILTER_LIST = 'vod_filter_items';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_PLAYLIST_STORAGE = 'playlist_storage';
@@ -159,6 +160,7 @@ const MACRO_TOKEN = '{TOKEN}';
 const MACRO_DEVICE = '{DEVICE_ID}';
 const MACRO_SERVER = '{SERVER_ID}';
 const MACRO_QUALITY = '{QUALITY_ID}';
+const MACRO_VPORTAL = '{VPORTAL}';
 
 // provider type access
 const PROVIDER_TYPE_PIN = 'pin';

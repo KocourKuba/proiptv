@@ -6,9 +6,19 @@ require_once 'lib/movie.php';
 require_once 'lib/default_dune_plugin.php';
 require_once 'lib/history_item.php';
 
+require_once 'starnet_vod_search_screen.php';
+require_once 'starnet_vod_filter_screen.php';
+require_once 'starnet_vod_category_list_screen.php';
+require_once 'starnet_vod_list_screen.php';
+require_once 'starnet_vod_movie_screen.php';
+require_once 'starnet_vod_seasons_list_screen.php';
+require_once 'starnet_vod_series_list_screen.php';
+require_once 'starnet_vod_favorites_screen.php';
+require_once 'starnet_vod_history_screen.php';
+
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Vod extends Abstract_Vod
+class vod_standard extends Abstract_Vod
 {
     const VOD_FAVORITES_LIST = 'vod_favorite_items';
     const VOD_HISTORY_ITEMS = 'vod_history_items';
@@ -17,6 +27,16 @@ class Starnet_Vod extends Abstract_Vod
      * @var Default_Dune_Plugin
      */
     protected $plugin;
+
+    /**
+     * @var Provider_Config
+     */
+    protected $provider;
+
+    /**
+     * @var array|false
+     */
+    protected $vod_items;
 
     /**
      * @template Group
@@ -92,14 +112,35 @@ class Starnet_Vod extends Abstract_Vod
      */
     public function init_vod($provider)
     {
+        $this->provider = $provider;
         $this->special_groups->clear();
-        $this->vod_source = $provider->getVodConfigValue('vod_source');
-        $this->vod_pattern = $provider->getVodConfigValue('vod_parser');
+
+        $this->plugin->destroy_screen(Starnet_Vod_Favorites_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_History_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Category_List_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_List_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Movie_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Seasons_List_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Series_List_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Search_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Filter_Screen::ID);
+
+        $this->plugin->create_screen(new Starnet_Vod_Favorites_Screen($this->plugin));
+        $this->plugin->create_screen(new Starnet_Vod_History_Screen($this->plugin));
+        $this->plugin->create_screen(new Starnet_Vod_Category_List_Screen($this->plugin));
+        $this->plugin->create_screen(new Starnet_Vod_List_Screen($this->plugin));
+        $this->plugin->create_screen(new Starnet_Vod_Movie_Screen($this->plugin));
+        $this->plugin->create_screen(new Starnet_Vod_Seasons_List_Screen($this->plugin));
+        $this->plugin->create_screen(new Starnet_Vod_Series_List_Screen($this->plugin));
+        $this->plugin->create_screen(new Starnet_Vod_Search_Screen($this->plugin));
+        $this->plugin->create_screen(new Starnet_Vod_Filter_Screen($this->plugin));
+
+        $this->vod_source = $this->provider->getVodConfigValue('vod_source');
+        $this->vod_pattern = $this->provider->getVodConfigValue('vod_parser');
         if (!empty($this->vod_pattern)) {
             $this->vod_pattern = "/$this->vod_pattern/";
         }
-        $this->vod_filters = $provider->getVodConfigValue('vod_filters');
-        $this->vod_quality = $provider->getVodConfigValue('vod_quality');
+        $this->vod_quality = $this->provider->getVodConfigValue('vod_quality');
 
         // Favorites category
         $special_group = new Default_Group($this->plugin,
@@ -231,6 +272,15 @@ class Starnet_Vod extends Abstract_Vod
         $this->pages[$idx] += $increment;
 
         return $this->pages[$idx];
+    }
+
+    /**
+     * @param string $idx
+     * @param int $value
+     */
+    public function set_next_page($idx, $value)
+    {
+        $this->pages[$idx] = $value;
     }
 
     /**
@@ -402,11 +452,12 @@ class Starnet_Vod extends Abstract_Vod
 
     /**
      * @param string $params
+     * @param $from_ndx
      * @return array
      */
-    public function getFilterList($params)
+    public function getFilterList($params, $from_ndx)
     {
-        hd_debug_print($params, true);
+        hd_debug_print("params: $params, from ndx: $from_ndx", true);
         return array();
     }
 
@@ -605,5 +656,13 @@ class Starnet_Vod extends Abstract_Vod
         }
 
         return $url;
+    }
+
+    /**
+     * @return string
+     */
+    protected function get_vod_cache_file()
+    {
+        return get_temp_path($this->plugin->get_active_playlist_key() . "_playlist_vod.json");
     }
 }

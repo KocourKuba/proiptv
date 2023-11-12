@@ -572,19 +572,31 @@ class Provider_Config
     }
 
     /**
+     * @param string $url
      * @return string
      */
-    public function get_playlist_url()
+    public function replace_macros($url)
     {
-        $playlist_url = $this->getPlaylistSource();
-        hd_debug_print("playlist template $playlist_url");
-        foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN, MACRO_DEVICE, MACRO_SERVER, MACRO_QUALITY) as $macro) {
-            if (strpos($playlist_url, $macro) === false) continue;
-            $playlist_url = str_replace($macro, trim($this->getCredential($macro)), $playlist_url);
-        }
+        static $macroses = array(
+            MACRO_LOGIN,
+            MACRO_PASSWORD,
+            MACRO_SUBDOMAIN,
+            MACRO_OTTKEY,
+            MACRO_TOKEN,
+            MACRO_DEVICE,
+            MACRO_SERVER,
+            MACRO_QUALITY,
+            MACRO_VPORTAL,
+        );
 
-        hd_debug_print("playlist url $playlist_url");
-        return $playlist_url;
+        hd_debug_print("playlist template $url", true);
+        foreach ($macroses as $macro) {
+            if (strpos($url, $macro) === false) continue;
+            $url = str_replace($macro, trim($this->getCredential($macro)), $url);
+        }
+        hd_debug_print("playlist url $url", true);
+
+        return $url;
     }
 
     /**
@@ -608,11 +620,7 @@ class Provider_Config
                 $token_url = $this->getTokenRequestUrl();
                 if (empty($token_url)) break;
 
-                foreach (array(MACRO_LOGIN, MACRO_PASSWORD) as $macro) {
-                    $token_url = str_replace($macro, $this->getCredential($macro), $token_url);
-                }
-
-                $response = HD::DownloadJson($token_url);
+                $response = HD::DownloadJson($this->replace_macros($token_url));
                 $token_name = $this->getTokenResponse();
                 if ($response !== false && isset($response[$token_name])) {
                     $this->setCredential(MACRO_TOKEN, $response[$token_name]);

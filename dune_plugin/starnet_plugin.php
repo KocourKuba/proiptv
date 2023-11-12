@@ -40,16 +40,6 @@ require_once 'starnet_tv.php';
 require_once 'starnet_tv_channel_list_screen.php';
 require_once 'starnet_tv_favorites_screen.php';
 require_once 'starnet_tv_history_screen.php';
-require_once 'starnet_vod.php';
-require_once 'starnet_vod_search_screen.php';
-require_once 'starnet_vod_filter_screen.php';
-require_once 'starnet_vod_category_list_screen.php';
-require_once 'starnet_vod_list_screen.php';
-require_once 'starnet_vod_movie_screen.php';
-require_once 'starnet_vod_seasons_list_screen.php';
-require_once 'starnet_vod_series_list_screen.php';
-require_once 'starnet_vod_favorites_screen.php';
-require_once 'starnet_vod_history_screen.php';
 require_once 'starnet_epfs_handler.php';
 require_once 'starnet_edit_list_screen.php';
 
@@ -65,7 +55,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
         User_Input_Handler_Registry::get_instance()->register_handler(new Starnet_Entry_Handler($this));
 
         $this->tv = new Starnet_Tv($this);
-        $this->vod = new Starnet_Vod($this);
 
         $this->create_screen(new Starnet_Tv_Groups_Screen($this));
         $this->create_screen(new Starnet_Tv_Channel_List_Screen($this));
@@ -82,16 +71,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_List_Screen($this));
-
-        $this->create_screen(new Starnet_Vod_Favorites_Screen($this));
-        $this->create_screen(new Starnet_Vod_History_Screen($this));
-        $this->create_screen(new Starnet_Vod_Category_List_Screen($this));
-        $this->create_screen(new Starnet_Vod_List_Screen($this));
-        $this->create_screen(new Starnet_Vod_Movie_Screen($this));
-        $this->create_screen(new Starnet_Vod_Seasons_List_Screen($this));
-        $this->create_screen(new Starnet_Vod_Series_List_Screen($this));
-        $this->create_screen(new Starnet_Vod_Search_Screen($this));
-        $this->create_screen(new Starnet_Vod_Filter_Screen($this));
 
         Starnet_Epfs_Handler::init($this);
 

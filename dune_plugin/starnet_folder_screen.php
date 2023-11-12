@@ -144,7 +144,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("from_ndx: $from_ndx, MediaURL: $media_url", true);
+        hd_debug_print("from_ndx: $from_ndx, MediaURL: " . $media_url->get_media_url_str(true), true);
 
         $err = false;
         $source_window_id = isset($media_url->source_window_id) ? $media_url->source_window_id : false;

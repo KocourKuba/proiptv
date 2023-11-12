@@ -85,7 +85,7 @@ class Default_Dune_Plugin implements DunePlugin
     public $tv;
 
     /**
-     * @var Starnet_Vod
+     * @var vod_standard
      */
     public $vod;
 
@@ -95,7 +95,7 @@ class Default_Dune_Plugin implements DunePlugin
     protected $playback_points;
 
     /**
-     * @var array
+     * @var Screen[]
      */
     protected $screens;
 
@@ -252,24 +252,29 @@ class Default_Dune_Plugin implements DunePlugin
     public function create_screen($object)
     {
         if (!is_null($object) && method_exists($object, 'get_id')) {
-            $this->add_screen($object);
-            User_Input_Handler_Registry::get_instance()->register_handler($object);
+            if (isset($this->screens[$object->get_id()])) {
+                hd_debug_print("Error: screen (id: " . $object->get_id() . ") already registered.");
+            } else {
+                $this->screens[$object->get_id()] = $object;
+                hd_debug_print("Screen added: " . $object->get_id());
+                User_Input_Handler_Registry::get_instance()->register_handler($object);
+            }
         } else {
             hd_debug_print(get_class($object) . ": Screen class is illegal. get_id method not defined!");
         }
     }
 
     /**
-     * @param Screen $scr
+     * @param $id
      * @return void
      */
-    protected function add_screen(Screen $scr)
+    public function destroy_screen($id)
     {
-        if (isset($this->screens[$scr->get_id()])) {
-            hd_debug_print("Error: screen (id: " . $scr->get_id() . ") already registered.");
+        if (isset($this->screens[$id])) {
+            User_Input_Handler_Registry::get_instance()->unregister_handler($this->screens[$id]->get_handler_id());
+            unset($this->screens[$id]);
         } else {
-            $this->screens[$scr->get_id()] = $scr;
-            hd_debug_print("Screen added: " . $scr->get_id());
+            hd_debug_print("Screen not exist: $id");
         }
     }
 
@@ -1509,7 +1514,8 @@ class Default_Dune_Plugin implements DunePlugin
                         if (is_null($provider)) {
                             throw new Exception("Unable to init provider $item");
                         }
-                        $playlist_url = $provider->get_playlist_url();
+                        $playlist_url = $provider->replace_macros($provider->getPlaylistSource());
+
                     } else {
                         throw new Exception("Unknown playlist type");
                     }
@@ -1591,12 +1597,7 @@ class Default_Dune_Plugin implements DunePlugin
         try {
             if ($force !== false) {
                 hd_debug_print("vod source: $vod_url");
-                foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN, MACRO_DEVICE, MACRO_SERVER, MACRO_QUALITY) as $macro) {
-                    if (strpos($vod_url, $macro) === false) continue;
-                    $vod_url = str_replace($macro, $provider->getCredential($macro), $vod_url);
-                }
-
-                $contents = HD::http_download_https_proxy($vod_url);
+                $contents = HD::http_download_https_proxy($provider->replace_macros($vod_url));
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
                     HD::set_last_error("Empty or incorrect playlist !\n\n" . $contents);
                     throw new Exception("Can't parse playlist");
@@ -2230,10 +2231,10 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_width => 70,
-                    ViewItemParams::icon_height => 70,
-                    ViewItemParams::icon_dx => 20,
-                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 60,
+                    ViewItemParams::icon_height => 60,
+                    ViewItemParams::icon_dx => 25,
+                    ViewItemParams::icon_dy => 0,
                     ViewItemParams::item_caption_dx => 30,
                     ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
@@ -2277,10 +2278,10 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_width => 70,
-                    ViewItemParams::icon_height => 70,
-                    ViewItemParams::icon_dx => 20,
-                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 60,
+                    ViewItemParams::icon_height => 60,
+                    ViewItemParams::icon_dx => 25,
+                    ViewItemParams::icon_dy => 0,
                     ViewItemParams::item_caption_dx => 30,
                     ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,

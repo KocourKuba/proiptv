@@ -67,6 +67,7 @@
       "provider_info": false,
       "vod_enabled": false,
       "vod_config": {
+        "vod_custom": true,
         "vod_source": "http://protected-api.com"
       }
     },
@@ -88,13 +89,13 @@
       "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
+      "id_map": "map",
+      "id_parser": "tvg-id",
       "devices": {
         "1": "1",
         "2": "2",
         "3": "3"
       },
-      "id_map": "map",
-      "id_parser": "tvg-id",
       "provider_info": true,
       "provider_info_config": {
         "url": "http://protected-api.com/auth/info",
@@ -107,6 +108,7 @@
       },
       "vod_enabled": false,
       "vod_config": {
+        "vod_custom": true,
         "vod_source": "http://protected-api.com"
       }
     },
@@ -125,8 +127,8 @@
       },
       "vod_enabled": false,
       "vod_config": {
-        "vod_filters": ["years", "genre"],
-        "vod_quality": true
+        "vod_custom": true,
+        "vod_source": "{VPORTAL}"
       }
     },
     {
@@ -166,10 +168,10 @@
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+$",
       "provider_info": false,
-      "vod_enabled": false,
+      "vod_enabled": true,
       "vod_config": {
-        "vod_source": "http://api.ottg.cc/playlist/vod?login={LOGIN}&password={PASSWORD}",
-        "vod_filters": ["genre","from","to"]
+        "vod_custom": true,
+        "vod_source": "http://api.ottg.cc/playlist/vod?login={LOGIN}&password={PASSWORD}"
       }
     },
     {
@@ -217,14 +219,14 @@
       "enable": true,
       "provider_type": "login",
       "playlist_source": "http://knkp.in/{LOGIN}/{PASSWORD}/{SERVER_ID}/1",
+      "id_map": "parse",
+      "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
       "servers": {
         "DE": "DE",
         "PL": "PL",
         "US": "US",
         "RU": "RU"
       },
-      "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
       "provider_info": false
     },
     {
@@ -245,6 +247,8 @@
       "enable": true,
       "provider_type": "login",
       "playlist_source": "http://pl.mymagic.tv/srv/{SERVER_ID}/{QUALITY_ID}/{LOGIN}/{PASSWORD}/tv.m3u",
+      "id_map": "",
+      "id_parser": "",
       "servers": {
         "0": "Default",
         "1": "Germany 1",
@@ -258,8 +262,6 @@
         "medium": "Medium",
         "high": "High"
       },
-      "id_map": "",
-      "id_parser": "",
       "provider_info": false
     },
     {
@@ -328,8 +330,8 @@
       },
       "vod_enabled": false,
       "vod_config": {
-        "vod_source": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}",
-        "vod_filters": ["genre","from","to"]
+        "vod_custom": true,
+        "vod_source": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}"
       }
     },
     {
@@ -350,12 +352,12 @@
       "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://pl.tvshka.net/?uid={PASSWORD}&srv={SERVER_ID}&type=halva",
+      "id_map": "parse",
+      "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$",
       "servers": {
         "0": "Server 1",
         "1": "Server 2"
       },
-      "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$",
       "provider_info": false
     },
     {
@@ -365,6 +367,8 @@
       "enable": true,
       "provider_type": "login",
       "playlist_source": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/tv.m3u?srv={SERVER_ID}",
+      "id_map": "",
+      "id_parser": "",
       "servers": {
         "0": "Auto Select",
         "1": "Server CZ",
@@ -372,8 +376,6 @@
         "3": "Server NL",
         "4": "Server RU"
       },
-      "id_map": "",
-      "id_parser": "",
       "provider_info": false,
       "vod_enabled": true,
       "vod_config": {
@@ -437,6 +439,8 @@
       "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
+      "id_map": "map",
+      "id_parser": "tvg-id",
       "qualities": {
         "high": "High",
         "medium": "Medium",
@@ -444,8 +448,6 @@
         "variant": "Adaptive",
         "hls": "Optimal"
       },
-      "id_map": "map",
-      "id_parser": "tvg-id",
       "provider_info": false
     },
     {
@@ -455,6 +457,8 @@
       "enable": true,
       "provider_type": "login",
       "playlist_source": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}playlist.m3u8",
+      "id_map": "parse",
+      "id_parser": "^https?:\\/\\/.+\\/(?:.+\\/)?(?<id>.+)\\/.+$",
       "servers": {
         "/": "RU (Russia, Moscow)",
         "kfc/": "KFC (Russia, Moscow)",
@@ -467,8 +471,6 @@
         "gn/": "GN (Ukraine, Kiev)",
         "RHLS/": "RHLS (GlobalCache CDN)"
       },
-      "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/(?:.+\\/)?(?<id>.+)\\/.+$",
       "provider_info": false
     }
   ]

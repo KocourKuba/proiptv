@@ -491,27 +491,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return null;
         }
 
-        $url = $provider->getProviderInfoConfigValue('url');
-        foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN) as $macro) {
-            if (strpos($url, $macro) !== false) {
-                $url = str_replace($macro, trim($provider->getCredential($macro)), $url);
-            }
-        }
-
         $curl_headers = null;
         if (isset($config['headers'])) {
             $curl_headers = array();
             foreach ($config['headers'] as $key => $header) {
-                foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN) as $macro) {
-                    if (strpos($header, $macro) !== false) {
-                        $header = str_replace($macro, trim($provider->getCredential($macro)), $header);
-                    }
-                }
-                $curl_headers[CURLOPT_HTTPHEADER][] = "$key: $header";
+                $curl_headers[CURLOPT_HTTPHEADER][] = "$key: " . $provider->replace_macros($header);
             }
         }
 
-        $json = HD::DownloadJson($url, true, $curl_headers);
+        $json = HD::DownloadJson($provider->replace_macros($provider->getProviderInfoConfigValue('url')), true, $curl_headers);
         $root = null;
         if (isset($config['root'])) {
             $root = $config['root'];
@@ -589,19 +577,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         try {
-            $url = $provider->getProviderInfoConfigValue('pay_url');
-            foreach (array(MACRO_LOGIN, MACRO_PASSWORD, MACRO_TOKEN) as $macro) {
-                if (strpos($url, $macro) !== false) {
-                    $url = str_replace($macro, trim($provider->getCredential($macro)), $url);
-                }
-            }
-
             $img = get_temp_path($this->plugin->get_active_playlist_key() . '.png');
             if (file_exists($img)) {
                 unlink($img);
             }
 
-            file_put_contents($img, HD::http_download_https_proxy($url));
+            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getProviderInfoConfigValue('pay_url')));
+            file_put_contents($img, $content);
             Control_Factory::add_vgap($defs, 20);
 
             if (file_exists($img)) {
