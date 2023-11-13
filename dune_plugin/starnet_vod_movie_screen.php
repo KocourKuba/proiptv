@@ -56,20 +56,18 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
         hd_debug_print($media_url->get_media_url_str(), true);
 
         $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
-        if (is_null($movie) || empty($movie->series_list)) {
-            if (is_null($movie)) {
-                $movie = new Movie($media_url->movie_id, $this->plugin);
-            }
+        if (is_null($movie)) {
+            $movie = new Movie($media_url->movie_id, $this->plugin);
             hd_debug_print("empty movie or no series data");
-            print_backtrace();
-            $movie->description = TR::t('warn_msg3');
-            return array
-            (
+            $movie->description = TR::t('warn_msg5');
+            return array(
                 PluginFolderView::multiple_views_supported => false,
                 PluginFolderView::archive => null,
                 PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_MOVIE,
                 PluginFolderView::data => array(
                     PluginMovieFolderView::movie => $movie->get_movie_array(),
+                    PluginMovieFolderView::left_button_caption => TR::t('ok'),
+                    PluginMovieFolderView::left_button_action => Action_Factory::close_and_run(),
                     PluginMovieFolderView::has_right_button => false,
                     PluginMovieFolderView::has_multiple_series => false,
                     PluginMovieFolderView::series_media_url => null,

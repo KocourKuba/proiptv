@@ -283,10 +283,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (!is_null($provider) && $provider->getProviderInfo()) {
                         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                         $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_INFO_DLG, TR::t('subscription'), "info.png");
-                        $pay_url = $provider->getProviderInfoConfigValue('pay_url');
-                        if (!empty($pay_url)) {
-                            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ADD_MONEY_DLG, TR::t('add_money'), "pay.png");
-                        }
                     }
 
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
@@ -495,6 +491,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
+        $pay_url = $provider->getProviderInfoConfigValue('pay_url');
+        if (!empty($pay_url)) {
+            Control_Factory::add_button($defs, $this, null,
+                self::ACTION_ADD_MONEY_DLG, null, TR::t('add_money'), 450, true);
+            Control_Factory::add_label($defs, "--------------------------------------", '', -10);
+        }
+
         $data = $provider->getProviderData();
         if (empty($data)) {
             hd_debug_print("Can't get account status");
@@ -507,7 +510,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         Control_Factory::add_vgap($defs, 20);
 
-        return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1400);
+        return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000, null /*$attrs*/);
     }
 
     /**
@@ -572,8 +575,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 Control_Factory::add_vgap($defs, 50);
             }
 
-            $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600, $attrs);
+            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600);
         } catch (Exception $ex) {
         }
 

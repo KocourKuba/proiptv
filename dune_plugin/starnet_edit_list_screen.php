@@ -58,6 +58,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const CONTROL_PASSWORD = 'password';
     const CONTROL_OTT_SUBDOMAIN = 'subdomain';
     const CONTROL_OTT_KEY = 'ottkey';
+    const CONTROL_VPORTAL = 'vportal';
     const CONTROL_DEVICE = 'device';
     const CONTROL_SERVER = 'server';
     const CONTROL_QUALITY = 'quality';
@@ -77,6 +78,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             if (isset($media_url->allow_order)) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+            } else {
+                $caption = $media_url->edit_list === self::SCREEN_EDIT_PLAYLIST ? TR::t('change_playlist') : TR::t('change_epg_source');
+                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_SET_CURRENT, $caption);
             }
 
             $hidden = ($media_url->edit_list === self::SCREEN_EDIT_GROUPS || $media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
@@ -152,6 +156,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return $this->do_edit_provider_dlg($user_input);
                 }
                 return null;
+
+            case ACTION_SET_CURRENT:
+                $this->set_changes($parent_media_url->save_data);
+                if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                    $this->plugin->set_active_playlist_key(MediaURL::decode($user_input->selected_media_url)->id);
+                } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                    $this->plugin->set_active_xmltv_source_key(MediaURL::decode($user_input->selected_media_url)->id);
+                }
+                break;
 
             case ACTION_ITEM_UP:
                 $order = &$this->get_edit_order($edit_list);
@@ -368,6 +381,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         /** @var Hashed_Array|Ordered_Array $order */
         $order = &$this->get_edit_order($edit_list);
         foreach ($order as $key => $item) {
+            $starred = false;
             $detailed_info = null;
             if ($edit_list === self::SCREEN_EDIT_CHANNELS) {
                 // Ordered_Array
@@ -399,6 +413,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 /** @var Named_Storage $item */
                 $id = $key;
                 $playlist = $this->plugin->get_playlist($id);
+                $starred = $id === $this->plugin->get_active_playlist_key();
                 $icon_file = get_image_path("link.png");
                 $title = empty($playlist->name) ? $playlist->params['uri'] : $playlist->name;
                 if ($playlist->type === PARAM_PROVIDER) {
@@ -421,6 +436,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     continue;
                 }
                 $id = $key;
+                $starred = $id === $this->plugin->get_active_xmltv_source_key();
                 $title = empty($item->name) ? $item->params['uri'] : $item->name;
                 $detailed_info = TR::t('edit_list_detail_info__2', $item->name, $item->params['uri']);
                 $icon_file = get_image_path("link.png");
@@ -431,6 +447,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $id)),
                 PluginRegularFolderItem::caption => $title,
+                PluginRegularFolderItem::starred => $starred,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $icon_file,
                     ViewItemParams::item_detailed_info => $detailed_info,
@@ -740,13 +757,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $playlist->type = PARAM_PROVIDER;
                         $playlist->params[PARAM_PROVIDER] = $m[1];
                         $playlist->name = $provider->getName();
-                        $vars = explode(':', $m[2]);
-                        if (empty($vars)) {
+                        $ext_vars = explode('|', $m[2]);
+                        if (empty($ext_vars)) {
                             hd_debug_print("invalid provider_info: $m[2]", true);
                             continue;
                         }
 
-                        hd_debug_print("parse imported provider_info: $m[2]", true);
+                        $vars = explode(':', $ext_vars[0]);
+                        if (empty($vars)) {
+                            hd_debug_print("invalid provider_info: $ext_vars[0]", true);
+                            continue;
+                        }
+
+                        hd_debug_print("parse imported provider_info: $ext_vars[0]", true);
 
                         switch ($provider->getProviderType()) {
                             case PROVIDER_TYPE_PIN:
@@ -773,6 +796,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                     $playlist->params[MACRO_SUBDOMAIN] = 'junior.edmonst.net';
                                     hd_debug_print("set ottkey: $vars[0]", true);
                                     $playlist->params[MACRO_OTTKEY] = $vars[0];
+                                }
+
+                                if (isset($ext_vars[1])) {
+                                    $playlist->params[MACRO_VPORTAL] = $ext_vars[1];
                                 }
                                 break;
                         }
@@ -957,6 +984,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 Control_Factory::add_text_field($defs, $this, null,
                     self::CONTROL_OTT_KEY, TR::t('ottkey'), $provider->getCredential(MACRO_OTTKEY),
                     false, true, false, true, self::DLG_CONTROLS_WIDTH);
+
+                Control_Factory::add_text_field($defs, $this, null,
+                    self::CONTROL_VPORTAL, TR::t('vportal'), $provider->getCredential(MACRO_VPORTAL),
+                    false, true, false, true, self::DLG_CONTROLS_WIDTH);
                 break;
 
             default:
@@ -1048,6 +1079,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $params[MACRO_SUBDOMAIN] = $provider->getProviderInfoConfigValue('domain');
                 }
                 $params[MACRO_OTTKEY] = $user_input->{self::CONTROL_OTT_KEY};
+                $params[MACRO_VPORTAL] = $user_input->{self::CONTROL_VPORTAL};
+
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;
                 break;
 

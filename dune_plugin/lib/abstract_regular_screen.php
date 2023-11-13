@@ -47,7 +47,7 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     {
         $old = $this->has_changes;
         $this->has_changes = true;
-        $this->plugin->set_dirty($save_data);
+        $this->plugin->set_dirty(true, $save_data);
         return $old;
     }
 

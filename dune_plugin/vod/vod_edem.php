@@ -4,12 +4,30 @@ require_once 'vod_standard.php';
 class vod_edem extends vod_standard
 {
     /**
+     * @var
+     */
+    protected $vportal_url;
+
+    /**
+     * @var
+     */
+    protected $vportal_key;
+
+    /**
      * @inheritDoc
      */
     public function init_vod($provider)
     {
         $this->vod_filters = array("years", "genre");
         $this->vod_quality = true;
+        $vportal = $provider->getCredential(MACRO_VPORTAL);
+        if (!empty($vportal) && preg_match("/^portal::\[key:([^]]+)](.+)$/", $vportal,$matches)) {
+            $provider->setVodEnabled(true);
+            list(, $this->vportal_key, $this->vportal_url) = $matches;
+        } else {
+            $provider->setVodEnabled(false);
+        }
+
         parent::init_vod($provider);
     }
 
@@ -54,7 +72,7 @@ class vod_edem extends vod_standard
                         $qualities .= $quality;
                     }
 
-                    $qualities = TR::load_string('setup_quality') . "|$qualities";
+                    $qualities = TR::load_string('vod_screen_quality') . "|$qualities";
                     $series_desc = rtrim($qualities, ' ,\0');
                     $movie->add_series_variants_data($item->fid, $item->title, $series_desc, $variants, $item->url);
                 }
@@ -78,7 +96,7 @@ class vod_edem extends vod_standard
                 $qualities .= $quality;
             }
 
-            $qualities = TR::load_string('setup_quality') . "|$qualities";
+            $qualities = TR::load_string('vod_screen_quality') . "|$qualities";
             $series_desc = rtrim($qualities, ' ,\0');
             $movie->add_series_variants_data($movie_id, $movieData->title, $series_desc, $variants, $movieData->url);
         }
@@ -164,7 +182,7 @@ class vod_edem extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
 
-        $pairs = explode(" ", $params);
+        $pairs = explode(",", $params);
         $post_params = array();
         foreach ($pairs as $pair) {
             if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
@@ -209,7 +227,7 @@ class vod_edem extends vod_standard
 
     /**
      * @param string $query_id
-     * @param $json
+     * @param Object $json
      * @return array
      */
     protected function CollectSearchResult($query_id, $json)
@@ -239,92 +257,16 @@ class vod_edem extends vod_standard
     }
 
     /**
-     * @param array &$defs
-     * @param Starnet_Vod_Filter_Screen $parent
-     * @param int $initial
-     * @return bool
-     */
-    public function AddFilterUI(&$defs, $parent, $initial = -1)
-    {
-        $filters = array("years", "genre");
-        hd_debug_print("AddFilterUI: $initial");
-        $added = false;
-        foreach ($filters as $name) {
-            $filter = $this->get_filter($name);
-            if ($filter === null) {
-                hd_debug_print("AddFilterUI: no filters with '$name'");
-                continue;
-            }
-
-            $values = $filter['values'];
-            if (empty($values)) {
-                hd_debug_print("AddFilterUI: no filters values for '$name'");
-                continue;
-            }
-
-            $idx = $initial;
-            if ($initial !== -1) {
-                $pairs = explode(" ", $initial);
-                foreach ($pairs as $pair) {
-                    if (strpos($pair, $name . ":") !== false && preg_match("/^$name:(.+)/", $pair, $m)) {
-                        $idx = array_search($m[1], $values) ?: -1;
-                        break;
-                    }
-                }
-            }
-
-            Control_Factory::add_combobox($defs, $parent, null, $name,
-                $filter['title'], $idx, $values, 600, true);
-
-            Control_Factory::add_vgap($defs, 30);
-            $added = true;
-        }
-
-        return $added;
-    }
-
-    /**
-     * @param $user_input
-     * @return string
-     */
-    public function CompileSaveFilterItem($user_input)
-    {
-        $filters = array("years", "genre");
-        $compiled_string = "";
-        foreach ($filters as $name) {
-            $filter = $this->get_filter($name);
-            if ($filter !== null && $user_input->{$name} !== -1) {
-                if (!empty($compiled_string)) {
-                    $compiled_string .= " ";
-                }
-
-                $compiled_string .= $name . ":" . $filter['values'][$user_input->{$name}];
-            }
-        }
-
-        return $compiled_string;
-    }
-
-    /**
      * @param array|null $params
      * @param bool $to_array
      * @return false|mixed
      */
     protected function make_json_request($params = null, $to_array = false)
     {
-        if (isset($this->embedded_account->vportal)) {
-            $vportal = $this->embedded_account->vportal;
-        } else {
-            $vportal = $this->provider->getCredential(MACRO_VPORTAL);
-        }
-
-        if (empty($vportal)
-            || !preg_match('/^portal::\[key:([^]]+)\](.+)$/', $vportal, $matches)) {
-            hd_debug_print("incorrect or empty VPortal key");
+        if (empty($this->vportal_url) || empty($this->vportal_key)) {
+            hd_debug_print("incorrect or empty VPortal key or url");
             return false;
         }
-
-        list(, $key, $url) = $matches;
 
         $pairs = array();
         if ($params !== null) {
@@ -332,12 +274,11 @@ class vod_edem extends vod_standard
         }
 
         // fill default params
-        $pairs['key'] = $key;
+        $pairs['key'] = $this->vportal_key;
         $pairs['mac'] = "000000000000"; // dummy
         $pairs['app'] = "ProIPTV_dune_plugin";
 
-        $curl_opt = array
-        (
+        $curl_opt = array(
             CURLOPT_HTTPHEADER => array("Content-Type: application/json"),
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($pairs)
@@ -345,6 +286,6 @@ class vod_edem extends vod_standard
 
         hd_debug_print("post_data: " . json_encode($pairs), true);
 
-        return HD::DownloadJson($url, $to_array, $curl_opt);
+        return HD::DownloadJson($this->vportal_url, $to_array, $curl_opt);
     }
 }

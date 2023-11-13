@@ -134,7 +134,7 @@
       "provider_info_config": {
         "domain": "junior.edmonst.net"
       },
-      "vod_enabled": false,
+      "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
         "vod_source": "{VPORTAL}"

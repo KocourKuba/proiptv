@@ -53,7 +53,7 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
     {
         $old = $this->has_changes;
         $this->has_changes = true;
-        $this->plugin->set_dirty($save_data);
+        $this->plugin->set_dirty(true, $save_data);
         return $old;
     }
 

@@ -64,18 +64,14 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 $media_url = MediaURL::decode($user_input->selected_media_url);
                 if ($media_url->genre_id !== Vod_Category::FLAG_FILTER && $user_input->{ACTION_FILTER} === ACTION_OPEN_FOLDER) {
                     return Action_Factory::open_folder($user_input->selected_media_url);
-/*                    return Action_Factory::open_folder(
-                        Starnet_Vod_List_Screen::get_media_url_string(Vod_Category::FLAG_FILTER, $media_url->genre_id),
-                        TR::t('filter')
-                    );
-*/                }
+                }
 
                 $filter_items = $this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
                 if ($user_input->{ACTION_FILTER} === ACTION_ITEMS_EDIT) {
                     $filter_idx = $filter_items->get_item_pos($media_url->genre_id);
                 } else {
                     /** @var Ordered_Array $filter_items */
-                    $filter_idx = $filter_items->size() === 0 ? -1 : 0;
+                    $filter_idx = -1;
                 }
 
                 return $this->plugin->vod->AddFilterUI($this, $filter_idx);
@@ -87,7 +83,12 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 hd_debug_print("filter_screen filter string: $filter_string");
                 /** @var Ordered_Array $filter_items */
                 $filter_items = &$this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
-                $filter_items->insert_item($filter_string, false);
+                if (isset($user_input->{ACTION_ITEMS_EDIT}) && (int)$user_input->{ACTION_ITEMS_EDIT} !== -1) {
+                    $filter_items->set_item_by_idx($user_input->{ACTION_ITEMS_EDIT}, $filter_string);
+                } else {
+                    $filter_items->add_item($filter_string);
+                }
+
                 $this->plugin->save_history(true);
                 return Action_Factory::invalidate_folders(
                     array(self::get_media_url_string(FILTER_MOVIES_GROUP_ID)),

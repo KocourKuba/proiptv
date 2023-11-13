@@ -186,12 +186,12 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     )
                 ),
                 PluginRegularFolderItem::caption => $title,
+                PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $channel->get_icon_url(),
                     ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
                     ViewItemParams::item_detailed_info => $description,
                 ),
-                PluginRegularFolderItem::starred => false,
             );
         }
 

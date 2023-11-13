@@ -122,6 +122,7 @@ abstract class Abstract_Vod
      */
     public function ensure_movie_loaded($movie_id)
     {
+        hd_debug_print(null, true);
         if (!isset($movie_id)) {
             hd_debug_print("Movie ID is not set");
             return;
@@ -148,6 +149,7 @@ abstract class Abstract_Vod
      */
     public function get_loaded_movie($movie_id)
     {
+        hd_debug_print(null, true);
         $this->ensure_movie_loaded($movie_id);
 
         return $this->get_cached_movie($movie_id);
@@ -161,6 +163,7 @@ abstract class Abstract_Vod
      */
     public function get_vod_info(MediaURL $media_url)
     {
+        hd_debug_print(null, true);
         $movie = $this->get_loaded_movie($media_url->movie_id);
         if ($movie === null) {
             return null;
@@ -209,6 +212,7 @@ abstract class Abstract_Vod
 
     public function ensure_genres_loaded()
     {
+        hd_debug_print(null, true);
         if ($this->genres !== null) {
             return;
         }

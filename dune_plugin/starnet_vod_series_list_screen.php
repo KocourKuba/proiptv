@@ -49,7 +49,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         if ($this->plugin->vod->getVodQuality()) {
             $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
-            $variant = $this->plugin->get_parameter(PARAM_VOD_DEFAULT_VARIANT, 'auto');
+            $variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_VARIANT, 'auto');
             if (!is_null($movie) && isset($movie->variants_list) && count($movie->variants_list) > 1) {
                 $q_exist = (in_array($variant, $movie->variants_list) ? "" : "?");
                 $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
@@ -96,17 +96,17 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $menu_items = array();
                 if (!isset($this->variants) || count($this->variants) < 2) break;
 
-                $current_variant = $this->plugin->get_parameter(PARAM_VOD_DEFAULT_VARIANT, 'auto');
+                $current_variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_VARIANT, 'auto');
                 $menu_items[] = User_Input_Handler_Registry::create_popup_item($this,
                     'auto', 'auto',
-                    $current_variant === 'auto' ? 'gui_skin://small_icons/video_settings.aai' : null
+                    $current_variant === 'auto' ? 'check.png' : null
                 );
                 foreach ($this->variants as $key => $variant) {
                     if ($key === "auto") continue;
 
                     $icon = null;
                     if ((string)$key === $current_variant) {
-                        $icon = 'gui_skin://small_icons/video_settings.aai';
+                        $icon = 'check.png';
                     }
                     $menu_items[] = User_Input_Handler_Registry::create_popup_item($this, $key, $key, $icon);
                 }
@@ -154,7 +154,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     foreach ($this->variants as $key => $variant) {
                         if ($user_input->control_id !== (string)$key) continue;
 
-                        $this->plugin->set_parameter(PARAM_VOD_DEFAULT_VARIANT, (string)$key);
+                        $this->plugin->set_setting(PARAM_VOD_DEFAULT_VARIANT, (string)$key);
                         $parent_url = MediaURL::decode($user_input->parent_media_url);
                         return Action_Factory::change_behaviour($this->get_action_map($parent_url, $plugin_cookies));
                     }

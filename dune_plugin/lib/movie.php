@@ -17,7 +17,7 @@ class Movie implements User_Input_Handler
     /**
      * @var Default_Dune_Plugin
      */
-    public $plugin;
+    private $plugin;
 
     /**
      * @var string
@@ -118,6 +118,13 @@ class Movie implements User_Input_Handler
      * @var array|string[]
      */
     public $variants_list;
+
+    public function __sleep()
+    {
+        $vars = get_object_vars($this);
+        unset($vars['plugin']);
+        return array_keys($vars);
+    }
 
     /**
      * @param string $id
@@ -425,7 +432,7 @@ class Movie implements User_Input_Handler
         $sel_id = isset($media_url->episode_id) ? $media_url->episode_id : null;
         $series_array = array();
         $initial_series_ndx = 0;
-        $variant = $this->plugin->get_parameter(PARAM_VOD_DEFAULT_VARIANT, 'auto');
+        $variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_VARIANT, 'auto');
         $counter = 0; // series index. Not the same as the key of series list
         $initial_start_array = array();
         foreach ($list as $series) {

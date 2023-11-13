@@ -985,7 +985,7 @@ class Starnet_Tv implements User_Input_Handler
                     hd_debug_print("Playlist group channels: " . json_encode($channels));
                 }
                 $group->get_items_order()->remove_items($orphans_channels);
-                $this->plugin->set_dirty(PLUGIN_ORDERS);
+                $this->plugin->set_dirty(true, PLUGIN_ORDERS);
             }
         }
 
@@ -997,7 +997,7 @@ class Starnet_Tv implements User_Input_Handler
                         . count($orphans_channels) . " : " . json_encode($orphans_channels));
                 }
                 $this->get_disabled_channel_ids()->remove_items($orphans_channels);
-                $this->plugin->set_dirty(PLUGIN_ORDERS);
+                $this->plugin->set_dirty(true, PLUGIN_ORDERS);
             }
         }
 

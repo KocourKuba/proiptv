@@ -34,12 +34,12 @@ class Playback_Points
     /**
      * @var string
      */
-    private $curr_point_id;
+    protected $curr_point_id;
 
     /**
      * @var array
      */
-    private $points;
+    protected $points;
 
     /**
      * @var Default_Dune_Plugin
@@ -47,6 +47,13 @@ class Playback_Points
     private $plugin;
 
     ///////////////////////////////////////////////////////////////////////////
+
+    public function __sleep()
+    {
+        $vars = get_object_vars($this);
+        unset($vars['plugin']);
+        return array_keys($vars);
+    }
 
     /**
      * @param Default_Dune_Plugin $plugin

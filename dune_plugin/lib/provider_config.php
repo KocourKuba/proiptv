@@ -559,6 +559,7 @@ class Provider_Config
             case PROVIDER_TYPE_EDEM:
                 $this->setCredential(MACRO_SUBDOMAIN, $info->params[MACRO_SUBDOMAIN]);
                 $this->setCredential(MACRO_OTTKEY, $info->params[MACRO_OTTKEY]);
+                $this->setCredential(MACRO_VPORTAL, $info->params[MACRO_VPORTAL]);
                 break;
 
             default:

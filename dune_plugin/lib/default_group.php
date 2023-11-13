@@ -98,6 +98,13 @@ class Default_Group extends Json_Serializer implements Group
      */
     private $plugin;
 
+    public function __sleep()
+    {
+        $vars = get_object_vars($this);
+        unset($vars['plugin']);
+        return array_keys($vars);
+    }
+
     /**
      * @param $plugin
      * @param string $id

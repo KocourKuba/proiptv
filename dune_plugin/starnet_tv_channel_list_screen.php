@@ -432,12 +432,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         return array(
             PluginRegularFolderItem::media_url => MediaURL::encode(array('channel_id' => $channel_id, 'group_id' => $group_id)),
             PluginRegularFolderItem::caption => $channel->get_title(),
+            PluginRegularFolderItem::starred => $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->in_items_order($channel_id),
             PluginRegularFolderItem::view_item_params => array(
                 ViewItemParams::icon_path => $channel->get_icon_url(),
                 ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
                 ViewItemParams::item_detailed_info => $detailed_info,
             ),
-            PluginRegularFolderItem::starred => $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->in_items_order($channel_id),
         );
     }
 

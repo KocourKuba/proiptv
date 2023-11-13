@@ -60,6 +60,7 @@ const ACTION_RESET_TYPE = 'reset_type';
 const ACTION_SORT_CHANNELS = 'channels';
 const ACTION_SORT_GROUPS = 'groups';
 const ACTION_SORT_ALL = 'all';
+const ACTION_SET_CURRENT = 'set_current';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';

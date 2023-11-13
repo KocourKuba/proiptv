@@ -42,6 +42,16 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        return $actions;
+    }
+
+    /**
      * defs for all controls on screen
      * @return array
      */
@@ -145,6 +155,13 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         $control_id = $user_input->control_id;
         switch ($control_id) {
+            case GUI_EVENT_KEY_RETURN:
+                return Action_Factory::close_and_run(
+                    Action_Factory::close_and_run(
+                        Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title())
+                    )
+                );
+
             case ACTION_PLUGIN_INFO:
                 Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
                 Control_Factory::add_vgap($defs, 20);

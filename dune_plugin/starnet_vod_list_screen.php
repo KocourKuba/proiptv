@@ -134,6 +134,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
             $movie_range = new Short_Movie_Range(0, 0);
         }
 
+        hd_debug_print("Short movie range: " . serialize($movie_range));
         $total = $movie_range->total;
         if ($total <= 0) {
             return $this->create_regular_folder_range(array());
@@ -141,19 +142,21 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
 
         $fav_group = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID);
         $items = array();
-        foreach ($movie_range->short_movies as $movie) {
-            $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie->id, $movie->name, $movie->poster_url, $movie->info),
-                PluginRegularFolderItem::caption => $movie->name,
-                PluginRegularFolderItem::starred => $fav_group->in_items_order($movie->id),
-                PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $movie->poster_url,
-                    ViewItemParams::item_detailed_info => $movie->info,
-                    ViewItemParams::item_caption_color => DEF_LABEL_TEXT_COLOR_WHITE,
-                ),
-            );
+        if (isset($movie_range->short_movies)) {
+            foreach ($movie_range->short_movies as $movie) {
+                $items[] = array(
+                    PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie->id, $movie->name, $movie->poster_url, $movie->info),
+                    PluginRegularFolderItem::caption => $movie->name,
+                    PluginRegularFolderItem::starred => $fav_group->in_items_order($movie->id),
+                    PluginRegularFolderItem::view_item_params => array(
+                        ViewItemParams::icon_path => $movie->poster_url,
+                        ViewItemParams::item_detailed_info => $movie->info,
+                        ViewItemParams::item_caption_color => DEF_LABEL_TEXT_COLOR_WHITE,
+                    ),
+                );
 
-            $this->plugin->vod->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url));
+                $this->plugin->vod->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url));
+            }
         }
 
         return $this->create_regular_folder_range($items, $movie_range->from_ndx, $total, true);
