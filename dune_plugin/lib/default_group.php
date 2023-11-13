@@ -52,7 +52,7 @@ class Default_Group extends Json_Serializer implements Group
     const SEARCH_MOVIES_GROUP_CAPTION = 'search';
     const SEARCH_MOVIES_GROUP_ICON = 'plugin_file://icons/search_movie_folder.png';
 
-    const FILTER_MOVIES_GROUP_CAPTION = 'filter';
+    const FILTER_MOVIES_GROUP_CAPTION = 'filters';
     const FILTER_MOVIES_GROUP_ICON = 'plugin_file://icons/filter_movie_folder.png';
 
     const HISTORY_MOVIES_GROUP_CAPTION = 'plugin_history';

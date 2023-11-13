@@ -31,19 +31,15 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        $actions = array();
-        $add_params['search_actions'] = 'open';
-        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, ACTION_CREATE_SEARCH, null, $add_params);
-
-        $add_params['search_actions'] = 'keyboard';
-
-        $actions[GUI_EVENT_KEY_PLAY]     = User_Input_Handler_Registry::create_action($this, ACTION_CREATE_SEARCH, null, $add_params);
-        $actions[GUI_EVENT_KEY_B_GREEN]  = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-        $actions[GUI_EVENT_KEY_D_BLUE]   = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
-        $actions[GUI_EVENT_KEY_RETURN]   = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-
-        return $actions;
+        return array(
+            GUI_EVENT_KEY_ENTER    => User_Input_Handler_Registry::create_action($this,
+                ACTION_CREATE_SEARCH, null, array(ACTION_SEARCH => ACTION_OPEN_FOLDER)),
+            GUI_EVENT_KEY_B_GREEN  => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up')),
+            GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down')),
+            GUI_EVENT_KEY_D_BLUE   => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
+            GUI_EVENT_KEY_RETURN   => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
+        );
     }
 
     /**
@@ -67,11 +63,11 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if (!isset($user_input->parent_media_url)) break;
 
                 $media_url = MediaURL::decode($user_input->selected_media_url);
-                if ($media_url->genre_id !== Vod_Category::FLAG_SEARCH && $user_input->search_actions !== 'keyboard') {
+                if ($media_url->genre_id !== Vod_Category::FLAG_SEARCH && $user_input->{ACTION_SEARCH} === ACTION_OPEN_FOLDER) {
                     return Action_Factory::open_folder($user_input->selected_media_url);
                 }
 
-                if ($user_input->search_actions === 'keyboard') {
+                if ($user_input->{ACTION_SEARCH} === ACTION_ITEMS_EDIT) {
                     $search_string = $media_url->genre_id;
                 } else {
                     /** @var Ordered_Array $search_items */
@@ -104,6 +100,23 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                     TR::t('search__1', ": $search_string"));
 
                 return Action_Factory::invalidate_folders(array(self::get_media_url_string(SEARCH_MOVIES_GROUP_ID)), $action);
+
+            case GUI_EVENT_KEY_POPUP_MENU:
+                if (isset($user_input->selected_media_url)
+                    && MediaURL::decode($user_input->selected_media_url)->genre_id !== Vod_Category::FLAG_SEARCH) {
+
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_EDIT, TR::t('edit'), "edit.png");
+                    return Action_Factory::show_popup_menu($menu_items);
+                }
+
+                break;
+
+            case ACTION_ITEMS_EDIT:
+                return User_Input_Handler_Registry::create_action($this,
+                    ACTION_CREATE_FILTER,
+                    null,
+                    array(ACTION_SEARCH => ACTION_ITEMS_EDIT)
+                );
 
             case ACTION_ITEM_UP:
             case ACTION_ITEM_DOWN:

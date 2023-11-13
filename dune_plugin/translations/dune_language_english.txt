@@ -17,6 +17,7 @@ refresh_playlist = Refresh playlist
 edit = Edit
 description = Description
 filter = Filter
+filters = Filters
 filter__1 = Filter: %s
 genre = Genre
 year_from = Year from

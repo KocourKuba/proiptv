@@ -157,13 +157,13 @@ class vod_edem extends vod_standard
     }
 
     /**
-     * @param string $params
-     * @return array|false
-     * @throws Exception
+     * @inheritDoc
      */
-    public function getFilterList($params)
+    public function getFilterList($params, $from_ndx)
     {
-        hd_debug_print("getFilterList: $params");
+        hd_debug_print(null, true);
+        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
+
         $pairs = explode(" ", $params);
         $post_params = array();
         foreach ($pairs as $pair) {

@@ -294,7 +294,7 @@ class Epg_Manager
             if ($check_time_file && $check_time_file + $max_cache_time > time()) {
                 hd_debug_print("Cached file: $cached_xmltv_file is not expired "
                     . date("Y-m-d H:s", $check_time_file)
-                    . " date expiration: " . date($check_time_file + $max_cache_time));
+                    . " date expiration: " . date("Y-m-d H:s", $check_time_file + $max_cache_time));
                 return 1;
             }
 

@@ -75,32 +75,7 @@ class vod_glanz extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $this->vod_items = false;
-        $tmp_file = $this->get_vod_cache_file();
-        $need_load = true;
-        if (file_exists($tmp_file)) {
-            $mtime = filemtime($tmp_file);
-            $diff = time() - $mtime;
-            if ($diff > 3600) {
-                hd_debug_print("Vod playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
-                unlink($tmp_file);
-            } else {
-                $need_load = false;
-            }
-        }
-
-        if ($need_load) {
-            $url = $this->provider->replace_macros($this->provider->getVodConfigValue('vod_source'));
-            $this->vod_items = HD::DownloadJson($url, false);
-            if ($this->vod_items === false) {
-                return;
-            }
-            HD::StoreContentToFile($tmp_file, $this->vod_items);
-        } else {
-            $this->vod_items = HD::ReadContentFromFile($tmp_file, false);
-        }
-
-        if ($this->vod_items === false) {
+        if ($this->load_vod_json_full() === false) {
             return;
         }
 
@@ -224,18 +199,20 @@ class vod_glanz extends vod_standard
      */
     public function getFilterList($params, $from_ndx)
     {
-        hd_debug_print($params);
-        $movies = array();
+        hd_debug_print(null, true);
+        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
 
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
-            return $movies;
+            return array();
         }
 
         if ($from_ndx !== 0) {
             // lazy load not supported
-            return $movies;
+            return array();
         }
+
+        $movies = array();
 
         $pairs = explode(",", $params);
         $post_params = array();

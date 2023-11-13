@@ -526,6 +526,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->load_settings(true);
         $this->plugin->load_orders(true);
+        $this->plugin->load_history(true);
         $this->plugin->get_epg_manager()->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
         $this->plugin->create_screen_views();
 

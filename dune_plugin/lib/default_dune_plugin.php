@@ -2709,12 +2709,16 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewParams::num_rows => 2,
                     ViewParams::paint_details => true,
                     ViewParams::paint_item_info_in_details => true,
-                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
                     ViewParams::background_path => $background,
                     ViewParams::background_order => 0,
                     ViewParams::background_height => 1080,
                     ViewParams::background_width => 1920,
                     ViewParams::optimize_full_screen_background => true,
+
+                    ViewParams::item_detailed_info_auto_line_break => true,
+                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
+                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
 
                     ViewParams::paint_sandwich => true,
                     ViewParams::sandwich_base => self::SANDWICH_BASE,
@@ -2724,9 +2728,6 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewParams::sandwich_height => self::VOD_SANDWICH_HEIGHT,
                     ViewParams::sandwich_icon_upscale_enabled => true,
                     ViewParams::sandwich_icon_keep_aspect_ratio => true,
-                    ViewParams::item_detailed_info_auto_line_break => true,
-                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
-                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
                 ),
 
                 PluginRegularFolderView::base_view_item_params => array
@@ -2765,10 +2766,11 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewParams::background_order => 0,
                     ViewParams::background_height => 1080,
                     ViewParams::background_width => 1920,
+
                     ViewParams::item_detailed_info_auto_line_break => true,
                     ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
                     ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
-                    ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
 
                     ViewParams::paint_sandwich => false,
                     ViewParams::sandwich_base => self::SANDWICH_BASE,

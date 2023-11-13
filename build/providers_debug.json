@@ -337,7 +337,7 @@
         "root": "data",
         "pay_url": "https://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
       },
-      "vod_enabled": false,
+      "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
         "vod_source": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}"
@@ -405,7 +405,7 @@
       "provider_info_config": {
         "url": "http://api.iptv.so/0.9/json/account?token={TOKEN}",
         "root": "account",
-        "ignore_items": "id,expire"
+        "ignore_items": "id,expire,services"
       }
     },
     {

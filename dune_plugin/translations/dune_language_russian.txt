@@ -18,6 +18,7 @@ edit = Редактировать
 description = Описание
 search = Поиск
 filter = Фильтр
+filters = Фильтры
 filter__1 = Фильтр: %s
 genre = Жанр
 year_from = Год от

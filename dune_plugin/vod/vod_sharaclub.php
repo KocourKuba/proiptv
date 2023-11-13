@@ -21,7 +21,7 @@ class vod_sharaclub extends vod_standard
     {
         hd_debug_print($movie_id);
         $movie = new Movie($movie_id, $this->plugin);
-        $jsonItems = HD::parse_json_file(self::get_vod_cache_file());
+        $jsonItems = HD::parse_json_file($this->get_vod_cache_file());
 
         if ($jsonItems === false) {
             hd_debug_print("failed to load movie: $movie_id");
@@ -94,23 +94,20 @@ class vod_sharaclub extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $jsonItems = HD::DownloadJson($this->GetVodListUrl(), false);
-        if ($jsonItems === false) {
+        if ($this->load_vod_json_full() === false) {
             return;
         }
-
-        HD::StoreContentToFile(self::get_vod_cache_file(), $jsonItems);
 
         $category_list = array();
         $category_index = array();
         $cat_info = array();
 
         // all movies
-        $count = count($jsonItems);
+        $count = count($this->vod_items);
         $cat_info[Vod_Category::FLAG_ALL] = $count;
         $genres = array();
         $years = array();
-        foreach ($jsonItems as $movie) {
+        foreach ($this->vod_items as $movie) {
             $category = (string)$movie->category;
             if (empty($category)) {
                 $category = TR::load_string('no_category');
@@ -163,15 +160,14 @@ class vod_sharaclub extends vod_standard
     public function getSearchList($keyword)
     {
         hd_debug_print($keyword);
-        $movies = array();
-        $jsonItems = HD::parse_json_file(self::get_vod_cache_file());
-        if ($jsonItems === false) {
+        if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
-            return $movies;
+            return array();
         }
 
+        $movies = array();
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
-        foreach ($jsonItems as $item) {
+        foreach ($this->vod_items as $item) {
             $search = utf8_encode(mb_strtolower($item->name, 'UTF-8'));
             if (strpos($search, $keyword) !== false) {
                 $movies[] = self::CreateShortMovie($item);
@@ -189,14 +185,12 @@ class vod_sharaclub extends vod_standard
      */
     public function getMovieList($query_id)
     {
-        $movies = array();
-
-        $jsonItems = HD::parse_json_file(self::get_vod_cache_file());
-        if ($jsonItems === false) {
+        if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
-            return $movies;
+            return array();
         }
 
+        $movies = array();
         $arr = explode("_", $query_id);
         if ($arr === false) {
             $category_id = $query_id;
@@ -206,7 +200,7 @@ class vod_sharaclub extends vod_standard
 
         $current_offset = $this->get_next_page($query_id, 0);
         $pos = 0;
-        foreach ($jsonItems as $movie) {
+        foreach ($this->vod_items as $movie) {
             if ($pos++ < $current_offset) continue;
 
             $category = $movie->category;
@@ -225,54 +219,51 @@ class vod_sharaclub extends vod_standard
     }
 
     /**
-     * @param string $params
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
-    public function getFilterList($params)
+    public function getFilterList($params, $from_ndx)
     {
-        hd_debug_print($params);
-        $movies = array();
+        hd_debug_print(null, true);
+        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
 
-        $jsonItems = HD::parse_json_file(self::get_vod_cache_file());
-        if ($jsonItems === false) {
+        if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
-            return $movies;
+            return array();
         }
+
+        if ($from_ndx !== 0) {
+            // lazy load not supported
+            return array();
+        }
+
+        $movies = array();
 
         $pairs = explode(",", $params);
         $post_params = array();
         foreach ($pairs as $pair) {
             if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
-                hd_debug_print("Filter: $m[1] Value: $m[2]");
                 $filter = $this->get_filter($m[1]);
                 if ($filter !== null && !empty($filter['values'])) {
                     $item_idx = array_search($m[2], $filter['values']);
                     if ($item_idx !== false && $item_idx !== -1) {
-                        $post_params[$m[1]] = $item_idx;
-                        hd_debug_print("Param: $item_idx");
+                        $post_params[$m[1]] = $filter['values'][$item_idx];
                     }
                 }
             }
         }
 
-        foreach ($jsonItems as $movie) {
-            $match_genre = !isset($post_params['genre']);
-            $info = $movie->info;
-            if (!$match_genre) {
-                foreach ($info->genre as $genre) {
-                    if (!isset($post_params['genre']) || $genre === $post_params['genre']) {
-                        $match_genre = true;
-                        break;
-                    }
-                }
+        foreach ($this->vod_items as $movie) {
+            if (isset($post_params['genre'])) {
+                $match_genre = in_array($post_params['genre'], $movie->info->genre);
+            } else {
+                $match_genre = true;
             }
 
             $match_year = false;
             $year_from = isset($post_params['from']) ? $post_params['from'] : ~PHP_INT_MAX;
             $year_to = isset($post_params['to']) ? $post_params['to'] : PHP_INT_MAX;
 
-            if ((int)$info->year >= $year_from && (int)$info->year <= $year_to) {
+            if ((int)$movie->info->year >= $year_from && (int)$movie->info->year <= $year_to) {
                 $match_year = true;
             }
 
@@ -301,82 +292,10 @@ class vod_sharaclub extends vod_standard
         $info = $movie_obj->info;
         $genres = HD::ArrayToStr($info->genre);
         $country = HD::ArrayToStr($info->country);
+
         $movie = new Short_Movie($id, (string)$movie_obj->name, (string)$info->poster);
         $movie->info = TR::t('vod_screen_movie_info__5', $movie_obj->name, $info->year, $country, $genres, $info->rating);
 
         return $movie;
-    }
-
-    /**
-     * @param array &$defs
-     * @param Starnet_Vod_Filter_Screen $parent
-     * @param int $initial
-     * @return bool
-     */
-    public function AddFilterUI(&$defs, $parent, $initial = -1)
-    {
-        $filters = array("genre", "from", "to");
-        hd_debug_print($initial);
-        $added = false;
-        Control_Factory::add_vgap($defs, 20);
-        foreach ($filters as $name) {
-            $filter = $this->get_filter($name);
-            if ($filter === null) {
-                hd_debug_print("no filters with '$name'");
-                continue;
-            }
-
-            $values = $filter['values'];
-            if (empty($values)) {
-                hd_debug_print("no filters values for '$name'");
-                continue;
-            }
-
-            $idx = $initial;
-            if ($initial !== -1) {
-                $pairs = explode(" ", $initial);
-                foreach ($pairs as $pair) {
-                    if (strpos($pair, $name . ":") !== false && preg_match("/^$name:(.+)/", $pair, $m)) {
-                        $idx = array_search($m[1], $values) ?: -1;
-                        break;
-                    }
-                }
-            }
-
-            Control_Factory::add_combobox($defs, $parent, null, $name,
-                $filter['title'], $idx, $values, 600, true);
-
-            Control_Factory::add_vgap($defs, 30);
-            $added = true;
-        }
-
-        return $added;
-    }
-
-    /**
-     * @param $user_input
-     * @return string
-     */
-    public function CompileSaveFilterItem($user_input)
-    {
-        $filters = array("genre", "from", "to");
-        $compiled_string = "";
-        foreach ($filters as $name) {
-            $filter = $this->get_filter($name);
-            if ($filter !== null && $user_input->{$name} !== -1) {
-                if (!empty($compiled_string)) {
-                    $compiled_string .= ",";
-                }
-
-                $compiled_string .= $name . ":" . $filter['values'][$user_input->{$name}];
-            }
-        }
-
-        return $compiled_string;
-    }
-
-    protected static function get_vod_cache_file()
-    {
-        return get_temp_path("playlist_vod.json");
     }
 }

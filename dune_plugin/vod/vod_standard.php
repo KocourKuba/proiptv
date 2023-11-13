@@ -457,7 +457,8 @@ class vod_standard extends Abstract_Vod
      */
     public function getFilterList($params, $from_ndx)
     {
-        hd_debug_print("params: $params, from ndx: $from_ndx", true);
+        hd_debug_print(null, true);
+        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
         return array();
     }
 
@@ -563,20 +564,24 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param array $defs
      * @param Starnet_Vod_Filter_Screen $parent
      * @param int $initial
-     * @return bool
+     * @return array|null
      */
-    public function AddFilterUI(&$defs, $parent, $initial = -1)
+    public function AddFilterUI($parent, $initial = -1)
     {
         if (empty($this->vod_filters)) {
-            return false;
+            return null;
         }
 
         hd_debug_print($initial);
         $added = false;
+        $filter_items = $this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
+        $user_filter = ($initial !== -1) ? $filter_items->get_item_by_idx($initial) : '';
+
+        $defs = array();
         Control_Factory::add_vgap($defs, 20);
+
         foreach ($this->vod_filters as $name) {
             $filter = $this->get_filter($name);
             if ($filter === null) {
@@ -591,8 +596,8 @@ class vod_standard extends Abstract_Vod
             }
 
             $idx = $initial;
-            if ($initial !== -1) {
-                $pairs = explode(" ", $initial);
+            if (!empty($user_filter)) {
+                $pairs = explode(",", $user_filter);
                 foreach ($pairs as $pair) {
                     if (strpos($pair, $name . ":") !== false && preg_match("/^$name:(.+)/", $pair, $m)) {
                         $idx = array_search($m[1], $values) ?: -1;
@@ -608,15 +613,25 @@ class vod_standard extends Abstract_Vod
             $added = true;
         }
 
-        return $added;
+        if (!$added) {
+            return null;
+        }
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $parent, null, ACTION_RUN_FILTER, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+        return Action_Factory::show_dialog(TR::t('filter'), $defs, true);
     }
 
     /**
-     * @param array $user_input
+     * @param Object $user_input
      * @return string
      */
     public function CompileSaveFilterItem($user_input)
     {
+        hd_debug_print(null, true);
+        dump_input_handler($user_input);
+
         if (empty($this->vod_filters)) {
             return '';
         }
@@ -624,7 +639,7 @@ class vod_standard extends Abstract_Vod
         $compiled_string = "";
         foreach ($this->vod_filters as $name) {
             $filter = $this->get_filter($name);
-            if ($filter !== null && $user_input->{$name} !== -1) {
+            if ($filter !== null && (int)$user_input->{$name} !== -1) {
                 if (!empty($compiled_string)) {
                     $compiled_string .= ",";
                 }
@@ -656,6 +671,38 @@ class vod_standard extends Abstract_Vod
         }
 
         return $url;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function load_vod_json_full()
+    {
+        $this->vod_items = false;
+        $tmp_file = $this->get_vod_cache_file();
+        $need_load = true;
+        if (file_exists($tmp_file)) {
+            $mtime = filemtime($tmp_file);
+            $diff = time() - $mtime;
+            if ($diff > 3600) {
+                hd_debug_print("Vod playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
+                unlink($tmp_file);
+            } else {
+                $need_load = false;
+            }
+        }
+
+        if ($need_load) {
+            $url = $this->provider->replace_macros($this->provider->getVodConfigValue('vod_source'));
+            $this->vod_items = HD::DownloadJson($url, false);
+            if ($this->vod_items !== false) {
+                HD::StoreContentToFile($tmp_file, $this->vod_items);
+            }
+        } else {
+            $this->vod_items = HD::ReadContentFromFile($tmp_file, false);
+        }
+
+        return $this->vod_items !== false;
     }
 
     /**
