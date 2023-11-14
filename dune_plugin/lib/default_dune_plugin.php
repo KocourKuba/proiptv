@@ -1446,33 +1446,6 @@ class Default_Dune_Plugin implements DunePlugin
         return $provider;
     }
 
-    /**
-     * @param string $id
-     * @return Provider_Config|null
-     */
-    public function init_provider_by_playlist($id)
-    {
-        $playlist = $this->get_playlist($id);
-        if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
-            return null;
-        }
-
-        $provider = $this->get_provider($playlist->params[PARAM_PROVIDER]);
-        if (is_null($provider)) {
-            hd_debug_print("unknown provider");
-            return null;
-        }
-
-        if (!$provider->getEnable()) {
-            hd_debug_print("provider disabled");
-            return null;
-        }
-
-        $provider->parse_provider_creds($playlist);
-
-        return $provider;
-    }
-
     public function init_epg_manager()
     {
         $this->epg_manager = null;
@@ -2132,10 +2105,9 @@ class Default_Dune_Plugin implements DunePlugin
 
             $name = $item->name;
             $cached_xmltv_file = $this->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
-            hd_debug_print("cached file: $cached_xmltv_file");
             if (file_exists($cached_xmltv_file)) {
                 $check_time_file = filemtime($cached_xmltv_file);
-                $name .= " (" . date("d.m H:s", $check_time_file) . ")";
+                $name .= " (" . date("d.m H:i", $check_time_file) . ")";
             }
 
             $menu_items[] = $this->create_menu_item($handler,

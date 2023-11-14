@@ -18,17 +18,19 @@ class vod_edem extends vod_standard
      */
     public function init_vod($provider)
     {
+        parent::init_vod($provider);
+
         $this->vod_filters = array("years", "genre");
         $this->vod_quality = true;
         $vportal = $provider->getCredential(MACRO_VPORTAL);
-        if (!empty($vportal) && preg_match("/^portal::\[key:([^]]+)](.+)$/", $vportal,$matches)) {
-            $provider->setVodEnabled(true);
-            list(, $this->vportal_key, $this->vportal_url) = $matches;
+        if (empty($vportal) || !preg_match("/^portal::\[key:([^]]+)](.+)$/", $vportal,$matches)) {
+            $show = false;
         } else {
-            $provider->setVodEnabled(false);
+            list(, $this->vportal_key, $this->vportal_url) = $matches;
+            $show = true;
         }
 
-        parent::init_vod($provider);
+        return $show;
     }
 
     /**

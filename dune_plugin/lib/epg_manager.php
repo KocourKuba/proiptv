@@ -293,8 +293,8 @@ class Epg_Manager
             $max_cache_time = 3600 * 24 * $this->cache_ttl;
             if ($check_time_file && $check_time_file + $max_cache_time > time()) {
                 hd_debug_print("Cached file: $cached_xmltv_file is not expired "
-                    . date("Y-m-d H:s", $check_time_file)
-                    . " date expiration: " . date("Y-m-d H:s", $check_time_file + $max_cache_time));
+                    . date("Y-m-d H:i", $check_time_file)
+                    . " date expiration: " . date("Y-m-d H:i", $check_time_file + $max_cache_time));
                 return 1;
             }
 
@@ -355,7 +355,7 @@ class Epg_Manager
                 hd_debug_print("Read finished");
             }
 
-            hd_debug_print("Last changed time on server: " . date("Y-m-d H:s", filemtime($tmp_filename)));
+            hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", filemtime($tmp_filename)));
             hd_debug_print("Download xmltv source $this->xmltv_url done: " . (microtime(true) - $t) . " secs");
             $t = microtime(true);
 

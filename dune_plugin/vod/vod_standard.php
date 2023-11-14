@@ -108,13 +108,26 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @param Provider_Config $provider
-     * @return void
+     * @return bool
      */
     public function init_vod($provider)
     {
         $this->provider = $provider;
-        $this->special_groups->clear();
+        $this->vod_source = $this->provider->replace_macros($this->provider->getVodConfigValue('vod_source'));
+        $this->vod_pattern = $this->provider->getVodConfigValue('vod_parser');
+        if (!empty($this->vod_pattern)) {
+            $this->vod_pattern = "/$this->vod_pattern/";
+        }
 
+        return true;
+    }
+
+    /**
+     * @param bool $enable
+     * @return void
+     */
+    public function init_vod_screens($enable)
+    {
         $this->plugin->destroy_screen(Starnet_Vod_Favorites_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_History_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Category_List_Screen::ID);
@@ -125,56 +138,53 @@ class vod_standard extends Abstract_Vod
         $this->plugin->destroy_screen(Starnet_Vod_Search_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Filter_Screen::ID);
 
-        $this->plugin->create_screen(new Starnet_Vod_Favorites_Screen($this->plugin));
-        $this->plugin->create_screen(new Starnet_Vod_History_Screen($this->plugin));
-        $this->plugin->create_screen(new Starnet_Vod_Category_List_Screen($this->plugin));
-        $this->plugin->create_screen(new Starnet_Vod_List_Screen($this->plugin));
-        $this->plugin->create_screen(new Starnet_Vod_Movie_Screen($this->plugin));
-        $this->plugin->create_screen(new Starnet_Vod_Seasons_List_Screen($this->plugin));
-        $this->plugin->create_screen(new Starnet_Vod_Series_List_Screen($this->plugin));
-        $this->plugin->create_screen(new Starnet_Vod_Search_Screen($this->plugin));
-        $this->plugin->create_screen(new Starnet_Vod_Filter_Screen($this->plugin));
+        $this->special_groups->clear();
 
-        $this->vod_source = $this->provider->replace_macros($this->provider->getVodConfigValue('vod_source'));
-        $this->vod_pattern = $this->provider->getVodConfigValue('vod_parser');
-        if (!empty($this->vod_pattern)) {
-            $this->vod_pattern = "/$this->vod_pattern/";
+        if ($enable) {
+            // Favorites category
+            $special_group = new Default_Group($this->plugin,
+                FAVORITES_MOVIE_GROUP_ID,
+                TR::load_string(Default_Group::FAV_MOVIES_GROUP_CAPTION),
+                Default_Group::FAV_MOVIES_GROUP_ICON);
+            $this->special_groups->set($special_group->get_id(), $special_group);
+
+            // History channels category
+            $special_group = new Default_Group($this->plugin,
+                HISTORY_MOVIES_GROUP_ID,
+                TR::load_string(Default_Group::HISTORY_MOVIES_GROUP_CAPTION),
+                Default_Group::HISTORY_MOVIES_GROUP_ICON,
+                false);
+            $this->special_groups->set($special_group->get_id(), $special_group);
+
+            // Search category
+            $special_group = new Default_Group($this->plugin,
+                SEARCH_MOVIES_GROUP_ID,
+                TR::load_string(Default_Group::SEARCH_MOVIES_GROUP_CAPTION),
+                Default_Group::SEARCH_MOVIES_GROUP_ICON,
+                true);
+            $this->special_groups->set($special_group->get_id(), $special_group);
+
+            // Filter category
+            $special_group = new Default_Group($this->plugin,
+                FILTER_MOVIES_GROUP_ID,
+                TR::load_string(Default_Group::FILTER_MOVIES_GROUP_CAPTION),
+                Default_Group::FILTER_MOVIES_GROUP_ICON,
+                true);
+            $special_group->set_disabled(empty($this->vod_filters));
+
+            $this->special_groups->set($special_group->get_id(), $special_group);
+
+            $this->plugin->create_screen(new Starnet_Vod_Favorites_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_History_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Category_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Movie_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Seasons_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Series_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Search_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Filter_Screen($this->plugin));
         }
-
-        // Favorites category
-        $special_group = new Default_Group($this->plugin,
-            FAVORITES_MOVIE_GROUP_ID,
-            TR::load_string(Default_Group::FAV_MOVIES_GROUP_CAPTION),
-            Default_Group::FAV_MOVIES_GROUP_ICON);
-        $this->special_groups->set($special_group->get_id(), $special_group);
-
-        // History channels category
-        $special_group = new Default_Group($this->plugin,
-            HISTORY_MOVIES_GROUP_ID,
-            TR::load_string(Default_Group::HISTORY_MOVIES_GROUP_CAPTION),
-            Default_Group::HISTORY_MOVIES_GROUP_ICON,
-            false);
-        $this->special_groups->set($special_group->get_id(), $special_group);
-
-        // Search category
-        $special_group = new Default_Group($this->plugin,
-            SEARCH_MOVIES_GROUP_ID,
-            TR::load_string(Default_Group::SEARCH_MOVIES_GROUP_CAPTION),
-            Default_Group::SEARCH_MOVIES_GROUP_ICON,
-            true);
-        $this->special_groups->set($special_group->get_id(), $special_group);
-
-        // Filter category
-        $special_group = new Default_Group($this->plugin,
-            FILTER_MOVIES_GROUP_ID,
-            TR::load_string(Default_Group::FILTER_MOVIES_GROUP_CAPTION),
-            Default_Group::FILTER_MOVIES_GROUP_ICON,
-            true);
-        $special_group->set_disabled(empty($this->vod_filters));
-
-        $this->special_groups->set($special_group->get_id(), $special_group);
     }
-
     /**
      * @return M3uParser
      */

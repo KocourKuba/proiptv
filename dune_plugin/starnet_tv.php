@@ -597,9 +597,6 @@ class Starnet_Tv implements User_Input_Handler
             return 0;
         }
 
-        $this->groups = new Hashed_Array();
-        $this->channels = new Hashed_Array();
-
         $id_map = false;
         $id_parser = '';
         $this->plugin->vod = null;
@@ -609,13 +606,16 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("VOD support: " . var_export($provider->getVodEnabled(), true));
                 $vod_class = "vod_" . ($provider->getVodConfigValue('vod_custom') ? $provider->getId() : "standard");
                 hd_debug_print("Used VOD class: $vod_class");
+                $enable = false;
                 if (class_exists($vod_class)) {
                     $this->plugin->vod = new $vod_class($this->plugin);
-                    $this->plugin->vod->init_vod($provider);
-                    $this->get_special_group(VOD_GROUP_ID)->set_disabled(!$provider->getVodEnabled());
+                    $enable = $this->plugin->vod->init_vod($provider);
+                    $this->get_special_group(VOD_GROUP_ID)->set_disabled(!$enable);
+                    $this->plugin->vod->init_vod_screens($enable);
                 } else {
                     hd_debug_print("VOD class not found");
                 }
+                hd_debug_print("VOD show: " . var_export($enable, true));
             }
 
             if ($provider->getIdParser() !== '') {
@@ -635,6 +635,9 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("no provider specific id mapping, use M3U attributes");
             }
         }
+
+        $this->groups = new Hashed_Array();
+        $this->channels = new Hashed_Array();
 
         $this->plugin->get_playback_points()->load_points(true);
 

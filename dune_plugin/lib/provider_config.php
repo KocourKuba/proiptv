@@ -546,20 +546,20 @@ class Provider_Config
 
         switch ($this->getProviderType()) {
             case PROVIDER_TYPE_PIN:
-                $this->setCredential(MACRO_PASSWORD, $info->params[MACRO_PASSWORD]);
+                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
                 break;
 
             case PROVIDER_TYPE_LOGIN:
             case PROVIDER_TYPE_LOGIN_TOKEN:
             case PROVIDER_TYPE_LOGIN_STOKEN:
-                $this->setCredential(MACRO_LOGIN, $info->params[MACRO_LOGIN]);
-                $this->setCredential(MACRO_PASSWORD, $info->params[MACRO_PASSWORD]);
+                $this->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
+                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
                 break;
 
             case PROVIDER_TYPE_EDEM:
-                $this->setCredential(MACRO_SUBDOMAIN, $info->params[MACRO_SUBDOMAIN]);
-                $this->setCredential(MACRO_OTTKEY, $info->params[MACRO_OTTKEY]);
-                $this->setCredential(MACRO_VPORTAL, $info->params[MACRO_VPORTAL]);
+                $this->setCredential(MACRO_SUBDOMAIN, isset($info->params[MACRO_SUBDOMAIN]) ? $info->params[MACRO_SUBDOMAIN] : '');
+                $this->setCredential(MACRO_OTTKEY, isset($info->params[MACRO_OTTKEY]) ? $info->params[MACRO_OTTKEY] : '');
+                $this->setCredential(MACRO_VPORTAL, isset($info->params[MACRO_VPORTAL]) ? $info->params[MACRO_VPORTAL] : '');
                 break;
 
             default:
@@ -567,7 +567,7 @@ class Provider_Config
         }
 
         if ($this->getProviderType() === PROVIDER_TYPE_LOGIN_TOKEN) {
-            $this->setCredential(MACRO_TOKEN, md5(strtolower($info->params[MACRO_LOGIN]) . md5($info->params[MACRO_PASSWORD])));
+            $this->setCredential(MACRO_TOKEN, md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD))));
         }
 
         $token_url = $this->getTokenRequestUrl();

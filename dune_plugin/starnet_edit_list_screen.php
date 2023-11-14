@@ -147,7 +147,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 /** @var Named_Storage $order */
                 $item = $this->get_edit_order($edit_list)->get($id);
 
-                hd_debug_print("item: " . $item);
+                hd_debug_print("item: " . $item, true);
                 if ($item->type === PARAM_LINK && isset($item->params['uri']) && preg_match(HTTP_PATTERN, $item->params['uri'])) {
                     return $this->do_edit_url_dlg($user_input);
                 }

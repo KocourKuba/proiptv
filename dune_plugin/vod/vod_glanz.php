@@ -8,8 +8,11 @@ class vod_glanz extends vod_standard
      */
     public function init_vod($provider)
     {
-        $this->vod_filters = array("genre", "from", "to");
         parent::init_vod($provider);
+
+        $this->vod_filters = array("genre", "from", "to");
+
+        return true;
     }
 
     /**
