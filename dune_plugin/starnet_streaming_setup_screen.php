@@ -156,7 +156,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
             hd_debug_print("Setup: changing $control_id value to $new_value");
         }
 
-        hd_debug_print("$control_id: " . $plugin_cookies->{$control_id}, true);
         switch ($control_id) {
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(

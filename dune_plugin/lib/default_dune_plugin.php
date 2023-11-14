@@ -533,7 +533,10 @@ class Default_Dune_Plugin implements DunePlugin
                 );
 
                 if (LogSeverity::$is_debug) {
-                    hd_debug_print(format_datetime("m-d H:i", $tm_start) . " - " . format_datetime("m-d H:i", $tm_end) . " {$value[Epg_Params::EPG_NAME]}");
+                    hd_debug_print(format_datetime("m-d H:i", $tm_start)
+                        . " - " . format_datetime("m-d H:i", $tm_end)
+                        . " {$value[Epg_Params::EPG_NAME]}"
+                    );
                 }
             }
         } catch (Exception $ex) {
@@ -1520,6 +1523,7 @@ class Default_Dune_Plugin implements DunePlugin
                         if (is_null($provider)) {
                             throw new Exception("Unable to init provider $item");
                         }
+                        $provider->request_provider_info();
                         $playlist_url = $provider->replace_macros($provider->getPlaylistSource());
 
                     } else {
@@ -2247,7 +2251,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::icon_valign => VALIGN_CENTER,
                     ViewItemParams::icon_width => 60,
                     ViewItemParams::icon_height => 60,
-                    ViewItemParams::icon_dx => 25,
+                    ViewItemParams::icon_dx => 30,
                     ViewItemParams::icon_dy => 0,
                     ViewItemParams::item_caption_dx => 30,
                     ViewItemParams::item_caption_width => 1100,
@@ -2294,8 +2298,8 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::icon_valign => VALIGN_CENTER,
                     ViewItemParams::icon_width => 60,
                     ViewItemParams::icon_height => 60,
-                    ViewItemParams::icon_dx => 25,
-                    ViewItemParams::icon_dy => 0,
+                    ViewItemParams::icon_dx => 35,
+                    ViewItemParams::icon_dy => -5,
                     ViewItemParams::item_caption_dx => 30,
                     ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
@@ -2333,10 +2337,10 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_dx => 20,
+                    ViewItemParams::icon_width => 60,
+                    ViewItemParams::icon_height => 60,
+                    ViewItemParams::icon_dx => 35,
                     ViewItemParams::icon_dy => -5,
-                    ViewItemParams::icon_width => 70,
-                    ViewItemParams::icon_height => 70,
                     ViewItemParams::item_caption_dx => 74,
                     ViewItemParams::item_caption_width => 550,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
@@ -2367,10 +2371,10 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
-                    ViewItemParams::icon_dx => 20,
+                    ViewItemParams::icon_width => 60,
+                    ViewItemParams::icon_height => 60,
+                    ViewItemParams::icon_dx => 35,
                     ViewItemParams::icon_dy => -5,
-                    ViewItemParams::icon_width => 70,
-                    ViewItemParams::icon_height => 70,
                     ViewItemParams::item_caption_dx => 97,
                     ViewItemParams::item_caption_width => 600,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,

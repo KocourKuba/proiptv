@@ -614,11 +614,12 @@ class Epg_Manager
     /**
      * clear memory cache and cache for current xmltv source
      *
+     * @param null $url
      * @return void
      */
-    public function clear_epg_cache()
+    public function clear_epg_cache($url = null)
     {
-        $this->clear_epg_files($this->url_hash);
+        $this->clear_epg_files(is_null($url) ? $this->url_hash : $url);
     }
 
     /**

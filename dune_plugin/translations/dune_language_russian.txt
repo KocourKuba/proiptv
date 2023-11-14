@@ -275,6 +275,7 @@ edit_list_add_name = Задать имя
 edit_list_edit_item = Редактировать
 edit_list_add_provider = Добавить провайдера IPTV
 edit_list_detail_info__2 = %s|%s
+edit_list_detail_info__3 = %s|%s|Скачано: %s
 
 epg_not_ready = Программа передач еще не готова
 epg_not_ready_desc = Идет индексирование программ передач, пожалуйста подождите

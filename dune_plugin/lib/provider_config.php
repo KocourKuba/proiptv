@@ -549,8 +549,14 @@ class Provider_Config
                 $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
                 break;
 
-            case PROVIDER_TYPE_LOGIN:
             case PROVIDER_TYPE_LOGIN_TOKEN:
+                $this->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
+                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
+                $this->setCredential(MACRO_TOKEN,
+                    md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD))));
+                break;
+
+            case PROVIDER_TYPE_LOGIN:
             case PROVIDER_TYPE_LOGIN_STOKEN:
                 $this->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
                 $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
@@ -566,18 +572,43 @@ class Provider_Config
                 return;
         }
 
-        if ($this->getProviderType() === PROVIDER_TYPE_LOGIN_TOKEN) {
-            $this->setCredential(MACRO_TOKEN, md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD))));
+        foreach($info->params as $key => $item) {
+            switch($key) {
+                case MACRO_SERVER:
+                    $this->setCredential(MACRO_SERVER, $item);
+                    break;
+                case MACRO_DEVICE:
+                    $this->setCredential(MACRO_DEVICE, $item);
+                    break;
+                case MACRO_QUALITY:
+                    $this->setCredential(MACRO_QUALITY, $item);
+                    break;
+            }
         }
 
+        $this->parsed_info = $info;
+    }
+
+    /**
+     * @param bool $force
+     * @return void
+     */
+    public function request_provider_info($force = false)
+    {
         $token_url = $this->getTokenRequestUrl();
+        if (empty($token_url)) {
+            return;
+        }
+
         $token = $this->getCredential(MACRO_TOKEN);
-        if (!empty($token_url) && empty($token)) {
-            $response = HD::DownloadJson($this->replace_macros($token_url));
-            $token_name = $this->getTokenResponse();
-            if ($response !== false && isset($response[$token_name])) {
-                $this->setCredential(MACRO_TOKEN, $response[$token_name]);
-            }
+        if (!empty($token) && !$force) {
+            return;
+        }
+
+        $response = HD::DownloadJson($this->replace_macros($token_url));
+        $token_name = $this->getTokenResponse();
+        if ($response !== false && isset($response[$token_name])) {
+            $this->setCredential(MACRO_TOKEN, $response[$token_name]);
         }
 
         if ($this->getProviderInfo()) {
@@ -611,21 +642,6 @@ class Provider_Config
                 hd_debug_print("info: " . raw_json_encode($this->provider_data), true);
             }
         }
-
-        foreach($info->params as $key => $item) {
-            switch($key) {
-                case MACRO_SERVER:
-                    $this->setCredential(MACRO_SERVER, $item);
-                    break;
-                case MACRO_DEVICE:
-                    $this->setCredential(MACRO_DEVICE, $item);
-                    break;
-                case MACRO_QUALITY:
-                    $this->setCredential(MACRO_QUALITY, $item);
-                    break;
-            }
-        }
-        $this->parsed_info = $info;
     }
 
     /**

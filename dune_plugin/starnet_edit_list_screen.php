@@ -425,7 +425,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if ($playlist->name !== $provider->getName()) {
                         $title .= " ({$provider->getName()})";
                     }
-                    $detailed_info = TR::t('edit_list_detail_info__2', $playlist->name, '');
+                    $detailed_info = $playlist->name;
                 } else if ($playlist->type === PARAM_LINK) {
                     $detailed_info = TR::t('edit_list_detail_info__2', $playlist->name, $playlist->params['uri']);
                 }
@@ -435,11 +435,20 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (!($item instanceof Named_Storage)) {
                     continue;
                 }
+
                 $id = $key;
                 $starred = $id === $this->plugin->get_active_xmltv_source_key();
                 $title = empty($item->name) ? $item->params['uri'] : $item->name;
-                $detailed_info = TR::t('edit_list_detail_info__2', $item->name, $item->params['uri']);
                 $icon_file = get_image_path("link.png");
+
+                $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
+                if (file_exists($cached_xmltv_file)) {
+                    $check_time_file = filemtime($cached_xmltv_file);
+                    $dl_date = date("d.m H:i", $check_time_file);
+                    $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params['uri'], $dl_date);
+                } else {
+                    $detailed_info = TR::t('edit_list_detail_info__2', $item->name, $item->params['uri']);
+                }
             } else {
                 continue;
             }
@@ -447,8 +456,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $id)),
                 PluginRegularFolderItem::caption => $title,
-                PluginRegularFolderItem::starred => $starred,
                 PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::item_sticker => ($starred ? Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2) : null),
                     ViewItemParams::icon_path => $icon_file,
                     ViewItemParams::item_detailed_info => $detailed_info,
                     ViewItemParams::item_detailed_icon_path => $icon_file,

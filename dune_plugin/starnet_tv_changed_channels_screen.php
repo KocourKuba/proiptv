@@ -186,8 +186,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                         'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::caption => $channel->get_title(),
-                PluginRegularFolderItem::starred => true,
                 PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::item_sticker => Control_Factory::create_sticker(get_image_path('add.png'), -63, 1),
                     ViewItemParams::icon_path => $channel->get_icon_url(),
                     ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
                     ViewItemParams::item_detailed_info => $detailed_info,
@@ -207,6 +207,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::item_sticker => Control_Factory::create_sticker(get_image_path('del.png'), -63, 1),
                     ViewItemParams::icon_path => Starnet_Tv::DEFAULT_CHANNEL_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => Starnet_Tv::DEFAULT_CHANNEL_ICON_PATH,
                     ViewItemParams::item_detailed_info => $detailed_info,

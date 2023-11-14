@@ -377,4 +377,39 @@ class Control_Factory
 
         self::add_vgap($defs, 4);
     }
+
+
+    public static function sticker_geometry($img, $img_x, $img_y, $img_halign, $img_valign)
+    {
+        return array(
+            'geom' => array('x' => $img_x, 'y' => $img_y, 'halign' => $img_halign, 'valign' => $img_valign),
+            'comp' => array('items' => array(array('type' => 'icon', 'url' => $img)))
+        );
+    }
+
+    /**
+     * @param string|array $img
+     * @param int $img_x
+     * @param int $img_y
+     * @param string $img_halign
+     * @param string $img_valign
+     * @return false|string
+     */
+    public static function create_sticker($img, $img_x = 0, $img_y = 0, $img_halign = 'right', $img_valign = 'top', $above_selection = false)
+    {
+        $items = array();
+        if (is_array($img)) {
+            foreach ($img as $k => $im) {
+                $im_x = isset($img_x[$k]) ? $img_x[$k] : 0;
+                $im_y = isset($img_y[$k]) ? $img_y[$k] : 0;
+                $im_halign = isset($img_halign[$k]) ? $img_halign[$k] : 'right';
+                $im_valign = isset($img_valign[$k]) ? $img_valign[$k] : 'top';
+                $items[] = self::sticker_geometry($im, $im_x, $im_y, $im_halign, $im_valign);
+            }
+        } else {
+            $items[] = self::sticker_geometry($img, $img_x, $img_y, $img_halign, $img_valign);
+        }
+
+        return json_encode(array('items' => $items, 'above_selection' => $above_selection));
+    }
 }

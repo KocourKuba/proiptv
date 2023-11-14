@@ -286,7 +286,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
 
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'playlist'));
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        ACTION_RELOAD, TR::t('refresh'), "refresh.png", array('reload_action' => 'playlist'));
                 }
 
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
@@ -487,6 +488,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         if (is_null($provider)) {
             return null;
         }
+
+        $provider->request_provider_info(true);
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);

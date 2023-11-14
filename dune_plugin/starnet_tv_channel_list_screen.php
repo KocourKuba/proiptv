@@ -274,10 +274,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $defs = array();
                 Control_Factory::add_text_field($defs, $this, null, self::ACTION_CUSTOM_DELETE, '',
-                    $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING, ''), false, false, false, false, 800);
+                    $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING, ''),
+                    false, false, false, false, 800);
 
                 Control_Factory::add_vgap($defs, 100);
-                Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'), 300);
+                Control_Factory::add_close_dialog_and_apply_button($defs, $this, null,
+                    self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'), 300);
                 Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
                 Control_Factory::add_vgap($defs, 10);
 

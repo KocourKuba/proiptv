@@ -979,7 +979,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $added_stickers[] = $bg;
 
         $added_stickers[] = Rows_Factory::add_regular_sticker_image(
-            get_image_path('page_plus_btn.png'),
+            get_image_path('add.png'),
             Rows_Factory::r(
                 0,
                 2,
@@ -988,7 +988,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $removed_stickers[] = $bg;
         $removed_stickers[] = Rows_Factory::add_regular_sticker_image(
-            get_image_path('page_minus_btn.png'),
+            get_image_path('del.png'),
             Rows_Factory::r(
                 0,
                 2,

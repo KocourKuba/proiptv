@@ -857,7 +857,8 @@ class Starnet_Tv implements User_Input_Handler
                     }
 
                     if (isset($ext_params[Entry::TAG_EXTHTTP]['user-agent'])) {
-                        hd_debug_print(Entry::TAG_EXTHTTP . " Channel: $channel_name uses custom User-Agent: '{$ext_params[Entry::TAG_EXTHTTP]['user-agent']}'", true);
+                        hd_debug_print(Entry::TAG_EXTHTTP
+                            . " Channel: $channel_name uses custom User-Agent: '{$ext_params[Entry::TAG_EXTHTTP]['user-agent']}'", true);
                         $ch_useragent = "User-Agent: " . $ext_params[Entry::TAG_EXTHTTP]['user-agent'];
                     }
                 }
@@ -871,12 +872,15 @@ class Starnet_Tv implements User_Input_Handler
                     }
 
                     if (isset($ext_vlc_opts['http-user-agent'])) {
-                        hd_debug_print(Entry::TAG_EXTVLCOPT . " Channel: $channel_name uses custom User-Agent: '{$ext_vlc_opts['http-user-agent']}'", true);
+                        hd_debug_print(Entry::TAG_EXTVLCOPT
+                            . " Channel: $channel_name uses custom User-Agent: '{$ext_vlc_opts['http-user-agent']}'", true);
                         $ch_useragent = "User-Agent: " . $ext_vlc_opts['http-user-agent'];
                     }
 
                     if (isset($ext_vlc_opts['dune-params'])) {
-                        hd_debug_print(Entry::TAG_EXTVLCOPT . " Channel: $channel_name uses custom dune_params: '{$ext_vlc_opts['dune-params']}'", true);
+                        hd_debug_print(Entry::TAG_EXTVLCOPT
+                            . " Channel: $channel_name uses custom dune_params: '{$ext_vlc_opts['dune-params']}'", true);
+
                         foreach ($ext_vlc_opts['dune-params'] as $param) {
                             $param_pair = explode(':', $param);
                             if (count($param_pair) < 2) continue;
