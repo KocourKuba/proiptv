@@ -1788,7 +1788,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * get all xmltv source
      *
-     * @return Hashed_Array const
+     * @return Hashed_Array<string, Named_Storage>
      */
     public function get_all_xmltv_sources()
     {
@@ -2130,9 +2130,17 @@ class Default_Dune_Plugin implements DunePlugin
                 continue;
             }
 
+            $name = $item->name;
+            $cached_xmltv_file = $this->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
+            hd_debug_print("cached file: $cached_xmltv_file");
+            if (file_exists($cached_xmltv_file)) {
+                $check_time_file = filemtime($cached_xmltv_file);
+                $name .= " (" . date("d.m H:s", $check_time_file) . ")";
+            }
+
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_EPG_SOURCE_SELECTED,
-                $item->name,
+                $name,
                 ($source_key === $key) ? "check.png" : null,
                 array(LIST_IDX => $key)
             );
