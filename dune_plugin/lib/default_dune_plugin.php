@@ -1087,40 +1087,40 @@ class Default_Dune_Plugin implements DunePlugin
      * save playlist settings
      *
      * @param bool $force
-     * @return void
+     * @return bool
      */
     public function save_settings($force = false)
     {
-        $this->save($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
+        return $this->save($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
     }
 
     /**
      * save plugin parameters
      *
      * @param bool $force
-     * @return void
+     * @return bool
      */
     public function save_parameters($force = false)
     {
-        $this->save('common.settings', PLUGIN_PARAMETERS, $force);
+        return $this->save('common.settings', PLUGIN_PARAMETERS, $force);
     }
 
     /**
      * save playlist channels orders
      *
      * @param bool $force
-     * @return void
+     * @return bool
      */
     public function save_orders($force = false)
     {
-        $this->save($this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . '.settings', PLUGIN_ORDERS, $force);
+        return $this->save($this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . '.settings', PLUGIN_ORDERS, $force);
     }
 
     /**
      * save playlist history
      *
      * @param bool $force
-     * @return void
+     * @return bool
      */
     public function save_history($force = false)
     {
@@ -1128,11 +1128,11 @@ class Default_Dune_Plugin implements DunePlugin
 
         if (is_null($this->{$type})) {
             hd_debug_print("this->$type is not set!", true);
-            return;
+            return false;
         }
 
         if ($this->postpone_save[$type] && !$force) {
-            return;
+            return false;
         }
 
         if ($force || $this->is_dirty($type)) {
@@ -1143,7 +1143,10 @@ class Default_Dune_Plugin implements DunePlugin
             }
             HD::put_items($file, $this->{$type}, false);
             $this->set_dirty(false, $type);
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -1151,17 +1154,17 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $name
      * @param string $type
      * @param bool $force
-     * @return void
+     * @return bool
      */
     private function save($name, $type, $force = false)
     {
         if (is_null($this->{$type})) {
             hd_debug_print("this->$type is not set!", true);
-            return;
+            return false;
         }
 
         if ($this->postpone_save[$type] && !$force) {
-            return;
+            return false;
         }
 
         if ($force || $this->is_dirty($type)) {
@@ -1171,7 +1174,9 @@ class Default_Dune_Plugin implements DunePlugin
             }
             HD::put_data_items($name, $this->{$type}, false);
             $this->set_dirty(false, $type);
+            return true;
         }
+        return false;
     }
 
     /**

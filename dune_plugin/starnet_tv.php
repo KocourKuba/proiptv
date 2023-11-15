@@ -743,7 +743,6 @@ class Starnet_Tv implements User_Input_Handler
             hd_debug_print("Remove orphaned order for group id: $orphan_group_id", true);
             $this->plugin->remove_order($orphan_group_id);
         }
-        unset($playlist_groups);
 
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
         // Read channels

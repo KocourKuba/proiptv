@@ -95,6 +95,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
+                $this->save_if_changed();
                 if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
@@ -108,9 +109,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
+                if ($this->save_if_changed()) {
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
 
@@ -177,8 +176,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                $this->plugin->save_orders();
-
                 /** @var Channel $channel */
                 switch ($user_input->{ACTION_RESET_TYPE}) {
                     case ACTION_SORT_CHANNELS:
@@ -214,7 +211,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_EDIT:
-                $this->plugin->save_orders();
+                $this->save_if_changed();
                 $is_channels = ($user_input->action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS);
                 $this->plugin->set_postpone_save(true, PLUGIN_ORDERS);
                 $media_url_str = MediaURL::encode(
@@ -234,23 +231,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $is_channels ? TR::t('tv_screen_edit_hidden_channels') : TR::t('tv_screen_edit_hidden_group'));
 
             case ACTION_SETTINGS:
-                $this->plugin->save_orders();
+                $this->save_if_changed();
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
             case self::ACTION_CHANNELS_SETTINGS:
-                $this->plugin->save_orders();
+                $this->save_if_changed();
                 return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::get_media_url_str(), TR::t('tv_screen_playlists_setup'));
 
             case self::ACTION_EPG_SETTINGS:
-                $this->plugin->save_orders();
+                $this->save_if_changed();
                 return Action_Factory::open_folder(Starnet_Epg_Setup_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
             case self::ACTION_CONFIRM_DLG_APPLY:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                }
-
                 return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -299,8 +291,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_PLAYLIST_SELECTED:
                 if (!isset($user_input->{LIST_IDX}) || $user_input->{LIST_IDX} === $this->plugin->get_active_playlist_key()) break;
 
-                $this->plugin->save_orders(true);
-                $this->set_changes(false);
+                $this->save_if_changed();
                 $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
@@ -316,14 +307,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EPG_SOURCE_SELECTED:
                 if (!isset($user_input->{LIST_IDX})) break;
 
-                $this->plugin->save_orders(true);
-                $this->set_changes(false);
+                $this->save_if_changed();
                 $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_CHANGE_GROUP_ICON:
-                $this->plugin->save_orders();
+                $this->save_if_changed();
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
@@ -362,6 +352,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
                     $group_icons->set($sel_media_url->group_id, $cached_image_name);
                     $this->plugin->save_settings(true);
+                    $this->set_no_changes(PLUGIN_SETTINGS);
 
                     /** @var Group $known_group */
                     if (strpos($old_cached_image, 'plugin_file://') === false) break;
@@ -416,14 +407,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
                     $group_icons->erase($sel_media_url->group_id);
                     $this->plugin->save_settings(true);
+                    $this->set_no_changes(PLUGIN_SETTINGS);
                 }
                 break;
 
             case ACTION_RELOAD:
-                if ($this->has_changes()) {
-                    $this->set_no_changes();
-                    $this->plugin->save_orders();
-                }
+                $this->save_if_changed();
 
                 if (isset($user_input->reload_action)) {
                     if ($user_input->reload_action === 'epg') {
@@ -461,9 +450,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->do_show_add_money();
 
             case ACTION_REFRESH_SCREEN:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
+                if ($this->save_if_changed()) {
                     Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 }
 
