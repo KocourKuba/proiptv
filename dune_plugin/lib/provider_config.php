@@ -168,10 +168,6 @@ class Provider_Config
 
     ////////////////////////////////////////////////////////////////////////
     /// non configurable vars
-    /**
-     * @var Named_Storage
-     */
-    private $parsed_info;
 
     public function __toString()
     {
@@ -522,6 +518,14 @@ class Provider_Config
     }
 
     /**
+     * @return void
+     */
+    public function clearCredentials()
+    {
+        $this->credentials = array();
+    }
+
+    /**
      * @return array
      */
     public function getProviderData()
@@ -531,63 +535,6 @@ class Provider_Config
 
     ////////////////////////////////////////////////////////////////////////
     /// Methods
-
-    /**
-     * @param Named_Storage $info
-     * @return void
-     */
-    public function parse_provider_creds($info)
-    {
-        if (!is_null($this->parsed_info) && $this->parsed_info === $info) {
-            return;
-        }
-
-        hd_debug_print("parse provider_info ({$this->getProviderType()}): $info", true);
-
-        switch ($this->getProviderType()) {
-            case PROVIDER_TYPE_PIN:
-                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
-                break;
-
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-                $this->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
-                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
-                $this->setCredential(MACRO_TOKEN,
-                    md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD))));
-                break;
-
-            case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
-                $this->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
-                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
-                break;
-
-            case PROVIDER_TYPE_EDEM:
-                $this->setCredential(MACRO_SUBDOMAIN, isset($info->params[MACRO_SUBDOMAIN]) ? $info->params[MACRO_SUBDOMAIN] : '');
-                $this->setCredential(MACRO_OTTKEY, isset($info->params[MACRO_OTTKEY]) ? $info->params[MACRO_OTTKEY] : '');
-                $this->setCredential(MACRO_VPORTAL, isset($info->params[MACRO_VPORTAL]) ? $info->params[MACRO_VPORTAL] : '');
-                break;
-
-            default:
-                return;
-        }
-
-        foreach($info->params as $key => $item) {
-            switch($key) {
-                case MACRO_SERVER:
-                    $this->setCredential(MACRO_SERVER, $item);
-                    break;
-                case MACRO_DEVICE:
-                    $this->setCredential(MACRO_DEVICE, $item);
-                    break;
-                case MACRO_QUALITY:
-                    $this->setCredential(MACRO_QUALITY, $item);
-                    break;
-            }
-        }
-
-        $this->parsed_info = $info;
-    }
 
     /**
      * @param bool $force

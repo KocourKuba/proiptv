@@ -241,11 +241,12 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param string $name
-     * @return Provider_Config
+     * @return Provider_Config|null
      */
     public function get_provider($name)
     {
-        return $this->providers->get($name);
+        $config = $this->providers->get($name);
+        return is_null($config) ? null : clone $config;
     }
 
     /**
@@ -1449,7 +1450,49 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        $provider->parse_provider_creds($info);
+        hd_debug_print("parse provider_info ({$provider->getProviderType()}): $info", true);
+
+        switch ($provider->getProviderType()) {
+            case PROVIDER_TYPE_PIN:
+                $provider->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
+                break;
+
+            case PROVIDER_TYPE_LOGIN_TOKEN:
+                $provider->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
+                $provider->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
+                $provider->setCredential(MACRO_TOKEN,
+                    md5(strtolower($provider->getCredential(MACRO_LOGIN)) . md5($provider->getCredential(MACRO_PASSWORD))));
+                break;
+
+            case PROVIDER_TYPE_LOGIN:
+            case PROVIDER_TYPE_LOGIN_STOKEN:
+                $provider->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
+                $provider->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
+                break;
+
+            case PROVIDER_TYPE_EDEM:
+                $provider->setCredential(MACRO_SUBDOMAIN, isset($info->params[MACRO_SUBDOMAIN]) ? $info->params[MACRO_SUBDOMAIN] : '');
+                $provider->setCredential(MACRO_OTTKEY, isset($info->params[MACRO_OTTKEY]) ? $info->params[MACRO_OTTKEY] : '');
+                $provider->setCredential(MACRO_VPORTAL, isset($info->params[MACRO_VPORTAL]) ? $info->params[MACRO_VPORTAL] : '');
+                break;
+
+            default:
+                return null;
+        }
+
+        foreach($info->params as $key => $item) {
+            switch($key) {
+                case MACRO_SERVER:
+                    $provider->setCredential(MACRO_SERVER, $item);
+                    break;
+                case MACRO_DEVICE:
+                    $provider->setCredential(MACRO_DEVICE, $item);
+                    break;
+                case MACRO_QUALITY:
+                    $provider->setCredential(MACRO_QUALITY, $item);
+                    break;
+            }
+        }
 
         return $provider;
     }

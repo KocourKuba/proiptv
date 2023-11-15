@@ -1,6 +1,6 @@
 @echo off
 setlocal
-del \\DUNE4K\DuneSD\dune_plugin_logs\proiptv.log  >nul 2>&1
+del \\DUNE4K\DuneSD\dune_plugin_logs\proiptv.log >nul 2>&1
 
 set /p VERSION=<build\version.txt
 for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
@@ -13,7 +13,9 @@ pushd dune_plugin
 7z a ..\dune_plugin_proiptv.zip >nul
 popd
 
-del dune_plugin\changelog.md >nul
+del dune_plugin\changelog.md >nul 2>&1
+del dune_plugin\providers.json >nul 2>&1
+del dune_plugin\providers_debug.json >nul 2>&1
 
 echo copy to Diskstation
 copy /Y dune_plugin_proiptv.zip \\DISKSTATION\Downloads\ >nul
