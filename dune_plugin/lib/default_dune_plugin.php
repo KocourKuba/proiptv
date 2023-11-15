@@ -2083,10 +2083,14 @@ class Default_Dune_Plugin implements DunePlugin
             $idx++;
 
             $icon = null;
+            $title = $item->name;
             if ($item->type === PARAM_PROVIDER) {
                 $provider = $this->init_provider($item);
                 if (!is_null($provider)) {
                     $icon = $provider->getLogo();
+                    if ($item->name !== $provider->getName()) {
+                        $title .= " ({$provider->getName()})";
+                    }
                 }
             } else if ($item->type === PARAM_LINK) {
                 $icon = "link.png";
@@ -2096,7 +2100,7 @@ class Default_Dune_Plugin implements DunePlugin
 
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_PLAYLIST_SELECTED,
-                $item->name,
+                $title,
                 ($cur !== $key) ? $icon : "check.png",
                 array(LIST_IDX => $key));
         }

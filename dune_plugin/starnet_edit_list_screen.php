@@ -950,19 +950,25 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             // edit existing provider
             $id = $user_input->{self::CONTROL_EDIT_ITEM};
             $playlist = $this->plugin->get_playlist($id);
+            $name = $playlist->name;
             if (!is_null($playlist)) {
                 hd_debug_print("playlist info : $playlist", true);
                 $provider = $this->plugin->init_provider($playlist);
                 hd_debug_print("existing provider : $provider", true);
             }
+
         }
 
         if (is_null($provider)) {
             return $defs;
         }
 
+        if (empty($name)) {
+            $name = $provider->getName();
+        }
+
         Control_Factory::add_text_field($defs, $this, null,
-            self::CONTROL_EDIT_NAME, TR::t('name'), $provider->getName(),
+            self::CONTROL_EDIT_NAME, TR::t('name'), $name,
             false, false, false, true, self::DLG_CONTROLS_WIDTH);
 
         switch ($provider->getProviderType()) {

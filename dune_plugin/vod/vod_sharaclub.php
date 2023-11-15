@@ -50,26 +50,23 @@ class vod_sharaclub extends vod_standard
                 $duration = (int)$item->info->episode_run_time;
             }
 
-            $genres = HD::ArrayToStr($item->info->genre);
-            $country = HD::ArrayToStr($item->info->country);
-
             $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
-                $item->name,            // name,
-                '',          // name_original,
-                $item->info->plot,      // description,
-                $item->info->poster,    // poster_url,
-                $duration,              // length_min,
-                $item->info->year,      // year,
-                $item->info->director,  // director_str,
-                '',           // scenario_str,
-                $item->info->cast,      // actors_str,
-                $genres,                // genres_str,
-                $item->info->rating,    // rate_imdb,
-                '',         // rate_kinopoisk,
-                '',            // rate_mpaa,
-                $country,               // country,
-                ''               // budget
+                $item->name,                          // name,
+                '',                       // name_original,
+                $item->info->plot,                    // description,
+                $item->info->poster,                  // poster_url,
+                $duration,                            // length_min,
+                $item->info->year,                    // year,
+                $item->info->director,                // director_str,
+                '',                       // scenario_str,
+                $item->info->cast,                    // actors_str,
+                HD::ArrayToStr($item->info->genre),   // genres_str,
+                $item->info->rating,                  // rate_imdb,
+                '',                      // rate_kinopoisk,
+                '',                         // rate_mpaa,
+                HD::ArrayToStr($item->info->country), // country,
+                ''                             // budget
             );
 
             // case for serials
