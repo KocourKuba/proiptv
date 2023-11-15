@@ -520,11 +520,11 @@ class vod_standard extends Abstract_Vod
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $movie = new Movie($movie_id, $this->plugin);
 
         $entry = $this->get_m3u_parser()->getEntryByIdx($movie_id);
         if ($entry === null) {
             hd_debug_print("Movie not found");
+            $movie = null;
         } else {
             $logo = $entry->getEntryAttribute('tvg-logo');
             $title = $entry->getEntryTitle();
@@ -548,6 +548,7 @@ class vod_standard extends Abstract_Vod
                 }
             }
 
+            $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
                 $title,// $xml->caption,
                 $title_orig,// $xml->caption_original,

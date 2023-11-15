@@ -40,15 +40,16 @@ class vod_edem extends vod_standard
      */
     public function TryLoadMovie($movie_id)
     {
+        hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $movie = new Movie($movie_id, $this->plugin);
         $movieData = $this->make_json_request(array('cmd' => "flick", 'fid' => (int)$movie_id, 'offset' => 0, 'limit' => 0));
 
         if ($movieData === false) {
             hd_debug_print("failed to load movie: $movie_id");
-            return $movie;
+            return null;
         }
 
+        $movie = new Movie($movie_id, $this->plugin);
         $series_desc = '';
         if ($movieData->type === 'multistream') {
             // collect series

@@ -22,15 +22,16 @@ class vod_sharaclub extends vod_standard
      */
     public function TryLoadMovie($movie_id)
     {
+        hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $movie = new Movie($movie_id, $this->plugin);
         $jsonItems = HD::parse_json_file($this->get_vod_cache_file());
 
         if ($jsonItems === false) {
             hd_debug_print("failed to load movie: $movie_id");
-            return $movie;
+            return null;
         }
 
+        $movie = null;
         foreach ($jsonItems as $item) {
             $id = '-1';
             if (isset($item->id)) {
@@ -52,6 +53,7 @@ class vod_sharaclub extends vod_standard
             $genres = HD::ArrayToStr($item->info->genre);
             $country = HD::ArrayToStr($item->info->country);
 
+            $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
                 $item->name,            // name,
                 '',          // name_original,

@@ -20,14 +20,15 @@ class vod_glanz extends vod_standard
      */
     public function TryLoadMovie($movie_id)
     {
+        hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $movie = new Movie($movie_id, $this->plugin);
 
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movie: $movie_id");
-            return $movie;
+            return null;
         }
 
+        $movie = null;
         foreach ($this->vod_items as $item) {
             if (isset($item->id)) {
                 $id = (string)$item->id;
@@ -47,6 +48,7 @@ class vod_glanz extends vod_standard
             }
             $genres_str = implode(", ", $genres);
 
+            $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
                 $item->name,            // name,
                 $item->o_name,          // name_original,

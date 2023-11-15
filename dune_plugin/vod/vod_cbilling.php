@@ -45,13 +45,14 @@ class vod_cbilling extends vod_standard
      */
     public function TryLoadMovie($movie_id)
     {
+        hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $movie = new Movie($movie_id, $this->plugin);
         $json = HD::DownloadJson("$this->vod_source/video/$movie_id", false);
         if ($json === false) {
-            return $movie;
+            return null;
         }
 
+        $movie = new Movie($movie_id, $this->plugin);
         $movieData = $json->data;
 
         $genresArray = array();
