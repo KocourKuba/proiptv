@@ -23,7 +23,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public static function get_media_url_string($category_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'category_id' => $category_id,));
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => VOD_GROUP_ID, 'category_id' => $category_id,));
     }
 
     /**

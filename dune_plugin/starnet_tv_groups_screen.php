@@ -335,6 +335,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
 
                     $group = $this->plugin->tv->get_any_group($sel_media_url->group_id);
+                    hd_debug_print("group: " . str_replace('\0','',serialize($group)));
                     if (is_null($group)) break;
 
                     $cached_image_name = "{$this->plugin->get_active_playlist_key()}_$data->caption";
@@ -363,7 +364,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $icons[] = $icon_path;
                         }
                     }
-                    if (isset($icons) && !in_array($old_cached_image, $icons)) {
+                    if (isset($icons) && !in_array($old_cached_image, $icons) && file_exists($old_cached_image)) {
                         unlink($old_cached_image);
                     }
                 }

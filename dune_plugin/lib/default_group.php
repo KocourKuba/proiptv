@@ -358,7 +358,7 @@ class Default_Group extends Json_Serializer implements Group
                 return Starnet_Vod_Search_Screen::get_media_url_string(SEARCH_MOVIES_GROUP_ID);
 
             case FILTER_MOVIES_GROUP_ID:
-                return Starnet_Vod_Filter_Screen::get_media_url_string(FILTER_MOVIES_GROUP_ID);
+                return Starnet_Vod_Filter_Screen::get_media_url_string();
         }
 
         return Starnet_Tv_Channel_List_Screen::get_media_url_string($this->get_id());

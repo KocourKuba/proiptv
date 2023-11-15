@@ -12,7 +12,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public static function get_media_url_string($category = '')
     {
-        return MediaURL::encode(array('screen_id' => self::ID, 'category' => $category));
+        return MediaURL::encode(array('screen_id' => self::ID, 'group_id' => FILTER_MOVIES_GROUP_ID, 'category' => $category));
     }
 
     /**
