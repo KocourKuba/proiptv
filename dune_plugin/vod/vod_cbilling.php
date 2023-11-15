@@ -20,6 +20,8 @@ class vod_cbilling extends vod_standard
     {
         parent::init_vod($provider);
 
+        $provider->request_provider_info(true);
+
         $provider_data = $provider->getProviderData();
         if (is_null($provider_data)) {
             $show = false;
