@@ -281,7 +281,7 @@ class Entry extends Json_Serializer
     {
         /*
          * Tags used to get entry ID
-		 * "CUID", "channel-id", "tvg-chno", "tvg-name", "name",
+		 * "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
          */
         static $tags = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number");
 

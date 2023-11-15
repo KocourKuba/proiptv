@@ -64,8 +64,17 @@
       "playlist_source": "https://af-play.com/playlist/{PASSWORD}.m3u8",
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info": false,
-      "vod_enabled": false,
+      "provider_info": true,
+      "provider_info_config": {
+        "url": "http://protected-api.com/auth/info",
+        "root": "data",
+        "ignore_items": "end_time,private_token,public_token",
+        "headers": {
+          "accept": "*/*",
+          "x-public-key": "{PASSWORD}"
+        }
+      },
+      "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
         "vod_source": "http://protected-api.com"
@@ -100,13 +109,13 @@
       "provider_info_config": {
         "url": "http://protected-api.com/auth/info",
         "root": "data",
-        "ignore_items": "end_time,ssl,public_token,private_token",
+        "ignore_items": "end_time,private_token,public_token",
         "headers": {
           "accept": "*/*",
           "x-public-key": "{PASSWORD}"
         }
       },
-      "vod_enabled": false,
+      "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
         "vod_source": "http://protected-api.com"
@@ -125,7 +134,7 @@
       "provider_info_config": {
         "domain": "junior.edmonst.net"
       },
-      "vod_enabled": false,
+      "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
         "vod_source": "{VPORTAL}"
@@ -328,7 +337,7 @@
         "root": "data",
         "pay_url": "https://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
       },
-      "vod_enabled": false,
+      "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
         "vod_source": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}"
@@ -396,8 +405,7 @@
       "provider_info_config": {
         "url": "http://api.iptv.so/0.9/json/account?token={TOKEN}",
         "root": "account",
-        "sections": "info,options,settings,services",
-        "ignore_items": "id,expire"
+        "ignore_items": "id,expire,services"
       }
     },
     {
