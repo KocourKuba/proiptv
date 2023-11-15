@@ -87,6 +87,10 @@ try
 }
 
 unlink($update_tar);
+unlink("./dune_plugin/$providers");
+unlink("./dune_plugin/changelog.md");
+unlink("./dune_plugin/$plugin_metadata");
+
 $hash = hash('md5', file_get_contents($update_file));
 echo "md5: $hash" . PHP_EOL;
 

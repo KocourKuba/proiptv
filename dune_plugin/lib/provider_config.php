@@ -596,19 +596,15 @@ class Provider_Config
     public function request_provider_info($force = false)
     {
         $token_url = $this->getTokenRequestUrl();
-        if (empty($token_url)) {
-            return;
-        }
-
-        $token = $this->getCredential(MACRO_TOKEN);
-        if (!empty($token) && !$force) {
-            return;
-        }
-
-        $response = HD::DownloadJson($this->replace_macros($token_url));
-        $token_name = $this->getTokenResponse();
-        if ($response !== false && isset($response[$token_name])) {
-            $this->setCredential(MACRO_TOKEN, $response[$token_name]);
+        if (!empty($token_url)) {
+            $token = $this->getCredential(MACRO_TOKEN);
+            if (empty($token) || $force) {
+                $response = HD::DownloadJson($this->replace_macros($token_url));
+                $token_name = $this->getTokenResponse();
+                if ($response !== false && isset($response[$token_name])) {
+                    $this->setCredential(MACRO_TOKEN, $response[$token_name]);
+                }
+            }
         }
 
         if ($this->getProviderInfo()) {
@@ -619,7 +615,7 @@ class Provider_Config
                 foreach ($headers as $key => $header) {
                     $curl_headers[CURLOPT_HTTPHEADER][] = "$key: " . $this->replace_macros($header);
                 }
-                hd_debug_print("headers: " . raw_json_encode($curl_headers));
+                hd_debug_print("headers: " . raw_json_encode($curl_headers), true);
             }
 
             $json = HD::DownloadJson($this->replace_macros($this->getProviderInfoConfigValue('url')), true, $curl_headers);
