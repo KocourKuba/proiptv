@@ -192,7 +192,12 @@
       "playlist_source": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}-m3u8",
       "id_map": "",
       "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8?$",
-      "provider_info": false
+      "provider_info": false,
+      "vod_enabled": true,
+      "vod_config": {
+        "vod_custom": true,
+        "vod_source": "https://www.ishara.tv/kino-ottn/{PASSWORD}"
+      }
     },
     {
       "id": "iptvonline",
