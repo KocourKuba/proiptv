@@ -67,18 +67,18 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     }
 
     /**
-     * @param MediaURL $parent_media_url
+     * @param string $parent_media_url_str
      * @param $plugin_cookies
      * @param int $sel_ndx
      * @return array
      */
-    public function invalidate_current_folder(MediaURL $parent_media_url, $plugin_cookies, $sel_ndx = -1)
+    public function invalidate_current_folder($parent_media_url_str, $plugin_cookies, $sel_ndx = -1)
     {
         hd_debug_print(null, true);
 
         return Starnet_Epfs_Handler::invalidate_folders(array(static::ID),
             Action_Factory::update_regular_folder(
-            $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
+            $this->get_folder_range(MediaURL::decode($parent_media_url_str), 0, $plugin_cookies),
             true,
             $sel_ndx)
         );

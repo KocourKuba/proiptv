@@ -273,6 +273,7 @@ vod_screen_quality = Qualität
 vod_screen_quality__1 = Qualität - %s
 vod_screen_all_movies__1 = Alle Filme %s
 vod_screen_season__1 = Staffel %s
+vod_screen_season__2 = %s (Staffel %s)
 vod_screen_series__1 = Episode %s
 vod_screen_series__2 = Episode %s %s
 vod_screen_movie_info__3 = %s|Jahr: %s|Bewertung: %s

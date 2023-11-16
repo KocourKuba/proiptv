@@ -91,7 +91,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
 
                 $this->plugin->save_history(true);
                 return Action_Factory::invalidate_folders(
-                    array(self::get_media_url_string(FILTER_MOVIES_GROUP_ID)),
+                    array($user_input->parent_media_url),
                     Action_Factory::open_folder(
                         Starnet_Vod_List_Screen::get_media_url_string(Vod_Category::FLAG_FILTER, $filter_string),
                         TR::t('filter')
@@ -133,7 +133,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                         break;
                 }
 
-                return Action_Factory::invalidate_folders(array(self::get_media_url_string(FILTER_MOVIES_GROUP_ID)));
+                return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
         }
 
         return null;

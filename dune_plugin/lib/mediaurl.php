@@ -59,6 +59,7 @@ require_once 'json_serializer.php';
  * @property bool|null $allow_reset // show reset to default button and call action ACTION_RESET_DEFAULT
  * @property string|null movie_id // Movie ID
  * @property string|null category_id // Movie Category ID
+ * @property string|null season_id // Season ID
  * @property string|null episode_id // Episode ID
  * @property string|null genre_id // Movie Genre ID
  * @property string|null name // search name

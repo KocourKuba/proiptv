@@ -82,7 +82,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
                 }
                 $this->set_changes();
                 $this->plugin->vod->change_vod_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $movie_id);
-                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+                return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DOWN:
                 $fav_group = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID);
@@ -92,14 +92,14 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
                 }
                 $this->set_changes();
                 $this->plugin->vod->change_vod_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $movie_id);
-                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+                return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DELETE:
                 $fav_group = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID);
                 $this->set_changes();
                 $this->plugin->vod->change_vod_favorites(PLUGIN_FAVORITES_OP_REMOVE, $movie_id);
                 if ($fav_group->get_items_order()->size() !== 0) {
-                    return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+                    return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
                 }
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 

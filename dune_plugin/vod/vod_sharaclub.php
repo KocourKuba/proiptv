@@ -12,7 +12,16 @@ class vod_sharaclub extends vod_standard
 
         $this->vod_filters = array("genre", "from", "to");
 
-        return true;
+        $provider->request_provider_info(true);
+
+        $provider_data = $provider->getProviderData();
+        if (is_null($provider_data)) {
+            $show = false;
+        } else {
+            $show = isset($provider_data['vod']) && $provider_data['vod'] !== false;
+        }
+
+        return $show;
     }
 
     /**
@@ -73,7 +82,11 @@ class vod_sharaclub extends vod_standard
             if (isset($item->seasons)) {
                 foreach ($item->seasons as $season) {
                     $movie->add_season_data($season->season,
-                        !empty($season->info->name) ? $season->info->name : TR::t('vod_screen_season__1', $season->season), '');
+                        empty($season->info->overview)
+                            ? TR::t('vod_screen_season__1', $season->season)
+                            : $season->info->overview
+                        ,'');
+
                     foreach ($season->episodes as $episode) {
                         hd_debug_print("movie playback_url: $episode->video");
                         $movie->add_series_data($episode->id, TR::t('vod_screen_series__1', $episode->episode), '', $episode->video, $season->season);

@@ -118,7 +118,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 }
                 $this->set_changes();
                 $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
-                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+                return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DOWN:
                 $user_input->sel_ndx++;
@@ -127,13 +127,13 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 }
                 $this->set_changes();
                 $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
-                return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+                return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DELETE:
                 $this->set_changes();
                 $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
                 if ($fav_group->get_items_order()->size() !== 0) {
-                    return $this->invalidate_current_folder(MediaURL::decode($user_input->parent_media_url), $plugin_cookies, $user_input->sel_ndx);
+                    return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
                     //return $action;
                 }
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);

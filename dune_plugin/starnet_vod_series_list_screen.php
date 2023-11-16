@@ -181,6 +181,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             return array();
         }
 
+        hd_debug_print("Movie: " . raw_json_encode($movie), true);
         /** @var Hashed_Array $viewed_items */
         $viewed_items = $this->plugin->get_history(HISTORY_MOVIES);
         $items = array();
@@ -189,7 +190,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             $info = $episode->name;
             $color = 15;
-            $id = "$media_url->movie_id:$episode->id";
+            $id = "$media_url->movie_id:$episode->season_id:$episode->id";
             $item_info = $viewed_items->get($id);
             if (!is_null($item_info)) {
                 hd_debug_print("viewed item: " . json_encode($item_info));
@@ -205,6 +206,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $color = 5;
             }
 
+            hd_debug_print("Movie media url: " . self::get_media_url_string($movie->id, $episode->season_id, $episode->id), true);
             $this->variants = $episode->variants;
             $items[] = array(
                 PluginRegularFolderItem::media_url => self::get_media_url_string($movie->id, $episode->season_id, $episode->id),

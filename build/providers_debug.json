@@ -196,7 +196,7 @@
       "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
-        "vod_source": "https://www.ishara.tv/kino-ottn/{PASSWORD}"
+        "vod_source": "http://www.ishara.tv/kino-ottn/{PASSWORD}"
       }
     },
     {

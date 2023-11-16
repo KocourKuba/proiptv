@@ -99,7 +99,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                     Starnet_Vod_List_Screen::get_media_url_string(Vod_Category::FLAG_SEARCH, $search_string),
                     TR::t('search__1', ": $search_string"));
 
-                return Action_Factory::invalidate_folders(array(self::get_media_url_string(SEARCH_MOVIES_GROUP_ID)), $action);
+                return Action_Factory::invalidate_folders(array($user_input->parent_media_url), $action);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->selected_media_url)
@@ -145,7 +145,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                         break;
                 }
 
-                return Action_Factory::invalidate_folders(array(self::get_media_url_string(SEARCH_MOVIES_GROUP_ID)));
+                return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
         }
 
         return null;
