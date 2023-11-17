@@ -179,6 +179,9 @@
       "playlist_source": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}-m3u8",
       "id_map": "",
       "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8?$",
+      "provider_info_config": {
+        "ignore_groups": ["Video on Demand","Сериалы"]
+      },
       "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
@@ -310,9 +313,9 @@
       "playlist_source": "http://list.playtv.pro/tv_live-m3u8/{LOGIN}-{PASSWORD}",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
-      "provider_info_url": "https://list.playtv.pro/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
+      "provider_info_url": "http://list.playtv.pro/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
       "provider_info_config": {
-        "pay_url": "https://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
+        "pay_url": "http://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
       },
       "vod_enabled": true,
       "vod_config": {
@@ -402,7 +405,7 @@
       "playlist_source": "http://vidok.tv/p/{TOKEN}",
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info_url": "http://sapi.ott.st/v2.4/json/settings?token={TOKEN}"
+      "provider_info_url": "http://sapi.ott.st/v2.4/json/account?token={TOKEN}"
     },
     {
       "id": "viplime",

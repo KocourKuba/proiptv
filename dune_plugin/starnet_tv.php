@@ -637,6 +637,7 @@ class Starnet_Tv implements User_Input_Handler
             } else {
                 hd_debug_print("no provider specific id mapping, use M3U attributes");
             }
+            $ignore_groups = $provider->getProviderInfoConfigValue('ignore_groups');
         }
 
         $this->groups = new Hashed_Array();
@@ -694,6 +695,8 @@ class Starnet_Tv implements User_Input_Handler
         foreach ($pl_entries as $entry) {
             $title = $entry->getGroupTitle();
             if ($this->groups->has($title)) continue;
+
+            if (!empty($ignore_groups) && in_array($title, $ignore_groups)) continue;
 
             // using title as id
             $group_icon = $custom_group_icons->get($title);
@@ -922,9 +925,11 @@ class Starnet_Tv implements User_Input_Handler
 
                 /** @var Group $parent_group */
                 $parent_group = $this->groups->get($group_title);
+                if (is_null($parent_group)) continue;
+
                 $protected = false;
                 $adult_code = $entry->getProtectedCode();
-                if ((!empty($adult_code)) || $parent_group->is_adult_group()) {
+                if (!empty($adult_code) || $parent_group->is_adult_group()) {
                     $protected = $enable_protected;
                 }
 

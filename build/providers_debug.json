@@ -179,6 +179,9 @@
       "playlist_source": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}-m3u8",
       "id_map": "",
       "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8?$",
+      "provider_info_config": {
+        "ignore_groups": ["Video on Demand","Сериалы"]
+      },
       "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
