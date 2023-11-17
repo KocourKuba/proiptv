@@ -55,5 +55,12 @@ function __autoload($className) {
         return;
     }
 
+    $path = __DIR__ . "/info/$className.php";
+    if (file_exists($path)) {
+        hd_print("include $path");
+        include($path);
+        return;
+    }
+
     hd_print("$className.php not found");
 }

@@ -173,7 +173,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                     DEF_LABEL_TEXT_COLOR_SILVER,
                     TR::load_string('scroll_page')
                 );
-                Control_Factory::add_smart_label($defs, null, $text);
+                Control_Factory::add_smart_label($defs, '', $text);
                 Control_Factory::add_vgap($defs, -80);
 
                 Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);

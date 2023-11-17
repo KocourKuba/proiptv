@@ -33,8 +33,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
     const ACTION_EPG_SETTINGS = 'epg_settings';
     const ACTION_CHANNELS_SETTINGS = 'channels_settings';
-    const ACTION_INFO_DLG = 'info_dlg';
-    const ACTION_ADD_MONEY_DLG = 'add_money_dlg';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -272,9 +270,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
 
                     $provider = $this->plugin->get_current_provider();
-                    if (!is_null($provider) && $provider->getProviderInfo()) {
-                        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                        $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+                    if (!is_null($provider)) {
+                        $info_url = $provider->getProviderInfoUrl();
+                        if (!empty($info_url)) {
+                            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+                        }
                     }
 
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
@@ -444,10 +445,21 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     Action_Factory::close_and_run(
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title())));
 
-            case self::ACTION_INFO_DLG:
-                return $this->do_show_subscription();
+            case ACTION_INFO_DLG:
+                $provider = $this->plugin->get_current_provider();
+                if (is_null($provider)) {
+                    return null;
+                }
 
-            case self::ACTION_ADD_MONEY_DLG:
+                $info_class = 'info_' . $provider->getId();
+                if (!class_exists($info_class)) {
+                    return null;
+                }
+
+                $config = new $info_class($this->plugin);
+                return $config->GetInfoUI($this);
+
+            case ACTION_ADD_MONEY_DLG:
                 return $this->do_show_add_money();
 
             case ACTION_REFRESH_SCREEN:
@@ -477,65 +489,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return null;
         }
 
-        $provider->request_provider_info(true);
-
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
-        $pay_url = $provider->getProviderInfoConfigValue('pay_url');
-        if (!empty($pay_url)) {
-            Control_Factory::add_button($defs, $this, null,
-                self::ACTION_ADD_MONEY_DLG, null, TR::t('add_money'), 450, true);
-            Control_Factory::add_label($defs, "--------------------------------------", '', -10);
+        $info_class = 'info_' . $provider->getId();
+        if (!class_exists($info_class)) {
+            return null;
         }
 
-        $data = $provider->getProviderData();
-        if (empty($data)) {
-            hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else {
-            $ignore = $provider->getProviderInfoConfigValue('ignore_items');
-            $text = $this->collect_account_items($data, is_null($ignore) ? $ignore : explode(',', $ignore));
-            Control_Factory::add_multiline_label($defs, null, $text, 12);
-        }
-
-        Control_Factory::add_vgap($defs, 20);
-
-        return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000, null /*$attrs*/);
-    }
-
-    /**
-     * @param array $data
-     * @param array|null $ignored
-     * @param int $deep
-     * @return string
-     */
-    protected function collect_account_items($data, $ignored, $deep = 0)
-    {
-        $text = '';
-        foreach ($data as $key => $value) {
-            if (!is_null($ignored) && in_array($key, $ignored)) continue;
-
-            if (is_array($value)) {
-                hd_debug_print("level: $deep, key: $key data: " . raw_json_encode($value));
-                if ($deep && !is_assoc_array($value)) {
-                    $t = mapped_implode(',', $value, ': ', $ignored);
-                    $text .= "$key: $t\n";
-                } else {
-                    if (is_assoc_array($data)) {
-                        $text .= "-------- $key --------\n";
-                    }
-                    $text .= $this->collect_account_items($value, $ignored, $deep + 1);
-                }
-            } else {
-                if (is_bool($value)) {
-                    $value = var_export($value, true);
-                }
-                $text .= "$key: $value\n";
-            }
-        }
-
-        return $text;
+        $config = new $info_class($provider);
+        return $config->GetInfoUI();
     }
 
     /**

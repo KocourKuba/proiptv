@@ -8,8 +8,7 @@
       "provider_type": "pin",
       "playlist_source": "http://only4.tv/pl/{PASSWORD}/102/only4tv.m3u8",
       "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
-      "provider_info": false
+      "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$"
     },
     {
       "id": "1ott",
@@ -17,12 +16,13 @@
       "logo": "http://iptv.esalecrm.net/res/logo_1ott.png",
       "enable": true,
       "provider_type": "login-stoken",
-      "token_request_url": "http://list.1ott.net/PinApi/{LOGIN}/{PASSWORD}",
-      "token_response": "token",
       "playlist_source": "http://list.1ott.net/api/{TOKEN}/high/ottplay.m3u8",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$",
-      "provider_info": false
+      "provider_info_config": {
+        "token_request_url": "http://list.1ott.net/PinApi/{LOGIN}/{PASSWORD}",
+        "token_response": "token"
+      }
     },
     {
       "id": "1usd",
@@ -36,8 +36,7 @@
       "xmltv_sources": {
         "1": "http://epg.team/tvteam.xml.gz",
         "2": "http://epg.team/tvteam.7.7.xml"
-      },
-      "provider_info": false
+      }
     },
     {
       "id": "101film",
@@ -48,7 +47,6 @@
       "playlist_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u",
       "id_map": "",
       "id_parser": "",
-      "provider_info": false,
       "vod_enabled": true,
       "vod_config": {
         "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
@@ -64,11 +62,8 @@
       "playlist_source": "https://af-play.com/playlist/{PASSWORD}.m3u8",
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info": true,
+      "provider_info_url": "http://protected-api.com/auth/info",
       "provider_info_config": {
-        "url": "http://protected-api.com/auth/info",
-        "root": "data",
-        "ignore_items": "end_time,private_token,public_token",
         "headers": {
           "accept": "*/*",
           "x-public-key": "{PASSWORD}"
@@ -88,8 +83,7 @@
       "provider_type": "pin",
       "playlist_source": "https://bcumedia.pro/playlist/hls/{PASSWORD}.m3u",
       "id_map": "map",
-      "id_parser": "tvg-id",
-      "provider_info": false
+      "id_parser": "tvg-id"
     },
     {
       "id": "cbilling",
@@ -105,11 +99,8 @@
         "2": "2",
         "3": "3"
       },
-      "provider_info": true,
+      "provider_info_url": "http://protected-api.com/auth/info",
       "provider_info_config": {
-        "url": "http://protected-api.com/auth/info",
-        "root": "data",
-        "ignore_items": "end_time,private_token,public_token",
         "headers": {
           "accept": "*/*",
           "x-public-key": "{PASSWORD}"
@@ -130,7 +121,6 @@
       "playlist_source": "http://epg.it999.ru/edem_epg_ico2.m3u8",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
-      "provider_info": false,
       "provider_info_config": {
         "domain": "junior.edmonst.net"
       },
@@ -148,8 +138,7 @@
       "provider_type": "login",
       "playlist_source": "http://lk.filmax-tv.ru/playlist/{PASSWORD}.m3u8",
       "id_map": "map",
-      "id_parser": "tvg-name",
-      "provider_info": false
+      "id_parser": "tvg-name"
     },
     {
       "id": "fox",
@@ -160,7 +149,6 @@
       "playlist_source": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/tv.m3u",
       "id_map": "",
       "id_parser": "",
-      "provider_info": false,
       "vod_enabled": true,
       "vod_config": {
         "vod_source": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/vodall.m3u",
@@ -176,7 +164,6 @@
       "playlist_source": "http://pl.ottg.cc/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output=hls",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+$",
-      "provider_info": false,
       "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
@@ -192,7 +179,6 @@
       "playlist_source": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}-m3u8",
       "id_map": "",
       "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8?$",
-      "provider_info": false,
       "vod_enabled": true,
       "vod_config": {
         "vod_custom": true,
@@ -208,8 +194,7 @@
       "playlist_source": "http://iptv.online/play/{PASSWORD}/m3u8",
       "playlist_catchup": "flussonic",
       "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/play\\/(?<id>.+)\\/.+\\/.*\\.m3u8?$",
-      "provider_info": false
+      "id_parser": "^https?:\\/\\/.+\\/play\\/(?<id>.+)\\/.+\\/.*\\.m3u8?$"
     },
     {
       "id": "itvlive",
@@ -220,11 +205,7 @@
       "playlist_source": "https://itv.ooo/p/{PASSWORD}/hls.m3u8",
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info": true,
-      "provider_info_config": {
-        "url": "http://api.itv.live//data/{PASSWORD}",
-        "root": "user_info"
-      }
+      "provider_info_url": "http://api.itv.live//data/{PASSWORD}"
     },
     {
       "id": "kineskop",
@@ -240,8 +221,7 @@
         "PL": "PL",
         "US": "US",
         "RU": "RU"
-      },
-      "provider_info": false
+      }
     },
     {
       "id": "lightiptv",
@@ -251,8 +231,7 @@
       "provider_type": "pin",
       "playlist_source": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u",
       "id_map": "map",
-      "id_parser": "name",
-      "provider_info": false
+      "id_parser": "name"
     },
     {
       "id": "mymagic",
@@ -275,8 +254,7 @@
       "qualities": {
         "medium": "Medium",
         "high": "High"
-      },
-      "provider_info": false
+      }
     },
     {
       "id": "ottclub",
@@ -286,8 +264,7 @@
       "provider_type": "pin",
       "playlist_source": "http://myott.top/playlist/{PASSWORD}/m3u",
       "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/stream\\/.+\\/(?<id>.+)\\.m3u8?$",
-      "provider_info": false
+      "id_parser": "^https?:\\/\\/.+\\/stream\\/.+\\/(?<id>.+)\\.m3u8?$"
     },
     {
       "id": "ping",
@@ -298,7 +275,6 @@
       "playlist_source": "http://pl.ping-tv.com/{LOGIN}/{PASSWORD}/tv.m3u",
       "id_map": "",
       "id_parser": "",
-      "provider_info": false,
       "vod_enabled": true,
       "vod_config": {
         "vod_source": "http://pl.ping-tv.com/{LOGIN}/{PASSWORD}/vodall.m3u",
@@ -313,8 +289,7 @@
       "provider_type": "pin",
       "playlist_source": "http://russkoetv.tv/play/{PASSWORD}.m3u8",
       "id_map": "map",
-      "id_parser": "tvg-id",
-      "provider_info": false
+      "id_parser": "tvg-id"
     },
     {
       "id": "sharatv",
@@ -324,8 +299,7 @@
       "provider_type": "login",
       "playlist_source": "http://tvfor.pro/g/{LOGIN}:{PASSWORD}/1/playlist.m3u",
       "id_map": "map",
-      "id_parser": "tvg-id",
-      "provider_info": false
+      "id_parser": "tvg-id"
     },
     {
       "id": "sharaclub",
@@ -336,11 +310,9 @@
       "playlist_source": "http://list.playtv.pro/tv_live-m3u8/{LOGIN}-{PASSWORD}",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
-      "provider_info": true,
+      "provider_info_url": "http://list.playtv.pro/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
       "provider_info_config": {
-        "url": "https://list.playtv.pro/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "root": "data",
-        "pay_url": "https://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
+        "pay_url": "http://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
       },
       "vod_enabled": true,
       "vod_config": {
@@ -356,8 +328,7 @@
       "provider_type": "pin",
       "playlist_source": "http://www.sharavoz.tv/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
       "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
-      "provider_info": false
+      "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$"
     },
     {
       "id": "shuratv",
@@ -371,8 +342,7 @@
       "servers": {
         "0": "Server 1",
         "1": "Server 2"
-      },
-      "provider_info": false
+      }
     },
     {
       "id": "smile",
@@ -390,7 +360,6 @@
         "3": "Server NL",
         "4": "Server RU"
       },
-      "provider_info": false,
       "vod_enabled": true,
       "vod_config": {
         "vod_source": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
@@ -406,12 +375,7 @@
       "playlist_source": "http://celn.shott.top/p/{TOKEN}",
       "id_map": "parse",
       "id_parser": "^https?:\\/\\/(?:.+)\\/iptv\\/(?:.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
-      "provider_info": true,
-      "provider_info_config": {
-        "url": "http://api.iptv.so/0.9/json/account?token={TOKEN}",
-        "root": "account",
-        "ignore_items": "id,expire,services"
-      }
+      "provider_info_url": "http://api.iptv.so/0.9/json/account?token={TOKEN}"
     },
     {
       "id": "tvteam",
@@ -427,8 +391,7 @@
         "2": "http://epg.team/tvteam.3.3.xml.tar.gz",
         "3": "http://epg.team/tvteam.5.5.xml.tar.gz",
         "4": "http://epg.team/tvteam.7.7.xml.tar.gz"
-      },
-      "provider_info": false
+      }
     },
     {
       "id": "vidok",
@@ -439,11 +402,7 @@
       "playlist_source": "http://vidok.tv/p/{TOKEN}",
       "id_map": "map",
       "id_parser": "tvg-id",
-      "provider_info": true,
-      "provider_info_config": {
-        "url": "http://sapi.ott.st/v2.4/json/settings?token={TOKEN}",
-        "root": "account"
-      }
+      "provider_info_url": "http://sapi.ott.st/v2.4/json/account?token={TOKEN}"
     },
     {
       "id": "viplime",
@@ -460,8 +419,7 @@
         "low": "Medium",
         "variant": "Adaptive",
         "hls": "Optimal"
-      },
-      "provider_info": false
+      }
     },
     {
       "id": "yosso",
@@ -483,8 +441,7 @@
         "kz/": "KZ (Kazakhstan, Almaty/Russia, Samara)",
         "gn/": "GN (Ukraine, Kiev)",
         "RHLS/": "RHLS (GlobalCache CDN)"
-      },
-      "provider_info": false
+      }
     }
   ]
 }

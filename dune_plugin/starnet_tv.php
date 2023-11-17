@@ -264,13 +264,14 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function disable_group_channels($pattern, $group_id, $regex = true)
     {
-        hd_debug_print("Hide channels type: $pattern");
+        hd_debug_print("Hide channels type: $pattern in group: $group_id");
 
         $group = $this->get_any_group($group_id);
         if (is_null($group)) {
             return;
         }
 
+        $i = 0;
         foreach ($group->get_group_enabled_channels() as $channel) {
             if ($regex) {
                 $disable = preg_match("#$pattern#", $channel->get_title());
@@ -280,8 +281,10 @@ class Starnet_Tv implements User_Input_Handler
 
             if ($disable) {
                 $channel->set_disabled(true);
+                $i++;
             }
         }
+        hd_debug_print("Total hide channels: $i");
     }
 
     ///////////////////////////////////////////////////////////////////////

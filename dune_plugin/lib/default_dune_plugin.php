@@ -43,7 +43,7 @@ class Default_Dune_Plugin implements DunePlugin
     const SANDWICH_MASK = 'cut_icon://{name=sandwich_mask}';
     const SANDWICH_COVER = 'cut_icon://{name=sandwich_cover}';
     const RESOURCE_URL = 'http://iptv.esalecrm.net/res/';
-    const CONFIG_URL = 'http://iptv.esalecrm.net/update/';
+    const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
     const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
     const ARCHIVE_ID = 'common';
 
@@ -1223,22 +1223,31 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($this->providers->size() === 0) {
             // 1. Check local debug version
-            // 2. Try to download from web
-            // 3. Check previously downloaded web version
+            // 2. Try to download from web release version
+            // 3. Check previously downloaded web release version
             // 4. Check preinstalled version
             // 5. Houston we have a problem
-            if (file_exists($tmp_file = get_install_path("providers_debug.json"))) {
+            $tmp_file = get_install_path("providers_debug.json");
+            if (file_exists($tmp_file)) {
                 $jsonArray = HD::ReadContentFromFile($tmp_file);
             } else {
                 $tmp_file = get_data_path("providers.json");
-                $jsonArray = HD::DownloadJson(self::CONFIG_URL . "providers.json");
+                $serial = get_serial_number();
+                if (empty($serial)) {
+                    hd_debug_print("Unable to get DUNE serial.");
+                    $serial = 'XXXX';
+                }
+                $ver = $this->plugin_info['app_version'];
+                $model = get_product_id();
+
+                $jsonArray = HD::DownloadJson(self::CONFIG_URL . "?ver=$ver&model=$model&serial=$serial");
                 if ($jsonArray === false || !isset($jsonArray['providers'])) {
                     if (file_exists($tmp_file)) {
                         $jsonArray = HD::ReadContentFromFile($tmp_file);
                     } else if (file_exists($tmp_file = get_install_path("providers.json"))) {
                         $jsonArray = HD::ReadContentFromFile($tmp_file);
                     } else {
-                        hd_debug_print("Problem to download providers configuration");
+                        hd_debug_print("Problem to get providers configuration");
                         return;
                     }
                 } else {
@@ -1262,7 +1271,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if (method_exists($config, $setter)) {
                         $config->{$setter}($value);
                     } else {
-                        hd_debug_print("Unknown method $setter");
+                        hd_debug_print("Unknown method $setter", true);
                     }
                 }
 
@@ -1571,7 +1580,7 @@ class Default_Dune_Plugin implements DunePlugin
                         if (is_null($provider)) {
                             throw new Exception("Unable to init provider $item");
                         }
-                        $provider->request_provider_info();
+                        $provider->request_provider_token();
                         $playlist_url = $provider->replace_macros($provider->getPlaylistSource());
 
                     } else {

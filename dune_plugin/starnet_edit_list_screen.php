@@ -251,7 +251,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->set_changes($parent_media_url->save_data);
 
                 return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
-                    $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+                    $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
 
             case ACTION_ITEMS_SORT:
                 $this->get_edit_order($edit_list)->sort_order();
@@ -365,7 +365,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->do_select_folder($user_input);
         }
 
-        return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
     }
 
     /**
@@ -711,7 +711,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         return Action_Factory::change_behaviour($this->get_action_map($parent_media_url,$plugin_cookies), 0,
-            $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+            $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
     }
 
     /**
@@ -886,7 +886,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $this->set_changes($parent_media_url->save_data);
         }
 
-        return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
     }
 
     /**
@@ -1067,6 +1067,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $provider = $this->plugin->get_provider($user_input->{PARAM_PROVIDER});
         if (is_null($provider)) return null;
 
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $item = new Named_Storage();
         $item->type = PARAM_PROVIDER;
         $item->name = $user_input->{self::CONTROL_EDIT_NAME};
@@ -1100,7 +1101,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             default:
-                return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
         }
 
         if (isset($user_input->{self::CONTROL_SERVER})) {
@@ -1130,7 +1131,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         return Action_Factory::change_behaviour($this->get_action_map($parent_media_url,$plugin_cookies), 0,
-            $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+            $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
     }
 
     protected function force_save($user_input)

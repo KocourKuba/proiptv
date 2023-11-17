@@ -109,17 +109,7 @@ class Provider_Config
     /**
      * @var string
      */
-    protected $token_request_url = '';
-
-    /**
-     * @var string
-     */
-    protected $token_response = '';
-
-    /**
-     * @var string
-     */
-    protected $provider_info = '';
+    protected $provider_info_url = '';
 
     /**
      * @var array
@@ -160,11 +150,6 @@ class Provider_Config
      * @var array
      */
     protected $credentials = array();
-
-    /**
-     * @var array
-     */
-    protected $provider_data = array();
 
     ////////////////////////////////////////////////////////////////////////
     /// non configurable vars
@@ -323,49 +308,17 @@ class Provider_Config
     /**
      * @return string
      */
-    public function getTokenRequestUrl()
+    public function getProviderInfoUrl()
     {
-        return $this->token_request_url;
-    }
-
-    /**
-     * @param string $token_request_url
-     */
-    public function setTokenRequestUrl($token_request_url)
-    {
-        $this->token_request_url = $token_request_url;
-    }
-
-    /**
-     * @return string
-     */
-    public function getTokenResponse()
-    {
-        return $this->token_response;
-    }
-
-    /**
-     * @param string $token_response
-     */
-    public function setTokenResponse($token_response)
-    {
-        $this->token_response = $token_response;
-    }
-
-    /**
-     * @return string
-     */
-    public function getProviderInfo()
-    {
-        return $this->provider_info;
+        return $this->provider_info_url;
     }
 
     /**
      * @param string $provider_info
      */
-    public function setProviderInfo($provider_info)
+    public function setProviderInfoUrl($provider_info)
     {
-        $this->provider_info = $provider_info;
+        $this->provider_info_url = $provider_info;
     }
 
     /**
@@ -517,22 +470,6 @@ class Provider_Config
         $this->credentials[$name] = $value;
     }
 
-    /**
-     * @return void
-     */
-    public function clearCredentials()
-    {
-        $this->credentials = array();
-    }
-
-    /**
-     * @return array
-     */
-    public function getProviderData()
-    {
-        return $this->provider_data;
-    }
-
     ////////////////////////////////////////////////////////////////////////
     /// Methods
 
@@ -540,51 +477,49 @@ class Provider_Config
      * @param bool $force
      * @return void
      */
-    public function request_provider_info($force = false)
+    public function request_provider_token($force = false)
     {
-        $token_url = $this->getTokenRequestUrl();
-        if (!empty($token_url)) {
-            $token = $this->getCredential(MACRO_TOKEN);
-            if (empty($token) || $force) {
-                $response = HD::DownloadJson($this->replace_macros($token_url));
-                $token_name = $this->getTokenResponse();
-                if ($response !== false && isset($response[$token_name])) {
-                    $this->setCredential(MACRO_TOKEN, $response[$token_name]);
-                }
-            }
+        $token = $this->getCredential(MACRO_TOKEN);
+        if (!empty($token) && !$force) {
+            return;
         }
 
-        if ($this->getProviderInfo()) {
-            $curl_headers = null;
-            $headers = $this->getProviderInfoConfigValue('headers');
-            if (!empty($headers)) {
-                $curl_headers = array();
-                foreach ($headers as $key => $header) {
-                    $curl_headers[CURLOPT_HTTPHEADER][] = "$key: " . $this->replace_macros($header);
-                }
-                hd_debug_print("headers: " . raw_json_encode($curl_headers), true);
-            }
-
-            $json = HD::DownloadJson($this->replace_macros($this->getProviderInfoConfigValue('url')), true, $curl_headers);
-
-            $root = $this->getProviderInfoConfigValue('root');
-            if ($json === false || (!is_null($root) && !isset($json[$root]))) {
-                hd_debug_print("Can't get account status");
-            } else {
-                hd_debug_print("account: " . raw_json_encode($json), true);
-                if (!is_null($root) && isset($json[$root])) {
-                    foreach (explode(',', $root) as $key) {
-                        $json = $json[$key];
-                    }
-                    hd_debug_print("root: " . raw_json_encode($json), true);
-                }
-
-                foreach ($json as $key => $value) {
-                    $this->provider_data[$key] = $value;
-                }
-                hd_debug_print("info: " . raw_json_encode($this->provider_data), true);
-            }
+        $token_url = $this->getProviderInfoConfigValue('token_request_url');
+        if (empty($token_url)) {
+            return;
         }
+
+        $response = HD::DownloadJson($this->replace_macros($token_url));
+        $token_name = $this->getProviderInfoConfigValue('token_response');
+        if (!empty($token_name) && $response !== false && isset($response[$token_name])) {
+            $this->setCredential(MACRO_TOKEN, $response[$token_name]);
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function request_provider_info()
+    {
+        $url = $this->getProviderInfoUrl();
+        if (empty($url)) {
+            return array();
+        }
+
+        $curl_headers = null;
+        $headers = $this->getProviderInfoConfigValue('headers');
+        if (!empty($headers)) {
+            $curl_headers = array();
+            foreach ($headers as $key => $header) {
+                $curl_headers[CURLOPT_HTTPHEADER][] = "$key: " . $this->replace_macros($header);
+            }
+            hd_debug_print("headers: " . raw_json_encode($curl_headers), true);
+        }
+
+        $provider_data = HD::DownloadJson($this->replace_macros($url), true, $curl_headers);
+        hd_debug_print("info: " . raw_json_encode($provider_data), true);
+
+        return $provider_data;
     }
 
     /**

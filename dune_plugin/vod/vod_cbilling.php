@@ -20,25 +20,23 @@ class vod_cbilling extends vod_standard
     {
         parent::init_vod($provider);
 
-        $provider->request_provider_info(true);
-
-        $provider_data = $provider->getProviderData();
-        if (is_null($provider_data)) {
+        $data = $provider->request_provider_info();
+        if (empty($data)) {
             $show = false;
         } else {
-            $show = isset($provider_data['vod']) && $provider_data['vod'] !== false;
+            $show = isset($data['vod']) && $data['vod'] !== false;
         }
 
         if (!$show) {
             return false;
         }
 
-        if (isset($provider_data['private_token'])) {
-            $this->token = $provider_data['private_token'];
+        if (isset($data['private_token'])) {
+            $this->token = $data['private_token'];
         }
 
-        $scheme = (isset($provider_data['ssl']) && $provider_data['ssl']) ? "https://" : "http://";
-        $this->server = $scheme . (isset($provider_data['server']) ? $provider_data['server'] : $this->vod_source);
+        $scheme = (isset($data['ssl']) && $data['ssl']) ? "https://" : "http://";
+        $this->server = $scheme . (isset($data['server']) ? $data['server'] : $this->vod_source);
         return true;
     }
 
