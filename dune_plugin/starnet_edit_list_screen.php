@@ -554,7 +554,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 "link.png");
 
             // Add File
-            $add_param['action'] = $edit_list === self::SCREEN_EDIT_PLAYLIST ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV;
+            $add_param['action'] = ($edit_list === self::SCREEN_EDIT_PLAYLIST) ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV;
             $menu_items[] = $this->plugin->create_menu_item($this,
                 self::ACTION_CHOOSE_FILE, TR::t('select_file'),
                 $edit_list === self::SCREEN_EDIT_PLAYLIST ? "m3u_file.png" : "xmltv_file.png",

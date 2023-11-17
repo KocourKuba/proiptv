@@ -41,7 +41,8 @@ class Starnet_Vod_Seasons_List_Screen extends Abstract_Preloaded_Regular_Screen 
     {
         return array(
             GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
-            GUI_EVENT_KEY_PLAY => Action_Factory::open_folder(),
+            GUI_EVENT_KEY_PLAY  => Action_Factory::open_folder(),
+            GUI_EVENT_KEY_STOP  => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 

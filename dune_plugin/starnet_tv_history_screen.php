@@ -56,6 +56,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
 
         if ($this->plugin->get_playback_points()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
@@ -92,6 +93,11 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 }
 
                 return Action_Factory::close_and_run();
+
+            case GUI_EVENT_KEY_STOP:
+                $this->plugin->save_orders(true);
+                $this->set_no_changes();
+                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case ACTION_PLAY_ITEM:
                 try {

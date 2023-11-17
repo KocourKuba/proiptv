@@ -30,6 +30,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history')),
             GUI_EVENT_KEY_D_BLUE   => User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite')),
             GUI_EVENT_KEY_RETURN   => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_STOP     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -65,6 +66,11 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 }
 
                 return Action_Factory::close_and_run();
+
+            case GUI_EVENT_KEY_STOP:
+                $this->plugin->save_orders(true);
+                $this->set_no_changes();
+                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
 			case ACTION_ITEM_DELETE:
                 $this->plugin->get_history(HISTORY_MOVIES)->erase($movie_id);

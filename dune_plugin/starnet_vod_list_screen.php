@@ -32,6 +32,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
             GUI_EVENT_KEY_SEARCH     => $add_action,
             GUI_EVENT_KEY_C_YELLOW   => $add_action,
             GUI_EVENT_KEY_D_BLUE     => User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite')),
+            GUI_EVENT_KEY_STOP       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 

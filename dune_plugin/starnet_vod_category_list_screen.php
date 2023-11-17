@@ -34,8 +34,9 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         return array(
-            GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
-            GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, TR::t('vod_screen_reload_playlist'))
+            GUI_EVENT_KEY_ENTER    => Action_Factory::open_folder(),
+            GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, TR::t('vod_screen_reload_playlist')),
+            GUI_EVENT_KEY_STOP     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 

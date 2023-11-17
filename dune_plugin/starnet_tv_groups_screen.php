@@ -60,7 +60,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU]   = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_STOP]       = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
-        $actions[GUI_EVENT_KEY_POWER]      = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POWER);
 
         $order = $this->plugin->tv->get_groups_order();
         if (!is_null($order) && $order->size() !== 0) {

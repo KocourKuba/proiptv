@@ -54,11 +54,12 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
         $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
 
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_RETURN]   = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
+        $actions[GUI_EVENT_KEY_STOP]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
 
         $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear'));
-        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $actions[GUI_EVENT_KEY_D_BLUE]  = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
 
         return $actions;
     }
@@ -84,6 +85,11 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 }
 
                 return Action_Factory::close_and_run();
+
+            case GUI_EVENT_KEY_STOP:
+                $this->plugin->save_orders(true);
+                $this->set_no_changes();
+                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case ACTION_PLAY_ITEM:
                 try {

@@ -40,11 +40,9 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
-
         $actions = array(
             GUI_EVENT_KEY_ENTER   => $action_play,
             GUI_EVENT_KEY_PLAY    => $action_play,
-            GUI_EVENT_KEY_B_GREEN => User_Input_Handler_Registry::create_action($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed')),
         );
 
         if ($this->plugin->vod->getVodQuality()) {
@@ -57,7 +55,9 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
         }
 
+        $actions[GUI_EVENT_KEY_B_GREEN]    = User_Input_Handler_Registry::create_action($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_KEY_STOP]       = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
 
         return $actions;
     }

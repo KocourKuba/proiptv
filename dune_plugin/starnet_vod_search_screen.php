@@ -39,6 +39,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
             GUI_EVENT_KEY_D_BLUE   => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
             GUI_EVENT_KEY_RETURN   => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
             GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
+            GUI_EVENT_KEY_STOP       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 

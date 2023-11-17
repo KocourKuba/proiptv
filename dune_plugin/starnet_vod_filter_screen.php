@@ -29,7 +29,8 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down')),
             GUI_EVENT_KEY_D_BLUE   => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
             GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
-            GUI_EVENT_KEY_RETURN   => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_RETURN     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_STOP       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -49,6 +50,11 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 }
 
                 return Action_Factory::close_and_run();
+
+            case GUI_EVENT_KEY_STOP:
+                $this->plugin->save_orders(true);
+                $this->set_no_changes();
+                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->selected_media_url)
