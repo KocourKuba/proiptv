@@ -346,7 +346,7 @@ class smb_tree
 
                 if ($wr === false) {
                     $fn = '/tmp/mnt/smb/' . $n;
-                    if (!file_exists($fn) && !mkdir($fn, 0777, true) && !is_dir($fn)) {
+                    if (!create_path($fn)) {
                         hd_debug_print("Directory '$fn' was not created");
                     }
                     $exec_string = "mount -t cifs -o username=$username,password=$password,posixpaths,rsize=32768,wsize=130048 \"$k\" \"$fn\" 2>&1 &";
@@ -461,7 +461,7 @@ class smb_tree
 
                 if ($wr === false) {
                     $fn = '/tmp/mnt/network/' . $n;
-                    if (!file_exists($fn) && !mkdir($fn, 0777, true) && !is_dir($fn)) {
+                    if (!create_path($fn)) {
                         hd_debug_print("Directory '$fn' was not created");
                     }
                     $q = shell_exec("mount -t nfs -o " . $vel['protocol'] . " $k $fn 2>&1");

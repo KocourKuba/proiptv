@@ -1627,7 +1627,7 @@ function get_filename($path)
 # creating directories along the way
 function create_path($path, $dir_mode = 0777)
 {
-    if (!file_exists($path) && !mkdir($path, $dir_mode, true) && !is_dir($path)) {
+    if (!file_exists($path) && !@mkdir($path, $dir_mode, true) && !is_dir($path)) {
         hd_debug_print("Directory '$path' was not created");
         return false;
     }

@@ -143,7 +143,7 @@ class Epg_Manager
     {
         $lock_dir = $this->get_cache_stem('.lock');
         if ($lock) {
-            if (!mkdir($lock_dir, 0644) && !is_dir($lock_dir)) {
+            if (!create_path($lock_dir, 0644)) {
                 hd_debug_print("Directory '$lock_dir' was not created");
             }
         } else if (is_dir($lock_dir)){
