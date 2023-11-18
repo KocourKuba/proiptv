@@ -16,7 +16,8 @@ class vod_sharaclub extends vod_standard
         if (empty($data)) {
             $show = false;
         } else {
-            $show = isset($data['vod']) && $data['vod'] !== false;
+            $show = isset($data['data']['vod']) && $data['data']['vod'] !== false;
+            hd_debug_print("vod:" . var_export($data['data']['vod'], true));
         }
 
         return $show;

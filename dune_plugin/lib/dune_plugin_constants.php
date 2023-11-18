@@ -126,6 +126,7 @@ const PARAM_CHANNEL_PLAYER = 'channel_player';
 const PARAM_KNOWN_CHANNELS = 'known_channels';
 const PARAM_USER_CATCHUP = 'user_catchup';
 const PARAM_USE_PICONS = 'use_picons';
+const PARAM_ID_MAPPER = 'id_mapper';
 const PARAM_TV_HISTORY_ITEMS = '_tv_history_items';
 const PARAM_USER_AGENT = 'user_agent';
 const PARAM_BUFFERING_TIME = 'buffering_time';

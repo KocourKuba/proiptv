@@ -606,7 +606,13 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->vod = null;
         $provider = $this->plugin->get_current_provider();
-        if (!is_null($provider)) {
+        if (is_null($provider)) {
+            $mapper = $this->plugin->get_setting(PARAM_ID_MAPPER, 'by_default');
+            if ($mapper !== 'default') {
+                $id_map = $mapper;
+                hd_debug_print("Use custom ID detection: $id_map");
+            }
+        } else {
             $playlist_catchup = $provider->getProviderConfigValue(CONFIG_PLAYLIST_CATCHUP);
             if (!empty($playlist_catchup)) {
                 $catchup['global'] = $playlist_catchup;

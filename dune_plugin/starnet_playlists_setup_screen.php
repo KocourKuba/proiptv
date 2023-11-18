@@ -75,11 +75,27 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // picon settings
 
-        $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
-        $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
+        $picons_ops = array(
+            PLAYLIST_PICONS => TR::t('playlist_picons'),
+            XMLTV_PICONS => TR::t('xmltv_picons')
+        );
         $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
             TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, self::CONTROLS_WIDTH, true);
+
+        //////////////////////////////////////
+        // ID detection settings
+        $provider = $this->plugin->get_current_provider();
+        if (is_null($provider)) {
+            $mapper_ops = array(
+                'by_default' => TR::t('by_default'),
+                'tvg-id' => TR::t('attribute_name__1', 'tvg-id'),
+                'tvg-name' => TR::t('attribute_name__1', 'tvg-name'),
+                'name' => TR::t('channel_name'));
+            $mapper_idx = $this->plugin->get_setting(PARAM_ID_MAPPER, 'by_default');
+            Control_Factory::add_combobox($defs, $this, null, PARAM_ID_MAPPER,
+                TR::t('setup_channels_id_mapper'), $mapper_idx, $mapper_ops, self::CONTROLS_WIDTH, true);
+        }
 
         //////////////////////////////////////
         // catchup settings
@@ -202,6 +218,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_USER_CATCHUP:
             case PARAM_USE_PICONS:
+            case PARAM_ID_MAPPER:
                 $this->plugin->set_setting($control_id, $new_value);
                 $this->plugin->tv->reload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
