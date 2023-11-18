@@ -1571,9 +1571,10 @@ class Default_Dune_Plugin implements DunePlugin
                     throw new Exception("Tv playlist not defined");
                 }
 
-                hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $item->name): $item->type");
+                hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $item->name)");
                 if ($item->type === PARAM_FILE) {
                     $contents = file_get_contents($item->params['uri']);
+                    hd_debug_print("m3u load local file {$item->params['uri']}", true);
                 } else {
                     if ($item->type === PARAM_LINK) {
                         if (!preg_match(HTTP_PATTERN, $item->params['uri'])) {
@@ -1587,11 +1588,11 @@ class Default_Dune_Plugin implements DunePlugin
                         }
                         $provider->request_provider_token();
                         $playlist_url = $provider->replace_macros($provider->getPlaylistSource());
-
                     } else {
                         throw new Exception("Unknown playlist type");
                     }
 
+                    hd_debug_print("m3u download url $playlist_url", true);
                     $contents = HD::http_download_https_proxy($playlist_url);
                 }
 
@@ -1891,8 +1892,10 @@ class Default_Dune_Plugin implements DunePlugin
     {
         /** @var Named_Storage $xmltv_source */
         $xmltv_source = $this->get_all_xmltv_sources()->get($key);
-        $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
-        $this->set_active_xmltv_source($xmltv_source->params['uri']);
+        if ($xmltv_source) {
+            $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
+            $this->set_active_xmltv_source($xmltv_source->params['uri']);
+        }
     }
 
     /**
