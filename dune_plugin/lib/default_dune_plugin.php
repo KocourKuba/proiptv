@@ -1229,6 +1229,7 @@ class Default_Dune_Plugin implements DunePlugin
             // 5. Houston we have a problem
             $tmp_file = get_install_path("providers_debug.json");
             if (file_exists($tmp_file)) {
+                hd_debug_print("Load debug providers configuration.");
                 $jsonArray = HD::ReadContentFromFile($tmp_file);
             } else {
                 $tmp_file = get_data_path("providers.json");
@@ -1243,16 +1244,20 @@ class Default_Dune_Plugin implements DunePlugin
                 $jsonArray = HD::DownloadJson(self::CONFIG_URL . "?ver=$ver&model=$model&serial=$serial");
                 if ($jsonArray === false || !isset($jsonArray['providers'])) {
                     if (file_exists($tmp_file)) {
+                        hd_debug_print("Load actual providers configuration");
                         $jsonArray = HD::ReadContentFromFile($tmp_file);
                     } else if (file_exists($tmp_file = get_install_path("providers.json"))) {
+                        hd_debug_print("Load installed providers configuration");
                         $jsonArray = HD::ReadContentFromFile($tmp_file);
-                    } else {
-                        hd_debug_print("Problem to get providers configuration");
-                        return;
                     }
                 } else {
                     HD::StoreContentToFile($tmp_file, $jsonArray);
                 }
+            }
+
+            if ($jsonArray === false || !isset($jsonArray['providers'])) {
+                hd_debug_print("Problem to get providers configuration");
+                return;
             }
 
             foreach ($jsonArray['providers'] as $item) {
@@ -1459,9 +1464,9 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        hd_debug_print("parse provider_info ({$provider->getProviderType()}): $info", true);
+        hd_debug_print("parse provider_info ({$provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)}): $info", true);
 
-        switch ($provider->getProviderType()) {
+        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
             case PROVIDER_TYPE_PIN:
                 $provider->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
                 break;
@@ -1637,11 +1642,11 @@ class Default_Dune_Plugin implements DunePlugin
     public function init_vod_playlist()
     {
         $provider = $this->get_current_provider();
-        if (is_null($provider) || !$provider->getVodEnabled()) {
+        if (is_null($provider)) {
             return false;
         }
 
-        $vod_url = $provider->getVodConfigValue('vod_source');
+        $vod_url = $provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
         if (empty($vod_url)) {
             return false;
         }
@@ -1843,7 +1848,7 @@ class Default_Dune_Plugin implements DunePlugin
         if ($xmltv_sources->size() === 0) {
             $provider = $this->get_current_provider();
             if (!is_null($provider)) {
-                $sources = $provider->getXmltvSources();
+                $sources = $provider->getProviderConfigValue(CONFIG_XMLTV_SOURCES);
                 if (!empty($sources)) {
                     foreach ($sources as $source) {
                         if (!preg_match(HTTP_PATTERN, $source, $m)) continue;

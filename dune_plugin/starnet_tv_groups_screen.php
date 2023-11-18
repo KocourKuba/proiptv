@@ -270,7 +270,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $provider = $this->plugin->get_current_provider();
                     if (!is_null($provider)) {
-                        $info_url = $provider->getProviderInfoUrl();
+                        $info_url = $provider->getProviderConfigValue(CONFIG_PROVIDER_INFO_URL);
                         if (!empty($info_url)) {
                             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
@@ -513,7 +513,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 unlink($img);
             }
 
-            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getProviderInfoConfigValue('pay_url')));
+            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getProviderConfigValue(CONFIG_PAY_URL)));
             file_put_contents($img, $content);
             Control_Factory::add_vgap($defs, 20);
 

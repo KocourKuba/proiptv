@@ -207,3 +207,22 @@ if (!defined('JSON_PRETTY_PRINT'))
     define('JSON_PRETTY_PRINT', 128);
 if (!defined('JSON_UNESCAPED_UNICODE'))
     define('JSON_UNESCAPED_UNICODE', 256);
+
+const CONFIG_PROVIDER_TYPE = 'provider_type';
+const CONFIG_ID_PARSER = 'id_parser';
+const CONFIG_ID_MAP = 'id_map';
+const CONFIG_IGNORE_GROUPS = 'ignore_groups';
+const CONFIG_PLAYLIST_CATCHUP = 'playlist_catchup';
+const CONFIG_TOKEN_REQUEST_URL = 'token_request_url';
+const CONFIG_TOKEN_RESPONSE = 'token_response';
+const CONFIG_HEADERS = 'headers';
+const CONFIG_XMLTV_SOURCES = 'xmltv_sources';
+const CONFIG_PROVIDER_INFO_URL = 'provider_info_url';
+const CONFIG_PAY_URL = 'pay_url';
+const CONFIG_DOMAIN = 'domain';
+const CONFIG_SERVERS = 'servers';
+const CONFIG_DEVICES = 'devices';
+const CONFIG_QUALITIES = 'qualities';
+const CONFIG_VOD_CUSTOM = 'vod_custom';
+const CONFIG_VOD_SOURCE = 'vod_source';
+const CONFIG_VOD_PARSER = 'vod_parser';

@@ -30,7 +30,7 @@ class info_sharaclub extends info_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        $pay_url = $provider->getProviderInfoConfigValue('pay_url');
+        $pay_url = $provider->getProviderConfigValue(CONFIG_PAY_URL);
         if (!empty($pay_url)) {
             Control_Factory::add_button($defs, $handler, null,
                 ACTION_ADD_MONEY_DLG, "", TR::t('add_money'), 450, true);
@@ -84,7 +84,7 @@ class info_sharaclub extends info_default
                 unlink($img);
             }
 
-            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getProviderInfoConfigValue('pay_url')));
+            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getProviderConfigValue(CONFIG_PAY_URL)));
             file_put_contents($img, $content);
             Control_Factory::add_vgap($defs, 20);
 

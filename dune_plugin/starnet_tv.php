@@ -600,14 +600,37 @@ class Starnet_Tv implements User_Input_Handler
             return 0;
         }
 
-        $id_map = false;
-        $id_parser = '';
+        $catchup['global'] = $this->m3u_parser->getM3uInfo()->getCatchup();
+        $global_catchup_source = $this->m3u_parser->getM3uInfo()->getCatchupSource();
+        $icon_url_base = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
+
         $this->plugin->vod = null;
         $provider = $this->plugin->get_current_provider();
         if (!is_null($provider)) {
-            if ($provider->getVodEnabled()) {
-                hd_debug_print("VOD support: " . var_export($provider->getVodEnabled(), true));
-                $vod_class = "vod_" . ($provider->getVodConfigValue('vod_custom') ? $provider->getId() : "standard");
+            $playlist_catchup = $provider->getProviderConfigValue(CONFIG_PLAYLIST_CATCHUP);
+            if (!empty($playlist_catchup)) {
+                $catchup['global'] = $playlist_catchup;
+                hd_debug_print("set provider catchup: $playlist_catchup");
+            }
+
+            $id_parser = $provider->getProviderConfigValue(CONFIG_ID_PARSER);
+            if (!empty($id_parser)) {
+                $id_parser = "/$id_parser/";
+                hd_debug_print("using provider ({$provider->getId()}) specific id parsing: $id_parser");
+            }
+
+            $id_map = $provider->getProviderConfigValue(CONFIG_ID_MAP);
+            if (!empty($id_map)) {
+                hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_map");
+            }
+
+            if (empty($id_map) && empty($id_parser)) {
+                hd_debug_print("no provider specific id mapping, use M3U attributes");
+            }
+
+            $vod_source = $provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
+            if (!empty($vod_source)) {
+                $vod_class = "vod_" . ($provider->getProviderConfigValue(CONFIG_VOD_CUSTOM) ? $provider->getId() : "standard");
                 hd_debug_print("Used VOD class: $vod_class");
                 $enable = false;
                 if (class_exists($vod_class)) {
@@ -621,33 +644,13 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("VOD show: " . var_export($enable, true));
             }
 
-            if ($provider->getIdParser() !== '') {
-                if ($provider->getPlaylistCatchup() !== '') {
-                    $catchup['global'] = $provider->getPlaylistCatchup();
-                    hd_debug_print("set provider catchup: {$catchup['global']}");
-                }
-
-                if ($provider->getIdMap() === 'map') {
-                    $id_map = true;
-                    $id_parser = $provider->getIdParser();
-                } else if ($provider->getIdMap() === 'parse') {
-                    $id_parser = "/{$provider->getIdParser()}/";
-                }
-                hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_parser");
-            } else {
-                hd_debug_print("no provider specific id mapping, use M3U attributes");
-            }
-            $ignore_groups = $provider->getProviderInfoConfigValue('ignore_groups');
+            $ignore_groups = $provider->getProviderConfigValue(CONFIG_IGNORE_GROUPS);
         }
 
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
 
         $this->plugin->get_playback_points()->load_points(true);
-
-        $catchup['global'] = $this->m3u_parser->getM3uInfo()->getCatchup();
-        $global_catchup_source = $this->m3u_parser->getM3uInfo()->getCatchupSource();
-        $icon_url_base = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
 
         // User catchup settings has higher priority than playlist or provider settings
         $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
@@ -756,20 +759,16 @@ class Starnet_Tv implements User_Input_Handler
         $number = 0;
         foreach ($pl_entries as $entry) {
             $channel_id = $entry->getEntryId();
-            if (empty($channel_id) && !is_null($provider)) {
-                if ($id_map) {
-                    if ($id_parser === 'name') {
-                        $channel_id = $entry->getEntryTitle();
-                    } else {
-                        $channel_id = $entry->getEntryAttribute($id_parser);
-                    }
+            if (empty($channel_id)) {
+                if (!empty($id_map)) {
+                    $channel_id = ($id_map === 'name') ? $entry->getEntryTitle() : $entry->getEntryAttribute($id_map);
                 } else if (!empty($id_parser) && preg_match($id_parser, $entry->getPath(), $m)) {
                     $channel_id = $m['id'];
                 }
-            }
 
-            if (empty($channel_id)) {
-                $channel_id = Hashed_Array::hash($entry->getPath());
+                if (empty($channel_id)) {
+                    $channel_id = Hashed_Array::hash($entry->getPath());
+                }
             }
 
             // if group is not registered it was disabled
@@ -1059,7 +1058,7 @@ class Starnet_Tv implements User_Input_Handler
         $replaces = array();
 
         $provider = $this->plugin->get_current_provider();
-        if (!is_null($provider) && $provider->getProviderType() === PROVIDER_TYPE_EDEM) {
+        if (!is_null($provider) && $provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE) === PROVIDER_TYPE_EDEM) {
             $replaces['localhost'] = $provider->getCredential(MACRO_SUBDOMAIN);
             $replaces['00000000000000'] = $provider->getCredential(MACRO_OTTKEY);
         }

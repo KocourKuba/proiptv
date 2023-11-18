@@ -33,7 +33,6 @@ class vod_ipstream extends vod_standard
 
         $movie = null;
         foreach ($jsonItems as $item) {
-            $id = '-1';
             if (isset($item->id)) {
                 $id = (string)$item->id;
             } else if (isset($item->series_id)) {
@@ -292,7 +291,6 @@ class vod_ipstream extends vod_standard
      */
     protected static function CreateShortMovie($movie_obj)
     {
-        $id = '-1';
         if (isset($movie_obj->id)) {
             $id = (string)$movie_obj->id;
         } else if (isset($movie_obj->series_id)) {

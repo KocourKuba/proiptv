@@ -25,38 +25,43 @@
  */
 
 /*
- {
+    {
       "id": "viplime",
       "name": "VipLime",
       "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
       "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
-      "qualities": {
-        "high": "High",
-        "medium": "Medium",
-        "low": "Medium",
-        "variant": "Adaptive",
-        "hls": "Optimal"
-      },
-      "id_map": "map",
-      "id_parser": "tvg-id",
-      "provider_info": false
-  },
+      "provider_info_config": {
+        "id_map": "map",
+        "id_parser": "tvg-id",
+        "qualities": {
+          "high": "High",
+          "medium": "Medium",
+          "low": "Medium",
+          "variant": "Adaptive",
+          "hls": "Optimal"
+        }
+      }
+    },
+    {
       "id": "1usd",
       "name": "1usd",
       "logo": "http://iptv.esalecrm.net/res/logo_1usd.png",
       "enable": true,
       "provider_type": "pin",
       "playlist_source": "http://1usd.tv/pl-{PASSWORD}-hls",
-      "id_map": "parse",
-      "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
-      "xmltv_sources": {
-        "1": "http://epg.team/tvteam.xml.gz",
-        "2": "http://epg.team/tvteam.7.7.xml"
-      },
-      "provider_info": false
-  },
+      "provider_info_config": {
+        "id_map": "map",
+        "id_parser": "tvg-name",
+        "xmltv_sources": [
+          "http://epg.team/tvteam.xml.gz",
+          "http://epg.team/tvteam.3.3.xml.tar.gz",
+          "http://epg.team/tvteam.5.5.xml.tar.gz",
+          "http://epg.team/tvteam.7.7.xml.tar.gz"
+        ]
+      }
+    },
 */
 
 class Provider_Config
@@ -84,67 +89,12 @@ class Provider_Config
     /**
      * @var string
      */
-    protected $provider_type = '';
-
-    /**
-     * @var string
-     */
     protected $playlist_source = '';
 
     /**
-     * @var string
-     */
-    protected $playlist_catchup = '';
-
-    /**
-     * @var string
-     */
-    protected $id_map = '';
-
-    /**
-     * @var string
-     */
-    protected $id_parser = '';
-
-    /**
-     * @var string
-     */
-    protected $provider_info_url = '';
-
-    /**
      * @var array
      */
-    protected $provider_info_config;
-
-    /**
-     * @var bool
-     */
-    protected $vod_enabled = false;
-
-    /**
-     * @var array
-     */
-    protected $vod_config = array();
-
-    /**
-     * @var array
-     */
-    protected $devices = array();
-
-    /**
-     * @var array
-     */
-    protected $servers = array();
-
-    /**
-     * @var array
-     */
-    protected $qualities = array();
-
-    /**
-     * @var array
-     */
-    protected $xmltv_sources = array();
+    protected $provider_config;
 
     /**
      * @var array
@@ -228,22 +178,6 @@ class Provider_Config
     /**
      * @return string
      */
-    public function getProviderType()
-    {
-        return $this->provider_type;
-    }
-
-    /**
-     * @param string $provider_type
-     */
-    public function setProviderType($provider_type)
-    {
-        $this->provider_type = $provider_type;
-    }
-
-    /**
-     * @return string
-     */
     public function getPlaylistSource()
     {
         return $this->playlist_source;
@@ -258,197 +192,20 @@ class Provider_Config
     }
 
     /**
-     * @return string
+     * @param array $provider_config
      */
-    public function getPlaylistCatchup()
+    public function setProviderConfig($provider_config)
     {
-        return $this->playlist_catchup;
-    }
-
-    /**
-     * @param string $playlist_catchup
-     */
-    public function setPlaylistCatchup($playlist_catchup)
-    {
-        $this->playlist_catchup = $playlist_catchup;
-    }
-
-    /**
-     * @return string
-     */
-    public function getIdMap()
-    {
-        return $this->id_map;
-    }
-
-    /**
-     * @param string $id_map
-     */
-    public function setIdMap($id_map)
-    {
-        $this->id_map = $id_map;
-    }
-
-    /**
-     * @return string
-     */
-    public function getIdParser()
-    {
-        return $this->id_parser;
-    }
-
-    /**
-     * @param string $id_parser
-     */
-    public function setIdParser($id_parser)
-    {
-        $this->id_parser = $id_parser;
-    }
-
-    /**
-     * @return string
-     */
-    public function getProviderInfoUrl()
-    {
-        return $this->provider_info_url;
-    }
-
-    /**
-     * @param string $provider_info
-     */
-    public function setProviderInfoUrl($provider_info)
-    {
-        $this->provider_info_url = $provider_info;
-    }
-
-    /**
-     * @return array
-     */
-    public function getProviderInfoConfig()
-    {
-        return $this->provider_info_config;
-    }
-
-    /**
-     * @param array $provider_info_config
-     */
-    public function setProviderInfoConfig($provider_info_config)
-    {
-        $this->provider_info_config = $provider_info_config;
+        $this->provider_config = $provider_config;
     }
 
     /**
      * @param string $val
      * @return string|array|null
      */
-    public function getProviderInfoConfigValue($val)
+    public function getProviderConfigValue($val)
     {
-        return isset($this->provider_info_config[$val]) ? $this->provider_info_config[$val] : null;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getVodEnabled()
-    {
-        return $this->vod_enabled;
-    }
-
-    /**
-     * @param bool $vod_enabled
-     */
-    public function setVodEnabled($vod_enabled)
-    {
-        $this->vod_enabled = $vod_enabled;
-    }
-
-    /**
-     * @return array
-     */
-    public function getVodConfig()
-    {
-        return $this->vod_config;
-    }
-
-    /**
-     * @param array $vod_config
-     */
-    public function setVodConfig($vod_config)
-    {
-        $this->vod_config = $vod_config;
-    }
-
-    /**
-     * @param string $value
-     * @return string|array|null
-     */
-    public function getVodConfigValue($value)
-    {
-        return isset($this->vod_config[$value]) ? $this->vod_config[$value] : null;
-    }
-
-    /**
-     * @return array
-     */
-    public function getDevices()
-    {
-        return $this->devices;
-    }
-
-    /**
-     * @param array $devices
-     */
-    public function setDevices($devices)
-    {
-        $this->devices = $devices;
-    }
-
-    /**
-     * @return array
-     */
-    public function getServers()
-    {
-        return $this->servers;
-    }
-
-    /**
-     * @param array $servers
-     */
-    public function setServers($servers)
-    {
-        $this->servers = $servers;
-    }
-
-    /**
-     * @return array
-     */
-    public function getQualities()
-    {
-        return $this->qualities;
-    }
-
-    /**
-     * @param array $qualities
-     */
-    public function setQualities($qualities)
-    {
-        $this->qualities = $qualities;
-    }
-
-    /**
-     * @return array
-     */
-    public function getXmltvSources()
-    {
-        return $this->xmltv_sources;
-    }
-
-    /**
-     * @param array $xmltv_sources
-     */
-    public function setXmltvSources($xmltv_sources)
-    {
-        $this->xmltv_sources = $xmltv_sources;
+        return isset($this->provider_config[$val]) ? $this->provider_config[$val] : null;
     }
 
     /**
@@ -484,13 +241,13 @@ class Provider_Config
             return;
         }
 
-        $token_url = $this->getProviderInfoConfigValue('token_request_url');
+        $token_url = $this->getProviderConfigValue(CONFIG_TOKEN_REQUEST_URL);
         if (empty($token_url)) {
             return;
         }
 
         $response = HD::DownloadJson($this->replace_macros($token_url));
-        $token_name = $this->getProviderInfoConfigValue('token_response');
+        $token_name = $this->getProviderConfigValue(CONFIG_TOKEN_RESPONSE);
         if (!empty($token_name) && $response !== false && isset($response[$token_name])) {
             $this->setCredential(MACRO_TOKEN, $response[$token_name]);
         }
@@ -501,13 +258,13 @@ class Provider_Config
      */
     public function request_provider_info()
     {
-        $url = $this->getProviderInfoUrl();
+        $url = $this->getProviderConfigValue(CONFIG_PROVIDER_INFO_URL);
         if (empty($url)) {
             return array();
         }
 
         $curl_headers = null;
-        $headers = $this->getProviderInfoConfigValue('headers');
+        $headers = $this->getProviderConfigValue(CONFIG_HEADERS);
         if (!empty($headers)) {
             $curl_headers = array();
             foreach ($headers as $key => $header) {

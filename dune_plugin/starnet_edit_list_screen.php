@@ -780,7 +780,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                         hd_debug_print("parse imported provider_info: $ext_vars[0]", true);
 
-                        switch ($provider->getProviderType()) {
+                        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
                             case PROVIDER_TYPE_PIN:
                                 hd_debug_print("set pin: $vars[0]");
                                 $playlist->params[MACRO_PASSWORD] = $vars[0];
@@ -811,17 +811,23 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                     $playlist->params[MACRO_VPORTAL] = $ext_vars[1];
                                 }
                                 break;
+
+                            default:
+                                break;
                         }
 
-                        if (count($servers = $provider->getServers())) {
+                        $servers = $provider->getProviderConfigValue(CONFIG_SERVERS);
+                        if (!empty($servers)) {
                             $playlist->params[MACRO_SERVER] = key($servers);
                         }
 
-                        if (count($devices = $provider->getDevices())) {
+                        $devices = $provider->getProviderConfigValue(CONFIG_DEVICES);
+                        if (!empty($devices)) {
                             $playlist->params[MACRO_DEVICE] = key($devices);
                         }
 
-                        if (count($qualities = $provider->getQualities())) {
+                        $qualities = $provider->getProviderConfigValue(CONFIG_QUALITIES);
+                        if (!empty($qualities)) {
                             $playlist->params[MACRO_QUALITY] = key($qualities);
                         }
 
@@ -971,7 +977,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             self::CONTROL_EDIT_NAME, TR::t('name'), $name,
             false, false, false, true, self::DLG_CONTROLS_WIDTH);
 
-        switch ($provider->getProviderType()) {
+        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
             case PROVIDER_TYPE_PIN:
                 Control_Factory::add_text_field($defs, $this, null,
                     self::CONTROL_PASSWORD, TR::t('token'), $provider->getCredential(MACRO_PASSWORD),
@@ -991,7 +997,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case PROVIDER_TYPE_EDEM:
                 $subdomain = $provider->getCredential(MACRO_SUBDOMAIN);
-                if (!empty($subdomain) && $subdomain !== $provider->getProviderInfoConfigValue('domain')) {
+                if (!empty($subdomain) && $subdomain !== $provider->getProviderConfigValue(CONFIG_DOMAIN)) {
                     Control_Factory::add_text_field($defs, $this, null,
                         self::CONTROL_OTT_SUBDOMAIN, TR::t('subdomain'), $provider->getCredential(MACRO_SUBDOMAIN),
                         false, false, false, true, self::DLG_CONTROLS_WIDTH);
@@ -1009,7 +1015,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
         }
 
-        $servers = $provider->getServers();
+        $servers = $provider->getProviderConfigValue(CONFIG_SERVERS);
         if (!empty($servers)) {
             $idx = $provider->getCredential(MACRO_SERVER);
             if (empty($idx)) {
@@ -1020,7 +1026,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 TR::t('server'), $idx, $servers, self::DLG_CONTROLS_WIDTH, true);
         }
 
-        $devices = $provider->getDevices();
+        $devices = $provider->getProviderConfigValue(CONFIG_DEVICES);
         if (!empty($devices)) {
             $idx = $provider->getCredential(MACRO_DEVICE);
             if (empty($idx)) {
@@ -1031,7 +1037,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 TR::t('device'), $idx, $devices, self::DLG_CONTROLS_WIDTH, true);
         }
 
-        $qualities = $provider->getQualities();
+        $qualities = $provider->getProviderConfigValue(CONFIG_QUALITIES);
         if (!empty($qualities)) {
             $idx = $provider->getCredential(MACRO_QUALITY);
             if (empty($idx)) {
@@ -1074,7 +1080,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         $id = $user_input->{self::CONTROL_EDIT_ITEM};
-        switch ($provider->getProviderType()) {
+        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
             case PROVIDER_TYPE_PIN:
                 $params[MACRO_PASSWORD] = $user_input->{self::CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_PASSWORD]) : $id;
@@ -1092,7 +1098,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (isset($user_input->{self::CONTROL_OTT_SUBDOMAIN})) {
                     $params[MACRO_SUBDOMAIN] = $user_input->{self::CONTROL_OTT_SUBDOMAIN};
                 } else {
-                    $params[MACRO_SUBDOMAIN] = $provider->getProviderInfoConfigValue('domain');
+                    $params[MACRO_SUBDOMAIN] = $provider->getProviderConfigValue(CONFIG_DOMAIN);
                 }
                 $params[MACRO_OTTKEY] = $user_input->{self::CONTROL_OTT_KEY};
                 $params[MACRO_VPORTAL] = $user_input->{self::CONTROL_VPORTAL};

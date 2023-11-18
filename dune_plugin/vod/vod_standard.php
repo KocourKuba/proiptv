@@ -113,11 +113,14 @@ class vod_standard extends Abstract_Vod
     public function init_vod($provider)
     {
         $this->provider = $provider;
-        $this->vod_source = $this->provider->replace_macros($this->provider->getVodConfigValue('vod_source'));
-        $this->vod_pattern = $this->provider->getVodConfigValue('vod_parser');
-        if (!empty($this->vod_pattern)) {
-            $this->vod_pattern = "/$this->vod_pattern/";
+        $vod_source = $provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
+        if (empty($vod_source)) {
+            return false;
         }
+
+        $this->vod_source = $this->provider->replace_macros($vod_source);
+        $vod_parser = $provider->getProviderConfigValue(CONFIG_VOD_PARSER);
+        $this->vod_pattern = empty($vod_parser) ? '' : "/$vod_parser/";
 
         return true;
     }
@@ -703,7 +706,12 @@ class vod_standard extends Abstract_Vod
         }
 
         if ($need_load) {
-            $url = $this->provider->replace_macros($this->provider->getVodConfigValue('vod_source'));
+            $vod_source = $this->provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
+            if (empty($vod_source)) {
+                return false;
+            }
+
+            $url = $this->provider->replace_macros($vod_source);
             $this->vod_items = HD::DownloadJson($url, false);
             if ($this->vod_items !== false) {
                 HD::StoreContentToFile($tmp_file, $this->vod_items);
