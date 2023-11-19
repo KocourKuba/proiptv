@@ -724,12 +724,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $data = MediaURL::decode($user_input->selected_data);
+        $selected_media_url = MediaURL::decode($user_input->selected_data);
         $order = &$this->get_edit_order($parent_media_url->edit_list);
 
-        if ($data->choose_file->action === self::ACTION_FILE_TEXT_LIST) {
-            hd_debug_print("Choosed file: $data->filepath", true);
-            $lines = file($data->filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($selected_media_url->choose_file->action === self::ACTION_FILE_TEXT_LIST) {
+            hd_debug_print("Choosed file: $selected_media_url->filepath", true);
+            $lines = file($selected_media_url->filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
                 return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
             }
@@ -746,7 +746,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         hd_debug_print("import link: '$line'", true);
                         try {
                             $contents = HD::http_download_https_proxy($line);
-                            if ($contents === false || strpos($contents, '#EXTM3U') !== 0) {
+                            if ($contents === false || strpos($contents, '#EXTM3U') === false) {
                                 throw new Exception("Bad M3U file: $line");
                             }
                             $playlist->type = PARAM_LINK;
@@ -878,16 +878,36 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             );
         }
 
-        if ($data->choose_file->action === self::ACTION_FILE_PLAYLIST || $data->choose_file->action === self::ACTION_FILE_XMLTV) {
-            $hash = Hashed_Array::hash($data->filepath);
+        if ($selected_media_url->choose_file->action === self::ACTION_FILE_PLAYLIST) {
+            $hash = Hashed_Array::hash($selected_media_url->filepath);
+            if ($order->has($hash)) {
+                return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+            }
+
+            $contents = file_get_contents($selected_media_url->filepath);
+            if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                hd_debug_print("Problem with import playlist: $selected_media_url->filepath");
+                return Action_Factory::show_title_dialog(TR::t('err_bad_m3u_file'));
+            }
+
+            $playlist = new Named_Storage();
+            $playlist->type = PARAM_FILE;
+            $playlist->name = basename($selected_media_url->filepath);
+            $playlist->params['uri'] = $selected_media_url->filepath;
+            $order->put($hash, $playlist);
+            $this->set_changes($parent_media_url->save_data);
+        }
+
+        if ($selected_media_url->choose_file->action === self::ACTION_FILE_XMLTV) {
+            $hash = Hashed_Array::hash($selected_media_url->filepath);
             if ($order->has($hash)) {
                 return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
             }
 
             $playlist = new Named_Storage();
             $playlist->type = PARAM_FILE;
-            $playlist->name = basename($data->filepath);
-            $playlist->params['uri'] = $data->filepath;
+            $playlist->name = basename($selected_media_url->filepath);
+            $playlist->params['uri'] = $selected_media_url->filepath;
             $order->put($hash, $playlist);
             $this->set_changes($parent_media_url->save_data);
         }
@@ -904,8 +924,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $selected_data = MediaURL::decode($user_input->selected_data);
-        $files = glob_dir($selected_data->filepath, "/\.$parent_media_url->extension$/i");
+        $selected_media_url = MediaURL::decode($user_input->selected_data);
+        $files = glob_dir($selected_media_url->filepath, "/\.$parent_media_url->extension$/i");
         if (empty($files)) {
             return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
         }
@@ -915,6 +935,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         foreach ($files as $file) {
             $hash = Hashed_Array::hash($file);
             if ($order->has($hash)) continue;
+
+            if ($parent_media_url->edit_list === self::ACTION_FILE_PLAYLIST) {
+                $contents = file_get_contents($file);
+                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                    hd_debug_print("Problem with import playlist: $file");
+                    continue;
+                }
+            }
 
             $playlist = new Named_Storage();
             $playlist->type = PARAM_FILE;

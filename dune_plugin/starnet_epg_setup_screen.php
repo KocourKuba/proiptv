@@ -83,6 +83,13 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         if (class_exists('SQLite3')) {
             $cache_engine[ENGINE_SQLITE] = TR::t('setup_epg_cache_sqlite');
             $cache_engine[ENGINE_LEGACY] = TR::t('setup_epg_cache_legacy');
+            $provider = $this->plugin->get_current_provider();
+            if (!is_null($provider)) {
+                $json_source = $provider->getProviderConfigValue('json_source');
+                if (!empty($json_source)) {
+                    $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json');
+                }
+            }
             $engine = $this->plugin->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
 
             Control_Factory::add_combobox($defs, $this, null,

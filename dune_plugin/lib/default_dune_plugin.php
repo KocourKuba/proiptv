@@ -1892,7 +1892,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         /** @var Named_Storage $xmltv_source */
         $xmltv_source = $this->get_all_xmltv_sources()->get($key);
-        if ($xmltv_source) {
+        if (!is_null($xmltv_source)) {
             $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
             $this->set_active_xmltv_source($xmltv_source->params['uri']);
         }
