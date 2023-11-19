@@ -16,10 +16,10 @@
       "id": "1ott",
       "name": "1ott",
       "logo": "http://iptv.esalecrm.net/res/logo_1ott.png",
-      "playlist_source": "http://list.1ott.net/api/{TOKEN}/high/ottplay.m3u8",
+      "playlist_source": "http://list.1ott.net/api/{TOKEN}/high/unix.m3u8",
       "provider_config": {
         "provider_type": "login-stoken",
-        "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$",
+        "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hlsx?\\/.+\\.m3u8$",
         "token_request_url": "http://list.1ott.net/PinApi/{LOGIN}/{PASSWORD}",
         "token_response": "token"
       }
