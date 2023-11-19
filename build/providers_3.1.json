@@ -8,7 +8,11 @@
       "playlist_source": "http://only4.tv/pl/{PASSWORD}/102/only4tv.m3u8",
       "provider_config": {
         "provider_type": "pin",
-        "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$"
+        "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
+        "xmltv_sources": [
+          "http://only4.tv/epg/epg.xml.gz",
+          "https://iptvx.one/epg/epg.xml.gz"
+        ]
       }
     },
     {
