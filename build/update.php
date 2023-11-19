@@ -69,7 +69,7 @@ file_put_contents("./dune_plugin/$plugin_metadata", $xml);
 $text = file_get_contents("./build/changelog.md");
 $text = str_replace('{plugin_version}', $version, $text);
 file_put_contents("./dune_plugin/changelog.md", $text);
-$providers_src = ($is_debug === 'debug') ? "providers_debug.json" :  "providers_3.1.json";
+$providers_src = ($is_debug === 'debug') ? "providers_debug.json" :  "providers_3.2.json";
 $providers_target = ($is_debug === 'debug') ? "providers_debug.json" :  "providers.json";
 copy("./build/$providers_src", "./dune_plugin/$providers_target");
 
