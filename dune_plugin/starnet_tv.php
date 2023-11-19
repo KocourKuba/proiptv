@@ -530,7 +530,11 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->load_settings(true);
         $this->plugin->load_orders(true);
         $this->plugin->load_history(true);
-        $this->plugin->get_epg_manager()->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
+        $epg_manager = $this->plugin->get_epg_manager();
+        if (is_null($epg_manager)) {
+            $this->plugin->init_epg_manager();
+        }
+        $epg_manager->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
         $this->plugin->create_screen_views();
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
@@ -679,19 +683,19 @@ class Starnet_Tv implements User_Input_Handler
 
         hd_debug_print("XMLTV source selected: $source");
         $this->plugin->init_epg_manager();
-        $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
+        $res = $epg_manager->is_xmltv_cache_valid();
         if ($res !== -1) {
             if ($res === 0) {
-                $this->plugin->get_epg_manager()->download_xmltv_source();
+                $epg_manager->download_xmltv_source();
             }
 
-            $this->plugin->get_epg_manager()->index_xmltv_channels();
+            $epg_manager->index_xmltv_channels();
         }
 
         hd_debug_print("Build categories and channels...");
         $t = microtime(true);
 
-        $picons = $this->plugin->get_epg_manager()->get_picons();
+        $picons = $epg_manager->get_picons();
 
         // suppress save after add group
         $this->plugin->set_postpone_save(true, PLUGIN_SETTINGS);
@@ -1029,7 +1033,7 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
         HD::ShowMemoryUsage();
 
-        if ($this->plugin->get_epg_manager()->is_xmltv_cache_valid() === 1) {
+        if ($epg_manager->is_xmltv_cache_valid() === 1) {
             hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
             $this->plugin->start_bg_indexing();
             sleep(1);
