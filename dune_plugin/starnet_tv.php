@@ -528,14 +528,14 @@ class Starnet_Tv implements User_Input_Handler
         HD::set_last_error(null);
 
         $this->plugin->load_settings(true);
+        $epg_engine = $this->plugin->init_epg_manager();
+        $epg_manager = $this->plugin->get_epg_manager();
+        $epg_manager->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
         $this->plugin->load_orders(true);
         $this->plugin->load_history(true);
-        $epg_manager = $this->plugin->get_epg_manager();
-        if (is_null($epg_manager)) {
-            $this->plugin->init_epg_manager();
-        }
-        $epg_manager->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
         $this->plugin->create_screen_views();
+
+        $provider = $this->plugin->get_current_provider();
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
@@ -609,7 +609,6 @@ class Starnet_Tv implements User_Input_Handler
         $icon_url_base = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
 
         $this->plugin->vod = null;
-        $provider = $this->plugin->get_current_provider();
         if (is_null($provider)) {
             $mapper = $this->plugin->get_setting(PARAM_ID_MAPPER, 'by_default');
             if ($mapper !== 'default') {
@@ -668,28 +667,30 @@ class Starnet_Tv implements User_Input_Handler
             $catchup['global'] = $user_catchup;
         }
 
-        $source = $this->plugin->get_active_xmltv_source();
-        if (empty($source)) {
-            $sources = $this->plugin->get_all_xmltv_sources();
-            $key = $this->plugin->get_active_xmltv_source_key();
-            hd_debug_print("XMLTV active source key: $key");
-            $source = $sources->get($key);
-            if (is_null($source) && $sources->size()) {
-                hd_debug_print("Unknown key for XMLTV source, try use first");
-                $sources->rewind();
-            }
-            $this->plugin->set_active_xmltv_source_key($sources->key());
-        }
-
-        hd_debug_print("XMLTV source selected: $source");
-        $this->plugin->init_epg_manager();
-        $res = $epg_manager->is_xmltv_cache_valid();
-        if ($res !== -1) {
-            if ($res === 0) {
-                $epg_manager->download_xmltv_source();
+        if ($epg_engine !== ENGINE_JSON) {
+            $source = $this->plugin->get_active_xmltv_source();
+            if (empty($source)) {
+                $sources = $this->plugin->get_all_xmltv_sources();
+                $key = $this->plugin->get_active_xmltv_source_key();
+                hd_debug_print("XMLTV active source key: $key");
+                $source = $sources->get($key);
+                if (is_null($source) && $sources->size()) {
+                    hd_debug_print("Unknown key for XMLTV source, try use first");
+                    $sources->rewind();
+                }
+                $this->plugin->set_active_xmltv_source_key($sources->key());
             }
 
-            $epg_manager->index_xmltv_channels();
+            hd_debug_print("XMLTV source selected: $source");
+            $this->plugin->init_epg_manager();
+            $res = $epg_manager->is_xmltv_cache_valid();
+            if ($res !== -1) {
+                if ($res === 0) {
+                    $epg_manager->download_xmltv_source();
+                }
+
+                $epg_manager->index_xmltv_channels();
+            }
         }
 
         hd_debug_print("Build categories and channels...");
@@ -796,7 +797,7 @@ class Starnet_Tv implements User_Input_Handler
             if (is_null($channel)) {
                 $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
                 if (!empty($epg_ids)) {
-                    $epg_ids = array_unique(array_values($epg_ids));
+                    $epg_ids = array_unique($epg_ids);
                 }
 
                 $playlist_icon = $entry->getEntryIcon();
@@ -816,7 +817,7 @@ class Starnet_Tv implements User_Input_Handler
                     $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
                 }
 
-            $used_tag = '';
+                $used_tag = '';
                 $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, Entry::TAG_EXTINF, $used_tag);
                 if ($used_tag === 'catchup-time') {
                     $archive /= 86400;
@@ -1033,7 +1034,7 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
         HD::ShowMemoryUsage();
 
-        if ($epg_manager->is_xmltv_cache_valid() === 1) {
+        if ($epg_engine !== ENGINE_JSON && $epg_manager->is_xmltv_cache_valid() === 1) {
             hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
             $this->plugin->start_bg_indexing();
             sleep(1);

@@ -32,6 +32,7 @@ require_once 'control_factory_ext.php';
 require_once 'default_archive.php';
 require_once 'catchup_params.php';
 require_once 'epg_manager_sql.php';
+require_once 'epg_manager_json.php';
 require_once 'provider_config.php';
 require_once 'named_storage.php';
 require_once 'm3u/M3uParser.php';
@@ -140,6 +141,11 @@ class Default_Dune_Plugin implements DunePlugin
     protected $providers;
 
     /**
+     * @var Hashed_Array
+     */
+    protected $epg_presets;
+
+    /**
      * @var Named_Storage
      */
     protected $cur_provider;
@@ -157,6 +163,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
         $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
         $this->providers = new Hashed_Array();
+        $this->epg_presets = new Hashed_Array();
     }
 
     public function set_plugin_cookies($plugin_cookies)
@@ -247,6 +254,14 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $config = $this->providers->get($name);
         return is_null($config) ? null : clone $config;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function get_epg_preset($key)
+    {
+        return $this->epg_presets->get($key);
     }
 
     /**
@@ -1260,6 +1275,10 @@ class Default_Dune_Plugin implements DunePlugin
                 return;
             }
 
+            foreach ($jsonArray['epg_presets'] as $key => $value) {
+                $this->epg_presets->set($key, $value);
+            }
+
             foreach ($jsonArray['providers'] as $item) {
                 if (isset($item['class'])) {
                     $config = new $item['class']();
@@ -1511,27 +1530,47 @@ class Default_Dune_Plugin implements DunePlugin
         return $provider;
     }
 
+    /**
+     * @return string
+     */
     public function init_epg_manager()
     {
         $this->epg_manager = null;
-        if ($this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE) === ENGINE_LEGACY) {
-            hd_debug_print("Using legacy cache engine");
-        } else if (class_exists('SQLite3')) {
-            hd_debug_print("Using sqlite cache engine");
-            $this->epg_manager = new Epg_Manager_Sql($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
-        } else {
-            hd_debug_print("Selected sqlite but system does not support it. Switch to legacy");
-            $this->set_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_LEGACY);
+        $engine_class = 'Epg_Manager';
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
+        if ($engine === ENGINE_JSON) {
+            $provider = $this->get_current_provider();
+            if (!is_null($provider)) {
+                $preset = $provider->getProviderConfigValue('epg_preset');
+                if (!empty($preset)) {
+                    hd_debug_print("Using JSON cache engine");
+                    $engine_class = 'Epg_Manager_Json';
+                }
+            }
+        } else if ($engine === ENGINE_SQLITE && class_exists('SQLite3')) {
+            $engine_class = 'Epg_Manager_Sql';
         }
 
-        if (is_null($this->epg_manager)) {
-            $this->epg_manager = new Epg_Manager($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source());
-        }
+        hd_debug_print("Using $engine_class cache engine");
+        $this->epg_manager = new $engine_class($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source(), $this);
 
         $flags = $this->get_bool_parameter(PARAM_FUZZY_SEARCH_EPG, false) ? EPG_FUZZY_SEARCH : 0;
         $flags |= $this->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         $this->epg_manager->set_flags($flags);
         $this->epg_manager->set_cache_ttl($this->get_setting(PARAM_EPG_CACHE_TTL, 3));
+        switch ($engine_class) {
+            case 'Epg_Manager':
+                return ENGINE_LEGACY;
+
+            case 'Epg_Manager_Sql':
+                return ENGINE_SQLITE;
+
+            case 'Epg_Manager_Json':
+                return ENGINE_JSON;
+
+            default:
+                return null;
+        }
     }
 
     /**
@@ -1714,7 +1753,7 @@ class Default_Dune_Plugin implements DunePlugin
             'log_file' => $this->get_epg_manager()->get_cache_stem('.log'),
             'version' => $this->plugin_info['app_version'],
             'cache_dir' => $this->get_cache_dir(),
-            'cache_engine' => $this->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE),
+            'cache_engine' => $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE),
             'cache_ttl' => $this->get_setting(PARAM_EPG_CACHE_TTL, 3),
             'xmltv_url' => $this->get_active_xmltv_source(),
         );

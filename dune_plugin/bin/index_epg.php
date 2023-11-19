@@ -40,8 +40,11 @@ set_debug_log($config->debug);
 
 if ($config->cache_engine === ENGINE_SQLITE) {
     $epg_man = new Epg_Manager_Sql($config->version, $config->cache_dir, $config->xmltv_url);
-} else {
+} else if ($config->cache_engine === ENGINE_LEGACY) {
     $epg_man = new Epg_Manager($config->version, $config->cache_dir, $config->xmltv_url);
+} else {
+    hd_debug_print("This manager do not requires run in background");
+    return;
 }
 
 $epg_man->set_cache_ttl($config->cache_ttl);

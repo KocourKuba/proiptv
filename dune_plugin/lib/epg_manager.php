@@ -30,6 +30,11 @@ require_once 'hashed_array.php';
 class Epg_Manager
 {
     /**
+     * @var Default_Dune_Plugin
+     */
+    protected $plugin;
+
+    /**
      * Version of the used cache scheme (plugin version)
      * @var string
      */
@@ -92,12 +97,14 @@ class Epg_Manager
      * @param string $version
      * @param string $cache_dir
      * @param string $name
+     * @param Default_Dune_Plugin|null $plugin
      */
-    public function __construct($version, $cache_dir, $name)
+    public function __construct($version, $cache_dir, $name, $plugin = null)
     {
         $this->version = $version;
         $this->xmltv_url = $name;
         $this->cache_dir = $cache_dir;
+        $this->plugin = $plugin;
 
         create_path($this->cache_dir);
 

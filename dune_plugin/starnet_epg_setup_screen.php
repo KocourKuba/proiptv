@@ -26,6 +26,7 @@
 require_once 'lib/abstract_controls_screen.php';
 require_once 'lib/user_input_handler.php';
 require_once 'lib/epg_manager_sql.php';
+require_once 'lib/epg_manager_json.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -85,12 +86,12 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             $cache_engine[ENGINE_LEGACY] = TR::t('setup_epg_cache_legacy');
             $provider = $this->plugin->get_current_provider();
             if (!is_null($provider)) {
-                $json_source = $provider->getProviderConfigValue('json_source');
-                if (!empty($json_source)) {
+                $epg_preset = $provider->getProviderConfigValue('epg_preset');
+                if (!empty($epg_preset)) {
                     $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json');
                 }
             }
-            $engine = $this->plugin->get_parameter(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
+            $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
 
             Control_Factory::add_combobox($defs, $this, null,
                 PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
@@ -219,7 +220,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case PARAM_EPG_CACHE_ENGINE:
                 $this->plugin->tv->unload_channels();
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
-                $this->plugin->set_parameter(PARAM_EPG_CACHE_ENGINE, $user_input->{$control_id});
+                $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
