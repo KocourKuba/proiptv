@@ -1304,13 +1304,11 @@ class Default_Dune_Plugin implements DunePlugin
                     // cache provider logo
                     $logo = $config->getLogo();
                     $filename = basename($logo);
-                    if (!file_exists(get_cached_image_path($filename))) {
-                        try {
-                            $data = HD::http_get_document($logo);
-                            file_put_contents(get_cached_image_path($filename), $data);
-                        } catch (Exception $ex) {
-                            hd_debug_print("failed to download provider logo: $logo");
-                        }
+                    $cached_file = get_cached_image_path($filename);
+                    try {
+                        HD::http_save_document($logo, $cached_file);
+                    } catch (Exception $ex) {
+                        hd_debug_print("failed to download provider logo: $logo");
                     }
                 }
             }

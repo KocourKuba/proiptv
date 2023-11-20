@@ -184,10 +184,11 @@ class HD
     /**
      * @param $url string
      * @param $opts array
+     * @param null $http_code
      * @return bool|string
      * @throws Exception
      */
-    public static function http_get_document($url, $opts = null)
+    public static function http_get_document($url, $opts = null, &$info = array())
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
@@ -197,6 +198,7 @@ class HD
         curl_setopt($ch, CURLOPT_MAXREDIRS, 2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_FILETIME, true);
         curl_setopt($ch, CURLOPT_USERAGENT, self::get_dune_user_agent());
         curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -211,7 +213,8 @@ class HD
         hd_debug_print("HTTP fetching '$url'");
 
         $content = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $info = curl_getinfo($ch);
+        $http_code = $info['http_code'];
 
         if ($content === false) {
             $err_msg = "Fetch $url failed. HTTP error: $http_code (" . curl_error($ch) . ')';
@@ -237,9 +240,12 @@ class HD
      * @return array
      * @throws Exception
      */
-    public static function http_save_document($url, $file_name, $opts = null)
+    public static function http_save_document($url, $file_name, $opts = null, &$info = array())
     {
-        $fp = fopen($file_name, 'wb');
+        $timestamp = file_exists($file_name) ? filemtime($file_name) : -1;
+
+        $tmp_file = get_temp_path(Hashed_Array::hash($file_name));
+        $fp = fopen($tmp_file, 'wb');
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -252,6 +258,8 @@ class HD
         curl_setopt($ch, CURLOPT_TIMEOUT, 120);
         curl_setopt($ch, CURLOPT_USERAGENT, self::get_dune_user_agent());
         curl_setopt($ch, CURLOPT_FILETIME, true);
+        curl_setopt($ch, CURLOPT_TIMECONDITION, CURL_TIMECOND_IFMODSINCE);
+        curl_setopt($ch, CURLOPT_TIMEVALUE, $timestamp);
         curl_setopt($ch, CURLOPT_FILE, $fp);
 
         if (isset($opts)) {
@@ -270,19 +278,29 @@ class HD
             }
 
             $info = curl_getinfo($ch);
-            hd_debug_print(raw_json_encode($info), true);
-            if ($info['http_code'] >= 300) {
+            $http_code = $info['http_code'];
+
+            if ($http_code !== 200 && $http_code !== 304) {
                 throw new Exception($url . PHP_EOL . "HTTP request failed ({$info['http_code']}): " . self::http_status_code_to_string($info['http_code']));
             }
+
+            fclose($fp);
+            curl_close($ch);
+
+            if ($http_code === 304) {
+                hd_debug_print("file not changed");
+            } else {
+                copy($tmp_file, $file_name);
+                touch($file_name, $info['filetime']);
+            }
+            unlink($tmp_file);
         } catch (Exception $ex) {
             fclose($fp);
-            unlink($file_name);
+            curl_close($ch);
+            unlink($tmp_file);
             flush();
             throw $ex;
         }
-
-        fclose($fp);
-        curl_close($ch);
 
         return $info;
     }
