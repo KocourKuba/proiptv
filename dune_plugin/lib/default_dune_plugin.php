@@ -2238,6 +2238,24 @@ class Default_Dune_Plugin implements DunePlugin
      * @param User_Input_Handler $handler
      * @return array
      */
+    public function epg_engine_menu($handler)
+    {
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+
+        $menu_items[] = $this->create_menu_item($handler, ENGINE_XMLTV, TR::t('setup_epg_cache_xmltv'),
+            ($engine === ENGINE_XMLTV) ? "check.png" : null
+        );
+
+        $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, TR::t('setup_epg_cache_json'),
+            ($engine === ENGINE_JSON) ? "check.png" : null
+        );
+        return $menu_items;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
     public function sort_menu($handler)
     {
         $menu_items = array();

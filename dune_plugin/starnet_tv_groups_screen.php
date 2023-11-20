@@ -247,6 +247,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $menu_items = $this->plugin->playlist_menu($this);
                 } else if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
                     $menu_items = $this->plugin->epg_source_menu($this);
+                } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
+                    $menu_items = $this->plugin->epg_engine_menu($this);
                 } else if (isset($user_input->{ACTION_SORT_POPUP})) {
                     $menu_items = $this->plugin->sort_menu($this);
                 } else {
@@ -271,6 +273,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $provider = $this->plugin->get_current_provider();
                     if (!is_null($provider)) {
+                        $epg_preset = $provider->getProviderConfigValue('epg_preset');
+                        if (!empty($epg_preset)) {
+                            $menu_items[] = $this->plugin->create_menu_item($this,
+                                ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'), "settings.png");
+                        }
+
                         $info_url = $provider->getProviderConfigValue(CONFIG_PROVIDER_INFO_URL);
                         if (!empty($info_url)) {
                             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
@@ -300,6 +308,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_CHANGE_EPG_SOURCE:
                 hd_debug_print("Start event popup menu for epg source", true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
+
+            case ACTION_EPG_CACHE_ENGINE:
+                hd_debug_print("Start event popup menu for epg source", true);
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_EPG_CACHE_ENGINE => true));
+
+            case ENGINE_XMLTV:
+            case ENGINE_JSON:
+                hd_debug_print("Selected engine: $user_input->control_id", true);
+                $this->plugin->tv->unload_channels();
+                $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
+                $this->plugin->init_epg_manager();
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);

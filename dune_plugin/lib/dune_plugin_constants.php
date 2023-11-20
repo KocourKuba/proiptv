@@ -40,6 +40,7 @@ const ACTION_CHANGE_GROUP_ICON = 'change_group_icon';
 const ACTION_CHANGE_BACKGROUND = 'change_background';
 const ACTION_CHANNEL_INFO = 'channel_info';
 const ACTION_CHANGE_EPG_SOURCE = 'change_epg_source';
+const ACTION_EPG_CACHE_ENGINE = 'cache_engine';
 const ACTION_EPG_SOURCE_SELECTED = 'epg_source_selected';
 const ACTION_SHOW_INDEX_PROGRESS = 'show_index_progress';
 const ACTION_FILTER = 'action_filter';
