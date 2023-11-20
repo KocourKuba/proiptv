@@ -387,7 +387,7 @@
       "id": "vidok",
       "name": "Vidok TV",
       "logo": "http://iptv.esalecrm.net/res/logo_vidok.png",
-      "playlist_source": "http://vidok.tv/p/{TOKEN}",
+      "playlist_source": "http://bddpv.plist.top/p/{TOKEN}",
       "provider_config": {
         "provider_type": "login-token",
         "id_map": "tvg-id",
