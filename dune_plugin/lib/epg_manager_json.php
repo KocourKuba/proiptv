@@ -41,6 +41,14 @@ class Epg_Manager_Json extends Epg_Manager
     protected $epg_cache = array();
 
     /**
+     * @inheritDoc
+     */
+    public function get_picons()
+    {
+        return null;
+    }
+
+    /**
      * try to load epg from cache otherwise request it from server
      * store parsed response to the cache
      * @param Channel $channel
@@ -139,8 +147,7 @@ class Epg_Manager_Json extends Epg_Manager
         $all_epg = array();
         if (file_exists($epg_cache_file)) {
             $now = time();
-            $max_check_time = 3600 * 24 * $this->cache_ttl;
-            $cache_expired = filemtime($epg_cache_file) + $max_check_time;
+            $cache_expired = filemtime($epg_cache_file) + 3600;
             if ($cache_expired > time()) {
                 $all_epg = unserialize(file_get_contents($epg_cache_file));
                 $from_cache = true;

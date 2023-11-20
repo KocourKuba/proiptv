@@ -81,6 +81,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // EPG cache engine
+        $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
         if (class_exists('SQLite3')) {
             $cache_engine[ENGINE_SQLITE] = TR::t('setup_epg_cache_sqlite');
             $cache_engine[ENGINE_LEGACY] = TR::t('setup_epg_cache_legacy');
@@ -91,7 +92,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                     $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json');
                 }
             }
-            $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
 
             Control_Factory::add_combobox($defs, $this, null,
                 PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
@@ -100,10 +100,29 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // Fuzzy search
-        $fuzzy_search = $this->plugin->get_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_on);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_FUZZY_SEARCH_EPG, TR::t('entry_epg_fuzzy_search'), SetupControlSwitchDefs::$on_off_translated[$fuzzy_search],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$fuzzy_search]), self::CONTROLS_WIDTH);
+        if ($engine !== ENGINE_JSON) {
+            $fuzzy_search = $this->plugin->get_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_on);
+            Control_Factory::add_image_button($defs, $this, null,
+                PARAM_FUZZY_SEARCH_EPG, TR::t('entry_epg_fuzzy_search'), SetupControlSwitchDefs::$on_off_translated[$fuzzy_search],
+                get_image_path(SetupControlSwitchDefs::$on_off_img[$fuzzy_search]), self::CONTROLS_WIDTH);
+
+            //////////////////////////////////////
+            // EPG cache
+            $epg_cache_ops = array();
+            $epg_cache_ops[0.5] = 0.5;
+            $epg_cache_ops[1] = 1;
+            $epg_cache_ops[2] = 2;
+            $epg_cache_ops[3] = 3;
+            $epg_cache_ops[4] = 4;
+            $epg_cache_ops[5] = 5;
+            $epg_cache_ops[6] = 6;
+            $epg_cache_ops[7] = 7;
+
+            $cache_ttl = $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
+                $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
+        }
 
         //////////////////////////////////////
         // Fake EPG
@@ -111,23 +130,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SetupControlSwitchDefs::$on_off_translated[$fake_epg],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$fake_epg]), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
-        // EPG cache
-        $epg_cache_ops = array();
-        $epg_cache_ops[0.5] = 0.5;
-        $epg_cache_ops[1] = 1;
-        $epg_cache_ops[2] = 2;
-        $epg_cache_ops[3] = 3;
-        $epg_cache_ops[4] = 4;
-        $epg_cache_ops[5] = 5;
-        $epg_cache_ops[6] = 6;
-        $epg_cache_ops[7] = 7;
-
-        $cache_ttl = $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
-        Control_Factory::add_combobox($defs, $this, null,
-            PARAM_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
-            $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // clear epg cache

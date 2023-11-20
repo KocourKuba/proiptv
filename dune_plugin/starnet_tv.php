@@ -536,6 +536,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->create_screen_views();
 
         $provider = $this->plugin->get_current_provider();
+        $is_xml_engine = ($epg_engine !== ENGINE_JSON);
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
@@ -606,7 +607,14 @@ class Starnet_Tv implements User_Input_Handler
 
         $catchup['global'] = $this->m3u_parser->getM3uInfo()->getCatchup();
         $global_catchup_source = $this->m3u_parser->getM3uInfo()->getCatchupSource();
-        $icon_url_base = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
+        $icon_base_url = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
+        if (!empty($icon_base_url)) {
+            hd_debug_print("Using base url for icons: $icon_base_url");
+        }
+        $icon_base_template = $this->m3u_parser->getHeaderAttribute('tvg-logo', Entry::TAG_EXTM3U);
+        if (!empty($icon_base_template)) {
+            hd_debug_print("Using base template for icons: $icon_base_template");
+        }
 
         $this->plugin->vod = null;
         if (is_null($provider)) {
@@ -667,7 +675,7 @@ class Starnet_Tv implements User_Input_Handler
             $catchup['global'] = $user_catchup;
         }
 
-        if ($epg_engine !== ENGINE_JSON) {
+        if ($is_xml_engine) {
             $source = $this->plugin->get_active_xmltv_source();
             if (empty($source)) {
                 $sources = $this->plugin->get_all_xmltv_sources();
@@ -801,13 +809,17 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 $playlist_icon = $entry->getEntryIcon();
-                if (!empty($icon_url_base) && !preg_match(HTTP_PATTERN, $playlist_icon)) {
-                    $playlist_icon = $icon_url_base . $playlist_icon;
+                if (!empty($icon_base_url) && !preg_match(HTTP_PATTERN, $playlist_icon)) {
+                    $playlist_icon = $icon_base_url . $playlist_icon;
+                } else if (!empty($icon_base_template)) {
+                    $playlist_icon = str_replace('%tvg%', $epg_ids['tvg-id'], $icon_base_template);
                 }
 
                 $xmltv_icon = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
 
-                if ($use_playlist_picons) {
+                if (!$is_xml_engine) {
+                    $icon_url = $playlist_icon;
+                } else if ($use_playlist_picons) {
                     $icon_url = empty($playlist_icon) ? $xmltv_icon : $playlist_icon;
                 } else {
                     $icon_url = $xmltv_icon;
@@ -946,8 +958,8 @@ class Starnet_Tv implements User_Input_Handler
                 $group_logo = $entry->getEntryAttribute('group-logo');
                 if (!empty($group_logo) && $parent_group->get_icon_url() === Default_Group::DEFAULT_GROUP_ICON) {
                     if (!preg_match(HTTP_PATTERN, $group_logo)) {
-                        if (!empty($icon_url_base)) {
-                            $group_logo = $icon_url_base . $group_logo;
+                        if (!empty($icon_base_url)) {
+                            $group_logo = $icon_base_url . $group_logo;
                         } else {
                             $group_logo = Default_Group::DEFAULT_GROUP_ICON;
                         }
