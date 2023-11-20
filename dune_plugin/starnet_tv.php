@@ -611,10 +611,6 @@ class Starnet_Tv implements User_Input_Handler
         if (!empty($icon_base_url)) {
             hd_debug_print("Using base url for icons: $icon_base_url");
         }
-        $icon_base_template = $this->m3u_parser->getHeaderAttribute('tvg-logo', Entry::TAG_EXTM3U);
-        if (!empty($icon_base_template)) {
-            hd_debug_print("Using base template for icons: $icon_base_template");
-        }
 
         $this->plugin->vod = null;
         if (is_null($provider)) {
@@ -811,8 +807,6 @@ class Starnet_Tv implements User_Input_Handler
                 $playlist_icon = $entry->getEntryIcon();
                 if (!empty($icon_base_url) && !preg_match(HTTP_PATTERN, $playlist_icon)) {
                     $playlist_icon = $icon_base_url . $playlist_icon;
-                } else if (!empty($icon_base_template)) {
-                    $playlist_icon = str_replace('%tvg%', $epg_ids['tvg-id'], $icon_base_template);
                 }
 
                 $xmltv_icon = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
