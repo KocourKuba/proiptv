@@ -1303,7 +1303,7 @@ class Starnet_Tv implements User_Input_Handler
         /** @var Group $group */
         foreach ($groups_order as $id) {
             $group = $this->get_any_group($id);
-            if (is_null($group) || $group->is_disabled()) continue;
+            if (is_null($group) || $group->is_disabled() || ($id !== ALL_CHANNEL_GROUP_ID && $group->get_items_order()->size() === 0)) continue;
 
             $group_icon = $group->get_icon_url();
             $groups[] = array(
