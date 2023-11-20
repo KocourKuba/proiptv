@@ -104,10 +104,17 @@ class M3uParser extends Json_Serializer
         $entry = new Entry();
         foreach($this->m3u_file as $line) {
             // something wrong or not supported
-            if ($this->parseLine($line, $entry)) {
-                // stream url
-                $this->m3u_entries[] = $entry;
-                $entry = new Entry();
+            switch ($this->parseLine($line, $entry)) {
+                case 1: // parse done
+                    $this->m3u_entries[] = $entry;
+                    $entry = new Entry();
+                    break;
+                case 2: // parse m3u header done
+                    $this->m3u_info = $entry;
+                    $entry = new Entry();
+                    break;
+                default: // parse fail or parse partial, continue parse with same entry
+                    break;
             }
         }
 
@@ -184,13 +191,17 @@ class M3uParser extends Json_Serializer
         $entry = new Entry();
         foreach($lines as $line) {
             // if parsed line is not path or is not header tag parse next line
-            if ($this->parseLine($line, $entry)) {
-                if ($entry->isM3U_Header()) {
-                    $this->m3u_info = $entry;
-                } else {
+            switch ($this->parseLine($line, $entry)) {
+                case 1: // parse done
                     $this->m3u_entries[] = $entry;
-                }
-                $entry = new Entry();
+                    $entry = new Entry();
+                    break;
+                case 2: // parse m3u header done
+                    $this->m3u_info = $entry;
+                    $entry = new Entry();
+                    break;
+                default: // parse fail or parse partial, continue parse with same entry
+                    break;
             }
         }
 
@@ -261,23 +272,23 @@ class M3uParser extends Json_Serializer
      *
      * @param string $line
      * @param Entry& $entry
-     * @return bool
+     * @return int
      */
     protected function parseLine($line, &$entry)
     {
         $line = trim($line);
         if (empty($line)) {
-            return false;
+            return -1;
         }
 
         $tag = $entry->parseExtTag($line, true);
         if (is_null($tag)) {
             // untagged line must be a stream url
             $entry->setPath($line);
-            return true;
+            return 1;
         }
 
-        return $entry->isM3U_Header();
+        return $entry->isM3U_Header() ? 2 : 0;
     }
 
     /**
@@ -296,10 +307,6 @@ class M3uParser extends Json_Serializer
         }
 
         $tag = $entry->parseExtTag($line, false);
-        if (LogSeverity::$is_debug) {
-            hd_debug_print(serialize($tag));
-        }
-
         if (is_null($tag)) {
             // untagged line must be a stream url
             $entry->setPath($line);

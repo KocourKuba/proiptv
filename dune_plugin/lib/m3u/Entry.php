@@ -280,12 +280,12 @@ class Entry extends Json_Serializer
     public function getEntryId()
     {
         /*
-         * Tags used to get entry ID
+         * Attributes used to get entry ID
 		 * "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
          */
-        static $tags = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number");
+        static $attrs = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number");
 
-        return $this->getAnyEntryAttribute($tags);
+        return $this->getAnyEntryAttribute($attrs);
     }
 
     /**
@@ -296,12 +296,12 @@ class Entry extends Json_Serializer
     public function getEntryIcon()
     {
         /*
-         * attributes contains picon information
+         * Attributes contains picon information
 		 * "tvg-logo", "url-logo"
          */
-        static $tags = array("tvg-logo", "url-logo");
+        static $attrs = array("tvg-logo", "url-logo");
 
-        return $this->getAnyEntryAttribute($tags);
+        return $this->getAnyEntryAttribute($attrs);
     }
 
     /**
@@ -312,7 +312,7 @@ class Entry extends Json_Serializer
     public function getCatchup()
     {
         /*
-         * attributes contains catchup information
+         * Attributes contains catchup information
 		 * "catchup", "catchup-type"
          */
         static $attrs = array("catchup", "catchup-type");
@@ -344,7 +344,7 @@ class Entry extends Json_Serializer
     public function getEpgSources()
     {
         /*
-         * attributes contains xmltv epg sources
+         * Attributes contains xmltv epg sources
 		 * "catchup", "catchup-type"
          */
         static $attrs = array("url-tvg", "x-tvg-url");
