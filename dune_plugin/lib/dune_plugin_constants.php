@@ -177,8 +177,7 @@ const PROVIDER_TYPE_EDEM = 'edem';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
 const ENGINE_JSON = 'json';
-const ENGINE_SQLITE = 'sqlite';
-const ENGINE_LEGACY = 'legacy';
+const ENGINE_XMLTV = 'xmltv';
 const EPG_CACHE_SUBDIR = 'epg_cache';
 const HISTORY_SUBDIR = 'history';
 const EPG_FUZZY_SEARCH = 1;

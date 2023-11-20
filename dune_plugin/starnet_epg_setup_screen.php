@@ -81,24 +81,21 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // EPG cache engine
-        $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
-        if (class_exists('SQLite3')) {
-            $cache_engine[ENGINE_SQLITE] = TR::t('setup_epg_cache_sqlite');
-            $cache_engine[ENGINE_LEGACY] = TR::t('setup_epg_cache_legacy');
-            $provider = $this->plugin->get_current_provider();
-            if (!is_null($provider)) {
-                $epg_preset = $provider->getProviderConfigValue('epg_preset');
-                if (!empty($epg_preset)) {
-                    $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json');
-                }
+        $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        $cache_engine[ENGINE_XMLTV] = TR::t('setup_epg_cache_xmltv');
+        $provider = $this->plugin->get_current_provider();
+        if (!is_null($provider)) {
+            $epg_preset = $provider->getProviderConfigValue('epg_preset');
+            if (!empty($epg_preset)) {
+                $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json');
             }
-
-            Control_Factory::add_combobox($defs, $this, null,
-                PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
-                $engine, $cache_engine, self::CONTROLS_WIDTH, true);
         }
 
-        if ($engine !== ENGINE_JSON) {
+        Control_Factory::add_combobox($defs, $this, null,
+            PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
+            $engine, $cache_engine, self::CONTROLS_WIDTH, true);
+
+        if ($engine === ENGINE_XMLTV) {
             //////////////////////////////////////
             // EPG cache
             $epg_cache_ops = array();

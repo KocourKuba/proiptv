@@ -1537,7 +1537,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $this->epg_manager = null;
         $engine_class = 'Epg_Manager';
-        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE);
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         if ($engine === ENGINE_JSON) {
             $provider = $this->get_current_provider();
             if (!is_null($provider)) {
@@ -1547,7 +1547,7 @@ class Default_Dune_Plugin implements DunePlugin
                     $engine_class = 'Epg_Manager_Json';
                 }
             }
-        } else if ($engine === ENGINE_SQLITE && class_exists('SQLite3')) {
+        } else if (class_exists('SQLite3')) {
             $engine_class = 'Epg_Manager_Sql';
         }
 
@@ -1560,10 +1560,8 @@ class Default_Dune_Plugin implements DunePlugin
         $this->epg_manager->set_cache_ttl($this->get_setting(PARAM_EPG_CACHE_TTL, 3));
         switch ($engine_class) {
             case 'Epg_Manager':
-                return ENGINE_LEGACY;
-
             case 'Epg_Manager_Sql':
-                return ENGINE_SQLITE;
+                return ENGINE_XMLTV;
 
             case 'Epg_Manager_Json':
                 return ENGINE_JSON;
@@ -1753,7 +1751,7 @@ class Default_Dune_Plugin implements DunePlugin
             'log_file' => $this->get_epg_manager()->get_cache_stem('.log'),
             'version' => $this->plugin_info['app_version'],
             'cache_dir' => $this->get_cache_dir(),
-            'cache_engine' => $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_SQLITE),
+            'cache_engine' => $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV),
             'cache_ttl' => $this->get_setting(PARAM_EPG_CACHE_TTL, 3),
             'xmltv_url' => $this->get_active_xmltv_source(),
         );

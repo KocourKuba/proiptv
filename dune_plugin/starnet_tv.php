@@ -536,7 +536,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->create_screen_views();
 
         $provider = $this->plugin->get_current_provider();
-        $is_xml_engine = ($epg_engine !== ENGINE_JSON);
+        $is_xml_engine = ($epg_engine === ENGINE_XMLTV);
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
@@ -1040,7 +1040,7 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
         HD::ShowMemoryUsage();
 
-        if ($epg_engine !== ENGINE_JSON && $epg_manager->is_xmltv_cache_valid() === 1) {
+        if ($epg_engine === ENGINE_XMLTV && $epg_manager->is_xmltv_cache_valid() === 1) {
             hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
             $this->plugin->start_bg_indexing();
             sleep(1);

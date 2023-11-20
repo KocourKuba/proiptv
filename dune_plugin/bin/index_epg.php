@@ -38,10 +38,12 @@ hd_print("Log: $LOG_FILE");
 
 set_debug_log($config->debug);
 
-if ($config->cache_engine === ENGINE_SQLITE) {
-    $epg_man = new Epg_Manager_Sql($config->version, $config->cache_dir, $config->xmltv_url);
-} else if ($config->cache_engine === ENGINE_LEGACY) {
-    $epg_man = new Epg_Manager($config->version, $config->cache_dir, $config->xmltv_url);
+if ($config->cache_engine === ENGINE_XMLTV) {
+    if (class_exists('SQLite3')) {
+        $epg_man = new Epg_Manager_Sql($config->version, $config->cache_dir, $config->xmltv_url);
+    } else {
+        $epg_man = new Epg_Manager($config->version, $config->cache_dir, $config->xmltv_url);
+    }
 } else {
     hd_debug_print("This manager do not requires run in background");
     return;
