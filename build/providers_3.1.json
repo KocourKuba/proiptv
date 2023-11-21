@@ -151,12 +151,12 @@
       "id": "glanz",
       "name": "Glanz",
       "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
-      "playlist_source": "http://pl.ottg.cc/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output=hls",
+      "playlist_source": "http://pl.ottg.tv/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output=hls",
       "provider_config": {
         "provider_type": "login",
         "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+$",
         "vod_custom": true,
-        "vod_source": "http://api.ottg.cc/playlist/vod?login={LOGIN}&password={PASSWORD}"
+        "vod_source": "http://api.ottg.tv/playlist/vod?login={LOGIN}&password={PASSWORD}"
       }
     },
     {
@@ -316,7 +316,7 @@
       "playlist_source": "http://www.sharavoz.tv/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
       "provider_config": {
         "provider_type": "pin",
-        "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$"
+        "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\?.+$"
       }
     },
     {
@@ -361,7 +361,7 @@
       "playlist_source": "http://celn.shott.top/p/{TOKEN}",
       "provider_config": {
         "provider_type": "login-token",
-        "id_parser": "^https?:\\/\\/(?:.+)\\/iptv\\/(?:.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
+        "id_map": "tvg-id",
         "provider_info_url": "http://api.iptv.so/0.9/json/account?token={TOKEN}"
       }
     },

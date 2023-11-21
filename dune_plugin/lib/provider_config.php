@@ -291,9 +291,10 @@ class Provider_Config
             MACRO_SUBDOMAIN,
             MACRO_OTTKEY,
             MACRO_TOKEN,
-            MACRO_DEVICE,
-            MACRO_SERVER,
-            MACRO_QUALITY,
+            MACRO_DOMAIN_ID,
+            MACRO_DEVICE_ID,
+            MACRO_SERVER_ID,
+            MACRO_QUALITY_ID,
             MACRO_VPORTAL,
         );
 

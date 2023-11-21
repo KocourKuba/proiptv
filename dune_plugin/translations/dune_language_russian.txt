@@ -68,6 +68,7 @@ token = Пин/Токен
 subdomain = Домен
 ottkey = OTT ключ
 vportal = VPortal
+domain = Домен
 device = Устройство
 devices = Устройств
 server = Сервер
@@ -90,6 +91,7 @@ type = Тип
 city = Город
 playlist_picons = Плейлист
 xmltv_picons = XMLTV
+edit_account = Редактировать настройки провайдера
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное

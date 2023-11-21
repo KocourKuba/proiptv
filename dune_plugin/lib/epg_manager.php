@@ -253,11 +253,26 @@ class Epg_Manager
                 ));
             }
 
-            if (!($this->flags & EPG_FAKE_EPG) || $channel->get_archive() === 0) {
-                hd_debug_print("No EPG for channel");
-                return $day_epg;
-            }
+            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
+        }
 
+        hd_debug_print("Total EPG entries loaded: " . count($day_epg));
+        ksort($day_epg);
+        hd_debug_print("Entries collected in: " . (microtime(true) - $t) . " secs");
+
+        return $day_epg;
+    }
+
+
+    /**
+     * @param Channel $channel
+     * @param $day_start_ts
+     * @param array $day_epg
+     * @return array
+     */
+    protected function getFakeEpg(Channel $channel, $day_start_ts, array $day_epg)
+    {
+        if (($this->flags & EPG_FAKE_EPG) && $channel->get_archive() !== 0) {
             hd_debug_print("Create fake data for non existing EPG data");
             for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
                 $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
@@ -265,11 +280,8 @@ class Epg_Manager
                 $day_epg[$start][Epg_Params::EPG_DESC] = '';
             }
         } else {
-            hd_debug_print("Total EPG entries loaded: " . count($day_epg));
-            ksort($day_epg);
+            hd_debug_print("No EPG for channel: {$channel->get_id()}");
         }
-
-        hd_debug_print("Entries collected in: " . (microtime(true) - $t) . " secs");
 
         return $day_epg;
     }

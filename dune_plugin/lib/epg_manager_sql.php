@@ -299,7 +299,7 @@ class Epg_Manager_Sql extends Epg_Manager
                 if (!is_null($channels_db)) {
                     $stm = $channels_db->prepare('SELECT DISTINCT channel_id FROM channels WHERE alias=:alias;');
                     $stm->bindValue(":alias", $channel_title);
-                    hd_debug_print("Search channel_id by: $channel_title");
+                    hd_debug_print("Search by channel title: $channel_title");
 
                     $res = $stm->execute();
                     if ($res) {
@@ -310,7 +310,7 @@ class Epg_Manager_Sql extends Epg_Manager
                 }
             }
 
-            $epg_ids = array_unique($epg_ids);
+            $epg_ids = array_unique(array_values($epg_ids));
             $channel_id = $channel->get_id();
             if (!empty($epg_ids)) {
                 hd_debug_print("Load position indexes for: $channel_id ($channel_title), search epg id's: " . raw_json_encode($epg_ids));
@@ -323,7 +323,7 @@ class Epg_Manager_Sql extends Epg_Manager
 
                     $res = $stmt->execute();
                     if (!$res) {
-                        throw new Exception("Query failed for epg $channel_id ($channel_title)");
+                        throw new Exception("Query failed for epg's: " . raw_json_encode($epg_ids) . " ($channel_title)");
                     }
 
                     while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
@@ -337,7 +337,7 @@ class Epg_Manager_Sql extends Epg_Manager
             }
 
             if (empty($channel_position)) {
-                throw new Exception("No positions for epg $channel_id ($channel_title)");
+                throw new Exception("No positions for channel $channel_id ($channel_title) and epg id's: ". raw_json_encode($epg_ids));
             }
 
         } catch (Exception $ex) {

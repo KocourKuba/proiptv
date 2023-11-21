@@ -184,7 +184,7 @@ class HD
     /**
      * @param $url string
      * @param $opts array
-     * @param null $http_code
+     * @param $info array
      * @return bool|string
      * @throws Exception
      */

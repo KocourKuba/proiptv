@@ -49,36 +49,29 @@ class Epg_Manager_Json extends Epg_Manager
     }
 
     /**
-     * try to load epg from cache otherwise request it from server
-     * store parsed response to the cache
-     * @param Channel $channel
-     * @param int $day_start_ts
-     * @return array|false
+     * @inheritDoc
      */
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
+        $day_epg = array();
         $epg_ids = $channel->get_epg_ids();
-        if (empty($epg_ids)) {
-            hd_debug_print("EPG ID not defined");
-            return false;
-        }
 
         $provider = $this->plugin->get_current_provider();
         if (is_null($provider)) {
             hd_debug_print("Not supported provider");
-            return false;
+            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
         }
 
         $preset_name = $provider->getProviderConfigValue('epg_preset');
         if (empty($preset_name)) {
             hd_debug_print("No preset for selected provider");
-            return false;
+            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
         }
 
         $preset = $this->plugin->get_epg_preset($preset_name);
         if (empty($preset)) {
             hd_debug_print("Unknown preset: $preset");
-            return false;
+            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
         }
 
         $epg_url = $preset['json_source'];
@@ -99,15 +92,15 @@ class Epg_Manager_Json extends Epg_Manager
         if (strpos($epg_url, '{ID}') !== false) {
             hd_debug_print("using ID: {$channel->get_id()}", true);
             $epg_url = str_replace('{ID}', $channel->get_id(), $epg_url);
+            $epg_ids['tvg-id'] = $channel->get_id();
         }
 
-        $day_epg = array();
         $key = 'tvg-id';
         if (!isset($epg_ids[$key])) {
             $key = 'tvg-name';
             if (!isset($epg_ids[$key])) {
                 hd_debug_print("No EPG ID defined");
-                return false;
+                return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
             }
         }
 
@@ -140,20 +133,21 @@ class Epg_Manager_Json extends Epg_Manager
 
         $epg_id = str_replace(' ', '%20', $epg_id);
         $epg_url = str_replace(array('{EPG_ID}', '#'), array($epg_id, '%23'), $epg_url);
-        $hash = hash('crc32', $epg_url);
-
-        $epg_cache_file = $this->get_cache_stem("_$hash.cache");
+        $epg_cache_file = get_temp_path(Hashed_Array::hash($epg_url) . ".cache");
         $from_cache = false;
         $all_epg = array();
         if (file_exists($epg_cache_file)) {
             $now = time();
-            $cache_expired = filemtime($epg_cache_file) + 3600;
-            if ($cache_expired > time()) {
-                $all_epg = unserialize(file_get_contents($epg_cache_file));
+            $check_time_file = filemtime($epg_cache_file);
+            $file_time = date("H:i", $check_time_file);
+            $expiration_time = date("H:i", $check_time_file + 3600);
+            if ($check_time_file + 3600 > time()) {
+                $all_epg = HD::ReadContentFromFile($epg_cache_file);
                 $from_cache = true;
+                hd_debug_print("Cached file: $epg_cache_file is not expired $file_time date expiration: $expiration_time");
                 hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
             } else {
-                hd_debug_print("Cache expired at $cache_expired now $now");
+                hd_debug_print("Cache expired at $expiration_time now " . date("H:i", $now));
                 unlink($epg_cache_file);
             }
         }
@@ -163,51 +157,39 @@ class Epg_Manager_Json extends Epg_Manager
             $all_epg = self::get_epg_json($epg_url, $preset);
             if (!empty($all_epg)) {
                 hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
-                file_put_contents($epg_cache_file, serialize($all_epg));
+                HD::StoreContentToFile($epg_cache_file, $all_epg);
             }
         }
 
         $counts = count($all_epg);
-        if ($counts !== 0) {
-            hd_debug_print("Total $counts EPG entries loaded");
+        if ($counts === 0) {
+            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
+        }
 
-            // filter out epg only for selected day
-            $day_end_ts = $day_start_ts + 86400;
+        hd_debug_print("Total $counts EPG entries loaded");
 
-            if (LogSeverity::$is_debug) {
-                $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
-                $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-                hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
-            }
+        // filter out epg only for selected day
+        $day_end_ts = $day_start_ts + 86400;
 
-            foreach ($all_epg as $time_start => $entry) {
-                if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
-                    $day_epg[$time_start] = $entry;
-                }
-            }
+        if (LogSeverity::$is_debug) {
+            $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
+            $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
+            hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
+        }
 
-            if (!empty($day_epg)) {
-                hd_debug_print("Store day epg to memory cache");
-                $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
-                return $day_epg;
+        foreach ($all_epg as $time_start => $entry) {
+            if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
+                $day_epg[$time_start] = $entry;
             }
         }
 
-        hd_debug_print("No EPG data for " . $channel->get_id());
-
-        if (($this->flags & EPG_FAKE_EPG) && $channel->get_archive() !== 0) {
-            hd_debug_print("Create fake data for non existing EPG data");
-            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
-                $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
-                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load_string('fake_epg_program') . " $n";
-                $day_epg[$start][Epg_Params::EPG_DESC] = '';
-            }
-        } else {
-            hd_debug_print("No EPG for channel");
+        if (!empty($day_epg)) {
+            hd_debug_print("Store day epg to memory cache");
+            $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
         }
 
         return $day_epg;
-    }
+     }
 
     /**
      * request server for epg and parse json response

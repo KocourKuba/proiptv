@@ -538,21 +538,27 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("day_start timestamp: $day_start_tm_sec (" . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ")");
             }
 
-            foreach ($this->epg_manager->get_day_epg_items($channel, $day_start_tm_sec) as $time => $value) {
-                $tm_start = (int)$time + $time_shift;
-                $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
-                $day_epg[] = array(
-                    PluginTvEpgProgram::start_tm_sec => $tm_start,
-                    PluginTvEpgProgram::end_tm_sec => $tm_end,
-                    PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
-                    PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
-                );
+            $items = $this->epg_manager->get_day_epg_items($channel, $day_start_tm_sec);
 
-                if (LogSeverity::$is_debug) {
-                    hd_debug_print(format_datetime("m-d H:i", $tm_start)
-                        . " - " . format_datetime("m-d H:i", $tm_end)
-                        . " {$value[Epg_Params::EPG_NAME]}"
+            foreach ($items as $time => $value) {
+                if (isset($value[Epg_Params::EPG_END], $value[Epg_Params::EPG_NAME], $value[Epg_Params::EPG_DESC])) {
+                    $tm_start = (int)$time + $time_shift;
+                    $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
+                    $day_epg[] = array(
+                        PluginTvEpgProgram::start_tm_sec => $tm_start,
+                        PluginTvEpgProgram::end_tm_sec => $tm_end,
+                        PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
+                        PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
                     );
+
+                    if (LogSeverity::$is_debug) {
+                        hd_debug_print(format_datetime("m-d H:i", $tm_start)
+                            . " - " . format_datetime("m-d H:i", $tm_end)
+                            . " {$value[Epg_Params::EPG_NAME]}"
+                        );
+                    }
+                } else {
+                    hd_debug_print("malformed epg data: " . raw_json_encode($value));
                 }
             }
         } catch (Exception $ex) {
@@ -1511,16 +1517,44 @@ class Default_Dune_Plugin implements DunePlugin
                 return null;
         }
 
+        $domains = $provider->getProviderConfigValue('domains');
+        if (!empty($domains)) {
+            $provider->setCredential(MACRO_DOMAIN_ID, reset($domains));
+            hd_debug_print("init default domain: " . $provider->getCredential(MACRO_DOMAIN_ID), true);
+        }
+        $servers = $provider->getProviderConfigValue('servers');
+        if (!empty($servers)) {
+            $provider->setCredential(MACRO_SERVER_ID, reset($servers));
+            hd_debug_print("init default server: " . $provider->getCredential(MACRO_SERVER_ID), true);
+        }
+        $devices = $provider->getProviderConfigValue('devices');
+        if (!empty($devices)) {
+            $provider->setCredential(MACRO_DEVICE_ID, reset($devices));
+            hd_debug_print("init default device: " . $provider->getCredential(MACRO_DEVICE_ID), true);
+        }
+        $qualities = $provider->getProviderConfigValue('qualities');
+        if (!empty($qualities)) {
+            $provider->setCredential(MACRO_QUALITY_ID, reset($qualities));
+            hd_debug_print("init default quality: " . $provider->getCredential(MACRO_QUALITY_ID), true);
+        }
+
         foreach($info->params as $key => $item) {
             switch($key) {
-                case MACRO_SERVER:
-                    $provider->setCredential(MACRO_SERVER, $item);
+                case MACRO_DOMAIN_ID:
+                    $provider->setCredential(MACRO_DOMAIN_ID, $item);
+                    hd_debug_print("set domain: " . $provider->getCredential(MACRO_DOMAIN_ID), true);
                     break;
-                case MACRO_DEVICE:
-                    $provider->setCredential(MACRO_DEVICE, $item);
+                case MACRO_SERVER_ID:
+                    $provider->setCredential(MACRO_SERVER_ID, $item);
+                    hd_debug_print("set server: " . $provider->getCredential(MACRO_SERVER_ID), true);
                     break;
-                case MACRO_QUALITY:
-                    $provider->setCredential(MACRO_QUALITY, $item);
+                case MACRO_DEVICE_ID:
+                    $provider->setCredential(MACRO_DEVICE_ID, $item);
+                    hd_debug_print("set device: " . $provider->getCredential(MACRO_DEVICE_ID), true);
+                    break;
+                case MACRO_QUALITY_ID:
+                    $provider->setCredential(MACRO_QUALITY_ID, $item);
+                    hd_debug_print("set quality: " . $provider->getCredential(MACRO_QUALITY_ID), true);
                     break;
             }
         }
@@ -2114,7 +2148,6 @@ class Default_Dune_Plugin implements DunePlugin
             $icon = get_cached_image_path(basename($icon));
         }
 
-        hd_debug_print("icon: $icon");
         return User_Input_Handler_Registry::create_popup_item($handler, $action_id, $caption, $icon, $add_params);
     }
 
@@ -2318,11 +2351,235 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function create_plugin_title()
     {
-        $name = $this->get_current_playlist()->name;
+        $playlist = $this->get_current_playlist();
+        $name = is_null($playlist) ? '' : $playlist->name;
         $plugin_name = $this->plugin_info['app_caption'];
         $name = empty($name) ? $plugin_name : "$plugin_name ($name)";
         hd_debug_print("plugin title: $name");
         return $name;
+    }
+
+    /**
+     * @param $handler
+     * @param $user_input
+     * @return array|null
+     */
+    public function do_edit_provider_dlg($handler, $user_input)
+    {
+        hd_debug_print(null, true);
+        dump_input_handler($user_input);
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        $provider = null;
+        $id = '';
+        if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
+            $provider = $this->get_current_provider();
+            $id = $this->get_active_playlist_key();
+        } else if (isset($user_input->{PARAM_PROVIDER})) {
+            // add new provider
+            $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
+            hd_debug_print("new provider : $provider", true);
+        } else if (isset($user_input->{CONTROL_EDIT_ITEM})) {
+            // edit existing provider
+            $id = $user_input->{CONTROL_EDIT_ITEM};
+            $playlist = $this->get_playlist($id);
+            $name = $playlist->name;
+            if (!is_null($playlist)) {
+                hd_debug_print("playlist info : $playlist", true);
+                $provider = $this->init_provider($playlist);
+                hd_debug_print("existing provider : $provider", true);
+            }
+        }
+
+        if (is_null($provider)) {
+            return $defs;
+        }
+
+        if (empty($name)) {
+            $name = $provider->getName();
+        }
+
+        Control_Factory::add_text_field($defs, $handler, null,
+            CONTROL_EDIT_NAME, TR::t('name'), $name,
+            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+
+        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
+            case PROVIDER_TYPE_PIN:
+                Control_Factory::add_text_field($defs, $handler, null,
+                    CONTROL_PASSWORD, TR::t('token'), $provider->getCredential(MACRO_PASSWORD),
+                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                break;
+
+            case PROVIDER_TYPE_LOGIN:
+            case PROVIDER_TYPE_LOGIN_TOKEN:
+            case PROVIDER_TYPE_LOGIN_STOKEN:
+                Control_Factory::add_text_field($defs, $handler, null,
+                    CONTROL_LOGIN, TR::t('login'), $provider->getCredential(MACRO_LOGIN),
+                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                Control_Factory::add_text_field($defs, $handler, null,
+                    CONTROL_PASSWORD, TR::t('password'), $provider->getCredential(MACRO_PASSWORD),
+                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                break;
+
+            case PROVIDER_TYPE_EDEM:
+                $subdomain = $provider->getCredential(MACRO_SUBDOMAIN);
+                if (!empty($subdomain) && $subdomain !== $provider->getProviderConfigValue(CONFIG_SUBDOMAIN)) {
+                    Control_Factory::add_text_field($defs, $handler, null,
+                        CONTROL_OTT_SUBDOMAIN, TR::t('subdomain'), $provider->getCredential(MACRO_SUBDOMAIN),
+                        false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                }
+                Control_Factory::add_text_field($defs, $handler, null,
+                    CONTROL_OTT_KEY, TR::t('ottkey'), $provider->getCredential(MACRO_OTTKEY),
+                    false, true, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+
+                Control_Factory::add_text_field($defs, $handler, null,
+                    CONTROL_VPORTAL, TR::t('vportal'), $provider->getCredential(MACRO_VPORTAL),
+                    false, true, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                break;
+
+            default:
+                return null;
+        }
+
+        $domains = $provider->getProviderConfigValue(CONFIG_DOMAINS);
+        if (!empty($domains)) {
+            $idx = $provider->getCredential(MACRO_DOMAIN_ID);
+            if (empty($idx)) {
+                $idx = key($domains);
+            }
+
+            Control_Factory::add_combobox($defs, $handler, null, CONTROL_DOMAIN,
+                TR::t('domain'), $idx, $domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+        }
+
+        $servers = $provider->getProviderConfigValue(CONFIG_SERVERS);
+        if (!empty($servers)) {
+            $idx = $provider->getCredential(MACRO_SERVER_ID);
+            if (empty($idx)) {
+                $idx = key($servers);
+            }
+
+            Control_Factory::add_combobox($defs, $handler, null, CONTROL_SERVER,
+                TR::t('server'), $idx, $servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+        }
+
+        $devices = $provider->getProviderConfigValue(CONFIG_DEVICES);
+        if (!empty($devices)) {
+            $idx = $provider->getCredential(MACRO_DEVICE_ID);
+            if (empty($idx)) {
+                $idx = key($devices);
+            }
+
+            Control_Factory::add_combobox($defs, $handler, null, CONTROL_DEVICE,
+                TR::t('device'), $idx, $devices, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+        }
+
+        $qualities = $provider->getProviderConfigValue(CONFIG_QUALITIES);
+        if (!empty($qualities)) {
+            $idx = $provider->getCredential(MACRO_QUALITY_ID);
+            if (empty($idx)) {
+                $idx = key($qualities);
+            }
+
+            Control_Factory::add_combobox($defs, $handler, null, CONTROL_QUALITY,
+                TR::t('quality'), $idx, $qualities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+        }
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
+            array(PARAM_PROVIDER => $provider->getId(), CONTROL_EDIT_ITEM => $id),
+            ACTION_EDIT_PROVIDER_DLG_APPLY,
+            TR::t('ok'), 300);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+    }
+
+    /**
+     * @param $handler
+     * @param $user_input
+     * @param $plugin_cookies
+     * @return array|null
+     */
+    public function apply_edit_provider_dlg($handler, $user_input, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
+        if (is_null($provider)) return null;
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $item = new Named_Storage();
+        $item->type = PARAM_PROVIDER;
+        $item->name = $user_input->{CONTROL_EDIT_NAME};
+
+        $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
+        $id = $user_input->{CONTROL_EDIT_ITEM};
+        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
+            case PROVIDER_TYPE_PIN:
+                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                $id = empty($id) ? Hashed_Array::hash($params[MACRO_PASSWORD]) : $id;
+                break;
+
+            case PROVIDER_TYPE_LOGIN:
+            case PROVIDER_TYPE_LOGIN_TOKEN:
+            case PROVIDER_TYPE_LOGIN_STOKEN:
+                $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
+                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
+                break;
+
+            case PROVIDER_TYPE_EDEM:
+                if (isset($user_input->{CONTROL_OTT_SUBDOMAIN})) {
+                    $params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
+                } else {
+                    $params[MACRO_SUBDOMAIN] = $provider->getProviderConfigValue(CONFIG_SUBDOMAIN);
+                }
+                $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
+                $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
+
+                $id = empty($id) ? Hashed_Array::hash($params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;
+                break;
+
+            default:
+                return $handler->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+        }
+
+        if (isset($user_input->{CONTROL_DOMAIN})) {
+            $params[MACRO_DOMAIN_ID] = $user_input->{CONTROL_DOMAIN};
+        }
+
+        if (isset($user_input->{CONTROL_SERVER})) {
+            $params[MACRO_SERVER_ID] = $user_input->{CONTROL_SERVER};
+        }
+
+        if (isset($user_input->{CONTROL_DEVICE})) {
+            $params[MACRO_DEVICE_ID] = $user_input->{CONTROL_DEVICE};
+        }
+
+        if (isset($user_input->{CONTROL_QUALITY})) {
+            $params[MACRO_QUALITY_ID] = $user_input->{CONTROL_QUALITY};
+        }
+
+        $item->params = $params;
+
+        hd_debug_print("compiled provider info: $item->name, provider params: " . json_encode($item->params), true);
+        $this->get_playlists()->set($id, $item);
+        $this->save_settings(true);
+
+        $this->clear_playlist_cache($id);
+        if (($this->get_active_playlist_key() === $id) && $this->tv->reload_channels() === 0) {
+            return Action_Factory::invalidate_all_folders($plugin_cookies,
+                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+        }
+
+        return Action_Factory::change_behaviour($handler->get_action_map($parent_media_url, $plugin_cookies), 0,
+            $handler->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
     }
 
     /**

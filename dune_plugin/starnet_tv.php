@@ -508,6 +508,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function unload_channels()
     {
+        hd_debug_print("Unload channels", true);
         $this->groups->clear();
         $this->channels->clear();
         $this->special_groups->clear();
@@ -639,6 +640,16 @@ class Starnet_Tv implements User_Input_Handler
 
             if (empty($id_map) && empty($id_parser)) {
                 hd_debug_print("no provider specific id mapping, use M3U attributes");
+            }
+
+            $icon_template = $provider->getProviderConfigValue(CONFIG_ICON_TEMPLATE);
+            if (!empty($icon_template)) {
+                hd_debug_print("using provider ({$provider->getId()}) specific icon mapping: $icon_template");
+            }
+
+            $domain_id = $provider->getCredential(MACRO_DOMAIN_ID);
+            if (!empty($domain_id)) {
+                hd_debug_print("using provider ({$provider->getId()}) specific domain id mapping: $domain_id");
             }
 
             $vod_source = $provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
@@ -820,7 +831,20 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 if (empty($icon_url)) {
-                    $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
+                    if (!empty($icon_template)) {
+                        $icon_url = $icon_template;
+                        if (isset($m)) {
+                            $icon_url = str_replace(
+                                array(MACRO_SCHEME, MACRO_DOMAIN, MACRO_ID),
+                                array($m['scheme'], $m['domain'], $channel_id),
+                                $icon_url);
+                        }
+                        if (isset($domain_id)) {
+                            $icon_url = str_replace(MACRO_DOMAIN_ID, $domain_id, $icon_url);
+                        }
+                    } else {
+                        $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
+                    }
                 }
 
                 $used_tag = '';

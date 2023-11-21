@@ -104,6 +104,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
      */
     public function parseTagAttributes($data)
     {
+        /** @noinspection NotOptimalRegularExpressionsInspection */
         preg_match_all('/([a-zA-Z0-9\-]+?)=("[^"]+"|[^\s]+)/', $data, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $match) {

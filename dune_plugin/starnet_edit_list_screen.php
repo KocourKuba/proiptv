@@ -44,24 +44,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_CHOOSE_FILE = 'choose_file';
     const ACTION_EDIT_ITEM_DLG = 'add_url_dialog';
     const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
-    const CONTROL_URL_PATH = 'url_path';
-    const CONTROL_EDIT_NAME = 'set_item_name';
-    const CONTROL_EDIT_ACTION = 'edit_action';
-    const CONTROL_EDIT_ITEM = 'edit_item';
     const ITEM_SET_NAME = 'set_name';
     const ITEM_EDIT = 'edit';
 
     const ACTION_ADD_URL_DLG = 'add_url';
     const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
-    const ACTION_EDIT_PROVIDER_DLG_APPLY = 'select_provider_apply';
-    const CONTROL_LOGIN = 'login';
-    const CONTROL_PASSWORD = 'password';
-    const CONTROL_OTT_SUBDOMAIN = 'subdomain';
-    const CONTROL_OTT_KEY = 'ottkey';
-    const CONTROL_VPORTAL = 'vportal';
-    const CONTROL_DEVICE = 'device';
-    const CONTROL_SERVER = 'server';
-    const CONTROL_QUALITY = 'quality';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -142,7 +129,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $id = MediaURL::decode($user_input->selected_media_url)->id;
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-                $user_input->{self::CONTROL_EDIT_ITEM} = $selected_media_url->id;
+                $user_input->{CONTROL_EDIT_ITEM} = $selected_media_url->id;
 
                 /** @var Named_Storage $order */
                 $item = $this->get_edit_order($edit_list)->get($id);
@@ -153,7 +140,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($item->type === PARAM_PROVIDER) {
-                    return $this->do_edit_provider_dlg($user_input);
+                    return $this->plugin->do_edit_provider_dlg($this, $user_input);
                 }
                 return null;
 
@@ -356,10 +343,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_EDIT_PROVIDER_DLG:
-                return $this->do_edit_provider_dlg($user_input);
+                return $this->plugin->do_edit_provider_dlg($this, $user_input);
 
-            case self::ACTION_EDIT_PROVIDER_DLG_APPLY:
-                return $this->apply_edit_provider_dlg($user_input, $plugin_cookies);
+            case ACTION_EDIT_PROVIDER_DLG_APPLY:
+                $this->set_no_changes();
+                return $this->plugin->apply_edit_provider_dlg($this, $user_input, $plugin_cookies);
 
             case ACTION_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
@@ -603,17 +591,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         dump_input_handler($user_input);
         $defs = array();
 
-        if (isset($user_input->{self::CONTROL_EDIT_ITEM})) {
+        if (isset($user_input->{CONTROL_EDIT_ITEM})) {
             $order = $this->get_edit_order(MediaURL::decode($user_input->parent_media_url)->edit_list);
             /** @var Named_Storage $item */
-            $item = $order->get($user_input->{self::CONTROL_EDIT_ITEM});
+            $item = $order->get($user_input->{CONTROL_EDIT_ITEM});
             if (is_null($item)) {
                 return $defs;
             }
             $window_title = TR::t('edit_list_edit_item');
             $name = $item->name;
             $url = $item->params['uri'];
-            $param = array(self::CONTROL_EDIT_ACTION => self::CONTROL_EDIT_ITEM);
+            $param = array(CONTROL_EDIT_ACTION => CONTROL_EDIT_ITEM);
         } else {
             $window_title = TR::t('edit_list_add_url');
             $name = '';
@@ -623,10 +611,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         Control_Factory::add_vgap($defs, 20);
 
-        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_EDIT_NAME, TR::t('name'),
+        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, TR::t('name'),
             $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
 
-        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_URL_PATH, TR::t('url'),
+        Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
             $url, false, false, false, true, self::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
@@ -655,8 +643,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         /** @var Hashed_Array $order */
         $order = &$this->get_edit_order($edit_list);
 
-        $url = isset($user_input->{self::CONTROL_URL_PATH}) ? $user_input->{self::CONTROL_URL_PATH} : '';
-        $name = isset($user_input->{self::CONTROL_EDIT_NAME}) ? $user_input->{self::CONTROL_EDIT_NAME} : '';
+        $url = isset($user_input->{CONTROL_URL_PATH}) ? $user_input->{CONTROL_URL_PATH} : '';
+        $name = isset($user_input->{CONTROL_EDIT_NAME}) ? $user_input->{CONTROL_EDIT_NAME} : '';
 
         if (empty($name)) {
             if (($pos = strpos($name, '?')) !== false) {
@@ -665,7 +653,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $name = ($edit_list === self::SCREEN_EDIT_PLAYLIST) ? basename($name) : $url;
         }
 
-        if (isset($user_input->{self::CONTROL_EDIT_ACTION})) {
+        if (isset($user_input->{CONTROL_EDIT_ACTION})) {
             // edit existing url
             $id = MediaURL::decode($user_input->selected_media_url)->id;
             /** @var Named_Storage $playlist */
@@ -816,19 +804,24 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                 break;
                         }
 
+                        $domains = $provider->getProviderConfigValue(CONFIG_DOMAINS);
+                        if (!empty($domains)) {
+                            $playlist->params[CONFIG_DOMAINS] = key($domains);
+                        }
+
                         $servers = $provider->getProviderConfigValue(CONFIG_SERVERS);
                         if (!empty($servers)) {
-                            $playlist->params[MACRO_SERVER] = key($servers);
+                            $playlist->params[MACRO_SERVER_ID] = key($servers);
                         }
 
                         $devices = $provider->getProviderConfigValue(CONFIG_DEVICES);
                         if (!empty($devices)) {
-                            $playlist->params[MACRO_DEVICE] = key($devices);
+                            $playlist->params[MACRO_DEVICE_ID] = key($devices);
                         }
 
                         $qualities = $provider->getProviderConfigValue(CONFIG_QUALITIES);
                         if (!empty($qualities)) {
-                            $playlist->params[MACRO_QUALITY] = key($qualities);
+                            $playlist->params[MACRO_QUALITY_ID] = key($qualities);
                         }
 
                         $hash = "{$provider->getId()}_$hash";
@@ -960,212 +953,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             Action_Factory::close_and_run(
                 Action_Factory::open_folder($parent_media_url->get_media_url_str(), $window_title))
         );
-    }
-
-    /**
-     * @param $user_input
-     * @return array|null
-     */
-    protected function do_edit_provider_dlg($user_input)
-    {
-        hd_debug_print(null, true);
-        dump_input_handler($user_input);
-
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
-        $provider = null;
-        $id = '';
-        if (isset($user_input->{PARAM_PROVIDER})) {
-            // add new provider
-            $provider = $this->plugin->get_provider($user_input->{PARAM_PROVIDER});
-            hd_debug_print("new provider : $provider", true);
-        } else if (isset($user_input->{self::CONTROL_EDIT_ITEM})) {
-            // edit existing provider
-            $id = $user_input->{self::CONTROL_EDIT_ITEM};
-            $playlist = $this->plugin->get_playlist($id);
-            $name = $playlist->name;
-            if (!is_null($playlist)) {
-                hd_debug_print("playlist info : $playlist", true);
-                $provider = $this->plugin->init_provider($playlist);
-                hd_debug_print("existing provider : $provider", true);
-            }
-
-        }
-
-        if (is_null($provider)) {
-            return $defs;
-        }
-
-        if (empty($name)) {
-            $name = $provider->getName();
-        }
-
-        Control_Factory::add_text_field($defs, $this, null,
-            self::CONTROL_EDIT_NAME, TR::t('name'), $name,
-            false, false, false, true, self::DLG_CONTROLS_WIDTH);
-
-        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
-            case PROVIDER_TYPE_PIN:
-                Control_Factory::add_text_field($defs, $this, null,
-                    self::CONTROL_PASSWORD, TR::t('token'), $provider->getCredential(MACRO_PASSWORD),
-                    false, false, false, true, self::DLG_CONTROLS_WIDTH);
-                break;
-
-            case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
-                Control_Factory::add_text_field($defs, $this, null,
-                    self::CONTROL_LOGIN, TR::t('login'), $provider->getCredential(MACRO_LOGIN),
-                    false, false, false, true, self::DLG_CONTROLS_WIDTH);
-                Control_Factory::add_text_field($defs, $this, null,
-                    self::CONTROL_PASSWORD, TR::t('password'), $provider->getCredential(MACRO_PASSWORD),
-                    false, false, false, true, self::DLG_CONTROLS_WIDTH);
-                break;
-
-            case PROVIDER_TYPE_EDEM:
-                $subdomain = $provider->getCredential(MACRO_SUBDOMAIN);
-                if (!empty($subdomain) && $subdomain !== $provider->getProviderConfigValue(CONFIG_DOMAIN)) {
-                    Control_Factory::add_text_field($defs, $this, null,
-                        self::CONTROL_OTT_SUBDOMAIN, TR::t('subdomain'), $provider->getCredential(MACRO_SUBDOMAIN),
-                        false, false, false, true, self::DLG_CONTROLS_WIDTH);
-                }
-                Control_Factory::add_text_field($defs, $this, null,
-                    self::CONTROL_OTT_KEY, TR::t('ottkey'), $provider->getCredential(MACRO_OTTKEY),
-                    false, true, false, true, self::DLG_CONTROLS_WIDTH);
-
-                Control_Factory::add_text_field($defs, $this, null,
-                    self::CONTROL_VPORTAL, TR::t('vportal'), $provider->getCredential(MACRO_VPORTAL),
-                    false, true, false, true, self::DLG_CONTROLS_WIDTH);
-                break;
-
-            default:
-                return null;
-        }
-
-        $servers = $provider->getProviderConfigValue(CONFIG_SERVERS);
-        if (!empty($servers)) {
-            $idx = $provider->getCredential(MACRO_SERVER);
-            if (empty($idx)) {
-                $idx = key($servers);
-            }
-
-            Control_Factory::add_combobox($defs, $this, null, self::CONTROL_SERVER,
-                TR::t('server'), $idx, $servers, self::DLG_CONTROLS_WIDTH, true);
-        }
-
-        $devices = $provider->getProviderConfigValue(CONFIG_DEVICES);
-        if (!empty($devices)) {
-            $idx = $provider->getCredential(MACRO_DEVICE);
-            if (empty($idx)) {
-                $idx = key($devices);
-            }
-
-            Control_Factory::add_combobox($defs, $this, null, self::CONTROL_DEVICE,
-                TR::t('device'), $idx, $devices, self::DLG_CONTROLS_WIDTH, true);
-        }
-
-        $qualities = $provider->getProviderConfigValue(CONFIG_QUALITIES);
-        if (!empty($qualities)) {
-            $idx = $provider->getCredential(MACRO_QUALITY);
-            if (empty($idx)) {
-                $idx = key($qualities);
-            }
-
-            Control_Factory::add_combobox($defs, $this, null, self::CONTROL_QUALITY,
-                TR::t('quality'), $idx, $qualities, self::DLG_CONTROLS_WIDTH, true);
-        }
-
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this,
-            array(PARAM_PROVIDER => $provider->getId(), self::CONTROL_EDIT_ITEM => $id),
-            self::ACTION_EDIT_PROVIDER_DLG_APPLY,
-            TR::t('ok'), 300);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
-    }
-
-    /**
-     * @param $user_input
-     * @param $plugin_cookies
-     * @return array|null
-     */
-    protected function apply_edit_provider_dlg($user_input, $plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $provider = $this->plugin->get_provider($user_input->{PARAM_PROVIDER});
-        if (is_null($provider)) return null;
-
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $item = new Named_Storage();
-        $item->type = PARAM_PROVIDER;
-        $item->name = $user_input->{self::CONTROL_EDIT_NAME};
-
-        $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
-        $id = $user_input->{self::CONTROL_EDIT_ITEM};
-        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
-            case PROVIDER_TYPE_PIN:
-                $params[MACRO_PASSWORD] = $user_input->{self::CONTROL_PASSWORD};
-                $id = empty($id) ? Hashed_Array::hash($params[MACRO_PASSWORD]) : $id;
-                break;
-
-            case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
-                $params[MACRO_LOGIN] = $user_input->{self::CONTROL_LOGIN};
-                $params[MACRO_PASSWORD] = $user_input->{self::CONTROL_PASSWORD};
-                $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
-                break;
-
-            case PROVIDER_TYPE_EDEM:
-                if (isset($user_input->{self::CONTROL_OTT_SUBDOMAIN})) {
-                    $params[MACRO_SUBDOMAIN] = $user_input->{self::CONTROL_OTT_SUBDOMAIN};
-                } else {
-                    $params[MACRO_SUBDOMAIN] = $provider->getProviderConfigValue(CONFIG_DOMAIN);
-                }
-                $params[MACRO_OTTKEY] = $user_input->{self::CONTROL_OTT_KEY};
-                $params[MACRO_VPORTAL] = $user_input->{self::CONTROL_VPORTAL};
-
-                $id = empty($id) ? Hashed_Array::hash($params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;
-                break;
-
-            default:
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
-        }
-
-        if (isset($user_input->{self::CONTROL_SERVER})) {
-            $params[MACRO_SERVER] = $user_input->{self::CONTROL_SERVER};
-        }
-
-        if (isset($user_input->{self::CONTROL_DEVICE})) {
-            $params[MACRO_DEVICE] = $user_input->{self::CONTROL_DEVICE};
-        }
-
-        if (isset($user_input->{self::CONTROL_QUALITY})) {
-            $params[MACRO_QUALITY] = $user_input->{self::CONTROL_QUALITY};
-        }
-
-        $item->params = $params;
-
-        hd_debug_print("compiled provider info: $item->name, provider params: " . json_encode($item->params), true);
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $this->plugin->get_playlists()->set($id, $item);
-        $this->plugin->set_dirty(true, $parent_media_url->save_data);
-        $this->force_save($user_input);
-
-        $this->plugin->clear_playlist_cache($id);
-        if (($this->plugin->get_active_playlist_key() === $id) && $this->plugin->tv->reload_channels() === 0) {
-            return Action_Factory::invalidate_all_folders($plugin_cookies,
-                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
-        }
-
-        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url,$plugin_cookies), 0,
-            $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
     }
 
     protected function force_save($user_input)

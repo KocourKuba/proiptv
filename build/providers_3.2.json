@@ -90,7 +90,7 @@
       "playlist_source": "http://only4.tv/pl/{PASSWORD}/102/only4tv.m3u8",
       "provider_config": {
         "provider_type": "pin",
-        "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
         "epg_preset": "drm",
         "epg_alias": "only4",
         "xmltv_sources": [
@@ -107,7 +107,7 @@
       "playlist_source": "http://list.1ott.net/api/{TOKEN}/high/unix.m3u8",
       "provider_config": {
         "provider_type": "login-stoken",
-        "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hlsx?\\/.+\\.m3u8$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hlsx?\\/.+\\.m3u8$",
         "token_request_url": "http://list.1ott.net/PinApi/{LOGIN}/{PASSWORD}",
         "token_response": "token",
         "epg_preset": "drm"
@@ -209,7 +209,7 @@
       "playlist_source": "http://epg.it999.ru/edem_epg_ico2.m3u8",
       "provider_config": {
         "provider_type": "edem",
-        "id_parser": "^https?:\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
         "domain": "junior.edmonst.net",
         "epg_preset": "drm",
         "vod_custom": true,
@@ -236,8 +236,6 @@
       "playlist_source": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/tv.m3u",
       "provider_config": {
         "provider_type": "login",
-        "epg_preset": "drm",
-        "epg_alias": "fox-tv",
         "vod_source": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/vodall.m3u",
         "vod_parser": "(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$"
       }
@@ -247,14 +245,21 @@
       "id": "glanz",
       "name": "Glanz",
       "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
-      "playlist_source": "http://pl.ottg.cc/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output=hls",
+      "playlist_source": "http://pl.{DOMAIN_ID}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output=hls",
       "provider_config": {
         "provider_type": "login",
-        "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$",
         "epg_preset": "drm",
         "epg_alias": "ottg",
+        "domains": {
+          "ottg.cc": "ottg.cc",
+          "ottg.in": "ottg.in",
+          "ottg.tv": "ottg.tv",
+          "ottg.space": "ottg.space",
+          "ottg.eu": "ottg.eu"
+        },
         "vod_custom": true,
-        "vod_source": "http://api.ottg.cc/playlist/vod?login={LOGIN}&password={PASSWORD}"
+        "vod_source": "http://api.{DOMAIN_ID}/playlist/vod?login={LOGIN}&password={PASSWORD}"
       }
     },
     {
@@ -265,7 +270,7 @@
       "playlist_source": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}-m3u8",
       "provider_config": {
         "provider_type": "pin",
-        "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8?$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8?$",
         "ignore_groups": ["Video on Demand","Сериалы"],
         "epg_preset": "sharaclub",
         "vod_custom": true,
@@ -281,7 +286,7 @@
       "provider_config": {
         "provider_type": "pin",
         "playlist_catchup": "flussonic",
-        "id_parser": "^https?:\\/\\/.+\\/play\\/(?<id>.+)\\/.+\\/.*\\.m3u8?$"
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*\\.m3u8?$"
       }
     },
     {
@@ -305,7 +310,7 @@
       "playlist_source": "http://knkp.in/{LOGIN}/{PASSWORD}/{SERVER_ID}/1",
       "provider_config": {
         "provider_type": "login",
-        "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
         "epg_preset": "drm",
         "servers": {
           "DE": "DE",
@@ -357,11 +362,16 @@
       "id": "ottclub",
       "name": "OTT Club",
       "logo": "http://iptv.esalecrm.net/res/logo_ottclub.png",
-      "playlist_source": "http://myott.top/playlist/{PASSWORD}/m3u",
+      "playlist_source": "http://{DOMAIN_ID}/playlist/{PASSWORD}/m3u",
       "provider_config": {
         "provider_type": "pin",
-        "id_parser": "^https?:\\/\\/.+\\/stream\\/.+\\/(?<id>.+)\\.m3u8?$",
-        "epg_preset": "ottclub"
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/.+\\/(?<id>.+)\\.m3u8?$",
+        "epg_preset": "ottclub",
+        "icon_template": "http://{DOMAIN_ID}/images/{ID}.png",
+        "domains": {
+          "myott.top": "myott.top",
+          "myott.tv": "myott.tv"
+        }
       }
     },
     {
@@ -411,7 +421,7 @@
       "playlist_source": "http://list.playtv.pro/tv_live-m3u8/{LOGIN}-{PASSWORD}",
       "provider_config": {
         "provider_type": "login",
-        "id_parser": "^https?:\\/\\/.+\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8$",
         "provider_info_url": "http://list.playtv.pro/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "pay_url": "http://list.playtv.pro/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "epg_preset": "sharaclub",
@@ -427,7 +437,7 @@
       "playlist_source": "http://www.sharavoz.tv/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
       "provider_config": {
         "provider_type": "pin",
-        "id_parser": "^https?:\\/\\/.+\\/(?<id>.+)\\/.+\\.m3u8\\?.+$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$",
         "epg_preset": "sharavoz"
       }
     },
@@ -439,7 +449,7 @@
       "playlist_source": "http://pl.tvshka.net/?uid={PASSWORD}&srv={SERVER_ID}&type=halva",
       "provider_config": {
         "provider_type": "pin",
-        "id_parser": "^https?:\\/\\/.+\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$",
         "epg_preset": "propg",
         "servers": {
           "0": "Server 1",
@@ -475,7 +485,7 @@
       "playlist_source": "http://celn.shott.top/p/{TOKEN}",
       "provider_config": {
         "provider_type": "login-token",
-        "id_parser": "^https?:\\/\\/(?:.+)\\/iptv\\/(?:.+)\\/(?<id>.+)\\/.*\\.m3u8?$",
+        "id_map": "tvg-id",
         "provider_info_url": "http://api.iptv.so/0.9/json/account?token={TOKEN}",
         "epg_preset": "tvclub"
       }
@@ -538,7 +548,7 @@
       "playlist_source": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}playlist.m3u8",
       "provider_config": {
         "provider_type": "login",
-        "id_parser": "^https?:\\/\\/.+\\/(?:.+\\/)?(?<id>.+)\\/.+$",
+        "id_parser": "^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+\\/)?(?<id>.+)\\/.+$",
         "epg_preset": "drm",
         "servers": {
           "/": "RU (Russia, Moscow)",

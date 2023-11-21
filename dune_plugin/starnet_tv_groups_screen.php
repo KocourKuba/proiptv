@@ -284,6 +284,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
                         }
+
+                        $menu_items[] = $this->plugin->create_menu_item($this,
+                            ACTION_EDIT_PROVIDER_DLG,
+                            TR::t('edit_account'),
+                            $provider->getLogo(),
+                            array(PARAM_PROVIDER => $provider->getId())
+                        );
                     }
 
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
@@ -315,11 +322,21 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ENGINE_XMLTV:
             case ENGINE_JSON:
-                hd_debug_print("Selected engine: $user_input->control_id", true);
-                $this->plugin->tv->unload_channels();
-                $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
-                $this->plugin->init_epg_manager();
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) !== $user_input->control_id) {
+                    hd_debug_print("Selected engine: $user_input->control_id", true);
+                    $this->plugin->tv->unload_channels();
+                    $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
+                    $this->plugin->init_epg_manager();
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                }
+                break;
+
+            case ACTION_EDIT_PROVIDER_DLG:
+                return $this->plugin->do_edit_provider_dlg($this, $user_input);
+
+            case ACTION_EDIT_PROVIDER_DLG_APPLY:
+                $this->set_no_changes();
+                return $this->plugin->apply_edit_provider_dlg($this, $user_input, $plugin_cookies);
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
