@@ -2432,11 +2432,11 @@ class Default_Dune_Plugin implements DunePlugin
                 }
                 Control_Factory::add_text_field($defs, $handler, null,
                     CONTROL_OTT_KEY, TR::t('ottkey'), $provider->getCredential(MACRO_OTTKEY),
-                    false, true, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
                 Control_Factory::add_text_field($defs, $handler, null,
                     CONTROL_VPORTAL, TR::t('vportal'), $provider->getCredential(MACRO_VPORTAL),
-                    false, true, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
                 break;
 
             default:
