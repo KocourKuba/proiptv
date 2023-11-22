@@ -145,12 +145,20 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
 
             case ACTION_SET_CURRENT:
-                $this->set_changes($parent_media_url->save_data);
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     $this->plugin->set_active_playlist_key(MediaURL::decode($user_input->selected_media_url)->id);
                 } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     $this->plugin->set_active_xmltv_source_key(MediaURL::decode($user_input->selected_media_url)->id);
+                } else {
+                    return null;
                 }
+
+                $this->force_save($user_input);
+                if ($this->plugin->tv->reload_channels() === 0) {
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+                }
+
                 break;
 
             case ACTION_ITEM_UP:
