@@ -30,6 +30,9 @@ if [ -z "$USER_AGENT" ]; then
 fi
 LOG_FILE=$4
 
-$CURL --insecure --silent --dump-header - --output "$SAVE_FILE" --location "$URL" --user-agent "$USER_AGENT" >$LOG_FILE
+echo "Download: $URL" >$LOG_FILE
+echo "UserAgent: $USER_AGENT" >>$LOG_FILE
+echo "Save to: $SAVE_FILE" >>$LOG_FILE
+$CURL --insecure --silent --dump-header - --output "$SAVE_FILE" --location "$URL" --user-agent "$USER_AGENT" >>$LOG_FILE
 
 exit;
