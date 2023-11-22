@@ -368,7 +368,7 @@ class Epg_Manager
                 unlink($tmp_filename);
             }
             $proxy_log = HD::http_save_https_proxy($this->xmltv_url, $tmp_filename);
-            if (LogSeverity::$is_debug && $proxy_log !== false) {
+            if ($proxy_log !== false) {
                 hd_debug_print("Read http_proxy log...");
                 foreach (explode("\n", $proxy_log) as $line) hd_debug_print(rtrim($line));
                 hd_debug_print("Read finished");
