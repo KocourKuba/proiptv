@@ -150,7 +150,7 @@ class Epg_Manager_Json extends Epg_Manager
         }
 
         foreach ($all_epg as $time_start => $entry) {
-            if ($time_start >= $day_start_ts - 3600 && $time_start < $day_end_ts) {
+            if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
                 $day_epg[$time_start] = $entry;
             }
         }
@@ -196,6 +196,10 @@ class Epg_Manager_Json extends Epg_Manager
             }
         }
 
+        // Possible need to add this to setup
+        // disabling end can help problem with overlapping end/start EPG
+        $parser_params[Epg_Params::EPG_END] = '';
+
         hd_debug_print("json epg root: " . $parser_params[Epg_Params::EPG_ROOT], true);
         hd_debug_print("json start: " . $parser_params[Epg_Params::EPG_START], true);
         hd_debug_print("json end: " . $parser_params[Epg_Params::EPG_END], true);
@@ -207,10 +211,6 @@ class Epg_Manager_Json extends Epg_Manager
         $no_end = empty($parser_params[Epg_Params::EPG_END]);
         foreach ($ch_data as $entry) {
             $program_start = $entry[$parser_params[Epg_Params::EPG_START]];
-            // prefill data to avoid undefined index notice
-            $channel_epg[$program_start][Epg_Params::EPG_END] = 0;
-            $channel_epg[$program_start][Epg_Params::EPG_NAME] = '';
-            $channel_epg[$program_start][Epg_Params::EPG_DESC] = '';
 
             if ($no_end) {
                 if ($prev_start !== 0) {
@@ -223,11 +223,16 @@ class Epg_Manager_Json extends Epg_Manager
 
             if (isset($entry[$parser_params[Epg_Params::EPG_NAME]])) {
                 $channel_epg[$program_start][Epg_Params::EPG_NAME] = HD::unescape_entity_string($entry[$parser_params[Epg_Params::EPG_NAME]]);
+            } else {
+                $channel_epg[$program_start][Epg_Params::EPG_NAME] = '';
             }
+
             if (isset($entry[$parser_params[Epg_Params::EPG_DESC]])) {
                 $desc = HD::unescape_entity_string($entry[$parser_params[Epg_Params::EPG_DESC]]);
                 $desc = str_replace('<br>', PHP_EOL, $desc);
                 $channel_epg[$program_start][Epg_Params::EPG_DESC] = $desc;
+            } else {
+                $channel_epg[$program_start][Epg_Params::EPG_DESC] = '';
             }
         }
 
