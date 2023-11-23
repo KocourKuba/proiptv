@@ -29,7 +29,7 @@ class vod_standard extends Abstract_Vod
     protected $plugin;
 
     /**
-     * @var Provider_Config
+     * @var api_default
      */
     protected $provider;
 
@@ -53,16 +53,6 @@ class vod_standard extends Abstract_Vod
      * @var array[]
      */
     protected $vod_m3u_indexes;
-
-    /**
-     * @var string
-     */
-    protected $vod_pattern;
-
-    /**
-     * @var string
-     */
-    protected $vod_source;
 
     /**
      * @var array
@@ -107,20 +97,15 @@ class vod_standard extends Abstract_Vod
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param Provider_Config $provider
+     * @param api_default $provider
      * @return bool
      */
     public function init_vod($provider)
     {
         $this->provider = $provider;
-        $vod_source = $provider->getApiCommand(API_COMMAND_VOD);
-        if (empty($vod_source)) {
+        if (!$provider->hasApiCommand(API_COMMAND_VOD)) {
             return false;
         }
-
-        $this->vod_source = $this->provider->replace_macros($vod_source);
-        $vod_parser = $provider->getProviderConfigValue(CONFIG_VOD_PARSER);
-        $this->vod_pattern = empty($vod_parser) ? '' : "/$vod_parser/";
 
         return true;
     }
@@ -706,13 +691,7 @@ class vod_standard extends Abstract_Vod
         }
 
         if ($need_load) {
-            $vod_source = $this->provider->getApiCommand(API_COMMAND_VOD);
-            if (empty($vod_source)) {
-                return false;
-            }
-
-            $url = $this->provider->replace_macros($vod_source);
-            $this->vod_items = HD::DownloadJson($url, false);
+            $this->vod_items = $this->provider->execApiCommand(API_COMMAND_VOD);
             if ($this->vod_items !== false) {
                 HD::StoreContentToFile($tmp_file, $this->vod_items);
             }

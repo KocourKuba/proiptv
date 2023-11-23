@@ -33,8 +33,8 @@ require_once 'default_archive.php';
 require_once 'catchup_params.php';
 require_once 'epg_manager_sql.php';
 require_once 'epg_manager_json.php';
-require_once 'provider_config.php';
 require_once 'named_storage.php';
+require_once 'api/api_default.php';
 require_once 'm3u/M3uParser.php';
 
 class Default_Dune_Plugin implements DunePlugin
@@ -146,7 +146,7 @@ class Default_Dune_Plugin implements DunePlugin
     protected $epg_presets;
 
     /**
-     * @var Named_Storage
+     * @var api_default
      */
     protected $cur_provider;
 
@@ -197,7 +197,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return Hashed_Array<Provider_Config>
+     * @return Hashed_Array<api_default>
      */
     public function get_providers()
     {
@@ -205,7 +205,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return Provider_Config|null
+     * @return api_default|null
      */
     public function get_current_provider()
     {
@@ -222,7 +222,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param Provider_Config|null $cur_provider
+     * @param api_default|null $cur_provider
      */
     public function set_current_provider($cur_provider)
     {
@@ -230,7 +230,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return Provider_Config[]
+     * @return api_default[]
      */
     public function get_enabled_providers()
     {
@@ -248,7 +248,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param string $name
-     * @return Provider_Config|null
+     * @return api_default|null
      */
     public function get_provider($name)
     {
@@ -272,9 +272,9 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        $epg_url = str_replace(MACRO_API, $provider->getApi(), $preset[EPG_JSON_SOURCE]);
+        $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $preset[EPG_JSON_SOURCE]);
         if (strpos($epg_url, MACRO_PROVIDER) !== false) {
-            $epg_alias = $provider->getProviderConfigValue(EPG_JSON_ALIAS);
+            $epg_alias = $provider->getConfigValue(EPG_JSON_ALIAS);
             $alias = empty($epg_alias) ? $provider->getId() : $epg_alias;
             hd_debug_print("using alias: $alias", true);
             $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
@@ -321,7 +321,7 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        $preset_name = $provider->getProviderConfigValue(EPG_JSON_PRESET);
+        $preset_name = $provider->getConfigValue(EPG_JSON_PRESET);
         if (empty($preset_name)) {
             hd_debug_print("No preset for selected provider");
             return null;
@@ -1346,36 +1346,38 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             foreach ($jsonArray['providers'] as $item) {
-                if (isset($item['class'])) {
-                    $config = new $item['class']();
-                } else {
-                    $config = new Provider_Config();
+                if (!isset($item['id'])) continue;
+
+                $api_class = "api_{$item['id']}";
+                if (!class_exists($api_class)) {
+                    $api_class = 'api_default';
                 }
 
+                /** @var api_default $config */
+                hd_debug_print("provider api: $api_class");
+                $provider = new $api_class($this);
                 foreach ($item as $key => $value) {
                     $words = explode('_', $key);
                     $setter = "set";
                     foreach ($words as $word) {
                         $setter .= ucwords($word);
                     }
-                    if (method_exists($config, $setter)) {
-                        $config->{$setter}($value);
+                    if (method_exists($provider, $setter)) {
+                        $provider->{$setter}($value);
                     } else {
                         hd_debug_print("Unknown method $setter", true);
                     }
                 }
 
-                if ($config->getId() !== '') {
-                    $this->providers->set($config->getId(), $config);
-                    // cache provider logo
-                    $logo = $config->getLogo();
-                    $filename = basename($logo);
-                    $cached_file = get_cached_image_path($filename);
-                    try {
-                        HD::http_save_document($logo, $cached_file);
-                    } catch (Exception $ex) {
-                        hd_debug_print("failed to download provider logo: $logo");
-                    }
+                $this->providers->set($provider->getId(), $provider);
+                // cache provider logo
+                $logo = $provider->getLogo();
+                $filename = basename($logo);
+                $cached_file = get_cached_image_path($filename);
+                try {
+                    HD::http_save_document($logo, $cached_file);
+                } catch (Exception $ex) {
+                    hd_debug_print("failed to download provider logo: $logo");
                 }
             }
         }
@@ -1532,7 +1534,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param Named_Storage $info
-     * @return Provider_Config|null
+     * @return api_default|null
      */
     public function init_provider($info)
     {
@@ -1577,45 +1579,30 @@ class Default_Dune_Plugin implements DunePlugin
                 return null;
         }
 
-        $domains = $provider->getProviderConfigValue('domains');
+        $domains = $provider->GetDomains();
         if (!empty($domains)) {
-            $provider->setCredential(MACRO_DOMAIN_ID, reset($domains));
-            hd_debug_print("init default domain: " . $provider->getCredential(MACRO_DOMAIN_ID), true);
+            $key = key($domains);
+            $provider->setCredential(MACRO_DOMAIN_ID, $key);
         }
-        $servers = $provider->getProviderConfigValue('servers');
+        $servers = $provider->GetServers();
         if (!empty($servers)) {
-            $provider->setCredential(MACRO_SERVER_ID, reset($servers));
-            hd_debug_print("init default server: " . $provider->getCredential(MACRO_SERVER_ID), true);
+            $key = key($servers);
+            $provider->setCredential(MACRO_SERVER_ID, $key);
         }
-        $devices = $provider->getProviderConfigValue('devices');
+        $devices = $provider->GetDevices();
         if (!empty($devices)) {
-            $provider->setCredential(MACRO_DEVICE_ID, reset($devices));
-            hd_debug_print("init default device: " . $provider->getCredential(MACRO_DEVICE_ID), true);
+            $key = key($devices);
+            $provider->setCredential(MACRO_DEVICE_ID, $key);
         }
-        $qualities = $provider->getProviderConfigValue('qualities');
+        $qualities = $provider->GetQualities();
         if (!empty($qualities)) {
-            $provider->setCredential(MACRO_QUALITY_ID, reset($qualities));
-            hd_debug_print("init default quality: " . $provider->getCredential(MACRO_QUALITY_ID), true);
+            $key = key($qualities);
+            $provider->setCredential(MACRO_QUALITY_ID, $key);
         }
 
         foreach($info->params as $key => $item) {
-            switch($key) {
-                case MACRO_DOMAIN_ID:
-                    $provider->setCredential(MACRO_DOMAIN_ID, $item);
-                    hd_debug_print("set domain: " . $provider->getCredential(MACRO_DOMAIN_ID), true);
-                    break;
-                case MACRO_SERVER_ID:
-                    $provider->setCredential(MACRO_SERVER_ID, $item);
-                    hd_debug_print("set server: " . $provider->getCredential(MACRO_SERVER_ID), true);
-                    break;
-                case MACRO_DEVICE_ID:
-                    $provider->setCredential(MACRO_DEVICE_ID, $item);
-                    hd_debug_print("set device: " . $provider->getCredential(MACRO_DEVICE_ID), true);
-                    break;
-                case MACRO_QUALITY_ID:
-                    $provider->setCredential(MACRO_QUALITY_ID, $item);
-                    hd_debug_print("set quality: " . $provider->getCredential(MACRO_QUALITY_ID), true);
-                    break;
+            if ($key === MACRO_DOMAIN_ID || $key === MACRO_SERVER_ID || $key === MACRO_DEVICE_ID || $key === MACRO_QUALITY_ID) {
+                $provider->setCredential($key, $item);
             }
         }
 
@@ -1633,7 +1620,7 @@ class Default_Dune_Plugin implements DunePlugin
         if ($engine === ENGINE_JSON) {
             $provider = $this->get_current_provider();
             if (!is_null($provider)) {
-                $preset = $provider->getProviderConfigValue(EPG_JSON_PRESET);
+                $preset = $provider->getConfigValue(EPG_JSON_PRESET);
                 if (!empty($preset)) {
                     hd_debug_print("Using JSON cache engine");
                     $engine_class = 'Epg_Manager_Json';
@@ -1694,35 +1681,32 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                $item = $this->get_current_playlist();
-                if (empty($item->type)) {
+                $playlist = $this->get_current_playlist();
+                if (empty($playlist->type)) {
                     hd_debug_print("Tv playlist not defined");
                     throw new Exception("Tv playlist not defined");
                 }
 
-                hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $item->name)");
-                if ($item->type === PARAM_FILE) {
-                    $contents = file_get_contents($item->params['uri']);
-                    hd_debug_print("m3u load local file {$item->params['uri']}", true);
-                } else {
-                    if ($item->type === PARAM_LINK) {
-                        if (!preg_match(HTTP_PATTERN, $item->params['uri'])) {
-                            throw new Exception("Malformed playlist url: {$item->params['uri']}");
-                        }
-                        $playlist_url = $item->params['uri'];
-                    } else if ($item->type === PARAM_PROVIDER) {
-                        $provider = $this->init_provider($item);
-                        if (is_null($provider)) {
-                            throw new Exception("Unable to init provider $item");
-                        }
-                        $provider->request_provider_token();
-                        $playlist_url = $provider->replace_macros($provider->getApiCommand(API_COMMAND_PLAYLIST));
-                    } else {
-                        throw new Exception("Unknown playlist type");
+                hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $playlist->name)");
+                if ($playlist->type === PARAM_FILE) {
+                    $contents = file_get_contents($playlist->params['uri']);
+                    hd_debug_print("m3u load local file {$playlist->params['uri']}", true);
+                } else if ($playlist->type === PARAM_LINK) {
+                    if (!preg_match(HTTP_PATTERN, $playlist->params['uri'])) {
+                        throw new Exception("Malformed playlist url: {$playlist->params['uri']}");
                     }
-
+                    $playlist_url = $playlist->params['uri'];
                     hd_debug_print("m3u download url $playlist_url", true);
                     $contents = HD::http_download_https_proxy($playlist_url);
+                } else if ($playlist->type === PARAM_PROVIDER) {
+                    $provider = $this->get_current_provider();
+                    if (is_null($provider)) {
+                        throw new Exception("Unable to init provider $playlist");
+                    }
+                    $provider->request_provider_token();
+                    $contents = $provider->execApiCommand(API_COMMAND_PLAYLIST, true);
+                } else {
+                    throw new Exception("Unknown playlist type");
                 }
 
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
@@ -1776,8 +1760,7 @@ class Default_Dune_Plugin implements DunePlugin
             return false;
         }
 
-        $vod_url = $provider->getApiCommand(API_COMMAND_VOD);
-        if (empty($vod_url)) {
+        if ($provider->hasApiCommand(API_COMMAND_VOD)) {
             return false;
         }
 
@@ -1798,8 +1781,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                hd_debug_print("vod source: $vod_url");
-                $contents = HD::http_download_https_proxy($provider->replace_macros($vod_url));
+                $contents = $provider->execApiCommand(API_COMMAND_VOD, true);
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
                     HD::set_last_error("Empty or incorrect playlist !\n\n" . $contents);
                     throw new Exception("Can't parse playlist");
@@ -1978,7 +1960,7 @@ class Default_Dune_Plugin implements DunePlugin
         if ($xmltv_sources->size() === 0) {
             $provider = $this->get_current_provider();
             if (!is_null($provider)) {
-                $sources = $provider->getProviderConfigValue(CONFIG_XMLTV_SOURCES);
+                $sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
                 if (!empty($sources)) {
                     foreach ($sources as $source) {
                         if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
@@ -2230,7 +2212,7 @@ class Default_Dune_Plugin implements DunePlugin
             $icon = null;
             $title = $item->name;
             if ($item->type === PARAM_PROVIDER) {
-                $provider = $this->init_provider($item);
+                $provider = $this->get_provider($item->params[PARAM_PROVIDER]);
                 if (!is_null($provider)) {
                     $icon = $provider->getLogo();
                     if ($item->name !== $provider->getName()) {
@@ -2443,6 +2425,7 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print("new provider : $provider", true);
         } else if (isset($user_input->{CONTROL_EDIT_ITEM})) {
             // edit existing provider
+            $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
             $id = $user_input->{CONTROL_EDIT_ITEM};
             $playlist = $this->get_playlist($id);
             $name = $playlist->name;
@@ -2485,7 +2468,7 @@ class Default_Dune_Plugin implements DunePlugin
 
             case PROVIDER_TYPE_EDEM:
                 $subdomain = $provider->getCredential(MACRO_SUBDOMAIN);
-                if (!empty($subdomain) && $subdomain !== $provider->getProviderConfigValue(CONFIG_SUBDOMAIN)) {
+                if (!empty($subdomain) && $subdomain !== $provider->getConfigValue(CONFIG_SUBDOMAIN)) {
                     Control_Factory::add_text_field($defs, $handler, null,
                         CONTROL_OTT_SUBDOMAIN, TR::t('subdomain'), $provider->getCredential(MACRO_SUBDOMAIN),
                         false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
@@ -2503,45 +2486,49 @@ class Default_Dune_Plugin implements DunePlugin
                 return null;
         }
 
-        $domains = $provider->getProviderConfigValue(CONFIG_DOMAINS);
+        $domains = $provider->GetDomains();
         if (!empty($domains)) {
             $idx = $provider->getCredential(MACRO_DOMAIN_ID);
             if (empty($idx)) {
                 $idx = key($domains);
             }
+            hd_debug_print("domains ($idx): " . json_encode($domains), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_DOMAIN,
                 TR::t('domain'), $idx, $domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
         }
 
-        $servers = $provider->getProviderConfigValue(CONFIG_SERVERS);
+        $servers = $provider->GetServers();
         if (!empty($servers)) {
             $idx = $provider->getCredential(MACRO_SERVER_ID);
             if (empty($idx)) {
                 $idx = key($servers);
             }
+            hd_debug_print("servers ($idx): " . json_encode($servers), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_SERVER,
                 TR::t('server'), $idx, $servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
         }
 
-        $devices = $provider->getProviderConfigValue(CONFIG_DEVICES);
+        $devices = $provider->GetDevices();
         if (!empty($devices)) {
             $idx = $provider->getCredential(MACRO_DEVICE_ID);
             if (empty($idx)) {
                 $idx = key($devices);
             }
+            hd_debug_print("devices ($idx): " . json_encode($devices), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_DEVICE,
                 TR::t('device'), $idx, $devices, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
         }
 
-        $qualities = $provider->getProviderConfigValue(CONFIG_QUALITIES);
+        $qualities = $provider->GetQualities();
         if (!empty($qualities)) {
             $idx = $provider->getCredential(MACRO_QUALITY_ID);
             if (empty($idx)) {
                 $idx = key($qualities);
             }
+            hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_QUALITY,
                 TR::t('quality'), $idx, $qualities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
@@ -2570,7 +2557,12 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
 
-        $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
+        if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
+            $provider = $this->get_current_provider();
+        } else {
+            $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
+        }
+
         if (is_null($provider)) return null;
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
@@ -2588,17 +2580,23 @@ class Default_Dune_Plugin implements DunePlugin
 
             case PROVIDER_TYPE_LOGIN:
             case PROVIDER_TYPE_LOGIN_TOKEN:
+                $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
+                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
+                break;
+
             case PROVIDER_TYPE_LOGIN_STOKEN:
                 $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
+                $provider->setCredential(MACRO_TOKEN, '');
                 break;
 
             case PROVIDER_TYPE_EDEM:
                 if (isset($user_input->{CONTROL_OTT_SUBDOMAIN})) {
                     $params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
                 } else {
-                    $params[MACRO_SUBDOMAIN] = $provider->getProviderConfigValue(CONFIG_SUBDOMAIN);
+                    $params[MACRO_SUBDOMAIN] = $provider->getConfigValue(CONFIG_SUBDOMAIN);
                 }
                 $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
                 $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
@@ -2628,14 +2626,17 @@ class Default_Dune_Plugin implements DunePlugin
 
         $item->params = $params;
 
-        hd_debug_print("compiled provider info: $item->name, provider params: " . json_encode($item->params), true);
+        hd_debug_print("compiled provider info: $item->name, provider params: " . raw_json_encode($item->params), true);
         $this->get_playlists()->set($id, $item);
-        $this->save_settings(true);
-
+        $this->save_parameters(true);
         $this->clear_playlist_cache($id);
-        if (($this->get_active_playlist_key() === $id) && $this->tv->reload_channels() === 0) {
-            return Action_Factory::invalidate_all_folders($plugin_cookies,
-                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+
+        if ($this->get_active_playlist_key() === $id) {
+            $this->set_active_playlist_key($id);
+            if ($this->tv->reload_channels() === 0) {
+                return Action_Factory::invalidate_all_folders($plugin_cookies,
+                    Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+            }
         }
 
         return Action_Factory::change_behaviour($handler->get_action_map($parent_media_url, $plugin_cookies), 0,
@@ -2653,14 +2654,7 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        $info_class = 'info_' . $provider->getId();
-        if (!class_exists($info_class)) {
-            return null;
-        }
-
-        /** @var info_default $config */
-        $config = new $info_class($this);
-        return $config->GetInfoUI($handler);
+        return $provider->GetInfoUI($handler);
     }
 
     /**
@@ -2673,29 +2667,7 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        try {
-            $img = get_temp_path($this->get_active_playlist_key() . '.png');
-            if (file_exists($img)) {
-                unlink($img);
-            }
-
-            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getApiCommand(API_COMMAND_PAY)));
-            file_put_contents($img, $content);
-            Control_Factory::add_vgap($defs, 20);
-
-            if (file_exists($img)) {
-                Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
-                Control_Factory::add_vgap($defs, 450);
-            } else {
-                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load_string('err_incorrect_access_data') . "</text>");
-                Control_Factory::add_vgap($defs, 50);
-            }
-
-            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600);
-        } catch (Exception $ex) {
-        }
-
-        return null;
+        return $provider->GetPayUI();
     }
 
     /**

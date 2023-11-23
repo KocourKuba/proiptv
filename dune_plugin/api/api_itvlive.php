@@ -1,5 +1,5 @@
 <?php
-require_once 'info_default.php';
+require_once 'api_default.php';
 
 /**
  * "user_info": {
@@ -25,37 +25,34 @@ require_once 'info_default.php';
  * }
  */
 
-class info_itvlive extends info_default
+class api_itvlive extends api_default
 {
     public function GetInfoUI($handler)
     {
-        $provider = $this->plugin->get_current_provider();
-        if (is_null($provider)) {
-            return null;
-        }
-
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        $data = $provider->request_provider_info();
-        if (empty($data)) {
+        $data = $this->execApiCommand(API_COMMAND_INFO);
+        if ($data === false) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
         } else {
-            if (isset($data['user_info'])) {
-                $info = $data['user_info'];
-                if (isset($info['login'])) {
-                    Control_Factory::add_label($defs, TR::t('login'), $info['login'], -15);
+            if (isset($data->user_info)) {
+                $info = $data->user_info;
+                if (isset($info->login)) {
+                    Control_Factory::add_label($defs, TR::t('login'), $info->login, -15);
                 }
-                if (isset($info['cash'])) {
-                    Control_Factory::add_label($defs, TR::t('balance'), $info['cash'], -15);
+                if (isset($info->cash)) {
+                    Control_Factory::add_label($defs, TR::t('balance'), $info->cash, -15);
                 }
             }
 
-            if (isset($data['package_info'])) {
+            if (isset($data->package_info)) {
                 $packages = '';
-                foreach ($data['package_info'] as $package) {
-                    $packages .= $package['name'] . "\n";
+                foreach ($data->package_info as $package) {
+                    if (isset($package->name)) {
+                        $packages .= $package->name . "\n";
+                    }
                 }
 
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);

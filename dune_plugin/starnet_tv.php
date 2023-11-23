@@ -621,19 +621,18 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("Use custom ID detection: $id_map");
             }
         } else {
-            $playlist_catchup = $provider->getProviderConfigValue(CONFIG_PLAYLIST_CATCHUP);
+            $playlist_catchup = $provider->getConfigValue(CONFIG_PLAYLIST_CATCHUP);
             if (!empty($playlist_catchup)) {
                 $catchup['global'] = $playlist_catchup;
                 hd_debug_print("set provider catchup: $playlist_catchup");
             }
 
-            $id_parser = $provider->getProviderConfigValue(CONFIG_ID_PARSER);
+            $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
             if (!empty($id_parser)) {
-                $id_parser = "/$id_parser/";
                 hd_debug_print("using provider ({$provider->getId()}) specific id parsing: $id_parser");
             }
 
-            $id_map = $provider->getProviderConfigValue(CONFIG_ID_MAP);
+            $id_map = $provider->getConfigValue(CONFIG_ID_MAP);
             if (!empty($id_map)) {
                 hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_map");
             }
@@ -642,7 +641,7 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("no provider specific id mapping, use M3U attributes");
             }
 
-            $icon_template = $provider->getApiCommand(API_COMMAND_ICON);
+            $icon_template = $provider->getIconstemplate();
             if (!empty($icon_template)) {
                 hd_debug_print("using provider ({$provider->getId()}) specific icon mapping: $icon_template");
             }
@@ -652,23 +651,17 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("using provider ({$provider->getId()}) specific domain id mapping: $domain_id");
             }
 
-            $vod_source = $provider->getApiCommand(API_COMMAND_VOD);
-            if (!empty($vod_source)) {
-                $vod_class = "vod_" . ($provider->getProviderConfigValue(CONFIG_VOD_CUSTOM) ? $provider->getId() : "standard");
-                hd_debug_print("Used VOD class: $vod_class");
-                $enable = false;
-                if (class_exists($vod_class)) {
-                    $this->plugin->vod = new $vod_class($this->plugin);
-                    $enable = $this->plugin->vod->init_vod($provider);
-                    $this->get_special_group(VOD_GROUP_ID)->set_disabled(!$enable);
-                    $this->plugin->vod->init_vod_screens($enable);
-                } else {
-                    hd_debug_print("VOD class not found");
-                }
+            $vod_class = $provider->get_vod_class();
+            if (!empty($vod_class)) {
+                hd_debug_print("Using VOD: $vod_class");
+                $this->plugin->vod = new $vod_class($this->plugin);
+                $enable = $this->plugin->vod->init_vod($provider);
+                $this->get_special_group(VOD_GROUP_ID)->set_disabled(!$enable);
+                $this->plugin->vod->init_vod_screens($enable);
                 hd_debug_print("VOD show: " . var_export($enable, true));
             }
 
-            $ignore_groups = $provider->getProviderConfigValue(CONFIG_IGNORE_GROUPS);
+            $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
         }
 
         $this->groups = new Hashed_Array();
@@ -853,6 +846,8 @@ class Starnet_Tv implements User_Input_Handler
                     $archive /= 86400;
                 }
 
+                $channel_url = $entry->getPath();
+
                 $archive_url = '';
                 if ($archive !== 0) {
                     $catchup['channel'] = $entry->getCatchup();
@@ -863,33 +858,33 @@ class Starnet_Tv implements User_Input_Handler
 
                     if (empty($archive_url)) {
                         if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_shift, $catchup)) {
-                            $archive_url = $entry->getPath()
-                                . ((strpos($entry->getPath(), '?') !== false) ? '&' : '?')
+                            $archive_url = $channel_url
+                                . ((strpos($channel_url, '?') !== false) ? '&' : '?')
                                 . 'utc=${start}&lutc=${timestamp}';
                         } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_timeshift, $catchup)) {
-                            $archive_url = $entry->getPath()
-                                . ((strpos($entry->getPath(), '?') !== false) ? '&' : '?')
+                            $archive_url = $channel_url
+                                . ((strpos($channel_url, '?') !== false) ? '&' : '?')
                                 . 'timeshift=${start}&timenow=${timestamp}';
                         } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_archive, $catchup)) {
-                            $archive_url = $entry->getPath()
-                                . ((strpos($entry->getPath(), '?') !== false) ? '&' : '?')
+                            $archive_url = $channel_url
+                                . ((strpos($channel_url, '?') !== false) ? '&' : '?')
                                 . 'archive=${start}&archive_end=${end}';
                         } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup)
-                            && preg_match("#^(https?://[^/]+)/(.+)/([^/]+)\.(m3u8?|ts)(\?.+=.+)?$#", $entry->getPath(), $m)) {
+                            && preg_match("#^(https?://[^/]+)/(.+)/([^/]+)\.(m3u8?|ts)(\?.+=.+)?$#", $channel_url, $m)) {
                             $params = isset($m[5]) ? $m[5] : '';
                             $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400.$m[4]$params";
                         } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_xstreamcode, $catchup)
-                            && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $entry->getPath(), $m)) {
+                            && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $channel_url, $m)) {
                             $extension = $m[6] ?: '.ts';
                             $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[5].$extension";
                         } else {
                             // if no info about catchup, use 'shift'
-                            $archive_url = $entry->getPath()
-                                . ((strpos($entry->getPath(), '?') !== false) ? '&' : '?')
+                            $archive_url = $channel_url
+                                . ((strpos($channel_url, '?') !== false) ? '&' : '?')
                                 . 'utc=${start}&lutc=${timestamp}';
                         }
                     } else if (!preg_match(HTTP_PATTERN, $archive_url)) {
-                        $archive_url = $entry->getPath() . $archive_url;
+                        $archive_url = $channel_url . $archive_url;
                     }
                 }
 
@@ -992,7 +987,7 @@ class Starnet_Tv implements User_Input_Handler
                     $channel_id,
                     $channel_name,
                     $icon_url,
-                    $entry->getPath(),
+                    $channel_url,
                     $archive_url,
                     $archive,
                     $number,
@@ -1099,9 +1094,15 @@ class Starnet_Tv implements User_Input_Handler
         $replaces = array();
 
         $provider = $this->plugin->get_current_provider();
-        if (!is_null($provider) && $provider->getType() === PROVIDER_TYPE_EDEM) {
-            $replaces['localhost'] = $provider->getCredential(MACRO_SUBDOMAIN);
-            $replaces['00000000000000'] = $provider->getCredential(MACRO_OTTKEY);
+        if (!is_null($provider)) {
+            $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
+            if (!empty($url_subst)) {
+                $stream_url = preg_replace($url_subst['regex'], $url_subst['replace'], $stream_url);
+            }
+
+            $replaces[MACRO_SERVER_ID] = $provider->getCredential(MACRO_SERVER_ID);
+            $replaces[MACRO_SUBDOMAIN] = $provider->getCredential(MACRO_SUBDOMAIN);
+            $replaces[MACRO_OTTKEY] = $provider->getCredential(MACRO_OTTKEY);
         }
 
         if ((int)$archive_ts > 0) {

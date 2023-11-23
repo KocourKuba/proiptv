@@ -48,7 +48,7 @@
     },
 */
 
-class Provider_Config
+class api_default
 {
     /**
      * @var string
@@ -73,8 +73,12 @@ class Provider_Config
     /**
      * @var string
      */
-    protected $api = '';
+    protected $api_url = '';
 
+    /**
+     * @var string
+     */
+    protected $icons_template = '';
     /**
      * @var array
      */
@@ -88,12 +92,17 @@ class Provider_Config
     /**
      * @var array
      */
-    protected $provider_config;
+    protected $config;
 
     /**
      * @var array
      */
     protected $credentials = array();
+
+    /**
+     * @var
+     */
+    protected $info;
 
     ////////////////////////////////////////////////////////////////////////
     /// non configurable vars
@@ -172,17 +181,33 @@ class Provider_Config
     /**
      * @return string
      */
-    public function getApi()
+    public function getApiUrl()
     {
-        return $this->api;
+        return $this->api_url;
     }
 
     /**
-     * @param string $api
+     * @param string $api_url
      */
-    public function setApi($api)
+    public function setApiUrl($api_url)
     {
-        $this->api = $api;
+        $this->api_url = $api_url;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIconstemplate()
+    {
+        return $this->icons_template;
+    }
+
+    /**
+     * @param string $icons_template
+     */
+    public function setIconstemplate($icons_template)
+    {
+        $this->icons_template = $icons_template;
     }
 
     /**
@@ -202,18 +227,6 @@ class Provider_Config
     }
 
     /**
-     * @param string $command
-     * @return string
-     */
-    public function getApiCommand($command)
-    {
-        if (!isset($this->api_commands[$command]))
-            return '';
-
-        return str_replace(MACRO_API, $this->getApi(), $this->api_commands[$command]);
-    }
-
-    /**
      * @return bool
      */
     public function getEnable()
@@ -230,20 +243,32 @@ class Provider_Config
     }
 
     /**
-     * @param array $provider_config
+     * @return array
      */
-    public function setProviderConfig($provider_config)
+    public function getConfig()
     {
-        $this->provider_config = $provider_config;
+        return $this->config;
     }
+
+
+    /**
+     * @param array $config
+     */
+    public function setConfig($config)
+    {
+        $this->config = $config;
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    /// Methods
 
     /**
      * @param string $val
      * @return string|array|null
      */
-    public function getProviderConfigValue($val)
+    public function getConfigValue($val)
     {
-        return isset($this->provider_config[$val]) ? $this->provider_config[$val] : null;
+        return isset($this->config[$val]) ? $this->config[$val] : null;
     }
 
     /**
@@ -265,44 +290,106 @@ class Provider_Config
         $this->credentials[$name] = $value;
     }
 
-    ////////////////////////////////////////////////////////////////////////
-    /// Methods
+    /**
+     * @return string|null
+     */
+    public function get_vod_class()
+    {
+        if ($this->hasApiCommand(API_COMMAND_VOD)) {
+            $vod_class = "vod_" . ($this->getConfigValue(CONFIG_VOD_CUSTOM) ? $this->getId() : "standard");
+            hd_debug_print("Used VOD class: $vod_class");
+            if (class_exists($vod_class)) {
+                return $vod_class;
+            }
+        }
 
+        return null;
+    }
     /**
      * @param bool $force
      * @return void
      */
     public function request_provider_token($force = false)
     {
+        if (!$this->hasApiCommand(API_COMMAND_REQUEST_TOKEN)) {
+            return;
+        }
+
         $token = $this->getCredential(MACRO_TOKEN);
         if (!empty($token) && !$force) {
             return;
         }
 
-        $token_url = $this->getProviderConfigValue(CONFIG_TOKEN_REQUEST_URL);
-        if (empty($token_url)) {
+        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN, false, true);
+        if ($response === false) {
             return;
         }
 
-        $response = HD::DownloadJson($this->replace_macros($token_url));
-        $token_name = $this->getProviderConfigValue(CONFIG_TOKEN_RESPONSE);
-        if (!empty($token_name) && $response !== false && isset($response[$token_name])) {
+        $token_name = $this->getConfigValue(CONFIG_TOKEN_RESPONSE);
+        if (!empty($token_name) && isset($response[$token_name])) {
             $this->setCredential(MACRO_TOKEN, $response[$token_name]);
         }
     }
 
     /**
-     * @return array
+     * @param bool $force
+     * @return bool
      */
-    public function request_provider_info()
+    public function get_provider_info($force = false)
     {
-        $url = $this->getApiCommand(API_COMMAND_INFO);
-        if (empty($url)) {
-            return array();
+        hd_debug_print(null, true);
+        if (is_null($this->info) || $force) {
+            $this->info = $this->execApiCommand(API_COMMAND_INFO);
+            if ($this->info === false) {
+                $this->info = array();
+            }
         }
 
+
+        return $this->info;
+    }
+
+    /**
+     * @param string $command
+     * @return bool
+     */
+    public function hasApiCommand($command)
+    {
+        return isset($this->api_commands[$command]);
+    }
+
+    /**
+     * @param string $command
+     * @return string
+     */
+    public function getApiCommand($command)
+    {
+        hd_debug_print(null, true);
+        if ($this->hasApiCommand($command))
+            return $this->replace_macros($this->api_commands[$command]);
+
+        return '';
+    }
+
+    /**
+     * @param string $command
+     * @param bool $binary
+     * @param bool $assoc
+     * @param string $params
+     * @return mixed|false
+     */
+    public function execApiCommand($command, $binary = false, $assoc = false, $params = '')
+    {
+        hd_debug_print(null, true);
+        $command_url = $this->getApiCommand($command);
+        if (empty($command_url)) {
+            return false;
+        }
+        $command_url .= $params;
+        hd_debug_print("execApiCommand: $command_url", true);
+
         $curl_headers = null;
-        $headers = $this->getProviderConfigValue(CONFIG_HEADERS);
+        $headers = $this->getConfigValue(CONFIG_HEADERS);
         if (!empty($headers)) {
             $curl_headers = array();
             foreach ($headers as $key => $header) {
@@ -311,17 +398,77 @@ class Provider_Config
             hd_debug_print("headers: " . raw_json_encode($curl_headers), true);
         }
 
-        $provider_data = HD::DownloadJson($this->replace_macros($url), true, $curl_headers);
-        hd_debug_print("info: " . raw_json_encode($provider_data), true);
+        if ($binary) {
+            $data = HD::http_download_https_proxy($command_url);
+        } else {
+            $data = HD::DownloadJson($command_url, $assoc, $curl_headers);
+        }
 
-        return $provider_data;
+        return $data;
     }
 
     /**
-     * @param string $url
+     * @param $handler
+     * @return array|null
+     */
+    public function GetInfoUI($handler)
+    {
+        return null;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function GetPayUI()
+    {
+        return null;
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetServers()
+    {
+        hd_debug_print(null, true);
+        return $this->getConfigValue(CONFIG_SERVERS);
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetDomains()
+    {
+        hd_debug_print(null, true);
+        return $this->getConfigValue(CONFIG_DOMAINS);
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetDevices()
+    {
+        hd_debug_print(null, true);
+        return $this->getConfigValue(CONFIG_DEVICES);
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetQualities()
+    {
+        hd_debug_print(null, true);
+        return $this->getConfigValue(CONFIG_QUALITIES);
+    }
+
+    /**
+     * @param string $string
      * @return string
      */
-    public function replace_macros($url)
+    public function replace_macros($string)
     {
         static $macroses = array(
             MACRO_LOGIN,
@@ -336,13 +483,14 @@ class Provider_Config
             MACRO_VPORTAL,
         );
 
-        hd_debug_print("playlist template $url", true);
+        hd_debug_print("template: $string", true);
         foreach ($macroses as $macro) {
-            if (strpos($url, $macro) === false) continue;
-            $url = str_replace($macro, trim($this->getCredential($macro)), $url);
+            if (strpos($string, $macro) === false) continue;
+            $string = str_replace($macro, trim($this->getCredential($macro)), $string);
         }
-        hd_debug_print("playlist url $url", true);
+        $string = str_replace(MACRO_API, $this->getApiUrl(), $string);
+        hd_debug_print("result: $string", true);
 
-        return $url;
+        return $string;
     }
 }

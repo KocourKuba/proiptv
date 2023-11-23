@@ -279,8 +279,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                 ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'), "engine.png");
                         }
 
-                        $info_url = $provider->getApiCommand(API_COMMAND_INFO);
-                        if (!empty($info_url)) {
+                        if ($provider->hasApiCommand(API_COMMAND_INFO)) {
                             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
                         }

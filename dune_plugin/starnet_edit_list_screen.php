@@ -413,7 +413,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $icon_file = get_image_path("link.png");
                 $title = empty($playlist->name) ? $playlist->params['uri'] : $playlist->name;
                 if ($playlist->type === PARAM_PROVIDER) {
-                    $provider = $this->plugin->init_provider($playlist);
+                    $provider = $this->plugin->get_provider($playlist->params[PARAM_PROVIDER]);
                     if (is_null($provider)) continue;
 
                     $icon_file = $provider->getLogo();
@@ -847,22 +847,22 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                 break;
                         }
 
-                        $domains = $provider->getProviderConfigValue(CONFIG_DOMAINS);
+                        $domains = $provider->GetDomains();
                         if (!empty($domains)) {
                             $playlist->params[CONFIG_DOMAINS] = key($domains);
                         }
 
-                        $servers = $provider->getProviderConfigValue(CONFIG_SERVERS);
+                        $servers = $provider->getConfigValue(CONFIG_SERVERS);
                         if (!empty($servers)) {
                             $playlist->params[MACRO_SERVER_ID] = key($servers);
                         }
 
-                        $devices = $provider->getProviderConfigValue(CONFIG_DEVICES);
+                        $devices = $provider->getConfigValue(CONFIG_DEVICES);
                         if (!empty($devices)) {
                             $playlist->params[MACRO_DEVICE_ID] = key($devices);
                         }
 
-                        $qualities = $provider->getProviderConfigValue(CONFIG_QUALITIES);
+                        $qualities = $provider->getConfigValue(CONFIG_QUALITIES);
                         if (!empty($qualities)) {
                             $playlist->params[MACRO_QUALITY_ID] = key($qualities);
                         }

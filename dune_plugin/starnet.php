@@ -55,7 +55,7 @@ function __autoload($className) {
         return;
     }
 
-    $path = __DIR__ . "/info/$className.php";
+    $path = __DIR__ . "/api/$className.php";
     if (file_exists($path)) {
         hd_print("include $path");
         include($path);

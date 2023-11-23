@@ -20,24 +20,24 @@ class vod_cbilling extends vod_standard
     {
         parent::init_vod($provider);
 
-        $data = $provider->request_provider_info();
-        if (empty($data) || !isset($data['data'])) {
+        $data = $provider->execApiCommand(API_COMMAND_INFO);
+        if ($data === false || !isset($data->data)) {
             $show = false;
         } else {
-            $data = $data['data'];
-            $show = isset($data['vod']) && $data['vod'] !== false;
+            $data = $data->data;
+            $show = isset($data->vod) && $data->vod !== false;
         }
 
         if (!$show) {
             return false;
         }
 
-        if (isset($data['private_token'])) {
-            $this->token = $data['private_token'];
+        if (isset($data->private_token)) {
+            $this->token = $data->private_token;
         }
 
-        $scheme = (isset($data['ssl']) && $data['ssl']) ? "https://" : "http://";
-        $this->server = $scheme . (isset($data['server']) ? $data['server'] : $this->vod_source);
+        $scheme = (isset($data->ssl) && $data->ssl) ? "https://" : "http://";
+        $this->server = $scheme . (isset($data->server) ? $data->server : $provider->getApiCommand(API_COMMAND_VOD));
         return true;
     }
 
@@ -48,8 +48,8 @@ class vod_cbilling extends vod_standard
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $json = HD::DownloadJson("$this->vod_source/video/$movie_id", false);
-        if ($json === false) {
+        $json = $this->provider->execApiCommand(API_COMMAND_VOD, false, false, "/video/$movie_id");
+        if ($json === false || !isset($json->data)) {
             return null;
         }
 
@@ -108,8 +108,8 @@ class vod_cbilling extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $jsonItems = HD::DownloadJson($this->vod_source, false);
-        if ($jsonItems === false) {
+        $jsonItems = $this->provider->execApiCommand(API_COMMAND_VOD);
+        if ($jsonItems === false || !isset($jsonItems->data)) {
             return;
         }
 
@@ -123,14 +123,16 @@ class vod_cbilling extends vod_standard
             $total += $node->count;
 
             // fetch genres for category
-            $genres = HD::DownloadJson("$this->vod_source/cat/$id/genres", false);
+            $genres = $this->provider->execApiCommand(API_COMMAND_VOD, false, false, "/cat/$id/genres");
             if ($genres === false) {
                 continue;
             }
 
             $gen_arr = array();
-            foreach ($genres->data as $genre) {
-                $gen_arr[] = new Vod_Category((string)$genre->id, (string)$genre->title, $category);
+            if (isset($genres->data)) {
+                foreach ($genres->data as $genre) {
+                    $gen_arr[] = new Vod_Category((string)$genre->id, (string)$genre->title, $category);
+                }
             }
 
             $category->set_sub_categories($gen_arr);
@@ -152,8 +154,8 @@ class vod_cbilling extends vod_standard
      */
     public function getSearchList($keyword)
     {
-        $url = "$this->vod_source/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
-        $searchRes = HD::DownloadJson($url, false);
+        $params = "/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
+        $searchRes = $this->provider->execApiCommand(API_COMMAND_VOD, false, false, $params);
         return $searchRes === false ? array() : $this->CollectSearchResult($searchRes);
     }
 
@@ -166,7 +168,7 @@ class vod_cbilling extends vod_standard
         $val = $this->get_next_page($query_id);
 
         if ($query_id === Vod_Category::FLAG_ALL) {
-            $url = "$this->vod_source/filter/new?page=$val";
+            $params = "/filter/new?page=$val";
         } else {
             $arr = explode("_", $query_id);
             if ($arr === false) {
@@ -175,10 +177,10 @@ class vod_cbilling extends vod_standard
                 $genre_id = $arr[1];
             }
 
-            $url = "$this->vod_source/genres/$genre_id?page=$val";
+            $params = "/genres/$genre_id?page=$val";
         }
 
-        $categories = HD::DownloadJson($url, false);
+        $categories = $this->provider->execApiCommand(API_COMMAND_VOD, false, false, $params);
         return $categories === false ? array() : $this->CollectSearchResult($categories);
     }
 

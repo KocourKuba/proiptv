@@ -85,7 +85,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $cache_engine[ENGINE_XMLTV] = TR::t('setup_epg_cache_xmltv');
         $provider = $this->plugin->get_current_provider();
         if (!is_null($provider)) {
-            $epg_preset = $provider->getProviderConfigValue(EPG_JSON_PRESET);
+            $epg_preset = $provider->getConfigValue(EPG_JSON_PRESET);
             if (!empty($epg_preset)) {
                 $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json');
             }

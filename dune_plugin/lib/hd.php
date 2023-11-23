@@ -311,7 +311,6 @@ class HD
      *
      * @param string $url
      * @return string|bool content of the downloaded file
-     * @throws Exception
      */
     public static function http_download_https_proxy($url)
     {
@@ -328,7 +327,8 @@ class HD
         if (!file_exists($tmp_file)) {
             $log_content = @file_get_contents($logfile);
             unlink($tmp_file);
-            throw new Exception("Can't download playlist $tmp_file\n\n" . $log_content);
+            hd_debug_print("Can't download playlist $tmp_file\n\n" . $log_content);
+            return false;
         }
         $content = file_get_contents($tmp_file);
         unlink($tmp_file);

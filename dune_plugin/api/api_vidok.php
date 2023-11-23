@@ -1,5 +1,5 @@
 <?php
-require_once 'info_default.php';
+require_once 'api_default.php';
 
 /**
  * "account": {
@@ -40,48 +40,43 @@ require_once 'info_default.php';
  * "servertime": 1700240140
  */
 
-class info_vidok extends info_default
+class api_vidok extends api_default
 {
     public function GetInfoUI($handler)
     {
-        $provider = $this->plugin->get_current_provider();
-        if (is_null($provider)) {
-            return null;
-        }
-
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        $data = $provider->request_provider_info();
-        if (empty($data)) {
+        $data = $this->execApiCommand(API_COMMAND_INFO);
+        if ($data === false) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($data['error']['message'])) {
+        } else if (isset($data->error, $data->error->message)) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), $data['error']['message'], -10);
-        } else if (isset($data['account'])) {
-            $data = $data['account'];
-            if (isset($data['login'])) {
-                Control_Factory::add_label($defs, TR::t('login'), $data['login'], -15);
+            Control_Factory::add_label($defs, TR::t('err_error'), $data->error->message, -10);
+        } else if (isset($data->account)) {
+            $data = $data->account;
+            if (isset($data->login)) {
+                Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
             }
-            if (isset($data['first_name'], $data['last_name'])) {
-                Control_Factory::add_label($defs, TR::t('name'), "{$data['first_name']} {$data['last_name']}", -15);
+            if (isset($data->first_name, $data->last_name)) {
+                Control_Factory::add_label($defs, TR::t('name'), "$data->first_name $data->last_name", -15);
             }
-            if (isset($data['city'], $data['country'])) {
-                Control_Factory::add_label($defs, TR::t('city'), "{$data['city']} ({$data['country']})", -15);
+            if (isset($data->city, $data->country)) {
+                Control_Factory::add_label($defs, TR::t('city'), "$data->city ($data->country)", -15);
             }
-            if (isset($data['tz '])) {
-                Control_Factory::add_label($defs, TR::t('time_zone'), $data['tz '], -15);
+            if (isset($data->tz)) {
+                Control_Factory::add_label($defs, TR::t('time_zone'), $data->tz, -15);
             }
-            if (isset($data['balance'])) {
-                Control_Factory::add_label($defs, TR::t('balance'), $data['balance'], -15);
+            if (isset($data->balance)) {
+                Control_Factory::add_label($defs, TR::t('balance'), $data->balance, -15);
             }
 
-            if (isset($data['packages'])) {
+            if (isset($data->packages)) {
                 $packages = '';
-                foreach ($data['packages'] as $package) {
-                    if (isset($package['name'], $package['expire'])) {
-                        $packages .= $package['name'] . " (" . date('d M Y H:i', $package['expire']) . ")\n";
+                foreach ($data->packages as $package) {
+                    if (isset($package->name, $package->expire)) {
+                        $packages .= $package->name . " (" . date('d M Y H:i', $package->expire) . ")\n";
                     }
                 }
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);

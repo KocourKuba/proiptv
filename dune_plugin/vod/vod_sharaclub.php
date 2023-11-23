@@ -12,13 +12,13 @@ class vod_sharaclub extends vod_standard
 
         $this->vod_filters = array("genre", "from", "to");
 
-        $data = $provider->request_provider_info();
-        if (empty($data) || !isset($data['data'])) {
+        $data = $provider->execApiCommand(API_COMMAND_INFO);
+        if ($data === false || !isset($data->data)) {
             $show = false;
         } else {
-            $data = $data['data'];
-            $show = isset($data['vod']) && $data['vod'] !== false;
-            hd_debug_print("vod:" . var_export($data['vod'], true));
+            $data = $data->data;
+            $show = isset($data->vod) && $data->vod !== false;
+            hd_debug_print("vod:" . var_export($data->vod, true));
         }
 
         return $show;
