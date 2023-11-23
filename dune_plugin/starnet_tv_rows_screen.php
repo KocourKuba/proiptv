@@ -130,7 +130,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         ///////////// start_time, end_time, genre, country, person /////////////////
 
         if (is_null($epg_data = $this->plugin->get_program_info($channel_id, -1, $plugin_cookies))) {
-
             hd_debug_print("no epg data");
             $channel_desc = $channel->get_desc();
             if (!empty($channel_desc)) {
@@ -146,7 +145,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 );
             }
         } else {
-
             $program = (object)array();
             $program->time = sprintf("%s - %s",
                 gmdate('H:i', $epg_data[PluginTvEpgProgram::start_tm_sec] + get_local_time_zone_offset()),
@@ -720,6 +718,21 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg'));
 
+            case ACTION_EPG_CACHE_ENGINE:
+                hd_debug_print("Start event popup menu for epg source", true);
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_EPG_CACHE_ENGINE => true));
+
+            case ENGINE_XMLTV:
+            case ENGINE_JSON:
+                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) !== $user_input->control_id) {
+                    hd_debug_print("Selected engine: $user_input->control_id", true);
+                    $this->plugin->tv->unload_channels();
+                    $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
+                    $this->plugin->init_epg_manager();
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                }
+                break;
+
             case ACTION_ZOOM_APPLY:
                 $channel_id = $media_url->channel_id;
                 if (isset($user_input->{ACTION_ZOOM_SELECT})) {
@@ -737,6 +750,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, false);
                 $this->set_changes();
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+
+            case ACTION_INFO_DLG:
+                return $this->plugin->do_show_subscription($this);
+
+            case ACTION_ADD_MONEY_DLG:
+                return $this->plugin->do_show_add_money();
 
             case ACTION_RELOAD:
                 if (isset($user_input->reload_action) && $user_input->reload_action === 'epg') {
@@ -774,6 +793,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->plugin->save_orders(true);
                     $this->set_no_changes();
                 }
+
+                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
+                    $this->plugin->get_epg_manager()->clear_epg_cache();
+                }
+
                 Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return Starnet_Epfs_Handler::invalidate_folders();
         }
@@ -1246,6 +1270,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             // popup menu for change epg source
             hd_debug_print("change epg source menu", true);
             $menu_items = $this->plugin->epg_source_menu($this);
+        } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
+            $menu_items = $this->plugin->epg_engine_menu($this);
         } else if (isset($user_input->{ACTION_SORT_POPUP})) {
             hd_debug_print("sort menu", true);
             $media_url = MediaURL::decode($user_input->selected_row_id);
@@ -1342,15 +1368,38 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
             }
 
+            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'), "image.png");
+
             if ($this->plugin->get_playlists()->size()) {
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
             }
 
-            if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV && $this->plugin->get_all_xmltv_sources()->size()) {
+            if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV
+                && $this->plugin->get_all_xmltv_sources()->size()) {
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
             }
 
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'), "image.png");
+            $provider = $this->plugin->get_current_provider();
+            if (!is_null($provider)) {
+                $epg_url = $this->plugin->get_epg_preset_url();
+                if (!empty($epg_url)) {
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'), "engine.png");
+                }
+
+                $info_url = $provider->getApiCommand(API_COMMAND_INFO);
+                if (!empty($info_url)) {
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+                }
+
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    ACTION_EDIT_PROVIDER_DLG,
+                    TR::t('edit_account'),
+                    $provider->getLogo(),
+                    array(PARAM_PROVIDER => $provider->getId())
+                );
+            }
 
             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_REFRESH_SCREEN, TR::t('refresh'), "refresh.png", $add_param);

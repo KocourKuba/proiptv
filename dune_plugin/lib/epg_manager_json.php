@@ -56,37 +56,9 @@ class Epg_Manager_Json extends Epg_Manager
         $day_epg = array();
         $epg_ids = $channel->get_epg_ids();
 
-        $provider = $this->plugin->get_current_provider();
-        if (is_null($provider)) {
-            hd_debug_print("Not supported provider");
+        $epg_url = $this->plugin->get_epg_preset_url();
+        if (empty($epg_url)) {
             return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
-        }
-
-        $preset_name = $provider->getProviderConfigValue('epg_preset');
-        if (empty($preset_name)) {
-            hd_debug_print("No preset for selected provider");
-            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
-        }
-
-        $preset = $this->plugin->get_epg_preset($preset_name);
-        if (empty($preset)) {
-            hd_debug_print("Unknown preset: $preset");
-            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
-        }
-
-        $epg_url = $preset['json_source'];
-        hd_debug_print("using json_source: $epg_url", true);
-        if (strpos($epg_url, '{PROVIDER}') !== false) {
-            $epg_alias = $provider->getProviderConfigValue('epg_alias');
-            $alias = empty($epg_alias) ? $provider->getId() : $epg_alias;
-            hd_debug_print("using alias: $alias", true);
-            $epg_url = str_replace('{PROVIDER}', $alias, $epg_url);
-        }
-
-        if (strpos($epg_url, '{TOKEN}') !== false) {
-            $token = $provider->getCredential(MACRO_TOKEN);
-            hd_debug_print("using token: $token", true);
-            $epg_url = str_replace('{TOKEN}', $token, $epg_url);
         }
 
         if (strpos($epg_url, '{ID}') !== false) {
@@ -153,8 +125,8 @@ class Epg_Manager_Json extends Epg_Manager
         }
 
         if ($from_cache === false) {
-            hd_debug_print("Fetching EPG ID: '$epg_id' from server");
-            $all_epg = self::get_epg_json($epg_url, $preset);
+            hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
+            $all_epg = self::get_epg_json($epg_url, $this->plugin->get_epg_preset_parser());
             if (!empty($all_epg)) {
                 hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
                 HD::StoreContentToFile($epg_cache_file, $all_epg);
@@ -178,7 +150,7 @@ class Epg_Manager_Json extends Epg_Manager
         }
 
         foreach ($all_epg as $time_start => $entry) {
-            if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
+            if ($time_start >= $day_start_ts - 3600 && $time_start < $day_end_ts) {
                 $day_epg[$time_start] = $entry;
             }
         }
@@ -200,7 +172,11 @@ class Epg_Manager_Json extends Epg_Manager
     protected static function get_epg_json($url, $parser_params)
     {
         $channel_epg = array();
-        hd_debug_print("parser params: " . json_encode($parser_params));
+
+        if (empty($parser_params))
+            return $channel_epg;
+
+        hd_debug_print("parser params: " . json_encode($parser_params), true);
 
         try {
             $ch_data = HD::DownloadJson($url);
@@ -261,5 +237,17 @@ class Epg_Manager_Json extends Epg_Manager
 
         ksort($channel_epg, SORT_NUMERIC);
         return $channel_epg;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function clear_epg_cache($url = null)
+    {
+        $this->epg_cache = array();
+        $files = get_temp_path('*.cache');
+        hd_debug_print("clear cache files: $files");
+        shell_exec('rm -f '. $files);
+        flush();
     }
 }

@@ -30,7 +30,7 @@ class info_sharaclub extends info_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        $pay_url = $provider->getProviderConfigValue(CONFIG_PAY_URL);
+        $pay_url = $provider->getApiCommand(API_COMMAND_PAY);
         if (!empty($pay_url)) {
             Control_Factory::add_button($defs, $handler, null,
                 ACTION_ADD_MONEY_DLG, "", TR::t('add_money'), 450, true);
@@ -66,40 +66,5 @@ class info_sharaclub extends info_default
         Control_Factory::add_vgap($defs, 20);
 
         return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1100);
-    }
-
-    /**
-     * @return array|null
-     */
-    protected function do_show_add_money()
-    {
-        $provider = $this->plugin->get_current_provider();
-        if (is_null($provider)) {
-            return null;
-        }
-
-        try {
-            $img = get_temp_path($this->plugin->get_active_playlist_key() . '.png');
-            if (file_exists($img)) {
-                unlink($img);
-            }
-
-            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getProviderConfigValue(CONFIG_PAY_URL)));
-            file_put_contents($img, $content);
-            Control_Factory::add_vgap($defs, 20);
-
-            if (file_exists($img)) {
-                Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
-                Control_Factory::add_vgap($defs, 450);
-            } else {
-                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load_string('err_incorrect_access_data') . "</text>");
-                Control_Factory::add_vgap($defs, 50);
-            }
-
-            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600);
-        } catch (Exception $ex) {
-        }
-
-        return null;
     }
 }

@@ -811,7 +811,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                         hd_debug_print("parse imported provider_info: $ext_vars[0]", true);
 
-                        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
+                        switch ($provider->getType()) {
                             case PROVIDER_TYPE_PIN:
                                 hd_debug_print("set pin: $vars[0]");
                                 $playlist->params[MACRO_PASSWORD] = $vars[0];

@@ -273,13 +273,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $provider = $this->plugin->get_current_provider();
                     if (!is_null($provider)) {
-                        $epg_preset = $provider->getProviderConfigValue('epg_preset');
-                        if (!empty($epg_preset)) {
+                        $epg_url = $this->plugin->get_epg_preset_url();
+                        if (!empty($epg_url)) {
                             $menu_items[] = $this->plugin->create_menu_item($this,
-                                ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'), "settings.png");
+                                ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'), "engine.png");
                         }
 
-                        $info_url = $provider->getProviderConfigValue(CONFIG_PROVIDER_INFO_URL);
+                        $info_url = $provider->getApiCommand(API_COMMAND_INFO);
                         if (!empty($info_url)) {
                             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
@@ -309,6 +309,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->save_if_changed();
                 $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
+                HD::set_last_error(null);
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
@@ -483,21 +484,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title())));
 
             case ACTION_INFO_DLG:
-                $provider = $this->plugin->get_current_provider();
-                if (is_null($provider)) {
-                    return null;
-                }
-
-                $info_class = 'info_' . $provider->getId();
-                if (!class_exists($info_class)) {
-                    return null;
-                }
-
-                $config = new $info_class($this->plugin);
-                return $config->GetInfoUI($this);
+                return $this->plugin->do_show_subscription($this);
 
             case ACTION_ADD_MONEY_DLG:
-                return $this->do_show_add_money();
+                return $this->plugin->do_show_add_money();
 
             case ACTION_REFRESH_SCREEN:
                 if ($this->save_if_changed()) {
@@ -514,60 +504,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         return Action_Factory::update_regular_folder(
             $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies), true, $sel_ndx
         );
-    }
-
-    /**
-     * @return array|null
-     */
-    protected function do_show_subscription()
-    {
-        $provider = $this->plugin->get_current_provider();
-        if (is_null($provider)) {
-            return null;
-        }
-
-        $info_class = 'info_' . $provider->getId();
-        if (!class_exists($info_class)) {
-            return null;
-        }
-
-        $config = new $info_class($provider);
-        return $config->GetInfoUI();
-    }
-
-    /**
-     * @return array|null
-     */
-    protected function do_show_add_money()
-    {
-        $provider = $this->plugin->get_current_provider();
-        if (is_null($provider)) {
-            return null;
-        }
-
-        try {
-            $img = get_temp_path($this->plugin->get_active_playlist_key() . '.png');
-            if (file_exists($img)) {
-                unlink($img);
-            }
-
-            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getProviderConfigValue(CONFIG_PAY_URL)));
-            file_put_contents($img, $content);
-            Control_Factory::add_vgap($defs, 20);
-
-            if (file_exists($img)) {
-                Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
-                Control_Factory::add_vgap($defs, 450);
-            } else {
-                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load_string('err_incorrect_access_data') . "</text>");
-                Control_Factory::add_vgap($defs, 50);
-            }
-
-            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600);
-        } catch (Exception $ex) {
-        }
-
-        return null;
     }
 
     /**

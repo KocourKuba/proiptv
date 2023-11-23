@@ -174,6 +174,8 @@ const PARAM_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
 const PARAM_XMLTV_SOURCE_NAMES = 'xmltv_source_names';
 
 // macroses used to replace template in providers playlists
+const MACRO_API = '{API}';
+const MACRO_PROVIDER = '{PROVIDER}';
 const MACRO_LOGIN = '{LOGIN}';
 const MACRO_PASSWORD = '{PASSWORD}';
 const MACRO_SUBDOMAIN = '{SUBDOMAIN}';
@@ -202,6 +204,10 @@ const EPG_CACHE_SUBDIR = 'epg_cache';
 const HISTORY_SUBDIR = 'history';
 const EPG_FUZZY_SEARCH = 1;
 const EPG_FAKE_EPG = 2;
+const EPG_JSON_PRESET = 'epg_preset';
+const EPG_JSON_SOURCE = 'json_source';
+const EPG_JSON_PARSER = 'parser';
+const EPG_JSON_ALIAS = 'epg_alias';
 
 # HTTP params
 const USER_AGENT = 'User-Agent';
@@ -228,7 +234,6 @@ if (!defined('JSON_PRETTY_PRINT'))
 if (!defined('JSON_UNESCAPED_UNICODE'))
     define('JSON_UNESCAPED_UNICODE', 256);
 
-const CONFIG_PROVIDER_TYPE = 'provider_type';
 const CONFIG_ID_PARSER = 'id_parser';
 const CONFIG_ID_MAP = 'id_map';
 const CONFIG_IGNORE_GROUPS = 'ignore_groups';
@@ -237,14 +242,16 @@ const CONFIG_TOKEN_REQUEST_URL = 'token_request_url';
 const CONFIG_TOKEN_RESPONSE = 'token_response';
 const CONFIG_HEADERS = 'headers';
 const CONFIG_XMLTV_SOURCES = 'xmltv_sources';
-const CONFIG_PROVIDER_INFO_URL = 'provider_info_url';
-const CONFIG_PAY_URL = 'pay_url';
-const CONFIG_ICON_TEMPLATE = 'icon_template';
 const CONFIG_SUBDOMAIN = 'domain';
 const CONFIG_SERVERS = 'servers';
 const CONFIG_DOMAINS = 'domains';
 const CONFIG_DEVICES = 'devices';
 const CONFIG_QUALITIES = 'qualities';
 const CONFIG_VOD_CUSTOM = 'vod_custom';
-const CONFIG_VOD_SOURCE = 'vod_source';
 const CONFIG_VOD_PARSER = 'vod_parser';
+
+const API_COMMAND_PLAYLIST = 'playlist';
+const API_COMMAND_VOD = 'vod';
+const API_COMMAND_INFO = 'info';
+const API_COMMAND_PAY = 'pay';
+const API_COMMAND_ICON = 'icon';

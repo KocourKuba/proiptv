@@ -642,7 +642,7 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("no provider specific id mapping, use M3U attributes");
             }
 
-            $icon_template = $provider->getProviderConfigValue(CONFIG_ICON_TEMPLATE);
+            $icon_template = $provider->getApiCommand(API_COMMAND_ICON);
             if (!empty($icon_template)) {
                 hd_debug_print("using provider ({$provider->getId()}) specific icon mapping: $icon_template");
             }
@@ -652,7 +652,7 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("using provider ({$provider->getId()}) specific domain id mapping: $domain_id");
             }
 
-            $vod_source = $provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
+            $vod_source = $provider->getApiCommand(API_COMMAND_VOD);
             if (!empty($vod_source)) {
                 $vod_class = "vod_" . ($provider->getProviderConfigValue(CONFIG_VOD_CUSTOM) ? $provider->getId() : "standard");
                 hd_debug_print("Used VOD class: $vod_class");
@@ -1099,7 +1099,7 @@ class Starnet_Tv implements User_Input_Handler
         $replaces = array();
 
         $provider = $this->plugin->get_current_provider();
-        if (!is_null($provider) && $provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE) === PROVIDER_TYPE_EDEM) {
+        if (!is_null($provider) && $provider->getType() === PROVIDER_TYPE_EDEM) {
             $replaces['localhost'] = $provider->getCredential(MACRO_SUBDOMAIN);
             $replaces['00000000000000'] = $provider->getCredential(MACRO_OTTKEY);
         }

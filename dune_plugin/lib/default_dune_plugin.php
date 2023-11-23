@@ -257,11 +257,49 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @return string|null
+     */
+    public function get_epg_preset_url()
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            hd_debug_print("Not supported provider");
+            return null;
+        }
+
+        $preset = $this->get_epg_preset();
+        if (is_null($preset)) {
+            return null;
+        }
+
+        $epg_url = str_replace(MACRO_API, $provider->getApi(), $preset[EPG_JSON_SOURCE]);
+        if (strpos($epg_url, MACRO_PROVIDER) !== false) {
+            $epg_alias = $provider->getProviderConfigValue(EPG_JSON_ALIAS);
+            $alias = empty($epg_alias) ? $provider->getId() : $epg_alias;
+            hd_debug_print("using alias: $alias", true);
+            $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
+        }
+
+        if (strpos($epg_url, MACRO_TOKEN) !== false) {
+            $token = $provider->getCredential(MACRO_TOKEN);
+            hd_debug_print("using token: $token", true);
+            $epg_url = str_replace(MACRO_TOKEN, $token, $epg_url);
+        }
+
+        return $epg_url;
+    }
+
+    /**
      * @return array|null
      */
-    public function get_epg_preset($key)
+    public function get_epg_preset_parser()
     {
-        return $this->epg_presets->get($key);
+        $preset = $this->get_epg_preset();
+        if (is_null($preset) || !isset($preset[EPG_JSON_PARSER])) {
+            return null;
+        }
+
+        return $preset[EPG_JSON_PARSER];
     }
 
     /**
@@ -270,6 +308,26 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_epg_manager()
     {
         return $this->epg_manager;
+    }
+
+    /**
+     * @return array|null
+     */
+    protected function get_epg_preset()
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            hd_debug_print("Not supported provider");
+            return null;
+        }
+
+        $preset_name = $provider->getProviderConfigValue(EPG_JSON_PRESET);
+        if (empty($preset_name)) {
+            hd_debug_print("No preset for selected provider");
+            return null;
+        }
+
+        return $this->epg_presets->get($preset_name);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -526,6 +584,12 @@ class Default_Dune_Plugin implements DunePlugin
                 throw new Exception('Unknown channel');
             }
 
+            if (LogSeverity::$is_debug) {
+                hd_debug_print("day_start timestamp: $day_start_tm_sec ("
+                    . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ") TZ offset: "
+                    . get_local_time_zone_offset());
+            }
+
             // correct day start to local timezone
             $day_start_tm_sec -= get_local_time_zone_offset();
 
@@ -533,10 +597,6 @@ class Default_Dune_Plugin implements DunePlugin
             $time_shift = 3600 * ($channel->get_timeshift_hours() + $this->get_setting(PARAM_EPG_SHIFT, 0));
             hd_debug_print("EPG time shift $time_shift", true);
             $day_start_tm_sec += $time_shift;
-
-            if (LogSeverity::$is_debug) {
-                hd_debug_print("day_start timestamp: $day_start_tm_sec (" . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ")");
-            }
 
             $items = $this->epg_manager->get_day_epg_items($channel, $day_start_tm_sec);
 
@@ -1487,9 +1547,9 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        hd_debug_print("parse provider_info ({$provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)}): $info", true);
+        hd_debug_print("parse provider_info ({$provider->getType()}): $info", true);
 
-        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
+        switch ($provider->getType()) {
             case PROVIDER_TYPE_PIN:
                 $provider->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
                 break;
@@ -1573,7 +1633,7 @@ class Default_Dune_Plugin implements DunePlugin
         if ($engine === ENGINE_JSON) {
             $provider = $this->get_current_provider();
             if (!is_null($provider)) {
-                $preset = $provider->getProviderConfigValue('epg_preset');
+                $preset = $provider->getProviderConfigValue(EPG_JSON_PRESET);
                 if (!empty($preset)) {
                     hd_debug_print("Using JSON cache engine");
                     $engine_class = 'Epg_Manager_Json';
@@ -1656,7 +1716,7 @@ class Default_Dune_Plugin implements DunePlugin
                             throw new Exception("Unable to init provider $item");
                         }
                         $provider->request_provider_token();
-                        $playlist_url = $provider->replace_macros($provider->getPlaylistSource());
+                        $playlist_url = $provider->replace_macros($provider->getApiCommand(API_COMMAND_PLAYLIST));
                     } else {
                         throw new Exception("Unknown playlist type");
                     }
@@ -1716,7 +1776,7 @@ class Default_Dune_Plugin implements DunePlugin
             return false;
         }
 
-        $vod_url = $provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
+        $vod_url = $provider->getApiCommand(API_COMMAND_VOD);
         if (empty($vod_url)) {
             return false;
         }
@@ -2405,7 +2465,7 @@ class Default_Dune_Plugin implements DunePlugin
             CONTROL_EDIT_NAME, TR::t('name'), $name,
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
-        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
+        switch ($provider->getType()) {
             case PROVIDER_TYPE_PIN:
                 Control_Factory::add_text_field($defs, $handler, null,
                     CONTROL_PASSWORD, TR::t('token'), $provider->getCredential(MACRO_PASSWORD),
@@ -2520,7 +2580,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         $id = $user_input->{CONTROL_EDIT_ITEM};
-        switch ($provider->getProviderConfigValue(CONFIG_PROVIDER_TYPE)) {
+        switch ($provider->getType()) {
             case PROVIDER_TYPE_PIN:
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_PASSWORD]) : $id;
@@ -2580,6 +2640,62 @@ class Default_Dune_Plugin implements DunePlugin
 
         return Action_Factory::change_behaviour($handler->get_action_map($parent_media_url, $plugin_cookies), 0,
             $handler->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+    }
+
+    /**
+     * @param $handler
+     * @return array|null
+     */
+    public function do_show_subscription($handler)
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            return null;
+        }
+
+        $info_class = 'info_' . $provider->getId();
+        if (!class_exists($info_class)) {
+            return null;
+        }
+
+        /** @var info_default $config */
+        $config = new $info_class($this);
+        return $config->GetInfoUI($handler);
+    }
+
+    /**
+     * @return array|null
+     */
+    public function do_show_add_money()
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            return null;
+        }
+
+        try {
+            $img = get_temp_path($this->get_active_playlist_key() . '.png');
+            if (file_exists($img)) {
+                unlink($img);
+            }
+
+            $content = HD::http_download_https_proxy($provider->replace_macros($provider->getApiCommand(API_COMMAND_PAY)));
+            file_put_contents($img, $content);
+            Control_Factory::add_vgap($defs, 20);
+
+            if (file_exists($img)) {
+                Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
+                Control_Factory::add_vgap($defs, 450);
+            } else {
+                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load_string('err_incorrect_access_data') . "</text>");
+                Control_Factory::add_vgap($defs, 50);
+            }
+
+            return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600);
+        } catch (Exception $ex) {
+        }
+
+        return null;
     }
 
     /**

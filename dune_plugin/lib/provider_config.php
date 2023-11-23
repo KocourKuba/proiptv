@@ -26,15 +26,17 @@
 
 /*
     {
+      "enable": true,
       "id": "viplime",
       "name": "VipLime",
+      "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
-      "enable": true,
-      "provider_type": "pin",
-      "playlist_source": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
-      "provider_info_config": {
-        "id_map": "map",
-        "id_parser": "tvg-id",
+      "api_commands": {
+        "playlist": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8"
+      },
+      "provider_config": {
+        "id_map": "tvg-id",
+        "epg_preset": "drm",
         "qualities": {
           "high": "High",
           "medium": "Medium",
@@ -42,24 +44,6 @@
           "variant": "Adaptive",
           "hls": "Optimal"
         }
-      }
-    },
-    {
-      "id": "1usd",
-      "name": "1usd",
-      "logo": "http://iptv.esalecrm.net/res/logo_1usd.png",
-      "enable": true,
-      "provider_type": "pin",
-      "playlist_source": "http://1usd.tv/pl-{PASSWORD}-hls",
-      "provider_info_config": {
-        "id_map": "map",
-        "id_parser": "tvg-name",
-        "xmltv_sources": [
-          "http://epg.team/tvteam.xml.gz",
-          "http://epg.team/tvteam.3.3.xml.tar.gz",
-          "http://epg.team/tvteam.5.5.xml.tar.gz",
-          "http://epg.team/tvteam.7.7.xml.tar.gz"
-        ]
       }
     },
 */
@@ -79,17 +63,27 @@ class Provider_Config
     /**
      * @var string
      */
+    protected $type = '';
+
+    /**
+     * @var string
+     */
     protected $logo = '';
+
+    /**
+     * @var string
+     */
+    protected $api = '';
+
+    /**
+     * @var array
+     */
+    protected $api_commands = array();
 
     /**
      * @var bool
      */
     protected $enable = false;
-
-    /**
-     * @var string
-     */
-    protected $playlist_source = '';
 
     /**
      * @var array
@@ -146,6 +140,22 @@ class Provider_Config
     /**
      * @return string
      */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param string $type
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+    }
+
+    /**
+     * @return string
+     */
     public function getLogo()
     {
         return $this->logo;
@@ -157,6 +167,50 @@ class Provider_Config
     public function setLogo($logo)
     {
         $this->logo = $logo;
+    }
+
+    /**
+     * @return string
+     */
+    public function getApi()
+    {
+        return $this->api;
+    }
+
+    /**
+     * @param string $api
+     */
+    public function setApi($api)
+    {
+        $this->api = $api;
+    }
+
+    /**
+     * @return array
+     */
+    public function getApiCommands()
+    {
+        return $this->api_commands;
+    }
+
+    /**
+     * @param array $api_commands
+     */
+    public function setApiCommands($api_commands)
+    {
+        $this->api_commands = $api_commands;
+    }
+
+    /**
+     * @param string $command
+     * @return string
+     */
+    public function getApiCommand($command)
+    {
+        if (!isset($this->api_commands[$command]))
+            return '';
+
+        return str_replace(MACRO_API, $this->getApi(), $this->api_commands[$command]);
     }
 
     /**
@@ -173,22 +227,6 @@ class Provider_Config
     public function setEnable($enable)
     {
         $this->enable = $enable;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPlaylistSource()
-    {
-        return $this->playlist_source;
-    }
-
-    /**
-     * @param string $playlist_source
-     */
-    public function setPlaylistSource($playlist_source)
-    {
-        $this->playlist_source = $playlist_source;
     }
 
     /**
@@ -258,7 +296,7 @@ class Provider_Config
      */
     public function request_provider_info()
     {
-        $url = $this->getProviderConfigValue(CONFIG_PROVIDER_INFO_URL);
+        $url = $this->getApiCommand(API_COMMAND_INFO);
         if (empty($url)) {
             return array();
         }

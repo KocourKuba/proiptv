@@ -113,7 +113,7 @@ class vod_standard extends Abstract_Vod
     public function init_vod($provider)
     {
         $this->provider = $provider;
-        $vod_source = $provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
+        $vod_source = $provider->getApiCommand(API_COMMAND_VOD);
         if (empty($vod_source)) {
             return false;
         }
@@ -706,7 +706,7 @@ class vod_standard extends Abstract_Vod
         }
 
         if ($need_load) {
-            $vod_source = $this->provider->getProviderConfigValue(CONFIG_VOD_SOURCE);
+            $vod_source = $this->provider->getApiCommand(API_COMMAND_VOD);
             if (empty($vod_source)) {
                 return false;
             }
