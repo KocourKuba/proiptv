@@ -506,14 +506,14 @@
       "name": "SharaClub",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
-      "api_url": "http://list.playtv.pro",
+      "api_url": "http://list.playtv.pro/api/players.php",
       "api_commands": {
-        "playlist": "{API}/tv_live-m3u8/{LOGIN}-{PASSWORD}",
-        "vod": "{API}/kino-full/{LOGIN}-{PASSWORD}",
-        "info": "{API}/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "pay": "{API}/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "servers": "{API}/api/players.php?a=ch_cdn&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "set_server": "{API}/api/players.php?a=ch_cdn&num={SERVER_ID}&u={LOGIN}-{PASSWORD}&source=dune_editor"
+        "playlist": "http://list.playtv.pro/tv_live-m3u8/{LOGIN}-{PASSWORD}",
+        "vod": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}",
+        "info": "{API}?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "pay": "{API}?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "servers": "{API}?a=ch_cdn&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "set_server": "{API}?a=ch_cdn&num={SERVER_ID}&u={LOGIN}-{PASSWORD}&source=dune_editor"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
@@ -533,7 +533,21 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
-        "epg_preset": "sharavoz"
+        "epg_preset": "sharavoz",
+        "url_subst": {
+          "regex": "/^(.+\\/\\/).+(\\/.+\\/.+)$/",
+          "replace": "$1{SERVER_ID}$2"
+        },
+        "servers": {
+          "ru01.spr24.net": "Russia (RU01)",
+          "ru02.spr24.net": "Moscow (RU02)",
+          "nl01.spr24.net": "Amsterdam (NL01)",
+          "am01.spr24.net": "Amsterdam (AM01)",
+          "fr01.spr24.net": "France (FR01)",
+          "ch01.spr24.net": "Zurich (CH01)",
+          "eu01.spr24.net": "Europe (EU01)",
+          "pl01.spr24.net": "Poland (PL01)"
+        }
       }
     },
     {

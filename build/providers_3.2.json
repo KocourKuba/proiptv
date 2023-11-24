@@ -258,7 +258,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$/",
         "domain": "junior.edmonst.net",
         "url_subst": {
-          "regex": "/^(https?:\\/\\/).+(\\/iptv\\/).+(\\/.+\\/.+\\.m3u8)$/",
+          "regex": "/^(https?:\\/\\/).+(\\/iptv\\/).+(\\/.+\\/.+)$/",
           "replace": "$1{SUBDOMAIN}$2{OTTKEY}$3"
         },
         "epg_preset": "drm",
@@ -272,11 +272,19 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_filmax.png",
       "api_commands": {
-        "playlist": "http://lk.filmax-tv.ru/playlist/{PASSWORD}.m3u8"
+        "playlist": "http://lk.filmax-tv.ru/{LOGIN}/{PASSWORD}/hls/p{SERVER_ID}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-name",
-        "epg_preset": "drm"
+        "epg_preset": "drm",
+        "servers": {
+          "1": "Germany",
+          "2": "Poland",
+          "3": "Moscow",
+          "5": "Saint Petersburg",
+          "9": "Moscow 2",
+          "10": "Saint Petersburg 2"
+        }
       }
     },
     {
@@ -433,14 +441,17 @@
       "name": "OTT Club",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_ottclub.png",
-      "api_url": "http://myott.tv",
-      "icons_template": "{API}/images/{ID}.png",
+      "icons_template": "http://{DOMAIN}/images/{ID}.png",
       "api_commands": {
         "playlist": "http://{DOMAIN_ID}/playlist/{PASSWORD}/m3u"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/.+\\/(?<id>.+)\\.m3u8?$/",
-        "epg_preset": "ottclub"
+        "epg_preset": "ottclub",
+        "domains": {
+          "myott.top": "myott.top",
+          "myott.tv": "myott.tv"
+        }
       }
     },
     {
@@ -495,14 +506,14 @@
       "name": "SharaClub",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
-      "api_url": "http://list.playtv.pro",
+      "api_url": "http://list.playtv.pro/api/players.php",
       "api_commands": {
-        "playlist": "{API}/tv_live-m3u8/{LOGIN}-{PASSWORD}",
-        "vod": "{API}/kino-full/{LOGIN}-{PASSWORD}",
-        "info": "{API}/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "pay": "{API}/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "servers": "{API}/api/players.php?a=ch_cdn&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "set_server": "{API}/api/players.php?a=ch_cdn&num={SERVER_ID}&u={LOGIN}-{PASSWORD}&source=dune_editor"
+        "playlist": "http://list.playtv.pro/tv_live-m3u8/{LOGIN}-{PASSWORD}",
+        "vod": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}",
+        "info": "{API}?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "pay": "{API}?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "servers": "{API}?a=ch_cdn&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "set_server": "{API}?a=ch_cdn&num={SERVER_ID}&u={LOGIN}-{PASSWORD}&source=dune_editor"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
@@ -522,7 +533,21 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
-        "epg_preset": "sharavoz"
+        "epg_preset": "sharavoz",
+        "url_subst": {
+          "regex": "/^(.+\\/\\/).+(\\/.+\\/.+)$/",
+          "replace": "$1{SERVER_ID}$2"
+        },
+        "servers": {
+          "ru01.spr24.net": "Russia (RU01)",
+          "ru02.spr24.net": "Moscow (RU02)",
+          "nl01.spr24.net": "Amsterdam (NL01)",
+          "am01.spr24.net": "Amsterdam (AM01)",
+          "fr01.spr24.net": "France (FR01)",
+          "ch01.spr24.net": "Zurich (CH01)",
+          "eu01.spr24.net": "Europe (EU01)",
+          "pl01.spr24.net": "Poland (PL01)"
+        }
       }
     },
     {
