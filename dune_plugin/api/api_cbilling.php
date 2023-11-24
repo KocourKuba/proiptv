@@ -22,7 +22,7 @@ class api_cbilling extends api_default
      */
     public function GetInfoUI($handler)
     {
-        $this->get_provider_info(true);
+        parent::GetInfoUI($handler);
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
@@ -59,8 +59,9 @@ class api_cbilling extends api_default
      */
     public function GetServers()
     {
+        parent::GetServers();
         hd_debug_print(null, true);
-        $this->get_provider_info(true);
+
         $servers = array();
         $data = $this->execApiCommand(API_COMMAND_SERVERS);
         if ($data === false || !isset($data->data)) {

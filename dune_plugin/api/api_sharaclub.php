@@ -25,6 +25,8 @@ class api_sharaclub extends api_default
      */
     public function GetInfoUI($handler)
     {
+        parent::GetInfoUI($handler);
+
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
@@ -33,14 +35,13 @@ class api_sharaclub extends api_default
                 ACTION_ADD_MONEY_DLG, "", TR::t('add_money'), 450, true);
         }
 
-        $data = $this->execApiCommand(API_COMMAND_INFO);
-        if ($data === false) {
+        if (empty($this->info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
-        } else if (isset($data->status) && (int)$data->status !== 1) {
-            Control_Factory::add_label($defs, TR::t('err_error'), $data->status, -10);
-        } else if (isset($data->data)) {
-            $data = $data->data;
+        } else if (isset($this->info->status) && (int)$this->info->status !== 1) {
+            Control_Factory::add_label($defs, TR::t('err_error'), $this->info->status, -10);
+        } else if (isset($this->info->data)) {
+            $data = $this->info->data;
             if (isset($data->login)) {
                 Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
             }
@@ -96,7 +97,10 @@ class api_sharaclub extends api_default
      */
     public function GetServers()
     {
+        parent::GetServers();
+
         hd_debug_print(null, true);
+
         $servers = array();
         $data = $this->execApiCommand(API_COMMAND_SERVERS);
         if ($data === false || !isset($data->status)) {
@@ -118,8 +122,8 @@ class api_sharaclub extends api_default
      */
     public function SetServer($server)
     {
-        hd_debug_print(null, true);
         parent::SetServer($server);
+
         $this->execApiCommand(API_COMMAND_SET_SERVER);
     }
 }

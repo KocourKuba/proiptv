@@ -338,13 +338,9 @@ class api_default
     public function get_provider_info($force = false)
     {
         hd_debug_print(null, true);
-        if (is_null($this->info) || $force) {
+        if ((empty($this->info) || $force) && $this->hasApiCommand(API_COMMAND_INFO)) {
             $this->info = $this->execApiCommand(API_COMMAND_INFO);
-            if ($this->info === false) {
-                $this->info = array();
-            }
         }
-
 
         return $this->info;
     }
@@ -385,6 +381,7 @@ class api_default
         if (empty($command_url)) {
             return false;
         }
+
         $command_url .= $params;
         hd_debug_print("execApiCommand: $command_url", true);
 
@@ -413,6 +410,7 @@ class api_default
      */
     public function GetInfoUI($handler)
     {
+        $this->get_provider_info();
         return null;
     }
 
@@ -431,6 +429,7 @@ class api_default
     public function GetServers()
     {
         hd_debug_print(null, true);
+        $this->get_provider_info();
         return $this->getConfigValue(CONFIG_SERVERS);
     }
 
@@ -442,6 +441,7 @@ class api_default
     public function SetServer($server)
     {
         hd_debug_print(null, true);
+
         $this->setCredential(MACRO_SERVER_ID, $server);
     }
 

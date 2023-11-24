@@ -44,18 +44,19 @@ class api_vidok extends api_default
 {
     public function GetInfoUI($handler)
     {
+        parent::GetInfoUI($handler);
+
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        $data = $this->execApiCommand(API_COMMAND_INFO);
-        if ($data === false) {
+        if (empty($this->info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($data->error, $data->error->message)) {
+        } else if (isset($this->info->error, $this->info->error->message)) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), $data->error->message, -10);
-        } else if (isset($data->account)) {
-            $data = $data->account;
+            Control_Factory::add_label($defs, TR::t('err_error'), $this->info->error->message, -10);
+        } else if (isset($this->info->account)) {
+            $data = $this->info->account;
             if (isset($data->login)) {
                 Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
             }
@@ -86,5 +87,45 @@ class api_vidok extends api_default
         Control_Factory::add_vgap($defs, 20);
 
         return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000, null /*$attrs*/);
+    }
+
+
+    /**
+     * @inheritDoc
+     */
+    public function GetServers()
+    {
+        parent::GetServers();
+
+        hd_debug_print(null, true);
+        $servers = array();
+        $data = $this->execApiCommand(API_COMMAND_SERVERS);
+        if ($data === false) {
+            hd_debug_print("Can't get account status");
+            return array();
+        }
+
+        foreach ($data->servers as $server) {
+            $servers[(int)$server->id] = $server->name;
+        }
+
+        if (isset($this->info->account->settings->server_id)) {
+            $this->setCredential(MACRO_SERVER_ID, (int)$this->info->account->settings->server_id);
+        }
+
+        return $servers;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function SetServer($server)
+    {
+        parent::SetServer($server);
+
+        $data = $this->execApiCommand(API_COMMAND_SET_SERVER);
+        if (!empty($data) && isset($data->settings->value)) {
+            $this->info = null;
+        }
     }
 }

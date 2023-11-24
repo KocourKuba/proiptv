@@ -599,7 +599,9 @@
       "api_url": "http://api.iptv.so/0.9/json",
       "api_commands": {
         "playlist": "http://celn.shott.top/p/{TOKEN}",
-        "info": "{API}/account?token={TOKEN}"
+        "info": "{API}/account?token={TOKEN}",
+        "servers": "{API}/servers?token={TOKEN}",
+        "set_server": "{API}/set?token={TOKEN}&server={SERVER_ID}"
       },
       "config": {
         "id_map": "tvg-id",
@@ -635,7 +637,9 @@
       "api_url": "http://sapi.ott.st/v2.4/json",
       "api_commands": {
         "playlist": "http://bddpv.plist.top/p/{TOKEN}",
-        "info": "{API}/account?token={TOKEN}"
+        "info": "{API}/account?token={TOKEN}",
+        "servers": "{API}/server_list?token={TOKEN}",
+        "set_server": "{API}/settings_set?token={TOKEN}&server={SERVER_ID}"
       },
       "config": {
         "id_map": "tvg-id",
