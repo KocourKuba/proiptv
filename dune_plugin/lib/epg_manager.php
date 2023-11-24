@@ -391,23 +391,28 @@ class Epg_Manager
                 $cmd = "gzip -d $tmp_filename 2>&1";
                 system($cmd, $ret);
                 if ($ret !== 0) {
-                    throw new Exception(TR::t('err_unzip__2', $tmp_filename, $ret));
+                    throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
                 }
                 $size = filesize($cached_xmltv_file);
                 hd_debug_print("$size bytes written to $cached_xmltv_file");
             } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
                 hd_debug_print("ZIP signature: " . bin2hex(substr($hdr, 0, 4)), true);
                 hd_debug_print("unzip $tmp_filename to $cached_xmltv_file");
-                $filename = trim(shell_exec("unzip -lq '$tmp_filename'"));
+                $filename = trim(shell_exec("unzip -lq '$tmp_filename'|grep -E '[\d:]+'"));
                 if (empty($filename)) {
                     throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
                 }
 
+                if (explode('\n', $filename) > 1) {
+                    throw new Exception("Too many files in zip archive, wrong format??!\n$filename");
+                }
+
+                hd_debug_print("zip list: $filename");
                 $cmd = "unzip -oq $tmp_filename -d $this->cache_dir 2>&1";
                 system($cmd, $ret);
                 unlink($tmp_filename);
                 if ($ret !== 0) {
-                    throw new Exception(TR::t('err_unzip__2', $tmp_filename, $ret));
+                    throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
                 }
 
                 rename($filename, $cached_xmltv_file);
@@ -433,7 +438,6 @@ class Epg_Manager
             if (!empty($tmp_filename) && file_exists($tmp_filename)) {
                 unlink($tmp_filename);
             }
-            HD::set_last_error($ex->getMessage());
         }
 
         $this->set_index_locked(false);
