@@ -272,11 +272,19 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_filmax.png",
       "api_commands": {
-        "playlist": "http://lk.filmax-tv.ru/playlist/{PASSWORD}.m3u8"
+        "playlist": "http://lk.filmax-tv.ru/{LOGIN}/{PASSWORD}/hls/p{SERVER_ID}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-name",
-        "epg_preset": "drm"
+        "epg_preset": "drm",
+        "servers": {
+          "1": "Germany",
+          "2": "Poland",
+          "3": "Moscow",
+          "5": "Saint Petersburg",
+          "9": "Moscow 2",
+          "10": "Saint Petersburg 2"
+        }
       }
     },
     {
