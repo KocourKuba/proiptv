@@ -2614,6 +2614,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         if (isset($user_input->{CONTROL_SERVER})) {
             $params[MACRO_SERVER_ID] = $user_input->{CONTROL_SERVER};
+            $provider->SetServer($user_input->{CONTROL_SERVER});
         }
 
         if (isset($user_input->{CONTROL_DEVICE})) {

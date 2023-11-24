@@ -17,6 +17,9 @@ require_once 'api_default.php';
 
 class api_cbilling extends api_default
 {
+    /**
+     * @inheritDoc
+     */
     public function GetInfoUI($handler)
     {
         $this->get_provider_info(true);
@@ -51,6 +54,9 @@ class api_cbilling extends api_default
         return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000, null /*$attrs*/);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function GetServers()
     {
         hd_debug_print(null, true);

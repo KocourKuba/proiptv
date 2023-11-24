@@ -20,6 +20,9 @@ require_once 'api_default.php';
 
 class api_sharaclub extends api_default
 {
+    /**
+     * @inheritDoc
+     */
     public function GetInfoUI($handler)
     {
         $defs = array();
@@ -62,6 +65,9 @@ class api_sharaclub extends api_default
         return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1100);
     }
 
+    /**
+     * @inheritDoc
+     */
     public function GetPayUI()
     {
         try {
@@ -83,5 +89,37 @@ class api_sharaclub extends api_default
         }
 
         return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function GetServers()
+    {
+        hd_debug_print(null, true);
+        $servers = array();
+        $data = $this->execApiCommand(API_COMMAND_SERVERS);
+        if ($data === false || !isset($data->status)) {
+            hd_debug_print("Can't get account status");
+            return array();
+        }
+
+        foreach ($data->allow_nums as $server) {
+            $servers[(int)$server->id] = $server->name;
+        }
+
+        $this->setCredential(MACRO_SERVER_ID, (int)$data->current);
+
+        return $servers;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function SetServer($server)
+    {
+        hd_debug_print(null, true);
+        parent::SetServer($server);
+        $this->execApiCommand(API_COMMAND_SET_SERVER);
     }
 }

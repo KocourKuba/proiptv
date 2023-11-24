@@ -435,6 +435,17 @@ class api_default
     }
 
     /**
+     * set server
+     * @param $server
+     * @return void
+     */
+    public function SetServer($server)
+    {
+        hd_debug_print(null, true);
+        $this->setCredential(MACRO_SERVER_ID, $server);
+    }
+
+    /**
      * returns list of provider servers
      * @return array|null
      */

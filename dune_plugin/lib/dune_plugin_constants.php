@@ -255,4 +255,5 @@ const API_COMMAND_VOD = 'vod';
 const API_COMMAND_INFO = 'info';
 const API_COMMAND_PAY = 'pay';
 const API_COMMAND_SERVERS = 'servers';
+const API_COMMAND_SET_SERVER = 'set_server';
 const API_COMMAND_REQUEST_TOKEN = 'request_token';

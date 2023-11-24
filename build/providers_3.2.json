@@ -500,7 +500,9 @@
         "playlist": "{API}/tv_live-m3u8/{LOGIN}-{PASSWORD}",
         "vod": "{API}/kino-full/{LOGIN}-{PASSWORD}",
         "info": "{API}/api/players.php?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "pay": "{API}/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor"
+        "pay": "{API}/api/players.php?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "servers": "{API}/api/players.php?a=ch_cdn&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "set_server": "{API}/api/players.php?a=ch_cdn&num={SERVER_ID}&u={LOGIN}-{PASSWORD}&source=dune_editor"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
