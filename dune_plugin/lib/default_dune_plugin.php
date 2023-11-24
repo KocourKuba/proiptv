@@ -2319,7 +2319,9 @@ class Default_Dune_Plugin implements DunePlugin
             ($engine === ENGINE_XMLTV) ? "check.png" : null
         );
 
-        $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, TR::t('setup_epg_cache_json'),
+        $provider = $this->get_current_provider();
+        $epg_preset = is_null($provider) ? '?' : $provider->getConfigValue(EPG_JSON_PRESET);
+        $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, TR::t('setup_epg_cache_json__1', $epg_preset),
             ($engine === ENGINE_JSON) ? "check.png" : null
         );
         return $menu_items;

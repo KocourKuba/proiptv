@@ -87,7 +87,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         if (!is_null($provider)) {
             $epg_preset = $provider->getConfigValue(EPG_JSON_PRESET);
             if (!empty($epg_preset)) {
-                $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json');
+                $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json__1', $epg_preset);
             }
         }
 
