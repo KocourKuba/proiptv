@@ -1760,7 +1760,7 @@ class Default_Dune_Plugin implements DunePlugin
             return false;
         }
 
-        if ($provider->hasApiCommand(API_COMMAND_VOD)) {
+        if (!$provider->hasApiCommand(API_COMMAND_VOD)) {
             return false;
         }
 

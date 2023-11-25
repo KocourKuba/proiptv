@@ -266,8 +266,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
                     }
 
-                    if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV
-                        && $this->plugin->get_all_xmltv_sources()->size()) {
+                    $is_xmltv_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+                    if ($is_xmltv_engine && $this->plugin->get_all_xmltv_sources()->size()) {
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
                     }
 
@@ -275,8 +275,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (!is_null($provider)) {
                         $epg_url = $this->plugin->get_epg_preset_url();
                         if (!empty($epg_url)) {
+                            $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
                             $menu_items[] = $this->plugin->create_menu_item($this,
-                                ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'), "engine.png");
+                                ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
                         }
 
                         if ($provider->hasApiCommand(API_COMMAND_INFO)) {
