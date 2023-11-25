@@ -3,7 +3,8 @@
 thisdir=$(dirname "$0")
 plugin_root=$(builtin cd "$thisdir/.." && pwd)
 plugin_name=$(basename "$plugin_root")
-LOG_FILE="/tmp/plugins/$plugin_name/media_check.log"
+LOG_FILE="$FS_PREFIX/tmp/plugins/$plugin_name/media_check.log"
+RESULT_FILE="$FS_PREFIX/tmp/plugins/$plugin_name/ffmpeg.log"
 
 RunWithTimeout()
 {
@@ -45,14 +46,12 @@ ProcessURL()
 
     URL="$1"
     FFMPEG_TIMEOUT_USEC=5000000
-    FFMPEG_EXE="/firmware/scripts/ffmpeg.sh"
-    RESULT_FILE=`mktemp -p "/tmp"`
+	rm -rf $RESULT_FILE
 
-    RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_EXE" -hide_banner -i "$URL" -vframes 0 -f null /dev/null >"$RESULT_FILE" 2>&1
+    RunWithTimeout "$FFMPEG_TIMEOUT_USEC" "$FFMPEG_PATH" -hide_banner -i "$URL" -vframes 0 -f null /dev/null >"$RESULT_FILE" 2>&1
 
     STATUS="$?"
-    cat "$RESULT_FILE"|grep "^ *Stream #[0-9]:[0-9]:"|sed -e 's/^[ \t]*//'|sed -r "s/ \(.*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+//g"|tee -a $LOG_FILE
-    rm -rf "$RESULT_FILE"
+    cat "$RESULT_FILE"
 
     if [ "$STATUS" > 1 ]; then
         echo "`date`: ffmpeg finished with status $STATUS" | tee -a $LOG_FILE
@@ -62,9 +61,24 @@ ProcessURL()
 
 echo "Started: `date`" >$LOG_FILE
 
+export LD_LIBRARY_PATH="/firmware/lib:$LD_LIBRARY_PATH"
+
+if [ -e /firmware/bin/ffmpeg ]; then
+  FFMPEG_PATH="/firmware/bin/ffmpeg"
+elif [ -f /config/ffmpeg_path.env ]; then
+  source /config/ffmpeg_path.env
+  if [ "$FFMPEG_PATH" = "" ]; then
+    echo "FFMPEG_PATH not set in /config/ffmpeg_path.env" >>$LOG_FILE
+    exit 1
+  fi
+else
+  echo "ffmpeg not found" >>$LOG_FILE
+  exit 1
+fi
+
 if [ "$#" -gt 0 ]; then
     while [ "$#" -gt 0 ]; do
-        echo "processing param URL: $1" >$LOG_FILE
+        echo "processing param URL: $1" >>$LOG_FILE
         ProcessURL "$1"
         shift
     done

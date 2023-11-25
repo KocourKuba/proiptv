@@ -2737,7 +2737,6 @@ class Default_Dune_Plugin implements DunePlugin
 
         $lines = wrap_string_to_lines($channel->get_icon_url(), 70);
         $info .= "Icon URL: " . implode("\n", $lines) . "\n";
-        $info .= (count($lines) > 1 ? "\n" : "");
 
         try {
             $live_url = $this->tv->generate_stream_url($channel_id, -1);
@@ -2748,7 +2747,6 @@ class Default_Dune_Plugin implements DunePlugin
             $lines = wrap_string_to_lines($channel->get_url(), 70);
         }
         $info .= "Live URL: " . implode("\n", $lines) . "\n";
-        $info .= (count($lines) > 1 ? "\n" : "");
 
         $archive_url = $channel->get_archive_url();
         if (!empty($archive_url)) {
@@ -2761,7 +2759,6 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             $info .= "Archive URL: " . implode("\n", $lines) . "\n";
-            $info .= (count($lines) > 1 ? "\n" : "");
         }
 
         if (!empty($ext_params[PARAM_DUNE_PARAMS])) {
@@ -2784,10 +2781,20 @@ class Default_Dune_Plugin implements DunePlugin
 
             if (is_resource($process)) {
                 $output = stream_get_contents($pipes[1]);
-                $info .= "\n$output";
 
                 fclose($pipes[1]);
                 proc_close($process);
+
+                $info .= "\n";
+                foreach(explode("\n", $output) as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+                    if (strpos($line, "Output") !== false) break;
+                    if (strpos($line, "Stream") !== false) {
+                        $line = preg_replace("/ \([\[].*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
+                        $info .= "$line\n";
+                    }
+                }
             }
         }
 
