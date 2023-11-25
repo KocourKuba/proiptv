@@ -141,6 +141,23 @@ class Starnet_Epfs_Handler
     }
 
     /**
+     * @param array|null $media_urls
+     * @param $post_action
+     * @param array|null $except_media_urls
+     * @return array
+     */
+    public static function invalidate_all_folders($media_urls = null, $post_action = null, $except_media_urls = null)
+    {
+        if (self::$enabled) {
+            $arr = array_merge(array(self::$epf_id), (is_array($media_urls) ? $media_urls : array()));
+        } else {
+            $arr = $media_urls;
+        }
+
+        return Action_Factory::invalidate_folders($arr, Action_Factory::invalidate_folders($except_media_urls, $post_action, true));
+    }
+
+    /**
      * @param $first_run
      * @param $plugin_cookies
      * @return array|null
@@ -177,7 +194,7 @@ class Starnet_Epfs_Handler
     private static function do_write_epf_data($path, $data)
     {
         hd_debug_print(null, true);
-
+        hd_debug_print("write epf path: $path");
         $tmp_path = "$path.tmp";
 
         if (false === file_put_contents($tmp_path, $data)) {

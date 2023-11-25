@@ -316,7 +316,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case GUI_EVENT_KEY_INFO:
-                return $this->do_show_channel_info($channel_id);
+                return $this->plugin->do_show_channel_info($channel_id);
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
@@ -479,103 +479,5 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         return Action_Factory::show_dialog(TR::t('search'), $defs, true);
-    }
-
-    /**
-     * @param $channel_id
-     * @return array|null
-     */
-    protected function do_show_channel_info($channel_id)
-    {
-        $channel = $this->plugin->tv->get_channel($channel_id);
-        if (is_null($channel)) {
-            return null;
-        }
-
-        $info = "ID: {$channel->get_id()}\n";
-        $info .= "Name: {$channel->get_title()}\n";
-        $info .= "Archive: " . var_export($channel->get_archive(), true) . " day's\n";
-        $info .= "Protected: " . var_export($channel->is_protected(), true) . "\n";
-        $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . "\n";
-        $info .= "Timeshift hours: {$channel->get_timeshift_hours()}\n";
-        $groups = array();
-        foreach ($channel->get_groups() as $group) {
-            $groups[] = $group->get_id();
-        }
-        $info .= "Categories: " . implode(', ', $groups) . "\n\n";
-
-        $lines = wrap_string_to_lines($channel->get_icon_url(), 70);
-        $info .= "Icon URL: " . implode("\n", $lines) . "\n";
-        $info .= (count($lines) > 1 ? "\n" : "");
-
-        try {
-            $live_url = $this->plugin->tv->generate_stream_url($channel_id, -1);
-            $lines = wrap_string_to_lines($live_url, 70);
-        } catch(Exception $ex) {
-            hd_debug_print($ex);
-            $live_url = '';
-            $lines = wrap_string_to_lines($channel->get_url(), 70);
-        }
-        $info .= "Live URL: " . implode("\n", $lines) . "\n";
-        $info .= (count($lines) > 1 ? "\n" : "");
-
-        $archive_url = $channel->get_archive_url();
-        if (!empty($archive_url)) {
-            try {
-                $url = $this->plugin->tv->generate_stream_url($channel_id, time() - 3600);
-                $lines = wrap_string_to_lines($url, 70);
-            } catch (Exception $ex) {
-                hd_debug_print($ex);
-                $lines = wrap_string_to_lines($archive_url, 70);
-            }
-
-            $info .= "Archive URL: " . implode("\n", $lines) . "\n";
-            $info .= (count($lines) > 1 ? "\n" : "");
-        }
-
-        if (!empty($ext_params[PARAM_DUNE_PARAMS])) {
-            $info .= "Params: " . implode(",", $ext_params[PARAM_DUNE_PARAMS]) . "\n";
-        }
-
-        if (!empty($live_url) && !is_apk()) {
-            $descriptors = array(
-                0 => array("pipe", "r"), // stdin
-                1 => array("pipe", "w"), // sdout
-                2 => array("pipe", "w"), // stderr
-            );
-
-            $live_url = HD::fix_double_scheme_url($live_url);
-            hd_debug_print("Get media info for: $live_url");
-            $process = proc_open(
-                get_install_path("bin/media_check.sh $live_url"),
-                $descriptors,
-                $pipes);
-
-            if (is_resource($process)) {
-                $output = stream_get_contents($pipes[1]);
-                $info .= "\n$output";
-
-                fclose($pipes[1]);
-                proc_close($process);
-            }
-        }
-
-        Control_Factory::add_multiline_label($defs, null, $info, 12);
-        Control_Factory::add_vgap($defs, 20);
-
-        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            1160,
-            get_image_path('page_plus_btn.png'),
-            get_image_path('page_minus_btn.png'),
-            DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load_string('scroll_page')
-        );
-        Control_Factory::add_smart_label($defs, '', $text);
-        Control_Factory::add_vgap($defs, -80);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1700);
     }
 }

@@ -25,17 +25,11 @@
  */
 
 require_once 'screen.php';
+require_once 'changes_impl.php';
 
-class Abstract_Screen implements Screen
+class Abstract_Screen extends Changes_Impl implements Screen
 {
     const ID = 'abstract_screen';
-
-    protected $plugin;
-
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        $this->plugin = $plugin;
-    }
 
     /**
      * This is not override of User_Input_Handler interface!

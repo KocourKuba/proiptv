@@ -25,59 +25,18 @@
  */
 
 require_once 'rows_screen.php';
+require_once 'lib/changes_impl.php';
 
-abstract class Abstract_Rows_Screen implements Rows_Screen
+abstract class Abstract_Rows_Screen extends Changes_Impl implements Rows_Screen
 {
     const ID = 'abstract_rows_screen';
-
-    /**
-     * @var Default_Dune_Plugin
-     */
-    protected $plugin;
 
     /**
      * @var string|null
      */
     protected $cur_sel_state;
 
-    /**
-     * @var bool
-     */
-    private $has_changes = false;
-
-    /**
-     * @param string $save_data
-     * @return bool
-     */
-    protected function set_changes($save_data = PLUGIN_ORDERS)
-    {
-        $old = $this->has_changes;
-        $this->has_changes = true;
-        $this->plugin->set_dirty(true, $save_data);
-        return $old;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function set_no_changes()
-    {
-        $old = $this->has_changes;
-        $this->has_changes = false;
-        return $old;
-    }
-
-    protected function has_changes()
-    {
-        return $this->has_changes;
-    }
-
     ///////////////////////////////////////////////////////////////////////
-
-    public function __construct(Default_Dune_Plugin $plugin)
-    {
-        $this->plugin = $plugin;
-    }
 
     /**
      * @return string|null

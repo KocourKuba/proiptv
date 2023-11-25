@@ -42,12 +42,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CHOOSE_FILE = 'choose_file';
-    const ACTION_EDIT_ITEM_DLG = 'add_url_dialog';
+    const ACTION_ADD_URL_DLG = 'add_url_dialog';
     const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
     const ITEM_SET_NAME = 'set_name';
     const ITEM_EDIT = 'edit';
 
-    const ACTION_ADD_URL_DLG = 'add_url';
     const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
 
     ///////////////////////////////////////////////////////////////////////
@@ -129,18 +128,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $id = MediaURL::decode($user_input->selected_media_url)->id;
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-                $user_input->{CONTROL_EDIT_ITEM} = $selected_media_url->id;
 
                 /** @var Named_Storage $order */
                 $item = $this->get_edit_order($edit_list)->get($id);
 
                 hd_debug_print("item: " . $item, true);
                 if ($item->type === PARAM_LINK && isset($item->params['uri']) && preg_match(HTTP_PATTERN, $item->params['uri'])) {
-                    return $this->do_edit_url_dlg($user_input);
+                    return $this->do_edit_url_dlg($edit_list, $selected_media_url->id);
                 }
 
                 if ($item->type === PARAM_PROVIDER) {
-                    return $this->plugin->do_edit_provider_dlg($this, $user_input);
+                    return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER}, $selected_media_url->id);
                 }
                 return null;
 
@@ -304,8 +302,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case self::ACTION_ADD_URL_DLG:
-            case self::ACTION_EDIT_ITEM_DLG:
-                return $this->do_edit_url_dlg($user_input);
+                return $this->do_edit_url_dlg();
 
             case self::ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
@@ -351,11 +348,22 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_EDIT_PROVIDER_DLG:
-                return $this->plugin->do_edit_provider_dlg($this, $user_input);
+                return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER});
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->set_no_changes();
-                return $this->plugin->apply_edit_provider_dlg($this, $user_input, $plugin_cookies);
+                if (!$this->plugin->apply_edit_provider_dlg($user_input))
+                    return null;
+
+                if ($this->plugin->tv->reload_channels() === 0) {
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+                }
+
+                return Action_Factory::invalidate_all_folders($plugin_cookies,
+                    Action_Factory::change_behaviour($this->get_action_map($user_input->parent_media_url, $plugin_cookies), 0,
+                        $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx))
+                );
 
             case ACTION_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
@@ -590,19 +598,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param $user_input
+     * @param string $edit_list
+     * @param string $id
      * @return array|null
      */
-    protected function do_edit_url_dlg($user_input)
+    protected function do_edit_url_dlg($edit_list = null, $id = '')
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
         $defs = array();
 
-        if (isset($user_input->{CONTROL_EDIT_ITEM})) {
-            $order = $this->get_edit_order(MediaURL::decode($user_input->parent_media_url)->edit_list);
+        if ($edit_list !== null && !empty($id)) {
+            $order = $this->get_edit_order($edit_list);
             /** @var Named_Storage $item */
-            $item = $order->get($user_input->{CONTROL_EDIT_ITEM});
+            $item = $order->get($id);
             if (is_null($item)) {
                 return $defs;
             }

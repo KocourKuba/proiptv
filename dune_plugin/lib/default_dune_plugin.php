@@ -2393,6 +2393,80 @@ class Default_Dune_Plugin implements DunePlugin
         return $menu_items;
     }
 
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $group_id
+     * @param bool $is_classic
+     * @return array
+     */
+    public function common_categories_menu($handler, $group_id, $is_classic = true)
+    {
+        $menu_items = array();
+        if ($group_id !== null) {
+            if ($group_id === HISTORY_GROUP_ID && $this->get_playback_points()->size() !== 0) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            } else if ($group_id === FAVORITES_GROUP_ID && $this->tv->get_special_group($group_id)->get_items_order()->size() !== 0) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            } else if ($group_id === CHANGED_CHANNELS_GROUP_ID) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            } else if ($this->tv->get_special_group($group_id) === null) {
+                if ($is_classic) {
+                    $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
+                } else {
+                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
+                }
+                $menu_items[] = $this->create_menu_item($handler, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
+            }
+
+            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        }
+
+        if ($is_classic) {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
+        } else {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'), "image.png");
+        }
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+
+        if ($this->get_playlists()->size()) {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
+        }
+
+        $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+        if ($is_xmltv_engine && $this->get_all_xmltv_sources()->size()) {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
+        }
+
+        $provider = $this->get_current_provider();
+        if (!is_null($provider)) {
+            $epg_url = $this->get_epg_preset_url();
+            if (!empty($epg_url)) {
+                $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
+            }
+
+            if ($provider->hasApiCommand(API_COMMAND_INFO)) {
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+                $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+            }
+
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_EDIT_PROVIDER_DLG,
+                TR::t('edit_account'),
+                $provider->getLogo(),
+                array(PARAM_PROVIDER => $provider->getId())
+            );
+        }
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+
+        return $menu_items;
+    }
+
     public function create_plugin_title()
     {
         $playlist = $this->get_current_playlist();
@@ -2405,31 +2479,28 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param $handler
-     * @param $user_input
+     * @param string $provider_id
+     * @param string $playlist_id
      * @return array|null
      */
-    public function do_edit_provider_dlg($handler, $user_input)
+    public function do_edit_provider_dlg($handler, $provider_id, $playlist_id = '')
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        $provider = null;
-        $id = '';
-        if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
+        if ($provider_id === 'current') {
+            $playlist_id = $this->get_active_playlist_key();
             $provider = $this->get_current_provider();
-            $id = $this->get_active_playlist_key();
-        } else if (isset($user_input->{PARAM_PROVIDER})) {
+        } else if ($playlist_id === null) {
             // add new provider
-            $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
+            $provider = $this->get_provider($provider_id);
             hd_debug_print("new provider : $provider", true);
-        } else if (isset($user_input->{CONTROL_EDIT_ITEM})) {
+        } else {
             // edit existing provider
-            $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
-            $id = $user_input->{CONTROL_EDIT_ITEM};
-            $playlist = $this->get_playlist($id);
+            $provider = $this->get_provider($provider_id);
+            $playlist = $this->get_playlist($playlist_id);
             $name = $playlist->name;
             if (!is_null($playlist)) {
                 hd_debug_print("playlist info : $playlist", true);
@@ -2539,7 +2610,7 @@ class Default_Dune_Plugin implements DunePlugin
         Control_Factory::add_vgap($defs, 50);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-            array(PARAM_PROVIDER => $provider->getId(), CONTROL_EDIT_ITEM => $id),
+            array(PARAM_PROVIDER => $provider->getId(), CONTROL_EDIT_ITEM => $playlist_id),
             ACTION_EDIT_PROVIDER_DLG_APPLY,
             TR::t('ok'), 300);
 
@@ -2550,12 +2621,10 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $handler
      * @param $user_input
-     * @param $plugin_cookies
-     * @return array|null
+     * @return bool
      */
-    public function apply_edit_provider_dlg($handler, $user_input, $plugin_cookies)
+    public function apply_edit_provider_dlg($user_input)
     {
         hd_debug_print(null, true);
 
@@ -2565,9 +2634,10 @@ class Default_Dune_Plugin implements DunePlugin
             $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
         }
 
-        if (is_null($provider)) return null;
+        if (is_null($provider)) {
+            return false;
+        }
 
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $item = new Named_Storage();
         $item->type = PARAM_PROVIDER;
         $item->name = $user_input->{CONTROL_EDIT_NAME};
@@ -2607,7 +2677,7 @@ class Default_Dune_Plugin implements DunePlugin
                 break;
 
             default:
-                return $handler->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                return false;
         }
 
         if (isset($user_input->{CONTROL_DOMAIN})) {
@@ -2636,14 +2706,108 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($this->get_active_playlist_key() === $id) {
             $this->set_active_playlist_key($id);
-            if ($this->tv->reload_channels() === 0) {
-                return Action_Factory::invalidate_all_folders($plugin_cookies,
-                    Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $channel_id
+     * @return array|null
+     */
+    public function do_show_channel_info($channel_id)
+    {
+        $channel = $this->tv->get_channel($channel_id);
+        if (is_null($channel)) {
+            return null;
+        }
+
+        $info = "ID: {$channel->get_id()}\n";
+        $info .= "Name: {$channel->get_title()}\n";
+        $info .= "Archive: " . var_export($channel->get_archive(), true) . " day's\n";
+        $info .= "Protected: " . var_export($channel->is_protected(), true) . "\n";
+        $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . "\n";
+        $info .= "Timeshift hours: {$channel->get_timeshift_hours()}\n";
+        $groups = array();
+        foreach ($channel->get_groups() as $group) {
+            $groups[] = $group->get_id();
+        }
+        $info .= "Categories: " . implode(', ', $groups) . "\n\n";
+
+        $lines = wrap_string_to_lines($channel->get_icon_url(), 70);
+        $info .= "Icon URL: " . implode("\n", $lines) . "\n";
+        $info .= (count($lines) > 1 ? "\n" : "");
+
+        try {
+            $live_url = $this->tv->generate_stream_url($channel_id, -1);
+            $lines = wrap_string_to_lines($live_url, 70);
+        } catch(Exception $ex) {
+            hd_debug_print($ex);
+            $live_url = '';
+            $lines = wrap_string_to_lines($channel->get_url(), 70);
+        }
+        $info .= "Live URL: " . implode("\n", $lines) . "\n";
+        $info .= (count($lines) > 1 ? "\n" : "");
+
+        $archive_url = $channel->get_archive_url();
+        if (!empty($archive_url)) {
+            try {
+                $url = $this->tv->generate_stream_url($channel_id, time() - 3600);
+                $lines = wrap_string_to_lines($url, 70);
+            } catch (Exception $ex) {
+                hd_debug_print($ex);
+                $lines = wrap_string_to_lines($archive_url, 70);
+            }
+
+            $info .= "Archive URL: " . implode("\n", $lines) . "\n";
+            $info .= (count($lines) > 1 ? "\n" : "");
+        }
+
+        if (!empty($ext_params[PARAM_DUNE_PARAMS])) {
+            $info .= "Params: " . implode(",", $ext_params[PARAM_DUNE_PARAMS]) . "\n";
+        }
+
+        if (!empty($live_url) && !is_apk()) {
+            $descriptors = array(
+                0 => array("pipe", "r"), // stdin
+                1 => array("pipe", "w"), // sdout
+                2 => array("pipe", "w"), // stderr
+            );
+
+            $live_url = HD::fix_double_scheme_url($live_url);
+            hd_debug_print("Get media info for: $live_url");
+            $process = proc_open(
+                get_install_path("bin/media_check.sh $live_url"),
+                $descriptors,
+                $pipes);
+
+            if (is_resource($process)) {
+                $output = stream_get_contents($pipes[1]);
+                $info .= "\n$output";
+
+                fclose($pipes[1]);
+                proc_close($process);
             }
         }
 
-        return Action_Factory::change_behaviour($handler->get_action_map($parent_media_url, $plugin_cookies), 0,
-            $handler->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+        Control_Factory::add_multiline_label($defs, null, $info, 12);
+        Control_Factory::add_vgap($defs, 20);
+
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            1160,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load_string('scroll_page')
+        );
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1700);
     }
 
     /**
