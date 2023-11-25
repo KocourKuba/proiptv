@@ -315,6 +315,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             }
 
             $unzip->extractTo($temp_folder);
+            for ($i = 0; $i < $unzip->numFiles; $i++) {
+                $stat_index = $unzip->statIndex($i);
+                touch("$temp_folder/{$stat_index['name']}", $stat_index['mtime']);
+            }
             $unzip->close();
         } catch (Exception $ex) {
             if (file_exists($tmp_filename)) {
@@ -327,7 +331,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         unlink($tmp_filename);
 
         foreach (glob_dir(get_data_path(), "/\.settings$/i") as $file) {
-            hd_debug_print("rename $file to $file.prev");
             rename($file, "$file.prev");
         }
 
@@ -338,14 +341,15 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             new RecursiveDirectoryIterator($temp_folder, FilesystemIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST);
 
-        $dest = get_data_path();
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                /** @noinspection PhpUndefinedMethodInspection */
-                create_path($dest . $files->getSubPathname());
+        foreach ($files as $src) {
+            /** @noinspection PhpUndefinedMethodInspection */
+            $dest = get_data_path($files->getSubPathname());
+            if ($src->isDir()) {
+                create_path($dest);
             } else {
-                /** @noinspection PhpUndefinedMethodInspection */
-                copy($file, $dest . $files->getSubPathname());
+                $mtime = filemtime($src);
+                rename($src, $dest);
+                touch($dest, $mtime);
             }
         }
 
@@ -356,9 +360,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         $this->plugin->load_parameters(true);
-        hd_debug_print("Reset XMLTV cache dir to default");
         $this->plugin->remove_parameter(PARAM_CACHE_PATH);
-        hd_debug_print("Reset debug logging");
         $this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, false);
 
         $this->plugin->init_plugin(true);
@@ -392,18 +394,16 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             $rootPath = get_data_path();
             $zip->addFile("{$rootPath}common.settings", "common.settings");
-            hd_debug_print("Add {$rootPath}common.settings", true);
             foreach ($this->plugin->get_playlists() as $key => $playlist) {
                 $name = $key . ".settings";
                 if (!file_exists($rootPath . $name)) continue;
 
-                hd_debug_print("Add $rootPath$name", true);
                 $zip->addFile("$rootPath$name", $name);
 
                 $name = $key .  '_' . PLUGIN_ORDERS . ".settings";
-                if (!file_exists($rootPath . $name)) continue;
-                hd_debug_print("Add $rootPath$name", true);
-                $zip->addFile("$rootPath$name", $name);
+                if (file_exists($rootPath . $name)) {
+                    $zip->addFile("$rootPath$name", $name);
+                }
             }
 
             $added_folders = array($rootPath . CACHED_IMAGE_SUBDIR);
@@ -418,7 +418,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 foreach ($added_folders as $folder) {
                     if (0 === strncmp($filePath, $folder, strlen($folder))) {
                         $relativePath = substr($filePath, strlen($rootPath));
-                        hd_debug_print("Add $filePath", true);
                         $zip->addFile($filePath, $relativePath);
                     }
                 }
@@ -429,7 +428,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             }
 
             $backup_path = "$filename/$zip_file_name";
-            hd_debug_print("copy $zip_file to: $backup_path");
             if (false === copy($zip_file, $backup_path)) {
                 throw new Exception(TR::t('err_copy__2', $zip_file, $backup_path));
             }
