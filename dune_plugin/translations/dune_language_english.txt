@@ -331,5 +331,6 @@ err_create_zip__1 = Can't create zip file: %s
 err_unzip__2 = Failed to unpack %s (error code: %s)
 err_empty_zip__1 = Empty zip file %s
 err_unknown_file_type = Unknown file type
+err_unsupported_file_type = Unsupported EPG format
 err_bad_m3u_file = Bad or malformed M3U file
-err_incorrect_access_data=Incorrect login or password
+err_incorrect_access_data = Incorrect login or password

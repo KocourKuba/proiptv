@@ -361,6 +361,10 @@ class Epg_Manager
             HD::set_last_error(null);
             $this->set_index_locked(true);
 
+            if (preg_match("/jtv.?\.zip$/", basename($this->xmltv_url))) {
+                throw new Exception("Unsupported EPG format (JTV)");
+            }
+
             hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
             $cached_xmltv_file = $this->get_cached_filename();
             $tmp_filename = $cached_xmltv_file . '.tmp';
