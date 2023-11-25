@@ -31,6 +31,7 @@ git tag %VERSION%.%BUILD%
 
 echo copy to Dropbox
 copy /Y dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
+copy /Y dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 echo.
 
 set /p CREDS=<creds.txt
