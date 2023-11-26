@@ -1313,7 +1313,8 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("Load debug providers configuration.");
                 $jsonArray = HD::ReadContentFromFile($tmp_file);
             } else {
-                $tmp_file = get_data_path("providers.json");
+                $name = "providers_{$this->plugin_info['app_base_version']}.json";
+                $tmp_file = get_data_path($name);
                 $serial = get_serial_number();
                 if (empty($serial)) {
                     hd_debug_print("Unable to get DUNE serial.");
@@ -1327,7 +1328,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if (file_exists($tmp_file)) {
                         hd_debug_print("Load actual providers configuration");
                         $jsonArray = HD::ReadContentFromFile($tmp_file);
-                    } else if (file_exists($tmp_file = get_install_path("providers.json"))) {
+                    } else if (file_exists($tmp_file = get_install_path($name))) {
                         hd_debug_print("Load installed providers configuration");
                         $jsonArray = HD::ReadContentFromFile($tmp_file);
                     }

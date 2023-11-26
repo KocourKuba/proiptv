@@ -1531,6 +1531,8 @@ function get_plugin_manifest_info()
         $result['app_caption'] = (string)$xml->caption;
         $result['app_class_name'] = (string)$xml->class_name;
         $result['app_version'] = (string)$xml->version;
+        $ver = explode('.', $result['app_version']);
+        $result['app_base_version'] = "$ver[0].$ver[1]";
         $result['app_version_idx'] = isset($xml->version_index) ? (string)$xml->version_index : '0';
         $result['app_release_date'] = (string)$xml->release_date;
         $result['app_background'] = (string)$xml->background;

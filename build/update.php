@@ -50,28 +50,27 @@ $update_tar = 'update_proiptv.tar';
 $update_file = 'update_proiptv.tar.gz';
 $release_date = date('Y.m.d');
 list(, $version, $version_index, $is_debug) = $argv;
-$version = "$version.$version_index";
+$full_version = "$version.$version_index";
 
 $xml = file_get_contents("build/$plugin_info.tpl");
 $xml = preg_replace("|<version>(.*)</version>|", "<version>$version</version>", $xml);
 $xml = preg_replace("|<release_date>(.*)</release_date>|", "<release_date>$release_date</release_date>", $xml);
 $xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
-echo "version: $version" . PHP_EOL;
+echo "version: $full_version" . PHP_EOL;
 echo "version index: $version_index" . PHP_EOL;
 echo "update date $release_date" . PHP_EOL;
 file_put_contents("./dune_plugin/$plugin_info", $xml);
 
 $xml = file_get_contents("build/$plugin_metadata.tpl");
-$xml = preg_replace("|<version>(.*)</version>|", "<version>$version</version>", $xml);
+$xml = preg_replace("|<version>(.*)</version>|", "<version>$full_version</version>", $xml);
 $xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
 file_put_contents("./dune_plugin/$plugin_metadata", $xml);
 
 $text = file_get_contents("./build/changelog.md");
-$text = str_replace('{plugin_version}', $version, $text);
+$text = str_replace('{plugin_version}', $full_version, $text);
 file_put_contents("./dune_plugin/changelog.md", $text);
-$providers_src = ($is_debug === 'debug') ? "providers_debug.json" :  "providers_3.2.json";
-$providers_target = ($is_debug === 'debug') ? "providers_debug.json" :  "providers.json";
-copy("./build/$providers_src", "./dune_plugin/$providers_target");
+$providers = ($is_debug === 'debug') ? "providers_debug.json" :  "providers_$version.json";
+copy("./build/$providers", "./dune_plugin/$providers");
 
 ExtendedZip::zipTree('./dune_plugin', $packed_plugin, ZipArchive::CREATE);
 
