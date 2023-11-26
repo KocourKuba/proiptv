@@ -14,8 +14,7 @@ pushd dune_plugin
 popd
 
 del dune_plugin\changelog.md >nul 2>&1
-del dune_plugin\providers.json >nul 2>&1
-del dune_plugin\providers_debug.json >nul 2>&1
+del dune_plugin\providers*.json >nul 2>&1
 
 echo copy to Diskstation
 copy /Y dune_plugin_proiptv.zip \\DISKSTATION\Downloads\ >nul
@@ -34,6 +33,8 @@ copy /Y dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
 copy /Y dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 echo.
 
+copy /Y dune_plugin\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
+
 set /p CREDS=<creds.txt
 echo %CREDS%
 "C:\Program Files (x86)\WinSCP\WinSCP.com" ^
@@ -42,6 +43,8 @@ echo %CREDS%
     "open %CREDS%" ^
 	"put update_proiptv.tar.gz" ^
 	"put update_proiptv.xml" ^
+	"cd ../config" ^
+	"put providers_%VERSION%.json" ^
     "exit"
 
 set WINSCP_RESULT=%ERRORLEVEL%
