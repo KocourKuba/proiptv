@@ -1711,7 +1711,7 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
-                    HD::set_last_error("Empty or incorrect playlist !\n\n" . $contents);
+                    HD::set_last_error("pl_last_error", "Empty or incorrect playlist !\n\n" . $contents);
                     throw new Exception("Can't parse playlist");
                 }
 
@@ -1724,14 +1724,14 @@ class Default_Dune_Plugin implements DunePlugin
             $this->tv->get_m3u_parser()->setupParser($tmp_file, $force);
             if ($this->tv->get_m3u_parser()->getEntriesCount() === 0) {
                 if (!$this->tv->get_m3u_parser()->parseInMemory()) {
-                    HD::set_last_error("Ошибка чтения плейлиста!");
+                    HD::set_last_error("pl_last_error", "Ошибка чтения плейлиста!");
                     throw new Exception("Can't read playlist");
                 }
 
                 $count = $this->tv->get_m3u_parser()->getEntriesCount();
                 if ($count === 0) {
                     $contents = @file_get_contents($tmp_file);
-                    HD::set_last_error("Пустой плейлист!\n\n" . $contents);
+                    HD::set_last_error("pl_last_error", "Пустой плейлист!\n\n" . $contents);
                     hd_debug_print("Empty playlist");
                     $this->clear_playlist_cache();
                     throw new Exception("Empty playlist");
@@ -1784,7 +1784,7 @@ class Default_Dune_Plugin implements DunePlugin
             if ($force !== false) {
                 $contents = $provider->execApiCommand(API_COMMAND_VOD, true);
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
-                    HD::set_last_error("Empty or incorrect playlist !\n\n" . $contents);
+                    HD::set_last_error("pl_last_error", "Empty or incorrect playlist !\n\n" . $contents);
                     throw new Exception("Can't parse playlist");
                 }
 

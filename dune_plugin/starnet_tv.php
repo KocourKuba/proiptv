@@ -526,7 +526,7 @@ class Starnet_Tv implements User_Input_Handler
 
         hd_debug_print();
 
-        HD::set_last_error(null);
+        HD::set_last_error("pl_last_error", null);
 
         $this->plugin->load_settings(true);
         $epg_engine = $this->plugin->init_epg_manager();

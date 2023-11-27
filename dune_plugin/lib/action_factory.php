@@ -194,15 +194,16 @@ class Action_Factory
      * @param int $preferred_width
      * @return array
      */
-    public static function show_title_dialog($title, $post_action = null, $multiline = null, $preferred_width = 0)
+    public static function show_title_dialog($title, $post_action = null, $multiline = '', $preferred_width = 0)
     {
         $defs = array();
 
         if ($preferred_width === 0) {
             $preferred_width = (int)mb_strlen($title, 'UTF-8') * 21 + 100;
-            if ($multiline !== null) {
+            if (!empty($multiline)) {
                 if (is_array($multiline)) {
                     $lines = $multiline;
+                    $multiline = implode("\n", $multiline);
                 } else {
                     $lines = explode("\n", $multiline);
                 }

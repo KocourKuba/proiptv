@@ -42,7 +42,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
 
         $res = $this->plugin->tv->load_channels();
         if ($res === 0) {
@@ -115,7 +114,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::open_folder();
                 }
 
-                HD::set_last_error(null);
                 return Action_Factory::show_title_dialog(TR::t('err_load_any'),null, $has_error, self::DLG_CONTROLS_WIDTH);
 
             case ACTION_ITEM_UP:
@@ -269,7 +267,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->save_if_changed();
                 $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
-                HD::set_last_error(null);
+                HD::set_last_error("pl_last_error", null);
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
 
@@ -458,13 +456,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $this->plugin->init_epg_manager();
                         $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
                         if ($res === -1) {
-                            return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error());
+                            return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error("xmltv_last_error"));
                         }
 
                         if ($res === 0) {
                             $res = $this->plugin->get_epg_manager()->download_xmltv_source();
                             if ($res === -1) {
-                                return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error());
+                                return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
                             }
                         }
                     } else if ($user_input->reload_action === 'playlist') {

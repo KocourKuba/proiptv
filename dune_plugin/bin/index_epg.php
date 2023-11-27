@@ -10,13 +10,13 @@ global $LOG_FILE;
 
 $config_file = get_temp_path('parse_config.json');
 if (!file_exists($config_file)) {
-    HD::set_last_error("Config file for indexing not exist");
+    HD::set_last_error("xmltv_last_error", "Config file for indexing not exist");
     return;
 }
 
 $config = json_decode(file_get_contents($config_file));
 if ($config === false) {
-    HD::set_last_error("Invalid config file for indexing");
+    HD::set_last_error("xmltv_last_error", "Invalid config file for indexing");
     @unlink($config_file);
     return;
 }

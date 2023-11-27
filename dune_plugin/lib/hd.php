@@ -935,25 +935,27 @@ class HD
     }
 
     /**
+     * @param string $source
      * @return string
      */
-    public static function get_last_error()
+    public static function get_last_error($source = "pl_last_error")
     {
-        $error_file = get_temp_path("last_error");
+        $error_file = get_temp_path($source);
         $msg = '';
         if (file_exists($error_file)) {
             $msg = file_get_contents($error_file);
-            self::set_last_error(null);
+            self::set_last_error($source, null);
         }
         return $msg;
     }
 
     /**
+     * @param $source
      * @param string|null $error
      */
-    public static function set_last_error($error)
+    public static function set_last_error($source, $error)
     {
-        $error_file = get_temp_path("last_error");
+        $error_file = get_temp_path($source);
 
         if (!empty($error)) {
             file_put_contents($error_file, $error);

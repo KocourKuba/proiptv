@@ -712,7 +712,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 hd_debug_print("Playlist: '$url' imported successefully");
             } catch (Exception $ex) {
                 hd_debug_print("Problem with download playlist: " . $ex->getMessage());
-                HD::set_last_error(null);
+                HD::set_last_error("pl_last_error", null);
                 return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
             }
         }
@@ -786,7 +786,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                 throw new Exception("Can't download file: $line");
                             }
                         } catch (Exception $ex) {
-                            HD::set_last_error(null);
+                            HD::set_last_error("pl_last_error", null);
                             hd_debug_print("Problem with download playlist: " . $ex->getMessage());
                             continue;
                         }

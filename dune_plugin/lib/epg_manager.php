@@ -301,10 +301,12 @@ class Epg_Manager
 
         if (empty($this->xmltv_url)) {
             $msg = "XMTLV EPG url not set";
-            HD::set_last_error($msg);
+            hd_debug_print("XMTLV EPG url not set");
+            HD::set_last_error("xmltv_last_error", $msg);
             return -1;
         }
 
+        HD::set_last_error("xmltv_last_error", null);
         $cached_xmltv_file = $this->get_cached_filename();
         hd_debug_print("Checking cached xmltv file: $cached_xmltv_file");
         if (file_exists($cached_xmltv_file)) {
@@ -358,7 +360,7 @@ class Epg_Manager
         $t = microtime(true);
 
         try {
-            HD::set_last_error(null);
+            HD::set_last_error("xmltv_last_error", null);
             $this->set_index_locked(true);
 
             if (preg_match("/jtv.?\.zip$/", basename($this->xmltv_url))) {
