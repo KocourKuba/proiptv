@@ -479,6 +479,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
+                $post_action = Action_Factory::close_and_run(
+                    Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
+
                 return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
 
             case ACTION_INFO_DLG:
