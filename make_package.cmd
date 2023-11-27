@@ -29,11 +29,10 @@ echo create GIT tag
 git tag %VERSION%.%BUILD%
 
 echo copy to Dropbox
-copy /Y dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
-copy /Y dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
+copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
+copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
+copy /Y .\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
 echo.
-
-copy /Y dune_plugin\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
 
 set /p CREDS=<creds.txt
 echo %CREDS%
