@@ -53,7 +53,7 @@ list(, $version, $version_index, $is_debug) = $argv;
 $full_version = "$version.$version_index";
 
 $xml = file_get_contents("build/$plugin_info.tpl");
-$xml = preg_replace("|<version>(.*)</version>|", "<version>$version</version>", $xml);
+$xml = preg_replace("|<version>(.*)</version>|", "<version>$full_version</version>", $xml);
 $xml = preg_replace("|<release_date>(.*)</release_date>|", "<release_date>$release_date</release_date>", $xml);
 $xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
 echo "version: $full_version" . PHP_EOL;
