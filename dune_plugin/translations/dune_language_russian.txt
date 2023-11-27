@@ -65,7 +65,6 @@ url = Ссылка
 login = Логин
 password = Пароль
 token = Пин/Токен
-subdomain = Домен
 ottkey = OTT ключ
 vportal = VPortal
 domain = Домен
@@ -245,7 +244,6 @@ tv_screen_zoom_make_taller = Увеличение высоты
 tv_screen_zoom_cut_edges = Обрезка краев
 tv_screen_zoom_full_enlarge = Полный экран
 tv_screen_zoom_full_stretch = Растяжение на весь экран
-tv_screen_group_info = %s
 tv_screen_group_info__2 = %s|Каналов: %s
 tv_screen_group_info__3 = %s|Каналов: %s|Скрыто: %s
 tv_screen_group_changed_info__3 = %s|Новых: %s|Удаленных: %s
@@ -291,7 +289,6 @@ edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Долгое на
 edit_list_add_name = Задать имя
 edit_list_edit_item = Редактировать
 edit_list_add_provider = Добавить провайдера IPTV
-edit_list_detail_info__2 = %s|%s
 edit_list_detail_info__3 = %s|%s|Скачано: %s
 
 epg_not_ready = Программа передач еще не готова

@@ -65,7 +65,6 @@ url = URL
 login = Login
 password = Password
 token = PIN/Token
-subdomain = Domain
 ottkey = OTT Key
 vportal = VPortal
 device = Device
@@ -233,7 +232,6 @@ edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Long press OK on 
 edit_list_add_name = Set name
 edit_list_edit_item = Edit
 edit_list_add_provider = Add IPTV provider
-edit_list_detail_info__2 = %s|%s
 edit_list_detail_info__3 = %s|%s|Downloaded: %s
 
 tv_screen_zoom_channel = Channel zoom
@@ -262,7 +260,6 @@ tv_screen_zoom_make_taller = Make taller
 tv_screen_zoom_cut_edges = Cut edges
 tv_screen_zoom_full_enlarge = Full enlarge
 tv_screen_zoom_full_stretch = Full stretch
-tv_screen_group_info = %s
 tv_screen_group_info__2 = %s|Channels: %s
 tv_screen_group_info__3 = %s|Channels: %s|Hidden: %s
 tv_screen_group_changed_info__3 = %s|New: %s|Removed: %s

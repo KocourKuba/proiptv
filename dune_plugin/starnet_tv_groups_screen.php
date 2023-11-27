@@ -558,7 +558,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case VOD_GROUP_ID:
-                    $item_detailed_info = TR::t('tv_screen_group_info', $group->get_title());
+                    $item_detailed_info = $group->get_title();
                     break;
 
                 default:

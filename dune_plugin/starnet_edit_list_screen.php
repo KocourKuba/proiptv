@@ -430,7 +430,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
                     $detailed_info = $playlist->name;
                 } else if ($playlist->type === PARAM_LINK) {
-                    $detailed_info = TR::t('edit_list_detail_info__2', $playlist->name, $playlist->params['uri']);
+                    $detailed_info = "$playlist->name|$playlist->params['uri']";
                 }
             } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                 // Hashed_Array
@@ -450,7 +450,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $dl_date = date("d.m H:i", $check_time_file);
                     $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params['uri'], $dl_date);
                 } else {
-                    $detailed_info = TR::t('edit_list_detail_info__2', $item->name, $item->params['uri']);
+                    $detailed_info = "$item->name|$item->params['uri']";
                 }
             } else {
                 continue;

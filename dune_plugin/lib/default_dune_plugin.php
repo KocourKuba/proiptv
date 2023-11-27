@@ -2548,7 +2548,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $subdomain = $provider->getCredential(MACRO_SUBDOMAIN);
                 if (!empty($subdomain) && $subdomain !== $provider->getConfigValue(CONFIG_SUBDOMAIN)) {
                     Control_Factory::add_text_field($defs, $handler, null,
-                        CONTROL_OTT_SUBDOMAIN, TR::t('subdomain'), $provider->getCredential(MACRO_SUBDOMAIN),
+                        CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $provider->getCredential(MACRO_SUBDOMAIN),
                         false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
                 }
                 Control_Factory::add_text_field($defs, $handler, null,
