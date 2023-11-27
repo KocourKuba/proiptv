@@ -2494,6 +2494,10 @@ class Default_Dune_Plugin implements DunePlugin
         if ($provider_id === 'current') {
             $playlist_id = $this->get_active_playlist_key();
             $provider = $this->get_current_provider();
+            $playlist = $this->get_playlist($playlist_id);
+            if (!is_null($playlist)) {
+                $name = $playlist->name;
+            }
         } else if ($playlist_id === null) {
             // add new provider
             $provider = $this->get_provider($provider_id);
@@ -2502,8 +2506,8 @@ class Default_Dune_Plugin implements DunePlugin
             // edit existing provider
             $provider = $this->get_provider($provider_id);
             $playlist = $this->get_playlist($playlist_id);
-            $name = $playlist->name;
             if (!is_null($playlist)) {
+                $name = $playlist->name;
                 hd_debug_print("playlist info : $playlist", true);
                 $provider = $this->init_provider($playlist);
                 hd_debug_print("existing provider : $provider", true);
