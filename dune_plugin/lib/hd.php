@@ -356,7 +356,6 @@ class HD
         shell_exec($cmd);
         if (!file_exists($save_file)) {
             $log_content = @file_get_contents($logfile);
-            unlink($save_file);
             throw new Exception("Can't download playlist $save_file\n\n" . $log_content);
         }
 

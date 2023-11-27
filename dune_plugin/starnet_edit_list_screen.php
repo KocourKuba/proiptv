@@ -57,7 +57,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
 
         $actions = array();
         if ($this->get_edit_order($media_url->edit_list)->size()) {
@@ -659,8 +658,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         /** @var Hashed_Array $order */
         $order = &$this->get_edit_order($edit_list);
 
-        $url = isset($user_input->{CONTROL_URL_PATH}) ? $user_input->{CONTROL_URL_PATH} : '';
         $name = isset($user_input->{CONTROL_EDIT_NAME}) ? $user_input->{CONTROL_EDIT_NAME} : '';
+        $url = isset($user_input->{CONTROL_URL_PATH}) ? $user_input->{CONTROL_URL_PATH} : '';
 
         if (empty($name)) {
             if (($pos = strpos($name, '?')) !== false) {
@@ -700,21 +699,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     hd_debug_print("Read finished");
                 }
 
-                if (file_exists($tmp_file)) {
-                    $contents = file_get_contents($tmp_file, false, null, 0, 512);
-                    if ($contents === false || strpos($contents, '#EXTM3U') === false) {
-                        unlink($tmp_file);
-                        throw new Exception("Bad M3U file: $url");
-                    }
-                    unlink($tmp_file);
-                } else {
+                if (!file_exists($tmp_file)) {
                     throw new Exception("Can't download file: $url");
                 }
 
                 $contents = file_get_contents($tmp_file, false, null, 0, 512);
-                if ($contents === false || strpos($contents, '#EXTM3U') !== 0) {
-                    throw new Exception("Bad M3U file: $url\n\n$contents");
+                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                    unlink($tmp_file);
+                    throw new Exception("Bad M3U file: '$url'\n$contents");
                 }
+                unlink($tmp_file);
+                hd_debug_print("Playlist: '$url' imported successefully");
             } catch (Exception $ex) {
                 hd_debug_print("Problem with download playlist: " . $ex->getMessage());
                 HD::set_last_error(null);
