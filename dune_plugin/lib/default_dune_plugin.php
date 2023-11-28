@@ -150,18 +150,11 @@ class Default_Dune_Plugin implements DunePlugin
      */
     protected $cur_provider;
 
-    /**
-     * @var string
-     */
-    protected $cur_provider_id;
-
     ///////////////////////////////////////////////////////////////////////
 
     protected function __construct()
     {
         $this->plugin_info = get_plugin_manifest_info();
-        $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
-        $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
         $this->providers = new Hashed_Array();
         $this->epg_presets = new Hashed_Array();
     }
@@ -1292,6 +1285,15 @@ class Default_Dune_Plugin implements DunePlugin
         if (!$force && $this->inited) {
             return;
         }
+
+        $this->parameters = null;
+        $this->settings = null;
+        $this->orders = null;
+        $this->history = null;
+        $this->cur_provider = null;
+
+        $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
+        $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
 
         hd_print("----------------------------------------------------");
         LogSeverity::$is_debug = true;
