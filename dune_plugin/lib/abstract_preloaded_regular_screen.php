@@ -47,13 +47,17 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
 
         $items = $this->get_all_folder_items($media_url, $plugin_cookies);
         $count = count($items);
-        $total = $from_ndx + $count;
+        $total = $count - $from_ndx;
 
-        if ($from_ndx >= $total) {
-            $from_ndx = $total;
+        if ($from_ndx < 0) {
+            $from_ndx = 0;
+        } else if ($from_ndx > $count) {
+            $from_ndx = 0;
             $items = array();
-        } else if ($from_ndx + $count > $total) {
-            array_splice($items, $total - $from_ndx);
+        }
+
+        if ($from_ndx > 0) {
+            array_splice($items, $count - $from_ndx);
         }
 
         return array(

@@ -73,8 +73,13 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
 
 			case ACTION_ITEM_DELETE:
-                $this->plugin->get_history(HISTORY_MOVIES)->erase($movie_id);
+                $history = $this->plugin->get_history(HISTORY_MOVIES);
+                $history->erase($movie_id);
                 $this->set_changes();
+                if ($history->size() === 0) {
+                    return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+                }
+
 				$sel_ndx = $user_input->sel_ndx + 1;
 				if ($sel_ndx < 0)
 					$sel_ndx = 0;
@@ -140,7 +145,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie_id),
+                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($id),
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $poster_url,
