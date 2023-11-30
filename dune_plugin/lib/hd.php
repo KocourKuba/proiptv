@@ -288,7 +288,7 @@ class HD
             curl_close($ch);
 
             if ($http_code === 304) {
-                hd_debug_print("file not changed");
+                hd_debug_print("file not changed", true);
             } else {
                 copy($tmp_file, $file_name);
                 touch($file_name, $info['filetime']);

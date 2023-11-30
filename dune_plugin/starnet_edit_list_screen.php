@@ -360,8 +360,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
-                    Action_Factory::change_behaviour($this->get_action_map($user_input->parent_media_url, $plugin_cookies), 0,
-                        $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx))
+                    Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
+                        $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx))
                 );
 
             case ACTION_FOLDER_SELECTED:
@@ -430,7 +430,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
                     $detailed_info = $playlist->name;
                 } else if ($playlist->type === PARAM_LINK) {
-                    $detailed_info = "$playlist->name|$playlist->params['uri']";
+                    $detailed_info = "$playlist->name|{$playlist->params['uri']}";
                 }
             } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                 // Hashed_Array
@@ -450,7 +450,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $dl_date = date("d.m H:i", $check_time_file);
                     $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params['uri'], $dl_date);
                 } else {
-                    $detailed_info = "$item->name|$item->params['uri']";
+                    $detailed_info = "$item->name|{$item->params['uri']}";
                 }
             } else {
                 continue;

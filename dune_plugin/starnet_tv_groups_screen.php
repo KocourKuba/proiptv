@@ -87,6 +87,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $sel_media_url = MediaURL::make(array());
         }
 
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+
         switch ($user_input->control_id)
         {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -313,8 +315,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
-                    Action_Factory::change_behaviour($this->get_action_map($user_input->parent_media_url, $plugin_cookies), 0,
-                        $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies, $user_input->sel_ndx))
+                    Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
+                        $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx))
                 );
 
             case ACTION_SORT_POPUP:

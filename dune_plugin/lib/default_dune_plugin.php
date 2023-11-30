@@ -1295,7 +1295,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
         $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
 
-        hd_print("----------------------------------------------------");
+        hd_debug_print("----------------------------------------------------");
         LogSeverity::$is_debug = true;
         $this->load_parameters(true);
         $this->update_log_level();
@@ -1388,7 +1388,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->tv->unload_channels();
 
         hd_debug_print("Init plugin done!");
-        hd_print("----------------------------------------------------");
+        hd_debug_print("----------------------------------------------------");
 
         $this->inited = true;
     }
@@ -1878,6 +1878,7 @@ class Default_Dune_Plugin implements DunePlugin
             if ($this->get_playlists()->size()) {
                 $this->get_playlists()->rewind();
                 $id = $this->get_playlists()->key();
+                $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
             }
         }
 
