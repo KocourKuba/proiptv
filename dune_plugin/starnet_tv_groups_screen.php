@@ -540,6 +540,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $group->get_title(),
                         $total,
                         $this->plugin->tv->get_disabled_channel_ids()->size());
+                    $color = DEF_LABEL_TEXT_COLOR_SKYBLUE;
+                    break;
+
+                case FAVORITES_GROUP_ID:
+                    $item_detailed_info = TR::t('tv_screen_group_info__2',
+                        $group->get_title(),
+                        $group->get_items_order()->size());
+                    $color = DEF_LABEL_TEXT_COLOR_GOLD;
                     break;
 
                 case HISTORY_GROUP_ID:
@@ -550,6 +558,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $visible++;
                     }
                     $item_detailed_info = TR::t('tv_screen_group_info__2', $group->get_title(), $visible);
+                    $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
                     break;
 
                 case CHANGED_CHANNELS_GROUP_ID:
@@ -557,16 +566,19 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $group->get_title(),
                         count($this->plugin->tv->get_changed_channels_ids('new')),
                         count($this->plugin->tv->get_changed_channels_ids('removed')));
+                    $color = DEF_LABEL_TEXT_COLOR_RED;
                     break;
 
                 case VOD_GROUP_ID:
                     $item_detailed_info = $group->get_title();
+                    $color = DEF_LABEL_TEXT_COLOR_GREEN;
                     break;
 
                 default:
                     $item_detailed_info = TR::t('tv_screen_group_info__2',
                         $group->get_title(),
                         $group->get_items_order()->size());
+                    $color = DEF_LABEL_TEXT_COLOR_WHITE;
                     break;
             }
 
@@ -576,6 +588,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 PluginRegularFolderItem::media_url => $group->get_media_url_str(),
                 PluginRegularFolderItem::caption => $group->get_title(),
                 PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::item_caption_color => $color,
                     ViewItemParams::icon_path => $group->get_icon_url(),
                     ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
                     ViewItemParams::item_detailed_info => $item_detailed_info,
