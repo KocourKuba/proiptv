@@ -194,6 +194,7 @@
       "provider_config": {
         "provider_type": "pin",
         "id_map": "tvg-id",
+        "playlist_catchup": "flussonic",
         "provider_info_url": "http://api.itv.live//data/{PASSWORD}"
       }
     },

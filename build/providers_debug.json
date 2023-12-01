@@ -371,6 +371,7 @@
       },
       "config": {
         "id_map": "tvg-id",
+        "playlist_catchup": "flussonic",
         "epg_preset": "itvlive"
       }
     },
