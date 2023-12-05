@@ -91,35 +91,42 @@ class Epg_Manager_Sql extends Epg_Manager
             $stm->bindParam(":channel_id", $channel_id);
             $stm->bindParam(":picon", $picon);
 
-            $file_object = $this->open_xmltv_file();
-            while (!$file_object->eof()) {
-                $xml_str = $file_object->fgets();
-                if (!$xml_str) break;
+            $file = $this->open_xmltv_file();
+            $xml_str = '';
+            while (!feof($file)) {
+                $data = fread($file, 8192);
+                if ($data === false) break;
 
                 // stop parse channels mapping
-                if (strpos($xml_str, "<programme") !== false) {
+                $xml_str .= $data;
+                if (strrpos($xml_str, "<programme") !== false) {
+                    break;
+                }
+            }
+            fclose($file);
+
+            $start = 0;
+            while ($start !== false) {
+                $start = strpos($xml_str, "<channel", $start);
+                if ($start === false) {
+                    // no channel nodes
                     break;
                 }
 
-                if (strpos($xml_str, "<channel") === false) {
-                    continue;
+                $end = strpos($xml_str, "</channel>", $start + 8);
+                if ($end === false) {
+                    // node without closing tag?
+                    break;
                 }
-
-                if (strpos($xml_str, "</channel") === false) {
-                    while (!$file_object->eof()) {
-                        $line = $file_object->fgets();
-                        $xml_str .= $line . PHP_EOL;
-                        if (strpos($line, "</channel") !== false) {
-                            break;
-                        }
-                    }
-                }
-
+                $end += 10;
                 $xml_node = new DOMDocument();
-                $xml_node->loadXML($xml_str);
+                $str = substr($xml_str, $start, $end - $start);
+                $start = $end;
+                $xml_node->loadXML($str);
                 foreach($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
+
                 if (empty($channel_id)) continue;
 
                 $picon = '';
@@ -195,32 +202,44 @@ class Epg_Manager_Sql extends Epg_Manager
 
             $stm = $filedb->prepare('INSERT INTO positions(channel_id, start, end) VALUES(:channel_id, :start, :end);');
             $stm->bindParam(":channel_id", $prev_channel);
-            $stm->bindParam(":start", $start);
-            $stm->bindParam(":end", $end);
+            $stm->bindParam(":start", $start_program_block);
+            $stm->bindParam(":end", $tag_end_pos);
 
             $cached_file = $this->get_cached_filename();
             if (!file_exists($cached_file)) {
                 throw new Exception("cache file not exist");
             }
 
-            $file_object = $this->open_xmltv_file();
+            $file = $this->open_xmltv_file();
 
-            $start = 0;
-            $i = 0;
+            $start_program_block = 0;
             $prev_channel = null;
-            while (!$file_object->eof()) {
-                $pos = $file_object->ftell();
-                $line = $file_object->fgets();
+            $i = 0;
+            while (!feof($file)) {
+                $tag_start_pos = ftell($file);
+                $line = stream_get_line($file, 0, "</programme>");
+                if ($line === false) break;
 
-                if (strpos($line, '<programme') === false) {
-                    if (strpos($line, '</tv>') === false) continue;
+                $offset = strpos($line, '<programme');
+                if ($offset === false) {
+                    // check if end
+                    $end_tv = strpos($line, "</tv>");
+                    if ($end_tv !== false) {
+                        $tag_end_pos = $end_tv + $tag_start_pos;
+                        $stm->execute();
+                        break;
+                    }
 
-                    $end = $pos;
-                    $stm->execute();
-                    break;
+                    // if open tag not found - skip chunk
+                    continue;
                 }
 
-                $ch_start = strpos($line, 'channel="', 11);
+                // end position include closing tag!
+                $tag_end_pos = ftell($file);
+                // append position of open tag to file position of chunk
+                $tag_start_pos += $offset;
+                // calculate channel id
+                $ch_start = strpos($line, 'channel="', $offset);
                 if ($ch_start === false) {
                     continue;
                 }
@@ -232,20 +251,20 @@ class Epg_Manager_Sql extends Epg_Manager
                 }
 
                 $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
-                if (!empty($channel_id)) {
-                    $end = $pos;
-                    if ($prev_channel === null) {
-                        $prev_channel = $channel_id;
-                        $start = $pos;
-                    } else if ($prev_channel !== $channel_id) {
-                        $stm->execute();
-                        if (($i % 100) === 0) {
-                            $filedb->exec('COMMIT;');
-                            $filedb->exec('BEGIN;');
-                        }
-                        $prev_channel = $channel_id;
-                        $start = $pos;
+                if (empty($channel_id)) continue;
+
+                if ($prev_channel === null) {
+                    $prev_channel = $channel_id;
+                    $start_program_block = $tag_start_pos;
+                } else if ($prev_channel !== $channel_id) {
+                    $tag_end_pos = $tag_start_pos;
+                    $stm->execute();
+                    if (($i % 100) === 0) {
+                        $filedb->exec('COMMIT;');
+                        $filedb->exec('BEGIN;');
                     }
+                    $prev_channel = $channel_id;
+                    $start_program_block = $tag_start_pos;
                 }
             }
 

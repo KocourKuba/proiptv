@@ -237,7 +237,7 @@ class Epg_Manager
                 hd_debug_print("Fetch data from XMLTV cache in: " . (microtime(true) - $t) . " secs");
             }
         } catch (Exception $ex) {
-            hd_print($ex->getMessage());
+            hd_debug_print($ex->getMessage());
         }
 
         if (empty($day_epg)) {
@@ -481,31 +481,38 @@ class Epg_Manager
 
             hd_debug_print("Start reindex: $channels_file");
 
-            $file_object = $this->open_xmltv_file();
-            while (!$file_object->eof()) {
-                $xml_str = $file_object->fgets();
+            $file = $this->open_xmltv_file();
+            $xml_str = '';
+            while (!feof($file)) {
+                $data = fread($file, 8192);
+                if ($data === false) break;
 
                 // stop parse channels mapping
-                if (strpos($xml_str, "<programme") !== false) {
+                $xml_str .= $data;
+                if (strrpos($xml_str, "<programme") !== false) {
+                    break;
+                }
+            }
+            fclose($file);
+
+            $start = 0;
+            while ($start !== false) {
+                $start = strpos($xml_str, "<channel", $start);
+                if ($start === false) {
+                    // no channel nodes
                     break;
                 }
 
-                if (strpos($xml_str, "<channel") === false) {
-                    continue;
+                $end = strpos($xml_str, "</channel>", $start + 8);
+                if ($end === false) {
+                    // node without closing tag?
+                    break;
                 }
-
-                if (strpos($xml_str, "</channel") === false) {
-                    while (!$file_object->eof()) {
-                        $line = $file_object->fgets();
-                        $xml_str .= $line . PHP_EOL;
-                        if (strpos($line, "</channel") !== false) {
-                            break;
-                        }
-                    }
-                }
-
+                $end += 10;
                 $xml_node = new DOMDocument();
-                $xml_node->loadXML($xml_str);
+                $str = substr($xml_str, $start, $end - $start);
+                $start = $end;
+                $xml_node->loadXML($str);
                 foreach($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
@@ -578,24 +585,36 @@ class Epg_Manager
 
             $t = microtime(true);
 
-            $file_object = $this->open_xmltv_file();
+            $file = $this->open_xmltv_file();
 
-            $start = 0;
+            $start_program_block = 0;
             $prev_channel = null;
             $xmltv_index = array();
-            while (!$file_object->eof()) {
-                $pos = $file_object->ftell();
-                $line = $file_object->fgets();
+            while (!feof($file)) {
+                $tag_start_pos = ftell($file);
+                $line = stream_get_line($file, 0, "</programme>");
+                if ($line === false) break;
 
-                if (strpos($line, '<programme') === false) {
-                    if (strpos($line, '</tv>') === false) continue;
+                $offset = strpos($line, '<programme');
+                if ($offset === false) {
+                    // check if end
+                    $end_tv = strpos($line, "</tv>");
+                    if ($end_tv !== false) {
+                        $tag_end_pos = $end_tv + $tag_start_pos;
+                        $xmltv_index[$prev_channel][] = array('start' => $start_program_block, 'end' => $tag_end_pos);
+                        break;
+                    }
 
-                    $end = $pos;
-                    $xmltv_index[$prev_channel][] = array('start' => $start, 'end' => $end);
-                    break;
+                    // if open tag not found - skip chunk
+                    continue;
                 }
 
-                $ch_start = strpos($line, 'channel="', 11);
+                // end position include closing tag!
+                $tag_end_pos = ftell($file);
+                // append position of open tag to file position of chunk
+                $tag_start_pos += $offset;
+                // calculate channel id
+                $ch_start = strpos($line, 'channel="', $offset);
                 if ($ch_start === false) {
                     continue;
                 }
@@ -607,17 +626,17 @@ class Epg_Manager
                 }
 
                 $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
+                if (empty($channel_id)) continue;
 
-                if (!empty($channel_id)) {
-                    $end = $pos;
-                    if ($prev_channel === null) {
-                        $prev_channel = $channel_id;
-                        $start = $pos;
-                    } else if ($prev_channel !== $channel_id) {
-                        $xmltv_index[$prev_channel][] = array('start' => $start, 'end' => $end);
-                        $prev_channel = $channel_id;
-                        $start = $pos;
-                    }
+                if ($prev_channel === null) {
+                    // first entrance. Need to remember channel id
+                    $prev_channel = $channel_id;
+                    $start_program_block = $tag_start_pos;
+                } else if ($prev_channel !== $channel_id) {
+                    // next channel. need to remember start programs block for channel
+                    $xmltv_index[$prev_channel][] = array('start' => $start_program_block, 'end' => $tag_start_pos);
+                    $prev_channel = $channel_id;
+                    $start_program_block = $tag_start_pos;
                 }
             }
 
@@ -729,7 +748,7 @@ class Epg_Manager
     }
 
     /**
-     * @return SplFileObject
+     * @return resource
      * @throws Exception
      */
     protected function open_xmltv_file()
@@ -739,11 +758,12 @@ class Epg_Manager
             throw new Exception("cache file not exist");
         }
 
-        $file_object = new SplFileObject($cached_file);
-        $file_object->setFlags(SplFileObject::DROP_NEW_LINE);
-        $file_object->rewind();
+        $file = fopen($cached_file, 'rb');
+        if (!$file) {
+            throw new Exception("can't open $cached_file");
+        }
 
-        return $file_object;
+        return $file;
     }
 
     /**
