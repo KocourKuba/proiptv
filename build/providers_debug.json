@@ -457,6 +457,20 @@
     },
     {
       "enable": true,
+      "id": "onlineott",
+      "name": "OnlineOTT TV",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_onlineott.png",
+      "api_commands": {
+        "playlist": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
+        "vod": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/vodall.m3u"
+      },
+      "config": {
+        "vod_parser": "(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$"
+      }
+    },
+    {
+      "enable": true,
       "id": "ping",
       "name": "Ping TV",
       "type": "login",
