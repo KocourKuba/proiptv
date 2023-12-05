@@ -854,6 +854,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_parameter($param, $val)
     {
+        hd_debug_print(null, true);
         $this->parameters[$param] = $val;
         $this->set_dirty(true,PLUGIN_PARAMETERS);
         $this->save_parameters();
@@ -1878,7 +1879,9 @@ class Default_Dune_Plugin implements DunePlugin
             if ($this->get_playlists()->size()) {
                 $this->get_playlists()->rewind();
                 $id = $this->get_playlists()->key();
-                $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
+                if (!empty($id)) {
+                    $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
+                }
             }
         }
 
@@ -2652,10 +2655,12 @@ class Default_Dune_Plugin implements DunePlugin
 
         $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         $id = $user_input->{CONTROL_EDIT_ITEM};
+        $not_set = true;
         switch ($provider->getType()) {
             case PROVIDER_TYPE_PIN:
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_PASSWORD]) : $id;
+                $not_set = empty($params[MACRO_PASSWORD]);
                 break;
 
             case PROVIDER_TYPE_LOGIN:
@@ -2663,6 +2668,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
+                $not_set = empty($params[MACRO_LOGIN]) || empty($params[MACRO_PASSWORD]);
                 break;
 
             case PROVIDER_TYPE_LOGIN_STOKEN:
@@ -2670,6 +2676,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
                 $provider->setCredential(MACRO_TOKEN, '');
+                $not_set = empty($params[MACRO_LOGIN]) || empty($params[MACRO_PASSWORD]);
                 break;
 
             case PROVIDER_TYPE_EDEM:
@@ -2682,10 +2689,15 @@ class Default_Dune_Plugin implements DunePlugin
                 $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
 
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;
+                $not_set = empty($params[MACRO_OTTKEY]);
                 break;
 
             default:
                 return false;
+        }
+
+        if ($not_set) {
+            return false;
         }
 
         if (isset($user_input->{CONTROL_DOMAIN})) {

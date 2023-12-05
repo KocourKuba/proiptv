@@ -137,7 +137,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($item->type === PARAM_PROVIDER) {
-                    return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER}, $selected_media_url->id);
+                    return $this->plugin->do_edit_provider_dlg($this, $item->params->provider, $selected_media_url->id);
                 }
                 return null;
 
@@ -351,8 +351,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->set_no_changes();
-                if (!$this->plugin->apply_edit_provider_dlg($user_input))
-                    return null;
+                if (!$this->plugin->apply_edit_provider_dlg($user_input)) {
+                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+                }
 
                 if ($this->plugin->tv->reload_channels() === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,

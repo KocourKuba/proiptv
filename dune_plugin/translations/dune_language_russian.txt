@@ -330,4 +330,4 @@ err_empty_zip__1 = Пустой файл архива %s
 err_unknown_file_type = Неизвестный тип файла
 err_unsupported_file_type = Неподдерживаемый формат EPG
 err_bad_m3u_file = Некорректный файл M3U
-err_incorrect_access_data = Неправильный логин или пароль
+err_incorrect_access_data = Неправильный данные для просмотра
