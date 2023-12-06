@@ -168,8 +168,6 @@
         "playlist": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "smile",
         "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
         "vod_parser": "(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$"
       }
@@ -594,7 +592,6 @@
         "vod": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}"
       },
       "config": {
-        "epg_preset": "drm",
         "servers": {
           "0": "Auto Select",
           "1": "Server CZ",
