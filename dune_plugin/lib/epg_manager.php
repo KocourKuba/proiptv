@@ -380,14 +380,14 @@ class Epg_Manager
                 hd_debug_print("Read finished");
             }
 
-            hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", filemtime($tmp_filename)));
-            hd_debug_print("Download xmltv source $this->xmltv_url done: " . (microtime(true) - $t) . " secs");
+            $file_time = filemtime($tmp_filename);
+            hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", $file_time));
+            hd_debug_print("Download xmltv source $this->xmltv_url done in: " . (microtime(true) - $t) . " secs");
             $t = microtime(true);
 
             $handle = fopen($tmp_filename, "rb");
             $hdr = fread($handle, 8);
             fclose($handle);
-
 
             if (0 === mb_strpos($hdr , "\x1f\x8b\x08")) {
                 hd_debug_print("GZ signature: " . bin2hex(substr($hdr, 0, 3)), true);
@@ -400,7 +400,8 @@ class Epg_Manager
                     throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
                 }
                 $size = filesize($cached_xmltv_file);
-                hd_debug_print("$size bytes written to $cached_xmltv_file");
+                touch($cached_xmltv_file, $file_time);
+                hd_debug_print("$size bytes ungzipped to $cached_xmltv_file in " . (microtime(true) - $t) . " secs");
             } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
                 hd_debug_print("ZIP signature: " . bin2hex(substr($hdr, 0, 4)), true);
                 hd_debug_print("unzip $tmp_filename to $cached_xmltv_file");
@@ -423,7 +424,8 @@ class Epg_Manager
 
                 rename($filename, $cached_xmltv_file);
                 $size = filesize($cached_xmltv_file);
-                hd_debug_print("$size bytes unzipped to $cached_xmltv_file");
+                touch($cached_xmltv_file, $file_time);
+                hd_debug_print("$size bytes unzipped to $cached_xmltv_file in " . (microtime(true) - $t) . " secs");
             } else if (false !== mb_strpos($hdr, "<?xml")) {
                 hd_debug_print("XML signature: " . substr($hdr, 0, 5), true);
                 hd_debug_print("rename $tmp_filename to $cached_xmltv_file");
@@ -432,7 +434,8 @@ class Epg_Manager
                 }
                 rename($tmp_filename, $cached_xmltv_file);
                 $size = filesize($cached_xmltv_file);
-                hd_debug_print("$size bytes written to $cached_xmltv_file");
+                touch($cached_xmltv_file, $file_time);
+                hd_debug_print("$size bytes stored to $cached_xmltv_file in " . (microtime(true) - $t) . " secs");
             } else {
                 hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
                 throw new Exception(TR::load_string('err_unknown_file_type'));
@@ -449,7 +452,6 @@ class Epg_Manager
         $this->set_index_locked(false);
 
         hd_debug_print("------------------------------------------------------------");
-        hd_debug_print("Unpack xmltv source $this->xmltv_url done: " . (microtime(true) - $t) . " secs");
 
         return $ret;
     }
