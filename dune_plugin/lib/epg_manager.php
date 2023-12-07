@@ -288,10 +288,10 @@ class Epg_Manager
 
     /**
      * Checks if xmltv source cached and not expired.
-     * If not, try to download it and unpack if necessary
-     * if downloaded xmltv file exists return 1
-     * if error return -1 and set_last_error contains error message
-     * if need download - 0
+     * if xmltv url not set return -1 and set_last_error contains error message
+     * if downloaded xmltv file exists and all indexes are present return 0
+     * if downloaded xmltv file not exists or expired return 1
+     * if downloaded xmltv file exists, not expired but indexes not exists return 2
      *
      * @return int
      */
@@ -309,6 +309,10 @@ class Epg_Manager
         HD::set_last_error("xmltv_last_error", null);
         $cached_xmltv_file = $this->get_cached_filename();
         hd_debug_print("Checking cached xmltv file: $cached_xmltv_file");
+        $channels_index = $this->get_channels_index_name();
+        $epg_index = $this->get_positions_index_name();
+        $picons_index = $this->get_picons_index_name();
+
         if (file_exists($cached_xmltv_file)) {
             $check_time_file = filemtime($cached_xmltv_file);
             $max_cache_time = 3600 * 24 * $this->cache_ttl;
@@ -316,7 +320,7 @@ class Epg_Manager
                 hd_debug_print("Cached file: $cached_xmltv_file is not expired "
                     . date("Y-m-d H:i", $check_time_file)
                     . " date expiration: " . date("Y-m-d H:i", $check_time_file + $max_cache_time));
-                return 1;
+                return (file_exists($epg_index) && file_exists($channels_index)) ? 0 : 2;
             }
 
             hd_debug_print("clear cached file: $cached_xmltv_file");
@@ -325,25 +329,22 @@ class Epg_Manager
             hd_debug_print("Cached xmltv file not exist");
         }
 
-        $epg_index = $this->get_index_name(true);
-        if (file_exists($epg_index)) {
-            hd_debug_print("clear cached epg index: $epg_index");
-            unlink($epg_index);
-        }
-
-        $channels_index = $this->get_index_name(false);
         if (file_exists($channels_index)) {
             hd_debug_print("clear cached channels index: $channels_index");
             unlink($channels_index);
         }
 
-        $picons_index = $this->get_picons_index_name();
+        if (file_exists($epg_index)) {
+            hd_debug_print("clear cached epg index: $epg_index");
+            unlink($epg_index);
+        }
+
         if (file_exists($picons_index)) {
             hd_debug_print("clear cached picons index: $picons_index");
             unlink($picons_index);
         }
 
-        return 0;
+        return 1;
     }
 
     /**
@@ -472,7 +473,7 @@ class Epg_Manager
      */
     public function index_xmltv_channels()
     {
-        $channels_file = $this->get_index_name(false);
+        $channels_file = $this->get_channels_index_name();
         $version_file = $this->get_cache_stem('_version');
         if (file_exists($channels_file) && file_exists($version_file)
             && file_get_contents($version_file) > '2.1') {
@@ -575,7 +576,7 @@ class Epg_Manager
         }
 
         $cache_valid = false;
-        $index_program = $this->get_index_name(true);
+        $index_program = $this->get_positions_index_name();
         if (file_exists($index_program)) {
             hd_debug_print("Load cache program index: $index_program");
             $this->xmltv_positions = HD::ReadContentFromFile($index_program);
@@ -650,7 +651,7 @@ class Epg_Manager
 
             if (!empty($xmltv_index)) {
                 hd_debug_print("Save index: $index_program", true);
-                HD::StoreContentToFile($this->get_index_name(true), $xmltv_index);
+                HD::StoreContentToFile($this->get_positions_index_name(), $xmltv_index);
                 $this->xmltv_positions = $xmltv_index;
             }
 
@@ -739,12 +740,19 @@ class Epg_Manager
     }
 
     /**
-     * @param bool $type
      * @return string|null
      */
-    protected function get_index_name($type)
+    protected function get_positions_index_name()
     {
-        return $this->get_cache_stem($type ? "_positions$this->index_ext" : "_channels$this->index_ext");
+        return $this->get_cache_stem("_positions$this->index_ext");
+    }
+
+    /**
+     * @return string|null
+     */
+    protected function get_channels_index_name()
+    {
+        return $this->get_cache_stem("_channels$this->index_ext");
     }
 
     /**
@@ -810,7 +818,7 @@ class Epg_Manager
         try {
             $t = microtime(true);
             if (empty($this->xmltv_positions)) {
-                $index_file = $this->get_index_name(true);
+                $index_file = $this->get_positions_index_name();
                 hd_debug_print("load positions index $$index_file");
                 $data = HD::ReadContentFromFile($index_file);
                 if (empty($data)) {
@@ -821,7 +829,7 @@ class Epg_Manager
             }
 
             if (empty($this->xmltv_channels)) {
-                $index_file = $this->get_index_name(false);
+                $index_file = $this->get_channels_index_name();
                 hd_debug_print("load channels index $$index_file");
                 $this->xmltv_channels = HD::ReadContentFromFile($index_file);
                 if (empty($this->xmltv_channels)) {

@@ -105,6 +105,7 @@ class Default_Channel extends Json_Serializer implements Channel
      * @param bool $protected
      * @param int $timeshift_hours
      * @param array $ext_params
+     * @param $disabled
      */
     public function __construct($plugin, $id, $title, $icon_url,
                                 $streaming_url, $archive_url,

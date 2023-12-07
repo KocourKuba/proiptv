@@ -374,7 +374,7 @@ class Epg_Manager_Sql extends Epg_Manager
     protected function open_sqlite_db($db_type, $mode = SQLITE3_OPEN_READONLY)
     {
         try {
-            $index_name = $this->get_index_name($db_type);
+            $index_name = $db_type ? $this->get_positions_index_name() : $this->get_channels_index_name();
             if (file_exists($index_name)) {
                 hd_debug_print("Open db: $index_name", true);
                 return new SQLite3($index_name, $mode, '');

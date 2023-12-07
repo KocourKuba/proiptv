@@ -40,29 +40,34 @@ set_debug_log($config->debug);
 
 if ($config->cache_engine === ENGINE_XMLTV) {
     if (class_exists('SQLite3')) {
-        $epg_man = new Epg_Manager_Sql($config->version, $config->cache_dir, $config->xmltv_url);
+        $epg_manager = new Epg_Manager_Sql($config->version, $config->cache_dir, $config->xmltv_url);
     } else {
-        $epg_man = new Epg_Manager($config->version, $config->cache_dir, $config->xmltv_url);
+        $epg_manager = new Epg_Manager($config->version, $config->cache_dir, $config->xmltv_url);
     }
 } else {
     hd_debug_print("This manager do not requires run in background");
     return;
 }
 
-$epg_man->set_cache_ttl($config->cache_ttl);
+$epg_manager->set_cache_ttl($config->cache_ttl);
 
 $start = microtime(true);
-$res = $epg_man->is_xmltv_cache_valid();
+$res = $epg_manager->is_xmltv_cache_valid();
 if ($res === -1) {
-    hd_debug_print("Error load xmltv");
+    hd_debug_print("Error load xmltv, url not set");
     return;
 }
 
 if ($res === 0) {
-    hd_debug_print("XMLTV source not downloaded, nothing to parse");
+    hd_debug_print("XMLTV source valid, no need to processing");
     return;
 }
 
-$epg_man->index_xmltv_positions();
+if ($res === 1) {
+    $epg_manager->download_xmltv_source();
+    $epg_manager->index_xmltv_channels();
+}
+
+$epg_manager->index_xmltv_positions();
 
 hd_print("Script execution time: ". format_duration(round(1000 * (microtime(true) - $start))));

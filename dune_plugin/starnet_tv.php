@@ -695,16 +695,28 @@ class Starnet_Tv implements User_Input_Handler
 
             hd_debug_print("XMLTV source selected: $source");
             $this->plugin->init_epg_manager();
+        }
+
+        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
+        if (!$use_playlist_picons) {
             $res = $epg_manager->is_xmltv_cache_valid();
-            if ($res !== -1) {
-                if ($res === 0) {
+            switch ($res) {
+                case -1:
+                    $picons = array();
+                    break;
+                case 0:
+                    $picons = $epg_manager->get_picons();
+                    break;
+                case 1:
                     $epg_manager->download_xmltv_source();
-                }
-
-                $epg_manager->index_xmltv_channels();
+                    $epg_manager->index_xmltv_channels();
+                    $picons = $epg_manager->get_picons();
+                    break;
+                case 2:
+                    $epg_manager->index_xmltv_channels();
+                    $picons = $epg_manager->get_picons();
+                    break;
             }
-
-            $picons = $epg_manager->get_picons();
         }
 
         hd_debug_print("Build categories and channels...");
@@ -776,7 +788,6 @@ class Starnet_Tv implements User_Input_Handler
             $this->plugin->remove_order($orphan_group_id);
         }
 
-        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
         // Read channels
         $playlist_group_channels = array();
         $number = 0;
@@ -824,13 +835,13 @@ class Starnet_Tv implements User_Input_Handler
                 $playlist_icon = $icon_base_url . $playlist_icon;
             }
 
-            if (!$is_xml_engine) {
+            if (!$is_xml_engine || $use_playlist_picons) {
                 $icon_url = $playlist_icon;
-            } else if ($use_playlist_picons) {
-                $xmltv_icon = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
-                $icon_url = empty($playlist_icon) ? $xmltv_icon : $playlist_icon;
             } else {
                 $icon_url = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
+                if (empty($icon_url)) {
+                    $icon_url = $playlist_icon;
+                }
             }
 
             if (empty($icon_url)) {
@@ -972,10 +983,13 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
         HD::ShowMemoryUsage();
 
-        if ($epg_engine === ENGINE_XMLTV && $epg_manager->is_xmltv_cache_valid() === 1) {
-            hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
-            $this->plugin->start_bg_indexing();
-            sleep(1);
+        if ($epg_engine === ENGINE_XMLTV) {
+            $res = $epg_manager->is_xmltv_cache_valid();
+            if ($res > 0) {
+                hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
+                $this->plugin->start_bg_indexing();
+                sleep(1);
+            }
         }
 
         return 2;
