@@ -571,7 +571,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 case VOD_GROUP_ID:
                     $item_detailed_info = $group->get_title();
-                    $color = DEF_LABEL_TEXT_COLOR_GREEN;
+                    $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
                     break;
 
                 default:

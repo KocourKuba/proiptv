@@ -1912,32 +1912,26 @@ function raw_json_encode($arr)
     return str_replace('\\/', '/', preg_replace_callback($pattern, $callback, json_encode($arr)));
 }
 
-function wrap_string_to_lines($str, $max_chars)
+/**
+ * return wrapped string
+ *
+ * @param $long_string
+ * @param $max_chars
+ * @return string
+ */
+function wrap_string_to_lines($long_string, $max_chars)
 {
-    return array_slice(
-        explode("\n",
+    $lines = array_slice(
+        explode(PHP_EOL,
             iconv('Windows-1251', 'UTF-8',
                 wordwrap(iconv('UTF-8', 'Windows-1251',
-                    trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $str))),
-                    $max_chars, "\n", true))
+                    trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $long_string))),
+                    $max_chars, PHP_EOL, true))
         ),
         0, 2
     );
-}
 
-function mapped_implode($glue, $array, $symbol, $ignore)
-{
-    if (!is_null($ignore)) {
-        $array = array_diff_key($array, array_fill_keys($ignore, ''));
-    }
-    return implode($glue, array_map(
-            function($k, $v) use($symbol) {
-                return $k . $symbol . $v;
-            },
-            array_keys($array),
-            array_values($array)
-        )
-    );
+    return implode(PHP_EOL, $lines);
 }
 
 function is_assoc_array($array){

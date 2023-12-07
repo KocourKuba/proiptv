@@ -35,6 +35,11 @@ class Default_Channel extends Json_Serializer implements Channel
     protected $_archive_url;
 
     /**
+     * @var string
+     */
+    protected $_catchup;
+
+    /**
      * @var array[Groups]
      */
     protected $_groups;
@@ -93,6 +98,7 @@ class Default_Channel extends Json_Serializer implements Channel
      * @param string $icon_url
      * @param string $streaming_url
      * @param string $archive_url
+     * @param string $catchup
      * @param int $archive
      * @param int $number
      * @param array $epg_ids
@@ -102,18 +108,17 @@ class Default_Channel extends Json_Serializer implements Channel
      */
     public function __construct($plugin, $id, $title, $icon_url,
                                 $streaming_url, $archive_url,
-                                $archive, $number, $epg_ids,
-                                $protected, $timeshift_hours, $ext_params = array())
+                                $catchup, $archive, $number, $epg_ids,
+                                $protected, $timeshift_hours, $ext_params, $disabled)
     {
         $this->plugin = $plugin;
-
-        $this->_disabled = false;
 
         $this->_id = $id;
         $this->_title = $title;
         $this->_icon_url = $icon_url;
         $this->_streaming_url = $streaming_url;
         $this->_archive_url = $archive_url;
+        $this->_catchup = $catchup;
         $this->_groups = array();
         $this->_archive = ($archive > 0) ? $archive : 0;
         $this->_number = $number;
@@ -121,6 +126,7 @@ class Default_Channel extends Json_Serializer implements Channel
         $this->_protected = $protected;
         $this->_timeshift_hours = $timeshift_hours;
         $this->_ext_params = $ext_params;
+        $this->_disabled = $disabled;
     }
 
     /**
@@ -287,6 +293,14 @@ class Default_Channel extends Json_Serializer implements Channel
     public function get_archive_url()
     {
         return $this->_archive_url;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_catchup()
+    {
+        return $this->_catchup;
     }
 
     /**

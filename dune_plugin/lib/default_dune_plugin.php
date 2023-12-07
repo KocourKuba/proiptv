@@ -2655,7 +2655,6 @@ class Default_Dune_Plugin implements DunePlugin
 
         $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         $id = $user_input->{CONTROL_EDIT_ITEM};
-        $not_set = true;
         switch ($provider->getType()) {
             case PROVIDER_TYPE_PIN:
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
@@ -2743,46 +2742,40 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        $info = "ID: {$channel->get_id()}\n";
-        $info .= "Name: {$channel->get_title()}\n";
-        $info .= "Archive: " . var_export($channel->get_archive(), true) . " day's\n";
-        $info .= "Protected: " . var_export($channel->is_protected(), true) . "\n";
-        $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . "\n";
-        $info .= "Timeshift hours: {$channel->get_timeshift_hours()}\n";
+        $info = "ID: " . $channel->get_id() . PHP_EOL;
+        $info .= "Name: " . $channel->get_title() . PHP_EOL;
+        $info .= "Archive: " . $channel->get_archive() . PHP_EOL;
+        $info .= "Protected: " . TR::load_string($channel->is_protected() ? 'yes' : 'no') . PHP_EOL;
+        $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . PHP_EOL;
+        $info .= "Timeshift hours: " . $channel->get_timeshift_hours() . PHP_EOL;
         $groups = array();
         foreach ($channel->get_groups() as $group) {
             $groups[] = $group->get_id();
         }
-        $info .= "Categories: " . implode(', ', $groups) . "\n\n";
+        $info .= "Categories: " . implode(', ', $groups) . PHP_EOL;
 
-        $lines = wrap_string_to_lines($channel->get_icon_url(), 70);
-        $info .= "Icon URL: " . implode("\n", $lines) . "\n";
+        $info .= PHP_EOL;
+        $info .= "Icon URL: " . wrap_string_to_lines($channel->get_icon_url(), 70) . PHP_EOL;
 
         try {
-            $live_url = $this->tv->generate_stream_url($channel_id, -1);
-            $lines = wrap_string_to_lines($live_url, 70);
+            $live_url = $this->tv->generate_stream_url($channel_id, -1, true);
+            $info .= "Live URL: " . wrap_string_to_lines($live_url, 70) . PHP_EOL;
         } catch(Exception $ex) {
             hd_debug_print($ex);
-            $live_url = '';
-            $lines = wrap_string_to_lines($channel->get_url(), 70);
         }
-        $info .= "Live URL: " . implode("\n", $lines) . "\n";
 
-        $archive_url = $channel->get_archive_url();
-        if (!empty($archive_url)) {
+        if ($channel->get_archive() > 0 ) {
             try {
-                $url = $this->tv->generate_stream_url($channel_id, time() - 3600);
-                $lines = wrap_string_to_lines($url, 70);
+                $archive_url = $this->tv->generate_stream_url($channel_id, time() - 3600, true);
+                $info .= "Archive URL: " . wrap_string_to_lines($archive_url, 70) . PHP_EOL;
             } catch (Exception $ex) {
                 hd_debug_print($ex);
-                $lines = wrap_string_to_lines($archive_url, 70);
             }
-
-            $info .= "Archive URL: " . implode("\n", $lines) . "\n";
         }
 
-        if (!empty($ext_params[PARAM_DUNE_PARAMS])) {
-            $info .= "Params: " . implode(",", $ext_params[PARAM_DUNE_PARAMS]) . "\n";
+        $dune_params = $this->tv->generate_dune_params($channel);
+        if (!empty($dune_params)) {
+            $info .= PHP_EOL . "Params: $dune_params" . PHP_EOL;
         }
 
         if (!empty($live_url) && !is_apk()) {
@@ -2792,7 +2785,6 @@ class Default_Dune_Plugin implements DunePlugin
                 2 => array("pipe", "w"), // stderr
             );
 
-            $live_url = HD::fix_double_scheme_url($live_url);
             hd_debug_print("Get media info for: $live_url");
             $process = proc_open(
                 get_install_path("bin/media_check.sh $live_url"),
@@ -2811,8 +2803,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if (empty($line)) continue;
                     if (strpos($line, "Output") !== false) break;
                     if (strpos($line, "Stream") !== false) {
-                        $line = preg_replace("/ \([\[].*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
-                        $info .= "$line\n";
+                        $info .= preg_replace("/ \([\[].*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+/", "", $line) . PHP_EOL;
                     }
                 }
             }

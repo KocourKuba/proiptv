@@ -381,8 +381,16 @@ class Epg_Manager
             }
 
             $file_time = filemtime($tmp_filename);
+            $dl_time = microtime(true) - $t;
+            $bps = filesize($tmp_filename) / $dl_time;
+            $si_prefix = array('B/s', 'KB/s', 'MB/s');
+            $base = 1024;
+            $class = min((int)log($bps, $base), count($si_prefix) - 1);
+            $speed = sprintf('%1.2f', $bps / pow($base, $class)) . ' ' . $si_prefix[$class];
+
             hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", $file_time));
-            hd_debug_print("Download xmltv source $this->xmltv_url done in: " . (microtime(true) - $t) . " secs");
+            hd_debug_print("Download xmltv source $this->xmltv_url done in: $dl_time secs (speed $speed)");
+
             $t = microtime(true);
 
             $handle = fopen($tmp_filename, "rb");
@@ -611,8 +619,6 @@ class Epg_Manager
                     continue;
                 }
 
-                // end position include closing tag!
-                $tag_end_pos = ftell($file);
                 // append position of open tag to file position of chunk
                 $tag_start_pos += $offset;
                 // calculate channel id

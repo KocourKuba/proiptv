@@ -112,6 +112,12 @@ interface Channel
     public function get_archive_url();
 
     /**
+     * catchup type for channel
+     * @return string
+     */
+    public function get_catchup();
+
+    /**
      * additional parameters
      * @return array
      */

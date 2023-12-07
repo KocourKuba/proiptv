@@ -84,6 +84,10 @@ class Starnet_Tv implements User_Input_Handler
      */
     protected $m3u_parser;
 
+    /**
+     * @var string
+     */
+    protected $catchup;
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -606,7 +610,7 @@ class Starnet_Tv implements User_Input_Handler
             return 0;
         }
 
-        $catchup['global'] = $this->m3u_parser->getM3uInfo()->getCatchup();
+        $this->catchup = $this->m3u_parser->getM3uInfo()->getCatchup();
         $global_catchup_source = $this->m3u_parser->getM3uInfo()->getCatchupSource();
         $icon_base_url = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
         if (!empty($icon_base_url)) {
@@ -623,7 +627,7 @@ class Starnet_Tv implements User_Input_Handler
         } else {
             $playlist_catchup = $provider->getConfigValue(CONFIG_PLAYLIST_CATCHUP);
             if (!empty($playlist_catchup)) {
-                $catchup['global'] = $playlist_catchup;
+                $this->catchup = $playlist_catchup;
                 hd_debug_print("set provider catchup: $playlist_catchup");
             }
 
@@ -699,12 +703,12 @@ class Starnet_Tv implements User_Input_Handler
 
                 $epg_manager->index_xmltv_channels();
             }
+
+            $picons = $epg_manager->get_picons();
         }
 
         hd_debug_print("Build categories and channels...");
         $t = microtime(true);
-
-        $picons = $epg_manager->get_picons();
 
         // suppress save after add group
         $this->plugin->set_postpone_save(true, PLUGIN_SETTINGS);
@@ -798,225 +802,134 @@ class Starnet_Tv implements User_Input_Handler
                 $channel_name = "no name";
             }
 
-            $number++;
-
             /** @var Channel $channel */
             $channel = $this->channels->get($channel_id);
-            if (is_null($channel)) {
-                $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
-                if (!empty($epg_ids)) {
-                    $epg_ids = array_unique($epg_ids);
-                }
+            // duplicate channel? Same ID or same Url
+            if (!is_null($channel)) continue;
 
-                $playlist_icon = $entry->getEntryIcon();
-                if (!empty($icon_base_url) && !preg_match(HTTP_PATTERN, $playlist_icon)) {
-                    $playlist_icon = $icon_base_url . $playlist_icon;
-                }
+            /** @var Group $parent_group */
+            $parent_group = $this->groups->get($group_title);
+            // if no parent group nowhere to add, strange but possible
+            if (is_null($parent_group)) continue;
 
-                $xmltv_icon = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
+            $number++;
 
-                if (!$is_xml_engine) {
-                    $icon_url = $playlist_icon;
-                } else if ($use_playlist_picons) {
-                    $icon_url = empty($playlist_icon) ? $xmltv_icon : $playlist_icon;
-                } else {
-                    $icon_url = $xmltv_icon;
-                }
-
-                if (empty($icon_url)) {
-                    if (!empty($icon_template)) {
-                        $icon_url = $icon_template;
-                        if (isset($m)) {
-                            $icon_url = str_replace(
-                                array(MACRO_SCHEME, MACRO_DOMAIN, MACRO_ID),
-                                array($m['scheme'], $m['domain'], $channel_id),
-                                $icon_url);
-                        }
-                        if (isset($domain_id)) {
-                            $icon_url = str_replace(MACRO_DOMAIN_ID, $domain_id, $icon_url);
-                        }
-                    } else {
-                        $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
-                    }
-                }
-
-                $used_tag = '';
-                $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, Entry::TAG_EXTINF, $used_tag);
-                if ($used_tag === 'catchup-time') {
-                    $archive /= 86400;
-                }
-
-                $channel_url = $entry->getPath();
-
-                $archive_url = '';
-                if ($archive !== 0) {
-                    $catchup['channel'] = $entry->getCatchup();
-                    $archive_url = $entry->getCatchupSource();
-                    if (empty($archive_url) && !empty($global_catchup_source)) {
-                        $archive_url = $global_catchup_source;
-                    }
-
-                    if (empty($archive_url)) {
-                        if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_shift, $catchup)) {
-                            $archive_url = $channel_url
-                                . ((strpos($channel_url, '?') !== false) ? '&' : '?')
-                                . 'utc=${start}&lutc=${timestamp}';
-                        } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_timeshift, $catchup)) {
-                            $archive_url = $channel_url
-                                . ((strpos($channel_url, '?') !== false) ? '&' : '?')
-                                . 'timeshift=${start}&timenow=${timestamp}';
-                        } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_archive, $catchup)) {
-                            $archive_url = $channel_url
-                                . ((strpos($channel_url, '?') !== false) ? '&' : '?')
-                                . 'archive=${start}&archive_end=${end}';
-                        } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup)
-                            && preg_match("#^(https?://[^/]+)/(.+)/([^/]+)\.(m3u8?|ts)(\?.+=.+)?$#", $channel_url, $m)) {
-                            $params = isset($m[5]) ? $m[5] : '';
-                            $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400.$m[4]$params";
-                        } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_xstreamcode, $catchup)
-                            && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $channel_url, $m)) {
-                            $extension = $m[6] ?: '.ts';
-                            $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[5].$extension";
-                        } else {
-                            // if no info about catchup, use 'shift'
-                            $archive_url = $channel_url
-                                . ((strpos($channel_url, '?') !== false) ? '&' : '?')
-                                . 'utc=${start}&lutc=${timestamp}';
-                        }
-                    } else if (!preg_match(HTTP_PATTERN, $archive_url)) {
-                        $archive_url = $channel_url . $archive_url;
-                    }
-                }
-
-                $ext_params[PARAM_DUNE_PARAMS] = $this->plugin->get_setting(PARAM_DUNE_PARAMS);
-
-                $ext_tag = $entry->getEntryTag(Entry::TAG_EXTHTTP);
-                if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
-                    foreach ($ext_http_values as $key => $value) {
-                        $ext_params[Entry::TAG_EXTHTTP][strtolower($key)] = $value;
-                    }
-
-                    if (isset($ext_params[Entry::TAG_EXTHTTP]['user-agent'])) {
-                        hd_debug_print(Entry::TAG_EXTHTTP
-                            . " Channel: $channel_name uses custom User-Agent: '{$ext_params[Entry::TAG_EXTHTTP]['user-agent']}'", true);
-                        $ch_useragent = "User-Agent: " . $ext_params[Entry::TAG_EXTHTTP]['user-agent'];
-                    }
-                }
-
-                $ext_tag = $entry->getEntryTag(Entry::TAG_EXTVLCOPT);
-                if ($ext_tag !== null) {
-                    $ext_vlc_opts = array();
-                    foreach ($ext_tag->getTagValues() as $value) {
-                        $pair = explode('=', $value);
-                        $ext_vlc_opts[strtolower(trim($pair[0]))] = trim($pair[1]);
-                    }
-
-                    if (isset($ext_vlc_opts['http-user-agent'])) {
-                        hd_debug_print(Entry::TAG_EXTVLCOPT
-                            . " Channel: $channel_name uses custom User-Agent: '{$ext_vlc_opts['http-user-agent']}'", true);
-                        $ch_useragent = "User-Agent: " . $ext_vlc_opts['http-user-agent'];
-                    }
-
-                    if (isset($ext_vlc_opts['dune-params'])) {
-                        hd_debug_print(Entry::TAG_EXTVLCOPT
-                            . " Channel: $channel_name uses custom dune_params: '{$ext_vlc_opts['dune-params']}'", true);
-
-                        foreach ($ext_vlc_opts['dune-params'] as $param) {
-                            $param_pair = explode(':', $param);
-                            if (count($param_pair) < 2) continue;
-
-                            $param_pair[0] = trim($param_pair[0]);
-                            if (strpos($param_pair[1], ",,") !== false) {
-                                $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
-                            } else {
-                                $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
-                            }
-
-                            $ext_params[PARAM_DUNE_PARAMS][$param_pair[0]] = $param_pair[1];
-                            unset($ext_vlc_opts['dune-params']);
-                        }
-                    }
-
-                    $ext_params[Entry::TAG_EXTVLCOPT] = $ext_vlc_opts;
-                }
-
-                if (!empty($ch_useragent)) {
-                    // escape commas for dune_params
-                    if (strpos($ch_useragent, ",,") !== false) {
-                        $ch_useragent = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $ch_useragent);
-                    } else {
-                        $ch_useragent = str_replace(",", ",,", $ch_useragent);
-                    }
-
-                    $ch_useragent = rawurlencode("User-Agent: " . $ch_useragent);
-                    if (isset($ext_params[PARAM_DUNE_PARAMS]['http_headers'])) {
-                        $ext_params[PARAM_DUNE_PARAMS]['http_headers'] .= $ch_useragent;
-                    } else {
-                        $ext_params[PARAM_DUNE_PARAMS]['http_headers'] = $ch_useragent;
-                    }
-
-                    unset($ch_useragent);
-                }
-
-                /** @var Group $parent_group */
-                $parent_group = $this->groups->get($group_title);
-                if (is_null($parent_group)) continue;
-
-                $protected = false;
-                $adult_code = $entry->getProtectedCode();
-                if (!empty($adult_code) || $parent_group->is_adult_group()) {
-                    $protected = $enable_protected;
-                }
-
-                $group_logo = $entry->getEntryAttribute('group-logo');
-                if (!empty($group_logo) && $parent_group->get_icon_url() === Default_Group::DEFAULT_GROUP_ICON) {
-                    if (!preg_match(HTTP_PATTERN, $group_logo)) {
-                        if (!empty($icon_base_url)) {
-                            $group_logo = $icon_base_url . $group_logo;
-                        } else {
-                            $group_logo = Default_Group::DEFAULT_GROUP_ICON;
-                        }
-                    }
-
-                    hd_debug_print("Set picon: $group_logo", true);
-                    $parent_group->set_icon_url($group_logo);
-                }
-
-                $channel = new Default_Channel(
-                    $this->plugin,
-                    $channel_id,
-                    $channel_name,
-                    $icon_url,
-                    $channel_url,
-                    $archive_url,
-                    $archive,
-                    $number,
-                    $epg_ids,
-                    $protected,
-                    (int)$entry->getEntryAttribute('tvg-shift', Entry::TAG_EXTINF),
-                    $ext_params
-                );
-
-                // ignore disabled channel
-                if ($this->get_disabled_channel_ids()->in_order($channel_id)) {
-                    //hd_debug_print("Channel $channel_name is disabled", true);
-                    $channel->set_disabled(true);
-                }
-
-                $playlist_group_channels[$parent_group->get_id()][] = $channel_id;
-                $this->channels->set($channel->get_id(), $channel);
-                if ($first_run) {
-                    $this->get_known_channels()->set($channel->get_id(), $channel->get_title());
-                }
-
-                foreach ($epg_ids as $epg_id) {
-                    $epg_ids[$epg_id] = '';
-                }
-
-                // Link group and channel.
-                $channel->add_group($parent_group);
-                $parent_group->add_channel($channel);
+            $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
+            if (!empty($epg_ids)) {
+                $epg_ids = array_unique($epg_ids);
             }
+
+            $playlist_icon = $entry->getEntryIcon();
+            if (!empty($icon_base_url) && !preg_match(HTTP_PATTERN, $playlist_icon)) {
+                $playlist_icon = $icon_base_url . $playlist_icon;
+            }
+
+            if (!$is_xml_engine) {
+                $icon_url = $playlist_icon;
+            } else if ($use_playlist_picons) {
+                $xmltv_icon = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
+                $icon_url = empty($playlist_icon) ? $xmltv_icon : $playlist_icon;
+            } else {
+                $icon_url = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
+            }
+
+            if (empty($icon_url)) {
+                if (!empty($icon_template)) {
+                    $icon_url = $icon_template;
+                    if (isset($m)) {
+                        $icon_url = str_replace(
+                            array(MACRO_SCHEME, MACRO_DOMAIN, MACRO_ID),
+                            array($m['scheme'], $m['domain'], $channel_id),
+                            $icon_url);
+                    }
+                    if (isset($domain_id)) {
+                        $icon_url = str_replace(MACRO_DOMAIN_ID, $domain_id, $icon_url);
+                    }
+                } else {
+                    $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
+                }
+            }
+
+            $used_tag = '';
+            $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, Entry::TAG_EXTINF, $used_tag);
+            if ($used_tag === 'catchup-time') {
+                $archive /= 86400;
+            }
+
+            if ($archive !== 0) {
+                $catchup = $entry->getCatchup();
+                $archive_url = $entry->getCatchupSource();
+                if (empty($archive_url) && !empty($global_catchup_source)) {
+                    $archive_url = $global_catchup_source;
+                }
+            } else {
+                $archive_url = '';
+                $catchup = '';
+            }
+
+            $ext_params = array();
+            $ext_tag = $entry->getEntryTag(Entry::TAG_EXTVLCOPT);
+            if ($ext_tag !== null) {
+                $ext_params[PARAM_EXT_VLC_OPTS] = $ext_tag->getTagValues();
+            }
+
+            $ext_tag = $entry->getEntryTag(Entry::TAG_EXTHTTP);
+            if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
+                $ext_params[PARAM_EXT_HTTP] = $ext_http_values;
+            }
+
+            $protected = false;
+            $adult_code = $entry->getProtectedCode();
+            if (!empty($adult_code) || $parent_group->is_adult_group()) {
+                $protected = $enable_protected;
+            }
+
+            $group_logo = $entry->getEntryAttribute('group-logo');
+            if (!empty($group_logo) && $parent_group->get_icon_url() === Default_Group::DEFAULT_GROUP_ICON) {
+                if (!preg_match(HTTP_PATTERN, $group_logo)) {
+                    if (!empty($icon_base_url)) {
+                        $group_logo = $icon_base_url . $group_logo;
+                    } else {
+                        $group_logo = Default_Group::DEFAULT_GROUP_ICON;
+                    }
+                }
+
+                hd_debug_print("Set picon: $group_logo", true);
+                $parent_group->set_icon_url($group_logo);
+            }
+
+            $disabled = $this->get_disabled_channel_ids()->in_order($channel_id);
+
+            $channel = new Default_Channel(
+                $this->plugin,
+                $channel_id,
+                $channel_name,
+                $icon_url,
+                $entry->getPath(),
+                $archive_url,
+                $catchup,
+                $archive,
+                $number,
+                $epg_ids,
+                $protected,
+                (int)$entry->getEntryAttribute('tvg-shift', Entry::TAG_EXTINF),
+                $ext_params,
+                $disabled
+            );
+
+            $playlist_group_channels[$parent_group->get_id()][] = $channel_id;
+            $this->channels->set($channel->get_id(), $channel);
+            if ($first_run) {
+                $this->get_known_channels()->set($channel->get_id(), $channel->get_title());
+            }
+
+            foreach ($epg_ids as $epg_id) {
+                $epg_ids[$epg_id] = '';
+            }
+
+            // Link group and channel.
+            $channel->add_group($parent_group);
+            $parent_group->add_channel($channel);
         }
 
         $changed = count($this->get_changed_channels_ids());
@@ -1076,7 +989,7 @@ class Starnet_Tv implements User_Input_Handler
      * @return string
      * @throws Exception
      */
-    public function generate_stream_url($channel_id, $archive_ts = -1)
+    public function generate_stream_url($channel_id, $archive_ts = -1, $clean = false)
     {
         hd_debug_print(null, true);
 
@@ -1085,8 +998,51 @@ class Starnet_Tv implements User_Input_Handler
             throw new Exception("Channel with id: $channel_id not found");
         }
 
+        $channel_name = $channel->get_title();
+        $channel_id = $channel->get_id();
+        hd_debug_print("Generate stream url for channel id: $channel_id '$channel_name'");
+
         // replace all macros
-        $stream_url = ((int)$archive_ts <= 0) ? $channel->get_url() : $channel->get_archive_url();
+        $stream_url = $channel->get_url();
+        if ((int)$archive_ts !== -1) {
+            $catchup['global'] = $this->catchup;
+            $catchup['channel'] = $channel->get_catchup();
+            $archive_url = $channel->get_archive_url();
+
+            if (empty($archive_url)) {
+                if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_shift, $catchup)) {
+                    $archive_url = $stream_url
+                        . ((strpos($stream_url, '?') !== false) ? '&' : '?')
+                        . 'utc=${start}&lutc=${timestamp}';
+                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_timeshift, $catchup)) {
+                    $archive_url = $stream_url
+                        . ((strpos($stream_url, '?') !== false) ? '&' : '?')
+                        . 'timeshift=${start}&timenow=${timestamp}';
+                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_archive, $catchup)) {
+                    $archive_url = $stream_url
+                        . ((strpos($stream_url, '?') !== false) ? '&' : '?')
+                        . 'archive=${start}&archive_end=${end}';
+                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup)
+                    && preg_match("#^(https?://[^/]+)/(.+)/([^/]+)\.(m3u8?|ts)(\?.+=.+)?$#", $stream_url, $m)) {
+                    $params = isset($m[5]) ? $m[5] : '';
+                    $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400.$m[4]$params";
+                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_xstreamcode, $catchup)
+                    && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $stream_url, $m)) {
+                    $extension = $m[6] ?: '.ts';
+                    $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[5].$extension";
+                } else {
+                    // if no info about catchup, use 'shift'
+                    $archive_url = $stream_url
+                        . ((strpos($stream_url, '?') !== false) ? '&' : '?')
+                        . 'utc=${start}&lutc=${timestamp}';
+                }
+            } else if (!preg_match(HTTP_PATTERN, $archive_url)) {
+                $archive_url = $stream_url . $archive_url;
+            }
+
+            $stream_url = $archive_url;
+        }
+
         if (empty($stream_url)) {
             throw new Exception("Empty url!");
         }
@@ -1105,7 +1061,7 @@ class Starnet_Tv implements User_Input_Handler
             $replaces[MACRO_OTTKEY] = $provider->getCredential(MACRO_OTTKEY);
         }
 
-        if ((int)$archive_ts > 0) {
+        if ((int)$archive_ts !== -1) {
             $now = time();
             $replaces[catchup_params::CU_START] = $archive_ts;
             $replaces[catchup_params::CU_UTC] = $archive_ts;
@@ -1138,41 +1094,115 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
-            $user_agent = rawurlencode("User-Agent: " . HD::get_dune_user_agent());
+        if (!$clean) {
+            $dune_params_str = $this->generate_dune_params($channel);
+            if (!empty($dune_params_str)) {
+                $stream_url .= $dune_params_str;
+            }
+            $stream_url = HD::make_ts($stream_url);
         }
 
+        return $stream_url;
+    }
+
+
+    /**
+     * @param Channel $channel
+     * @return string
+     */
+    public function generate_dune_params(Channel $channel)
+    {
         $ext_params = $channel->get_ext_params();
-        $dune_params = "";
-        if (isset($ext_params[PARAM_DUNE_PARAMS])) {
-            if (!empty($user_agent)) {
-                if (!isset($ext_params[PARAM_DUNE_PARAMS]['http_headers'])) {
-                    $ext_params[PARAM_DUNE_PARAMS]['http_headers'] = $user_agent;
+        $system_dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS);
+        if (!empty($system_dune_params)) {
+            $dune_params = array_slice($system_dune_params, 0);
+        }
+
+        if (!empty($ext_params[PARAM_EXT_VLC_OPTS])) {
+            $ext_vlc_opts = array();
+            foreach ($ext_params[PARAM_EXT_VLC_OPTS] as $value) {
+                $pair = explode('=', $value);
+                $ext_vlc_opts[strtolower(trim($pair[0]))] = trim($pair[1]);
+            }
+
+            if (isset($ext_vlc_opts['http-user-agent'])) {
+                $dune_params['http_headers'] = "User-Agent: " . rawurlencode($ext_vlc_opts['http-user-agent']);
+            }
+
+            if (isset($ext_vlc_opts['dune-params'])) {
+                foreach ($ext_vlc_opts['dune-params'] as $param) {
+                    $param_pair = explode(':', $param);
+                    if (count($param_pair) < 2) continue;
+
+                    $param_pair[0] = trim($param_pair[0]);
+                    if (strpos($param_pair[1], ",,") !== false) {
+                        $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
+                    } else {
+                        $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
+                    }
+
+                    $dune_params[$param_pair[0]] = $param_pair[1];
+                }
+            }
+        }
+
+        if (!empty($ext_params[PARAM_EXT_HTTP])) {
+            foreach ($ext_params[PARAM_EXT_HTTP] as $key => $value) {
+                $ext_params[Entry::TAG_EXTHTTP][strtolower($key)] = $value;
+            }
+
+            if (isset($ext_params[Entry::TAG_EXTHTTP]['user-agent'])) {
+                $ch_useragent = "User-Agent: " . $ext_params[Entry::TAG_EXTHTTP]['user-agent'];
+
+                // escape commas for dune_params
+                if (strpos($ch_useragent, ",,") !== false) {
+                    $ch_useragent = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $ch_useragent);
                 } else {
-                    $pos = strpos($ext_params[PARAM_DUNE_PARAMS]['http_headers'], "UserAgent:");
+                    $ch_useragent = str_replace(",", ",,", $ch_useragent);
+                }
+
+                $ch_useragent = rawurlencode("User-Agent: " . $ch_useragent);
+                if (isset($dune_params['http_headers'])) {
+                    $dune_params['http_headers'] .= $ch_useragent;
+                } else {
+                    $dune_params['http_headers'] = $ch_useragent;
+                }
+            }
+        }
+
+        if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
+            $user_agent = rawurlencode("User-Agent: " . HD::get_dune_user_agent());
+            if (!empty($user_agent)) {
+                if (!isset($dune_params['http_headers'])) {
+                    $dune_params['http_headers'] = $user_agent;
+                } else {
+                    $pos = strpos($dune_params['http_headers'], "UserAgent:");
                     if ($pos === false) {
-                        $ext_params[PARAM_DUNE_PARAMS]['http_headers'] .= "," . $user_agent;
+                        $dune_params['http_headers'] .= "," . $user_agent;
                     }
                 }
             }
-        } else if (!empty($user_agent)) {
-            $ext_params[PARAM_DUNE_PARAMS]['http_headers'] = $user_agent;
         }
 
-        if (isset($ext_params[PARAM_DUNE_PARAMS])) {
-            foreach ($ext_params[PARAM_DUNE_PARAMS] as $key => $value) {
-                if (!empty($dune_params)) {
-                    $dune_params .= ",";
+        if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
+            $zoom_preset = $this->get_channel_zoom($channel->get_id());
+            if (!is_null($zoom_preset)) {
+                if (!is_android()) {
+                    $zoom_preset = DuneVideoZoomPresets::normal;
+                    hd_debug_print("zoom_preset: reset to normal $zoom_preset");
                 }
 
-                $dune_params .= "$key:$value";
-            }
-            if (!empty($dune_params)) {
-                $stream_url .= "|||dune_params|||$dune_params";
+                if ($zoom_preset !== DuneVideoZoomPresets::not_set) {
+                    $dune_params['zoom'] = $zoom_preset;
+                }
             }
         }
 
-        return HD::make_ts($stream_url);
+        if (empty($dune_params)) {
+            return "";
+        }
+
+        return "|||dune_params|||" . str_replace('=', ':', http_build_query($dune_params, null, ','));
     }
 
     /**
@@ -1182,15 +1212,11 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function tv_player_exec($media_url, $archive_ts = -1)
     {
-        $url = $this->generate_stream_url($media_url->channel_id, $archive_ts);
-
         if (!$this->get_channels_for_ext_player()->in_order($media_url->channel_id)) {
             return Action_Factory::tv_play($media_url);
         }
 
-        $url = str_replace("ts://", "", $url);
-        $param_pos = strpos($url, '|||dune_params');
-        $url =  $param_pos!== false ? substr($url, 0, $param_pos) : $url;
+        $url = $this->generate_stream_url($media_url->channel_id, $archive_ts, true);
         $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
         hd_debug_print("play movie in the external player: $cmd");
         exec($cmd, $output);
@@ -1218,32 +1244,16 @@ class Starnet_Tv implements User_Input_Handler
                 throw new Exception("Unknown channel");
             }
 
-            if ($protect_code !== $pass_sex && $channel->is_protected()) {
-                throw new Exception("Wrong adult password");
-            }
-
-            if (!$channel->is_protected()) {
+            if ($channel->is_protected()) {
+                if ($protect_code !== $pass_sex) {
+                    throw new Exception("Wrong adult password");
+                }
+            } else {
                 $now = $channel->get_archive() > 0 ? time() : 0;
                 $this->plugin->get_playback_points()->push_point($channel_id, ($archive_ts !== -1 ? $archive_ts : $now));
             }
 
-            // update url if play archive or different type of the stream
             $url = $this->generate_stream_url($channel_id, $archive_ts);
-
-            if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
-                $zoom_preset = $this->get_channel_zoom($channel_id);
-                if (!is_null($zoom_preset)) {
-                    if (!is_android()) {
-                        $zoom_preset = DuneVideoZoomPresets::normal;
-                        hd_debug_print("zoom_preset: reset to normal $zoom_preset");
-                    }
-
-                    if ($zoom_preset !== DuneVideoZoomPresets::not_set) {
-                        $url .= (strpos($url, "|||dune_params|||") === false ? "|||dune_params|||" : ",");
-                        $url .= "zoom:$zoom_preset";
-                    }
-                }
-            }
         } catch (Exception $ex) {
             hd_debug_print("Exception: " . $ex->getMessage());
             $url = '';

@@ -111,7 +111,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             break;
 
                         default:
-                            $color = DEF_LABEL_TEXT_COLOR_GREEN;
+                            $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
                             $item_detailed_info = $group->get_title();
                             break;
                     }
