@@ -55,6 +55,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
             PluginControlsFolderView::defs => $defs,
             PluginControlsFolderView::initial_sel_ndx => -1,
             PluginControlsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
+            PluginControlsFolderView::timer => $this->get_timer($media_url, $plugin_cookies),
             PluginControlsFolderView::params => array(
                 PluginFolderViewParams::paint_path_box => true,
                 PluginFolderViewParams::paint_content_box_background => true,

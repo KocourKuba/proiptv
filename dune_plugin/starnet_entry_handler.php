@@ -115,6 +115,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return User_Input_Handler_Registry::create_action($this, 'do_setup');
                         }
 
+                        $this->plugin->tv->load_channels();
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
                             hd_debug_print("launch play", true);
@@ -160,10 +161,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
                         }
 
+                        $this->plugin->tv->load_channels();
                         return Action_Factory::tv_play($media_url);
 
                     case 'update_epfs':
                         $this->plugin->init_plugin();
+                        $this->plugin->tv->load_channels();
                         hd_debug_print("update_epfs", true);
                         return Starnet_Epfs_Handler::update_all_epfs($plugin_cookies,
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));

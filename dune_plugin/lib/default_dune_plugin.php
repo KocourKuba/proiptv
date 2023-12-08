@@ -1296,7 +1296,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
         $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
 
-        hd_debug_print("----------------------------------------------------");
+        hd_debug_print_separator();
         LogSeverity::$is_debug = true;
         $this->load_parameters(true);
         $this->update_log_level();
@@ -1389,7 +1389,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->tv->unload_channels();
 
         hd_debug_print("Init plugin done!");
-        hd_debug_print("----------------------------------------------------");
+        hd_debug_print_separator();
 
         $this->inited = true;
     }

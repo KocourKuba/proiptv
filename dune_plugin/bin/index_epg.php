@@ -29,6 +29,7 @@ if (!empty($LOG_FILE)) {
     date_default_timezone_set('UTC');
 }
 
+hd_debug_print_separator();
 hd_print("Script start: index_epg");
 hd_print("Version: $config->version");
 hd_print("XMLTV source: $config->xmltv_url");
@@ -71,3 +72,4 @@ if ($res === 1) {
 $epg_manager->index_xmltv_positions();
 
 hd_print("Script execution time: ". format_duration(round(1000 * (microtime(true) - $start))));
+hd_debug_print_separator();

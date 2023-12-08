@@ -460,7 +460,7 @@ class Epg_Manager
 
         $this->set_index_locked(false);
 
-        hd_debug_print("------------------------------------------------------------");
+        hd_debug_print_separator();
 
         return $ret;
     }
@@ -557,8 +557,8 @@ class Epg_Manager
 
         hd_debug_print("Total channels id's: " . count($this->xmltv_channels));
         hd_debug_print("Total picons: " . count($this->xmltv_picons));
-        hd_debug_print("------------------------------------------------------------");
         hd_debug_print("Reindexing EPG channels done: " . (microtime(true) - $t) . " secs");
+        hd_debug_print_separator();
 
         HD::ShowMemoryUsage();
     }
@@ -656,8 +656,8 @@ class Epg_Manager
             }
 
             hd_debug_print("Total unique epg id's indexed: " . count($xmltv_index));
-            hd_debug_print("------------------------------------------------------------");
             hd_debug_print("Reindexing EPG program done: " . (microtime(true) - $t) . " secs");
+            hd_debug_print_separator();
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
         }
@@ -875,5 +875,19 @@ class Epg_Manager
         }
 
         return array();
+    }
+
+    public function import_indexing_log()
+    {
+        $index_log = $this->get_cache_stem('.log');
+        if (file_exists($index_log)) {
+            hd_debug_print("Read epg indexing log $index_log...");
+            $logfile = @file_get_contents($index_log);
+            foreach (explode(PHP_EOL, $logfile) as $l) {
+                hd_print(preg_replace("|^\[.+\]\s(.*)$|", "$1", rtrim($l)));
+            }
+            hd_debug_print("Read finished");
+            unlink($index_log);
+        }
     }
 }

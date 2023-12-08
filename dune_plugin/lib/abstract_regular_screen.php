@@ -48,15 +48,15 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
         $folder_view = $folder_views[$this->get_folder_view_index($plugin_cookies)];
         $folder_view[PluginRegularFolderView::actions] = $this->get_action_map($media_url, $plugin_cookies);
         $folder_view[PluginRegularFolderView::initial_range] = $this->get_folder_range($media_url, 0, $plugin_cookies);
+        $folder_view[PluginRegularFolderView::timer] = $this->get_timer($media_url, $plugin_cookies);
         $archive = $this->get_image_archive($media_url);
         $archive_def = is_null($archive) ? null : $archive->get_image_archive_def();
 
-        return array
-        (
+        return array(
             PluginFolderView::multiple_views_supported => (count($folder_views) > 1 ? 1 : 0),
             PluginFolderView::archive => $archive_def,
             PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_REGULAR,
-            PluginFolderView::data => $folder_view
+            PluginFolderView::data => $folder_view,
         );
     }
 

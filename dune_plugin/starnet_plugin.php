@@ -76,7 +76,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         print_sysinfo();
 
-        hd_print("----------------------------------------------------");
+        hd_debug_print_separator();
         hd_print("Plugin name:         " . $this->plugin_info['app_caption']);
         hd_print("Plugin version:      " . $this->plugin_info['app_version']);
         hd_print("Plugin date:         " . $this->plugin_info['app_release_date']);
@@ -84,7 +84,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("TimeZone             " . getTimeZone());
         hd_print("Daylight             " . date('I'));
         hd_print("New UI support       " . var_export(HD::rows_api_support(), true));
-        hd_print("----------------------------------------------------");
+        hd_debug_print_separator();
 
         hd_debug_print("Plugin loading complete.");
     }

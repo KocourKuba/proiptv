@@ -436,10 +436,7 @@ class Starnet_Tv implements User_Input_Handler
 
         return array(
             GUI_EVENT_PLAYBACK_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP),
-            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this,
-                GUI_EVENT_TIMER,
-                null,
-                $this->plugin->get_epg_manager()->is_index_locked() ? array('locked' => true) : null),
+            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this,GUI_EVENT_TIMER),
         );
     }
 
@@ -462,13 +459,9 @@ class Starnet_Tv implements User_Input_Handler
                     clearstatcache();
                     if ($this->plugin->get_epg_manager()->is_index_locked()) {
                         $new_actions = $this->get_action_map();
-                        $new_actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this,
-                            GUI_EVENT_TIMER,
-                            null,
-                            array('locked' => true));
-
                         $post_action = Action_Factory::change_behaviour($new_actions, 1000);
                     } else {
+                        $this->plugin->get_epg_manager()->import_indexing_log();
                         foreach($this->plugin->get_epg_manager()->get_delayed_epg() as $channel_id) {
                             hd_debug_print("Refresh EPG for channel ID: $channel_id");
                             $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
@@ -979,8 +972,8 @@ class Starnet_Tv implements User_Input_Handler
 
         hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channel_ids()->size()}, changed channels: $changed");
         hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->get_groups_order()->size()));
-        hd_debug_print("------------------------------------------------------------");
         hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
+        hd_debug_print_separator();
         HD::ShowMemoryUsage();
 
         if ($epg_engine === ENGINE_XMLTV) {

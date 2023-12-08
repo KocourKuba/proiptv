@@ -43,14 +43,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         hd_debug_print(null, true);
 
-        $res = $this->plugin->tv->load_channels();
-        if ($res === 0) {
-            hd_debug_print("Channels not loaded!");
-        } else if ($res === 2) {
-            hd_debug_print("Channels reloaded!");
-            $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-        }
-
         $actions = array();
 
         $actions[GUI_EVENT_KEY_ENTER]      = User_Input_Handler_Registry::create_action($this, ACTION_OPEN_FOLDER);
@@ -59,6 +51,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU]   = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_STOP]       = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_TIMER]          = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
         $order = $this->plugin->tv->get_groups_order();
         if (!is_null($order) && $order->size() !== 0) {
@@ -99,6 +92,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
             return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_DLG_APPLY);
+
+            case GUI_EVENT_TIMER:
+                clearstatcache();
+                $epg_manager = $this->plugin->get_epg_manager();
+                if ($epg_manager->is_index_locked()) {
+                    $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                    return Action_Factory::change_behaviour($actions, 1000);
+                }
+
+                $epg_manager->import_indexing_log();
+                return null;
 
             case GUI_EVENT_KEY_STOP:
                 $this->plugin->save_orders(true);
@@ -615,6 +619,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         return $items;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    {
+        return Action_Factory::timer(1000);
     }
 
     /**

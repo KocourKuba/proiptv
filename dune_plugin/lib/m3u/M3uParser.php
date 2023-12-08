@@ -118,8 +118,8 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("------------------------------------------------------------");
         hd_debug_print("parseFile " . (microtime(true) - $t) . " secs");
+        hd_debug_print_separator();
         return true;
     }
 
@@ -162,8 +162,8 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("------------------------------------------------------------");
         hd_debug_print("indexFile " . (microtime(true) - $t) . " secs");
+        hd_debug_print_separator();
         return $data;
     }
 
@@ -205,8 +205,8 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("------------------------------------------------------------");
         hd_debug_print("parseInMemory " . (microtime(true) - $t) . " sec.");
+        hd_debug_print_separator();
         return true;
     }
 

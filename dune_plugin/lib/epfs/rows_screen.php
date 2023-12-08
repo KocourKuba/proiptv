@@ -9,11 +9,4 @@ interface Rows_Screen extends Screen
      * @return array
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies);
-
-    /**
-     * @param MediaURL $media_url
-     * @param $plugin_cookies
-     * @return mixed
-     */
-    public function get_timer(MediaURL $media_url, $plugin_cookies);
 }

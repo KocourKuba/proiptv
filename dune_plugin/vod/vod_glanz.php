@@ -86,7 +86,7 @@ class vod_glanz extends vod_standard
 
         $count = count($this->vod_items);
         hd_debug_print("Total items loaded: " . count($this->vod_items));
-        hd_debug_print("------------------------------------------------------------");
+        hd_debug_print_separator();
         HD::ShowMemoryUsage();
 
         $category_list = array();

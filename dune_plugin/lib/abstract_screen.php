@@ -51,6 +51,17 @@ class Abstract_Screen extends Changes_Impl implements Screen
         return MediaURL::encode(array('screen_id' => static::ID));
     }
 
+    /**
+     * @param MediaURL $media_url
+     * @param $plugin_cookies
+     * @return mixed|null
+     * @noinspection PhpReturnDocTypeMismatchInspection
+     */
+    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    {
+        return null;
+    }
+
     ///////////////////////////////////////////////////////////////////////
     // Screen interface
 

@@ -67,6 +67,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             GUI_EVENT_KEY_RETURN     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
             GUI_EVENT_KEY_TOP_MENU   => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
             GUI_EVENT_KEY_STOP       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_TIMER          => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
         );
 
         if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
@@ -111,6 +112,17 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 return $post_action;
+
+            case GUI_EVENT_TIMER:
+                clearstatcache();
+                $epg_manager = $this->plugin->get_epg_manager();
+                if ($epg_manager->is_index_locked()) {
+                    $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                    return Action_Factory::change_behaviour($actions, 1000);
+                }
+
+                $epg_manager->import_indexing_log();
+                return null;
 
             case GUI_EVENT_KEY_STOP:
                 $this->plugin->save_orders(true);
@@ -373,6 +385,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         return $items;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    {
+        return Action_Factory::timer(1000);
     }
 
     /**

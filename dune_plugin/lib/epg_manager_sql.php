@@ -153,9 +153,9 @@ class Epg_Manager_Sql extends Epg_Manager
 
             hd_debug_print("Total channels id's: $channels");
             hd_debug_print("Total picons: $picons");
-            hd_debug_print("------------------------------------------------------------");
             hd_debug_print("Reindexing EPG channels done: " . (microtime(true) - $t) . " secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
+            hd_debug_print_separator();
 
         } catch (Exception $ex) {
             hd_debug_print("Reindexing EPG channels failed: " . $ex->getMessage());
@@ -275,9 +275,9 @@ class Epg_Manager_Sql extends Epg_Manager
             $total_epg = empty($result) ? 0 : (int)$result;
 
             hd_debug_print("Total unique epg id's indexed: $total_epg");
-            hd_debug_print("------------------------------------------------------------");
             hd_debug_print("Reindexing EPG positions done: " . (microtime(true) - $t) . " secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
+            hd_debug_print_separator();
         } catch (Exception $ex) {
             hd_debug_print("Reindexing EPG positions failed: " . $ex->getMessage());
         }
