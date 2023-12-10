@@ -709,11 +709,13 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
       "api_commands": {
-        "playlist": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8"
+        "playlist": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
+        "vod": "http://m.cdntv.online/f/{PASSWORD}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
         "epg_preset": "drm",
+        "vod_parser": "(?<title>[^\\(]*)\\s\\((?<year>\\d+)\\)$",
         "qualities": {
           "high": "High",
           "medium": "Medium",
