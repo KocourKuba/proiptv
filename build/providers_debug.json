@@ -353,7 +353,20 @@
       },
       "config": {
         "playlist_catchup": "flussonic",
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*\\.m3u8?$/"
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*\\.m3u8?$/",
+        "url_subst": {
+          "regex": "/^(.+\\/\\/).+(\\/play\\/.+)$/",
+          "replace": "$1{SERVER_ID}$2"
+        },
+        "servers": {
+          "pl.iptv.monster": "Poland",
+          "de.iptv.monster": "Germany",
+          "nl.iptv.monster": "Netherlands",
+          "ru.iptv.monster": "Russia",
+          "ca.iptv.monster": "Canada",
+          "gr.iptv.monster": "Greece",
+          "ukr.iptv.monster": "Ukraine"
+        }
       }
     },
     {
@@ -618,6 +631,37 @@
       "config": {
         "id_map": "tvg-id",
         "epg_preset": "tvclub"
+      }
+    },
+    {
+      "enable": true,
+      "id": "tvizi",
+      "name": "TVIZI Net",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
+      "api_commands": {
+        "playlist": "https://{DOMAIN_ID}/play/{PASSWORD}/m3u8"
+      },
+      "config": {
+        "playlist_catchup": "flussonic",
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*\\.m3u8?$/",
+        "domains": {
+          "tvizi.net": "tvizi.net",
+          "bistv.top": "bistv.top"
+        },
+        "url_subst": {
+          "regex": "/^(.+\\/\\/).+(\\/play\\/.+)$/",
+          "replace": "$1{SERVER_ID}$2"
+        },
+        "servers": {
+          "pl.seetv.cc": "Poland",
+          "de.seetv.cc": "Germany",
+          "nl.seetv.cc": "Netherlands",
+          "ru.seetv.cc": "Russia",
+          "ca.seetv.cc": "Canada",
+          "gr.seetv.cc": "Greece",
+          "ukr.seetv.cc": "Ukraine"
+        }
       }
     },
     {
