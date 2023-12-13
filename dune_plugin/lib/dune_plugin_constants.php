@@ -79,6 +79,7 @@ const CONTROL_DEVICE = 'device';
 const CONTROL_SERVER = 'server';
 const CONTROL_DOMAIN = 'domain';
 const CONTROL_QUALITY = 'quality';
+const CONTROL_STREAM = 'stream';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';
@@ -187,6 +188,7 @@ const MACRO_DOMAIN_ID = '{DOMAIN_ID}';
 const MACRO_DEVICE_ID = '{DEVICE_ID}';
 const MACRO_SERVER_ID = '{SERVER_ID}';
 const MACRO_QUALITY_ID = '{QUALITY_ID}';
+const MACRO_STREAM_ID = '{STREAM_ID}';
 const MACRO_VPORTAL = '{VPORTAL}';
 const MACRO_SCHEME = '{SCHEME}';
 const MACRO_DOMAIN = '{DOMAIN}';
@@ -223,6 +225,7 @@ const IMAGE_PATTERN = '|psd|pspimage|thm|tif|yuf|svg|ico|djpg|dbmp|dpng';
 const PLAYLIST_PATTERN = 'm3u|m3u8';
 const EPG_PATTERN = 'xml|xmltv|gz';
 const HTTP_PATTERN = '/^(https?):\/\/([^\?]+)\??/';
+const TS_REPL_PATTERN = '/^(https?:\/\/)(.+)$/';
 const PROVIDER_PATTERN = '/^(.+)@(.+)$/';
 
 # Mounted storages path
@@ -239,11 +242,11 @@ if (!defined('JSON_UNESCAPED_UNICODE'))
 const CONFIG_ID_PARSER = 'id_parser';
 const CONFIG_ID_MAP = 'id_map';
 const CONFIG_IGNORE_GROUPS = 'ignore_groups';
-const CONFIG_PLAYLIST_CATCHUP = 'playlist_catchup';
 const CONFIG_TOKEN_RESPONSE = 'token_response';
 const CONFIG_HEADERS = 'headers';
 const CONFIG_XMLTV_SOURCES = 'xmltv_sources';
 const CONFIG_SUBDOMAIN = 'domain';
+const CONFIG_STREAMS = 'streams';
 const CONFIG_SERVERS = 'servers';
 const CONFIG_DOMAINS = 'domains';
 const CONFIG_DEVICES = 'devices';

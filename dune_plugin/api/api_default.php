@@ -377,13 +377,14 @@ class api_default
     public function execApiCommand($command, $binary = false, $assoc = false, $params = '')
     {
         hd_debug_print(null, true);
+        hd_debug_print("execApiCommand: $command", true);
         $command_url = $this->getApiCommand($command);
         if (empty($command_url)) {
             return false;
         }
 
         $command_url .= $params;
-        hd_debug_print("execApiCommand: $command_url", true);
+        hd_debug_print("ApiCommandUrl: $command_url", true);
 
         $curl_headers = null;
         $headers = $this->getConfigValue(CONFIG_HEADERS);
@@ -420,6 +421,38 @@ class api_default
     public function GetPayUI()
     {
         return null;
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetStreams()
+    {
+        hd_debug_print(null, true);
+        return $this->getConfigValue(CONFIG_STREAMS);
+    }
+
+    /**
+     * set server
+     * @param $server
+     * @return void
+     */
+    public function SetStreams($server)
+    {
+        hd_debug_print(null, true);
+        $this->setCredential(CONFIG_STREAMS, $server);
+    }
+
+    /**
+     * set server
+     * @param $server
+     * @return void
+     */
+    public function SetStream($server)
+    {
+        hd_debug_print(null, true);
+        $this->setCredential(MACRO_STREAM_ID, $server);
     }
 
     /**
@@ -487,6 +520,7 @@ class api_default
             MACRO_SUBDOMAIN,
             MACRO_OTTKEY,
             MACRO_TOKEN,
+            MACRO_STREAM_ID,
             MACRO_DOMAIN_ID,
             MACRO_DEVICE_ID,
             MACRO_SERVER_ID,

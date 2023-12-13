@@ -1585,27 +1585,27 @@ class Default_Dune_Plugin implements DunePlugin
 
         $domains = $provider->GetDomains();
         if (!empty($domains)) {
-            $key = key($domains);
-            $provider->setCredential(MACRO_DOMAIN_ID, $key);
+            $provider->setCredential(MACRO_DOMAIN_ID, key($domains));
         }
         $servers = $provider->GetServers();
         if (!empty($servers)) {
-            $key = key($servers);
-            $provider->setCredential(MACRO_SERVER_ID, $key);
+            $provider->setCredential(MACRO_SERVER_ID, key($servers));
         }
         $devices = $provider->GetDevices();
         if (!empty($devices)) {
-            $key = key($devices);
-            $provider->setCredential(MACRO_DEVICE_ID, $key);
+            $provider->setCredential(MACRO_DEVICE_ID, key($devices));
         }
         $qualities = $provider->GetQualities();
         if (!empty($qualities)) {
-            $key = key($qualities);
-            $provider->setCredential(MACRO_QUALITY_ID, $key);
+            $provider->setCredential(MACRO_QUALITY_ID, key($qualities));
+        }
+        $streams = $provider->getStreams();
+        if (!empty($streams)) {
+            $provider->setCredential(MACRO_STREAM_ID, key($streams));
         }
 
         foreach($info->params as $key => $item) {
-            if ($key === MACRO_DOMAIN_ID || $key === MACRO_SERVER_ID || $key === MACRO_DEVICE_ID || $key === MACRO_QUALITY_ID) {
+            if ($key === MACRO_DOMAIN_ID || $key === MACRO_SERVER_ID || $key === MACRO_DEVICE_ID || $key === MACRO_QUALITY_ID || $key === MACRO_STREAM_ID) {
                 $provider->setCredential($key, $item);
             }
         }
@@ -1707,6 +1707,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if (is_null($provider)) {
                         throw new Exception("Unable to init provider $playlist");
                     }
+
                     $provider->request_provider_token();
                     $contents = $provider->execApiCommand(API_COMMAND_PLAYLIST, true);
                 } else {
@@ -2570,6 +2571,18 @@ class Default_Dune_Plugin implements DunePlugin
                 return null;
         }
 
+        $streams = $provider->GetStreams();
+        if (!empty($streams)) {
+            $idx = $provider->getCredential(MACRO_STREAM_ID);
+            if (empty($idx)) {
+                $idx = key($streams);
+            }
+            hd_debug_print("streams ($idx): " . json_encode($streams), true);
+
+            Control_Factory::add_combobox($defs, $handler, null, CONTROL_STREAM,
+                TR::t('stream'), $idx, $streams, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+        }
+
         $domains = $provider->GetDomains();
         if (!empty($domains)) {
             $idx = $provider->getCredential(MACRO_DOMAIN_ID);
@@ -2664,18 +2677,14 @@ class Default_Dune_Plugin implements DunePlugin
 
             case PROVIDER_TYPE_LOGIN:
             case PROVIDER_TYPE_LOGIN_TOKEN:
-                $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
-                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
-                $not_set = empty($params[MACRO_LOGIN]) || empty($params[MACRO_PASSWORD]);
-                break;
-
             case PROVIDER_TYPE_LOGIN_STOKEN:
                 $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
-                $provider->setCredential(MACRO_TOKEN, '');
                 $not_set = empty($params[MACRO_LOGIN]) || empty($params[MACRO_PASSWORD]);
+                if ($provider->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
+                    $provider->setCredential(MACRO_TOKEN, '');
+                }
                 break;
 
             case PROVIDER_TYPE_EDEM:
@@ -2714,6 +2723,10 @@ class Default_Dune_Plugin implements DunePlugin
 
         if (isset($user_input->{CONTROL_QUALITY})) {
             $params[MACRO_QUALITY_ID] = $user_input->{CONTROL_QUALITY};
+        }
+
+        if (isset($user_input->{CONTROL_STREAM})) {
+            $params[MACRO_STREAM_ID] = $user_input->{CONTROL_STREAM};
         }
 
         $item->params = $params;

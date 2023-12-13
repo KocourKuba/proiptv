@@ -618,8 +618,8 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("Use custom ID detection: $id_map");
             }
         } else {
-            $playlist_catchup = $provider->getConfigValue(CONFIG_PLAYLIST_CATCHUP);
-            if (!empty($playlist_catchup)) {
+            $playlist_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP);
+            if ($playlist_catchup !== KnownCatchupSourceTags::cu_unknown) {
                 $this->catchup = $playlist_catchup;
                 hd_debug_print("set provider catchup: $playlist_catchup");
             }
@@ -1011,11 +1011,31 @@ class Starnet_Tv implements User_Input_Handler
 
         // replace all macros
         $stream_url = $channel->get_url();
-        if ((int)$archive_ts !== -1) {
-            $catchup['global'] = $this->catchup;
-            $catchup['channel'] = $channel->get_catchup();
-            $archive_url = $channel->get_archive_url();
+        if (empty($stream_url)) {
+            throw new Exception("Empty url!");
+        }
 
+        $provider = $this->plugin->get_current_provider();
+        if (!is_null($provider)) {
+            $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
+            if (!empty($url_subst)) {
+                $stream_url = preg_replace($url_subst['regex'], $url_subst['replace'], $stream_url);
+            }
+
+            $stream_url = $provider->replace_macros($stream_url);
+        }
+
+        if ((int)$archive_ts !== -1) {
+            $catchup = $channel->get_catchup();
+            if (empty($catchup)) {
+                $catchup = $this->catchup;
+                if (empty($catchup) && strpos($stream_url, 'mpegts') !== false) {
+                    $catchup = 'flussonic';
+                }
+            }
+
+            $archive_url = $channel->get_archive_url();
+            hd_debug_print("catchup params: $catchup");
             if (empty($archive_url)) {
                 if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_shift, $catchup)) {
                     $archive_url = $stream_url
@@ -1029,10 +1049,15 @@ class Starnet_Tv implements User_Input_Handler
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'archive=${start}&archive_end=${end}';
-                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup)
-                    && preg_match("#^(https?://[^/]+)/(.+)/([^/]+)\.(m3u8?|ts)(\?.+=.+)?$#", $stream_url, $m)) {
+                } else if ((KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup))
+                    && preg_match("#^(https?://[^/]+)/([^/]+)/([^/.?]+)(\.m3u8)?(\?.+=.+)?$#", $stream_url, $m)) {
                     $params = isset($m[5]) ? $m[5] : '';
-                    $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400.$m[4]$params";
+                    if ($m[3] === 'mpegts') {
+                        //$archive_url = "$m[1]/$m[2]/timeshift_abs-" . '${start}' . ".ts$params";
+                        $archive_url = "$m[1]/$m[2]/archive-" . '${start}' . "-14400.ts$params";
+                    } else {
+                        $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400$m[4]$params";
+                    }
                 } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_xstreamcode, $catchup)
                     && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $stream_url, $m)) {
                     $extension = $m[6] ?: '.ts';
@@ -1048,27 +1073,8 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             $stream_url = $archive_url;
-        }
 
-        if (empty($stream_url)) {
-            throw new Exception("Empty url!");
-        }
-
-        $replaces = array();
-
-        $provider = $this->plugin->get_current_provider();
-        if (!is_null($provider)) {
-            $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
-            if (!empty($url_subst)) {
-                $stream_url = preg_replace($url_subst['regex'], $url_subst['replace'], $stream_url);
-            }
-
-            $replaces[MACRO_SERVER_ID] = $provider->getCredential(MACRO_SERVER_ID);
-            $replaces[MACRO_SUBDOMAIN] = $provider->getCredential(MACRO_SUBDOMAIN);
-            $replaces[MACRO_OTTKEY] = $provider->getCredential(MACRO_OTTKEY);
-        }
-
-        if ((int)$archive_ts !== -1) {
+            $replaces = array();
             $now = time();
             $replaces[catchup_params::CU_START] = $archive_ts;
             $replaces[catchup_params::CU_UTC] = $archive_ts;
@@ -1091,13 +1097,13 @@ class Starnet_Tv implements User_Input_Handler
             $replaces[catchup_params::CU_END_HOUR]  = date('H', $now);
             $replaces[catchup_params::CU_END_MIN]   = date('M', $now);
             $replaces[catchup_params::CU_END_SEC]   = date('S', $now);
-        }
 
-        hd_debug_print("replaces: " . raw_json_encode($replaces), true);
-        foreach ($replaces as $key => $value) {
-            if (strpos($stream_url, $key) !== false) {
-                hd_debug_print("replace $key to $value", true);
-                $stream_url = str_replace($key, $value, $stream_url);
+            hd_debug_print("replaces: " . raw_json_encode($replaces), true);
+            foreach ($replaces as $key => $value) {
+                if (strpos($stream_url, $key) !== false) {
+                    hd_debug_print("replace $key to $value", true);
+                    $stream_url = str_replace($key, $value, $stream_url);
+                }
             }
         }
 

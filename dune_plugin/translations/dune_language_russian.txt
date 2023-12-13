@@ -70,6 +70,7 @@ vportal = VPortal
 domain = Домен
 device = Устройство
 devices = Устройств
+stream = Тип потока
 server = Сервер
 quality = Качество
 subscription = Подписка
