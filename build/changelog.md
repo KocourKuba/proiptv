@@ -1,6 +1,7 @@
 ﻿## История версий
 
 ### Версия {plugin_version}
+- Добавлена поддержки смены потока в настройках провайдера для 1OTT, Glanz, IPTV Online, ITV Live, IPStream/iShara, LightIPTV, SharaClub, Sharavoz, TVIZI, TV Team, VipLime
 - Добавлен провайдер TVIZI NET
 - Добавлена возможность смены сервера для IPTV Online
 
