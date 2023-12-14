@@ -2688,7 +2688,7 @@ class Default_Dune_Plugin implements DunePlugin
                 break;
 
             case PROVIDER_TYPE_EDEM:
-                if (isset($user_input->{CONTROL_OTT_SUBDOMAIN})) {
+                if (!empty($user_input->{CONTROL_OTT_SUBDOMAIN})) {
                     $params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
                 } else {
                     $params[MACRO_SUBDOMAIN] = $provider->getConfigValue(CONFIG_SUBDOMAIN);
