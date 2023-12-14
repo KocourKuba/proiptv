@@ -526,15 +526,11 @@ class Starnet_Tv implements User_Input_Handler
         HD::set_last_error("pl_last_error", null);
 
         $this->plugin->load_settings(true);
-        $epg_engine = $this->plugin->init_epg_manager();
-        $epg_manager = $this->plugin->get_epg_manager();
-        $epg_manager->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
         $this->plugin->load_orders(true);
         $this->plugin->load_history(true);
         $this->plugin->create_screen_views();
 
         $provider = $this->plugin->get_current_provider();
-        $is_xml_engine = ($epg_engine === ENGINE_XMLTV);
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
@@ -672,6 +668,8 @@ class Starnet_Tv implements User_Input_Handler
             $catchup['global'] = $user_catchup;
         }
 
+        $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+
         if ($is_xml_engine) {
             $source = $this->plugin->get_active_xmltv_source();
             if (empty($source)) {
@@ -684,14 +682,17 @@ class Starnet_Tv implements User_Input_Handler
                     $sources->rewind();
                 }
                 $this->plugin->set_active_xmltv_source_key($sources->key());
+                $source = $this->plugin->get_active_xmltv_source();
             }
 
             hd_debug_print("XMLTV source selected: $source");
-            $this->plugin->init_epg_manager();
         }
 
+        $this->plugin->init_epg_manager();
+        $epg_manager = $this->plugin->get_epg_manager();
+
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
-        if (!$use_playlist_picons) {
+        if ($is_xml_engine && !$use_playlist_picons) {
             $res = $epg_manager->is_xmltv_cache_valid();
             switch ($res) {
                 case -1:
@@ -976,7 +977,7 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print_separator();
         HD::ShowMemoryUsage();
 
-        if ($epg_engine === ENGINE_XMLTV) {
+        if ($is_xml_engine) {
             $res = $epg_manager->is_xmltv_cache_valid();
             if ($res > 0) {
                 hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
@@ -1049,8 +1050,8 @@ class Starnet_Tv implements User_Input_Handler
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'archive=${start}&archive_end=${end}';
-                } else if ((KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup))
-                    && preg_match("#^(https?://[^/]+)/([^/]+)/([^/.?]+)(\.m3u8)?(\?.+=.+)?$#", $stream_url, $m)) {
+                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup)
+                    && preg_match("#^(https?://[^/]+)/(.+)/([^/.?]+)(\.m3u8)?(\?.+=.+)?$#", $stream_url, $m)) {
                     $params = isset($m[5]) ? $m[5] : '';
                     if ($m[3] === 'mpegts') {
                         //$archive_url = "$m[1]/$m[2]/timeshift_abs-" . '${start}' . ".ts$params";
