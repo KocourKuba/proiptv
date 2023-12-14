@@ -1184,7 +1184,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
-            $user_agent = rawurlencode("User-Agent: " . HD::get_dune_user_agent());
+            $user_agent = "User-Agent: " . HD::get_dune_user_agent();
             if (!empty($user_agent)) {
                 if (!isset($dune_params['http_headers'])) {
                     $dune_params['http_headers'] = $user_agent;
@@ -1215,7 +1215,7 @@ class Starnet_Tv implements User_Input_Handler
             return "";
         }
 
-        return "|||dune_params|||" . str_replace('=', ':', http_build_query($dune_params, null, ','));
+        return HD::DUNE_PARAMS_MAGIC . str_replace('=', ':', http_build_query($dune_params, null, ','));
     }
 
     /**

@@ -665,7 +665,7 @@ class vod_standard extends Abstract_Vod
         }
 
         if (!empty($dune_params_str)) {
-            $url .= "|||dune_params|||$dune_params_str";
+            $url .= HD::DUNE_PARAMS_MAGIC . $dune_params_str;
         }
 
         return $url;
