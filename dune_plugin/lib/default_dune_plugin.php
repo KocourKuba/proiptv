@@ -1614,7 +1614,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return string
+     * @return void
      */
     public function init_epg_manager()
     {
@@ -1641,17 +1641,6 @@ class Default_Dune_Plugin implements DunePlugin
         $flags |= $this->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         $this->epg_manager->set_flags($flags);
         $this->epg_manager->set_cache_ttl($this->get_setting(PARAM_EPG_CACHE_TTL, 3));
-        switch ($engine_class) {
-            case 'Epg_Manager':
-            case 'Epg_Manager_Sql':
-                return ENGINE_XMLTV;
-
-            case 'Epg_Manager_Json':
-                return ENGINE_JSON;
-
-            default:
-                return null;
-        }
     }
 
     /**
