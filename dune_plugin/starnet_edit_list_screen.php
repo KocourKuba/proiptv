@@ -710,7 +710,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     throw new Exception("Bad M3U file: '$url'\n$contents");
                 }
                 unlink($tmp_file);
-                hd_debug_print("Playlist: '$url' imported successefully");
+                hd_debug_print("Playlist: '$url' imported successfully");
             } catch (Exception $ex) {
                 hd_debug_print("Problem with download playlist: " . $ex->getMessage());
                 HD::set_last_error("pl_last_error", null);

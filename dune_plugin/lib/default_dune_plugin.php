@@ -2738,10 +2738,9 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($this->get_active_playlist_key() === $id) {
             $this->set_active_playlist_key($id);
-            return true;
         }
 
-        return false;
+        return true;
     }
 
     /**
