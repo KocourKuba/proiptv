@@ -1358,7 +1358,7 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 /** @var api_default $config */
-                hd_debug_print("provider api: $api_class");
+                hd_debug_print("provider api: $api_class ({$item['name']})");
                 $provider = new $api_class($this);
                 foreach ($item as $key => $value) {
                     $words = explode('_', $key);

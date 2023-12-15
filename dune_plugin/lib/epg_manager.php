@@ -26,6 +26,7 @@
 require_once 'hd.php';
 require_once 'epg_params.php';
 require_once 'hashed_array.php';
+require_once 'tr.php';
 
 class Epg_Manager
 {
