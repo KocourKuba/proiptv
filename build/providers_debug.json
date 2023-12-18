@@ -578,6 +578,33 @@
     },
     {
       "enable": true,
+      "id": "satq",
+      "name": "Satq TV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
+      "api_commands": {
+        "playlist": "http://iptv11.com/1/{PASSWORD}.m3u8"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\/(video\\.m3u8|mpegts)$/",
+        "url_subst": {
+          "regex": "/^(.+\\/\\/).+(\\/.+\\/.+\\/.+)$/",
+          "replace": "$1{SERVER_ID}$2"
+        },
+        "servers": {
+          "cdn.iptv11.com": "Germany",
+          "serv2.iptv11.com": "Poland 1",
+          "serv6.iptv11.com": "Poland 2",
+          "serv1.iptv11.com": "Moscow 1",
+          "serv5.iptv11.com": "Moscow 2",
+          "serv7.iptv11.com": "Netherlands 1",
+          "serv3.iptv11.com": "Netherlands 2",
+          "serv4.iptv11.com": "Netherlands 3"
+        }
+      }
+    },
+    {
+      "enable": true,
       "id": "sharatv",
       "name": "SharaTV",
       "type": "login",
