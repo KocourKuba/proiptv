@@ -1924,7 +1924,7 @@ class Default_Dune_Plugin implements DunePlugin
         $tmp_file = get_temp_path($playlist_id . "_playlist.m3u8");
         if (file_exists($tmp_file)) {
             $this->tv->get_m3u_parser()->setupParser('');
-            hd_debug_print("remove $tmp_file", true);
+            hd_debug_print("clear_playlist_cache: remove $tmp_file");
             unlink($tmp_file);
         }
     }

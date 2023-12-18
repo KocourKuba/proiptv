@@ -239,6 +239,7 @@ if (!defined('JSON_PRETTY_PRINT'))
 if (!defined('JSON_UNESCAPED_UNICODE'))
     define('JSON_UNESCAPED_UNICODE', 256);
 
+const CONFIG_PLAYLIST_CATCHUP = 'playlist_catchup';
 const CONFIG_ID_PARSER = 'id_parser';
 const CONFIG_ID_MAP = 'id_map';
 const CONFIG_IGNORE_GROUPS = 'ignore_groups';

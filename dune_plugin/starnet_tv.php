@@ -1030,6 +1030,10 @@ class Starnet_Tv implements User_Input_Handler
             $catchup = $channel->get_catchup();
             if (empty($catchup)) {
                 $catchup = $this->catchup;
+                if (empty($catchup) && !is_null($provider)) {
+                    $catchup = $provider->getConfigValue(CONFIG_PLAYLIST_CATCHUP);
+                }
+
                 if (empty($catchup) && strpos($stream_url, 'mpegts') !== false) {
                     $catchup = 'flussonic';
                 }
