@@ -777,7 +777,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->save_if_changed();
-                if (!$this->plugin->apply_edit_provider_dlg($user_input)) {
+                $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                if ($id === null) {
                     return null;
                 }
 

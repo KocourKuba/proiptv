@@ -163,6 +163,7 @@ const PARAM_CUSTOM_DELETE_REGEX = 'custom_delete_regex';
 const PARAM_PROVIDER = 'provider';
 const PARAM_LINK = 'link';
 const PARAM_FILE = 'file';
+const PARAM_URI = 'uri';
 const PARAM_VOD_DEFAULT_VARIANT = 'variant';
 
 const LIST_IDX = 'list_idx';

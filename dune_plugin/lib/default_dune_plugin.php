@@ -1446,7 +1446,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $name = basename($name);
             }
             $item->name = $name;
-            $item->params['uri'] = $playlist;
+            $item->params[PARAM_URI] = $playlist;
             $item->type = preg_match(HTTP_PATTERN, $playlist) ? PARAM_LINK : PARAM_FILE;
             hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, params: " . raw_json_encode($item->params), true);
             $new_storage->set($id, $item);
@@ -1475,7 +1475,7 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("($type) upgrade xmltv source: $source", true);
                 $item = new Named_Storage();
                 $id = ($type === 'Hashed_Array') ? $key : Hashed_Array::hash($source);
-                $item->params['uri'] = $source;
+                $item->params[PARAM_URI] = $source;
                 $name = $source_names->get($key);
                 if (preg_match(HTTP_PATTERN, $source, $m)) {
                     $item->type = PARAM_LINK;
@@ -1688,13 +1688,13 @@ class Default_Dune_Plugin implements DunePlugin
 
                 hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $playlist->name)");
                 if ($playlist->type === PARAM_FILE) {
-                    $contents = file_get_contents($playlist->params['uri']);
-                    hd_debug_print("m3u load local file {$playlist->params['uri']}", true);
+                    $contents = file_get_contents($playlist->params[PARAM_URI]);
+                    hd_debug_print("m3u load local file {$playlist->params[PARAM_URI]}", true);
                 } else if ($playlist->type === PARAM_LINK) {
-                    if (!preg_match(HTTP_PATTERN, $playlist->params['uri'])) {
-                        throw new Exception("Malformed playlist url: {$playlist->params['uri']}");
+                    if (!preg_match(HTTP_PATTERN, $playlist->params[PARAM_URI])) {
+                        throw new Exception("Malformed playlist url: {$playlist->params[PARAM_URI]}");
                     }
-                    $playlist_url = $playlist->params['uri'];
+                    $playlist_url = $playlist->params[PARAM_URI];
                     hd_debug_print("m3u download url $playlist_url", true);
                     $contents = HD::http_download_https_proxy($playlist_url);
                 } else if ($playlist->type === PARAM_PROVIDER) {
@@ -1955,7 +1955,7 @@ class Default_Dune_Plugin implements DunePlugin
 
             $item = new Named_Storage();
             $item->type = PARAM_LINK;
-            $item->params['uri'] = $m3u8source;
+            $item->params[PARAM_URI] = $m3u8source;
             $item->name = $m[2];
             $xmltv_sources->put(Hashed_Array::hash($m3u8source), $item);
         }
@@ -1970,7 +1970,7 @@ class Default_Dune_Plugin implements DunePlugin
 
                         $item = new Named_Storage();
                         $item->type = PARAM_LINK;
-                        $item->params['uri'] = $source;
+                        $item->params[PARAM_URI] = $source;
                         $item->name = $m[2];
                         $xmltv_sources->put(Hashed_Array::hash($source), $item);
                     }
@@ -2008,7 +2008,7 @@ class Default_Dune_Plugin implements DunePlugin
         $xmltv_source = $this->get_all_xmltv_sources()->get($key);
         if (!is_null($xmltv_source)) {
             $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
-            $this->set_active_xmltv_source($xmltv_source->params['uri']);
+            $this->set_active_xmltv_source($xmltv_source->params[PARAM_URI]);
         }
     }
 
@@ -2641,7 +2641,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param $user_input
-     * @return bool
+     * @return null|string
      */
     public function apply_edit_provider_dlg($user_input)
     {
@@ -2654,7 +2654,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if (is_null($provider)) {
-            return false;
+            return null;
         }
 
         $item = new Named_Storage();
@@ -2696,11 +2696,11 @@ class Default_Dune_Plugin implements DunePlugin
                 break;
 
             default:
-                return false;
+                return null;
         }
 
         if ($not_set) {
-            return false;
+            return null;
         }
 
         if (isset($user_input->{CONTROL_DOMAIN})) {
@@ -2735,7 +2735,7 @@ class Default_Dune_Plugin implements DunePlugin
             $this->set_active_playlist_key($id);
         }
 
-        return true;
+        return $id;
     }
 
     /**

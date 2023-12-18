@@ -132,12 +132,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $item = $this->get_edit_order($edit_list)->get($id);
 
                 hd_debug_print("item: " . $item, true);
-                if ($item->type === PARAM_LINK && isset($item->params['uri']) && preg_match(HTTP_PATTERN, $item->params['uri'])) {
+                if ($item->type === PARAM_LINK && isset($item->params[PARAM_URI]) && preg_match(HTTP_PATTERN, $item->params[PARAM_URI])) {
                     return $this->do_edit_url_dlg($edit_list, $selected_media_url->id);
                 }
 
                 if ($item->type === PARAM_PROVIDER) {
-                    return $this->plugin->do_edit_provider_dlg($this, $item->params->provider, $selected_media_url->id);
+                    return $this->plugin->do_edit_provider_dlg($this, $item->params[PARAM_PROVIDER], $selected_media_url->id);
                 }
                 return null;
 
@@ -351,19 +351,24 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->set_no_changes();
-                if (!$this->plugin->apply_edit_provider_dlg($user_input)) {
+                $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                if ($id === null) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($this->plugin->tv->reload_channels() === 0) {
+                if ($this->plugin->get_active_playlist_key() === $id) {
+                    if ($this->plugin->tv->reload_channels() === 0) {
+                        return Action_Factory::invalidate_all_folders($plugin_cookies,
+                            Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+                    }
+
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
-                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
+                            $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx))
+                    );
                 }
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies,
-                    Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
-                        $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx))
-                );
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
@@ -418,7 +423,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $id = $key;
                 $playlist = $this->plugin->get_playlist($id);
                 $starred = $id === $this->plugin->get_active_playlist_key();
-                $title = empty($playlist->name) ? $playlist->params['uri'] : $playlist->name;
+                $title = empty($playlist->name) ? $playlist->params[PARAM_URI] : $playlist->name;
                 if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->plugin->get_provider($playlist->params[PARAM_PROVIDER]);
                     if (is_null($provider)) continue;
@@ -432,7 +437,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 } else if ($playlist->type === PARAM_FILE) {
                     $icon_file = get_image_path("m3u_file.png");
                 } else  {
-                    $detailed_info = "$playlist->name|{$playlist->params['uri']}";
+                    $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
                     $icon_file = get_image_path("link.png");
                 }
             } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
@@ -444,7 +449,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $id = $key;
                 $starred = $id === $this->plugin->get_active_xmltv_source_key();
-                $title = empty($item->name) ? $item->params['uri'] : $item->name;
+                $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
                 if ($item->type === PARAM_FILE) {
                     $icon_file = get_image_path("xmltv_file.png");
                 } else {
@@ -455,9 +460,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (file_exists($cached_xmltv_file)) {
                     $check_time_file = filemtime($cached_xmltv_file);
                     $dl_date = date("d.m H:i", $check_time_file);
-                    $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params['uri'], $dl_date);
+                    $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params[PARAM_URI], $dl_date);
                 } else {
-                    $detailed_info = "$item->name|{$item->params['uri']}";
+                    $detailed_info = "$item->name|{$item->params[PARAM_URI]}";
                 }
             } else {
                 continue;
@@ -622,7 +627,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
             $window_title = TR::t('edit_list_edit_item');
             $name = $item->name;
-            $url = $item->params['uri'];
+            $url = $item->params[PARAM_URI];
             $param = array(CONTROL_EDIT_ACTION => CONTROL_EDIT_ITEM);
         } else {
             $window_title = TR::t('edit_list_add_url');
@@ -725,7 +730,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $playlist->name = $name;
-        $playlist->params['uri'] = $url;
+        $playlist->params[PARAM_URI] = $url;
         $playlist->type = preg_match(HTTP_PATTERN, $url) ? PARAM_LINK : PARAM_FILE;
         $order->set($id, $playlist);
         $this->set_changes($parent_media_url->save_data);
@@ -787,7 +792,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                 }
                                 $playlist->type = PARAM_LINK;
                                 $playlist->name = basename($m[2]);
-                                $playlist->params['uri'] = $line;
+                                $playlist->params[PARAM_URI] = $line;
                                 unlink($tmp_file);
                             } else {
                                 throw new Exception("Can't download file: $line");
@@ -893,7 +898,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (preg_match(HTTP_PATTERN, $line, $m)) {
                         $old = $order->get($hash);
                         $item = new Named_Storage();
-                        $item->params['uri'] = $line;
+                        $item->params[PARAM_URI] = $line;
                         $item->name = $m[2];
                         if (is_null($old)) {
                             $order->put($hash, $item);
@@ -939,7 +944,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $playlist = new Named_Storage();
             $playlist->type = PARAM_FILE;
             $playlist->name = basename($selected_media_url->filepath);
-            $playlist->params['uri'] = $selected_media_url->filepath;
+            $playlist->params[PARAM_URI] = $selected_media_url->filepath;
             $order->put($hash, $playlist);
             $this->set_changes($parent_media_url->save_data);
         }
@@ -953,7 +958,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $xmltv = new Named_Storage();
             $xmltv->type = PARAM_FILE;
             $xmltv->name = basename($selected_media_url->filepath);
-            $xmltv->params['uri'] = $selected_media_url->filepath;
+            $xmltv->params[PARAM_URI] = $selected_media_url->filepath;
             $order->put($hash, $xmltv);
             $this->set_changes($parent_media_url->save_data);
         }
@@ -993,7 +998,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $playlist = new Named_Storage();
             $playlist->type = PARAM_FILE;
             $playlist->name = basename($file);
-            $playlist->params['uri'] = $file;
+            $playlist->params[PARAM_URI] = $file;
             $order->put($hash, $playlist);
             $this->set_changes($parent_media_url->save_data);
         }

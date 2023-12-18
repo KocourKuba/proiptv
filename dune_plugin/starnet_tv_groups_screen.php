@@ -309,7 +309,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->set_no_changes();
-                if (!$this->plugin->apply_edit_provider_dlg($user_input)) {
+                $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                if ($id === null) {
                     return null;
                 }
 
