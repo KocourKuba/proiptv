@@ -30,6 +30,7 @@ require_once 'tr.php';
 
 class Epg_Manager
 {
+    const STREAM_CHUNK = 131072; // 128Kb
     /**
      * @var Default_Dune_Plugin
      */
@@ -494,47 +495,32 @@ class Epg_Manager
             hd_debug_print("Start reindex: $channels_file");
 
             $file = $this->open_xmltv_file();
-            $xml_str = '';
             while (!feof($file)) {
-                $data = fread($file, 8192);
-                if ($data === false) break;
+                $line = stream_get_line($file, self::STREAM_CHUNK, "<channel ");
+                if (empty($line)) continue;
 
-                // stop parse channels mapping
-                $xml_str .= $data;
-                if (strrpos($xml_str, "<programme") !== false) {
-                    break;
-                }
-            }
-            fclose($file);
+                fseek($file, -9, SEEK_CUR);
+                $str = fread($file, 9);
+                if ($str !== "<channel ") continue;
 
-            $start = 0;
-            while ($start !== false) {
-                $start = strpos($xml_str, "<channel", $start);
-                if ($start === false) {
-                    // no channel nodes
-                    break;
-                }
+                $line = stream_get_line($file, self::STREAM_CHUNK, "</channel>");
+                if (empty($line)) continue;
 
-                $end = strpos($xml_str, "</channel>", $start + 8);
-                if ($end === false) {
-                    // node without closing tag?
-                    break;
-                }
-                $end += 10;
+                $line = "<channel $line</channel>";
+
                 $xml_node = new DOMDocument();
-                $str = substr($xml_str, $start, $end - $start);
-                $start = $end;
-                $xml_node->loadXML($str);
+                $xml_node->loadXML($line);
                 foreach($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
 
                 if (empty($channel_id)) continue;
 
+                $picon = '';
                 foreach ($xml_node->getElementsByTagName('icon') as $tag) {
-                    $picon = $tag->getAttribute('src');
-                    if (!preg_match(HTTP_PATTERN, $picon)) {
-                        $picon = '';
+                    if (preg_match(HTTP_PATTERN, $tag->getAttribute('src'))) {
+                        $picon = $tag->getAttribute('src');
+                        break;
                     }
                 }
 
@@ -546,6 +532,7 @@ class Epg_Manager
                     }
                 }
             }
+            fclose($file);
 
             HD::StoreContentToFile($this->get_picons_index_name(), $this->xmltv_picons);
             HD::StoreContentToFile($channels_file, $this->xmltv_channels);
@@ -604,7 +591,7 @@ class Epg_Manager
             $xmltv_index = array();
             while (!feof($file)) {
                 $tag_start_pos = ftell($file);
-                $line = stream_get_line($file, 0, "</programme>");
+                $line = stream_get_line($file, self::STREAM_CHUNK, "</programme>");
                 if ($line === false) break;
 
                 $offset = strpos($line, '<programme');
@@ -840,16 +827,7 @@ class Epg_Manager
             }
 
             // try found channel_id by epg_id
-            $channel_title = $channel->get_title();
             $epg_ids = $channel->get_epg_ids();
-            if (empty($epg_ids) || $this->flags) {
-                // channel_id not exist or not found. Try to map from channel name
-                if (isset($this->xmltv_channels[$channel_title])) {
-                    $epg_ids[] = $this->xmltv_channels[$channel_title];
-                }
-            }
-
-            $epg_ids = array_unique($epg_ids);
             foreach ($epg_ids as $epg_id) {
                 if (isset($this->xmltv_channels[$epg_id])) {
                     $channel_id = $this->xmltv_channels[$epg_id];
@@ -858,7 +836,7 @@ class Epg_Manager
             }
 
             if (empty($channel_id)) {
-                throw new Exception("index positions for epg '$channel_title' is not exist");
+                throw new Exception("index positions for epg '{$channel->get_title()}' is not exist");
             }
 
             if (!isset($this->xmltv_positions[$channel_id])) {

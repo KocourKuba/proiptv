@@ -820,9 +820,9 @@ class Starnet_Tv implements User_Input_Handler
             $number++;
 
             $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
-            if (!empty($epg_ids)) {
-                $epg_ids = array_unique($epg_ids);
-            }
+            $epg_ids[] = $channel_id;
+            $epg_ids[] = $channel_name;
+            $epg_ids = array_unique($epg_ids);
 
             $playlist_icon = $entry->getEntryIcon();
             if (!empty($icon_base_url) && !preg_match(HTTP_PATTERN, $playlist_icon)) {

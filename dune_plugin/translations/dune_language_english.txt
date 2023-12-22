@@ -181,7 +181,6 @@ entry_not_available = This function not available for this device!
 entry_send_log = Send log to the developer
 entry_log_sent = Log sent successfully!
 entry_log_not_sent = Sent log failed!
-entry_epg_fuzzy_search = Fuzzy EPG search
 entry_epg_fake = Emulate missing EPG
 entry_epg_cache_clear = Clear EPG cache
 entry_epg_cache_clear_all = Clear the entire EPG cache

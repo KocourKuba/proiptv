@@ -112,13 +112,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             Control_Factory::add_combobox($defs, $this, null,
                 PARAM_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
                 $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
-
-            //////////////////////////////////////
-            // Fuzzy search
-            $fuzzy_search = $this->plugin->get_parameter(PARAM_FUZZY_SEARCH_EPG, SetupControlSwitchDefs::switch_on);
-            Control_Factory::add_image_button($defs, $this, null,
-                PARAM_FUZZY_SEARCH_EPG, TR::t('entry_epg_fuzzy_search'), SetupControlSwitchDefs::$on_off_translated[$fuzzy_search],
-                get_image_path(SetupControlSwitchDefs::$on_off_img[$fuzzy_search]), self::CONTROLS_WIDTH);
         }
 
         //////////////////////////////////////

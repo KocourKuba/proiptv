@@ -207,7 +207,6 @@ const ENGINE_JSON = 'json';
 const ENGINE_XMLTV = 'xmltv';
 const EPG_CACHE_SUBDIR = 'epg_cache';
 const HISTORY_SUBDIR = 'history';
-const EPG_FUZZY_SEARCH = 1;
 const EPG_FAKE_EPG = 2;
 const EPG_JSON_PRESET = 'epg_preset';
 const EPG_JSON_SOURCE = 'json_source';

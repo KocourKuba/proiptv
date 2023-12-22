@@ -814,7 +814,9 @@ class Default_Dune_Plugin implements DunePlugin
         $this->load_parameters();
 
         if (!isset($this->parameters[$param])) {
-            hd_debug_print("load default $param: $default", true);
+            if ($default !== null) {
+                hd_debug_print("load default $param: $default", true);
+            }
             $this->parameters[$param] = $default;
         } else {
             $default_type = gettype($default);
@@ -1643,7 +1645,7 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print("Using $engine_class cache engine");
         $this->epg_manager = new $engine_class($this->plugin_info['app_version'], $this->get_cache_dir(), $this->get_active_xmltv_source(), $this);
 
-        $flags = $this->get_bool_parameter(PARAM_FUZZY_SEARCH_EPG, false) ? EPG_FUZZY_SEARCH : 0;
+        $flags = 0;
         $flags |= $this->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         $this->epg_manager->set_flags($flags);
         $this->epg_manager->set_cache_ttl($this->get_setting(PARAM_EPG_CACHE_TTL, 3));
@@ -1960,20 +1962,18 @@ class Default_Dune_Plugin implements DunePlugin
             $xmltv_sources->put(Hashed_Array::hash($m3u8source), $item);
         }
 
-        if ($xmltv_sources->size() === 0) {
-            $provider = $this->get_current_provider();
-            if (!is_null($provider)) {
-                $sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
-                if (!empty($sources)) {
-                    foreach ($sources as $source) {
-                        if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
+        $provider = $this->get_current_provider();
+        if (!is_null($provider)) {
+            $sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
+            if (!empty($sources)) {
+                foreach ($sources as $source) {
+                    if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
 
-                        $item = new Named_Storage();
-                        $item->type = PARAM_LINK;
-                        $item->params[PARAM_URI] = $source;
-                        $item->name = $m[2];
-                        $xmltv_sources->put(Hashed_Array::hash($source), $item);
-                    }
+                    $item = new Named_Storage();
+                    $item->type = PARAM_LINK;
+                    $item->params[PARAM_URI] = $source;
+                    $item->name = $m[2];
+                    $xmltv_sources->put(Hashed_Array::hash($source), $item);
                 }
             }
         }

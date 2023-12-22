@@ -94,35 +94,20 @@ class Epg_Manager_Sql extends Epg_Manager
             $file = $this->open_xmltv_file();
             $xml_str = '';
             while (!feof($file)) {
-                $data = fread($file, 8192);
-                if ($data === false) break;
+                $line = stream_get_line($file, self::STREAM_CHUNK, "<channel ");
+                if (empty($line)) continue;
 
-                // stop parse channels mapping
-                $xml_str .= $data;
-                if (strrpos($xml_str, "<programme") !== false) {
-                    break;
-                }
-            }
-            fclose($file);
+                fseek($file, -9, SEEK_CUR);
+                $str = fread($file, 9);
+                if ($str !== "<channel ") continue;
 
-            $start = 0;
-            while ($start !== false) {
-                $start = strpos($xml_str, "<channel", $start);
-                if ($start === false) {
-                    // no channel nodes
-                    break;
-                }
+                $line = stream_get_line($file, self::STREAM_CHUNK, "</channel>");
+                if (empty($line)) continue;
 
-                $end = strpos($xml_str, "</channel>", $start + 8);
-                if ($end === false) {
-                    // node without closing tag?
-                    break;
-                }
-                $end += 10;
+                $line = "<channel $line</channel>";
+
                 $xml_node = new DOMDocument();
-                $str = substr($xml_str, $start, $end - $start);
-                $start = $end;
-                $xml_node->loadXML($str);
+                $xml_node->loadXML($line);
                 foreach($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
@@ -136,11 +121,13 @@ class Epg_Manager_Sql extends Epg_Manager
                     }
                 }
 
+                $this->xmltv_channels[$channel_id] = $channel_id;
                 foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
                     $alias = $tag->nodeValue;
                     $stm->execute();
                 }
             }
+            fclose($file);
             $filedb->exec('COMMIT;');
 
             $result = $filedb->querySingle('SELECT count(*) FROM channels;');
@@ -313,7 +300,7 @@ class Epg_Manager_Sql extends Epg_Manager
             $channel_title = $channel->get_title();
             $epg_ids = $channel->get_epg_ids();
 
-            if (empty($epg_ids) || ($this->flags & EPG_FUZZY_SEARCH)) {
+            if (empty($epg_ids)) {
                 $channels_db = $this->open_sqlite_db(false);
                 if (!is_null($channels_db)) {
                     $stm = $channels_db->prepare('SELECT DISTINCT channel_id FROM channels WHERE alias=:alias;');
