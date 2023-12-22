@@ -2666,7 +2666,7 @@ class Default_Dune_Plugin implements DunePlugin
         switch ($provider->getType()) {
             case PROVIDER_TYPE_PIN:
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                $id = empty($id) ? Hashed_Array::hash($params[MACRO_PASSWORD]) : $id;
+                $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$params[MACRO_PASSWORD]) : $id;
                 $not_set = empty($params[MACRO_PASSWORD]);
                 break;
 
@@ -2675,7 +2675,7 @@ class Default_Dune_Plugin implements DunePlugin
             case PROVIDER_TYPE_LOGIN_STOKEN:
                 $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                $id = empty($id) ? Hashed_Array::hash($params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
+                $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
                 $not_set = empty($params[MACRO_LOGIN]) || empty($params[MACRO_PASSWORD]);
                 if ($provider->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
                     $provider->setCredential(MACRO_TOKEN, '');
@@ -2691,7 +2691,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
                 $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
 
-                $id = empty($id) ? Hashed_Array::hash($params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;
+                $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;
                 $not_set = empty($params[MACRO_OTTKEY]);
                 break;
 
