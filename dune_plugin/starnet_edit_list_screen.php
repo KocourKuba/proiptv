@@ -704,14 +704,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
             try {
                 $tmp_file = get_temp_path(Hashed_Array::hash($url));
-                $proxy_log = HD::http_save_https_proxy($url, $tmp_file);
-                if ($proxy_log !== false) {
-                    hd_debug_print("Read http_proxy log...");
-                    foreach (explode("\n", $proxy_log) as $l) hd_debug_print(rtrim($l));
-                    hd_debug_print("Read finished");
-                }
-
-                if (!file_exists($tmp_file)) {
+                if (HD::http_save_https_proxy($url, $tmp_file) === false) {
                     throw new Exception("Can't download file: $url");
                 }
 
@@ -777,11 +770,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         hd_debug_print("import link: '$line'", true);
                         try {
                             $tmp_file = get_temp_path(Hashed_Array::hash($line));
-                            $proxy_log = HD::http_save_https_proxy($line, $tmp_file);
-                            if ($proxy_log !== false) {
-                                hd_debug_print("Read http_proxy log...");
-                                foreach (explode("\n", $proxy_log) as $l) hd_debug_print(rtrim($l));
-                                hd_debug_print("Read finished");
+                            if (HD::http_save_https_proxy($line, $tmp_file) === false) {
+                                throw new Exception("Can't download : $line");
                             }
 
                             if (file_exists($tmp_file)) {

@@ -58,6 +58,7 @@ select_folder = Ordner auswählen
 select_file = Datei aussuchen
 storage = Lagerung
 internal = intern
+image_libs = Icons packs
 restore = Wiederherstellen
 restore_all = Alles wiederherstellen
 name = Name

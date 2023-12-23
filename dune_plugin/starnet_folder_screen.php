@@ -46,6 +46,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     const SELECTED_TYPE_SMB = 'smb';
     const SELECTED_TYPE_FOLDER = 'folder';
     const SELECTED_TYPE_FILE = 'file';
+    const SELECTED_TYPE_IMAGE_LIB = 'imagelib';
 
     private $counter = 0;
 
@@ -114,7 +115,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         } else if ($media_url->filepath !== '/tmp/mnt/storage' &&
             $media_url->filepath !== '/tmp/mnt/network' &&
             $media_url->filepath !== '/tmp/mnt/smb' &&
-            $media_url->filepath !== '/sdcard/DuneHD') {
+            $media_url->filepath !== '/sdcard/DuneHD' &&
+            $media_url->filepath !== '/imagelib') {
 
             if (isset($media_url->choose_folder) && $media_url->choose_folder !== false) {
                 $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this,
@@ -146,10 +148,19 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         hd_debug_print(null, true);
         hd_debug_print("from_ndx: $from_ndx, MediaURL: " . $media_url->get_media_url_str(true), true);
 
+        if (empty($media_url->filepath)) {
+            $dir = array("/imagelib", "/tmp/mnt");
+            if (is_android()) {
+                $dir[] = "/sdcard";
+            }
+        } else {
+            $dir[] = $media_url->filepath;
+        }
+
         $err = false;
         $source_window_id = isset($media_url->source_window_id) ? $media_url->source_window_id : false;
-        $dir = empty($media_url->filepath) ? (is_android() ? array("/tmp/mnt", "/sdcard") : "/tmp/mnt") : $media_url->filepath;
         $allow_network = !isset($media_url->allow_network) || $media_url->allow_network;
+        $allow_image_lib = !isset($media_url->allow_image_lib) || $media_url->allow_image_lib;
         $windowCounter = isset($media_url->windowCounter) ? $media_url->windowCounter + 1 : 2;
         $ip_path = isset($media_url->ip_path) ? $media_url->ip_path : false;
         $nfs_protocol = isset($media_url->nfs_protocol) ? $media_url->nfs_protocol : false;
@@ -159,17 +170,19 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         $choose_file = isset($media_url->choose_file) ? $media_url->choose_file : false;
 
         $items = array();
-        foreach (self::get_file_list($plugin_cookies, $dir) as $item_type => $item) {
-            if (isset($media_url->filepath)) {
+        hd_debug_print("dir: " . json_encode($dir));
+        foreach ($this->get_file_list($plugin_cookies, $dir) as $item_type => $item) {
+            if (isset($media_url->filepath) && is_array($item)) {
                 ksort($item);
             }
 
             foreach ($item as $k => $v) {
+                hd_debug_print("folder key: $k, value: " . json_encode($v));
                 $detailed_icon = '';
                 if ($item_type === self::SELECTED_TYPE_SMB) {
                     $caption = $v['foldername'];
                     $filepath = $k;
-                    $icon_file = self::get_folder_icon('smb_folder', $filepath);
+                    $icon_file = self::get_folder_icon('smb_folder');
                     $info = TR::t('folder_screen_smb__2', $caption, $v['ip']);
                     $type = self::SELECTED_TYPE_FOLDER;
                     $ip_path = $v['ip'];
@@ -186,7 +199,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 } else if ($item_type === self::SELECTED_TYPE_NFS) {
                     $caption = $v['foldername'];
                     $filepath = $k;
-                    $icon_file = self::get_folder_icon('smb_folder', $filepath);
+                    $icon_file = self::get_folder_icon('smb_folder');
                     $info = TR::t('folder_screen_nfs__2', $caption, $v['ip']);
                     $type = self::SELECTED_TYPE_FOLDER;
                     $ip_path = $v['ip'];
@@ -195,6 +208,12 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         $info = TR::t('err_error_nfs__1', $v['err']);
                         $err = $v['err'];
                     }
+                } else if ($item_type === self::SELECTED_TYPE_IMAGE_LIB) {
+                    $caption = $v['foldername'];
+                    $filepath = $k;
+                    $icon_file = self::get_folder_icon('imagelib');
+                    $type = self::SELECTED_TYPE_FOLDER;
+                    $info = TR::t('folder_screen_folder__1', $caption);
                 } else if ($item_type === self::SELECTED_TYPE_FOLDER) {
                     if ($k === 'network') {
                         if (!$allow_network) continue;
@@ -203,9 +222,12 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         if (!$allow_network) continue;
                         $caption = 'SMB';
                     } else if ($k === 'storage') {
-                        $caption = TR::t('storage');
+                        $caption = TR::load_string('storage');
                     } else if ($k === 'internal') {
-                        $caption = TR::t('internal');
+                        $caption = TR::load_string('internal');
+                    } else if ($k === 'imagelib') {
+                        if (!$allow_image_lib) continue;
+                        $caption = TR::load_string('image_libs');
                     } else {
                         $caption = $k;
                     }
@@ -394,9 +416,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      * @param array $path
      * @return array
      */
-    protected static function get_file_list($plugin_cookies, $path)
+    protected function get_file_list($plugin_cookies, $path)
     {
         hd_debug_print(null, true);
+        hd_debug_print(json_encode($path), true);
 
         if (!is_array($path)) {
             $dirs[] = $path;
@@ -408,20 +431,72 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         $fileData['folder'] = array();
         $fileData['file'] = array();
         foreach ($dirs as $dir) {
+            hd_debug_print("get_file_list dir: $dir");
             if ($dir === '/tmp/mnt/smb') {
                 $info = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
                 $s['smb'] = $smb_shares->get_mount_all_smb($info);
+                hd_debug_print("smb: " . json_encode($s));
                 return $s;
             }
 
             if ($dir === '/tmp/mnt/network') {
                 $s['nfs'] = $smb_shares::get_mount_nfs();
+                hd_debug_print("nfs: " . json_encode($s));
+                return $s;
+            }
+
+            $imagelib_path = get_temp_path('imagelib/');
+            if ($dir === $imagelib_path) {
+                $s = array();
+                foreach ($this->get_image_libs() as $item) {
+                    $img_path = "$imagelib_path{$item['name']}";
+                    create_path($img_path);
+                    $need_download = false;
+                    $files = glob("$img_path/*");
+                    if (empty($files)) {
+                        $need_download = true;
+                    }
+
+                    $package_name = get_temp_path($item['package']);
+                    if ($need_download && !file_exists($package_name) && HD::http_save_https_proxy($item['url'], $package_name) === false) {
+                        hd_debug_print("can't download image pack: $package_name");
+                        break;
+                    }
+
+                    $unzip = new ZipArchive();
+                    try {
+                        $out = $unzip->open($package_name);
+                        if ($out !== true) {
+                            throw new Exception(TR::t('err_unzip__2', $package_name, $out));
+                        }
+
+                        // Check if zip is empty
+                        $first_file = $unzip->getNameIndex(0);
+                        if (empty($first_file)) {
+                            $unzip->close();
+                            throw new Exception(TR::t('err_empty_zip__1', $package_name));
+                        }
+
+                        $unzip->extractTo($img_path);
+                        for ($i = 0; $i < $unzip->numFiles; $i++) {
+                            $stat_index = $unzip->statIndex($i);
+                            touch("$img_path/{$stat_index['name']}", $stat_index['mtime']);
+                        }
+                    } catch (Exception $ex) {
+                        hd_debug_print($ex->getMessage());
+                    }
+                    $unzip->close();
+                    $s['imagelib'][$img_path]['foldername'] = $item['name'];
+                }
                 return $s;
             }
 
             if ($dir === '/sdcard') {
                 $fileData['folder']['internal']['filepath'] = $dir . DIRECTORY_SEPARATOR;
+            } else if ($dir === '/imagelib') {
+                $fileData['folder']['imagelib']['filepath'] = get_temp_path('imagelib/');
             } else if ($handle = opendir($dir)) {
+                hd_debug_print("opendir: $dir");
                 $bug_kind = get_bug_platform_kind();
                 while (false !== ($file = readdir($handle))) {
                     if ($file === "." || $file === "..") continue;
@@ -444,29 +519,37 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
+     * @return array
+     */
+    protected function get_image_libs()
+    {
+        return $this->plugin->get_image_libs()->get_values();
+    }
+
+    /**
      * @param string $ref
      * @return string
      */
     protected static function get_file_icon($ref)
     {
         if (preg_match('/\.(' . AUDIO_PATTERN . ')$/i', $ref)) {
-            $file_icon = 'gui_skin://small_icons/audio_file.aai';
+            $file_icon = get_image_path('audio_file.png');
         } else if (preg_match('/\.(' . VIDEO_PATTERN . ')$/i', $ref)) {
-            $file_icon = 'gui_skin://small_icons/video_file.aai';
+            $file_icon = get_image_path('video_file.png');
         } else if (preg_match('/\.(' . IMAGE_PREVIEW_PATTERN . ')$/i', $ref)) {
             $file_icon = $ref;
         } else if (preg_match('/\.(' . IMAGE_PATTERN . ')$/i', $ref)) {
-            $file_icon = 'gui_skin://small_icons/image_file.aai';
+            $file_icon = get_image_path('image_file.png');
         } else if (preg_match('/\.(' . PLAYLIST_PATTERN . ')$/i', $ref)) {
-            $file_icon = 'gui_skin://small_icons/playlist_file.aai';
+            $file_icon = get_image_path('playlist_file.png');
         } else if (preg_match('/\.(' . EPG_PATTERN . ')$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/subtitles_settings.aai';
         } else if (preg_match('/\.txt$/i', $ref)) {
             $file_icon = 'gui_skin://small_icons/language_settings.aai';
         } else if (preg_match('/\.zip$/i', $ref)) {
-            $file_icon = 'gui_skin://small_icons/apps.aai';
+            $file_icon = get_image_path('zip_file.png');
         } else {
-            $file_icon = 'gui_skin://small_icons/unknown_file.aai';
+            $file_icon = get_image_path('unknown_file.png');
         }
 
         return $file_icon;
@@ -477,26 +560,29 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
      * @param string $filepath
      * @return string
      */
-    protected static function get_folder_icon($folder_type, $filepath)
+    protected static function get_folder_icon($folder_type, $filepath = "")
     {
         if ($folder_type === 'storage') {
-            $folder_icon = "gui_skin://small_icons/sd_card.aai";
+            $folder_icon = get_image_path('sdcard.png');
         } else if ($folder_type === 'internal') {
-            $folder_icon = "gui_skin://small_icons/system_storage.aai";
+            $folder_icon = get_image_path('internal_storage.png');
         } else if ($folder_type === 'smb') {
-            $folder_icon = "gui_skin://small_icons/smb.aai";
+            $folder_icon = get_image_path('smb.png');
         } else if ($folder_type === 'smb_folder') {
-            $folder_icon = "gui_skin://small_icons/network_folder.aai";
+            $folder_icon = get_image_path('smb_folder.png');
         } else if ($folder_type === 'network') {
-            $folder_icon = "gui_skin://small_icons/network.aai";
+            $folder_icon = get_image_path('nfs_folder.png');
+        } else if ($folder_type === 'imagelib') {
+            $folder_icon = get_image_path('image_folder.png');
         } else if (preg_match("|/tmp/mnt/storage/usb_storage_[^/]+$|", $filepath)) {
-            $folder_icon = "gui_skin://small_icons/usb.aai";
+            $folder_icon = get_image_path('usb_device.png');
         } else if (preg_match("|/tmp/mnt/storage/[^/]+$|", $filepath)) {
-            $folder_icon = "gui_skin://small_icons/hdd.aai";
+            $folder_icon = get_image_path('hdd_device.png');
         } else {
-            $folder_icon = "gui_skin://small_icons/folder.aai";
+            $folder_icon = get_image_path('folder_icon.png');
         }
 
+        hd_debug_print("folder type: $folder_type, icon: $folder_icon", true);
         return $folder_icon;
     }
 

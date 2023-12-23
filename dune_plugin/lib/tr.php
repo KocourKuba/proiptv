@@ -88,7 +88,9 @@ class TR
             return trim($m[1]);
         }
 
-        return $string_key;
+        $args = func_get_args();
+        array_shift($args);
+        return vsprintf($string_key, $args);
     }
 
     protected static function get_translation_filename($lang)

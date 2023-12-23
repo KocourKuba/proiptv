@@ -58,6 +58,7 @@ select_folder = Выбрать папку
 select_file = Выбрать файл
 storage = Системный диск
 internal = Внутреннее хранилище
+image_libs = Библиотеки иконок
 restore = Восстановить
 restore_all = Восстановить все
 name = Имя

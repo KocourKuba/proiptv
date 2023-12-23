@@ -341,8 +341,7 @@ class HD
      *
      * @param string $url
      * @param string|null $save_file
-     * @return string|bool download log
-     * @throws Exception
+     * @return bool
      */
     public static function http_save_https_proxy($url, $save_file)
     {
@@ -354,12 +353,13 @@ class HD
         $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$save_file' '$user_agent' '$logfile'";
         hd_debug_print("Exec: $cmd", true);
         shell_exec($cmd);
-        if (!file_exists($save_file)) {
-            $log_content = @file_get_contents($logfile);
-            throw new Exception("Can't download playlist $save_file\n\n" . $log_content);
+        $log_content = @file_get_contents($logfile);
+        if ($log_content !== false) {
+            hd_debug_print("Read http_proxy log...");
+            foreach (explode("\n", $log_content) as $l) hd_debug_print(rtrim($l));
+            hd_debug_print("Read finished");
         }
-
-        return @file_get_contents($logfile);
+        return file_exists($save_file);
     }
 
     /**

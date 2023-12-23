@@ -146,6 +146,11 @@ class Default_Dune_Plugin implements DunePlugin
     protected $epg_presets;
 
     /**
+     * @var Hashed_Array
+     */
+    protected $image_libs;
+
+    /**
      * @var api_default
      */
     protected $cur_provider;
@@ -157,6 +162,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->plugin_info = get_plugin_manifest_info();
         $this->providers = new Hashed_Array();
         $this->epg_presets = new Hashed_Array();
+        $this->image_libs = new Hashed_Array();
     }
 
     public function set_plugin_cookies($plugin_cookies)
@@ -321,6 +327,23 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         return $this->epg_presets->get($preset_name);
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_image_libs()
+    {
+        return $this->image_libs;
+    }
+
+    /**
+     * @param $preset_name string
+     * @return array|null
+     */
+    public function get_image_lib($preset_name)
+    {
+        return $this->image_libs->get($preset_name);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -1303,10 +1326,6 @@ class Default_Dune_Plugin implements DunePlugin
         $this->load_parameters(true);
         $this->update_log_level();
 
-        $this->init_epg_manager();
-        $this->create_screen_views();
-        $this->playback_points = new Playback_Points($this);
-
         if ($this->providers->size() === 0) {
             // 1. Check local debug version
             // 2. Try to download from web release version
@@ -1315,7 +1334,7 @@ class Default_Dune_Plugin implements DunePlugin
             // 5. Houston we have a problem
             $tmp_file = get_install_path("providers_debug.json");
             if (file_exists($tmp_file)) {
-                hd_debug_print("Load debug providers configuration.");
+                hd_debug_print("Load debug providers configuration: $tmp_file");
                 $jsonArray = HD::ReadContentFromFile($tmp_file);
             } else {
                 $name = "providers_{$this->plugin_info['app_base_version']}.json";
@@ -1342,13 +1361,19 @@ class Default_Dune_Plugin implements DunePlugin
                 }
             }
 
-            if ($jsonArray === false || !isset($jsonArray['providers'])) {
-                hd_debug_print("Problem to get providers configuration");
-                return;
+            foreach ($jsonArray['plugin_config']['image_libs'] as $key => $value) {
+                hd_debug_print("available image lib: $key");
+                $this->image_libs->set($key, $value);
             }
 
             foreach ($jsonArray['epg_presets'] as $key => $value) {
+                hd_debug_print("available epg preset: $key");
                 $this->epg_presets->set($key, $value);
+            }
+
+            if ($jsonArray === false || !isset($jsonArray['providers'])) {
+                hd_debug_print("Problem to get providers configuration");
+                return;
             }
 
             foreach ($jsonArray['providers'] as $item) {
@@ -1393,6 +1418,10 @@ class Default_Dune_Plugin implements DunePlugin
                 }
             }
         }
+
+        $this->init_epg_manager();
+        $this->create_screen_views();
+        $this->playback_points = new Playback_Points($this);
 
         $this->tv->unload_channels();
 
@@ -1550,6 +1579,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function init_provider($info)
     {
+        hd_debug_print("provider info:" . json_encode($info));
         $provider = $this->get_provider($info->params[PARAM_PROVIDER]);
         if (is_null($provider)) {
             hd_debug_print("unknown provider");
