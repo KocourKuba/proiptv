@@ -45,6 +45,7 @@ require_once 'json_serializer.php';
  * @property string|null $extension // pattern for show files with specified extension
  * @property string|null $caption // Caption of the selected media url
  * @property bool|null  $allow_network // Allow to use network folders NFS/SMB for Starnet_Folder_Screen
+ * @property bool|null $allow_image_lib // Allow to use image lib folders for Starnet_Folder_Screen
  * @property string|null $nfs_protocol // symbolic name of NFS protocol
  * @property bool|null $is_favorite // Is selected media url point to the favorite folder
  * @property int|mixed|null $archive_tm // timestamp of the archive position playback, -1 live broadcast

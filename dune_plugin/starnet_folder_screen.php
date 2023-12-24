@@ -41,6 +41,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     const ACTION_SMB_SETUP = 'smb_setup';
     const ACTION_NEW_SMB_DATA = 'new_smb_data';
     const ACTION_SAVE_SMB_SETUP = 'save_smb_setup';
+    const ACTION_RELOAD_IMAGE_FOLDER = 'reload_image_folder';
 
     const SELECTED_TYPE_NFS = 'nfs';
     const SELECTED_TYPE_SMB = 'smb';
@@ -103,7 +104,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         $actions[GUI_EVENT_KEY_SETUP] = Action_Factory::replace_path($media_url->windowCounter);
 
         if (empty($media_url->filepath)) {
-            if ($media_url->allow_network) {
+            $allow_network = isset($media_url->allow_network) && $media_url->allow_network;
+            $allow_image_lib = isset($media_url->allow_image_lib) && $media_url->allow_image_lib;
+
+            if ($allow_network) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
                     self::ACTION_SMB_SETUP, TR::t('folder_screen_smb_settings'));
             }
@@ -111,6 +115,11 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             if ($media_url->allow_reset) {
                 $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
                     self::ACTION_RESET_FOLDER, TR::t('reset_default'));
+            }
+
+            if ($allow_image_lib) {
+                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
+                    self::ACTION_RELOAD_IMAGE_FOLDER, TR::t('refresh'));
             }
         } else if ($media_url->filepath !== '/tmp/mnt/storage' &&
             $media_url->filepath !== '/tmp/mnt/network' &&
@@ -159,8 +168,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $err = false;
         $source_window_id = isset($media_url->source_window_id) ? $media_url->source_window_id : false;
-        $allow_network = !isset($media_url->allow_network) || $media_url->allow_network;
-        $allow_image_lib = !isset($media_url->allow_image_lib) || $media_url->allow_image_lib;
+        $allow_network = isset($media_url->allow_network) && $media_url->allow_network;
+        $allow_image_lib = isset($media_url->allow_image_lib) && $media_url->allow_image_lib;
         $windowCounter = isset($media_url->windowCounter) ? $media_url->windowCounter + 1 : 2;
         $ip_path = isset($media_url->ip_path) ? $media_url->ip_path : false;
         $nfs_protocol = isset($media_url->nfs_protocol) ? $media_url->nfs_protocol : false;
@@ -368,6 +377,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             case self::ACTION_RESET_FOLDER:
                 return $this->do_reset_folder($user_input);
 
+            case self::ACTION_RELOAD_IMAGE_FOLDER:
+                return $this->do_reload_folder($user_input);
+
             case self::ACTION_GET_FOLDER_NAME_DLG:
                 return $this->do_get_folder_name_dlg();
 
@@ -563,7 +575,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     protected static function get_folder_icon($folder_type, $filepath = "")
     {
         if ($folder_type === 'storage') {
-            $folder_icon = get_image_path('sdcard.png');
+            $folder_icon = get_image_path('hdd_device.png');
         } else if ($folder_type === 'internal') {
             $folder_icon = get_image_path('internal_storage.png');
         } else if ($folder_type === 'smb') {
@@ -899,5 +911,21 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             array('selected_data' => $url->get_media_url_str()));
 
         return Action_Factory::replace_path($parent_url->windowCounter, null, $post_action);
+    }
+
+    /**
+     * @param $user_input
+     * @return array|null
+     */
+    protected function do_reload_folder($user_input)
+    {
+        hd_debug_print(null, true);
+
+        shell_exec('rm -f ' . get_temp_path('*.zip'));
+        delete_directory(get_temp_path('imagelib'));
+
+        flush();
+
+        return Starnet_Epfs_Handler::invalidate_folders(array($user_input->parent_media_url));
     }
 }
