@@ -515,12 +515,12 @@ class api_default
     public function replace_macros($string)
     {
         static $macroses = array(
+            MACRO_STREAM_ID,
             MACRO_LOGIN,
             MACRO_PASSWORD,
             MACRO_SUBDOMAIN,
             MACRO_OTTKEY,
             MACRO_TOKEN,
-            MACRO_STREAM_ID,
             MACRO_DOMAIN_ID,
             MACRO_DEVICE_ID,
             MACRO_SERVER_ID,

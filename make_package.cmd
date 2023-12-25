@@ -53,4 +53,6 @@ if %WINSCP_RESULT% equ 0 (
   echo Error
 )
 
+del .\providers_%VERSION%.json >nul
+
 exit /b %WINSCP_RESULT%

@@ -602,13 +602,17 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
       "api_commands": {
-        "playlist": "http://iptv11.com/1/{PASSWORD}.m3u8"
+        "playlist": "{STREAM_ID}"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\/(video\\.m3u8|mpegts)$/",
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "url_subst": {
-          "regex": "/^(.+\\/\\/).+(\\/.+\\/.+\\/.+)$/",
+          "regex": "/^(.+\\/\\/).+(\\/.+\\/.+)$/",
           "replace": "$1{SERVER_ID}$2"
+        },
+        "streams": {
+          "http://iptv11.com/{PASSWORD}.m3u8": "HLS",
+          "http://iptv11.com/iptv/{PASSWORD}-ts.m3u": "MPEG-TS"
         },
         "servers": {
           "cdn.iptv11.com": "Germany",
