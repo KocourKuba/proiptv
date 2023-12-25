@@ -85,6 +85,11 @@ class vod_standard extends Abstract_Vod
     protected $filters = array();
 
     /**
+     * @var string
+     */
+    protected $vod_parser;
+
+    /**
      * @param Default_Dune_Plugin $plugin
      */
     public function __construct(Default_Dune_Plugin $plugin)
@@ -106,6 +111,8 @@ class vod_standard extends Abstract_Vod
         if (!$provider->hasApiCommand(API_COMMAND_VOD)) {
             return false;
         }
+
+        $this->vod_parser = $this->provider->getConfigValue(CONFIG_VOD_PARSER);
 
         return true;
     }
@@ -429,7 +436,7 @@ class vod_standard extends Abstract_Vod
             $search_in = utf8_encode(mb_strtolower($title, 'UTF-8'));
             if (strpos($search_in, $keyword) === false) continue;
 
-            if (!empty($this->vod_pattern) && preg_match($this->vod_pattern, $title, $match)) {
+            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
                 $title = isset($match['title']) ? $match['title'] : $title;
             }
 
@@ -486,7 +493,7 @@ class vod_standard extends Abstract_Vod
             if ($entry === null || $entry->isM3U_Header()) continue;
 
             $title = $entry->getEntryTitle();
-            if (!empty($this->vod_pattern) && preg_match($this->vod_pattern, $title, $match)) {
+            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
                 $title = isset($match['title']) ? $match['title'] : $title;
             }
             $title = trim($title);
@@ -520,7 +527,7 @@ class vod_standard extends Abstract_Vod
             $country = '';
             $year = '';
 
-            if (!empty($this->vod_pattern) && preg_match($this->vod_pattern, $title, $match)) {
+            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
                 $title = isset($match['title']) ? $match['title'] : $title;
                 $title_orig = isset($match['title_orig']) ? $match['title_orig'] : $title_orig;
                 $country = isset($match['country']) ? $match['country'] : $country;
