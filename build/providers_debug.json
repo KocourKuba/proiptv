@@ -200,7 +200,7 @@
       },
       "config": {
         "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
-        "vod_parser": "(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$"
+        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/"
       }
     },
     {
@@ -337,7 +337,7 @@
       "config": {
         "epg_preset": "drm",
         "epg_alias": "fox-tv",
-        "vod_parser": "(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$"
+        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/"
       }
     },
     {
@@ -561,7 +561,7 @@
         "vod": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
-        "vod_parser": "(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$"
+        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/"
       }
     },
     {
@@ -578,7 +578,7 @@
       "config": {
         "epg_preset": "drm",
         "epg_alias": "fox-tv",
-        "vod_parser": "(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$"
+        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/"
       }
     },
     {
@@ -593,6 +593,20 @@
       "config": {
         "id_map": "tvg-id",
         "epg_preset": "cbilling"
+      }
+    },
+    {
+      "enable": true,
+      "id": "rutv",
+      "name": "RU TV",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_rutv.png",
+      "api_commands": {
+        "playlist": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
+        "vod": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/vod.m3u"
+      },
+      "config": {
+        "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/"
       }
     },
     {
@@ -735,7 +749,7 @@
           "3": "Server NL",
           "4": "Server RU"
         },
-        "vod_parser": "(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$"
+        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/"
       }
     },
     {
@@ -850,7 +864,7 @@
       "config": {
         "id_map": "tvg-id",
         "epg_preset": "drm",
-        "vod_parser": "(?<title>[^\\(]*)\\s\\((?<year>\\d+)\\)$",
+        "vod_parser": "/^(?<title>[^\\(]*)\\s\\((?<year>\\d+)\\)$/",
         "url_subst": {
           "regex": "/^(.+\\.).+$/",
           "replace": "$1{STREAM_ID}"
