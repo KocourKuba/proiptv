@@ -475,29 +475,12 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         break;
                     }
 
-                    $unzip = new ZipArchive();
-                    try {
-                        $out = $unzip->open($package_name);
-                        if ($out !== true) {
-                            throw new Exception(TR::t('err_unzip__2', $package_name, $out));
-                        }
-
-                        // Check if zip is empty
-                        $first_file = $unzip->getNameIndex(0);
-                        if (empty($first_file)) {
-                            $unzip->close();
-                            throw new Exception(TR::t('err_empty_zip__1', $package_name));
-                        }
-
-                        $unzip->extractTo($img_path);
-                        for ($i = 0; $i < $unzip->numFiles; $i++) {
-                            $stat_index = $unzip->statIndex($i);
-                            touch("$img_path/{$stat_index['name']}", $stat_index['mtime']);
-                        }
-                    } catch (Exception $ex) {
-                        hd_debug_print($ex->getMessage());
+                    $cmd = "unzip -oq '$package_name' -d '$img_path' 2>&1";
+                    system($cmd, $ret);
+                    if ($ret !== 0) {
+                        hd_debug_print("Failed to unpack $package_name (error code: $ret)");
+                        continue;
                     }
-                    $unzip->close();
                     $s['imagelib'][$img_path]['foldername'] = $item['name'];
                 }
                 return $s;
