@@ -31,6 +31,7 @@ require_once 'tr.php';
 class Epg_Manager
 {
     const STREAM_CHUNK = 131072; // 128Kb
+
     /**
      * @var Default_Dune_Plugin
      */
@@ -93,6 +94,9 @@ class Epg_Manager
      */
     protected $flags = 0;
 
+    /**
+     * @var string
+     */
     protected $index_ext = '.index';
 
     /**
