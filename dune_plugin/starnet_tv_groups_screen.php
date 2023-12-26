@@ -287,7 +287,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->save_if_changed();
                 $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg', 'force' => true));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -459,8 +459,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 if (isset($user_input->reload_action)) {
                     if ($user_input->reload_action === 'epg') {
-                        $this->plugin->get_epg_manager()->clear_epg_cache();
                         $this->plugin->init_epg_manager();
+                        if ($user_input->force === true) {
+                            $this->plugin->get_epg_manager()->clear_epg_cache();
+                        }
                         $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
                         if ($res === -1) {
                             return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error("xmltv_last_error"));
