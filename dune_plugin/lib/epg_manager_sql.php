@@ -92,7 +92,6 @@ class Epg_Manager_Sql extends Epg_Manager
             $stm->bindParam(":picon", $picon);
 
             $file = $this->open_xmltv_file();
-            $xml_str = '';
             while (!feof($file)) {
                 $line = stream_get_line($file, self::STREAM_CHUNK, "<channel ");
                 if (empty($line)) continue;
@@ -300,18 +299,22 @@ class Epg_Manager_Sql extends Epg_Manager
             $channel_title = $channel->get_title();
             $epg_ids = $channel->get_epg_ids();
 
-            if (empty($epg_ids)) {
-                $channels_db = $this->open_sqlite_db(false);
-                if (!is_null($channels_db)) {
-                    $stm = $channels_db->prepare('SELECT DISTINCT channel_id FROM channels WHERE alias=:alias;');
-                    $stm->bindValue(":alias", $channel_title);
-                    hd_debug_print("Search by channel title: $channel_title");
+            $channels_db = $this->open_sqlite_db(false);
+            if (!is_null($channels_db)) {
+                $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
+                $stm = $channels_db->prepare("SELECT DISTINCT channel_id FROM channels WHERE alias IN ($placeHolders);");
+                if ($stm !== false) {
+                    foreach ($epg_ids as $index => $val) {
+                        $stm->bindValue($index + 1, $val);
+                    }
 
                     $res = $stm->execute();
-                    if ($res) {
-                        while ($row = $res->fetchArray(SQLITE3_NUM)) {
-                            $epg_ids[] = (string)$row[0];
-                        }
+                    if (!$res) {
+                        throw new Exception("Query failed for epg's: " . raw_json_encode($epg_ids) . " ($channel_title)");
+                    }
+
+                    while ($row = $res->fetchArray(SQLITE3_NUM)) {
+                        $epg_ids[] = (string)$row[0];
                     }
                 }
             }
