@@ -1722,6 +1722,7 @@ function get_dune_model() {
         'tv175x' => 'RealBox 4K',
         'tv175y' => 'Real Vision 4K Plus',
         'tv274a' => 'Sky 4K Plus',
+        'tv288b' => 'Pro One 8K Plus',
         'tv292a' => 'Pro 4K',
         'tv292b' => 'Pro 4K',
         'tv393a' => 'Pro 4K Plus',
