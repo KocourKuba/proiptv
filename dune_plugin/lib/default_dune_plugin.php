@@ -2893,6 +2893,35 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @param $handler
+     * @param $action
+     * @return array
+     */
+    public function show_password_dialog($handler, $action)
+    {
+        $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
+        if (empty($pass_settings)) {
+            return User_Input_Handler_Registry::create_action($handler, $action);
+        }
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        Control_Factory::add_text_field($defs, $handler, null, 'pass', TR::t('setup_pass'),
+            '', true, true, false, true, 500, true);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, array("action" => $action),
+            ACTION_PASSWORD_APPLY, TR::t('ok'), 300);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
+    }
+
+    /**
      * @return void
      */
     public function create_screen_views()

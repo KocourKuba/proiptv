@@ -31,7 +31,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ID = 'tv_groups';
 
     const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
-    const ACTION_PASSWORD_APPLY = 'password';
     const ACTION_DO_EDIT_PROVIDER = 'do_edit_provider';
     const ACTION_DO_SETTINGS = 'do_edit_settings';
     const ACTION_DO_CHANNELS_SETTINGS = 'do_channels_settings';
@@ -236,12 +235,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_SETTINGS:
                 $this->save_if_changed();
-                return $this->show_password_dialog(self::ACTION_DO_SETTINGS);
+                return $this->plugin->show_password_dialog($this, self::ACTION_DO_SETTINGS);
 
             case self::ACTION_DO_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
-            case self::ACTION_PASSWORD_APPLY:
+            case ACTION_PASSWORD_APPLY:
                 if ($this->plugin->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
                     return null;
                 }
@@ -310,7 +309,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_EDIT_PROVIDER_DLG:
                 $this->save_if_changed();
-                return $this->show_password_dialog(self::ACTION_DO_EDIT_PROVIDER);
+                return $this->plugin->show_password_dialog($this, self::ACTION_DO_EDIT_PROVIDER);
 
             case self::ACTION_DO_EDIT_PROVIDER:
                 return $this->plugin->do_edit_provider_dlg($this, 'current');
@@ -661,33 +660,5 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $this->plugin->get_screen_view('icons_5x4_caption'),
             $this->plugin->get_screen_view('icons_5x4_no_caption'),
         );
-    }
-
-    /**
-     * @param $action
-     * @return array
-     */
-    protected function show_password_dialog($action)
-    {
-        $pass_settings = $this->plugin->get_parameter(PARAM_SETTINGS_PASSWORD);
-        if (empty($pass_settings)) {
-            return User_Input_Handler_Registry::create_action($this,$action);
-        }
-
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
-        Control_Factory::add_text_field($defs, $this, null, 'pass', TR::t('setup_pass'),
-            '', true, true, false, true, 500, true);
-
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, array("action" => $action),
-            self::ACTION_PASSWORD_APPLY, TR::t('ok'), 300);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
     }
 }
