@@ -1082,7 +1082,9 @@ class Starnet_Tv implements User_Input_Handler
                         . 'utc=${start}&lutc=${timestamp}';
                 }
             } else if (!preg_match(HTTP_PATTERN, $archive_url)) {
-                $archive_url = $stream_url . $archive_url;
+                $archive_url = $stream_url
+                    . ((strpos($stream_url, '?') !== false) ? '&' : '?')
+                    . ltrim($archive_url, "?");
             }
 
             $stream_url = $archive_url;
