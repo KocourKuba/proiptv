@@ -111,7 +111,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // HTTPS->HTTP convertion
 
-        $force_http = $this->plugin->get_parameter(PARAM_FORCE_HTTP, SetupControlSwitchDefs::switch_off);
+        $force_http = $this->plugin->get_setting(PARAM_FORCE_HTTP, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FORCE_HTTP, TR::t('setup_force_http'), SetupControlSwitchDefs::$on_off_translated[$force_http],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$force_http]), self::CONTROLS_WIDTH);
