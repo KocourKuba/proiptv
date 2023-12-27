@@ -103,6 +103,7 @@ const VOD_SEARCH_LIST = 'vod_search';
 const VOD_FILTER_LIST = 'vod_filter_items';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
+const PARAM_SETTINGS_PASSWORD = 'settings_password';
 const PARAM_PLAYLIST_STORAGE = 'playlist_storage';
 const PARAM_CUR_PLAYLIST_ID = 'cur_playlist_id';
 const PARAM_VOD_IDX = 'vod_idx';

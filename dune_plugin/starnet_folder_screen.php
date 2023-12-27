@@ -618,13 +618,13 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         Control_Factory::add_text_field($defs, $this, null,
             'new_user',
             TR::t('folder_screen_user'),
-            $user, 0, 0, 0, 1, 500
+            $user, false, false, false, true, 500
         );
 
         Control_Factory::add_text_field($defs, $this, null,
             'new_pass',
             TR::t('folder_screen_password'),
-            $password, 0, 0, 0, 1, 500
+            $password, false, false, false, true, 500
         );
 
         Control_Factory::add_custom_close_dialog_and_apply_buffon($defs,
@@ -823,7 +823,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         Control_Factory::add_text_field($defs,
             $this, null,
             self::ACTION_CREATE_FOLDER, '',
-            '', 0, 0, 1, 1, 1230, false, true
+            '', false, false, true, true, 1230, false, true
         );
         Control_Factory::add_vgap($defs, 500);
         return Action_Factory::show_dialog(TR::t('folder_screen_choose_name'), $defs, true);

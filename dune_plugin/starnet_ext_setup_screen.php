@@ -42,6 +42,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     const ACTION_HISTORY_FOLDER = 'history_folder';
     const CONTROL_ADULT_PASS_DLG = 'adult_pass_dialog';
     const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
+    const ACTION_SETTINGS_PASS_DLG_APPLY = 'settings_pass_apply';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -102,8 +103,13 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // adult channel password
-        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_ADULT_PASS_DLG,
+        Control_Factory::add_image_button($defs, $this, array('adult' => true), self::CONTROL_ADULT_PASS_DLG,
             TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
+        // Settings protection
+        Control_Factory::add_image_button($defs, $this, array('adult' => false), self::CONTROL_ADULT_PASS_DLG,
+            TR::t('setup_settings_protection_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // debugging
@@ -242,22 +248,23 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
 
             case self::CONTROL_ADULT_PASS_DLG: // show pass dialog
-                $defs = $this->do_get_pass_control_defs();
-                return Action_Factory::show_dialog(TR::t('setup_adult_password'), $defs, true);
+                return $this->do_get_pass_control_defs($user_input->adult);
 
             case self::ACTION_ADULT_PASS_DLG_APPLY: // handle pass dialog result
                 $need_reload = false;
-                $pass = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
-                if ($user_input->pass1 !== $pass) {
+                $param = $user_input->adult ? PARAM_ADULT_PASSWORD : PARAM_SETTINGS_PASSWORD;
+                $pass = $this->plugin->get_parameter($param);
+                hd_debug_print("pass: $param ($pass == $user_input->pass1)");
+                if ($user_input->pass1 !== (string)$pass) {
                     $msg = TR::t('err_wrong_old_password');
                 } else if (empty($user_input->pass2)) {
-                    $this->plugin->set_parameter(PARAM_ADULT_PASSWORD, '');
+                    $this->plugin->set_parameter($param, '');
                     $msg = TR::t('setup_pass_disabled');
-                    $need_reload = true;
+                    $need_reload = $user_input->adult;
                 } else if ($user_input->pass1 !== $user_input->pass2) {
-                    $this->plugin->set_parameter(PARAM_ADULT_PASSWORD, $user_input->pass2);
+                    $this->plugin->set_parameter($param, $user_input->pass2);
                     $msg = TR::t('setup_pass_changed');
-                    $need_reload = true;
+                    $need_reload = $user_input->adult;
                 } else {
                     $msg = TR::t('setup_pass_not_changed');
                 }
@@ -446,9 +453,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
     /**
      * adult pass dialog defs
+     * @param $adult bool
      * @return array
      */
-    public function do_get_pass_control_defs()
+    public function do_get_pass_control_defs($adult)
     {
         hd_debug_print(null, true);
 
@@ -460,16 +468,17 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         Control_Factory::add_vgap($defs, 20);
 
         Control_Factory::add_text_field($defs, $this, null, 'pass1', TR::t('setup_old_pass'),
-            $pass1, 1, true, 0, 1, 500, 0);
+            $pass1, true, true, false, true, 500, true);
         Control_Factory::add_text_field($defs, $this, null, 'pass2', TR::t('setup_new_pass'),
-            $pass2, 1, true, 0, 1, 500, 0);
+            $pass2, true, true, false, true, 500, true);
 
         Control_Factory::add_vgap($defs, 50);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, self::ACTION_ADULT_PASS_DLG_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, array("adult" => $adult), self::ACTION_ADULT_PASS_DLG_APPLY, TR::t('ok'), 300);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
 
-        return $defs;
+        $title = $adult ? TR::t('setup_adult_password') : TR::t('setup_settings_protection');
+        return Action_Factory::show_dialog($title, $defs, true);
     }
 }

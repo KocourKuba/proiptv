@@ -157,7 +157,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         $user_agent = $this->plugin->get_setting(PARAM_USER_AGENT, '');
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_USER_AGENT, TR::t('setup_channels_user_agent'),
-            $user_agent, false, false, 0, 1, 1200, 0);
+            $user_agent, false, false, false, true, 1200, 0);
 
         $dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
         $dune_params_str = '';
@@ -169,7 +169,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
-            $dune_params_str, false, false, 0, 1, 1200, 0);
+            $dune_params_str, false, false, false, true, 1200, 0);
 
         Control_Factory::add_vgap($defs, 50);
 
