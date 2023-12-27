@@ -855,6 +855,8 @@ class Starnet_Tv implements User_Input_Handler
                 }
             }
 
+            $stream_path = $entry->getPath();
+
             $used_tag = '';
             $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, Entry::TAG_EXTINF, $used_tag);
             if ($used_tag === 'catchup-time') {
@@ -870,6 +872,12 @@ class Starnet_Tv implements User_Input_Handler
             } else {
                 $archive_url = '';
                 $catchup = '';
+            }
+
+            if ($this->plugin->get_bool_setting(PARAM_FORCE_HTTP, false)) {
+                $stream_path = str_replace('https://', 'http://', $stream_path);
+                $icon_url = str_replace('https://', 'http://', $icon_url);
+                $archive_url = str_replace('https://', 'http://', $archive_url);
             }
 
             $ext_params = array();
@@ -910,7 +918,7 @@ class Starnet_Tv implements User_Input_Handler
                 $channel_id,
                 $channel_name,
                 $icon_url,
-                $entry->getPath(),
+                $stream_path,
                 $archive_url,
                 $catchup,
                 $archive,

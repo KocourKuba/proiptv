@@ -109,6 +109,14 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, self::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
+        // HTTPS->HTTP convertion
+
+        $force_http = $this->plugin->get_parameter(PARAM_FORCE_HTTP, SetupControlSwitchDefs::switch_off);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_FORCE_HTTP, TR::t('setup_force_http'), SetupControlSwitchDefs::$on_off_translated[$force_http],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$force_http]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
         // additional parameters
 
         Control_Factory::add_image_button($defs, $this, null,
@@ -220,6 +228,11 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case PARAM_USE_PICONS:
             case PARAM_ID_MAPPER:
                 $this->plugin->set_setting($control_id, $new_value);
+                $this->plugin->tv->reload_channels();
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
+            case PARAM_FORCE_HTTP:
+                $this->plugin->toggle_setting($control_id, false);
                 $this->plugin->tv->reload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 

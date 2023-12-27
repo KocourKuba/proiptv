@@ -165,6 +165,7 @@ const PARAM_LINK = 'link';
 const PARAM_FILE = 'file';
 const PARAM_URI = 'uri';
 const PARAM_VOD_DEFAULT_VARIANT = 'variant';
+const PARAM_FORCE_HTTP = 'force_http';
 
 const LIST_IDX = 'list_idx';
 const PLAYLIST_PICONS = 'playlist_picons';

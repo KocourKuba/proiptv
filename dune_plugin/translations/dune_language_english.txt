@@ -164,6 +164,7 @@ setup_changelog = History of changes
 setup_debug = Enable debug logging
 setup_per_channel_zoom = Enable per-channel zoom
 setup_backup_folder_path = Backup folder
+setup_force_http = Force https -> http links conversion
 
 setup_channels_src_reset_playlist = Reset playlist settings
 setup_channels_src_edit_playlists = Edit Playlists

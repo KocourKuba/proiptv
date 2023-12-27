@@ -2,7 +2,7 @@
   "plugin_config": {
     "image_libs": {
       "editor": {
-        "name": "IPTV Channels Editor",
+        "name": "IPTV Channel Editor",
         "package": "icons_pack_editor.zip",
         "url": "https://www.dropbox.com/scl/fi/4ro320e1mbdby78awqpyk/icons_pack_editor.zip?rlkey=whzmvdw418zms746qj2tkgl8j&dl=1"
       },

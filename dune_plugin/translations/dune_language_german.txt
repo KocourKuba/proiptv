@@ -165,6 +165,7 @@ setup_changelog = Geschichte der Veränderungen
 setup_debug = Aktivieren Sie die Debug-Protokollierung
 setup_per_channel_zoom = Aktivieren Sie den Zoom pro Kanal
 setup_backup_folder_path = Sicherungsordner
+setup_force_http = Konvertierung von https -> http Links
 
 setup_channels_src_reset_playlist = Playlist-Einstellungen zurücksetzen
 setup_channels_src_edit_playlists = Wiedergabeliste bearbeiten
