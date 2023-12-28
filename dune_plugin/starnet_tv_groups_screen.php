@@ -98,12 +98,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case GUI_EVENT_TIMER:
                 clearstatcache();
                 $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager->is_index_locked()) {
-                    $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                    return Action_Factory::change_behaviour($actions, 1000);
-                }
+                if (!is_null($epg_manager)) {
+                    if ($epg_manager->is_index_locked()) {
+                        $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                        return Action_Factory::change_behaviour($actions, 1000);
+                    }
 
-                $epg_manager->import_indexing_log();
+                    $epg_manager->import_indexing_log();
+                }
                 return null;
 
             case GUI_EVENT_KEY_STOP:

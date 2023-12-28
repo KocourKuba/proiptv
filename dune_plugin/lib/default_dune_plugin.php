@@ -2536,13 +2536,14 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print("new provider : $provider", true);
         } else {
             // edit existing provider
-            $provider = $this->get_provider($provider_id);
             $playlist = $this->get_playlist($playlist_id);
             if (!is_null($playlist)) {
                 $name = $playlist->name;
                 hd_debug_print("playlist info : $playlist", true);
                 $provider = $this->init_provider($playlist);
-                hd_debug_print("existing provider : $provider", true);
+                hd_debug_print("existing provider : " . json_encode($provider), true);
+            } else {
+                $provider = $this->get_provider($provider_id);
             }
         }
 
