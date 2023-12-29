@@ -390,9 +390,29 @@ function hd_debug_print_separator()
  * return is shell is APK.
  * @return bool
  */
-function is_apk(){
-    return (bool) getenv("HD_APK");
+function is_apk()
+{
+    return (getenv("HD_APK") === '1');
 }
+
+/**
+ * return is shell is FW APK.
+ * @return bool
+ */
+function is_fw_apk()
+{
+    return (getenv("HD_FW_APK") === '1');
+}
+
+/**
+ * return is shell is FW APK.
+ * @return bool
+ */
+function is_not_certified()
+{
+    return !is_apk() || is_fw_apk();
+}
+
 
 /**
  * return type of platform: android, apk, 8670, etc.
@@ -403,9 +423,13 @@ function get_platform_info()
     static $platform = null;
 
     if (is_null($platform)){
-        if (getenv("HD_APK")) {
+        if (is_apk()) {
             $platform['platform'] = 'android';
-            $platform['type'] = 'apk';
+            if (is_fw_apk()) {
+                $platform['type'] = 'fw_apk';
+            } else {
+                $platform['type'] = 'apk';
+            }
         } else {
             $ini_arr = parse_ini_file('/tmp/run/versions.txt');
             if (isset($ini_arr['platform_kind'])) {

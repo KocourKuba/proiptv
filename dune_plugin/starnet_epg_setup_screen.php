@@ -200,7 +200,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
-                        'allow_network' => !is_apk(),
+                        'allow_network' => is_not_certified(),
                         'choose_folder' => static::ID,
                         'allow_reset' => true,
                         'end_action' => ACTION_RELOAD,

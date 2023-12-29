@@ -53,7 +53,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // Show in main screen
-        if (!is_apk()) {
+        if (is_not_certified()) {
             $show_tv = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_SHOW_TV);
             Control_Factory::add_image_button($defs, $this, null,
                 self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SetupControlSwitchDefs::$on_off_translated[$show_tv],
@@ -160,7 +160,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 );
 
             case self::CONTROL_SHOW_TV:
-                if (!is_apk()) {
+                if (is_not_certified()) {
                     self::toggle_cookie_param($plugin_cookies, $control_id);
                 }
                 break;
@@ -192,7 +192,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                             'action' => ACTION_CHANGE_BACKGROUND,
                             'extension'	=> 'png|jpg|jpeg',
                         ),
-                        'allow_network' => !is_apk(),
+                        'allow_network' => is_not_certified(),
                         'allow_image_lib' => true,
                         'allow_reset' => true,
                         'read_only' => true,

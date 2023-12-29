@@ -149,7 +149,7 @@ class smb_tree
     {
         return is_apk()
             ? 'export LD_LIBRARY_PATH=$FS_PREFIX/lib:$LD_LIBRARY_PATH&&$FS_PREFIX/bin/nmblookup --configfile=$FS_PREFIX/etc/samba/smb.conf '
-            : 'export LD_LIBRARY_PATH=/firmware/lib:$LD_LIBRARY_PATH&&/firmware/bin/nmblookup';
+            : 'export LD_LIBRARY_PATH=/firmware/lib:$LD_LIBRARY_PATH&&/firmware/bin/nmblookup ';
     }
 
     public static function get_network_folder_smb()
