@@ -1746,6 +1746,12 @@ class Default_Dune_Plugin implements DunePlugin
                     throw new Exception("Can't parse playlist");
                 }
 
+                $encoding = HD::detect_encoding($contents);
+                if ($encoding !== 'utf-8') {
+                    hd_debug_print("Fixing playlist encoding: $encoding");
+                    $contents = iconv($encoding, 'utf-8', $contents);
+                }
+
                 file_put_contents($tmp_file, $contents);
                 $mtime = filemtime($tmp_file);
                 hd_debug_print("Save $tmp_file (timestamp: $mtime)");

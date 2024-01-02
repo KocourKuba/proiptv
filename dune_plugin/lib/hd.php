@@ -1084,4 +1084,22 @@ class HD
         }
         return true;
     }
+
+    public static function detect_encoding($string)
+    {
+        static $list = array("utf-8", "windows-1251", "windows-1252", "ASCII");
+
+        foreach ($list as $item) {
+            try {
+                $sample = @iconv($item, $item, $string);
+            } catch (Exception $e) {
+                continue;
+            }
+
+            if (md5($sample) === md5($string)) {
+                return $item;
+            }
+        }
+        return null;
+    }
 }
