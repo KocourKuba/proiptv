@@ -175,7 +175,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
             $groups = array();
             foreach ($channel->get_groups() as $group) {
-                $groups[] = $group->get_title();
+                $groups[] = str_replace('|', '¦', $group->get_title());
             }
 
             $detailed_info = TR::t('tv_screen_ch_channel_info__5',
