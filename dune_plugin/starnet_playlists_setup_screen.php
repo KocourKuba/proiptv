@@ -38,6 +38,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     const ACTION_EXT_PARAMS_DLG_APPLY = 'ext_params_apply';
     const CONTROL_USER_AGENT = 'user_agent';
     const CONTROL_DUNE_PARAMS = 'dune_params';
+    const CONTROL_DUNE_FORCE_TS = 'dune_force_ts';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -157,7 +158,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         $user_agent = $this->plugin->get_setting(PARAM_USER_AGENT, '');
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_USER_AGENT, TR::t('setup_channels_user_agent'),
-            $user_agent, false, false, false, true, 1200, 0);
+            $user_agent, false, false, false, true, 1200);
 
         $dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
         $dune_params_str = '';
@@ -169,7 +170,11 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
-            $dune_params_str, false, false, false, true, 1200, 0);
+            $dune_params_str, false, false, false, true, 1200);
+
+        $force_ts = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SetupControlSwitchDefs::switch_off);
+        Control_Factory::add_combobox($defs, $this, null, self::CONTROL_DUNE_FORCE_TS,
+            TR::t('setup_channels_dune_force_ts'), $force_ts, SetupControlSwitchDefs::$on_off_translated, 1200);
 
         Control_Factory::add_vgap($defs, 50);
 
@@ -228,12 +233,10 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case PARAM_USE_PICONS:
             case PARAM_ID_MAPPER:
                 $this->plugin->set_setting($control_id, $new_value);
-                $this->plugin->tv->reload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case PARAM_FORCE_HTTP:
                 $this->plugin->toggle_setting($control_id, false);
-                $this->plugin->tv->reload_channels();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_RESET_PLAYLIST_DLG:
@@ -274,6 +277,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 if (!empty($params_array)) {
                     $this->plugin->set_setting(PARAM_DUNE_PARAMS, $params_array);
                 }
+
+                $this->plugin->set_setting(PARAM_DUNE_FORCE_TS, $user_input->{self::CONTROL_DUNE_FORCE_TS});
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 

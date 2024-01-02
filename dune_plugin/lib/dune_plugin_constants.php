@@ -140,6 +140,7 @@ const PARAM_XMLTV_SOURCES = 'xmltv_sources';
 const PARAM_CUR_XMLTV_SOURCE_KEY = 'cur_xmltv_source_key';
 const PARAM_CUR_XMLTV_SOURCE = 'cur_xmltv_source';
 const PARAM_DUNE_PARAMS = 'dune_params';
+const PARAM_DUNE_FORCE_TS = 'dune_force_ts';
 const PARAM_EXT_VLC_OPTS = 'ext_vlc_opts';
 const PARAM_EXT_HTTP = 'ext_http';
 const PARAM_CHANNELS_ZOOM = 'channels_zoom';

@@ -1127,7 +1127,7 @@ class Starnet_Tv implements User_Input_Handler
             if (!empty($dune_params_str)) {
                 $stream_url .= $dune_params_str;
             }
-            $stream_url = HD::make_ts($stream_url);
+            $stream_url = HD::make_ts($stream_url, $this->plugin->get_bool_setting(PARAM_DUNE_FORCE_TS, false));
         }
 
         return $stream_url;

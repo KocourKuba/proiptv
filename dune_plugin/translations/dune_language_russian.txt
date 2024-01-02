@@ -182,6 +182,7 @@ setup_channels_id_mapper = Определение ID канала
 setup_channels_ext_params = Дополнительные параметры
 setup_channels_user_agent = HTTP User-Agent
 setup_channels_dune_params = dune_params
+setup_channels_dune_force_ts = Force Dune to detect stream
 
 entry_not_available = Для этой приставки эта функция недоступна!
 entry_send_log = Отправить лог разработчику

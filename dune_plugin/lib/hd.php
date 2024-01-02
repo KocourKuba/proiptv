@@ -783,12 +783,12 @@ class HD
      * @param string $url
      * @return string
      */
-    public static function make_ts($url)
+    public static function make_ts($url, $force = false)
     {
         if (!preg_match("|^https?://ts://|", $url)) {
             if (preg_match("/\.mp4(?=\?|$)/i", $url)) {
                 $url = preg_replace(TS_REPL_PATTERN, "$1" . "mp4://$2", $url);
-            } else if (preg_match("/\.ts|mpegts(?=\?|$)/i", $url)) {
+            } else if ($force || preg_match("/\.ts|mpegts(?=\?|$)/i", $url)) {
                 $url = preg_replace(TS_REPL_PATTERN, "$1ts://$2", $url);
             }
         }
