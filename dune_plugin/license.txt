@@ -1,6 +1,6 @@
 ﻿The MIT License (MIT)
 
-Author and copyright (2021-2023): sharky72 (https://github.com/KocourKuba)
+Author and copyright (2021-2024): sharky72 (https://github.com/KocourKuba)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
