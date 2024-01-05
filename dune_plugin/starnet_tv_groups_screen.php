@@ -469,7 +469,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (isset($user_input->reload_action)) {
                     if ($user_input->reload_action === 'epg') {
                         $this->plugin->init_epg_manager();
-                        if ($user_input->force === true) {
+                        if (isset($user_input->force) && $user_input->force === true) {
                             $this->plugin->get_epg_manager()->clear_epg_cache();
                         }
                         $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
