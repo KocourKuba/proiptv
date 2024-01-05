@@ -281,20 +281,6 @@
       "logo": "http://iptv.esalecrm.net/res/logo_crdtv.png",
       "api_commands": {
         "playlist": "http://crdtv.net/m/{PASSWORD}/crdtv.m3u"
-      },
-      "url_subst": {
-        "regex": "/^(https?:\\/\\/).+(\\.crd-s.net\\/.+)$/",
-        "replace": "$1{DOMAIN_ID}$2"
-      },
-      "config": {
-        "servers": {
-          "ottrg": "Russia",
-          "ott": "Germany (Saarbrücken)",
-          "ottgf": "Germany (Frankfurt)",
-          "ottp": "Poland",
-          "ottrk": "Kazakhstan",
-          "otta": "Azerbaijan"
-        }
       }
     },
     {
