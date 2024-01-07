@@ -263,7 +263,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 } else {
                     $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
                     $menu_items = $this->plugin->common_categories_menu($this, $group_id);
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, TR::t('refresh'), "refresh.png",
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, TR::t('refresh_playlist'), "refresh.png",
                         array('reload_action' => 'playlist'));
                 }
 
