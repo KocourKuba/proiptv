@@ -136,7 +136,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::update_regular_folder($range, true, $user_input->sel_ndx);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                if (is_not_certified()) {
+                if (with_network_manager()) {
                     $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_PLAY_ITEM,
                         TR::t('tv_screen_external_player'),

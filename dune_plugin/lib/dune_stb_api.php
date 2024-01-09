@@ -392,7 +392,7 @@ function hd_debug_print_separator()
  */
 function is_apk()
 {
-    return (getenv("HD_APK") === '1');
+    return (bool) getenv("HD_APK");
 }
 
 /**
@@ -401,18 +401,25 @@ function is_apk()
  */
 function is_fw_apk()
 {
-    return (getenv("HD_FW_APK") === '1');
+    return (bool) getenv("HD_FW_APK");
 }
 
 /**
  * return is shell is FW APK.
  * @return bool
  */
-function is_not_certified()
+function is_limited_apk()
 {
-    return !is_apk() || is_fw_apk();
+    return is_apk() && !is_fw_apk();
 }
 
+/**
+ * return is shell is FW APK.
+ * @return bool
+ */
+function with_network_manager() {
+    return !is_limited_apk();
+}
 
 /**
  * return type of platform: android, apk, 8670, etc.

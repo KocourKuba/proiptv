@@ -2822,7 +2822,7 @@ class Default_Dune_Plugin implements DunePlugin
             $info .= PHP_EOL . "Params: $dune_params" . PHP_EOL;
         }
 
-        if (!empty($live_url) && is_not_certified()) {
+        if (!empty($live_url) && with_network_manager()) {
             $descriptors = array(
                 0 => array("pipe", "r"), // stdin
                 1 => array("pipe", "w"), // sdout

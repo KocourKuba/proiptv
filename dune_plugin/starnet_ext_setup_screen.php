@@ -164,7 +164,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                             'action' => self::ACTION_BACKUP_FOLDER,
                             'extension'	=> 'zip',
                         ),
-                        'allow_network' => is_not_certified(),
+                        'allow_network' => with_network_manager(),
                         'windowCounter' => 1,
                     )
                 );
@@ -179,7 +179,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                             'action' => self::ACTION_FILE_RESTORE,
                             'extension'	=> 'zip',
                         ),
-                        'allow_network' => is_not_certified(),
+                        'allow_network' => with_network_manager(),
                         'read_only' => true,
                         'windowCounter' => 1,
                     )
@@ -195,7 +195,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                             'action' => self::ACTION_HISTORY_FOLDER,
                         ),
                         'allow_reset' => true,
-                        'allow_network' => is_not_certified(),
+                        'allow_network' => with_network_manager(),
                         'windowCounter' => 1,
                     )
                 );

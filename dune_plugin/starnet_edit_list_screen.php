@@ -315,7 +315,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             'action' => $user_input->action,
                             'extension'	=> $user_input->extension,
                         ),
-                        'allow_network' => ($user_input->action === self::ACTION_FILE_TEXT_LIST) && is_not_certified(),
+                        'allow_network' => ($user_input->action === self::ACTION_FILE_TEXT_LIST) && with_network_manager(),
                         'read_only' => true,
                         'windowCounter' => 1,
                     )
@@ -494,7 +494,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
         if ($this->get_edit_order($media_url->edit_list)->size() === 0) {
-            $msg = is_not_certified()
+            $msg = with_network_manager()
                 ? TR::t('edit_list_add_prompt_apk__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW)
                 : TR::t('edit_list_add_prompt__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW);
             $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;
