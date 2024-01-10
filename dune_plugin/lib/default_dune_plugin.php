@@ -2221,12 +2221,12 @@ class Default_Dune_Plugin implements DunePlugin
             return array($action_id => true);
         }
 
-        if ($icon !== null && strpos($icon,"://") === false) {
-            $icon = get_image_path($icon);
-        }
-
-        if (file_exists(get_cached_image_path(basename($icon)))) {
-            $icon = get_cached_image_path(basename($icon));
+        if (!empty($icon)) {
+            if (strpos($icon,"://") === false) {
+                $icon = get_image_path($icon);
+            } else if (file_exists(get_cached_image_path(basename($icon)))) {
+                $icon = get_cached_image_path(basename($icon));
+            }
         }
 
         return User_Input_Handler_Registry::create_popup_item($handler, $action_id, $caption, $icon, $add_params);
