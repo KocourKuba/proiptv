@@ -1,11 +1,11 @@
 # ProIPTV
-Универсальный плагин M3U плейлистов для плейеров Dune HD.
-Так же поддерживаются наиболее известные провайдеры IPTV
-Минимальная версия прошивки поддерживаемая плагином r11
+Универсальный плагин M3U плейлистов для плейеров Dune HD. Минимальная версия прошивки поддерживаемая плагином r11.
 
-Universal Dune HD plugin with M3U playlist support.
-Also, have presets for most popular IPTV providers
-Minimal firware revision supported by plugin r11
+Universal Dune HD plugin with M3U playlist support. Minimal firmware revision supported by plugin r11.
+
+Так же поддерживаются наиболее известные провайдеры IPTV.
+
+Also, have presets for most popular IPTV providers.
 
 01. [Antifriz](https://antifriztv.com/Antifriz)
 02. [BCU Media](https://bcumedia.pro/)
@@ -44,6 +44,7 @@ Minimal firware revision supported by plugin r11
 35. [Satq TV](https://satq.tv/)
 36. [RU TV](https://rutv.vip/)
 37. [CRD TV](https://crdtv.net/)
+
 ## License and copyright
 
 The MIT License (MIT)
