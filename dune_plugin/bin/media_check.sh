@@ -61,10 +61,10 @@ ProcessURL()
 
 echo "Started: `date`" >$LOG_FILE
 
-export LD_LIBRARY_PATH="/firmware/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH"
 
-if [ -e /firmware/bin/ffmpeg ]; then
-  FFMPEG_PATH="/firmware/bin/ffmpeg"
+if [ -e $FS_PREFIX/firmware/bin/ffmpeg ]; then
+  FFMPEG_PATH="$FS_PREFIX/firmware/bin/ffmpeg"
 elif [ -f /config/ffmpeg_path.env ]; then
   source /config/ffmpeg_path.env
   if [ "$FFMPEG_PATH" = "" ]; then
