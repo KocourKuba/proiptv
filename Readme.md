@@ -7,7 +7,7 @@ Universal Dune HD plugin with M3U playlist support. Minimal firmware revision su
 
 Also, have presets for most popular IPTV providers.
 
-01. [Antifriz](https://antifriztv.com/Antifriz)
+01. [Antifriz](https://antifriz.tv/)
 02. [BCU Media](https://bcumedia.pro/)
 03. [Edem](https://iedem.tv/)
 04. [Fox](http://info.fox-tv.fun/)
