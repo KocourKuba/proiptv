@@ -142,10 +142,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
 
             case ACTION_SET_CURRENT:
+                $id = MediaURL::decode($user_input->selected_media_url)->id;
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                    $this->plugin->set_active_playlist_key(MediaURL::decode($user_input->selected_media_url)->id);
+                    $this->plugin->set_active_playlist_key($id);
                 } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    $this->plugin->set_active_xmltv_source_key(MediaURL::decode($user_input->selected_media_url)->id);
+                    if ($id === $this->plugin->get_active_xmltv_source_key()) {
+                        $this->plugin->set_active_xmltv_source_key(null);
+                    } else {
+                        $this->plugin->set_active_xmltv_source_key($id);
+                    }
                 } else {
                     return null;
                 }
