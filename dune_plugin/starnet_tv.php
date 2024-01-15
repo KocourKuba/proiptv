@@ -673,7 +673,7 @@ class Starnet_Tv implements User_Input_Handler
         if ($is_xml_engine) {
             $source = $this->plugin->get_active_xmltv_source();
             if (empty($source)) {
-                $sources = $this->plugin->get_all_xmltv_sources();
+                $sources = $this->plugin->get_playlist_xmltv_sources();
                 $key = $this->plugin->get_active_xmltv_source_key();
                 hd_debug_print("XMLTV active source key: $key");
                 $source = $sources->get($key);

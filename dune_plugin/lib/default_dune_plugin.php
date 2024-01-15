@@ -1978,11 +1978,11 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * get all xmltv source
+     * get playlist xmltv source
      *
      * @return Hashed_Array<string, Named_Storage>
      */
-    public function get_all_xmltv_sources()
+    public function get_playlist_xmltv_sources()
     {
         hd_debug_print(null, true);
 
@@ -2013,6 +2013,21 @@ class Default_Dune_Plugin implements DunePlugin
                 }
             }
         }
+
+        return $xmltv_sources;
+    }
+
+    /**
+     * get all xmltv source
+     *
+     * @return Hashed_Array<string, Named_Storage>
+     */
+    public function get_all_xmltv_sources()
+    {
+        hd_debug_print(null, true);
+
+        /** @var Hashed_Array $sources */
+        $xmltv_sources = $this->get_playlist_xmltv_sources();
 
         if ($xmltv_sources->size() !== 0) {
             $xmltv_sources->add(EPG_SOURCES_SEPARATOR_TAG);
