@@ -466,6 +466,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $check_time_file = filemtime($cached_xmltv_file);
                     $dl_date = date("d.m H:i", $check_time_file);
                     $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params[PARAM_URI], $dl_date);
+                    $title = TR::t('edit_list_title_info__2', $title, $dl_date);
                 } else {
                     $detailed_info = "$item->name|{$item->params[PARAM_URI]}";
                 }
