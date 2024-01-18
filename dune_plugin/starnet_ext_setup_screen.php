@@ -468,9 +468,9 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         Control_Factory::add_vgap($defs, 20);
 
         Control_Factory::add_text_field($defs, $this, null, 'pass1', TR::t('setup_old_pass'),
-            $pass1, true, true, false, true, 500, false);
+            $pass1, true, true, false, true, 500);
         Control_Factory::add_text_field($defs, $this, null, 'pass2', TR::t('setup_new_pass'),
-            $pass2, true, true, false, true, 500, false);
+            $pass2, true, true, false, true, 500);
 
         Control_Factory::add_vgap($defs, 50);
 
