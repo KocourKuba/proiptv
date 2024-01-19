@@ -149,8 +149,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         static $history_txt;
 
         if (empty($history_txt)) {
-            $history_txt = file_get_contents(get_install_path('changelog.md'));
-            $history_txt = preg_replace('/\n$/U', '', $history_txt);
+            $history_txt = str_replace(array("###", "##"), '', file_get_contents(get_install_path('changelog.md')));
         }
 
         $control_id = $user_input->control_id;
