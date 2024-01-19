@@ -156,11 +156,15 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         $control_id = $user_input->control_id;
         switch ($control_id) {
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    Action_Factory::close_and_run(
-                        Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title())
-                    )
-                );
+                $post_action = null;
+                if ($user_input->parent_media_url !== 'setup') {
+                    $post_action = Action_Factory::close_and_run(
+                        Action_Factory::open_folder(
+                            Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title())
+                    );
+                }
+
+                return Action_Factory::close_and_run($post_action);
 
             case ACTION_PLUGIN_INFO:
                 Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
