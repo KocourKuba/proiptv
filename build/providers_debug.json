@@ -777,7 +777,10 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "tvclub"
+        "epg_preset": "tvclub",
+        "streams": {
+          "mpegts": "MPEG-TS"
+        }
       }
     },
     {

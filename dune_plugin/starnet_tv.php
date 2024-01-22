@@ -1024,6 +1024,7 @@ class Starnet_Tv implements User_Input_Handler
             throw new Exception("Empty url!");
         }
 
+        $force_detect = false;
         $provider = $this->plugin->get_current_provider();
         if (!is_null($provider)) {
             $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
@@ -1032,6 +1033,15 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             $stream_url = $provider->replace_macros($stream_url);
+
+            $streams = $provider->GetStreams();
+            if (!empty($streams)) {
+                $idx = $provider->getCredential(MACRO_STREAM_ID);
+                if (empty($idx)) {
+                    $idx = key($streams);
+                }
+                $force_detect = ($streams[$idx] === 'MPEG-TS');
+            }
         }
 
         if ((int)$archive_ts !== -1) {
@@ -1127,7 +1137,9 @@ class Starnet_Tv implements User_Input_Handler
             if (!empty($dune_params_str)) {
                 $stream_url .= $dune_params_str;
             }
-            $stream_url = HD::make_ts($stream_url, $this->plugin->get_bool_setting(PARAM_DUNE_FORCE_TS, false));
+
+            $force_detect = $this->plugin->get_bool_setting(PARAM_DUNE_FORCE_TS, false) || $force_detect;
+            $stream_url = HD::make_ts($stream_url, $force_detect);
         }
 
         return $stream_url;
