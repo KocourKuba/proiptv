@@ -28,6 +28,7 @@ require_once 'lib/ordered_array.php';
 require_once 'lib/default_group.php';
 require_once 'lib/default_channel.php';
 require_once 'lib/default_epg_item.php';
+require_once 'lib/m3u/KnownCatchupSourceTags.php';
 require_once 'vod/vod_standard.php';
 
 class Starnet_Tv implements User_Input_Handler
