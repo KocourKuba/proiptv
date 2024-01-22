@@ -1706,6 +1706,7 @@ function print_sysinfo()
         'Dune IP Addr' => get_ip_address(),
         'Dune DNS servers' => $dns,
         'PHP Version' => PHP_VERSION,
+        'Plugin Memory' => ini_get('memory_limit'),
         'libCURL Version' => "{$values['version']} ({$values['ssl_version']})",
     );
 

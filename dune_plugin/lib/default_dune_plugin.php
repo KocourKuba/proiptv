@@ -159,6 +159,8 @@ class Default_Dune_Plugin implements DunePlugin
 
     protected function __construct()
     {
+        ini_set('memory_limit', '256M');
+
         $this->plugin_info = get_plugin_manifest_info();
         $this->providers = new Hashed_Array();
         $this->epg_presets = new Hashed_Array();
