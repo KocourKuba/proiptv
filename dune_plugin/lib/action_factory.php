@@ -37,16 +37,13 @@ class Action_Factory
      */
     public static function open_folder($media_url_str = null, $caption = null, $id = null, $sel_id = null, $post_action = null, $keep_osd_context = false)
     {
-        $action =
-            array
-            (
-                GuiAction::handler_string_id => PLUGIN_OPEN_FOLDER_ACTION_ID,
-                GuiAction::data => array
-                    (
-                        PluginOpenFolderActionData::media_url => $media_url_str,
-                        PluginOpenFolderActionData::caption => $caption,
-                    )
-            );
+        $action = array(
+            GuiAction::handler_string_id => PLUGIN_OPEN_FOLDER_ACTION_ID,
+            GuiAction::data => array(
+                PluginOpenFolderActionData::media_url => $media_url_str,
+                PluginOpenFolderActionData::caption => $caption
+            )
+        );
 
         if (!is_null($id) && defined('PluginOpenFolderActionData::id'))
             $action[GuiAction::data][PluginOpenFolderActionData::id] = $id;
@@ -95,9 +92,24 @@ class Action_Factory
     {
         return array(
             GuiAction::handler_string_id => PLUGIN_VOD_PLAY_ACTION_ID,
+            GuiAction::data => array(PluginVodPlayActionData::vod_info => $vod_info)
+        );
+    }
+
+    /**
+     * @param string $group_id
+     * @param string $channel_id
+     * @return array
+     */
+    public static function select_channel_id($group_id, $channel_id)
+    {
+        return array(
+            GuiAction::handler_string_id => PLUGIN_TV_SELECT_CHANNEL_ACTION_ID,
             GuiAction::data => array(
-                PluginVodPlayActionData::vod_info => $vod_info,
-            ),
+                PluginTvSelectChannelActionData::group_id => $group_id,
+                PluginTvSelectChannelActionData::channel_id => $channel_id,
+                PluginTvSelectChannelActionData::is_favorite => false
+            )
         );
     }
 
@@ -115,9 +127,9 @@ class Action_Factory
             GuiAction::data => array(
                 PluginShowErrorActionData::fatal => $fatal,
                 PluginShowErrorActionData::title => $title,
-                PluginShowErrorActionData::msg_lines => $msg_lines,
+                PluginShowErrorActionData::msg_lines => $msg_lines
             ),
-            GuiAction::params => null,
+            GuiAction::params => null
         );
     }
 
@@ -138,25 +150,22 @@ class Action_Factory
         $max_height = isset($attrs['max_height']) ? $attrs['max_height'] : 0;
         $dialog_params = isset($attrs['dialog_params']) ? $attrs['dialog_params'] : array();
 
-        return array
-        (
+        return array(
             GuiAction::handler_string_id => SHOW_DIALOG_ACTION_ID,
             GuiAction::caption => null,
-            GuiAction::data =>
-                array
-                (
-                    ShowDialogActionData::title => $title,
-                    ShowDialogActionData::defs => $defs,
-                    ShowDialogActionData::close_by_return => $close_by_return,
-                    ShowDialogActionData::preferred_width => $preferred_width,
-                    ShowDialogActionData::max_height => $max_height,
-                    ShowDialogActionData::min_item_title_width => $min_item_title_width,
-                    ShowDialogActionData::initial_sel_ndx => $initial_sel_ndx,
-                    ShowDialogActionData::actions => $actions,
-                    ShowDialogActionData::timer => $timer,
-                    ShowDialogActionData::params => $dialog_params,
-                ),
-            GuiAction::params => null,
+            GuiAction::data => array(
+                ShowDialogActionData::title => $title,
+                ShowDialogActionData::defs => $defs,
+                ShowDialogActionData::close_by_return => $close_by_return,
+                ShowDialogActionData::preferred_width => $preferred_width,
+                ShowDialogActionData::max_height => $max_height,
+                ShowDialogActionData::min_item_title_width => $min_item_title_width,
+                ShowDialogActionData::initial_sel_ndx => $initial_sel_ndx,
+                ShowDialogActionData::actions => $actions,
+                ShowDialogActionData::timer => $timer,
+                ShowDialogActionData::params => $dialog_params
+            ),
+            GuiAction::params => null
         );
     }
 
@@ -166,16 +175,11 @@ class Action_Factory
      */
     public static function close_dialog_and_run($post_action)
     {
-        return array
-        (
+        return array(
             GuiAction::handler_string_id => CLOSE_DIALOG_AND_RUN_ACTION_ID,
             GuiAction::caption => null,
-            GuiAction::data =>
-                array
-                (
-                    CloseDialogAndRunActionData::post_action => $post_action,
-                ),
-            GuiAction::params => null,
+            GuiAction::data => array(CloseDialogAndRunActionData::post_action => $post_action),
+            GuiAction::params => null
         );
     }
 
@@ -258,7 +262,7 @@ class Action_Factory
             GuiAction::handler_string_id => STATUS_ACTION_ID,
             GuiAction::caption => null,
             GuiAction::data => array(StatusActionData::status => $status),
-            GuiAction::params => null,
+            GuiAction::params => null
         );
     }
 
@@ -274,8 +278,8 @@ class Action_Factory
             GuiAction::data => array(
                 PluginInvalidateFoldersActionData::media_urls => $media_urls,
                 PluginInvalidateFoldersActionData::post_action => $post_action,
-                PluginInvalidateFoldersActionData::all_except => $all_except,
-            ),
+                PluginInvalidateFoldersActionData::all_except => $all_except
+            )
         );
     }
 
@@ -290,8 +294,8 @@ class Action_Factory
             GuiAction::handler_string_id => SHOW_POPUP_MENU_ACTION_ID,
             GuiAction::data => array(
                 ShowPopupMenuActionData::menu_items => $menu_items,
-                ShowPopupMenuActionData::selected_menu_item_index => $sel_ndx,
-            ),
+                ShowPopupMenuActionData::selected_menu_item_index => $sel_ndx
+            )
         );
     }
 
@@ -305,12 +309,11 @@ class Action_Factory
     {
         return array(
             GuiAction::handler_string_id => PLUGIN_UPDATE_FOLDER_ACTION_ID,
-            GuiAction::data => array
-            (
+            GuiAction::data => array(
                 PluginUpdateFolderActionData::range => $range,
                 PluginUpdateFolderActionData::need_refresh => $need_refresh,
-                PluginUpdateFolderActionData::sel_ndx => (int)$sel_ndx,
-            ),
+                PluginUpdateFolderActionData::sel_ndx => (int)$sel_ndx
+            )
         );
     }
 
@@ -327,8 +330,8 @@ class Action_Factory
             GuiAction::data => array(
                 ResetControlsActionData::defs => $defs,
                 ResetControlsActionData::initial_sel_ndx => $initial_sel_ndx,
-                ResetControlsActionData::post_action => $post_action,
-            ),
+                ResetControlsActionData::post_action => $post_action
+            )
         );
     }
 
@@ -343,8 +346,8 @@ class Action_Factory
             GuiAction::handler_string_id => PLUGIN_CLEAR_ARCHIVE_CACHE_ACTION_ID,
             GuiAction::data => array(
                 PluginClearArchiveCacheActionData::archive_id => $archive_id,
-                PluginClearArchiveCacheActionData::post_action => $post_action,
-            ),
+                PluginClearArchiveCacheActionData::post_action => $post_action
+            )
         );
     }
 
@@ -366,8 +369,8 @@ class Action_Factory
             GuiAction::data => array(
                 PluginReplacePathActionData::erase_count => $erase_count,
                 PluginReplacePathActionData::elements => $elements,
-                PluginReplacePathActionData::post_action => $post_action,
-            ),
+                PluginReplacePathActionData::post_action => $post_action
+            )
         );
     }
 
@@ -384,8 +387,8 @@ class Action_Factory
             GuiAction::data => array(
                 ChangeBehaviourActionData::actions => $actions,
                 ChangeBehaviourActionData::timer => self::timer($timer),
-                ChangeBehaviourActionData::post_action => $post_action,
-            ),
+                ChangeBehaviourActionData::post_action => $post_action
+            )
         );
     }
 
@@ -400,8 +403,8 @@ class Action_Factory
             GuiAction::handler_string_id => LAUNCH_MEDIA_URL_ACTION_ID,
             GuiAction::data => array(
                 LaunchMediaUrlActionData::url => $url,
-                LaunchMediaUrlActionData::post_action => $post_action,
-            ),
+                LaunchMediaUrlActionData::post_action => $post_action
+            )
         );
     }
 
@@ -415,7 +418,7 @@ class Action_Factory
             GuiAction::handler_string_id => CLOSE_AND_RUN_ACTION_ID,
             GuiAction::caption => null,
             GuiAction::data => array(CloseAndRunActionData::post_action => $post_action,),
-            GuiAction::params => null,
+            GuiAction::params => null
         );
     }
 
@@ -427,7 +430,7 @@ class Action_Factory
     {
         return array(
             GuiAction::handler_string_id => SHOW_MAIN_SCREEN_ACTION_ID,
-            GuiAction::data => array(ShowMainScreenActionData::post_action => $post_action,),
+            GuiAction::data => array(ShowMainScreenActionData::post_action => $post_action)
         );
     }
 
@@ -441,7 +444,7 @@ class Action_Factory
             GuiAction::handler_string_id => PLUGIN_HANDLE_USER_INPUT_ACTION_ID,
             GuiAction::caption => null,
             GuiAction::data => null,
-            GuiAction::params => $params,
+            GuiAction::params => $params
         );
     }
 
@@ -477,8 +480,8 @@ class Action_Factory
                 PluginUpdateInfoBlockActionData::text_color => $text_color,
                 PluginUpdateInfoBlockActionData::text_halo => $text_halo,
                 PluginUpdateInfoBlockActionData::text_y_offset => $text_y_offset,
-                PluginUpdateInfoBlockActionData::post_action => $post_action,
-            ),
+                PluginUpdateInfoBlockActionData::post_action => $post_action
+            )
         );
     }
 
@@ -499,8 +502,8 @@ class Action_Factory
                 PluginUpdateEpgActionData::clear => $clear,
                 PluginUpdateEpgActionData::day_start_tm_sec => $day_start_tm_sec,
                 PluginUpdateEpgActionData::programs => $programs,
-                PluginUpdateEpgActionData::post_action => $post_action,
-            ),
+                PluginUpdateEpgActionData::post_action => $post_action
+            )
         );
     }
 
@@ -555,8 +558,8 @@ class Action_Factory
             GuiAction::handler_string_id => PLUGIN_UPDATE_OSD_ACTION_ID,
             GuiAction::data => array(
                 PluginUpdateOsdActionData::components => $comps,
-                PluginUpdateOsdActionData::post_action => $post_action,
-            ),
+                PluginUpdateOsdActionData::post_action => $post_action
+            )
         );
     }
 
@@ -575,8 +578,8 @@ class Action_Factory
                 ChangeSettingsActionData::settings => $settings,
                 ChangeSettingsActionData::reboot => $reboot,
                 ChangeSettingsActionData::restart_gui => $restart_gui,
-                ChangeSettingsActionData::post_action => $post_action,
-            ),
+                ChangeSettingsActionData::post_action => $post_action
+            )
         );
     }
 
@@ -595,14 +598,16 @@ class Action_Factory
                 GuiAction::handler_string_id => CHANGE_SETTINGS_ACTION_ID,
                 GuiAction::data => array(
                     ChangeSettingsActionData::restart_gui => true,
-                    ChangeSettingsActionData::post_action => null)
+                    ChangeSettingsActionData::post_action => null
+                )
             );
         }
 
         if (defined('RESTART_ACTION_ID')) {
             return array(
                 GuiAction::handler_string_id => RESTART_ACTION_ID,
-                GuiAction::data => array(RestartActionData::reboot => false));
+                GuiAction::data => array(RestartActionData::reboot => false)
+            );
         }
 
         exec('killall shell');
@@ -615,8 +620,8 @@ class Action_Factory
             GuiAction::handler_string_id => PLUGIN_UPDATE_ROWS_INFO_ACTION_ID,
             GuiAction::data => array(
                 PluginUpdateRowsInfoActionData::clear_cache => true,
-                PluginUpdateRowsInfoActionData::post_action => $post_action,
-                ),
+                PluginUpdateRowsInfoActionData::post_action => $post_action
+            )
         );
     }
 
@@ -630,15 +635,15 @@ class Action_Factory
             PluginRowsInfo::bg_url => $bg_url,
             PluginRowsInfo::nl_bg_url => $nl_bg_url,
             PluginRowsInfo::mask_url => $mask_url,
-            PluginRowsInfo::playback_urls => $playback_urls,
+            PluginRowsInfo::playback_urls => $playback_urls
         );
 
         return array(
             GuiAction::handler_string_id => PLUGIN_UPDATE_ROWS_INFO_ACTION_ID,
             GuiAction::data => array(
-                    PluginUpdateRowsInfoActionData::info => $info,
-                    PluginUpdateRowsInfoActionData::post_action => $post_action,
-                ),
+                PluginUpdateRowsInfoActionData::info => $info,
+                PluginUpdateRowsInfoActionData::post_action => $post_action
+            )
         );
     }
 }
