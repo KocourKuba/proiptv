@@ -32,7 +32,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     const ACTION_NEW_SEARCH = 'new_search';
     const ACTION_CREATE_SEARCH = 'create_search';
     const ACTION_RUN_SEARCH = 'run_search';
-    const ACTION_JUMP_TO_CHANNEL = 'jump_to_channel';
     const ACTION_CUSTOM_DELETE = 'custom_delete';
     const ACTION_CUSTOM_STRING_DLG_APPLY = 'apply_custom_string_dlg';
 
@@ -186,7 +185,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 return $this->do_search($parent_group, $find_text);
 
-            case self::ACTION_JUMP_TO_CHANNEL:
+            case ACTION_JUMP_TO_CHANNEL:
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
 
             case ACTION_ITEM_UP:
@@ -486,7 +485,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 hd_debug_print("found channel: $ch_title, idx: $idx", true);
                 $add_params['number'] = $idx;
                 Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
-                    self::ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
+                    ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
             }
             ++$idx;
         }

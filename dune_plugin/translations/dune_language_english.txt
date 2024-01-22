@@ -93,6 +93,7 @@ city = City
 playlist_picons = Playlist
 xmltv_picons = XMLTV
 edit_account = Edit account settings
+jump_to_channel = Jump to channel
 
 plugin_all_channels = All channels
 plugin_favorites = Favorites

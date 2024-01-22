@@ -93,6 +93,7 @@ city = Город
 playlist_picons = Плейлист
 xmltv_picons = XMLTV
 edit_account = Редактировать настройки провайдера
+jump_to_channel = Перейти к каналу
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное

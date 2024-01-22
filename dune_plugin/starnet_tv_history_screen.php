@@ -60,7 +60,6 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         if ($this->plugin->get_playback_points()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'));
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
             $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         }
@@ -139,11 +138,30 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 				return Action_Factory::show_title_dialog($message,
                     $this->plugin->tv->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
+            case ACTION_JUMP_TO_CHANNEL:
+                $channel = $this->plugin->tv->get_channel($selected_media_url->channel_id);
+                if (!is_null($channel) && !is_null($group = $channel->get_group())) {
+                    $pos = $group->get_items_order()->get_item_pos($selected_media_url->channel_id);
+                    return Action_Factory::open_folder(
+                        Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
+                        $group->get_title(),
+                        null,
+                        null,
+                        User_Input_Handler_Registry::create_action_screen(
+                            Starnet_Tv_Channel_List_Screen::ID,
+                            ACTION_JUMP_TO_CHANNEL,
+                            null,
+                            array('number' => $pos)
+                        )
+                    );
+                }
+
+                return null;
+
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();
-                if (!is_apk()) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
-                }
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL, TR::t('jump_to_channel'));
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
         }

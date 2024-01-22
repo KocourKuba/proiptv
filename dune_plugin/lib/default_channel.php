@@ -181,6 +181,28 @@ class Default_Channel extends Json_Serializer implements Channel
     /**
      * @inheritDoc
      */
+    public function get_group($group_id = null)
+    {
+        $group = null;
+        if (count($this->_groups)) {
+            if ($group_id === null) {
+                $group = $this->_groups[0];
+            } else {
+                foreach ($this->_groups as $g) {
+                    if ($g->get_id() === $group_id) {
+                        $group = $g;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $group;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function get_number()
     {
         return $this->_number;
