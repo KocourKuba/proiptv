@@ -154,7 +154,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             case GUI_EVENT_KEY_POPUP_MENU:
                 $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
                 if (in_array($channel_id, $new_channels)) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'));
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
                     return Action_Factory::show_popup_menu($menu_items);
                 }
 
