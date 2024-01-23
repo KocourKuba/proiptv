@@ -810,8 +810,16 @@ class Starnet_Tv implements User_Input_Handler
 
             /** @var Channel $channel */
             $channel = $this->channels->get($channel_id);
-            // duplicate channel? Same ID or same Url
-            if (!is_null($channel)) continue;
+            if (!is_null($channel)) {
+                // duplicate channel? Same ID or same Url
+                hd_debug_print("duplicate channel id: $channel_id ($channel_name) group: $group_title, url: {$entry->getPath()}");
+                $group = $channel->get_group();
+                hd_debug_print("existing channel id:  $channel_id: ({$channel->get_title()}) group: "
+                    . (is_null($group) ? "unknown" : $group->get_title())
+                    . ", url: {$entry->getPath()}"
+                );
+                continue;
+            }
 
             /** @var Group $parent_group */
             $parent_group = $this->groups->get($group_title);

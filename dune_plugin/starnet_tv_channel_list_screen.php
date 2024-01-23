@@ -188,6 +188,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_JUMP_TO_CHANNEL:
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
 
+            case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
+                return $this->plugin->tv->jump_to_channel($selected_media_url->channel_id);
+
             case ACTION_ITEM_UP:
                 $group = $this->plugin->tv->get_group($selected_media_url->group_id);
                 if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
@@ -229,9 +232,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE_CHANNELS, TR::t('tv_screen_hide_group_channels'), "remove.png");
 
-                $group = $this->plugin->tv->get_group($selected_media_url->group_id);
-                if (!is_null($group) && $selected_media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
+                if ($selected_media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
                     $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_CREATE_SEARCH, TR::t('search'), "search.png");
+                } else {
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'));
                 }
 
                 if (with_network_manager()) {

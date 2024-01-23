@@ -67,6 +67,7 @@ const ACTION_INFO_DLG = 'info_dlg';
 const ACTION_ADD_MONEY_DLG = 'add_money_dlg';
 const ACTION_PASSWORD_APPLY = 'password_apply';
 const ACTION_JUMP_TO_CHANNEL = 'jump_to_channel';
+const ACTION_JUMP_TO_CHANNEL_IN_GROUP = 'jump_to_channel_in_group';
 
 const CONTROL_EDIT_ACTION = 'edit_action';
 const CONTROL_EDIT_NAME = 'set_item_name';
