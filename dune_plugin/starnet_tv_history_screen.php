@@ -139,24 +139,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     $this->plugin->tv->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
             case ACTION_JUMP_TO_CHANNEL:
-                $channel = $this->plugin->tv->get_channel($selected_media_url->channel_id);
-                if (!is_null($channel) && !is_null($group = $channel->get_group())) {
-                    $pos = $group->get_items_order()->get_item_pos($selected_media_url->channel_id);
-                    return Action_Factory::open_folder(
-                        Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
-                        $group->get_title(),
-                        null,
-                        null,
-                        User_Input_Handler_Registry::create_action_screen(
-                            Starnet_Tv_Channel_List_Screen::ID,
-                            ACTION_JUMP_TO_CHANNEL,
-                            null,
-                            array('number' => $pos)
-                        )
-                    );
-                }
-
-                return null;
+                return $this->plugin->tv->jump_to_channel($selected_media_url->channel_id);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();

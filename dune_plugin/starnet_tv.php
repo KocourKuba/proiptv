@@ -1563,4 +1563,31 @@ class Starnet_Tv implements User_Input_Handler
             $this->get_channels_for_ext_player()->remove_item($channel_id);
         }
     }
+
+    /**
+     * @param string $channel_id
+     * @return array
+     */
+    public function jump_to_channel($channel_id)
+    {
+        $channel = $this->get_channel($channel_id);
+        if (is_null($channel) || is_null($group = $channel->get_group())) {
+            return null;
+        }
+
+        return Action_Factory::close_and_run(
+            Action_Factory::open_folder(
+                Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
+                $group->get_title(),
+                null,
+                null,
+                User_Input_Handler_Registry::create_action_screen(
+                    Starnet_Tv_Channel_List_Screen::ID,
+                    ACTION_JUMP_TO_CHANNEL,
+                    null,
+                    array('number' => $group->get_items_order()->get_item_pos($channel_id))
+                )
+            )
+        );
+    }
 }
