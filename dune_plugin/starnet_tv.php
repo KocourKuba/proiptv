@@ -813,11 +813,8 @@ class Starnet_Tv implements User_Input_Handler
             if (!is_null($channel)) {
                 // duplicate channel? Same ID or same Url
                 hd_debug_print("duplicate channel id: $channel_id ($channel_name) group: $group_title, url: {$entry->getPath()}");
-                $group = $channel->get_group();
-                hd_debug_print("existing channel id:  $channel_id: ({$channel->get_title()}) group: "
-                    . (is_null($group) ? "unknown" : $group->get_title())
-                    . ", url: {$entry->getPath()}"
-                );
+                hd_debug_print("existing channel id:  $channel_id: ({$channel->get_title()}) "
+                    . "group: {$channel->get_parent_group()->get_title()}, url: {$channel->get_url()}");
                 continue;
             }
 
@@ -930,6 +927,7 @@ class Starnet_Tv implements User_Input_Handler
                 $stream_path,
                 $archive_url,
                 $catchup,
+                $parent_group,
                 $archive,
                 $number,
                 $epg_ids,
@@ -950,7 +948,6 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             // Link group and channel.
-            $channel->add_group($parent_group);
             $parent_group->add_channel($channel);
         }
 
@@ -1346,9 +1343,7 @@ class Starnet_Tv implements User_Input_Handler
                 $channel = $this->get_channel($item);
                 if (is_null($channel)) continue;
 
-                foreach ($channel->get_groups() as $in_group) {
-                    $group_id_arr->put($in_group->get_id(), '');
-                }
+                $group_id_arr->put($channel->get_parent_group()->get_id(), '');
                 if ($group_id_arr->size() === 0) continue;
 
                 $all_channels->put(
@@ -1579,21 +1574,21 @@ class Starnet_Tv implements User_Input_Handler
     public function jump_to_channel($channel_id)
     {
         $channel = $this->get_channel($channel_id);
-        if (is_null($channel) || is_null($group = $channel->get_group())) {
+        if (is_null($channel)) {
             return null;
         }
 
         return Action_Factory::close_and_run(
             Action_Factory::open_folder(
-                Starnet_Tv_Channel_List_Screen::get_media_url_string($group->get_id()),
-                $group->get_title(),
+                Starnet_Tv_Channel_List_Screen::get_media_url_string($channel->get_parent_group()->get_id()),
+                $channel->get_parent_group()->get_title(),
                 null,
                 null,
                 User_Input_Handler_Registry::create_action_screen(
                     Starnet_Tv_Channel_List_Screen::ID,
                     ACTION_JUMP_TO_CHANNEL,
                     null,
-                    array('number' => $group->get_items_order()->get_item_pos($channel_id))
+                    array('number' => $channel->get_parent_group()->get_items_order()->get_item_pos($channel_id))
                 )
             )
         );

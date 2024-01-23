@@ -683,6 +683,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $order = &$this->plugin->tv->get_known_channels();
                     $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);
                     $order->clear();
+                    /** @var Channel $channel */
                     foreach ($all_channels as $channel) {
                         $order->set($channel->get_id(), $channel->get_title());
                     }
@@ -1055,6 +1056,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 RowsItemsParams::fav_sticker_icon_width,
                 RowsItemsParams::fav_sticker_icon_height));
 
+        /** @var Channel $channel */
         foreach ($this->plugin->tv->get_channels($new_channels) as $channel) {
             if (is_null($channel) || $channel->is_disabled()) continue;
 

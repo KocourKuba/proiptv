@@ -33,14 +33,9 @@ interface Channel
     public function get_icon_url();
 
     /**
-     * @return Group[]
+     * @return Group
      */
-    public function get_groups();
-
-    /**
-     * @return Group|null
-     */
-    public function get_group($group_id = null);
+    public function get_parent_group();
 
     /**
      * internal number

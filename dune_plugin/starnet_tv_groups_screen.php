@@ -414,6 +414,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $order = &$this->plugin->tv->get_known_channels();
                     $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);
                     $order->clear();
+                    /** @var Channel $channel */
                     foreach ($all_channels as $channel) {
                         $order->set($channel->get_id(), $channel->get_title());
                     }

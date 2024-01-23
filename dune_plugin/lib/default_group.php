@@ -280,6 +280,7 @@ class Default_Group extends Json_Serializer implements Group
     {
         $channels = new Hashed_Array();
         if ($this->_id === ALL_CHANNEL_GROUP_ID) {
+            /** @var Channel $channel */
             foreach ($this->plugin->tv->get_channels() as $channel) {
                 if (is_null($channel) || !$channel->is_disabled()) continue;
                 $channels->put($channel->get_id(), $channel);

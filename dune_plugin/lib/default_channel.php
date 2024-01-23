@@ -40,9 +40,9 @@ class Default_Channel extends Json_Serializer implements Channel
     protected $_catchup;
 
     /**
-     * @var array[Groups]
+     * @var Group
      */
-    protected $_groups;
+    protected $_group;
 
     /**
      * @var int
@@ -99,6 +99,7 @@ class Default_Channel extends Json_Serializer implements Channel
      * @param string $streaming_url
      * @param string $archive_url
      * @param string $catchup
+     * @param Group $group
      * @param int $archive
      * @param int $number
      * @param array $epg_ids
@@ -108,8 +109,8 @@ class Default_Channel extends Json_Serializer implements Channel
      * @param $disabled
      */
     public function __construct($plugin, $id, $title, $icon_url,
-                                $streaming_url, $archive_url,
-                                $catchup, $archive, $number, $epg_ids,
+                                $streaming_url, $archive_url, $catchup,
+                                $group, $archive, $number, $epg_ids,
                                 $protected, $timeshift_hours, $ext_params, $disabled)
     {
         $this->plugin = $plugin;
@@ -120,7 +121,7 @@ class Default_Channel extends Json_Serializer implements Channel
         $this->_streaming_url = $streaming_url;
         $this->_archive_url = $archive_url;
         $this->_catchup = $catchup;
-        $this->_groups = array();
+        $this->_group = $group;
         $this->_archive = ($archive > 0) ? $archive : 0;
         $this->_number = $number;
         $this->_epg_ids = $epg_ids;
@@ -173,31 +174,9 @@ class Default_Channel extends Json_Serializer implements Channel
     /**
      * @inheritDoc
      */
-    public function get_groups()
+    public function get_parent_group()
     {
-        return $this->_groups;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_group($group_id = null)
-    {
-        $group = null;
-        if (count($this->_groups)) {
-            if ($group_id === null) {
-                $group = $this->_groups[0];
-            } else {
-                foreach ($this->_groups as $g) {
-                    if ($g->get_id() === $group_id) {
-                        $group = $g;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return $group;
+        return $this->_group;
     }
 
     /**
@@ -236,12 +215,10 @@ class Default_Channel extends Json_Serializer implements Channel
             $this->plugin->tv->get_disabled_channel_ids()->remove_item($this->_id);
         }
 
-        foreach ($this->get_groups() as $group) {
-            if ($disabled) {
-                $group->get_items_order()->remove_item($this->_id);
-            } else {
-                $group->get_items_order()->add_item($this->_id);
-            }
+        if ($disabled) {
+            $this->get_parent_group()->get_items_order()->remove_item($this->_id);
+        } else {
+            $this->get_parent_group()->get_items_order()->add_item($this->_id);
         }
         $this->plugin->save_orders();
     }
@@ -351,16 +328,5 @@ class Default_Channel extends Json_Serializer implements Channel
     public function set_ext_param($param, $value)
     {
         $this->_ext_params[$param] = $value;
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * add group
-     * @param Group $group
-     */
-    public function add_group(Group $group)
-    {
-        $this->_groups[] = $group;
     }
 }

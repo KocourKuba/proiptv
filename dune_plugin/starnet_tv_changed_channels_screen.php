@@ -170,13 +170,12 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             hd_debug_print("Removed channels: " . raw_json_encode($removed_channels));
         }
 
+        /** @var Channel $channel */
         foreach ($this->plugin->tv->get_channels($new_channels) as $channel) {
             if (is_null($channel)) continue;
 
-            $groups = array();
-            foreach ($channel->get_groups() as $group) {
-                $groups[] = str_replace('|', '¦', $group->get_title());
-            }
+            $group = $channel->get_parent_group();
+            $groups[] = str_replace('|', '¦', (is_null($group) ? "" : $group->get_title()));
 
             $detailed_info = TR::t('tv_screen_ch_channel_info__5',
                 $channel->get_title(),
@@ -187,7 +186,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             );
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => MediaURL::encode(array(
+                PluginRegularFolderItem::media_url => MediaURL::encode(
+                    array(
                         'channel_id' => $channel->get_id(),
                         'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
@@ -206,7 +206,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             $detailed_info = TR::t('tv_screen_ch_channel_info__2', $caption, $item);
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => MediaURL::encode(array(
+                PluginRegularFolderItem::media_url => MediaURL::encode(
+                    array(
                         'channel_id' => $item,
                         'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),

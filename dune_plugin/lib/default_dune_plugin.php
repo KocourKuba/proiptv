@@ -2813,12 +2813,10 @@ class Default_Dune_Plugin implements DunePlugin
         $info .= "Archive: " . $channel->get_archive() . PHP_EOL;
         $info .= "Protected: " . TR::load_string($channel->is_protected() ? 'yes' : 'no') . PHP_EOL;
         $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . PHP_EOL;
-        $info .= "Timeshift hours: " . $channel->get_timeshift_hours() . PHP_EOL;
-        $groups = array();
-        foreach ($channel->get_groups() as $group) {
-            $groups[] = $group->get_id();
+        if ($channel->get_timeshift_hours() !== 0) {
+            $info .= "Timeshift hours: " . $channel->get_timeshift_hours() . PHP_EOL;
         }
-        $info .= "Categories: " . implode(', ', $groups) . PHP_EOL;
+        $info .= "Category: " . $channel->get_parent_group()->get_id() . PHP_EOL;
 
         $info .= PHP_EOL;
         $info .= "Icon URL: " . wrap_string_to_lines($channel->get_icon_url(), 70) . PHP_EOL;
