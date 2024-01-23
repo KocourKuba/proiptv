@@ -58,8 +58,9 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_STOP]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
 
-        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear'));
-        $actions[GUI_EVENT_KEY_D_BLUE]  = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $actions[GUI_EVENT_KEY_B_GREEN]    = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear'));
+        $actions[GUI_EVENT_KEY_D_BLUE]     = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
         return $actions;
     }
@@ -75,6 +76,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         if (!isset($user_input->selected_media_url)) {
             return null;
         }
+
+        $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
@@ -111,7 +114,6 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return $post_action;
 
             case ACTION_ITEM_DELETE:
-                $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
                 $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
                 $removed_channels = $this->plugin->tv->get_changed_channels_ids('removed');
                 $order = &$this->plugin->tv->get_known_channels();
@@ -145,6 +147,18 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 }
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+
+            case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
+                return $this->plugin->tv->jump_to_channel($channel_id);
+
+            case GUI_EVENT_KEY_POPUP_MENU:
+                $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
+                if (in_array($channel_id, $new_channels)) {
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'));
+                    return Action_Factory::show_popup_menu($menu_items);
+                }
+
+                return null;
         }
 
         return Action_Factory::update_regular_folder(
