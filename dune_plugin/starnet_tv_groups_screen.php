@@ -75,14 +75,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
-        $sel_ndx = $user_input->sel_ndx;
+        $sel_ndx = isset($user_input->sel_ndx) ? $user_input->sel_ndx : 0;
         if (isset($user_input->selected_media_url)) {
             $sel_media_url = MediaURL::decode($user_input->selected_media_url);
         } else {
             $sel_media_url = MediaURL::make(array());
         }
-
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
         switch ($user_input->control_id)
         {
@@ -99,8 +97,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 clearstatcache();
                 $epg_manager = $this->plugin->get_epg_manager();
                 if (!is_null($epg_manager)) {
-                    if ($epg_manager->is_index_locked()) {
-                        $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                    if (isset($user_input->parent_media_url) && $epg_manager->is_index_locked()) {
+                        $actions = $this->get_action_map(MediaURL::decode($user_input->parent_media_url), $plugin_cookies);
                         return Action_Factory::change_behaviour($actions, 1000);
                     }
 
@@ -328,6 +326,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
 
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
                         $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx))

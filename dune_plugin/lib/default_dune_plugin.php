@@ -2473,12 +2473,15 @@ class Default_Dune_Plugin implements DunePlugin
             } else if ($group_id === CHANGED_CHANNELS_GROUP_ID) {
                 $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            } else if ($this->tv->get_special_group($group_id) === null) {
-                if ($is_classic) {
-                    $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
-                } else {
-                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
-                }
+            }
+
+            if ($is_classic) {
+                $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
+            } else {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
+            }
+
+            if ($this->tv->get_special_group($group_id) === null) {
                 $menu_items[] = $this->create_menu_item($handler, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
             }
 
