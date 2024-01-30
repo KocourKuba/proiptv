@@ -117,18 +117,21 @@ class vod_sharavoz extends vod_standard
 
         $category_tree = array();
         foreach ($categories as $item) {
+            hd_debug_print("$item->category_id ($item->category_name)", true);
             $pair = explode("|", $item->category_name);
 
             $parent_id = trim($pair[0]);
-            $category_tree[$parent_id][$item->category_id] = trim($pair[1]);
+            $category_tree[$parent_id][] = trim($pair[1]) . "_$item->category_id";
         }
 
         $category_count = 0;
         foreach ($category_tree as $key => $value) {
             $category = new Vod_Category($key, $key);
             $gen_arr = array();
-            foreach ($value as $id => $sub_cat_name) {
-                $gen_arr[] = new Vod_Category($id, $sub_cat_name, $category);
+            foreach ($value as $sub_cat_name) {
+                $sub_pair = explode("_", $sub_cat_name);
+                hd_debug_print("Sub Category: $sub_pair[0] ($sub_pair[1])", true);
+                $gen_arr[] = new Vod_Category($sub_pair[1], $sub_pair[0], $category);
             }
 
             $category->set_sub_categories($gen_arr);
