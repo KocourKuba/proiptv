@@ -698,7 +698,8 @@
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
       "api_url": "http://api.program.spr24.net/api",
       "api_commands": {
-        "playlist": "http://www.sharavoz.tv/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u"
+        "playlist": "http://www.sharavoz.tv/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
+        "vod": "http://app.media24.cc/json/c"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
@@ -720,7 +721,8 @@
           "ch01.spr24.net": "Zurich (CH01)",
           "eu01.spr24.net": "Europe (EU01)",
           "pl01.spr24.net": "Poland (PL01)"
-        }
+        },
+        "vod_custom": true
       }
     },
     {

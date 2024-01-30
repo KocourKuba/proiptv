@@ -361,8 +361,19 @@ class api_default
     public function getApiCommand($command)
     {
         hd_debug_print(null, true);
+
+        return $this->replace_macros($this->getRawApiCommand($command));
+    }
+
+    /**
+     * @param string $command
+     * @return string
+     */
+    public function getRawApiCommand($command)
+    {
+        hd_debug_print(null, true);
         if ($this->hasApiCommand($command))
-            return $this->replace_macros($this->api_commands[$command]);
+            return $this->api_commands[$command];
 
         return '';
     }

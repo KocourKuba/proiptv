@@ -80,6 +80,8 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
             );
         }
 
+        hd_debug_print("movie: " . raw_json_encode($movie->get_movie_array()));
+
         $right_button_caption = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID)->in_items_order($movie->id)
             ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
         $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array('movie_id' => $movie->id));

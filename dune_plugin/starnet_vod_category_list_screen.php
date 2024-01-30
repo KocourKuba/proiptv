@@ -8,7 +8,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     const ID = 'vod_category_list';
 
     /**
-     * @var array
+     * @var Vod_Category[]
      */
     private $category_list;
 

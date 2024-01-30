@@ -1,5 +1,4 @@
 <?php
-///////////////////////////////////////////////////////////////////////////
 
 require_once 'lib/abstract_vod.php';
 require_once 'lib/movie.php';
@@ -371,7 +370,7 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param array &$category_list
+     * @param Vod_Category[] &$category_list
      * @param array &$category_index
      */
     public function fetchVodCategories(&$category_list, &$category_index)

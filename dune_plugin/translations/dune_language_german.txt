@@ -298,6 +298,7 @@ vod_screen_season__1 = Staffel %s
 vod_screen_season__2 = %s (Staffel %s)
 vod_screen_series__1 = Episode %s
 vod_screen_series__2 = Episode %s %s
+vod_screen_movie_info__2 = %s|Bewertung: %s
 vod_screen_movie_info__3 = %s|Jahr: %s|Bewertung: %s
 vod_screen_movie_info__4 = %s|Jahr: %s|Land: %s|Genre: %s
 vod_screen_movie_info__5 = %s|Jahr: %s|Land: %s|Genre: %s|Bewertung: %s

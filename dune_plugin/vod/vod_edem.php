@@ -4,12 +4,12 @@ require_once 'vod_standard.php';
 class vod_edem extends vod_standard
 {
     /**
-     * @var
+     * @var string
      */
     protected $vportal_url;
 
     /**
-     * @var
+     * @var string
      */
     protected $vportal_key;
 
