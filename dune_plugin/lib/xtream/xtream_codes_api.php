@@ -171,22 +171,11 @@ class xtream_codes_api
     public function get_stream_url($id)
     {
         $stream_type = ($this->stream_type === self::VOD) ? "movie" : $this->stream_type;
-        $url = '';
-        if (!empty($this->streams)) {
-            foreach ($this->streams as $category) {
-                if (isset($category[$id]->stream_id)) {
-                    $stream = $category[$id];
-                    $url = sprintf("%s/%s/%s/%s/$stream->stream_id",
-                        $this->base_url,
-                        $stream_type,
-                        $this->username,
-                        $this->password);
-                    break;
-                }
-            }
-        }
-
-        return $url;
+        return sprintf("%s/%s/%s/%s/$id",
+            $this->base_url,
+            $stream_type,
+            $this->username,
+            $this->password);
     }
 
     ///////////////////////////////////////////////////////////////////////////////

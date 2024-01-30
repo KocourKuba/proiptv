@@ -89,7 +89,12 @@ class vod_sharavoz extends vod_standard
             ''                             // budget
         );
 
-        $url = $this->xtream->get_stream_url($movie_id);
+        $id = $movie_id;
+        if (!empty($item->container_extension)) {
+            $id .= ".$item->container_extension";
+        }
+
+        $url = $this->xtream->get_stream_url($id);
         hd_debug_print("movie playback_url: $url");
         $movie->add_series_data($movie_id, $item->info->name, '', $url);
 
@@ -110,13 +115,29 @@ class vod_sharavoz extends vod_standard
         $category_list = array();
         $category_index = array();
 
-        foreach ($categories as $category) {
-            $cat = new Vod_Category($category->category_id, $category->category_name);
-            $category_list[] = $cat;
-            $category_index[$cat->get_id()] = $cat;
+        $category_tree = array();
+        foreach ($categories as $item) {
+            $pair = explode("|", $item->category_name);
+
+            $parent_id = trim($pair[0]);
+            $category_tree[$parent_id][$item->category_id] = trim($pair[1]);
         }
 
-        hd_debug_print("Categories read: " . count($category_list));
+        $category_count = 0;
+        foreach ($category_tree as $key => $value) {
+            $category = new Vod_Category($key, $key);
+            $gen_arr = array();
+            foreach ($value as $id => $sub_cat_name) {
+                $gen_arr[] = new Vod_Category($id, $sub_cat_name, $category);
+            }
+
+            $category->set_sub_categories($gen_arr);
+            $category_count += count($gen_arr);
+
+            $category_list[] = $category;
+            $category_index[$category->get_id()] = $category;
+        }
+        hd_debug_print("Categories read: $category_count");
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -131,7 +152,7 @@ class vod_sharavoz extends vod_standard
         $movies = array();
 
         $arr = explode("_", $query_id);
-        $category_id = ($arr === false) ? $query_id : $arr[0];
+        $category_id = ($arr === false) ? $query_id : $arr[1];
 
         $vod_items = $this->xtream->get_streams($category_id);
 
