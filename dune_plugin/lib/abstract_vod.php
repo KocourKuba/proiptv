@@ -38,6 +38,7 @@ abstract class Abstract_Vod
      */
     public function set_cached_movie(Movie $movie)
     {
+        hd_debug_print("set movie to cache: $movie->id, movie: " . json_encode($movie), true);
         $this->movie_by_id[$movie->id] = $movie;
         $this->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url));
     }
@@ -47,6 +48,7 @@ abstract class Abstract_Vod
      */
     public function set_failed_movie_id($movie_id)
     {
+        hd_debug_print("set failed movie id: $movie_id", true);
         $this->failed_movie_ids[$movie_id] = true;
     }
 
@@ -123,7 +125,7 @@ abstract class Abstract_Vod
     public function ensure_movie_loaded($movie_id)
     {
         hd_debug_print(null, true);
-        if (!isset($movie_id)) {
+        if (empty($movie_id)) {
             hd_debug_print("Movie ID is not set");
             return;
         }
@@ -150,6 +152,7 @@ abstract class Abstract_Vod
     public function get_loaded_movie($movie_id)
     {
         hd_debug_print(null, true);
+        hd_debug_print("movie_id: $movie_id", true);
         $this->ensure_movie_loaded($movie_id);
 
         return $this->get_cached_movie($movie_id);

@@ -288,7 +288,7 @@ vod_screen_no_film_info = Movie information not available
 vod_screen_last_viewed__2 = %s|Date: %s
 vod_screen_last_viewed__3 = %s|Date: %s|Viewed: %s%%
 vod_screen_all_viewed__2 = %s|Viewed: %s
-vod_screen_viewed__2 = %s| [Viewed %s]
+vod_screen_viewed__2 = %s | [Viewed %s]
 vod_screen_viewed_not_viewed = Viewed/Not viewed
 vod_screen_viewed = Quality
 vod_screen_quality__1 = Quality - %s
@@ -301,6 +301,8 @@ vod_screen_movie_info__2 = %s|Rating: %s
 vod_screen_movie_info__3 = %s|Year: %s|Rating: %s
 vod_screen_movie_info__4 = %s|Year: %s|Country: %s|Genre: %s
 vod_screen_movie_info__5 = %s|Year: %s|Country: %s|Genre: %s|Rating: %s
+vod_movie_title__3 = %s|Season %s|%s
+vod_screen_group_info__2 = %s|Movies: %s
 
 epg_not_ready = EPG not ready
 epg_not_ready_desc = EPG is still indexing, please wait

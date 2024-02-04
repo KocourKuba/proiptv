@@ -200,10 +200,13 @@ class vod_cbilling extends vod_standard
                 }
             }
             if (isset($entry->name)) {
-                $movie = new Short_Movie($entry->id, $entry->name, $entry->poster);
                 $genre_str = implode(", ", $genresArray);
-                $movie->info = TR::t('vod_screen_movie_info__5', $entry->name, $entry->year, $entry->country, $genre_str, $entry->rating);
-                $movies[] = $movie;
+                $movies[] = new Short_Movie(
+                    $entry->id,
+                    $entry->name,
+                    $entry->poster,
+                    TR::t('vod_screen_movie_info__5', $entry->name, $entry->year, $entry->country, $genre_str, $entry->rating)
+                );
             }
         }
 

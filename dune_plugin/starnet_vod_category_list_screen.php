@@ -95,19 +95,15 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 foreach ($this->plugin->vod->get_special_groups() as $group) {
                     if (is_null($group)) continue;
 
-                    hd_debug_print("group: '{$group->get_title()}' disabled: " . var_export($group->is_disabled(), true), true);
-
-                    if ($group->is_disabled()) continue;
-
                     switch ($group->get_id()) {
                         case FAVORITES_MOVIE_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;
-                            $item_detailed_info = TR::t('tv_screen_group_info__2', $group->get_title(), $group->get_items_order()->size());
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group->get_title(), $group->get_items_order()->size());
                             break;
 
                         case HISTORY_MOVIES_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
-                            $item_detailed_info = TR::t('tv_screen_group_info__2', $group->get_title(), $this->plugin->get_history(HISTORY_MOVIES)->size());
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group->get_title(), $this->plugin->get_history(HISTORY_MOVIES)->size());
                             break;
 
                         default:

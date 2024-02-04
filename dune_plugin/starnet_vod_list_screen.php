@@ -156,7 +156,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
                     ),
                 );
 
-                $this->plugin->vod->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url));
+                $this->plugin->vod->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url, $movie->info));
             }
         }
 

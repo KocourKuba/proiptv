@@ -28,6 +28,11 @@ class Movie_Series
     public $playback_url = '';
 
     /**
+     * @var string
+     */
+    public $movie_image = '';
+
+    /**
      * @var array
      */
     public $variants;

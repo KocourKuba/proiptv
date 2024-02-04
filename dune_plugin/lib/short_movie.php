@@ -26,8 +26,9 @@ class Short_Movie
      * @param string $id
      * @param string $name
      * @param string $poster_url
+     * @param string $info
      */
-    public function __construct($id, $name, $poster_url)
+    public function __construct($id, $name, $poster_url, $info = '')
     {
         if (is_null($id)) {
             hd_debug_print("id is null");
@@ -37,5 +38,6 @@ class Short_Movie
         $this->id = $id;
         $this->name = $name;
         $this->poster_url = $poster_url;
+        $this->info = $info;
     }
 }

@@ -194,16 +194,23 @@ class Movie implements User_Input_Handler
 
         $series_idx = empty($episode->id) ? $user_input->plugin_vod_series_ndx : $episode->id;
         $id = $user_input->plugin_vod_id;
-        $history_item = new HistoryItem($watched, $user_input->plugin_vod_stop_position, $user_input->plugin_vod_duration, $user_input->plugin_vod_stop_tm);
-
         hd_debug_print("add movie to history: id: $id, series: $series_idx", true);
+
         /** @var Hashed_Array $history_items */
         $history_items = &$this->plugin->get_history(HISTORY_MOVIES);
-        $history_id = "$id:$episode->season_id:$series_idx";
-        if ($history_items->has($history_id)) {
-            $history_items->erase($history_id);
+        $history_item = $history_items->get($id);
+        if (is_null($history_item)) {
+            $history_item = array();
         }
-        $history_items->set($history_id, $history_item);
+
+        $history_item[$series_idx] = new HistoryItem(
+            $watched,
+            $user_input->plugin_vod_stop_position,
+            $user_input->plugin_vod_duration,
+            $user_input->plugin_vod_stop_tm
+        );
+
+        $history_items->set($id, $history_item);
 
         $this->plugin->save_history(true);
 
@@ -216,13 +223,13 @@ class Movie implements User_Input_Handler
             array(
                 $series_media_url_str,
                 Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID),
-                Starnet_Vod_History_Screen::get_media_url_str()
+                Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID)
             )
         );
     }
 
     /**
-     * @param $v
+     * @param $v string|null
      * @return string
      */
     private function to_string($v)
@@ -311,20 +318,23 @@ class Movie implements User_Input_Handler
     }
 
     /**
-     * @param string $id
-     * @param string $name
-     * @param string $description
-     * @param string $playback_url
-     * @param bool $playback_url_is_stream_url
+     * @param $id string
+     * @param $name string
+     * @param $description
+     * @param $playback_url string
+     * @param $season_id string
+     * @param $movie_image string
+     * @param $playback_url_is_stream_url bool
      * @throws Exception
      */
-    public function add_series_data($id, $name, $description, $playback_url, $season_id = '', $playback_url_is_stream_url = true)
+    public function add_series_data($id, $name, $description, $playback_url, $season_id = '', $movie_image = '', $playback_url_is_stream_url = true)
     {
         $series = new Movie_Series($id);
         $series->name = $this->to_string($name);
         $series->series_desc = $this->to_string($description);
         $series->season_id = $this->to_string($season_id);
         $series->playback_url = $this->to_string($playback_url);
+        $series->movie_image = $this->to_string($movie_image);
         $series->playback_url_is_stream_url = $playback_url_is_stream_url;
 
         $this->series_list[$id] = $series;
@@ -436,52 +446,55 @@ class Movie implements User_Input_Handler
         $variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_VARIANT, 'auto');
         $counter = 0; // series index. Not the same as the key of series list
         $initial_start_array = array();
-        foreach ($list as $series) {
-            if (isset($series->variants)) {
-                if (!array_key_exists($variant, $series->variants)) {
-                    $best_var = $series->variants;
+        foreach ($list as $episode) {
+            if (isset($episode->variants)) {
+                if (!array_key_exists($variant, $episode->variants)) {
+                    $best_var = $episode->variants;
                     array_pop($best_var);
                     foreach ($best_var as $key => $var) {
                         $variant = $key;
                     }
                 }
 
-                if (isset($series->variants[$variant])) {
-                    $playback_url = $series->variants[$variant]->playback_url;
-                    $playback_url_is_stream_url = $series->variants[$variant]->playback_url_is_stream_url;
+                if (isset($episode->variants[$variant])) {
+                    $playback_url = $episode->variants[$variant]->playback_url;
+                    $playback_url_is_stream_url = $episode->variants[$variant]->playback_url_is_stream_url;
                 } else {
-                    $playback_url = $series->playback_url;
-                    $playback_url_is_stream_url = $series->playback_url_is_stream_url;
+                    $playback_url = $episode->playback_url;
+                    $playback_url_is_stream_url = $episode->playback_url_is_stream_url;
                 }
             } else {
-                $playback_url = $series->playback_url;
-                $playback_url_is_stream_url = $series->playback_url_is_stream_url;
+                $playback_url = $episode->playback_url;
+                $playback_url_is_stream_url = $episode->playback_url_is_stream_url;
             }
 
-            if (!is_null($sel_id) && $series->id === $sel_id) {
+            if (!is_null($sel_id) && $episode->id === $sel_id) {
                 $initial_series_ndx = $counter;
             }
 
             $pos = 0;
-            $name = $series->name;
+            $name = $episode->name;
+            $ids = explode(':', $media_url->movie_id);
+            $movie_id = $ids[0];
             /** @var HistoryItem $viewed_series */
-            $viewed_series = $this->plugin->get_history(HISTORY_MOVIES)->get("$media_url->movie_id:$series->season_id:$series->id");
+            $viewed_series = $this->plugin->get_history(HISTORY_MOVIES)->get($movie_id);
+            if (!is_null($viewed_series) && isset($viewed_series[$episode->id])) {
+                $info = $viewed_series[$episode->id];
+                if ($info->watched === false && $info->duration !== -1) {
+                    $name .= " [" . format_duration($info->position) . "]";
 
-            if (!is_null($viewed_series) && $viewed_series->watched === false && $viewed_series->duration !== -1) {
-                $name .= " [" . format_duration($viewed_series->position) . "]";
+                    $pos = $info->position;
+                    if ($pos < 0)
+                        $pos = 0;
 
-                $pos = $viewed_series->position;
-                if ($pos < 0)
-                    $pos = 0;
-
-                if ($pos > $viewed_series->duration)
-                    $pos = 0;
+                    if ($pos > $info->duration)
+                        $pos = 0;
+                }
             }
-
             $initial_start_array[$counter] = $pos * 1000;
             $playback_url = HD::make_ts($playback_url);
             $playback_url = $this->plugin->vod->UpdateDuneParams($playback_url);
-            hd_debug_print("Playback movie: $media_url->movie_id, episode: $series->id ($variant)", true);
+            hd_debug_print("Playback movie: $media_url->movie_id, episode: $episode->id ($variant)", true);
             hd_debug_print("Url: $playback_url from $initial_start_array[$counter]", true);
             $series_array[] = array(
                 PluginVodSeriesInfo::name => $name,

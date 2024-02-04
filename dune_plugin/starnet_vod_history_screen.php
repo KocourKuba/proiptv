@@ -128,14 +128,25 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 $poster_url = "missing://";
             } else {
                 $caption = $short_movie->name;
-                if ($movie_infos->date !== 0) {
-                    if ($movie_infos->watched) {
-                        $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $movie_infos->date));
-                    } else if ($movie_infos->duration !== -1) {
-                        $percent = (int)((float)$movie_infos->position / (float)$movie_infos->duration * 100);
-                        $detailed_info = TR::t('vod_screen_last_viewed__3', $short_movie->name, format_datetime("d.m.Y H:i", $movie_infos->date), $percent);
+                $last_viewed = 0;
+                $info = $movie_infos;
+                if (is_array($movie_infos)) {
+                    foreach ($movie_infos as $movie_info) {
+                        if (isset($movie_info->watched) && $movie_info->date > $last_viewed) {
+                            $last_viewed = $movie_info->date;
+                            $info = $movie_info;
+                        }
+                    }
+                }
+
+                if ($info->date !== 0) {
+                    if ($info->watched) {
+                        $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $info->date));
+                    } else if ($info->duration !== -1 && count($movie_infos) < 2) {
+                        $percent = (int)((float)$info->position / (float)$info->duration * 100);
+                        $detailed_info = TR::t('vod_screen_last_viewed__3', $short_movie->name, format_datetime("d.m.Y H:i", $info->date), $percent);
                     } else {
-                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $movie_infos->date));
+                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $info->date));
                     }
                 } else {
                     $detailed_info = $short_movie->name;

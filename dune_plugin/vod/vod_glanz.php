@@ -281,9 +281,11 @@ class vod_glanz extends vod_standard
         }
         $genres_str = implode(", ", $genres);
 
-        $movie = new Short_Movie($id, (string)$movie_obj->name, (string)$movie_obj->cover);
-        $movie->info = TR::t('vod_screen_movie_info__4', $movie_obj->name, $movie_obj->year, $movie_obj->country, $genres_str);
-
-        return $movie;
+        return new Short_Movie(
+            $id,
+            (string)$movie_obj->name,
+            (string)$movie_obj->cover,
+            TR::t('vod_screen_movie_info__4', $movie_obj->name, $movie_obj->year, $movie_obj->country, $genres_str)
+        );
     }
 }

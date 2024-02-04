@@ -304,13 +304,13 @@ class vod_sharaclub extends vod_standard
             $id = $movie_obj->series_id . "_serial";
         }
 
-        $info = $movie_obj->info;
-        $genres = HD::ArrayToStr($info->genre);
-        $country = HD::ArrayToStr($info->country);
+        $genres = HD::ArrayToStr($movie_obj->info->genre);
+        $country = HD::ArrayToStr($movie_obj->info->country);
 
-        $movie = new Short_Movie($id, (string)$movie_obj->name, (string)$info->poster);
-        $movie->info = TR::t('vod_screen_movie_info__5', $movie_obj->name, $info->year, $country, $genres, $info->rating);
-
-        return $movie;
+        return new Short_Movie($id,
+            (string)$movie_obj->name,
+            (string)$movie_obj->info->poster,
+            TR::t('vod_screen_movie_info__5', $movie_obj->name, $movie_obj->info->year, $country, $genres, $movie_obj->info->rating)
+        );
     }
 }

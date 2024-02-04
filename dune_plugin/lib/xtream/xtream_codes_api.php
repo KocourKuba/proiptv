@@ -48,16 +48,6 @@ class xtream_codes_api
     protected $password;
 
     /**
-     * @var string
-     */
-    protected $stream_type = self::VOD;
-
-    /**
-     * @var bool
-     */
-    protected $streams_by_category = false;
-
-    /**
      * @var array
      */
     protected $auth_info;
@@ -65,12 +55,7 @@ class xtream_codes_api
     /**
      * @var array
      */
-    protected $categories;
-
-    /**
-     * @var array
-     */
-    protected $streams;
+    protected $cache;
 
     ///////////////////////////////////////////////////////////////////////////////
 
@@ -78,24 +63,19 @@ class xtream_codes_api
      * @param $base_url string
      * @param $username string
      * @param $password string
-     * @param $stream_type string
-     * @param $streams_by_category bool
      * @return void
      */
-    public function init($base_url, $username, $password, $stream_type = self::VOD, $streams_by_category = false)
+    public function init($base_url, $username, $password)
     {
         $this->base_url = $base_url;
         $this->username = $username;
         $this->password = $password;
-        $this->stream_type = $stream_type;
-        $this->streams_by_category = $streams_by_category;
     }
 
     public function reset_cache()
     {
         $this->auth_info = null;
-        $this->categories = null;
-        $this->streams = null;
+        $this->cache = null;
     }
 
     /**
@@ -104,7 +84,7 @@ class xtream_codes_api
     public function get_auth()
     {
         if (is_null($this->auth_info)) {
-            $this->auth_info = self::DownloadJsonBigIntMod($this->get_auth_url(), false);
+            $this->auth_info = $this->get_cached_response($this->get_auth_url());
         }
 
         return $this->auth_info;
@@ -113,64 +93,36 @@ class xtream_codes_api
     /**
      * @return array|false
      */
-    public function get_categories()
+    public function get_categories($stream_type = self::VOD)
     {
-        if (is_null($this->categories)) {
-            $this->categories = self::DownloadJsonBigIntMod($this->get_categories_url(), false);
-        }
-
-        return $this->categories;
+        return $this->get_cached_response($this->get_categories_url($stream_type), false);
     }
 
     /**
      * @param $category_id string|null
-     * @return array|false
+     * @return mixed|false
      */
-    public function get_streams($category_id = null)
+    public function get_streams($stream_type = self::VOD, $category_id = null)
     {
-        $load = false;
-        if (!empty($category_id) && !isset($this->streams[$category_id])) {
-            $load = true;
-        } else if (empty($this->streams)) {
-            $load = true;
-        }
-
-        if ($load) {
-            $streams = self::DownloadJsonBigIntMod($this->get_streams_url($category_id), false);
-            if ($streams === false) {
-                return array();
-            }
-
-            if ($this->streams_by_category && !empty($category_id) ) {
-                foreach ($streams as $stream) {
-                    $this->streams[$category_id][$stream->stream_id] = $stream;
-                }
-            } else {
-                foreach ($streams as $stream) {
-                    $this->streams[$stream->category_id][$stream->stream_id] = $stream;
-                }
-            }
-        }
-
-        return empty($category_id) ? $this->streams : $this->streams[$category_id];
+        return $this->get_cached_response($this->get_streams_url($stream_type, $category_id));
     }
 
     /**
      * @param $id string
      * @return mixed|false
      */
-    public function get_stream_info($id)
+    public function get_stream_info($id, $stream_type = self::VOD)
     {
-        return self::DownloadJsonBigIntMod($this->get_stream_info_url($id), false);
+        return $this->get_cached_response($this->get_stream_info_url($id, $stream_type));
     }
 
     /**
      * @param $id string
      * @return string
      */
-    public function get_stream_url($id)
+    public function get_stream_url($id, $stream_type = self::VOD)
     {
-        $stream_type = ($this->stream_type === self::VOD) ? "movie" : $this->stream_type;
+        $stream_type = ($stream_type !== self::LIVE) ? "movie" : $stream_type;
         return sprintf("%s/%s/%s/%s/$id",
             $this->base_url,
             $stream_type,
@@ -191,17 +143,21 @@ class xtream_codes_api
     /**
      * @return string
      */
-    protected function get_categories_url()
+    protected function get_categories_url($stream_type = self::VOD)
     {
-        return sprintf("%s&action=get_%s_categories", $this->get_auth_url(), $this->stream_type);
+        return sprintf("%s&action=get_%s_categories", $this->get_auth_url(), $stream_type);
     }
 
     /**
      * @return string|null
      */
-    protected function get_streams_url($category_id = null)
+    protected function get_streams_url($stream_type = self::VOD, $category_id = null)
     {
-        $url = sprintf("%s&action=get_%s_streams", $this->get_auth_url(), $this->stream_type);
+        if ($stream_type === self::SERIES) {
+            $url = sprintf("%s&action=get_%s", $this->get_auth_url(), $stream_type);
+        } else {
+            $url = sprintf("%s&action=get_%s_streams", $this->get_auth_url(), $stream_type);
+        }
 
         if (!empty($category_id)) {
             $url .= "&category_id=$category_id";
@@ -213,32 +169,57 @@ class xtream_codes_api
     /**
      * @return string
      */
-    protected function get_stream_info_url($id)
+    protected function get_stream_info_url($id, $stream_type = self::VOD)
     {
-        return sprintf("%s&action=get_%s_info&%s_id=%s", $this->get_auth_url(), $this->stream_type, $this->stream_type, $id);
+        return sprintf("%s&action=get_%s_info&%s_id=%s", $this->get_auth_url(), $stream_type, $stream_type, $id);
     }
 
     /**
-     * @param string $url
+     * @param $url string
      * @param bool $to_array
-     * @return false|mixed
+     * @return mixed|false
      */
-    public static function DownloadJsonBigIntMod($url, $to_array = true)
+    protected function get_cached_response($url, $to_array = false, $opts = null)
     {
-        try {
-            $doc = HD::http_get_document($url);
-            $doc = preg_replace('/("\w+"):(\d{9,})/', '\\1:"\\2"', $doc);
-            $contents = json_decode($doc, $to_array);
-            if ($contents === null || $contents === false) {
-                hd_debug_print("failed to decode json");
-                hd_debug_print("doc: $doc");
-                return false;
-            }
-        } catch (Exception $ex) {
-            hd_debug_print("Unable to load url: " . $ex->getMessage());
-            return false;
+        $url_hash = hash('crc32', $url . json_encode($opts));
+        if (!is_null($this->cache) && isset($this->cache[$url_hash])) {
+            return $this->cache[$url_hash];
         }
 
-        return $contents;
+        $tmp_file = get_temp_path("$url_hash.json");
+        if (file_exists($tmp_file)) {
+            $mtime = filemtime($tmp_file);
+            $diff = time() - $mtime;
+            if ($diff <= 3600) {
+                $cached_data = HD::ReadContentFromFile($tmp_file, $to_array);
+                if ($cached_data !== false) {
+                    return $this->update_cache($url_hash, $cached_data);
+                }
+            }
+
+            hd_debug_print("xtream response cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
+            unlink($tmp_file);
+        }
+
+        $cached_data = HD::DownloadJson($url, $to_array, $opts);
+        if ($cached_data !== false) {
+            HD::StoreContentToFile($tmp_file, $cached_data);
+        }
+
+        return $this->update_cache($url_hash, $cached_data);
+    }
+
+    /**
+     * @param $url_hash string
+     * @param $cached_data mixed
+     * @return mixed
+     */
+    protected function update_cache($url_hash, $cached_data)
+    {
+        if ($cached_data !== false) {
+            $this->cache[$url_hash] = $cached_data;
+        }
+
+        return $cached_data;
     }
 }

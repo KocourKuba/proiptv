@@ -270,7 +270,7 @@ vod_screen_no_film_info = Информация о фильме недоступ�
 vod_screen_last_viewed__2 = %s|Дата: %s
 vod_screen_last_viewed__3 = %s|Дата: %s|Просмотрено: %s%%
 vod_screen_all_viewed__2 = %s|Просмотрено: %s
-vod_screen_viewed__2 = %s| [Просмотрено %s]
+vod_screen_viewed__2 = %s | [Просмотрено %s]
 vod_screen_viewed_not_viewed = Просмотрено/Не просмотрено
 vod_screen_quality = Качество
 vod_screen_quality__1 = Качество - %s
@@ -283,6 +283,8 @@ vod_screen_movie_info__2 = %s|Рейтинг: %s
 vod_screen_movie_info__3 = %s|Год: %s|Рейтинг: %s
 vod_screen_movie_info__4 = %s|Год: %s|Страна: %s|Жанр: %s
 vod_screen_movie_info__5 = %s|Год: %s|Страна: %s|Жанр: %s|Рейтинг: %s
+vod_movie_title__3 = %s|Сезон %s|%s
+vod_screen_group_info__2 = %s|Фильмов: %s
 
 edit_list_added__1 = Добавлено файлов: %s
 edit_list_added__2 = Добавлено файлов: %s из: %s

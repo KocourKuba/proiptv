@@ -246,9 +246,12 @@ class vod_edem extends vod_standard
             if ($entry->type === 'next') {
                 $this->get_next_page($query_id, $entry->request->offset - $current_offset);
             } else {
-                $movie = new Short_Movie($entry->request->fid, $entry->title, $entry->img);
-                $movie->info = TR::t('vod_screen_movie_info__3', $entry->title, $entry->year, $entry->agelimit);
-                $movies[] = $movie;
+                $movies[] = new Short_Movie(
+                    $entry->request->fid,
+                    $entry->title,
+                    $entry->img,
+                    TR::t('vod_screen_movie_info__3', $entry->title, $entry->year, $entry->agelimit)
+                );
             }
         }
         if ($current_offset === $this->get_next_page($query_id, 0)) {

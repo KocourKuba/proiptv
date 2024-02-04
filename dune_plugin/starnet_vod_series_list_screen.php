@@ -184,19 +184,22 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
         hd_debug_print("Movie: " . raw_json_encode($movie), true);
         /** @var Hashed_Array $viewed_items */
         $viewed_items = $this->plugin->get_history(HISTORY_MOVIES);
+        $item = $viewed_items->get($media_url->movie_id);
+        $viewed_item = is_null($item) ? array() : $item;
+
         $items = array();
         foreach ($movie->series_list as $episode) {
             if (isset($media_url->season_id) && $media_url->season_id !== $episode->season_id) continue;
 
             $info = $episode->name;
             $color = 15;
-            $id = "$media_url->movie_id:$episode->season_id:$episode->id";
-            $item_info = $viewed_items->get($id);
-            if (!is_null($item_info)) {
+            if (isset($viewed_item[$episode->id])) {
+                $item_info = $viewed_item[$episode->id];
                 hd_debug_print("viewed item: " . json_encode($item_info));
                 if ($item_info->watched) {
-                    $info = TR::t('vod_screen_viewed__2', $episode->name, format_datetime("d.m.Y H:i", $item_info->date));
-                } else if ($item_info->duration !== -1) {
+                    $date = format_datetime("d.m.Y H:i", $item_info->date);
+                    $info = TR::t('vod_screen_viewed__2', $episode->name, $date);
+                } else if (isset($item_info->duration) && $item_info->duration !== -1) {
                     $start = format_duration_seconds($item_info->position);
                     $total = format_duration_seconds($item_info->duration);
                     $date = format_datetime("d.m.Y H:i", $item_info->date);
@@ -211,10 +214,10 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $items[] = array(
                 PluginRegularFolderItem::media_url => self::get_media_url_string($movie->id, $episode->season_id, $episode->id),
                 PluginRegularFolderItem::caption => $info,
-                PluginRegularFolderItem::view_item_params => array
-                (
+                PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => 'gui_skin://small_icons/movie.aai',
-                    ViewItemParams::item_detailed_info => $episode->series_desc,
+                    ViewItemParams::item_detailed_info => empty($episode->series_desc) ? $episode->name : $episode->series_desc,
+                    ViewItemParams::item_detailed_icon_path => empty($episode->movie_image) ? 'gui_skin://large_icons/movie.aai' : $episode->movie_image,
                     ViewItemParams::item_caption_color => $color,
                 ),
             );
