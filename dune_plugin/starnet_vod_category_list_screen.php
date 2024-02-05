@@ -95,6 +95,9 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 foreach ($this->plugin->vod->get_special_groups() as $group) {
                     if (is_null($group)) continue;
 
+                    hd_debug_print("group: '{$group->get_title()}' disabled: " . var_export($group->is_disabled(), true), true);
+                    if ($group->is_disabled()) continue;
+
                     switch ($group->get_id()) {
                         case FAVORITES_MOVIE_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;

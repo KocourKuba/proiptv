@@ -142,25 +142,25 @@ class vod_sharavoz extends vod_standard
         //
 
         $movie = new Movie($movie_id, $this->plugin);
-        if ($stream_type === xtream_codes_api::VOD) {
-            $movie->set_data(
-                $item->info->name,                    // name,
-                $item->info->o_name,                  // name_original,
-                $item->info->plot,                    // description,
-                $item->info->movie_image,             // poster_url,
-                $item->info->duration,                // length_min,
-                $item->info->releasedate,             // year,
-                $item->info->director,                // director_str,
-                '',                       // scenario_str,
-                $item->info->actors,                  // actors_str,
-                $item->info->genre,                   // genres_str,
-                $item->info->rating,                  // rate_imdb,
-                $item->info->rating_count_kinopoisk,  // rate_kinopoisk,
-                $item->info->age,                     // rate_mpaa,
-                $item->info->country,                 // country,
-                ''                             // budget
-            );
+        $movie->set_data(
+            self::get_data_variant($item->info, "name"), // name,
+            self::get_data_variant($item->info, "o_name"), // name_original,
+            self::get_data_variant($item->info, array("plot", "description")),  // description,
+            self::get_data_variant($item->info, array("movie_image", "cover")),  // poster_url,
+            self::get_data_variant($item->info, array("duration", "episode_run_time")), // length_min,
+            self::get_data_variant($item->info, array("releasedate", "releaseDate", "release_date")), // year,
+            self::get_data_variant($item->info, "director"), // director_str,
+            '', // scenario_str,
+            self::get_data_variant($item->info, array("actors", "cast")), // actors_str,
+            self::get_data_variant($item->info, "genre"), // genres_str,
+            self::get_data_variant($item->info, "rating"), // rate_imdb,
+            self::get_data_variant($item->info, "rating_count_kinopoisk"), // rate_kinopoisk,
+            self::get_data_variant($item->info, "age"), // rate_mpaa,
+            self::get_data_variant($item->info, "country"), // country,
+            '' // budget
+        );
 
+        if ($stream_type === xtream_codes_api::VOD) {
             $id = $stream_id;
             if (!empty($item->info->container_extension)) {
                 $id .= ".{$item->info->container_extension}";
@@ -168,29 +168,7 @@ class vod_sharavoz extends vod_standard
             $url = $this->xtream->get_stream_url($id);
             hd_debug_print("movie playback_url: $url");
             $movie->add_series_data($movie_id, $item->info->name, '', $url);
-        }
-
-        if ($stream_type === xtream_codes_api::SERIES) {
-            $movie->set_data(
-                $item->info->name,                    // name,
-                '',                       // name_original,
-                $item->info->plot,                    // description,
-                $item->info->cover,                   // poster_url,
-                $item->info->episode_run_time,        // length_min,
-                $item->info->releaseDate,             // year,
-                $item->info->director,                // director_str,
-                '',                       // scenario_str,
-                $item->info->cast,                    // actors_str,
-                $item->info->genre,                   // genres_str,
-                '',                         // rate_imdb,
-                '',                      // rate_kinopoisk,
-//                $item->info->rating,                  // rate_imdb,
-//                $item->info->rating_count_kinopoisk,  // rate_kinopoisk,
-                '',                         // rate_mpaa,
-                '',                           // country,
-                ''                             // budget
-            );
-
+        } else if ($stream_type === xtream_codes_api::SERIES) {
             foreach ($item->episodes as $season_id => $season) {
                 $movie->add_season_data($season_id, !empty($season->name) ? $season->name : TR::t('vod_screen_season__1', $season_id), '');
                 foreach ($season as $episode) {
@@ -362,5 +340,27 @@ class vod_sharavoz extends vod_standard
                 }
             }
         }
+    }
+
+    /**
+     * @param $data object
+     * @param $names array|string
+     * @return string
+     */
+    protected static function get_data_variant($data, $names)
+    {
+        $ret_val = '';
+        if (is_array($names)) {
+            foreach ($names as $name) {
+                if (!empty($data->{$name})) {
+                    $ret_val = $data->{$name};
+                    break;
+                }
+            }
+        } else if (!empty($data->{$names})) {
+            $ret_val = $data->{$names};
+        }
+
+        return $ret_val;
     }
 }
