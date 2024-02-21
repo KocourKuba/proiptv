@@ -599,7 +599,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
       "api_commands": {
-        "playlist": "http://russkoetv.tv/play/{PASSWORD}.m3u8"
+        "playlist": "https://russkoetv.tv/play/{PASSWORD}.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
