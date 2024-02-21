@@ -5,9 +5,9 @@ require_once 'api_default.php';
  * "account": {
  *      "info": {
  *      "id": 9405,
- *      "login": "igores",
- *      "mail": "info@igores.ru",
- *      "name": "Igor Hett",
+ *      "login": "igore",
+ *      "mail": "info@igore.ru",
+ *      "name": "Igor Het",
  *      "balance": 0
  *      },
  *      "options": {

@@ -1105,6 +1105,35 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * load playlist settings by ID
+     *
+     * @param string $id
+     * @return array
+     */
+    public function get_settings($id)
+    {
+        if (empty($id)) {
+            return array();
+        }
+
+        return HD::get_data_items("$id.settings", true, false);
+    }
+
+    /**
+     * load playlist settings by ID
+     *
+     * @param string $id
+     * @param array $data
+     * @return void
+     */
+    public function put_settings($id, $data)
+    {
+        if (!empty($id)) {
+            HD::put_data_items("$id.settings", $data, false);
+        }
+    }
+
+    /**
      * load playlist settings
      *
      * @param bool $force
@@ -2725,6 +2754,8 @@ class Default_Dune_Plugin implements DunePlugin
 
         $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         $id = $user_input->{CONTROL_EDIT_ITEM};
+        $is_new = empty($id);
+
         switch ($provider->getType()) {
             case PROVIDER_TYPE_PIN:
                 $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
@@ -2789,6 +2820,25 @@ class Default_Dune_Plugin implements DunePlugin
         $item->params = $params;
 
         hd_debug_print("compiled provider info: $item->name, provider params: " . raw_json_encode($item->params), true);
+
+        if ($is_new) {
+            $id = "{$provider->getId()}_$id";
+            $settings = $this->get_settings($id);
+            $dune_params = $provider->getConfigValue(PARAM_DUNE_PARAMS);
+            if (!empty($dune_params)) {
+                $settings[PARAM_DUNE_PARAMS] = $dune_params;
+            }
+
+            $epg_preset = $provider->getConfigValue(EPG_JSON_PRESET);
+            if (!empty($epg_preset)) {
+                $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
+            }
+
+            if (!empty($settings)) {
+                $this->put_settings($id, $settings);
+            }
+        }
+
         $this->get_playlists()->set($id, $item);
         $this->save_parameters(true);
         $this->clear_playlist_cache($id);

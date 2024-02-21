@@ -301,7 +301,8 @@
           "replace": "$1{SUBDOMAIN}$2{OTTKEY}$3"
         },
         "epg_preset": "drm",
-        "vod_custom": true
+        "vod_custom": true,
+        "dune_params": "hls_forced_type:event"
       }
     },
     {

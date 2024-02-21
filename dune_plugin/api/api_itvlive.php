@@ -3,7 +3,7 @@ require_once 'api_default.php';
 
 /**
  * "user_info": {
- *      "login": "shegwow",
+ *      "login": "shegow",
  *      "pay_system": "2",
  *      "cash": "0.09"
  * },
