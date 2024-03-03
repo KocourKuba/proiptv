@@ -297,7 +297,7 @@ class Epg_Manager_Sql extends Epg_Manager
             }
 
             $channel_title = $channel->get_title();
-            $epg_ids = $channel->get_epg_ids();
+            $epg_ids = array_values($channel->get_epg_ids());
 
             $channels_db = $this->open_sqlite_db(false);
             if (!is_null($channels_db)) {
@@ -319,10 +319,11 @@ class Epg_Manager_Sql extends Epg_Manager
                 }
             }
 
-            $epg_ids = array_unique(array_values($epg_ids));
+            $epg_ids = array_values(array_unique($epg_ids));
+            hd_debug_print("Found epg_ids: " . json_encode($epg_ids), true);
             $channel_id = $channel->get_id();
             if (!empty($epg_ids)) {
-                hd_debug_print("Load position indexes for: $channel_id ($channel_title), search epg id's: " . raw_json_encode($epg_ids));
+                hd_debug_print("Load position indexes for: $channel_id ($channel_title), search epg id's: " . raw_json_encode($epg_ids), true);
                 $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
                 $stmt = $pos_db->prepare("SELECT start, end FROM positions WHERE channel_id IN ($placeHolders);");
                 if ($stmt !== false) {
@@ -348,11 +349,11 @@ class Epg_Manager_Sql extends Epg_Manager
             if (empty($channel_position)) {
                 throw new Exception("No positions for channel $channel_id ($channel_title) and epg id's: ". raw_json_encode($epg_ids));
             }
-
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
         }
 
+        hd_debug_print("Channel positions: " . raw_json_encode($channel_position), true);
         return $channel_position;
     }
 
