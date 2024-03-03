@@ -290,7 +290,7 @@
       "type": "edem",
       "logo": "http://iptv.esalecrm.net/res/logo_edem.png",
       "api_commands": {
-        "playlist": "http://epg.it999.ru/edem_epg_ico2.m3u8",
+        "playlist": "http://epg.one/edem_epg_ico2.m3u8",
         "vod": "{VPORTAL}"
       },
       "config": {
@@ -302,7 +302,7 @@
         },
         "epg_preset": "drm",
         "vod_custom": true,
-        "dune_params": "hls_forced_type:event"
+        "dune_params": "hls_forced_type:event,psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
