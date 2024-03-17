@@ -238,7 +238,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
                 }
 
-                if (with_network_manager()) {
+                if (!is_limited_apk()) {
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                     $is_external = $this->plugin->tv->get_channels_for_ext_player()->in_order($channel_id);
                     $menu_items[] = $this->plugin->create_menu_item($this,

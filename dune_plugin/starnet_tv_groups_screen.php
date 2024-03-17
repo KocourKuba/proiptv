@@ -346,7 +346,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             'action' => $user_input->control_id,
                             'extension'	=> IMAGE_PREVIEW_PATTERN,
                         ),
-                        'allow_network' => with_network_manager(),
+                        'allow_network' => !is_limited_apk(),
                         'allow_image_lib' => true,
                         'allow_reset' => true,
                         'read_only' => true,

@@ -1338,7 +1338,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
-                if (with_network_manager()) {
+                if (!is_limited_apk()) {
                     $is_external = $this->plugin->tv->get_channels_for_ext_player()->in_order($channel_id);
                     $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_EXTERNAL_PLAYER,

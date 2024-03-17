@@ -371,14 +371,6 @@ function is_limited_apk()
 }
 
 /**
- * return is shell is FW APK.
- * @return bool
- */
-function with_network_manager() {
-    return !is_limited_apk();
-}
-
-/**
  * return type of platform: android, apk, 8670, etc.
  * @return array
  */
