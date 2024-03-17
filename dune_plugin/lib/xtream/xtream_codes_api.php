@@ -95,7 +95,7 @@ class xtream_codes_api
      */
     public function get_categories($stream_type = self::VOD)
     {
-        return $this->get_cached_response($this->get_categories_url($stream_type), false);
+        return $this->get_cached_response($this->get_categories_url($stream_type));
     }
 
     /**
