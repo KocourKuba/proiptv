@@ -2824,11 +2824,6 @@ class Default_Dune_Plugin implements DunePlugin
         if ($is_new) {
             $id = "{$provider->getId()}_$id";
             $settings = $this->get_settings($id);
-            $dune_params = $provider->getConfigValue(PARAM_DUNE_PARAMS);
-            if (!empty($dune_params)) {
-                $settings[PARAM_DUNE_PARAMS] = $dune_params;
-            }
-
             $epg_preset = $provider->getConfigValue(EPG_JSON_PRESET);
             if (!empty($epg_preset)) {
                 $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
@@ -2870,9 +2865,8 @@ class Default_Dune_Plugin implements DunePlugin
             $info .= "Timeshift hours: " . $channel->get_timeshift_hours() . PHP_EOL;
         }
         $info .= "Category: " . $channel->get_parent_group()->get_id() . PHP_EOL;
-
+        $info .= "Icon: " . wrap_string_to_lines($channel->get_icon_url(), 70) . PHP_EOL;
         $info .= PHP_EOL;
-        $info .= "Icon URL: " . wrap_string_to_lines($channel->get_icon_url(), 70) . PHP_EOL;
 
         try {
             $live_url = $this->tv->generate_stream_url($channel_id, -1, true);
@@ -2892,7 +2886,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $dune_params = $this->tv->generate_dune_params($channel);
         if (!empty($dune_params)) {
-            $info .= PHP_EOL . "Params: $dune_params" . PHP_EOL;
+            $info .= "dune_params: " . substr($dune_params, strlen(HD::DUNE_PARAMS_MAGIC)) . PHP_EOL;
         }
 
         if (!empty($live_url) && !is_limited_apk()) {
@@ -2926,11 +2920,11 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
-        Control_Factory::add_multiline_label($defs, null, $info, 12);
-        Control_Factory::add_vgap($defs, 20);
+        Control_Factory::add_multiline_label($defs, null, $info, 18);
+        Control_Factory::add_vgap($defs, 10);
 
         $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            1160,
+            1200,
             get_image_path('page_plus_btn.png'),
             get_image_path('page_minus_btn.png'),
             DEF_LABEL_TEXT_COLOR_SILVER,
@@ -2942,7 +2936,7 @@ class Default_Dune_Plugin implements DunePlugin
         Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1700);
+        return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1750);
     }
 
     /**

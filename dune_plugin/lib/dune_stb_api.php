@@ -1987,3 +1987,23 @@ function register_all_known_events($handler, &$actions)
         }
     }
 }
+
+function dune_params_to_array($str)
+{
+    $params_array = array();
+    $dune_params = explode(',', $str);
+    foreach ($dune_params as $param) {
+        $param_pair = explode(':', $param);
+        if (empty($param_pair) || count($param_pair) < 2) continue;
+
+        $param_pair[0] = trim($param_pair[0]);
+        if (strpos($param_pair[1], ",,") !== false) {
+            $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
+        } else {
+            $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
+        }
+
+        $params_array[$param_pair[0]] = $param_pair[1];
+    }
+    return $params_array;
+}

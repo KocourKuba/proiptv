@@ -142,7 +142,8 @@
         "xmltv_sources": [
           "http://only4.tv/epg/epg.xml.gz",
           "https://iptvx.one/epg/epg.xml.gz"
-        ]
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -163,7 +164,8 @@
         "streams": {
           "unix.m3u8": "HLS",
           "ottplay.m3u": "MPEG-TS"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -191,7 +193,8 @@
           "http://epg.team/tvteam.3.3.xml.tar.gz",
           "http://epg.team/tvteam.5.5.xml.tar.gz",
           "http://epg.team/tvteam.7.7.xml.tar.gz"
-        ]
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -205,7 +208,8 @@
       },
       "config": {
         "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
-        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/"
+        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -228,7 +232,8 @@
           "x-public-key": "{PASSWORD}"
         },
         "epg_preset": "cbilling",
-        "vod_custom": true
+        "vod_custom": true,
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -243,7 +248,8 @@
       "config": {
         "id_map": "tvg-id",
         "epg_preset": "drm",
-        "epg_alias": "bcu"
+        "epg_alias": "bcu",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -275,7 +281,8 @@
           "3": "3"
         },
         "epg_preset": "cbilling",
-        "vod_custom": true
+        "vod_custom": true,
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -337,7 +344,8 @@
           "5": "Saint Petersburg",
           "9": "Moscow 2",
           "10": "Saint Petersburg 2"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -353,7 +361,8 @@
       "config": {
         "epg_preset": "drm",
         "epg_alias": "fox-tv",
-        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/"
+        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -381,7 +390,8 @@
           "ottg.space": "ottg.space",
           "ottg.eu": "ottg.eu"
         },
-        "vod_custom": true
+        "vod_custom": true,
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -402,7 +412,8 @@
           "-m3u8": "HLS",
           "?": "MPEG-TS"
         },
-        "vod_custom": true
+        "vod_custom": true,
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -433,7 +444,8 @@
           "ca.iptv.monster": "Canada",
           "gr.iptv.monster": "Greece",
           "ukr.iptv.monster": "Ukraine"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -458,7 +470,8 @@
         "streams": {
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -478,7 +491,8 @@
           "PL": "PL",
           "US": "US",
           "RU": "RU"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -495,7 +509,8 @@
         "streams": {
           "hls": "HLS",
           "ts": "MPEG-TS"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -517,7 +532,8 @@
         "streams": {
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -544,7 +560,8 @@
         "qualities": {
           "medium": "Medium",
           "high": "High"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -563,7 +580,8 @@
         "domains": {
           "myott.top": "myott.top",
           "myott.tv": "myott.tv"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -577,7 +595,8 @@
         "vod": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
-        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/"
+        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -594,7 +613,8 @@
       "config": {
         "epg_preset": "drm",
         "epg_alias": "fox-tv",
-        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/"
+        "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -608,7 +628,8 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "cbilling"
+        "epg_preset": "cbilling",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -622,7 +643,8 @@
         "vod": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/vod.m3u"
       },
       "config": {
-        "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/"
+        "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -653,7 +675,8 @@
           "serv7.iptv11.com": "Netherlands 1",
           "serv3.iptv11.com": "Netherlands 2",
           "serv4.iptv11.com": "Netherlands 3"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -668,7 +691,8 @@
       "config": {
         "id_map": "tvg-id",
         "epg_preset": "drm",
-        "epg_alias": "shara-tv"
+        "epg_alias": "shara-tv",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -693,7 +717,8 @@
           "m3u8": "HLS",
           "m3u": "MPEG-TS"
         },
-        "vod_custom": true
+        "vod_custom": true,
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -728,7 +753,8 @@
           "eu01.spr24.net": "Europe (EU01)",
           "pl01.spr24.net": "Poland (PL01)"
         },
-        "vod_custom": true
+        "vod_custom": true,
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -746,7 +772,8 @@
         "servers": {
           "0": "Server 1",
           "1": "Server 2"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -767,7 +794,8 @@
           "3": "Server NL",
           "4": "Server RU"
         },
-        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/"
+        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -788,7 +816,8 @@
         "epg_preset": "tvclub",
         "streams": {
           "mpegts": "MPEG-TS"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -823,7 +852,8 @@
           "ca.seetv.cc": "Canada",
           "gr.seetv.cc": "Greece",
           "ukr.seetv.cc": "Ukraine"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -851,7 +881,8 @@
           "http://epg.team/tvteam.3.3.xml.tar.gz",
           "http://epg.team/tvteam.5.5.xml.tar.gz",
           "http://epg.team/tvteam.7.7.xml.tar.gz"
-        ]
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -869,7 +900,8 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "vidok"
+        "epg_preset": "vidok",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -900,7 +932,8 @@
           "low": "Medium",
           "variant": "Adaptive",
           "hls": "Optimal"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
     {
@@ -926,7 +959,8 @@
           "kz/": "KZ (Kazakhstan, Almaty/Russia, Samara)",
           "gn/": "GN (Ukraine, Kiev)",
           "RHLS/": "RHLS (GlobalCache CDN)"
-        }
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }
   ]

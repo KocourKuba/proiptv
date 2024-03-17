@@ -1064,7 +1064,7 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             $archive_url = $channel->get_archive_url();
-            hd_debug_print("catchup params: $catchup");
+            hd_debug_print("catchup params: $catchup", true);
             if (empty($archive_url)) {
                 if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_shift, $catchup)) {
                     $archive_url = $stream_url
@@ -1159,10 +1159,18 @@ class Starnet_Tv implements User_Input_Handler
     public function generate_dune_params(Channel $channel)
     {
         $ext_params = $channel->get_ext_params();
-        $system_dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS);
-        if (!empty($system_dune_params)) {
-            $dune_params = array_slice($system_dune_params, 0);
+        $plugin_dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS);
+        if (!empty($plugin_dune_params)) {
+            $plugin_dune_params = array_slice($plugin_dune_params, 0);
         }
+
+        $provider = $this->plugin->get_current_provider();
+        $provider_dune_params = array();
+        if (!is_null($provider)) {
+            $provider_dune_params = dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS));
+        }
+
+        $dune_params = array_unique(array_merge($provider_dune_params, $plugin_dune_params));
 
         if (!empty($ext_params[PARAM_EXT_VLC_OPTS])) {
             $ext_vlc_opts = array();
@@ -1248,7 +1256,10 @@ class Starnet_Tv implements User_Input_Handler
             return "";
         }
 
-        return HD::DUNE_PARAMS_MAGIC . str_replace('=', ':', http_build_query($dune_params, null, ','));
+        $params = HD::DUNE_PARAMS_MAGIC . str_replace('=', ':', http_build_query($dune_params, null, ','));
+        hd_debug_print("dune_params: $params");
+
+        return $params;
     }
 
     /**
