@@ -4,17 +4,22 @@
       "editor": {
         "name": "IPTV Channel Editor",
         "package": "icons_pack_editor.zip",
-        "url": "https://www.dropbox.com/scl/fi/4ro320e1mbdby78awqpyk/icons_pack_editor.zip?rlkey=whzmvdw418zms746qj2tkgl8j&dl=1"
+        "url": "https://dl.dropboxusercontent.com/scl/fi/4ro320e1mbdby78awqpyk/icons_pack_editor.zip?rlkey=whzmvdw418zms746qj2tkgl8j"
       },
       "xemu": {
         "name": "Xemu",
         "package": "icon_pack_xemu.zip",
-        "url": "https://www.dropbox.com/scl/fi/qavhqtpins771cacgsprg/icon_pack_xemu.zip?rlkey=pjpfqr8fipqnzf05pjwov2on4&dl=1"
+        "url": "https://dl.dropboxusercontent.com/scl/fi/qavhqtpins771cacgsprg/icon_pack_xemu.zip?rlkey=pjpfqr8fipqnzf05pjwov2on4"
       },
       "viktor": {
         "name": "Viktor",
         "package": "icon_pack_viktor.zip",
-        "url": "https://www.dropbox.com/scl/fi/kh6nvfodicsx62s5f4vjy/icon_pack_viktor.zip?rlkey=oj3eec3i9oew813cay5cqj718&dl=1"
+        "url": "https://dl.dropboxusercontent.com/scl/fi/kh6nvfodicsx62s5f4vjy/icon_pack_viktor.zip?rlkey=oj3eec3i9oew813cay5cqj718"
+      },
+      "zedoar": {
+        "name": "Zedoar",
+        "package": "icon_pack_zedoar.zip",
+        "url": "https://dl.dropboxusercontent.com/scl/fi/g4z1tbnr915eukb4bwj7u/icon_pack_zedoar.zip?rlkey=agq5ql9tlwwuym7ysj8n20mji"
       }
     }
   },
