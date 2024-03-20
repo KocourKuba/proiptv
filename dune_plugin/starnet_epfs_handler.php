@@ -154,7 +154,13 @@ class Starnet_Epfs_Handler
             $arr = $media_urls;
         }
 
-        return Action_Factory::invalidate_folders($arr, Action_Factory::invalidate_folders($except_media_urls, $post_action, true));
+        if ($except_media_urls !== null) {
+            $post_invalidate = Action_Factory::invalidate_folders($except_media_urls, $post_action, true);
+        } else {
+            $post_invalidate = $post_action;
+        }
+
+        return Action_Factory::invalidate_folders($arr, $post_invalidate);
     }
 
     /**
