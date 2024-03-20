@@ -1014,7 +1014,7 @@ class Default_Dune_Plugin implements DunePlugin
      *
      * @param string $id
      * @param mixed|null $default
-     * @return Hashed_Array<string, HistoryItem>|Ordered_Array
+     * @return Hashed_Array<string, History_Item>|Ordered_Array
      */
     public function &get_history($id, $default = null)
     {

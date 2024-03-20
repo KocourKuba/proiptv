@@ -1328,7 +1328,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             if ($media_url->group_id === HISTORY_GROUP_ID) {
                 hd_debug_print("in history rows", true);
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");
-            } else if ($media_url->group_id === FAVORITES_GROUP_ID && !is_apk()) {
+            } else if ($media_url->group_id === FAVORITES_GROUP_ID && !is_limited_apk()) {
                 hd_debug_print("in favorites rows", true);
                 $menu_items[] = $this->plugin->create_menu_item($this, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), "star.png");
             } else {
@@ -1363,7 +1363,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), "info.png");
             }
 
-            if (is_apk()) {
+            if (is_limited_apk()) {
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 if ($media_url->group_id === FAVORITES_GROUP_ID) {
                     $menu_items[] = $this->plugin->create_menu_item($this,

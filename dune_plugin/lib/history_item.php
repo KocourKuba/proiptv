@@ -1,6 +1,6 @@
 <?php
 
-class HistoryItem
+class History_Item
 {
     /**
      * @var bool $watched

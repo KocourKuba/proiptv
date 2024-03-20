@@ -121,7 +121,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $viewed_items = &$this->plugin->get_history(HISTORY_MOVIES);
                 $movie_info = $viewed_items->get($selected_media_url->movie_id);
                 if ((isset($user_input->{ACTION_WATCHED}) && $user_input->{ACTION_WATCHED} !== false) || is_null($movie_info)) {
-                    $history_item[$selected_media_url->episode_id] = new HistoryItem(true, 0, 0, time());
+                    $history_item[$selected_media_url->episode_id] = new History_Item(true, 0, 0, time());
 
                     $viewed_items->set($selected_media_url->movie_id, $history_item);
                 } else if ($movie_info->watched) {
@@ -185,7 +185,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
         hd_debug_print("Movie: " . raw_json_encode($movie), true);
         /** @var Hashed_Array $viewed_items */
         $viewed_items = $this->plugin->get_history(HISTORY_MOVIES);
-        /** @var HistoryItem[] $movie_info */
+        /** @var History_Item[] $movie_info */
         $movie_info = $viewed_items->get($media_url->movie_id);
         $viewed_item = is_null($movie_info) ? array() : $movie_info;
 

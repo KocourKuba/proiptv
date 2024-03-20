@@ -203,7 +203,7 @@ class Movie implements User_Input_Handler
             $history_item = array();
         }
 
-        $history_item[$series_idx] = new HistoryItem(
+        $history_item[$series_idx] = new History_Item(
             $watched,
             $user_input->plugin_vod_stop_position,
             $user_input->plugin_vod_duration,
@@ -476,7 +476,7 @@ class Movie implements User_Input_Handler
             $name = $episode->name;
             $ids = explode(':', $media_url->movie_id);
             $movie_id = $ids[0];
-            /** @var HistoryItem $viewed_series */
+            /** @var History_Item $viewed_series */
             $viewed_series = $this->plugin->get_history(HISTORY_MOVIES)->get($movie_id);
             if (!is_null($viewed_series) && isset($viewed_series[$episode->id])) {
                 $info = $viewed_series[$episode->id];
