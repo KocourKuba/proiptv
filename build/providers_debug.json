@@ -788,6 +788,7 @@
         "vod": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}"
       },
       "config": {
+        "epg_preset": "drm",
         "servers": {
           "0": "Auto Select",
           "1": "Server CZ",
