@@ -110,16 +110,14 @@ class Epg_Manager_Json extends Epg_Manager
         $all_epg = array();
         if (file_exists($epg_cache_file)) {
             $now = time();
-            $check_time_file = filemtime($epg_cache_file);
-            $file_time = date("H:i", $check_time_file);
-            $expiration_time = date("H:i", $check_time_file + 3600);
-            if ($check_time_file + 3600 > time()) {
-                $all_epg = HD::ReadContentFromFile($epg_cache_file);
+            $max_check_time = 3600 * 3;
+            $cache_expired = filemtime($epg_cache_file) + $max_check_time;
+            if ($cache_expired > time()) {
+                $all_epg = unserialize(file_get_contents($epg_cache_file));
                 $from_cache = true;
-                hd_debug_print("Cached file: $epg_cache_file is not expired $file_time date expiration: $expiration_time");
                 hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
             } else {
-                hd_debug_print("Cache expired at $expiration_time now " . date("H:i", $now));
+                hd_debug_print("Cache expired at $cache_expired now $now");
                 unlink($epg_cache_file);
             }
         }
