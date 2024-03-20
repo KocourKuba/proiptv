@@ -66,20 +66,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // XMLTV sources
-
-        Control_Factory::add_image_button($defs, $this, null, ACTION_ITEMS_EDIT,
-            TR::t('setup_edit_xmltv_list'), TR::t('edit'), get_image_path('edit.png'), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
-        // EPG cache dir
-        $cache_dir = $this->plugin->get_cache_dir();
-        $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
-        $cache_dir = HD::string_ellipsis($cache_dir . DIRECTORY_SEPARATOR);
-        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
-            $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
         // EPG cache engine
         $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         $cache_engine[ENGINE_XMLTV] = TR::t('setup_epg_cache_xmltv');
@@ -91,11 +77,29 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             }
         }
 
-        Control_Factory::add_combobox($defs, $this, null,
-            PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
-            $engine, $cache_engine, self::CONTROLS_WIDTH, true);
+        if (count($cache_engine) > 1) {
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
+                $engine, $cache_engine, self::CONTROLS_WIDTH, true);
+        } else if (count($cache_engine) === 1) {
+            Control_Factory::add_button($defs, $this,null, "dummy",
+                TR::t('setup_epg_cache_engine'), reset($cache_engine), self::CONTROLS_WIDTH);
+        }
 
         if ($engine === ENGINE_XMLTV) {
+            //////////////////////////////////////
+            // XMLTV sources
+            Control_Factory::add_image_button($defs, $this, null, ACTION_ITEMS_EDIT,
+                TR::t('setup_edit_xmltv_list'), TR::t('edit'), get_image_path('edit.png'), self::CONTROLS_WIDTH);
+
+            //////////////////////////////////////
+            // EPG cache dir
+            $cache_dir = $this->plugin->get_cache_dir();
+            $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
+            $cache_dir = HD::string_ellipsis($cache_dir . DIRECTORY_SEPARATOR);
+            Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
+                $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
+
             //////////////////////////////////////
             // EPG cache
             $epg_cache_ops = array();
@@ -112,6 +116,12 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             Control_Factory::add_combobox($defs, $this, null,
                 PARAM_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
                 $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
+
+            //////////////////////////////////////
+            // clear epg cache
+            Control_Factory::add_image_button($defs, $this, null,
+                self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear_all'), TR::t('clear'),
+                get_image_path('brush.png'), self::CONTROLS_WIDTH);
         }
 
         //////////////////////////////////////
@@ -120,12 +130,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SetupControlSwitchDefs::$on_off_translated[$fake_epg],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$fake_epg]), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
-        // clear epg cache
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear_all'), TR::t('clear'),
-            get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg time shift
