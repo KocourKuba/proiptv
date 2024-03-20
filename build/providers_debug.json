@@ -207,6 +207,7 @@
         "playlist": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u"
       },
       "config": {
+        "epg_preset": "drm",
         "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
         "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
