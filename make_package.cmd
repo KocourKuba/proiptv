@@ -41,6 +41,7 @@ echo %CREDS%
   /log="%~dp0WinSCP.log" /ini=nul ^
   /command ^
     "open %CREDS%" ^
+	"cd update" ^
 	"put update_proiptv.tar.gz" ^
 	"put update_proiptv.xml" ^
 	"cd ../config" ^
