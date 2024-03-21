@@ -67,7 +67,7 @@ $xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$ve
 file_put_contents("./dune_plugin/$plugin_metadata", $xml);
 
 $text = file_get_contents("./build/changelog.md");
-$text = str_replace('{plugin_version}', $full_version, $text);
+$text = str_replace('{latest_version}', $full_version, $text);
 file_put_contents("./dune_plugin/changelog.md", $text);
 $providers = ($is_debug === 'debug') ? "providers_debug.json" :  "providers_$version.json";
 copy("./build/$providers", "./dune_plugin/$providers");
