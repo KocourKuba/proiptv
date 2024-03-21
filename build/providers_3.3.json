@@ -427,6 +427,8 @@
         "playlist": "http://iptv.online/play/{PASSWORD}/m3u8"
       },
       "config": {
+        "epg_preset": "drm",
+        "epg_alias": "iptv.online",
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "url_subst": {
@@ -534,7 +536,8 @@
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
+        "xmltv_picons": true
       }
     },
     {
