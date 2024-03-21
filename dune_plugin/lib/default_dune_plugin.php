@@ -2824,6 +2824,11 @@ class Default_Dune_Plugin implements DunePlugin
         if ($is_new) {
             $id = "{$provider->getId()}_$id";
             $settings = $this->get_settings($id);
+            $xmltv_picons = $provider->getConfigValue(XMLTV_PICONS);
+            if ($xmltv_picons) {
+                $settings[PARAM_USE_PICONS] = XMLTV_PICONS;
+            }
+
             $epg_preset = $provider->getConfigValue(EPG_JSON_PRESET);
             if (!empty($epg_preset)) {
                 $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;

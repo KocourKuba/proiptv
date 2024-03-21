@@ -218,6 +218,7 @@ const EPG_JSON_PRESET = 'epg_preset';
 const EPG_JSON_SOURCE = 'json_source';
 const EPG_JSON_PARSER = 'parser';
 const EPG_JSON_ALIAS = 'epg_alias';
+const ICON_SOURCE = 'epg_preset';
 
 # HTTP params
 const USER_AGENT = 'User-Agent';
