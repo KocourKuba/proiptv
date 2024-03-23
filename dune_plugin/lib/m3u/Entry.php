@@ -137,7 +137,7 @@ class Entry extends Json_Serializer
         $attributes = array();
         if (!is_null($this->tags) && is_null($tag)) {
             foreach ($this->tags as $item) {
-                safe_merge_array($attributes, $item->getAttributes());
+                $attributes = safe_merge_array($attributes, $item->getAttributes());
             }
         } else if ($this->hasTag($tag)) {
             $attributes = $this->getEntryTag($tag);
@@ -202,16 +202,17 @@ class Entry extends Json_Serializer
      */
     public function getAnyEntryAttribute($attrs, $tag = null, &$found_attr = null)
     {
-        foreach ($attrs as $attr) {
-            $val = $this->getEntryAttribute($attr, $tag);
-            if (empty($val)) continue;
+        if (is_array($attrs)) {
+            foreach ($attrs as $attr) {
+                $val = $this->getEntryAttribute($attr, $tag);
+                if (empty($val)) continue;
 
-            if ($found_attr !== null) {
-                $found_attr = $attr;
+                if ($found_attr !== null) {
+                    $found_attr = $attr;
+                }
+                return $val;
             }
-            return $val;
         }
-
         return '';
     }
 

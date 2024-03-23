@@ -2020,7 +2020,8 @@ class Default_Dune_Plugin implements DunePlugin
         /** @var Hashed_Array $sources */
         $xmltv_sources = new Hashed_Array();
         foreach ($this->tv->get_m3u_parser()->getXmltvSources() as $m3u8source) {
-            if (!preg_match(HTTP_PATTERN, $m3u8source, $m)) continue;
+            if (!preg_match(HTTP_PATTERN, $m3u8source, $m)
+                || preg_match("/jtv.?\.zip$/", basename($m3u8source))) continue;
 
             $item = new Named_Storage();
             $item->type = PARAM_LINK;

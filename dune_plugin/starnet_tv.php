@@ -600,8 +600,20 @@ class Starnet_Tv implements User_Input_Handler
             return 0;
         }
 
-        $this->catchup = $this->m3u_parser->getM3uInfo()->getCatchup();
-        $global_catchup_source = $this->m3u_parser->getM3uInfo()->getCatchupSource();
+        foreach ($this->catchup = $this->m3u_parser->getM3uInfo() as $entry) {
+            $catchup = $entry->getCatchup();
+            if (!empty($catchup)) {
+                $this->catchup = $catchup;
+                break;
+            }
+        }
+        foreach ($this->m3u_parser->getM3uInfo() as $entry) {
+            $catchup = $entry->getCatchupSource();
+            if (!empty($catchup)) {
+                $global_catchup_source = $catchup;
+                break;
+            }
+        }
         $icon_base_url = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
         if (!empty($icon_base_url)) {
             hd_debug_print("Using base url for icons: $icon_base_url");
@@ -1170,7 +1182,8 @@ class Starnet_Tv implements User_Input_Handler
             $provider_dune_params = dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS));
         }
 
-        $dune_params = array_unique(array_merge($provider_dune_params, $plugin_dune_params));
+        $all_params = array_merge($provider_dune_params, $plugin_dune_params);
+        $dune_params = array_unique($all_params);
 
         if (!empty($ext_params[PARAM_EXT_VLC_OPTS])) {
             $ext_vlc_opts = array();

@@ -38,7 +38,7 @@ class M3uParser extends Json_Serializer
     protected $m3u_entries;
 
     /**
-     * @var Entry
+     * @var Entry[]
      */
     protected $m3u_info;
 
@@ -51,11 +51,6 @@ class M3uParser extends Json_Serializer
      * @var SplFileObject
      */
     private $m3u_file;
-
-    public function __construct()
-    {
-        $this->m3u_info = new Entry();
-    }
 
     /**
      * @param string $file_name
@@ -110,7 +105,7 @@ class M3uParser extends Json_Serializer
                     $entry = new Entry();
                     break;
                 case 2: // parse m3u header done
-                    $this->m3u_info = $entry;
+                    $this->m3u_info[] = $entry;
                     $entry = new Entry();
                     break;
                 default: // parse fail or parse partial, continue parse with same entry
@@ -197,7 +192,7 @@ class M3uParser extends Json_Serializer
                     $entry = new Entry();
                     break;
                 case 2: // parse m3u header done
-                    $this->m3u_info = $entry;
+                    $this->m3u_info[] = $entry;
                     $entry = new Entry();
                     break;
                 default: // parse fail or parse partial, continue parse with same entry
@@ -317,7 +312,7 @@ class M3uParser extends Json_Serializer
     }
 
     /**
-     * @return Entry
+     * @return Entry[]
      */
     public function getM3uInfo()
     {
@@ -349,7 +344,13 @@ class M3uParser extends Json_Serializer
      */
     public function getHeaderAttributes($tag = null)
     {
-        return $this->m3u_info->getEntryAttributes($tag);
+        $attributes = array();
+        foreach ($this->m3u_info as $entry) {
+            foreach ($entry->getEntryAttributes($tag) as $attr) {
+                $attributes[] = $attr;
+            }
+        }
+        return array_unique($attributes);
     }
 
     /**
@@ -362,7 +363,14 @@ class M3uParser extends Json_Serializer
      */
     public function getHeaderAttribute($name, $tag = null)
     {
-        return is_array($name) ? $this->m3u_info->getAnyEntryAttribute($name, $tag) : $this->m3u_info->getEntryAttribute($name, $tag);
+        foreach ($this->m3u_info as $entry) {
+            $attr = $entry->getAnyEntryAttribute($name, $tag);
+            if (!empty($attr)) {
+                return $attr;
+            }
+        }
+
+        return "";
     }
 
     /**
@@ -372,11 +380,14 @@ class M3uParser extends Json_Serializer
     {
         if (is_null($this->xmltv_sources)) {
             $this->xmltv_sources = new Ordered_Array();
-            foreach ($this->m3u_info->getEpgSources() as $value) {
-                $urls = explode(',', $value);
-                foreach ($urls as $url) {
-                    if (!empty($url) && preg_match(HTTP_PATTERN, $url)) {
-                        $this->xmltv_sources->add_item($url);
+            foreach ($this->m3u_info as $entry) {
+                $arr = $entry->getEpgSources();
+                foreach ($arr as $value) {
+                    $urls = explode(',', $value);
+                    foreach ($urls as $url) {
+                        if (!empty($url) && preg_match(HTTP_PATTERN, $url)) {
+                            $this->xmltv_sources->add_item($url);
+                        }
                     }
                 }
             }
@@ -392,7 +403,7 @@ class M3uParser extends Json_Serializer
     {
         unset($this->m3u_entries, $this->m3u_info);
         $this->m3u_entries = array();
-        $this->m3u_info = new Entry();
+        $this->m3u_info = array();
         $this->xmltv_sources = null;
     }
 }
