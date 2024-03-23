@@ -820,7 +820,7 @@
       }
     },
     {
-      "enable": false,
+      "enable": true,
       "id": "topiptv",
       "name": "TopIPTV",
       "type": "login",
