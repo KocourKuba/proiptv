@@ -2546,7 +2546,11 @@ class Default_Dune_Plugin implements DunePlugin
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
                 $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
             }
+        }
 
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+
+        if (!is_null($provider)) {
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_EDIT_PROVIDER_DLG,
                 TR::t('edit_account'),
@@ -2554,6 +2558,12 @@ class Default_Dune_Plugin implements DunePlugin
                 array(PARAM_PROVIDER => $provider->getId())
             );
         }
+
+        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
+            TR::t('setup_channels_src_edit_playlists'), "m3u_file.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) );
+
+        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
+            TR::t('setup_edit_xmltv_list'), "epg.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) );
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
