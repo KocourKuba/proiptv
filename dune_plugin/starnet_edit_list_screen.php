@@ -44,6 +44,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_CHOOSE_FILE = 'choose_file';
     const ACTION_ADD_URL_DLG = 'add_url_dialog';
     const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
+    const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ITEM_SET_NAME = 'set_name';
     const ITEM_EDIT = 'edit';
 
@@ -259,9 +260,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->create_popup_menu($user_input);
 
             case ACTION_ITEMS_CLEAR:
-                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CLEAR_APPLY);
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, self::ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
-            case self::ACTION_CLEAR_APPLY:
+            case self::ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 switch ($edit_list) {
                     case self::SCREEN_EDIT_EPG_LIST:
                     case self::SCREEN_EDIT_PLAYLIST:

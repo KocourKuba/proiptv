@@ -39,6 +39,7 @@ by_default = По умолчанию
 channel_name = Название канала
 attribute_name__1 = M3U атрибут '%s'
 yes_no_confirm_msg = Вы уверены?
+yes_no_confirm_clear_all_msg = Вы уверены что хотите очистить список?
 sort_popup_menu = Сортировки
 sort_groups = Сортировать категории по имени
 sort_channels = Сортировать каналы по имени
