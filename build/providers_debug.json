@@ -128,6 +128,22 @@
   "providers": [
     {
       "enable": true,
+      "id": "101film",
+      "name": "101film",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_101film.png",
+      "api_commands": {
+        "playlist": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u"
+      },
+      "config": {
+        "epg_preset": "drm",
+        "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
+        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "1cent",
       "name": "1cent",
       "type": "pin",
@@ -199,22 +215,6 @@
     },
     {
       "enable": true,
-      "id": "101film",
-      "name": "101film",
-      "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_101film.png",
-      "api_commands": {
-        "playlist": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u"
-      },
-      "config": {
-        "epg_preset": "drm",
-        "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
-        "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
       "id": "antifriz",
       "name": "Antifriz",
       "type": "pin",
@@ -250,6 +250,21 @@
         "id_map": "tvg-id",
         "epg_preset": "drm",
         "epg_alias": "bcu",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "bittv",
+      "name": "BitTV",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_bittv.png",
+      "api_commands": {
+        "playlist": "https://bittv.ltd/playlists/{LOGIN}:{PASSWORD}/playlist.m3u"
+      },
+      "config": {
+        "epg_preset": "drm",
+        "epg_alias": "iptvx.one",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -352,7 +367,7 @@
     {
       "enable": true,
       "id": "fox",
-      "name": "Fox-IPTV",
+      "name": "Fox TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_fox.png",
       "api_commands": {
@@ -570,6 +585,21 @@
     },
     {
       "enable": true,
+      "id": "onlineott",
+      "name": "OnlineOTT TV",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_onlineott.png",
+      "api_commands": {
+        "playlist": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
+        "vod": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/vodall.m3u"
+      },
+      "config": {
+        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "ottclub",
       "name": "OTT Club",
       "type": "pin",
@@ -585,21 +615,6 @@
           "myott.top": "myott.top",
           "myott.tv": "myott.tv"
         },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
-      "id": "onlineott",
-      "name": "OnlineOTT TV",
-      "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_onlineott.png",
-      "api_commands": {
-        "playlist": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
-        "vod": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/vodall.m3u"
-      },
-      "config": {
-        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -623,21 +638,6 @@
     },
     {
       "enable": true,
-      "id": "russkoetv",
-      "name": "RusskoeTV",
-      "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
-      "api_commands": {
-        "playlist": "https://russkoetv.tv/play/{PASSWORD}.m3u8"
-      },
-      "config": {
-        "id_map": "tvg-id",
-        "epg_preset": "cbilling",
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
       "id": "rutv",
       "name": "RU TV",
       "type": "login",
@@ -648,6 +648,21 @@
       },
       "config": {
         "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "russkoetv",
+      "name": "RusskoeTV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
+      "api_commands": {
+        "playlist": "https://russkoetv.tv/play/{PASSWORD}.m3u8"
+      },
+      "config": {
+        "id_map": "tvg-id",
+        "epg_preset": "cbilling",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -827,6 +842,35 @@
     },
     {
       "enable": true,
+      "id": "tvteam",
+      "name": "TV Team",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
+      "api_commands": {
+        "playlist": "https://tv.team/pl/11/{PASSWORD}/playlist.m3u8"
+      },
+      "config": {
+        "id_map": "tvg-name",
+        "url_subst": {
+          "regex": "/^(.+\\/\\/.+\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
+          "replace": "$1{STREAM_ID}$2"
+        },
+        "streams": {
+          "mono.m3u8": "HLS",
+          "mpegts": "MPEG-TS"
+        },
+        "epg_preset": "tvteam",
+        "xmltv_sources": [
+          "http://epg.team/tvteam.xml.gz",
+          "http://epg.team/tvteam.3.3.xml.tar.gz",
+          "http://epg.team/tvteam.5.5.xml.tar.gz",
+          "http://epg.team/tvteam.7.7.xml.tar.gz"
+        ],
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "tvizi",
       "name": "TVIZI Net",
       "type": "pin",
@@ -858,35 +902,6 @@
           "gr.seetv.cc": "Greece",
           "ukr.seetv.cc": "Ukraine"
         },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
-      "id": "tvteam",
-      "name": "TV Team",
-      "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
-      "api_commands": {
-        "playlist": "https://tv.team/pl/11/{PASSWORD}/playlist.m3u8"
-      },
-      "config": {
-        "id_map": "tvg-name",
-        "url_subst": {
-          "regex": "/^(.+\\/\\/.+\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
-          "replace": "$1{STREAM_ID}$2"
-        },
-        "streams": {
-          "mono.m3u8": "HLS",
-          "mpegts": "MPEG-TS"
-        },
-        "epg_preset": "tvteam",
-        "xmltv_sources": [
-          "http://epg.team/tvteam.xml.gz",
-          "http://epg.team/tvteam.3.3.xml.tar.gz",
-          "http://epg.team/tvteam.5.5.xml.tar.gz",
-          "http://epg.team/tvteam.7.7.xml.tar.gz"
-        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
