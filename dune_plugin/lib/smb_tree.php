@@ -29,7 +29,6 @@ require_once 'hd.php';
 class smb_tree
 {
     private $descriptor_spec;
-    private $env = array('LD_LIBRARY_PATH' => '/tango/firmware/lib');
     private $smb_tree_output = '';
     private $return_value = 0;
     private $no_pass = true;
@@ -65,9 +64,10 @@ class smb_tree
      */
     private function execute($args = '')
     {
-        $cmd = "/tango/firmware/bin/smbtree {$this->get_auth_options()} {$this->get_debug_level()} $args";
+        $cmd = '$FS_PREFIX' . "/firmware/bin/smbtree {$this->get_auth_options()} {$this->get_debug_level()} $args";
         hd_debug_print("smbtree exec: $cmd", true);
-        $process = proc_open($cmd, $this->descriptor_spec, $pipes, '/tmp', $this->env);
+        $env = array('LD_LIBRARY_PATH' => '$FS_PREFIX/firmware/lib');
+        $process = proc_open($cmd, $this->descriptor_spec, $pipes, '/tmp', $env);
 
         if (is_resource($process)) {
             $this->smb_tree_output = stream_get_contents($pipes[1]);
@@ -147,9 +147,20 @@ class smb_tree
 
     public static function get_nmblookup_path()
     {
-        return is_apk()
-            ? 'export LD_LIBRARY_PATH=$FS_PREFIX/lib:$LD_LIBRARY_PATH&&$FS_PREFIX/bin/nmblookup --configfile=$FS_PREFIX/etc/samba/smb.conf '
-            : 'export LD_LIBRARY_PATH=/firmware/lib:$LD_LIBRARY_PATH&&/firmware/bin/nmblookup ';
+        $cmd = '&&$FS_PREFIX/firmware_ext/smbserver/bin/nmblookup --configfile=$FS_PREFIX/etc/samba/smb.conf';
+        if (file_exists("/firmware_ext/smbserver/lib")) {
+            // android
+            $path = 'export LD_LIBRARY_PATH=$FS_PREFIX/firmware_ext/smbserver/lib:$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH';
+        } else if (file_exists("/firmware/bin/nmblookup")) {
+            // sigma
+            $path = 'export LD_LIBRARY_PATH=/firmware/lib:$LD_LIBRARY_PATH';
+            $cmd = '&&/firmware/bin/nmblookup';
+        } else {
+            $path = 'export LD_LIBRARY_PATH=$FS_PREFIX/lib:$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH';
+        }
+
+        hd_debug_print("nmblookup: $path$cmd");
+        return $path . $cmd;
     }
 
     public static function get_network_folder_smb()
@@ -385,21 +396,24 @@ class smb_tree
 
     public function get_mount_all_smb($info)
     {
-        if ($info !== 3) { // not SMB search
-            $folders = self::get_mount_smb(self::get_ip_network_folder_smb());
-
-            if ($info === 1) { // only network folders
-                return $folders;
-            }
+        switch ($info) {
+            case 1:
+                // only network folders
+                $ip = self::get_ip_network_folder_smb();
+                break;
+            case 2:
+                // network folders and network folders + SMB search
+                $ip = array_merge($this->get_ip_server_shares_smb(), self::get_ip_network_folder_smb());
+                break;
+            case 3:
+                // only SMB search
+                $ip = $this->get_ip_server_shares_smb();
+                break;
+            default:
+                $ip = array();
         }
 
-        $shares = self::get_mount_smb($this->get_ip_server_shares_smb());
-        if ($info === 3) { // only SMB search
-            return $shares;
-        }
-
-        // network folders and network folders + SMB search
-        return array_merge($shares, $folders);
+        return self::get_mount_smb($ip);
     }
 
     public static function get_network_folder_nfs()

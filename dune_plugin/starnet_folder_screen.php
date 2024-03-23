@@ -107,7 +107,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             $allow_network = isset($media_url->allow_network) && $media_url->allow_network;
             $allow_image_lib = isset($media_url->allow_image_lib) && $media_url->allow_image_lib;
 
-            if ($allow_network) {
+            if ($allow_network && !is_android()) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
                     self::ACTION_SMB_SETUP, TR::t('folder_screen_smb_settings'));
             }
@@ -445,7 +445,12 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         foreach ($dirs as $dir) {
             hd_debug_print("get_file_list dir: $dir");
             if ($dir === '/tmp/mnt/smb') {
-                $info = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
+                if (is_android()) {
+                    $info = 1;
+                } else {
+                    $info = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
+                }
+
                 $s['smb'] = $smb_shares->get_mount_all_smb($info);
                 hd_debug_print("smb: " . json_encode($s));
                 return $s;
