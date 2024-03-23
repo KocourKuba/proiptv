@@ -263,6 +263,7 @@
         "playlist": "https://bittv.ltd/playlists/{LOGIN}:{PASSWORD}/playlist.m3u"
       },
       "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.*\\.m3u8\\?.*$/",
         "epg_preset": "drm",
         "epg_alias": "iptvx.one",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -815,6 +816,20 @@
           "4": "Server RU"
         },
         "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": false,
+      "id": "topiptv",
+      "name": "TopIPTV",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_topiptv.png",
+      "api_commands": {
+        "playlist": "https://s.topiptv.link/list.php?login={LOGIN}&password={PASSWORD}&type=m3u"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/(?<id>.+)\\?token=.*$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
