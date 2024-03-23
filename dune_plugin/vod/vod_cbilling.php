@@ -21,6 +21,7 @@ class vod_cbilling extends vod_standard
         parent::init_vod($provider);
 
         $data = $provider->execApiCommand(API_COMMAND_INFO);
+        hd_debug_print(API_COMMAND_INFO . ' ' . serialize($data));
         if ($data === false || !isset($data->data)) {
             $show = false;
         } else {
