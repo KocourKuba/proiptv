@@ -113,7 +113,7 @@ class Epg_Manager_Json extends Epg_Manager
             $max_check_time = 3600;
             $cache_expired = filemtime($epg_cache_file) + $max_check_time;
             if ($cache_expired > time()) {
-                $all_epg = unserialize(file_get_contents($epg_cache_file));
+                $all_epg = HD::ReadContentFromFile($epg_cache_file);
                 $from_cache = true;
                 hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
             } else {
