@@ -678,7 +678,7 @@ class Starnet_Tv implements User_Input_Handler
         // User catchup settings has higher priority than playlist or provider settings
         $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
         if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
-            $catchup['global'] = $user_catchup;
+            $global_catchup_source = $user_catchup;
         }
 
         $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
@@ -1171,7 +1171,7 @@ class Starnet_Tv implements User_Input_Handler
     public function generate_dune_params(Channel $channel)
     {
         $ext_params = $channel->get_ext_params();
-        $plugin_dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS);
+        $plugin_dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
         if (!empty($plugin_dune_params)) {
             $plugin_dune_params = array_slice($plugin_dune_params, 0);
         }
