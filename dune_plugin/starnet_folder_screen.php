@@ -468,24 +468,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 foreach ($this->get_image_libs() as $item) {
                     $img_path = "$imagelib_path{$item['name']}";
                     create_path($img_path);
-                    $need_download = false;
-                    $files = glob("$img_path/*");
-                    if (empty($files)) {
-                        $need_download = true;
-                    }
-
-                    $package_name = get_temp_path($item['package']);
-                    if ($need_download && !file_exists($package_name) && HD::http_save_https_proxy($item['url'], $package_name) === false) {
-                        hd_debug_print("can't download image pack: $package_name");
-                        break;
-                    }
-
-                    $cmd = "unzip -oq '$package_name' -d '$img_path' 2>&1";
-                    system($cmd, $ret);
-                    if ($ret !== 0) {
-                        hd_debug_print("Failed to unpack $package_name (error code: $ret)");
-                        continue;
-                    }
                     $s['imagelib'][$img_path]['foldername'] = $item['name'];
                 }
                 return $s;
@@ -497,6 +479,31 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 $fileData['folder']['imagelib']['filepath'] = get_temp_path('imagelib/');
             } else if ($handle = opendir($dir)) {
                 hd_debug_print("opendir: $dir");
+                if (basename(dirname($dir)) === 'imagelib') {
+                    foreach ($this->get_image_libs() as $lib) {
+                        if (basename($dir) !== $lib['name']) continue;
+
+                        $need_download = false;
+                        $files = glob("$dir/*");
+                        if (empty($files)) {
+                            $need_download = true;
+                        }
+
+                        $package_name = get_temp_path($lib['package']);
+                        if ($need_download && !file_exists($package_name) && HD::http_save_https_proxy($lib['url'], $package_name) === false) {
+                            hd_debug_print("can't download image pack: $package_name");
+                            break;
+                        }
+
+                        $cmd = "unzip -oq '$package_name' -d '$dir' 2>&1";
+                        system($cmd, $ret);
+                        if ($ret !== 0) {
+                            hd_debug_print("Failed to unpack $package_name (error code: $ret)");
+                            break;
+                        }
+                    }
+                }
+
                 $bug_kind = get_bug_platform_kind();
                 while (false !== ($file = readdir($handle))) {
                     if ($file === "." || $file === "..") continue;
