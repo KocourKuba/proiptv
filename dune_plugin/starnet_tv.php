@@ -1060,6 +1060,11 @@ class Starnet_Tv implements User_Input_Handler
                 }
                 $force_detect = ($streams[$idx] === 'MPEG-TS');
             }
+
+            $detect_stream = $provider->getConfigValue(PARAM_DUNE_FORCE_TS);
+            if ($detect_stream) {
+                $force_detect = $detect_stream;
+            }
         }
 
         if ((int)$archive_ts !== -1) {
@@ -1156,8 +1161,8 @@ class Starnet_Tv implements User_Input_Handler
                 $stream_url .= $dune_params_str;
             }
 
-            $force_detect = $this->plugin->get_bool_setting(PARAM_DUNE_FORCE_TS, false) || $force_detect;
-            $stream_url = HD::make_ts($stream_url, $force_detect);
+            $detect_ts = $this->plugin->get_bool_setting(PARAM_DUNE_FORCE_TS, false) || $force_detect;
+            $stream_url = HD::make_ts($stream_url, $detect_ts);
         }
 
         return $stream_url;

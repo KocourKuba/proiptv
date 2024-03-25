@@ -2845,6 +2845,11 @@ class Default_Dune_Plugin implements DunePlugin
                 $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
             }
 
+            $detect_stream = $provider->getConfigValue(PARAM_DUNE_FORCE_TS);
+            if ($detect_stream) {
+                $settings[PARAM_DUNE_FORCE_TS] = $detect_stream;
+            }
+
             if (!empty($settings)) {
                 $this->put_settings($id, $settings);
             }

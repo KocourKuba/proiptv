@@ -712,7 +712,8 @@
         "id_map": "tvg-id",
         "epg_preset": "drm",
         "epg_alias": "shara-tv",
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
+        "dune_force_ts": true
       }
     },
     {
