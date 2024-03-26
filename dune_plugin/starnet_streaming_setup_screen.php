@@ -76,10 +76,10 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // Force detection stream
-        $value = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SetupControlSwitchDefs::switch_off);
+        $force_detection = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_DUNE_FORCE_TS, TR::t('setup_channels_dune_force_ts'), SetupControlSwitchDefs::$on_off_translated[$value],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
+            PARAM_DUNE_FORCE_TS, TR::t('setup_channels_dune_force_ts'), SetupControlSwitchDefs::$on_off_translated[$force_detection],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$force_detection]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // buffering time
@@ -178,12 +178,12 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_BUFFERING_TIME:
             case PARAM_ARCHIVE_DELAY_TIME:
-            case PARAM_DUNE_FORCE_TS:
                 $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
                 break;
 
+            case PARAM_DUNE_FORCE_TS:
             case PARAM_PER_CHANNELS_ZOOM:
-                $this->plugin->toggle_setting(PARAM_PER_CHANNELS_ZOOM);
+                $this->plugin->toggle_setting($control_id);
                 break;
         }
 
