@@ -435,6 +435,38 @@
     },
     {
       "enable": true,
+      "id": "iptv.best",
+      "name": "IPTV Best",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptvbest.png",
+      "api_commands": {
+        "playlist": "https://smotrim.uno/pl/{PASSWORD}/playlist.m3u8"
+      },
+      "config": {
+        "playlist_catchup": "flussonic",
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
+        "url_subst": {
+          "regex": "/^(.+\\/\\/).+(\\/play\\/.+\\/).+$/",
+          "replace": "$1{SERVER_ID}$2{STREAM_ID}"
+        },
+        "streams": {
+          "video.m3u8": "HLS",
+          "mpegts": "MPEG-TS"
+        },
+        "servers": {
+          "ca.seetv.cc": "Canada",
+          "gr.seetv.cc": "Greece",
+          "de.seetv.cc": "Germany",
+          "nl.seetv.cc": "Netherlands",
+          "pl.seetv.cc": "Poland",
+          "ru.seetv.cc": "Russia",
+          "ukr.seetv.cc": "Ukraine"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "iptvonline",
       "name": "IPTV Online",
       "type": "pin",
