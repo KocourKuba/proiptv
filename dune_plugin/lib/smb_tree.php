@@ -115,22 +115,17 @@ class smb_tree
 
     public function get_xdomains()
     {
-        return ($this->execute('--xdomains') !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
-    }
-
-    public function get_domains()
-    {
-        return ($this->execute('--domains') !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
+        return ($this->execute('-X') !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
     }
 
     public function get_workgroup_servers($domain)
     {
-        return ($this->execute('--workgroup-servers=' . $domain) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
+        return ($this->execute('-W ' . $domain) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
     }
 
     public function get_server_shares($server)
     {
-        return ($this->execute('--server-shares=' . $server) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
+        return ($this->execute('-E ' . $server) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
     }
 
     public static function get_df_smb()

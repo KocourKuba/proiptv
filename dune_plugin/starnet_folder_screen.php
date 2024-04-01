@@ -445,7 +445,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         foreach ($dirs as $dir) {
             hd_debug_print("get_file_list dir: $dir");
             if ($dir === '/tmp/mnt/smb') {
-                if (is_android()) {
+                if (is_limited_apk()) {
                     $info = 1;
                 } else {
                     $info = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
