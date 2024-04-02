@@ -443,6 +443,8 @@
         "playlist": "https://smotrim.uno/pl/{PASSWORD}/playlist.m3u8"
       },
       "config": {
+        "epg_preset": "drm",
+        "epg_alias": "iptv.online",
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "url_subst": {
@@ -454,12 +456,12 @@
           "mpegts": "MPEG-TS"
         },
         "servers": {
-          "ca.seetv.cc": "Canada",
-          "gr.seetv.cc": "Greece",
+          "pl.seetv.cc": "Poland",
           "de.seetv.cc": "Germany",
           "nl.seetv.cc": "Netherlands",
-          "pl.seetv.cc": "Poland",
           "ru.seetv.cc": "Russia",
+          "ca.seetv.cc": "Canada",
+          "gr.seetv.cc": "Greece",
           "ukr.seetv.cc": "Ukraine"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -488,13 +490,13 @@
           "mpegts": "MPEG-TS"
         },
         "servers": {
-          "pl.iptv.monster": "Poland",
-          "de.iptv.monster": "Germany",
-          "nl.iptv.monster": "Netherlands",
-          "ru.iptv.monster": "Russia",
-          "ca.iptv.monster": "Canada",
-          "gr.iptv.monster": "Greece",
-          "ukr.iptv.monster": "Ukraine"
+          "pl.seetv.cc": "Poland",
+          "de.seetv.cc": "Germany",
+          "nl.seetv.cc": "Netherlands",
+          "ru.seetv.cc": "Russia",
+          "ca.seetv.cc": "Canada",
+          "gr.seetv.cc": "Greece",
+          "ukr.seetv.cc": "Ukraine"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -927,6 +929,8 @@
         "playlist": "https://{DOMAIN_ID}/play/{PASSWORD}/m3u8"
       },
       "config": {
+        "epg_preset": "drm",
+        "epg_alias": "iptv.online",
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "domains": {
