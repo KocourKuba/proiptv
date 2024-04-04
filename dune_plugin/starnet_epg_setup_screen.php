@@ -183,21 +183,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             );
 
             case ACTION_ITEMS_EDIT:
-                $this->plugin->set_postpone_save(true, PLUGIN_PARAMETERS);
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'source_media_url_str' => static::get_media_url_str(),
-                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST,
-                        'end_action' => ACTION_RELOAD,
-                        'cancel_action' => RESET_CONTROLS_ACTION_ID,
-                        'save_data' => PLUGIN_PARAMETERS,
-                        'extension' => EPG_PATTERN,
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_edit_xmltv_list'));
+                return Starnet_Edit_List_Screen::get_caller_action($this, Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST);
 
             case self::CONTROL_CHANGE_CACHE_PATH:
                 $media_url_str = MediaURL::encode(

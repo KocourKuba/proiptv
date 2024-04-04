@@ -527,6 +527,67 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         );
     }
 
+    /**
+     * @param Abstract_Screen $source_screen
+     * @param string $action_edit
+     * @param $selected_media_url
+     * @return array|null
+     */
+    public static function get_caller_action($source_screen, $action_edit, $selected_media_url = null)
+    {
+        $params = array(
+            'screen_id' => static::ID,
+            'source_window_id' => $source_screen::ID,
+            'source_media_url_str' => $source_screen::get_media_url_str(),
+            'edit_list' => $action_edit,
+            'windowCounter' => 1,
+        );
+
+        if ($action_edit === static::SCREEN_EDIT_CHANNELS ||
+            $action_edit === static::SCREEN_EDIT_GROUPS) {
+            $source_screen->plugin->set_postpone_save(true, PLUGIN_ORDERS);
+            $params['save_data'] = PLUGIN_ORDERS;
+            $params['end_action'] = ACTION_RELOAD;
+            $params['cancel_action'] = ACTION_EMPTY;
+        } else if ($action_edit === static::SCREEN_EDIT_PLAYLIST ||
+                   $action_edit === static::SCREEN_EDIT_EPG_LIST) {
+            $source_screen->plugin->set_postpone_save(true, PLUGIN_PARAMETERS);
+            $params['save_data'] = PLUGIN_PARAMETERS;
+            $params['end_action'] = ACTION_REFRESH_SCREEN;
+            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
+        }
+
+        $sel_id = null;
+        switch ($action_edit) {
+            case static::SCREEN_EDIT_CHANNELS:
+                if (!is_null($selected_media_url)) {
+                    $params['group_id'] = $selected_media_url->group_id;
+                }
+                $title = TR::t('tv_screen_edit_hidden_channels');
+                break;
+
+            case static::SCREEN_EDIT_GROUPS:
+                $title = TR::t('tv_screen_edit_hidden_group');
+                break;
+
+            case static::SCREEN_EDIT_PLAYLIST:
+                $params['extension'] = PLAYLIST_PATTERN;
+                $title = TR::t('setup_channels_src_edit_playlists');
+                $sel_id = $source_screen->plugin->get_active_playlist_key();
+                break;
+
+            case static::SCREEN_EDIT_EPG_LIST:
+                $params['extension'] = EPG_PATTERN;
+                $title = TR::t('setup_edit_xmltv_list');
+                break;
+
+            default:
+                return null;
+        }
+
+        return Action_Factory::open_folder(MediaURL::encode($params), $title, null, $sel_id);
+    }
+
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// protected methods
 

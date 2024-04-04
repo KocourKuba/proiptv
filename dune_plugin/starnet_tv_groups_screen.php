@@ -215,23 +215,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEMS_EDIT:
                 $this->save_if_changed();
-                $is_channels = ($user_input->action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS);
-                $this->plugin->set_postpone_save(true, PLUGIN_ORDERS);
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'source_media_url_str' => static::get_media_url_str(),
-                        'edit_list' => $user_input->action_edit,
-                        'group_id' => $is_channels ? $sel_media_url->group_id : null,
-                        'end_action' => ACTION_REFRESH_SCREEN,
-                        'cancel_action' => ACTION_EMPTY,
-                        'save_data' => PLUGIN_ORDERS,
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str,
-                    $is_channels ? TR::t('tv_screen_edit_hidden_channels') : TR::t('tv_screen_edit_hidden_group'));
+                return Starnet_Edit_List_Screen::get_caller_action($this, $user_input->action_edit, $sel_media_url);
 
             case ACTION_SETTINGS:
                 $this->save_if_changed();
@@ -250,6 +234,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case GUI_EVENT_KEY_POPUP_MENU:
+                $this->save_if_changed();
                 if (isset($user_input->{ACTION_CHANGE_PLAYLIST})) {
                     $menu_items = $this->plugin->playlist_menu($this);
                 } else if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
@@ -261,7 +246,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 } else {
                     $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
                     $menu_items = $this->plugin->common_categories_menu($this, $group_id);
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, TR::t('refresh_playlist'), "refresh.png",
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        ACTION_RELOAD,
+                        TR::t('refresh_playlist'),
+                        "refresh.png",
                         array('reload_action' => 'playlist'));
                 }
 

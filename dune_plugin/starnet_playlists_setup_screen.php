@@ -204,26 +204,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             );
 
             case ACTION_ITEMS_EDIT:
-                $this->plugin->set_postpone_save(true, PLUGIN_PARAMETERS);
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Edit_List_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'source_media_url_str' => static::get_media_url_str(),
-                        'edit_list' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST,
-                        'end_action' => ACTION_RELOAD,
-                        'cancel_action' => RESET_CONTROLS_ACTION_ID,
-                        'save_data' => PLUGIN_PARAMETERS,
-                        'extension' => PLAYLIST_PATTERN,
-                        'windowCounter' => 1,
-                    )
-                );
-
-                return Action_Factory::open_folder($media_url_str,
-                    TR::t('setup_channels_src_edit_playlists'),
-                    null,
-                    $this->plugin->get_active_playlist_key()
-                );
+                return Starnet_Edit_List_Screen::get_caller_action($this, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
 
             case PARAM_USER_CATCHUP:
             case PARAM_USE_PICONS:
