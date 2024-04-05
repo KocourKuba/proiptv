@@ -465,7 +465,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             $imagelib_path = get_temp_path('imagelib/');
             if ($dir === $imagelib_path) {
                 $s = array();
-                foreach ($this->get_image_libs() as $item) {
+                foreach ($this->plugin->get_image_libs()->get_values() as $item) {
                     $img_path = "$imagelib_path{$item['name']}";
                     create_path($img_path);
                     $s['imagelib'][$img_path]['foldername'] = $item['name'];
@@ -480,7 +480,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             } else if ($handle = opendir($dir)) {
                 hd_debug_print("opendir: $dir");
                 if (basename(dirname($dir)) === 'imagelib') {
-                    foreach ($this->get_image_libs() as $lib) {
+                    foreach ($this->plugin->get_image_libs()->get_values() as $lib) {
                         if (basename($dir) !== $lib['name']) continue;
 
                         $need_download = false;
@@ -523,14 +523,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             }
         }
         return $fileData;
-    }
-
-    /**
-     * @return array
-     */
-    protected function get_image_libs()
-    {
-        return $this->plugin->get_image_libs()->get_values();
     }
 
     /**
@@ -656,9 +648,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         hd_debug_print(null, true);
 
         $selected_url = MediaURL::decode($user_input->selected_media_url);
-        if (!isset($selected_url))
-             return null;
-
         if ($selected_url->type === self::SELECTED_TYPE_FOLDER) {
             $caption = $selected_url->caption;
             if ($selected_url->err === false) {
