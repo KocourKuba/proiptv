@@ -245,6 +245,7 @@ edit_list_edit_item = Bearbeiten
 edit_list_add_provider = IPTV-Anbieter hinzufügen
 edit_list_detail_info__3 = %s|%s|Heruntergeladen: %s
 edit_list_title_info__2 = %s|Heruntergeladen: %s
+edit_list_title_cant_delete = Can't delete the playlist XMLTV source!
 
 tv_screen_zoom_channel = Kanalzoom
 tv_screen_search_channel = Geben Sie den Namen oder einen Teil des Namens für die Suche ein

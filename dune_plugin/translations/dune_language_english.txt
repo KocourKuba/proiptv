@@ -244,6 +244,7 @@ edit_list_edit_item = Edit
 edit_list_add_provider = Add IPTV provider
 edit_list_detail_info__3 = %s|%s|Downloaded: %s
 edit_list_title_info__2 = %s|Downloaded: %s
+edit_list_title_cant_delete = Die XMLTV-Quelle der Wiedergabeliste kann nicht gelöscht werden!
 
 tv_screen_zoom_channel = Channel zoom
 tv_screen_search_channel = Enter name or part of the name for search
