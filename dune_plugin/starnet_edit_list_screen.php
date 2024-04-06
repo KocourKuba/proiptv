@@ -335,11 +335,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
-                        'choose_file' => array(
-                            'action' => $user_input->action,
-                            'extension'	=> $user_input->extension,
-                        ),
-                        'allow_network' => ($user_input->action === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk(),
+                        'choose_file' => $user_input->selected_action,
+                        'extension'	=> $user_input->extension,
+                        'allow_network' => ($user_input->selected_action === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk(),
                         'read_only' => true,
                         'windowCounter' => 1,
                     )
@@ -355,9 +353,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
-                        'choose_folder' => array(
-                            'extension'	=> $user_input->extension,
-                        ),
+                        'choose_folder' => $user_input->control_id,
+                        'extension'	=> $user_input->extension,
                         'allow_network' => false,
                         'read_only' => true,
                         'windowCounter' => 1,
@@ -654,34 +651,40 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $menu_items = array();
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST || $edit_list === self::SCREEN_EDIT_EPG_LIST) {
             // Add URL
-            $add_param = array('extension' => $parent_media_url->extension);
             $menu_items[] = $this->plugin->create_menu_item($this,
                 self::ACTION_ADD_URL_DLG,
                 TR::t('edit_list_add_url'),
-                "link.png");
+                "link.png"
+            );
 
             // Add File
-            $add_param['action'] = ($edit_list === self::SCREEN_EDIT_PLAYLIST) ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV;
             $menu_items[] = $this->plugin->create_menu_item($this,
-                self::ACTION_CHOOSE_FILE, TR::t('select_file'),
+                self::ACTION_CHOOSE_FILE,
+                TR::t('select_file'),
                 $edit_list === self::SCREEN_EDIT_PLAYLIST ? "m3u_file.png" : "xmltv_file.png",
-                $add_param);
+                array(
+                    'selected_action' => ($edit_list === self::SCREEN_EDIT_PLAYLIST) ? self::ACTION_FILE_PLAYLIST : self::ACTION_FILE_XMLTV,
+                    'extension' => $parent_media_url->extension
+                )
+            );
 
             // Add list file
-            $add_param['action'] = self::ACTION_FILE_TEXT_LIST;
-            $add_param['extension'] = 'txt|lst';
             $menu_items[] = $this->plugin->create_menu_item($this,
                 self::ACTION_CHOOSE_FILE,
                 TR::t('edit_list_import_list'),
                 "text_file.png",
-                $add_param);
+                array(
+                    'selected_action' => self::ACTION_FILE_TEXT_LIST,
+                    'extension' => 'txt|lst'
+                )
+            );
 
-            unset($add_param['action']);
             $menu_items[] = $this->plugin->create_menu_item($this,
                 self::ACTION_CHOOSE_FOLDER,
                 TR::t('edit_list_folder_path'),
                 "folder.png",
-                $add_param);
+                array('extension' => $parent_media_url->extension)
+            );
 
             // Add provider
             if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
@@ -844,7 +847,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $edit_list = $parent_media_url->edit_list;
 
         $order = $this->get_hashed_order($edit_list);
-        if ($selected_media_url->choose_file->action === self::ACTION_FILE_TEXT_LIST) {
+        if ($selected_media_url->choose_file === self::ACTION_FILE_TEXT_LIST) {
             hd_debug_print("Choosed file: $selected_media_url->filepath", true);
             $lines = file($selected_media_url->filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
@@ -1012,7 +1015,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             );
         }
 
-        if ($selected_media_url->choose_file->action === self::ACTION_FILE_PLAYLIST) {
+        if ($selected_media_url->choose_file === self::ACTION_FILE_PLAYLIST) {
             $hash = Hashed_Array::hash($selected_media_url->filepath);
             if ($order->has($hash)) {
                 return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
@@ -1032,7 +1035,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $this->set_changes($parent_media_url->save_data);
         }
 
-        if ($selected_media_url->choose_file->action === self::ACTION_FILE_XMLTV) {
+        if ($selected_media_url->choose_file === self::ACTION_FILE_XMLTV) {
             $hash = Hashed_Array::hash($selected_media_url->filepath);
             if ($order->has($hash)) {
                 return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
@@ -1071,7 +1074,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $hash = Hashed_Array::hash($file);
             if ($order->has($hash)) continue;
 
-            if ($user_input->action === self::ACTION_FILE_PLAYLIST) {
+            if ($user_input->selected_action === self::ACTION_FILE_PLAYLIST) {
                 $contents = file_get_contents($file);
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
                     hd_debug_print("Problem with import playlist: $file");

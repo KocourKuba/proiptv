@@ -37,9 +37,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     const CONTROL_HISTORY_CHANGE_FOLDER = 'change_history_folder';
     const CONTROL_COPY_TO_DATA = 'copy_to_data';
     const CONTROL_COPY_TO_PLUGIN = 'copy_to_plugin';
-    const ACTION_FILE_RESTORE = 'restore_file';
-    const ACTION_BACKUP_FOLDER = 'backup_folder';
-    const ACTION_HISTORY_FOLDER = 'history_folder';
     const CONTROL_ADULT_PASS_DLG = 'adult_pass_dialog';
     const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
     const ACTION_SETTINGS_PASS_DLG_APPLY = 'settings_pass_apply';
@@ -160,10 +157,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
-                        'choose_folder' => array(
-                            'action' => self::ACTION_BACKUP_FOLDER,
-                            'extension'	=> 'zip',
-                        ),
+                        'choose_folder' => $user_input->control_id,
+                        'extension'	=> 'zip',
                         'allow_network' => !is_limited_apk(),
                         'windowCounter' => 1,
                     )
@@ -175,10 +170,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
-                        'choose_file' => array(
-                            'action' => self::ACTION_FILE_RESTORE,
-                            'extension'	=> 'zip',
-                        ),
+                        'choose_file' => $user_input->control_id,
+                        'extension'	=> 'zip',
                         'allow_network' => !is_limited_apk(),
                         'read_only' => true,
                         'windowCounter' => 1,
@@ -191,9 +184,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
-                        'choose_folder' => array(
-                            'action' => self::ACTION_HISTORY_FOLDER,
-                        ),
+                        'choose_folder' => $user_input->control_id,
                         'allow_reset' => true,
                         'allow_network' => !is_limited_apk(),
                         'windowCounter' => 1,
@@ -203,7 +194,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_folder->action === self::ACTION_HISTORY_FOLDER) {
+                if ($data->choose_folder === self::CONTROL_HISTORY_CHANGE_FOLDER) {
                     hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
                     $this->plugin->set_history_path($data->filepath);
 
@@ -211,7 +202,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                         $action_reload, $data->filepath, self::CONTROLS_WIDTH);
                 }
 
-                if ($data->choose_folder->action === self::ACTION_BACKUP_FOLDER) {
+                if ($data->choose_folder === self::CONTROL_BACKUP) {
                     return $this->do_backup_settings($data->filepath);
                 }
 
@@ -219,7 +210,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file->action === self::ACTION_FILE_RESTORE) {
+                if ($data->choose_file === self::CONTROL_RESTORE) {
                     return $this->do_restore_settings($data->caption, $data->filepath);
                 }
                 break;

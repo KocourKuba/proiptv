@@ -228,7 +228,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($this->plugin->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
                     return null;
                 }
-                return User_Input_Handler_Registry::create_action($this, $user_input->action);
+                return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
 
             case self::ACTION_CONFIRM_DLG_APPLY:
                 return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
@@ -330,10 +330,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
-                        'choose_file' => array(
-                            'action' => $user_input->control_id,
-                            'extension'	=> IMAGE_PREVIEW_PATTERN,
-                        ),
+                        'choose_file' => $user_input->control_id,
+                        'extension'	=> IMAGE_PREVIEW_PATTERN,
                         'allow_network' => !is_limited_apk(),
                         'allow_image_lib' => true,
                         'allow_reset' => true,
@@ -345,7 +343,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
+                if ($data->choose_file === ACTION_CHANGE_GROUP_ICON) {
 
                     $group = $this->plugin->tv->get_any_group($sel_media_url->group_id);
                     if (is_null($group)) break;
@@ -411,7 +409,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file->action === ACTION_CHANGE_GROUP_ICON) {
+                if ($data->choose_file === ACTION_CHANGE_GROUP_ICON) {
 
                     $group = $this->plugin->tv->get_any_group($sel_media_url->group_id);
                     if (is_null($group)) break;

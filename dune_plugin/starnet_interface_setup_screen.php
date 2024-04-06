@@ -188,10 +188,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
-                        'choose_file' => array(
-                            'action' => ACTION_CHANGE_BACKGROUND,
-                            'extension'	=> 'png|jpg|jpeg',
-                        ),
+                        'choose_file' => ACTION_CHANGE_BACKGROUND,
+                        'extension'	=> 'png|jpg|jpeg',
                         'allow_network' => !is_limited_apk(),
                         'allow_image_lib' => true,
                         'allow_reset' => true,
@@ -203,7 +201,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file->action === ACTION_CHANGE_BACKGROUND) {
+                if ($data->choose_file === ACTION_CHANGE_BACKGROUND) {
                     $old_image = $this->plugin->get_background_image();
                     $is_old_default = $this->plugin->is_background_image_default();
                     $cached_image = get_cached_image_path("{$this->plugin->get_active_playlist_key()}_$data->caption");

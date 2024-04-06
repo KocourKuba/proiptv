@@ -2988,15 +2988,15 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $handler
-     * @param $action
+     * @param User_Input_Handler $handler
+     * @param string $param_action
      * @return array
      */
-    public function show_password_dialog($handler, $action)
+    public function show_password_dialog($handler, $param_action)
     {
         $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
         if (empty($pass_settings)) {
-            return User_Input_Handler_Registry::create_action($handler, $action);
+            return User_Input_Handler_Registry::create_action($handler, $param_action);
         }
 
         $defs = array();
@@ -3007,7 +3007,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         Control_Factory::add_vgap($defs, 50);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, array("action" => $action),
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, array("param_action" => $param_action),
             ACTION_PASSWORD_APPLY, TR::t('ok'), 300);
 
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);

@@ -86,7 +86,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 if ($this->plugin->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
                     return null;
                 }
-                return User_Input_Handler_Registry::create_action($this, $user_input->action);
+                return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
 
             case ACTION_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
