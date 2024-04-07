@@ -147,7 +147,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 hd_debug_print("item: " . $item, true);
-                if ($item->type === PARAM_LINK && isset($item->params[PARAM_URI]) && preg_match(HTTP_PATTERN, $item->params[PARAM_URI])) {
+                if (($item->type === PARAM_LINK || empty($item->type))
+                    && isset($item->params[PARAM_URI])
+                    && preg_match(HTTP_PATTERN, $item->params[PARAM_URI])) {
                     return $this->do_edit_url_dlg($edit_list, $selected_media_url->id);
                 }
 
@@ -766,6 +768,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $name = isset($user_input->{CONTROL_EDIT_NAME}) ? $user_input->{CONTROL_EDIT_NAME} : '';
         $url = isset($user_input->{CONTROL_URL_PATH}) ? $user_input->{CONTROL_URL_PATH} : '';
+        if (!preg_match(HTTP_PATTERN, $url)) {
+            return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
+        }
 
         if (empty($name)) {
             if (($pos = strpos($name, '?')) !== false) {
@@ -775,25 +780,26 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $order = $this->get_hashed_order($edit_list);
+        $id = MediaURL::decode($user_input->selected_media_url)->id;
         if (isset($user_input->{CONTROL_EDIT_ACTION})) {
             // edit existing url
-            $id = MediaURL::decode($user_input->selected_media_url)->id;
-            /** @var Named_Storage $playlist */
-            $playlist = $order->get($id);
-            if (is_null($playlist)) {
-                $playlist = new Named_Storage();
+            if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                $order->erase($id);
+                $item = null;
+                $this->plugin->get_epg_manager()->clear_epg_files($id);
+            } else {
+                $item = $order->get($id);
             }
         } else {
-            // new url
+            $item = null;
+        }
+
+        if (is_null($item)) {
             $id = Hashed_Array::hash($url);
             while ($order->has($id)) {
                 $id = Hashed_Array::hash("$id.$url");
             }
-            $playlist = new Named_Storage();
-        }
-
-        if (!preg_match(HTTP_PATTERN, $url)) {
-            return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
+            $item = new Named_Storage();
         }
 
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
@@ -817,10 +823,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
         }
 
-        $playlist->name = $name;
-        $playlist->params[PARAM_URI] = $url;
-        $playlist->type = preg_match(HTTP_PATTERN, $url) ? PARAM_LINK : PARAM_FILE;
-        $order->set($id, $playlist);
+        $item->name = $name;
+        $item->type = preg_match(HTTP_PATTERN, $url) ? PARAM_LINK : PARAM_FILE;
+        $item->params[PARAM_URI] = $url;
+        $order->set($id, $item);
         $this->set_changes($parent_media_url->save_data);
 
         $this->plugin->clear_playlist_cache($id);

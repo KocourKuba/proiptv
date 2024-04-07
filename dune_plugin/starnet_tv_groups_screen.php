@@ -278,7 +278,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->save_if_changed();
                 $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg_change'));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -453,8 +453,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->save_if_changed();
 
                 if (isset($user_input->reload_action)) {
-                    if ($user_input->reload_action === 'epg') {
-                        $this->plugin->get_epg_manager()->clear_epg_cache();
+                    if ($user_input->reload_action === 'playlist') {
+                        $this->plugin->clear_playlist_cache();
+                    } else if ($user_input->reload_action === 'epg' || $user_input->reload_action === 'epg_change') {
+                        if ($user_input->reload_action === 'epg') {
+                            $this->plugin->get_epg_manager()->clear_epg_cache();
+                        }
                         $this->plugin->init_epg_manager();
                         $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
                         if ($res === -1) {
@@ -467,8 +471,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                 return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
                             }
                         }
-                    } else if ($user_input->reload_action === 'playlist') {
-                        $this->plugin->clear_playlist_cache();
                     }
                 }
 
