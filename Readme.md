@@ -1,11 +1,9 @@
 # ProIPTV
-Универсальный плагин M3U плейлистов для плейеров Dune HD. Минимальная версия прошивки поддерживаемая плагином r11.
 
 Universal Dune HD plugin with M3U playlist support. Minimal firmware revision supported by plugin r11.
-
-Так же поддерживаются наиболее известные провайдеры IPTV.
-
 Also, have presets for most popular IPTV providers.
+
+Универсальный плагин M3U плейлистов для плейеров Dune HD. Минимальная версия прошивки поддерживаемая плагином r11. Так же поддерживаются наиболее известные провайдеры IPTV в виде готовых шаблонов.
 
 01. [101film](http://101film.org/)
 02. [1CENT](https://1cent.tv/)
@@ -21,29 +19,31 @@ Also, have presets for most popular IPTV providers.
 12. [Fox TV](http://info.fox-tv.fun/)
 13. [Glanz](http://ottg.cc/)
 14. [IPStream/iShara](https://www.ipstream.one/)
-15. [IPTV Online](https://iptv.online/)
-16. [ITV Live](https://itv.live/)
-17. [Kineskop Club](http://kineskop.club/)
-18. [KLI Media](https://klimedia.space/)
-19. [LightIPTV](https://ottbill.cc/)
-20. [MyMagic](http://mymagic.tv/)
-21. [OnlineOTT TV](https://www.onlineott-tv.site/)
-22. [OTTClub](https://www.ottclub.cc/)
-23. [Ping TV](http://ping-tv.com/)
-24. [RU TV](https://rutv.vip/)
-25. [Russkoe TV](https://russkoetv.tv/)
-26. [Satq TV](https://satq.tv/)
-27. [Shara TV](https://shara-tv.org/)
-28. [Sharaclub](https://shara.club/)
-29. [Sharavoz](https://www.sharavoz.tv/)
-30. [Shura TV](http://shura.tv/b/)
-31. [Smile TV](http://smile-tv.live/)
-32. [TV Club](https://tvclub.cc/)
-33. [TV Team](https://tv.team/)
-34. [TVIZI net](https://tvizi.net/)
-35. [Vidok TV](https://vidok.tv/)
-36. [VipLime](http://viplime.fun/)
-37. [Yosso TV](https://streaming-elbrus.su/)
+15. [IPTV Best](https://ip-tv.best/)
+16. [IPTV Online](https://iptv.online/)
+17. [ITV Live](https://itv.live/)
+18. [Kineskop Club](http://kineskop.club/)
+19. [KLI Media](https://klimedia.space/)
+20. [LightIPTV](https://ottbill.cc/)
+21. [MyMagic](http://mymagic.tv/)
+22. [OnlineOTT TV](https://www.onlineott-tv.site/)
+23. [OTTClub](https://www.ottclub.cc/)
+24. [Ping TV](http://ping-tv.com/)
+25. [RU TV](https://rutv.vip/)
+26. [Russkoe TV](https://russkoetv.tv/)
+27. [Satq TV](https://satq.tv/)
+28. [Shara TV](https://shara-tv.org/)
+29. [Sharaclub](https://shara.club/)
+30. [Sharavoz](https://www.sharavoz.tv/)
+31. [Shura TV](http://shura.tv/b/)
+32. [Smile TV](http://smile-tv.live/)
+33. [TopIPTV](https://topiptv.info/)
+34. [TV Club](https://tvclub.cc/)
+35. [TV Team](https://tv.team/)
+36. [TVIZI net](https://tvizi.net/)
+37. [Vidok TV](https://vidok.tv/)
+38. [VipLime](http://viplime.fun/)
+39. [Yosso TV](https://streaming-elbrus.su/)
 
 ## License and copyright
 
@@ -54,9 +54,7 @@ Author and copyright (2021-2024): sharky72 (https://github.com/KocourKuba)
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to
 deal in the Software without restriction, including without limitation the
-rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-sell copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+rights to use, copy, modify, merge, publish, distribute, sublicense of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
