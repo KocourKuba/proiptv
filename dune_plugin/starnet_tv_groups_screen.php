@@ -479,6 +479,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($this->plugin->tv->reload_channels() !== 0) {
+                    $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $this->plugin->get_bool_parameter(PARAM_SHOW_VOD_ICON) && $this->plugin->vod;
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
 

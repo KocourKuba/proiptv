@@ -119,10 +119,10 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 /** @var Hashed_Array $viewed_items */
                 $viewed_items = &$this->plugin->get_history(HISTORY_MOVIES);
+                /** @var History_Item $movie_info */
                 $movie_info = $viewed_items->get($selected_media_url->movie_id);
-                if ((isset($user_input->{ACTION_WATCHED}) && $user_input->{ACTION_WATCHED} !== false) || is_null($movie_info)) {
+                if (is_null($movie_info) || (isset($user_input->{ACTION_WATCHED}) && $user_input->{ACTION_WATCHED} !== false)) {
                     $history_item[$selected_media_url->episode_id] = new History_Item(true, 0, 0, time());
-
                     $viewed_items->set($selected_media_url->movie_id, $history_item);
                 } else if ($movie_info->watched) {
                     $viewed_items->erase($selected_media_url->movie_id);

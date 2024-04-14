@@ -31,6 +31,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
     const ACTION_PLUGIN_ENTRY = 'plugin_entry';
     const ACTION_LAUNCH = 'launch';
+    const ACTION_LAUNCH_VOD = 'launch_vod';
     const ACTION_AUTO_RESUME = 'auto_resume';
     const ACTION_UPDATE_EPFS = 'update_epfs';
     const ACTION_INSTALL = 'install';
@@ -125,17 +126,18 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 hd_debug_print("plugin_entry $user_input->action_id");
+                if (!is_newer_versions()) {
+                    return  Action_Factory::show_error(true, TR::t('err_too_old_player'),
+                        array(
+                            TR::load_string('err_too_old_player'),
+                            "Dune Product ID: " .get_product_id(),
+                            "Dune Firmware: " . get_raw_firmware_version(),
+                            "Dune Serial: " . get_serial_number(),
+                        ));
+                }
+
                 switch ($user_input->action_id) {
                     case self::ACTION_LAUNCH:
-                        if (!is_newer_versions()) {
-                            return  Action_Factory::show_error(true, TR::t('err_too_old_player'),
-                                array(
-                                    TR::load_string('err_too_old_player'),
-                                    "Dune Product ID: " .get_product_id(),
-                                    "Dune Firmware: " . get_raw_firmware_version(),
-                                    "Dune Serial: " . get_serial_number(),
-                                ));
-                        }
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_playlists()->size() === 0) {
@@ -167,6 +169,19 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         return $action;
+
+                    case self::ACTION_LAUNCH_VOD:
+                        $this->plugin->init_plugin();
+                        if ($this->plugin->get_playlists()->size() === 0) {
+                            return User_Input_Handler_Registry::create_action($this, 'do_setup');
+                        }
+
+                        $this->plugin->tv->load_channels();
+                        if ($this->plugin->vod) {
+                            return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
+                        }
+
+                        return Action_Factory::show_error(false, TR::t('err_vod_not_available'));
 
                     case self::ACTION_AUTO_RESUME:
                         $this->plugin->init_plugin(true);

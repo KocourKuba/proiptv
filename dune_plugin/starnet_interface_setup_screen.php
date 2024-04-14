@@ -87,11 +87,18 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // show history category
-        $show_history = $this->plugin->get_parameter(PARAM_SHOW_CHANGED_CHANNELS, SetupControlSwitchDefs::switch_on);
+        // show changed channels category
+        $show_changed = $this->plugin->get_parameter(PARAM_SHOW_CHANGED_CHANNELS, SetupControlSwitchDefs::switch_on);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SetupControlSwitchDefs::$on_off_translated[$show_history],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
+            PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SetupControlSwitchDefs::$on_off_translated[$show_changed],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_changed]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
+        // show separate VOD icon
+        $show_vod_icon = $this->plugin->get_parameter(PARAM_SHOW_VOD_ICON, SetupControlSwitchDefs::switch_off);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_SHOW_VOD_ICON, TR::t('setup_show_vod_icon'), SetupControlSwitchDefs::$on_off_translated[$show_vod_icon],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_vod_icon]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg font size
@@ -177,6 +184,13 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 array(Starnet_Tv_Groups_Screen::ID),
                 Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
             );
+
+            case PARAM_SHOW_VOD_ICON:
+                self::toggle_cookie_param($plugin_cookies, $control_id);
+                $this->plugin->save_settings();
+                $this->plugin->toggle_parameter($control_id);
+                $this->plugin->tv->reload_channels();
+                return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
 
             case PARAM_ASK_EXIT:
             case PARAM_EPG_FONT_SIZE:

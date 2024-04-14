@@ -157,6 +157,26 @@
             <show_by_default>yes</show_by_default>
         </entry_point>
         <entry_point>
+            <parent_media_url>root://tv</parent_media_url>
+            <media_url>launch_vod</media_url>
+            <caption>%tr%plugin_vod</caption>
+            <icon_url>plugin_file://icons/default_logo_vod.png</icon_url>
+            <small_icon_url>plugin_file://icons/default_logo_vod_small.png</small_icon_url>
+            <actions>
+                <key_enter>
+                    <type>plugin_handle_user_input</type>
+                    <params>
+                        <handler_id>entry_handler</handler_id>
+                        <control_id>plugin_entry</control_id>
+                        <action_id>launch_vod</action_id>
+                    </params>
+                </key_enter>
+            </actions>
+            <ip_address_required>yes</ip_address_required>
+            <show_cookie_name>show_vod_icon</show_cookie_name>
+            <show_by_default>no</show_by_default>
+        </entry_point>
+        <entry_point>
             <parent_media_url>setup://applications</parent_media_url>
             <media_url>setup</media_url>
             <caption>ProIPTV</caption>

@@ -1561,6 +1561,12 @@ class Default_Dune_Plugin implements DunePlugin
         $this->set_parameter(PLUGIN_CONFIG_VERSION, '3');
         $this->save_parameters(true);
 
+        if (!isset($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
+            $plugin_cookies->{PARAM_SHOW_VOD_ICON} = false;
+        }
+
+        $this->save_parameters(true);
+
         // Move channels orders from settings to separate storage
 
         /** @var Named_Storage $playlist */
