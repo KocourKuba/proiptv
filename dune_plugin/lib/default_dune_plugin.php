@@ -1562,7 +1562,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->save_parameters(true);
 
         if (!isset($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
-            $plugin_cookies->{PARAM_SHOW_VOD_ICON} = false;
+            $plugin_cookies->{PARAM_SHOW_VOD_ICON} = SetupControlSwitchDefs::switch_off;
         }
 
         $this->save_parameters(true);
@@ -2886,7 +2886,7 @@ class Default_Dune_Plugin implements DunePlugin
         $info = "ID: " . $channel->get_id() . PHP_EOL;
         $info .= "Name: " . $channel->get_title() . PHP_EOL;
         $info .= "Archive: " . $channel->get_archive() . PHP_EOL;
-        $info .= "Protected: " . TR::load_string($channel->is_protected() ? 'yes' : 'no') . PHP_EOL;
+        $info .= "Protected: " . TR::load_string($channel->is_protected() ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) . PHP_EOL;
         $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . PHP_EOL;
         if ($channel->get_timeshift_hours() !== 0) {
             $info .= "Timeshift hours: " . $channel->get_timeshift_hours() . PHP_EOL;

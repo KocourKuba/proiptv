@@ -186,9 +186,13 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             );
 
             case PARAM_SHOW_VOD_ICON:
-                self::toggle_cookie_param($plugin_cookies, $control_id);
                 $this->plugin->save_settings();
                 $this->plugin->toggle_parameter($control_id);
+                $plugin_cookies->{$control_id} = $this->plugin->get_bool_parameter($control_id)
+                    ? SetupControlSwitchDefs::switch_on
+                    : SetupControlSwitchDefs::switch_off;
+                hd_debug_print("set plugin_cookie: $control_id:" . $plugin_cookies->{$control_id});
+
                 $this->plugin->tv->reload_channels();
                 return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
 

@@ -171,13 +171,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return $action;
 
                     case self::ACTION_LAUNCH_VOD:
+                        hd_debug_print("action: launch vod", true);
                         $this->plugin->init_plugin();
                         if ($this->plugin->get_playlists()->size() === 0) {
                             return User_Input_Handler_Registry::create_action($this, 'do_setup');
                         }
 
                         $this->plugin->tv->load_channels();
-                        if ($this->plugin->vod) {
+                        if ($this->plugin->vod && $plugin_cookies->{PARAM_SHOW_VOD_ICON} === SetupControlSwitchDefs::switch_on) {
                             return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
                         }
 

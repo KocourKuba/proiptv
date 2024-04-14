@@ -93,10 +93,11 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
      */
     protected static function toggle_cookie_param($plugin_cookies, $param)
     {
+        hd_debug_print("toggle old param $param: " . $plugin_cookies->{$param}, true);
         $plugin_cookies->{$param} = $plugin_cookies->{$param} === SetupControlSwitchDefs::switch_off
             ? SetupControlSwitchDefs::switch_on
             : SetupControlSwitchDefs::switch_off;
 
-        hd_debug_print("$param: " . $plugin_cookies->{$param}, true);
+        hd_debug_print("toggle new param $param: " . $plugin_cookies->{$param}, true);
     }
 }
