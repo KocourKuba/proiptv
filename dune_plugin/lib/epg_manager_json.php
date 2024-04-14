@@ -208,6 +208,8 @@ class Epg_Manager_Json extends Epg_Manager
         $prev_start = 0;
         $no_end = empty($parser_params[Epg_Params::EPG_END]);
         foreach ($ch_data as $entry) {
+            if (!isset($entry[$parser_params[Epg_Params::EPG_START]])) continue;
+
             $program_start = $entry[$parser_params[Epg_Params::EPG_START]];
 
             if ($no_end) {
