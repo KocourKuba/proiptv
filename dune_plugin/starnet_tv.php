@@ -670,6 +670,11 @@ class Starnet_Tv implements User_Input_Handler
             $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
         }
 
+        $enable_vod_icon = ($this->plugin->get_bool_parameter(PARAM_SHOW_VOD_ICON) && !is_null($this->plugin->vod))
+            ? SetupControlSwitchDefs::switch_on
+            : SetupControlSwitchDefs::switch_off;
+        $this->plugin->set_plugin_cookie(PARAM_SHOW_VOD_ICON, $enable_vod_icon);
+
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
 

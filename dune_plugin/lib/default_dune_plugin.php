@@ -177,6 +177,11 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->plugin_cookies;
     }
 
+    public function set_plugin_cookie($name, $value)
+    {
+        return $this->plugin_cookies->{$name} = $value;
+    }
+
     public function set_internet_status($internet_status)
     {
         $this->internet_status = $internet_status;
