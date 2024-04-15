@@ -117,10 +117,9 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param bool $enable
      * @return void
      */
-    public function init_vod_screens($enable)
+    public function init_vod_screens()
     {
         $this->plugin->destroy_screen(Starnet_Vod_Favorites_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_History_Screen::ID);
@@ -134,7 +133,7 @@ class vod_standard extends Abstract_Vod
 
         $this->special_groups->clear();
 
-        if ($enable) {
+        if ($this->plugin->vod_enabled) {
             // Favorites category
             $special_group = new Default_Group($this->plugin,
                 FAVORITES_MOVIE_GROUP_ID,
@@ -179,6 +178,7 @@ class vod_standard extends Abstract_Vod
             $this->plugin->create_screen(new Starnet_Vod_Filter_Screen($this->plugin));
         }
     }
+
     /**
      * @return M3uParser
      */

@@ -173,7 +173,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->force_save($user_input);
-                if ($this->plugin->tv->reload_channels() === 0) {
+                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
@@ -380,7 +380,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($this->plugin->get_active_playlist_key() === $id) {
-                    if ($this->plugin->tv->reload_channels() === 0) {
+                    if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                         return Action_Factory::invalidate_all_folders($plugin_cookies,
                             Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                     }
@@ -830,7 +830,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $this->set_changes($parent_media_url->save_data);
 
         $this->plugin->clear_playlist_cache($id);
-        if (($this->plugin->get_active_playlist_key() === $id) && $this->plugin->tv->reload_channels() === 0) {
+        if (($this->plugin->get_active_playlist_key() === $id) && $this->plugin->tv->reload_channels($plugin_cookies) === 0) {
             return Action_Factory::invalidate_all_folders($plugin_cookies,
                 Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
         }

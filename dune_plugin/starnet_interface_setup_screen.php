@@ -55,12 +55,14 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         // Show in main screen
         if (!is_limited_apk()) {
             $show_tv = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_SHOW_TV);
+            hd_debug_print(self::CONTROL_SHOW_TV . ": $show_tv", true);
             Control_Factory::add_image_button($defs, $this, null,
                 self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SetupControlSwitchDefs::$on_off_translated[$show_tv],
                 get_image_path(SetupControlSwitchDefs::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
         }
 
         $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SetupControlSwitchDefs::switch_on);
+        hd_debug_print(PARAM_ASK_EXIT . ": $ask_exit", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_ASK_EXIT, TR::t('setup_ask_exit'), SetupControlSwitchDefs::$on_off_translated[$ask_exit],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$ask_exit]), self::CONTROLS_WIDTH);
@@ -68,6 +70,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // show all channels category
         $show_all = $this->plugin->get_parameter(PARAM_SHOW_ALL, SetupControlSwitchDefs::switch_on);
+        hd_debug_print(PARAM_SHOW_ALL . ": $show_all", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
@@ -75,6 +78,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // show favorites category
         $show_fav = $this->plugin->get_parameter(PARAM_SHOW_FAVORITES, SetupControlSwitchDefs::switch_on);
+        hd_debug_print(PARAM_SHOW_FAVORITES . ": $show_fav", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
@@ -82,6 +86,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // show history category
         $show_history = $this->plugin->get_parameter(PARAM_SHOW_HISTORY, SetupControlSwitchDefs::switch_on);
+        hd_debug_print(PARAM_SHOW_HISTORY . ": $show_history", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
@@ -89,6 +94,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // show changed channels category
         $show_changed = $this->plugin->get_parameter(PARAM_SHOW_CHANGED_CHANNELS, SetupControlSwitchDefs::switch_on);
+        hd_debug_print(PARAM_SHOW_CHANGED_CHANNELS . ": $show_changed", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SetupControlSwitchDefs::$on_off_translated[$show_changed],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_changed]), self::CONTROLS_WIDTH);
@@ -96,6 +102,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // show separate VOD icon
         $show_vod_icon = $this->plugin->get_parameter(PARAM_SHOW_VOD_ICON, SetupControlSwitchDefs::switch_off);
+        hd_debug_print(PARAM_SHOW_VOD_ICON . ": $show_vod_icon", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_VOD_ICON, TR::t('setup_show_vod_icon'), SetupControlSwitchDefs::$on_off_translated[$show_vod_icon],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_vod_icon]), self::CONTROLS_WIDTH);
@@ -103,6 +110,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // epg font size
         $font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+        hd_debug_print(PARAM_EPG_FONT_SIZE . ": $font_size", true);
         $font_ops_translated[SetupControlSwitchDefs::switch_on] = TR::t('setup_small');
         $font_ops_translated[SetupControlSwitchDefs::switch_off] = TR::t('setup_normal');
 
@@ -179,12 +187,12 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case PARAM_SHOW_VOD_ICON:
                 $this->plugin->save_settings();
                 $this->plugin->toggle_parameter($control_id);
-                $this->plugin->tv->reload_channels();
+                $this->plugin->tv->reload_channels($plugin_cookies);
 
-            return Starnet_Epfs_Handler::invalidate_folders(
-                array(Starnet_Tv_Groups_Screen::ID),
-                Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
-            );
+                return Starnet_Epfs_Handler::invalidate_folders(
+                    array(Starnet_Tv_Groups_Screen::ID),
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
+                );
 
             case PARAM_ASK_EXIT:
             case PARAM_EPG_FONT_SIZE:

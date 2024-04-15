@@ -91,6 +91,11 @@ class Default_Dune_Plugin implements DunePlugin
     public $vod;
 
     /**
+     * @var bool
+     */
+    public $vod_enabled = false;
+
+    /**
      * @var Playback_Points
      */
     protected $playback_points;
@@ -167,8 +172,9 @@ class Default_Dune_Plugin implements DunePlugin
         $this->image_libs = new Hashed_Array();
     }
 
-    public function set_plugin_cookies($plugin_cookies)
+    public function set_plugin_cookies(&$plugin_cookies)
     {
+        hd_debug_print(null, true);
         $this->plugin_cookies = $plugin_cookies;
     }
 
@@ -179,6 +185,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function set_plugin_cookie($name, $value)
     {
+        hd_debug_print("set_plugin_cookie: $name = $value", true);
         return $this->plugin_cookies->{$name} = $value;
     }
 
@@ -527,7 +534,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $decoded_media_url = MediaURL::decode($media_url);
 
-        return $this->tv->get_tv_info($decoded_media_url);
+        return $this->tv->get_tv_info($decoded_media_url, &$plugin_cookies);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -573,7 +580,7 @@ class Default_Dune_Plugin implements DunePlugin
             throw new Exception('TV is not supported');
         }
 
-        return $this->tv->get_tv_playback_url($channel_id, $archive_tm_sec, $protect_code);
+        return $this->tv->get_tv_playback_url($channel_id, $archive_tm_sec, $protect_code, &$plugin_cookies);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -1564,8 +1571,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $this->set_parameter(PLUGIN_CONFIG_VERSION, '3');
-        $this->save_parameters(true);
-
+        $this->get_parameter(PARAM_SHOW_VOD_ICON, SetupControlSwitchDefs::switch_off);
         if (!isset($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
             $plugin_cookies->{PARAM_SHOW_VOD_ICON} = SetupControlSwitchDefs::switch_off;
         }

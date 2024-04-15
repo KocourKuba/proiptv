@@ -493,12 +493,13 @@ class Starnet_Tv implements User_Input_Handler
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @param $plugin_cookies
      * @return int
      */
-    public function reload_channels()
+    public function reload_channels(&$plugin_cookies)
     {
         $this->unload_channels();
-        return $this->load_channels();
+        return $this->load_channels($plugin_cookies);
     }
 
     /**
@@ -513,9 +514,10 @@ class Starnet_Tv implements User_Input_Handler
     }
 
     /**
+     * @param $plugin_cookies
      * @return int
      */
-    public function load_channels()
+    public function load_channels(&$plugin_cookies)
     {
         if ($this->channels->size() !== 0) {
             hd_debug_print("Channels already loaded", true);
@@ -620,6 +622,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         $this->plugin->vod = null;
+        $this->plugin->vod_enabled = false;
         if (is_null($provider)) {
             $mapper = $this->plugin->get_setting(PARAM_ID_MAPPER, 'by_default');
             if ($mapper !== 'default') {
@@ -661,19 +664,21 @@ class Starnet_Tv implements User_Input_Handler
             if (!empty($vod_class)) {
                 hd_debug_print("Using VOD: $vod_class");
                 $this->plugin->vod = new $vod_class($this->plugin);
-                $enable = $this->plugin->vod->init_vod($provider);
-                $this->get_special_group(VOD_GROUP_ID)->set_disabled(!$enable);
-                $this->plugin->vod->init_vod_screens($enable);
-                hd_debug_print("VOD show: " . var_export($enable, true));
+                $this->plugin->vod_enabled = $this->plugin->vod->init_vod($provider);
+                $this->get_special_group(VOD_GROUP_ID)->set_disabled(!$this->plugin->vod_enabled);
+                $this->plugin->vod->init_vod_screens();
+                hd_debug_print("VOD show: " . var_export($this->plugin->vod_enabled, true));
             }
 
             $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
         }
 
-        $enable_vod_icon = ($this->plugin->get_bool_parameter(PARAM_SHOW_VOD_ICON) && !is_null($this->plugin->vod))
+        $enable_vod_icon = ($this->plugin->get_bool_parameter(PARAM_SHOW_VOD_ICON, false) && $this->plugin->vod_enabled)
             ? SetupControlSwitchDefs::switch_on
             : SetupControlSwitchDefs::switch_off;
-        $this->plugin->set_plugin_cookie(PARAM_SHOW_VOD_ICON, $enable_vod_icon);
+
+        $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
+        hd_debug_print(PARAM_SHOW_VOD_ICON . ": $enable_vod_icon", true);
 
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
@@ -1308,12 +1313,13 @@ class Starnet_Tv implements User_Input_Handler
      * @param string $channel_id
      * @param int $archive_ts
      * @param string $protect_code
+     * @param $plugin_cookies
      * @return string
      */
-    public function get_tv_playback_url($channel_id, $archive_ts, $protect_code)
+    public function get_tv_playback_url($channel_id, $archive_ts, $protect_code, &$plugin_cookies)
     {
         try {
-            if ($this->load_channels() === 0) {
+            if ($this->load_channels($plugin_cookies) === 0) {
                 throw new Exception("Channels not loaded!");
             }
 
@@ -1345,16 +1351,16 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param MediaURL $media_url
+     * @param $plugin_cookies
      * @return array
-     * @throws Exception
      */
-    public function get_tv_info(MediaURL $media_url)
+    public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
     {
         $epg_font_size = $this->plugin->get_bool_parameter(PARAM_EPG_FONT_SIZE, false)
             ? PLUGIN_FONT_SMALL
             : PLUGIN_FONT_NORMAL;
 
-        if ($this->load_channels() === 0) {
+        if ($this->load_channels($plugin_cookies) === 0) {
             hd_debug_print("Channels not loaded!");
             return array();
         }

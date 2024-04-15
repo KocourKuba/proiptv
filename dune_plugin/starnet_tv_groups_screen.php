@@ -309,7 +309,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                if ($this->plugin->tv->reload_channels() === 0) {
+                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
@@ -478,15 +478,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->get_epg_manager()->clear_epg_cache();
                 }
 
-                if ($this->plugin->tv->reload_channels() !== 0) {
-                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
+                    $post_action = Action_Factory::close_and_run(
+                        Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
+
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
                 }
 
-                $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
-                $post_action = Action_Factory::close_and_run(
-                    Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
-
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_INFO_DLG:
                 return $this->plugin->do_show_subscription($this);
@@ -518,7 +518,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
 
         $items = array();
-        $res = $this->plugin->tv->load_channels();
+        $res = $this->plugin->tv->load_channels($plugin_cookies);
         if ($res === 0) {
             hd_debug_print("Channels not loaded!");
             return $items;

@@ -335,7 +335,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
-                $this->plugin->tv->reload_channels();
+                $this->plugin->tv->reload_channels($plugin_cookies);
                 return Starnet_Epfs_Handler::invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::close_and_run(
@@ -363,7 +363,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $items = array();
 
         try {
-            if ($this->plugin->tv->load_channels() === 0) {
+            if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
                 throw new Exception("Channels not loaded!");
             }
 

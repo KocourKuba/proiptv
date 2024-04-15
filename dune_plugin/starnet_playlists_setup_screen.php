@@ -260,7 +260,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
                 $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
-                $result = $this->plugin->tv->reload_channels();
+                $result = $this->plugin->tv->reload_channels($plugin_cookies);
                 $action = Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );

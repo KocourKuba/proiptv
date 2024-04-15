@@ -261,7 +261,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 }
 
                 if ($need_reload) {
-                    $this->plugin->tv->reload_channels();
+                    $this->plugin->tv->reload_channels($plugin_cookies);
                 }
 
                 return Action_Factory::show_title_dialog($msg,

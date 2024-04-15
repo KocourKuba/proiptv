@@ -329,7 +329,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     {
         hd_debug_print(null, true);
 
-        if ($this->plugin->tv->load_channels() === 0) {
+        if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
             hd_debug_print("Channels not loaded!");
         }
 
@@ -819,12 +819,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->set_no_changes();
                 }
 
-                if ($this->plugin->tv->reload_channels() !== 0) {
-                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
                 }
 
-                $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_REFRESH_SCREEN:
                 if ($this->has_changes()) {

@@ -144,7 +144,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return User_Input_Handler_Registry::create_action($this, 'do_setup');
                         }
 
-                        $this->plugin->tv->load_channels();
+                        $this->plugin->tv->load_channels($plugin_cookies);
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
                             hd_debug_print("launch play", true);
@@ -172,13 +172,13 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_LAUNCH_VOD:
                         hd_debug_print("action: launch vod", true);
-                        $this->plugin->init_plugin();
+                        $this->plugin->init_plugin($plugin_cookies);
                         if ($this->plugin->get_playlists()->size() === 0) {
                             return User_Input_Handler_Registry::create_action($this, 'do_setup');
                         }
 
-                        $this->plugin->tv->load_channels();
-                        if ($this->plugin->vod && $plugin_cookies->{PARAM_SHOW_VOD_ICON} === SetupControlSwitchDefs::switch_on) {
+                        $this->plugin->tv->load_channels($plugin_cookies);
+                        if ($this->plugin->vod_enabled && $plugin_cookies->{PARAM_SHOW_VOD_ICON} === SetupControlSwitchDefs::switch_on) {
                             return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
                         }
 
@@ -204,12 +204,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
                         }
 
-                        $this->plugin->tv->load_channels();
+                        $this->plugin->tv->load_channels($plugin_cookies);
                         return Action_Factory::tv_play($media_url);
 
                     case self::ACTION_UPDATE_EPFS:
                         $this->plugin->init_plugin();
-                        $this->plugin->tv->load_channels();
+                        $this->plugin->tv->load_channels($plugin_cookies);
                         hd_debug_print("update_epfs", true);
                         return Starnet_Epfs_Handler::update_all_epfs($plugin_cookies,
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
