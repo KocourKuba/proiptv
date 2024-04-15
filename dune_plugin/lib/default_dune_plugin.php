@@ -243,23 +243,6 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return api_default[]
-     */
-    public function get_enabled_providers()
-    {
-        $providers = array();
-        if (!is_null($this->providers)) {
-            foreach ($this->providers as $value) {
-                if ($value->getEnable()) {
-                    $providers[] = $value;
-                }
-            }
-        }
-
-        return $providers;
-    }
-
-    /**
      * @param string $name
      * @return api_default|null
      */
@@ -1420,15 +1403,15 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             foreach ($jsonArray['providers'] as $item) {
-                if (!isset($item['id'])) continue;
+                if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
 
                 $api_class = "api_{$item['id']}";
                 if (!class_exists($api_class)) {
                     $api_class = 'api_default';
                 }
 
-                /** @var api_default $config */
                 hd_debug_print("provider api: $api_class ({$item['name']})");
+                /** @var api_default $provider */
                 $provider = new $api_class($this);
                 foreach ($item as $key => $value) {
                     $words = explode('_', $key);
@@ -1443,7 +1426,6 @@ class Default_Dune_Plugin implements DunePlugin
                     }
                 }
 
-                $this->providers->set($provider->getId(), $provider);
                 // cache provider logo
                 $logo = $provider->getLogo();
                 $filename = basename($logo);
@@ -1459,6 +1441,7 @@ class Default_Dune_Plugin implements DunePlugin
                         hd_debug_print("failed to download provider logo: $logo");
                     }
                 }
+                $this->providers->set($provider->getId(), $provider);
             }
         }
 
@@ -2293,7 +2276,8 @@ class Default_Dune_Plugin implements DunePlugin
         if (!empty($icon)) {
             if (strpos($icon,"://") === false) {
                 $icon = get_image_path($icon);
-            } else if (file_exists(get_cached_image_path(basename($icon)))) {
+            } else if (strpos($icon, "plugin_file://") === false
+                && file_exists(get_cached_image_path(basename($icon)))) {
                 $icon = get_cached_image_path(basename($icon));
             }
         }
@@ -2355,8 +2339,9 @@ class Default_Dune_Plugin implements DunePlugin
         $menu_items = array();
 
         $idx = 0;
-        foreach ($this->get_enabled_providers() as $provider) {
-            if ($idx !== 0 && ($idx % 15) === 0) {
+        /** @var api_default $provider */
+        foreach ($this->providers as $provider) {
+            if ($idx !== 0 && ($idx % 17) === 0) {
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             }
             $idx++;
@@ -2368,6 +2353,7 @@ class Default_Dune_Plugin implements DunePlugin
                 array(PARAM_PROVIDER => $provider->getId())
             );
         }
+
         return $menu_items;
     }
 
