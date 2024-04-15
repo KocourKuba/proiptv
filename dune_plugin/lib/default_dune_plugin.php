@@ -2210,7 +2210,7 @@ class Default_Dune_Plugin implements DunePlugin
         Control_Factory::add_vgap($defs, -10);
         Control_Factory::add_label($defs, self::AUTHOR_LOGO,
             " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
-            20);
+            14);
     }
 
     /**

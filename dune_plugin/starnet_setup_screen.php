@@ -73,7 +73,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             get_image_path('info.png'),
             Abstract_Controls_Screen::CONTROLS_WIDTH);
 
-        Control_Factory::add_vgap($defs, 16);
+        Control_Factory::add_vgap($defs, 10);
 
         Control_Factory::add_button($defs, $this,null, self::ACTION_DONATE_DLG,
             TR::t('setup_donate_title'), 'QR code', self::CONTROLS_WIDTH);
