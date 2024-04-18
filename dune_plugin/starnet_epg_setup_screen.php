@@ -232,7 +232,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 if ($this->plugin->get_cache_dir() === $data->filepath) break;
 
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
-                $this->plugin->set_parameter(PARAM_CACHE_PATH, $data->filepath);
+                $this->plugin->set_parameter(PARAM_CACHE_PATH, str_replace("//", "/", $data->filepath));
                 $this->plugin->init_epg_manager();
 
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),

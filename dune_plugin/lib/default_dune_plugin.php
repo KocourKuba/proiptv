@@ -2132,7 +2132,7 @@ class Default_Dune_Plugin implements DunePlugin
             $cache_dir = get_data_path(EPG_CACHE_SUBDIR);
         }
 
-        return $cache_dir;
+        return str_replace("//", "/", $cache_dir);
     }
 
     /**
