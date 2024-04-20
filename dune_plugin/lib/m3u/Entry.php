@@ -195,25 +195,28 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * @param array $attrs
+     * @param string|array $attrs
      * @param null $tag
      * @param null $found_attr
      * @return string
      */
     public function getAnyEntryAttribute($attrs, $tag = null, &$found_attr = null)
     {
-        if (is_array($attrs)) {
-            foreach ($attrs as $attr) {
-                $val = $this->getEntryAttribute($attr, $tag);
-                if (empty($val)) continue;
-
-                if ($found_attr !== null) {
-                    $found_attr = $attr;
-                }
-                return $val;
-            }
+        if (!is_array($attrs)) {
+            return $this->getEntryAttribute($attrs, $tag);
         }
-        return '';
+
+        $val = '';
+        foreach ($attrs as $attr) {
+            $val = $this->getEntryAttribute($attr, $tag);
+            if (empty($val)) continue;
+
+            if ($found_attr !== null) {
+                $found_attr = $attr;
+            }
+            break;
+        }
+        return $val;
     }
 
     /**
