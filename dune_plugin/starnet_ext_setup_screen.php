@@ -41,6 +41,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
     const ACTION_SETTINGS_PASS_DLG_APPLY = 'settings_pass_apply';
 
+    protected $return_index = array('initial_sel_ndx' => 13);
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -149,7 +151,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case GUI_EVENT_KEY_RETURN:
             return Action_Factory::close_and_run(
                 User_Input_Handler_Registry::create_action_screen(
-                    Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, array('initial_sel_ndx' => 11))
+                    Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
             );
 
             case self::CONTROL_BACKUP:

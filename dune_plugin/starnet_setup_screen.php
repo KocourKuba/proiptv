@@ -34,6 +34,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
     const ACTION_DONATE_DLG = 'donate_dlg';
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
+    const CONTROL_CATEGORY_SCREEN = 'category_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_EPG_SCREEN = 'epg_screen';
     const CONTROL_STREAMING_SCREEN = 'streaming_screen';
@@ -84,22 +85,27 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Channels settings 5
+        // Category settings 5
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CATEGORY_SCREEN,
+            TR::t('setup_category_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
+        // Channels settings 7
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_PLAYLISTS_SCREEN,
             TR::t('tv_screen_playlists_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // EPG settings 7
+        // EPG settings 9
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_EPG_SCREEN,
             TR::t('setup_epg_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Streaming settings 9
+        // Streaming settings 11
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_STREAMING_SCREEN,
             TR::t('setup_streaming_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Extended settings 11
+        // Extended settings 13
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_EXT_SETUP_SCREEN,
             TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
@@ -189,6 +195,9 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(Starnet_Interface_Setup_Screen::get_media_url_str(), TR::t('setup_interface_title'));
+
+            case self::CONTROL_CATEGORY_SCREEN: // show interface settings dialog
+                return Action_Factory::open_folder(Starnet_Category_Setup_Screen::get_media_url_str(), TR::t('setup_category_title'));
 
             case self::CONTROL_PLAYLISTS_SCREEN: // show epg settings dialog
                 return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::get_media_url_str(), TR::t('tv_screen_playlists_setup'));

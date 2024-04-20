@@ -108,6 +108,7 @@ setup_internal = Internal
 setup_external = External
 setup_donate_title = Donate to author
 setup_interface_title = Interface settings
+setup_category_title = Category settings
 setup_change_settings = Change settings
 setup_epg_settings = EPG settings
 setup_streaming_settings = Playback settings

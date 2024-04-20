@@ -108,6 +108,7 @@ setup_internal = Intern
 setup_external = Extern
 setup_donate_title = Spenden Sie an den Autor
 setup_interface_title = Schnittstelleintsellung
+setup_category_title = Kategorieeinstellungen
 setup_change_settings = Einstellungen ändern
 setup_epg_settings = EPG-Einstellungen
 setup_streaming_settings = Wiedergabeeinstellungen
