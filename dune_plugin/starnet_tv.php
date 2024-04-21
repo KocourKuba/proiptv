@@ -85,10 +85,6 @@ class Starnet_Tv implements User_Input_Handler
      */
     protected $m3u_parser;
 
-    /**
-     * @var string
-     */
-    protected $catchup;
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -602,20 +598,6 @@ class Starnet_Tv implements User_Input_Handler
             return 0;
         }
 
-        foreach ($this->catchup = $this->m3u_parser->getM3uInfo() as $entry) {
-            $catchup = $entry->getCatchup();
-            if (!empty($catchup)) {
-                $this->catchup = $catchup;
-                break;
-            }
-        }
-        foreach ($this->m3u_parser->getM3uInfo() as $entry) {
-            $catchup = $entry->getCatchupSource();
-            if (!empty($catchup)) {
-                $global_catchup_source = $catchup;
-                break;
-            }
-        }
         $icon_base_url = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
         if (!empty($icon_base_url)) {
             hd_debug_print("Using base url for icons: $icon_base_url");
@@ -630,12 +612,6 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("Use custom ID detection: $id_map");
             }
         } else {
-            $playlist_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP);
-            if ($playlist_catchup !== KnownCatchupSourceTags::cu_unknown) {
-                $this->catchup = $playlist_catchup;
-                hd_debug_print("set provider catchup: $playlist_catchup");
-            }
-
             $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
             if (!empty($id_parser)) {
                 hd_debug_print("using provider ({$provider->getId()}) specific id parsing: $id_parser");
@@ -684,12 +660,6 @@ class Starnet_Tv implements User_Input_Handler
         $this->channels = new Hashed_Array();
 
         $this->plugin->get_playback_points()->load_points(true);
-
-        // User catchup settings has higher priority than playlist or provider settings
-        $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
-        if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
-            $global_catchup_source = $user_catchup;
-        }
 
         $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
 
@@ -891,17 +861,7 @@ class Starnet_Tv implements User_Input_Handler
                 $archive /= 86400;
             }
 
-            if ($archive !== 0) {
-                $catchup = $entry->getCatchup();
-                $archive_url = $entry->getCatchupSource();
-                if (empty($archive_url) && !empty($global_catchup_source)) {
-                    $archive_url = $global_catchup_source;
-                }
-            } else {
-                $archive_url = '';
-                $catchup = '';
-            }
-
+            $archive_url = $entry->getCatchupSource();
             if ($this->plugin->get_bool_setting(PARAM_FORCE_HTTP, false)) {
                 $stream_path = str_replace('https://', 'http://', $stream_path);
                 $icon_url = str_replace('https://', 'http://', $icon_url);
@@ -948,7 +908,7 @@ class Starnet_Tv implements User_Input_Handler
                 $icon_url,
                 $stream_path,
                 $archive_url,
-                $catchup,
+                $entry->getCatchup(),
                 $parent_group,
                 $archive,
                 $number,
@@ -1078,33 +1038,55 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if ((int)$archive_ts !== -1) {
-            $catchup = $channel->get_catchup();
-            if (empty($catchup)) {
-                $catchup = $this->catchup;
-                if (empty($catchup) && !is_null($provider)) {
-                    $catchup = $provider->getConfigValue(CONFIG_PLAYLIST_CATCHUP);
-                }
-
-                if (empty($catchup) && strpos($stream_url, 'mpegts') !== false) {
-                    $catchup = 'flussonic';
+            foreach ($this->m3u_parser->getM3uInfo() as $entry) {
+                $catchup = $entry->getCatchup();
+                if (!empty($catchup)) {
+                    break;
                 }
             }
 
+            if (empty($catchup) && !is_null($provider)) {
+                $catchup = $provider->getConfigValue(CONFIG_PLAYLIST_CATCHUP);
+                hd_debug_print("set catchup params from config: $catchup", true);
+            }
+
+            if (empty($catchup) && strpos($stream_url, 'mpegts') !== false) {
+                $catchup = KnownCatchupSourceTags::cu_flussonic;
+                hd_debug_print("force catchup params for mpegts: $catchup", true);
+            }
+
+            $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
+            if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
+                $catchup = $user_catchup;
+                hd_debug_print("force set user catchup: $catchup");
+            }
+
+            $channel_catchup = $channel->get_catchup();
+            if (!empty($channel_catchup)) {
+                // channel catchup override playlist, user and config settings
+                $catchup = $channel_catchup;
+            } else if (empty($catchup)) {
+                $catchup = KnownCatchupSourceTags::cu_shift;
+            }
+
             $archive_url = $channel->get_archive_url();
-            hd_debug_print("catchup params: $catchup", true);
+            hd_debug_print("using catchup params: $catchup", true);
             if (empty($archive_url)) {
                 if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_shift, $catchup)) {
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'utc=${start}&lutc=${timestamp}';
+                    hd_debug_print("archive url template (shift): $archive_url", true);
                 } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_timeshift, $catchup)) {
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'timeshift=${start}&timenow=${timestamp}';
+                    hd_debug_print("archive url template (timeshift): $archive_url", true);
                 } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_archive, $catchup)) {
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'archive=${start}&archive_end=${end}';
+                    hd_debug_print("archive url template (archive): $archive_url", true);
                 } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup)
                     && preg_match("#^(https?://[^/]+)/(.+)/([^/.?]+)(\.m3u8)?(\?.+=.+)?$#", $stream_url, $m)) {
                     $params = isset($m[5]) ? $m[5] : '';
@@ -1114,20 +1096,26 @@ class Starnet_Tv implements User_Input_Handler
                     } else {
                         $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400$m[4]$params";
                     }
+                    hd_debug_print("archive url template (flussonic): $archive_url", true);
                 } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_xstreamcode, $catchup)
                     && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $stream_url, $m)) {
                     $extension = $m[6] ?: '.ts';
                     $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[5].$extension";
+                    hd_debug_print("archive url template (xtream code): $archive_url", true);
                 } else {
                     // if no info about catchup, use 'shift'
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'utc=${start}&lutc=${timestamp}';
+                    hd_debug_print("archive url template (default shift): $archive_url", true);
                 }
             } else if (!preg_match(HTTP_PATTERN, $archive_url)) {
                 $archive_url = $stream_url
                     . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                     . ltrim($archive_url, "?");
+                hd_debug_print("archive url template (append): $archive_url", true);
+            } else {
+                hd_debug_print("archive url template (playlist): $archive_url", true);
             }
 
             $stream_url = $archive_url;
