@@ -9,7 +9,7 @@
       "xemu": {
         "name": "Xemu",
         "package": "icon_pack_xemu.zip",
-        "url": "https://dl.dropboxusercontent.com/scl/fi/qavhqtpins771cacgsprg/icon_pack_xemu.zip?rlkey=pjpfqr8fipqnzf05pjwov2on4"
+        "url": "https://www.dropbox.com/scl/fo/hh6qm90sk8ezvirpx9179/ANu0vST1sQUI-xz6E58vwe0?rlkey=qupvstvhlb6mjlgia1ci28208&dl=1"
       },
       "viktor": {
         "name": "Viktor",
@@ -1021,16 +1021,16 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+\\/)?(?<id>.+)\\/.+$/",
         "epg_preset": "drm",
         "servers": {
-          "/": "RU (Russia, Moscow)",
-          "kfc/": "KFC (Russia, Moscow)",
-          "OSTHLS/": "OSTHLS (Russia, Moscow)",
+          "/": "RU (Russia, Moscow, DC1)",
+          "kfc/": "KFC (Russia, Moscow, DC2)",
+          "OSTHLS/": "OSTHLS (Russia, Moscow, DC3)",
           "KRDHLS/": "KRDHLS (Russia, Krasnodar)",
           "bn/": "BN (Russia, Saint-Petersburg)",
           "BYHLS/": "BYHLS (Belarus, Minsk)",
           "de/": "DE (Germany, Frankfurt/Netherlands, Amsterdam)",
-          "kz/": "KZ (Kazakhstan, Almaty/Russia, Samara)",
-          "gn/": "GN (Ukraine, Kiev)",
-          "RHLS/": "RHLS (GlobalCache CDN)"
+          "kz/": "KZ (Russia, Samara)",
+          "gn/": "GN (Poland, Warsaw)",
+          "RHLS/": "RHLS (Europe, Lux/Fra)"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
