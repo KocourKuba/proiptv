@@ -324,9 +324,17 @@ class HD
         $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$tmp_file' '$user_agent' '$logfile'";
         hd_debug_print("Exec: $cmd", true);
         shell_exec($cmd);
+        $log_content = @file_get_contents($logfile);
+        if ($log_content !== false) {
+            hd_debug_print("Read http_proxy log...");
+            foreach (explode("\n", $log_content) as $l) {
+                hd_debug_print(rtrim($l));
+            }
+            hd_debug_print("Read finished");
+        }
+
         if (!file_exists($tmp_file)) {
-            $log_content = @file_get_contents($logfile);
-            hd_debug_print("Can't download playlist $tmp_file\n\n" . $log_content);
+            hd_debug_print("Can't download playlist to $tmp_file");
             return false;
         }
         $content = file_get_contents($tmp_file);
@@ -356,7 +364,9 @@ class HD
         $log_content = @file_get_contents($logfile);
         if ($log_content !== false) {
             hd_debug_print("Read http_proxy log...");
-            foreach (explode("\n", $log_content) as $l) hd_debug_print(rtrim($l));
+            foreach (explode("\n", $log_content) as $l) {
+                hd_debug_print(rtrim($l));
+            }
             hd_debug_print("Read finished");
         }
         return file_exists($save_file);
