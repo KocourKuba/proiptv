@@ -105,7 +105,7 @@
       }
     },
     "tvteam": {
-      "json_source": "http://tv.team/{EPG_ID}.json",
+      "json_source": "http://troya.one/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -897,7 +897,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
       "api_commands": {
-        "playlist": "https://tv.team/pl/11/{PASSWORD}/playlist.m3u8"
+        "playlist": "http://troya.one/pl/11/{PASSWORD}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-name",
@@ -1018,7 +1018,7 @@
         "playlist": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}playlist.m3u8"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?:.+\\/)?(?<id>.+)\\/.+$/",
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>[^\\/]+)\\/(?<id>.+)\\/.+$/",
         "epg_preset": "drm",
         "servers": {
           "/": "RU (Russia, Moscow, DC1)",
