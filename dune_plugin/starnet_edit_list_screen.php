@@ -379,6 +379,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
+                if (is_array($id)) {
+                    return $id;
+                }
+
                 if ($this->plugin->get_active_playlist_key() === $id) {
                     if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                         return Action_Factory::invalidate_all_folders($plugin_cookies,
@@ -945,7 +949,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                     $playlist->params[MACRO_OTTKEY] = $vars[0];
                                 }
 
-                                if (isset($ext_vars[1])) {
+                                if (!empty($ext_vars[1])) {
+                                    if (!preg_match(VPORTAL_PATTERN, $ext_vars[1])) {
+                                        return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
+                                    }
                                     $playlist->params[MACRO_VPORTAL] = $ext_vars[1];
                                 }
                                 break;

@@ -2746,7 +2746,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param $user_input
-     * @return null|string
+     * @return null|string|array
      */
     public function apply_edit_provider_dlg($user_input)
     {
@@ -2796,6 +2796,10 @@ class Default_Dune_Plugin implements DunePlugin
                     $params[MACRO_SUBDOMAIN] = $provider->getConfigValue(CONFIG_SUBDOMAIN);
                 }
                 $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
+                if (!preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
+                    return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
+                }
+
                 $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
 
                 $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;

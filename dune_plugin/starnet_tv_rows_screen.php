@@ -783,6 +783,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return null;
                 }
 
+                if (is_array($id)) {
+                    return $id;
+                }
+
                 return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);
 
             case GUI_EVENT_KEY_INFO:

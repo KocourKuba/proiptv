@@ -23,7 +23,7 @@ class vod_edem extends vod_standard
         $this->vod_filters = array("years", "genre");
         $this->vod_quality = true;
         $vportal = $provider->getCredential(MACRO_VPORTAL);
-        if (empty($vportal) || !preg_match("/^portal::\[key:([^]]+)](.+)$/", $vportal,$matches)) {
+        if (empty($vportal) || !preg_match(VPORTAL_PATTERN, $vportal,$matches)) {
             $show = false;
         } else {
             list(, $this->vportal_key, $this->vportal_url) = $matches;

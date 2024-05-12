@@ -235,6 +235,7 @@ const EPG_PATTERN = 'xml|xmltv|gz';
 const HTTP_PATTERN = '/^(https?):\/\/([^\?]+)\??/';
 const TS_REPL_PATTERN = '/^(https?:\/\/)(.+)$/';
 const PROVIDER_PATTERN = '/^(.+)@(.+)$/';
+const VPORTAL_PATTERN = '/^portal::\[key:([^]]+)](.+)$/';
 
 # Mounted storages path
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage';
