@@ -73,13 +73,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
             return null;
         }
 
+        hd_debug_print("user input control: $user_input->control_id", true);
         switch ($user_input->control_id) {
             case self::ACTION_DO_REBOOT:
-                hd_debug_print("do reboot", true);
                 return Action_Factory::restart(true);
 
             case self::ACTION_DO_PLUGIN_SETTINGS:
-                hd_debug_print("do setup", true);
                 $this->plugin->init_plugin();
                 return $this->plugin->show_password_dialog($this, ACTION_SETTINGS);
 
@@ -93,20 +92,23 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
 
             case self::ACTION_DO_CHANNELS_SETTINGS:
-                hd_debug_print("do setup", true);
                 $this->plugin->init_plugin();
                 return $this->plugin->show_password_dialog($this, ACTION_CHANNELS_SETTINGS);
 
             case ACTION_CHANNELS_SETTINGS:
-                hd_debug_print("do channels setup", true);
                 $this->plugin->init_plugin();
                 return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::ID, TR::t('tv_screen_playlists_setup'));
 
             case self::ACTION_DO_SEND_LOG:
-                hd_debug_print("do_send_log", true);
-                $error_msg = '';
-                $msg = HD::send_log_to_developer($this->plugin->plugin_info['app_version'], $error_msg) ? TR::t('entry_log_sent') : TR::t('entry_log_not_sent');
-                return Action_Factory::show_title_dialog($msg, null, $error_msg);
+                if (is_newer_versions()) {
+                    $error_msg = '';
+                    $msg = HD::send_log_to_developer($this->plugin->plugin_info['app_version'], $error_msg)
+                        ? TR::t('entry_log_sent')
+                        : TR::t('entry_log_not_sent');
+                    return Action_Factory::show_title_dialog($msg);
+                }
+
+                return Action_Factory::show_title_dialog(TR::t('entry_log_not_sent_too_old'));
 
             case self::ACTION_DO_CLEAR_EPG:
                 $this->plugin->init_plugin();
@@ -126,7 +128,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 hd_debug_print("plugin_entry $user_input->action_id");
+
                 if (!is_newer_versions()) {
+                    hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
                     return  Action_Factory::show_error(true, TR::t('err_too_old_player'),
                         array(
                             TR::load_string('err_too_old_player'),
@@ -141,7 +145,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_playlists()->size() === 0) {
-                            return User_Input_Handler_Registry::create_action($this, 'do_setup');
+                            return User_Input_Handler_Registry::create_action($this, self::ACTION_DO_PLUGIN_SETTINGS);
                         }
 
                         $this->plugin->tv->load_channels($plugin_cookies);
@@ -171,10 +175,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return $action;
 
                     case self::ACTION_LAUNCH_VOD:
-                        hd_debug_print("action: launch vod", true);
                         $this->plugin->init_plugin($plugin_cookies);
                         if ($this->plugin->get_playlists()->size() === 0) {
-                            return User_Input_Handler_Registry::create_action($this, 'do_setup');
+                            return User_Input_Handler_Registry::create_action($this, self::ACTION_DO_PLUGIN_SETTINGS);
                         }
 
                         $this->plugin->tv->load_channels($plugin_cookies);
@@ -210,7 +213,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     case self::ACTION_UPDATE_EPFS:
                         $this->plugin->init_plugin();
                         $this->plugin->tv->load_channels($plugin_cookies);
-                        hd_debug_print("update_epfs", true);
                         return Starnet_Epfs_Handler::update_all_epfs($plugin_cookies,
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
