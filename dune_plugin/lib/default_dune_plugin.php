@@ -2796,7 +2796,7 @@ class Default_Dune_Plugin implements DunePlugin
                     $params[MACRO_SUBDOMAIN] = $provider->getConfigValue(CONFIG_SUBDOMAIN);
                 }
                 $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
-                if (!preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
+                if (!empty($user_input->{CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
                     return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
                 }
 

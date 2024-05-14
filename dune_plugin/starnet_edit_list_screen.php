@@ -949,12 +949,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                                     $playlist->params[MACRO_OTTKEY] = $vars[0];
                                 }
 
-                                if (!empty($ext_vars[1])) {
-                                    if (!preg_match(VPORTAL_PATTERN, $ext_vars[1])) {
-                                        return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
-                                    }
-                                    $playlist->params[MACRO_VPORTAL] = $ext_vars[1];
+                                if (!empty($ext_vars[1]) && !preg_match(VPORTAL_PATTERN, $ext_vars[1])) {
+                                    return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
                                 }
+                                $playlist->params[MACRO_VPORTAL] = $ext_vars[1];
                                 break;
 
                             default:

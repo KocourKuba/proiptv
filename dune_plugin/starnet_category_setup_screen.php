@@ -38,10 +38,9 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 
     /**
      * interface dialog defs
-     * @param $plugin_cookies
      * @return array
      */
-    public function do_get_control_defs(&$plugin_cookies)
+    public function do_get_control_defs()
     {
         hd_debug_print(null, true);
 
@@ -102,7 +101,7 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        return $this->do_get_control_defs($plugin_cookies);
+        return $this->do_get_control_defs();
     }
 
     /**
@@ -137,10 +136,10 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 
                 return Starnet_Epfs_Handler::invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),
-                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
+                    Action_Factory::reset_controls($this->do_get_control_defs())
                 );
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
+        return Action_Factory::reset_controls($this->do_get_control_defs());
     }
 }
