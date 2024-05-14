@@ -20,16 +20,19 @@ class vod_cbilling extends vod_standard
     {
         parent::init_vod($provider);
 
-        $data = $provider->execApiCommand(API_COMMAND_INFO);
-        hd_debug_print(API_COMMAND_INFO . ' ' . serialize($data));
-        if ($data === false || !isset($data->data)) {
-            $show = false;
-        } else {
-            $data = $data->data;
-            $show = isset($data->vod) && $data->vod !== false;
+        $response = $provider->execApiCommand(API_COMMAND_INFO);
+        if ($response === false) {
+            return false;
         }
 
-        if (!$show) {
+        hd_debug_print(API_COMMAND_INFO . ' ' . serialize($response));
+        $data = HD::decodeResponse(false, $response);
+        if ($data === false || !isset($data->data)) {
+            return false;
+        }
+
+        $data = $data->data;
+        if (!isset($data->vod) || $data->vod === false) {
             return false;
         }
 
@@ -49,8 +52,15 @@ class vod_cbilling extends vod_standard
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $json = $this->provider->execApiCommand(API_COMMAND_VOD, "/video/$movie_id");
+        $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, "/video/$movie_id");
+        if ($response === false) {
+            hd_debug_print("Failed request: " . API_COMMAND_VOD . "param: /video/$movie_id");
+            return null;
+        }
+
+        $json = HD::decodeResponse(false, $response);
         if ($json === false || !isset($json->data)) {
+            hd_debug_print("Wrong response on command: " . API_COMMAND_VOD);
             return null;
         }
 
@@ -109,8 +119,15 @@ class vod_cbilling extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $jsonItems = $this->provider->execApiCommand(API_COMMAND_VOD);
+        $response = $this->provider->execApiCommand(API_COMMAND_VOD);
+        if ($response === false) {
+            hd_debug_print("Failed request: " . API_COMMAND_VOD);
+            return;
+        }
+
+        $jsonItems = HD::decodeResponse(false, $response);
         if ($jsonItems === false || !isset($jsonItems->data)) {
+            hd_debug_print("Wrong response on command: " . API_COMMAND_VOD);
             return;
         }
 
@@ -124,7 +141,13 @@ class vod_cbilling extends vod_standard
             $total += $node->count;
 
             // fetch genres for category
-            $genres = $this->provider->execApiCommand(API_COMMAND_VOD,"/cat/$id/genres");
+            $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, "/cat/$id/genres");
+            if ($response === false) {
+                hd_debug_print("Failed request: " . API_COMMAND_VOD . "param: /cat/$id/genres");
+                continue;
+            }
+
+            $genres = HD::decodeResponse(false, $response);
             if ($genres === false) {
                 continue;
             }
@@ -156,7 +179,11 @@ class vod_cbilling extends vod_standard
     public function getSearchList($keyword)
     {
         $params = "/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
-        $searchRes = $this->provider->execApiCommand(API_COMMAND_VOD, $params);
+        $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, $params);
+        if ($response === false) {
+            return array();
+        }
+        $searchRes = HD::decodeResponse(false, $response);
         return $searchRes === false ? array() : $this->CollectSearchResult($searchRes);
     }
 
@@ -181,7 +208,12 @@ class vod_cbilling extends vod_standard
             $params = "/genres/$genre_id?page=$val";
         }
 
-        $categories = $this->provider->execApiCommand(API_COMMAND_VOD, $params);
+        $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, $params);
+        if ($response === false) {
+            return array();
+        }
+
+        $categories = HD::decodeResponse(false, $response);
         return $categories === false ? array() : $this->CollectSearchResult($categories);
     }
 

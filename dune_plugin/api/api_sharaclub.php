@@ -73,8 +73,7 @@ class api_sharaclub extends api_default
     {
         try {
             $img = tempnam(get_temp_path() . '.png', '');
-            $content = $this->execApiCommand(API_COMMAND_PAY, '',true);
-            file_put_contents($img, $content);
+            $this->execApiCommand(API_COMMAND_PAY, $img);
             Control_Factory::add_vgap($defs, 20);
 
             if (file_exists($img)) {
@@ -102,17 +101,21 @@ class api_sharaclub extends api_default
         hd_debug_print(null, true);
 
         $servers = array();
-        $data = $this->execApiCommand(API_COMMAND_SERVERS);
-        if ($data === false || !isset($data->status)) {
-            hd_debug_print("Can't get account status");
-            return array();
-        }
+        $response = $this->execApiCommand(API_COMMAND_SERVERS);
+        if ($response === false) {
+            hd_debug_print("Can't get servers status");
+        } else {
+            $data = HD::decodeResponse(false, $response);
+            if ($data === false || !isset($data->status)) {
+                hd_debug_print("Wrong response on command: " . API_COMMAND_SERVERS);
+            } else {
+                foreach ($data->allow_nums as $server) {
+                    $servers[(int)$server->id] = $server->name;
+                }
 
-        foreach ($data->allow_nums as $server) {
-            $servers[(int)$server->id] = $server->name;
+                $this->setCredential(MACRO_SERVER_ID, (int)$data->current);
+            }
         }
-
-        $this->setCredential(MACRO_SERVER_ID, (int)$data->current);
 
         return $servers;
     }

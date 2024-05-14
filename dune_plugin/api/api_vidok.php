@@ -99,18 +99,22 @@ class api_vidok extends api_default
 
         hd_debug_print(null, true);
         $servers = array();
-        $data = $this->execApiCommand(API_COMMAND_SERVERS);
-        if ($data === false) {
-            hd_debug_print("Can't get account status");
-            return array();
-        }
+        $response = $this->execApiCommand(API_COMMAND_SERVERS);
+        if ($response === false) {
+            hd_debug_print("Can't get servers status");
+        } else {
+            $data = HD::decodeResponse(false, $response);
+            if ($data === false || !isset($data->data)) {
+                hd_debug_print("Wrong response on command: " . API_COMMAND_SERVERS);
+            } else {
+                foreach ($data->servers as $server) {
+                    $servers[(int)$server->id] = $server->name;
+                }
 
-        foreach ($data->servers as $server) {
-            $servers[(int)$server->id] = $server->name;
-        }
-
-        if (isset($this->info->account->settings->server_id)) {
-            $this->setCredential(MACRO_SERVER_ID, (int)$this->info->account->settings->server_id);
+                if (isset($this->info->account->settings->server_id)) {
+                    $this->setCredential(MACRO_SERVER_ID, (int)$this->info->account->settings->server_id);
+                }
+            }
         }
 
         return $servers;
@@ -123,9 +127,14 @@ class api_vidok extends api_default
     {
         parent::SetServer($server);
 
-        $data = $this->execApiCommand(API_COMMAND_SET_SERVER);
-        if (!empty($data) && isset($data->settings->value)) {
-            $this->info = null;
+        $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
+        if ($response) {
+            $data = HD::decodeResponse(false, $response);
+            if (empty($data)) {
+                hd_debug_print("Wrong response on command: " . API_COMMAND_SET_SERVER);
+            } else if (isset($data->settings->value)) {
+                $this->info = null;
+            }
         }
     }
 }

@@ -320,14 +320,12 @@ class api_default
             return;
         }
 
-        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN, '', true);
-        if ($response === false) {
-            return;
-        }
-
-        $token_name = $this->getConfigValue(CONFIG_TOKEN_RESPONSE);
-        if (!empty($token_name) && isset($response[$token_name])) {
-            $this->setCredential(MACRO_TOKEN, $response[$token_name]);
+        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
+        if ($response) {
+            $token_name = $this->getConfigValue(CONFIG_TOKEN_RESPONSE);
+            if (!empty($token_name) && isset($response[$token_name])) {
+                $this->setCredential(MACRO_TOKEN, $response[$token_name]);
+            }
         }
     }
 
@@ -339,7 +337,10 @@ class api_default
     {
         hd_debug_print(null, true);
         if ((empty($this->info) || $force) && $this->hasApiCommand(API_COMMAND_INFO)) {
-            $this->info = $this->execApiCommand(API_COMMAND_INFO);
+            $response = $this->execApiCommand(API_COMMAND_INFO);
+            if ($response) {
+                $this->info = HD::decodeResponse(false, $response);
+            }
         }
 
         return $this->info;
@@ -380,12 +381,11 @@ class api_default
 
     /**
      * @param string $command
+     * @param string $file
      * @param string $params
-     * @param bool $no_decode
-     * @param bool $assoc
-     * @return mixed|false
+     * @return bool
      */
-    public function execApiCommand($command, $params = '', $no_decode = false, $assoc = false)
+    public function execApiCommand($command, $file = null, $params = '')
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
@@ -407,20 +407,7 @@ class api_default
             hd_debug_print("curl headers: " . raw_json_encode($curl_headers), true);
         }
 
-        $data = HD::http_download_https_proxy($command_url, null, $curl_headers);
-        if (!$no_decode) {
-            hd_debug_print("decode json");
-            $contents = json_decode($data, $assoc);
-            if ($contents !== null && $contents !== false) {
-                $data = $contents;
-            } else {
-                hd_debug_print("failed to decode json");
-                hd_debug_print("doc: $data", true);
-                $data = false;
-            }
-        }
-
-        return $data;
+        return HD::http_download_https_proxy($command_url, $file, $curl_headers);
     }
 
     /**

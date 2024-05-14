@@ -1767,12 +1767,17 @@ class Default_Dune_Plugin implements DunePlugin
                     }
 
                     $provider->request_provider_token();
-                    $contents = $provider->execApiCommand(API_COMMAND_PLAYLIST, '', true);
+                    $contents = $provider->execApiCommand(API_COMMAND_PLAYLIST);
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
 
-                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                if ($contents === false) {
+                    HD::set_last_error("pl_last_error", "Can't download playlist!");
+                    throw new Exception("Can't download playlist");
+                }
+
+                if (strpos($contents, '#EXTM3U') === false) {
                     HD::set_last_error("pl_last_error", "Empty or incorrect playlist !\n\n" . $contents);
                     throw new Exception("Can't parse playlist");
                 }
@@ -1850,13 +1855,23 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                $contents = $provider->execApiCommand(API_COMMAND_VOD,'',true);
-                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
-                    HD::set_last_error("pl_last_error", "Empty or incorrect playlist !\n\n" . $contents);
+                $response = $provider->execApiCommand(API_COMMAND_VOD, $tmp_file);
+                if ($response === false) {
+                    HD::set_last_error("pl_last_error", "Can't download playlist!");
+                    if (file_exists($tmp_file)) {
+                        unlink($tmp_file);
+                    }
+                    throw new Exception("Can't download playlist");
+                }
+
+                if (strpos($response, '#EXTM3U') === false) {
+                    HD::set_last_error("pl_last_error", "Empty or incorrect playlist!\n\n" . $response);
+                    if (file_exists($tmp_file)) {
+                        unlink($tmp_file);
+                    }
                     throw new Exception("Can't parse playlist");
                 }
 
-                file_put_contents($tmp_file, $contents);
                 $mtime = filemtime($tmp_file);
                 hd_debug_print("Save $tmp_file (timestamp: $mtime)");
             }

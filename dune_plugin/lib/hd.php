@@ -336,15 +336,14 @@ class HD
         $config_data  = "--insecure" . PHP_EOL;
         $config_data .= "--silent" . PHP_EOL;
         $config_data .= "--dump-header -" . PHP_EOL;
-        $config_data .= "--max-redirs 4" . PHP_EOL;
         $config_data .= "--connect-timeout 30" . PHP_EOL;
         $config_data .= "--max-time 30" . PHP_EOL;
         //$config_data .= "--retry 1" . PHP_EOL;
         $config_data .= "--location" . PHP_EOL;
+        $config_data .= "--max-redirs 4" . PHP_EOL;
         $config_data .= '--user-agent "' . self::get_dune_user_agent() .'"' . PHP_EOL;
         $config_data .= '--url "' . $url . '"' . PHP_EOL;
         $config_data .= '--output "' . $save_file . '"' . PHP_EOL;
-        //$config_data  = "--verbose" . PHP_EOL;
         if (!empty($curl_headers)) {
             foreach ($curl_headers as $header) {
                 $config_data .= '--header "' . $header . '"' . PHP_EOL;
@@ -380,6 +379,32 @@ class HD
         }
 
         return file_exists($save_file);
+    }
+
+    /**
+     * @param bool $is_file
+     * @param string $source contains data or file name
+     * @param bool $assoc
+     * @return mixed|false
+     */
+    public static function decodeResponse($is_file, $source, $assoc = false)
+    {
+        if ($is_file) {
+            $data = file_get_contents($source);
+        } else {
+            $data = $source;
+        }
+
+        hd_debug_print("decode json");
+        $contents = json_decode($data, $assoc);
+        if ($contents !== null && $contents !== false) {
+            return $contents;
+        }
+
+        hd_debug_print("failed to decode json");
+        hd_debug_print("doc: $data", true);
+
+        return false;
     }
 
     /**

@@ -697,9 +697,12 @@ class vod_standard extends Abstract_Vod
         }
 
         if ($need_load) {
-            $this->vod_items = $this->provider->execApiCommand(API_COMMAND_VOD);
-            if ($this->vod_items !== false) {
-                HD::StoreContentToFile($tmp_file, $this->vod_items);
+            $response = $this->provider->execApiCommand(API_COMMAND_VOD);
+            if ($response) {
+                $this->vod_items = HD::decodeResponse(false, $response);
+                if ($this->vod_items !== false) {
+                    HD::StoreContentToFile($tmp_file, $this->vod_items);
+                }
             }
         } else {
             $this->vod_items = HD::ReadContentFromFile($tmp_file, false);
