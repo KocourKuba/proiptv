@@ -381,7 +381,7 @@ class Epg_Manager
                 unlink($tmp_filename);
             }
 
-            if (HD::http_save_https_proxy($this->xmltv_url, $tmp_filename) === false) {
+            if (HD::http_download_https_proxy($this->xmltv_url, $tmp_filename) === false) {
                 throw new Exception("Failed to download $this->xmltv_url");
             }
 

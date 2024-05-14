@@ -409,6 +409,48 @@ function get_platform_info()
     return $platform;
 }
 
+function get_platform_kind()
+{
+    static $platform_kind = null;
+
+    if (is_null($platform_kind)) {
+        $v = get_platform_info();
+        if ($v['platform'] !== 'android') {
+            $platform_kind = $v['type'];
+        }
+    }
+
+    return $platform_kind;
+}
+
+function get_platform_curl()
+{
+    static $curl = null;
+    if (is_null($curl)) {
+        $v = get_platform_info();
+        hd_debug_print("platform: " . $v['platform']);
+        hd_debug_print("type: " . $v['type']);
+        $curl = "curl";
+        if ($v['platform'] === 'android') {
+            $curl = getenv('FS_PREFIX') . "/firmware/bin/curl";
+        } else if ($v['platform'] === 'sigma') {
+            $short3 = substr($v['type'], 0, 3);
+            if (strpos($v['type'], '87') === 0) {
+                $curl = get_install_path("/bin/curl.87xx");
+            } else if ($short3 === '864') {
+                $curl = get_install_path("/bin/curl.864x");
+            } else if ($short3 === '865') {
+                $curl = get_install_path("/bin/curl.865x");
+            } else if ($short3 === '867') {
+                $curl = get_install_path("/bin/curl.867x");
+            }
+        }
+        hd_debug_print("used curl: $curl");
+    }
+
+    return $curl;
+}
+
 function get_bug_platform_kind()
 {
     static $bug_platform_kind = null;

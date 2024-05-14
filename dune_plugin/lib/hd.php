@@ -195,7 +195,7 @@ class HD
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 2);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_FILETIME, true);
@@ -307,68 +307,78 @@ class HD
 
     /**
      * download and return contents
-     * in case of exception returns in message contents of log file
-     *
-     * @param string $url
-     * @return string|bool content of the downloaded file
-     */
-    public static function http_download_https_proxy($url)
-    {
-        $logfile = get_temp_path("http_proxy.log");
-        if (file_exists($logfile)) {
-            unlink($logfile);
-        }
-
-        $tmp_file = get_temp_path(Hashed_Array::hash($url));
-        $user_agent = self::get_dune_user_agent();
-        $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$tmp_file' '$user_agent' '$logfile'";
-        hd_debug_print("Exec: $cmd", true);
-        shell_exec($cmd);
-        $log_content = @file_get_contents($logfile);
-        if ($log_content !== false) {
-            hd_debug_print("Read http_proxy log...");
-            foreach (explode("\n", $log_content) as $l) {
-                hd_debug_print(rtrim($l));
-            }
-            hd_debug_print("Read finished");
-        }
-
-        if (!file_exists($tmp_file)) {
-            hd_debug_print("Can't download playlist to $tmp_file");
-            return false;
-        }
-        $content = file_get_contents($tmp_file);
-        unlink($tmp_file);
-
-        return $content;
-    }
-
-    /**
-     * download and return contents of log file
-     * Used to download large files
+     * if $save_file is null return content
+     * otherwise save content to $save_file and return true or false
      *
      * @param string $url
      * @param string|null $save_file
-     * @return bool
+     * @param array|null $curl_headers
+     * @return string|bool content of the downloaded file or result of operation
      */
-    public static function http_save_https_proxy($url, $save_file)
+    public static function http_download_https_proxy($url, $save_file = null, $curl_headers = null)
     {
-        $logfile = get_temp_path("http_proxy.log");
+        $ret_content = empty($save_file);
+
+        $logfile = get_temp_path("https_proxy.log");
         if (file_exists($logfile)) {
             unlink($logfile);
         }
-        $user_agent = self::get_dune_user_agent();
-        $cmd = get_install_path('bin/https_proxy.sh') . " '$url' '$save_file' '$user_agent' '$logfile'";
+
+        $config_file = get_temp_path('curl_confg.txt');
+        if (file_exists($config_file)) {
+            unlink($config_file);
+        }
+
+        if (empty($save_file)) {
+            $save_file = get_temp_path(Hashed_Array::hash($url));
+        }
+
+        $config_data  = "--insecure" . PHP_EOL;
+        $config_data .= "--silent" . PHP_EOL;
+        $config_data .= "--dump-header -" . PHP_EOL;
+        $config_data .= "--max-redirs 4" . PHP_EOL;
+        $config_data .= "--connect-timeout 30" . PHP_EOL;
+        $config_data .= "--max-time 30" . PHP_EOL;
+        //$config_data .= "--retry 1" . PHP_EOL;
+        $config_data .= "--location" . PHP_EOL;
+        $config_data .= '--user-agent "' . self::get_dune_user_agent() .'"' . PHP_EOL;
+        $config_data .= '--url "' . $url . '"' . PHP_EOL;
+        $config_data .= '--output "' . $save_file . '"' . PHP_EOL;
+        //$config_data  = "--verbose" . PHP_EOL;
+        if (!empty($curl_headers)) {
+            foreach ($curl_headers as $header) {
+                $config_data .= '--header "' . $header . '"' . PHP_EOL;
+            }
+        }
+        file_put_contents($config_file, $config_data);
+
+        $cmd = get_install_path('bin/https_proxy.sh') . " " . get_platform_curl() . " '$config_file' '$logfile'";
         hd_debug_print("Exec: $cmd", true);
         shell_exec($cmd);
-        $log_content = @file_get_contents($logfile);
-        if ($log_content !== false) {
-            hd_debug_print("Read http_proxy log...");
-            foreach (explode("\n", $log_content) as $l) {
-                hd_debug_print(rtrim($l));
+        if (!file_exists($logfile)) {
+            hd_debug_print("No http_proxy log!");
+        } else {
+            $log_content = @file_get_contents($logfile);
+            if (LogSeverity::$is_debug && $log_content !== false) {
+                hd_debug_print("Read http_proxy log...");
+                foreach (explode("\n", $log_content) as $l) {
+                    hd_debug_print(rtrim($l));
+                }
+                hd_debug_print("Read finished");
             }
-            hd_debug_print("Read finished");
         }
+
+        if (!file_exists($save_file)) {
+            hd_debug_print("Can't download to $save_file");
+            return false;
+        }
+
+        if ($ret_content) {
+            $content = file_get_contents($save_file);
+            unlink($save_file);
+            return $content;
+        }
+
         return file_exists($save_file);
     }
 
@@ -456,22 +466,6 @@ class HD
 
     /**
      * @param string $url
-     * @param array $post_data
-     * @return bool|string
-     * @throws Exception
-     */
-    public static function http_post_document($url, $post_data)
-    {
-        return self::http_get_document($url,
-            array
-            (
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => $post_data
-            ));
-    }
-
-    /**
-     * @param string $url
      * @param resource $in_file
      * @param integer $in_file_size
      * @return bool|string
@@ -480,8 +474,7 @@ class HD
     public static function http_put_document($url, $in_file, $in_file_size)
     {
         return self::http_get_document($url,
-            array
-            (
+            array(
                 CURLOPT_PUT => true,
                 CURLOPT_CUSTOMREQUEST => "PUT",
                 CURLOPT_INFILE => $in_file,

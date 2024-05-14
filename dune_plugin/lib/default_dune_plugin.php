@@ -1767,7 +1767,7 @@ class Default_Dune_Plugin implements DunePlugin
                     }
 
                     $provider->request_provider_token();
-                    $contents = $provider->execApiCommand(API_COMMAND_PLAYLIST, true);
+                    $contents = $provider->execApiCommand(API_COMMAND_PLAYLIST, '', true);
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
@@ -1850,7 +1850,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                $contents = $provider->execApiCommand(API_COMMAND_VOD, true);
+                $contents = $provider->execApiCommand(API_COMMAND_VOD,'',true);
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
                     HD::set_last_error("pl_last_error", "Empty or incorrect playlist !\n\n" . $contents);
                     throw new Exception("Can't parse playlist");

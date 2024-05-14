@@ -73,7 +73,7 @@ class api_sharaclub extends api_default
     {
         try {
             $img = tempnam(get_temp_path() . '.png', '');
-            $content = $this->execApiCommand(API_COMMAND_PAY, true);
+            $content = $this->execApiCommand(API_COMMAND_PAY, '',true);
             file_put_contents($img, $content);
             Control_Factory::add_vgap($defs, 20);
 

@@ -49,7 +49,7 @@ class vod_cbilling extends vod_standard
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $json = $this->provider->execApiCommand(API_COMMAND_VOD, false, false, "/video/$movie_id");
+        $json = $this->provider->execApiCommand(API_COMMAND_VOD, "/video/$movie_id");
         if ($json === false || !isset($json->data)) {
             return null;
         }
@@ -124,7 +124,7 @@ class vod_cbilling extends vod_standard
             $total += $node->count;
 
             // fetch genres for category
-            $genres = $this->provider->execApiCommand(API_COMMAND_VOD, false, false, "/cat/$id/genres");
+            $genres = $this->provider->execApiCommand(API_COMMAND_VOD,"/cat/$id/genres");
             if ($genres === false) {
                 continue;
             }
@@ -156,7 +156,7 @@ class vod_cbilling extends vod_standard
     public function getSearchList($keyword)
     {
         $params = "/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
-        $searchRes = $this->provider->execApiCommand(API_COMMAND_VOD, false, false, $params);
+        $searchRes = $this->provider->execApiCommand(API_COMMAND_VOD, $params);
         return $searchRes === false ? array() : $this->CollectSearchResult($searchRes);
     }
 
@@ -181,7 +181,7 @@ class vod_cbilling extends vod_standard
             $params = "/genres/$genre_id?page=$val";
         }
 
-        $categories = $this->provider->execApiCommand(API_COMMAND_VOD, false, false, $params);
+        $categories = $this->provider->execApiCommand(API_COMMAND_VOD, $params);
         return $categories === false ? array() : $this->CollectSearchResult($categories);
     }
 

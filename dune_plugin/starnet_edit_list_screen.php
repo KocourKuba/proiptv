@@ -809,7 +809,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
             try {
                 $tmp_file = get_temp_path(Hashed_Array::hash($url));
-                if (HD::http_save_https_proxy($url, $tmp_file) === false) {
+                if (HD::http_download_https_proxy($url, $tmp_file) === false) {
                     throw new Exception("Can't download file: $url");
                 }
 
@@ -876,7 +876,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         hd_debug_print("import link: '$line'", true);
                         try {
                             $tmp_file = get_temp_path(Hashed_Array::hash($line));
-                            if (HD::http_save_https_proxy($line, $tmp_file) === false) {
+                            if (HD::http_download_https_proxy($line, $tmp_file) === false) {
                                 throw new Exception("Can't download : $line");
                             }
 

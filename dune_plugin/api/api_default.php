@@ -320,7 +320,7 @@ class api_default
             return;
         }
 
-        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN, false, true);
+        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN, '', true);
         if ($response === false) {
             return;
         }
@@ -380,12 +380,12 @@ class api_default
 
     /**
      * @param string $command
-     * @param bool $binary
-     * @param bool $assoc
      * @param string $params
+     * @param bool $no_decode
+     * @param bool $assoc
      * @return mixed|false
      */
-    public function execApiCommand($command, $binary = false, $assoc = false, $params = '')
+    public function execApiCommand($command, $params = '', $no_decode = false, $assoc = false)
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
@@ -398,19 +398,26 @@ class api_default
         hd_debug_print("ApiCommandUrl: $command_url", true);
 
         $curl_headers = null;
-        $headers = $this->getConfigValue(CONFIG_HEADERS);
-        if (!empty($headers)) {
+        $config_headers = $this->getConfigValue(CONFIG_HEADERS);
+        if (!empty($config_headers)) {
             $curl_headers = array();
-            foreach ($headers as $key => $header) {
-                $curl_headers[CURLOPT_HTTPHEADER][] = "$key: " . $this->replace_macros($header);
+            foreach ($config_headers as $key => $header) {
+                $curl_headers[] = "$key: " . $this->replace_macros($header);
             }
-            hd_debug_print("headers: " . raw_json_encode($curl_headers), true);
+            hd_debug_print("curl headers: " . raw_json_encode($curl_headers), true);
         }
 
-        if ($binary) {
-            $data = HD::http_download_https_proxy($command_url);
-        } else {
-            $data = HD::DownloadJson($command_url, $assoc, $curl_headers);
+        $data = HD::http_download_https_proxy($command_url, null, $curl_headers);
+        if (!$no_decode) {
+            hd_debug_print("decode json");
+            $contents = json_decode($data, $assoc);
+            if ($contents !== null && $contents !== false) {
+                $data = $contents;
+            } else {
+                hd_debug_print("failed to decode json");
+                hd_debug_print("doc: $data", true);
+                $data = false;
+            }
         }
 
         return $data;
