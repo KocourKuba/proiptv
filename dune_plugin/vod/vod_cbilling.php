@@ -121,14 +121,19 @@ class vod_cbilling extends vod_standard
     {
         $response = $this->provider->execApiCommand(API_COMMAND_VOD);
         if ($response === false) {
-            hd_debug_print("Failed request: " . API_COMMAND_VOD);
-            return;
+            $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
+            $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
+            hd_debug_print($exception_msg);
+            HD::set_last_error("vod_last_error", $exception_msg);
+            return false;
         }
 
         $jsonItems = HD::decodeResponse(false, $response);
         if ($jsonItems === false || !isset($jsonItems->data)) {
-            hd_debug_print("Wrong response on command: " . API_COMMAND_VOD);
-            return;
+            $exception_msg = "Неправильный ответ на команду: " . API_COMMAND_VOD . "\n\n$response";
+            hd_debug_print($exception_msg);
+            HD::set_last_error("vod_last_error", $exception_msg);
+            return false;
         }
 
         $category_list = array();
@@ -171,6 +176,7 @@ class vod_cbilling extends vod_standard
         $category_index[Vod_Category::FLAG_ALL] = $category;
 
         hd_debug_print("Categories read: " . count($category_list));
+        return true;
     }
 
     /**

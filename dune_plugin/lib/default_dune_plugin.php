@@ -1773,12 +1773,14 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 if ($contents === false) {
-                    HD::set_last_error("pl_last_error", "Can't download playlist!");
-                    throw new Exception("Can't download playlist");
+                    $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
+                    $exception_msg = "Ошибка скачивания плейлиста!\n\n$logfile";
+                    HD::set_last_error("pl_last_error", $exception_msg);
+                    throw new Exception($exception_msg);
                 }
 
                 if (strpos($contents, '#EXTM3U') === false) {
-                    HD::set_last_error("pl_last_error", "Empty or incorrect playlist !\n\n" . $contents);
+                    HD::set_last_error("pl_last_error", "Пустой или неправильный плейлист!\n\n" . $contents);
                     throw new Exception("Can't parse playlist");
                 }
 
@@ -1804,7 +1806,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $count = $this->tv->get_m3u_parser()->getEntriesCount();
                 if ($count === 0) {
                     $contents = @file_get_contents($tmp_file);
-                    HD::set_last_error("pl_last_error", "Пустой плейлист!\n\n" . $contents);
+                    HD::set_last_error("pl_last_error", "Пустой или неправильный плейлист!\n\n" . $contents);
                     hd_debug_print("Empty playlist");
                     $this->clear_playlist_cache();
                     throw new Exception("Empty playlist");
@@ -1857,16 +1859,18 @@ class Default_Dune_Plugin implements DunePlugin
             if ($force !== false) {
                 $response = $provider->execApiCommand(API_COMMAND_VOD, $tmp_file);
                 if ($response === false) {
-                    HD::set_last_error("pl_last_error", "Can't download playlist!");
+                    $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
+                    $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
+                    HD::set_last_error("vod_last_error", $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);
                     }
-                    throw new Exception("Can't download playlist");
+                    throw new Exception($exception_msg);
                 }
 
                 $playlist = file_get_contents($tmp_file);
                 if (strpos($playlist, '#EXTM3U') === false) {
-                    HD::set_last_error("pl_last_error", "Empty or incorrect playlist!\n\n" . $playlist);
+                    HD::set_last_error("vod_last_error", "Пустой или неправильный плейлист!\n\n" . $playlist);
                     unlink($tmp_file);
                     throw new Exception("Can't parse playlist");
                 }

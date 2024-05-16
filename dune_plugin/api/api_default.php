@@ -320,11 +320,16 @@ class api_default
             return;
         }
 
+        $token_name = $this->getConfigValue(CONFIG_TOKEN_RESPONSE);
         $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
-        if ($response) {
-            $token_name = $this->getConfigValue(CONFIG_TOKEN_RESPONSE);
-            if (!empty($token_name) && isset($response[$token_name])) {
-                $this->setCredential(MACRO_TOKEN, $response[$token_name]);
+        if ($response === false) {
+            hd_debug_print("Can't get " . API_COMMAND_REQUEST_TOKEN);
+        } else {
+            $data = HD::decodeResponse(false, $response, true);
+            if ($data === false || !isset($data[$token_name])) {
+                hd_debug_print("Wrong response on command: " . API_COMMAND_REQUEST_TOKEN);
+            } else {
+                $this->setCredential(MACRO_TOKEN, $data[$token_name]);
             }
         }
     }
@@ -535,8 +540,9 @@ class api_default
 
         hd_debug_print("template: $string", true);
         foreach ($macroses as $macro) {
-            if (strpos($string, $macro) === false) continue;
-            $string = str_replace($macro, trim($this->getCredential($macro)), $string);
+            if (strpos($string, $macro) !== false) {
+                $string = str_replace($macro, trim($this->getCredential($macro)), $string);
+            }
         }
         $string = str_replace(MACRO_API, $this->getApiUrl(), $string);
         hd_debug_print("result: $string", true);

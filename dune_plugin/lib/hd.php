@@ -43,6 +43,7 @@ class HD
 
     private static $token = '05ba6358d39c4f298f43024b654b7387';
     const DUNE_PARAMS_MAGIC = "|||dune_params|||";
+    const HTTPS_PROXY_LOG = "https_proxy.log";
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -319,7 +320,7 @@ class HD
     {
         $ret_content = empty($save_file);
 
-        $logfile = get_temp_path("https_proxy.log");
+        $logfile = get_temp_path(self::HTTPS_PROXY_LOG);
         if (file_exists($logfile)) {
             unlink($logfile);
         }
@@ -355,7 +356,8 @@ class HD
         hd_debug_print("Exec: $cmd", true);
         shell_exec($cmd);
         if (!file_exists($logfile)) {
-            hd_debug_print("No http_proxy log!");
+            $log_content = "No http_proxy log!";
+            hd_debug_print($log_content);
         } else {
             $log_content = @file_get_contents($logfile);
             if (LogSeverity::$is_debug && $log_content !== false) {

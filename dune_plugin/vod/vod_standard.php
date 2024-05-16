@@ -372,13 +372,14 @@ class vod_standard extends Abstract_Vod
     /**
      * @param Vod_Category[] &$category_list
      * @param array &$category_index
+     * @return bool
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
         hd_debug_print(null, true);
         if (!$this->plugin->init_vod_playlist()) {
             hd_debug_print("VOD not available");
-            return;
+            return false;
         }
 
         $t = microtime(1);
@@ -413,6 +414,7 @@ class vod_standard extends Abstract_Vod
         hd_debug_print("Categories read: " . count($category_list));
         hd_debug_print("Fetched categories at " . (microtime(1) - $t) . " secs");
         HD::ShowMemoryUsage();
+        return true;
     }
 
     /**
@@ -698,9 +700,20 @@ class vod_standard extends Abstract_Vod
 
         if ($need_load) {
             $response = $this->provider->execApiCommand(API_COMMAND_VOD);
-            if ($response) {
+            if ($response === false) {
+                $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
+                $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
+                HD::set_last_error("vod_last_error", $exception_msg);
+                if (file_exists($tmp_file)) {
+                    unlink($tmp_file);
+                }
+            } else {
                 $this->vod_items = HD::decodeResponse(false, $response);
-                if ($this->vod_items !== false) {
+                if ($this->vod_items === false || !isset($this->vod_items)) {
+                    $exception_msg = "Неправильный ответ на команду: " . API_COMMAND_VOD . "\n\n$response";
+                    hd_debug_print($exception_msg);
+                    HD::set_last_error("vod_last_error", $exception_msg);
+                } else {
                     HD::StoreContentToFile($tmp_file, $this->vod_items);
                 }
             }

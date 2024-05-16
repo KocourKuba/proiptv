@@ -133,7 +133,7 @@ class vod_edem extends vod_standard
     {
         $doc = $this->make_json_request();
         if ($doc === false) {
-            return;
+            return false;
         }
 
         $category_list = array();
@@ -162,6 +162,7 @@ class vod_edem extends vod_standard
 
         hd_debug_print("Categories read: " . count($category_list));
         hd_debug_print("Filters count: " . count($exist_filters));
+        return true;
     }
 
     /**
@@ -264,10 +265,9 @@ class vod_edem extends vod_standard
 
     /**
      * @param array|null $params
-     * @param bool $to_array
      * @return false|mixed
      */
-    protected function make_json_request($params = null, $to_array = false)
+    protected function make_json_request($params = null)
     {
         if (empty($this->vportal_url) || empty($this->vportal_key)) {
             hd_debug_print("incorrect or empty VPortal key or url");
@@ -292,6 +292,6 @@ class vod_edem extends vod_standard
 
         hd_debug_print("post_data: " . json_encode($pairs), true);
 
-        return HD::DownloadJson($this->vportal_url, $to_array, $curl_opt);
+        return HD::DownloadJson($this->vportal_url, false, $curl_opt);
     }
 }

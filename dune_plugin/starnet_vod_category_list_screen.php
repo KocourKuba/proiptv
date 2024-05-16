@@ -132,7 +132,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         if (empty($category_list)) {
-            return array();
+            return $items;
         }
 
         foreach ($category_list as $category) {

@@ -382,7 +382,8 @@ class Epg_Manager
             }
 
             if (HD::http_download_https_proxy($this->xmltv_url, $tmp_filename) === false) {
-                throw new Exception("Failed to download $this->xmltv_url");
+                $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
+                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n$logfile");
             }
 
             $file_time = filemtime($tmp_filename);

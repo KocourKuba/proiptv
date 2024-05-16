@@ -81,14 +81,10 @@ class vod_glanz extends vod_standard
     public function fetchVodCategories(&$category_list, &$category_index)
     {
         if ($this->load_vod_json_full() === false) {
-            return;
+            return false;
         }
 
         $count = count($this->vod_items);
-        hd_debug_print("Total items loaded: " . count($this->vod_items));
-        hd_debug_print_separator();
-        HD::ShowMemoryUsage();
-
         $category_list = array();
         $category_index = array();
         $cat_info = array();
@@ -138,6 +134,11 @@ class vod_glanz extends vod_standard
         $this->set_filters($filters);
 
         hd_debug_print("Categories read: " . count($category_list));
+        hd_debug_print("Total items loaded: " . count($this->vod_items));
+        hd_debug_print_separator();
+        HD::ShowMemoryUsage();
+
+        return true;
     }
 
     /**

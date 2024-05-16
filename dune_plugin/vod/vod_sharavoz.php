@@ -216,6 +216,7 @@ class vod_sharavoz extends vod_standard
             $category_index[$category->get_id()] = $category;
         }
         hd_debug_print("Categories read: $category_count");
+        return true;
     }
 
     ///////////////////////////////////////////////////////////////////////

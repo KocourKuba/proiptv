@@ -810,19 +810,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             try {
                 $tmp_file = get_temp_path(Hashed_Array::hash($url));
                 if (HD::http_download_https_proxy($url, $tmp_file) === false) {
-                    throw new Exception("Can't download file: $url");
+                    $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
+                    throw new Exception("Ошибка скачивания плейлиста: $url\n\n$logfile");
                 }
 
                 $contents = file_get_contents($tmp_file, false, null, 0, 512);
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
                     unlink($tmp_file);
-                    throw new Exception("Bad M3U file: '$url'\n$contents");
+                    throw new Exception("Пустой или неправильный плейлист! '$url'\n\n$contents");
                 }
                 unlink($tmp_file);
                 hd_debug_print("Playlist: '$url' imported successfully");
             } catch (Exception $ex) {
                 hd_debug_print("Problem with download playlist: " . $ex->getMessage());
-                HD::set_last_error("pl_last_error", null);
                 return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
             }
         }
@@ -876,8 +876,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         hd_debug_print("import link: '$line'", true);
                         try {
                             $tmp_file = get_temp_path(Hashed_Array::hash($line));
-                            if (HD::http_download_https_proxy($line, $tmp_file) === false) {
-                                throw new Exception("Can't download : $line");
+                            if (!HD::http_download_https_proxy($line, $tmp_file)) {
+                                $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
+                                throw new Exception("Ошибка скачивания : $line\n\n$logfile");
                             }
 
                             if (file_exists($tmp_file)) {
@@ -895,7 +896,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             }
                         } catch (Exception $ex) {
                             HD::set_last_error("pl_last_error", null);
-                            hd_debug_print("Problem with download playlist: " . $ex->getMessage());
+                            hd_debug_print($ex->getMessage());
                             continue;
                         }
                     } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {

@@ -119,7 +119,16 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $has_error = HD::get_last_error();
                 if (empty($has_error)) {
-                    return Action_Factory::open_folder();
+                    if ($sel_media_url->group_id !== VOD_GROUP_ID) {
+                        return Action_Factory::open_folder();
+                    }
+
+                    $category_list = array();
+                    $category_index = array();
+                    if ($this->plugin->vod->fetchVodCategories($category_list, $category_index)) {
+                        return Action_Factory::open_folder();
+                    }
+                    $has_error = HD::get_last_error('vod_last_error');
                 }
 
                 return Action_Factory::show_title_dialog(TR::t('err_load_any'),null, $has_error, self::DLG_CONTROLS_WIDTH);

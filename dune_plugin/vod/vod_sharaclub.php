@@ -115,7 +115,7 @@ class vod_sharaclub extends vod_standard
     public function fetchVodCategories(&$category_list, &$category_index)
     {
         if ($this->load_vod_json_full() === false) {
-            return;
+            return false;
         }
 
         $category_list = array();
@@ -168,6 +168,7 @@ class vod_sharaclub extends vod_standard
         $this->set_filters($filters);
 
         hd_debug_print("Categories read: " . count($category_list));
+        return true;
     }
 
     ///////////////////////////////////////////////////////////////////////
