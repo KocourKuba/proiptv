@@ -1864,16 +1864,15 @@ class Default_Dune_Plugin implements DunePlugin
                     throw new Exception("Can't download playlist");
                 }
 
-                if (strpos($response, '#EXTM3U') === false) {
-                    HD::set_last_error("pl_last_error", "Empty or incorrect playlist!\n\n" . $response);
-                    if (file_exists($tmp_file)) {
-                        unlink($tmp_file);
-                    }
+                $playlist = file_get_contents($tmp_file);
+                if (strpos($playlist, '#EXTM3U') === false) {
+                    HD::set_last_error("pl_last_error", "Empty or incorrect playlist!\n\n" . $playlist);
+                    unlink($tmp_file);
                     throw new Exception("Can't parse playlist");
                 }
 
                 $mtime = filemtime($tmp_file);
-                hd_debug_print("Save $tmp_file (timestamp: $mtime)");
+                hd_debug_print("Stored $tmp_file (timestamp: $mtime)");
             }
 
             // Is already parsed?
