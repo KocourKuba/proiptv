@@ -2646,117 +2646,10 @@ class Default_Dune_Plugin implements DunePlugin
             $name = $provider->getName();
         }
 
-        Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_EDIT_NAME, TR::t('name'), $name,
-            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-
-        switch ($provider->getType()) {
-            case PROVIDER_TYPE_PIN:
-                Control_Factory::add_text_field($defs, $handler, null,
-                    CONTROL_PASSWORD, TR::t('token'), $provider->getCredential(MACRO_PASSWORD),
-                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-                break;
-
-            case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
-                Control_Factory::add_text_field($defs, $handler, null,
-                    CONTROL_LOGIN, TR::t('login'), $provider->getCredential(MACRO_LOGIN),
-                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-                Control_Factory::add_text_field($defs, $handler, null,
-                    CONTROL_PASSWORD, TR::t('password'), $provider->getCredential(MACRO_PASSWORD),
-                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-                break;
-
-            case PROVIDER_TYPE_EDEM:
-                $subdomain = $provider->getCredential(MACRO_SUBDOMAIN);
-                if (!empty($subdomain) && $subdomain !== $provider->getConfigValue(CONFIG_SUBDOMAIN)) {
-                    Control_Factory::add_text_field($defs, $handler, null,
-                        CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $provider->getCredential(MACRO_SUBDOMAIN),
-                        false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-                }
-                Control_Factory::add_text_field($defs, $handler, null,
-                    CONTROL_OTT_KEY, TR::t('ottkey'), $provider->getCredential(MACRO_OTTKEY),
-                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-
-                Control_Factory::add_text_field($defs, $handler, null,
-                    CONTROL_VPORTAL, TR::t('vportal'), $provider->getCredential(MACRO_VPORTAL),
-                    false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-                break;
-
-            default:
-                return null;
+        $defs = $provider->GetSetupUI($name, $playlist_id, $handler);
+        if (empty($defs)) {
+            return null;
         }
-
-        $streams = $provider->GetStreams();
-        if (!empty($streams)) {
-            $idx = $provider->getCredential(MACRO_STREAM_ID);
-            if (empty($idx)) {
-                $idx = key($streams);
-            }
-            hd_debug_print("streams ($idx): " . json_encode($streams), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_STREAM,
-                TR::t('stream'), $idx, $streams, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
-        }
-
-        $domains = $provider->GetDomains();
-        if (!empty($domains)) {
-            $idx = $provider->getCredential(MACRO_DOMAIN_ID);
-            if (empty($idx)) {
-                $idx = key($domains);
-            }
-            hd_debug_print("domains ($idx): " . json_encode($domains), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_DOMAIN,
-                TR::t('domain'), $idx, $domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
-        }
-
-        $servers = $provider->GetServers();
-        if (!empty($servers)) {
-            $idx = $provider->getCredential(MACRO_SERVER_ID);
-            if (empty($idx)) {
-                $idx = key($servers);
-            }
-            hd_debug_print("servers ($idx): " . json_encode($servers), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_SERVER,
-                TR::t('server'), $idx, $servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
-        }
-
-        $devices = $provider->GetDevices();
-        if (!empty($devices)) {
-            $idx = $provider->getCredential(MACRO_DEVICE_ID);
-            if (empty($idx)) {
-                $idx = key($devices);
-            }
-            hd_debug_print("devices ($idx): " . json_encode($devices), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_DEVICE,
-                TR::t('device'), $idx, $devices, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
-        }
-
-        $qualities = $provider->GetQualities();
-        if (!empty($qualities)) {
-            $idx = $provider->getCredential(MACRO_QUALITY_ID);
-            if (empty($idx)) {
-                $idx = key($qualities);
-            }
-            hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_QUALITY,
-                TR::t('quality'), $idx, $qualities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
-        }
-
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-            array(PARAM_PROVIDER => $provider->getId(), CONTROL_EDIT_ITEM => $playlist_id),
-            ACTION_EDIT_PROVIDER_DLG_APPLY,
-            TR::t('ok'), 300);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-        Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
     }
@@ -2782,81 +2675,17 @@ class Default_Dune_Plugin implements DunePlugin
         $item = new Named_Storage();
         $item->type = PARAM_PROVIDER;
         $item->name = $user_input->{CONTROL_EDIT_NAME};
-
-        $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
-        $id = $user_input->{CONTROL_EDIT_ITEM};
-        $is_new = empty($id);
-
-        switch ($provider->getType()) {
-            case PROVIDER_TYPE_PIN:
-                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$params[MACRO_PASSWORD]) : $id;
-                $not_set = empty($params[MACRO_PASSWORD]);
-                break;
-
-            case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
-                $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
-                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$params[MACRO_LOGIN].$params[MACRO_PASSWORD]) : $id;
-                $not_set = empty($params[MACRO_LOGIN]) || empty($params[MACRO_PASSWORD]);
-                if ($provider->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
-                    $provider->setCredential(MACRO_TOKEN, '');
-                }
-                break;
-
-            case PROVIDER_TYPE_EDEM:
-                if (!empty($user_input->{CONTROL_OTT_SUBDOMAIN})) {
-                    $params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
-                } else {
-                    $params[MACRO_SUBDOMAIN] = $provider->getConfigValue(CONFIG_SUBDOMAIN);
-                }
-                $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
-                if (!empty($user_input->{CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
-                    return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
-                }
-
-                $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
-
-                $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$params[MACRO_SUBDOMAIN].$params[MACRO_OTTKEY]) : $id;
-                $not_set = empty($params[MACRO_OTTKEY]);
-                break;
-
-            default:
-                return null;
-        }
-
-        if ($not_set) {
+        $item->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
+        $id = $provider->ApplySetupUI($user_input, $item);
+        if (is_null($id)) {
             return null;
         }
 
-        if (isset($user_input->{CONTROL_DOMAIN})) {
-            $params[MACRO_DOMAIN_ID] = $user_input->{CONTROL_DOMAIN};
+        if (is_array($id)) {
+            return $id;
         }
 
-        if (isset($user_input->{CONTROL_SERVER})) {
-            $params[MACRO_SERVER_ID] = $user_input->{CONTROL_SERVER};
-            $provider->SetServer($user_input->{CONTROL_SERVER});
-        }
-
-        if (isset($user_input->{CONTROL_DEVICE})) {
-            $params[MACRO_DEVICE_ID] = $user_input->{CONTROL_DEVICE};
-        }
-
-        if (isset($user_input->{CONTROL_QUALITY})) {
-            $params[MACRO_QUALITY_ID] = $user_input->{CONTROL_QUALITY};
-        }
-
-        if (isset($user_input->{CONTROL_STREAM})) {
-            $params[MACRO_STREAM_ID] = $user_input->{CONTROL_STREAM};
-        }
-
-        $item->params = $params;
-
-        hd_debug_print("compiled provider info: $item->name, provider params: " . raw_json_encode($item->params), true);
-
-        if ($is_new) {
+        if (empty($user_input->{CONTROL_EDIT_ITEM})) {
             $id = "{$provider->getId()}_$id";
             $settings = $this->get_settings($id);
             $xmltv_picons = $provider->getConfigValue(XMLTV_PICONS);
