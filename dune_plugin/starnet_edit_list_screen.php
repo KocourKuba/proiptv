@@ -906,79 +906,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             hd_debug_print("Unknown provider ID: $m[1]");
                             continue;
                         }
-                        $playlist->type = PARAM_PROVIDER;
-                        $playlist->params[PARAM_PROVIDER] = $m[1];
-                        $playlist->name = $provider->getName();
-                        $ext_vars = explode('|', $m[2]);
-                        if (empty($ext_vars)) {
-                            hd_debug_print("invalid provider_info: $m[2]", true);
-                            continue;
-                        }
 
-                        $vars = explode(':', $ext_vars[0]);
-                        if (empty($vars)) {
-                            hd_debug_print("invalid provider_info: $ext_vars[0]", true);
-                            continue;
-                        }
-
-                        hd_debug_print("parse imported provider_info: $ext_vars[0]", true);
-
-                        switch ($provider->getType()) {
-                            case PROVIDER_TYPE_PIN:
-                                hd_debug_print("set pin: $vars[0]");
-                                $playlist->params[MACRO_PASSWORD] = $vars[0];
-                                break;
-
-                            case PROVIDER_TYPE_LOGIN:
-                            case PROVIDER_TYPE_LOGIN_TOKEN:
-                            case PROVIDER_TYPE_LOGIN_STOKEN:
-                                hd_debug_print("set login: $vars[0]", true);
-                                $playlist->params[MACRO_LOGIN] = $vars[0];
-                                hd_debug_print("set password: $vars[1]", true);
-                                $playlist->params[MACRO_PASSWORD] = $vars[1];
-                                break;
-
-                            case PROVIDER_TYPE_EDEM:
-                                if (isset($vars[1])) {
-                                    hd_debug_print("set subdomain: $vars[0]", true);
-                                    $playlist->params[MACRO_SUBDOMAIN] = $vars[0];
-                                    hd_debug_print("set ottkey: $vars[1]", true);
-                                    $playlist->params[MACRO_OTTKEY] = $vars[1];
-                                } else {
-                                    $playlist->params[MACRO_SUBDOMAIN] = 'junior.edmonst.net';
-                                    hd_debug_print("set ottkey: $vars[0]", true);
-                                    $playlist->params[MACRO_OTTKEY] = $vars[0];
-                                }
-
-                                if (!empty($ext_vars[1]) && !preg_match(VPORTAL_PATTERN, $ext_vars[1])) {
-                                    return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
-                                }
-                                $playlist->params[MACRO_VPORTAL] = $ext_vars[1];
-                                break;
-
-                            default:
-                                break;
-                        }
-
-                        $domains = $provider->GetDomains();
-                        if (!empty($domains)) {
-                            $playlist->params[CONFIG_DOMAINS] = key($domains);
-                        }
-
-                        $servers = $provider->getConfigValue(CONFIG_SERVERS);
-                        if (!empty($servers)) {
-                            $playlist->params[MACRO_SERVER_ID] = key($servers);
-                        }
-
-                        $devices = $provider->getConfigValue(CONFIG_DEVICES);
-                        if (!empty($devices)) {
-                            $playlist->params[MACRO_DEVICE_ID] = key($devices);
-                        }
-
-                        $qualities = $provider->getConfigValue(CONFIG_QUALITIES);
-                        if (!empty($qualities)) {
-                            $playlist->params[MACRO_QUALITY_ID] = key($qualities);
-                        }
+                        $res = $provider->set_info($m, $playlist);
+                        if (!$res) continue;
 
                         $hash = "{$provider->getId()}_$hash";
                     } else {

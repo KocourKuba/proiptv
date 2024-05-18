@@ -529,8 +529,6 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->load_history(true);
         $this->plugin->create_screen_views();
 
-        $provider = $this->plugin->get_current_provider();
-
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
         /** @var Hashed_Array<string, string> $custom_group_icons */
@@ -603,6 +601,7 @@ class Starnet_Tv implements User_Input_Handler
             hd_debug_print("Using base url for icons: $icon_base_url");
         }
 
+        $provider = $this->plugin->get_current_provider();
         $this->plugin->vod = null;
         $this->plugin->vod_enabled = false;
         if (is_null($provider)) {

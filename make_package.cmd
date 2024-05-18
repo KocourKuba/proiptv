@@ -1,7 +1,7 @@
 @echo off
 setlocal
 rem del \\DUNE4K\DuneSD\dune_plugin_logs\proiptv.log >nul 2>&1
-del \\DUNE8K\android_fe7b_ac1b\dune_plugin_logs\proiptv.log >nul 2>&1
+del \\DUNEAV\flash_card_d832_6f19\dune_plugin_logs\proiptv.log >nul 2>&1
 
 set /p VERSION=<build\version.txt
 for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a

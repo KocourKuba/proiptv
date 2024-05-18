@@ -229,7 +229,6 @@
       "config": {
         "id_map": "tvg-id",
         "headers": {
-          "accept": "*/*",
           "x-public-key": "{PASSWORD}"
         },
         "epg_preset": "cbilling",
@@ -289,7 +288,6 @@
           "replace": "$1{SERVER_ID}$2"
         },
         "headers": {
-          "accept": "*/*",
           "x-public-key": "{PASSWORD}"
         },
         "devices": {

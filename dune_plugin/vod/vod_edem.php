@@ -6,11 +6,6 @@ class vod_edem extends vod_standard
     /**
      * @var string
      */
-    protected $vportal_url;
-
-    /**
-     * @var string
-     */
     protected $vportal_key;
 
     /**
@@ -22,11 +17,14 @@ class vod_edem extends vod_standard
 
         $this->vod_filters = array("years", "genre");
         $this->vod_quality = true;
-        $vportal = $provider->getCredential(MACRO_VPORTAL);
-        if (empty($vportal) || !preg_match(VPORTAL_PATTERN, $vportal,$matches)) {
+        $vportal = $this->provider->getCredential(MACRO_VPORTAL);
+        if (empty($vportal) || !preg_match(VPORTAL_PATTERN, $vportal, $matches)) {
+            hd_debug_print("Incorrect or empty VPortal data: $vportal");
             $show = false;
         } else {
-            list(, $this->vportal_key, $this->vportal_url) = $matches;
+            $commands = $this->provider->getApiCommands();
+            list(, $this->vportal_key, $commands[API_COMMAND_VOD]) = $matches;
+            $this->provider->setApiCommands($commands);
             $show = true;
         }
 
@@ -269,11 +267,6 @@ class vod_edem extends vod_standard
      */
     protected function make_json_request($params = null)
     {
-        if (empty($this->vportal_url) || empty($this->vportal_key)) {
-            hd_debug_print("incorrect or empty VPortal key or url");
-            return false;
-        }
-
         $pairs = array();
         if ($params !== null) {
             $pairs = $params;
@@ -284,19 +277,11 @@ class vod_edem extends vod_standard
         $pairs['mac'] = "000000000000"; // dummy
         $pairs['app'] = "ProIPTV_dune_plugin";
 
-        $curl_opt = array(
-            CURLOPT_HTTPHEADER => array("Content-Type: application/json"),
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($pairs)
-        );
+        $curl_opt[CURLOPT_POST] = true;
+        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json");
+        $curl_opt[CURLOPT_POSTFIELDS] = str_replace('"', '\"', json_encode($pairs));
 
-        $response = HD::http_download_https_proxy($this->vportal_url, null, $curl_opt);
-        if ($response === false) {
-            hd_debug_print("Can't get VPortal request");
-            return false;
-        }
-
-        $data = HD::decodeResponse(false, $response);
+        $data = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $curl_opt);
         if ($data === false) {
             hd_debug_print("Wrong response on VPortal request");
         }

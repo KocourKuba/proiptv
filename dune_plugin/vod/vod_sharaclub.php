@@ -12,13 +12,8 @@ class vod_sharaclub extends vod_standard
 
         $this->vod_filters = array("genre", "from", "to");
 
-        $response = $provider->execApiCommand(API_COMMAND_INFO);
-        if ($response === false) {
-            return false;
-        }
-
-        $data = HD::decodeResponse(false, $response);
-        if ($data === false || !isset($data->data)) {
+        $data = $provider->execApiCommand(API_COMMAND_INFO);
+        if (!isset($data->data)) {
             return false;
         }
 

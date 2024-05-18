@@ -66,22 +66,15 @@ class api_cbilling extends api_default
         hd_debug_print(null, true);
 
         $servers = array();
-        $response = $this->execApiCommand(API_COMMAND_SERVERS);
-        if ($response === false) {
-            hd_debug_print("Can't get servers status");
-        } else {
-            $data = HD::decodeResponse(false, $response);
-            if ($data === false || !isset($data->data)) {
-                hd_debug_print("Wrong response on command: " . API_COMMAND_SERVERS);
-            } else {
-                foreach ($data->data as $server) {
-                    $servers[$server->name] = $server->country;
-                }
+        $data = $this->execApiCommand(API_COMMAND_SERVERS);
+        if (isset($data->data)) {
+            foreach ($data->data as $server) {
+                $servers[$server->name] = $server->country;
+            }
 
-                $cur_server = $this->getCredential(MACRO_SERVER_ID);
-                if (empty($cur_server) && isset($this->info->data->server)) {
-                    $this->setCredential(MACRO_SERVER_ID, $this->info->data->server);
-                }
+            $cur_server = $this->getCredential(MACRO_SERVER_ID);
+            if (empty($cur_server) && isset($this->info->data->server)) {
+                $this->setCredential(MACRO_SERVER_ID, $this->info->data->server);
             }
         }
 

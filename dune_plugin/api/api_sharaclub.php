@@ -101,20 +101,13 @@ class api_sharaclub extends api_default
         hd_debug_print(null, true);
 
         $servers = array();
-        $response = $this->execApiCommand(API_COMMAND_SERVERS);
-        if ($response === false) {
-            hd_debug_print("Can't get servers status");
-        } else {
-            $data = HD::decodeResponse(false, $response);
-            if ($data === false || !isset($data->status)) {
-                hd_debug_print("Wrong response on command: " . API_COMMAND_SERVERS);
-            } else {
-                foreach ($data->allow_nums as $server) {
-                    $servers[(int)$server->id] = $server->name;
-                }
-
-                $this->setCredential(MACRO_SERVER_ID, (int)$data->current);
+        $data = $this->execApiCommand(API_COMMAND_SERVERS);
+        if (isset($data->status)) {
+            foreach ($data->allow_nums as $server) {
+                $servers[(int)$server->id] = $server->name;
             }
+
+            $this->setCredential(MACRO_SERVER_ID, (int)$data->current);
         }
 
         return $servers;

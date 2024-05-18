@@ -241,11 +241,12 @@ class HD
      *
      * @param string $url
      * @param string|null $save_file
-     * @param array|null $curl_options
+     * @param array $curl_options
      * @return string|bool content of the downloaded file or result of operation
      */
-    public static function http_download_https_proxy($url, $save_file = null, $curl_options = null)
+    public static function http_download_https_proxy($url, $save_file = null, $curl_options = array())
     {
+        hd_debug_print("curl opt: " . json_encode($curl_options), true);
         $ret_content = empty($save_file);
 
         $logfile = get_temp_path(self::HTTPS_PROXY_LOG);
@@ -270,20 +271,20 @@ class HD
         $config_data .= "--location" . PHP_EOL;
         $config_data .= "--max-redirs 4" . PHP_EOL;
         $config_data .= "--compressed " . PHP_EOL;
-        $config_data .= '--user-agent "' . self::get_dune_user_agent() .'"' . PHP_EOL;
-        $config_data .= '--url "' . $url . '"' . PHP_EOL;
-        $config_data .= '--output "' . $save_file . '"' . PHP_EOL;
+        $config_data .= "--user-agent \"" . self::get_dune_user_agent() ."\"" . PHP_EOL;
+        $config_data .= "--url \"$url\"" . PHP_EOL;
+        $config_data .= "--output \"$save_file\"" . PHP_EOL;
 
         if (!empty($curl_options)) {
             foreach ($curl_options as $opt_name => $parameters) {
                 if ($opt_name === CURLOPT_HTTPHEADER) {
                     foreach ($parameters as $parameter) {
-                        $config_data .= '--header "' . $parameter . '"' . PHP_EOL;
+                        $config_data .= "--header \"$parameter\"" . PHP_EOL;
                     }
                 } else if ($opt_name === CURLOPT_POST && $parameters) {
-                    $config_data .= "--request POST " . PHP_EOL;
+                    $config_data .= "--request POST" . PHP_EOL;
                 } else if ($opt_name === CURLOPT_POSTFIELDS) {
-                    $config_data .= "--data '" . $parameters . "'" . PHP_EOL;
+                    $config_data .= "--data \"$parameters\"" . PHP_EOL;
                 }
             }
         }

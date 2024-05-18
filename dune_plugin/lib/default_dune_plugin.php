@@ -224,11 +224,19 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $playlist = $this->get_current_playlist();
         if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
+            hd_debug_print("Current settings not provider");
             return null;
         }
 
         if (is_null($this->cur_provider)) {
-            $this->cur_provider = $this->init_provider($playlist);
+            $this->cur_provider = $this->get_provider($playlist->params[PARAM_PROVIDER]);
+            if (is_null($this->cur_provider)) {
+                hd_debug_print("unknown provider");
+            } else if (!$this->cur_provider->getEnable()) {
+                hd_debug_print("provider disabled");
+            } else {
+                $this->cur_provider->init_provider($playlist);
+            }
         }
 
         return $this->cur_provider;
@@ -1604,84 +1612,6 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param Named_Storage $info
-     * @return api_default|null
-     */
-    public function init_provider($info)
-    {
-        hd_debug_print("provider info:" . json_encode($info));
-        $provider = $this->get_provider($info->params[PARAM_PROVIDER]);
-        if (is_null($provider)) {
-            hd_debug_print("unknown provider");
-            return null;
-        }
-
-        if (!$provider->getEnable()) {
-            hd_debug_print("provider disabled");
-            return null;
-        }
-
-        hd_debug_print("parse provider_info ({$provider->getType()}): $info", true);
-
-        switch ($provider->getType()) {
-            case PROVIDER_TYPE_PIN:
-                $provider->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
-                break;
-
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-                $provider->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
-                $provider->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
-                $provider->setCredential(MACRO_TOKEN,
-                    md5(strtolower($provider->getCredential(MACRO_LOGIN)) . md5($provider->getCredential(MACRO_PASSWORD))));
-                break;
-
-            case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
-                $provider->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
-                $provider->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
-                break;
-
-            case PROVIDER_TYPE_EDEM:
-                $provider->setCredential(MACRO_SUBDOMAIN, isset($info->params[MACRO_SUBDOMAIN]) ? $info->params[MACRO_SUBDOMAIN] : '');
-                $provider->setCredential(MACRO_OTTKEY, isset($info->params[MACRO_OTTKEY]) ? $info->params[MACRO_OTTKEY] : '');
-                $provider->setCredential(MACRO_VPORTAL, isset($info->params[MACRO_VPORTAL]) ? $info->params[MACRO_VPORTAL] : '');
-                break;
-
-            default:
-                return null;
-        }
-
-        $domains = $provider->GetDomains();
-        if (!empty($domains)) {
-            $provider->setCredential(MACRO_DOMAIN_ID, key($domains));
-        }
-        $servers = $provider->GetServers();
-        if (!empty($servers)) {
-            $provider->setCredential(MACRO_SERVER_ID, key($servers));
-        }
-        $devices = $provider->GetDevices();
-        if (!empty($devices)) {
-            $provider->setCredential(MACRO_DEVICE_ID, key($devices));
-        }
-        $qualities = $provider->GetQualities();
-        if (!empty($qualities)) {
-            $provider->setCredential(MACRO_QUALITY_ID, key($qualities));
-        }
-        $streams = $provider->getStreams();
-        if (!empty($streams)) {
-            $provider->setCredential(MACRO_STREAM_ID, key($streams));
-        }
-
-        foreach($info->params as $key => $item) {
-            if ($key === MACRO_DOMAIN_ID || $key === MACRO_SERVER_ID || $key === MACRO_DEVICE_ID || $key === MACRO_QUALITY_ID || $key === MACRO_STREAM_ID) {
-                $provider->setCredential($key, $item);
-            }
-        }
-
-        return $provider;
-    }
-
-    /**
      * @return void
      */
     public function init_epg_manager()
@@ -1740,9 +1670,9 @@ class Default_Dune_Plugin implements DunePlugin
             $force = true;
         }
 
+        $playlist = $this->get_current_playlist();
         try {
             if ($force !== false) {
-                $playlist = $this->get_current_playlist();
                 if (empty($playlist->type)) {
                     hd_debug_print("Tv playlist not defined");
                     throw new Exception("Tv playlist not defined");
@@ -1750,7 +1680,8 @@ class Default_Dune_Plugin implements DunePlugin
 
                 hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $playlist->name)");
                 if ($playlist->type === PARAM_FILE) {
-                    $contents = file_get_contents($playlist->params[PARAM_URI]);
+                    $res = true;
+                    $tmp_file = $playlist->params[PARAM_URI];
                     hd_debug_print("m3u load local file {$playlist->params[PARAM_URI]}", true);
                 } else if ($playlist->type === PARAM_LINK) {
                     if (!preg_match(HTTP_PATTERN, $playlist->params[PARAM_URI])) {
@@ -1758,26 +1689,26 @@ class Default_Dune_Plugin implements DunePlugin
                     }
                     $playlist_url = $playlist->params[PARAM_URI];
                     hd_debug_print("m3u download url $playlist_url", true);
-                    $contents = HD::http_download_https_proxy($playlist_url);
+                    $res = HD::http_download_https_proxy($playlist_url, $tmp_file);
                 } else if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
                     if (is_null($provider)) {
                         throw new Exception("Unable to init provider $playlist");
                     }
 
-                    $provider->request_provider_token();
-                    $contents = $provider->execApiCommand(API_COMMAND_PLAYLIST);
+                    $res = $provider->load_playlist($tmp_file);
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
 
-                if ($contents === false) {
+                if ($res === false) {
                     $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                     $exception_msg = "Ошибка скачивания плейлиста!\n\n$logfile";
                     HD::set_last_error("pl_last_error", $exception_msg);
                     throw new Exception($exception_msg);
                 }
 
+                $contents = file_get_contents($tmp_file);
                 if (strpos($contents, '#EXTM3U') === false) {
                     HD::set_last_error("pl_last_error", "Пустой или неправильный плейлист!\n\n" . $contents);
                     throw new Exception("Can't parse playlist");
@@ -1787,9 +1718,9 @@ class Default_Dune_Plugin implements DunePlugin
                 if ($encoding !== 'utf-8') {
                     hd_debug_print("Fixing playlist encoding: $encoding");
                     $contents = iconv($encoding, 'utf-8', $contents);
+                    file_put_contents($tmp_file, $contents);
                 }
 
-                file_put_contents($tmp_file, $contents);
                 $mtime = filemtime($tmp_file);
                 hd_debug_print("Save $tmp_file (timestamp: $mtime)");
             }
@@ -1816,6 +1747,9 @@ class Default_Dune_Plugin implements DunePlugin
             }
         } catch (Exception $ex) {
             hd_debug_print("Unable to load tv playlist: " . $ex->getMessage());
+            if ($playlist->type !== PARAM_FILE) {
+                unlink($tmp_file);
+            }
             return false;
         }
 
@@ -2630,9 +2564,12 @@ class Default_Dune_Plugin implements DunePlugin
             $playlist = $this->get_playlist($playlist_id);
             if (!is_null($playlist)) {
                 $name = $playlist->name;
-                hd_debug_print("playlist info : $playlist", true);
-                $provider = $this->init_provider($playlist);
-                hd_debug_print("existing provider : " . json_encode($provider), true);
+                hd_debug_print("provider info:" . json_encode($playlist));
+                $provider = $this->get_provider($playlist->params[PARAM_PROVIDER]);
+                if (!is_null($provider)) {
+                    hd_debug_print("existing provider : " . json_encode($provider), true);
+                    $provider->init_provider($playlist);
+                }
             } else {
                 $provider = $this->get_provider($provider_id);
             }

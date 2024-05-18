@@ -117,21 +117,14 @@ class api_tvclub extends api_default
 
         hd_debug_print(null, true);
         $servers = array();
-        $response = $this->execApiCommand(API_COMMAND_SERVERS);
-        if ($response === false) {
-            hd_debug_print("Can't get servers status");
-        } else {
-            $data = HD::decodeResponse(false, $response);
-            if ($data === false || !isset($data->servers)) {
-                hd_debug_print("Wrong response on command: " . API_COMMAND_SERVERS);
-            } else {
-                foreach ($data->servers as $server) {
-                    $servers[(int)$server->id] = $server->name;
-                }
+        $data = $this->execApiCommand(API_COMMAND_SERVERS);
+        if (isset($data->servers)) {
+            foreach ($data->servers as $server) {
+                $servers[(int)$server->id] = $server->name;
+            }
 
-                if (isset($this->info->account->settings->server_id)) {
-                    $this->setCredential(MACRO_SERVER_ID, (int)$this->info->account->settings->server_id);
-                }
+            if (isset($this->info->account->settings->server_id)) {
+                $this->setCredential(MACRO_SERVER_ID, (int)$this->info->account->settings->server_id);
             }
         }
 

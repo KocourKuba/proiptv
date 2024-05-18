@@ -6,6 +6,64 @@ class api_edem extends api_default
     /**
      * @inheritDoc
      */
+    public function init_provider($info)
+    {
+        hd_debug_print("provider info:" . json_encode($info));
+        hd_debug_print("parse provider_info ({$this->getType()}): $info", true);
+
+        $this->setCredential(MACRO_SUBDOMAIN, isset($info->params[MACRO_SUBDOMAIN]) ? $info->params[MACRO_SUBDOMAIN] : '');
+        $this->setCredential(MACRO_OTTKEY, isset($info->params[MACRO_OTTKEY]) ? $info->params[MACRO_OTTKEY] : '');
+        $this->setCredential(MACRO_VPORTAL, isset($info->params[MACRO_VPORTAL]) ? $info->params[MACRO_VPORTAL] : '');
+
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function set_info($matches, &$info)
+    {
+        $info->type = PARAM_PROVIDER;
+        $info->params[PARAM_PROVIDER] = $matches[1];
+        $info->name = $this->getName();
+
+        $ext_vars = explode('|', $matches[2]);
+        if (empty($ext_vars)) {
+            hd_debug_print("invalid provider_info: $matches[2]", true);
+            return false;
+        }
+
+        $vars = explode(':', $ext_vars[0]);
+        if (empty($vars)) {
+            hd_debug_print("invalid provider_info: $ext_vars[0]", true);
+            return false;
+        }
+
+        hd_debug_print("parse imported provider_info: $ext_vars[0]", true);
+
+        if (isset($vars[1])) {
+            hd_debug_print("set subdomain: $vars[0]", true);
+            $info->params[MACRO_SUBDOMAIN] = $vars[0];
+            hd_debug_print("set ottkey: $vars[1]", true);
+            $info->params[MACRO_OTTKEY] = $vars[1];
+        } else {
+            $info->params[MACRO_SUBDOMAIN] = 'junior.edmonst.net';
+            hd_debug_print("set ottkey: $vars[0]", true);
+            $info->params[MACRO_OTTKEY] = $vars[0];
+        }
+
+        if (!empty($ext_vars[1]) && !preg_match(VPORTAL_PATTERN, $ext_vars[1])) {
+            return false;
+        }
+
+        $info->params[MACRO_VPORTAL] = $ext_vars[1];
+
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function GetSetupUI($name, $playlist_id, $handler)
     {
         $defs = array();

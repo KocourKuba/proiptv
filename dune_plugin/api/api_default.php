@@ -263,6 +263,132 @@ class api_default
     /// Methods
 
     /**
+     * @param Named_Storage $info
+     * @return api_default|null
+     */
+    public function init_provider($info)
+    {
+        hd_debug_print("provider info:" . json_encode($info));
+        hd_debug_print("parse provider_info ({$this->getType()}): $info", true);
+
+        switch ($this->getType()) {
+            case PROVIDER_TYPE_PIN:
+                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
+                break;
+
+            case PROVIDER_TYPE_LOGIN_TOKEN:
+                $this->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
+                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
+                $this->setCredential(MACRO_TOKEN,
+                    md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD))));
+                break;
+
+            case PROVIDER_TYPE_LOGIN:
+            case PROVIDER_TYPE_LOGIN_STOKEN:
+                $this->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
+                $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
+                break;
+
+            default:
+                return null;
+        }
+
+        $domains = $this->GetDomains();
+        if (!empty($domains)) {
+            $this->setCredential(MACRO_DOMAIN_ID, key($domains));
+        }
+        $servers = $this->GetServers();
+        if (!empty($servers)) {
+            $this->setCredential(MACRO_SERVER_ID, key($servers));
+        }
+        $devices = $this->GetDevices();
+        if (!empty($devices)) {
+            $this->setCredential(MACRO_DEVICE_ID, key($devices));
+        }
+        $qualities = $this->GetQualities();
+        if (!empty($qualities)) {
+            $this->setCredential(MACRO_QUALITY_ID, key($qualities));
+        }
+        $streams = $this->getStreams();
+        if (!empty($streams)) {
+            $this->setCredential(MACRO_STREAM_ID, key($streams));
+        }
+
+        foreach($info->params as $key => $item) {
+            if ($key === MACRO_DOMAIN_ID || $key === MACRO_SERVER_ID || $key === MACRO_DEVICE_ID || $key === MACRO_QUALITY_ID || $key === MACRO_STREAM_ID) {
+                $this->setCredential($key, $item);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param array $matches
+     * @param Named_Storage $info
+     * @return bool
+     */
+    public function set_info($matches, &$info)
+    {
+        $info->type = PARAM_PROVIDER;
+        $info->params[PARAM_PROVIDER] = $matches[1];
+        $info->name = $this->getName();
+
+        $vars = explode(':', $matches[2]);
+        if (empty($vars)) {
+            hd_debug_print("invalid provider_info: $matches[0]", true);
+            return false;
+        }
+
+        hd_debug_print("parse imported provider_info: $vars[0]", true);
+
+        switch ($this->getType()) {
+            case PROVIDER_TYPE_PIN:
+                hd_debug_print("set pin: $vars[0]");
+                $info->params[MACRO_PASSWORD] = $vars[0];
+                break;
+
+            case PROVIDER_TYPE_LOGIN:
+            case PROVIDER_TYPE_LOGIN_TOKEN:
+            case PROVIDER_TYPE_LOGIN_STOKEN:
+                hd_debug_print("set login: $vars[0]", true);
+                $info->params[MACRO_LOGIN] = $vars[0];
+                hd_debug_print("set password: $vars[1]", true);
+                $info->params[MACRO_PASSWORD] = $vars[1];
+                break;
+            default:
+                return false;
+        }
+
+        $domains = $this->GetDomains();
+        if (!empty($domains)) {
+            $info->params[CONFIG_DOMAINS] = key($domains);
+        }
+
+        $servers = $this->getConfigValue(CONFIG_SERVERS);
+        if (!empty($servers)) {
+            $info->params[MACRO_SERVER_ID] = key($servers);
+        }
+
+        $devices = $this->getConfigValue(CONFIG_DEVICES);
+        if (!empty($devices)) {
+            $info->params[MACRO_DEVICE_ID] = key($devices);
+        }
+
+        $qualities = $this->getConfigValue(CONFIG_QUALITIES);
+        if (!empty($qualities)) {
+            $info->params[MACRO_QUALITY_ID] = key($qualities);
+        }
+
+        $streams = $this->getConfigValue(CONFIG_STREAMS);
+        if (!empty($streams)) {
+            $info->params[MACRO_STREAM_ID] = key($streams);
+        }
+
+        return true;
+    }
+
+    /**
      * @param string $val
      * @return string|array|null
      */
@@ -305,33 +431,47 @@ class api_default
 
         return null;
     }
+
     /**
      * @param bool $force
-     * @return void
+     * @return bool
      */
     public function request_provider_token($force = false)
     {
+        hd_debug_print(null, true);
+
         if (!$this->hasApiCommand(API_COMMAND_REQUEST_TOKEN)) {
-            return;
+            return true;
         }
 
         $token = $this->getCredential(MACRO_TOKEN);
         if (!empty($token) && !$force) {
-            return;
+            return true;
         }
 
         $token_name = $this->getConfigValue(CONFIG_TOKEN_RESPONSE);
-        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
-        if ($response === false) {
-            hd_debug_print("Can't get " . API_COMMAND_REQUEST_TOKEN);
-        } else {
-            $data = HD::decodeResponse(false, $response, true);
-            if ($data === false || !isset($data[$token_name])) {
-                hd_debug_print("Wrong response on command: " . API_COMMAND_REQUEST_TOKEN);
-            } else {
-                $this->setCredential(MACRO_TOKEN, $data[$token_name]);
-            }
+        $data = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
+        if (isset($data->{$token_name})) {
+            $this->setCredential(MACRO_TOKEN, $data->{$token_name});
+            return true;
         }
+
+        return false;
+    }
+
+    /**
+     * @param $tmp_file string
+     * @return bool
+     */
+    public function load_playlist($tmp_file)
+    {
+        hd_debug_print(null, true);
+
+        if (!$this->request_provider_token()) {
+            return false;
+        }
+
+        return $this->execApiCommand(API_COMMAND_PLAYLIST, $tmp_file);
     }
 
     /**
@@ -387,10 +527,11 @@ class api_default
     /**
      * @param string $command
      * @param string $file
-     * @param string $params
-     * @return bool
+     * @param bool $decode
+     * @param array $curl_options
+     * @return bool|object
      */
-    public function execApiCommand($command, $file = null, $params = '')
+    public function execApiCommand($command, $file = null, $decode = true, $curl_options = array())
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
@@ -399,20 +540,42 @@ class api_default
             return false;
         }
 
-        $command_url .= $params;
+        if (isset($curl_options['path'])) {
+            $command_url .= $curl_options['path'];
+        }
         hd_debug_print("ApiCommandUrl: $command_url", true);
 
-        $curl_headers = null;
         $config_headers = $this->getConfigValue(CONFIG_HEADERS);
         if (!empty($config_headers)) {
-            $curl_headers[CURLOPT_HTTPHEADER] = array();
             foreach ($config_headers as $key => $header) {
-                $curl_headers[] = "$key: " . $this->replace_macros($header);
+                $value = $this->replace_macros($header);
+                if (!empty($value)) {
+                    $curl_options[CURLOPT_HTTPHEADER][] = "$key: $value";
+                }
             }
-            hd_debug_print("curl headers: " . raw_json_encode($curl_headers), true);
         }
 
-        return HD::http_download_https_proxy($command_url, $file, $curl_headers);
+        $response = HD::http_download_https_proxy($command_url, $file, $curl_options);
+        if ($response === false) {
+            hd_debug_print("Can't get response on request: " . $command);
+            return false;
+        }
+
+        if (!is_null($file)) {
+            return true;
+        }
+
+        if (!$decode) {
+            return $response;
+        }
+
+        $data = HD::decodeResponse(false, $response);
+        if ($data === false) {
+            hd_debug_print("Can't decode response on request: " . $command);
+            return false;
+        }
+
+        return $data;
     }
 
     /**
@@ -556,7 +719,7 @@ class api_default
             case PROVIDER_TYPE_PIN:
                 $item->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$item->params[MACRO_PASSWORD]) : $id;
-                if (empty($params[MACRO_PASSWORD])) {
+                if (empty($item->params[MACRO_PASSWORD])) {
                     return null;
                 }
                 break;
@@ -567,7 +730,7 @@ class api_default
                 $item->params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
                 $item->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$item->params[MACRO_LOGIN].$item->params[MACRO_PASSWORD]) : $id;
-                if (empty($params[MACRO_LOGIN]) || empty($params[MACRO_PASSWORD])) {
+                if (empty($item->params[MACRO_LOGIN]) || empty($item->params[MACRO_PASSWORD])) {
                     return null;
                 }
 
@@ -598,7 +761,7 @@ class api_default
         }
 
         if (isset($user_input->{CONTROL_STREAM})) {
-            $params[MACRO_STREAM_ID] = $user_input->{CONTROL_STREAM};
+            $item->params[MACRO_STREAM_ID] = $user_input->{CONTROL_STREAM};
         }
 
         hd_debug_print("compiled provider info: $item->name, provider params: " . raw_json_encode($item->params), true);

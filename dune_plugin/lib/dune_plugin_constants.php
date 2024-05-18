@@ -192,6 +192,7 @@ const MACRO_PASSWORD = '{PASSWORD}';
 const MACRO_SUBDOMAIN = '{SUBDOMAIN}';
 const MACRO_OTTKEY = '{OTTKEY}';
 const MACRO_TOKEN = '{TOKEN}';
+const MACRO_REFRESH_TOKEN = '{REFRESH_TOKEN}';
 const MACRO_DOMAIN_ID = '{DOMAIN_ID}';
 const MACRO_DEVICE_ID = '{DEVICE_ID}';
 const MACRO_SERVER_ID = '{SERVER_ID}';
@@ -201,13 +202,13 @@ const MACRO_VPORTAL = '{VPORTAL}';
 const MACRO_SCHEME = '{SCHEME}';
 const MACRO_DOMAIN = '{DOMAIN}';
 const MACRO_ID = '{ID}';
+const MACRO_EXPIRE_DATA = '{EXPIRE_DATA}';
 
 // provider type access
 const PROVIDER_TYPE_PIN = 'pin';
 const PROVIDER_TYPE_LOGIN = 'login';
 const PROVIDER_TYPE_LOGIN_TOKEN = 'login-token';
 const PROVIDER_TYPE_LOGIN_STOKEN = 'login-stoken';
-const PROVIDER_TYPE_EDEM = 'edem';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
 const ENGINE_JSON = 'json';
@@ -234,7 +235,7 @@ const PLAYLIST_PATTERN = 'm3u|m3u8';
 const EPG_PATTERN = 'xml|xmltv|gz';
 const HTTP_PATTERN = '/^(https?):\/\/([^\?]+)\??/';
 const TS_REPL_PATTERN = '/^(https?:\/\/)(.+)$/';
-const PROVIDER_PATTERN = '/^(.+)@(.+)$/';
+const PROVIDER_PATTERN = '/^([^@]+)@(.+)$/';
 const VPORTAL_PATTERN = '/^portal::\[key:([^]]+)](.+)$/';
 
 # Mounted storages path
@@ -272,3 +273,4 @@ const API_COMMAND_PAY = 'pay';
 const API_COMMAND_SERVERS = 'servers';
 const API_COMMAND_SET_SERVER = 'set_server';
 const API_COMMAND_REQUEST_TOKEN = 'request_token';
+const API_COMMAND_REFRESH_TOKEN = 'refresh_token';
