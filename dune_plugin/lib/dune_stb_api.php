@@ -1687,6 +1687,8 @@ function print_sysinfo()
     $platform = get_platform_info();
     $dns = get_dns_address();
     $values = curl_version();
+    $ext_curl = trim(shell_exec(get_platform_curl() . ' --version|grep curl'));
+
     $table = array(
         'Dune Product' => get_product_id(),
         'Dune Model' => get_dune_model(),
@@ -1699,6 +1701,7 @@ function print_sysinfo()
         'PHP Version' => PHP_VERSION,
         'Plugin Memory' => ini_get('memory_limit'),
         'libCURL Version' => "{$values['version']} ({$values['ssl_version']})",
+        'CURL Version' => $ext_curl,
     );
 
     if (class_exists("SQLite3")) {
@@ -1745,6 +1748,7 @@ function get_dune_model() {
         'tv175v' => 'Pro Vision 4K Solo',
         'tv175x' => 'RealBox 4K',
         'tv175y' => 'Real Vision 4K Plus',
+        'tv182a' => 'AV1 4K',
         'tv274a' => 'Sky 4K Plus',
         'tv288b' => 'Pro One 8K Plus',
         'tv292a' => 'Pro 4K',

@@ -32,7 +32,7 @@ Default_Dune_Plugin_Fw::$plugin_class_name = 'Starnet_Plugin';
  * @throws Exception
  */
 function __autoload($className) {
-    hd_debug_print("__autoload class $className", true);
+    //hd_debug_print("__autoload class $className", true);
 
     $path = __DIR__ . "/$className.php";
     if (file_exists($path)) {
@@ -62,5 +62,5 @@ function __autoload($className) {
         return;
     }
 
-    hd_debug_print("$className.php not found", true);
+    //hd_debug_print("$className.php not found", true);
 }

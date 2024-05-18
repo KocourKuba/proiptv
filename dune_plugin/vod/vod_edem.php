@@ -265,7 +265,7 @@ class vod_edem extends vod_standard
 
     /**
      * @param array|null $params
-     * @return false|mixed
+     * @return bool|object
      */
     protected function make_json_request($params = null)
     {
@@ -290,8 +290,17 @@ class vod_edem extends vod_standard
             CURLOPT_POSTFIELDS => json_encode($pairs)
         );
 
-        hd_debug_print("post_data: " . json_encode($pairs), true);
+        $response = HD::http_download_https_proxy($this->vportal_url, null, $curl_opt);
+        if ($response === false) {
+            hd_debug_print("Can't get VPortal request");
+            return false;
+        }
 
-        return HD::DownloadJson($this->vportal_url, false, $curl_opt);
+        $data = HD::decodeResponse(false, $response);
+        if ($data === false) {
+            hd_debug_print("Wrong response on VPortal request");
+        }
+
+        return $data;
     }
 }

@@ -128,8 +128,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             hd_debug_print(null, true);
             $img_ym = get_temp_path('qr_ym.png');
             $img_pp = get_temp_path('qr_pp.png');
-            HD::http_save_document(Default_Dune_Plugin::RESOURCE_URL . "QR_YM.png", $img_ym);
-            HD::http_save_document(Default_Dune_Plugin::RESOURCE_URL . "QR_PP.png", $img_pp);
+            HD::http_download_https_proxy(Default_Dune_Plugin::RESOURCE_URL . "QR_YM.png", $img_ym);
+            HD::http_download_https_proxy(Default_Dune_Plugin::RESOURCE_URL . "QR_PP.png", $img_pp);
 
             Control_Factory::add_vgap($defs, 50);
             Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");

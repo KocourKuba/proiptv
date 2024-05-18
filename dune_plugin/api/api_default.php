@@ -405,7 +405,7 @@ class api_default
         $curl_headers = null;
         $config_headers = $this->getConfigValue(CONFIG_HEADERS);
         if (!empty($config_headers)) {
-            $curl_headers = array();
+            $curl_headers[CURLOPT_HTTPHEADER] = array();
             foreach ($config_headers as $key => $header) {
                 $curl_headers[] = "$key: " . $this->replace_macros($header);
             }

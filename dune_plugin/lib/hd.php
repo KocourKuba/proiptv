@@ -235,88 +235,16 @@ class HD
     }
 
     /**
-     * @param $url string
-     * @param $file_name string
-     * @param $opts array
-     * @return array
-     * @throws Exception
-     */
-    public static function http_save_document($url, $file_name, $opts = null, &$info = array())
-    {
-        $timestamp = file_exists($file_name) ? filemtime($file_name) : -1;
-
-        $tmp_file = get_temp_path(Hashed_Array::hash($file_name));
-        $fp = fopen($tmp_file, 'wb');
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-        curl_setopt($ch, CURLOPT_USERAGENT, self::get_dune_user_agent());
-        curl_setopt($ch, CURLOPT_FILETIME, true);
-        curl_setopt($ch, CURLOPT_TIMECONDITION, CURL_TIMECOND_IFMODSINCE);
-        curl_setopt($ch, CURLOPT_TIMEVALUE, $timestamp);
-        curl_setopt($ch, CURLOPT_FILE, $fp);
-
-        if (isset($opts)) {
-            //self::dump_curl_opts($opts);
-            foreach ($opts as $k => $v) {
-                curl_setopt($ch, $k, $v);
-            }
-        }
-
-        hd_debug_print("HTTP fetching '$url'");
-
-        try {
-            $result = curl_exec($ch);
-            if ($result === false) {
-                throw new Exception($url . PHP_EOL . "curl_exec error: " . curl_error($ch));
-            }
-
-            $info = curl_getinfo($ch);
-            $http_code = $info['http_code'];
-
-            if ($http_code !== 200 && $http_code !== 304) {
-                throw new Exception($url . PHP_EOL . "HTTP request failed ({$info['http_code']}): " . self::http_status_code_to_string($info['http_code']));
-            }
-
-            fclose($fp);
-            curl_close($ch);
-
-            if ($http_code === 304) {
-                hd_debug_print("file not changed", true);
-            } else {
-                copy($tmp_file, $file_name);
-                touch($file_name, $info['filetime']);
-            }
-            unlink($tmp_file);
-        } catch (Exception $ex) {
-            fclose($fp);
-            curl_close($ch);
-            unlink($tmp_file);
-            flush();
-            throw $ex;
-        }
-
-        return $info;
-    }
-
-    /**
      * download and return contents
      * if $save_file is null return content
      * otherwise save content to $save_file and return true or false
      *
      * @param string $url
      * @param string|null $save_file
-     * @param array|null $curl_headers
+     * @param array|null $curl_options
      * @return string|bool content of the downloaded file or result of operation
      */
-    public static function http_download_https_proxy($url, $save_file = null, $curl_headers = null)
+    public static function http_download_https_proxy($url, $save_file = null, $curl_options = null)
     {
         $ret_content = empty($save_file);
 
@@ -339,18 +267,36 @@ class HD
         $config_data .= "--dump-header -" . PHP_EOL;
         $config_data .= "--connect-timeout 30" . PHP_EOL;
         $config_data .= "--max-time 30" . PHP_EOL;
-        //$config_data .= "--retry 1" . PHP_EOL;
         $config_data .= "--location" . PHP_EOL;
         $config_data .= "--max-redirs 4" . PHP_EOL;
+        $config_data .= "--compressed " . PHP_EOL;
         $config_data .= '--user-agent "' . self::get_dune_user_agent() .'"' . PHP_EOL;
         $config_data .= '--url "' . $url . '"' . PHP_EOL;
         $config_data .= '--output "' . $save_file . '"' . PHP_EOL;
-        if (!empty($curl_headers)) {
-            foreach ($curl_headers as $header) {
-                $config_data .= '--header "' . $header . '"' . PHP_EOL;
+
+        if (!empty($curl_options)) {
+            foreach ($curl_options as $opt_name => $parameters) {
+                if ($opt_name === CURLOPT_HTTPHEADER) {
+                    foreach ($parameters as $parameter) {
+                        $config_data .= '--header "' . $parameter . '"' . PHP_EOL;
+                    }
+                } else if ($opt_name === CURLOPT_POST && $parameters) {
+                    $config_data .= "--request POST " . PHP_EOL;
+                } else if ($opt_name === CURLOPT_POSTFIELDS) {
+                    $config_data .= "--data '" . $parameters . "'" . PHP_EOL;
+                }
             }
         }
+
         file_put_contents($config_file, $config_data);
+
+        if (LogSeverity::$is_debug) {
+            $lines = file($config_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            hd_debug_print("Curl config:", true);
+            foreach ($lines as $line) {
+                hd_debug_print($line, true);
+            }
+        }
 
         $cmd = get_install_path('bin/https_proxy.sh') . " " . get_platform_curl() . " '$config_file' '$logfile'";
         hd_debug_print("Exec: $cmd", true);
@@ -359,13 +305,13 @@ class HD
             $log_content = "No http_proxy log!";
             hd_debug_print($log_content);
         } else {
-            $log_content = @file_get_contents($logfile);
+            $log_content = file($logfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             if (LogSeverity::$is_debug && $log_content !== false) {
-                hd_debug_print("Read http_proxy log...");
-                foreach (explode("\n", $log_content) as $l) {
-                    hd_debug_print(rtrim($l));
+                hd_debug_print("---------  Read http_proxy log ---------");
+                foreach ($log_content as $line) {
+                    hd_debug_print($line, true);
                 }
-                hd_debug_print("Read finished");
+                hd_debug_print("---------     Read finished    ---------");
             }
         }
 
@@ -391,13 +337,16 @@ class HD
      */
     public static function decodeResponse($is_file, $source, $assoc = false)
     {
+        if ($source === false) {
+            return  false;
+        }
+
         if ($is_file) {
             $data = file_get_contents($source);
         } else {
             $data = $source;
         }
 
-        hd_debug_print("decode json");
         $contents = json_decode($data, $assoc);
         if ($contents !== null && $contents !== false) {
             return $contents;

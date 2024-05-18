@@ -176,10 +176,10 @@ class xtream_codes_api
 
     /**
      * @param $url string
-     * @param bool $to_array
+     * @param $opts array CURLOPT_PARAMS
      * @return mixed|false
      */
-    protected function get_cached_response($url, $to_array = false, $opts = null)
+    protected function get_cached_response($url, $opts = null)
     {
         $url_hash = hash('crc32', $url . json_encode($opts));
         if (!is_null($this->cache) && isset($this->cache[$url_hash])) {
@@ -191,17 +191,15 @@ class xtream_codes_api
             $mtime = filemtime($tmp_file);
             $diff = time() - $mtime;
             if ($diff <= 3600) {
-                $cached_data = HD::ReadContentFromFile($tmp_file, $to_array);
-                if ($cached_data !== false) {
-                    return $this->update_cache($url_hash, $cached_data);
-                }
+                $cached_data = HD::ReadContentFromFile($tmp_file, false);
+                return $this->update_cache($url_hash, $cached_data);
             }
 
             hd_debug_print("xtream response cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
             unlink($tmp_file);
         }
 
-        $cached_data = HD::DownloadJson($url, $to_array, $opts);
+        $cached_data = HD::decodeResponse(false, HD::http_download_https_proxy($url, false, $opts));
         if ($cached_data !== false) {
             HD::StoreContentToFile($tmp_file, $cached_data);
         }

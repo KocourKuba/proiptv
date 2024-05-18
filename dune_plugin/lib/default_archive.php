@@ -134,16 +134,12 @@ class Default_Archive implements Archive
         }
 
         $version_url = "$url_prefix/versions.txt";
-        try {
-            $doc = HD::http_get_document($version_url);
-        } catch (Exception $ex) {
-            $doc = null;
-        }
+        $doc = HD::http_download_https_proxy($version_url);
 
         $version_by_name = array();
         $total_size = 0;
 
-        if (is_null($doc)) {
+        if ($doc === false) {
             hd_debug_print("Failed to fetch archive versions.txt from $version_url.");
         } else {
             while (($tok = strtok($doc, "\n")) !== false) {
@@ -161,13 +157,8 @@ class Default_Archive implements Archive
             hd_debug_print("Archive $id: " . count($version_by_name) . " files.");
 
             $size_url = "$url_prefix/size.txt";
-            try {
-                $doc = HD::http_get_document($size_url);
-            } catch (Exception $ex) {
-                $doc = null;
-            }
-
-            if (is_null($doc)) {
+            $doc = HD::http_download_https_proxy($size_url);
+            if ($doc === false) {
                 hd_debug_print("Failed to fetch archive size.txt from $size_url.");
                 $version_by_name = array();
             } else {
