@@ -109,7 +109,9 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
         hd_debug_print("from_ndx: $from_ndx, MediaURL: " . $media_url->get_media_url_str(true), true);
 
         $this->plugin->vod->try_reset_pages();
-        if (empty($media_url->genre_id) || $media_url->category_id === Vod_Category::FLAG_ALL) {
+        if (empty($media_url->genre_id)
+            || $media_url->category_id === Vod_Category::FLAG_ALL_MOVIES
+            || $media_url->category_id === Vod_Category::FLAG_ALL_SERIALS) {
             $key = $media_url->category_id;
         } else {
             $key = $media_url->category_id . "_" . $media_url->genre_id;
@@ -152,6 +154,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::icon_path => $movie->poster_url,
                         ViewItemParams::item_detailed_info => $movie->info,
+                        ViewItemParams::item_detailed_icon_path => empty($movie->big_poster_url) ? $movie->poster_url : $movie->big_poster_url,
                         ViewItemParams::item_caption_color => DEF_LABEL_TEXT_COLOR_WHITE,
                     ),
                 );

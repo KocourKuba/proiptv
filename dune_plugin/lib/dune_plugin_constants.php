@@ -53,6 +53,7 @@ const ACTION_NEW_SEARCH = 'new_search';
 const ACTION_RUN_SEARCH = 'run_search';
 const ACTION_WATCHED = 'watched';
 const ACTION_QUALITY = 'quality';
+const ACTION_AUDIO = 'audio';
 const ACTION_CHANNELS_SETTINGS = 'channels_settings';
 const ACTION_NEED_CONFIGURE = 'configure';
 const ACTION_BALANCE = 'balance';
@@ -170,7 +171,7 @@ const PARAM_PROVIDER = 'provider';
 const PARAM_LINK = 'link';
 const PARAM_FILE = 'file';
 const PARAM_URI = 'uri';
-const PARAM_VOD_DEFAULT_VARIANT = 'variant';
+const PARAM_VOD_DEFAULT_QUALITY = 'quality';
 const PARAM_FORCE_HTTP = 'force_http';
 
 const LIST_IDX = 'list_idx';
@@ -262,7 +263,6 @@ const CONFIG_SERVERS = 'servers';
 const CONFIG_DOMAINS = 'domains';
 const CONFIG_DEVICES = 'devices';
 const CONFIG_QUALITIES = 'qualities';
-const CONFIG_VOD_CUSTOM = 'vod_custom';
 const CONFIG_VOD_PARSER = 'vod_parser';
 const CONFIG_URL_SUBST = 'url_subst';
 

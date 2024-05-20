@@ -232,7 +232,6 @@
           "x-public-key": "{PASSWORD}"
         },
         "epg_preset": "cbilling",
-        "vod_custom": true,
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -296,7 +295,6 @@
           "3": "3"
         },
         "epg_preset": "cbilling",
-        "vod_custom": true,
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -328,7 +326,6 @@
           "replace": "$1{SUBDOMAIN}$2{OTTKEY}$3"
         },
         "epg_preset": "drm",
-        "vod_custom": true,
         "dune_params": "hls_forced_type:event,psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -405,7 +402,6 @@
           "ottg.space": "ottg.space",
           "ottg.eu": "ottg.eu"
         },
-        "vod_custom": true,
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -427,7 +423,6 @@
           "-m3u8": "HLS",
           "?": "MPEG-TS"
         },
-        "vod_custom": true,
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -474,7 +469,9 @@
       "api_url": "https://iptv.online/api/v4",
       "api_commands": {
         "playlist": "{API}/playlist/m3u8",
-        "request_token": "{API}/auth"
+        "request_token": "{API}/auth",
+        "refresh_token": "{API}/oauth2",
+        "vod": "{API}/catalog"
       },
       "config": {
         "epg_preset": "drm",
@@ -775,7 +772,6 @@
           "m3u8": "HLS",
           "m3u": "MPEG-TS"
         },
-        "vod_custom": true,
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -811,7 +807,6 @@
           "eu01.spr24.net": "Europe (EU01)",
           "pl01.spr24.net": "Poland (PL01)"
         },
-        "vod_custom": true,
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },

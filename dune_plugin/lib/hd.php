@@ -270,19 +270,22 @@ class HD
         $config_data .= "--max-time 30" . PHP_EOL;
         $config_data .= "--location" . PHP_EOL;
         $config_data .= "--max-redirs 4" . PHP_EOL;
-        $config_data .= "--compressed " . PHP_EOL;
+        $config_data .= "--compressed" . PHP_EOL;
         $config_data .= "--user-agent \"" . self::get_dune_user_agent() ."\"" . PHP_EOL;
         $config_data .= "--url \"$url\"" . PHP_EOL;
         $config_data .= "--output \"$save_file\"" . PHP_EOL;
 
         if (!empty($curl_options)) {
+            if (!isset($curl_options[CURLOPT_POST])) {
+                $curl_options[CURLOPT_POST] = false;
+            }
             foreach ($curl_options as $opt_name => $parameters) {
                 if ($opt_name === CURLOPT_HTTPHEADER) {
                     foreach ($parameters as $parameter) {
                         $config_data .= "--header \"$parameter\"" . PHP_EOL;
                     }
-                } else if ($opt_name === CURLOPT_POST && $parameters) {
-                    $config_data .= "--request POST" . PHP_EOL;
+                } else if ($opt_name === CURLOPT_POST) {
+                    $config_data .= "--request " . ($parameters ? "POST" : "GET") . PHP_EOL;
                 } else if ($opt_name === CURLOPT_POSTFIELDS) {
                     $config_data .= "--data \"$parameters\"" . PHP_EOL;
                 }
@@ -1083,5 +1086,10 @@ class HD
             }
         }
         return null;
+    }
+
+    public static function escaped_json_encode($param)
+    {
+        return str_replace('"', '\"', json_encode($param));
     }
 }

@@ -59,8 +59,5 @@ function __autoload($className) {
     if (file_exists($path)) {
         hd_debug_print("include $path", true);
         include($path);
-        return;
     }
-
-    //hd_debug_print("$className.php not found", true);
 }

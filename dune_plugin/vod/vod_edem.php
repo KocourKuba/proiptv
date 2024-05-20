@@ -62,20 +62,20 @@ class vod_edem extends vod_standard
                     $movie->add_series_data($item->fid, $item->title, $series_desc, $item->url);
                 } else {
                     $variants_data = (array)$episodeData->variants;
-                    $variants = array();
-                    $qualities = '';
+                    $qualities = array();
+                    $qualities_str = '';
                     foreach ($variants_data as $key => $url) {
                         $quality = ($key === 'auto' ? $key : $key . 'p');
-                        $variants[$key] = new Movie_Variant($item->fid . "_" . $key, $quality, $url);
-                        if (!empty($qualities)) {
-                            $qualities .= ",";
+                        $qualities[$key] = new Movie_Variant($item->fid . "_" . $key, $quality, $url);
+                        if (!empty($qualities_str)) {
+                            $qualities_str .= ",";
                         }
-                        $qualities .= $quality;
+                        $qualities_str .= $quality;
                     }
 
-                    $qualities = TR::load_string('vod_screen_quality') . "|$qualities";
-                    $series_desc = rtrim($qualities, ' ,\0');
-                    $movie->add_series_variants_data($item->fid, $item->title, $series_desc, $variants, $item->url);
+                    $qualities_str = TR::load_string('vod_screen_quality') . "|$qualities_str";
+                    $series_desc = rtrim($qualities_str, ' ,\0');
+                    $movie->add_series_with_variants_data($item->fid, $item->title, $series_desc, $qualities, array(), $item->url);
                 }
             }
         } else if (!isset($movieData->variants)) {
@@ -86,20 +86,20 @@ class vod_edem extends vod_standard
             $movie->add_series_data($movie_id, $movieData->title, $series_desc, $movieData->url);
         } else {
             $variants_data = (array)$movieData->variants;
-            $variants = array();
-            $qualities = '';
+            $qualities = array();
+            $qualities_str = '';
             foreach ($variants_data as $key => $url) {
                 $quality = ($key === 'auto' ? $key : $key . 'p');
-                $variants[$key] = new Movie_Variant($movie_id . "_" . $key, $quality, $url);
-                if (!empty($qualities)) {
-                    $qualities .= ",";
+                $qualities[$key] = new Movie_Variant($movie_id . "_" . $key, $quality, $url);
+                if (!empty($qualities_str)) {
+                    $qualities_str .= ",";
                 }
-                $qualities .= $quality;
+                $qualities_str .= $quality;
             }
 
-            $qualities = TR::load_string('vod_screen_quality') . "|$qualities";
-            $series_desc = rtrim($qualities, ' ,\0');
-            $movie->add_series_variants_data($movie_id, $movieData->title, $series_desc, $variants, $movieData->url);
+            $qualities_str = TR::load_string('vod_screen_quality') . "|$qualities_str";
+            $series_desc = rtrim($qualities_str, ' ,\0');
+            $movie->add_series_with_variants_data($movie_id, $movieData->title, $series_desc, $qualities, array(), $movieData->url);
         }
 
         $movie->set_data(
@@ -116,8 +116,7 @@ class vod_edem extends vod_standard
             '',// rate_imdb,
             '',// rate_kinopoisk,
             isset($movieData->agelimit) ? $movieData->agelimit : '',// rate_mpaa,
-            '',// country,
-            ''// budget
+            ''// country,
         );
 
         return $movie;
@@ -245,12 +244,14 @@ class vod_edem extends vod_standard
             if ($entry->type === 'next') {
                 $this->get_next_page($query_id, $entry->request->offset - $current_offset);
             } else {
-                $movies[] = new Short_Movie(
+                $movie = new Short_Movie(
                     $entry->request->fid,
                     $entry->title,
-                    $entry->img,
+                    $entry->imglr,
                     TR::t('vod_screen_movie_info__3', $entry->title, $entry->year, $entry->agelimit)
                 );
+                $movie->big_poster_url = $entry->img;
+                $movies[] = $movie;
             }
         }
         if ($current_offset === $this->get_next_page($query_id, 0)) {
@@ -278,14 +279,9 @@ class vod_edem extends vod_standard
         $pairs['app'] = "ProIPTV_dune_plugin";
 
         $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json");
-        $curl_opt[CURLOPT_POSTFIELDS] = str_replace('"', '\"', json_encode($pairs));
+        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
+        $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_json_encode($pairs);
 
-        $data = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $curl_opt);
-        if ($data === false) {
-            hd_debug_print("Wrong response on VPortal request");
-        }
-
-        return $data;
+        return $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $curl_opt);
     }
 }

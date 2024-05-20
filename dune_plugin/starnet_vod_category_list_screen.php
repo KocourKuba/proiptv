@@ -139,7 +139,8 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             $category_id = $category->get_id();
             if (!is_null($category->get_sub_categories())) {
                 $media_url_str = self::get_media_url_string($category_id);
-            } else if ($category_id === Vod_Category::FLAG_ALL
+            } else if ($category_id === Vod_Category::FLAG_ALL_MOVIES
+                || $category_id === Vod_Category::FLAG_ALL_SERIALS
                 || $category_id === Vod_Category::FLAG_SEARCH
                 || $category_id === Vod_Category::FLAG_FILTER) {
                 // special category id's

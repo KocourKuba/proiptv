@@ -422,11 +422,14 @@ class api_default
     public function get_vod_class()
     {
         if ($this->hasApiCommand(API_COMMAND_VOD)) {
-            $vod_class = "vod_" . ($this->getConfigValue(CONFIG_VOD_CUSTOM) ? $this->getId() : "standard");
-            hd_debug_print("Used VOD class: $vod_class");
+            $vod_class = "vod_" . $this->getId();
             if (class_exists($vod_class)) {
+                hd_debug_print("Used VOD class: $vod_class");
                 return $vod_class;
             }
+
+            hd_debug_print("Used VOD class: vod_standard");
+            return  "vod_standard";
         }
 
         return null;
@@ -482,10 +485,7 @@ class api_default
     {
         hd_debug_print(null, true);
         if ((empty($this->info) || $force) && $this->hasApiCommand(API_COMMAND_INFO)) {
-            $response = $this->execApiCommand(API_COMMAND_INFO);
-            if ($response) {
-                $this->info = HD::decodeResponse(false, $response);
-            }
+            $this->info = $this->execApiCommand(API_COMMAND_INFO);
         }
 
         return $this->info;
@@ -540,8 +540,8 @@ class api_default
             return false;
         }
 
-        if (isset($curl_options['path'])) {
-            $command_url .= $curl_options['path'];
+        if (isset($curl_options[vod_standard::VOD_GET_PARAM_PATH])) {
+            $command_url .= $curl_options[vod_standard::VOD_GET_PARAM_PATH];
         }
         hd_debug_print("ApiCommandUrl: $command_url", true);
 
@@ -557,7 +557,7 @@ class api_default
 
         $response = HD::http_download_https_proxy($command_url, $file, $curl_options);
         if ($response === false) {
-            hd_debug_print("Can't get response on request: " . $command);
+            hd_debug_print("Can't get response on request: " . $command_url);
             return false;
         }
 
@@ -570,9 +570,8 @@ class api_default
         }
 
         $data = HD::decodeResponse(false, $response);
-        if ($data === false) {
-            hd_debug_print("Can't decode response on request: " . $command);
-            return false;
+        if ($data === false || $data === null) {
+            hd_debug_print("Can't decode response on request: " . $command_url);
         }
 
         return $data;

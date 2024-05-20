@@ -114,12 +114,14 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
         hd_debug_print(null, true);
 
         $items = array();
-        foreach ($this->plugin->get_history(HISTORY_MOVIES) as $id => $movie_infos) {
+        foreach ($this->plugin->get_history(HISTORY_MOVIES) as $movie_id => $movie_infos) {
             if (empty($movie_infos)) continue;
 
-            hd_debug_print("history id: $id, " . json_encode($movie_infos));
-            $ids = explode(':', $id);
-            $movie_id = $ids[0];
+            // $id = 95803
+            // $id = serials_95803
+            // $movie_infos = {"95803":{"watched":true,"position":null,"duration":null,"date":null}}
+            // $movie_infos = {"1:1":{"watched":true,"position":null,"duration":null,"date":null}}
+            hd_debug_print("history id: $movie_id, " . json_encode($movie_infos));
             $this->plugin->vod->ensure_movie_loaded($movie_id);
             $short_movie = $this->plugin->vod->get_cached_short_movie($movie_id);
 
@@ -129,7 +131,6 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
             } else {
                 $caption = $short_movie->name;
                 $last_viewed = 0;
-                $info = $movie_infos;
                 if (is_array($movie_infos)) {
                     foreach ($movie_infos as $movie_info) {
                         if (isset($movie_info->watched) && $movie_info->date > $last_viewed) {
@@ -137,9 +138,11 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                             $info = $movie_info;
                         }
                     }
+                } else {
+                    $info = $movie_infos;
                 }
 
-                if ($info->date !== 0) {
+                if (isset($info) && $info->date !== 0) {
                     if ($info->watched) {
                         $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $info->date));
                     } else if ($info->duration !== -1 && count($movie_infos) < 2) {

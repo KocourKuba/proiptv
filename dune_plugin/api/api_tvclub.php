@@ -139,13 +139,8 @@ class api_tvclub extends api_default
         parent::SetServer($server);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
-        if ($response) {
-            $data = HD::decodeResponse(false, $response);
-            if (empty($data)) {
-                hd_debug_print("Wrong response on command: " . API_COMMAND_SET_SERVER);
-            } else if (isset($data->settings->current->server->id)) {
-                $this->info = null;
-            }
+        if (isset($response->settings->current->server->id)) {
+            $this->info = null;
         }
     }
 }

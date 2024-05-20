@@ -139,6 +139,7 @@ class api_iptvonline extends api_default
         $token = $this->getCredential(MACRO_TOKEN);
         $expired = time() > (int)$this->getCredential(MACRO_EXPIRE_DATA);
         if (!$force && !empty($token) && !$expired) {
+            hd_debug_print("request not required", true);
             return true;
         }
 
@@ -149,21 +150,24 @@ class api_iptvonline extends api_default
         $refresh_token = $this->getCredential(MACRO_REFRESH_TOKEN);
         $refresh = $expired && !empty($refresh_token);
         if ($refresh) {
+            hd_debug_print("need to refresh token", true);
             $cmd = API_COMMAND_REFRESH_TOKEN;
             $pairs['grant_type'] = $this->getCredential(MACRO_LOGIN);
             $pairs['refresh_token'] = $refresh_token;
         } else {
+            hd_debug_print("need to request token", true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
             $pairs['login'] = $this->getCredential(MACRO_LOGIN);
             $pairs['password'] = $this->getCredential(MACRO_PASSWORD);
         }
 
         $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json");
-        $curl_opt[CURLOPT_POSTFIELDS] = str_replace('"', '\"', json_encode($pairs));
+        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
+        $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_json_encode($pairs);
 
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
+            hd_debug_print("token requested", true);
             $this->setCredential(MACRO_TOKEN, $data->access_token);
             $this->setCredential(MACRO_REFRESH_TOKEN, $data->refresh_token);
             $this->setCredential(MACRO_EXPIRE_DATA, $data->expires_time);

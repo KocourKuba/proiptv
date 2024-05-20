@@ -156,8 +156,7 @@ class vod_sharavoz extends vod_standard
             self::get_data_variant($item->info, "rating"), // rate_imdb,
             self::get_data_variant($item->info, "rating_count_kinopoisk"), // rate_kinopoisk,
             self::get_data_variant($item->info, "age"), // rate_mpaa,
-            self::get_data_variant($item->info, "country"), // country,
-            '' // budget
+            self::get_data_variant($item->info, "country") // country,
         );
 
         if ($stream_type === xtream_codes_api::VOD) {
@@ -248,7 +247,7 @@ class vod_sharavoz extends vod_standard
                 $category = TR::load_string('no_category');
             }
 
-            if ($category_id === Vod_Category::FLAG_ALL || $category_id === $category) {
+            if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
                 $movies[] = self::CreateShortMovie($movie);
             }
         }
@@ -269,6 +268,8 @@ class vod_sharavoz extends vod_standard
         hd_debug_print($keyword);
 
         $movies = array();
+
+        $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
 
         $this->search(xtream_codes_api::VOD, $keyword, $movies);
         $this->search(xtream_codes_api::SERIES, $keyword, $movies);
@@ -328,7 +329,6 @@ class vod_sharavoz extends vod_standard
             return;
         }
 
-        $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
         foreach ($categories as $category) {
             $streams = $this->xtream->get_streams($stream_type, $category->category_id);
             if ($streams === false) continue;

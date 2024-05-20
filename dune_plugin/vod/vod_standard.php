@@ -21,7 +21,7 @@ class vod_standard extends Abstract_Vod
 {
     const VOD_FAVORITES_LIST = 'vod_favorite_items';
     const VOD_HISTORY_ITEMS = 'vod_history_items';
-
+    const VOD_GET_PARAM_PATH = 'path';
     /**
      * @var Default_Dune_Plugin
      */
@@ -62,6 +62,11 @@ class vod_standard extends Abstract_Vod
      * @var bool
      */
     protected $vod_quality = false;
+
+    /**
+     * @var bool
+     */
+    protected $vod_audio = false;
 
     /**
      * @var array
@@ -209,6 +214,14 @@ class vod_standard extends Abstract_Vod
     public function getVodQuality()
     {
         return $this->vod_quality;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getVodAudio()
+    {
+        return $this->vod_audio;
     }
 
     public function try_reset_pages()
@@ -395,16 +408,16 @@ class vod_standard extends Abstract_Vod
             }
         }
         sort($all_indexes);
-        $this->vod_m3u_indexes[Vod_Category::FLAG_ALL] = $all_indexes;
+        $this->vod_m3u_indexes[Vod_Category::FLAG_ALL_MOVIES] = $all_indexes;
 
         // all movies
         $count = count($all_indexes);
-        $category = new Vod_Category(Vod_Category::FLAG_ALL, "Все фильмы ($count)");
+        $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($count)"));
         $category_list[] = $category;
-        $category_index[Vod_Category::FLAG_ALL] = $category;
+        $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
         foreach ($this->vod_m3u_indexes as $group => $indexes) {
-            if ($group === Vod_Category::FLAG_ALL) continue;
+            if ($group === Vod_Category::FLAG_ALL_MOVIES) continue;
 
             $count = count($indexes);
             $cat = new Vod_Category($group, "$group ($count)");
@@ -430,7 +443,7 @@ class vod_standard extends Abstract_Vod
         $movies = array();
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
 
-        foreach ($this->vod_m3u_indexes[Vod_Category::FLAG_ALL] as $index) {
+        foreach ($this->vod_m3u_indexes[Vod_Category::FLAG_ALL_MOVIES] as $index) {
             $title = $this->m3u_parser->getTitleByIdx($index);
             if (empty($title)) continue;
 
@@ -537,7 +550,7 @@ class vod_standard extends Abstract_Vod
 
             $category = '';
             foreach ($this->vod_m3u_indexes as $group => $indexes) {
-                if ($group === Vod_Category::FLAG_ALL) continue;
+                if ($group === Vod_Category::FLAG_ALL_MOVIES) continue;
                 if (in_array($movie_id, $indexes)) {
                     $category = $group;
                     break;
@@ -546,21 +559,20 @@ class vod_standard extends Abstract_Vod
 
             $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
-                $title,// $xml->caption,
-                $title_orig,// $xml->caption_original,
-                '',// $xml->description,
-                $logo,// $xml->poster_url,
-                '',// $xml->length,
-                $year,// $xml->year,
-                '',// $xml->director,
-                '',// $xml->scenario,
-                '',// $xml->actors,
-                $category,// $xml->genres,
-                '',// $xml->rate_imdb,
-                '',// $xml->rate_kinopoisk,
-                '',// $xml->rate_mpaa,
-                $country,// $xml->country,
-                ''// $xml->budget
+                $title,            // caption,
+                $title_orig,       // caption_original,
+                '',      // description,
+                $logo,             // poster_url,
+                '',      // length,
+                $year,             // year,
+                '',     // director,
+                '',     // scenario,
+                '',       // actors,
+                $category,         // genres,
+                '',       // rate_imdb,
+                '',    // rate_kinopoisk,
+                '',       // rate_mpaa,
+                $country           // country,
             );
 
             $movie->add_series_data($movie_id, $title, '', $entry->getPath());
@@ -590,33 +602,44 @@ class vod_standard extends Abstract_Vod
 
         foreach ($this->vod_filters as $name) {
             $filter = $this->get_filter($name);
+            hd_debug_print("filter: $name : " . json_encode($filter));
             if ($filter === null) {
                 hd_debug_print("no filters with '$name'");
                 continue;
             }
 
-            $values = $filter['values'];
-            if (empty($values)) {
-                hd_debug_print("no filters values for '$name'");
-                continue;
-            }
-
-            $idx = $initial;
+            // fill get value from already set user filter
             if (!empty($user_filter)) {
                 $pairs = explode(",", $user_filter);
                 foreach ($pairs as $pair) {
                     if (strpos($pair, $name . ":") !== false && preg_match("/^$name:(.+)/", $pair, $m)) {
-                        $idx = array_search($m[1], $values) ?: -1;
+                        $user_value = $m[1];
+                        hd_debug_print("user value: $user_value");
                         break;
                     }
                 }
             }
 
-            Control_Factory::add_combobox($defs, $parent, null, $name,
-                $filter['title'], $idx, $values, 600, true);
+            if (isset($filter['text'])) {
+                $initial_value = isset($user_value) ? $user_value : '';
+                hd_debug_print("init text value: $initial_value");
+                Control_Factory::add_text_field($defs, $parent, null, $name,
+                    $filter['title'], $initial_value, true, false, false, false, 600);
+                Control_Factory::add_vgap($defs, 20);
+                $added = true;
+            }
 
-            Control_Factory::add_vgap($defs, 30);
-            $added = true;
+            if (!empty($filter['values'])) {
+                $idx = -1;
+                if (isset($user_value)) {
+                    $idx = array_search($user_value, $filter['values']) ?: -1;
+                }
+                hd_debug_print("init cb value: $idx");
+                Control_Factory::add_combobox($defs, $parent, null, $name,
+                    $filter['title'], $idx, $filter['values'], 600, true);
+                Control_Factory::add_vgap($defs, 20);
+                $added = true;
+            }
         }
 
         if (!$added) {
@@ -645,13 +668,24 @@ class vod_standard extends Abstract_Vod
         $compiled_string = "";
         foreach ($this->vod_filters as $name) {
             $filter = $this->get_filter($name);
-            if ($filter !== null && (int)$user_input->{$name} !== -1) {
-                if (!empty($compiled_string)) {
-                    $compiled_string .= ",";
-                }
+            if ($filter === null) continue;
 
-                $compiled_string .= $name . ":" . $filter['values'][$user_input->{$name}];
+            $add_text = '';
+            if (isset($filter['text']) && !empty($user_input->{$name})) {
+                $add_text = $user_input->{$name};
+            } else if ((int)$user_input->{$name} !== -1){
+                $add_text = $filter['values'][$user_input->{$name}];
             }
+
+            if (empty($add_text)) {
+                continue;
+            }
+
+            if (!empty($compiled_string)) {
+                $compiled_string .= ",";
+            }
+
+            $compiled_string .= $name . ":" . $add_text;
         }
 
         return $compiled_string;

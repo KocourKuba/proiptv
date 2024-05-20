@@ -1747,7 +1747,7 @@ class Default_Dune_Plugin implements DunePlugin
             }
         } catch (Exception $ex) {
             hd_debug_print("Unable to load tv playlist: " . $ex->getMessage());
-            if ($playlist->type !== PARAM_FILE) {
+            if ($playlist->type !== PARAM_FILE && file_exists($tmp_file)) {
                 unlink($tmp_file);
             }
             return false;
@@ -2854,8 +2854,8 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::icon_valign => VALIGN_CENTER,
                     ViewItemParams::icon_width => 60,
                     ViewItemParams::icon_height => 60,
-                    ViewItemParams::icon_dx => 30,
-                    ViewItemParams::icon_dy => 0,
+                    ViewItemParams::icon_dx => 35,
+                    ViewItemParams::icon_dy => -5,
                     ViewItemParams::item_caption_dx => 30,
                     ViewItemParams::item_caption_width => 1100,
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
@@ -2893,6 +2893,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewParams::item_detailed_info_font_size => FONT_SIZE_NORMAL,
                     ViewParams::sandwich_icon_upscale_enabled => true,
                     ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                    ViewParams::zoom_detailed_icon => false,
                 ),
                 PluginRegularFolderView::base_view_item_params => array
                 (

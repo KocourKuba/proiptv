@@ -46,21 +46,14 @@ class vod_cbilling extends vod_standard
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $params['path'] = "/video/$movie_id";
+        $params[self::VOD_GET_PARAM_PATH] = "/video/$movie_id";
         $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
-        if ($response === false) {
-            hd_debug_print("Failed request: " . API_COMMAND_VOD . "param: {$params['path']}");
-            return null;
-        }
-
-        $json = HD::decodeResponse(false, $response);
-        if ($json === false || !isset($json->data)) {
-            hd_debug_print("Wrong response on command: " . API_COMMAND_VOD);
+        if (!isset($response->data)) {
             return null;
         }
 
         $movie = new Movie($movie_id, $this->plugin);
-        $movieData = $json->data;
+        $movieData = $response->data;
 
         $genresArray = array();
         foreach ($movieData->genres as $genre) {
@@ -81,8 +74,7 @@ class vod_cbilling extends vod_standard
             $movieData->rating,// rate_imdb,
             '',// rate_kinopoisk,
             $movieData->age,// rate_mpaa,
-            $movieData->country,// country,
-            ''// budget
+            $movieData->country// country,
         );
 
         if (isset($movieData->seasons)) {
@@ -114,18 +106,10 @@ class vod_cbilling extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $response = $this->provider->execApiCommand(API_COMMAND_VOD);
-        if ($response === false) {
+        $jsonItems = $this->provider->execApiCommand(API_COMMAND_VOD);
+        if ($jsonItems === false) {
             $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
             $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
-            hd_debug_print($exception_msg);
-            HD::set_last_error("vod_last_error", $exception_msg);
-            return false;
-        }
-
-        $jsonItems = HD::decodeResponse(false, $response);
-        if ($jsonItems === false || !isset($jsonItems->data)) {
-            $exception_msg = "Неправильный ответ на команду: " . API_COMMAND_VOD . "\n\n$response";
             hd_debug_print($exception_msg);
             HD::set_last_error("vod_last_error", $exception_msg);
             return false;
@@ -141,14 +125,8 @@ class vod_cbilling extends vod_standard
             $total += $node->count;
 
             // fetch genres for category
-            $params['path'] = "/cat/$id/genres";
-            $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
-            if ($response === false) {
-                hd_debug_print("Failed request: " . API_COMMAND_VOD . "param: {$params['path']}");
-                continue;
-            }
-
-            $genres = HD::decodeResponse(false, $response);
+            $params[self::VOD_GET_PARAM_PATH] = "/cat/$id/genres";
+            $genres = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
             if ($genres === false) {
                 continue;
             }
@@ -167,9 +145,9 @@ class vod_cbilling extends vod_standard
         }
 
         // all movies
-        $category = new Vod_Category(Vod_Category::FLAG_ALL, TR::t('vod_screen_all_movies__1', " ($total)"));
+        $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($total)"));
         array_unshift($category_list, $category);
-        $category_index[Vod_Category::FLAG_ALL] = $category;
+        $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
         hd_debug_print("Categories read: " . count($category_list));
         return true;
@@ -180,14 +158,9 @@ class vod_cbilling extends vod_standard
      */
     public function getSearchList($keyword)
     {
-        $params['path'] = "/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
+        $params[self::VOD_GET_PARAM_PATH] = "/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
         $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
-        if ($response === false) {
-            hd_debug_print("Failed request: " . API_COMMAND_VOD . "param: {$params['path']}");
-            return array();
-        }
-        $searchRes = HD::decodeResponse(false, $response);
-        return $searchRes === false ? array() : $this->CollectSearchResult($searchRes);
+        return $response === false ? array() : $this->CollectSearchResult($response);
     }
 
     /**
@@ -198,8 +171,8 @@ class vod_cbilling extends vod_standard
         hd_debug_print($query_id);
         $val = $this->get_next_page($query_id);
 
-        if ($query_id === Vod_Category::FLAG_ALL) {
-            $params['path'] = "/filter/new?page=$val";
+        if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
+            $params[self::VOD_GET_PARAM_PATH] = "/filter/new?page=$val";
         } else {
             $arr = explode("_", $query_id);
             if ($arr === false) {
@@ -208,17 +181,11 @@ class vod_cbilling extends vod_standard
                 $genre_id = $arr[1];
             }
 
-            $params['path'] = "/genres/$genre_id?page=$val";
+            $params[self::VOD_GET_PARAM_PATH] = "/genres/$genre_id?page=$val";
         }
 
         $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
-        if ($response === false) {
-            hd_debug_print("Failed request: " . API_COMMAND_VOD . "param: {$params['path']}");
-            return array();
-        }
-
-        $categories = HD::decodeResponse(false, $response);
-        return $categories === false ? array() : $this->CollectSearchResult($categories);
+        return $response === false ? array() : $this->CollectSearchResult($response);
     }
 
     /**

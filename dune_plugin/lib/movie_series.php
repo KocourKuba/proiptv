@@ -35,7 +35,12 @@ class Movie_Series
     /**
      * @var array
      */
-    public $variants;
+    public $qualities;
+
+    /**
+     * @var array
+     */
+    public $audios;
 
     /**
      * @var bool

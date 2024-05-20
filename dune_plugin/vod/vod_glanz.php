@@ -63,8 +63,7 @@ class vod_glanz extends vod_standard
                 '',           // rate_imdb,
                 '',        // rate_kinopoisk,
                 '',           // rate_mpaa,
-                $item->country,         // country,
-                ''               // budget
+                $item->country          // country,
             );
 
             hd_debug_print("movie playback_url: $item->url");
@@ -90,7 +89,7 @@ class vod_glanz extends vod_standard
         $cat_info = array();
 
         // all movies
-        $cat_info[Vod_Category::FLAG_ALL] = $count;
+        $cat_info[Vod_Category::FLAG_ALL_MOVIES] = $count;
         $genres = array();
         $years = array();
         foreach ($this->vod_items as $movie) {
@@ -114,7 +113,7 @@ class vod_glanz extends vod_standard
 
         foreach ($cat_info as $category => $movie_count) {
             $cat = new Vod_Category($category,
-                ($category === Vod_Category::FLAG_ALL) ? TR::t('vod_screen_all_movies__1', "($movie_count)") : "$category ($movie_count)");
+                ($category === Vod_Category::FLAG_ALL_MOVIES) ? TR::t('vod_screen_all_movies__1', "($movie_count)") : "$category ($movie_count)");
             $category_list[] = $cat;
             $category_index[$category] = $cat;
         }
@@ -190,7 +189,7 @@ class vod_glanz extends vod_standard
                 $category = TR::load_string('no_category');
             }
 
-            if ($category_id === Vod_Category::FLAG_ALL || $category_id === $category) {
+            if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
                 $movies[] = self::CreateShortMovie($movie);
             }
         }
