@@ -9,6 +9,8 @@ const ACTION_FOLDER_SELECTED = 'folder_selected';
 const ACTION_PLAYLIST_SELECTED = 'playlist_selected';
 const ACTION_EDIT_PROVIDER_DLG = 'select_provider';
 const ACTION_EDIT_PROVIDER_DLG_APPLY = 'select_provider_apply';
+const ACTION_EDIT_PROVIDER_EXT_DLG = 'edit_ext_provider';
+const ACTION_EDIT_PROVIDER_EXT_DLG_APPLY = 'select_ext_provider_apply';
 const ACTION_FILE_SELECTED = 'file_selected';
 const ACTION_ITEM_ADD = 'item_add';
 const ACTION_ITEM_DELETE = 'item_delete';
@@ -210,6 +212,7 @@ const PROVIDER_TYPE_PIN = 'pin';
 const PROVIDER_TYPE_LOGIN = 'login';
 const PROVIDER_TYPE_LOGIN_TOKEN = 'login-token';
 const PROVIDER_TYPE_LOGIN_STOKEN = 'login-stoken';
+const PROVIDER_EXT_PARAMS = 'ext_params';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
 const ENGINE_JSON = 'json';

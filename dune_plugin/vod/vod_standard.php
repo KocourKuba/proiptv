@@ -458,7 +458,7 @@ class vod_standard extends Abstract_Vod
             if ($entry === null) continue;
 
             $poster_url = $entry->getEntryAttribute('tvg-logo');
-            hd_debug_print("Found at $index movie '$title', poster url: '$poster_url'");
+            hd_debug_print("Found at $index movie '$title', poster url: '$poster_url'", true);
             $movies[] = new Short_Movie($index, $title, $poster_url);
         }
 
@@ -614,7 +614,6 @@ class vod_standard extends Abstract_Vod
                 foreach ($pairs as $pair) {
                     if (strpos($pair, $name . ":") !== false && preg_match("/^$name:(.+)/", $pair, $m)) {
                         $user_value = $m[1];
-                        hd_debug_print("user value: $user_value");
                         break;
                     }
                 }
@@ -622,7 +621,6 @@ class vod_standard extends Abstract_Vod
 
             if (isset($filter['text'])) {
                 $initial_value = isset($user_value) ? $user_value : '';
-                hd_debug_print("init text value: $initial_value");
                 Control_Factory::add_text_field($defs, $parent, null, $name,
                     $filter['title'], $initial_value, true, false, false, false, 600);
                 Control_Factory::add_vgap($defs, 20);
@@ -634,7 +632,7 @@ class vod_standard extends Abstract_Vod
                 if (isset($user_value)) {
                     $idx = array_search($user_value, $filter['values']) ?: -1;
                 }
-                hd_debug_print("init cb value: $idx");
+
                 Control_Factory::add_combobox($defs, $parent, null, $name,
                     $filter['title'], $idx, $filter['values'], 600, true);
                 Control_Factory::add_vgap($defs, 20);

@@ -87,6 +87,7 @@ balance_not_support = Информация о балансе не поддерж
 package = Пакет
 packages = Пакеты
 no_packages = Нет пакетов
+recurring = Автопродление
 ssl = SSL включен
 disable_adult = Без взрослых каналов
 time_zone = Часовой пояс
@@ -94,7 +95,8 @@ type = Тип
 city = Город
 playlist_picons = Плейлист
 xmltv_picons = XMLTV
-edit_account = Редактировать настройки провайдера
+edit_account = Данные доступа
+edit_ext_account = Настройки провайдера
 jump_to_channel = Перейти к каналу в группе
 
 plugin_all_channels = Все каналы

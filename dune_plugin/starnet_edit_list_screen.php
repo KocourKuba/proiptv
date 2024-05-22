@@ -445,7 +445,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $starred = ($key === $this->plugin->get_active_playlist_key());
                 $title = empty($playlist->name) ? $playlist->params[PARAM_URI] : $playlist->name;
                 if ($playlist->type === PARAM_PROVIDER) {
-                    $provider = $this->plugin->get_provider($playlist->params[PARAM_PROVIDER]);
+                    $provider = $this->plugin->create_provider_class($playlist->params[PARAM_PROVIDER]);
                     if (is_null($provider)) continue;
 
                     $icon_file = $provider->getLogo();
@@ -901,16 +901,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         }
                     } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {
                         hd_debug_print("import provider $m[1]:", true);
-                        $provider = $this->plugin->get_provider($m[1]);
+                        $provider = $this->plugin->create_provider_class($m[1]);
                         if (is_null($provider)) {
                             hd_debug_print("Unknown provider ID: $m[1]");
                             continue;
                         }
 
-                        $res = $provider->set_info($m, $playlist);
-                        if (!$res) continue;
-
-                        $hash = "{$provider->getId()}_$hash";
+                        $playlist = $provider->fill_default_info($m, $hash);
+                        if (!$playlist) continue;
                     } else {
                         hd_debug_print("can't recognize: $line");
                         continue;

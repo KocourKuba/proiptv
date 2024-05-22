@@ -42,6 +42,20 @@ require_once 'api_default.php';
 
 class api_vidok extends api_default
 {
+    /**
+     * @param bool $force
+     * @return bool
+     */
+    public function request_provider_token($force = false)
+    {
+        hd_debug_print(null, true);
+
+        $gen_token = md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD)));
+        $this->setCredential(MACRO_TOKEN, $gen_token);
+
+        return true;
+    }
+
     public function GetInfoUI($handler)
     {
         parent::GetInfoUI($handler);
@@ -49,14 +63,14 @@ class api_vidok extends api_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($this->info)) {
+        if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($this->info->error, $this->info->error->message)) {
+        } else if (isset($this->account_info->error, $this->account_info->error->message)) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), $this->info->error->message, -10);
-        } else if (isset($this->info->account)) {
-            $data = $this->info->account;
+            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info->error->message, -10);
+        } else if (isset($this->account_info->account)) {
+            $data = $this->account_info->account;
             if (isset($data->login)) {
                 Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
             }
@@ -105,8 +119,8 @@ class api_vidok extends api_default
                 $servers[(int)$server->id] = $server->name;
             }
 
-            if (isset($this->info->account->settings->server_id)) {
-                $this->setCredential(MACRO_SERVER_ID, (int)$this->info->account->settings->server_id);
+            if (isset($this->account_info->account->settings->server_id)) {
+                $this->setCredential(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
             }
         }
 
@@ -122,7 +136,7 @@ class api_vidok extends api_default
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->settings->value)) {
-            $this->info = null;
+            $this->account_info = null;
         }
     }
 }

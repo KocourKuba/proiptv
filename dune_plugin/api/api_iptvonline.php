@@ -6,132 +6,6 @@ class api_iptvonline extends api_default
     /**
      * @inheritDoc
      */
-    public function init_provider($info)
-    {
-        hd_debug_print("provider info:" . json_encode($info));
-        hd_debug_print("parse provider_info ({$this->getType()}): $info", true);
-
-        $this->setCredential(MACRO_LOGIN, isset($info->params[MACRO_LOGIN]) ? $info->params[MACRO_LOGIN] : '');
-        $this->setCredential(MACRO_PASSWORD, isset($info->params[MACRO_PASSWORD]) ? $info->params[MACRO_PASSWORD] : '');
-        $this->setCredential(MACRO_TOKEN,isset($info->params[MACRO_TOKEN]) ? $info->params[MACRO_TOKEN] : '');
-        $this->setCredential(MACRO_REFRESH_TOKEN,isset($info->params[MACRO_REFRESH_TOKEN]) ? $info->params[MACRO_REFRESH_TOKEN] : '');
-        $this->setCredential(MACRO_EXPIRE_DATA,isset($info->params[MACRO_EXPIRE_DATA]) ? $info->params[MACRO_EXPIRE_DATA] : '');
-
-        $servers = $this->GetServers();
-        if (!empty($servers)) {
-            $this->setCredential(MACRO_SERVER_ID, key($servers));
-        }
-
-        $streams = $this->getStreams();
-        if (!empty($streams)) {
-            $this->setCredential(MACRO_STREAM_ID, key($streams));
-        }
-
-        foreach($info->params as $key => $item) {
-            if ($key === MACRO_SERVER_ID || $key === MACRO_STREAM_ID) {
-                $this->setCredential($key, $item);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function set_info($matches, &$info)
-    {
-        $info->type = PARAM_PROVIDER;
-        $info->params[PARAM_PROVIDER] = $matches[1];
-        $info->name = $this->getName();
-
-        $vars = explode(':', $matches[2]);
-        if (empty($vars)) {
-            hd_debug_print("invalid provider_info: $matches[0]", true);
-            return false;
-        }
-
-        hd_debug_print("parse imported provider_info: $vars[0]", true);
-
-        hd_debug_print("set login: $vars[0]", true);
-        $info->params[MACRO_LOGIN] = $vars[0];
-        hd_debug_print("set password: $vars[1]", true);
-        $info->params[MACRO_PASSWORD] = $vars[1];
-
-        $info->params[MACRO_TOKEN] = '';
-        $info->params[MACRO_REFRESH_TOKEN] = '';
-        $info->params[MACRO_EXPIRE_DATA] = 0;
-
-        $servers = $this->getConfigValue(CONFIG_SERVERS);
-        if (!empty($servers)) {
-            $info->params[MACRO_SERVER_ID] = key($servers);
-        }
-
-        $streams = $this->getConfigValue(CONFIG_STREAMS);
-        if (!empty($streams)) {
-            $info->params[MACRO_STREAM_ID] = key($streams);
-        }
-
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function GetSetupUI($name, $playlist_id, $handler)
-    {
-        $defs = array();
-
-        Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_EDIT_NAME, TR::t('name'), $name,
-            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-
-        Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_LOGIN, TR::t('login'), $this->getCredential(MACRO_LOGIN),
-            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-        Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_PASSWORD, TR::t('password'), $this->getCredential(MACRO_PASSWORD),
-            false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-            array(PARAM_PROVIDER => $this->getId(), CONTROL_EDIT_ITEM => $playlist_id),
-            ACTION_EDIT_PROVIDER_DLG_APPLY,
-            TR::t('ok'), 300);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-        Control_Factory::add_vgap($defs, 10);
-
-        return $defs;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function ApplySetupUI($user_input, &$item)
-    {
-        $id = $user_input->{CONTROL_EDIT_ITEM};
-
-        $item->params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
-        $item->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-        $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$item->params[MACRO_LOGIN].$item->params[MACRO_PASSWORD]) : $id;
-        if (empty($item->params[MACRO_LOGIN]) || empty($item->params[MACRO_PASSWORD])) {
-            return null;
-        }
-
-        $this->setCredential(MACRO_TOKEN, '');
-        $this->setCredential(MACRO_REFRESH_TOKEN, '');
-        $this->setCredential(MACRO_EXPIRE_DATA, 0);
-
-        hd_debug_print("compiled provider info: $item->name, provider params: " . raw_json_encode($item->params), true);
-
-        return $id;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
@@ -143,23 +17,41 @@ class api_iptvonline extends api_default
             return true;
         }
 
-        $pairs['client_id'] = "TestAndroidAppV0";
-        $pairs['client_secret'] = "kshdiouehruyiwuresuygr736t4763b7637"; // dummy
-        $pairs['device_id'] = get_serial_number();
-
         $refresh_token = $this->getCredential(MACRO_REFRESH_TOKEN);
         $refresh = $expired && !empty($refresh_token);
         if ($refresh) {
+            /*
+            {
+                "client_id" : "{{client_id}}",
+                "client_secret": "{{client_secret}}",
+                "device_id": "{{DEVICE_UNIQ_ID}}",
+                "grant_type" : "refresh_token",
+                "refresh_token" : "{{refresh_token}}",
+            }
+            */
             hd_debug_print("need to refresh token", true);
             $cmd = API_COMMAND_REFRESH_TOKEN;
-            $pairs['grant_type'] = $this->getCredential(MACRO_LOGIN);
+            $pairs['grant_type'] = 'refresh_token';
             $pairs['refresh_token'] = $refresh_token;
         } else {
+            /*
+            {
+                "client_id" : "{{client_id}}",
+                "client_secret": "{{client_secret}}",
+                "device_id": "{{DEVICE_UNIQ_ID}}".
+                "login": "{{TEST_EMAIL_CLIENT}}",
+                "password" : "{{TEST_EMAIL_CLIENT_PASSWORD}}"
+            }
+            */
             hd_debug_print("need to request token", true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
             $pairs['login'] = $this->getCredential(MACRO_LOGIN);
             $pairs['password'] = $this->getCredential(MACRO_PASSWORD);
         }
+
+        $pairs['client_id'] = "TestAndroidAppV0";
+        $pairs['client_secret'] = "kshdiouehruyiwuresuygr736t4763b7637"; // dummy
+        $pairs['device_id'] = get_serial_number();
 
         $curl_opt[CURLOPT_POST] = true;
         $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
@@ -171,9 +63,11 @@ class api_iptvonline extends api_default
             $this->setCredential(MACRO_TOKEN, $data->access_token);
             $this->setCredential(MACRO_REFRESH_TOKEN, $data->refresh_token);
             $this->setCredential(MACRO_EXPIRE_DATA, $data->expires_time);
+            $this->save_credentials();
             return true;
         }
 
+        hd_debug_print("token not received: " . json_encode($data), true);
         return false;
     }
 
@@ -185,15 +79,123 @@ class api_iptvonline extends api_default
     {
         hd_debug_print(null, true);
 
-        if (!$this->request_provider_token()) {
-            return false;
-        }
+        $data = parent::load_playlist(null);
 
-        $data = $this->execApiCommand(API_COMMAND_PLAYLIST);
         if (isset($data->success, $data->data)) {
             return HD::http_download_https_proxy($data->data, $tmp_file);
         }
 
         return false;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function fill_default_info($matches, &$hash)
+    {
+        $info = parent::fill_default_info($matches, $hash);
+
+        $info->params[MACRO_TOKEN] = '';
+        $info->params[MACRO_REFRESH_TOKEN] = '';
+        $info->params[MACRO_EXPIRE_DATA] = 0;
+
+        return $info;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function GetInfoUI($handler)
+    {
+        parent::GetInfoUI($handler);
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        if (empty($this->account_info)) {
+            hd_debug_print("Can't get account status");
+            Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
+        } else if (!isset($this->account_info->status) || $this->account_info->status !== 200) {
+            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info->message, -10);
+        } else if (isset($this->account_info->data)) {
+            $data = $this->account_info->data;
+            if (isset($data->login)) {
+                Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
+            }
+
+            if (isset($data->balance, $data->currency)) {
+                Control_Factory::add_label($defs, TR::t('balance'), "$data->balance $data->currency", -15);
+            }
+
+            if (isset($data->server_name)) {
+                Control_Factory::add_label($defs, TR::t('server'), $data->server_name, -15);
+            }
+
+            if (isset($data->subscriptions)) {
+                $packages = '';
+                foreach ($data->subscriptions as $subscription) {
+                    $packages .= $subscription->name . PHP_EOL;
+                    $packages .= TR::load_string('end_date') . ": $subscription->end_date" . PHP_EOL;
+                    $packages .= TR::load_string('recurring') . ": " .
+                        ($subscription->auto_prolong ? TR::load_string('yes') : TR::load_string('no')) . PHP_EOL;
+                }
+                Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
+            }
+        }
+
+        Control_Factory::add_vgap($defs, 20);
+
+        return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1100);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function GetServers()
+    {
+        parent::GetServers();
+
+        hd_debug_print(null, true);
+
+        $servers = array();
+        $data = $this->execApiCommand(API_COMMAND_SERVERS);
+        if (isset($data->status) && $data->status === 200) {
+            $servers = $this->collect_servers($data);
+        }
+
+        return $servers;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function SetServer($server)
+    {
+        parent::SetServer($server);
+
+        $curl_opt[CURLOPT_POST] = true;
+        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
+        $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_json_encode(array("server_location" => $server));
+
+        $response = $this->execApiCommand(API_COMMAND_SET_SERVER, null, true, $curl_opt);
+        if (isset($data->status) && $data->status === 200) {
+            $this->collect_servers($response);
+        }
+    }
+
+    protected function collect_servers($data)
+    {
+        $servers = array();
+        $selected = -1;
+        foreach ($data->device->settings->server_location->value as $server) {
+            $servers[(int)$server->id] = $server->label;
+            if ($server->selected) {
+                $selected = (int)$server->id;
+            }
+        }
+
+        $this->setCredential(MACRO_SERVER_ID, $selected);
+
+        return $servers;
     }
 }

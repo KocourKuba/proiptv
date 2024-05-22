@@ -177,6 +177,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/~[^\\/]+\\/(?<id>\\d+)(?:\\/.+\\.m3u8)?$/",
         "token_response": "token",
         "epg_preset": "drm",
+        "ext_params": true,
         "streams": {
           "unix.m3u8": "HLS",
           "ottplay.m3u": "MPEG-TS"
@@ -196,6 +197,7 @@
       "config": {
         "id_map": "tvg-name",
         "epg_preset": "tvteam",
+        "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/)mono\\.m3u8(.+)$/",
           "replace": "$1{STREAM_ID}$2"
@@ -282,6 +284,8 @@
       },
       "config": {
         "id_map": "tvg-id",
+        "epg_preset": "cbilling",
+        "ext_params": true,
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(:.+)$/",
           "replace": "$1{SERVER_ID}$2"
@@ -294,7 +298,6 @@
           "2": "2",
           "3": "3"
         },
-        "epg_preset": "cbilling",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -341,6 +344,7 @@
       "config": {
         "id_map": "tvg-name",
         "epg_preset": "drm",
+        "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/)index\\.m3u8(.+)$/",
           "replace": "$1{STREAM_ID}$2"
@@ -391,6 +395,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "epg_preset": "drm",
         "epg_alias": "ottg",
+        "ext_params": true,
         "streams": {
           "hls": "HLS",
           "ts": "MPEG-TS"
@@ -419,6 +424,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
         "ignore_groups": ["Video on Demand","Сериалы"],
         "epg_preset": "sharaclub",
+        "ext_params": true,
         "streams": {
           "-m3u8": "HLS",
           "?": "MPEG-TS"
@@ -438,6 +444,7 @@
       "config": {
         "epg_preset": "drm",
         "epg_alias": "iptv.online",
+        "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "url_subst": {
@@ -464,39 +471,30 @@
       "enable": true,
       "id": "iptvonline",
       "name": "IPTV Online",
-      "type": "pin",
+      "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
       "api_url": "https://iptv.online/api/v4",
       "api_commands": {
         "playlist": "{API}/playlist/m3u8",
         "request_token": "{API}/auth",
         "refresh_token": "{API}/oauth2",
+        "info": "{API}/profile",
+        "servers": "{API}/device/info",
+        "set_server": "{API}/device/settings",
         "vod": "{API}/catalog"
       },
       "config": {
         "epg_preset": "drm",
         "epg_alias": "iptv.online",
+        "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
-        "url_subst": {
-          "regex": "/^(.+\\/\\/).+(\\/play\\/.+\\/).+$/",
-          "replace": "$1{SERVER_ID}$2{STREAM_ID}"
-        },
         "headers": {
           "Authorization": "Bearer {TOKEN}"
         },
         "streams": {
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
-        },
-        "servers": {
-          "pl.seetv.cc": "Poland",
-          "de.seetv.cc": "Germany",
-          "nl.seetv.cc": "Netherlands",
-          "ru.seetv.cc": "Russia",
-          "ca.seetv.cc": "Canada",
-          "gr.seetv.cc": "Greece",
-          "ukr.seetv.cc": "Ukraine"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -516,6 +514,7 @@
         "id_map": "tvg-id",
         "playlist_catchup": "flussonic",
         "epg_preset": "itvlive",
+        "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/)video\\.m3u8(.+)$/",
           "replace": "$1{STREAM_ID}$2"
@@ -539,6 +538,7 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
         "epg_preset": "drm",
+        "ext_params": true,
         "servers": {
           "DE": "DE",
           "PL": "PL",
@@ -559,6 +559,7 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/lb\\/(?<id>.+)\\/.+$/",
+        "ext_params": true,
         "streams": {
           "hls": "HLS",
           "ts": "MPEG-TS"
@@ -578,6 +579,7 @@
       "config": {
         "id_map": "name",
         "epg_preset": "drm",
+        "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/)video\\.m3u8(.+)$/",
           "replace": "$1{STREAM_ID}$2"
@@ -602,6 +604,7 @@
       "config": {
         "epg_preset": "drm",
         "epg_alias": "magic",
+        "ext_params": true,
         "servers": {
           "0": "Default",
           "1": "Germany 1",
@@ -712,6 +715,7 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/.+\\/.+)$/",
           "replace": "$1{SERVER_ID}$2"
@@ -768,6 +772,7 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(\\/.+|\\.ts)$/",
         "epg_preset": "sharaclub",
+        "ext_params": true,
         "streams": {
           "m3u8": "HLS",
           "m3u": "MPEG-TS"
@@ -789,6 +794,7 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
         "epg_preset": "sharavoz",
+        "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
           "replace": "$1{SERVER_ID}$2{STREAM_ID}$3"
@@ -822,6 +828,7 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
         "epg_preset": "shuratv",
+        "ext_params": true,
         "servers": {
           "0": "Server 1",
           "1": "Server 2"
@@ -841,6 +848,7 @@
       },
       "config": {
         "epg_preset": "drm",
+        "ext_params": true,
         "servers": {
           "0": "Auto Select",
           "1": "Server CZ",
@@ -899,6 +907,8 @@
       },
       "config": {
         "id_map": "tvg-name",
+        "epg_preset": "tvteam",
+        "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/\\/.+\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
           "replace": "$1{STREAM_ID}$2"
@@ -907,7 +917,6 @@
           "mono.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "epg_preset": "tvteam",
         "xmltv_sources": [
           "http://epg.team/tvteam.xml.gz",
           "http://epg.team/tvteam.3.3.xml.tar.gz",
@@ -929,6 +938,7 @@
       "config": {
         "epg_preset": "drm",
         "epg_alias": "iptv.online",
+        "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
         "domains": {
@@ -987,6 +997,7 @@
       "config": {
         "id_map": "tvg-id",
         "epg_preset": "drm",
+        "ext_params": true,
         "vod_parser": "/^(?<title>[^\\(]*)\\s\\((?<year>\\d+)\\)$/",
         "url_subst": {
           "regex": "/^(.+\\.).+$/",
@@ -1018,6 +1029,7 @@
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>[^\\/]+)\\/(?<id>.+)\\/.+$/",
         "epg_preset": "drm",
+        "ext_params": true,
         "servers": {
           "/": "RU (Russia, Moscow, DC1)",
           "kfc/": "KFC (Russia, Moscow, DC2)",

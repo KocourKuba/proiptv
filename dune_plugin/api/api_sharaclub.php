@@ -35,13 +35,13 @@ class api_sharaclub extends api_default
                 ACTION_ADD_MONEY_DLG, "", TR::t('add_money'), 450, true);
         }
 
-        if (empty($this->info)) {
+        if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
-        } else if (isset($this->info->status) && (int)$this->info->status !== 1) {
-            Control_Factory::add_label($defs, TR::t('err_error'), $this->info->status, -10);
-        } else if (isset($this->info->data)) {
-            $data = $this->info->data;
+        } else if (isset($this->account_info->status) && (int)$this->account_info->status !== 1) {
+            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info->status, -10);
+        } else if (isset($this->account_info->data)) {
+            $data = $this->account_info->data;
             if (isset($data->login)) {
                 Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
             }

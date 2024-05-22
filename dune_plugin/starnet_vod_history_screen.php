@@ -121,7 +121,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
             // $id = serials_95803
             // $movie_infos = {"95803":{"watched":true,"position":null,"duration":null,"date":null}}
             // $movie_infos = {"1:1":{"watched":true,"position":null,"duration":null,"date":null}}
-            hd_debug_print("history id: $movie_id, " . json_encode($movie_infos));
+            hd_debug_print("history id: $movie_id, " . json_encode($movie_infos), true);
             $this->plugin->vod->ensure_movie_loaded($movie_id);
             $short_movie = $this->plugin->vod->get_cached_short_movie($movie_id);
 

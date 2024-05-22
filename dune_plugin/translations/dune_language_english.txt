@@ -87,6 +87,7 @@ balance_not_support = Account balance information not supported
 package = Package
 packages = Packages
 no_packages = No packages
+recurring = Auto recurring
 ssl = SSL Enabled
 disable_adult = Adult channels disabled
 time_zone = Zeitzone
@@ -94,7 +95,8 @@ type = Type
 city = City
 playlist_picons = Playlist
 xmltv_picons = XMLTV
-edit_account = Edit account settings
+edit_account = Account accesss
+edit_ext_account = Account settings
 jump_to_channel = Jump to the channel in the group
 
 plugin_all_channels = All channels

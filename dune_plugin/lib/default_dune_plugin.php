@@ -222,20 +222,23 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_current_provider()
     {
+        hd_debug_print(null, true);
+
         $playlist = $this->get_current_playlist();
         if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
-            hd_debug_print("Current settings not provider");
+            hd_debug_print("Current settings is not a provider");
             return null;
         }
 
         if (is_null($this->cur_provider)) {
-            $this->cur_provider = $this->get_provider($playlist->params[PARAM_PROVIDER]);
+            $this->cur_provider = $this->create_provider_class($playlist->params[PARAM_PROVIDER]);
             if (is_null($this->cur_provider)) {
                 hd_debug_print("unknown provider");
             } else if (!$this->cur_provider->getEnable()) {
                 hd_debug_print("provider disabled");
             } else {
-                $this->cur_provider->init_provider($playlist);
+                $this->cur_provider->set_provider_playlist($this->get_active_playlist_key());
+                $this->cur_provider->init_provider();
             }
         }
 
@@ -254,7 +257,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $name
      * @return api_default|null
      */
-    public function get_provider($name)
+    public function create_provider_class($name)
     {
         $config = $this->providers->get($name);
         return is_null($config) ? null : clone $config;
@@ -1696,6 +1699,7 @@ class Default_Dune_Plugin implements DunePlugin
                         throw new Exception("Unable to init provider $playlist");
                     }
 
+                    $provider->request_provider_token();
                     $res = $provider->load_playlist($tmp_file);
                 } else {
                     throw new Exception("Unknown playlist type");
@@ -2255,7 +2259,7 @@ class Default_Dune_Plugin implements DunePlugin
             $icon = null;
             $title = $item->name;
             if ($item->type === PARAM_PROVIDER) {
-                $provider = $this->get_provider($item->params[PARAM_PROVIDER]);
+                $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
                 if (!is_null($provider)) {
                     $icon = $provider->getLogo();
                     if ($item->name !== $provider->getName()) {
@@ -2497,22 +2501,29 @@ class Default_Dune_Plugin implements DunePlugin
                     ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
             }
 
+            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             if ($provider->hasApiCommand(API_COMMAND_INFO)) {
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
                 $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
             }
-        }
 
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-
-        if (!is_null($provider)) {
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_EDIT_PROVIDER_DLG,
                 TR::t('edit_account'),
                 $provider->getLogo(),
                 array(PARAM_PROVIDER => $provider->getId())
             );
+
+            if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_EDIT_PROVIDER_EXT_DLG,
+                    TR::t('edit_ext_account'),
+                    "settings.png",
+                    array(PARAM_PROVIDER => $provider->getId())
+                );
+            }
         }
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
         $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
             TR::t('setup_channels_src_edit_playlists'), "m3u_file.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) );
@@ -2549,29 +2560,29 @@ class Default_Dune_Plugin implements DunePlugin
         Control_Factory::add_vgap($defs, 20);
 
         if ($provider_id === 'current') {
-            $playlist_id = $this->get_active_playlist_key();
             $provider = $this->get_current_provider();
-            $playlist = $this->get_playlist($playlist_id);
-            if (!is_null($playlist)) {
-                $name = $playlist->name;
+            if (!is_null($provider)) {
+                $name = $provider->get_provider_playlist()->name;
             }
-        } else if ($playlist_id === null) {
+            hd_debug_print("current provider : $provider", true);
+        } else if (empty($playlist_id)) {
             // add new provider
-            $provider = $this->get_provider($provider_id);
+            $provider = $this->create_provider_class($provider_id);
             hd_debug_print("new provider : $provider", true);
         } else {
             // edit existing provider
             $playlist = $this->get_playlist($playlist_id);
             if (!is_null($playlist)) {
                 $name = $playlist->name;
-                hd_debug_print("provider info:" . json_encode($playlist));
-                $provider = $this->get_provider($playlist->params[PARAM_PROVIDER]);
+                hd_debug_print("provider info:" . json_encode($playlist), true);
+                $provider = $this->create_provider_class($playlist->params[PARAM_PROVIDER]);
                 if (!is_null($provider)) {
                     hd_debug_print("existing provider : " . json_encode($provider), true);
-                    $provider->init_provider($playlist);
+                    $provider->set_provider_playlist($playlist_id);
+                    $provider->init_provider();
                 }
             } else {
-                $provider = $this->get_provider($provider_id);
+                $provider = $this->create_provider_class($provider_id);
             }
         }
 
@@ -2592,6 +2603,30 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @param $handler
+     * @return array|null
+     */
+    public function do_edit_provider_ext_dlg($handler)
+    {
+        hd_debug_print(null, true);
+
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            return array();
+        }
+
+        $defs = $provider->GetExtSetupUI($handler);
+        if (empty($defs)) {
+            return null;
+        }
+
+        $head = array();
+        Control_Factory::add_vgap($head, 20);
+
+        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", array_merge($head, $defs), true);
+    }
+
+    /**
      * @param $user_input
      * @return null|string|array
      */
@@ -2601,19 +2636,22 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
             $provider = $this->get_current_provider();
+            if (is_null($provider)) {
+                return null;
+            }
         } else {
-            $provider = $this->get_provider($user_input->{PARAM_PROVIDER});
+            $provider = $this->create_provider_class($user_input->{PARAM_PROVIDER});
+            if (is_null($provider)) {
+                return null;
+            }
+            $playlist = new Named_Storage();
+            $playlist->type = PARAM_PROVIDER;
+            $playlist->name = $user_input->{CONTROL_EDIT_NAME};
+            $playlist->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
+            $provider->set_provider_playlist($playlist);
         }
 
-        if (is_null($provider)) {
-            return null;
-        }
-
-        $item = new Named_Storage();
-        $item->type = PARAM_PROVIDER;
-        $item->name = $user_input->{CONTROL_EDIT_NAME};
-        $item->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
-        $id = $provider->ApplySetupUI($user_input, $item);
+        $id = $provider->ApplySetupUI($user_input);
         if (is_null($id)) {
             return null;
         }
@@ -2645,7 +2683,9 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
-        $this->get_playlists()->set($id, $item);
+        $provider->request_provider_token();
+
+        $this->get_playlists()->set($id, $provider->get_provider_playlist());
         $this->save_parameters(true);
         $this->clear_playlist_cache($id);
 
@@ -2654,6 +2694,34 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         return $id;
+    }
+
+    /**
+     * @param $user_input
+     * @return null|string|array
+     */
+    public function apply_edit_provider_ext_dlg($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $provider = $this->get_current_provider();
+        $playlist_id = $this->get_active_playlist_key();
+        if (is_null($provider)) {
+            return null;
+        }
+
+        $playlist = $this->get_current_playlist();
+        $provider->ApplyExtSetupUI($user_input, $playlist);
+
+        $this->get_playlists()->set($playlist_id, $playlist);
+        $this->save_parameters(true);
+        $this->clear_playlist_cache($playlist_id);
+
+        if ($this->get_active_playlist_key() === $playlist_id) {
+            $this->set_active_playlist_key($playlist_id);
+        }
+
+        return $playlist_id;
     }
 
     /**
@@ -2782,7 +2850,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $param_action
      * @return array
      */
-    public function show_password_dialog($handler, $param_action)
+    public function show_protect_settings_dialog($handler, $param_action)
     {
         $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
         if (empty($pass_settings)) {

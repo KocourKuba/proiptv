@@ -87,6 +87,7 @@ balance_not_support = Balanz wird nicht unterstützt
 package = Paket
 packages = Pakete
 no_packages = Keine Pakete
+recurring = Automatisch wiederkehrend
 ssl = SSL aktiviert
 disable_adult = Erwachsenenkanäle deaktiviert
 time_zone = Zeitzone
@@ -94,7 +95,8 @@ type = Typ
 city = Stadt
 playlist_picons = Wiedergabeliste
 xmltv_picons = XMLTV
-edit_account = Kontoeinstellungen bearbeiten
+edit_account = Kontozugriff
+edit_ext_account = Account Einstellungen
 jump_to_channel = Springe zum Kanal in der Gruppe
 
 plugin_all_channels = Alle Kanäle

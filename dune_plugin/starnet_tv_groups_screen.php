@@ -32,6 +32,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
     const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
     const ACTION_DO_EDIT_PROVIDER = 'do_edit_provider';
+    const ACTION_DO_EDIT_PROVIDER_EXT = 'do_edit_provider_ext';
     const ACTION_DO_SETTINGS = 'do_edit_settings';
     const ACTION_DO_CHANNELS_SETTINGS = 'do_channels_settings';
     const ACTION_DO_EPG_SETTINGS = 'do_epg_settings';
@@ -228,7 +229,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_SETTINGS:
                 $this->save_if_changed();
-                return $this->plugin->show_password_dialog($this, self::ACTION_DO_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_DO_SETTINGS);
 
             case self::ACTION_DO_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
@@ -305,15 +306,30 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_EDIT_PROVIDER_DLG:
+            case ACTION_EDIT_PROVIDER_EXT_DLG:
                 $this->save_if_changed();
-                return $this->plugin->show_password_dialog($this, self::ACTION_DO_EDIT_PROVIDER);
+                return $this->plugin->show_protect_settings_dialog($this,
+                    ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
+                        ? self::ACTION_DO_EDIT_PROVIDER
+                        : self::ACTION_DO_EDIT_PROVIDER_EXT);
 
             case self::ACTION_DO_EDIT_PROVIDER:
-                return $this->plugin->do_edit_provider_dlg($this, 'current');
+            case self::ACTION_DO_EDIT_PROVIDER_EXT:
+                if ($user_input->control_id === self::ACTION_DO_EDIT_PROVIDER) {
+                    return $this->plugin->do_edit_provider_dlg($this, 'current');
+                }
+
+                return $this->plugin->do_edit_provider_ext_dlg($this);
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
+            case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
                 $this->set_no_changes();
-                $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
+                    $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                } else {
+                    $id = $this->plugin->apply_edit_provider_ext_dlg($user_input);
+                }
+
                 if ($id === null) {
                     return null;
                 }

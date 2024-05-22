@@ -80,7 +80,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_DO_PLUGIN_SETTINGS:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_password_dialog($this, ACTION_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, ACTION_SETTINGS);
 
             case ACTION_PASSWORD_APPLY:
                 if ($this->plugin->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
@@ -93,7 +93,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_DO_CHANNELS_SETTINGS:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_password_dialog($this, ACTION_CHANNELS_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, ACTION_CHANNELS_SETTINGS);
 
             case ACTION_CHANNELS_SETTINGS:
                 $this->plugin->init_plugin();

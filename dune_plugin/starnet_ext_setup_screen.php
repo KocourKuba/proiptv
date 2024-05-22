@@ -144,7 +144,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
-            hd_debug_print("Setup: changing $control_id value to $new_value");
+            hd_debug_print("Setup: changing $control_id value to $new_value", true);
         }
 
         switch ($control_id) {
@@ -247,7 +247,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $need_reload = false;
                 $param = $user_input->adult ? PARAM_ADULT_PASSWORD : PARAM_SETTINGS_PASSWORD;
                 $pass = $this->plugin->get_parameter($param);
-                hd_debug_print("pass: $param ($pass == $user_input->pass1)");
+                hd_debug_print("pass: $param ($pass == $user_input->pass1)", true);
                 if ($user_input->pass1 !== (string)$pass) {
                     $msg = TR::t('err_wrong_old_password');
                 } else if (empty($user_input->pass2)) {

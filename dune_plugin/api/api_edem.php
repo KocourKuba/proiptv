@@ -6,26 +6,9 @@ class api_edem extends api_default
     /**
      * @inheritDoc
      */
-    public function init_provider($info)
+    public function fill_default_info($matches, &$hash)
     {
-        hd_debug_print("provider info:" . json_encode($info));
-        hd_debug_print("parse provider_info ({$this->getType()}): $info", true);
-
-        $this->setCredential(MACRO_SUBDOMAIN, isset($info->params[MACRO_SUBDOMAIN]) ? $info->params[MACRO_SUBDOMAIN] : '');
-        $this->setCredential(MACRO_OTTKEY, isset($info->params[MACRO_OTTKEY]) ? $info->params[MACRO_OTTKEY] : '');
-        $this->setCredential(MACRO_VPORTAL, isset($info->params[MACRO_VPORTAL]) ? $info->params[MACRO_VPORTAL] : '');
-
-        return $this;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function set_info($matches, &$info)
-    {
-        $info->type = PARAM_PROVIDER;
-        $info->params[PARAM_PROVIDER] = $matches[1];
-        $info->name = $this->getName();
+        $info = parent::fill_default_info($matches, $hash);
 
         $ext_vars = explode('|', $matches[2]);
         if (empty($ext_vars)) {
@@ -52,13 +35,17 @@ class api_edem extends api_default
             $info->params[MACRO_OTTKEY] = $vars[0];
         }
 
-        if (!empty($ext_vars[1]) && !preg_match(VPORTAL_PATTERN, $ext_vars[1])) {
-            return false;
+        if (!empty($ext_vars[1])) {
+            if (!preg_match(VPORTAL_PATTERN, $ext_vars[1])) {
+                return false;
+            }
+
+            $info->params[MACRO_VPORTAL] = $ext_vars[1];
         }
 
-        $info->params[MACRO_VPORTAL] = $ext_vars[1];
+        $hash = $this->get_hash($info);
 
-        return true;
+        return $info;
     }
 
     /**
@@ -66,6 +53,7 @@ class api_edem extends api_default
      */
     public function GetSetupUI($name, $playlist_id, $handler)
     {
+        hd_debug_print(null, true);
         $defs = array();
 
         Control_Factory::add_text_field($defs, $handler, null,
@@ -102,32 +90,58 @@ class api_edem extends api_default
     /**
      * @inheritDoc
      */
-    public function ApplySetupUI($user_input, &$item)
+    public function ApplySetupUI($user_input)
     {
         $id = $user_input->{CONTROL_EDIT_ITEM};
 
         if (!empty($user_input->{CONTROL_OTT_SUBDOMAIN})) {
-            $item->params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
+            $this->playlist_info->params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
         } else {
-            $item->params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
+            $this->playlist_info->params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
         }
 
         if (empty($user_input->{CONTROL_OTT_KEY})) {
             return null;
         }
 
-        $item->params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
+        $this->playlist_info->params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
 
         if (!empty($user_input->{CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
             return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
         }
 
-        $item->params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
+        $this->playlist_info->params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
 
-        $id = empty($id) ? Hashed_Array::hash($item->type.$item->name.$item->params[MACRO_SUBDOMAIN].$item->params[MACRO_OTTKEY]) : $id;
+        $id = empty($id) ? $this->get_hash($this->playlist_info) : $id;
 
-        hd_debug_print("compiled provider info: $item->name, provider params: " . raw_json_encode($item->params), true);
+        hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . raw_json_encode($this->playlist_info->params), true);
 
         return $id;
+    }
+
+    /**
+     * @param Named_Storage $info
+     * @return string
+     */
+    protected function get_hash($info)
+    {
+        $str = '';
+        if (isset($info->params[MACRO_SUBDOMAIN])) {
+            $str .= $info->params[MACRO_SUBDOMAIN];
+        }
+
+        if (isset($info->params[MACRO_OTTKEY])) {
+            $str .= $info->params[MACRO_OTTKEY];
+        }
+
+        if (isset($info->params[MACRO_VPORTAL])) {
+            $str .= $info->params[MACRO_VPORTAL];
+        }
+
+        if (!empty($str)) {
+            return Hashed_Array::hash($info->type . $info->name . $str);
+        }
+
+        return '';
     }
 }

@@ -27,11 +27,11 @@ class api_cbilling extends api_default
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($this->info)) {
+        if (empty($this->account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($this->info->data)) {
-            $data = $this->info->data;
+        } else if (isset($this->account_info->data)) {
+            $data = $this->account_info->data;
             if (isset($data->end_date)) {
                 Control_Factory::add_label($defs, TR::t('end_date'), $data->end_date, -15);
             }
@@ -73,8 +73,8 @@ class api_cbilling extends api_default
             }
 
             $cur_server = $this->getCredential(MACRO_SERVER_ID);
-            if (empty($cur_server) && isset($this->info->data->server)) {
-                $this->setCredential(MACRO_SERVER_ID, $this->info->data->server);
+            if (empty($cur_server) && isset($this->account_info->data->server)) {
+                $this->setCredential(MACRO_SERVER_ID, $this->account_info->data->server);
             }
         }
 
