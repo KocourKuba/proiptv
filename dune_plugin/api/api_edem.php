@@ -94,10 +94,17 @@ class api_edem extends api_default
     {
         $id = $user_input->{CONTROL_EDIT_ITEM};
 
-        if (!empty($user_input->{CONTROL_OTT_SUBDOMAIN})) {
-            $this->playlist_info->params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
-        } else {
+        if (is_null($this->playlist_info)) {
+            $this->playlist_info = new Named_Storage();
+            $this->playlist_info->type = PARAM_PROVIDER;
+            $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
+            $this->playlist_info->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
+        }
+
+        if (empty($user_input->{CONTROL_OTT_SUBDOMAIN})) {
             $this->playlist_info->params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
+        } else {
+            $this->playlist_info->params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
         }
 
         if (empty($user_input->{CONTROL_OTT_KEY})) {
@@ -114,7 +121,7 @@ class api_edem extends api_default
 
         $id = empty($id) ? $this->get_hash($this->playlist_info) : $id;
 
-        hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . raw_json_encode($this->playlist_info->params), true);
+        hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . raw_json_encode($this->playlist_info), true);
 
         $this->set_default_settings($user_input, $id);
 
