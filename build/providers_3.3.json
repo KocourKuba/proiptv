@@ -652,7 +652,7 @@
       "name": "Ping TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_ping.png",
-      "api_url": "pl.ping-tv.com",
+      "api_url": "http://pl.ping-tv.com",
       "api_commands": {
         "playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
         "vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"

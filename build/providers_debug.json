@@ -279,7 +279,7 @@
       "api_commands": {
         "account_info": "{API}/auth/info",
         "get_playlist": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
-        "get_vod": "http://protected-api.com",
+        "get_vod": "{API}",
         "get_servers": "{API}/servers"
       },
       "config": {
@@ -392,9 +392,10 @@
       "name": "Fox TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_fox.png",
+      "api_url": "http://pl.fox-tv.fun",
       "api_commands": {
-        "get_playlist": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/tv.m3u",
-        "get_vod": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/vodall.m3u"
+        "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
         "epg_preset": "drm",
@@ -659,9 +660,10 @@
       "name": "OnlineOTT TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_onlineott.png",
+      "api_url": "http://pl.onlineott-tv.site",
       "api_commands": {
-        "get_playlist": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
-        "get_vod": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/vodall.m3u"
+        "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
         "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/",
@@ -694,7 +696,7 @@
       "name": "Ping TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_ping.png",
-      "api_url": "pl.ping-tv.com",
+      "api_url": "http://pl.ping-tv.com",
       "api_commands": {
         "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
         "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
@@ -712,9 +714,10 @@
       "name": "RU TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_rutv.png",
+      "api_url": "http://pl.ru-tv.site",
       "api_commands": {
-        "get_playlist": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
-        "get_vod": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/vod.m3u"
+        "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "{API}/{LOGIN}/{PASSWORD}/vod.m3u"
       },
       "config": {
         "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
@@ -874,9 +877,10 @@
       "name": "Smile",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_smile.png",
+      "api_url": "http://pl.smile-tv.live",
       "api_commands": {
-        "get_playlist": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/tv.m3u?srv={SERVER_ID}",
-        "get_vod": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}"
+        "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u?srv={SERVER_ID}",
+        "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}"
       },
       "config": {
         "epg_preset": "drm",
@@ -1022,9 +1026,10 @@
       "name": "VipLime",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
+      "api_url": "http://cdntv.online",
       "api_commands": {
-        "get_playlist": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
-        "get_vod": "http://m.cdntv.online/f/{PASSWORD}/playlist.m3u8"
+        "get_playlist": "{API}/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
+        "get_vod": "{API}/f/{PASSWORD}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
