@@ -700,8 +700,7 @@ class api_default
 
         $id = empty($id) ? $this->get_hash($this->playlist_info) : $id;
 
-        hd_debug_print("ApplySetupUI compiled provider info: {$this->playlist_info->name}, provider params: "
-            . raw_json_encode($this->playlist_info->params), true);
+        hd_debug_print("ApplySetupUI compiled provider info: " . raw_json_encode($this->playlist_info), true);
 
         $this->set_default_settings($user_input, $id);
 
@@ -863,8 +862,7 @@ class api_default
             $changed = true;
         }
 
-        hd_debug_print("ApplyExtSetupUI compiled provider info: {$this->playlist_info->name}, provider params: "
-            . raw_json_encode($this->playlist_info->params), true);
+        hd_debug_print("ApplyExtSetupUI compiled provider info: " . raw_json_encode($this->playlist_info), true);
 
         if (!$changed) {
             return false;

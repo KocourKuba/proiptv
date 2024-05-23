@@ -327,6 +327,24 @@ class Starnet_Tv implements User_Input_Handler
     }
 
     /**
+     * enable/disable channel
+     *
+     * @param string $channel_id
+     */
+    public function disable_channel($channel_id, $disable)
+    {
+        /** @var Default_Channel $channel */
+        $channel = $this->get_channel($channel_id);
+        if (is_null($channel)) {
+            return false;
+        }
+
+        $channel->set_disabled(true);
+        hd_debug_print(($disable ? "Hide" : "Show") . "Hide channel: $channel_id");
+        return true;
+    }
+
+    /**
      * disable group and remove it from order
      *
      * @param string $group_id
@@ -335,8 +353,16 @@ class Starnet_Tv implements User_Input_Handler
     {
         hd_debug_print("Hide group: $group_id");
         /** @var Default_Group $group */
-        if (($group = $this->groups->get($group_id)) !== null) {
+        $group = $this->groups->get($group_id);
+        if (!is_null($group)) {
             $group->set_disabled(true);
+            $group_channels = $group->get_items_order()->get_order();
+            $this->get_known_channels()->erase_keys($group_channels);
+            $all_channels = $this->get_channels();
+            if ($all_channels) {
+                $all_channels->erase_keys($group_channels);
+            }
+            $group->get_items_order()->clear();
         }
 
         $this->get_groups_order()->remove_item($group_id);
@@ -738,31 +764,35 @@ class Starnet_Tv implements User_Input_Handler
         $pl_entries = $this->m3u_parser->getM3uEntries();
         foreach ($pl_entries as $entry) {
             $title = $entry->getGroupTitle();
-            if ($this->groups->has($title)) continue;
+            if ($playlist_groups->in_order($title)
+                || (!empty($ignore_groups) && in_array($title, $ignore_groups))) continue;
 
-            if (!empty($ignore_groups) && in_array($title, $ignore_groups)) continue;
+            $playlist_groups->add_item($title);
+            if ($disabled_group->in_order($title)) {
+                hd_debug_print("Hidden category # $title");
+                continue;
+            }
 
             // using title as id
             $group_icon = $custom_group_icons->get($title);
             if (!is_null($group_icon)) {
                 $group_icon = get_cached_image_path($custom_group_icons->get($title));
             }
+
             $group = new Default_Group($this->plugin, $title, $title, $group_icon);
+
             $adult = (strpos($title, "зрослы") !== false
                 || strpos($title, "adult") !== false
                 || strpos($title, "18+") !== false
                 || strpos($title, "xxx") !== false);
 
             $group->set_adult($adult);
-            if ($disabled_group->in_order($group->get_id())) {
-                $group->set_disabled(true);
-                hd_debug_print("Hidden category # $title");
-            } else if (!$this->get_groups_order()->in_order($group->get_id())) {
+
+            if (!$this->get_groups_order()->in_order($group->get_id())) {
                 hd_debug_print("New    category # $title");
                 $this->get_groups_order()->add_item($title);
             }
 
-            $playlist_groups->add_item($title);
             $this->groups->set($group->get_id(), $group);
         }
 
@@ -777,6 +807,9 @@ class Starnet_Tv implements User_Input_Handler
             hd_debug_print("Remove orphaned hidden group: $group", true);
             $disabled_group->remove_item($group);
         }
+
+        // remove disabled groups from playlist group
+        $playlist_groups->remove_items($disabled_group->get_order());
 
         // orders
         $playlist_groups->add_items(
@@ -818,6 +851,10 @@ class Starnet_Tv implements User_Input_Handler
             if (empty($channel_name)) {
                 hd_print("Bad entry: " . $entry);
                 $channel_name = "no name";
+            }
+
+            if ($disabled_group->in_order($group_title)) {
+                continue;
             }
 
             /** @var Channel $channel */

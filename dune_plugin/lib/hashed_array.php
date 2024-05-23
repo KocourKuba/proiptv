@@ -185,6 +185,17 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @param array $keys
+     */
+    public function erase_keys($keys)
+    {
+        $cnt = count($this->seq);
+        $this->seq = array_values(array_diff($this->seq, $keys));
+        $this->map = array_diff_key($this->map, array_fill_keys($keys, null));
+        return $cnt - count($this->seq);
+    }
+
+    /**
      * @param TKey $key
      * @return bool
      */

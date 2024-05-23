@@ -225,10 +225,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEM_DELETE:
-                $channel = $this->plugin->tv->get_channel($channel_id);
-                if (!is_null($channel)) {
+                if ($this->plugin->tv->disable_channel($channel_id, true)) {
                     $this->set_changes();
-                    $channel->set_disabled(true);
                 }
                 break;
 

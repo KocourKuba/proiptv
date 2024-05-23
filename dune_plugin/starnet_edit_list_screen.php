@@ -219,23 +219,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_REMOVE_ITEM_DLG_APPLY);
 
                     case self::SCREEN_EDIT_CHANNELS:
-                        $channel = $this->plugin->tv->get_channel($item);
                         $force_return = $this->plugin->tv->get_disabled_channel_ids()->size() === 0;
-                        if (!is_null($channel)) {
-                            hd_debug_print("restore channel: {$channel->get_title()} ({$channel->get_id()})", true);
-                            $channel->set_disabled(false);
+                        if ($this->plugin->tv->disable_channel($item, false)) {
                             $this->set_changes();
                         }
                         break;
 
                     case self::SCREEN_EDIT_GROUPS:
-                        $group = $this->plugin->tv->get_group($item);
                         $force_return = $this->plugin->tv->get_disabled_group_ids()->size() === 0;
-                        if (!is_null($group)) {
-                            hd_debug_print("restore group: " . $group->get_id(), true);
-                            $group->set_disabled(false);
-                            $this->set_changes();
-                        }
+                        hd_debug_print("restore group: " . $item, true);
+                        $this->plugin->tv->get_disabled_group_ids()->remove_item($item);
+                        $this->set_changes();
                         break;
 
                     default:
@@ -307,19 +301,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                         /** @var Channel $channel */
                         foreach ($group->get_group_disabled_channels() as $channel) {
-                            hd_debug_print("restore channel: {$channel->get_title()} ({$channel->get_id()})", true);
-                            $channel->set_disabled(false);
-                            $this->set_changes();
+                            if ($this->plugin->tv->disable_channel($channel->get_id(), false)) {
+                                $this->set_changes();
+                            }
                         }
                         break;
 
                     case self::SCREEN_EDIT_GROUPS:
-                        /** @var Group $group */
-                        foreach ($this->plugin->tv->get_groups($this->plugin->tv->get_disabled_group_ids()) as $group) {
-                            hd_debug_print("restore group: " . $group->get_id(), true);
-                            $group->set_disabled(false);
-                            $this->set_changes();
-                        }
+                        $this->plugin->tv->get_disabled_group_ids()->clear();
+                        $this->set_changes();
                         break;
 
                     default:
@@ -379,20 +369,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->set_no_changes();
                 $id = $this->plugin->apply_edit_provider_dlg($user_input);
-                if ($id === null) {
+                if ($id === false) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
-                }
-
-                if ($this->plugin->get_active_playlist_key() === $id) {
-                    if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
-                        return Action_Factory::invalidate_all_folders($plugin_cookies,
-                            Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
-                    }
-
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,
-                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
-                            $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx))
-                    );
                 }
 
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
@@ -433,10 +411,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         } else if ($edit_list === self::SCREEN_EDIT_GROUPS) {
             /** @var string $item */
             foreach ($this->plugin->tv->get_disabled_group_ids() as $item) {
-                $group = $this->plugin->tv->get_group($item);
-                if (!is_null($group)) {
-                    $items[] = self::add_item($item, $group->get_title(), false, $group->get_icon_url(), null);
-                }
+                $items[] = self::add_item($item, $item, false, Default_Group::DEFAULT_GROUP_ICON, null);
             }
         } else if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
             /** @var Named_Storage $item */

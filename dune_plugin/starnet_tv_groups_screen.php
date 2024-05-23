@@ -172,6 +172,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DELETE:
+                // hide group
                 $this->plugin->tv->disable_group($sel_media_url->group_id);
                 $this->set_changes();
                 break;

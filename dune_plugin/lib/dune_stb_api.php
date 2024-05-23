@@ -1943,7 +1943,7 @@ function raw_json_encode($arr)
         return html_entity_decode("&#x$m[1];", ENT_QUOTES, 'UTF-8');
     };
 
-    return str_replace('\\/', '/', preg_replace_callback($pattern, $callback, json_encode($arr)));
+    return preg_replace_callback($pattern, $callback, json_encode($arr));
 }
 
 /**

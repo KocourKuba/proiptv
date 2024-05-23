@@ -694,18 +694,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 break;
 
             case ACTION_ITEM_DELETE:
-                if (isset($user_input->selected_item_id)) {
-                    $channel = $this->plugin->tv->get_channel($media_url->channel_id);
-                    if (!is_null($channel)) {
-                        $channel->set_disabled(true);
-                        $this->set_changes();
-                    }
-                } else {
-                    $group = $this->plugin->tv->get_group($media_url->group_id);
-                    if (!is_null($group)) {
-                        $group->set_disabled(true);
-                        $this->set_changes();
-                    }
+                if (!isset($user_input->selected_item_id)) {
+                    $this->plugin->tv->disable_group($media_url->group_id);
+                    $this->set_changes();
+                } else if ($this->plugin->tv->disable_channel($media_url->channel_id, true)) {
+                    $this->set_changes();
                 }
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
