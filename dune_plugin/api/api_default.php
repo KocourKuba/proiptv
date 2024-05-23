@@ -280,7 +280,7 @@ class api_default
     /**
      * @param string $playlist_id
      */
-    public function set_provider_playlist($playlist_id)
+    public function set_provider_playlist_id($playlist_id)
     {
         hd_debug_print(null, true);
 
@@ -670,6 +670,13 @@ class api_default
         hd_debug_print(null, true);
 
         $id = $user_input->{CONTROL_EDIT_ITEM};
+
+        if (is_null($this->playlist_info)) {
+            $this->playlist_info = new Named_Storage();
+            $this->playlist_info->type = PARAM_PROVIDER;
+            $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
+            $this->playlist_info->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
+        }
 
         switch ($this->getType()) {
             case PROVIDER_TYPE_PIN:

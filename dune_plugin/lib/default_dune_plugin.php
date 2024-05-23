@@ -240,7 +240,7 @@ class Default_Dune_Plugin implements DunePlugin
             } else if (!$provider->getEnable()) {
                 hd_debug_print("provider disabled");
             } else {
-                $provider->set_provider_playlist($this->get_active_playlist_key());
+                $provider->set_provider_playlist_id($this->get_active_playlist_key());
             }
 
             $this->set_current_provider($provider);
@@ -2631,7 +2631,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $provider = $this->create_provider_class($playlist->params[PARAM_PROVIDER]);
                 if (!is_null($provider)) {
                     hd_debug_print("existing provider : " . json_encode($provider), true);
-                    $provider->set_provider_playlist($playlist_id);
+                    $provider->set_provider_playlist_id($playlist_id);
                 }
             } else {
                 $provider = $this->create_provider_class($provider_id);
@@ -2689,20 +2689,13 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
             $provider = $this->get_current_provider();
-            if (is_null($provider)) {
-                return false;
-            }
         } else {
             // edit existing or new provider in starnet_edit_list_screen
             $provider = $this->create_provider_class($user_input->{PARAM_PROVIDER});
-            if (is_null($provider)) {
-                return false;
-            }
-            $playlist = new Named_Storage();
-            $playlist->type = PARAM_PROVIDER;
-            $playlist->name = $user_input->{CONTROL_EDIT_NAME};
-            $playlist->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
-            $provider->set_provider_playlist($playlist);
+        }
+
+        if (is_null($provider)) {
+            return false;
         }
 
         return $provider->ApplySetupUI($user_input);
