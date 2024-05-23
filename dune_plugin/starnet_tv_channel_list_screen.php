@@ -103,14 +103,20 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $post_action = Action_Factory::close_and_run();
                 if ($this->has_changes()) {
                     $this->plugin->save_orders(true);
                     $this->set_no_changes();
-                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+                    $post_action = null;
+                    if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
+                        $post_action = User_Input_Handler_Registry::create_action(
+                            User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
+                            ACTION_REFRESH_SCREEN);
+                    }
+                    $post_action = Action_Factory::close_and_run($post_action);
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
                 }
 
-                return $post_action;
+                return Action_Factory::close_and_run();
 
             case GUI_EVENT_TIMER:
                 clearstatcache();

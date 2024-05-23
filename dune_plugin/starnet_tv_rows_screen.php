@@ -679,6 +679,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if ($media_url->group_id === CHANGED_CHANNELS_GROUP_ID) {
+                    $this->set_changes();
                     $all_channels = $this->plugin->tv->get_channels();
                     $order = &$this->plugin->tv->get_known_channels();
                     $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);

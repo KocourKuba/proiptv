@@ -104,7 +104,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 clearstatcache();
                 $epg_manager = $this->plugin->get_epg_manager();
                 if (!is_null($epg_manager)) {
-                    if (isset($user_input->parent_media_url) && $epg_manager->is_index_locked()) {
+                    if ($epg_manager->is_index_locked()) {
                         $actions = $this->get_action_map(MediaURL::decode($user_input->parent_media_url), $plugin_cookies);
                         return Action_Factory::change_behaviour($actions, 1000);
                     }
@@ -517,15 +517,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_REFRESH_SCREEN:
                 $this->save_if_changed();
-                if (isset($user_input->parent_media_url)) {
-                    $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-
-                    $post_action = Action_Factory::close_and_run(Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title()));
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,
-                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0, $post_action)
-                    );
-                }
-                return null;
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                $post_action = Action_Factory::close_and_run(Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title()));
+                return Action_Factory::invalidate_all_folders($plugin_cookies,
+                    Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0, $post_action)
+                );
 
             case ACTION_EMPTY:
             default:

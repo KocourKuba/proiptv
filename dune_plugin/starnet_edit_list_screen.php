@@ -224,6 +224,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         if (!is_null($channel)) {
                             hd_debug_print("restore channel: {$channel->get_title()} ({$channel->get_id()})", true);
                             $channel->set_disabled(false);
+                            $this->set_changes();
                         }
                         break;
 
@@ -233,6 +234,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         if (!is_null($group)) {
                             hd_debug_print("restore group: " . $group->get_id(), true);
                             $group->set_disabled(false);
+                            $this->set_changes();
                         }
                         break;
 
@@ -307,6 +309,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         foreach ($group->get_group_disabled_channels() as $channel) {
                             hd_debug_print("restore channel: {$channel->get_title()} ({$channel->get_id()})", true);
                             $channel->set_disabled(false);
+                            $this->set_changes();
                         }
                         break;
 
@@ -315,6 +318,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         foreach ($this->plugin->tv->get_groups($this->plugin->tv->get_disabled_group_ids()) as $group) {
                             hd_debug_print("restore group: " . $group->get_id(), true);
                             $group->set_disabled(false);
+                            $this->set_changes();
                         }
                         break;
 

@@ -1262,6 +1262,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function save_parameters($force = false)
     {
+        if ($force || $this->is_dirty(PLUGIN_PARAMETERS)) {
+            hd_debug_print(null, true);
+        }
+
         return $this->save('common.settings', PLUGIN_PARAMETERS, $force);
     }
 
@@ -1279,6 +1283,11 @@ class Default_Dune_Plugin implements DunePlugin
         } else {
             $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
         }
+
+        if ($force || $this->is_dirty(PLUGIN_ORDERS)) {
+            hd_debug_print(null, true);
+        }
+
         return $this->save($order_name, PLUGIN_ORDERS, $force);
     }
 
@@ -1335,7 +1344,6 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if ($force || $this->is_dirty($type)) {
-            hd_debug_print(null, true);
             hd_debug_print("Save: $name", true);
             if (LogSeverity::$is_debug) {
                 foreach ($this->{$type} as $key => $param) {

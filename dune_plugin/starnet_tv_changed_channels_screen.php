@@ -80,11 +80,19 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
 
         switch ($user_input->control_id) {
+            case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 if ($this->has_changes()) {
                     $this->plugin->save_orders(true);
                     $this->set_no_changes();
-                    return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
+                    $post_action = null;
+                    if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
+                        $post_action = User_Input_Handler_Registry::create_action(
+                            User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
+                            ACTION_REFRESH_SCREEN);
+                    }
+                    $post_action = Action_Factory::close_and_run($post_action);
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
                 }
 
                 return Action_Factory::close_and_run();
@@ -131,6 +139,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 }
 
                 if (count($new_channels) === 0 && count($removed_channels) === 0) {
+                    $this->set_changes();
                     $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }

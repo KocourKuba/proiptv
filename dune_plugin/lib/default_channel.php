@@ -220,7 +220,6 @@ class Default_Channel extends Json_Serializer implements Channel
         } else {
             $this->get_parent_group()->get_items_order()->add_item($this->_id);
         }
-        $this->plugin->save_orders();
     }
 
     /**
