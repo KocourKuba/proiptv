@@ -148,7 +148,16 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return User_Input_Handler_Registry::create_action($this, self::ACTION_CALL_PLUGIN_SETTINGS);
                         }
 
-                        $this->plugin->tv->load_channels($plugin_cookies);
+                        if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
+                            return Action_Factory::open_folder(
+                                Starnet_Tv_Groups_Screen::ID,
+                                $this->plugin->create_plugin_title(),
+                                null,
+                                null,
+                                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error())
+                            );
+                        }
+
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
                             hd_debug_print("launch play", true);
@@ -165,14 +174,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                     $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
                                 }
                             }
-                            $action = Action_Factory::tv_play($media_url);
-                        } else {
-                            hd_debug_print("action: launch open", true);
-                            $action = Action_Factory::open_folder(
-                                Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
+                            return Action_Factory::tv_play($media_url);
                         }
 
-                        return $action;
+                        hd_debug_print("action: launch open", true);
+                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
 
                     case self::ACTION_LAUNCH_VOD:
                         $this->plugin->init_plugin($plugin_cookies);
@@ -180,8 +186,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return User_Input_Handler_Registry::create_action($this, self::ACTION_CALL_PLUGIN_SETTINGS);
                         }
 
-                        $this->plugin->tv->load_channels($plugin_cookies);
                         if ($this->plugin->vod_enabled && $plugin_cookies->{PARAM_SHOW_VOD_ICON} === SetupControlSwitchDefs::switch_on) {
+                            $this->plugin->tv->load_channels($plugin_cookies);
                             return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
                         }
 
@@ -192,6 +198,17 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         if ((int)$user_input->mandatory_playback !== 1
                             || (isset($plugin_cookies->auto_resume) && $plugin_cookies->auto_resume === SetupControlSwitchDefs::switch_off)) {
                             break;
+                        }
+
+                        if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
+                            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
+                            return Action_Factory::open_folder(
+                                Starnet_Tv_Groups_Screen::ID,
+                                $this->plugin->create_plugin_title(),
+                                null,
+                                null,
+                                $post_action
+                            );
                         }
 
                         $media_url = null;
@@ -207,7 +224,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
                         }
 
-                        $this->plugin->tv->load_channels($plugin_cookies);
                         return Action_Factory::tv_play($media_url);
 
                     case self::ACTION_UPDATE_EPFS:

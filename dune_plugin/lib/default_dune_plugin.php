@@ -241,9 +241,8 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("provider disabled");
             } else {
                 $provider->set_provider_playlist_id($this->get_active_playlist_key());
+                $this->set_current_provider($provider);
             }
-
-            $this->set_current_provider($provider);
         }
 
         return $this->cur_provider;
