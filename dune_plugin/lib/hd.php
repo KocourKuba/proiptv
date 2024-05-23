@@ -1091,8 +1091,8 @@ class HD
         return null;
     }
 
-    public static function escaped_json_encode($param)
+    public static function escaped_raw_json_encode($param)
     {
-        return str_replace('"', '\"', json_encode($param));
+        return str_replace('"', '\"', raw_json_encode($param));
     }
 }
