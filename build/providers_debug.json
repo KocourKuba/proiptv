@@ -133,7 +133,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_101film.png",
       "api_commands": {
-        "playlist": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u"
+        "get_playlist": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u"
       },
       "config": {
         "epg_preset": "drm",
@@ -149,7 +149,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_1cent.png",
       "api_commands": {
-        "playlist": "http://only4.tv/pl/{PASSWORD}/102/only4tv.m3u8"
+        "get_playlist": "http://only4.tv/pl/{PASSWORD}/102/only4tv.m3u8"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$/",
@@ -170,7 +170,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_1ott.png",
       "api_url": "http://list.1ott.net",
       "api_commands": {
-        "playlist": "{API}/api/{TOKEN}/high/{STREAM_ID}",
+        "get_playlist": "{API}/api/{TOKEN}/high/{STREAM_ID}",
         "request_token": "{API}/PinApi/{LOGIN}/{PASSWORD}"
       },
       "config": {
@@ -192,7 +192,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_1usd.png",
       "api_commands": {
-        "playlist": "http://1usd.tv/pl-{PASSWORD}-hls"
+        "get_playlist": "http://1usd.tv/pl-{PASSWORD}-hls"
       },
       "config": {
         "id_map": "tvg-name",
@@ -223,10 +223,10 @@
       "logo": "http://iptv.esalecrm.net/res/logo_antifriz.png",
       "api_url": "http://protected-api.com",
       "api_commands": {
-        "info": "{API}/auth/info",
-        "playlist": "https://af-play.com/playlist/{PASSWORD}.m3u8",
-        "vod": "{API}",
-        "servers": "{API}/servers"
+        "account_info": "{API}/auth/info",
+        "get_playlist": "https://af-play.com/playlist/{PASSWORD}.m3u8",
+        "get_vod": "{API}",
+        "get_servers": "{API}/servers"
       },
       "config": {
         "id_map": "tvg-id",
@@ -244,7 +244,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_bcumedia.png",
       "api_commands": {
-        "playlist": "https://bcumedia.pro/playlist/hls/{PASSWORD}.m3u"
+        "get_playlist": "https://bcumedia.pro/playlist/hls/{PASSWORD}.m3u"
       },
       "config": {
         "id_map": "tvg-id",
@@ -260,7 +260,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_bittv.png",
       "api_commands": {
-        "playlist": "https://bittv.ltd/playlists/{LOGIN}:{PASSWORD}/playlist.m3u"
+        "get_playlist": "https://bittv.ltd/playlists/{LOGIN}:{PASSWORD}/playlist.m3u"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.*\\.m3u8\\?.*$/",
@@ -277,10 +277,10 @@
       "logo": "http://iptv.esalecrm.net/res/logo_cbilling.png",
       "api_url": "http://protected-api.com",
       "api_commands": {
-        "info": "{API}/auth/info",
-        "playlist": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
-        "vod": "http://protected-api.com",
-        "servers": "{API}/servers"
+        "account_info": "{API}/auth/info",
+        "get_playlist": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
+        "get_vod": "http://protected-api.com",
+        "get_servers": "{API}/servers"
       },
       "config": {
         "id_map": "tvg-id",
@@ -308,7 +308,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_crdtv.png",
       "api_commands": {
-        "playlist": "http://crdtv.net/m/{PASSWORD}/crdtv.m3u"
+        "get_playlist": "http://crdtv.net/m/{PASSWORD}/crdtv.m3u"
       }
     },
     {
@@ -317,18 +317,34 @@
       "name": "iEdem/iLook",
       "type": "edem",
       "logo": "http://iptv.esalecrm.net/res/logo_edem.png",
+      "api_url": "http://epg.one",
       "api_commands": {
-        "playlist": "http://epg.one/edem_epg_ico2.m3u8",
-        "vod": "{VPORTAL}"
+        "get_playlist": "{API}/{PLAYLIST}",
+        "get_vod": "{VPORTAL}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$/",
         "domain": "junior.edmonst.net",
+        "epg_preset": "drm",
+        "ext_params": true,
+        "playlists": {
+            "thematic": {
+              "name": "Thematic",
+              "url": "edem_epg_ico2.m3u8"
+            },
+            "thematic_sort": {
+              "name": "Thematic Sorted",
+              "url": "edem_epg_ico3.m3u8"
+            },
+            "standard": {
+              "name": "Standard",
+              "url": "edem_epg_ico.m3u8"
+            }
+        },
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(\\/iptv\\/).+(\\/.+\\/.+)$/",
           "replace": "$1{SUBDOMAIN}$2{OTTKEY}$3"
         },
-        "epg_preset": "drm",
         "dune_params": "hls_forced_type:event,psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -339,7 +355,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_filmax.png",
       "api_commands": {
-        "playlist": "http://lk.filmax-tv.ru/{LOGIN}/{PASSWORD}/hls/p{SERVER_ID}/playlist.m3u8"
+        "get_playlist": "http://lk.filmax-tv.ru/{LOGIN}/{PASSWORD}/hls/p{SERVER_ID}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-name",
@@ -353,7 +369,7 @@
           "index.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "servers": {
+        "get_servers": {
           "1": "Germany",
           "2": "Poland",
           "3": "Moscow",
@@ -371,8 +387,8 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_fox.png",
       "api_commands": {
-        "playlist": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/tv.m3u",
-        "vod": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/vodall.m3u"
+        "get_playlist": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "http://pl.fox-tv.fun/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
         "epg_preset": "drm",
@@ -388,8 +404,8 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
       "api_commands": {
-        "playlist": "http://pl.{DOMAIN_ID}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output={STREAM_ID}",
-        "vod": "http://api.{DOMAIN_ID}/playlist/vod?login={LOGIN}&password={PASSWORD}"
+        "get_playlist": "{PLAYLIST}",
+        "get_vod": "http://api.{DOMAIN_ID}/playlist/vod?login={LOGIN}&password={PASSWORD}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
@@ -407,6 +423,16 @@
           "ottg.space": "ottg.space",
           "ottg.eu": "ottg.eu"
         },
+        "playlists": {
+          "standard": {
+            "name": "Standard",
+            "url": "http://pl.{DOMAIN_ID}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output={STREAM_ID}"
+          },
+          "no_adult": {
+            "name": "No Adult channels",
+            "url": "http://pl.{DOMAIN_ID}/get.php?username={LOGIN}&password={PASSWORD}&type=m3u&output={STREAM_ID}&censored=0"
+          }
+        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -417,8 +443,8 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_ipstream.png",
       "api_commands": {
-        "playlist": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}{STREAM_ID}",
-        "vod": "http://www.ishara.tv/kino-ottn/{PASSWORD}"
+        "get_playlist": "http://file.ipstr.im/iptv/m3u_plus-{PASSWORD}{STREAM_ID}",
+        "get_vod": "http://www.ishara.tv/kino-ottn/{PASSWORD}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
@@ -439,7 +465,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_iptvbest.png",
       "api_commands": {
-        "playlist": "https://smotrim.uno/pl/{PASSWORD}/playlist.m3u8"
+        "get_playlist": "https://smotrim.uno/pl/{PASSWORD}/playlist.m3u8"
       },
       "config": {
         "epg_preset": "drm",
@@ -455,7 +481,7 @@
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "servers": {
+        "get_servers": {
           "pl.seetv.cc": "Poland",
           "de.seetv.cc": "Germany",
           "nl.seetv.cc": "Netherlands",
@@ -475,13 +501,13 @@
       "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
       "api_url": "https://iptv.online/api/v4",
       "api_commands": {
-        "playlist": "{API}/playlist/m3u8",
+        "get_playlist": "{API}/playlist/m3u8",
         "request_token": "{API}/auth",
         "refresh_token": "{API}/oauth2",
-        "info": "{API}/profile",
-        "servers": "{API}/device/info",
-        "set_server": "{API}/device/settings",
-        "vod": "{API}/catalog"
+        "account_info": "{API}/profile",
+        "get_device": "{API}/device/info",
+        "set_device": "{API}/device/settings",
+        "get_vod": "{API}/catalog"
       },
       "config": {
         "epg_preset": "drm",
@@ -507,8 +533,8 @@
       "logo": "http://iptv.esalecrm.net/res/logo_itv.png",
       "api_url": "http://api.itv.live",
       "api_commands": {
-        "info": "{API}/data/{PASSWORD}",
-        "playlist": "https://itv.ooo/p/{PASSWORD}/hls.m3u8"
+        "account_info": "{API}/data/{PASSWORD}",
+        "get_playlist": "https://itv.ooo/p/{PASSWORD}/hls.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
@@ -533,13 +559,13 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_kineskop.png",
       "api_commands": {
-        "playlist": "http://knkp.in/{LOGIN}/{PASSWORD}/{SERVER_ID}/1"
+        "get_playlist": "http://knkp.in/{LOGIN}/{PASSWORD}/{SERVER_ID}/1"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
         "epg_preset": "drm",
         "ext_params": true,
-        "servers": {
+        "get_servers": {
           "DE": "DE",
           "PL": "PL",
           "US": "US",
@@ -555,7 +581,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_klimedia.png",
       "api_commands": {
-        "playlist": "https://klimedia.space/{STREAM_ID}/{LOGIN}/{PASSWORD}/playlist.m3u8"
+        "get_playlist": "https://klimedia.space/{STREAM_ID}/{LOGIN}/{PASSWORD}/playlist.m3u8"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/lb\\/(?<id>.+)\\/.+$/",
@@ -574,7 +600,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_lightiptv.png",
       "api_commands": {
-        "playlist": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
+        "get_playlist": "http://lightiptv.cc/playlist/hls/{PASSWORD}.m3u"
       },
       "config": {
         "id_map": "name",
@@ -599,13 +625,13 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_mymagic.png",
       "api_commands": {
-        "playlist": "http://pl.mymagic.tv/srv/{SERVER_ID}/{QUALITY_ID}/{LOGIN}/{PASSWORD}/tv.m3u"
+        "get_playlist": "http://pl.mymagic.tv/srv/{SERVER_ID}/{QUALITY_ID}/{LOGIN}/{PASSWORD}/tv.m3u"
       },
       "config": {
         "epg_preset": "drm",
         "epg_alias": "magic",
         "ext_params": true,
-        "servers": {
+        "get_servers": {
           "0": "Default",
           "1": "Germany 1",
           "2": "Czech",
@@ -628,8 +654,8 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_onlineott.png",
       "api_commands": {
-        "playlist": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
-        "vod": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/vodall.m3u"
+        "get_playlist": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "http://pl.onlineott-tv.site/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
         "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<country>.+)\\s(?<year>\\d+)\\)$/",
@@ -644,7 +670,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_ottclub.png",
       "icons_template": "http://{DOMAIN}/images/{ID}.png",
       "api_commands": {
-        "playlist": "http://{DOMAIN_ID}/playlist/{PASSWORD}/m3u"
+        "get_playlist": "http://{DOMAIN_ID}/playlist/{PASSWORD}/m3u"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/.+\\/(?<id>.+)\\.m3u8?$/",
@@ -664,8 +690,8 @@
       "logo": "http://iptv.esalecrm.net/res/logo_ping.png",
       "api_url": "pl.ping-tv.com",
       "api_commands": {
-        "playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
-        "vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
+        "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
         "epg_preset": "drm",
@@ -681,8 +707,8 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_rutv.png",
       "api_commands": {
-        "playlist": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
-        "vod": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/vod.m3u"
+        "get_playlist": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "http://pl.ru-tv.site/{LOGIN}/{PASSWORD}/vod.m3u"
       },
       "config": {
         "vod_parser": "/^(?<title>[^\\/]+)\\s\\((?:(?<country>.+)\\s)?(?<year>\\d+)\\)$/",
@@ -696,7 +722,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
       "api_commands": {
-        "playlist": "https://russkoetv.tv/play/{PASSWORD}.m3u8"
+        "get_playlist": "https://russkoetv.tv/play/{PASSWORD}.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
@@ -711,7 +737,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
       "api_commands": {
-        "playlist": "{STREAM_ID}"
+        "get_playlist": "{STREAM_ID}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+$/",
@@ -724,7 +750,7 @@
           "http://iptv11.com/{PASSWORD}.m3u8": "HLS",
           "http://iptv11.com/iptv/{PASSWORD}-ts.m3u": "MPEG-TS"
         },
-        "servers": {
+        "get_servers": {
           "cdn.iptv11.com": "Germany",
           "serv2.iptv11.com": "Poland 1",
           "serv6.iptv11.com": "Poland 2",
@@ -744,7 +770,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharatv.png",
       "api_commands": {
-        "playlist": "http://tvfor.pro/g/{LOGIN}:{PASSWORD}/1/playlist.m3u"
+        "get_playlist": "http://tvfor.pro/g/{LOGIN}:{PASSWORD}/1/playlist.m3u"
       },
       "config": {
         "id_map": "tvg-id",
@@ -762,11 +788,11 @@
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
       "api_url": "http://list.playtv.pro/api/players.php",
       "api_commands": {
-        "playlist": "http://list.playtv.pro/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}",
-        "vod": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}",
-        "info": "{API}?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "get_playlist": "http://list.playtv.pro/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}",
+        "get_vod": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}",
+        "account_info": "{API}?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "pay": "{API}?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
-        "servers": "{API}?a=ch_cdn&u={LOGIN}-{PASSWORD}&source=dune_editor",
+        "get_servers": "{API}?a=ch_cdn&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "set_server": "{API}?a=ch_cdn&num={SERVER_ID}&u={LOGIN}-{PASSWORD}&source=dune_editor"
       },
       "config": {
@@ -788,8 +814,8 @@
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
       "api_url": "http://api.program.spr24.net/api",
       "api_commands": {
-        "playlist": "http://www.sharavoz.tv/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
-        "vod": "http://app.media24.cc/json/c"
+        "get_playlist": "http://www.sharavoz.tv/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
+        "get_vod": "http://app.media24.cc/json/c"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
@@ -803,7 +829,7 @@
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "servers": {
+        "get_servers": {
           "ru01.spr24.net": "Russia (RU01)",
           "ru02.spr24.net": "Moscow (RU02)",
           "nl01.spr24.net": "Amsterdam (NL01)",
@@ -823,13 +849,13 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_shuratv.png",
       "api_commands": {
-        "playlist": "http://pl.tvshka.net/?uid={PASSWORD}&srv={SERVER_ID}&type=halva"
+        "get_playlist": "http://pl.tvshka.net/?uid={PASSWORD}&srv={SERVER_ID}&type=halva"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
         "epg_preset": "shuratv",
         "ext_params": true,
-        "servers": {
+        "get_servers": {
           "0": "Server 1",
           "1": "Server 2"
         },
@@ -843,13 +869,13 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_smile.png",
       "api_commands": {
-        "playlist": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/tv.m3u?srv={SERVER_ID}",
-        "vod": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}"
+        "get_playlist": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/tv.m3u?srv={SERVER_ID}",
+        "get_vod": "http://pl.smile-tv.live/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}"
       },
       "config": {
         "epg_preset": "drm",
         "ext_params": true,
-        "servers": {
+        "get_servers": {
           "0": "Auto Select",
           "1": "Server CZ",
           "2": "Server DE",
@@ -867,7 +893,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_topiptv.png",
       "api_commands": {
-        "playlist": "https://s.topiptv.link/list.php?login={LOGIN}&password={PASSWORD}&type=m3u"
+        "get_playlist": "https://s.topiptv.link/list.php?login={LOGIN}&password={PASSWORD}&type=m3u"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/(?<id>.+)\\?token=.*$/",
@@ -882,9 +908,9 @@
       "logo": "http://iptv.esalecrm.net/res/logo_tvclub.png",
       "api_url": "http://api.iptv.so/0.9/json",
       "api_commands": {
-        "playlist": "http://celn.shott.top/p/{TOKEN}",
-        "info": "{API}/account?token={TOKEN}",
-        "servers": "{API}/servers?token={TOKEN}",
+        "get_playlist": "http://celn.shott.top/p/{TOKEN}",
+        "account_info": "{API}/account?token={TOKEN}",
+        "get_servers": "{API}/servers?token={TOKEN}",
         "set_server": "{API}/set?token={TOKEN}&server={SERVER_ID}"
       },
       "config": {
@@ -903,7 +929,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
       "api_commands": {
-        "playlist": "http://troya.one/pl/11/{PASSWORD}/playlist.m3u8"
+        "get_playlist": "http://troya.one/pl/11/{PASSWORD}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-name",
@@ -933,7 +959,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
       "api_commands": {
-        "playlist": "https://{DOMAIN_ID}/play/{PASSWORD}/m3u8"
+        "get_playlist": "https://{DOMAIN_ID}/play/{PASSWORD}/m3u8"
       },
       "config": {
         "epg_preset": "drm",
@@ -953,7 +979,7 @@
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "servers": {
+        "get_servers": {
           "pl.seetv.cc": "Poland",
           "de.seetv.cc": "Germany",
           "nl.seetv.cc": "Netherlands",
@@ -973,9 +999,9 @@
       "logo": "http://iptv.esalecrm.net/res/logo_vidok.png",
       "api_url": "http://sapi.ott.st/v2.4/json",
       "api_commands": {
-        "playlist": "http://bddpv.plist.top/p/{TOKEN}",
-        "info": "{API}/account?token={TOKEN}",
-        "servers": "{API}/server_list?token={TOKEN}",
+        "get_playlist": "http://bddpv.plist.top/p/{TOKEN}",
+        "account_info": "{API}/account?token={TOKEN}",
+        "get_servers": "{API}/server_list?token={TOKEN}",
         "set_server": "{API}/settings_set?token={TOKEN}&server={SERVER_ID}"
       },
       "config": {
@@ -991,8 +1017,8 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_viplime.png",
       "api_commands": {
-        "playlist": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
-        "vod": "http://m.cdntv.online/f/{PASSWORD}/playlist.m3u8"
+        "get_playlist": "http://cdntv.online/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
+        "get_vod": "http://m.cdntv.online/f/{PASSWORD}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
@@ -1024,13 +1050,13 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
       "api_commands": {
-        "playlist": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}playlist.m3u8"
+        "get_playlist": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}playlist.m3u8"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>[^\\/]+)\\/(?<id>.+)\\/.+$/",
         "epg_preset": "drm",
         "ext_params": true,
-        "servers": {
+        "get_servers": {
           "/": "RU (Russia, Moscow, DC1)",
           "kfc/": "KFC (Russia, Moscow, DC2)",
           "OSTHLS/": "OSTHLS (Russia, Moscow, DC3)",

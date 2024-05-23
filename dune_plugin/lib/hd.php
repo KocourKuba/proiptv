@@ -246,7 +246,10 @@ class HD
      */
     public static function http_download_https_proxy($url, $save_file = null, $curl_options = array())
     {
-        hd_debug_print("curl opt: " . json_encode($curl_options), true);
+        if (!empty($curl_options)) {
+            hd_debug_print("curl options: " . json_encode($curl_options), true);
+        }
+
         $ret_content = empty($save_file);
 
         $logfile = get_temp_path(self::HTTPS_PROXY_LOG);

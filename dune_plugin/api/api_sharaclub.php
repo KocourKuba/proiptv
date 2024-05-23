@@ -104,7 +104,7 @@ class api_sharaclub extends api_default
         hd_debug_print(null, true);
 
         $servers = array();
-        $data = $this->execApiCommand(API_COMMAND_SERVERS);
+        $data = $this->execApiCommand(API_COMMAND_GET_SERVERS);
         if (isset($data->status)) {
             foreach ($data->allow_nums as $server) {
                 $servers[(int)$server->id] = $server->name;

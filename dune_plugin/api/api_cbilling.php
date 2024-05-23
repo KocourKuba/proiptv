@@ -66,7 +66,7 @@ class api_cbilling extends api_default
         hd_debug_print(null, true);
 
         $servers = array();
-        $data = $this->execApiCommand(API_COMMAND_SERVERS);
+        $data = $this->execApiCommand(API_COMMAND_GET_SERVERS);
         if (isset($data->data)) {
             foreach ($data->data as $server) {
                 $servers[$server->name] = $server->country;

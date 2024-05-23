@@ -379,10 +379,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if (is_array($id)) {
-                    return $id;
-                }
-
                 if ($this->plugin->get_active_playlist_key() === $id) {
                     if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                         return Action_Factory::invalidate_all_folders($plugin_cookies,

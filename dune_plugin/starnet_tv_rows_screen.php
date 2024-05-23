@@ -466,16 +466,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     {
         hd_debug_print(null, true);
 
-        return array(
-            GUI_EVENT_KEY_PLAY                => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY),
-            GUI_EVENT_KEY_ENTER               => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
-            GUI_EVENT_KEY_B_GREEN             => User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_UP),
-            GUI_EVENT_KEY_C_YELLOW            => User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_DOWN),
-            GUI_EVENT_KEY_D_BLUE              => User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_ADD),
-            GUI_EVENT_KEY_INFO                => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO),
-            GUI_EVENT_KEY_POPUP_MENU          => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
-            GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE => User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE),
-        );
+        $actions[GUI_EVENT_KEY_PLAY]                = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY);
+        $actions[GUI_EVENT_KEY_ENTER]               = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
+        $actions[GUI_EVENT_KEY_B_GREEN]             = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_UP);
+        $actions[GUI_EVENT_KEY_C_YELLOW]            = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_DOWN);
+        $actions[GUI_EVENT_KEY_D_BLUE]              = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_ADD);
+        $actions[GUI_EVENT_KEY_INFO]                = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
+        $actions[GUI_EVENT_KEY_POPUP_MENU]          = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
+
+        return $actions;
     }
 
     /**
@@ -774,17 +774,32 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return $this->plugin->do_show_add_money();
 
             case ACTION_EDIT_PROVIDER_DLG:
-                return $this->plugin->do_edit_provider_dlg($this, 'current');
-
-            case ACTION_EDIT_PROVIDER_DLG_APPLY:
+            case ACTION_EDIT_PROVIDER_EXT_DLG:
                 $this->save_if_changed();
-                $id = $this->plugin->apply_edit_provider_dlg($user_input);
-                if ($id === null) {
-                    return null;
+                return $this->plugin->show_protect_settings_dialog($this,
+                    ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
+                        ? ACTION_DO_EDIT_PROVIDER
+                        : ACTION_DO_EDIT_PROVIDER_EXT);
+
+            case ACTION_DO_EDIT_PROVIDER:
+            case ACTION_DO_EDIT_PROVIDER_EXT:
+                if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
+                    return $this->plugin->do_edit_provider_dlg($this, 'current');
                 }
 
-                if (is_array($id)) {
-                    return $id;
+                return $this->plugin->do_edit_provider_ext_dlg($this);
+
+            case ACTION_EDIT_PROVIDER_DLG_APPLY:
+            case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
+                $this->set_no_changes();
+                if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
+                    $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                } else {
+                    $id = $this->plugin->apply_edit_provider_ext_dlg($user_input);
+                }
+
+                if ($id === null) {
+                    return null;
                 }
 
                 return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);

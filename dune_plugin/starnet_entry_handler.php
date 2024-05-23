@@ -37,11 +37,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_INSTALL = 'install';
     const ACTION_UNINSTALL = 'uninstall';
     const ACTION_UPDATE = 'update';
-    const ACTION_DO_CHANNELS_SETTINGS = 'do_channels_setup';
-    const ACTION_DO_PLUGIN_SETTINGS = 'do_setup';
-    const ACTION_DO_REBOOT = 'do_reboot';
-    const ACTION_DO_SEND_LOG = 'do_send_log';
-    const ACTION_DO_CLEAR_EPG = 'do_clear_epg';
+    const ACTION_CALL_PLUGIN_SETTINGS = 'call_setup';
+    const ACTION_CALL_CHANNELS_SETTINGS = 'call_channels_setup';
+    const ACTION_CHANNELS_SETTINGS = 'channels_settings';
+    const ACTION_CALL_REBOOT = 'call_reboot';
+    const ACTION_CALL_SEND_LOG = 'call_send_log';
+    const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
 
     private $plugin;
 
@@ -75,12 +76,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         hd_debug_print("user input control: $user_input->control_id", true);
         switch ($user_input->control_id) {
-            case self::ACTION_DO_REBOOT:
+            case self::ACTION_CALL_REBOOT:
                 return Action_Factory::restart(true);
 
-            case self::ACTION_DO_PLUGIN_SETTINGS:
+            case self::ACTION_CALL_PLUGIN_SETTINGS:
                 $this->plugin->init_plugin();
                 return $this->plugin->show_protect_settings_dialog($this, ACTION_SETTINGS);
+
+            case ACTION_SETTINGS:
+                return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
 
             case ACTION_PASSWORD_APPLY:
                 if ($this->plugin->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
@@ -88,18 +92,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
                 return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
 
-            case ACTION_SETTINGS:
-                return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
-
-            case self::ACTION_DO_CHANNELS_SETTINGS:
+            case self::ACTION_CALL_CHANNELS_SETTINGS:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_protect_settings_dialog($this, ACTION_CHANNELS_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_CHANNELS_SETTINGS);
 
-            case ACTION_CHANNELS_SETTINGS:
-                $this->plugin->init_plugin();
+            case self::ACTION_CHANNELS_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::ID, TR::t('tv_screen_playlists_setup'));
 
-            case self::ACTION_DO_SEND_LOG:
+            case self::ACTION_CALL_SEND_LOG:
                 if (is_newer_versions()) {
                     $error_msg = '';
                     $msg = HD::send_log_to_developer($this->plugin->plugin_info['app_version'], $error_msg)
@@ -110,7 +110,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 return Action_Factory::show_title_dialog(TR::t('entry_log_not_sent_too_old'));
 
-            case self::ACTION_DO_CLEAR_EPG:
+            case self::ACTION_CALL_CLEAR_EPG:
                 $this->plugin->init_plugin();
                 $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->init_epg_manager();
@@ -145,7 +145,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_playlists()->size() === 0) {
-                            return User_Input_Handler_Registry::create_action($this, self::ACTION_DO_PLUGIN_SETTINGS);
+                            return User_Input_Handler_Registry::create_action($this, self::ACTION_CALL_PLUGIN_SETTINGS);
                         }
 
                         $this->plugin->tv->load_channels($plugin_cookies);
@@ -177,7 +177,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     case self::ACTION_LAUNCH_VOD:
                         $this->plugin->init_plugin($plugin_cookies);
                         if ($this->plugin->get_playlists()->size() === 0) {
-                            return User_Input_Handler_Registry::create_action($this, self::ACTION_DO_PLUGIN_SETTINGS);
+                            return User_Input_Handler_Registry::create_action($this, self::ACTION_CALL_PLUGIN_SETTINGS);
                         }
 
                         $this->plugin->tv->load_channels($plugin_cookies);

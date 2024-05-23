@@ -116,6 +116,8 @@ class api_edem extends api_default
 
         hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . raw_json_encode($this->playlist_info->params), true);
 
+        $this->set_default_settings($user_input, $id);
+
         return $id;
     }
 
@@ -138,10 +140,10 @@ class api_edem extends api_default
             $str .= $info->params[MACRO_VPORTAL];
         }
 
-        if (!empty($str)) {
-            return Hashed_Array::hash($info->type . $info->name . $str);
+        if (empty($str)) {
+            return '';
         }
 
-        return '';
+        return $this->getId() . "_" . Hashed_Array::hash($info->type . $info->name . $str);
     }
 }

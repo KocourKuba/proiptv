@@ -4,6 +4,11 @@ require_once 'api_default.php';
 class api_iptvonline extends api_default
 {
     /**
+     * @var Object
+     */
+    protected $device;
+
+    /**
      * @inheritDoc
      */
     public function request_provider_token($force = false)
@@ -131,6 +136,10 @@ class api_iptvonline extends api_default
                 Control_Factory::add_label($defs, TR::t('server'), $data->server_name, -15);
             }
 
+            if (isset($data->selected_playlist->title)) {
+                Control_Factory::add_label($defs, TR::t('playlist'), $data->selected_playlist->title, -15);
+            }
+
             if (isset($data->subscriptions)) {
                 $packages = '';
                 foreach ($data->subscriptions as $subscription) {
@@ -157,12 +166,17 @@ class api_iptvonline extends api_default
 
         hd_debug_print(null, true);
 
-        $servers = array();
-        $data = $this->execApiCommand(API_COMMAND_SERVERS);
-        if (isset($data->status) && $data->status === 200) {
-            $servers = $this->collect_servers($data);
+        if (empty($this->device)) {
+            $data = $this->execApiCommand(API_COMMAND_GET_DEVICE);
+            if (isset($data->status) && $data->status === 200) {
+                $this->device = $data;
+            }
         }
 
+        $servers = $this->collect_servers($selected);
+        if ($selected !== $this->getCredential(MACRO_SERVER_ID)) {
+            $this->setCredential(MACRO_SERVER_ID, $selected);
+        }
         return $servers;
     }
 
@@ -177,25 +191,103 @@ class api_iptvonline extends api_default
         $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
         $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_json_encode(array("server_location" => $server));
 
-        $response = $this->execApiCommand(API_COMMAND_SET_SERVER, null, true, $curl_opt);
-        if (isset($data->status) && $data->status === 200) {
-            $this->collect_servers($response);
+        $response = $this->execApiCommand(API_COMMAND_SET_DEVICE, null, true, $curl_opt);
+        if (isset($response->status) && $response->status === 200) {
+            $this->device = $response;
+            $this->collect_servers($selected);
+            $this->setCredential(MACRO_SERVER_ID, $selected);
+            $this->account_info = null;
         }
     }
 
-    protected function collect_servers($data)
+    /**
+     * returns list of account playlists
+     * @return array|null
+     */
+    public function GetPlaylists()
     {
-        $servers = array();
-        $selected = -1;
-        foreach ($data->device->settings->server_location->value as $server) {
-            $servers[(int)$server->id] = $server->label;
-            if ($server->selected) {
-                $selected = (int)$server->id;
+        parent::GetPlaylists();
+
+        hd_debug_print(null, true);
+
+        if (empty($this->device)) {
+            $data = $this->execApiCommand(API_COMMAND_GET_DEVICE);
+            if (isset($data->status) && $data->status === 200) {
+                $this->device = $data;
             }
         }
 
-        $this->setCredential(MACRO_SERVER_ID, $selected);
+        $playlists = $this->collect_playlists($selected);
+        if ($selected !== $this->getCredential(MACRO_PLAYLIST_ID)) {
+            $this->setCredential(MACRO_PLAYLIST_ID, $selected);
+        }
+
+        return $playlists;
+    }
+
+    /**
+     * set server
+     * @param $id
+     * @return void
+     */
+    public function SetPlaylist($id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("SetPlaylist: $id");
+
+        $curl_opt[CURLOPT_POST] = true;
+        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
+        $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_json_encode(array("user_playlists" => $id));
+
+        $response = $this->execApiCommand(API_COMMAND_SET_DEVICE, null, true, $curl_opt);
+        if (isset($response->status) && $response->status === 200) {
+            $this->device = $response;
+            $this->collect_playlists($selected);
+            parent::SetPlaylist($selected);
+            $this->account_info = null;
+        } else {
+            hd_debug_print("Can't set playlist: " . json_encode($response));
+        }
+    }
+
+    /**
+     * collect servers information
+     * @param string $selected
+     * @return array
+     */
+    protected function collect_servers(&$selected = "-1")
+    {
+        $servers = array();
+        if (isset($this->device->device->settings->server_location->value)) {
+            foreach ($this->device->device->settings->server_location->value as $server) {
+                $servers[(string)$server->id] = $server->label;
+                if ($server->selected) {
+                    $selected = (string)$server->id;
+                }
+            }
+        }
 
         return $servers;
+    }
+
+    /**
+     * collect playlists information
+     * @param string &$selected
+     * @return array
+     */
+    protected function collect_playlists(&$selected = "-1")
+    {
+        $playlists = array();
+        if (isset($this->device->device->settings->user_playlists->value)) {
+            foreach ($this->device->device->settings->user_playlists->value as $playlist) {
+                $idx = (string)$playlist->id;
+                $playlists[$idx]['name'] = $playlist->label;
+                if ($playlist->selected) {
+                    $selected = $idx;
+                }
+            }
+        }
+
+        return $playlists;
     }
 }

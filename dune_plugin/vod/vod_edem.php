@@ -23,7 +23,7 @@ class vod_edem extends vod_standard
             $show = false;
         } else {
             $commands = $this->provider->getApiCommands();
-            list(, $this->vportal_key, $commands[API_COMMAND_VOD]) = $matches;
+            list(, $this->vportal_key, $commands[API_COMMAND_GET_VOD]) = $matches;
             $this->provider->setApiCommands($commands);
             $show = true;
         }
@@ -282,6 +282,6 @@ class vod_edem extends vod_standard
         $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
         $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_json_encode($pairs);
 
-        return $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $curl_opt);
+        return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
     }
 }

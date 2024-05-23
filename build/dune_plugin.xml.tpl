@@ -102,7 +102,7 @@
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>do_setup</control_id>
+                                <control_id>call_setup</control_id>
                             </params>
                         </action>
                     </menu_item>
@@ -113,7 +113,7 @@
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>do_channels_setup</control_id>
+                                <control_id>channels_settings</control_id>
                             </params>
                         </action>
                     </menu_item>
@@ -124,7 +124,7 @@
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>do_clear_epg</control_id>
+                                <control_id>call_clear_epg</control_id>
                             </params>
                         </action>
                     </menu_item>
@@ -135,7 +135,7 @@
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>do_reboot</control_id>
+                                <control_id>call_reboot</control_id>
                             </params>
                         </action>
                     </menu_item>
@@ -146,7 +146,7 @@
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>do_send_log</control_id>
+                                <control_id>call_send_log</control_id>
                             </params>
                         </action>
                     </menu_item>

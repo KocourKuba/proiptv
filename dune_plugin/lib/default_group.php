@@ -234,7 +234,6 @@ class Default_Group extends Json_Serializer implements Group
                 $this->plugin->tv->get_disabled_group_ids()->remove_item($this->_id);
                 $this->plugin->tv->get_groups_order()->add_item($this->_id);
             }
-            $this->plugin->save_orders();
         }
     }
 

@@ -333,12 +333,12 @@ class Starnet_Tv implements User_Input_Handler
     public function disable_group($group_id)
     {
         hd_debug_print("Hide group: $group_id");
+        /** @var Default_Group $group */
         if (($group = $this->groups->get($group_id)) !== null) {
             $group->set_disabled(true);
         }
 
         $this->get_groups_order()->remove_item($group_id);
-        $this->plugin->save_settings();
     }
 
     /**
@@ -524,22 +524,15 @@ class Starnet_Tv implements User_Input_Handler
 
         HD::set_last_error("pl_last_error", null);
 
-        $this->plugin->load_settings(true);
-        $this->plugin->load_orders(true);
-        $this->plugin->load_history(true);
         $this->plugin->create_screen_views();
+
+        // first check if playlist in cache
+        if (!$this->plugin->init_playlist()) {
+            return 0;
+        }
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
-        /** @var Hashed_Array<string, string> $custom_group_icons */
-        $custom_group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
-        // convert absolute path to filename
-        foreach($custom_group_icons as $key => $icon) {
-            if (strpos($icon, DIRECTORY_SEPARATOR) !== false) {
-                $icon = basename($icon);
-                $custom_group_icons->set($key, $icon);
-            }
-        }
 
         // Favorites category
         $special_group = new Default_Group($this->plugin,
@@ -583,17 +576,33 @@ class Starnet_Tv implements User_Input_Handler
 
         $first_run = $this->get_known_channels()->size() === 0;
 
+        $this->plugin->load_settings(true);
+        $this->plugin->load_history(true);
+        $this->plugin->load_orders(true);
+
+        // move group icons to orders
+        if ($this->plugin->get_setting(PARAM_GROUPS_ICONS) !== null) {
+            hd_debug_print("Move group icons setting from playlist to order settings");
+            $this->plugin->set_orders(PARAM_GROUPS_ICONS, $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array()));
+            $this->plugin->remove_setting(PARAM_GROUPS_ICONS);
+        }
+
+        /** @var Hashed_Array<string, string> $custom_group_icons */
+        $custom_group_icons = $this->plugin->get_orders(PARAM_GROUPS_ICONS, new Hashed_Array());
+        // convert absolute path to filename
+        foreach ($custom_group_icons as $key => $icon) {
+            if (strpos($icon, DIRECTORY_SEPARATOR) !== false) {
+                $icon = basename($icon);
+                $custom_group_icons->set($key, $icon);
+            }
+        }
+
         /** @var Group $special_group */
         foreach ($this->special_groups as $special_group) {
             $group_icon = $custom_group_icons->get($special_group->get_id());
             if (!is_null($group_icon)) {
                 $special_group->set_icon_url(get_cached_image_path($group_icon));
             }
-        }
-
-        // first check if playlist in cache
-        if (!$this->plugin->init_playlist()) {
-            return 0;
         }
 
         $icon_base_url = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
@@ -764,6 +773,7 @@ class Starnet_Tv implements User_Input_Handler
                 PARAM_DISABLED_CHANNELS,
                 PARAM_KNOWN_CHANNELS,
                 PARAM_GROUPS_ORDER,
+                PARAM_GROUPS_ICONS,
                 FAVORITES_GROUP_ID,
                 FAVORITES_MOVIE_GROUP_ID,
             )

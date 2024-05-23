@@ -31,10 +31,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ID = 'tv_groups';
 
     const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
-    const ACTION_DO_EDIT_PROVIDER = 'do_edit_provider';
-    const ACTION_DO_EDIT_PROVIDER_EXT = 'do_edit_provider_ext';
     const ACTION_DO_SETTINGS = 'do_edit_settings';
-    const ACTION_DO_CHANNELS_SETTINGS = 'do_channels_settings';
     const ACTION_DO_EPG_SETTINGS = 'do_epg_settings';
 
     ///////////////////////////////////////////////////////////////////////
@@ -65,6 +62,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_D_BLUE]     = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS, TR::t('entry_setup'));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
+        $provider = $this->plugin->get_current_provider();
+        if (!is_null($provider) && $provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+            $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
+        }
+
         return $actions;
     }
 
@@ -75,6 +77,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         hd_debug_print(null, true);
         dump_input_handler($user_input);
+
+        if (!isset($user_input->parent_media_url)) {
+            return null;
+        }
 
         $sel_ndx = isset($user_input->sel_ndx) ? $user_input->sel_ndx : 0;
         if (isset($user_input->selected_media_url)) {
@@ -244,7 +250,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $this->save_if_changed();
                 if (isset($user_input->{ACTION_CHANGE_PLAYLIST})) {
                     $menu_items = $this->plugin->playlist_menu($this);
                 } else if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
@@ -310,12 +315,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->save_if_changed();
                 return $this->plugin->show_protect_settings_dialog($this,
                     ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
-                        ? self::ACTION_DO_EDIT_PROVIDER
-                        : self::ACTION_DO_EDIT_PROVIDER_EXT);
+                        ? ACTION_DO_EDIT_PROVIDER
+                        : ACTION_DO_EDIT_PROVIDER_EXT);
 
-            case self::ACTION_DO_EDIT_PROVIDER:
-            case self::ACTION_DO_EDIT_PROVIDER_EXT:
-                if ($user_input->control_id === self::ACTION_DO_EDIT_PROVIDER) {
+            case ACTION_DO_EDIT_PROVIDER:
+            case ACTION_DO_EDIT_PROVIDER_EXT:
+                if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
                     return $this->plugin->do_edit_provider_dlg($this, 'current');
                 }
 
@@ -325,29 +330,16 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
                 $this->set_no_changes();
                 if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
-                    $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                    $res = $this->plugin->apply_edit_provider_dlg($user_input);
                 } else {
-                    $id = $this->plugin->apply_edit_provider_ext_dlg($user_input);
+                    $res = $this->plugin->apply_edit_provider_ext_dlg($user_input);
                 }
 
-                if ($id === null) {
-                    return null;
+                if ($res) {
+                    return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);
                 }
 
-                if (is_array($id)) {
-                    return $id;
-                }
-
-                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,
-                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
-                }
-
-                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-                return Action_Factory::invalidate_all_folders($plugin_cookies,
-                    Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
-                        $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx))
-                );
+                return null;
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
@@ -389,9 +381,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     hd_debug_print("Assign icon: $cached_image to group: $sel_media_url->group_id");
 
                     /** @var Hashed_Array $group_icons */
-                    $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
+                    $group_icons = $this->plugin->get_orders(PARAM_GROUPS_ICONS, new Hashed_Array());
                     $group_icons->set($sel_media_url->group_id, $cached_image_name);
-                    $this->plugin->save_settings(true);
+                    $this->plugin->save_orders(true);
                     $this->set_no_changes(PLUGIN_SETTINGS);
 
                     /** @var Group $known_group */
@@ -471,9 +463,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
 
                     /** @var Hashed_Array<string> $group_icons */
-                    $group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
+                    $group_icons = $this->plugin->get_orders(PARAM_GROUPS_ICONS, new Hashed_Array());
                     $group_icons->erase($sel_media_url->group_id);
-                    $this->plugin->save_settings(true);
+                    $this->plugin->save_orders(true);
                     $this->set_no_changes(PLUGIN_SETTINGS);
                 }
                 break;
@@ -525,18 +517,23 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_REFRESH_SCREEN:
                 $this->save_if_changed();
+                if (isset($user_input->parent_media_url)) {
+                    $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
-                $post_action = Action_Factory::close_and_run(Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title()));
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+                    $post_action = Action_Factory::close_and_run(Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title()));
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,
+                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0, $post_action)
+                    );
+                }
+                return null;
 
             case ACTION_EMPTY:
             default:
                 return null;
         }
 
-        return Action_Factory::update_regular_folder(
-            $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies), true, $sel_ndx
-        );
+        $post_action = $this->get_folder_range(MediaURL::decode($user_input->parent_media_url),0, $plugin_cookies);
+        return Action_Factory::update_regular_folder($post_action, true, $sel_ndx);
     }
 
     /**

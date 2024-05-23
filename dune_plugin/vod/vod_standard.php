@@ -112,7 +112,7 @@ class vod_standard extends Abstract_Vod
     public function init_vod($provider)
     {
         $this->provider = $provider;
-        if (!$provider->hasApiCommand(API_COMMAND_VOD)) {
+        if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
             return false;
         }
 
@@ -733,7 +733,7 @@ class vod_standard extends Abstract_Vod
         if (!$need_load) {
             $this->vod_items = HD::ReadContentFromFile($tmp_file, false);
         } else {
-            $this->vod_items = $this->provider->execApiCommand(API_COMMAND_VOD);
+            $this->vod_items = $this->provider->execApiCommand(API_COMMAND_GET_VOD);
             if ($this->vod_items !== false) {
                 HD::StoreContentToFile($tmp_file, $this->vod_items);
             } else {

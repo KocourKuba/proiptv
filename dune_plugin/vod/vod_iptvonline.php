@@ -309,7 +309,7 @@ class vod_iptvonline extends vod_standard
             $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_json_encode($params[CURLOPT_POSTFIELDS]);
         }
 
-        $data = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $curl_opt);
+        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
         if (!isset($data->success, $data->status) || !$data->success || $data->status !== 200) {
             hd_debug_print("Wrong response: " . json_encode($data));
             return false;

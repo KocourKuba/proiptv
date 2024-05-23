@@ -12,7 +12,7 @@ class vod_sharaclub extends vod_standard
 
         $this->vod_filters = array("genre", "from", "to");
 
-        $data = $provider->execApiCommand(API_COMMAND_INFO);
+        $data = $provider->execApiCommand(API_COMMAND_ACCOUNT_INFO);
         if (!isset($data->data)) {
             return false;
         }

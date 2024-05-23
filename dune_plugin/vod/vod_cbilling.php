@@ -20,7 +20,7 @@ class vod_cbilling extends vod_standard
     {
         parent::init_vod($provider);
 
-        $data = $provider->execApiCommand(API_COMMAND_INFO);
+        $data = $provider->execApiCommand(API_COMMAND_ACCOUNT_INFO);
         if (!isset($data->data)) {
             return false;
         }
@@ -35,7 +35,7 @@ class vod_cbilling extends vod_standard
         }
 
         $scheme = (isset($data->ssl) && $data->ssl) ? "https://" : "http://";
-        $this->server = $scheme . (isset($data->server) ? $data->server : $provider->getApiCommand(API_COMMAND_VOD));
+        $this->server = $scheme . (isset($data->server) ? $data->server : $provider->getApiCommand(API_COMMAND_GET_VOD));
         return true;
     }
 
@@ -47,7 +47,7 @@ class vod_cbilling extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
         $params[self::VOD_GET_PARAM_PATH] = "/video/$movie_id";
-        $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
+        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
         if (!isset($response->data)) {
             return null;
         }
@@ -106,7 +106,7 @@ class vod_cbilling extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $jsonItems = $this->provider->execApiCommand(API_COMMAND_VOD);
+        $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD);
         if ($jsonItems === false) {
             $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
             $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
@@ -126,7 +126,7 @@ class vod_cbilling extends vod_standard
 
             // fetch genres for category
             $params[self::VOD_GET_PARAM_PATH] = "/cat/$id/genres";
-            $genres = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
+            $genres = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
             if ($genres === false) {
                 continue;
             }
@@ -159,7 +159,7 @@ class vod_cbilling extends vod_standard
     public function getSearchList($keyword)
     {
         $params[self::VOD_GET_PARAM_PATH] = "/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
-        $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
+        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
         return $response === false ? array() : $this->CollectSearchResult($response);
     }
 
@@ -184,7 +184,7 @@ class vod_cbilling extends vod_standard
             $params[self::VOD_GET_PARAM_PATH] = "/genres/$genre_id?page=$val";
         }
 
-        $response = $this->provider->execApiCommand(API_COMMAND_VOD, null, true, $params);
+        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
         return $response === false ? array() : $this->CollectSearchResult($response);
     }
 

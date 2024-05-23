@@ -160,6 +160,11 @@ class Default_Dune_Plugin implements DunePlugin
      */
     protected $cur_provider;
 
+    /**
+     * @var string
+     */
+    protected $cur_provider_playlist_id = '';
+
     ///////////////////////////////////////////////////////////////////////
 
     protected function __construct()
@@ -222,8 +227,6 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_current_provider()
     {
-        hd_debug_print(null, true);
-
         $playlist = $this->get_current_playlist();
         if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
             hd_debug_print("Current settings is not a provider");
@@ -231,15 +234,16 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if (is_null($this->cur_provider)) {
-            $this->cur_provider = $this->create_provider_class($playlist->params[PARAM_PROVIDER]);
-            if (is_null($this->cur_provider)) {
+            $provider = $this->create_provider_class($playlist->params[PARAM_PROVIDER]);
+            if (is_null($provider)) {
                 hd_debug_print("unknown provider");
-            } else if (!$this->cur_provider->getEnable()) {
+            } else if (!$provider->getEnable()) {
                 hd_debug_print("provider disabled");
             } else {
-                $this->cur_provider->set_provider_playlist($this->get_active_playlist_key());
-                $this->cur_provider->init_provider();
+                $provider->set_provider_playlist($this->get_active_playlist_key());
             }
+
+            $this->set_current_provider($provider);
         }
 
         return $this->cur_provider;
@@ -251,6 +255,9 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_current_provider($cur_provider)
     {
         $this->cur_provider = $cur_provider;
+        if (!is_null($this->cur_provider)) {
+            $this->set_current_provider_playlist_id($this->cur_provider->getCredential(MACRO_PLAYLIST_ID));
+        }
     }
 
     /**
@@ -887,7 +894,6 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_parameter($param, $val)
     {
-        hd_debug_print(null, true);
         $this->parameters[$param] = $val;
         $this->set_dirty(true,PLUGIN_PARAMETERS);
         $this->save_parameters();
@@ -1172,7 +1178,17 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function load_orders($force = false)
     {
-        $this->load($this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . '.settings', PLUGIN_ORDERS, $force);
+        $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . ".settings";
+        $id = $this->get_current_provider_playlist_id();
+        if ($id !== '') {
+            $new_order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
+            if (file_exists(get_data_path($order_name))) {
+                hd_debug_print("rename old orders: $order_name to new: $new_order_name");
+                rename(get_data_path($order_name), get_data_path($new_order_name));
+            }
+            $order_name = $new_order_name;
+        }
+        $this->load($order_name, PLUGIN_ORDERS, $force);
     }
 
     /**
@@ -1189,11 +1205,14 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if (!isset($this->{$type})) {
-            $file = $this->get_history_path() . DIRECTORY_SEPARATOR . "{$this->get_active_playlist_key()}_$type.settings";
+            $file = $this->get_history_path() . DIRECTORY_SEPARATOR . $this->get_active_playlist_key() . "_$type.settings";
             hd_debug_print("Load ($type): $file");
+            hd_debug_print(null, true);
             $this->{$type} = HD::get_items($file, true, false);
             if (LogSeverity::$is_debug) {
-                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param), true);
+                foreach ($this->{$type} as $key => $param) {
+                    hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
+                }
             }
         }
     }
@@ -1213,10 +1232,13 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if (!isset($this->{$type})) {
+            hd_debug_print(null, true);
             hd_debug_print("Load ($type): $name");
             $this->{$type} = HD::get_data_items($name, true, false);
             if (LogSeverity::$is_debug) {
-                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
+                foreach ($this->{$type} as $key => $param) {
+                    hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
+                }
             }
         }
     }
@@ -1251,7 +1273,13 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function save_orders($force = false)
     {
-        return $this->save($this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . '.settings', PLUGIN_ORDERS, $force);
+        $id = $this->get_current_provider_playlist_id();
+        if ($id === '') {
+            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . ".settings";
+        } else {
+            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
+        }
+        return $this->save($order_name, PLUGIN_ORDERS, $force);
     }
 
     /**
@@ -1265,7 +1293,7 @@ class Default_Dune_Plugin implements DunePlugin
         $type = PLUGIN_HISTORY;
 
         if (is_null($this->{$type})) {
-            hd_debug_print("this->$type is not set!", true);
+            hd_debug_print("$type is not set!", true);
             return false;
         }
 
@@ -1274,7 +1302,8 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if ($force || $this->is_dirty($type)) {
-            $file = $this->get_history_path() . DIRECTORY_SEPARATOR . "{$this->get_active_playlist_key()}_$type.settings";
+            $file = $this->get_history_path() . DIRECTORY_SEPARATOR . $this->get_active_playlist_key() . "_$type.settings";
+            hd_debug_print(null, true);
             hd_debug_print("Save: $file", true);
             if (LogSeverity::$is_debug) {
                 foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
@@ -1306,9 +1335,12 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if ($force || $this->is_dirty($type)) {
+            hd_debug_print(null, true);
             hd_debug_print("Save: $name", true);
             if (LogSeverity::$is_debug) {
-                foreach ($this->{$type} as $key => $param) hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
+                foreach ($this->{$type} as $key => $param) {
+                    hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
+                }
             }
             HD::put_data_items($name, $this->{$type}, false);
             $this->set_dirty(false, $type);
@@ -1773,7 +1805,7 @@ class Default_Dune_Plugin implements DunePlugin
             return false;
         }
 
-        if (!$provider->hasApiCommand(API_COMMAND_VOD)) {
+        if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
             return false;
         }
 
@@ -1794,7 +1826,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         try {
             if ($force !== false) {
-                $response = $provider->execApiCommand(API_COMMAND_VOD, $tmp_file);
+                $response = $provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
                 if ($response === false) {
                     $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                     $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
@@ -1887,6 +1919,19 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_playlist($id)
     {
         return $this->get_playlists()->get($id);
+    }
+
+    /**
+     * @return string
+     */
+    public function get_current_provider_playlist_id()
+    {
+        return $this->cur_provider_playlist_id;
+    }
+
+    public function set_current_provider_playlist_id($id)
+    {
+        $this->cur_provider_playlist_id = $id;
     }
 
     /**
@@ -2502,7 +2547,7 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            if ($provider->hasApiCommand(API_COMMAND_INFO)) {
+            if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
                 $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
             }
 
@@ -2579,7 +2624,6 @@ class Default_Dune_Plugin implements DunePlugin
                 if (!is_null($provider)) {
                     hd_debug_print("existing provider : " . json_encode($provider), true);
                     $provider->set_provider_playlist($playlist_id);
-                    $provider->init_provider();
                 }
             } else {
                 $provider = $this->create_provider_class($provider_id);
@@ -2628,21 +2672,23 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param $user_input
-     * @return null|string|array
+     * @return bool
      */
     public function apply_edit_provider_dlg($user_input)
     {
         hd_debug_print(null, true);
+        dump_input_handler($user_input);
 
         if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
             $provider = $this->get_current_provider();
             if (is_null($provider)) {
-                return null;
+                return false;
             }
         } else {
+            // edit existing or new provider in starnet_edit_list_screen
             $provider = $this->create_provider_class($user_input->{PARAM_PROVIDER});
             if (is_null($provider)) {
-                return null;
+                return false;
             }
             $playlist = new Named_Storage();
             $playlist->type = PARAM_PROVIDER;
@@ -2651,77 +2697,24 @@ class Default_Dune_Plugin implements DunePlugin
             $provider->set_provider_playlist($playlist);
         }
 
-        $id = $provider->ApplySetupUI($user_input);
-        if (is_null($id)) {
-            return null;
-        }
-
-        if (is_array($id)) {
-            return $id;
-        }
-
-        if (empty($user_input->{CONTROL_EDIT_ITEM})) {
-            $id = "{$provider->getId()}_$id";
-            $settings = $this->get_settings($id);
-            $xmltv_picons = $provider->getConfigValue(XMLTV_PICONS);
-            if ($xmltv_picons) {
-                $settings[PARAM_USE_PICONS] = XMLTV_PICONS;
-            }
-
-            $epg_preset = $provider->getConfigValue(EPG_JSON_PRESET);
-            if (!empty($epg_preset)) {
-                $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
-            }
-
-            $detect_stream = $provider->getConfigValue(PARAM_DUNE_FORCE_TS);
-            if ($detect_stream) {
-                $settings[PARAM_DUNE_FORCE_TS] = $detect_stream;
-            }
-
-            if (!empty($settings)) {
-                $this->put_settings($id, $settings);
-            }
-        }
-
-        $provider->request_provider_token();
-
-        $this->get_playlists()->set($id, $provider->get_provider_playlist());
-        $this->save_parameters(true);
-        $this->clear_playlist_cache($id);
-
-        if ($this->get_active_playlist_key() === $id) {
-            $this->set_active_playlist_key($id);
-        }
-
-        return $id;
+        return $provider->ApplySetupUI($user_input);
     }
 
     /**
      * @param $user_input
-     * @return null|string|array
+     * @return bool
      */
     public function apply_edit_provider_ext_dlg($user_input)
     {
         hd_debug_print(null, true);
+        dump_input_handler($user_input);
 
         $provider = $this->get_current_provider();
-        $playlist_id = $this->get_active_playlist_key();
         if (is_null($provider)) {
-            return null;
+            return false;
         }
 
-        $playlist = $this->get_current_playlist();
-        $provider->ApplyExtSetupUI($user_input, $playlist);
-
-        $this->get_playlists()->set($playlist_id, $playlist);
-        $this->save_parameters(true);
-        $this->clear_playlist_cache($playlist_id);
-
-        if ($this->get_active_playlist_key() === $playlist_id) {
-            $this->set_active_playlist_key($playlist_id);
-        }
-
-        return $playlist_id;
+        return $provider->ApplyExtSetupUI($user_input);
     }
 
     /**
