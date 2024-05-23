@@ -361,7 +361,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         $this->plugin->load_parameters(true);
         $this->plugin->remove_parameter(PARAM_CACHE_PATH);
-        $this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, true);
+        $this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, false);
 
         $this->plugin->init_plugin(true);
 
