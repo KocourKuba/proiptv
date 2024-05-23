@@ -327,6 +327,12 @@
         "domain": "junior.edmonst.net",
         "epg_preset": "drm",
         "ext_params": true,
+        "replace_icon_patterns": [
+          {
+            "search": "|/img/|",
+            "replace": "/img2/"
+          }
+        ],
         "playlists": {
             "thematic": {
               "name": "Thematic",

@@ -88,6 +88,7 @@ const CONTROL_DOMAIN = 'domain';
 const CONTROL_QUALITY = 'quality';
 const CONTROL_STREAM = 'stream';
 const CONTROL_PLAYLIST = 'playlist';
+const CONTROL_REPLACE_ICONS = 'replace_icons';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';
@@ -177,6 +178,7 @@ const PARAM_FILE = 'file';
 const PARAM_URI = 'uri';
 const PARAM_VOD_DEFAULT_QUALITY = 'quality';
 const PARAM_FORCE_HTTP = 'force_http';
+const PARAM_REPLACE_ICON = 'replace_playlist_icon';
 
 const LIST_IDX = 'list_idx';
 const PLAYLIST_PICONS = 'playlist_picons';
@@ -273,6 +275,7 @@ const CONFIG_QUALITIES = 'qualities';
 const CONFIG_PLAYLISTS = 'playlists';
 const CONFIG_VOD_PARSER = 'vod_parser';
 const CONFIG_URL_SUBST = 'url_subst';
+const CONFIG_ICON_REPLACE = 'replace_icon_patterns';
 
 const API_COMMAND_GET_PLAYLIST = 'get_playlist';
 const API_COMMAND_GET_VOD = 'get_vod';

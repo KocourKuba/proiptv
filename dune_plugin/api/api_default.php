@@ -403,11 +403,12 @@ class api_default
 
     /**
      * @param string $name
+     * @param string $default
      * @return string
      */
-    public function getCredential($name)
+    public function getCredential($name, $default = '')
     {
-        return isset($this->playlist_info->params[$name]) ? $this->playlist_info->params[$name] : '';
+        return isset($this->playlist_info->params[$name]) ? $this->playlist_info->params[$name] : $default;
     }
 
     /**
@@ -795,6 +796,14 @@ class api_default
                 TR::t('playlist'), $idx, $pl_names, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
         }
 
+        $icon_replacements = $this->getConfigValue(CONFIG_ICON_REPLACE);
+        if (!empty($icon_replacements)) {
+            $val = $this->getCredential(PARAM_REPLACE_ICON, SetupControlSwitchDefs::switch_on);
+            Control_Factory::add_combobox($defs, $handler, null, CONTROL_REPLACE_ICONS,
+                TR::t('setup_channels_square_icons'), $val, SetupControlSwitchDefs::$on_off_translated,
+                Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+        }
+
         if (!empty($defs)) {
             Control_Factory::add_vgap($defs, 50);
 
@@ -846,6 +855,11 @@ class api_default
 
         if ($this->check_control_parameters($user_input, CONTROL_STREAM, MACRO_STREAM_ID)) {
             $this->setCredential(MACRO_STREAM_ID, $user_input->{CONTROL_STREAM});
+            $changed = true;
+        }
+
+        if ($this->check_control_parameters($user_input, CONTROL_REPLACE_ICONS, PARAM_REPLACE_ICON)) {
+            $this->setCredential(PARAM_REPLACE_ICON, $user_input->{CONTROL_REPLACE_ICONS});
             $changed = true;
         }
 

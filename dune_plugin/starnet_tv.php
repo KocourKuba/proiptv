@@ -273,6 +273,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         $i = 0;
+        /** @var Default_Channel $channel */
         foreach ($group->get_group_enabled_channels() as $channel) {
             if ($regex) {
                 $disable = preg_match("#$pattern#", $channel->get_title());
@@ -614,6 +615,8 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->vod = null;
         $this->plugin->vod_enabled = false;
         if (is_null($provider)) {
+            $replace_icons = false;
+            $icon_replace_pattern = '';
             $mapper = $this->plugin->get_setting(PARAM_ID_MAPPER, 'by_default');
             if ($mapper !== 'default') {
                 $id_map = $mapper;
@@ -642,6 +645,14 @@ class Starnet_Tv implements User_Input_Handler
             $domain_id = $provider->getCredential(MACRO_DOMAIN_ID);
             if (!empty($domain_id)) {
                 hd_debug_print("using provider ({$provider->getId()}) specific domain id mapping: $domain_id");
+            }
+
+            $replace_icons = $provider->getCredential(PARAM_REPLACE_ICON, SetupControlSwitchDefs::switch_on);
+            if ($replace_icons === SetupControlSwitchDefs::switch_off) {
+                $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
+                if (!empty($icon_replace_pattern)) {
+                    hd_debug_print("using provider ({$provider->getId()}) playlist icon replacement icon: " . json_encode($icon_replace_pattern));
+                }
             }
 
             $vod_class = $provider->get_vod_class();
@@ -838,6 +849,11 @@ class Starnet_Tv implements User_Input_Handler
 
             if (!$is_xml_engine || $use_playlist_picons) {
                 $icon_url = $playlist_icon;
+                if ($replace_icons && !empty($icon_replace_pattern)) {
+                    foreach ($icon_replace_pattern as $pattern) {
+                        $icon_url = preg_replace($pattern['search'], $pattern['replace'], $icon_url);
+                    }
+                }
             } else {
                 $icon_url = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
                 if (empty($icon_url)) {
