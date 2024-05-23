@@ -419,6 +419,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $playlist = $this->plugin->get_playlist($key);
                 $starred = ($key === $this->plugin->get_active_playlist_key());
                 $title = empty($playlist->name) ? $playlist->params[PARAM_URI] : $playlist->name;
+                if (empty($title)) {
+                    $title = "Unrecognized or bad playlist entry";
+                }
+
+                $detailed_info = '';
                 if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->plugin->create_provider_class($playlist->params[PARAM_PROVIDER]);
                     if (is_null($provider)) continue;
@@ -433,7 +438,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $detailed_info = null;
                     $icon_file = get_image_path("m3u_file.png");
                 } else {
-                    $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
+                    if (isset($playlist->params[PARAM_URI])) {
+                        $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
+                    }
                     $icon_file = get_image_path("link.png");
                 }
 
@@ -453,13 +460,20 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $dupes[$key] = '';
                     $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
                     $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
+                    if (empty($title)) {
+                        $title = "Unrecognized or bad xmltv entry";
+                    }
+
                     if (file_exists($cached_xmltv_file)) {
                         $check_time_file = filemtime($cached_xmltv_file);
                         $dl_date = date("d.m H:i", $check_time_file);
                         $title = TR::t('edit_list_title_info__2', $title, $dl_date);
                         $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params[PARAM_URI], $dl_date);
                     } else {
-                        $detailed_info = "$item->name|{$item->params[PARAM_URI]}";
+                        $detailed_info = "";
+                        if (isset($playlist->params[PARAM_URI])) {
+                            $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
+                        }
                     }
 
                     if ($idx === 'pl') {

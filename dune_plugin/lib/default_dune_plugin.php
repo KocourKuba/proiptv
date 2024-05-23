@@ -1791,7 +1791,7 @@ class Default_Dune_Plugin implements DunePlugin
             }
         } catch (Exception $ex) {
             hd_debug_print("Unable to load tv playlist: " . $ex->getMessage());
-            if ($playlist->type !== PARAM_FILE && file_exists($tmp_file)) {
+            if (isset($playlist->type) && $playlist->type !== PARAM_FILE && file_exists($tmp_file)) {
                 unlink($tmp_file);
             }
             return false;
