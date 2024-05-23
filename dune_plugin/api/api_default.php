@@ -501,7 +501,7 @@ class api_default
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
         }
 
-        hd_debug_print("get_provider_info: " . json_encode($this->account_info), true);
+        hd_debug_print("get_provider_info: " . raw_json_encode($this->account_info), true);
 
         return $this->account_info;
     }

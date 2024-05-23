@@ -114,7 +114,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_ITEMS_EDIT:
                 return User_Input_Handler_Registry::create_action($this,
-                    ACTION_CREATE_FILTER,
+                    ACTION_CREATE_SEARCH,
                     null,
                     array(ACTION_SEARCH => ACTION_ITEMS_EDIT)
                 );

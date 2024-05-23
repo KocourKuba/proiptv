@@ -29,8 +29,6 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
             $arr['info'] = $info;
         }
 
-        //hd_debug_print("Movie ID: $movie_id, Movie name: $name, Movie Poster: $poster_url", true);
-
         return MediaURL::encode($arr);
     }
 
