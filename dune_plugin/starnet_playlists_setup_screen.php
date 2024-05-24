@@ -69,13 +69,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // playlist import source
-
-        Control_Factory::add_image_button($defs, $this, null,
-            ACTION_ITEMS_EDIT, TR::t('setup_channels_src_edit_playlists'), TR::t('edit'),
-            get_image_path('edit.png'), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
         // picon settings
 
         if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV) {
@@ -204,9 +197,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 User_Input_Handler_Registry::create_action_screen(
                     Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
             );
-
-            case ACTION_ITEMS_EDIT:
-                return Starnet_Edit_List_Screen::get_caller_action($this, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
 
             case PARAM_USER_CATCHUP:
             case PARAM_USE_PICONS:

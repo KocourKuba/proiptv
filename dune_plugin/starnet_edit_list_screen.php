@@ -52,6 +52,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
     ///////////////////////////////////////////////////////////////////////
 
+    protected $force_parent_reload = false;
     /**
      * @inheritDoc
      */
@@ -96,7 +97,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
-                $reload = $this->set_no_changes();
+                $reload = $this->set_no_changes() || $this->force_parent_reload;
+                $this->force_parent_reload = false;
+
                 hd_debug_print("Need reload: " . var_export($reload, true), true);
                 if ($reload) {
                     $this->plugin->set_dirty(true, $parent_media_url->save_data);
@@ -126,11 +129,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $id = MediaURL::decode($user_input->selected_media_url)->id;
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);
 
-                if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                    $item = $this->get_order($edit_list)->get($id);
-                } else {
-                    $item = $this->get_order($edit_list)->get($id);
-                }
+                $item = $this->get_order($edit_list)->get($id);
 
                 hd_debug_print("item: " . $item, true);
                 if (($item->type === PARAM_LINK || empty($item->type))
@@ -158,6 +157,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
+                $this->force_parent_reload = true;
                 $this->force_save($user_input);
                 if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,

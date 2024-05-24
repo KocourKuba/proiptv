@@ -90,11 +90,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         if ($engine === ENGINE_XMLTV) {
             //////////////////////////////////////
-            // XMLTV sources
-            Control_Factory::add_image_button($defs, $this, null, ACTION_ITEMS_EDIT,
-                TR::t('setup_edit_xmltv_list'), TR::t('edit'), get_image_path('edit.png'), self::CONTROLS_WIDTH);
-
-            //////////////////////////////////////
             // EPG cache dir
             $cache_dir = $this->plugin->get_cache_dir();
             $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
@@ -183,9 +178,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 User_Input_Handler_Registry::create_action_screen(
                     Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
             );
-
-            case ACTION_ITEMS_EDIT:
-                return Starnet_Edit_List_Screen::get_caller_action($this, Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST);
 
             case self::CONTROL_CHANGE_CACHE_PATH:
                 $media_url_str = MediaURL::encode(
