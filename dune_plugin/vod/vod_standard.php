@@ -275,28 +275,43 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param string $idx
+     * @param string $page_id
      * @param int $increment
      * @return int
      */
-    public function get_next_page($idx, $increment = 1)
+    public function get_next_page($page_id, $increment = 1)
     {
-        if (!array_key_exists($idx, $this->pages)) {
-            $this->pages[$idx] = 0;
+        if (!array_key_exists($page_id, $this->pages)) {
+            $this->pages[$page_id] = 0;
         }
 
-        $this->pages[$idx] += $increment;
+        if ($this->pages[$page_id] !== -1) {
+            $this->pages[$page_id] += $increment;
+        }
 
-        return $this->pages[$idx];
+        hd_debug_print("get_next_page page_id: $page_id next_idx: {$this->pages[$page_id]}", true);
+        return $this->pages[$page_id];
     }
 
     /**
-     * @param string $idx
+     * @param string $page_id
      * @param int $value
      */
-    public function set_next_page($idx, $value)
+    public function set_next_page($page_id, $value)
     {
-        $this->pages[$idx] = $value;
+        hd_debug_print("set_next_page page_id: $page_id idx: $value", true);
+        $this->pages[$page_id] = $value;
+    }
+
+    /**
+     * @param string $page_id
+     * @return int
+     */
+    public function get_current_page($page_id)
+    {
+        $current_idx = array_key_exists($page_id, $this->pages) ? $this->pages[$page_id] : 0;
+        hd_debug_print("get_current_page page_id: $page_id current_idx: $current_idx", true);
+        return $current_idx;
     }
 
     /**
@@ -493,14 +508,17 @@ class vod_standard extends Abstract_Vod
         $arr = explode("_", $query_id);
         $category_id = ($arr === false) ? $query_id : $arr[0];
 
-        $current_offset = $this->get_next_page($query_id, 0);
+        $page_idx = $this->get_current_page($query_id);
+        if ($page_idx < 0)
+            return array();
+
         $indexes = $this->vod_m3u_indexes[$category_id];
 
         $max = count($indexes);
-        $ubound = min($max, $current_offset + 5000);
-        hd_debug_print("Read from: $current_offset to $ubound");
+        $ubound = min($max, $page_idx + 5000);
+        hd_debug_print("Read from: $page_idx to $ubound");
 
-        $pos = $current_offset;
+        $pos = $page_idx;
         while($pos < $ubound) {
             $index = $indexes[$pos++];
             $entry = $this->m3u_parser->getEntryByIdx($index);
@@ -515,7 +533,7 @@ class vod_standard extends Abstract_Vod
             $movies[] = new Short_Movie($index, $title, $entry->getEntryAttribute('tvg-logo'));
         }
 
-        $this->get_next_page($query_id, $pos - $current_offset);
+        $this->get_next_page($query_id, $pos - $page_idx);
 
         return $movies;
     }

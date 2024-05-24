@@ -199,6 +199,10 @@ class vod_ipstream extends vod_standard
             return array();
         }
 
+        $page_idx = $this->get_current_page($query_id);
+        if ($page_idx < 0)
+            return array();
+
         $movies = array();
         $arr = explode("_", $query_id);
         if ($arr === false) {
@@ -207,10 +211,9 @@ class vod_ipstream extends vod_standard
             $category_id = $arr[0];
         }
 
-        $current_offset = $this->get_next_page($query_id, 0);
         $pos = 0;
         foreach ($this->vod_items as $movie) {
-            if ($pos++ < $current_offset) continue;
+            if ($pos++ < $page_idx) continue;
 
             $category = $movie->category;
             if (empty($category)) {
@@ -221,7 +224,7 @@ class vod_ipstream extends vod_standard
                 $movies[] = self::CreateShortMovie($movie);
             }
         }
-        $this->get_next_page($query_id, $pos - $current_offset);
+        $this->get_next_page($query_id, $pos - $page_idx);
 
         hd_debug_print("Movies read for query: $query_id - " . count($movies));
         return $movies;

@@ -6,6 +6,8 @@ class vod_iptvonline extends vod_standard
     const API_ACTION_MOVIES = 'movies';
     const API_ACTION_SERIALS = 'serials';
     const API_ACTION_FILTERS = 'filters';
+    const API_ACTION_SEARCH = 'search';
+    const API_ACTION_FILTER = 'filter';
 
     /**
      * @inheritDoc
@@ -166,14 +168,25 @@ class vod_iptvonline extends vod_standard
 
         $params[CURLOPT_POSTFIELDS] = array("search" => $keyword);
 
-        $params[self::VOD_GET_PARAM_PATH] = "/" . self::API_ACTION_MOVIES . "?limit=100&page=1";
+        $movies = array();
+        $page_id = self::API_ACTION_MOVIES . "_" . self::API_ACTION_SEARCH;
+        $page_idx = $this->get_next_page($page_id);
+        if ($page_idx < 0)
+            return $movies;
+
+        $params[self::VOD_GET_PARAM_PATH] = "/" . self::API_ACTION_MOVIES . "?limit=100&page=$page_idx";
         $searchRes = $this->make_json_request($params);
 
-        $movies = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_MOVIES, $searchRes, 'search');
+        $movies = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_MOVIES, $searchRes, self::API_ACTION_SEARCH);
 
-        $params[self::VOD_GET_PARAM_PATH] = "/" . self::API_ACTION_SERIALS . "?limit=100&page=1";
+        $page_id = self::API_ACTION_SERIALS . "_" . self::API_ACTION_SEARCH;
+        $page_idx = $this->get_next_page($page_id);
+        if ($page_idx < 0)
+            return $movies;
+
+        $params[self::VOD_GET_PARAM_PATH] = "/" . self::API_ACTION_SERIALS . "?limit=100&page=$page_idx";
         $searchRes = $this->make_json_request($params);
-        $serials = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_SERIALS, $searchRes, 'search');
+        $serials = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_SERIALS, $searchRes, self::API_ACTION_SEARCH);
 
         return array_merge($movies, $serials);
     }
@@ -225,11 +238,18 @@ class vod_iptvonline extends vod_standard
             $param_str .= "$key-$value";
         }
 
-        $post_params[self::VOD_GET_PARAM_PATH] = "/$query_id?limit=100&page=1";
+        $page_id = $query_id . "_" . self::API_ACTION_FILTER;
+        $page_idx = $this->get_next_page($page_id);
+        if ($page_idx < 0)
+            return array();
+
+        hd_debug_print("filter page_idx:  $page_idx");
+
+        $post_params[self::VOD_GET_PARAM_PATH] = "/$query_id?limit=100&page=$page_idx";
         $post_params[CURLOPT_POSTFIELDS]['features_hash'] = $param_str;
         $json = $this->make_json_request($post_params);
 
-        return $json === false ? array() : $this->CollectSearchResult($query_id, $json, 'filter');
+        return $json === false ? array() : $this->CollectSearchResult($query_id, $json, self::API_ACTION_FILTER);
     }
 
     /**
@@ -239,8 +259,8 @@ class vod_iptvonline extends vod_standard
      */
     public function getMovieList($query_id)
     {
-        $val = $this->get_next_page($query_id);
-        $params[self::VOD_GET_PARAM_PATH] = "/$query_id?limit=100&page=$val";
+        $page_idx = $this->get_next_page($query_id);
+        $params[self::VOD_GET_PARAM_PATH] = "/$query_id?limit=100&page=$page_idx";
         $json = $this->make_json_request($params);
 
         return ($json === false || $json === null) ? array() : $this->CollectSearchResult($query_id, $json);
@@ -258,13 +278,12 @@ class vod_iptvonline extends vod_standard
         hd_debug_print("query_id: $query_id");
 
         $movies = array();
-
-        $page_idx = is_null($search) ? $query_id : "{$query_id}_$search";
-        $current_offset = $this->get_next_page($page_idx, 0);
-        if ($current_offset < 0)
+        if (!isset($json->data->items))
             return $movies;
 
-        if (!isset($json->data->items))
+        $page_id = is_null($search) ? $query_id : "{$query_id}_$search";
+        $current_idx = $this->get_current_page($page_id);
+        if ($current_idx < 0)
             return $movies;
 
         $data = $json->data;
@@ -280,8 +299,9 @@ class vod_iptvonline extends vod_standard
             $movies[] = $movie;
         }
 
-        if ($data->pagination->pages === $current_offset) {
-            $this->set_next_page($page_idx, -1);
+        if ($data->pagination->pages === $current_idx) {
+            hd_debug_print("Last page: {$data->pagination->pages}");
+            $this->set_next_page($page_id, -1);
         }
 
         hd_debug_print("Movies found: " . count($movies));

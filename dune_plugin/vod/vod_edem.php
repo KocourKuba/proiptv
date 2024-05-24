@@ -202,11 +202,15 @@ class vod_edem extends vod_standard
         }
 
         if (empty($post_params)) {
-            return false;
+            return array();
         }
 
+        $page_idx = $this->get_next_page($params);
+        if ($page_idx < 0)
+            return array();
+
         $post_params['filter'] = 'on';
-        $post_params['offset'] = $this->get_next_page($params, 0);
+        $post_params['offset'] = $page_idx;
         $json = $this->make_json_request($post_params);
 
         return $json === false ? array() : $this->CollectSearchResult($params, $json);
@@ -219,8 +223,11 @@ class vod_edem extends vod_standard
      */
     public function getMovieList($query_id)
     {
-        $val = $this->get_next_page($query_id, 0);
-        $post_params = array('cmd' => "flicks", 'fid' => (int)$query_id, 'offset' => $val, 'limit' => 50);
+        $page_idx = $this->get_next_page($query_id);
+        if ($page_idx < 0)
+            return array();
+
+        $post_params = array('cmd' => "flicks", 'fid' => (int)$query_id, 'offset' => $page_idx, 'limit' => 50);
         $json = $this->make_json_request($post_params);
 
         return $json === false ? array() : $this->CollectSearchResult($query_id, $json);
@@ -236,7 +243,7 @@ class vod_edem extends vod_standard
         hd_debug_print("query_id: $query_id");
         $movies = array();
 
-        $current_offset = $this->get_next_page($query_id, 0);
+        $current_offset = $this->get_current_page($query_id);
         if ($current_offset < 0)
             return $movies;
 
@@ -254,7 +261,7 @@ class vod_edem extends vod_standard
                 $movies[] = $movie;
             }
         }
-        if ($current_offset === $this->get_next_page($query_id, 0)) {
+        if ($current_offset === $this->get_current_page($query_id)) {
             $this->set_next_page($query_id, -1);
         }
 

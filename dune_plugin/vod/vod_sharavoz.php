@@ -230,17 +230,19 @@ class vod_sharavoz extends vod_standard
         hd_debug_print(null, true);
         hd_debug_print($query_id);
 
+        $page_idx = $this->get_current_page($query_id);
+        if ($page_idx < 0)
+            return array();
+
         // Фильмы_1_vod
         $arr = explode("_", $query_id);
         $category_id = isset($arr[1]) ? $arr[1] : $query_id;
 
         $vod_items = $this->xtream->get_streams($arr[2], $category_id);
-        $current_offset = $this->get_next_page($query_id, 0);
-
         $pos = 0;
         $movies = array();
         foreach ($vod_items as $movie) {
-            if ($pos++ < $current_offset) continue;
+            if ($pos++ < $page_idx) continue;
 
             $category = (string)$movie->category_id;
             if (empty($category)) {
@@ -251,7 +253,7 @@ class vod_sharavoz extends vod_standard
                 $movies[] = self::CreateShortMovie($movie);
             }
         }
-        $this->get_next_page($query_id, $pos - $current_offset);
+        $this->get_next_page($query_id, $pos - $page_idx);
 
         hd_debug_print("Movies read for query: $query_id: " . count($movies));
         return $movies;
@@ -329,16 +331,16 @@ class vod_sharavoz extends vod_standard
             return;
         }
 
-        foreach ($categories as $category) {
-            $streams = $this->xtream->get_streams($stream_type, $category->category_id);
-            if ($streams === false) continue;
+        $streams = $this->xtream->get_streams($stream_type);
+        if ($streams === false) {
+            return;
+        }
 
-            foreach ($streams as $stream) {
-                $search = utf8_encode(mb_strtolower($stream->name, 'UTF-8'));
-                if (strpos($search, $keyword) !== false) {
-                    $id = $stream_type === xtream_codes_api::SERIES ? $stream->series_id : $stream->stream_id;
-                    $movies[$id] = self::CreateShortMovie($stream);
-                }
+        foreach ($streams as $stream) {
+            $search = utf8_encode(mb_strtolower($stream->name, 'UTF-8'));
+            if (strpos($search, $keyword) !== false) {
+                $id = $stream_type === xtream_codes_api::SERIES ? $stream->series_id : $stream->stream_id;
+                $movies[$id] = self::CreateShortMovie($stream);
             }
         }
     }

@@ -158,7 +158,11 @@ class vod_cbilling extends vod_standard
      */
     public function getSearchList($keyword)
     {
-        $params[self::VOD_GET_PARAM_PATH] = "/filter/by_name?name=" . urlencode($keyword) . "&page=" . $this->get_next_page($keyword);
+        $page_idx = $this->get_next_page($keyword);
+        if ($page_idx < 0)
+            return array();
+
+        $params[self::VOD_GET_PARAM_PATH] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
         return $response === false ? array() : $this->CollectSearchResult($response);
     }
@@ -169,10 +173,12 @@ class vod_cbilling extends vod_standard
     public function getMovieList($query_id)
     {
         hd_debug_print($query_id);
-        $val = $this->get_next_page($query_id);
+        $page_idx = $this->get_next_page($query_id);
+        if ($page_idx < 0)
+            return array();
 
         if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
-            $params[self::VOD_GET_PARAM_PATH] = "/filter/new?page=$val";
+            $params[self::VOD_GET_PARAM_PATH] = "/filter/new?page=$page_idx";
         } else {
             $arr = explode("_", $query_id);
             if ($arr === false) {
@@ -181,7 +187,7 @@ class vod_cbilling extends vod_standard
                 $genre_id = $arr[1];
             }
 
-            $params[self::VOD_GET_PARAM_PATH] = "/genres/$genre_id?page=$val";
+            $params[self::VOD_GET_PARAM_PATH] = "/genres/$genre_id?page=$page_idx";
         }
 
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
