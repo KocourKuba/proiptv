@@ -33,6 +33,9 @@ require_once 'json_serializer.php';
  */
 class Hashed_Array extends Json_Serializer implements Iterator
 {
+    const UP = -1;
+    const DOWN = 1;
+
     /**
      * @var integer
      */
@@ -50,6 +53,12 @@ class Hashed_Array extends Json_Serializer implements Iterator
 
     public function __sleep()
     {
+        $new_map = array();
+        foreach ($this->seq as $key) {
+            $new_map[$key] = $this->map[$key];
+        }
+        $this->map = $new_map;
+
         return array('pos', 'map');
     }
 
@@ -241,15 +250,38 @@ class Hashed_Array extends Json_Serializer implements Iterator
         return $values;
     }
 
-    public function key_sort()
-    {
-        uksort($this->seq, array(__CLASS__, "sort_array_cb"));
-    }
-
     public function value_sort()
     {
         uasort($this->map, array(__CLASS__, "sort_array_cb"));
         $this->seq = array_keys($this->map);
+    }
+
+    /**
+     * @param string $id
+     * @param int $direction
+     * @return bool
+     */
+    public function arrange_item($id, $direction)
+    {
+        $k = array_search($id, $this->seq);
+        //hd_debug_print("move id: $id from idx: $k to direction: $direction");
+
+        if ($k === false || $direction === 0)
+            return false;
+
+        if ($direction < 0 && $k !== 0) {
+            $t = $this->seq[$k - 1];
+            $this->seq[$k - 1] = $this->seq[$k];
+            $this->seq[$k] = $t;
+        } else if ($direction > 0 && $k !== count($this->seq) - 1) {
+            $t = $this->seq[$k + 1];
+            $this->seq[$k + 1] = $this->seq[$k];
+            $this->seq[$k] = $t;
+        } else {
+            return false;
+        }
+
+        return true;
     }
 
     /**

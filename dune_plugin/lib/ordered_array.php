@@ -79,6 +79,15 @@ class Ordered_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * @param $id
+     * @return mixed
+     */
+    public function get($id)
+    {
+        return $id;
+    }
+
+    /**
      * @return int
      */
     public function size()
