@@ -141,6 +141,9 @@ class vod_sharavoz extends vod_standard
         //    },
         //
 
+        $age = self::get_data_variant($item->info, "age");
+        $age_limit = empty($age) ? array() : array(TR::t('vod_screen_age_limit') => $age);
+
         $movie = new Movie($movie_id, $this->plugin);
         $movie->set_data(
             self::get_data_variant($item->info, "name"), // name,
@@ -155,8 +158,11 @@ class vod_sharavoz extends vod_standard
             self::get_data_variant($item->info, "genre"), // genres_str,
             self::get_data_variant($item->info, "rating"), // rate_imdb,
             self::get_data_variant($item->info, "rating_count_kinopoisk"), // rate_kinopoisk,
-            self::get_data_variant($item->info, "age"), // rate_mpaa,
-            self::get_data_variant($item->info, "country") // country,
+            '', // rate_mpaa,
+            self::get_data_variant($item->info, "country"), // country,
+            '',
+            array(),
+            $age_limit // rate details
         );
 
         if ($stream_type === xtream_codes_api::VOD) {

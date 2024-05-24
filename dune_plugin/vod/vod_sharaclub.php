@@ -56,6 +56,9 @@ class vod_sharaclub extends vod_standard
                 $duration = (int)$item->info->episode_run_time;
             }
 
+            $age = isset($item->info->adult) && !empty($item->info->adult)  ? "{$item->info->adult}+" : '';
+            $age_limit = empty($age) ? array() : array(TR::t('vod_screen_age_limit') => $age);
+
             $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
                 $item->name,                          // name,
@@ -71,7 +74,10 @@ class vod_sharaclub extends vod_standard
                 $item->info->rating,                  // rate_imdb,
                 '',                      // rate_kinopoisk,
                 '',                         // rate_mpaa,
-                HD::ArrayToStr($item->info->country)  // country,
+                HD::ArrayToStr($item->info->country),  // country,
+                '',
+                array(), // details
+                $age_limit // rate details
             );
 
             // case for serials

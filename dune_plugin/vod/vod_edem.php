@@ -48,7 +48,7 @@ class vod_edem extends vod_standard
         }
 
         $movie = new Movie($movie_id, $this->plugin);
-        $series_desc = '';
+        $qualities_str = '';
         if ($movieData->type === 'multistream') {
             // collect series
             foreach ($movieData->items as $item) {
@@ -58,19 +58,17 @@ class vod_edem extends vod_standard
                     $movie->add_series_data($item->fid, $item->title, '', $item->url);
                 } else if (count((array)$episodeData->variants) === 1) {
                     $key = key($episodeData->variants);
-                    $series_desc = ($key === 'auto' ? $key : $key . 'p');
-                    $movie->add_series_data($item->fid, $item->title, $series_desc, $item->url);
+                    $movie->add_series_data($item->fid, $item->title, $key, $item->url);
                 } else {
                     $variants_data = (array)$episodeData->variants;
                     $qualities = array();
                     $qualities_str = '';
                     foreach ($variants_data as $key => $url) {
-                        $quality = ($key === 'auto' ? $key : $key . 'p');
-                        $qualities[$key] = new Movie_Variant($item->fid . "_" . $key, $quality, $url);
+                        $qualities[$key] = new Movie_Variant($item->fid . "_" . $key, $key, $url);
                         if (!empty($qualities_str)) {
                             $qualities_str .= ",";
                         }
-                        $qualities_str .= $quality;
+                        $qualities_str .= ($key === 'auto' ? '' : $key);
                     }
 
                     $qualities_str = TR::load_string('vod_screen_quality') . "|$qualities_str";
@@ -82,41 +80,43 @@ class vod_edem extends vod_standard
             $movie->add_series_data($movie_id, $movieData->title, '', $movieData->url);
         } else if (count((array)$movieData->variants) === 1) {
             $key = key($movieData->variants);
-            $series_desc = ($key === 'auto' ? $key : $key . 'p');
-            $movie->add_series_data($movie_id, $movieData->title, $series_desc, $movieData->url);
+            $movie->add_series_data($movie_id, $movieData->title, $key, $movieData->url);
         } else {
             $variants_data = (array)$movieData->variants;
             $qualities = array();
-            $qualities_str = '';
             foreach ($variants_data as $key => $url) {
-                $quality = ($key === 'auto' ? $key : $key . 'p');
-                $qualities[$key] = new Movie_Variant($movie_id . "_" . $key, $quality, $url);
+                $qualities[$key] = new Movie_Variant($movie_id . "_" . $key, $key, $url);
                 if (!empty($qualities_str)) {
                     $qualities_str .= ",";
                 }
-                $qualities_str .= $quality;
+                $qualities_str .= ($key === 'auto' ? '' : $key);
             }
 
-            $qualities_str = TR::load_string('vod_screen_quality') . "|$qualities_str";
-            $series_desc = rtrim($qualities_str, ' ,\0');
+            $series_desc = rtrim(TR::load_string('vod_screen_quality') . "|$qualities_str", ' ,\0');
             $movie->add_series_with_variants_data($movie_id, $movieData->title, $series_desc, $qualities, array(), $movieData->url);
         }
 
+        $age = isset($movieData->agelimit) ? "$movieData->agelimit+" : '';
+        $age_limit = empty($age) ? array() : array(TR::t('vod_screen_age_limit') => $age);
+
         $movie->set_data(
-            $movieData->title,// caption,
-            $series_desc,// caption_original,
-            isset($movieData->description) ? $movieData->description : '',// description,
-            isset($movieData->img) ? $movieData->img : '',// poster_url,
-            isset($movieData->duration) ? $movieData->duration : '',// length,
-            isset($movieData->year) ? $movieData->year : '',// year,
-            '',// director,
-            '',// scenario,
-            '',// actors,
-            '',// genres,
-            '',// rate_imdb,
-            '',// rate_kinopoisk,
-            isset($movieData->agelimit) ? $movieData->agelimit : '',// rate_mpaa,
-            ''// country,
+            $movieData->title,      // caption
+            '',         // caption_original
+            isset($movieData->description) ? $movieData->description : '',  // description
+            isset($movieData->img) ? $movieData->img : '',  // poster_url
+            isset($movieData->duration) ? $movieData->duration : '',    // length
+            isset($movieData->year) ? $movieData->year : '',    // year
+            '',          // director
+            '',          // scenario
+            '',            // actors
+            '',            // genres
+            '',            // rate_imdb,
+            '',         // rate_kinopoisk
+            '',            // rate_mpaa
+            '',              // country
+            '',              // budget
+            array(TR::t('vod_screen_quality') => $qualities_str), // details
+            $age_limit // rate details
         );
 
         return $movie;
@@ -255,7 +255,7 @@ class vod_edem extends vod_standard
                     $entry->request->fid,
                     $entry->title,
                     $entry->imglr,
-                    TR::t('vod_screen_movie_info__3', $entry->title, $entry->year, $entry->agelimit)
+                    TR::t('vod_screen_movie_info__3', $entry->title, $entry->year)
                 );
                 $movie->big_poster_url = $entry->img;
                 $movies[] = $movie;
