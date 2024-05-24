@@ -334,18 +334,18 @@
           }
         ],
         "playlists": {
-            "thematic": {
-              "name": "Thematic",
-              "url": "edem_epg_ico2.m3u8"
-            },
-            "thematic_sort": {
-              "name": "Thematic Sorted",
-              "url": "edem_epg_ico3.m3u8"
-            },
-            "standard": {
-              "name": "Standard",
-              "url": "edem_epg_ico.m3u8"
-            }
+          "thematic": {
+            "name": "Thematic",
+            "url": "edem_epg_ico2.m3u8"
+          },
+          "thematic_sort": {
+            "name": "Thematic Sorted",
+            "url": "edem_epg_ico3.m3u8"
+          },
+          "standard": {
+            "name": "Standard",
+            "url": "edem_epg_ico.m3u8"
+          }
         },
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(\\/iptv\\/).+(\\/.+\\/.+)$/",
@@ -375,7 +375,7 @@
           "index.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "get_servers": {
+        "servers": {
           "1": "Germany",
           "2": "Poland",
           "3": "Moscow",
@@ -488,7 +488,7 @@
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "get_servers": {
+        "servers": {
           "pl.seetv.cc": "Poland",
           "de.seetv.cc": "Germany",
           "nl.seetv.cc": "Netherlands",
@@ -572,7 +572,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
         "epg_preset": "drm",
         "ext_params": true,
-        "get_servers": {
+        "servers": {
           "DE": "DE",
           "PL": "PL",
           "US": "US",
@@ -638,7 +638,7 @@
         "epg_preset": "drm",
         "epg_alias": "magic",
         "ext_params": true,
-        "get_servers": {
+        "servers": {
           "0": "Default",
           "1": "Germany 1",
           "2": "Czech",
@@ -683,6 +683,7 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/.+\\/(?<id>.+)\\.m3u8?$/",
         "epg_preset": "ottclub",
+        "ext_params": true,
         "domains": {
           "myott.top": "myott.top",
           "myott.tv": "myott.tv"
@@ -746,20 +747,16 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_satq.png",
       "api_commands": {
-        "get_playlist": "{STREAM_ID}"
+        "get_playlist": "http://iptv11.com/1/{PASSWORD}.m3u8"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "ext_params": true,
         "url_subst": {
-          "regex": "/^(.+\\/\\/).+(\\/.+\\/.+)$/",
+          "regex": "/^(.+\\/\\/).+(\\/[^\\/]+\\/[^\\/]+\\/.+)$/",
           "replace": "$1{SERVER_ID}$2"
         },
-        "streams": {
-          "http://iptv11.com/{PASSWORD}.m3u8": "HLS",
-          "http://iptv11.com/iptv/{PASSWORD}-ts.m3u": "MPEG-TS"
-        },
-        "get_servers": {
+        "servers": {
           "cdn.iptv11.com": "Germany",
           "serv2.iptv11.com": "Poland 1",
           "serv6.iptv11.com": "Poland 2",
@@ -838,7 +835,7 @@
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "get_servers": {
+        "servers": {
           "ru01.spr24.net": "Russia (RU01)",
           "ru02.spr24.net": "Moscow (RU02)",
           "nl01.spr24.net": "Amsterdam (NL01)",
@@ -864,7 +861,7 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
         "epg_preset": "shuratv",
         "ext_params": true,
-        "get_servers": {
+        "servers": {
           "0": "Server 1",
           "1": "Server 2"
         },
@@ -885,7 +882,7 @@
       "config": {
         "epg_preset": "drm",
         "ext_params": true,
-        "get_servers": {
+        "servers": {
           "0": "Auto Select",
           "1": "Server CZ",
           "2": "Server DE",
@@ -989,7 +986,7 @@
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
-        "get_servers": {
+        "servers": {
           "pl.seetv.cc": "Poland",
           "de.seetv.cc": "Germany",
           "nl.seetv.cc": "Netherlands",
@@ -1029,7 +1026,7 @@
       "api_url": "http://cdntv.online",
       "api_commands": {
         "get_playlist": "{API}/{QUALITY_ID}/{PASSWORD}/playlist.m3u8",
-        "get_vod": "{API}/f/{PASSWORD}/playlist.m3u8"
+        "get_vod": "http://m.cdntv.online/f/{PASSWORD}/playlist.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
@@ -1067,7 +1064,7 @@
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>[^\\/]+)\\/(?<id>.+)\\/.+$/",
         "epg_preset": "drm",
         "ext_params": true,
-        "get_servers": {
+        "servers": {
           "/": "RU (Russia, Moscow, DC1)",
           "kfc/": "KFC (Russia, Moscow, DC2)",
           "OSTHLS/": "OSTHLS (Russia, Moscow, DC3)",

@@ -499,9 +499,8 @@ class api_default
 
         if ((empty($this->account_info) || $force) && $this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
+            hd_debug_print("get_provider_info: " . raw_json_encode($this->account_info), true);
         }
-
-        hd_debug_print("get_provider_info: " . raw_json_encode($this->account_info), true);
 
         return $this->account_info;
     }
