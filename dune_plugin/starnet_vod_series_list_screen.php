@@ -120,16 +120,22 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if (!isset($this->qualities) || count($this->qualities) < 2) break;
 
                 $current_quality = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');
-                $qualities['auto'] = TR::t('by_default');
-                $qualities = array_merge($qualities, $this->qualities);
-                foreach ($qualities as $key => $quality) {
-                    $name = ($key === 'auto') ? $quality : $key;
+
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    self::ACTION_QUALITY_SELECTED,
+                    TR::t('by_default'),
+                    $current_quality === 'auto' ? 'check.png' : null,
+                    array('quality' => 'auto')
+                );
+
+                foreach ($this->qualities as $key => $quality) {
+                    if ($key === 'auto') continue;
 
                     $icon = null;
                     if ((string)$key === $current_quality) {
                         $icon = 'check.png';
                     }
-                    $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_QUALITY_SELECTED, $name, $icon, array('quality' => $key));
+                    $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_QUALITY_SELECTED, $quality->name, $icon, array('quality' => $key));
                 }
 
                 return Action_Factory::show_popup_menu($menu_items);

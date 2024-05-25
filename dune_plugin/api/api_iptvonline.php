@@ -60,7 +60,7 @@ class api_iptvonline extends api_default
 
         $curl_opt[CURLOPT_POST] = true;
         $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-        $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_raw_json_encode($pairs);
+        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($pairs);
 
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
@@ -189,7 +189,7 @@ class api_iptvonline extends api_default
 
         $curl_opt[CURLOPT_POST] = true;
         $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-        $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_raw_json_encode(array("server_location" => $server));
+        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode(array("server_location" => $server));
 
         $response = $this->execApiCommand(API_COMMAND_SET_DEVICE, null, true, $curl_opt);
         if (isset($response->status) && $response->status === 200) {
@@ -237,7 +237,7 @@ class api_iptvonline extends api_default
 
         $curl_opt[CURLOPT_POST] = true;
         $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-        $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_raw_json_encode(array("user_playlists" => $id));
+        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode(array("user_playlists" => $id));
 
         $response = $this->execApiCommand(API_COMMAND_SET_DEVICE, null, true, $curl_opt);
         if (isset($response->status) && $response->status === 200) {

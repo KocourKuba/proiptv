@@ -1936,6 +1936,11 @@ function safe_merge_array($ar1, $ar2)
     return $ar1;
 }
 
+function escaped_raw_json_encode($param)
+{
+    return str_replace('"', '\"', raw_json_encode($param));
+}
+
 function raw_json_encode($arr)
 {
     $pattern = "/\\\\u([0-9a-fA-F]{4})/";

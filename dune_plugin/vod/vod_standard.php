@@ -22,6 +22,7 @@ class vod_standard extends Abstract_Vod
     const VOD_FAVORITES_LIST = 'vod_favorite_items';
     const VOD_HISTORY_ITEMS = 'vod_history_items';
     const VOD_GET_PARAM_PATH = 'path';
+
     /**
      * @var Default_Dune_Plugin
      */

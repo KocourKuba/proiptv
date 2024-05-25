@@ -64,7 +64,7 @@ class vod_edem extends vod_standard
                     $qualities = array();
                     $qualities_str = '';
                     foreach ($variants_data as $key => $url) {
-                        $qualities[$key] = new Movie_Variant($item->fid . "_" . $key, $key, $url);
+                        $qualities[(string)$key] = new Movie_Variant($item->fid . "_" . $key, $key, $url);
                         if (!empty($qualities_str)) {
                             $qualities_str .= ",";
                         }
@@ -287,7 +287,7 @@ class vod_edem extends vod_standard
 
         $curl_opt[CURLOPT_POST] = true;
         $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-        $curl_opt[CURLOPT_POSTFIELDS] = HD::escaped_raw_json_encode($pairs);
+        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($pairs);
 
         return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
     }
