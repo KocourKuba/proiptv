@@ -232,7 +232,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEMS_EDIT:
                 $this->save_if_changed();
-                return Starnet_Edit_List_Screen::get_caller_action($this, $user_input->action_edit, $sel_media_url);
+                return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $sel_media_url);
 
             case ACTION_SETTINGS:
                 $this->save_if_changed();

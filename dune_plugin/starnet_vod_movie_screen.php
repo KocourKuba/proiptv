@@ -51,7 +51,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url->get_media_url_str(), true);
+        hd_debug_print($media_url, true);
         hd_debug_print("movie id: $media_url->movie_id", true);
 
         $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);

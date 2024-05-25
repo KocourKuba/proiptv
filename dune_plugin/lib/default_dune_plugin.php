@@ -1384,6 +1384,9 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function init_plugin($force = false)
     {
+        hd_debug_print(null, true);
+        hd_debug_print("force: " . var_export($force, true), true);
+
         if (!$force && $this->inited) {
             return;
         }
@@ -1494,10 +1497,10 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
-        $this->init_epg_manager();
         $this->create_screen_views();
         $this->playback_points = new Playback_Points($this);
 
+        $this->init_epg_manager();
         $this->tv->unload_channels();
 
         hd_debug_print("Init plugin done!");
@@ -2596,6 +2599,71 @@ class Default_Dune_Plugin implements DunePlugin
         $name = empty($name) ? $plugin_name : "$plugin_name ($name)";
         hd_debug_print("plugin title: $name");
         return $name;
+    }
+
+    /**
+     * @param string $source_screen_id
+     * @param string $action_edit
+     * @param $selected_media_url
+     * @return array|null
+     */
+    public function do_edit_list_screen($source_screen_id, $action_edit, $selected_media_url = null)
+    {
+        $params = array(
+            'screen_id' => Starnet_Edit_List_Screen::ID,
+            'source_window_id' => $source_screen_id,
+            'source_media_url_str' => $source_screen_id,
+            'edit_list' => $action_edit,
+            'windowCounter' => 1,
+        );
+
+        if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS || $action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS) {
+            $this->set_postpone_save(true, PLUGIN_ORDERS);
+            $params['save_data'] = PLUGIN_ORDERS;
+            $params['end_action'] = ACTION_RELOAD;
+            $params['cancel_action'] = ACTION_EMPTY;
+        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) {
+            $this->set_postpone_save(true, PLUGIN_PARAMETERS);
+            $params['allow_order'] = true;
+            $params['save_data'] = PLUGIN_PARAMETERS;
+            $params['end_action'] = ACTION_REFRESH_SCREEN;
+            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
+        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) {
+            $this->set_postpone_save(true, PLUGIN_PARAMETERS);
+            $params['save_data'] = PLUGIN_PARAMETERS;
+            $params['end_action'] = ACTION_REFRESH_SCREEN;
+            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
+        }
+
+        $sel_id = null;
+        switch ($action_edit) {
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS:
+                if (!is_null($selected_media_url)) {
+                    $params['group_id'] = $selected_media_url->group_id;
+                }
+                $title = TR::t('tv_screen_edit_hidden_channels');
+                break;
+
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS:
+                $title = TR::t('tv_screen_edit_hidden_group');
+                break;
+
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST:
+                $params['extension'] = PLAYLIST_PATTERN;
+                $title = TR::t('setup_channels_src_edit_playlists');
+                $sel_id = $this->get_active_playlist_key();
+                break;
+
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST:
+                $params['extension'] = EPG_PATTERN;
+                $title = TR::t('setup_edit_xmltv_list');
+                break;
+
+            default:
+                return null;
+        }
+
+        return Action_Factory::open_folder(MediaURL::encode($params), $title, null, $sel_id);
     }
 
     /**

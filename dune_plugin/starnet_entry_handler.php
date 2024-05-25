@@ -23,6 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+require_once 'lib/mediaurl.php';
 require_once 'lib/user_input_handler_registry.php';
 
 class Starnet_Entry_Handler implements User_Input_Handler
@@ -38,8 +39,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_UNINSTALL = 'uninstall';
     const ACTION_UPDATE = 'update';
     const ACTION_CALL_PLUGIN_SETTINGS = 'call_setup';
-    const ACTION_CALL_CHANNELS_SETTINGS = 'call_channels_setup';
-    const ACTION_CHANNELS_SETTINGS = 'channels_settings';
+    const ACTION_CALL_PLAYLIST_SETTINGS = 'call_playlist_setup';
+    const ACTION_PLAYLIST_SETTINGS = 'channels_settings';
     const ACTION_CALL_REBOOT = 'call_reboot';
     const ACTION_CALL_SEND_LOG = 'call_send_log';
     const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
@@ -92,12 +93,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
                 return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
 
-            case self::ACTION_CALL_CHANNELS_SETTINGS:
+            case self::ACTION_CALL_PLAYLIST_SETTINGS:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_CHANNELS_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_PLAYLIST_SETTINGS);
 
-            case self::ACTION_CHANNELS_SETTINGS:
-                return Action_Factory::open_folder(Starnet_Playlists_Setup_Screen::ID, TR::t('tv_screen_playlists_setup'));
+            case self::ACTION_PLAYLIST_SETTINGS:
+                return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
 
             case self::ACTION_CALL_SEND_LOG:
                 if (is_newer_versions()) {

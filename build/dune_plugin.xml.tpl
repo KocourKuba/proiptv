@@ -113,7 +113,7 @@
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>channels_settings</control_id>
+                                <control_id>call_playlist_setup</control_id>
                             </params>
                         </action>
                     </menu_item>

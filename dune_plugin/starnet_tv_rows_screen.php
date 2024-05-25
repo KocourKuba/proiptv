@@ -665,7 +665,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_ITEMS_CLEAR:
-                hd_debug_print($media_url->get_media_url_str());
+                hd_debug_print($media_url, true);
                 if ($media_url->group_id === HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
                     $this->plugin->get_playback_points()->clear_points();
@@ -1337,7 +1337,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             // popup menu for selected chennel in row
             hd_debug_print("in channels rows", true);
             $media_url = MediaURL::decode($user_input->selected_item_id);
-            hd_debug_print($media_url->get_media_url_str());
+            hd_debug_print($media_url, true);
             if ($media_url->group_id === HISTORY_GROUP_ID) {
                 hd_debug_print("in history rows", true);
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");

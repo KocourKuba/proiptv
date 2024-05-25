@@ -454,7 +454,7 @@ class Movie implements User_Input_Handler
     public function get_movie_play_info(MediaURL $media_url)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url->get_media_url_str(), true);
+        hd_debug_print($media_url, true);
 
         if (!isset($media_url->screen_id)) {
             hd_debug_print("get_movie_play_info: List screen in media url not set: " . $media_url->get_raw_string());
