@@ -400,9 +400,11 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
                 $zip->addFile("$rootPath$name", $name);
 
-                $name = $key .  '_' . PLUGIN_ORDERS . ".settings";
-                if (file_exists($rootPath . $name)) {
-                    $zip->addFile("$rootPath$name", $name);
+                $pattern = $key .  '_' . PLUGIN_ORDERS . ".*\.settings$";
+                foreach (glob_dir($rootPath, "/$pattern/i") as $full_path) {
+                    if (file_exists($full_path)) {
+                        $zip->addFile($full_path, basename($full_path));
+                    }
                 }
             }
 
