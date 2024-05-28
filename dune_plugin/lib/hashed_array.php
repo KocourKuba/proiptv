@@ -167,7 +167,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * filter array by keys, return values only match with keys
      *
-     * @param TKey[] $keys
+     * @param array $keys
      * @return Hashed_Array
      */
     public function &filter($keys)

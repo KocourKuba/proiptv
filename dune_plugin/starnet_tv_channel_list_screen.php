@@ -478,7 +478,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     {
         hd_debug_print($group, true);
 
-        /** @var Channel $channel */
+        /** @var Default_Channel $channel */
         $channels = $group->get_group_enabled_channels()->get_ordered_values();
 
         $defs = array();

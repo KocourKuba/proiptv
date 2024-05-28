@@ -90,9 +90,4 @@ interface Group
      * @return string;
      */
     public function get_media_url_str();
-
-    /**
-     * @param Channel $channel
-     */
-    public function add_channel($channel);
 }

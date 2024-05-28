@@ -193,7 +193,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             hd_debug_print("Removed channels: " . raw_json_encode($removed_channels), true);
         }
 
-        /** @var Channel $channel */
+        /** @var Default_Channel $channel */
         foreach ($this->plugin->tv->get_filtered_channels($new_channels) as $channel) {
             if (is_null($channel)) continue;
 

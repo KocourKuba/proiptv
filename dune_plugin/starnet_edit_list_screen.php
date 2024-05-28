@@ -296,7 +296,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $group = $this->plugin->tv->get_any_group($parent_media_url->group_id);
                         if (is_null($group)) break;
 
-                        /** @var Channel $channel */
+                        /** @var Default_Channel $channel */
                         foreach ($group->get_group_disabled_channels() as $channel) {
                             if ($this->plugin->tv->disable_channel($channel->get_id(), false)) {
                                 $this->set_changes();
@@ -398,7 +398,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group = $this->plugin->tv->get_group($media_url->group_id);
                     if (is_null($group)) continue;
 
-                    $channel = $group->get_group_channels()->get($item);
+                    $channel = $group->get_group_channel($item);
                 }
 
                 if (is_null($channel)) continue;

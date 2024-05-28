@@ -234,7 +234,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 PaneParams::fav_btn_font_size
             );
         } else {
-            /** @var Group $group */
+            /** @var Default_Group $group */
             if ($group_id === FAVORITES_GROUP_ID) {
                 $group = $this->plugin->tv->get_special_group($group_id);
             } else {
@@ -635,7 +635,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return null;
                 }
 
-                /** @var Channel $channel */
+                /** @var Default_Channel $channel */
                 if ($user_input->{ACTION_RESET_TYPE} === ACTION_SORT_CHANNELS) {
                     if (!is_null($sel_group = $this->plugin->tv->get_group($media_url->group_id))) {
                         $sel_group->sort_group_items(true);
@@ -684,7 +684,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $order = &$this->plugin->tv->get_known_channels();
                     $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);
                     $order->clear();
-                    /** @var Channel $channel */
+                    /** @var Default_Channel $channel */
                     foreach ($all_channels as $channel) {
                         $order->set($channel->get_id(), $channel->get_title());
                     }
@@ -1069,7 +1069,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 RowsItemsParams::fav_sticker_icon_width,
                 RowsItemsParams::fav_sticker_icon_height));
 
-        /** @var Channel $channel */
+        /** @var Default_Channel $channel */
         foreach ($this->plugin->tv->get_filtered_channels($new_channels) as $channel) {
             if (is_null($channel) || $channel->is_disabled()) continue;
 
@@ -1198,22 +1198,20 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $rows = array();
         $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
-        /** @var Group $group */
-        /** @var Channel $channel */
-        foreach ($this->plugin->tv->get_groups($this->plugin->tv->get_groups_order()) as $group) {
+        /** @var Default_Group $group */
+        /** @var Default_Channel $channel */
+        $groups = $this->plugin->tv->get_groups()->filter($this->plugin->tv->get_groups_order()->get_order());
+        foreach ($groups as $group) {
             if (is_null($group)) continue;
 
             $group_id = $group->get_id();
             $items = array();
-            foreach ($group->get_items_order() as $channel_id) {
-                $channel = $this->plugin->tv->get_channel($channel_id);
-                if (is_null($channel) || $channel->is_disabled()) continue;
-
+            foreach ($group->get_group_enabled_channels() as $channel) {
                 $items[] = Rows_Factory::add_regular_item(
-                    json_encode(array('group_id' => $group_id, 'channel_id' => $channel_id)),
+                    json_encode(array('group_id' => $group_id, 'channel_id' => $channel->get_id())),
                     $channel->get_icon_url(),
                     $channel->get_title(),
-                    $fav_group->in_items_order($channel_id) ? $fav_stickers : null
+                    $fav_group->in_items_order($channel->get_id()) ? $fav_stickers : null
                 );
             }
 

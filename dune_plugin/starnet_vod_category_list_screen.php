@@ -91,7 +91,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $parent_category = $this->category_index[$media_url->category_id];
                 $category_list = $parent_category->get_sub_categories();
             } else {
-                /** @var Group $group */
+                /** @var Default_Group $group */
                 foreach ($this->plugin->vod->get_special_groups() as $group) {
                     if (is_null($group)) continue;
 

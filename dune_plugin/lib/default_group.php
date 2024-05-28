@@ -84,9 +84,9 @@ class Default_Group extends Json_Serializer implements Group
     protected $_disabled;
 
     /**
-     * @var Hashed_Array
+     * @var Ordered_Array
      */
-    protected $_channels;
+    protected $_channels_ids;
 
     /**
      * @var bool
@@ -127,7 +127,7 @@ class Default_Group extends Json_Serializer implements Group
         $this->_disabled = false;
         $this->_order_support = $order_support;
 
-        $this->_channels = new Hashed_Array();
+        $this->_channels_ids = new Ordered_Array();
     }
 
     /**
@@ -240,13 +240,20 @@ class Default_Group extends Json_Serializer implements Group
     /**
      * @inheritDoc
      */
-    public function &get_group_channels()
+    public function get_group_channels()
     {
         if ($this->_id === ALL_CHANNEL_GROUP_ID) {
             return $this->plugin->tv->get_channels();
         }
 
-        return $this->_channels;
+        $group_channels = new Hashed_Array();
+        foreach($this->_channels_ids as $channel_id) {
+            $channel = $this->plugin->tv->get_channel($channel_id);
+            if (!is_null($channel)) {
+                $group_channels->set($channel->get_id(), $channel);
+            }
+        }
+        return $group_channels;
     }
 
     /**
@@ -254,11 +261,12 @@ class Default_Group extends Json_Serializer implements Group
      */
     public function get_group_channel($id)
     {
+        $channel = $this->plugin->tv->get_channel($id);
         if ($this->_id === ALL_CHANNEL_GROUP_ID) {
-            return $this->plugin->tv->get_channel($id);
+            return $channel;
         }
 
-        return $this->_channels->get($id);
+        return $this->_channels_ids->in_order($id) ? $channel : null;
     }
 
     /**
@@ -380,11 +388,11 @@ class Default_Group extends Json_Serializer implements Group
     /// Methods
 
     /**
-     * @inheritDoc
+     * @param Default_Channel $channel
      */
     public function add_channel($channel)
     {
-        $this->_channels->set($channel->get_id(), $channel);
+        $this->_channels_ids->add_item($channel->get_id());
         if ($this->_order_support && !$channel->is_disabled()) {
             $this->get_items_order()->add_item($channel->get_id());
         }
@@ -401,7 +409,8 @@ class Default_Group extends Json_Serializer implements Group
         $order = &$this->get_items_order();
         $order->clear();
         if ($reset) {
-            foreach ($this->_channels as $channel) {
+            foreach ($this->_channels_ids as $channel_id) {
+                $channel = $this->plugin->tv->get_channel($channel_id);
                 if (is_null($channel) || $channel->is_disabled()) continue;
 
                 $order->add_item($channel->get_id());
@@ -409,7 +418,8 @@ class Default_Group extends Json_Serializer implements Group
         } else {
             // group items order contain only ID of the channels
             $names = new Hashed_Array();
-            foreach ($this->_channels as $channel) {
+            foreach ($this->_channels_ids as $channel_id) {
+                $channel = $this->plugin->tv->get_channel($channel_id);
                 if (!is_null($channel) && !$channel->is_disabled()) {
                     $names->set($channel->get_id(), $channel->get_title());
                 }

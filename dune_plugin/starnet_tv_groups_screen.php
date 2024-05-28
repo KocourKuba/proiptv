@@ -196,7 +196,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                /** @var Channel $channel */
+                /** @var Default_Channel $channel */
                 switch ($user_input->{ACTION_RESET_TYPE}) {
                     case ACTION_SORT_CHANNELS:
                         if (!is_null($sel_group = $this->plugin->tv->get_group($sel_media_url->group_id))) {
@@ -387,7 +387,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->save_orders(true);
                     $this->set_no_changes(PLUGIN_SETTINGS);
 
-                    /** @var Group $known_group */
+                    /** @var Default_Group $known_group */
                     if (strpos($old_cached_image, 'plugin_file://') === false) break;
 
                     foreach ($this->plugin->tv->get_groups() as $known_group) {
@@ -421,7 +421,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $order = &$this->plugin->tv->get_known_channels();
                     $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled(true);
                     $order->clear();
-                    /** @var Channel $channel */
+                    /** @var Default_Channel $channel */
                     foreach ($all_channels as $channel) {
                         $order->set($channel->get_id(), $channel->get_title());
                     }
@@ -547,7 +547,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return $items;
         }
 
-        /** @var Group $group */
+        /** @var Default_Group $group */
         foreach ($this->plugin->tv->get_special_groups() as $group) {
             if (is_null($group)) continue;
 
@@ -621,7 +621,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
         }
 
-        /** @var Group $group */
+        /** @var Default_Group $group */
         foreach ($this->plugin->tv->get_enabled_groups()->filter($this->plugin->tv->get_groups_order()->get_order()) as $group) {
             $group_url = $group->get_icon_url();
             $items[] = array(

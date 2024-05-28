@@ -197,38 +197,17 @@ class Starnet_Tv implements User_Input_Handler
     }
 
     /**
-     * returns all groups if filter not set
-     * returns all groups filtered by filter array
-     *
-     * @param array|Ordered_Array|Hashed_Array|string|null $filter
-     * @return Hashed_Array<Default_Group>|Default_Group
+     * returns all groups
+     * @return Hashed_Array<Default_Group>
      */
-    public function get_groups($filter = null)
+    public function get_groups()
     {
         if (is_null($this->groups)) {
             hd_debug_print("Groups not loaded");
             return new Hashed_Array();
         }
 
-        if (is_null($filter)) {
-            return $this->groups;
-        }
-
-        if (is_array($filter)) {
-            return $this->groups->filter($filter);
-        }
-
-        if (is_object($filter)) {
-            if ($filter instanceof Ordered_Array) {
-                return $this->groups->filter($filter->get_order());
-            }
-
-            if ($filter instanceof Hashed_Array) {
-                return $this->groups->filter($filter->get_ordered_values());
-            }
-        }
-
-        return $this->groups->get($filter);
+        return $this->groups;
     }
 
     /**
@@ -339,6 +318,7 @@ class Starnet_Tv implements User_Input_Handler
      * enable/disable channel
      *
      * @param string $channel_id
+     * @param bool $disable
      */
     public function disable_channel($channel_id, $disable)
     {
@@ -348,7 +328,7 @@ class Starnet_Tv implements User_Input_Handler
             return false;
         }
 
-        $channel->set_disabled(true);
+        $channel->set_disabled($disable);
         hd_debug_print(($disable ? "Hide" : "Show") . " channel: $channel_id");
         return true;
     }
@@ -635,7 +615,7 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        /** @var Group $special_group */
+        /** @var Default_Group $special_group */
         foreach ($this->special_groups as $special_group) {
             $group_icon = $custom_group_icons->get($special_group->get_id());
             if (!is_null($group_icon)) {
@@ -868,7 +848,7 @@ class Starnet_Tv implements User_Input_Handler
                 continue;
             }
 
-            /** @var Channel $channel */
+            /** @var Default_Channel $channel */
             $channel = $this->channels->get($channel_id);
             if (!is_null($channel)) {
                 // duplicate channel? Same ID or same Url
@@ -878,7 +858,7 @@ class Starnet_Tv implements User_Input_Handler
                 continue;
             }
 
-            /** @var Group $parent_group */
+            /** @var Default_Group $parent_group */
             $parent_group = $this->groups->get($group_title);
             // if no parent group nowhere to add, strange but possible
             if (is_null($parent_group)) continue;
@@ -1010,7 +990,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled($changed === 0);
 
         // cleanup orders if saved group removed from playlist
-        /** @var Group $group */
+        /** @var Default_Group $group */
         foreach ($this->groups as $group) {
             $channels = isset($playlist_group_channels[$group->get_id()]) ? $playlist_group_channels[$group->get_id()] : array();
             $orphans_channels = array_diff($group->get_items_order()->get_order(), $channels);
@@ -1430,7 +1410,7 @@ class Starnet_Tv implements User_Input_Handler
         $group_all = $this->get_special_group(ALL_CHANNEL_GROUP_ID);
         $show_all = !$group_all->is_disabled();
         $all_channels = new Hashed_Array();
-        /** @var Group $group */
+        /** @var Default_Group $group */
         foreach ($this->groups as $group) {
             if ($group->is_disabled()) continue;
 
@@ -1439,7 +1419,7 @@ class Starnet_Tv implements User_Input_Handler
                 $group_id_arr->put(ALL_CHANNEL_GROUP_ID, '');
             }
 
-            /** @var Group $group */
+            /** @var Default_Group $group */
             foreach ($group->get_items_order() as $item) {
                 $channel = $this->get_channel($item);
                 if (is_null($channel)) continue;
@@ -1480,7 +1460,7 @@ class Starnet_Tv implements User_Input_Handler
             $this->get_groups_order()->get_order());
 
         $groups = array();
-        /** @var Group $group */
+        /** @var Default_Group $group */
         foreach ($groups_order as $id) {
             $group = $this->get_any_group($id);
             if (is_null($group) || $group->is_disabled() || ($id !== ALL_CHANNEL_GROUP_ID && $group->get_items_order()->size() === 0)) continue;

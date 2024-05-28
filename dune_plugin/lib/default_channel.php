@@ -40,7 +40,7 @@ class Default_Channel extends Json_Serializer implements Channel
     protected $_catchup;
 
     /**
-     * @var Group
+     * @var Default_Group
      */
     protected $_group;
 
@@ -214,7 +214,7 @@ class Default_Channel extends Json_Serializer implements Channel
             $this->get_parent_group()->get_items_order()->remove_item($this->_id);
         } else {
             $this->plugin->tv->get_disabled_channel_ids()->remove_item($this->_id);
-            $this->get_parent_group()->add_channel($this);
+            $this->get_parent_group()->get_items_order()->add_item($this->_id);
         }
     }
 
