@@ -1070,7 +1070,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 RowsItemsParams::fav_sticker_icon_height));
 
         /** @var Channel $channel */
-        foreach ($this->plugin->tv->get_channels($new_channels) as $channel) {
+        foreach ($this->plugin->tv->get_filtered_channels($new_channels) as $channel) {
             if (is_null($channel) || $channel->is_disabled()) continue;
 
             $items[] = Rows_Factory::add_regular_item(

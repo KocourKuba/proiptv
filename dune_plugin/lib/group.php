@@ -55,6 +55,12 @@ interface Group
     public function get_group_channels();
 
     /**
+     * @param string $id
+     * @return Channel
+     */
+    public function get_group_channel($id);
+
+    /**
      * @return Hashed_Array
      */
     public function get_group_enabled_channels();
@@ -84,4 +90,9 @@ interface Group
      * @return string;
      */
     public function get_media_url_str();
+
+    /**
+     * @param Channel $channel
+     */
+    public function add_channel($channel);
 }

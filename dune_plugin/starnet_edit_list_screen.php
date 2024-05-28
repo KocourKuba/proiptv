@@ -205,17 +205,27 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_REMOVE_ITEM_DLG_APPLY);
 
                     case self::SCREEN_EDIT_CHANNELS:
-                        $force_return = $this->get_order($edit_list)->size() === 0;
-                        if ($this->plugin->tv->disable_channel($item, false)) {
-                            $this->set_changes();
+                        if (!$this->plugin->tv->disable_channel($item, false)) {
+                            return null;
                         }
+
+                        $this->get_order($edit_list)->remove_item($item);
+                        $group = $this->plugin->tv->get_any_group($parent_media_url->group_id);
+                        if (is_null($group)) {
+                            return null;
+                        }
+                        $channel = $group->get_group_channel($item);
+                        if (!is_null($channel)) {
+                            $channel->set_disabled(false);
+                        }
+
+                        $force_return = $group->get_group_disabled_channels()->size() === 0;
                         break;
 
                     case self::SCREEN_EDIT_GROUPS:
+                        $this->get_order($edit_list)->remove_item($item);
                         $force_return = $this->get_order($edit_list)->size() === 0;
                         hd_debug_print("restore group: " . $item, true);
-                        $this->get_order($edit_list)->remove_item($item);
-                        $this->set_changes();
                         break;
 
                     default:
@@ -225,6 +235,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->set_changes($parent_media_url->save_data);
                 if ($force_return) {
+                    $this->force_parent_reload = true;
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
                 break;
@@ -374,6 +385,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        hd_debug_print("MediaUrl: " . $media_url, true);
 
         $edit_list = $media_url->edit_list;
         $items = array();
@@ -389,9 +401,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $channel = $group->get_group_channels()->get($item);
                 }
 
-                if (!is_null($channel)) {
-                    $items[] = self::add_item($item, $channel->get_title(), false, $channel->get_icon_url(), null);
-                }
+                if (is_null($channel)) continue;
+
+                $items[] = self::add_item($item, $channel->get_title(), false, $channel->get_icon_url(), null);
             }
         } else if ($edit_list === self::SCREEN_EDIT_GROUPS) {
             /** @var string $item */
@@ -472,6 +484,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
         }
 
+        hd_debug_print("all items: " . raw_json_encode($items), true);
         return $items;
     }
 

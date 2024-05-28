@@ -211,14 +211,10 @@ class Default_Channel extends Json_Serializer implements Channel
         $this->_disabled = $disabled;
         if ($disabled) {
             $this->plugin->tv->get_disabled_channel_ids()->add_item($this->_id);
-        } else {
-            $this->plugin->tv->get_disabled_channel_ids()->remove_item($this->_id);
-        }
-
-        if ($disabled) {
             $this->get_parent_group()->get_items_order()->remove_item($this->_id);
         } else {
-            $this->get_parent_group()->get_items_order()->add_item($this->_id);
+            $this->plugin->tv->get_disabled_channel_ids()->remove_item($this->_id);
+            $this->get_parent_group()->add_channel($this);
         }
     }
 

@@ -63,20 +63,20 @@ class Starnet_Tv implements User_Input_Handler
     protected $playback_url_is_stream_url;
 
     /**
-     * @template Channel
-     * @var Hashed_Array<string, Channel>
+     * @template Default_Channel
+     * @var Hashed_Array<string, Default_Channel>
      */
     protected $channels;
 
     /**
-     * @template Group
-     * @var Hashed_Array<string, Group>
+     * @template Default_Group
+     * @var Hashed_Array<string, Default_Group>
      */
     protected $groups;
 
     /**
-     * @template Group
-     * @var Hashed_Array<string, Group>
+     * @template Default_Group
+     * @var Hashed_Array<string, Default_Group>
      */
     protected $special_groups;
 
@@ -122,18 +122,27 @@ class Starnet_Tv implements User_Input_Handler
     }
 
     /**
-     * @param array|Ordered_Array|Hashed_Array|string|null $filter
-     * @return Hashed_Array<Channel>|null
+     * @return Hashed_Array<Default_Channel>
      */
-    public function &get_channels($filter = null)
+    public function &get_channels()
     {
         if ($this->channels->size() === 0) {
             hd_debug_print("Channels not loaded");
             return self::$null_hashed_array;
         }
 
-        if (is_null($filter)) {
-            return $this->channels;
+        return $this->channels;
+    }
+
+    /**
+     * @param array|Ordered_Array|Hashed_Array|string $filter
+     * @return Hashed_Array<Default_Channel>|null
+     */
+    public function &get_filtered_channels($filter)
+    {
+        if ($this->channels->size() === 0) {
+            hd_debug_print("Channels not loaded");
+            return self::$null_hashed_array;
         }
 
         if (is_array($filter)) {
@@ -156,7 +165,7 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param string $channel_id
-     * @return Channel
+     * @return Default_Channel
      */
     public function get_channel($channel_id)
     {
@@ -169,7 +178,7 @@ class Starnet_Tv implements User_Input_Handler
     }
 
     /**
-     * @return Hashed_Array<Channel>
+     * @return Hashed_Array<Default_Channel>
      */
     public function get_enabled_channels()
     {
@@ -179,7 +188,7 @@ class Starnet_Tv implements User_Input_Handler
             return $channels;
         }
 
-        /** @var Channel $channel */
+        /** @var Default_Channel $channel */
         foreach ($this->channels as $channel) {
             if (is_null($channel) || $channel->is_disabled()) continue;
             $channels->put($channel->get_id(), $channel);
@@ -192,7 +201,7 @@ class Starnet_Tv implements User_Input_Handler
      * returns all groups filtered by filter array
      *
      * @param array|Ordered_Array|Hashed_Array|string|null $filter
-     * @return Hashed_Array<Group>|Group
+     * @return Hashed_Array<Default_Group>|Default_Group
      */
     public function get_groups($filter = null)
     {
@@ -226,7 +235,7 @@ class Starnet_Tv implements User_Input_Handler
      * returns group with selected id
      *
      * @param string $group_id
-     * @return Group
+     * @return Default_Group
      */
     public function get_group($group_id)
     {
@@ -242,7 +251,7 @@ class Starnet_Tv implements User_Input_Handler
      * returns group with selected id
      *
      * @param string $group_id
-     * @return Group
+     * @return Default_Group
      */
     public function get_any_group($group_id)
     {
@@ -294,8 +303,8 @@ class Starnet_Tv implements User_Input_Handler
     /**
      * returns only not null and enabled groups
      *
-     * @template Group
-     * @return  Hashed_Array<Group>
+     * @template Default_Channel
+     * @return  Hashed_Array<Default_Channel>
      */
     public function get_enabled_groups()
     {
@@ -311,8 +320,8 @@ class Starnet_Tv implements User_Input_Handler
     /**
      * returns only not null and disabled groups
      *
-     * @template Group
-     * @return  Hashed_Array<Group>
+     * @template Default_Channel
+     * @return  Hashed_Array<Default_Channel>
      */
     public function get_disabled_groups()
     {
@@ -340,7 +349,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         $channel->set_disabled(true);
-        hd_debug_print(($disable ? "Hide" : "Show") . "Hide channel: $channel_id");
+        hd_debug_print(($disable ? "Hide" : "Show") . " channel: $channel_id");
         return true;
     }
 
@@ -387,7 +396,7 @@ class Starnet_Tv implements User_Input_Handler
     public function get_special_groups_count()
     {
         $groups_cnt = 0;
-        /** @var Group $group */
+        /** @var Default_Channel $group */
         foreach($this->special_groups as $group) {
             if (!is_null($group) && !$group->is_disabled()) $groups_cnt++;
         }
@@ -567,6 +576,7 @@ class Starnet_Tv implements User_Input_Handler
             TR::load_string(Default_Group::FAV_CHANNEL_GROUP_CAPTION),
             Default_Group::FAV_CHANNEL_GROUP_ICON);
         $this->special_groups->set($special_group->get_id(), $special_group);
+        hd_debug_print("Favorites: " . json_encode($special_group->get_items_order()->get_order()), true);
 
         // History channels category
         $special_group = new Default_Group($this->plugin,
@@ -575,6 +585,7 @@ class Starnet_Tv implements User_Input_Handler
             Default_Group::HISTORY_GROUP_ICON,
             false);
         $this->special_groups->set($special_group->get_id(), $special_group);
+        hd_debug_print("History: " . json_encode($special_group->get_items_order()->get_order()), true);
 
         // Changed channels category
         $special_group = new Default_Group($this->plugin,
