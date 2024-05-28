@@ -1058,24 +1058,11 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_yosso.png",
       "api_commands": {
-        "get_playlist": "https://streaming-elbrus.su/playlist/{LOGIN}/{PASSWORD}/{SERVER_ID}playlist.m3u8"
+        "get_playlist": "https://streaming-elbrus.su/p12/{LOGIN}/{PASSWORD}/BL/playlist.m3u8"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>[^\\/]+)\\/(?<id>.+)\\/.+$/",
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "epg_preset": "drm",
-        "ext_params": true,
-        "servers": {
-          "/": "RU (Russia, Moscow, DC1)",
-          "kfc/": "KFC (Russia, Moscow, DC2)",
-          "OSTHLS/": "OSTHLS (Russia, Moscow, DC3)",
-          "KRDHLS/": "KRDHLS (Russia, Krasnodar)",
-          "bn/": "BN (Russia, Saint-Petersburg)",
-          "BYHLS/": "BYHLS (Belarus, Minsk)",
-          "de/": "DE (Germany, Frankfurt/Netherlands, Amsterdam)",
-          "kz/": "KZ (Russia, Samara)",
-          "gn/": "GN (Poland, Warsaw)",
-          "RHLS/": "RHLS (Europe, Lux/Fra)"
-        },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     }
