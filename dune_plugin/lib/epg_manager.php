@@ -413,6 +413,7 @@ class Epg_Manager
                 if ($ret !== 0) {
                     throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
                 }
+                flush();
                 $size = filesize($cached_xmltv_file);
                 touch($cached_xmltv_file, $file_time);
                 hd_debug_print("$size bytes ungzipped to $cached_xmltv_file in " . (microtime(true) - $t) . " secs");
@@ -435,6 +436,7 @@ class Epg_Manager
                 if ($ret !== 0) {
                     throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
                 }
+                flush();
 
                 rename($filename, $cached_xmltv_file);
                 $size = filesize($cached_xmltv_file);

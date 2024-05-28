@@ -414,24 +414,27 @@ class smb_tree
     public static function get_network_folder_nfs()
     {
         $nfs = array();
-        $network = parse_ini_file('/config/network_folders.properties', true);
-        foreach ($network as $k => $v) {
-            if (preg_match("/(.*)\.(.*)/", $k, $match)) {
-                $network_folder[$match[2]][$match[1]] = $v;
+        if (file_exists('/config/network_folders.properties')) {
+            $network = parse_ini_file('/config/network_folders.properties', true);
+            foreach ($network as $k => $v) {
+                if (preg_match("/(.*)\.(.*)/", $k, $match)) {
+                    $network_folder[$match[2]][$match[1]] = $v;
+                }
             }
-        }
 
-        if (isset($network_folder)) {
-            foreach ($network_folder as $v) {
-                if ((int)$v['type'] === 1) {
-                    $p = ((int)$v['protocol'] === 1) ? 'tcp' : 'udp';
-                    $nfs[$v['server'] . ':' . $v['directory']]['foldername'] = $v['name'];
-                    $nfs[$v['server'] . ':' . $v['directory']]['protocol'] = $p;
-                    $nfs[$v['server'] . ':' . $v['directory']]['server'] = $v['server'];
-                    $nfs[$v['server'] . ':' . $v['directory']]['directory'] = $v['directory'];
+            if (isset($network_folder)) {
+                foreach ($network_folder as $v) {
+                    if ((int)$v['type'] === 1) {
+                        $p = ((int)$v['protocol'] === 1) ? 'tcp' : 'udp';
+                        $nfs[$v['server'] . ':' . $v['directory']]['foldername'] = $v['name'];
+                        $nfs[$v['server'] . ':' . $v['directory']]['protocol'] = $p;
+                        $nfs[$v['server'] . ':' . $v['directory']]['server'] = $v['server'];
+                        $nfs[$v['server'] . ':' . $v['directory']]['directory'] = $v['directory'];
+                    }
                 }
             }
         }
+
         return $nfs;
     }
 
