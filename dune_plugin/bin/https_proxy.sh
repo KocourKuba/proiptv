@@ -9,6 +9,6 @@ if [ -z "$CURL_CONFIG" ] || [ ! -e $CURL_CONFIG ]; then
   exit
 fi
 
-$CURL --config $CURL_CONFIG >>$LOG_FILE
+$CURL --config $CURL_CONFIG >>$LOG_FILE 2>&1
 
-exit;
+exit

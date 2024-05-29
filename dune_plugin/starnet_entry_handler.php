@@ -101,15 +101,19 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
 
             case self::ACTION_CALL_SEND_LOG:
-                if (is_newer_versions()) {
-                    $error_msg = '';
-                    $msg = HD::send_log_to_developer($this->plugin->plugin_info['app_version'], $error_msg)
-                        ? TR::t('entry_log_sent')
-                        : TR::t('entry_log_not_sent');
-                    return Action_Factory::show_title_dialog($msg);
+                if (!is_newer_versions()) {
+                    return Action_Factory::show_title_dialog(TR::t('entry_send_log'), null, TR::t('entry_log_not_sent_too_old'));
                 }
 
-                return Action_Factory::show_title_dialog(TR::t('entry_log_not_sent_too_old'));
+                if (!LogSeverity::$is_debug) {
+                    return Action_Factory::show_title_dialog(TR::t('entry_send_log'), null, TR::t('entry_log_not_enabled'));
+                }
+
+                $error_msg = '';
+                $msg = HD::send_log_to_developer($this->plugin, $error_msg)
+                    ? TR::t('entry_log_sent')
+                    : TR::t('entry_log_not_sent');
+                return Action_Factory::show_title_dialog(TR::t('entry_send_log'), null, $msg);
 
             case self::ACTION_CALL_CLEAR_EPG:
                 $this->plugin->init_plugin();

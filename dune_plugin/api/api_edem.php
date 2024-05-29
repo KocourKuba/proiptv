@@ -114,7 +114,7 @@ class api_edem extends api_default
         $this->playlist_info->params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
 
         if (!empty($user_input->{CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
-            return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'), 1000);
+            return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'));
         }
 
         $this->playlist_info->params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};

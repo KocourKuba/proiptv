@@ -205,7 +205,12 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 }
 
                 if ($data->choose_folder === self::CONTROL_BACKUP) {
-                    return $this->do_backup_settings($data->filepath);
+                    if (HD::do_backup_settings($this->plugin, $data->filepath) === false) {
+                        return Action_Factory::show_title_dialog(TR::t('err_backup'));
+                    }
+
+                    return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
+                        User_Input_Handler_Registry::create_action($this, ACTION_RELOAD));
                 }
 
                 break;
@@ -373,77 +378,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 )
             )
         );
-    }
-
-    /**
-     * @param string $filename
-     * @return array
-     */
-    protected function do_backup_settings($filename)
-    {
-        hd_debug_print(ACTION_FOLDER_SELECTED . " $filename");
-        $timestamp = format_datetime('Y-m-d_H-i', time());
-        $zip_file_name = "proiptv_backup_{$this->plugin->plugin_info['app_version']}_$timestamp.zip";
-        $zip_file = get_temp_path($zip_file_name);
-
-        try {
-            $zip = new ZipArchive();
-            if (!$zip->open($zip_file, ZipArchive::CREATE)) {
-                throw new Exception(TR::t("err_create_zip__1", $zip_file));
-            }
-
-            $rootPath = get_data_path();
-            $zip->addFile("{$rootPath}common.settings", "common.settings");
-            foreach ($this->plugin->get_playlists() as $key => $playlist) {
-                $name = $key . ".settings";
-                if (!file_exists($rootPath . $name)) continue;
-
-                $zip->addFile("$rootPath$name", $name);
-
-                $pattern = $key .  '_' . PLUGIN_ORDERS . ".*\.settings$";
-                foreach (glob_dir($rootPath, "/$pattern/i") as $full_path) {
-                    if (file_exists($full_path)) {
-                        $zip->addFile($full_path, basename($full_path));
-                    }
-                }
-            }
-
-            $added_folders = array($rootPath . CACHED_IMAGE_SUBDIR);
-            /** @var SplFileInfo[] $files */
-            $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath),
-                RecursiveIteratorIterator::SELF_FIRST);
-
-            foreach ($files as $file) {
-                if ($file->isDir()) continue;
-
-                $filePath = $file->getRealPath();
-                foreach ($added_folders as $folder) {
-                    if (0 === strncmp($filePath, $folder, strlen($folder))) {
-                        $relativePath = substr($filePath, strlen($rootPath));
-                        $zip->addFile($filePath, $relativePath);
-                    }
-                }
-            }
-
-            if (!$zip->close()) {
-                throw new Exception("Error create zip file: $zip_file " . $zip->getStatusString());
-            }
-
-            $backup_path = "$filename/$zip_file_name";
-            if (false === copy($zip_file, $backup_path)) {
-                throw new Exception(TR::t('err_copy__2', $zip_file, $backup_path));
-            }
-        } catch (Exception $ex) {
-            hd_debug_print(HD::get_storage_size(get_temp_path()));
-            hd_debug_print($ex->getMessage());
-            return Action_Factory::show_title_dialog(TR::t('err_backup'), null, $ex->getMessage());
-        }
-
-        unlink($zip_file);
-        flush();
-
-        return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
-            User_Input_Handler_Registry::create_action($this, ACTION_RELOAD));
     }
 
     /**

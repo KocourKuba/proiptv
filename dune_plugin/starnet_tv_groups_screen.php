@@ -138,7 +138,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $has_error = HD::get_last_error('vod_last_error');
                 }
 
-                return Action_Factory::show_title_dialog(TR::t('err_load_any'),null, $has_error, self::DLG_CONTROLS_WIDTH);
+                return Action_Factory::show_title_dialog(TR::t('err_load_any'),null, $has_error);
 
             case ACTION_ITEM_UP:
                 if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::UP))

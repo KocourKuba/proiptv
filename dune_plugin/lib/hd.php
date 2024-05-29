@@ -307,7 +307,13 @@ class HD
 
         $cmd = get_install_path('bin/https_proxy.sh') . " " . get_platform_curl() . " '$config_file' '$logfile'";
         hd_debug_print("Exec: $cmd", true);
-        shell_exec($cmd);
+        $result = shell_exec($cmd);
+        if ($result === false) {
+            hd_debug_print("Problem with exec https_proxy script");
+        } else if ($result !== null) {
+            hd_debug_print("Exec result: $result");
+        }
+
         if (!file_exists($logfile)) {
             $log_content = "No http_proxy log!";
             hd_debug_print($log_content);
@@ -316,7 +322,7 @@ class HD
             if (LogSeverity::$is_debug && $log_content !== false) {
                 hd_debug_print("---------  Read http_proxy log ---------");
                 foreach ($log_content as $line) {
-                    hd_debug_print($line, true);
+                    hd_debug_print($line);
                 }
                 hd_debug_print("---------     Read finished    ---------");
             }
@@ -468,13 +474,14 @@ class HD
 
     ///////////////////////////////////////////////////////////////////////
 
-    public static function send_log_to_developer($ver, &$error = null)
+    public static function send_log_to_developer($plugin, &$error = null)
     {
         $serial = get_serial_number();
         if (empty($serial)) {
             hd_debug_print("Unable to get DUNE serial.");
             $serial = 'XX-XX-XX-XX-XX';
         }
+        $ver = $plugin->plugin_info['app_version'];
         $ver = str_replace('.', '_', $ver);
         $timestamp = format_datetime('Ymd_His', time());
         $model = get_product_id();
@@ -485,10 +492,11 @@ class HD
         $plugin_name = get_plugin_name();
 
         $paths = array(
-            get_data_path("*.settings"),
+            get_temp_path("*.txt"),
             get_temp_path("*.log"),
             get_temp_path("*.m3u8"),
-            "$apk_subst/tmp/run/shell.*",
+            "$apk_subst/tmp/run/shell.log",
+            "$apk_subst/tmp/run/shell.log.old",
         );
 
         if (file_exists("$apk_subst/D/dune_plugin_logs/$plugin_name.log")) {
@@ -499,6 +507,13 @@ class HD
         }
         if (file_exists("$apk_subst/tmp/run/$plugin_name.log")) {
             $paths[] = "$apk_subst/tmp/run/$plugin_name.*";
+        }
+
+        $plugin_backup = self::do_backup_settings($plugin, get_temp_path(), false);
+        if ($plugin_backup === false) {
+            $paths[] = get_data_path("*.settings");
+        } else {
+            $paths[] = $plugin_backup;
         }
 
         $files = array();
@@ -540,6 +555,88 @@ class HD
         @unlink($zip_file);
 
         return $ret;
+    }
+
+    /**
+     * @param Default_Dune_Plugin $plugin
+     * @param string $folder_path
+     * @return bool|string
+     */
+    public static function do_backup_settings($plugin, $folder_path, $complete = true)
+    {
+        $folder_path = get_paved_path($folder_path);
+
+        hd_debug_print(ACTION_FOLDER_SELECTED . " $folder_path");
+        if ($complete) {
+            $timestamp = format_datetime('Y-m-d_H-i', time());
+            $zip_file_name = "proiptv_backup_{$plugin->plugin_info['app_version']}_$timestamp.zip";
+        } else {
+            $zip_file_name = "proiptv_backup.zip";
+        }
+        $zip_file = get_temp_path($zip_file_name);
+
+        try {
+            $zip = new ZipArchive();
+            if (!$zip->open($zip_file, ZipArchive::CREATE)) {
+                throw new Exception(TR::t("err_create_zip__1", $zip_file));
+            }
+
+            $rootPath = get_data_path();
+            $zip->addFile("{$rootPath}common.settings", "common.settings");
+            foreach ($plugin->get_playlists() as $key => $playlist) {
+                $name = $key . ".settings";
+                if (!file_exists($rootPath . $name)) continue;
+
+                $zip->addFile("$rootPath$name", $name);
+
+                $pattern = $key .  '_' . PLUGIN_ORDERS . ".*\.settings$";
+                foreach (glob_dir($rootPath, "/$pattern/i") as $full_path) {
+                    if (file_exists($full_path)) {
+                        $zip->addFile($full_path, basename($full_path));
+                    }
+                }
+            }
+
+            if ($complete) {
+                $added_folders = array($rootPath . CACHED_IMAGE_SUBDIR);
+                /** @var SplFileInfo[] $files */
+                $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath),
+                    RecursiveIteratorIterator::SELF_FIRST);
+
+                foreach ($files as $file) {
+                    if ($file->isDir()) continue;
+
+                    $filePath = $file->getRealPath();
+                    foreach ($added_folders as $folder) {
+                        if (0 === strncmp($filePath, $folder, strlen($folder))) {
+                            $relativePath = substr($filePath, strlen($rootPath));
+                            $zip->addFile($filePath, $relativePath);
+                        }
+                    }
+                }
+            }
+
+            if (!$zip->close()) {
+                throw new Exception("Error create zip file: $zip_file " . $zip->getStatusString());
+            }
+
+            $backup_path = "$folder_path/$zip_file_name";
+            if ($zip_file !== $backup_path && false === copy($zip_file, $backup_path)) {
+                throw new Exception(TR::t('err_copy__2', $zip_file, $backup_path));
+            }
+        } catch (Exception $ex) {
+            hd_debug_print(self::get_storage_size(get_temp_path()));
+            hd_debug_print($ex->getMessage());
+            return false;
+        }
+
+        flush();
+        if ($zip_file !== $backup_path) {
+            hd_print("unlink $zip_file");
+            unlink($zip_file);
+        }
+
+        return $backup_path;
     }
 
     /**
