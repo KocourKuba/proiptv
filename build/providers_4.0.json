@@ -923,6 +923,7 @@
       "config": {
         "id_map": "tvg-id",
         "epg_preset": "tvclub",
+        "ext_params": true,
         "streams": {
           "mpegts": "MPEG-TS"
         },
