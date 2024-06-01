@@ -486,13 +486,12 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @param string $params
-     * @param $from_ndx
      * @return array
      */
-    public function getFilterList($params, $from_ndx)
+    public function getFilterList($params)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
+        hd_debug_print("getFilterList: $params");
         return array();
     }
 
@@ -733,7 +732,7 @@ class vod_standard extends Abstract_Vod
     /**
      * @return bool
      */
-    protected function load_vod_json_full()
+    protected function load_vod_json_full($assoc = false)
     {
         $this->vod_items = false;
         $tmp_file = $this->get_vod_cache_file();
@@ -750,17 +749,24 @@ class vod_standard extends Abstract_Vod
         }
 
         if (!$need_load) {
-            $this->vod_items = HD::ReadContentFromFile($tmp_file, false);
+            $this->vod_items = HD::ReadContentFromFile($tmp_file, $assoc);
         } else {
-            $this->vod_items = $this->provider->execApiCommand(API_COMMAND_GET_VOD);
-            if ($this->vod_items !== false) {
-                HD::StoreContentToFile($tmp_file, $this->vod_items);
-            } else {
+            $responce = $this->provider->execApiCommand(API_COMMAND_GET_VOD);
+            if ($responce === false) {
                 $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                 $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
                 HD::set_last_error("vod_last_error", $exception_msg);
                 if (file_exists($tmp_file)) {
                     unlink($tmp_file);
+                }
+            } else {
+                $this->vod_items = HD::decodeResponse(true, $tmp_file, $assoc);
+                if ($this->vod_items === false) {
+                    $exception_msg = "Ошибка декодирования данных медиатеки!\n\n";
+                    HD::set_last_error("vod_last_error", $exception_msg);
+                    if (file_exists($tmp_file)) {
+                        unlink($tmp_file);
+                    }
                 }
             }
         }

@@ -55,9 +55,7 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param string $movie_id
-     * @return Movie
-     * @throws Exception
+     * @inheritDoc
      */
     public function TryLoadMovie($movie_id)
     {
@@ -193,8 +191,7 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param array &$category_list
-     * @param array &$category_index
+     * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
@@ -220,16 +217,16 @@ class vod_sharavoz extends vod_standard
             $category_list[] = $category;
             $category_index[$category->get_id()] = $category;
         }
+
         hd_debug_print("Categories read: $category_count");
+
         return true;
     }
 
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $query_id
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getMovieList($query_id)
     {
@@ -266,9 +263,7 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param string $keyword
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getSearchList($keyword)
     {

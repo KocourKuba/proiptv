@@ -30,6 +30,7 @@ class vod_glanz extends vod_standard
 
         $movie = null;
         foreach ($this->vod_items as $item) {
+            $item = (object)$item;
             if (isset($item->id)) {
                 $id = (string)$item->id;
             } else {
@@ -79,7 +80,7 @@ class vod_glanz extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        if ($this->load_vod_json_full() === false) {
+        if ($this->load_vod_json_full(true) === false) {
             return false;
         }
 
@@ -93,6 +94,7 @@ class vod_glanz extends vod_standard
         $genres = array();
         $years = array();
         foreach ($this->vod_items as $movie) {
+            $movie = (object)$movie;
             $category = (string)$movie->category;
             if (empty($category)) {
                 $category = TR::load_string('no_category');
@@ -154,6 +156,7 @@ class vod_glanz extends vod_standard
 
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
         foreach ($this->vod_items as $item) {
+            $item = (object)$item;
             $search = utf8_encode(mb_strtolower($item->name, 'UTF-8'));
             if (strpos($search, $keyword) !== false) {
                 $movies[] = self::CreateShortMovie($item);
@@ -187,6 +190,7 @@ class vod_glanz extends vod_standard
         foreach ($this->vod_items as $movie) {
             if ($pos++ < $page_idx) continue;
 
+            $movie = (object)$movie;
             $category = $movie->category;
             if (empty($category)) {
                 $category = TR::load_string('no_category');
@@ -205,18 +209,13 @@ class vod_glanz extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getFilterList($params, $from_ndx)
+    public function getFilterList($params)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
+        hd_debug_print("getFilterList: $params");
 
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
-            return array();
-        }
-
-        if ($from_ndx !== 0) {
-            // lazy load not supported
             return array();
         }
 
@@ -237,6 +236,7 @@ class vod_glanz extends vod_standard
         }
 
         foreach ($this->vod_items as $movie) {
+            $movie = (object)$movie;
             $match_genre = !isset($post_params['genre']);
             if (!$match_genre) {
                 foreach ($movie->genres as $genre) {

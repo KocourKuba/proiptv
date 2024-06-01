@@ -124,7 +124,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
                 $movies = $this->plugin->vod->getSearchList($media_url->genre_id);
             }
         } else if ($media_url->category_id === Vod_Category::FLAG_FILTER) {
-            $movies = $this->plugin->vod->getFilterList($media_url->genre_id, $from_ndx);
+            $movies = $this->plugin->vod->getFilterList($media_url->genre_id);
         } else {
             $movies = $this->plugin->vod->getMovieList($key);
         }

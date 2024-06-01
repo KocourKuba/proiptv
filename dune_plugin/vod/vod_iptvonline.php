@@ -23,9 +23,7 @@ class vod_iptvonline extends vod_standard
     }
 
     /**
-     * @param string $movie_id +/
-     * @return Movie
-     * @throws Exception
+     * @inheritDoc
      */
     public function TryLoadMovie($movie_id)
     {
@@ -104,8 +102,7 @@ class vod_iptvonline extends vod_standard
     }
 
     /**
-     * @param array &$category_list
-     * @param array &$category_index
+     * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
@@ -158,9 +155,7 @@ class vod_iptvonline extends vod_standard
     }
 
     /**
-     * @param string $keyword
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getSearchList($keyword)
     {
@@ -194,10 +189,10 @@ class vod_iptvonline extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getFilterList($params, $from_ndx)
+    public function getFilterList($params)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
+        hd_debug_print("getFilterList: $params");
 
         $pairs = explode(",", $params);
         $filter_params = array();
@@ -253,9 +248,7 @@ class vod_iptvonline extends vod_standard
     }
 
     /**
-     * @param string $query_id
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getMovieList($query_id)
     {

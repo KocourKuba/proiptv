@@ -16,9 +16,7 @@ class vod_ipstream extends vod_standard
     }
 
     /**
-     * @param string $movie_id
-     * @return Movie
-     * @throws Exception
+     * @inheritDoc
      */
     public function TryLoadMovie($movie_id)
     {
@@ -97,8 +95,7 @@ class vod_ipstream extends vod_standard
     }
 
     /**
-     * @param array &$category_list
-     * @param array &$category_index
+     * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
@@ -162,9 +159,7 @@ class vod_ipstream extends vod_standard
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $keyword
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getSearchList($keyword)
     {
@@ -188,9 +183,7 @@ class vod_ipstream extends vod_standard
     }
 
     /**
-     * @param string $query_id
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getMovieList($query_id)
     {
@@ -233,18 +226,13 @@ class vod_ipstream extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getFilterList($params, $from_ndx)
+    public function getFilterList($params)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
+        hd_debug_print("getFilterList: $params");
 
         if ($this->vod_items === false) {
             hd_debug_print("failed to load movies");
-            return array();
-        }
-
-        if ($from_ndx !== 0) {
-            // lazy load not supported
             return array();
         }
 

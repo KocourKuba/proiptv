@@ -32,9 +32,7 @@ class vod_edem extends vod_standard
     }
 
     /**
-     * @param string $movie_id +/
-     * @return Movie
-     * @throws Exception
+     * @inheritDoc
      */
     public function TryLoadMovie($movie_id)
     {
@@ -71,8 +69,8 @@ class vod_edem extends vod_standard
                         $qualities_str .= ($key === 'auto' ? '' : $key);
                     }
 
-                    $qualities_str = TR::load_string('vod_screen_quality') . "|$qualities_str";
-                    $series_desc = rtrim($qualities_str, ' ,\0');
+                    $qualities_str = rtrim($qualities_str, ' ,\0');
+                    $series_desc = TR::load_string('vod_screen_quality') . "|$qualities_str";
                     $movie->add_series_with_variants_data($item->fid, $item->title, $series_desc, $qualities, array(), $item->url);
                 }
             }
@@ -92,7 +90,8 @@ class vod_edem extends vod_standard
                 $qualities_str .= ($key === 'auto' ? '' : $key);
             }
 
-            $series_desc = rtrim(TR::load_string('vod_screen_quality') . "|$qualities_str", ' ,\0');
+            $qualities_str = rtrim($qualities_str, ' ,\0');
+            $series_desc = TR::load_string('vod_screen_quality') . "|$qualities_str";
             $movie->add_series_with_variants_data($movie_id, $movieData->title, $series_desc, $qualities, array(), $movieData->url);
         }
 
@@ -123,8 +122,7 @@ class vod_edem extends vod_standard
     }
 
     /**
-     * @param array &$category_list
-     * @param array &$category_index
+     * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
@@ -163,9 +161,7 @@ class vod_edem extends vod_standard
     }
 
     /**
-     * @param string $keyword
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getSearchList($keyword)
     {
@@ -178,10 +174,10 @@ class vod_edem extends vod_standard
     /**
      * @inheritDoc
      */
-    public function getFilterList($params, $from_ndx)
+    public function getFilterList($params)
     {
         hd_debug_print(null, true);
-        hd_debug_print("getFilterList: $params, from ndx: $from_ndx");
+        hd_debug_print("getFilterList: $params");
 
         $pairs = explode(",", $params);
         $post_params = array();
@@ -217,9 +213,7 @@ class vod_edem extends vod_standard
     }
 
     /**
-     * @param string $query_id
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function getMovieList($query_id)
     {

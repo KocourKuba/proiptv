@@ -148,7 +148,7 @@ class MediaURL extends Json_Serializer
      */
     public function __toString()
     {
-        return (string)$this->get_media_url_str();
+        return (string)MediaUrl::encode($this->map, true);
     }
 
     ///////////////////////////////////////////////////////////////////////
