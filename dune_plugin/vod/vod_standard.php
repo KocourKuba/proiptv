@@ -751,7 +751,7 @@ class vod_standard extends Abstract_Vod
         if (!$need_load) {
             $this->vod_items = HD::ReadContentFromFile($tmp_file, $assoc);
         } else {
-            $responce = $this->provider->execApiCommand(API_COMMAND_GET_VOD);
+            $responce = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($responce === false) {
                 $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                 $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
