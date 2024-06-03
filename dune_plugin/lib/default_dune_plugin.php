@@ -1425,8 +1425,8 @@ class Default_Dune_Plugin implements DunePlugin
                 }
                 $ver = $this->plugin_info['app_version'];
                 $model = get_product_id();
-
-                $jsonArray = HD::DownloadJson(self::CONFIG_URL . "?ver=$ver&model=$model&serial=$serial");
+                $firmware = get_raw_firmware_version();
+                $jsonArray = HD::DownloadJson(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial");
                 if ($jsonArray === false || !isset($jsonArray['providers'])) {
                     if (file_exists($tmp_file)) {
                         hd_debug_print("Load actual providers configuration");
