@@ -6,9 +6,10 @@ CURL_CONFIG=$2
 LOG_FILE=$3
 
 if [ -z "$CURL_CONFIG" ] || [ ! -e $CURL_CONFIG ]; then
-  exit
+  exit -1
 fi
 
 $CURL --config $CURL_CONFIG >>$LOG_FILE 2>&1
-
-exit
+res=$?
+echo "exit code: $res" >>$LOG_FILE
+exit $res
