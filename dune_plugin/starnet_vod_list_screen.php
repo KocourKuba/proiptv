@@ -137,7 +137,6 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
             $movie_range = new Short_Movie_Range(0, 0);
         }
 
-        hd_debug_print("Short movie range: " . raw_json_encode($movie_range));
         $total = $movie_range->total;
         if ($total <= 0) {
             return $this->create_regular_folder_range(array());

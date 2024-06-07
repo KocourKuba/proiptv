@@ -37,6 +37,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             GUI_EVENT_KEY_ENTER    => Action_Factory::open_folder(),
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, TR::t('vod_screen_reload_playlist')),
             GUI_EVENT_KEY_STOP     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_TIMER        => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
         );
     }
 
@@ -52,12 +53,21 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             return null;
         }
 
-        if ($user_input->control_id === ACTION_RELOAD) {
-            hd_debug_print("reload categories");
-            $this->clear_vod();
-            $media_url = MediaURL::decode($user_input->parent_media_url);
-            $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
-            return Action_Factory::update_regular_folder($range, true, -1);
+        switch ($user_input->control_id) {
+            case ACTION_RELOAD:
+                hd_debug_print("reload categories");
+                $this->clear_vod();
+                $media_url = MediaURL::decode($user_input->parent_media_url);
+                $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
+                return Action_Factory::update_regular_folder($range, true, -1);
+
+            case GUI_EVENT_TIMER:
+                $error = HD::get_last_error('vod_last_error');
+                if (empty($error)) break;
+
+                return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error);
+            default:
+                break;
         }
 
         return null;
@@ -74,7 +84,10 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print($media_url, true);
 
         if (is_null($this->category_index) || is_null($this->category_list)) {
-            $this->plugin->vod->fetchVodCategories($this->category_list, $this->category_index);
+            if (!$this->plugin->vod->fetchVodCategories($this->category_list, $this->category_index)) {
+                hd_debug_print("Error: Fetch categories");
+                return array();
+            }
         }
 
         $category_list = $this->category_list;

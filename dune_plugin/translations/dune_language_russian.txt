@@ -360,3 +360,5 @@ err_unsupported_file_type = Неподдерживаемый формат EPG
 err_bad_m3u_file = Некорректный файл M3U
 err_incorrect_access_data = Неправильные данные для просмотра
 err_vod_not_available = Для выбранного плейлиста/провайдера медиатека недоступна
+err_load_vod = Ошибка чтения медиатеки!
+err_decoding_vod = Ошибка декодирования данных медиатеки!

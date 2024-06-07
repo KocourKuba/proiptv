@@ -257,7 +257,7 @@ class HD
             unlink($logfile);
         }
 
-        $config_file = get_temp_path('curl_confg.txt');
+        $config_file = get_temp_path('curl_config.txt');
         if (file_exists($config_file)) {
             unlink($config_file);
         }
@@ -268,12 +268,14 @@ class HD
 
         $config_data  = "--insecure" . PHP_EOL;
         $config_data .= "--silent" . PHP_EOL;
+        $config_data .= "--show-error" . PHP_EOL;
         $config_data .= "--dump-header -" . PHP_EOL;
         $config_data .= "--connect-timeout 30" . PHP_EOL;
-        $config_data .= "--max-time 30" . PHP_EOL;
+        $config_data .= "--max-time 90" . PHP_EOL;
         $config_data .= "--location" . PHP_EOL;
         $config_data .= "--max-redirs 4" . PHP_EOL;
         $config_data .= "--compressed" . PHP_EOL;
+        $config_data .= "--parallel" . PHP_EOL;
         $config_data .= "--user-agent \"" . self::get_dune_user_agent() ."\"" . PHP_EOL;
         $config_data .= "--url \"$url\"" . PHP_EOL;
         $config_data .= "--output \"$save_file\"" . PHP_EOL;
@@ -310,8 +312,8 @@ class HD
         $result = shell_exec($cmd);
         if ($result === false) {
             hd_debug_print("Problem with exec https_proxy script");
-        } else if ($result !== null) {
-            hd_debug_print("Exec result: $result");
+        } else {
+            hd_debug_print("Exec result: " . (int)$result);
         }
 
         if (!file_exists($logfile)) {

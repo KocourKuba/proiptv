@@ -306,9 +306,9 @@ class Epg_Manager
         hd_debug_print();
 
         if (empty($this->xmltv_url)) {
-            $msg = "XMTLV EPG url not set";
-            hd_debug_print("XMTLV EPG url not set");
-            HD::set_last_error("xmltv_last_error", $msg);
+            $exception_msg = "XMTLV EPG url not set";
+            hd_debug_print($exception_msg);
+            HD::set_last_error("xmltv_last_error", $exception_msg);
             return -1;
         }
 

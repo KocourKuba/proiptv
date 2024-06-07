@@ -754,7 +754,7 @@ class vod_standard extends Abstract_Vod
             $responce = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($responce === false) {
                 $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
-                $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
+                $exception_msg = TR::load_string('err_load_vod') . "\n\n$logfile";
                 HD::set_last_error("vod_last_error", $exception_msg);
                 if (file_exists($tmp_file)) {
                     unlink($tmp_file);
@@ -762,10 +762,10 @@ class vod_standard extends Abstract_Vod
             } else {
                 $this->vod_items = HD::decodeResponse(true, $tmp_file, $assoc);
                 if ($this->vod_items === false) {
-                    $exception_msg = "Ошибка декодирования данных медиатеки!\n\n";
+                    $exception_msg = TR::load_string('err_decoding_vod');
                     HD::set_last_error("vod_last_error", $exception_msg);
                     if (file_exists($tmp_file)) {
-                        unlink($tmp_file);
+                        //unlink($tmp_file);
                     }
                 }
             }

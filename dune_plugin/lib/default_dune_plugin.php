@@ -1749,15 +1749,16 @@ class Default_Dune_Plugin implements DunePlugin
 
                 if ($res === false) {
                     $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
-                    $exception_msg = "Ошибка скачивания плейлиста!\n\n$logfile";
+                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$logfile";
                     HD::set_last_error("pl_last_error", $exception_msg);
                     throw new Exception($exception_msg);
                 }
 
                 $contents = file_get_contents($tmp_file);
                 if (strpos($contents, '#EXTM3U') === false) {
-                    HD::set_last_error("pl_last_error", "Пустой или неправильный плейлист!\n\n" . $contents);
-                    throw new Exception("Can't parse playlist");
+                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$contents";
+                    HD::set_last_error("pl_last_error", $exception_msg);
+                    throw new Exception($exception_msg);
                 }
 
                 $encoding = HD::detect_encoding($contents);
@@ -1775,17 +1776,19 @@ class Default_Dune_Plugin implements DunePlugin
             $this->tv->get_m3u_parser()->setupParser($tmp_file, $force);
             if ($this->tv->get_m3u_parser()->getEntriesCount() === 0) {
                 if (!$this->tv->get_m3u_parser()->parseInMemory()) {
-                    HD::set_last_error("pl_last_error", "Ошибка чтения плейлиста!");
-                    throw new Exception("Can't read playlist");
+                    $exception_msg = TR::load_string('err_load_playlist');
+                    HD::set_last_error("pl_last_error", $exception_msg);
+                    throw new Exception($exception_msg);
                 }
 
                 $count = $this->tv->get_m3u_parser()->getEntriesCount();
                 if ($count === 0) {
                     $contents = @file_get_contents($tmp_file);
-                    HD::set_last_error("pl_last_error", "Пустой или неправильный плейлист!\n\n" . $contents);
+                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$contents";
+                    HD::set_last_error("pl_last_error", $exception_msg);
                     hd_debug_print("Empty playlist");
                     $this->clear_playlist_cache();
-                    throw new Exception("Empty playlist");
+                    throw new Exception($exception_msg);
                 }
 
                 hd_debug_print("Total entries loaded from playlist m3u file: $count");
@@ -1839,7 +1842,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $response = $provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
                 if ($response === false) {
                     $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
-                    $exception_msg = "Ошибка чтения медиатеки!\n\n$logfile";
+                    $exception_msg = TR::load_string('err_load_vod') . "\n\n$logfile";
                     HD::set_last_error("vod_last_error", $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);
@@ -1849,9 +1852,10 @@ class Default_Dune_Plugin implements DunePlugin
 
                 $playlist = file_get_contents($tmp_file);
                 if (strpos($playlist, '#EXTM3U') === false) {
-                    HD::set_last_error("vod_last_error", "Пустой или неправильный плейлист!\n\n" . $playlist);
+                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$playlist";
+                    HD::set_last_error("vod_last_error", $exception_msg);
                     unlink($tmp_file);
-                    throw new Exception("Can't parse playlist");
+                    throw new Exception($exception_msg);
                 }
 
                 $mtime = filemtime($tmp_file);
