@@ -43,6 +43,7 @@ class vod_glanz extends vod_standard
 
             $genres = array();
             foreach ($item->genres as $genre) {
+                $genre = (object)$genre;
                 if (!empty($genre->title)) {
                     $genres[] = $genre->title;
                 }
@@ -109,7 +110,10 @@ class vod_glanz extends vod_standard
             // collect filters information
             $years[(int)$movie->year] = $movie->year;
             foreach ($movie->genres as $genre) {
-                $genres[(int)$genre['id']] = $genre['title'];
+                $genre = (object)$genre;
+                if (!empty($genre->title) && !empty($genre->id)) {
+                    $genres[(int)$genre->id] = $genre->title;
+                }
             }
         }
 
@@ -278,6 +282,7 @@ class vod_glanz extends vod_standard
 
         $genres = array();
         foreach ($movie_obj->genres as $genre) {
+            $genre = (object)$genre;
             if (!empty($genre->title)) {
                 $genres[] = $genre->title;
             }
