@@ -71,15 +71,7 @@ class TR
      */
     public static function load_string($string_key)
     {
-        $lang = 'english';
-        if (file_exists('/config/settings.properties')) {
-            $sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW);
-            if ($sys_settings !== false) {
-                $lang = $sys_settings['interface_language'];
-            }
-        }
-
-        $lang_file = self::get_translation_filename($lang);
+        $lang_file = self::get_translation_filename(self::get_current_language());
         if (empty($lang_file)) {
             return '';
         }
@@ -91,6 +83,19 @@ class TR
         $args = func_get_args();
         array_shift($args);
         return vsprintf($string_key, $args);
+    }
+
+    public static function get_current_language()
+    {
+        $lang = 'english';
+        if (file_exists('/config/settings.properties')) {
+            $sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW);
+            if ($sys_settings !== false) {
+                $lang = $sys_settings['interface_language'];
+            }
+        }
+
+        return $lang;
     }
 
     protected static function get_translation_filename($lang)

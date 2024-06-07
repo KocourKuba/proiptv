@@ -154,8 +154,13 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         static $history_txt;
 
+        $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $history_txt = str_replace(array("###", "##"), '', file_get_contents(get_install_path('changelog.md')));
+            $path = get_install_path("changelog.$lang.md");
+            if (!file_exists($path)) {
+                $path = get_install_path("changelog.english.md");
+            }
+            $history_txt = str_replace(array("###", "##"), '', file_get_contents($path));
         }
 
         $control_id = $user_input->control_id;

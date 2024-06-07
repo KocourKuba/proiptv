@@ -23,9 +23,13 @@ $xml = preg_replace("|<version>(.*)</version>|", "<version>$full_version</versio
 $xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
 file_put_contents("./dune_plugin/$plugin_metadata", $xml);
 
-$text = file_get_contents("./build/changelog.md");
+$text = file_get_contents("./build/changelog.russian.md");
 $text = str_replace('{latest_version}', $full_version, $text);
-file_put_contents("./dune_plugin/changelog.md", $text);
+file_put_contents("./dune_plugin/changelog.russian.md", $text);
+$text = file_get_contents("./build/changelog.english.md");
+$text = str_replace('{latest_version}', $full_version, $text);
+file_put_contents("./dune_plugin/changelog.english.md", $text);
+
 $providers = ($is_debug === 'debug') ? "providers_debug.json" : "providers_$version.json";
 copy("./build/$providers", "./dune_plugin/$providers");
 

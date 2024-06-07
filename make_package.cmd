@@ -14,7 +14,7 @@ pushd dune_plugin
 7z a ..\dune_plugin_proiptv.zip >nul
 popd
 
-del dune_plugin\changelog.md >nul 2>&1
+del dune_plugin\changelog*.md >nul 2>&1
 del dune_plugin\providers*.json >nul 2>&1
 
 echo copy to Diskstation
