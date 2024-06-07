@@ -18,8 +18,8 @@
 		<country>any</country>
 	</suggested>
 	<default_caption>ProIPTV</default_caption>
-	<default_short_description>IPTV by M3U playlists</default_short_description>
-	<default_long_description>Universal IPTV service for any provider with M3U playlists</default_long_description>
+	<default_short_description>ProIPTV универсальный плагин для проигрывания файлов M3U и поддержкой известных провайдеров IPTV</default_short_description>
+	<default_long_description>ProIPTV универсальный плагин для воспроизведения файлов M3U и поддержкой самых популярных провайдеров IPTV. Поддержка XMLTV EPG. Позволяет настраивать собственные изображения для категорий и многое другое. https://forum.hdtv.ru/</default_long_description>
 	<flags>0</flags>
 	<community_plugin>yes</community_plugin>
 </dune_plugin_metadata>
