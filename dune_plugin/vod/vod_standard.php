@@ -765,7 +765,7 @@ class vod_standard extends Abstract_Vod
                     $exception_msg = TR::load_string('err_decoding_vod');
                     HD::set_last_error("vod_last_error", $exception_msg);
                     if (file_exists($tmp_file)) {
-                        //unlink($tmp_file);
+                        unlink($tmp_file);
                     }
                 }
             }
@@ -777,7 +777,7 @@ class vod_standard extends Abstract_Vod
     /**
      * @return string
      */
-    protected function get_vod_cache_file()
+    public function get_vod_cache_file()
     {
         return get_temp_path($this->plugin->get_active_playlist_key() . "_playlist_vod.json");
     }
