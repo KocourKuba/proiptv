@@ -1373,7 +1373,7 @@ class Starnet_Tv implements User_Input_Handler
 
             if ($channel->is_protected()) {
                 if ($protect_code !== $pass_sex) {
-                    throw new Exception("Wrong adult password");
+                    throw new Exception("Wrong adult password: $protect_code");
                 }
             } else {
                 $now = $channel->get_archive() > 0 ? time() : 0;
