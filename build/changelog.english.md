@@ -1,6 +1,10 @@
 ﻿## Version history
 
 ### Version {latest_version}
+- Added executable php-cgi for ARM (87xx) platform
+- Correctly clearing VOD cache
+
+### Version 4.0.674
 - Added English version of the Changelog
 - Update translation
 - Minor fix for Glanz and SharaClub VOD
