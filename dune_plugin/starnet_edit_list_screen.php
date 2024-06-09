@@ -47,6 +47,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
     const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
+    const ACTION_SHOW_QR = 'show_qr';
 
     const ITEM_SET_NAME = 'set_name';
     const ITEM_EDIT = 'edit';
@@ -74,7 +75,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $hidden ? TR::t('restore') : TR::t('delete'));
         }
 
-        if ($media_url->edit_list !== self::SCREEN_EDIT_PROVIDERS) {
+        if ($media_url->edit_list === self::SCREEN_EDIT_PROVIDERS) {
+            $info = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_QR, TR::t('info'));
+            $actions[GUI_EVENT_KEY_B_GREEN] = $info;
+            $actions[GUI_EVENT_KEY_INFO] = $info;
+        } else {
             $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
         }
 
@@ -395,6 +400,22 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
+
+            case self::ACTION_SHOW_QR:
+                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+                /** @var api_default $provider */
+                $provider = $this->get_order($edit_list)->get($selected_media_url->id);
+                if (!is_null($provider)) {
+                    $link = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
+                    $qr_code = get_temp_path($provider->getId()) . ".jpg";
+                    if (HD::http_download_https_proxy($link, $qr_code)) {
+                        Control_Factory::add_vgap($defs, 20);
+
+                        Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
+                        Control_Factory::add_vgap($defs, 450);
+                        return Action_Factory::show_dialog(TR::t('provider_info'), $defs, true, 600);
+                    }
+                }
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);

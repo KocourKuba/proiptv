@@ -99,6 +99,8 @@ xmltv_picons = XMLTV
 edit_account = Account accesss
 edit_ext_account = Account settings
 jump_to_channel = Jump to the channel in the group
+info = Information
+provider_info = Link to IPTV provider
 
 plugin_all_channels = All channels
 plugin_favorites = Favorites

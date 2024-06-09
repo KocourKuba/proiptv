@@ -99,6 +99,8 @@ xmltv_picons = XMLTV
 edit_account = Данные доступа
 edit_ext_account = Настройки провайдера
 jump_to_channel = Перейти к каналу в группе
+info = Информация
+provider_info = Ссылка на провайдера
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное
