@@ -1,6 +1,11 @@
 ﻿## Version history
 
 ### Version {latest_version}
+- The list of playlists is empty, then the window for adding playlists is shown, not the plugin settings
+- Popup menu for adding an IPTV provider has been replaced with a new selection screen
+- When adding an IPTV provider, you can see a link to its website or follow the QR code
+
+### Version 4.0.678
 - Added executable php-cgi for ARM (87xx) platform
 - Correctly clearing VOD cache
 
