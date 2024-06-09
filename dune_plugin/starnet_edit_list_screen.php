@@ -405,17 +405,18 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);
                 /** @var api_default $provider */
                 $provider = $this->get_order($edit_list)->get($selected_media_url->id);
-                if (!is_null($provider)) {
-                    $link = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
-                    $qr_code = get_temp_path($provider->getId()) . ".jpg";
-                    if (HD::http_download_https_proxy($link, $qr_code)) {
-                        Control_Factory::add_vgap($defs, 20);
+                if (is_null($provider)) break;
 
-                        Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
-                        Control_Factory::add_vgap($defs, 450);
-                        return Action_Factory::show_dialog(TR::t('provider_info'), $defs, true, 600);
-                    }
+                $qr_code = get_temp_path($provider->getId()) . ".jpg";
+                if (!file_exists($qr_code)) {
+                    $link = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
+                    if (false === HD::http_download_https_proxy($link, $qr_code)) break;
                 }
+
+                Control_Factory::add_vgap($defs, 20);
+                Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
+                Control_Factory::add_vgap($defs, 450);
+                return Action_Factory::show_dialog(TR::t('provider_info'), $defs, true, 600);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
