@@ -33,6 +33,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const SCREEN_EDIT_EPG_LIST = 'epg_list';
     const SCREEN_EDIT_GROUPS = 'groups';
     const SCREEN_EDIT_CHANNELS = 'channels';
+    const SCREEN_EDIT_PROVIDERS = 'providers';
 
     const ACTION_FILE_PLAYLIST = 'play_list_file';
     const ACTION_FILE_XMLTV = 'xmltv_file';
@@ -44,11 +45,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_CHOOSE_FILE = 'choose_file';
     const ACTION_ADD_URL_DLG = 'add_url_dialog';
     const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
+    const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
+
     const ITEM_SET_NAME = 'set_name';
     const ITEM_EDIT = 'edit';
-
-    const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -61,7 +62,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
 
         $actions = array();
-        if ($this->get_order($media_url->edit_list)->size() !== 0) {
+        if (!isset($media_url->deny_edit) && $this->get_order($media_url->edit_list)->size() !== 0) {
             if (isset($media_url->allow_order)) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
@@ -73,7 +74,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $hidden ? TR::t('restore') : TR::t('delete'));
         }
 
-        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
+        if ($media_url->edit_list !== self::SCREEN_EDIT_PROVIDERS) {
+            $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
+        }
 
         $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_RETURN] = $action_return;
@@ -97,6 +100,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
+                if ($edit_list === self::SCREEN_EDIT_PROVIDERS) {
+                    return Action_Factory::close_and_run(
+                        User_Input_Handler_Registry::create_action_screen(
+                            $parent_media_url->source_window_id,
+                            $parent_media_url->cancel_action
+                        )
+                    );
+                }
+
                 $reload = $this->set_no_changes() || $this->force_parent_reload;
                 $this->force_parent_reload = false;
 
@@ -122,25 +134,33 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case GUI_EVENT_KEY_ENTER:
-                if ($edit_list !== self::SCREEN_EDIT_PLAYLIST && $edit_list !== self::SCREEN_EDIT_EPG_LIST) break;
-
-                $this->force_save($user_input);
-
-                $id = MediaURL::decode($user_input->selected_media_url)->id;
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);
 
-                $item = $this->get_order($edit_list)->get($id);
+                if ($edit_list === self::SCREEN_EDIT_PLAYLIST || $edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                    $this->force_save($user_input);
+                    $item = $this->get_order($edit_list)->get($selected_media_url->id);
 
-                hd_debug_print("item: " . $item, true);
-                if (($item->type === PARAM_LINK || empty($item->type))
-                    && isset($item->params[PARAM_URI])
-                    && preg_match(HTTP_PATTERN, $item->params[PARAM_URI])) {
-                    return $this->do_edit_url_dlg($edit_list, $selected_media_url->id);
+                    hd_debug_print("item: " . $item, true);
+                    if (($item->type === PARAM_LINK || empty($item->type))
+                        && isset($item->params[PARAM_URI])
+                        && preg_match(HTTP_PATTERN, $item->params[PARAM_URI])) {
+                        return $this->do_edit_url_dlg($edit_list, $selected_media_url->id);
+                    }
+
+                    if ($item->type === PARAM_PROVIDER) {
+                        return $this->plugin->do_edit_provider_dlg($this, $item->params[PARAM_PROVIDER], $selected_media_url->id);
+                    }
+                } else if ($edit_list === self::SCREEN_EDIT_PROVIDERS) {
+                    return Action_Factory::close_and_run(
+                        User_Input_Handler_Registry::create_action_screen(
+                            $parent_media_url->source_window_id,
+                            $parent_media_url->end_action,
+                            null,
+                            array(PARAM_PROVIDER => $selected_media_url->id)
+                        )
+                    );
                 }
 
-                if ($item->type === PARAM_PROVIDER) {
-                    return $this->plugin->do_edit_provider_dlg($this, $item->params[PARAM_PROVIDER], $selected_media_url->id);
-                }
                 return null;
 
             case ACTION_SET_CURRENT:
@@ -243,7 +263,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case self::ACTION_REMOVE_ITEM_DLG_APPLY:
                 hd_debug_print(null, true);
 
-                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 $selected_media_url = MediaURL::decode($user_input->selected_media_url);
                 $id = $selected_media_url->id;
                 hd_debug_print("edit_list: $parent_media_url->edit_list", true);
@@ -357,8 +376,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::open_folder($media_url_str, TR::t('edit_list_src_folder'));
 
             case self::ACTION_ADD_PROVIDER_POPUP:
-                $menu_items = $this->plugin->all_providers_menu($this);
-                return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
+                if ($edit_list === self::SCREEN_EDIT_PROVIDERS) break;
+
+                return $this->plugin->do_edit_list_screen(self::ID, self::SCREEN_EDIT_PROVIDERS);
 
             case ACTION_EDIT_PROVIDER_DLG:
                 return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER});
@@ -370,7 +390,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                $idx = $this->plugin->get_playlists()->get_idx($id);
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $idx);
 
             case ACTION_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
@@ -387,104 +408,31 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         hd_debug_print("MediaUrl: " . $media_url, true);
 
-        $edit_list = $media_url->edit_list;
-        $items = array();
-        if ($edit_list === self::SCREEN_EDIT_CHANNELS) {
-            /** @var string $item */
-            foreach ($this->get_order($edit_list) as $item) {
-                if ($media_url->group_id === ALL_CHANNEL_GROUP_ID) {
-                    $channel = $this->plugin->tv->get_channel($item);
-                } else {
-                    $group = $this->plugin->tv->get_group($media_url->group_id);
-                    if (is_null($group)) continue;
+        switch($media_url->edit_list) {
+            case self::SCREEN_EDIT_CHANNELS:
+                $items = $this->collect_channels($media_url);
+                break;
 
-                    $channel = $group->get_group_channel($item);
-                }
+            case self::SCREEN_EDIT_GROUPS:
+                $items = $this->collect_groups($media_url);
+                break;
 
-                if (is_null($channel)) continue;
+            case self::SCREEN_EDIT_PLAYLIST:
+                $items = $this->collect_playlists($media_url);
+                break;
 
-                $items[] = self::add_item($item, $channel->get_title(), false, $channel->get_icon_url(), null);
-            }
-        } else if ($edit_list === self::SCREEN_EDIT_GROUPS) {
-            /** @var string $item */
-            foreach ($this->get_order($edit_list) as $item) {
-                $items[] = self::add_item($item, $item, false, Default_Group::DEFAULT_GROUP_ICON, null);
-            }
-        } else if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
-            /** @var Named_Storage $item */
-            foreach ($this->get_order($edit_list) as $key => $playlist) {
-                $starred = ($key === $this->plugin->get_active_playlist_key());
-                $title = empty($playlist->name) ? $playlist->params[PARAM_URI] : $playlist->name;
-                if (empty($title)) {
-                    $title = "Unrecognized or bad playlist entry";
-                }
+            case self::SCREEN_EDIT_EPG_LIST:
+                $items = $this->collect_epg_lists($media_url);
+                break;
 
-                $detailed_info = '';
-                if ($playlist->type === PARAM_PROVIDER) {
-                    $provider = $this->plugin->create_provider_class($playlist->params[PARAM_PROVIDER]);
-                    if (is_null($provider)) continue;
+            case self::SCREEN_EDIT_PROVIDERS:
+                $items = $this->collect_providers($media_url);
+                break;
 
-                    $icon_file = $provider->getLogo();
-                    $title = $playlist->name;
-                    if ($playlist->name !== $provider->getName()) {
-                        $title .= " ({$provider->getName()})";
-                    }
-                    $detailed_info = $playlist->name;
-                } else if ($playlist->type === PARAM_FILE) {
-                    $detailed_info = null;
-                    $icon_file = get_image_path("m3u_file.png");
-                } else {
-                    if (isset($playlist->params[PARAM_URI])) {
-                        $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
-                    }
-                    $icon_file = get_image_path("link.png");
-                }
-
-                $items[] = self::add_item($key, $title, $starred, $icon_file, $detailed_info);
-            }
-        } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
-            $all_sources['pl'] = $this->plugin->get_playlist_xmltv_sources();
-            $all_sources['ext'] = $this->get_order($edit_list);
-            $active_key = $this->plugin->get_active_xmltv_source_key();
-            $dupes = array();
-            foreach ($all_sources as $idx => $source) {
-                foreach ($source as $key => $item) {
-                    if (isset($dupes[$key])) {
-                        continue;
-                    }
-
-                    $dupes[$key] = '';
-                    $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
-                    $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
-                    if (empty($title)) {
-                        $title = "Unrecognized or bad xmltv entry";
-                    }
-
-                    if (file_exists($cached_xmltv_file)) {
-                        $check_time_file = filemtime($cached_xmltv_file);
-                        $dl_date = date("d.m H:i", $check_time_file);
-                        $title = TR::t('edit_list_title_info__2', $title, $dl_date);
-                        $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params[PARAM_URI], $dl_date);
-                    } else {
-                        $detailed_info = "";
-                        if (isset($playlist->params[PARAM_URI])) {
-                            $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
-                        }
-                    }
-
-                    if ($idx === 'pl') {
-                        $icon_file = get_image_path("m3u_file.png" );
-                    } else if ($item->type === PARAM_FILE) {
-                        $icon_file = get_image_path("xmltv_file.png" );
-                    } else {
-                        $icon_file = get_image_path("link.png" );
-                    }
-                    $items[] = self::add_item($key, $title, $key === $active_key, $icon_file, $detailed_info);
-                }
-            }
+            default:
+                $items = array();
         }
 
-        hd_debug_print("all items: " . raw_json_encode($items), true);
         return $items;
     }
 
@@ -526,6 +474,134 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     /////////////////////////////////////////////////////////////////////////////////////////////
     /// protected methods
 
+    protected function collect_channels($media_url)
+    {
+        $items = array();
+        /** @var string $item */
+        foreach ($this->get_order($media_url->edit_list) as $item) {
+            if ($media_url->group_id === ALL_CHANNEL_GROUP_ID) {
+                $channel = $this->plugin->tv->get_channel($item);
+            } else {
+                $group = $this->plugin->tv->get_group($media_url->group_id);
+                if (is_null($group)) continue;
+
+                $channel = $group->get_group_channel($item);
+            }
+
+            if (is_null($channel)) continue;
+
+            $items[] = self::add_item($item, $channel->get_title(), false, $channel->get_icon_url(), null);
+        }
+
+        return $items;
+    }
+
+    protected function collect_groups($media_url)
+    {
+        $items = array();
+        /** @var string $item */
+        foreach ($this->get_order($media_url->edit_list) as $item) {
+            $items[] = self::add_item($item, $item, false, Default_Group::DEFAULT_GROUP_ICON, null);
+        }
+
+        return $items;
+    }
+
+    protected function collect_playlists($media_url)
+    {
+        $items = array();
+        /** @var Named_Storage $item */
+        foreach ($this->get_order($media_url->edit_list) as $key => $playlist) {
+            $starred = ($key === $this->plugin->get_active_playlist_key());
+            $title = empty($playlist->name) ? $playlist->params[PARAM_URI] : $playlist->name;
+            if (empty($title)) {
+                $title = "Unrecognized or bad playlist entry";
+            }
+
+            $detailed_info = '';
+            if ($playlist->type === PARAM_PROVIDER) {
+                $provider = $this->plugin->create_provider_class($playlist->params[PARAM_PROVIDER]);
+                if (is_null($provider)) continue;
+
+                $icon_file = $provider->getLogo();
+                $title = $playlist->name;
+                if ($playlist->name !== $provider->getName()) {
+                    $title .= " ({$provider->getName()})";
+                }
+                $detailed_info = $playlist->name;
+            } else if ($playlist->type === PARAM_FILE) {
+                $detailed_info = null;
+                $icon_file = get_image_path("m3u_file.png");
+            } else {
+                if (isset($playlist->params[PARAM_URI])) {
+                    $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
+                }
+                $icon_file = get_image_path("link.png");
+            }
+
+            $items[] = self::add_item($key, $title, $starred, $icon_file, $detailed_info);
+        }
+
+        return $items;
+    }
+
+    protected function collect_epg_lists($media_url)
+    {
+        $items = array();
+        $all_sources['pl'] = $this->plugin->get_playlist_xmltv_sources();
+        $all_sources['ext'] = $this->get_order($media_url->edit_list);
+        $active_key = $this->plugin->get_active_xmltv_source_key();
+        $dupes = array();
+        foreach ($all_sources as $idx => $source) {
+            foreach ($source as $key => $item) {
+                if (isset($dupes[$key])) {
+                    continue;
+                }
+
+                $dupes[$key] = '';
+                $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
+                $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
+                if (empty($title)) {
+                    $title = "Unrecognized or bad xmltv entry";
+                }
+
+                if (file_exists($cached_xmltv_file)) {
+                    $check_time_file = filemtime($cached_xmltv_file);
+                    $dl_date = date("d.m H:i", $check_time_file);
+                    $title = TR::t('edit_list_title_info__2', $title, $dl_date);
+                    $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params[PARAM_URI], $dl_date);
+                } else {
+                    $detailed_info = "";
+                    if (isset($playlist->params[PARAM_URI])) {
+                        $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
+                    }
+                }
+
+                if ($idx === 'pl') {
+                    $icon_file = get_image_path("m3u_file.png" );
+                } else if ($item->type === PARAM_FILE) {
+                    $icon_file = get_image_path("xmltv_file.png" );
+                } else {
+                    $icon_file = get_image_path("link.png" );
+                }
+                $items[] = self::add_item($key, $title, $key === $active_key, $icon_file, $detailed_info);
+            }
+        }
+
+        return $items;
+    }
+
+    protected function collect_providers($media_url)
+    {
+        $items = array();
+        /** @var api_default $provider */
+        foreach ($this->get_order($media_url->edit_list) as $provider) {
+            $items[] = self::add_item($provider->getId(), $provider->getName(), false, $provider->getLogo(), $provider->getProviderUrl());
+        }
+
+        return $items;
+    }
+
     protected static function add_item($id, $title, $starred, $icon_file, $detailed_info)
     {
         return array(
@@ -542,16 +618,29 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
     protected function &get_order($edit_list, $default = 'Ordered_Array')
     {
-        if ($edit_list === self::SCREEN_EDIT_GROUPS) {
-            $order = $this->plugin->tv->get_disabled_group_ids();
-        } else if ($edit_list === self::SCREEN_EDIT_CHANNELS) {
-            $order = $this->plugin->tv->get_disabled_channel_ids();
-        } else if ($edit_list === static::SCREEN_EDIT_PLAYLIST) {
-            $order = $this->plugin->get_playlists();
-        } else if ($edit_list === static::SCREEN_EDIT_EPG_LIST) {
-            $order = $this->plugin->get_ext_xmltv_sources();
-        } else {
-            $order = new $default;
+        switch ($edit_list) {
+            case self::SCREEN_EDIT_GROUPS:
+                $order = $this->plugin->tv->get_disabled_group_ids();
+                break;
+
+            case self::SCREEN_EDIT_CHANNELS:
+                $order = $this->plugin->tv->get_disabled_channel_ids();
+                break;
+
+            case static::SCREEN_EDIT_PLAYLIST:
+                $order = $this->plugin->get_playlists();
+                break;
+
+            case static::SCREEN_EDIT_EPG_LIST:
+                $order = $this->plugin->get_ext_xmltv_sources();
+                break;
+
+            case static::SCREEN_EDIT_PROVIDERS:
+                $order = $this->plugin->get_providers();
+                break;
+
+            default:
+                $order = new $default;
         }
 
         return $order;
@@ -777,139 +866,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode($user_input->selected_data);
-        $edit_list = $parent_media_url->edit_list;
 
-        $order = $this->get_order($edit_list);
         if ($selected_media_url->choose_file === self::ACTION_FILE_TEXT_LIST) {
-            hd_debug_print("Choosed file: $selected_media_url->filepath", true);
-            $lines = file($selected_media_url->filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
-                return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
-            }
-
-            $old_count = $order->size();
-            $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
-            foreach ($lines as $line) {
-                $line = trim($line);
-                hd_debug_print("Load string: '$line'", true);
-                $hash = Hashed_Array::hash($line);
-                if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                    $playlist = new Named_Storage();
-                    if (preg_match(HTTP_PATTERN, $line, $m)) {
-                        hd_debug_print("import link: '$line'", true);
-                        try {
-                            $tmp_file = get_temp_path(Hashed_Array::hash($line));
-                            if (!HD::http_download_https_proxy($line, $tmp_file)) {
-                                $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
-                                throw new Exception("Ошибка скачивания : $line\n\n$logfile");
-                            }
-
-                            if (file_exists($tmp_file)) {
-                                $contents = file_get_contents($tmp_file, false, null, 0, 512);
-                                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
-                                    unlink($tmp_file);
-                                    throw new Exception("Bad M3U file: $line");
-                                }
-                                $playlist->type = PARAM_LINK;
-                                $playlist->name = basename($m[2]);
-                                $playlist->params[PARAM_URI] = $line;
-                                unlink($tmp_file);
-                            } else {
-                                throw new Exception("Can't download file: $line");
-                            }
-                        } catch (Exception $ex) {
-                            HD::set_last_error("pl_last_error", null);
-                            hd_debug_print($ex->getMessage());
-                            continue;
-                        }
-                    } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {
-                        hd_debug_print("import provider $m[1]:", true);
-                        $provider = $this->plugin->create_provider_class($m[1]);
-                        if (is_null($provider)) {
-                            hd_debug_print("Unknown provider ID: $m[1]");
-                            continue;
-                        }
-
-                        $playlist = $provider->fill_default_info($m, $hash);
-                        if (!$playlist) continue;
-                    } else {
-                        hd_debug_print("can't recognize: $line");
-                        continue;
-                    }
-
-                    if ($order->has($hash)) {
-                        hd_debug_print("already exist: $playlist", true);
-                    } else {
-                        hd_debug_print("imported playlist: $playlist", true);
-                        $order->put($hash, $playlist);
-                    }
-                } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    if (preg_match(HTTP_PATTERN, $line, $m)) {
-                        $old = $order->get($hash);
-                        $item = new Named_Storage();
-                        $item->params[PARAM_URI] = $line;
-                        $item->name = $m[2];
-                        if (is_null($old)) {
-                            $order->put($hash, $item);
-                            hd_debug_print("import link: '$line'");
-                        } else if (!($old instanceof Hashed_Array)) {
-                            $old_count--;
-                            $order->set($hash, $item);
-                            hd_debug_print("replace link: '$line'");
-                        }
-                    } else {
-                        hd_debug_print("line skipped: '$line'");
-                    }
-                }
-            }
-
-            if ($old_count === $order->size()) {
-                return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
-            }
-
-            $this->set_changes($parent_media_url->save_data);
-
-            $window_title = ($edit_list === self::SCREEN_EDIT_PLAYLIST)
-                ? TR::t('setup_channels_src_edit_playlists')
-                : TR::t('setup_edit_xmltv_list');
-
-            return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $order->size() - $old_count, count($lines)),
-                Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str(), $window_title))
-            );
+            return $this->select_text_file($user_input);
         }
 
         if ($selected_media_url->choose_file === self::ACTION_FILE_PLAYLIST) {
-            $hash = Hashed_Array::hash($selected_media_url->filepath);
-            if ($order->has($hash)) {
-                return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
-            }
-
-            $contents = file_get_contents($selected_media_url->filepath, false, null, 0, 512);
-            if ($contents === false || strpos($contents, '#EXTM3U') === false) {
-                hd_debug_print("Problem with import playlist: $selected_media_url->filepath");
-                return Action_Factory::show_title_dialog(TR::t('err_bad_m3u_file'));
-            }
-
-            $playlist = new Named_Storage();
-            $playlist->type = PARAM_FILE;
-            $playlist->name = basename($selected_media_url->filepath);
-            $playlist->params[PARAM_URI] = $selected_media_url->filepath;
-            $order->put($hash, $playlist);
-            $this->set_changes($parent_media_url->save_data);
+            return $this->select_m3u_file($user_input, $plugin_cookies);
         }
 
         if ($selected_media_url->choose_file === self::ACTION_FILE_XMLTV) {
-            $hash = Hashed_Array::hash($selected_media_url->filepath);
-            if ($order->has($hash)) {
-                return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
-            }
-
-            $xmltv = new Named_Storage();
-            $xmltv->type = PARAM_FILE;
-            $xmltv->name = basename($selected_media_url->filepath);
-            $xmltv->params[PARAM_URI] = $selected_media_url->filepath;
-            $order->put($hash, $xmltv);
-            $this->set_changes($parent_media_url->save_data);
+            return $this->select_xmltv_list($user_input, $plugin_cookies);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
@@ -965,9 +932,161 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
     protected function force_save($user_input)
     {
+        if (isset($parent_media_url->save_data)) {
+            $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+            $this->plugin->set_postpone_save(false, $parent_media_url->save_data);
+            $this->plugin->set_postpone_save(true, $parent_media_url->save_data);
+            $this->set_no_changes();
+        }
+    }
+
+    protected function select_text_file($user_input)
+    {
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $this->plugin->set_postpone_save(false, $parent_media_url->save_data);
-        $this->plugin->set_postpone_save(true, $parent_media_url->save_data);
-        $this->set_no_changes();
+        $selected_media_url = MediaURL::decode($user_input->selected_data);
+        $order = $this->get_order($parent_media_url->edit_list);
+
+        hd_debug_print("Choosed file: $selected_media_url->filepath", true);
+        $lines = file($selected_media_url->filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
+            return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
+        }
+
+        $old_count = $order->size();
+        $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
+        foreach ($lines as $line) {
+            $line = trim($line);
+            hd_debug_print("Load string: '$line'", true);
+            $hash = Hashed_Array::hash($line);
+            if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
+                $playlist = new Named_Storage();
+                if (preg_match(HTTP_PATTERN, $line, $m)) {
+                    hd_debug_print("import link: '$line'", true);
+                    try {
+                        $tmp_file = get_temp_path(Hashed_Array::hash($line));
+                        if (!HD::http_download_https_proxy($line, $tmp_file)) {
+                            $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
+                            throw new Exception("Ошибка скачивания : $line\n\n$logfile");
+                        }
+
+                        if (file_exists($tmp_file)) {
+                            $contents = file_get_contents($tmp_file, false, null, 0, 512);
+                            if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                                unlink($tmp_file);
+                                throw new Exception("Bad M3U file: $line");
+                            }
+                            $playlist->type = PARAM_LINK;
+                            $playlist->name = basename($m[2]);
+                            $playlist->params[PARAM_URI] = $line;
+                            unlink($tmp_file);
+                        } else {
+                            throw new Exception("Can't download file: $line");
+                        }
+                    } catch (Exception $ex) {
+                        HD::set_last_error("pl_last_error", null);
+                        hd_debug_print($ex->getMessage());
+                        continue;
+                    }
+                } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {
+                    hd_debug_print("import provider $m[1]:", true);
+                    $provider = $this->plugin->create_provider_class($m[1]);
+                    if (is_null($provider)) {
+                        hd_debug_print("Unknown provider ID: $m[1]");
+                        continue;
+                    }
+
+                    $playlist = $provider->fill_default_info($m, $hash);
+                    if (!$playlist) continue;
+                } else {
+                    hd_debug_print("can't recognize: $line");
+                    continue;
+                }
+
+                if ($order->has($hash)) {
+                    hd_debug_print("already exist: $playlist", true);
+                } else {
+                    hd_debug_print("imported playlist: $playlist", true);
+                    $order->put($hash, $playlist);
+                }
+            } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                if (preg_match(HTTP_PATTERN, $line, $m)) {
+                    $old = $order->get($hash);
+                    $item = new Named_Storage();
+                    $item->params[PARAM_URI] = $line;
+                    $item->name = $m[2];
+                    if (is_null($old)) {
+                        $order->put($hash, $item);
+                        hd_debug_print("import link: '$line'");
+                    } else if (!($old instanceof Hashed_Array)) {
+                        $old_count--;
+                        $order->set($hash, $item);
+                        hd_debug_print("replace link: '$line'");
+                    }
+                } else {
+                    hd_debug_print("line skipped: '$line'");
+                }
+            }
+        }
+
+        if ($old_count === $order->size()) {
+            return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
+        }
+
+        $this->set_changes($parent_media_url->save_data);
+
+        $window_title = ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST)
+            ? TR::t('setup_channels_src_edit_playlists')
+            : TR::t('setup_edit_xmltv_list');
+
+        return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $order->size() - $old_count, count($lines)),
+            Action_Factory::close_and_run(Action_Factory::open_folder($parent_media_url->get_media_url_str(), $window_title))
+        );
+    }
+
+    protected function select_m3u_file($user_input, $plugin_cookies)
+    {
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_data);
+        $order = $this->get_order($parent_media_url->edit_list);
+
+        $hash = Hashed_Array::hash($selected_media_url->filepath);
+        if ($order->has($hash)) {
+            return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+        }
+
+        $contents = file_get_contents($selected_media_url->filepath, false, null, 0, 512);
+        if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+            hd_debug_print("Problem with import playlist: $selected_media_url->filepath");
+            return Action_Factory::show_title_dialog(TR::t('err_bad_m3u_file'));
+        }
+
+        $playlist = new Named_Storage();
+        $playlist->type = PARAM_FILE;
+        $playlist->name = basename($selected_media_url->filepath);
+        $playlist->params[PARAM_URI] = $selected_media_url->filepath;
+        $order->put($hash, $playlist);
+        $this->set_changes($parent_media_url->save_data);
+
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+    }
+
+    protected function select_xmltv_list($user_input, $plugin_cookies)
+    {
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_data);
+        $order = $this->get_order($parent_media_url->edit_list);
+        $hash = Hashed_Array::hash($selected_media_url->filepath);
+        if ($order->has($hash)) {
+            return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+        }
+
+        $xmltv = new Named_Storage();
+        $xmltv->type = PARAM_FILE;
+        $xmltv->name = basename($selected_media_url->filepath);
+        $xmltv->params[PARAM_URI] = $selected_media_url->filepath;
+        $order->put($hash, $xmltv);
+        $this->set_changes($parent_media_url->save_data);
+
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
     }
 }

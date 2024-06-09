@@ -2348,33 +2348,6 @@ class Default_Dune_Plugin implements DunePlugin
      * @param User_Input_Handler $handler
      * @return array
      */
-    public function all_providers_menu($handler)
-    {
-        $menu_items = array();
-
-        $idx = 0;
-        /** @var api_default $provider */
-        foreach ($this->providers as $provider) {
-            if ($idx !== 0 && ($idx % 17) === 0) {
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            }
-            $idx++;
-
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_EDIT_PROVIDER_DLG,
-                $provider->getName(),
-                $provider->getLogo(),
-                array(PARAM_PROVIDER => $provider->getId())
-            );
-        }
-
-        return $menu_items;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @return array
-     */
     public function epg_source_menu($handler)
     {
         $menu_items = array();
@@ -2637,6 +2610,10 @@ class Default_Dune_Plugin implements DunePlugin
             $params['save_data'] = PLUGIN_PARAMETERS;
             $params['end_action'] = ACTION_REFRESH_SCREEN;
             $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
+        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_PROVIDERS) {
+            $params['deny_edit'] = true;
+            $params['end_action'] = ACTION_EDIT_PROVIDER_DLG;
+            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
         }
 
         $sel_id = null;
@@ -2661,6 +2638,10 @@ class Default_Dune_Plugin implements DunePlugin
             case Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST:
                 $params['extension'] = EPG_PATTERN;
                 $title = TR::t('setup_edit_xmltv_list');
+                break;
+
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_PROVIDERS:
+                $title = TR::t('edit_list_add_provider');
                 break;
 
             default:
@@ -2802,7 +2783,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $info = "ID: " . $channel->get_id() . PHP_EOL;
         $info .= "Name: " . $channel->get_title() . PHP_EOL;
-        $info .= "Archive: " . $channel->get_archive() . PHP_EOL;
+        $info .= "Archive: " . $channel->get_archive() . " days" . PHP_EOL;
         $info .= "Protected: " . TR::load_string($channel->is_protected() ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) . PHP_EOL;
         $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . PHP_EOL;
         if ($channel->get_timeshift_hours() !== 0) {

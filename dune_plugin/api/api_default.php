@@ -73,6 +73,11 @@ class api_default
     /**
      * @var string
      */
+    protected $provider_url = '';
+
+    /**
+     * @var string
+     */
     protected $api_url = '';
 
     /**
@@ -196,6 +201,22 @@ class api_default
     /**
      * @return string
      */
+    public function getProviderUrl()
+    {
+        return $this->provider_url;
+    }
+
+    /**
+     * @param string $provider_url
+     */
+    public function setProviderUrl($provider_url)
+    {
+        $this->provider_url = $provider_url;
+    }
+
+    /**
+     * @return string
+     */
     public function getApiUrl()
     {
         return $this->api_url;
@@ -212,7 +233,7 @@ class api_default
     /**
      * @return string
      */
-    public function getIconstemplate()
+    public function getIconsTemplate()
     {
         return $this->icons_template;
     }
@@ -220,7 +241,7 @@ class api_default
     /**
      * @param string $icons_template
      */
-    public function setIconstemplate($icons_template)
+    public function setIconsTemplate($icons_template)
     {
         $this->icons_template = $icons_template;
     }
@@ -710,7 +731,7 @@ class api_default
 
         $this->set_default_settings($user_input, $id);
 
-        return true;
+        return $id;
     }
 
     /**

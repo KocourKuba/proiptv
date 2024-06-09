@@ -654,7 +654,7 @@ class Starnet_Tv implements User_Input_Handler
                 hd_debug_print("no provider specific id mapping, use M3U attributes");
             }
 
-            $icon_template = $provider->getIconstemplate();
+            $icon_template = $provider->getIconsTemplate();
             if (!empty($icon_template)) {
                 hd_debug_print("using provider ({$provider->getId()}) specific icon mapping: $icon_template");
             }

@@ -336,7 +336,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $res = $this->plugin->apply_edit_provider_ext_dlg($user_input);
                 }
 
-                if ($res) {
+                if ($res !== false) {
                     return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);
                 }
 

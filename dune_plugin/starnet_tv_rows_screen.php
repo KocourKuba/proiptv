@@ -792,7 +792,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $id = $this->plugin->apply_edit_provider_ext_dlg($user_input);
                 }
 
-                if ($id === null) {
+                if ($id === false) {
                     return null;
                 }
 
