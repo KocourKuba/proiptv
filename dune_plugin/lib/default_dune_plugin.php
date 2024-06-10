@@ -2357,7 +2357,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $idx = 0;
         foreach ($sources as $key => $item) {
-            if ($idx !== 0 && ($idx % 15) === 0) {
+            if ($idx !== 0 && ($idx % 17) === 0) {
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             }
             $idx++;
