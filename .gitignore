@@ -19,4 +19,5 @@
 /dune_plugin/providers.json
 /archive
 /cache_dir
+/shared_scripts
 /dune_plugin/providers_debug.json

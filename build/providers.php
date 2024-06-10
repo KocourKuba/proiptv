@@ -1,4 +1,6 @@
 <?php
+require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/crm_settings.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/MySQL.php");
 
 function write_to_log($value, $logname, $method = 'ab')
 {
@@ -91,27 +93,83 @@ function get_ip()
     return ($ip);
 }
 
+function IP2Country($ip)
+{
+    // Detect country by IP
+    $iplong = ip2long($ip);
+    $query = "SELECT c2code FROM ip2country WHERE ip_from <= {$iplong} AND ip_to >= {$iplong}";
+
+    $DB = new db_driver;
+    $DB->obj['sql_database'] = CRM_DATABASE;
+    $DB->obj['sql_user'] = IPTV_USER;
+    $DB->obj['sql_pass'] = IPTV_PASSWORD;
+
+    if($DB->connect()) {
+        $DB->query($query);
+        $row = $DB->fetch_row();
+        $country = $row['c2code'];
+    }
+
+    if(empty($country)) {
+        $country = 'XX';
+    }
+
+    return $country;
+}
+
 $url_params = parse_url(getenv("REQUEST_URI"));
 if (isset($url_params['query'])) {
     parse_str($url_params['query'], $params);
 }
 
 if (isset($params['ver'])) {
+    $request = getenv("REQUEST_URI");
     $ver = explode('.', $params['ver']);
     $name ="providers_$ver[0].$ver[1].json";
+    $time = time();
+    $date = date("m.d.Y H:i:s");
+    $ip = get_ip();
+    $country = IP2Country($ip);
+    $version = $params['ver'];
+    $model =  $params['model'];
+    $firmware = $params['firmware'];
+    $serial = $params['serial'];
 
-    $logbuf = "========================================\n";
-    $logbuf .= "date      : " . date("m.d.Y H:i:s") . "\n";
-    $logbuf .= "url       : " . getenv("REQUEST_URI") . "\n";
-    $logbuf .= "ip        : " . get_ip() . "\n";
-    $logbuf .= "ver       : " . $params['ver'] . "\n";
-    $logbuf .= "model     : " . $params['model'] . "\n";
-    $logbuf .= "serial    : " . $params['serial'] . "\n";
+    $logbuf = "========================================" . PHP_EOL;
+    $logbuf .= "date      : $date" . PHP_EOL;
+    $logbuf .= "url       : $request" . PHP_EOL;
+    $logbuf .= "ip        : $ip ( $country )" . PHP_EOL;
+    $logbuf .= "version   : $version" . PHP_EOL;
+    $logbuf .= "model     : $model" . PHP_EOL;
+    $logbuf .= "firmware  : $firmware" . PHP_EOL;
+    $logbuf .= "serial    : $serial" . PHP_EOL;
 
     write_to_log($logbuf, 'providers.log');
-
     header("HTTP/1.1 200 OK");
     echo file_get_contents($name);
+
+    $DB = new db_driver;
+    $DB->obj['sql_database'] = IPTV_DATABASE;
+    $DB->obj['sql_user'] = IPTV_USER;
+    $DB->obj['sql_pass'] = IPTV_PASSWORD;
+
+    if($DB->connect()) {
+        $data['model'] = $model;
+        $data['firmware'] = $firmware;
+        $data['serial'] = $serial;
+        $data['time'] = $time;
+        $data['version'] = $version;
+        $data['ip'] = $ip;
+        $data['country'] = $country;
+        $DB->insert_or_update_table($data, 'statistics');
+        $error = $DB->error;
+        if (!empty($error)) {
+            write_to_log("query error $error", 'error.log');
+        }
+        $DB->close_db();
+    } else {
+	    write_to_log("cant connect", 'error.log');
+	}
 } else {
     header("HTTP/1.1 404 Not found");
 }
