@@ -497,15 +497,11 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        $playlists = $this->GetPlaylists();
-        if (!empty($playlists)) {
-            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
-            if (isset($playlists[$idx]['url'])) {
-                $this->setCredential(MACRO_PLAYLIST, $playlists[$idx]['url']);
-            }
+        if ($this->SetPlaylistMacro()) {
+            return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
         }
 
-        return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
+        return false;
     }
 
     /**
@@ -753,7 +749,7 @@ class api_default
             hd_debug_print("streams ($idx): " . json_encode($streams), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_STREAM,
-                TR::t('stream'), $idx, $streams, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+                TR::t('stream'), $idx, $streams, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         $domains = $this->GetDomains();
@@ -765,7 +761,7 @@ class api_default
             hd_debug_print("domains ($idx): " . json_encode($domains), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_DOMAIN,
-                TR::t('domain'), $idx, $domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+                TR::t('domain'), $idx, $domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         $servers = $this->GetServers();
@@ -777,7 +773,7 @@ class api_default
             hd_debug_print("servers ($idx): " . json_encode($servers), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_SERVER,
-                TR::t('server'), $idx, $servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+                TR::t('server'), $idx, $servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         $devices = $this->GetDevices();
@@ -789,7 +785,7 @@ class api_default
             hd_debug_print("devices ($idx): " . json_encode($devices), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_DEVICE,
-                TR::t('device'), $idx, $devices, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+                TR::t('device'), $idx, $devices, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         $qualities = $this->GetQualities();
@@ -801,7 +797,7 @@ class api_default
             hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
 
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_QUALITY,
-                TR::t('quality'), $idx, $qualities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+                TR::t('quality'), $idx, $qualities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         $playlists = $this->GetPlaylists();
@@ -827,7 +823,7 @@ class api_default
             $val = $this->getCredential(PARAM_REPLACE_ICON, SetupControlSwitchDefs::switch_on);
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_REPLACE_ICONS,
                 TR::t('setup_channels_square_icons'), $val, SetupControlSwitchDefs::$on_off_translated,
-                Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
+                Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         if (!empty($defs)) {
@@ -967,6 +963,29 @@ class api_default
         hd_debug_print(null, true);
         $this->get_provider_info();
         return $this->getConfigValue(CONFIG_PLAYLISTS);
+    }
+
+    /**
+     * set MACRO_PLAYLIST to appropriate value
+     * @return bool
+     */
+    public function SetPlaylistMacro()
+    {
+        $playlists = $this->GetPlaylists();
+        if (!empty($playlists)) {
+            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
+            if ($idx === 'custom') {
+                $this->setCredential(MACRO_PLAYLIST, $this->getCredential(MACRO_CUSTOM_PLAYLIST));
+                return true;
+            }
+
+            if (isset($playlists[$idx]['url'])) {
+                $this->setCredential(MACRO_PLAYLIST, $playlists[$idx]['url']);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

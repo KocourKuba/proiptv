@@ -225,7 +225,7 @@
       "name": "Antifriz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_antifriz.png",
-      "provider_url": "https://antifriztv.com/",
+      "provider_url": "https://antifriz.tv/",
       "api_url": "http://protected-api.com",
       "api_commands": {
         "account_info": "{API}/auth/info",
@@ -327,9 +327,9 @@
       "type": "edem",
       "logo": "http://iptv.esalecrm.net/res/logo_edem.png",
       "provider_url": "https://ilook.tv/",
-      "api_url": "http://epg.one",
+      "api_url": "",
       "api_commands": {
-        "get_playlist": "{API}/{PLAYLIST}",
+        "get_playlist": "{PLAYLIST}",
         "get_vod": "{VPORTAL}"
       },
       "config": {
@@ -346,15 +346,19 @@
         "playlists": {
           "thematic": {
             "name": "Thematic",
-            "url": "edem_epg_ico2.m3u8"
+            "url": "http://epg.one/edem_epg_ico2.m3u8"
           },
           "thematic_sort": {
             "name": "Thematic Sorted",
-            "url": "edem_epg_ico3.m3u8"
+            "url": "http://epg.one/edem_epg_ico3.m3u8"
           },
           "standard": {
             "name": "Standard",
-            "url": "edem_epg_ico.m3u8"
+            "url": "http://epg.one/edem_epg_ico.m3u8"
+          },
+          "custom": {
+            "name": "Custom",
+            "url": ""
           }
         },
         "url_subst": {
@@ -756,7 +760,7 @@
       "name": "RusskoeTV",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
-      "provider_url": "https://russkoetv.tv/",
+      "provider_url": "https://russkoetv.shop/",
       "api_commands": {
         "get_playlist": "https://russkoetv.shop/play/{PASSWORD}.m3u8"
       },

@@ -43,8 +43,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CHOOSE_FILE = 'choose_file';
-    const ACTION_ADD_URL_DLG = 'add_url_dialog';
-    const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
     const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ACTION_SHOW_QR = 'show_qr';
@@ -341,10 +339,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-            case self::ACTION_ADD_URL_DLG:
+            case ACTION_ADD_URL_DLG:
                 return $this->do_edit_url_dlg();
 
-            case self::ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
+            case ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
 
             case self::ACTION_CHOOSE_FILE:
@@ -692,7 +690,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             // Add URL
             $menu_items[] = $this->plugin->create_menu_item($this,
-                self::ACTION_ADD_URL_DLG,
+                ACTION_ADD_URL_DLG,
                 TR::t('edit_list_add_url'),
                 "link.png"
             );
@@ -784,7 +782,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         Control_Factory::add_vgap($defs, 50);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $this, $param,
-            self::ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
+            ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
 
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);

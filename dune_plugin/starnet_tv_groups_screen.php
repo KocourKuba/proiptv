@@ -526,6 +526,37 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0, $post_action)
                 );
 
+            case CONTROL_PLAYLIST:
+                if ($user_input->action_type !== 'confirm' || $user_input->{CONTROL_PLAYLIST} !== 'custom') {
+                    return null;
+                }
+
+                $provider = $this->plugin->get_current_provider();
+                if (is_null($provider)) {
+                    return null;
+                }
+
+                $url = $provider->getCredential(MACRO_CUSTOM_PLAYLIST);
+
+                Control_Factory::add_vgap($defs, 20);
+                Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
+                    $url, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+                Control_Factory::add_vgap($defs, 50);
+                Control_Factory::add_close_dialog_and_apply_button($defs, $this, null,
+                    ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
+                Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+                Control_Factory::add_vgap($defs, 10);
+
+                return Action_Factory::show_dialog(TR::t('edit_list_add_url'), $defs, true);
+
+            case ACTION_URL_DLG_APPLY:
+                $provider = $this->plugin->get_current_provider();
+                if (!is_null($provider)) {
+                    hd_debug_print("set custom playlist $user_input->url_path");
+                    $provider->setCredential(MACRO_CUSTOM_PLAYLIST, $user_input->url_path);
+                }
+                return null;
+
             case ACTION_EMPTY:
             default:
                 return null;

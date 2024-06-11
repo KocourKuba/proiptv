@@ -72,6 +72,8 @@ const ACTION_ADD_MONEY_DLG = 'add_money_dlg';
 const ACTION_PASSWORD_APPLY = 'password_apply';
 const ACTION_JUMP_TO_CHANNEL = 'jump_to_channel';
 const ACTION_JUMP_TO_CHANNEL_IN_GROUP = 'jump_to_channel_in_group';
+const ACTION_ADD_URL_DLG = 'add_url_dialog';
+const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
 
 const CONTROL_EDIT_ACTION = 'edit_action';
 const CONTROL_EDIT_NAME = 'set_item_name';
@@ -207,6 +209,7 @@ const MACRO_QUALITY_ID = '{QUALITY_ID}';
 const MACRO_STREAM_ID = '{STREAM_ID}';
 const MACRO_PLAYLIST_ID = '{PLAYLIST_ID}';
 const MACRO_PLAYLIST = '{PLAYLIST}';
+const MACRO_CUSTOM_PLAYLIST = '{CUSTOM_PLAYLIST}';
 const MACRO_VPORTAL = '{VPORTAL}';
 const MACRO_SCHEME = '{SCHEME}';
 const MACRO_DOMAIN = '{DOMAIN}';
