@@ -599,10 +599,14 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->load_orders(true);
 
         // move group icons to orders
-        if ($this->plugin->get_setting(PARAM_GROUPS_ICONS) !== null) {
-            hd_debug_print("Move group icons setting from playlist to order settings");
-            $this->plugin->set_orders(PARAM_GROUPS_ICONS, $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array()));
+        if ($this->plugin->has_setting(PARAM_GROUPS_ICONS)) {
+            /** @var $old_group_icons Hashed_Array */
+            $old_group_icons = $this->plugin->get_setting(PARAM_GROUPS_ICONS, new Hashed_Array());
             $this->plugin->remove_setting(PARAM_GROUPS_ICONS);
+            if ($old_group_icons->size() !== 0) {
+                hd_debug_print("Move group icons setting from playlist to order settings");
+                $this->plugin->set_orders(PARAM_GROUPS_ICONS, $old_group_icons);
+            }
         }
 
         /** @var Hashed_Array<string, string> $custom_group_icons */
@@ -782,6 +786,7 @@ class Starnet_Tv implements User_Input_Handler
             if (!$this->get_groups_order()->in_order($group->get_id())) {
                 hd_debug_print("New    category # $title");
                 $this->get_groups_order()->add_item($title);
+                $this->plugin->set_dirty(true, PLUGIN_ORDERS);
             }
 
             $this->groups->set($group->get_id(), $group);

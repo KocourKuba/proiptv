@@ -160,11 +160,6 @@ class Default_Dune_Plugin implements DunePlugin
      */
     protected $cur_provider;
 
-    /**
-     * @var string
-     */
-    protected $cur_provider_playlist_id = '';
-
     ///////////////////////////////////////////////////////////////////////
 
     protected function __construct()
@@ -254,9 +249,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_current_provider($cur_provider)
     {
         $this->cur_provider = $cur_provider;
-        if (!is_null($this->cur_provider)) {
-            $this->set_current_provider_playlist_id($this->cur_provider->getCredential(MACRO_PLAYLIST_ID));
-        }
     }
 
     /**
@@ -787,6 +779,16 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * Is set settings for selected playlist
+     *
+     * @param string $type
+     */
+    public function has_setting($type)
+    {
+        return array_key_exists($type, $this->settings);
+    }
+
+    /**
      * Get plugin boolean parameters
      *
      * @param string $type
@@ -896,6 +898,16 @@ class Default_Dune_Plugin implements DunePlugin
         $this->parameters[$param] = $val;
         $this->set_dirty(true,PLUGIN_PARAMETERS);
         $this->save_parameters();
+    }
+
+    /**
+     * Is set settings for selected playlist
+     *
+     * @param string $type
+     */
+    public function has_parameter($type)
+    {
+        return array_key_exists($type, $this->parameters);
     }
 
     /**
@@ -1154,7 +1166,10 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $active_playlist_key = $this->get_active_playlist_key();
         if (!empty($active_playlist_key)) {
-            $this->load($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
+            if (!isset($this->{PLUGIN_SETTINGS}) || $force) {
+                hd_debug_print(null, true);
+                $this->load("$active_playlist_key.settings", PLUGIN_SETTINGS, $force);
+            }
         }
     }
 
@@ -1166,7 +1181,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function load_parameters($force = false)
     {
-        $this->load('common.settings', PLUGIN_PARAMETERS, $force);
+        if (!isset($this->{PLUGIN_PARAMETERS}) || $force) {
+            hd_debug_print(null, true);
+            $this->load('common.settings', PLUGIN_PARAMETERS, $force);
+        }
     }
 
     /**
@@ -1178,8 +1196,8 @@ class Default_Dune_Plugin implements DunePlugin
     public function load_orders($force = false)
     {
         $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . ".settings";
-        $id = $this->get_current_provider_playlist_id();
-        if ($id !== '') {
+        if (isset($this->cur_provider)) {
+            $id = $this->cur_provider->getCredential(MACRO_PLAYLIST_ID);
             $new_order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
             if (file_exists(get_data_path($order_name))) {
                 hd_debug_print("rename old orders: $order_name to new: $new_order_name");
@@ -1187,7 +1205,11 @@ class Default_Dune_Plugin implements DunePlugin
             }
             $order_name = $new_order_name;
         }
-        $this->load($order_name, PLUGIN_ORDERS, $force);
+
+        if (!isset($this->{PLUGIN_ORDERS}) || $force) {
+            hd_debug_print(null, true);
+            $this->load($order_name, PLUGIN_ORDERS, $force);
+        }
     }
 
     /**
@@ -1227,6 +1249,8 @@ class Default_Dune_Plugin implements DunePlugin
     private function load($name, $type, $force = false)
     {
         if ($force) {
+            hd_debug_print(null, true);
+            hd_debug_print("Force load ($type): $name");
             $this->{$type} = null;
         }
 
@@ -1276,11 +1300,11 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function save_orders($force = false)
     {
-        $id = $this->get_current_provider_playlist_id();
-        if ($id === '') {
-            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . ".settings";
-        } else {
+        if (isset($this->cur_provider)) {
+            $id = $this->cur_provider->getCredential(MACRO_PLAYLIST_ID);
             $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
+        } else {
+            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . ".settings";
         }
 
         if ($force || $this->is_dirty(PLUGIN_ORDERS)) {
@@ -1933,19 +1957,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_playlist($id)
     {
         return $this->get_playlists()->get($id);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_current_provider_playlist_id()
-    {
-        return $this->cur_provider_playlist_id;
-    }
-
-    public function set_current_provider_playlist_id($id)
-    {
-        $this->cur_provider_playlist_id = $id;
     }
 
     /**

@@ -594,8 +594,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params[PARAM_URI], $dl_date);
                 } else {
                     $detailed_info = "";
-                    if (isset($playlist->params[PARAM_URI])) {
-                        $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
+                    if (isset($item->params[PARAM_URI])) {
+                        $detailed_info = "$item->name|{$item->params[PARAM_URI]}";
                     }
                 }
 

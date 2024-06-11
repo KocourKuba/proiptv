@@ -979,7 +979,6 @@ class api_default
         hd_debug_print(null, true);
         hd_debug_print("SetPlaylist: $id");
         $this->setCredential(MACRO_PLAYLIST_ID, $id);
-        $this->plugin->set_current_provider_playlist_id($id);
     }
 
     /**

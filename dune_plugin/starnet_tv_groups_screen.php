@@ -278,6 +278,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_PLAYLIST_SELECTED:
                 if (!isset($user_input->{LIST_IDX}) || $user_input->{LIST_IDX} === $this->plugin->get_active_playlist_key()) break;
 
+                hd_debug_print("Select playlist: " . $user_input->{LIST_IDX}, true);
                 $this->save_if_changed();
                 $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
                 HD::set_last_error("pl_last_error", null);
@@ -472,6 +473,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_RELOAD:
+                hd_debug_print("Action reload", true);
                 $this->save_if_changed();
 
                 if (isset($user_input->reload_action)) {

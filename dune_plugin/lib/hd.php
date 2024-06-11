@@ -823,7 +823,9 @@ class HD
      */
     public static function put_items($path, $items, $json = true)
     {
-        file_put_contents($path, $json ? json_encode($items) : serialize($items));
+        if (file_put_contents($path, $json ? json_encode($items) : serialize($items)) === false) {
+            hd_debug_print("Failed to save $path");
+        }
     }
 
     /**

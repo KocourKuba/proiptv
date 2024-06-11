@@ -157,7 +157,7 @@ class Playback_Points
                 //hd_debug_print("channel_id $channel_id time mark: $archive_ts");
                 $this->curr_point_id = $channel_id;
 
-                if (isset($this->points[$channel_id])) {
+                if (array_key_exists($channel_id, $this->points)) {
                     unset($this->points[$channel_id]);
                 }
                 $this->points = array($channel_id => $archive_ts) + $this->points;
