@@ -132,7 +132,7 @@ if (isset($params['ver'])) {
     $country = IP2Country($ip);
     $version = $params['ver'];
     $model =  $params['model'];
-    $firmware = $params['firmware'];
+    $firmware = isset($params['firmware']) ? $params['firmware'] : "";
     $serial = $params['serial'];
 
     $logbuf = "========================================" . PHP_EOL;
