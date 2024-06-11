@@ -1,6 +1,9 @@
 ﻿## Version history
 
 ### Version {latest_version}
+- Fix wrong rename category settings for some providers
+
+### Version 4.0.688
 - Changed the maximum number of elements in the popup menu for selecting XMLTV sources
 - Category settings disappeared after switching from the provider’s playlist to a regular playlist
 
