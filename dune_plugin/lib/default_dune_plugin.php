@@ -1199,11 +1199,18 @@ class Default_Dune_Plugin implements DunePlugin
         if (isset($this->cur_provider)) {
             $id = $this->cur_provider->getCredential(MACRO_PLAYLIST_ID);
             $new_order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
-            if (file_exists(get_data_path($order_name))) {
-                hd_debug_print("rename old orders: $order_name to new: $new_order_name");
-                rename(get_data_path($order_name), get_data_path($new_order_name));
+            if (empty($id)) {
+                if (file_exists(get_data_path($new_order_name))) {
+                    hd_debug_print("restore wrong rename orders: $new_order_name to new: $order_name");
+                    rename(get_data_path($new_order_name), get_data_path($order_name));
+                }
+            } else {
+                if (file_exists(get_data_path($order_name))) {
+                    hd_debug_print("rename old orders: $order_name to new: $new_order_name");
+                    rename(get_data_path($order_name), get_data_path($new_order_name));
+                }
+                $order_name = $new_order_name;
             }
-            $order_name = $new_order_name;
         }
 
         if (!isset($this->{PLUGIN_ORDERS}) || $force) {
