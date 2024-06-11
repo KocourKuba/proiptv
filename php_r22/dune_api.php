@@ -525,6 +525,7 @@ class EditListConfigActionData
     const /* (GuiItemList *)                  */ groups                           = 'groups';
     const /* (char *)                         */ def_id                           = 'def_id';
     const /* int                              */ options                          = 'options';
+    const /* (char *)                         */ sel_id                           = 'sel_id';
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 
@@ -781,6 +782,7 @@ class GuiComboboxDef
 {
     const /* (char *)                         */ initial_value                    = 'initial_value';
     const /* (MY_Properties *)                */ value_caption_pairs              = 'value_caption_pairs';
+    const /* (MY_StringArray *)               */ dimmed_ids                       = 'dimmed_ids';
     const /* int                              */ width                            = 'width';
     const /* (GuiAction *)                    */ apply_action                     = 'apply_action';
     const /* (GuiAction *)                    */ confirm_action                   = 'confirm_action';
