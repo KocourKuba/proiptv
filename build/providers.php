@@ -161,14 +161,18 @@ if (isset($params['ver'])) {
         $data['version'] = $version;
         $data['ip'] = $ip;
         $data['country'] = $country;
-        $DB->insert_or_update_table($data, 'statistics');
-        $error = $DB->error;
-        if (!empty($error)) {
-            write_to_log("query error $error", 'error.log');
+        if (!empty($serial)) {
+            $DB->insert_or_update_table($data, 'statistics');
+            $error = $DB->error;
+            if (!empty($error)) {
+                write_to_log("database query error $error", 'error.log');
+            }
+            $DB->close_db();
+        } else {
+            write_to_log("bad url query $request", 'error.log');
         }
-        $DB->close_db();
     } else {
-	    write_to_log("cant connect", 'error.log');
+	    write_to_log("can't connect to database", 'error.log');
 	}
 } else {
     header("HTTP/1.1 404 Not found");
