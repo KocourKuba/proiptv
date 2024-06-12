@@ -1073,12 +1073,13 @@ class Starnet_Tv implements User_Input_Handler
         $force_detect = false;
         $provider = $this->plugin->get_current_provider();
         if (!is_null($provider)) {
-            $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
-            if (!empty($url_subst)) {
-                $stream_url = preg_replace($url_subst['regex'], $url_subst['replace'], $stream_url);
+            if ($provider->getCredential(MACRO_PLAYLIST_ID) !== CUSTOM_PLAYLIST_ID) {
+                $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
+                if (!empty($url_subst)) {
+                    $stream_url = preg_replace($url_subst['regex'], $url_subst['replace'], $stream_url);
+                    $stream_url = $provider->replace_macros($stream_url);
+                }
             }
-
-            $stream_url = $provider->replace_macros($stream_url);
 
             $streams = $provider->GetStreams();
             if (!empty($streams)) {
