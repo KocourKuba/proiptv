@@ -306,9 +306,9 @@ class api_default
         hd_debug_print(null, true);
 
         $this->playlist_id = $playlist_id;
-        $playlist = $this->plugin->get_playlist($playlist_id);
-        if ($playlist !== null && isset($playlist->params)) {
-            $this->playlist_info = $playlist;
+        $item = $this->plugin->get_playlist_storage_item($playlist_id);
+        if ($item !== null && isset($item->params)) {
+            $this->playlist_info = $item;
             hd_debug_print("provider info: ($playlist_id) " . json_encode($this->playlist_info), true);
         } else {
             hd_debug_print("incorrect provider info: $playlist_id");
@@ -496,6 +496,19 @@ class api_default
     public function load_playlist($tmp_file)
     {
         hd_debug_print(null, true);
+
+        $playlists = $this->GetPlaylists();
+        if (!empty($playlists)) {
+            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
+            $playlist = '';
+            if ($idx === 'custom') {
+                $playlist = $this->getCredential(MACRO_CUSTOM_PLAYLIST);
+            } else if (!empty($playlists[$idx]['url'])) {
+                $playlist = $playlists[$idx]['url'];
+            }
+
+            $this->setCredential(MACRO_PLAYLIST, $playlist);
+        }
 
         return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
     }
@@ -1064,21 +1077,10 @@ class api_default
             MACRO_VPORTAL,
         );
 
-        $playlist = '';
-        $playlists = $this->GetPlaylists();
-        if (!empty($playlists)) {
-            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
-            if ($idx === 'custom') {
-                $playlist = $this->getCredential(MACRO_CUSTOM_PLAYLIST);
-            } else if (!empty($playlists[$idx]['url'])) {
-                $playlist = $playlists[$idx]['url'];
-            }
-        }
-
         hd_debug_print("template: $string", true);
         $string = str_replace(
             array(MACRO_API, MACRO_PLAYLIST),
-            array($this->getApiUrl(), $playlist),
+            array($this->getApiUrl(), $this->getCredential(MACRO_PLAYLIST)),
             $string);
 
         foreach ($macroses as $macro) {

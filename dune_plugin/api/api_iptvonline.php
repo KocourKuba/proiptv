@@ -206,9 +206,9 @@ class api_iptvonline extends api_default
      */
     public function GetPlaylists()
     {
-        parent::GetPlaylists();
-
         hd_debug_print(null, true);
+
+        $this->get_provider_info();
 
         if (empty($this->device)) {
             $data = $this->execApiCommand(API_COMMAND_GET_DEVICE);

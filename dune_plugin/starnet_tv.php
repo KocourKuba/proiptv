@@ -550,6 +550,10 @@ class Starnet_Tv implements User_Input_Handler
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
 
+        $this->plugin->load_settings(true);
+        $this->plugin->load_orders(true);
+        $this->plugin->load_history(true);
+
         // Favorites category
         $special_group = new Default_Group($this->plugin,
             FAVORITES_GROUP_ID,
@@ -593,10 +597,6 @@ class Starnet_Tv implements User_Input_Handler
         $this->special_groups->set($special_group->get_id(), $special_group);
 
         $first_run = $this->get_known_channels()->size() === 0;
-
-        $this->plugin->load_settings(true);
-        $this->plugin->load_history(true);
-        $this->plugin->load_orders(true);
 
         // move group icons to orders
         if ($this->plugin->has_setting(PARAM_GROUPS_ICONS)) {

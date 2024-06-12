@@ -224,19 +224,21 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $playlist = $this->get_current_playlist();
         if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
-            hd_debug_print("Current settings is not a provider");
+            hd_debug_print("Current playlist is not a provider");
             return null;
         }
 
         if (is_null($this->cur_provider)) {
             $provider = $this->create_provider_class($playlist->params[PARAM_PROVIDER]);
             if (is_null($provider)) {
-                hd_debug_print("unknown provider");
+                hd_debug_print("unknown provider class: " . $playlist->params[PARAM_PROVIDER]);
             } else if (!$provider->getEnable()) {
-                hd_debug_print("provider disabled");
+                hd_debug_print("provider " . $provider->getId() . " is disabled");
             } else {
-                $provider->set_provider_playlist_id($this->get_active_playlist_key());
+                $active_playlist = $this->get_active_playlist_key();
+                $provider->set_provider_playlist_id($active_playlist);
                 $this->set_current_provider($provider);
+                hd_debug_print("Using provider " . $provider->getId() . " (" . $provider->getName() . ") - playlist id: $active_playlist");
             }
         }
 
@@ -1196,7 +1198,7 @@ class Default_Dune_Plugin implements DunePlugin
         if (isset($this->cur_provider)) {
             $id = $this->cur_provider->getCredential(MACRO_PLAYLIST_ID);
             $new_order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
-            if (empty($id)) {
+            if ($id === "" || is_null($id)) {
                 if (file_exists(get_data_path($new_order_name))) {
                     hd_debug_print("restore wrong rename orders: $new_order_name to new: $order_name");
                     rename(get_data_path($new_order_name), get_data_path($order_name));
@@ -1544,144 +1546,14 @@ class Default_Dune_Plugin implements DunePlugin
         $this->load_parameters(true);
         $this->update_log_level();
 
-        if ($this->get_parameter(PLUGIN_CONFIG_VERSION) === '3') {
+        if ((int)$this->get_parameter(PLUGIN_CONFIG_VERSION) >= 3) {
+            hd_debug_print("no upgrade needed");
             // upgrade completed
             return;
         }
 
-        $this->set_postpone_save(true, PLUGIN_PARAMETERS);
-
-        if (isset($plugin_cookies->pass_sex)) {
-            $this->set_parameter(PARAM_ADULT_PASSWORD, $plugin_cookies->pass_sex);
-            unset($plugin_cookies->pass_sex);
-        } else {
-            $this->get_parameter(PARAM_ADULT_PASSWORD, '0000');
-        }
-
-        // Convert playlists to Named_Storage
-        $new_storage = new Hashed_Array();
-
-        /** @var Hashed_Array $playlist_names */
-        $playlist_names = $this->get_parameter(PARAM_PLAYLISTS_NAMES, new Hashed_Array());
-        /** @var Ordered_Array $old_playslists */
-        $old_playslists = $this->get_parameter(PARAM_PLAYLISTS, new Ordered_Array());
-        $selected = Hashed_Array::hash($old_playslists->get_selected_item());
-        $found = '';
-        foreach ($old_playslists as $playlist) {
-            hd_debug_print("upgrade playlist: $playlist", true);
-            $item = new Named_Storage();
-            $id = Hashed_Array::hash($playlist);
-            if ($id === $selected) {
-                $found = $selected;
-            }
-            $name = $playlist_names->get($id);
-            if (empty($name)) {
-                $name = $playlist;
-                if (($pos = strpos($name, '?')) !== false) {
-                    $name = substr($name, 0, $pos);
-                }
-                $name = basename($name);
-            }
-            $item->name = $name;
-            $item->params[PARAM_URI] = $playlist;
-            $item->type = preg_match(HTTP_PATTERN, $playlist) ? PARAM_LINK : PARAM_FILE;
-            hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, params: " . raw_json_encode($item->params), true);
-            $new_storage->set($id, $item);
-        }
-
-        if (empty($found)) {
-            $new_storage->rewind();
-            $found = $new_storage->key();
-        }
-
-        $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $found);
-        $this->set_parameter(PARAM_PLAYLIST_STORAGE, $new_storage);
-
-        $this->remove_parameter(PARAM_PLAYLISTS);
-        $this->remove_parameter(PARAM_PLAYLISTS_NAMES);
-
-        // convert old type xmltv parameter
-        $new_storage = new Hashed_Array();
-        $source_names = $this->get_parameter(PARAM_XMLTV_SOURCE_NAMES, new Hashed_Array());
-        $type = $this->get_parameter_type(PARAM_EXT_XMLTV_SOURCES);
-        if ($type !== null) {
-            /** @var Hashed_Array $old_array */
-            $old_array = $this->get_parameter(PARAM_EXT_XMLTV_SOURCES);
-            /** @var Hashed_Array $source_names */
-            foreach ($old_array as $key => $source) {
-                hd_debug_print("($type) upgrade xmltv source: $source", true);
-                $item = new Named_Storage();
-                $id = ($type === 'Hashed_Array') ? $key : Hashed_Array::hash($source);
-                $item->params[PARAM_URI] = $source;
-                $name = $source_names->get($key);
-                if (preg_match(HTTP_PATTERN, $source, $m)) {
-                    $item->type = PARAM_LINK;
-                    if (empty($name)) {
-                        $name = $m[2];
-                    } else {
-                        $name = $source;
-                    }
-                } else {
-                    $item->type = PARAM_FILE;
-                }
-                $item->name = $name;
-                hd_debug_print("new storage: id: $id, type: $item->type, name: $item->name, params: " . raw_json_encode($item->params), true);
-                $new_storage->put($id, $item);
-            }
-            $this->set_parameter(PARAM_XMLTV_SOURCES, $new_storage);
-            $this->remove_parameter(PARAM_EXT_XMLTV_SOURCES);
-            $this->remove_parameter(PARAM_XMLTV_SOURCE_NAMES);
-        }
-
-        $this->set_parameter(PLUGIN_CONFIG_VERSION, '3');
-        $this->get_parameter(PARAM_SHOW_VOD_ICON, SetupControlSwitchDefs::switch_off);
-        if (!isset($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
-            $plugin_cookies->{PARAM_SHOW_VOD_ICON} = SetupControlSwitchDefs::switch_off;
-        }
-
-        $this->save_parameters(true);
-
-        // Move channels orders from settings to separate storage
-
-        /** @var Named_Storage $playlist */
-        foreach($this->get_playlists() as $id => $playlist) {
-            $settings_name = "$id.settings";
-            $order_name = $id . '_' . PLUGIN_ORDERS . '.settings';
-            hd_debug_print("loading: $settings_name", true);
-
-            $this->load($settings_name, PLUGIN_SETTINGS, true);
-            $this->load($order_name, PLUGIN_ORDERS, true);
-
-            $this->set_postpone_save(true, PLUGIN_SETTINGS);
-            $this->set_postpone_save(true, PLUGIN_ORDERS);
-
-            $all_keys = array_keys($this->settings);
-            foreach ($all_keys as $key) {
-                if (strpos($key,PARAM_CHANNELS_ORDER) !== false) {
-                    hd_debug_print("load old order from: $key", true);
-                    $order = $this->get_setting($key);
-                    $id = substr($key, strlen(PARAM_CHANNELS_ORDER . '_'));
-                    $this->set_orders($id, $order);
-                    $this->remove_setting($key);
-                } else if (strpos($key,FAVORITES_GROUP_ID) !== false) {
-                    hd_debug_print("load old order from: $key", true);
-                    $order = $this->get_setting($key);
-                    $this->set_orders(FAVORITES_GROUP_ID, $order);
-                    $this->remove_setting($key);
-                } else if (in_array($key, array(PARAM_DISABLED_GROUPS, PARAM_DISABLED_CHANNELS, PARAM_KNOWN_CHANNELS, PARAM_GROUPS_ORDER))) {
-                    hd_debug_print("load old order from: $key", true);
-                    $order = $this->get_setting($key);
-                    $this->set_orders($key, $order);
-                    $this->remove_setting($key);
-                }
-            }
-            $this->save($settings_name, PLUGIN_SETTINGS, true);
-            $this->save($order_name, PLUGIN_ORDERS, true);
-        }
-
-        $this->parameters = null;
-        $this->settings = null;
-        $this->orders = null;
+        $this->set_parameter(PLUGIN_CONFIG_VERSION, 4);
+        hd_debug_print("too old version");
     }
 
     /**
@@ -1959,7 +1831,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $id
      * @return Named_Storage
      */
-    public function get_playlist($id)
+    public function get_playlist_storage_item($id)
     {
         return $this->get_playlists()->get($id);
     }
@@ -2692,11 +2564,11 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print("new provider : $provider", true);
         } else {
             // edit existing provider
-            $playlist = $this->get_playlist($playlist_id);
-            if (!is_null($playlist)) {
-                $name = $playlist->name;
-                hd_debug_print("provider info:" . json_encode($playlist), true);
-                $provider = $this->create_provider_class($playlist->params[PARAM_PROVIDER]);
+            $item = $this->get_playlist_storage_item($playlist_id);
+            if (!is_null($item)) {
+                $name = $item->name;
+                hd_debug_print("provider info:" . json_encode($item), true);
+                $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
                 if (!is_null($provider)) {
                     hd_debug_print("existing provider : " . json_encode($provider), true);
                     $provider->set_provider_playlist_id($playlist_id);
