@@ -46,8 +46,9 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
                 hd_print("Instantiating plugin...");
                 $plugin = $this->create_plugin();
                 hd_debug_print("Plugin instance created.");
-            } catch (Exception $e) {
-                hd_debug_print("Error: can not instantiate plugin (" . $e->getMessage() . ')');
+            } catch (Exception $ex) {
+                hd_debug_print("Error: can not instantiate plugin");
+                print_backtrace_exception($ex);
 
                 return array(
                     PluginOutputData::has_data => false,
@@ -80,8 +81,8 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
                 PluginOutputData::is_error => true,
                 PluginOutputData::error_action => $e->get_error_action()
             );
-        } catch (Exception $e) {
-            hd_debug_print("Error: Exception caught: " . $e->getMessage());
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
 
             return array(
                 PluginOutputData::has_data => false,

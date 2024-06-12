@@ -326,10 +326,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             }
             $unzip->close();
         } catch (Exception $ex) {
+            print_backtrace_exception($ex);
             if (file_exists($tmp_filename)) {
                 unlink($tmp_filename);
             }
-            hd_debug_print($ex->getMessage());
             return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
         }
 

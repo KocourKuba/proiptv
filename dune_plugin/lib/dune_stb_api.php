@@ -295,6 +295,79 @@ function print_backtrace()
 }
 
 /**
+ * provide a Java style exception trace
+ *
+ * @param Exception|Throwable $ex
+ * @param bool $as_string
+ * @param array|null $seen - array passed to recursive calls to accumulate trace lines already seen
+ *                leave as NULL when calling this function
+ * @return array|string of strings, one entry per trace line
+ */
+function backtrace_exception($ex, $as_string = false, $seen = null) {
+    $starter = $seen ? 'Caused by: ' : '';
+    $result = array();
+    if (!$seen) {
+        $seen = array();
+    }
+
+    $trace  = $ex->getTrace();
+    $prev   = $ex->getPrevious();
+    $result[] = sprintf('%s%s: %s', $starter, get_class($ex), $ex->getMessage());
+    $file = $ex->getFile();
+    $line = $ex->getLine();
+    while (true) {
+        $current = "$file:$line";
+        if (is_array($seen) && in_array($current, $seen)) {
+            $result[] = sprintf(' ... %d more', count($trace)+1);
+            break;
+        }
+        $result[] = sprintf(' at %s%s%s(%s%s%s)',
+            count($trace) && array_key_exists('class', $trace[0]) ? str_replace('\\', '.', $trace[0]['class']) : '',
+            count($trace) && array_key_exists('class', $trace[0]) && array_key_exists('function', $trace[0]) ? '.' : '',
+            count($trace) && array_key_exists('function', $trace[0]) ? str_replace('\\', '.', $trace[0]['function']) : '(main)',
+            $line === null ? $file : basename($file),
+            $line === null ? '' : ':',
+            $line === null ? '' : $line);
+        if (is_array($seen))
+            $seen[] = "$file:$line";
+        if (!count($trace))
+            break;
+        $file = array_key_exists('file', $trace[0]) ? $trace[0]['file'] : 'Unknown Source';
+        $line = array_key_exists('file', $trace[0]) && array_key_exists('line', $trace[0]) && $trace[0]['line'] ? $trace[0]['line'] : null;
+        array_shift($trace);
+    }
+
+    if ($as_string) {
+        $result = implode(PHP_EOL, $result);
+
+        if ($prev) {
+            $result .= PHP_EOL . backtrace_exception($prev, $as_string, $seen);
+        }
+    } else if ($prev) {
+        $result = array_merge($result, backtrace_exception($prev, $as_string, $seen));
+    }
+
+    return $result;
+}
+
+/**
+ * print exception backtrace to log
+ *
+ * @param Exception|Throwable $ex
+ * @param bool $as_string
+ */
+function print_backtrace_exception($ex, $as_string = false)
+{
+    if ($as_string) {
+        hd_debug_print(backtrace_exception($ex, $as_string));
+    } else {
+        foreach (backtrace_exception($ex, $as_string) as $line) {
+            hd_debug_print($line);
+        }
+    }
+}
+
+/**
  * @param mixed $val
  * @param bool $is_debug
  * @return void
@@ -1569,7 +1642,7 @@ function get_plugin_manifest_info()
             $result[$node_name] = json_decode(json_encode($xml->xpath("//$node_name")), true);
         }
     } catch (Exception $ex) {
-        hd_debug_print($ex->getMessage());
+        print_backtrace_exception($ex);
     }
 
     return $result;

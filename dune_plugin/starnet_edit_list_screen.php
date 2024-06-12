@@ -854,7 +854,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 unlink($tmp_file);
                 hd_debug_print("Playlist: '$url' imported successfully");
             } catch (Exception $ex) {
-                hd_debug_print("Problem with download playlist: " . $ex->getMessage());
+                hd_debug_print("Problem with download playlist");
+                print_backtrace_exception($ex);
                 return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
             }
         }
@@ -1004,7 +1005,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         }
                     } catch (Exception $ex) {
                         HD::set_last_error("pl_last_error", null);
-                        hd_debug_print($ex->getMessage());
+                        print_backtrace_exception($ex);
                         continue;
                     }
                 } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {

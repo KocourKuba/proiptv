@@ -42,8 +42,8 @@ if (!$is_debug) {
         $pd->buildFromDirectory("./dune_plugin");
         $pd->compress(Phar::GZ);
         unset($pd);
-    } catch (Exception $e) {
-        echo "Exception : " . $e;
+    } catch (Exception $ex) {
+        echo "Exception : " . $ex;
     }
 
     unlink($update_tar);

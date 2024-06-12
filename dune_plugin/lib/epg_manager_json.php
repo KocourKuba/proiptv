@@ -183,7 +183,7 @@ class Epg_Manager_Json extends Epg_Manager
                 return $channel_epg;
             }
         } catch (Exception $ex) {
-            hd_debug_print("http exception: " . $ex->getMessage());
+            print_backtrace_exception($ex);
             return $channel_epg;
         }
 

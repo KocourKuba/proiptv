@@ -1387,7 +1387,7 @@ class Starnet_Tv implements User_Input_Handler
 
             $url = $this->generate_stream_url($channel_id, $archive_ts);
         } catch (Exception $ex) {
-            hd_debug_print("Exception: " . $ex->getMessage());
+            print_backtrace_exception($ex);
             $url = '';
         }
 

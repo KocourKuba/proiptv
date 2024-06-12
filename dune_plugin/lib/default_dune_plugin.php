@@ -644,10 +644,7 @@ class Default_Dune_Plugin implements DunePlugin
                 }
             }
         } catch (Exception $ex) {
-            $msg = $ex->getMessage();
-            if (!empty($msg)) {
-                hd_debug_print($msg);
-            }
+            print_backtrace_exception($ex);
         }
 
         return $day_epg;
@@ -1826,7 +1823,7 @@ class Default_Dune_Plugin implements DunePlugin
                 HD::ShowMemoryUsage();
             }
         } catch (Exception $ex) {
-            hd_debug_print("Unable to load tv playlist: " . $ex->getMessage());
+            print_backtrace_exception($ex);
             if (isset($playlist->type) && $playlist->type !== PARAM_FILE && file_exists($tmp_file)) {
                 unlink($tmp_file);
             }
@@ -1896,7 +1893,8 @@ class Default_Dune_Plugin implements DunePlugin
             // Is already parsed?
             $this->vod->get_m3u_parser()->setupParser($tmp_file, $force);
         } catch (Exception $ex) {
-            hd_debug_print("Unable to load VOD playlist: " . $ex->getMessage());
+            hd_debug_print("Unable to load VOD playlist");
+            print_backtrace_exception($ex);
             return false;
         }
 
@@ -2814,8 +2812,8 @@ class Default_Dune_Plugin implements DunePlugin
         try {
             $live_url = $this->tv->generate_stream_url($channel_id, -1, true);
             $info .= "Live URL: " . wrap_string_to_lines($live_url, 70) . PHP_EOL;
-        } catch(Exception $ex) {
-            hd_debug_print($ex);
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
         }
 
         if ($channel->get_archive() > 0 ) {
@@ -2823,7 +2821,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $archive_url = $this->tv->generate_stream_url($channel_id, time() - 3600, true);
                 $info .= "Archive URL: " . wrap_string_to_lines($archive_url, 70) . PHP_EOL;
             } catch (Exception $ex) {
-                hd_debug_print($ex);
+                print_backtrace_exception($ex);
             }
         }
 

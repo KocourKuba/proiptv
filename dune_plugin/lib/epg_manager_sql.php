@@ -144,7 +144,8 @@ class Epg_Manager_Sql extends Epg_Manager
             hd_debug_print_separator();
 
         } catch (Exception $ex) {
-            hd_debug_print("Reindexing EPG channels failed: " . $ex->getMessage());
+            hd_debug_print("Reindexing EPG channels failed");
+            print_backtrace_exception($ex);
         }
 
         $this->set_index_locked(false);
@@ -265,7 +266,8 @@ class Epg_Manager_Sql extends Epg_Manager
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
             hd_debug_print_separator();
         } catch (Exception $ex) {
-            hd_debug_print("Reindexing EPG positions failed: " . $ex->getMessage());
+            hd_debug_print("Reindexing EPG positions failed");
+            print_backtrace_exception($ex);
         }
 
         $this->set_index_locked(false);
@@ -350,7 +352,7 @@ class Epg_Manager_Sql extends Epg_Manager
                 throw new Exception("No positions for channel $channel_id ($channel_title) and epg id's: ". raw_json_encode($epg_ids));
             }
         } catch (Exception $ex) {
-            hd_debug_print($ex->getMessage());
+            print_backtrace_exception($ex);
         }
 
         hd_debug_print("Channel positions: " . raw_json_encode($channel_position), true);
@@ -377,8 +379,8 @@ class Epg_Manager_Sql extends Epg_Manager
             }
 
             hd_debug_print("Database $index_name is not exist!");
-        } catch(Exception $ex) {
-            hd_debug_print($ex->getMessage());
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
         }
 
         return null;

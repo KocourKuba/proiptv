@@ -102,7 +102,8 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $vod_info = $this->plugin->vod->get_vod_info($selected_media_url);
                     $post_action = $this->plugin->vod->vod_player_exec($vod_info,isset($user_input->external));
                 } catch (Exception $ex) {
-                    hd_debug_print("Movie can't played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Movie can't played");
+                    print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(
                         TR::t('err_channel_cant_start'),
                         null,

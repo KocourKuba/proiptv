@@ -107,7 +107,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                     $selected_media_url = MediaURL::decode($user_input->selected_media_url);
                     $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
-                    hd_debug_print("Channel can't be played, exception info: " . $ex->getMessage());
+                    hd_debug_print("Channel can't be played, exception info");
+                    print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
                         null,
                         TR::t('warn_msg2__1', $ex->getMessage()));

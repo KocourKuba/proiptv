@@ -89,6 +89,7 @@ class api_sharaclub extends api_default
 
             return Action_Factory::show_dialog(TR::t("add_money"), $defs, true, 600);
         } catch (Exception $ex) {
+            print_backtrace_exception($ex);
         }
 
         return null;

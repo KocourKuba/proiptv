@@ -71,6 +71,7 @@ class M3uParser extends Json_Serializer
                 }
             } catch (Exception $ex) {
                 hd_debug_print("Can't read file: $this->file_name");
+                print_backtrace_exception($ex);
                 return;
             }
         }

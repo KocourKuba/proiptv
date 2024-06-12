@@ -497,11 +497,7 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        if ($this->SetPlaylistMacro()) {
-            return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
-        }
-
-        return false;
+        return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
     }
 
     /**
@@ -910,18 +906,18 @@ class api_default
     }
 
     /**
-     * set server
-     * @param string $server
+     * set streams
+     * @param array|null $streams
      * @return void
      */
-    public function SetStreams($server)
+    public function SetStreams($streams)
     {
         hd_debug_print(null, true);
-        $this->setCredential(CONFIG_STREAMS, $server);
+        $this->setCredential(CONFIG_STREAMS, $streams);
     }
 
     /**
-     * set server
+     * set stream
      * @param string $stream
      * @return void
      */
@@ -966,30 +962,7 @@ class api_default
     }
 
     /**
-     * set MACRO_PLAYLIST to appropriate value
-     * @return bool
-     */
-    public function SetPlaylistMacro()
-    {
-        $playlists = $this->GetPlaylists();
-        if (!empty($playlists)) {
-            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
-            if ($idx === 'custom') {
-                $this->setCredential(MACRO_PLAYLIST, $this->getCredential(MACRO_CUSTOM_PLAYLIST));
-                return true;
-            }
-
-            if (isset($playlists[$idx]['url'])) {
-                $this->setCredential(MACRO_PLAYLIST, $playlists[$idx]['url']);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * set server
+     * set playlist
      * @param string $id
      * @return void
      */
@@ -1091,10 +1064,21 @@ class api_default
             MACRO_VPORTAL,
         );
 
+        $playlist = '';
+        $playlists = $this->GetPlaylists();
+        if (!empty($playlists)) {
+            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
+            if ($idx === 'custom') {
+                $playlist = $this->getCredential(MACRO_CUSTOM_PLAYLIST);
+            } else if (!empty($playlists[$idx]['url'])) {
+                $playlist = $playlists[$idx]['url'];
+            }
+        }
+
         hd_debug_print("template: $string", true);
         $string = str_replace(
             array(MACRO_API, MACRO_PLAYLIST),
-            array($this->getApiUrl(), $this->getCredential(MACRO_PLAYLIST)),
+            array($this->getApiUrl(), $playlist),
             $string);
 
         foreach ($macroses as $macro) {

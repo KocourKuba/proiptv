@@ -544,8 +544,8 @@ class HD
                 $ret = true;
             }
         } catch (Exception $ex) {
+            print_backtrace_exception($ex);
             $msg = ": Unable to upload log: " . $ex->getMessage();
-            hd_debug_print($msg);
             if ($error !== null) {
                 $error = $msg;
             }
@@ -628,7 +628,7 @@ class HD
             }
         } catch (Exception $ex) {
             hd_debug_print(self::get_storage_size(get_temp_path()));
-            hd_debug_print($ex->getMessage());
+            print_backtrace_exception($ex);
             return false;
         }
 
@@ -911,7 +911,7 @@ class HD
                 return false;
             }
         } catch (Exception $ex) {
-            hd_debug_print("Unable to load url: " . $ex->getMessage());
+            print_backtrace_exception($ex);
             return false;
         }
 
@@ -1181,7 +1181,8 @@ class HD
         foreach ($list as $item) {
             try {
                 $sample = @iconv($item, $item, $string);
-            } catch (Exception $e) {
+            } catch (Exception $ex) {
+                print_backtrace_exception($ex);
                 continue;
             }
 

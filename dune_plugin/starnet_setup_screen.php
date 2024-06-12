@@ -139,6 +139,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
             return Action_Factory::show_dialog(TR::t('setup_donate_title'), $defs, true, 1150, $attrs);
         } catch (Exception $ex) {
+            print_backtrace_exception($ex);
         }
 
         return Action_Factory::status(0);
