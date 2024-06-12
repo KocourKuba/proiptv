@@ -234,6 +234,7 @@ const EPG_JSON_SOURCE = 'json_source';
 const EPG_JSON_PARSER = 'parser';
 const EPG_JSON_ALIAS = 'epg_alias';
 const ICON_SOURCE = 'epg_preset';
+const CUSTOM_PLAYLIST_ID = 'custom';
 
 # HTTP params
 const USER_AGENT = 'User-Agent';

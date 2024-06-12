@@ -501,7 +501,7 @@ class api_default
         if (!empty($playlists)) {
             $idx = $this->getCredential(MACRO_PLAYLIST_ID);
             $playlist = '';
-            if ($idx === 'custom') {
+            if ($idx === CUSTOM_PLAYLIST_ID) {
                 $playlist = $this->getCredential(MACRO_CUSTOM_PLAYLIST);
             } else if (!empty($playlists[$idx]['url'])) {
                 $playlist = $playlists[$idx]['url'];

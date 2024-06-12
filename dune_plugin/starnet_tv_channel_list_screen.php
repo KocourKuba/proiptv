@@ -273,9 +273,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $items = array(
                     TR::t('tv_screen_hide_plus') => "[\s(]\+\d",
                     TR::t('tv_screen_hide_orig') => "[Oo]rig|[Uu]ncomp",
-                    TR::t('tv_screen_hide_50') => "\s50|FHD",
-                    TR::t('tv_screen_hide_uhd') => "UHD|4[KkКк]|8[KkКк]",
-                    TR::t('tv_screen_hide_string') => "custom"
+                    TR::t('tv_screen_hide_50') => "\s50|\sFHD",
+                    TR::t('tv_screen_hide_uhd') => "UHD|\s4[KkКк]|\s8[KkКк]",
+                    TR::t('tv_screen_hide_string') => "custom_string"
                 );
                 foreach ($items as $key => $val) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE_BY_STRING, $key, null, array('hide' => $val));
@@ -283,7 +283,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_ITEM_DELETE_BY_STRING:
-                if ($user_input->hide !== 'custom') {
+                if ($user_input->hide !== 'custom_string') {
                     $this->set_changes();
                     $this->plugin->tv->disable_group_channels($user_input->hide, $selected_media_url->group_id);
                     break;

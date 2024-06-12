@@ -527,7 +527,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
 
             case CONTROL_PLAYLIST:
-                if ($user_input->action_type !== 'confirm' || $user_input->{CONTROL_PLAYLIST} !== 'custom') {
+                if ($user_input->action_type !== 'confirm' || $user_input->{CONTROL_PLAYLIST} !== CUSTOM_PLAYLIST_ID) {
                     return null;
                 }
 
