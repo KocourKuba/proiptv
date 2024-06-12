@@ -149,14 +149,14 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         $choose_file = isset($media_url->choose_file) ? $media_url->choose_file : false;
 
         $items = array();
-        hd_debug_print("dir: " . json_encode($dir));
+        hd_debug_print("dir: " . json_encode($dir), true);
         foreach ($this->get_file_list($plugin_cookies, $dir) as $item_type => $item) {
             if (isset($media_url->filepath) && is_array($item)) {
                 ksort($item);
             }
 
             foreach ($item as $k => $v) {
-                hd_debug_print("folder key: $k, value: " . json_encode($v));
+                hd_debug_print("folder key: $k, value: " . json_encode($v), true);
                 $detailed_icon = '';
                 if ($item_type === self::SELECTED_TYPE_SMB) {
                     $caption = $v['foldername'];
@@ -445,7 +445,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             } else if ($dir === self::IMAGELIB_PATH) {
                 $fileData['folder']['imagelib']['filepath'] = get_temp_path('imagelib/');
             } else if ($handle = opendir($dir)) {
-                hd_debug_print("opendir: $dir");
+                hd_debug_print("opendir: $dir", true);
                 if (basename(dirname($dir)) === 'imagelib') {
                     foreach ($this->plugin->get_image_libs()->get_values() as $lib) {
                         if (basename($dir) !== $lib['name']) continue;
