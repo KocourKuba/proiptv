@@ -1328,7 +1328,18 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             if (isset($media_url->row_id)) {
                 $row_id = json_decode($media_url->row_id);
                 if ($this->plugin->tv->get_group($row_id->group_id) !== null) {
-                    $menu_items = $this->plugin->sort_menu($this);
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'),
+                        null, array(ACTION_SORT_TYPE => ACTION_SORT_CHANNELS));
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_groups'),
+                        null, array(ACTION_SORT_TYPE => ACTION_SORT_GROUPS));
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'),
+                        null, array(ACTION_RESET_TYPE => ACTION_SORT_CHANNELS));
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'),
+                        null, array(ACTION_RESET_TYPE => ACTION_SORT_GROUPS));
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_all_sort'),
+                        null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
                 }
             }
         } else if (isset($user_input->selected_item_id)) {

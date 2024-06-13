@@ -2298,29 +2298,6 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param User_Input_Handler $handler
-     * @return array
-     */
-    public function sort_menu($handler)
-    {
-        $menu_items = array();
-
-        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_SORT, TR::t('sort_channels'),
-            null, array(ACTION_SORT_TYPE => ACTION_SORT_CHANNELS));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_SORT, TR::t('sort_groups'),
-            null, array(ACTION_SORT_TYPE => ACTION_SORT_GROUPS));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'),
-            null, array(ACTION_RESET_TYPE => ACTION_SORT_CHANNELS));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'),
-            null, array(ACTION_RESET_TYPE => ACTION_SORT_GROUPS));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RESET_ITEMS_SORT, TR::t('reset_all_sort'),
-            null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-
-        return $menu_items;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
      * @param string $group_id
      * @return array
      */

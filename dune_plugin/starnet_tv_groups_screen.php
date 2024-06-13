@@ -179,15 +179,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEMS_SORT:
                 $group = $this->plugin->tv->get_group($sel_media_url->group_id);
-                if (is_null($group) || !isset($user_input->{ACTION_SORT_TYPE})) {
+                if (is_null($group)) {
                     return null;
                 }
 
-                if ($user_input->{ACTION_SORT_TYPE} === ACTION_SORT_CHANNELS) {
-                    $group->sort_group_items();
-                } else {
-                    $this->plugin->tv->get_groups_order()->sort_order();
-                }
+                $this->plugin->tv->get_groups_order()->sort_order();
                 $this->set_changes();
                 break;
 
@@ -258,7 +254,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
                     $menu_items = $this->plugin->epg_engine_menu($this);
                 } else if (isset($user_input->{ACTION_SORT_POPUP})) {
-                    $menu_items = $this->plugin->sort_menu($this);
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_groups'));
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_groups_sort'),
+                        null, array(ACTION_RESET_TYPE => ACTION_SORT_GROUPS));
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_all_sort'),
+                        null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 } else {
                     $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
                     $menu_items = $this->plugin->common_categories_menu($this, $group_id);

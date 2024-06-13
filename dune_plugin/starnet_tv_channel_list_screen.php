@@ -232,15 +232,31 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items = array();
-
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE_CHANNELS, TR::t('tv_screen_hide_group_channels'), "remove.png");
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    ACTION_ITEM_DELETE,
+                    TR::t('tv_screen_hide_channel'),
+                    "remove.png");
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    ACTION_ITEM_DELETE_CHANNELS,
+                    TR::t('tv_screen_hide_group_channels'),
+                    "remove.png");
 
                 if ($selected_media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_CREATE_SEARCH, TR::t('search'), "search.png");
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        self::ACTION_CREATE_SEARCH,
+                        TR::t('search'),
+                        "search.png");
                 } else {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        ACTION_JUMP_TO_CHANNEL_IN_GROUP,
+                        TR::t('jump_to_channel'),
+                        "goto.png");
+                }
+
+                if ($this->plugin->tv->get_special_group($parent_media_url->group_id) === null) {
+                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'));
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'));
                 }
 
                 if (!is_limited_apk()) {
@@ -261,11 +277,17 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ratio'), "aspect.png");
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        ACTION_ZOOM_POPUP_MENU,
+                        TR::t('video_aspect_ratio'),
+                        "aspect.png");
                 }
 
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), "info.png");
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    GUI_EVENT_KEY_INFO,
+                    TR::t('channel_info_dlg'),
+                    "info.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 
@@ -337,6 +359,26 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case GUI_EVENT_KEY_INFO:
                 return $this->plugin->do_show_channel_info($channel_id);
+
+            case ACTION_ITEMS_SORT:
+                $group = $this->plugin->tv->get_group($parent_media_url->group_id);
+                if (is_null($group)) {
+                    return null;
+                }
+
+                $group->sort_group_items();
+                $this->set_changes();
+                break;
+
+            case ACTION_RESET_ITEMS_SORT:
+                $group = $this->plugin->tv->get_group($parent_media_url->group_id);
+                if (is_null($group)) {
+                    return null;
+                }
+
+                $group->sort_group_items(true);
+                $this->set_changes();
+                break;
 
             case ACTION_RELOAD:
                 hd_debug_print("reload");
