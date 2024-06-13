@@ -1,6 +1,11 @@
 ﻿## Version history
 
 ### Version {latest_version}
+- Channel sorting menu is now available within a category
+- Added the ability to add your own playlist (from the account) for the iEdem/iLook provider (through the popup menu - provider settings). Access data is used from the playlist!
+- Added additional diagnostics to find the reason for resetting playlist settings (icons/sorting/favorites)
+
+### Version 4.0.692
 - Fix wrong rename category settings for some providers
 
 ### Version 4.0.688
