@@ -147,6 +147,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 switch ($user_input->action_id) {
                     case self::ACTION_LAUNCH:
+                        hd_debug_print_separator();
+                        hd_debug_print("LANUCH PLUGIN");
+                        hd_debug_print_separator();
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_playlists()->size() === 0) {
@@ -165,7 +168,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
-                            hd_debug_print("launch play", true);
+                            hd_debug_print("launch auto play", true);
 
                             $media_url = null;
                             if (file_exists('/config/resume_state.properties')) {
@@ -187,6 +190,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
 
                     case self::ACTION_LAUNCH_VOD:
+                        hd_debug_print_separator();
+                        hd_debug_print("LANUCH PLUGIN VOD");
+                        hd_debug_print_separator();
+
                         $this->plugin->init_plugin($plugin_cookies);
                         if ($this->plugin->get_playlists()->size() === 0) {
                             return User_Input_Handler_Registry::create_action($this, self::ACTION_CALL_PLUGIN_SETTINGS);
@@ -200,6 +207,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Action_Factory::show_error(false, TR::t('err_vod_not_available'));
 
                     case self::ACTION_AUTO_RESUME:
+                        hd_debug_print_separator();
+                        hd_debug_print("LANUCH PLUGIN AUTO RESUME MODE");
+                        hd_debug_print_separator();
+
                         $this->plugin->init_plugin(true);
                         if ((int)$user_input->mandatory_playback !== 1
                             || (isset($plugin_cookies->auto_resume) && $plugin_cookies->auto_resume === SetupControlSwitchDefs::switch_off)) {

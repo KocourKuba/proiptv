@@ -541,6 +541,9 @@ class Starnet_Tv implements User_Input_Handler
         HD::set_last_error("pl_last_error", null);
 
         $this->plugin->load_settings(true);
+
+        $provider = $this->plugin->get_current_provider();
+
         $this->plugin->create_screen_views();
 
         // first check if playlist in cache
@@ -634,7 +637,6 @@ class Starnet_Tv implements User_Input_Handler
             hd_debug_print("Using base url for icons: $icon_base_url");
         }
 
-        $provider = $this->plugin->get_current_provider();
         $this->plugin->vod = null;
         $this->plugin->vod_enabled = false;
         if (is_null($provider)) {
