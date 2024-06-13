@@ -1214,6 +1214,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         if (!isset($this->{PLUGIN_ORDERS}) || $force) {
             hd_debug_print(null, true);
+            hd_debug_print("provider order: " . var_export(isset($this->cur_provider), true));
             $this->load($order_name, PLUGIN_ORDERS, $force);
         }
     }
@@ -1530,7 +1531,6 @@ class Default_Dune_Plugin implements DunePlugin
         $this->create_screen_views();
         $this->playback_points = new Playback_Points($this);
 
-        $this->init_epg_manager();
         $this->tv->unload_channels();
 
         hd_debug_print("Init plugin done!");
@@ -1552,7 +1552,7 @@ class Default_Dune_Plugin implements DunePlugin
             return;
         }
 
-        $this->set_parameter(PLUGIN_CONFIG_VERSION, 4);
+        $this->parameters = null;
         hd_debug_print("too old version");
     }
 

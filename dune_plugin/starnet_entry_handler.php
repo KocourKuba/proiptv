@@ -117,8 +117,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_CLEAR_EPG:
                 $this->plugin->init_plugin();
-                $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->init_epg_manager();
+                $this->plugin->get_epg_manager()->clear_all_epg_cache();
                 $this->plugin->tv->unload_channels();
                 $action = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
                 if (HD::rows_api_support()) {
@@ -177,6 +177,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                     $media_url->group_id = $resume_state['plugin_tv_is_favorite'] ? Starnet_Tv_Favorites_Screen::ID : $resume_state['plugin_tv_group'];
                                     $media_url->channel_id = $resume_state['plugin_tv_channel'];
                                     $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
+                                    hd_debug_print("Auto play: " . $media_url);
                                 }
                             }
                             return Action_Factory::tv_play($media_url);
@@ -226,6 +227,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 $media_url->group_id = $resume_state['plugin_tv_is_favorite'] ? Starnet_Tv_Favorites_Screen::ID : $resume_state['plugin_tv_group'];
                                 $media_url->channel_id = $resume_state['plugin_tv_channel'];
                                 $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
+                                hd_debug_print("Auto resume: " . $media_url);
                             }
                         }
 

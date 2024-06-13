@@ -540,6 +540,7 @@ class Starnet_Tv implements User_Input_Handler
 
         HD::set_last_error("pl_last_error", null);
 
+        $this->plugin->load_settings(true);
         $this->plugin->create_screen_views();
 
         // first check if playlist in cache
@@ -547,10 +548,11 @@ class Starnet_Tv implements User_Input_Handler
             return 0;
         }
 
+        $this->plugin->init_epg_manager();
+
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
 
-        $this->plugin->load_settings(true);
         $this->plugin->load_orders(true);
         $this->plugin->load_history(true);
 
