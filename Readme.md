@@ -50,6 +50,10 @@ Also, have presets for most popular IPTV providers.
 40. [Uspeh TV](https://uspeh.tv/)
 </details>
 
+## Donate
+[PayPal](https://www.paypal.com/donate/?cmd=_donations&business=5DY7PESZL4D8L&currency_code=USD&amount=5)  
+[YooMoney](https://yoomoney.ru/to/41001913379027)
+
 ## License and copyright
 
 The MIT License (MIT)
@@ -71,7 +75,3 @@ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
-
-## Donate
-[PayPal](https://www.paypal.com/donate/?cmd=_donations&business=5DY7PESZL4D8L&currency_code=USD&amount=5)  
-[YooMoney](https://yoomoney.ru/to/41001913379027)
