@@ -45,6 +45,7 @@ const ACTION_CHANGE_GROUP_ICON = 'change_group_icon';
 const ACTION_CHANGE_BACKGROUND = 'change_background';
 const ACTION_CHANNEL_INFO = 'channel_info';
 const ACTION_CHANGE_EPG_SOURCE = 'change_epg_source';
+const ACTION_CHANGE_PICONS_SOURCE = 'change_picons_source';
 const ACTION_EPG_CACHE_ENGINE = 'cache_engine';
 const ACTION_EPG_SOURCE_SELECTED = 'epg_source_selected';
 const ACTION_SHOW_INDEX_PROGRESS = 'show_index_progress';
@@ -233,7 +234,6 @@ const EPG_JSON_PRESET = 'epg_preset';
 const EPG_JSON_SOURCE = 'json_source';
 const EPG_JSON_PARSER = 'parser';
 const EPG_JSON_ALIAS = 'epg_alias';
-const ICON_SOURCE = 'epg_preset';
 const CUSTOM_PLAYLIST_ID = 'custom';
 
 # HTTP params

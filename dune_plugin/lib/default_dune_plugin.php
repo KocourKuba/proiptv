@@ -2310,6 +2310,21 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function picons_source_menu($handler)
+    {
+        $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+
+        $menu_items[] = $this->create_menu_item($handler, PLAYLIST_PICONS, TR::t('playlist_picons'),
+            ($icons_playlist === PLAYLIST_PICONS) ? "check.png" : null);
+        $menu_items[] = $this->create_menu_item($handler, XMLTV_PICONS, TR::t('xmltv_picons'),
+            ($icons_playlist === XMLTV_PICONS) ? "check.png" : null);
+        return $menu_items;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
      * @param string $group_id
      * @return array
      */
@@ -2399,11 +2414,12 @@ class Default_Dune_Plugin implements DunePlugin
         $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
         if ($is_xmltv_engine && $this->get_all_xmltv_sources()->size()) {
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source'), "image.png");
         }
 
+        $epg_url = $this->get_epg_preset_url();
         $provider = $this->get_current_provider();
         if (!is_null($provider)) {
-            $epg_url = $this->get_epg_preset_url();
             if (!empty($epg_url)) {
                 $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
                 $menu_items[] = $this->create_menu_item($handler,

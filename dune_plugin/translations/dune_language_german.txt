@@ -56,6 +56,7 @@ change_background = Hintergrundbild ändern
 channel_info_dlg = Kanalinformationen
 change_playlist = Playlist ändern
 change_epg_source = EPG-Quelle ändern
+change_picons_source = Kanalsymbolquelle ändern
 select_folder = Ordner auswählen
 select_file = Datei aussuchen
 storage = Externe Speicher
