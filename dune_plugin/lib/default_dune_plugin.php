@@ -318,6 +318,18 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * clear memory cache and entire cache folder
+     *
+     * @return void
+     */
+    public function clear_all_epg_cache()
+    {
+        if (isset($this->epg_manager)) {
+            $this->epg_manager->clear_epg_files('');
+        }
+    }
+
+    /**
      * @return array|null
      */
     protected function get_epg_preset()

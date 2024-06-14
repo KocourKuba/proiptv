@@ -673,16 +673,6 @@ class Epg_Manager
     }
 
     /**
-     * clear memory cache and entire cache folder
-     *
-     * @return void
-     */
-    public function clear_all_epg_cache()
-    {
-        $this->clear_epg_files('');
-    }
-
-    /**
      * clear indexes
      *
      * @return void
@@ -712,7 +702,7 @@ class Epg_Manager
         hd_debug_print("clear cache files: $files");
         shell_exec('rm -f '. $files);
         flush();
-        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size(dirname($files)));
     }
 
     /**
