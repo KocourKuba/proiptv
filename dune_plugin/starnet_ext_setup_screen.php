@@ -231,16 +231,22 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case self::CONTROL_COPY_TO_DATA:
                 $history_path = $this->plugin->get_history_path();
                 hd_debug_print("copy to: $history_path");
-                if (!HD::copy_data(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                try {
+                    HD::copy_data(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path);
+                } catch (Exception $ex) {
+                    print_backtrace_exception($ex);
+                    return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
                 }
 
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
 
             case self::CONTROL_COPY_TO_PLUGIN:
                 hd_debug_print("copy to: " . get_data_path());
-                if (!HD::copy_data($this->plugin->get_history_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", get_data_path('history'))) {
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                try {
+                    HD::copy_data($this->plugin->get_history_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", get_data_path('history'));
+                } catch (Exception $ex) {
+                    print_backtrace_exception($ex);
+                    return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
                 }
 
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
@@ -296,15 +302,17 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
      */
     protected function do_restore_settings($name, $filename)
     {
-        $this->plugin->get_epg_manager()->clear_all_epg_cache();
+        $this->plugin->clear_all_epg_cache();
         $this->plugin->clear_playlist_cache();
 
         $temp_folder = get_temp_path("restore");
         delete_directory($temp_folder);
         $tmp_filename = get_temp_path($name);
         try {
-            if (!copy($filename, $tmp_filename))
-                throw new Exception(TR::t('err_copy'));
+            hd_debug_print("Copy $filename to $tmp_filename");
+            if (!copy($filename, $tmp_filename)) {
+                throw new Exception(error_get_last());
+            }
 
             $unzip = new ZipArchive();
             $out = $unzip->open($tmp_filename);

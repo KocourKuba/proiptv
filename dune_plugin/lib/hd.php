@@ -1152,26 +1152,28 @@ class HD
      * @param string $sourcePath absoulute path where files will be searched
      * @param string $source_pattern regex pattern to match files
      * @param string $destPath absolute path to destination folder
-     * @return bool
+     * @throws Exception
      */
     public static function copy_data($sourcePath, $source_pattern, $destPath){
         if (empty($sourcePath) || empty($destPath)) {
-            hd_debug_print("One of is empty: sourceDir = $sourcePath | destDir = $destPath");
-            return false;
+            $msg = "One of is empty: sourceDir = $sourcePath | destDir = $destPath";
+            hd_debug_print($msg);
+            throw new Exception($msg);
         }
 
         if (!create_path($destPath)) {
-            hd_debug_print("Can't create destination folder: $destPath");
-            return false;
+            $msg ="Can't create destination folder: $destPath";
+            hd_debug_print($msg);
+            throw new Exception($msg);
         }
 
         foreach (glob_dir($sourcePath, $source_pattern) as $file) {
             $dest_file = get_slash_trailed_path($destPath) . basename($file);
             hd_debug_print("copy $file to $dest_file");
-            if (!copy($file, $dest_file))
-                return false;
+            if (!copy($file, $dest_file)) {
+                throw new Exception(error_get_last());
+            }
         }
-        return true;
     }
 
     public static function detect_encoding($string)
