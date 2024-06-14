@@ -1,6 +1,11 @@
 ﻿## Version history
 
 ### Version {latest_version}
+- Fixed translation for some strings
+- Added an additional popup menu item to change the source of channel icons on the category screen (only if the XMLTV engine is selected)
+- Changed the maximum number of menu items when changing the playlist (a large list was displayed incorrectly on Sigma devices)
+
+### Version 4.0.704
 - Provider settings are not initialized after a "warm" restart of the plugin
 
 ### Version 4.0.704
