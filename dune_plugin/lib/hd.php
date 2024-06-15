@@ -104,6 +104,19 @@ class HD
         return $size[0] . ' (' . $size[1] . ')';
     }
 
+    /**
+     * @param string $path
+     * @return string
+     */
+    public static function get_file_size($path)
+    {
+        $bytes = filesize($path);
+        $si_prefix = array('B', 'KB', 'MB', 'GB', 'TB', 'EB', 'ZB', 'YB');
+        $base = 1024;
+        $class = min((int)log($bytes, $base), count($si_prefix) - 1);
+        return sprintf('%1.2f', $bytes / pow($base, $class)) . ' ' . $si_prefix[$class];
+    }
+
     ///////////////////////////////////////////////////////////////////////
 
     public static function print_array($opts, $ident = 0)

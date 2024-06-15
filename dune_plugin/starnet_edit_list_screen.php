@@ -588,13 +588,20 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (file_exists($cached_xmltv_file)) {
                     $check_time_file = filemtime($cached_xmltv_file);
                     $dl_date = date("d.m H:i", $check_time_file);
+                    $max_cache_time = $check_time_file + 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
+                    $expired = date("d.m H:i", $max_cache_time);
+
                     $title = TR::t('edit_list_title_info__2', $title, $dl_date);
-                    $detailed_info = TR::t('edit_list_detail_info__3', $item->name, $item->params[PARAM_URI], $dl_date);
+                    $detailed_info = TR::t('edit_list_detail_info__4',
+                        $item->params[PARAM_URI],
+                        HD::get_file_size($cached_xmltv_file),
+                        $dl_date,
+                        $expired
+                        );
+                } else if (isset($item->params[PARAM_URI])) {
+                    $detailed_info = TR::t('edit_list_detail_info__1', $item->params[PARAM_URI]);
                 } else {
-                    $detailed_info = "";
-                    if (isset($item->params[PARAM_URI])) {
-                        $detailed_info = "$item->name|{$item->params[PARAM_URI]}";
-                    }
+                    $detailed_info = $item->name;
                 }
 
                 if ($idx === 'pl') {
