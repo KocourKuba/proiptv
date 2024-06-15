@@ -40,7 +40,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_UPDATE = 'update';
     const ACTION_CALL_PLUGIN_SETTINGS = 'call_setup';
     const ACTION_CALL_PLAYLIST_SETTINGS = 'call_playlist_setup';
+    const ACTION_CALL_XMLTV_SOURSES_SETTINGS = 'call_xmltv_setup';
     const ACTION_PLAYLIST_SETTINGS = 'channels_settings';
+    const ACTION_XMLTV_SOURCES_SETTINGS = 'xmltv_settings';
     const ACTION_CALL_REBOOT = 'call_reboot';
     const ACTION_CALL_SEND_LOG = 'call_send_log';
     const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
@@ -99,6 +101,13 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_PLAYLIST_SETTINGS:
                 return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
+
+            case self::ACTION_CALL_XMLTV_SOURSES_SETTINGS:
+                $this->plugin->init_plugin();
+                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_XMLTV_SOURCES_SETTINGS);
+
+            case self::ACTION_XMLTV_SOURCES_SETTINGS:
+                return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST);
 
             case self::ACTION_CALL_SEND_LOG:
                 if (!is_newer_versions()) {

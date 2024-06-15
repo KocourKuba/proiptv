@@ -118,6 +118,17 @@
                         </action>
                     </menu_item>
                     <menu_item>
+                        <caption>%tr%setup_edit_xmltv_list</caption>
+                        <icon_url>gui_skin://small_icons/sources.aai</icon_url>
+                        <action>
+                            <type>plugin_handle_user_input</type>
+                            <params>
+                                <handler_id>entry_handler</handler_id>
+                                <control_id>call_xmltv_setup</control_id>
+                            </params>
+                        </action>
+                    </menu_item>
+                    <menu_item>
                         <caption>%tr%entry_epg_cache_clear_all</caption>
                         <icon_url>gui_skin://small_icons/subtitles_settings.aai</icon_url>
                         <action>
