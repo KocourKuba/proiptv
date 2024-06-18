@@ -2,6 +2,12 @@
 
 ### Version {latest_version}
 - Fixed translation for some strings
+- Added checking the correctness of playlist settings.
+- Slightly redesigned the display of information about channels/playlists/XMLTV sources
+- Editing XMLTV sources added to the plugin popup menu
+
+### Version 4.0.718
+- Fixed translation for some strings
 - Added an additional popup menu item to change the source of channel icons on the category screen (only if the XMLTV engine is selected)
 - Changed the maximum number of menu items when changing the playlist (a large list was displayed incorrectly on Sigma devices)
 
