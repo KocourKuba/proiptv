@@ -157,11 +157,17 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $path = get_install_path("changelog.$lang.md");
-            if (!file_exists($path)) {
-                $path = get_install_path("changelog.english.md");
+            $doc = HD::http_download_https_proxy(Default_Dune_Plugin::UPDATE_URL_PREFIX . "changelog.$lang.md");
+            if ($doc === false) {
+                hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
+                $path = get_install_path("changelog.$lang.md");
+                if (!file_exists($path)) {
+                    $path = get_install_path("changelog.english.md");
+                }
+                $doc = file_get_contents($path);
             }
-            $history_txt = str_replace(array("###", "##"), '', file_get_contents($path));
+
+            $history_txt = str_replace(array("###", "##"), '', $doc);
         }
 
         $control_id = $user_input->control_id;
@@ -178,23 +184,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 return Action_Factory::close_and_run($post_action);
 
             case ACTION_PLUGIN_INFO:
-                Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
-                Control_Factory::add_vgap($defs, 20);
-
-                $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-                    1160,
-                    get_image_path('page_plus_btn.png'),
-                    get_image_path('page_minus_btn.png'),
-                    DEF_LABEL_TEXT_COLOR_SILVER,
-                    TR::load_string('scroll_page')
-                );
-                Control_Factory::add_smart_label($defs, '', $text);
-                Control_Factory::add_vgap($defs, -80);
-
-                Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
-                Control_Factory::add_vgap($defs, 10);
-
-                return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
+                return $this->plugin->get_plugin_info_dlg();
 
             case self::ACTION_DONATE_DLG: // show donate QR codes
                 return $this->do_donate_dialog();

@@ -46,6 +46,7 @@ class Default_Dune_Plugin implements DunePlugin
     const RESOURCE_URL = 'http://iptv.esalecrm.net/res/';
     const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
     const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
+    const UPDATE_URL_PREFIX = 'https://raw.githubusercontent.com/KocourKuba/proiptv/master/build/';
     const ARCHIVE_ID = 'common';
 
     /////////////////////////////////////////////////////////////////////////////
@@ -2828,6 +2829,48 @@ class Default_Dune_Plugin implements DunePlugin
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
+    }
+
+    /**
+     * @return array
+     */
+    public function get_plugin_info_dlg()
+    {
+        static $history_txt;
+
+        $lang = strtolower(TR::get_current_language());
+        if (empty($history_txt)) {
+            $doc = HD::http_download_https_proxy(self::UPDATE_URL_PREFIX . "changelog.$lang.md");
+            if ($doc === false) {
+                hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
+                $path = get_install_path("changelog.$lang.md");
+                if (!file_exists($path)) {
+                    $path = get_install_path("changelog.english.md");
+                }
+                $doc = file_get_contents($path);
+            }
+
+            $history_txt = str_replace(array("###", "##"), '', $doc);
+        }
+
+        $defs = array();
+        Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
+        Control_Factory::add_vgap($defs, 20);
+
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            1160,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load_string('scroll_page')
+        );
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
     }
 
     /**

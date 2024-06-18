@@ -59,7 +59,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
         }
 
-        $actions[GUI_EVENT_KEY_D_BLUE]     = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS, TR::t('entry_setup'));
+        $actions[GUI_EVENT_KEY_D_BLUE]     = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_INFO, TR::t('plugin_info'));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
         $provider = $this->plugin->get_current_provider();
@@ -245,6 +245,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case self::ACTION_CONFIRM_DLG_APPLY:
                 return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
+
+            case ACTION_PLUGIN_INFO:
+                return $this->plugin->get_plugin_info_dlg();
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->{ACTION_CHANGE_PLAYLIST})) {
