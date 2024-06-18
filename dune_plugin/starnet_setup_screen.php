@@ -32,7 +32,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 {
     const ID = 'setup';
 
-    const ACTION_DONATE_DLG = 'donate_dlg';
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
     const CONTROL_CATEGORY_SCREEN = 'category_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
@@ -76,7 +75,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         Control_Factory::add_vgap($defs, 10);
 
-        Control_Factory::add_button($defs, $this,null, self::ACTION_DONATE_DLG,
+        Control_Factory::add_button($defs, $this,null, ACTION_DONATE_DLG,
             TR::t('setup_donate_title'), 'QR code', self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
@@ -122,29 +121,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         return $this->do_get_control_defs();
     }
 
-    public function do_donate_dialog()
-    {
-        try {
-            hd_debug_print(null, true);
-            $img_ym = get_temp_path('qr_ym.png');
-            $img_pp = get_temp_path('qr_pp.png');
-            HD::http_download_https_proxy(Default_Dune_Plugin::RESOURCE_URL . "QR_YM.png", $img_ym);
-            HD::http_download_https_proxy(Default_Dune_Plugin::RESOURCE_URL . "QR_PP.png", $img_pp);
-
-            Control_Factory::add_vgap($defs, 50);
-            Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");
-            Control_Factory::add_smart_label($defs, "", "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
-            Control_Factory::add_vgap($defs, 450);
-
-            $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-            return Action_Factory::show_dialog(TR::t('setup_donate_title'), $defs, true, 1150, $attrs);
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
-        }
-
-        return Action_Factory::status(0);
-    }
-
     /**
      * @inheritDoc
      */
@@ -184,10 +160,10 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 return Action_Factory::close_and_run($post_action);
 
             case ACTION_PLUGIN_INFO:
-                return $this->plugin->get_plugin_info_dlg();
+                return $this->plugin->get_plugin_info_dlg($this);
 
-            case self::ACTION_DONATE_DLG: // show donate QR codes
-                return $this->do_donate_dialog();
+            case ACTION_DONATE_DLG: // show donate QR codes
+                return $this->plugin->do_donate_dialog();
 
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(Starnet_Interface_Setup_Screen::get_media_url_str(), TR::t('setup_interface_title'));

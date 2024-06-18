@@ -247,7 +247,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case ACTION_PLUGIN_INFO:
-                return $this->plugin->get_plugin_info_dlg();
+                return $this->plugin->get_plugin_info_dlg($this);
+
+            case ACTION_DONATE_DLG: // show donate QR codes
+                return $this->plugin->do_donate_dialog();
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->{ACTION_CHANGE_PLAYLIST})) {

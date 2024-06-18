@@ -2834,7 +2834,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @return array
      */
-    public function get_plugin_info_dlg()
+    public function get_plugin_info_dlg($handler)
     {
         static $history_txt;
 
@@ -2867,10 +2867,34 @@ class Default_Dune_Plugin implements DunePlugin
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);
 
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,null, ACTION_DONATE_DLG, TR::t('setup_donate_title'), 300);
         Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
+    }
+
+    public function do_donate_dialog()
+    {
+        try {
+            hd_debug_print(null, true);
+            $img_ym = get_temp_path('qr_ym.png');
+            $img_pp = get_temp_path('qr_pp.png');
+            HD::http_download_https_proxy(self::RESOURCE_URL . "QR_YM.png", $img_ym);
+            HD::http_download_https_proxy(self::RESOURCE_URL . "QR_PP.png", $img_pp);
+
+            Control_Factory::add_vgap($defs, 50);
+            Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");
+            Control_Factory::add_smart_label($defs, "", "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
+            Control_Factory::add_vgap($defs, 450);
+
+            $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
+            return Action_Factory::show_dialog(TR::t('setup_donate_title'), $defs, true, 1150, $attrs);
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+        }
+
+        return Action_Factory::status(0);
     }
 
     /**
