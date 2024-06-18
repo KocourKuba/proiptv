@@ -1,10 +1,12 @@
 ﻿## Version history
 
-### Version {latest_version}
+### Version {current_version}
 - Fixed translation for some strings
 - Added checking the correctness of playlist settings.
-- Slightly redesigned the display of information about channels/playlists/XMLTV sources
+- Slightly redesigned the display of information about XMLTV channels/playlists/sources
 - Editing XMLTV sources added to the plugin popup menu
+- The blue button on the category screen now shows a list of changes
+- The changelog is now downloaded up-to-date from GitHub. Without updating the plugin, you can view the list of current changes.
 
 ### Version 4.0.718
 - Fixed translation for some strings
