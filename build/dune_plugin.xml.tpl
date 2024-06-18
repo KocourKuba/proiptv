@@ -107,7 +107,7 @@
                         </action>
                     </menu_item>
                     <menu_item>
-                        <caption>%tr%tv_screen_playlists_setup</caption>
+                        <caption>%tr%setup_channels_src_edit_playlists</caption>
                         <icon_url>gui_skin://small_icons/playlist_file.aai</icon_url>
                         <action>
                             <type>plugin_handle_user_input</type>
