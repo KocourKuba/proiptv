@@ -350,16 +350,20 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
                 $this->set_no_changes();
                 if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
-                    $res = $this->plugin->apply_edit_provider_dlg($user_input);
+                    $id = $this->plugin->apply_edit_provider_dlg($user_input);
                 } else {
-                    $res = $this->plugin->apply_edit_provider_ext_dlg($user_input);
+                    $id = $this->plugin->apply_edit_provider_ext_dlg($user_input);
                 }
 
-                if ($res !== false) {
-                    return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);
+                if ($id === false) {
+                    return null;
                 }
 
-                return null;
+                if (is_array($id)) {
+                    return $id;
+                }
+
+                return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
@@ -502,14 +506,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $this->plugin->get_epg_manager()->clear_epg_cache();
                         }
                         $this->plugin->init_epg_manager();
-                        $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
-                        if ($res === -1) {
+                        $id = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
+                        if ($id === -1) {
                             return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error("xmltv_last_error"));
                         }
 
-                        if ($res === 0) {
-                            $res = $this->plugin->get_epg_manager()->download_xmltv_source();
-                            if ($res === -1) {
+                        if ($id === 0) {
+                            $id = $this->plugin->get_epg_manager()->download_xmltv_source();
+                            if ($id === -1) {
                                 return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
                             }
                         }

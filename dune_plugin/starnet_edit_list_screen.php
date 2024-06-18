@@ -393,6 +393,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
+                if (is_array($id)) {
+                    return $id;
+                }
+
                 $idx = $this->plugin->get_playlists()->get_idx($id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $idx);
 

@@ -1545,6 +1545,27 @@ class Default_Dune_Plugin implements DunePlugin
 
         $this->tv->unload_channels();
 
+        $playlists = $this->get_playlists();
+        if ($playlists->has("")) {
+            hd_debug_print("Playlist storage contains incorrect data. Fixing...");
+            $new_playlists = new Hashed_Array();
+            /** @var  $value Named_Storage */
+            foreach ($playlists as $key => $value) {
+                if (empty($key)) {
+                    $provider = $this->create_provider_class($value->params[PARAM_PROVIDER]);
+                    $id = $provider->get_hash($value);
+                    if (!empty($id)) {
+                        $new_playlists->set($id, $value);
+                    } else {
+                        hd_debug_print("empty id for: $value->name");
+                    }
+                } else {
+                    $new_playlists->set($key, $value);
+                }
+            }
+            $this->set_parameter(PARAM_PLAYLIST_STORAGE, $new_playlists);
+        }
+
         hd_debug_print("Init plugin done!");
         hd_debug_print_separator();
 
@@ -1553,19 +1574,10 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function upgrade_parameters(&$plugin_cookies)
     {
-        hd_debug_print(null, true);
+        hd_debug_print(null, false);
 
         $this->load_parameters(true);
         $this->update_log_level();
-
-        if ((int)$this->get_parameter(PLUGIN_CONFIG_VERSION) >= 3) {
-            hd_debug_print("no upgrade needed");
-            // upgrade completed
-            return;
-        }
-
-        $this->parameters = null;
-        hd_debug_print("too old version");
     }
 
     /**
@@ -1854,11 +1866,16 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_active_playlist_key()
     {
         $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
-        if (empty($id) || !$this->get_playlists()->has($id)) {
-            if ($this->get_playlists()->size()) {
-                $this->get_playlists()->rewind();
-                $id = $this->get_playlists()->key();
-                if (!empty($id)) {
+        $playlists = $this->get_playlists();
+        if (empty($id) || !$playlists->has($id)) {
+            if ($playlists->size()) {
+                $playlists->rewind();
+                $id = $playlists->key();
+                if (empty($id)) {
+                    /** @var $playlist Named_Storage */
+                    $playlist = $playlists->get($id);
+                    hd_debug_print("empty id for: " . $playlist->name);
+                } else {
                     $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
                 }
             }

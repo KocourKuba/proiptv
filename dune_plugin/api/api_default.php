@@ -688,7 +688,7 @@ class api_default
 
     /**
      * @param $user_input
-     * @return bool
+     * @return bool|array
      */
     public function ApplySetupUI($user_input)
     {
@@ -731,8 +731,11 @@ class api_default
         }
 
         $id = empty($id) ? $this->get_hash($this->playlist_info) : $id;
+        if (empty($id)) {
+            return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
+        }
 
-        hd_debug_print("ApplySetupUI compiled provider info: " . raw_json_encode($this->playlist_info), true);
+        hd_debug_print("ApplySetupUI compiled provider ($id) info: " . raw_json_encode($this->playlist_info), true);
 
         $this->set_default_settings($user_input, $id);
 
@@ -1032,7 +1035,7 @@ class api_default
      * @param Named_Storage $info
      * @return string
      */
-    protected function get_hash($info)
+    public function get_hash($info)
     {
         $str = '';
         if (isset($info->params[MACRO_LOGIN])) {
@@ -1123,9 +1126,9 @@ class api_default
             }
         }
 
-        $this->request_provider_token();
-
         $this->plugin->get_playlists()->set($id, $this->get_provider_playlist());
+
+        $this->request_provider_token();
         $this->plugin->save_parameters(true);
         $this->plugin->clear_playlist_cache($id);
 
