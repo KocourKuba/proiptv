@@ -36,6 +36,7 @@ const ACTION_RESTORE_GROUPS = 'restore_groups';
 const ACTION_RESTORE_CHANNELS = 'restore_chanels';
 const ACTION_RESET_DEFAULT = 'reset_default';
 const ACTION_SETTINGS = 'settings';
+const ACTION_DO_SETTINGS = 'do_edit_settings';
 const ACTION_ZOOM_POPUP_MENU = 'zoom_popup_menu';
 const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_ZOOM_SELECT = 'zoom_select';

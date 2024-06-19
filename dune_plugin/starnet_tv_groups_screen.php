@@ -31,7 +31,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ID = 'tv_groups';
 
     const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
-    const ACTION_DO_SETTINGS = 'do_edit_settings';
     const ACTION_DO_EPG_SETTINGS = 'do_epg_settings';
 
     ///////////////////////////////////////////////////////////////////////
@@ -232,9 +231,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_SETTINGS:
                 $this->save_if_changed();
-                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_DO_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
 
-            case self::ACTION_DO_SETTINGS:
+            case ACTION_DO_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
             case ACTION_PASSWORD_APPLY:

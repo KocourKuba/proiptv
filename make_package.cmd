@@ -35,6 +35,7 @@ copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION
 copy /Y .\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
 echo.
 
+echo upload to server
 set /p CREDS=<creds.txt
 echo %CREDS%
 "C:\Program Files (x86)\WinSCP\WinSCP.com" ^

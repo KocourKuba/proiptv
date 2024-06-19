@@ -2474,6 +2474,9 @@ class Default_Dune_Plugin implements DunePlugin
         $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
             TR::t('setup_edit_xmltv_list'), "epg.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) );
 
+        $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,
+            TR::t('entry_setup'), "settings.png");
+
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
         return $menu_items;

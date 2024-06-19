@@ -1,6 +1,9 @@
 ﻿## Version history
 
 ### Version {current_version}
+- Plugin settings are now available via the popup menu on the categories and channels screen
+
+### Version 4.0.722
 - Fixed translation for some strings
 - Added checking the correctness of playlist settings.
 - Slightly redesigned the display of information about XMLTV channels/playlists/sources

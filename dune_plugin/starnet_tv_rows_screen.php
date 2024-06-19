@@ -743,6 +743,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
                 break;
 
+            case ACTION_SETTINGS:
+                $this->save_if_changed();
+                return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
+
+            case ACTION_DO_SETTINGS:
+                return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
+
             case ACTION_ZOOM_APPLY:
                 $channel_id = $media_url->channel_id;
                 if (isset($user_input->{ACTION_ZOOM_SELECT})) {

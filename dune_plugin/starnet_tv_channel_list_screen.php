@@ -161,6 +161,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_SETTINGS:
+                $this->save_if_changed();
+                return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
+
+            case ACTION_DO_SETTINGS:
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
             case self::ACTION_CREATE_SEARCH:
@@ -288,6 +292,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     GUI_EVENT_KEY_INFO,
                     TR::t('channel_info_dlg'),
                     "info.png");
+
+                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_SETTINGS,
+                    TR::t('entry_setup'), "settings.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 
