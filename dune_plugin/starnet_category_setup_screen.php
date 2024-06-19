@@ -32,7 +32,7 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 {
     const ID = 'category_setup';
 
-    protected $return_index = array('initial_sel_ndx' => 5);
+    protected $return_index = array('initial_sel_ndx' => 4);
 
     ///////////////////////////////////////////////////////////////////////
 

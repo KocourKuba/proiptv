@@ -41,7 +41,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
     const ACTION_SETTINGS_PASS_DLG_APPLY = 'settings_pass_apply';
 
-    protected $return_index = array('initial_sel_ndx' => 13);
+    protected $return_index = array('initial_sel_ndx' => 12);
 
     ///////////////////////////////////////////////////////////////////////
 

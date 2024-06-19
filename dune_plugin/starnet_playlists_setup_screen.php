@@ -40,7 +40,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     const CONTROL_USER_AGENT = 'user_agent';
     const CONTROL_DUNE_PARAMS = 'dune_params';
 
-    protected $return_index = array('initial_sel_ndx' => 7);
+    protected $return_index = array('initial_sel_ndx' => 6);
 
     ///////////////////////////////////////////////////////////////////////
 

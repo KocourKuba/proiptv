@@ -33,7 +33,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     const ID = 'interface_setup';
 
     const CONTROL_SHOW_TV = 'show_tv';
-    protected $return_index = array('initial_sel_ndx' => 3);
+    protected $return_index = array('initial_sel_ndx' => 2);
 
     ///////////////////////////////////////////////////////////////////////
 

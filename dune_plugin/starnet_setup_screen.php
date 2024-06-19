@@ -75,36 +75,33 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         Control_Factory::add_vgap($defs, 10);
 
-        Control_Factory::add_button($defs, $this,null, ACTION_DONATE_DLG,
-            TR::t('setup_donate_title'), 'QR code', self::CONTROLS_WIDTH);
-
         //////////////////////////////////////
-        // Interface settings 3
+        // Interface settings 2
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_INTERFACE_SCREEN,
             TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Category settings 5
+        // Category settings 4
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CATEGORY_SCREEN,
             TR::t('setup_category_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Channels settings 7
+        // Channels settings 6
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_PLAYLISTS_SCREEN,
             TR::t('tv_screen_playlists_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // EPG settings 9
+        // EPG settings 8
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_EPG_SCREEN,
             TR::t('setup_epg_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Streaming settings 11
+        // Streaming settings 10
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_STREAMING_SCREEN,
             TR::t('setup_streaming_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Extended settings 13
+        // Extended settings 12
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_EXT_SETUP_SCREEN,
             TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);

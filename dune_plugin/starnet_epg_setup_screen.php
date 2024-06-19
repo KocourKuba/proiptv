@@ -37,7 +37,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const CONTROL_CHANGE_CACHE_PATH = 'xmltv_cache_path';
     const CONTROL_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
 
-    protected $return_index = array('initial_sel_ndx' => 9);
+    protected $return_index = array('initial_sel_ndx' => 8);
 
     ///////////////////////////////////////////////////////////////////////
 

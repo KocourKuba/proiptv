@@ -36,7 +36,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
     const CONTROL_AUTO_PLAY = 'auto_play';
     const CONTROL_DUNE_FORCE_TS = 'dune_force_ts';
 
-    protected $return_index = array('initial_sel_ndx' => 11);
+    protected $return_index = array('initial_sel_ndx' => 10);
 
     ///////////////////////////////////////////////////////////////////////
 
