@@ -336,7 +336,8 @@ warn_msg3 = Abonnementdetails können nicht angezeigt werden.
 warn_msg4 = Falscher Benutzername oder Passwort.
 warn_msg5 = Die technischen Informationen zum Film enthalten falsche oder fehlende Daten.\nDer Film kann nicht abgespielt werden.
 
-err_too_old_player = Dieser DUNE HD-Player ist zu alt und wird nicht unterstützt
+err_too_old_player = DUNE HD-Player ist zu alt und wird nicht unterstützt
+err_required_firmware = Erfordert Firmware-Version b11 oder höher
 err_load_playlist = Fehler beim Laden der Playlist!
 err_epg_not_set = XMLTV-Quelle nicht festgelegt!
 err_file_exist = Die Datei in der Liste ist bereits vorhanden!

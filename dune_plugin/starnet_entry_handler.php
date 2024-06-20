@@ -78,6 +78,17 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         hd_debug_print("user input control: $user_input->control_id", true);
+
+        if (!is_newer_versions()) {
+            hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
+            return  Action_Factory::show_error(true, TR::t('err_too_old_player'),
+                array(
+                    TR::load_string('err_required_firmware'),
+                    "Dune Product ID: " .get_product_id(),
+                    "Dune Firmware: " . get_raw_firmware_version(),
+                ));
+        }
+
         switch ($user_input->control_id) {
             case self::ACTION_CALL_REBOOT:
                 return Action_Factory::restart(true);
@@ -141,17 +152,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 hd_debug_print("plugin_entry $user_input->action_id");
-
-                if (!is_newer_versions()) {
-                    hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
-                    return  Action_Factory::show_error(true, TR::t('err_too_old_player'),
-                        array(
-                            TR::load_string('err_too_old_player'),
-                            "Dune Product ID: " .get_product_id(),
-                            "Dune Firmware: " . get_raw_firmware_version(),
-                            "Dune Serial: " . get_serial_number(),
-                        ));
-                }
 
                 switch ($user_input->action_id) {
                     case self::ACTION_LAUNCH:
