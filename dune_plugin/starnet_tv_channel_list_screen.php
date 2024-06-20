@@ -235,32 +235,30 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
                 break;
 
-            case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items[] = $this->plugin->create_menu_item($this,
-                    ACTION_ITEM_DELETE,
-                    TR::t('tv_screen_hide_channel'),
-                    "remove.png");
-                $menu_items[] = $this->plugin->create_menu_item($this,
-                    ACTION_ITEM_DELETE_CHANNELS,
-                    TR::t('tv_screen_hide_group_channels'),
-                    "remove.png");
+            case ACTION_ITEMS_EDIT:
+                $this->save_if_changed();
+                return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $parent_media_url);
 
-                if ($selected_media_url->group_id !== ALL_CHANNEL_GROUP_ID) {
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        self::ACTION_CREATE_SEARCH,
-                        TR::t('search'),
-                        "search.png");
-                } else {
+            case GUI_EVENT_KEY_POPUP_MENU:
+                if ($selected_media_url->group_id === ALL_CHANNEL_GROUP_ID) {
                     $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_JUMP_TO_CHANNEL_IN_GROUP,
                         TR::t('jump_to_channel'),
                         "goto.png");
-                }
-
-                if ($this->plugin->tv->get_special_group($parent_media_url->group_id) === null) {
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'));
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'));
+                    $menu_items = array_merge($menu_items, $this->plugin->edit_hidden_menu($this, $selected_media_url->group_id, false));
+                } else {
+                    $menu_items[] = $this->plugin->create_menu_item($this,
+                        self::ACTION_CREATE_SEARCH,
+                        TR::t('search'),
+                        "search.png");
+
+                    if ($this->plugin->tv->get_special_group($selected_media_url->group_id) === null) {
+                        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                        $menu_items = array_merge($menu_items, $this->plugin->edit_hidden_menu($this, $selected_media_url->group_id, false));
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'));
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'));
+                    }
                 }
 
                 if (!is_limited_apk()) {

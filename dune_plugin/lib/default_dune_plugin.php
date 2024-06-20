@@ -2356,9 +2356,10 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @param User_Input_Handler $handler
      * @param string $group_id
+     * @param bool $top
      * @return array
      */
-    public function edit_hidden_menu($handler, $group_id)
+    public function edit_hidden_menu($handler, $group_id, $top = true)
     {
         $menu_items = array();
 
@@ -2366,27 +2367,48 @@ class Default_Dune_Plugin implements DunePlugin
             return $menu_items;
         }
 
-        if ($this->tv->get_special_group($group_id) === null) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
-        }
+        if ($top) {
+            if ($this->tv->get_special_group($group_id) === null) {
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_ITEM_DELETE,
+                    TR::t('tv_screen_hide_group'),
+                    "hide.png");
+            }
 
-        hd_debug_print("Disabled groups: " . $this->tv->get_disabled_group_ids()->size(), true);
-        if ($this->tv->get_disabled_group_ids()->size() !== 0) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
-                TR::t('tv_screen_edit_hidden_group'), "edit.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
+            hd_debug_print("Disabled groups: " . $this->tv->get_disabled_group_ids()->size(), true);
+            if ($this->tv->get_disabled_group_ids()->size() !== 0) {
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_ITEMS_EDIT,
+                    TR::t('tv_screen_edit_hidden_group'),
+                    "edit.png",
+                    array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
+            }
+        } else {
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_ITEM_DELETE,
+                TR::t('tv_screen_hide_channel'),
+                "remove.png");
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_ITEM_DELETE_CHANNELS,
+                TR::t('tv_screen_hide_group_channels'),
+                "remove.png");
         }
 
         $has_hidden_channels = false;
         if (!is_null($group = $this->tv->get_group($group_id))) {
             $has_hidden_channels = $group->get_group_channels()->size() !== $group->get_items_order()->size();
+            hd_debug_print("Disabled channels: " . $group->get_group_channels()->size(), true);
         } else if ($group_id === ALL_CHANNEL_GROUP_ID) {
             $has_hidden_channels = $this->tv->get_disabled_channel_ids()->size() !== 0;
             hd_debug_print("Disabled channels: " . $this->tv->get_disabled_channel_ids()->size(), true);
         }
 
-        if ($has_hidden_channels) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
-                TR::t('tv_screen_edit_hidden_channels'), "edit.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS) );
+        if (!$top && $has_hidden_channels) {
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_ITEMS_EDIT,
+                TR::t('tv_screen_edit_hidden_channels'),
+                "edit.png",
+                array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS) );
         }
 
         if (!empty($menu_items)) {
@@ -2507,10 +2529,10 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @param string $source_screen_id
      * @param string $action_edit
-     * @param $selected_media_url
+     * @param $media_url
      * @return array|null
      */
-    public function do_edit_list_screen($source_screen_id, $action_edit, $selected_media_url = null)
+    public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null)
     {
         $params = array(
             'screen_id' => Starnet_Edit_List_Screen::ID,
@@ -2545,8 +2567,8 @@ class Default_Dune_Plugin implements DunePlugin
         $sel_id = null;
         switch ($action_edit) {
             case Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS:
-                if (!is_null($selected_media_url)) {
-                    $params['group_id'] = $selected_media_url->group_id;
+                if (!is_null($media_url) && isset($media_url->group_id)) {
+                    $params['group_id'] = $media_url->group_id;
                 }
                 $title = TR::t('tv_screen_edit_hidden_channels');
                 break;

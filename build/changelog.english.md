@@ -1,7 +1,8 @@
 ﻿## Version history
 
 ### Version {current_version}
-- VOD support for the TVIZI provider (access data has changed! Now it is a login and password to the user account on the site)
+- VOD support for the provider TVIZI (access data for media library support has changed! now it is a login and password to the user account on the site)
+- Editing of hidden channels has been moved to the popup menu of the channels list
 - Plugin settings are now available via the popup menu on the categories and channels screen
 
 ### Version 4.0.722
