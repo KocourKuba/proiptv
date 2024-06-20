@@ -2887,7 +2887,7 @@ class Default_Dune_Plugin implements DunePlugin
                 $doc = file_get_contents($path);
             }
 
-            $history_txt = str_replace(array("###", "##"), '', $doc);
+            $history_txt = str_replace(array("###", "\r"), '', $doc);
         }
 
         $defs = array();

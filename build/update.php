@@ -1,5 +1,4 @@
 <?php
-
 $plugin_info = 'dune_plugin.xml';
 $plugin_metadata = 'dune_plugin_metadata.xml';
 $update_info = 'update_proiptv.xml';
@@ -23,12 +22,8 @@ $xml = preg_replace("|<version>(.*)</version>|", "<version>$full_version</versio
 $xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
 file_put_contents("./dune_plugin/$plugin_metadata", $xml);
 
-$text = file_get_contents("./build/changelog.russian.md");
-$text = str_replace('{current_version}', $full_version, $text);
-file_put_contents("./dune_plugin/changelog.russian.md", $text);
-$text = file_get_contents("./build/changelog.english.md");
-$text = str_replace('{current_version}', $full_version, $text);
-file_put_contents("./dune_plugin/changelog.english.md", $text);
+copy("./build/changelog.russian.md", "./dune_plugin/changelog.russian.md");
+copy("./build/changelog.english.md", "./dune_plugin/changelog.english.md");
 
 $providers = ($is_debug === 'debug') ? "providers_debug.json" : "providers_$version.json";
 copy("./build/$providers", "./dune_plugin/$providers");
