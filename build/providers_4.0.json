@@ -1003,11 +1003,18 @@
       "enable": true,
       "id": "tvizi",
       "name": "TVIZI Net",
-      "type": "pin",
+      "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
       "provider_url": "https://tvizi.net/",
+      "api_url": "https://iptv.online/api/v4",
       "api_commands": {
-        "get_playlist": "https://{DOMAIN_ID}/play/{PASSWORD}/m3u8"
+        "get_playlist": "{API}/playlist/m3u8",
+        "request_token": "{API}/auth",
+        "refresh_token": "{API}/oauth2",
+        "account_info": "{API}/profile",
+        "get_device": "{API}/device/info",
+        "set_device": "{API}/device/settings",
+        "get_vod": "{API}/catalog"
       },
       "config": {
         "epg_preset": "drm",
@@ -1015,26 +1022,12 @@
         "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
-        "domains": {
-          "tvizi.net": "tvizi.net",
-          "bistv.top": "bistv.top"
-        },
-        "url_subst": {
-          "regex": "/^(.+\\/\\/).+(\\/play\\/.+\\/).+$/",
-          "replace": "$1{SERVER_ID}$2{STREAM_ID}"
+        "headers": {
+          "Authorization": "Bearer {TOKEN}"
         },
         "streams": {
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
-        },
-        "servers": {
-          "pl.seetv.cc": "Poland",
-          "de.seetv.cc": "Germany",
-          "nl.seetv.cc": "Netherlands",
-          "ru.seetv.cc": "Russia",
-          "ca.seetv.cc": "Canada",
-          "gr.seetv.cc": "Greece",
-          "ukr.seetv.cc": "Ukraine"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

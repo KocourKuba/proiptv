@@ -331,6 +331,18 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * clear memory cache and cache folder
+     *
+     * @return void
+     */
+    public function clear_epg_cache($url = null)
+    {
+        if (isset($this->epg_manager)) {
+            $this->epg_manager->clear_epg_cache($url);
+        }
+    }
+
+    /**
      * @return array|null
      */
     protected function get_epg_preset()
@@ -1575,7 +1587,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function upgrade_parameters(&$plugin_cookies)
     {
-        hd_debug_print(null, false);
+        hd_debug_print(null, true);
 
         $this->load_parameters(true);
         $this->update_log_level();
