@@ -1585,6 +1585,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->inited = true;
     }
 
+    /** @noinspection PhpUnusedParameterInspection */
     public function upgrade_parameters(&$plugin_cookies)
     {
         hd_debug_print(null, true);

@@ -28,6 +28,7 @@ if ERRORLEVEL 2 goto :EOF
 
 echo create GIT tag
 git tag %VERSION%.%BUILD%
+git.exe push --force  --tags  -- "origin" master:master
 
 echo copy to Dropbox
 copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
