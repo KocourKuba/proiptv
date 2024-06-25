@@ -705,21 +705,26 @@ class api_default
 
         switch ($this->getType()) {
             case PROVIDER_TYPE_PIN:
-                $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                if (!empty($this->playlist_info->params[MACRO_PASSWORD])) {
-                    break;
+                if (empty($user_input->{CONTROL_PASSWORD})
+                    || $this->playlist_info->params[MACRO_PASSWORD] === $user_input->{CONTROL_PASSWORD}) {
+                    return false;
                 }
 
-                return false;
+                $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                break;
 
             case PROVIDER_TYPE_LOGIN:
             case PROVIDER_TYPE_LOGIN_TOKEN:
             case PROVIDER_TYPE_LOGIN_STOKEN:
-                $this->playlist_info->params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
-                $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                if (empty($this->playlist_info->params[MACRO_LOGIN]) || empty($this->playlist_info->params[MACRO_PASSWORD])) {
+                if (empty($user_input->{CONTROL_LOGIN})
+                    || empty($user_input->{CONTROL_PASSWORD})
+                    || ($this->playlist_info->params[MACRO_LOGIN] === $user_input->{CONTROL_LOGIN}
+                        && $this->playlist_info->params[MACRO_PASSWORD] === $user_input->{CONTROL_PASSWORD})) {
                     return false;
                 }
+
+                $this->playlist_info->params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
+                $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
 
                 if ($this->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
                     $this->setCredential(MACRO_TOKEN, '');
@@ -730,14 +735,17 @@ class api_default
                 return false;
         }
 
-        $id = empty($id) ? $this->get_hash($this->playlist_info) : $id;
+        $is_new = empty($id);
+        $id = $is_new ? $this->get_hash($this->playlist_info) : $id;
         if (empty($id)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
         }
 
         hd_debug_print("ApplySetupUI compiled provider ($id) info: " . raw_json_encode($this->playlist_info), true);
 
-        $this->set_default_settings($user_input, $id);
+        if ($is_new) {
+            $this->set_default_settings($user_input, $id);
+        }
 
         return $id;
     }

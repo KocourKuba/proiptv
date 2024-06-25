@@ -719,6 +719,37 @@
       }
     },
     {
+      "enable": false,
+      "id": "peaktv",
+      "name": "Peak TV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_peaktv.png",
+      "provider_url": "https://peaktv.info/",
+      "api_url": "https://peaktv.info",
+      "api_commands": {
+        "get_playlist": "{API}/{PASSWORD}/{STREAM_ID}/peaktvinfo.m3u8"
+      },
+      "config": {
+        "epg_preset": "drm",
+        "epg_alias": "gabbarit",
+        "ext_params": true,
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "streams": {
+          "hls": "HLS",
+          "ts": "MPEG-TS"
+        },
+        "servers": {
+          "188.68.217.223": "Russia",
+          "88.198.7.213": "Germany"
+        },
+        "url_subst": {
+          "regex": "/^(https?:\\/\\/).+(\\/.+)(\\/.+)$/",
+          "replace": "$1{SERVER_ID}$2$3"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
       "enable": true,
       "id": "ping",
       "name": "Ping TV",

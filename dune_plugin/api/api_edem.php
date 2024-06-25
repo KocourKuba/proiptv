@@ -119,14 +119,17 @@ class api_edem extends api_default
 
         $this->playlist_info->params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
 
-        $id = empty($id) ? $this->get_hash($this->playlist_info) : $id;
+        $is_new = empty($id);
+        $id = $is_new ? $this->get_hash($this->playlist_info) : $id;
         if (empty($id)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
         }
 
         hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . raw_json_encode($this->playlist_info), true);
 
-        $this->set_default_settings($user_input, $id);
+        if ($is_new) {
+            $this->set_default_settings($user_input, $id);
+        }
 
         return $id;
     }
