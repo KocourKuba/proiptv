@@ -228,22 +228,16 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_REMOVE_ITEM_DLG_APPLY);
 
                     case self::SCREEN_EDIT_CHANNELS:
-                        if (!$this->plugin->tv->disable_channel($item, false)) {
-                            return null;
+                        if ($this->plugin->tv->disable_channel($item, false)) {
+                            $this->get_order($edit_list)->remove_item($item);
+                            $group = $this->plugin->tv->get_any_group($parent_media_url->group_id);
+                            if (!is_null($group)) {
+                                $force_return = $group->get_group_disabled_channels()->size() === 0;
+                                break;
+                            }
                         }
 
-                        $this->get_order($edit_list)->remove_item($item);
-                        $group = $this->plugin->tv->get_any_group($parent_media_url->group_id);
-                        if (is_null($group)) {
-                            return null;
-                        }
-                        $channel = $group->get_group_channel($item);
-                        if (!is_null($channel)) {
-                            $channel->set_disabled(false);
-                        }
-
-                        $force_return = $group->get_group_disabled_channels()->size() === 0;
-                        break;
+                        return null;
 
                     case self::SCREEN_EDIT_GROUPS:
                         $this->get_order($edit_list)->remove_item($item);

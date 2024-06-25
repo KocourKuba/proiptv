@@ -1669,17 +1669,18 @@ class Starnet_Tv implements User_Input_Handler
             return null;
         }
 
+        $parent_group = $channel->get_parent_group();
         return Action_Factory::close_and_run(
             Action_Factory::open_folder(
-                Starnet_Tv_Channel_List_Screen::get_media_url_string($channel->get_parent_group()->get_id()),
-                $channel->get_parent_group()->get_title(),
+                Starnet_Tv_Channel_List_Screen::get_media_url_string($parent_group->get_id()),
+                $parent_group->get_title(),
                 null,
                 null,
                 User_Input_Handler_Registry::create_action_screen(
                     Starnet_Tv_Channel_List_Screen::ID,
                     ACTION_JUMP_TO_CHANNEL,
                     null,
-                    array('number' => $channel->get_parent_group()->get_items_order()->get_item_pos($channel_id))
+                    array('number' => $parent_group->get_items_order()->get_item_pos($channel_id))
                 )
             )
         );
