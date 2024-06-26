@@ -23,10 +23,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'hd.php';
+require_once 'lib/hd.php';
+require_once 'lib/hashed_array.php';
+require_once 'lib/tr.php';
 require_once 'epg_params.php';
-require_once 'hashed_array.php';
-require_once 'tr.php';
 
 class Epg_Manager
 {
@@ -166,21 +166,19 @@ class Epg_Manager
     }
 
     /**
-     * Get picons
+     * Get picon for channel
      *
-     * @return array|null
+     * @param $alias string
+     * @return string
      */
-    public function get_picons()
+    public function get_picon($alias)
     {
-        if (!isset($this->xmltv_picons)
-            && file_exists(get_data_path($this->url_hash . '_version'))
-            && file_get_contents(get_data_path($this->url_hash . '_version')) > '1.8') {
-
+        if (!isset($this->xmltv_picons)) {
             hd_debug_print("Load picons from: " . $this->get_picons_index_name());
             $this->xmltv_picons = HD::ReadContentFromFile($this->get_picons_index_name());
         }
 
-        return $this->xmltv_picons;
+        return isset($this->xmltv_picons) ? $this->xmltv_picons[$alias] : '';
     }
 
     /**
@@ -297,7 +295,8 @@ class Epg_Manager
      * if xmltv url not set return -1 and set_last_error contains error message
      * if downloaded xmltv file exists and all indexes are present return 0
      * if downloaded xmltv file not exists or expired return 1
-     * if downloaded xmltv file exists, not expired but indexes not exists return 2
+     * if downloaded xmltv file exists, not expired and indexes for channels and icons exists return 2
+     * if downloaded xmltv file exists, not expired but all indexes not exists return 3
      *
      * @return int
      */
@@ -313,22 +312,20 @@ class Epg_Manager
         }
 
         HD::set_last_error("xmltv_last_error", null);
-        $cached_xmltv_file = $this->get_cached_filename();
-        hd_debug_print("Checking cached xmltv file: $cached_xmltv_file");
-        $channels_index = $this->get_channels_index_name();
-        $pos_index = $this->get_positions_index_name();
-        $picons_index = $this->get_picons_index_name();
+        $cached_file = $this->get_cached_filename();
+        hd_debug_print("Checking cached xmltv file: $cached_file");
 
-        if (file_exists($cached_xmltv_file)) {
-            $check_time_file = filemtime($cached_xmltv_file);
+        if ($this->check_index_version() && file_exists($cached_file) && filesize($cached_file) !== 0) {
+            $check_time_file = filemtime($cached_file);
             $max_cache_time = 3600 * 24 * $this->cache_ttl;
             if ($check_time_file && $check_time_file + $max_cache_time > time()) {
-                hd_debug_print("Cached file: $cached_xmltv_file is not expired "
+                hd_debug_print("Cached file: $cached_file is not expired "
                     . date("Y-m-d H:i", $check_time_file)
                     . " date expiration: " . date("Y-m-d H:i", $check_time_file + $max_cache_time));
-                $pos_index_valid = file_exists($pos_index);
-                $channels_index_valid = file_exists($channels_index);
-                $picons_index_valid = file_exists($picons_index);
+
+                $channels_index_valid = $this->is_channels_index_valid();
+                $picons_index_valid = $this->is_picons_index_valid();
+                $pos_index_valid = $this->is_position_index_valid();
 
                 if ($pos_index_valid && $channels_index_valid && $picons_index_valid) {
                     return 0;
@@ -341,26 +338,13 @@ class Epg_Manager
                 return 3;
             }
 
-            hd_debug_print("clear cached file: $cached_xmltv_file");
-            unlink($cached_xmltv_file);
+            hd_debug_print("clear cached file: $cached_file");
+            unlink($cached_file);
         } else {
             hd_debug_print("Cached xmltv file not exist");
         }
 
-        if (file_exists($channels_index)) {
-            hd_debug_print("clear cached channels index: $channels_index");
-            unlink($channels_index);
-        }
-
-        if (file_exists($pos_index)) {
-            hd_debug_print("clear cached epg index: $pos_index");
-            unlink($pos_index);
-        }
-
-        if (file_exists($picons_index)) {
-            hd_debug_print("clear cached picons index: $picons_index");
-            unlink($picons_index);
-        }
+        $this->clear_epg_files($this->get_cache_stem(''));
 
         return 1;
     }
@@ -387,8 +371,8 @@ class Epg_Manager
             }
 
             hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
-            $cached_xmltv_file = $this->get_cached_filename();
-            $tmp_filename = $cached_xmltv_file . '.tmp';
+            $cached_file = $this->get_cached_filename();
+            $tmp_filename = $cached_file . '.tmp';
             if (file_exists($tmp_filename)) {
                 unlink($tmp_filename);
             }
@@ -417,21 +401,21 @@ class Epg_Manager
 
             if (0 === mb_strpos($hdr , "\x1f\x8b\x08")) {
                 hd_debug_print("GZ signature: " . bin2hex(substr($hdr, 0, 3)), true);
-                rename($tmp_filename, $cached_xmltv_file . '.gz');
-                $tmp_filename = $cached_xmltv_file . '.gz';
-                hd_debug_print("ungzip $tmp_filename to $cached_xmltv_file");
+                rename($tmp_filename, $cached_file . '.gz');
+                $tmp_filename = $cached_file . '.gz';
+                hd_debug_print("ungzip $tmp_filename to $cached_file");
                 $cmd = "gzip -d $tmp_filename 2>&1";
                 system($cmd, $ret);
                 if ($ret !== 0) {
                     throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
                 }
                 flush();
-                $size = filesize($cached_xmltv_file);
-                touch($cached_xmltv_file, $file_time);
-                hd_debug_print("$size bytes ungzipped to $cached_xmltv_file in " . (microtime(true) - $t) . " secs");
+                $size = filesize($cached_file);
+                touch($cached_file, $file_time);
+                hd_debug_print("$size bytes ungzipped to $cached_file in " . (microtime(true) - $t) . " secs");
             } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
                 hd_debug_print("ZIP signature: " . bin2hex(substr($hdr, 0, 4)), true);
-                hd_debug_print("unzip $tmp_filename to $cached_xmltv_file");
+                hd_debug_print("unzip $tmp_filename to $cached_file");
                 $filename = trim(shell_exec("unzip -lq '$tmp_filename'|grep -E '[\d:]+'"));
                 if (empty($filename)) {
                     throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
@@ -450,20 +434,20 @@ class Epg_Manager
                 }
                 flush();
 
-                rename($filename, $cached_xmltv_file);
-                $size = filesize($cached_xmltv_file);
-                touch($cached_xmltv_file, $file_time);
-                hd_debug_print("$size bytes unzipped to $cached_xmltv_file in " . (microtime(true) - $t) . " secs");
+                rename($filename, $cached_file);
+                $size = filesize($cached_file);
+                touch($cached_file, $file_time);
+                hd_debug_print("$size bytes unzipped to $cached_file in " . (microtime(true) - $t) . " secs");
             } else if (false !== mb_strpos($hdr, "<?xml")) {
                 hd_debug_print("XML signature: " . substr($hdr, 0, 5), true);
-                hd_debug_print("rename $tmp_filename to $cached_xmltv_file");
-                if (file_exists($cached_xmltv_file)) {
-                    unlink($cached_xmltv_file);
+                hd_debug_print("rename $tmp_filename to $cached_file");
+                if (file_exists($cached_file)) {
+                    unlink($cached_file);
                 }
-                rename($tmp_filename, $cached_xmltv_file);
-                $size = filesize($cached_xmltv_file);
-                touch($cached_xmltv_file, $file_time);
-                hd_debug_print("$size bytes stored to $cached_xmltv_file in " . (microtime(true) - $t) . " secs");
+                rename($tmp_filename, $cached_file);
+                $size = filesize($cached_file);
+                touch($cached_file, $file_time);
+                hd_debug_print("$size bytes stored to $cached_file in " . (microtime(true) - $t) . " secs");
             } else {
                 hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
                 throw new Exception(TR::load_string('err_unknown_file_type'));
@@ -493,10 +477,7 @@ class Epg_Manager
     public function index_xmltv_channels()
     {
         $channels_file = $this->get_channels_index_name();
-        $version_file = $this->get_cache_stem('_version');
-        if (file_exists($channels_file) && file_exists($version_file)
-            && file_get_contents($version_file) > '2.1') {
-
+        if (file_exists($channels_file)) {
             hd_debug_print("Load cache channels index: $channels_file");
             $this->xmltv_channels = HD::ReadContentFromFile($channels_file);
             return;
@@ -555,15 +536,15 @@ class Epg_Manager
 
             HD::StoreContentToFile($this->get_picons_index_name(), $this->xmltv_picons);
             HD::StoreContentToFile($channels_file, $this->xmltv_channels);
-            file_put_contents($version_file, $this->version);
+            file_put_contents($this->get_cache_stem('_version'), $this->version);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }
 
         $this->set_index_locked(false);
 
-        hd_debug_print("Total channels id's: " . count($this->xmltv_channels));
-        hd_debug_print("Total picons: " . count($this->xmltv_picons));
+        hd_debug_print("Total entries id's: " . count($this->xmltv_channels));
+        hd_debug_print("Total known picons: " . count($this->xmltv_picons));
         hd_debug_print("Reindexing EPG channels done: " . (microtime(true) - $t) . " secs");
         hd_debug_print_separator();
 
@@ -687,19 +668,6 @@ class Epg_Manager
     }
 
     /**
-     * clear indexes
-     *
-     * @return void
-     */
-    public function clear_epg_cache_indexes()
-    {
-        $this->clear_epg_files("*.$this->index_ext");
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    /**
      * clear memory cache and cache for current xmltv source
      *
      * @return void
@@ -716,7 +684,7 @@ class Epg_Manager
         hd_debug_print("clear cache files: $files");
         shell_exec('rm -f '. $files);
         flush();
-        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size(dirname($files)));
+        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
 
     /**
@@ -728,6 +696,41 @@ class Epg_Manager
         return $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . $ext;
     }
 
+
+    /**
+     * returns list of requested epg when indexing in process
+     *
+     * @return array
+     */
+    public function get_delayed_epg()
+    {
+        return $this->delayed_epg;
+    }
+
+    /**
+     */
+    public function clear_delayed_epg()
+    {
+        $this->delayed_epg = array();
+    }
+
+    public function import_indexing_log()
+    {
+        $index_log = $this->get_cache_stem('.log');
+        if (file_exists($index_log)) {
+            hd_debug_print("Read epg indexing log $index_log...");
+            $logfile = @file_get_contents($index_log);
+            foreach (explode(PHP_EOL, $logfile) as $l) {
+                hd_print(preg_replace("|^\[.+\]\s(.*)$|", "$1", rtrim($l)));
+            }
+            hd_debug_print("Read finished");
+            unlink($index_log);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
     /**
      * @return string
      */
@@ -737,27 +740,40 @@ class Epg_Manager
     }
 
     /**
-     * @return string|null
+     * Checks that index created by right plugin version
+     *
+     * @return bool
      */
-    protected function get_positions_index_name()
+    protected function check_index_version()
     {
-        return $this->get_cache_stem("_positions$this->index_ext");
+        return file_exists(get_data_path($this->url_hash . '_version')) && file_get_contents(get_data_path($this->url_hash . '_version')) > '4.0.730';
     }
 
     /**
-     * @return string|null
+     * @return bool
      */
-    protected function get_channels_index_name()
+    protected function is_position_index_valid()
     {
-        return $this->get_cache_stem("_channels$this->index_ext");
+        $name = $this->get_positions_index_name();
+        return file_exists($name) && filesize($name) !== 0;
     }
 
     /**
-     * @return string
+     * @return bool
      */
-    protected function get_picons_index_name()
+    protected function is_channels_index_valid()
     {
-        return $this->get_cache_stem("_picons$this->index_ext");
+        $name = $this->get_channels_index_name();
+        return file_exists($name) && filesize($name) !== 0;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function is_picons_index_valid()
+    {
+        $name = $this->get_picons_index_name();
+        return file_exists($name) && filesize($name) !== 0;
     }
 
     /**
@@ -789,21 +805,6 @@ class Epg_Manager
         $this->xmltv_picons = null;
         $this->xmltv_channels = null;
         $this->xmltv_positions = null;
-    }
-
-    /**
-     * @return array
-     */
-    public function get_delayed_epg()
-    {
-        return $this->delayed_epg;
-    }
-
-    /**
-     */
-    public function clear_delayed_epg()
-    {
-        $this->delayed_epg = array();
     }
 
     /**
@@ -866,17 +867,30 @@ class Epg_Manager
         return array();
     }
 
-    public function import_indexing_log()
+    ///////////////////////////////////////////////////////////////////////////////
+    /// private methods
+
+    /**
+     * @return string|null
+     */
+    private function get_positions_index_name()
     {
-        $index_log = $this->get_cache_stem('.log');
-        if (file_exists($index_log)) {
-            hd_debug_print("Read epg indexing log $index_log...");
-            $logfile = @file_get_contents($index_log);
-            foreach (explode(PHP_EOL, $logfile) as $l) {
-                hd_print(preg_replace("|^\[.+\]\s(.*)$|", "$1", rtrim($l)));
-            }
-            hd_debug_print("Read finished");
-            unlink($index_log);
-        }
+        return $this->get_cache_stem("_positions$this->index_ext");
+    }
+
+    /**
+     * @return string|null
+     */
+    private function get_channels_index_name()
+    {
+        return $this->get_cache_stem("_channels$this->index_ext");
+    }
+
+    /**
+     * @return string
+     */
+    private function get_picons_index_name()
+    {
+        return $this->get_cache_stem("_picons$this->index_ext");
     }
 }

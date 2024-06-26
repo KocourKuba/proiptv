@@ -23,8 +23,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'hd.php';
-require_once 'epg_params.php';
+require_once 'epg_manager.php';
 
 class Epg_Manager_Json extends Epg_Manager
 {
@@ -42,14 +41,16 @@ class Epg_Manager_Json extends Epg_Manager
 
     /**
      * @inheritDoc
+     * @override
      */
-    public function get_picons()
+    public function get_picon($alias)
     {
-        return null;
+        return '';
     }
 
     /**
      * @inheritDoc
+     * @override
      */
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
@@ -246,6 +247,7 @@ class Epg_Manager_Json extends Epg_Manager
 
     /**
      * @inheritDoc
+     * @override
      */
     public function clear_epg_cache($url = null)
     {

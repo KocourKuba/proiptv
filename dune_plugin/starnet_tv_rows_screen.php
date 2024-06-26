@@ -24,8 +24,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'lib/ext_epg_program.php';
 require_once 'lib/playback_points.php';
+require_once 'lib/epg/ext_epg_program.php';
 
 require_once 'lib/epfs/abstract_rows_screen.php';
 require_once 'lib/epfs/rows_factory.php';
@@ -820,7 +820,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (isset($user_input->reload_action)) {
                     if ($user_input->reload_action === 'epg') {
                         $this->plugin->save_settings(true);
-                        $this->plugin->clear_epg_cache();
+                        $this->plugin->safe_clear_epg_cache();
                         $this->plugin->init_epg_manager();
                         $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
                         if ($res === -1) {
@@ -855,7 +855,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
-                    $this->plugin->clear_epg_cache();
+                    $this->plugin->safe_clear_epg_cache();
                 }
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies);

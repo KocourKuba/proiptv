@@ -508,7 +508,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $this->plugin->clear_playlist_cache();
                     } else if ($user_input->reload_action === 'epg' || $user_input->reload_action === 'epg_change') {
                         if ($user_input->reload_action === 'epg') {
-                            $this->plugin->clear_epg_cache();
+                            $this->plugin->safe_clear_epg_cache();
                         }
                         $this->plugin->init_epg_manager();
                         $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
@@ -524,7 +524,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
-                    $this->plugin->clear_epg_cache();
+                    $this->plugin->safe_clear_epg_cache();
                 }
 
                 if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {

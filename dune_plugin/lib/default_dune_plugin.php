@@ -31,8 +31,8 @@ require_once 'user_input_handler_registry.php';
 require_once 'control_factory_ext.php';
 require_once 'default_archive.php';
 require_once 'catchup_params.php';
-require_once 'epg_manager_sql.php';
-require_once 'epg_manager_json.php';
+require_once 'lib/epg/epg_manager_sql.php';
+require_once 'lib/epg/epg_manager_json.php';
 require_once 'named_storage.php';
 require_once 'api/api_default.php';
 require_once 'm3u/M3uParser.php';
@@ -335,7 +335,7 @@ class Default_Dune_Plugin implements DunePlugin
      *
      * @return void
      */
-    public function clear_epg_cache($url = null)
+    public function safe_clear_epg_cache($url = null)
     {
         if (isset($this->epg_manager)) {
             $this->epg_manager->clear_epg_cache($url);

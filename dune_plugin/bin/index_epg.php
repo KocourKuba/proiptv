@@ -4,7 +4,7 @@ require_once "cgi_config.php";
 set_include_path(get_include_path(). PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
 
 require_once "lib/hd.php";
-require_once 'lib/epg_manager_sql.php';
+require_once 'lib/epg/epg_manager_sql.php';
 
 global $LOG_FILE;
 
@@ -39,15 +39,10 @@ hd_print("Log: $LOG_FILE");
 
 set_debug_log($config->debug);
 
-if ($config->cache_engine === ENGINE_XMLTV) {
-    if (class_exists('SQLite3')) {
-        $epg_manager = new Epg_Manager_Sql($config->version, $config->cache_dir, $config->xmltv_url);
-    } else {
-        $epg_manager = new Epg_Manager($config->version, $config->cache_dir, $config->xmltv_url);
-    }
+if (class_exists('SQLite3')) {
+    $epg_manager = new Epg_Manager_Sql($config->version, $config->cache_dir, $config->xmltv_url);
 } else {
-    hd_debug_print("This manager do not requires run in background");
-    return;
+    $epg_manager = new Epg_Manager($config->version, $config->cache_dir, $config->xmltv_url);
 }
 
 $epg_manager->set_cache_ttl($config->cache_ttl);
