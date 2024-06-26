@@ -120,9 +120,8 @@ class Epg_Manager_Sql extends Epg_Manager
                     }
                 }
 
-                $this->xmltv_channels[$channel_id] = $channel_id;
                 foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                    $alias = $tag->nodeValue;
+                    $alias = mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8");
                     $stm->execute();
                 }
             }
@@ -277,6 +276,14 @@ class Epg_Manager_Sql extends Epg_Manager
     /// protected methods
 
     /**
+     * @return string
+     */
+    protected function get_picons_index_name()
+    {
+        return $this->get_cache_stem("_channels$this->index_ext");
+    }
+
+    /**
      * @inheritDoc
      * @override
      */
@@ -307,7 +314,7 @@ class Epg_Manager_Sql extends Epg_Manager
                 $stm = $channels_db->prepare("SELECT DISTINCT channel_id FROM channels WHERE alias IN ($placeHolders);");
                 if ($stm !== false) {
                     foreach ($epg_ids as $index => $val) {
-                        $stm->bindValue($index + 1, $val);
+                        $stm->bindValue($index + 1, mb_convert_case($val, MB_CASE_LOWER, "UTF-8"));
                     }
 
                     $res = $stm->execute();

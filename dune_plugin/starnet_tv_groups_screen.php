@@ -355,17 +355,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
                 $this->set_no_changes();
                 if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
-                    $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                    $res = $this->plugin->apply_edit_provider_dlg($user_input);
                 } else {
-                    $id = $this->plugin->apply_edit_provider_ext_dlg($user_input);
+                    $res = $this->plugin->apply_edit_provider_ext_dlg($user_input);
                 }
 
-                if ($id === false) {
+                if ($res === false) {
                     return null;
                 }
 
-                if (is_array($id)) {
-                    return $id;
+                if (is_array($res)) {
+                    return $res;
                 }
 
                 return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);
@@ -511,16 +511,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $this->plugin->clear_epg_cache();
                         }
                         $this->plugin->init_epg_manager();
-                        $id = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
-                        if ($id === -1) {
+                        $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
+                        if ($res === -1) {
                             return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error("xmltv_last_error"));
                         }
 
-                        if ($id === 0) {
-                            $id = $this->plugin->get_epg_manager()->download_xmltv_source();
-                            if ($id === -1) {
-                                return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
-                            }
+                        $res = $this->plugin->get_epg_manager()->download_xmltv_source();
+                        if ($res === -1) {
+                            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
                         }
                     }
                 }

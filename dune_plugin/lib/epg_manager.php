@@ -316,7 +316,7 @@ class Epg_Manager
         $cached_xmltv_file = $this->get_cached_filename();
         hd_debug_print("Checking cached xmltv file: $cached_xmltv_file");
         $channels_index = $this->get_channels_index_name();
-        $epg_index = $this->get_positions_index_name();
+        $pos_index = $this->get_positions_index_name();
         $picons_index = $this->get_picons_index_name();
 
         if (file_exists($cached_xmltv_file)) {
@@ -326,7 +326,19 @@ class Epg_Manager
                 hd_debug_print("Cached file: $cached_xmltv_file is not expired "
                     . date("Y-m-d H:i", $check_time_file)
                     . " date expiration: " . date("Y-m-d H:i", $check_time_file + $max_cache_time));
-                return (file_exists($epg_index) && file_exists($channels_index)) ? 0 : 2;
+                $pos_index_valid = file_exists($pos_index);
+                $channels_index_valid = file_exists($channels_index);
+                $picons_index_valid = file_exists($picons_index);
+
+                if ($pos_index_valid && $channels_index_valid && $picons_index_valid) {
+                    return 0;
+                }
+
+                if ($channels_index_valid && $picons_index_valid) {
+                    return 2;
+                }
+
+                return 3;
             }
 
             hd_debug_print("clear cached file: $cached_xmltv_file");
@@ -340,9 +352,9 @@ class Epg_Manager
             unlink($channels_index);
         }
 
-        if (file_exists($epg_index)) {
-            hd_debug_print("clear cached epg index: $epg_index");
-            unlink($epg_index);
+        if (file_exists($pos_index)) {
+            hd_debug_print("clear cached epg index: $pos_index");
+            unlink($pos_index);
         }
 
         if (file_exists($picons_index)) {
@@ -529,11 +541,13 @@ class Epg_Manager
                     }
                 }
 
-                $this->xmltv_channels[$channel_id] = $channel_id;
+                $ls_channel = mb_convert_case($channel_id, MB_CASE_LOWER, "UTF-8");
+                $this->xmltv_channels[$ls_channel] = $channel_id;
                 foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                    $this->xmltv_channels[$tag->nodeValue] = $channel_id;
+                    $alias = mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8");
+                    $this->xmltv_channels[$alias] = $channel_id;
                     if (!empty($picon)) {
-                        $this->xmltv_picons[$tag->nodeValue] = $picon;
+                        $this->xmltv_picons[$alias] = $picon;
                     }
                 }
             }
@@ -824,8 +838,9 @@ class Epg_Manager
             // try found channel_id by epg_id
             $epg_ids = $channel->get_epg_ids();
             foreach ($epg_ids as $epg_id) {
-                if (isset($this->xmltv_channels[$epg_id])) {
-                    $channel_id = $this->xmltv_channels[$epg_id];
+                $epg_id_lower = mb_convert_case($epg_id, MB_CASE_LOWER, "UTF-8");
+                if (array_key_exists($epg_id_lower, $this->xmltv_channels)) {
+                    $channel_id = $this->xmltv_channels[$epg_id_lower];
                     break;
                 }
             }

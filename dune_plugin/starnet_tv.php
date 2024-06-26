@@ -727,26 +727,34 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->init_epg_manager();
         $epg_manager = $this->plugin->get_epg_manager();
-
+        $picons = array();
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
         if ($is_xml_engine && !$use_playlist_picons) {
             $res = $epg_manager->is_xmltv_cache_valid();
+            hd_debug_print("cache valid status: $res", true);
             switch ($res) {
-                case -1:
-                    $picons = array();
-                    break;
-                case 0:
-                    $picons = $epg_manager->get_picons();
-                    break;
                 case 1:
+                    // downloaded xmltv file not exists or expired
+                    hd_debug_print("Download and indexing xmltv source");
                     $epg_manager->download_xmltv_source();
                     $epg_manager->index_xmltv_channels();
-                    $picons = $epg_manager->get_picons();
                     break;
-                case 2:
+                case 3:
+                    // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
+                    hd_debug_print("Indexing xmltv source");
                     $epg_manager->index_xmltv_channels();
-                    $picons = $epg_manager->get_picons();
                     break;
+                default:
+                    break;
+            }
+
+            // check cache for validity again, and only if xmltv cache is valid load icons from EPG
+            $res = $epg_manager->is_xmltv_cache_valid();
+            if ($res === 0 || $res === 2) {
+                $picons = $epg_manager->get_picons();
+                hd_debug_print("picons loaded: " . count($picons), true);
+            } else {
+                hd_debug_print("cache not valid: $res", true);
             }
         }
 
@@ -892,7 +900,8 @@ class Starnet_Tv implements User_Input_Handler
                     }
                 }
             } else {
-                $icon_url = isset($picons[$channel_name]) ? $picons[$channel_name]: '';
+                $lc_channel = mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8");
+                $icon_url = isset($picons[$lc_channel]) ? $picons[$lc_channel] : '';
                 if (empty($icon_url)) {
                     $icon_url = $playlist_icon;
                 }
