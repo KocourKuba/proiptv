@@ -719,7 +719,7 @@
       }
     },
     {
-      "enable": false,
+      "enable": true,
       "id": "peaktv",
       "name": "Peak TV",
       "type": "pin",
