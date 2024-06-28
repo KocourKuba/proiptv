@@ -236,10 +236,16 @@ class HD
             throw new Exception($err_msg);
         }
 
-        if ($http_code >= 300) {
+        if ($http_code >= 400) {
             $err_msg = "Fetch $url failed. HTTP request failed ($http_code): " . self::http_status_code_to_string($http_code);
             hd_debug_print($err_msg);
             throw new Exception($err_msg);
+        }
+
+        if ($http_code >= 300) {
+            $err_msg = "Fetch $url completed, but ignored. HTTP request ($http_code): " . self::http_status_code_to_string($http_code);
+            hd_debug_print($err_msg);
+            $content = '';
         }
 
         curl_close($ch);
