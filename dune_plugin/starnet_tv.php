@@ -728,24 +728,8 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->init_epg_manager();
         $epg_manager = $this->plugin->get_epg_manager();
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
-        if ($is_xml_engine && !$use_playlist_picons) {
-            $res = $epg_manager->is_xmltv_cache_valid();
-            hd_debug_print("cache valid status: $res", true);
-            switch ($res) {
-                case 1:
-                    // downloaded xmltv file not exists or expired
-                    hd_debug_print("Download and indexing xmltv source");
-                    $epg_manager->download_xmltv_source();
-                    $epg_manager->index_xmltv_channels();
-                    break;
-                case 3:
-                    // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
-                    hd_debug_print("Indexing xmltv source");
-                    $epg_manager->index_xmltv_channels();
-                    break;
-                default:
-                    break;
-            }
+        if (!$use_playlist_picons) {
+            $epg_manager->index_only_channels();
         }
 
         hd_debug_print("Build categories and channels...");
@@ -860,7 +844,7 @@ class Starnet_Tv implements User_Input_Handler
             if (!is_null($channel)) {
                 // duplicate channel? Same ID or same Url
                 hd_debug_print("duplicate channel id: $channel_id ($channel_name) group: $group_title, url: {$entry->getPath()}");
-                hd_debug_print("existing channel id:  $channel_id: ({$channel->get_title()}) "
+                hd_debug_print("existing channel id:  $channel_id ({$channel->get_title()}) "
                     . "group: {$channel->get_parent_group()->get_title()}, url: {$channel->get_url()}");
                 continue;
             }
@@ -873,8 +857,8 @@ class Starnet_Tv implements User_Input_Handler
             $number++;
 
             $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
-            $epg_ids[] = $channel_id;
-            $epg_ids[] = $channel_name;
+            $epg_ids['name'] = $channel_name;
+            $epg_ids['id'] = $channel_id;
             $epg_ids = array_unique($epg_ids);
 
             $playlist_icon = $entry->getEntryIcon();
@@ -882,7 +866,7 @@ class Starnet_Tv implements User_Input_Handler
                 $playlist_icon = $icon_base_url . $playlist_icon;
             }
 
-            if (!$is_xml_engine || $use_playlist_picons) {
+            if ($use_playlist_picons) {
                 $icon_url = $playlist_icon;
                 if ($replace_icons && !empty($icon_replace_pattern)) {
                     foreach ($icon_replace_pattern as $pattern) {
@@ -1035,12 +1019,8 @@ class Starnet_Tv implements User_Input_Handler
         HD::ShowMemoryUsage();
 
         if ($is_xml_engine) {
-            $res = $epg_manager->is_xmltv_cache_valid();
-            if ($res > 0) {
-                hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
-                $this->plugin->start_bg_indexing();
-                sleep(1);
-            }
+            hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
+            $this->plugin->get_epg_manager()->start_bg_indexing();
         }
 
         return 2;

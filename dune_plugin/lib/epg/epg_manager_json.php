@@ -23,9 +23,9 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'epg_manager.php';
+require_once 'epg_manager_xmltv.php';
 
-class Epg_Manager_Json extends Epg_Manager
+class Epg_Manager_Json extends Epg_Manager_Xmltv
 {
     /**
      * contains current dune IP
@@ -43,15 +43,6 @@ class Epg_Manager_Json extends Epg_Manager
      * @inheritDoc
      * @override
      */
-    public function get_picon($alias)
-    {
-        return '';
-    }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
         $day_epg = array();
@@ -59,6 +50,7 @@ class Epg_Manager_Json extends Epg_Manager
 
         $epg_url = $this->plugin->get_epg_preset_url();
         if (empty($epg_url)) {
+            hd_debug_print("No EPG url defined");
             return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
         }
 
@@ -68,13 +60,18 @@ class Epg_Manager_Json extends Epg_Manager
             $epg_ids['tvg-id'] = $channel->get_id();
         }
 
-        $key = 'tvg-id';
-        if (!isset($epg_ids[$key])) {
-            $key = 'tvg-name';
-            if (!isset($epg_ids[$key])) {
-                hd_debug_print("No EPG ID defined");
-                return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
+        $epg_id = '';
+        $tvg_keys = array('tvg-id', 'tvg-name', 'name', 'id');
+        foreach ($tvg_keys as $key) {
+            if (isset($epg_ids[$key])) {
+                $epg_id = $epg_ids[$key];
+                break;
             }
+        }
+
+        if (empty($epg_id)) {
+            hd_debug_print("No EPG ID defined");
+            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
         }
 
         $epg_id = $epg_ids[$key];
@@ -163,6 +160,22 @@ class Epg_Manager_Json extends Epg_Manager
      }
 
     /**
+     * @inheritDoc
+     * @override
+     */
+    public function clear_epg_cache()
+    {
+        $this->epg_cache = array();
+        $files = get_temp_path('*.cache');
+        hd_debug_print("clear cache files: $files");
+        shell_exec('rm -f '. $files);
+        flush();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
      * request server for epg and parse json response
      * @param string $url
      * @param array $parser_params
@@ -243,18 +256,5 @@ class Epg_Manager_Json extends Epg_Manager
 
         ksort($channel_epg, SORT_NUMERIC);
         return $channel_epg;
-    }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    public function clear_epg_cache($url = null)
-    {
-        $this->epg_cache = array();
-        $files = get_temp_path('*.cache');
-        hd_debug_print("clear cache files: $files");
-        shell_exec('rm -f '. $files);
-        flush();
     }
 }

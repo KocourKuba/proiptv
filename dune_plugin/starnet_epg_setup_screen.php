@@ -25,7 +25,6 @@
 
 require_once 'lib/abstract_controls_screen.php';
 require_once 'lib/user_input_handler.php';
-require_once 'lib/epg/epg_manager_sql.php';
 require_once 'lib/epg/epg_manager_json.php';
 
 ///////////////////////////////////////////////////////////////////////////
@@ -88,38 +87,36 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 TR::t('setup_epg_cache_engine'), reset($cache_engine), self::CONTROLS_WIDTH);
         }
 
-        if ($engine === ENGINE_XMLTV) {
-            //////////////////////////////////////
-            // EPG cache dir
-            $cache_dir = $this->plugin->get_cache_dir();
-            $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
-            $cache_dir = HD::string_ellipsis($cache_dir . DIRECTORY_SEPARATOR);
-            Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
-                $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
+        //////////////////////////////////////
+        // EPG cache dir
+        $cache_dir = $this->plugin->get_cache_dir();
+        $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
+        $cache_dir = HD::string_ellipsis($cache_dir . DIRECTORY_SEPARATOR);
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
+            $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
 
-            //////////////////////////////////////
-            // EPG cache
-            $epg_cache_ops = array();
-            $epg_cache_ops[0.5] = 0.5;
-            $epg_cache_ops[1] = 1;
-            $epg_cache_ops[2] = 2;
-            $epg_cache_ops[3] = 3;
-            $epg_cache_ops[4] = 4;
-            $epg_cache_ops[5] = 5;
-            $epg_cache_ops[6] = 6;
-            $epg_cache_ops[7] = 7;
+        //////////////////////////////////////
+        // EPG cache
+        $epg_cache_ops = array();
+        $epg_cache_ops[0.5] = 0.5;
+        $epg_cache_ops[1] = 1;
+        $epg_cache_ops[2] = 2;
+        $epg_cache_ops[3] = 3;
+        $epg_cache_ops[4] = 4;
+        $epg_cache_ops[5] = 5;
+        $epg_cache_ops[6] = 6;
+        $epg_cache_ops[7] = 7;
 
-            $cache_ttl = $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
-            Control_Factory::add_combobox($defs, $this, null,
-                PARAM_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
-                $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
+        $cache_ttl = $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
+        Control_Factory::add_combobox($defs, $this, null,
+            PARAM_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
+            $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
 
-            //////////////////////////////////////
-            // clear epg cache
-            Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear_all'), TR::t('clear'),
-                get_image_path('brush.png'), self::CONTROLS_WIDTH);
-        }
+        //////////////////////////////////////
+        // clear epg cache
+        Control_Factory::add_image_button($defs, $this, null,
+            self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear_all'), TR::t('clear'),
+            get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Fake EPG

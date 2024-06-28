@@ -130,7 +130,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $doc = HD::http_download_https_proxy(Default_Dune_Plugin::UPDATE_URL_PREFIX . "changelog.$lang.md");
+            $doc = HD::http_download_https_proxy(Default_Dune_Plugin::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
             if ($doc === false) {
                 hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
                 $path = get_install_path("changelog.$lang.md");

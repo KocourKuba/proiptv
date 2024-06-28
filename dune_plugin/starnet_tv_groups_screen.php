@@ -507,25 +507,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if ($user_input->reload_action === 'playlist') {
                         $this->plugin->clear_playlist_cache();
                     } else if ($user_input->reload_action === 'epg' || $user_input->reload_action === 'epg_change') {
-                        if ($user_input->reload_action === 'epg') {
-                            $this->plugin->safe_clear_epg_cache();
-                        }
+                        $this->plugin->safe_clear_epg_cache();
                         $this->plugin->init_epg_manager();
-                        $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
-                        if ($res === -1) {
-                            return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error("xmltv_last_error"));
-                        }
-
-                        $res = $this->plugin->get_epg_manager()->download_xmltv_source();
+                        $this->plugin->get_epg_manager()->clear_epg_files($this->plugin->get_active_xmltv_source_key());
+                        $res = $this->plugin->get_epg_manager()->reload_xmltv_source();
                         if ($res === -1) {
                             return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
                         }
                     }
                 }
 
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
-                    $this->plugin->safe_clear_epg_cache();
-                }
+                $this->plugin->safe_clear_epg_cache();
 
                 if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());

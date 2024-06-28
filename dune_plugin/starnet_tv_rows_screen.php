@@ -726,7 +726,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $this->save_if_changed();
                 $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg_change'));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -816,23 +816,20 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return null;
 
             case ACTION_RELOAD:
+                hd_debug_print("Action reload", true);
                 $this->save_if_changed();
+
                 if (isset($user_input->reload_action)) {
-                    if ($user_input->reload_action === 'epg') {
-                        $this->plugin->save_settings(true);
+                    if ($user_input->reload_action === 'playlist') {
+                        $this->plugin->clear_playlist_cache();
+                    } else if ($user_input->reload_action === 'epg' || $user_input->reload_action === 'epg_change') {
                         $this->plugin->safe_clear_epg_cache();
                         $this->plugin->init_epg_manager();
-                        $res = $this->plugin->get_epg_manager()->is_xmltv_cache_valid();
-                        if ($res === -1) {
-                            return Action_Factory::show_title_dialog(TR::t('err_epg_not_set'), null, HD::get_last_error("xmltv_last_error"));
-                        }
-
-                        $res = $this->plugin->get_epg_manager()->download_xmltv_source();
+                        $this->plugin->get_epg_manager()->clear_epg_files($this->plugin->get_active_xmltv_source_key());
+                        $res = $this->plugin->get_epg_manager()->reload_xmltv_source();
                         if ($res === -1) {
                             return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
                         }
-                    } else if ($user_input->reload_action === 'playlist') {
-                        $this->plugin->clear_playlist_cache();
                     }
                 }
 

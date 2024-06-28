@@ -71,7 +71,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // picon settings
 
-        if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV) {
+        $source = $this->plugin->get_active_xmltv_source();
+        if (!empty($source)) {
             $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
             $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
             $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
