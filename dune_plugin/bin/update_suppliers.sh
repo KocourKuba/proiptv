@@ -12,4 +12,10 @@ dirpath="$FS_PREFIX/tmp/tv_app_suppliers"
 
 touch "$FS_PREFIX/tmp/plugins/$plugin_name/update_epfs_if_needed_flag"
 
-# please be warn, addtional data for this script will be generated after this comment!
+cat << EOF > "$filepath"
+{
+  "plugin" : "$plugin_name",
+  "caption" : "ProIPTV",
+  "tv_app" : "{\"type\":\"plugin\",\"plugin_name\":\"$plugin_name\",\"update_url\":\"http://iptv.esalecrm.net/update/update_proiptv.xml\"}"
+}
+EOF
