@@ -1,4 +1,9 @@
 ﻿### Upcoming version
+- Added support for Peak TV provider (https://peaktv.info)
+- Optimize XMLTV indexing and storage
+- Added the ability to select the source of icons when using the 'Internet EPG Server' engine
+- Fixed a bug with resetting the default provider settings after editing access data
+- Update translation
 
 ### Version 4.0.730
 - VOD support for the provider TVIZI (access data for media library support has changed! now it is a login and password to the user account on the site)
