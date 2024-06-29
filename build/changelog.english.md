@@ -1,4 +1,6 @@
 ﻿### Upcoming version
+
+### Version 4.0.744
 - Added support for Peak TV provider (https://peaktv.info)
 - Optimize XMLTV indexing and storage
 - Added the ability to select the source of icons when using the 'Internet EPG Server' engine
