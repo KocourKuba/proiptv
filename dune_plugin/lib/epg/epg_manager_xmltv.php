@@ -209,6 +209,10 @@ class Epg_Manager_Xmltv
                             foreach ($tag->getElementsByTagName('desc') as $tag_desc) {
                                 $day_epg[$program_start][Epg_Params::EPG_DESC] = $tag_desc->nodeValue;
                             }
+
+                            foreach ($tag->getElementsByTagName('icon') as $tag_icon) {
+                                $day_epg[$program_start][Epg_Params::EPG_ICON] = $tag_icon->getAttribute('src');
+                            }
                         }
                     }
 

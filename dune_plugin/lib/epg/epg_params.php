@@ -19,4 +19,5 @@ class Epg_Params
     const /* (char *)	*/ EPG_DIRECTOR     = 'epg_director';
     const /* (char *)	*/ EPG_ACTORS       = 'epg_actors';
     const /* (char *)	*/ EPG_CATEGORY     = 'epg_category';
+    const /* (char *)	*/ EPG_ICON         = 'epg_icon';
 }

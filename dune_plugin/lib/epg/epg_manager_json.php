@@ -48,93 +48,96 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         $day_epg = array();
         $epg_ids = $channel->get_epg_ids();
 
-        $epg_url = $this->plugin->get_epg_preset_url();
-        if (empty($epg_url)) {
-            hd_debug_print("No EPG url defined");
+        try {
+            $epg_url = $this->plugin->get_epg_preset_url();
+            if (empty($epg_url)) {
+                throw new Exception("No EPG url defined");
+            }
+
+            if (strpos($epg_url, '{ID}') !== false) {
+                hd_debug_print("using ID: {$channel->get_id()}", true);
+                $epg_url = str_replace('{ID}', $channel->get_id(), $epg_url);
+                $epg_ids['tvg-id'] = $channel->get_id();
+            }
+
+            $epg_id = '';
+            $tvg_keys = array('tvg-id', 'tvg-name', 'name', 'id');
+            foreach ($tvg_keys as $key) {
+                if (isset($epg_ids[$key])) {
+                    $epg_id = $epg_ids[$key];
+                    break;
+                }
+            }
+
+            if (empty($epg_id)) {
+                throw new Exception("No EPG ID defined");
+            }
+
+            $epg_id = $epg_ids[$key];
+            if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
+                hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache ");
+                return $this->epg_cache[$epg_id][$day_start_ts];
+            }
+
+            $channel_id = $channel->get_id();
+            $channel_title = $channel->get_title();
+            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
+
+            $cur_time = $day_start_ts + get_local_time_zone_offset();
+            if (strpos($epg_url, '{YEAR}') !== false) {
+                $epg_date = gmdate('Y', $cur_time);
+                hd_debug_print("using YEAR: $epg_date", true);
+                $epg_url = str_replace( '{YEAR}', $epg_date, $epg_url);
+            }
+            if (strpos($epg_url, '{MONTH}') !== false) {
+                $epg_date = gmdate('m', $cur_time);
+                hd_debug_print("using MONTH: $epg_date", true);
+                $epg_url = str_replace( '{MONTH}', $epg_date, $epg_url);
+            }
+            if (strpos($epg_url, '{DAY}') !== false) {
+                $epg_date = gmdate('d', $cur_time);
+                hd_debug_print("using DAY: $epg_date", true);
+                $epg_url = str_replace( '{DAY}', $epg_date, $epg_url);
+            }
+
+            $epg_id = str_replace(' ', '%20', $epg_id);
+            $epg_url = str_replace(array('{EPG_ID}', '#'), array($epg_id, '%23'), $epg_url);
+            $epg_cache_file = get_temp_path(Hashed_Array::hash($epg_url) . ".cache");
+            $from_cache = false;
+            $all_epg = array();
+            if (file_exists($epg_cache_file)) {
+                $now = time();
+                $max_check_time = 3600;
+                $cache_expired = filemtime($epg_cache_file) + $max_check_time;
+                if ($cache_expired > time()) {
+                    $all_epg = HD::ReadContentFromFile($epg_cache_file);
+                    $from_cache = true;
+                    hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
+                } else {
+                    hd_debug_print("Cache expired at $cache_expired now $now");
+                    unlink($epg_cache_file);
+                }
+            }
+
+            if ($from_cache === false) {
+                hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
+                $all_epg = self::get_epg_json($epg_url, $this->plugin->get_epg_preset_parser());
+                if (!empty($all_epg)) {
+                    hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
+                    HD::StoreContentToFile($epg_cache_file, $all_epg);
+                }
+            }
+
+            $counts = count($all_epg);
+            if ($counts === 0) {
+                throw new Exception("Not EPG entries found");
+            }
+
+            hd_debug_print("Total $counts EPG entries loaded");
+        } catch (Exception $ex) {
+            hd_debug_print($ex->getMessage());
             return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
         }
-
-        if (strpos($epg_url, '{ID}') !== false) {
-            hd_debug_print("using ID: {$channel->get_id()}", true);
-            $epg_url = str_replace('{ID}', $channel->get_id(), $epg_url);
-            $epg_ids['tvg-id'] = $channel->get_id();
-        }
-
-        $epg_id = '';
-        $tvg_keys = array('tvg-id', 'tvg-name', 'name', 'id');
-        foreach ($tvg_keys as $key) {
-            if (isset($epg_ids[$key])) {
-                $epg_id = $epg_ids[$key];
-                break;
-            }
-        }
-
-        if (empty($epg_id)) {
-            hd_debug_print("No EPG ID defined");
-            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
-        }
-
-        $epg_id = $epg_ids[$key];
-        if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
-            hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache ");
-            return $this->epg_cache[$epg_id][$day_start_ts];
-        }
-
-        $channel_id = $channel->get_id();
-        $channel_title = $channel->get_title();
-        hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
-
-        $cur_time = $day_start_ts + get_local_time_zone_offset();
-        if (strpos($epg_url, '{YEAR}') !== false) {
-            $epg_date = gmdate('Y', $cur_time);
-            hd_debug_print("using YEAR: $epg_date", true);
-            $epg_url = str_replace( '{YEAR}', $epg_date, $epg_url);
-        }
-        if (strpos($epg_url, '{MONTH}') !== false) {
-            $epg_date = gmdate('m', $cur_time);
-            hd_debug_print("using MONTH: $epg_date", true);
-            $epg_url = str_replace( '{MONTH}', $epg_date, $epg_url);
-        }
-        if (strpos($epg_url, '{DAY}') !== false) {
-            $epg_date = gmdate('d', $cur_time);
-            hd_debug_print("using DAY: $epg_date", true);
-            $epg_url = str_replace( '{DAY}', $epg_date, $epg_url);
-        }
-
-        $epg_id = str_replace(' ', '%20', $epg_id);
-        $epg_url = str_replace(array('{EPG_ID}', '#'), array($epg_id, '%23'), $epg_url);
-        $epg_cache_file = get_temp_path(Hashed_Array::hash($epg_url) . ".cache");
-        $from_cache = false;
-        $all_epg = array();
-        if (file_exists($epg_cache_file)) {
-            $now = time();
-            $max_check_time = 3600;
-            $cache_expired = filemtime($epg_cache_file) + $max_check_time;
-            if ($cache_expired > time()) {
-                $all_epg = HD::ReadContentFromFile($epg_cache_file);
-                $from_cache = true;
-                hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
-            } else {
-                hd_debug_print("Cache expired at $cache_expired now $now");
-                unlink($epg_cache_file);
-            }
-        }
-
-        if ($from_cache === false) {
-            hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
-            $all_epg = self::get_epg_json($epg_url, $this->plugin->get_epg_preset_parser());
-            if (!empty($all_epg)) {
-                hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
-                HD::StoreContentToFile($epg_cache_file, $all_epg);
-            }
-        }
-
-        $counts = count($all_epg);
-        if ($counts === 0) {
-            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
-        }
-
-        hd_debug_print("Total $counts EPG entries loaded");
 
         // filter out epg only for selected day
         $day_end_ts = $day_start_ts + 86400;

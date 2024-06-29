@@ -41,7 +41,8 @@
         "epg_name": "name",
         "epg_desc": "descr",
         "epg_start": "time",
-        "epg_end": "time_to"
+        "epg_end": "time_to",
+        "epg_icon": "icon"
       }
     },
     "itvlive": {
