@@ -128,7 +128,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
             $this->xmltv_picons = HD::ReadContentFromFile($name);
         }
 
-        return isset($this->xmltv_picons) ? $this->xmltv_picons[$alias] : '';
+        return isset($this->xmltv_picons[$alias]) ? $this->xmltv_picons[$alias] : '';
     }
 
     /**
@@ -137,7 +137,80 @@ class Epg_Indexer_Classic extends Epg_Indexer
      */
     public function index_xmltv_channels()
     {
-        // TODO: Implement index_xmltv_channels() method.
+        $channels_file = $this->get_index_name('channels');
+        if (file_exists($channels_file)) {
+            hd_debug_print("Load cache channels index: $channels_file");
+            $this->xmltv_channels = HD::ReadContentFromFile($channels_file);
+            return;
+        }
+
+        $this->xmltv_channels = array();
+        $this->xmltv_picons = array();
+        $t = microtime(true);
+
+        try {
+            $this->set_index_locked(true);
+
+            hd_debug_print_separator();
+            hd_debug_print("Start reindex: $channels_file");
+
+            $file = $this->open_xmltv_file();
+            while (!feof($file)) {
+                $line = stream_get_line($file, self::STREAM_CHUNK, "<channel ");
+                if (empty($line)) continue;
+
+                fseek($file, -9, SEEK_CUR);
+                $str = fread($file, 9);
+                if ($str !== "<channel ") continue;
+
+                $line = stream_get_line($file, self::STREAM_CHUNK, "</channel>");
+                if (empty($line)) continue;
+
+                $line = "<channel $line</channel>";
+
+                $xml_node = new DOMDocument();
+                $xml_node->loadXML($line);
+                foreach($xml_node->getElementsByTagName('channel') as $tag) {
+                    $channel_id = $tag->getAttribute('id');
+                }
+
+                if (empty($channel_id)) continue;
+
+                $picon = '';
+                foreach ($xml_node->getElementsByTagName('icon') as $tag) {
+                    if (preg_match(HTTP_PATTERN, $tag->getAttribute('src'))) {
+                        $picon = $tag->getAttribute('src');
+                        break;
+                    }
+                }
+
+                $ls_channel = mb_convert_case($channel_id, MB_CASE_LOWER, "UTF-8");
+                $this->xmltv_channels[$ls_channel] = $channel_id;
+                foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
+                    $alias = mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8");
+                    $this->xmltv_channels[$alias] = $channel_id;
+                    if (!empty($picon)) {
+                        $this->xmltv_picons[$alias] = $picon;
+                    }
+                }
+            }
+            fclose($file);
+
+            HD::StoreContentToFile($this->get_index_name('picons'), $this->xmltv_picons);
+            HD::StoreContentToFile($channels_file, $this->xmltv_channels);
+
+            hd_debug_print("Total entries id's: " . count($this->xmltv_channels));
+            hd_debug_print("Total known picons: " . count($this->xmltv_picons));
+            hd_debug_print("Reindexing EPG channels done: " . (microtime(true) - $t) . " secs");
+            hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
+            HD::ShowMemoryUsage();
+            hd_debug_print_separator();
+        } catch (Exception $ex) {
+            hd_debug_print("Reindexing EPG channels failed");
+            print_backtrace_exception($ex);
+        }
+
+        $this->set_index_locked(false);
     }
 
     /**
@@ -168,6 +241,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
         try {
             $this->set_index_locked(true);
 
+            hd_debug_print_separator();
             hd_debug_print("Start reindex: $index_program");
 
             $t = microtime(true);
@@ -233,14 +307,15 @@ class Epg_Indexer_Classic extends Epg_Indexer
 
             hd_debug_print("Total unique epg id's indexed: " . count($xmltv_index));
             hd_debug_print("Reindexing EPG program done: " . (microtime(true) - $t) . " secs");
+            hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
+            HD::ShowMemoryUsage();
+            hd_debug_print_separator();
         } catch (Exception $ex) {
+            hd_debug_print("Reindexing EPG positions failed");
             print_backtrace_exception($ex);
         }
 
         $this->set_index_locked(false);
-
-        HD::ShowMemoryUsage();
-        hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
     }
 
     /**

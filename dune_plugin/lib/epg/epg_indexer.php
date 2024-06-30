@@ -174,7 +174,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         $cached_file = $this->get_cached_filename();
         hd_debug_print("Checking cached xmltv file: $cached_file");
 
-        if ($this->check_index_version() && file_exists($cached_file) && filesize($cached_file) !== 0) {
+        if (file_exists($cached_file) && filesize($cached_file) !== 0) {
             $check_time_file = filemtime($cached_file);
             $max_cache_time = 3600 * 24 * $this->cache_ttl;
             if ($check_time_file && $check_time_file + $max_cache_time > time()) {
@@ -203,7 +203,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             hd_debug_print("Cached xmltv file not exist");
         }
 
-        $this->clear_epg_files($this->get_cache_stem(''));
+        $this->clear_epg_files($this->url_hash);
 
         return 1;
     }

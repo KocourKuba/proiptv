@@ -123,7 +123,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $epg_manager = $this->plugin->get_epg_manager();
                 if ($epg_manager->is_index_locked()) {
                     $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                    return Action_Factory::change_behaviour($actions, 1000);
+                    return Action_Factory::change_behaviour($actions, 2000);
                 }
 
                 $epg_manager->import_indexing_log();

@@ -105,7 +105,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (!is_null($epg_manager)) {
                     if ($epg_manager->is_index_locked()) {
                         $actions = $this->get_action_map(MediaURL::decode($user_input->parent_media_url), $plugin_cookies);
-                        return Action_Factory::change_behaviour($actions, 1000);
+                        return Action_Factory::change_behaviour($actions, 2000);
                     }
 
                     $epg_manager->import_indexing_log();

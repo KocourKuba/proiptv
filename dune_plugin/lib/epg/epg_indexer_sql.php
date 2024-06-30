@@ -145,9 +145,10 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 }
             }
 
-            hd_debug_print("Start reindex channels and picons...");
-
             $this->set_index_locked(true);
+
+            hd_debug_print_separator();
+            hd_debug_print("Start reindex channels and picons...");
 
             $t = microtime(true);
 
@@ -220,6 +221,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
             hd_debug_print("Total known picons: $picons");
             hd_debug_print("Reindexing EPG channels done: " . (microtime(true) - $t) . " secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
+            HD::ShowMemoryUsage();
             hd_debug_print_separator();
 
         } catch (Exception $ex) {
@@ -236,6 +238,11 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function index_xmltv_positions()
     {
+        if ($this->is_index_locked()) {
+            hd_debug_print("File is indexing now, skipped");
+            return;
+        }
+
         try {
             if ($this->is_index_valid('picons')) {
                 $total_pos = $this->epg_db->querySingle('SELECT count(*) FROM positions;');
@@ -245,6 +252,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 }
             }
 
+            hd_debug_print_separator();
             hd_debug_print("Start reindex positions...");
 
             $this->set_index_locked(true);
@@ -335,6 +343,8 @@ class Epg_Indexer_Sql extends Epg_Indexer
             hd_debug_print("Total unique epg id's indexed: $total_epg");
             hd_debug_print("Reindexing EPG positions done: " . (microtime(true) - $t) . " secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
+            HD::ShowMemoryUsage();
+            hd_debug_print_separator();
         } catch (Exception $ex) {
             hd_debug_print("Reindexing EPG positions failed");
             print_backtrace_exception($ex);
