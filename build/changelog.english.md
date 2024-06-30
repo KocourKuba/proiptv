@@ -1,5 +1,8 @@
 ﻿### Upcoming version
 
+### Версия 4.0.746
+- Fixed XMLTV indexing for Sigma devices
+
 ### Version 4.0.744
 - Added support for Peak TV provider (https://peaktv.info)
 - Optimize XMLTV indexing and storage
