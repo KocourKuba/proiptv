@@ -97,7 +97,7 @@ function IP2Country($ip)
 {
     // Detect country by IP
     $iplong = ip2long($ip);
-    $query = "SELECT c2code FROM ip2country WHERE ip_from <= $iplong AND ip_to >= $iplong";
+    $query = "SELECT c2code FROM ip2country WHERE ip_from <= {$iplong} AND ip_to >= {$iplong}";
 
     $DB = new db_driver;
     $DB->obj['sql_database'] = CRM_DATABASE;
@@ -134,7 +134,10 @@ if (isset($params['ver'])) {
     $model =  $params['model'];
     $firmware = isset($params['firmware']) ? $params['firmware'] : "";
     $serial = $params['serial'];
-
+    $revison = '';
+    if (!empty($firmware) && preg_match('/.+_(r\d{2})/', $firmware, $m)) {
+        $revison = $m[1];
+    }
     $logbuf = "========================================" . PHP_EOL;
     $logbuf .= "date      : $date" . PHP_EOL;
     $logbuf .= "url       : $request" . PHP_EOL;
@@ -156,8 +159,10 @@ if (isset($params['ver'])) {
     if($DB->connect()) {
         $data['model'] = $model;
         $data['firmware'] = $firmware;
+        $data['revision'] = $revison;
         $data['serial'] = $serial;
         $data['time'] = $time;
+        $data['date'] = $date;
         $data['version'] = $version;
         $data['ip'] = $ip;
         $data['country'] = $country;

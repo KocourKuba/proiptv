@@ -11,7 +11,7 @@ if(!$DB->connect()) {
     write_to_log("proiptv_stat: can't connect", 'error.log');
 }
 
-$prev_day = date("m.d.Y", strtotime('-1 day'));
+$prev_day = date("m.d.Y");
 
 $res = $DB->query("SELECT model, count(model) AS cnt FROM statistics GROUP BY model ORDER BY model ASC");
 if ($res) {
@@ -22,7 +22,7 @@ if ($res) {
     file_put_contents("stat_all_$prev_day.txt", $stat_all);
 }
 
-$res = $DB->query("SELECT model, count(model) AS cnt FROM statistics WHERE date(FROM_UNIXTIME(time)) = CURRENT_DATE - 1 GROUP BY model ORDER BY cnt DESC");
+$res = $DB->query("SELECT model, count(model) AS cnt FROM statistics WHERE date(FROM_UNIXTIME(time))=CURRENT_DATE GROUP BY model ORDER BY cnt DESC");
 if ($res) {
     $stat_all = '';
     while($row = $DB->fetch_row()) {
