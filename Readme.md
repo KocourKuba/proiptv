@@ -48,6 +48,7 @@ Also, have presets for most popular IPTV providers.
 38. [TopIPTV](https://topiptv.info/)
 39. [IPTV Best](https://ip-tv.best/)
 40. [Uspeh TV](https://uspeh.tv/)
+41. [Peak TV](https://https://peaktv.info/)
 </details>
 
 ## Donate
