@@ -515,13 +515,15 @@ class api_default
 
     /**
      * @param bool $force
-     * @return bool
+     * @return bool|object
      */
     public function get_provider_info($force = false)
     {
         hd_debug_print(null, true);
 
-        $this->request_provider_token();
+        if (!$this->request_provider_token()) {
+            return null;
+        }
 
         if ((empty($this->account_info) || $force) && $this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
@@ -580,8 +582,9 @@ class api_default
             return false;
         }
 
-        if (isset($curl_options[vod_standard::VOD_GET_PARAM_PATH])) {
-            $command_url .= $curl_options[vod_standard::VOD_GET_PARAM_PATH];
+        if (isset($curl_options[CURLOPT_CUSTOMREQUEST])) {
+            $command_url .= $curl_options[CURLOPT_CUSTOMREQUEST];
+            unset($curl_options[CURLOPT_CUSTOMREQUEST]);
         }
         hd_debug_print("ApiCommandUrl: $command_url", true);
 
@@ -863,7 +866,7 @@ class api_default
 
     /**
      * @param $user_input
-     * @return bool
+     * @return bool|array
      */
     public function ApplyExtSetupUI($user_input)
     {
@@ -871,8 +874,10 @@ class api_default
 
         $changed = false;
         if ($this->check_control_parameters($user_input, CONTROL_SERVER, MACRO_SERVER_ID)) {
-            $this->SetServer($user_input->{CONTROL_SERVER});
-            $changed = true;
+            $changed = $this->SetServer($user_input->{CONTROL_SERVER}, $error_message);
+            if (!$changed && !empty($error_message)) {
+                return Action_Factory::show_title_dialog(TR::t('err_error'), null, $error_message);
+            }
         }
 
         if ($this->check_control_parameters($user_input, CONTROL_PLAYLIST, MACRO_PLAYLIST_ID)) {
@@ -965,13 +970,17 @@ class api_default
     /**
      * set server
      * @param string $server
-     * @return void
+     * @param string $error_msg
+     * @return bool
      */
-    public function SetServer($server)
+    public function SetServer($server, &$error_msg)
     {
         hd_debug_print(null, true);
 
         $this->setCredential(MACRO_SERVER_ID, $server);
+        $error_msg = '';
+
+        return true;
     }
 
     /**
@@ -1080,6 +1089,7 @@ class api_default
             MACRO_SUBDOMAIN,
             MACRO_OTTKEY,
             MACRO_TOKEN,
+            MACRO_SESSION_ID,
             MACRO_DOMAIN_ID,
             MACRO_DEVICE_ID,
             MACRO_SERVER_ID,

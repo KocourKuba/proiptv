@@ -70,16 +70,16 @@ class api_tvclub extends api_default
 
     public function GetInfoUI($handler)
     {
-        parent::GetInfoUI($handler);
+        $account_info = $this->get_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($this->account_info)) {
+        if (empty($account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($this->account_info->account)) {
-            $data = $this->account_info->account;
+        } else if (isset($account_info->account)) {
+            $data = $account_info->account;
             if (isset($data->info)) {
                 $info = $data->info;
                 if (isset($info->login)) {
@@ -148,13 +148,22 @@ class api_tvclub extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server)
+    public function SetServer($server, &$error_msg)
     {
-        parent::SetServer($server);
+        $old = $this->getCredential(MACRO_SERVER_ID);
+        $this->setCredential(MACRO_SERVER_ID, $server);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->settings->current->server->id)) {
             $this->account_info = null;
+            return true;
         }
+
+        $this->setCredential(MACRO_SERVER_ID, $old);
+        if (isset($response->error->msg)) {
+            $error_msg = $response->error->msg;
+        }
+
+        return false;
     }
 }

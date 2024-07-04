@@ -1673,7 +1673,6 @@ class Default_Dune_Plugin implements DunePlugin
                         throw new Exception("Unable to init provider $playlist");
                     }
 
-                    $provider->request_provider_token();
                     $res = $provider->load_playlist($tmp_file);
                 } else {
                     throw new Exception("Unknown playlist type");
@@ -2680,7 +2679,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param $user_input
-     * @return bool
+     * @return bool|array
      */
     public function apply_edit_provider_ext_dlg($user_input)
     {

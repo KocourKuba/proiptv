@@ -46,7 +46,7 @@ class vod_cbilling extends vod_standard
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $params[self::VOD_GET_PARAM_PATH] = "/video/$movie_id";
+        $params[CURLOPT_CUSTOMREQUEST] = "/video/$movie_id";
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
         if (!isset($response->data)) {
             return null;
@@ -125,7 +125,7 @@ class vod_cbilling extends vod_standard
             $total += $node->count;
 
             // fetch genres for category
-            $params[self::VOD_GET_PARAM_PATH] = "/cat/$id/genres";
+            $params[CURLOPT_CUSTOMREQUEST] = "/cat/$id/genres";
             $genres = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
             if ($genres === false) {
                 continue;
@@ -162,7 +162,7 @@ class vod_cbilling extends vod_standard
         if ($page_idx < 0)
             return array();
 
-        $params[self::VOD_GET_PARAM_PATH] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
+        $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=" . urlencode($keyword) . "&page=$page_idx";
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
         return $response === false ? array() : $this->CollectSearchResult($response);
     }
@@ -178,7 +178,7 @@ class vod_cbilling extends vod_standard
             return array();
 
         if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
-            $params[self::VOD_GET_PARAM_PATH] = "/filter/new?page=$page_idx";
+            $params[CURLOPT_CUSTOMREQUEST] = "/filter/new?page=$page_idx";
         } else {
             $arr = explode("_", $query_id);
             if ($arr === false) {
@@ -187,7 +187,7 @@ class vod_cbilling extends vod_standard
                 $genre_id = $arr[1];
             }
 
-            $params[self::VOD_GET_PARAM_PATH] = "/genres/$genre_id?page=$page_idx";
+            $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=$page_idx";
         }
 
         $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);

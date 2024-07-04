@@ -58,19 +58,19 @@ class api_vidok extends api_default
 
     public function GetInfoUI($handler)
     {
-        parent::GetInfoUI($handler);
+        $account_info = $this->get_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($this->account_info)) {
+        if (empty($account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($this->account_info->error, $this->account_info->error->message)) {
+        } else if (isset($account_info->error, $account_info->error->message)) {
             hd_debug_print("Can't get account status");
-            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info->error->message, -10);
+            Control_Factory::add_label($defs, TR::t('err_error'), $account_info->error->message, -10);
         } else if (isset($this->account_info->account)) {
-            $data = $this->account_info->account;
+            $data = $account_info->account;
             if (isset($data->login)) {
                 Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
             }
@@ -91,7 +91,7 @@ class api_vidok extends api_default
                 $packages = '';
                 foreach ($data->packages as $package) {
                     if (isset($package->name, $package->expire)) {
-                        $packages .= $package->name . " (" . date('d M Y H:i', $package->expire) . ")\n";
+                        $packages .= $package->name . " (" . date('d M Y H:i', $package->expire) . ")" . PHP_EOL;
                     }
                 }
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
@@ -130,13 +130,20 @@ class api_vidok extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server)
+    public function SetServer($server, &$error_msg)
     {
-        parent::SetServer($server);
+        $old = $this->getCredential(MACRO_SERVER_ID);
+        $this->setCredential(MACRO_SERVER_ID, $server);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->settings->value)) {
             $this->account_info = null;
+            return true;
         }
+
+        $this->setCredential(MACRO_SERVER_ID, $old);
+
+        $error_msg = '';
+        return false;
     }
 }

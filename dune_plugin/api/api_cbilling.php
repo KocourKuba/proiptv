@@ -22,16 +22,16 @@ class api_cbilling extends api_default
      */
     public function GetInfoUI($handler)
     {
-        parent::GetInfoUI($handler);
+        $account_info = $this->get_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if (empty($this->account_info)) {
+        if (empty($account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('err_error'), TR::t('warn_msg3'), -10);
-        } else if (isset($this->account_info->data)) {
-            $data = $this->account_info->data;
+        } else if (isset($account_info->data)) {
+            $data = $account_info->data;
             if (isset($data->end_date)) {
                 Control_Factory::add_label($defs, TR::t('end_date'), $data->end_date, -15);
             }

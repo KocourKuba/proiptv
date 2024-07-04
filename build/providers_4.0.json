@@ -1004,11 +1004,17 @@
       "enable": true,
       "id": "tvteam",
       "name": "TV Team",
-      "type": "pin",
+      "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
       "provider_url": "https://tv.team/",
+      "api_url": "http://tv.team/api",
       "api_commands": {
-        "get_playlist": "http://troya.one/pl/11/{PASSWORD}/playlist.m3u8"
+        "account_info": "{API}/?apiAction=getUserData&sessionId={SESSION_ID}",
+        "get_playlist": "http://troya.one/pl/11/{TOKEN}/playlist.m3u8",
+        "get_servers": "{API}/?apiAction=getServersGroups&sessionId={SESSION_ID}",
+        "set_server": "{API}?apiAction=updateUserData&groupId={SERVER_ID}&sessionId={SESSION_ID}",
+        "get_packages": "{API}/?apiAction=getUserPackages&sessionId={SESSION_ID}",
+        "request_token": "{API}?userLogin={LOGIN}&userPasswd="
       },
       "config": {
         "id_map": "tvg-name",

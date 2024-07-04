@@ -25,7 +25,7 @@ class api_sharaclub extends api_default
      */
     public function GetInfoUI($handler)
     {
-        parent::GetInfoUI($handler);
+        $account_info = $this->get_provider_info();
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
@@ -35,27 +35,27 @@ class api_sharaclub extends api_default
                 ACTION_ADD_MONEY_DLG, "", TR::t('add_money'), 450, true);
         }
 
-        if (empty($this->account_info)) {
+        if (empty($account_info)) {
             hd_debug_print("Can't get account status");
             Control_Factory::add_label($defs, TR::t('warn_msg3'), null, -10);
-        } else if (isset($this->account_info->status) && (int)$this->account_info->status !== 1) {
-            Control_Factory::add_label($defs, TR::t('err_error'), $this->account_info->status, -10);
-        } else if (isset($this->account_info->data)) {
-            $data = $this->account_info->data;
+        } else if (isset($account_info->status) && (int)$account_info->status !== 1) {
+            Control_Factory::add_label($defs, TR::t('err_error'), $account_info->status, -10);
+        } else if (isset($account_info->data)) {
+            $data = $account_info->data;
             if (isset($data->login)) {
                 Control_Factory::add_label($defs, TR::t('login'), $data->login, -15);
             }
             if (isset($data->money, $data->currency)) {
-                Control_Factory::add_label($defs, TR::t('balance'), "$data->money $data->currency", -15);
+                Control_Factory::add_label($defs, TR::t('balance'), $data->money . " " . $data->currency, -15);
             }
             if (isset($data->money_need, $data->currency)) {
-                Control_Factory::add_label($defs, TR::t('money_need'), "$data->money_need $data->currency", -15);
+                Control_Factory::add_label($defs, TR::t('money_need'), $data->money_need . " " . $data->currency, -15);
             }
 
             if (isset($data->abon)) {
                 $packages = '';
                 foreach ($data->abon as $package) {
-                    $packages .= $package . "\n";
+                    $packages .= $package . PHP_EOL;
                 }
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }
@@ -120,10 +120,19 @@ class api_sharaclub extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server)
+    public function SetServer($server, &$error_msg)
     {
-        parent::SetServer($server);
+        $old = $this->getCredential(MACRO_SERVER_ID);
+        $this->setCredential(MACRO_SERVER_ID, $server);
 
-        $this->execApiCommand(API_COMMAND_SET_SERVER);
+        $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
+        if (isset($response->status) && (int)$response->status === 1) {
+            return true;
+        }
+
+        $this->setCredential(MACRO_SERVER_ID, $old);
+
+        $error_msg = '';
+        return false;
     }
 }
