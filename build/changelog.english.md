@@ -1,6 +1,10 @@
 ﻿### Upcoming version
 
-### Версия 4.0.746
+### Version 4.0.756
+- API support for the TV Team provider. Subscription Information. Changing the server from the plugin. (access data has changed! Now this is the login and password to the user's account)
+- Fixed a bug with duplicate provider after editing access data
+
+### Version 4.0.746
 - Fixed XMLTV indexing for Sigma devices
 
 ### Version 4.0.744
