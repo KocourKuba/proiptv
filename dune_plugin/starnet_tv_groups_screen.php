@@ -346,7 +346,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_DO_EDIT_PROVIDER:
             case ACTION_DO_EDIT_PROVIDER_EXT:
                 if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
-                    return $this->plugin->do_edit_provider_dlg($this, 'current');
+                    $provider = $this->plugin->get_current_provider();
+                    if (is_null($provider)) {
+                        return null;
+                    }
+                    return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
                 }
 
                 return $this->plugin->do_edit_provider_ext_dlg($this);
@@ -360,7 +364,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $res = $this->plugin->apply_edit_provider_ext_dlg($user_input);
                 }
 
-                if ($res === false) {
+                if ($res === false || $res === null) {
                     return null;
                 }
 

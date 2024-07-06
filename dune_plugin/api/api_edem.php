@@ -94,30 +94,50 @@ class api_edem extends api_default
     {
         $id = $user_input->{CONTROL_EDIT_ITEM};
 
+        if (!empty($id)) {
+            $this->set_provider_playlist_id($id);
+        }
+
         if (is_null($this->playlist_info)) {
+            hd_debug_print("Create new provider info", true);
             $this->playlist_info = new Named_Storage();
             $this->playlist_info->type = PARAM_PROVIDER;
             $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
             $this->playlist_info->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         }
 
+        $changed = false;
         if (empty($user_input->{CONTROL_OTT_SUBDOMAIN})) {
-            $this->playlist_info->params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
-        } else {
+            if ($this->playlist_info->params[MACRO_SUBDOMAIN] !== $this->getConfigValue(CONFIG_SUBDOMAIN)) {
+                $this->playlist_info->params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
+                $changed = true;
+            }
+        } else if ($this->check_control_parameters($user_input,CONTROL_OTT_SUBDOMAIN, MACRO_SUBDOMAIN)) {
             $this->playlist_info->params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
+            $changed = true;
         }
 
         if (empty($user_input->{CONTROL_OTT_KEY})) {
-            return null;
+            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
 
-        $this->playlist_info->params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
+        if ($this->check_control_parameters($user_input,CONTROL_OTT_KEY, MACRO_OTTKEY)) {
+            $this->playlist_info->params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
+            $changed = true;
+        }
 
         if (!empty($user_input->{CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
             return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'));
         }
 
-        $this->playlist_info->params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
+        if ($this->check_control_parameters($user_input,CONTROL_VPORTAL, MACRO_VPORTAL)) {
+            $this->playlist_info->params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
+            $changed = true;
+        }
+
+        if (!$changed) {
+            return null;
+        }
 
         $is_new = empty($id);
         $id = $is_new ? $this->get_hash($this->playlist_info) : $id;
@@ -128,6 +148,7 @@ class api_edem extends api_default
         hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . raw_json_encode($this->playlist_info), true);
 
         if ($is_new) {
+            hd_debug_print("Set default values for id: $id", true);
             $this->set_default_settings($user_input, $id);
         }
 

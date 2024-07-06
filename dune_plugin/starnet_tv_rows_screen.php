@@ -785,7 +785,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_DO_EDIT_PROVIDER:
             case ACTION_DO_EDIT_PROVIDER_EXT:
                 if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
-                    return $this->plugin->do_edit_provider_dlg($this, 'current');
+                    $provider = $this->plugin->get_current_provider();
+                    if (is_null($provider)) {
+                        return null;
+                    }
+                    return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
                 }
 
                 return $this->plugin->do_edit_provider_ext_dlg($this);

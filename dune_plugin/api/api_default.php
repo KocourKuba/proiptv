@@ -299,6 +299,14 @@ class api_default
     /// Methods
 
     /**
+     * @return string
+     */
+    public function get_provider_playlist_id()
+    {
+        return $this->playlist_id;
+    }
+
+    /**
      * @param string $playlist_id
      */
     public function set_provider_playlist_id($playlist_id)
@@ -699,35 +707,47 @@ class api_default
 
         $id = $user_input->{CONTROL_EDIT_ITEM};
 
+        if (!empty($id)) {
+            $this->set_provider_playlist_id($id);
+        }
+
         if (is_null($this->playlist_info)) {
+            hd_debug_print("Create new provider info", true);
             $this->playlist_info = new Named_Storage();
             $this->playlist_info->type = PARAM_PROVIDER;
             $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
             $this->playlist_info->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         }
 
+        $changed = false;
         switch ($this->getType()) {
             case PROVIDER_TYPE_PIN:
-                if (empty($user_input->{CONTROL_PASSWORD})
-                    || $this->playlist_info->params[MACRO_PASSWORD] === $user_input->{CONTROL_PASSWORD}) {
-                    return false;
+                if (empty($user_input->{CONTROL_PASSWORD})) {
+                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                if ($this->check_control_parameters($user_input,CONTROL_PASSWORD, MACRO_PASSWORD)) {
+                    $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                    $changed = true;
+                }
                 break;
 
             case PROVIDER_TYPE_LOGIN:
             case PROVIDER_TYPE_LOGIN_TOKEN:
             case PROVIDER_TYPE_LOGIN_STOKEN:
-                if (empty($user_input->{CONTROL_LOGIN})
-                    || empty($user_input->{CONTROL_PASSWORD})
-                    || ($this->playlist_info->params[MACRO_LOGIN] === $user_input->{CONTROL_LOGIN}
-                        && $this->playlist_info->params[MACRO_PASSWORD] === $user_input->{CONTROL_PASSWORD})) {
-                    return false;
+                if (empty($user_input->{CONTROL_LOGIN}) || empty($user_input->{CONTROL_PASSWORD})) {
+                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                $this->playlist_info->params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
-                $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                if ($this->check_control_parameters($user_input,CONTROL_LOGIN, MACRO_LOGIN)) {
+                    $this->playlist_info->params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
+                    $changed = true;
+                }
+
+                if ($this->check_control_parameters($user_input,CONTROL_PASSWORD, MACRO_PASSWORD)) {
+                    $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                    $changed = true;
+                }
 
                 if ($this->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
                     $this->setCredential(MACRO_TOKEN, '');
@@ -735,7 +755,11 @@ class api_default
                 break;
 
             default:
-                return false;
+                return null;
+        }
+
+        if (!$changed) {
+            return null;
         }
 
         $is_new = empty($id);
@@ -747,6 +771,7 @@ class api_default
         hd_debug_print("ApplySetupUI compiled provider ($id) info: " . raw_json_encode($this->playlist_info), true);
 
         if ($is_new) {
+            hd_debug_print("Set default values for id: $id", true);
             $this->set_default_settings($user_input, $id);
         }
 
@@ -1144,7 +1169,7 @@ class api_default
             }
         }
 
-        $this->plugin->get_playlists()->set($id, $this->get_provider_playlist());
+        $this->plugin->get_playlists()->set($id, $this->playlist_info);
 
         $this->request_provider_token();
         $this->plugin->save_parameters(true);

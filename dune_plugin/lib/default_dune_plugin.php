@@ -2470,7 +2470,7 @@ class Default_Dune_Plugin implements DunePlugin
                 ACTION_EDIT_PROVIDER_DLG,
                 TR::t('edit_account'),
                 $provider->getLogo(),
-                array(PARAM_PROVIDER => $provider->getId())
+                array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_STORAGE => $provider->get_provider_playlist_id())
             );
 
             if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
@@ -2478,7 +2478,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ACTION_EDIT_PROVIDER_EXT_DLG,
                     TR::t('edit_ext_account'),
                     "settings.png",
-                    array(PARAM_PROVIDER => $provider->getId())
+                    array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_STORAGE => $provider->get_provider_playlist_id())
                 );
             }
         }
@@ -2591,17 +2591,12 @@ class Default_Dune_Plugin implements DunePlugin
     public function do_edit_provider_dlg($handler, $provider_id, $playlist_id = '')
     {
         hd_debug_print(null, true);
+        hd_debug_print("Provider id: $provider_id, Playlist id: $playlist_id", true);
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
-        if ($provider_id === 'current') {
-            $provider = $this->get_current_provider();
-            if (!is_null($provider)) {
-                $name = $provider->get_provider_playlist()->name;
-            }
-            hd_debug_print("current provider : $provider", true);
-        } else if (empty($playlist_id)) {
+        if (empty($playlist_id)) {
             // add new provider
             $provider = $this->create_provider_class($provider_id);
             hd_debug_print("new provider : $provider", true);
@@ -2613,8 +2608,8 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("provider info:" . json_encode($item), true);
                 $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
                 if (!is_null($provider)) {
-                    hd_debug_print("existing provider : " . json_encode($provider), true);
                     $provider->set_provider_playlist_id($playlist_id);
+                    hd_debug_print("existing provider : " . json_encode($provider), true);
                 }
             } else {
                 $provider = $this->create_provider_class($provider_id);
@@ -2668,7 +2663,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function apply_edit_provider_dlg($user_input)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
             $provider = $this->get_current_provider();
@@ -2691,7 +2685,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function apply_edit_provider_ext_dlg($user_input)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         $provider = $this->get_current_provider();
         if (is_null($provider)) {
