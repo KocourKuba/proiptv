@@ -97,7 +97,7 @@ function IP2Country($ip)
 {
     // Detect country by IP
     $iplong = ip2long($ip);
-    $query = "SELECT c2code FROM ip2country WHERE ip_from <= {$iplong} AND ip_to >= {$iplong}";
+    $query = "SELECT c2code FROM ip2country WHERE ip_from <= $iplong AND ip_to >= $iplong";
 
     $DB = new db_driver;
     $DB->obj['sql_database'] = CRM_DATABASE;
