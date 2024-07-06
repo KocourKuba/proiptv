@@ -261,7 +261,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $this->epg_db->exec('DROP TABLE IF EXISTS positions;');
             $this->epg_db->exec('CREATE TABLE positions (channel_id STRING, start INTEGER, end INTEGER);');
-            $this->epg_db->exec('PRAGMA journal_mode=WAL;');
+            $this->epg_db->exec('PRAGMA journal_mode=MEMORY;');
             $this->epg_db->exec('BEGIN;');
 
             hd_debug_print("Begin transactions...");
@@ -326,8 +326,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
                     $tag_end_pos = $tag_start_pos;
                     $stm->execute();
                     if (($i % 100) === 0) {
-                        $this->epg_db->exec('COMMIT;');
-                        $this->epg_db->exec('BEGIN;');
+                        $this->epg_db->exec('COMMIT;BEGIN;');
                     }
                     $prev_channel = $channel_id;
                     $start_program_block = $tag_start_pos;
