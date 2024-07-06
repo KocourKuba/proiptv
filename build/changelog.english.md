@@ -1,5 +1,8 @@
 ﻿### Upcoming version
 
+### Version 4.0.758
+- Fixed a bug with duplicate provider when creating a new playlist
+
 ### Version 4.0.756
 - API support for the TV Team provider. Subscription Information. Changing the server from the plugin. (access data has changed! Now this is the login and password to the user's account)
 - Fixed a bug with duplicate provider after editing access data
