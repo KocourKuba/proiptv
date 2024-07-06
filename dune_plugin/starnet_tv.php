@@ -470,18 +470,19 @@ class Starnet_Tv implements User_Input_Handler
 
                 if (isset($user_input->locked)) {
                     clearstatcache();
-                    if ($this->plugin->get_epg_manager()->is_index_locked()) {
+                    $epg_manager = $this->plugin->get_epg_manager();
+                    if ($epg_manager->get_indexer()->is_index_locked()) {
                         $new_actions = $this->get_action_map();
                         $post_action = Action_Factory::change_behaviour($new_actions, 1000);
                     } else {
-                        $this->plugin->get_epg_manager()->import_indexing_log();
+                        $epg_manager->import_indexing_log();
                         foreach($this->plugin->get_epg_manager()->get_delayed_epg() as $channel_id) {
                             hd_debug_print("Refresh EPG for channel ID: $channel_id");
                             $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
                             $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
                             $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
                         }
-                        $this->plugin->get_epg_manager()->clear_delayed_epg();
+                        $epg_manager->clear_delayed_epg();
                     }
                 }
 
@@ -729,7 +730,7 @@ class Starnet_Tv implements User_Input_Handler
         $epg_manager = $this->plugin->get_epg_manager();
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
         if (!$use_playlist_picons) {
-            $epg_manager->index_only_channels();
+            $epg_manager->get_indexer()->index_only_channels();
         }
 
         hd_debug_print("Build categories and channels...");
@@ -875,7 +876,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
             } else {
                 $lc_channel = mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8");
-                $icon_url = $epg_manager->get_picon($lc_channel);
+                $icon_url = $epg_manager->get_indexer()->get_picon($lc_channel);
                 if (empty($icon_url)) {
                     $icon_url = $playlist_icon;
                 }

@@ -121,7 +121,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case GUI_EVENT_TIMER:
                 clearstatcache();
                 $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager->is_index_locked()) {
+                if ($epg_manager->get_indexer()->is_index_locked()) {
                     $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                     return Action_Factory::change_behaviour($actions, 2000);
                 }

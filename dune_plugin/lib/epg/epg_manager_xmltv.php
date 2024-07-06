@@ -85,6 +85,14 @@ class Epg_Manager_Xmltv
     }
 
     /**
+     * @return Epg_Indexer
+     */
+    public function get_indexer()
+    {
+        return $this->indexer;
+    }
+
+    /**
      * @return bool
      */
     public function init_by_config()
@@ -132,17 +140,6 @@ class Epg_Manager_Xmltv
     public function set_flags($flags)
     {
         $this->flags = $flags;
-    }
-
-    /**
-     * Get picon for channel
-     *
-     * @param $alias string
-     * @return string
-     */
-    public function get_picon($alias)
-    {
-        return $this->indexer->get_picon($alias);
     }
 
     /**
@@ -236,22 +233,6 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @return int
-     */
-    public function reload_xmltv_source()
-    {
-        return $this->indexer->download_xmltv_source();
-    }
-
-    /**
-     * @return bool
-     */
-    public function is_index_locked()
-    {
-        return $this->indexer->is_index_locked();
-    }
-
-    /**
      * Import indexing log to plugin logs
      *
      * @return void
@@ -272,15 +253,6 @@ class Epg_Manager_Xmltv
         } else {
             hd_debug_print("Log to import $index_log not exist");
         }
-    }
-
-    /**
-     * @param string $ext
-     * @return string
-     */
-    public function get_cache_stem($ext)
-    {
-        return $this->indexer->get_cache_stem($ext);
     }
 
     /**
@@ -308,7 +280,7 @@ class Epg_Manager_Xmltv
 
         $config = array(
             'debug' => LogSeverity::$is_debug,
-            'log_file' => $this->get_cache_stem('.log'),
+            'log_file' => $this->indexer->get_cache_stem('.log'),
             'cache_dir' => $this->plugin->get_cache_dir(),
             'cache_ttl' => $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3),
             'xmltv_url' => $this->plugin->get_active_xmltv_source(),
@@ -345,27 +317,6 @@ class Epg_Manager_Xmltv
         $this->indexer->index_xmltv_positions();
 
         hd_print("Script execution time: ". format_duration(round(1000 * (microtime(true) - $start))));
-    }
-
-    /**
-     * indexing xmltv file to make channel to display-name map
-     * and collect picons for channels
-     *
-     * @return void
-     */
-    public function index_only_channels()
-    {
-        $this->indexer->index_only_channels();
-    }
-
-    /**
-     * clear memory cache and cache for current xmltv source
-     *
-     * @return void
-     */
-    public function clear_epg_files($filename)
-    {
-        $this->indexer->clear_epg_files($filename);
     }
 
     /**

@@ -325,7 +325,7 @@ class Default_Dune_Plugin implements DunePlugin
     public function clear_all_epg_cache()
     {
         if (isset($this->epg_manager)) {
-            $this->epg_manager->clear_epg_files('');
+            $this->epg_manager->get_indexer()->clear_epg_files('');
         }
     }
 
@@ -1655,17 +1655,17 @@ class Default_Dune_Plugin implements DunePlugin
                     throw new Exception("Tv playlist not defined");
                 }
 
-                hd_debug_print("m3u playlist ({$this->get_active_playlist_key()} - $playlist->name)");
+                hd_debug_print("m3u playlist: $playlist->name ({$this->get_active_playlist_key()})");
                 if ($playlist->type === PARAM_FILE) {
                     $res = true;
-                    $tmp_file = $playlist->params[PARAM_URI];
-                    hd_debug_print("m3u load local file {$playlist->params[PARAM_URI]}", true);
+                    copy($playlist->params[PARAM_URI], $tmp_file);
+                    hd_debug_print("m3u load local file: {$playlist->params[PARAM_URI]}");
                 } else if ($playlist->type === PARAM_LINK) {
-                    if (!preg_match(HTTP_PATTERN, $playlist->params[PARAM_URI])) {
-                        throw new Exception("Malformed playlist url: {$playlist->params[PARAM_URI]}");
-                    }
                     $playlist_url = $playlist->params[PARAM_URI];
-                    hd_debug_print("m3u download url $playlist_url", true);
+                    hd_debug_print("m3u download link: $playlist_url");
+                    if (!preg_match(HTTP_PATTERN, $playlist_url)) {
+                        throw new Exception("Malformed playlist url: $playlist_url");
+                    }
                     $res = HD::http_download_https_proxy($playlist_url, $tmp_file);
                 } else if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
@@ -1673,6 +1673,7 @@ class Default_Dune_Plugin implements DunePlugin
                         throw new Exception("Unable to init provider $playlist");
                     }
 
+                    hd_debug_print("Load provider playlist to: $tmp_file");
                     $res = $provider->load_playlist($tmp_file);
                 } else {
                     throw new Exception("Unknown playlist type");
@@ -1681,6 +1682,12 @@ class Default_Dune_Plugin implements DunePlugin
                 if ($res === false) {
                     $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                     $exception_msg = TR::load_string('err_load_playlist') . "\n\n$logfile";
+                    HD::set_last_error("pl_last_error", $exception_msg);
+                    throw new Exception($exception_msg);
+                }
+
+                if (!file_exists($tmp_file)) {
+                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$tmp_file";
                     HD::set_last_error("pl_last_error", $exception_msg);
                     throw new Exception($exception_msg);
                 }
@@ -1699,10 +1706,10 @@ class Default_Dune_Plugin implements DunePlugin
                     file_put_contents($tmp_file, $contents);
                 }
 
-                $mtime = filemtime($tmp_file);
-                hd_debug_print("Save $tmp_file (timestamp: $mtime)");
             }
 
+            $mtime = filemtime($tmp_file);
+            hd_debug_print("Parse playlist $tmp_file (timestamp: $mtime)");
             // Is already parsed?
             $this->tv->get_m3u_parser()->setupParser($tmp_file, $force);
             if ($this->tv->get_m3u_parser()->getEntriesCount() === 0) {

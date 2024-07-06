@@ -197,13 +197,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 return 3;
             }
 
-            hd_debug_print("clear cached file: $cached_file");
-            unlink($cached_file);
+            hd_debug_print("Xmltv cache expired");
         } else {
             hd_debug_print("Cached xmltv file not exist");
         }
-
-        $this->clear_epg_files($this->url_hash);
 
         return 1;
     }
@@ -232,6 +229,9 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
             $cached_file = $this->get_cached_filename();
             $tmp_filename = $cached_file . '.tmp';
+            if (file_exists($cached_file)) {
+                unlink($cached_file);
+            }
             if (file_exists($tmp_filename)) {
                 unlink($tmp_filename);
             }
@@ -328,7 +328,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
-     * clear memory cache and cache for current xmltv source
+     * clear memory cache and cache for selected filename mask
      *
      * @return void
      */
@@ -345,6 +345,16 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         shell_exec('rm -f '. $files);
         flush();
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+    }
+
+    /**
+     * clear memory cache and cache for current xmltv source
+     *
+     * @return void
+     */
+    public function clear_current_epg_files()
+    {
+        $this->clear_epg_files($this->url_hash);
     }
 
     /**

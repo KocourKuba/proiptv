@@ -268,7 +268,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (!$this->get_order($edit_list)->has($id)) {
                         return Action_Factory::show_error(false, TR::t('edit_list_title_cant_delete'));
                     }
-                    $this->plugin->get_epg_manager()->clear_epg_files($id);
+                    $this->plugin->get_epg_manager()->get_indexer()->clear_epg_files($id);
                     $this->get_order($edit_list)->erase($id);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     hd_debug_print("remove playlist settings: $id", true);
@@ -296,7 +296,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 switch ($edit_list) {
                     case self::SCREEN_EDIT_EPG_LIST:
                         foreach ($this->get_order($edit_list) as $key) {
-                            $this->plugin->get_epg_manager()->clear_epg_files($key);
+                            $this->plugin->get_epg_manager()->get_indexer()->clear_epg_files($key);
                         }
                         $this->get_order($edit_list)->clear();
                         break;
@@ -827,7 +827,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                 $order->erase($id);
                 $item = null;
-                $this->plugin->get_epg_manager()->clear_epg_files($id);
+                $this->plugin->get_epg_manager()->get_indexer()->clear_epg_files($id);
             } else {
                 $item = $order->get($id);
             }

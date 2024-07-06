@@ -825,8 +825,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     } else if ($user_input->reload_action === 'epg' || $user_input->reload_action === 'epg_change') {
                         $this->plugin->safe_clear_epg_cache();
                         $this->plugin->init_epg_manager();
-                        $this->plugin->get_epg_manager()->clear_epg_files($this->plugin->get_active_xmltv_source_key());
-                        $res = $this->plugin->get_epg_manager()->reload_xmltv_source();
+                        $this->plugin->get_epg_manager()->get_indexer()->clear_current_epg_files();
+                        $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
                         if ($res === -1) {
                             return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
                         }
