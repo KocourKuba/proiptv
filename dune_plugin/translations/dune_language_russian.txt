@@ -108,7 +108,7 @@ plugin_all_channels = Все каналы
 plugin_favorites = Избранное
 plugin_history = История просмотра
 plugin_changed = Измененные каналы
-plugin_vod = Медиатека:
+plugin_vod = Медиатека
 plugin_info = Информация о плагине
 
 setup_small = Мелкий
