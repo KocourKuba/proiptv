@@ -337,7 +337,7 @@ warn_msg4 = Incorrect username or password.
 warn_msg5 = The movie technical information contains incorrect or missing data.\nThe movie cannot be played.
 
 err_too_old_player = DUNE HD player is too old and not supported
-err_required_firmware = Requires firmware version b11 or higher
+err_required_firmware = Requires firmware version r11 or higher
 err_load_playlist = Playlist loading error!
 err_epg_not_set = XMLTV source not set!
 err_file_exist = File in list already exist!
