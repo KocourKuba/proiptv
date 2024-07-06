@@ -378,7 +378,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->plugin->do_edit_list_screen(self::ID, self::SCREEN_EDIT_PROVIDERS);
 
             case ACTION_EDIT_PROVIDER_DLG:
-                return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER}, $user_input->{PARAM_PLAYLIST_STORAGE});
+                $playlist_id = empty($user_input->{PARAM_PLAYLIST_ID}) ? '' : $user_input->{PARAM_PLAYLIST_ID};
+                return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER}, $playlist_id);
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->set_no_changes();

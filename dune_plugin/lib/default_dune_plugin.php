@@ -2470,7 +2470,7 @@ class Default_Dune_Plugin implements DunePlugin
                 ACTION_EDIT_PROVIDER_DLG,
                 TR::t('edit_account'),
                 $provider->getLogo(),
-                array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_STORAGE => $provider->get_provider_playlist_id())
+                array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_ID => $provider->get_provider_playlist_id())
             );
 
             if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
@@ -2478,7 +2478,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ACTION_EDIT_PROVIDER_EXT_DLG,
                     TR::t('edit_ext_account'),
                     "settings.png",
-                    array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_STORAGE => $provider->get_provider_playlist_id())
+                    array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_ID => $provider->get_provider_playlist_id())
                 );
             }
         }

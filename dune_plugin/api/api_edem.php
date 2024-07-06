@@ -135,6 +135,11 @@ class api_edem extends api_default
             $changed = true;
         }
 
+        if ($this->playlist_info->name !== $user_input->{CONTROL_EDIT_NAME}) {
+            $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
+            $changed = true;
+        }
+
         if (!$changed) {
             return null;
         }

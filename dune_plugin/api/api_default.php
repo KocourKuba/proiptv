@@ -705,7 +705,7 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        $id = $user_input->{CONTROL_EDIT_ITEM};
+        $id = empty($user_input->{CONTROL_EDIT_ITEM}) ? '' : $user_input->{CONTROL_EDIT_ITEM};
 
         if (!empty($id)) {
             $this->set_provider_playlist_id($id);
@@ -730,6 +730,12 @@ class api_default
                     $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                     $changed = true;
                 }
+
+                if ($this->playlist_info->name !== $user_input->{CONTROL_EDIT_NAME}) {
+                    $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
+                    $changed = true;
+                }
+
                 break;
 
             case PROVIDER_TYPE_LOGIN:
@@ -749,9 +755,11 @@ class api_default
                     $changed = true;
                 }
 
-                if ($this->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
-                    $this->setCredential(MACRO_TOKEN, '');
+                if ($this->playlist_info->name !== $user_input->{CONTROL_EDIT_NAME}) {
+                    $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
+                    $changed = true;
                 }
+
                 break;
 
             default:
@@ -766,6 +774,10 @@ class api_default
         $id = $is_new ? $this->get_hash($this->playlist_info) : $id;
         if (empty($id)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
+        }
+
+        if ($this->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
+            $this->setCredential(MACRO_TOKEN, '');
         }
 
         hd_debug_print("ApplySetupUI compiled provider ($id) info: " . raw_json_encode($this->playlist_info), true);
@@ -1097,8 +1109,10 @@ class api_default
 
     protected function save_credentials()
     {
-        $this->plugin->get_playlists()->set($this->playlist_id, $this->playlist_info);
-        $this->plugin->save_parameters(true);
+        if (!empty($this->playlist_id)) {
+            $this->plugin->get_playlists()->set($this->playlist_id, $this->playlist_info);
+            $this->plugin->save_parameters(true);
+        }
     }
 
     /**
