@@ -91,6 +91,7 @@ package = Пакет:
 packages = Пакеты:
 no_packages = Нет пакетов
 recurring = Автопродление:
+package_timed = Повременный:
 ssl = SSL включен:
 disable_adult = Без взрослых каналов:
 time_zone = Часовой пояс

@@ -91,6 +91,7 @@ package = Package:
 packages = Packages:
 no_packages = No packages
 recurring = Auto recurring:
+package_timed = Timed:
 ssl = SSL Enabled:
 disable_adult = Adult channels disabled:
 time_zone = Time zone

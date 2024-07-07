@@ -101,6 +101,7 @@ class api_tvteam extends api_default
                     $packages .= TR::load_string('package') . " " . $package->packageId . PHP_EOL;
                     $packages .= TR::load_string('start_date') . " " . $package->fromDate . PHP_EOL;
                     $packages .= TR::load_string('end_date') . " " . $package->toDate . PHP_EOL;
+                    $packages .= TR::load_string('package_timed') . " " . TR::load_string($package->packageIsTimed ? 'yes' : 'no') . PHP_EOL;
                     $packages .= TR::load_string('money_need') . " " . $package->salePrice . PHP_EOL;
                 }
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);

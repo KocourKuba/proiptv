@@ -91,6 +91,7 @@ package = Paket:
 packages = Pakete:
 no_packages = Keine Pakete
 recurring = Automatisch wiederkehrend:
+package_timed = Zeitlich abgepasst:
 ssl = SSL aktiviert:
 disable_adult = Erwachsenenkanäle deaktiviert:
 time_zone = Zeitzone
