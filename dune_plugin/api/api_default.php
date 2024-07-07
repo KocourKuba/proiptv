@@ -708,13 +708,19 @@ class api_default
 
     /**
      * @param $user_input
-     * @return bool|array
+     * @return bool|array|string
      */
     public function ApplySetupUI($user_input)
     {
         hd_debug_print(null, true);
 
         $id = empty($user_input->{CONTROL_EDIT_ITEM}) ? '' : $user_input->{CONTROL_EDIT_ITEM};
+
+        if (!empty($id)) {
+            hd_debug_print("load info for playlist id: $id", true);
+            $this->playlist_info = $this->plugin->get_playlist_storage_item($id);
+            hd_debug_print("provider info: " . raw_json_encode($this->playlist_info), true);
+        }
 
         if (is_null($this->playlist_info)) {
             hd_debug_print("Create new provider info", true);
@@ -725,6 +731,12 @@ class api_default
         }
 
         $changed = false;
+
+        if ($this->playlist_info->name !== $user_input->{CONTROL_EDIT_NAME}) {
+            $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
+            $changed = true;
+        }
+
         switch ($this->getType()) {
             case PROVIDER_TYPE_PIN:
                 if (empty($user_input->{CONTROL_PASSWORD})) {
@@ -735,12 +747,6 @@ class api_default
                     $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                     $changed = true;
                 }
-
-                if ($this->playlist_info->name !== $user_input->{CONTROL_EDIT_NAME}) {
-                    $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
-                    $changed = true;
-                }
-
                 break;
 
             case PROVIDER_TYPE_LOGIN:
@@ -757,11 +763,6 @@ class api_default
 
                 if ($this->check_control_parameters($user_input,CONTROL_PASSWORD, MACRO_PASSWORD)) {
                     $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                    $changed = true;
-                }
-
-                if ($this->playlist_info->name !== $user_input->{CONTROL_EDIT_NAME}) {
-                    $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
                     $changed = true;
                 }
 

@@ -2654,7 +2654,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param $user_input
-     * @return bool
+     * @return bool|array|string
      */
     public function apply_edit_provider_dlg($user_input)
     {

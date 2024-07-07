@@ -61,6 +61,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_D_BLUE]     = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_INFO, TR::t('plugin_info'));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
+
         return $actions;
     }
 
@@ -530,6 +532,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_INFO_DLG:
+                $provider = $this->plugin->get_current_provider();
+                if (is_null($provider) ||!$provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+                    return null;
+                }
+
                 return $this->plugin->do_show_subscription($this);
 
             case ACTION_ADD_MONEY_DLG:
@@ -591,8 +598,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
 
         $items = array();
-        $res = $this->plugin->tv->load_channels($plugin_cookies);
-        if ($res === 0) {
+        if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
             hd_debug_print("Channels not loaded!");
             return $items;
         }

@@ -101,6 +101,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $edit_list = $parent_media_url->edit_list;
 
+        $only_refresh = false;
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
                 if ($edit_list === self::SCREEN_EDIT_PROVIDERS) {
@@ -201,6 +202,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->set_changes($parent_media_url->save_data);
+                $only_refresh = true;
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -217,6 +219,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->set_changes($parent_media_url->save_data);
+                $only_refresh = true;
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -283,6 +286,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_ITEMS_SORT:
                 $this->get_order($edit_list)->sort_order();
                 $this->set_changes($parent_media_url->save_data);
+                $only_refresh = true;
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -397,6 +401,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->set_changes($parent_media_url->save_data);
+                if (($this->plugin->get_active_playlist_key() === $id) && $this->plugin->tv->reload_channels($plugin_cookies) === 0) {
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+                }
+
+                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $id;
                 $idx = $this->plugin->get_playlists()->get_idx($id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $idx);
 
@@ -419,6 +429,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
                 Control_Factory::add_vgap($defs, 450);
                 return Action_Factory::show_dialog(TR::t('provider_info'), $defs, true, 600);
+        }
+
+        if ($only_refresh) {
+            $post_action = $this->get_folder_range(MediaURL::decode($user_input->parent_media_url),0, $plugin_cookies);
+            return Action_Factory::update_regular_folder($post_action, true, $user_input->sel_ndx);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
