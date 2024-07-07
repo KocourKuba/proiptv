@@ -244,7 +244,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
         }
 
         try {
-            if ($this->is_index_valid('picons')) {
+            if ($this->is_index_valid('positions')) {
                 $total_pos = $this->epg_db->querySingle('SELECT count(*) FROM positions;');
                 if (!empty($total_pos) && (int)$total_pos !== 0) {
                     hd_debug_print("EPG positions info already indexed", true);
@@ -273,7 +273,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $cached_file = $this->get_cached_filename();
             if (!file_exists($cached_file)) {
-                throw new Exception("cache file not exist");
+                throw new Exception("cache file $cached_file not exist");
             }
 
             $file = $this->open_xmltv_file();

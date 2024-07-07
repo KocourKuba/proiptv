@@ -546,7 +546,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $decoded_media_url = MediaURL::decode($media_url);
 
-        return $this->tv->get_tv_info($decoded_media_url, &$plugin_cookies);
+        return $this->tv->get_tv_info($decoded_media_url, $plugin_cookies);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -592,7 +592,7 @@ class Default_Dune_Plugin implements DunePlugin
             throw new Exception('TV is not supported');
         }
 
-        return $this->tv->get_tv_playback_url($channel_id, $archive_tm_sec, $protect_code, &$plugin_cookies);
+        return $this->tv->get_tv_playback_url($channel_id, $archive_tm_sec, $protect_code, $plugin_cookies);
     }
 
     ///////////////////////////////////////////////////////////////////////

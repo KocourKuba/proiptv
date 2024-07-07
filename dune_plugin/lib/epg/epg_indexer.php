@@ -404,7 +404,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     {
         $cached_file = $this->get_cached_filename();
         if (!file_exists($cached_file)) {
-            throw new Exception("cache file not exist");
+            throw new Exception("cache file $cached_file not exist");
         }
 
         $file = fopen($cached_file, 'rb');
