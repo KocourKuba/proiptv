@@ -109,8 +109,6 @@ class api_vidok extends api_default
      */
     public function GetServers()
     {
-        parent::GetServers();
-
         hd_debug_print(null, true);
         $servers = array();
         $data = $this->execApiCommand(API_COMMAND_GET_SERVERS);

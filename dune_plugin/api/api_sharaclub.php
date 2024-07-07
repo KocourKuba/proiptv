@@ -100,8 +100,6 @@ class api_sharaclub extends api_default
      */
     public function GetServers()
     {
-        parent::GetServers();
-
         hd_debug_print(null, true);
 
         $servers = array();

@@ -6,9 +6,9 @@ class api_edem extends api_default
     /**
      * @inheritDoc
      */
-    public function fill_default_info($matches, &$hash)
+    public function fill_default_provider_info($matches, &$hash)
     {
-        $info = parent::fill_default_info($matches, $hash);
+        $info = parent::fill_default_provider_info($matches, $hash);
 
         $ext_vars = explode('|', $matches[2]);
         if (empty($ext_vars)) {
@@ -93,10 +93,6 @@ class api_edem extends api_default
     public function ApplySetupUI($user_input)
     {
         $id = $user_input->{CONTROL_EDIT_ITEM};
-
-        if (!empty($id)) {
-            $this->set_provider_playlist_id($id);
-        }
 
         if (is_null($this->playlist_info)) {
             hd_debug_print("Create new provider info", true);

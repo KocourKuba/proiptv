@@ -543,14 +543,14 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->load_settings(true);
 
-        $provider = $this->plugin->get_current_provider();
-
         $this->plugin->create_screen_views();
 
         // first check if playlist in cache
         if (!$this->plugin->init_playlist()) {
             return 0;
         }
+
+        $provider = $this->plugin->get_current_provider();
 
         $this->plugin->init_epg_manager();
 

@@ -62,7 +62,6 @@ class api_cbilling extends api_default
      */
     public function GetServers()
     {
-        parent::GetServers();
         hd_debug_print(null, true);
 
         $servers = array();

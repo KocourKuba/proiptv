@@ -164,16 +164,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 
-                        if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
-                            return Action_Factory::open_folder(
-                                Starnet_Tv_Groups_Screen::ID,
-                                $this->plugin->create_plugin_title(),
-                                null,
-                                null,
-                                Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error())
-                            );
-                        }
-
                         if ((int)$user_input->mandatory_playback === 1
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
                             hd_debug_print("launch auto play", true);
@@ -191,6 +181,17 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                     hd_debug_print("Auto play: " . $media_url);
                                 }
                             }
+
+                            if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
+                                return Action_Factory::open_folder(
+                                    Starnet_Tv_Groups_Screen::ID,
+                                    $this->plugin->create_plugin_title(),
+                                    null,
+                                    null,
+                                    Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error())
+                                );
+                            }
+
                             return Action_Factory::tv_play($media_url);
                         }
 
@@ -225,17 +226,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             break;
                         }
 
-                        if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
-                            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
-                            return Action_Factory::open_folder(
-                                Starnet_Tv_Groups_Screen::ID,
-                                $this->plugin->create_plugin_title(),
-                                null,
-                                null,
-                                $post_action
-                            );
-                        }
-
                         $media_url = null;
                         if (file_exists('/config/resume_state.properties')) {
                             $resume_state = parse_ini_file('/config/resume_state.properties', 0, INI_SCANNER_RAW);
@@ -248,9 +238,23 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
                                 hd_debug_print("Auto resume: " . $media_url);
                             }
+
+                            if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
+                                $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
+                                return Action_Factory::open_folder(
+                                    Starnet_Tv_Groups_Screen::ID,
+                                    $this->plugin->create_plugin_title(),
+                                    null,
+                                    null,
+                                    $post_action
+                                );
+                            }
+
+                            return Action_Factory::tv_play($media_url);
                         }
 
-                        return Action_Factory::tv_play($media_url);
+                        hd_debug_print("auto resume channel not exist. action: launch open", true);
+                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
 
                     case self::ACTION_UPDATE_EPFS:
                         $this->plugin->init_plugin();

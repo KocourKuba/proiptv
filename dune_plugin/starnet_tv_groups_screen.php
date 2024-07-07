@@ -61,11 +61,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_D_BLUE]     = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_INFO, TR::t('plugin_info'));
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
 
-        $provider = $this->plugin->get_current_provider();
-        if (!is_null($provider) && $provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
-            $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
-        }
-
         return $actions;
     }
 
@@ -347,6 +342,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_DO_EDIT_PROVIDER_EXT:
                 if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
                     $provider = $this->plugin->get_current_provider();
+                    hd_debug_print(raw_json_encode($provider));
                     if (is_null($provider)) {
                         return null;
                     }

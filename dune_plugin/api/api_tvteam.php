@@ -23,8 +23,10 @@ class api_tvteam extends api_default
 
         $params[CURLOPT_CUSTOMREQUEST] = md5($this->getCredential(MACRO_PASSWORD));
         $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN, null, true, $params);
-        hd_debug_print("request_provider_token: " . raw_json_encode($response), true);
-        if (isset($response->data->sessionId)) {
+        hd_debug_print("request provider token response: " . raw_json_encode($response), true);
+        if ($response->status === 0 || !empty($response->error)) {
+            HD::set_last_error("pl_last_error", $response->error);
+        } else if (isset($response->data->sessionId)) {
             $this->setCredential(MACRO_SESSION_ID, $response->data->sessionId);
             $this->setCredential(MACRO_EXPIRE_DATA, time());
             $this->save_credentials();
@@ -44,7 +46,7 @@ class api_tvteam extends api_default
 
         if (!$this->request_provider_token()) {
             hd_debug_print("Failed to get session id");
-            return null;
+            return false;
         }
 
         if (empty($this->account_info) || $force) {
@@ -53,7 +55,7 @@ class api_tvteam extends api_default
                 $this->setCredential(MACRO_TOKEN, $this->account_info->data->userData->userToken);
                 $this->save_credentials();
             }
-            hd_debug_print("get_provider_info: " . raw_json_encode($this->account_info), true);
+            hd_debug_print("get provider info response: " . raw_json_encode($this->account_info), true);
         }
 
         return $this->account_info;
@@ -62,6 +64,7 @@ class api_tvteam extends api_default
     public function GetInfoUI($handler)
     {
         $account_info = $this->get_provider_info();
+
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
 
@@ -115,8 +118,6 @@ class api_tvteam extends api_default
     public function GetServers()
     {
         hd_debug_print(null, true);
-
-        $this->get_provider_info();
 
         if (empty($this->servers)) {
             $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);

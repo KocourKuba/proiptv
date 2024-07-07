@@ -222,6 +222,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_current_provider()
     {
+        hd_debug_print(null, true);
+
         $playlist = $this->get_current_playlist();
         if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
             hd_debug_print("Current playlist is not a provider");
@@ -235,22 +237,14 @@ class Default_Dune_Plugin implements DunePlugin
             } else if (!$provider->getEnable()) {
                 hd_debug_print("provider " . $provider->getId() . " is disabled");
             } else {
+                $this->cur_provider = $provider;
                 $active_playlist = $this->get_active_playlist_key();
                 $provider->set_provider_playlist_id($active_playlist);
-                $this->set_current_provider($provider);
                 hd_debug_print("Using provider " . $provider->getId() . " (" . $provider->getName() . ") - playlist id: $active_playlist");
             }
         }
 
         return $this->cur_provider;
-    }
-
-    /**
-     * @param api_default|null $cur_provider
-     */
-    public function set_current_provider($cur_provider)
-    {
-        $this->cur_provider = $cur_provider;
     }
 
     /**
@@ -1600,14 +1594,12 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $this->epg_manager = null;
         $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
-        if ($engine === ENGINE_JSON) {
-            $provider = $this->get_current_provider();
-            if (!is_null($provider)) {
-                $preset = $provider->getConfigValue(EPG_JSON_PRESET);
-                if (!empty($preset)) {
-                    hd_debug_print("Using 'Epg_Manager_Json' cache engine");
-                    $this->epg_manager = new Epg_Manager_Json($this);
-                }
+        $provider = $this->get_current_provider();
+        if (($engine === ENGINE_JSON) && !is_null($provider)) {
+            $preset = $provider->getConfigValue(EPG_JSON_PRESET);
+            if (!empty($preset)) {
+                hd_debug_print("Using 'Epg_Manager_Json' cache engine");
+                $this->epg_manager = new Epg_Manager_Json($this);
             }
         }
 
@@ -1615,6 +1607,7 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
             $this->epg_manager = new Epg_Manager_Xmltv($this);
         }
+
         $this->epg_manager->init_indexer($this->get_cache_dir(), $this->get_active_xmltv_source());
     }
 
@@ -1682,20 +1675,17 @@ class Default_Dune_Plugin implements DunePlugin
                 if ($res === false) {
                     $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                     $exception_msg = TR::load_string('err_load_playlist') . "\n\n$logfile";
-                    HD::set_last_error("pl_last_error", $exception_msg);
                     throw new Exception($exception_msg);
                 }
 
                 if (!file_exists($tmp_file)) {
                     $exception_msg = TR::load_string('err_load_playlist') . "\n\n$tmp_file";
-                    HD::set_last_error("pl_last_error", $exception_msg);
                     throw new Exception($exception_msg);
                 }
 
                 $contents = file_get_contents($tmp_file);
                 if (strpos($contents, '#EXTM3U') === false) {
                     $exception_msg = TR::load_string('err_load_playlist') . "\n\n$contents";
-                    HD::set_last_error("pl_last_error", $exception_msg);
                     throw new Exception($exception_msg);
                 }
 
@@ -1715,16 +1705,13 @@ class Default_Dune_Plugin implements DunePlugin
             if ($this->tv->get_m3u_parser()->getEntriesCount() === 0) {
                 if (!$this->tv->get_m3u_parser()->parseInMemory()) {
                     $exception_msg = TR::load_string('err_load_playlist');
-                    HD::set_last_error("pl_last_error", $exception_msg);
                     throw new Exception($exception_msg);
                 }
 
                 $count = $this->tv->get_m3u_parser()->getEntriesCount();
                 if ($count === 0) {
                     $contents = @file_get_contents($tmp_file);
-                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$contents";
-                    HD::set_last_error("pl_last_error", $exception_msg);
-                    hd_debug_print("Empty playlist");
+                    $exception_msg = TR::load_string('err_load_playlist') . " Empty playlist!\n\n$contents";
                     $this->clear_playlist_cache();
                     throw new Exception($exception_msg);
                 }
@@ -1733,6 +1720,13 @@ class Default_Dune_Plugin implements DunePlugin
                 HD::ShowMemoryUsage();
             }
         } catch (Exception $ex) {
+            $err = HD::get_last_error();
+            if (!empty($err)) {
+                $err .= "\n\n" . $ex->getMessage();
+            } else {
+                $err = $ex->getMessage();
+            }
+            HD::set_last_error("pl_last_error", $err);
             print_backtrace_exception($ex);
             if (isset($playlist->type) && $playlist->type !== PARAM_FILE && file_exists($tmp_file)) {
                 unlink($tmp_file);
@@ -1881,8 +1875,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_active_playlist_key($id)
     {
+        hd_debug_print(null, true);
+
         $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
-        $this->set_current_provider(null);
+        $this->cur_provider = null;
     }
 
     /**

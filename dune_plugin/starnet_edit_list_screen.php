@@ -1027,7 +1027,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         continue;
                     }
 
-                    $playlist = $provider->fill_default_info($m, $hash);
+                    $playlist = $provider->fill_default_provider_info($m, $hash);
                     if (!$playlist) continue;
                 } else {
                     hd_debug_print("can't recognize: $line");

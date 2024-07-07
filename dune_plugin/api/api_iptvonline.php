@@ -96,9 +96,9 @@ class api_iptvonline extends api_default
     /**
      * @inheritDoc
      */
-    public function fill_default_info($matches, &$hash)
+    public function fill_default_provider_info($matches, &$hash)
     {
-        $info = parent::fill_default_info($matches, $hash);
+        $info = parent::fill_default_provider_info($matches, $hash);
 
         $info->params[MACRO_TOKEN] = '';
         $info->params[MACRO_REFRESH_TOKEN] = '';
@@ -162,8 +162,6 @@ class api_iptvonline extends api_default
      */
     public function GetServers()
     {
-        parent::GetServers();
-
         hd_debug_print(null, true);
 
         if (empty($this->device)) {
@@ -212,8 +210,6 @@ class api_iptvonline extends api_default
     public function GetPlaylists()
     {
         hd_debug_print(null, true);
-
-        $this->get_provider_info();
 
         if (empty($this->device)) {
             $data = $this->execApiCommand(API_COMMAND_GET_DEVICE);

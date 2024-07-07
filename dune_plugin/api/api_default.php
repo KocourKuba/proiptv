@@ -308,10 +308,16 @@ class api_default
 
     /**
      * @param string $playlist_id
+     * @return void
      */
     public function set_provider_playlist_id($playlist_id)
     {
         hd_debug_print(null, true);
+        hd_debug_print("playlist id: $playlist_id", true);
+
+        if (empty($playlist_id)) {
+            return;
+        }
 
         $this->playlist_id = $playlist_id;
         $item = $this->plugin->get_playlist_storage_item($playlist_id);
@@ -320,6 +326,11 @@ class api_default
             hd_debug_print("provider info: ($playlist_id) " . json_encode($this->playlist_info), true);
         } else {
             hd_debug_print("incorrect provider info: $playlist_id");
+        }
+
+        if ($this->get_provider_info() === false) {
+            hd_debug_print("Can't get provider info!");
+            return;
         }
 
         // set credentials values if it not set
@@ -374,17 +385,12 @@ class api_default
         }
     }
 
-    public function get_provider_playlist()
-    {
-        return $this->playlist_info;
-    }
-
     /**
      * @param array $matches
      * @param string $hash
      * @return bool|Named_Storage
      */
-    public function fill_default_info($matches, &$hash)
+    public function fill_default_provider_info($matches, &$hash)
     {
         $info = new Named_Storage();
         $info->type = PARAM_PROVIDER;
@@ -505,6 +511,10 @@ class api_default
     {
         hd_debug_print(null, true);
 
+        if ($this->get_provider_info() === false) {
+            return false;
+        }
+
         $playlists = $this->GetPlaylists();
         if (!empty($playlists)) {
             $idx = $this->getCredential(MACRO_PLAYLIST_ID);
@@ -530,7 +540,8 @@ class api_default
         hd_debug_print(null, true);
 
         if (!$this->request_provider_token()) {
-            return null;
+            hd_debug_print("Can't get provider token");
+            return false;
         }
 
         if ((empty($this->account_info) || $force) && $this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
@@ -634,8 +645,6 @@ class api_default
      */
     public function GetInfoUI($handler)
     {
-        hd_debug_print(null, true);
-        $this->get_provider_info();
         return null;
     }
 
@@ -706,10 +715,6 @@ class api_default
         hd_debug_print(null, true);
 
         $id = empty($user_input->{CONTROL_EDIT_ITEM}) ? '' : $user_input->{CONTROL_EDIT_ITEM};
-
-        if (!empty($id)) {
-            $this->set_provider_playlist_id($id);
-        }
 
         if (is_null($this->playlist_info)) {
             hd_debug_print("Create new provider info", true);
@@ -799,6 +804,10 @@ class api_default
         hd_debug_print(null, true);
 
         $defs = array();
+
+        if ($this->get_provider_info() === false) {
+            return $defs;
+        }
 
         $streams = $this->GetStreams();
         if (!empty($streams) && count($streams) > 1) {
@@ -1000,7 +1009,6 @@ class api_default
     public function GetServers()
     {
         hd_debug_print(null, true);
-        $this->get_provider_info();
         return $this->getConfigValue(CONFIG_SERVERS);
     }
 
@@ -1027,8 +1035,8 @@ class api_default
     public function GetPlaylists()
     {
         hd_debug_print(null, true);
-        $this->get_provider_info();
-        return $this->getConfigValue(CONFIG_PLAYLISTS);
+
+        return $this->getConfigValue(CONFIG_SERVERS);
     }
 
     /**
