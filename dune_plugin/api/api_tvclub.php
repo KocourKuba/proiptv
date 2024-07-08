@@ -125,19 +125,22 @@ class api_tvclub extends api_default
     public function GetServers()
     {
         hd_debug_print(null, true);
-        $servers = array();
-        $data = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-        if (isset($data->servers)) {
-            foreach ($data->servers as $server) {
-                $servers[(int)$server->id] = $server->name;
-            }
 
-            if (isset($this->account_info->account->settings->server_id)) {
-                $this->setCredential(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
+        if (empty($this->servers)) {
+            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            hd_debug_print("GetServers: " . raw_json_encode($response), true);
+            if (isset($response->servers)) {
+                foreach ($response->servers as $server) {
+                    $this->servers[(int)$server->id] = $server->name;
+                }
+
+                if (isset($this->account_info->account->settings->server_id)) {
+                    $this->setCredential(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
+                }
             }
         }
 
-        return $servers;
+        return $this->servers;
     }
 
     /**
@@ -150,6 +153,7 @@ class api_tvclub extends api_default
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->settings->current->server->id)) {
+            $this->servers = array();
             $this->account_info = null;
             return true;
         }

@@ -119,6 +119,41 @@ class api_default
      */
     protected $plugin;
 
+    /**
+     * @var array
+     */
+    protected $servers = array();
+
+    /**
+     * @var array
+     */
+    protected $domains = array();
+
+    /**
+     * @var array
+     */
+    protected $devices = array();
+
+    /**
+     * @var array
+     */
+    protected $streams = array();
+
+    /**
+     * @var array
+     */
+    protected $qualities = array();
+
+    /**
+     * @var array
+     */
+    protected $packages = array();
+
+    /**
+     * @var array
+     */
+    protected $playlists = array();
+
     public function __construct(DunePlugin $plugin)
     {
         $this->plugin = $plugin;
@@ -960,18 +995,12 @@ class api_default
     public function GetStreams()
     {
         hd_debug_print(null, true);
-        return $this->getConfigValue(CONFIG_STREAMS);
-    }
 
-    /**
-     * set streams
-     * @param array|null $streams
-     * @return void
-     */
-    public function SetStreams($streams)
-    {
-        hd_debug_print(null, true);
-        $this->setCredential(CONFIG_STREAMS, $streams);
+        if (empty($this->streams)) {
+            $this->streams = $this->getConfigValue(CONFIG_STREAMS);
+        }
+
+        return $this->streams;
     }
 
     /**
@@ -992,7 +1021,12 @@ class api_default
     public function GetServers()
     {
         hd_debug_print(null, true);
-        return $this->getConfigValue(CONFIG_SERVERS);
+
+        if (empty($this->servers)) {
+            $this->servers = $this->getConfigValue(CONFIG_SERVERS);
+        }
+
+        return $this->servers;
     }
 
     /**
@@ -1019,7 +1053,11 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        return $this->getConfigValue(CONFIG_SERVERS);
+        if (empty($this->playlists)) {
+            $this->playlists = $this->getConfigValue(CONFIG_PLAYLISTS);
+        }
+
+        return $this->playlists;
     }
 
     /**
@@ -1031,6 +1069,7 @@ class api_default
     {
         hd_debug_print(null, true);
         hd_debug_print("SetPlaylist: $id");
+
         $this->setCredential(MACRO_PLAYLIST_ID, $id);
     }
 
@@ -1041,7 +1080,12 @@ class api_default
     public function GetDomains()
     {
         hd_debug_print(null, true);
-        return $this->getConfigValue(CONFIG_DOMAINS);
+
+        if (empty($this->domains)) {
+            $this->domains = $this->getConfigValue(CONFIG_DOMAINS);
+        }
+
+        return $this->domains;
     }
 
     /**
@@ -1051,7 +1095,12 @@ class api_default
     public function GetDevices()
     {
         hd_debug_print(null, true);
-        return $this->getConfigValue(CONFIG_DEVICES);
+
+        if (empty($this->devices)) {
+            $this->devices = $this->getConfigValue(CONFIG_DEVICES);
+        }
+
+        return $this->devices;
     }
 
     /**
@@ -1073,7 +1122,12 @@ class api_default
     public function GetQualities()
     {
         hd_debug_print(null, true);
-        return $this->getConfigValue(CONFIG_QUALITIES);
+
+        if (empty($this->qualities)) {
+            $this->qualities = $this->getConfigValue(CONFIG_QUALITIES);
+        }
+
+        return $this->qualities;
     }
 
     /**

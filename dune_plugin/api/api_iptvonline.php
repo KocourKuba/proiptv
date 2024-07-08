@@ -191,17 +191,21 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->device)) {
-            $data = $this->execApiCommand(API_COMMAND_GET_DEVICE);
-            if (isset($data->status) && $data->status === 200) {
-                $this->device = $data;
+            $response = $this->execApiCommand(API_COMMAND_GET_DEVICE);
+            hd_debug_print("GetServers: " . raw_json_encode($response), true);
+            if (isset($response->status) && $response->status === 200) {
+                $this->device = $response;
             }
         }
 
-        $servers = $this->collect_servers($selected);
-        if ($selected !== $this->getCredential(MACRO_SERVER_ID)) {
-            $this->setCredential(MACRO_SERVER_ID, $selected);
+        if (empty($this->servers)) {
+            $this->collect_servers($selected);
+            if ($selected !== $this->getCredential(MACRO_SERVER_ID)) {
+                $this->setCredential(MACRO_SERVER_ID, $selected);
+            }
         }
-        return $servers;
+
+        return $this->servers;
     }
 
     /**
@@ -244,12 +248,14 @@ class api_iptvonline extends api_default
             }
         }
 
-        $playlists = $this->collect_playlists($selected);
-        if ($selected !== $this->getCredential(MACRO_PLAYLIST_ID)) {
-            $this->setCredential(MACRO_PLAYLIST_ID, $selected);
+        if (empty($this->playlists)) {
+            $this->collect_playlists($selected);
+            if ($selected !== $this->getCredential(MACRO_PLAYLIST_ID)) {
+                $this->setCredential(MACRO_PLAYLIST_ID, $selected);
+            }
         }
 
-        return $playlists;
+        return $this->playlists;
     }
 
     /**
@@ -284,17 +290,18 @@ class api_iptvonline extends api_default
      */
     protected function collect_servers(&$selected = "-1")
     {
-        $servers = array();
+        $this->servers = array();
+
         if (isset($this->device->device->settings->server_location->value)) {
             foreach ($this->device->device->settings->server_location->value as $server) {
-                $servers[(string)$server->id] = $server->label;
+                $this->servers[(string)$server->id] = $server->label;
                 if ($server->selected) {
                     $selected = (string)$server->id;
                 }
             }
         }
 
-        return $servers;
+        return $this->servers;
     }
 
     /**
@@ -304,17 +311,18 @@ class api_iptvonline extends api_default
      */
     protected function collect_playlists(&$selected = "-1")
     {
-        $playlists = array();
+        $this->playlists = array();
+
         if (isset($this->device->device->settings->user_playlists->value)) {
             foreach ($this->device->device->settings->user_playlists->value as $playlist) {
                 $idx = (string)$playlist->id;
-                $playlists[$idx]['name'] = $playlist->label;
+                $this->playlists[$idx]['name'] = $playlist->label;
                 if ($playlist->selected) {
                     $selected = $idx;
                 }
             }
         }
 
-        return $playlists;
+        return $this->playlists;
     }
 }

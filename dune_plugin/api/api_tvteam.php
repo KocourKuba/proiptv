@@ -5,9 +5,6 @@ class api_tvteam extends api_default
 {
     const SESSION_FILE = "%s_session_id";
 
-    /** @var array  */
-    protected $servers = array();
-
     /**
      * @inheritDoc
      */
@@ -130,6 +127,9 @@ class api_tvteam extends api_default
             }
 
             if (isset($info->groupId)) {
+                if (empty($this->servers)) {
+                    $this->GetServers();
+                }
                 $name = isset($this->servers[$info->groupId]) ? $this->servers[$info->groupId] : 'Not set';
                 Control_Factory::add_label($defs, TR::t('server'), $name, -15);
             }
@@ -138,18 +138,22 @@ class api_tvteam extends api_default
                 Control_Factory::add_label($defs, TR::t('disable_adult'), $info->showPorno ? TR::t('no') : TR::t('yes'), -15);
             }
 
-            $response = $this->execApiCommand(API_COMMAND_GET_PACKAGES);
-            if (isset($response->data->userPackagesList)) {
-                $packages = '';
-                foreach ($response->data->userPackagesList as $package) {
-                    $packages .= TR::load_string('package') . " " . $package->packageId . PHP_EOL;
-                    $packages .= TR::load_string('start_date') . " " . $package->fromDate . PHP_EOL;
-                    $packages .= TR::load_string('end_date') . " " . $package->toDate . PHP_EOL;
-                    $packages .= TR::load_string('package_timed') . " " . TR::load_string($package->packageIsTimed ? 'yes' : 'no') . PHP_EOL;
-                    $packages .= TR::load_string('money_need') . " " . $package->salePrice . PHP_EOL;
+            if (empty($this->packages)) {
+                $response = $this->execApiCommand(API_COMMAND_GET_PACKAGES);
+                if (isset($response->data->userPackagesList)) {
+                    $this->packages = $response->data->userPackagesList;
                 }
-                Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }
+
+            $packages = '';
+            foreach ($this->packages as $package) {
+                $packages .= TR::load_string('package') . " " . $package->packageId . PHP_EOL;
+                $packages .= TR::load_string('start_date') . " " . $package->fromDate . PHP_EOL;
+                $packages .= TR::load_string('end_date') . " " . $package->toDate . PHP_EOL;
+                $packages .= TR::load_string('package_timed') . " " . TR::load_string($package->packageIsTimed ? 'yes' : 'no') . PHP_EOL;
+                $packages .= TR::load_string('money_need') . " " . $package->salePrice . PHP_EOL;
+            }
+            Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
         }
 
         Control_Factory::add_vgap($defs, 20);
@@ -169,7 +173,7 @@ class api_tvteam extends api_default
             hd_debug_print("GetServers: " . raw_json_encode($response), true);
             if (((int)$response->status === 1) && isset($response->status, $response->data->serversGroupsList)) {
                 foreach ($response->data->serversGroupsList as $server) {
-                    $this->servers[(int)$server->groupId] = "$server->portalDomainName ($server->streamDomainName)";
+                    $this->servers[$server->groupId] = "$server->portalDomainName ($server->streamDomainName)";
                 }
             }
 
@@ -193,6 +197,7 @@ class api_tvteam extends api_default
         hd_debug_print("SetServer: " . raw_json_encode($response), true);
         if (isset($response->status) && (int)$response->status === 1) {
             $this->account_info = null;
+            $this->servers = array();
             return true;
         }
 

@@ -64,19 +64,21 @@ class api_cbilling extends api_default
     {
         hd_debug_print(null, true);
 
-        $servers = array();
-        $data = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-        if (isset($data->data)) {
-            foreach ($data->data as $server) {
-                $servers[$server->name] = $server->country;
-            }
+        if (empty($this->servers)) {
+            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            hd_debug_print("GetServers: " . raw_json_encode($response), true);
+            if (isset($response->data)) {
+                foreach ($response->data as $server) {
+                    $this->servers[$server->name] = $server->country;
+                }
 
-            $cur_server = $this->getCredential(MACRO_SERVER_ID);
-            if (empty($cur_server) && isset($this->account_info->data->server)) {
-                $this->setCredential(MACRO_SERVER_ID, $this->account_info->data->server);
+                $cur_server = $this->getCredential(MACRO_SERVER_ID);
+                if (empty($cur_server) && isset($this->account_info->data->server)) {
+                    $this->setCredential(MACRO_SERVER_ID, $this->account_info->data->server);
+                }
             }
         }
 
-        return $servers;
+        return $this->servers;
     }
 }

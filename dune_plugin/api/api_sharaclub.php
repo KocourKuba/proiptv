@@ -102,17 +102,19 @@ class api_sharaclub extends api_default
     {
         hd_debug_print(null, true);
 
-        $servers = array();
-        $data = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-        if (isset($data->status)) {
-            foreach ($data->allow_nums as $server) {
-                $servers[(int)$server->id] = $server->name;
-            }
+        if (empty($this->servers)) {
+            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            hd_debug_print("GetServers: " . raw_json_encode($response), true);
+            if (isset($response->status)) {
+                foreach ($response->allow_nums as $server) {
+                    $this->servers[(int)$server->id] = $server->name;
+                }
 
-            $this->setCredential(MACRO_SERVER_ID, (int)$data->current);
+                $this->setCredential(MACRO_SERVER_ID, (int)$response->current);
+            }
         }
 
-        return $servers;
+        return $this->servers;
     }
 
     /**
@@ -125,11 +127,11 @@ class api_sharaclub extends api_default
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->status) && (int)$response->status === 1) {
+            $this->servers = array();
             return true;
         }
 
         $this->setCredential(MACRO_SERVER_ID, $old);
-
         $error_msg = '';
         return false;
     }
