@@ -381,13 +381,15 @@ class M3uParser extends Json_Serializer
     {
         if (is_null($this->xmltv_sources)) {
             $this->xmltv_sources = new Ordered_Array();
-            foreach ($this->m3u_info as $entry) {
-                $arr = $entry->getEpgSources();
-                foreach ($arr as $value) {
-                    $urls = explode(',', $value);
-                    foreach ($urls as $url) {
-                        if (!empty($url) && preg_match(HTTP_PATTERN, $url)) {
-                            $this->xmltv_sources->add_item($url);
+            if (is_array($this->m3u_info)) {
+                foreach ($this->m3u_info as $entry) {
+                    $arr = $entry->getEpgSources();
+                    foreach ($arr as $value) {
+                        $urls = explode(',', $value);
+                        foreach ($urls as $url) {
+                            if (!empty($url) && preg_match(HTTP_PATTERN, $url)) {
+                                $this->xmltv_sources->add_item($url);
+                            }
                         }
                     }
                 }

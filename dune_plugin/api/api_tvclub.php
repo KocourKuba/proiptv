@@ -55,24 +55,14 @@ require_once 'api_default.php';
 class api_tvclub extends api_default
 {
     /**
-     * @param bool $force
-     * @return bool
+     * @inheritDoc
      */
-    public function request_provider_token($force = false)
+    public function replace_macros($string)
     {
-        hd_debug_print(null, true);
-        hd_debug_print("force request provider token: " . var_export($force, true));
+        $token = md5($this->getCredential(MACRO_LOGIN) . md5($this->getCredential(MACRO_PASSWORD)));
+        $string = str_replace(MACRO_SESSION_ID, $token, $string);
 
-        $token = $this->getCredential(MACRO_TOKEN);
-        if (!$force && !empty($token)) {
-            hd_debug_print("request not required", true);
-            return true;
-        }
-
-        $token = md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD)));
-        $this->setCredential(MACRO_TOKEN, $token);
-
-        return true;
+        return parent::replace_macros($string);
     }
 
     public function GetInfoUI($handler)

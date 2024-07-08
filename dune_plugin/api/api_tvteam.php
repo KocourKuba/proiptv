@@ -3,23 +3,37 @@ require_once 'api_default.php';
 
 class api_tvteam extends api_default
 {
+    const SESSION_FILE = "%s_session_id";
+
     /** @var array  */
     protected $servers = array();
 
     /**
-     * @param bool $force
-     * @return bool
+     * @inheritDoc
      */
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $session = $this->getCredential(MACRO_SESSION_ID);
-        $expired = time() > (int)$this->getCredential(MACRO_EXPIRE_DATA) + 86400;
-        if (!$force && !empty($session) && !$expired) {
+        $session_file = get_temp_path(sprintf(self::SESSION_FILE, $this->get_provider_playlist_id()));
+        $expired = true;
+        if (file_exists($session_file)) {
+            $session_id = file_get_contents($session_file);
+            $expired = time() > filemtime($session_file);
+            unlink($session_file);
+        }
+
+        if (!$force && !empty($session_id) && !$expired) {
             hd_debug_print("request not required", true);
             return true;
+        }
+
+        // remove old settings
+        $res = $this->removeCredential(MACRO_SESSION_ID);
+        $res |= $this->removeCredential(MACRO_EXPIRE_DATA);
+        if ($res) {
+            $this->save_credentials();
         }
 
         $error_msg = HD::check_last_error('rq_last_error');
@@ -30,17 +44,16 @@ class api_tvteam extends api_default
         } else {
             HD::set_last_error("pl_last_error", null);
             HD::set_last_error("rq_last_error", null);
-            $params[CURLOPT_CUSTOMREQUEST] = md5($this->getCredential(MACRO_PASSWORD));
-            $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN, null, true, $params);
+            $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
             hd_debug_print("request provider token response: " . raw_json_encode($response), true);
             if ($response->status === 0 || !empty($response->error)) {
                 HD::set_last_error("pl_last_error", $response->error);
                 HD::set_last_error("rq_last_error", $response->error);
             } else if (isset($response->data->sessionId)) {
-                $this->setCredential(MACRO_SESSION_ID, $response->data->sessionId);
-                $this->setCredential(MACRO_EXPIRE_DATA, time());
-                $this->save_credentials();
+                file_put_contents($session_file, $response->data->sessionId);
+                touch($session_file, time() + 86400);
                 HD::set_last_error("rq_last_error", null);
+
                 return true;
             }
         }
@@ -69,6 +82,27 @@ class api_tvteam extends api_default
         return $this->account_info;
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function replace_macros($string)
+    {
+        $token = $this->getCredential(MACRO_TOKEN);
+        $hash_password = md5($this->getCredential(MACRO_PASSWORD));
+        $session_file = get_temp_path(sprintf(self::SESSION_FILE, $this->get_provider_playlist_id()));
+        $session_id = file_exists($session_file) ? file_get_contents($session_file) : '';
+
+        $string = str_replace(
+            array(MACRO_SESSION_ID, MACRO_HASH_PASSWORD, MACRO_TOKEN),
+            array($session_id, $hash_password, $token),
+            $string);
+
+        return parent::replace_macros($string);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function GetInfoUI($handler)
     {
         $account_info = $this->get_provider_info();

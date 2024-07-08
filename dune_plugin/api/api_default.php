@@ -412,8 +412,6 @@ class api_default
                 break;
 
             case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
                 hd_debug_print("set login: $vars[0]", true);
                 $info->params[MACRO_LOGIN] = $vars[0];
                 hd_debug_print("set password: $vars[1]", true);
@@ -462,7 +460,7 @@ class api_default
      */
     public function removeCredential($name)
     {
-        if ($this->playlist_info->params[$name]) {
+        if (isset($this->playlist_info->params[$name])) {
            unset($this->playlist_info->params[$name]);
            return true;
         }
@@ -495,27 +493,7 @@ class api_default
      */
     public function request_provider_token($force = false)
     {
-        hd_debug_print(null, true);
-        hd_debug_print("force request provider token: " . var_export($force, true));
-
-        if (!$this->hasApiCommand(API_COMMAND_REQUEST_TOKEN)) {
-            return true;
-        }
-
-        $token = $this->getCredential(MACRO_TOKEN);
-        if (!empty($token) && !$force) {
-            return true;
-        }
-
-        $token_name = $this->getConfigValue(CONFIG_TOKEN_RESPONSE);
-        $data = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
-        if (isset($data->{$token_name})) {
-            $this->setCredential(MACRO_TOKEN, $data->{$token_name});
-            $this->save_credentials();
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -574,7 +552,6 @@ class api_default
     public function getApiCommand($command)
     {
         hd_debug_print(null, true);
-        hd_debug_print("API Command: $command", true);
 
         return $this->replace_macros($this->getRawApiCommand($command));
     }
@@ -586,10 +563,8 @@ class api_default
     public function getRawApiCommand($command)
     {
         hd_debug_print(null, true);
-        if ($this->hasApiCommand($command))
-            return $this->api_commands[$command];
 
-        return '';
+        return $this->hasApiCommand($command) ? $this->api_commands[$command] : '';
     }
 
     /**
@@ -614,6 +589,7 @@ class api_default
             $command_url .= $curl_options[CURLOPT_CUSTOMREQUEST];
             unset($curl_options[CURLOPT_CUSTOMREQUEST]);
         }
+
         hd_debug_print("ApiCommandUrl: $command_url", true);
 
         $config_headers = $this->getConfigValue(CONFIG_HEADERS);
@@ -688,8 +664,6 @@ class api_default
                 break;
 
             case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
                 Control_Factory::add_text_field($defs, $handler, null,
                     CONTROL_LOGIN, TR::t('login'), $this->getCredential(MACRO_LOGIN),
                     false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
@@ -759,8 +733,6 @@ class api_default
                 break;
 
             case PROVIDER_TYPE_LOGIN:
-            case PROVIDER_TYPE_LOGIN_TOKEN:
-            case PROVIDER_TYPE_LOGIN_STOKEN:
                 if (empty($user_input->{CONTROL_LOGIN}) || empty($user_input->{CONTROL_PASSWORD})) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
@@ -789,10 +761,6 @@ class api_default
         $id = $is_new ? $this->get_hash($this->playlist_info) : $id;
         if (empty($id)) {
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
-        }
-
-        if ($this->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
-            $this->setCredential(MACRO_TOKEN, '');
         }
 
         hd_debug_print("ApplySetupUI compiled provider ($id) info: " . raw_json_encode($this->playlist_info), true);
@@ -1150,7 +1118,6 @@ class api_default
             MACRO_STREAM_ID,
             MACRO_SUBDOMAIN,
             MACRO_OTTKEY,
-            MACRO_TOKEN,
             MACRO_SESSION_ID,
             MACRO_DOMAIN_ID,
             MACRO_DEVICE_ID,

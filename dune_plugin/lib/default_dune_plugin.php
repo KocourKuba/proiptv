@@ -286,13 +286,7 @@ class Default_Dune_Plugin implements DunePlugin
             $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
         }
 
-        if (strpos($epg_url, MACRO_TOKEN) !== false) {
-            $token = $provider->getCredential(MACRO_TOKEN);
-            hd_debug_print("using token: $token", true);
-            $epg_url = str_replace(MACRO_TOKEN, $token, $epg_url);
-        }
-
-        return $epg_url;
+        return $provider->replace_macros($epg_url);
     }
 
     /**

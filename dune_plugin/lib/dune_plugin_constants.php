@@ -206,6 +206,7 @@ const MACRO_SUBDOMAIN = '{SUBDOMAIN}';
 const MACRO_OTTKEY = '{OTTKEY}';
 const MACRO_TOKEN = '{TOKEN}';
 const MACRO_SESSION_ID = '{SESSION_ID}';
+const MACRO_HASH_PASSWORD = '{HASH_PASSWORD}';
 const MACRO_REFRESH_TOKEN = '{REFRESH_TOKEN}';
 const MACRO_DOMAIN_ID = '{DOMAIN_ID}';
 const MACRO_DEVICE_ID = '{DEVICE_ID}';
@@ -224,8 +225,6 @@ const MACRO_EXPIRE_DATA = '{EXPIRE_DATA}';
 // provider type access
 const PROVIDER_TYPE_PIN = 'pin';
 const PROVIDER_TYPE_LOGIN = 'login';
-const PROVIDER_TYPE_LOGIN_TOKEN = 'login-token';
-const PROVIDER_TYPE_LOGIN_STOKEN = 'login-stoken';
 const PROVIDER_EXT_PARAMS = 'ext_params';
 
 const EPG_SOURCES_SEPARATOR_TAG = 'special_source_separator_tag';
@@ -271,7 +270,6 @@ const CONFIG_PLAYLIST_CATCHUP = 'playlist_catchup';
 const CONFIG_ID_PARSER = 'id_parser';
 const CONFIG_ID_MAP = 'id_map';
 const CONFIG_IGNORE_GROUPS = 'ignore_groups';
-const CONFIG_TOKEN_RESPONSE = 'token_response';
 const CONFIG_HEADERS = 'headers';
 const CONFIG_XMLTV_SOURCES = 'xmltv_sources';
 const CONFIG_SUBDOMAIN = 'domain';
