@@ -165,9 +165,11 @@ class vod_sharavoz extends vod_standard
 
         if ($stream_type === xtream_codes_api::VOD) {
             $id = $stream_id;
+            /*
             if (!empty($item->info->container_extension)) {
                 $id .= ".{$item->info->container_extension}";
             }
+            */
             $url = $this->xtream->get_stream_url($id);
             hd_debug_print("movie playback_url: $url");
             $movie->add_series_data($movie_id, $item->info->name, '', $url);
