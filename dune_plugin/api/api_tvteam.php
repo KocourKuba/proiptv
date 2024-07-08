@@ -21,7 +21,9 @@ class api_tvteam extends api_default
         if (file_exists($session_file)) {
             $session_id = file_get_contents($session_file);
             $expired = time() > filemtime($session_file);
-            unlink($session_file);
+            if ($expired) {
+                unlink($session_file);
+            }
         }
 
         if (!$force && !empty($session_id) && !$expired) {
@@ -87,10 +89,10 @@ class api_tvteam extends api_default
      */
     public function replace_macros($string)
     {
-        $token = $this->getCredential(MACRO_TOKEN);
         $hash_password = md5($this->getCredential(MACRO_PASSWORD));
         $session_file = get_temp_path(sprintf(self::SESSION_FILE, $this->get_provider_playlist_id()));
         $session_id = file_exists($session_file) ? file_get_contents($session_file) : '';
+        $token = $this->getCredential(MACRO_TOKEN);
 
         $string = str_replace(
             array(MACRO_SESSION_ID, MACRO_HASH_PASSWORD, MACRO_TOKEN),

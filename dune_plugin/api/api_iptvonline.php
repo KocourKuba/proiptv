@@ -24,7 +24,9 @@ class api_iptvonline extends api_default
         if (file_exists($token_file)) {
             $token = file_get_contents($token_file);
             $expired = time() > filemtime($token_file);
-            unlink($token_file);
+            if ($expired) {
+                unlink($token_file);
+            }
         }
 
         if (!$force && !empty($token) && !$expired) {

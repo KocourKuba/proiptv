@@ -18,7 +18,9 @@ class api_1ott extends api_default
         if (file_exists($session_file)) {
             $session_id = file_get_contents($session_file);
             $expired = time() > filemtime($session_file);
-            unlink($session_file);
+            if ($expired) {
+                unlink($session_file);
+            }
         }
 
         if (!$force && !empty($session_id) && !$expired) {
