@@ -1,10 +1,14 @@
 ﻿### Upcoming version
+
+### Version 4.1.770
 - Reducing the number of authorization requests for TV Team, so that the provider does not block when entering incorrect access data.
 - More information is provided for playlist download or token request errors.
 - Additional fields in the TV Team account information
 - Changed the format of some requests in the plugin configuration
+- Most requests to servers of IPTV providers for information/list of servers, etc., are now cached.
 - Fixed a bug with checking the position database for XMLTV for Dune HD on Android.
 - Tokens/session IDs are no longer saved in the settings, in order to avoid problems with transferring to another Dune HD
+- Fixed a bug with setting the status of viewed/unviewed in the VOD
 
 ### Version 4.0.758
 - Fixed a bug with duplicate provider when creating a new playlist
