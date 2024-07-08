@@ -221,7 +221,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $this->plugin->save_history(true);
 
                 return Action_Factory::invalidate_folders(array(
-                        self::get_media_url_string($selected_media_url->movie_id, $selected_media_url->season_id),
+                        $user_input->parent_media_url,
                         Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID)
                     )
                 );
