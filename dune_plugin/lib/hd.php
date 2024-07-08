@@ -1046,6 +1046,20 @@ class HD
      * @param string $source
      * @return string
      */
+    public static function check_last_error($source = "pl_last_error")
+    {
+        $error_file = get_temp_path($source);
+        $msg = '';
+        if (file_exists($error_file)) {
+            $msg = file_get_contents($error_file);
+        }
+        return $msg;
+    }
+
+    /**
+     * @param string $source
+     * @return string
+     */
     public static function get_last_error($source = "pl_last_error")
     {
         $error_file = get_temp_path($source);

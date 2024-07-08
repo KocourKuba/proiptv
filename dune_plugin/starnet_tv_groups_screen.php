@@ -107,6 +107,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $epg_manager->import_indexing_log();
                 }
+
+                foreach (array('pl_last_error', 'xmltv_last_error') as $last_error) {
+                    $error_msg = HD::get_last_error($last_error);
+                    if (!empty($error_msg)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
+                    }
+                }
+
                 return null;
 
             case GUI_EVENT_KEY_STOP:
@@ -342,15 +350,21 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_DO_EDIT_PROVIDER:
             case ACTION_DO_EDIT_PROVIDER_EXT:
+                $provider = $this->plugin->get_current_provider();
+                if (is_null($provider)) {
+                    return null;
+                }
+
                 if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
-                    $provider = $this->plugin->get_current_provider();
                     hd_debug_print(raw_json_encode($provider));
-                    if (is_null($provider)) {
-                        return null;
-                    }
+
                     return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
                 }
 
+                if (!$provider->request_provider_token()) {
+                    hd_debug_print("Can't get provider token");
+                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), TR::t('err_cant_get_token'));
+                }
                 return $this->plugin->do_edit_provider_ext_dlg($this);
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
@@ -504,9 +518,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
                 $this->save_if_changed();
-
+                $force = false;
                 if (isset($user_input->reload_action)) {
                     if ($user_input->reload_action === 'playlist') {
+                        $force = true;
                         $this->plugin->clear_playlist_cache();
                     } else if ($user_input->reload_action === 'epg' || $user_input->reload_action === 'epg_change') {
                         $this->plugin->safe_clear_epg_cache();
@@ -521,7 +536,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->plugin->safe_clear_epg_cache();
 
-                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
+                if ($this->plugin->tv->reload_channels($plugin_cookies, $force) === 0) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
                     $post_action = Action_Factory::close_and_run(
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));

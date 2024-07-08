@@ -320,7 +320,7 @@ class api_default
         }
 
         $this->playlist_id = $playlist_id;
-        $item = $this->plugin->get_playlist_storage_item($playlist_id);
+        $item = $this->plugin->get_playlists()->get($playlist_id);
         if ($item !== null && isset($item->params)) {
             $this->playlist_info = $item;
             hd_debug_print("provider info: ($playlist_id) " . json_encode($this->playlist_info), true);
@@ -457,6 +457,20 @@ class api_default
     }
 
     /**
+     * @param string $name
+     * @return bool
+     */
+    public function removeCredential($name)
+    {
+        if ($this->playlist_info->params[$name]) {
+           unset($this->playlist_info->params[$name]);
+           return true;
+        }
+
+        return false;
+    }
+
+    /**
      * @return string|null
      */
     public function get_vod_class()
@@ -482,6 +496,7 @@ class api_default
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
+        hd_debug_print("force request provider token: " . var_export($force, true));
 
         if (!$this->hasApiCommand(API_COMMAND_REQUEST_TOKEN)) {
             return true;
@@ -511,10 +526,6 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        if ($this->get_provider_info() === false) {
-            return false;
-        }
-
         $playlists = $this->GetPlaylists();
         if (!empty($playlists)) {
             $idx = $this->getCredential(MACRO_PLAYLIST_ID);
@@ -538,11 +549,6 @@ class api_default
     public function get_provider_info($force = false)
     {
         hd_debug_print(null, true);
-
-        if (!$this->request_provider_token()) {
-            hd_debug_print("Can't get provider token");
-            return false;
-        }
 
         if ((empty($this->account_info) || $force) && $this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
@@ -568,6 +574,7 @@ class api_default
     public function getApiCommand($command)
     {
         hd_debug_print(null, true);
+        hd_debug_print("API Command: $command", true);
 
         return $this->replace_macros($this->getRawApiCommand($command));
     }
@@ -596,6 +603,8 @@ class api_default
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
+        hd_debug_print("curl options: " . raw_json_encode($curl_options), true);
+
         $command_url = $this->getApiCommand($command);
         if (empty($command_url)) {
             return false;
@@ -718,7 +727,7 @@ class api_default
 
         if (!empty($id)) {
             hd_debug_print("load info for playlist id: $id", true);
-            $this->playlist_info = $this->plugin->get_playlist_storage_item($id);
+            $this->playlist_info = $this->plugin->get_playlists()->get($id);
             hd_debug_print("provider info: " . raw_json_encode($this->playlist_info), true);
         }
 
@@ -779,7 +788,7 @@ class api_default
         $is_new = empty($id);
         $id = $is_new ? $this->get_hash($this->playlist_info) : $id;
         if (empty($id)) {
-            return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
+            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
 
         if ($this->getType() === PROVIDER_TYPE_LOGIN_STOKEN) {
@@ -791,6 +800,15 @@ class api_default
         if ($is_new) {
             hd_debug_print("Set default values for id: $id", true);
             $this->set_default_settings($user_input, $id);
+        }
+
+        $this->plugin->get_playlists()->set($id, $this->playlist_info);
+        $this->plugin->save_parameters(true);
+        $this->plugin->clear_playlist_cache($id);
+
+        if (!$this->request_provider_token(true)) {
+            hd_debug_print("Can't get provider token");
+            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), TR::t('err_cant_get_token'));
         }
 
         return $id;
@@ -805,10 +823,6 @@ class api_default
         hd_debug_print(null, true);
 
         $defs = array();
-
-        if ($this->get_provider_info() === false) {
-            return $defs;
-        }
 
         $streams = $this->GetStreams();
         if (!empty($streams) && count($streams) > 1) {
@@ -1193,10 +1207,6 @@ class api_default
         }
 
         $this->plugin->get_playlists()->set($id, $this->playlist_info);
-
-        $this->request_provider_token();
-        $this->plugin->save_parameters(true);
-        $this->plugin->clear_playlist_cache($id);
 
         if ($this->plugin->get_active_playlist_key() === $id) {
             $this->plugin->set_active_playlist_key($id);

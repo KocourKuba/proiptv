@@ -241,6 +241,11 @@ class Default_Dune_Plugin implements DunePlugin
                 $active_playlist = $this->get_active_playlist_key();
                 $provider->set_provider_playlist_id($active_playlist);
                 hd_debug_print("Using provider " . $provider->getId() . " (" . $provider->getName() . ") - playlist id: $active_playlist");
+                if (!$this->cur_provider->request_provider_token()) {
+                    hd_debug_print("Can't get provider token");
+                    $this->cur_provider = null;
+                    return null;
+                }
             }
         }
 
@@ -1614,9 +1619,10 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * Initialize and parse selected playlist
      *
+     * @param bool $force
      * @return bool
      */
-    public function init_playlist()
+    public function init_playlist($force = false)
     {
         $this->init_user_agent();
 
@@ -1626,18 +1632,20 @@ class Default_Dune_Plugin implements DunePlugin
             return false;
         }
 
-        $force = false;
         $tmp_file = $this->get_current_playlist_cache(true);
-        if (file_exists($tmp_file)) {
-            $mtime = filemtime($tmp_file);
-            $diff = time() - $mtime;
-            if ($diff > 3600) {
-                hd_debug_print("Playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
-                unlink($tmp_file);
+
+        if (!$force) {
+            if (file_exists($tmp_file)) {
+                $mtime = filemtime($tmp_file);
+                $diff = time() - $mtime;
+                if ($diff > 3600) {
+                    hd_debug_print("Playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
+                    unlink($tmp_file);
+                    $force = true;
+                }
+            } else {
                 $force = true;
             }
-        } else {
-            $force = true;
         }
 
         $playlist = $this->get_current_playlist();
@@ -1666,6 +1674,10 @@ class Default_Dune_Plugin implements DunePlugin
                         throw new Exception("Unable to init provider $playlist");
                     }
 
+                    if ($provider->get_provider_info($force) === false) {
+                        throw new Exception("Unable to get provider info");
+                    }
+
                     hd_debug_print("Load provider playlist to: $tmp_file");
                     $res = $provider->load_playlist($tmp_file);
                 } else {
@@ -1673,8 +1685,13 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 if ($res === false) {
-                    $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
-                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$logfile";
+                    $exception_msg = TR::load_string('err_load_playlist');
+                    $log_path = get_temp_path(HD::HTTPS_PROXY_LOG);
+                    if (file_exists($log_path)) {
+                        $logfile = file_get_contents($log_path);
+                        $exception_msg .= "\n\n$logfile";
+                        unlink($log_path);
+                    }
                     throw new Exception($exception_msg);
                 }
 
@@ -1834,15 +1851,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function &get_playlists()
     {
         return $this->get_parameter(PARAM_PLAYLIST_STORAGE, new Hashed_Array());
-    }
-
-    /**
-     * @param string $id
-     * @return Named_Storage
-     */
-    public function get_playlist_storage_item($id)
-    {
-        return $this->get_playlists()->get($id);
     }
 
     /**
@@ -2598,7 +2606,7 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print("new provider : $provider", true);
         } else {
             // edit existing provider
-            $item = $this->get_playlist_storage_item($playlist_id);
+            $item = $this->get_playlists()->get($playlist_id);
             if (!is_null($item)) {
                 $name = $item->name;
                 hd_debug_print("provider info:" . json_encode($item), true);
@@ -2793,6 +2801,11 @@ class Default_Dune_Plugin implements DunePlugin
         $provider = $this->get_current_provider();
         if (is_null($provider)) {
             return null;
+        }
+
+        if (!$provider->request_provider_token()) {
+            hd_debug_print("Can't get provider token");
+            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), TR::t('err_cant_get_token'));
         }
 
         return $provider->GetInfoUI($handler);

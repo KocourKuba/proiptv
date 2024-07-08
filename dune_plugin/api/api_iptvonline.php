@@ -14,6 +14,7 @@ class api_iptvonline extends api_default
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
+        hd_debug_print("force request provider token: " . var_export($force, true));
 
         $token = $this->getCredential(MACRO_TOKEN);
         $expired = time() > (int)$this->getCredential(MACRO_EXPIRE_DATA);
@@ -77,8 +78,7 @@ class api_iptvonline extends api_default
     }
 
     /**
-     * @param $tmp_file string
-     * @return bool
+     * @inheritDoc
      */
     public function load_playlist($tmp_file)
     {

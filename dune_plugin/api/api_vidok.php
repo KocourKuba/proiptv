@@ -49,9 +49,16 @@ class api_vidok extends api_default
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
+        hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $gen_token = md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD)));
-        $this->setCredential(MACRO_TOKEN, $gen_token);
+        $token = $this->getCredential(MACRO_TOKEN);
+        if (!$force && !empty($token)) {
+            hd_debug_print("request not required", true);
+            return true;
+        }
+
+        $token = md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD)));
+        $this->setCredential(MACRO_TOKEN, $token);
 
         return true;
     }

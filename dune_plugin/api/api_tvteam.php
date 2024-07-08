@@ -13,24 +13,36 @@ class api_tvteam extends api_default
     public function request_provider_token($force = false)
     {
         hd_debug_print(null, true);
+        hd_debug_print("force request provider token: " . var_export($force, true));
 
         $session = $this->getCredential(MACRO_SESSION_ID);
-        $expired = time() > (int)$this->getCredential(MACRO_EXPIRE_DATA) + 3600;
+        $expired = time() > (int)$this->getCredential(MACRO_EXPIRE_DATA) + 86400;
         if (!$force && !empty($session) && !$expired) {
             hd_debug_print("request not required", true);
             return true;
         }
 
-        $params[CURLOPT_CUSTOMREQUEST] = md5($this->getCredential(MACRO_PASSWORD));
-        $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN, null, true, $params);
-        hd_debug_print("request provider token response: " . raw_json_encode($response), true);
-        if ($response->status === 0 || !empty($response->error)) {
-            HD::set_last_error("pl_last_error", $response->error);
-        } else if (isset($response->data->sessionId)) {
-            $this->setCredential(MACRO_SESSION_ID, $response->data->sessionId);
-            $this->setCredential(MACRO_EXPIRE_DATA, time());
-            $this->save_credentials();
-            return true;
+        $error_msg = HD::check_last_error('rq_last_error');
+        if (!$force && !empty($error_msg)) {
+            $info_msg = str_replace('|', PHP_EOL, TR::load_string('err_auth_no_spam'));
+            hd_debug_print($info_msg);
+            HD::set_last_error("pl_last_error", "$info_msg\n\n$error_msg");
+        } else {
+            HD::set_last_error("pl_last_error", null);
+            HD::set_last_error("rq_last_error", null);
+            $params[CURLOPT_CUSTOMREQUEST] = md5($this->getCredential(MACRO_PASSWORD));
+            $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN, null, true, $params);
+            hd_debug_print("request provider token response: " . raw_json_encode($response), true);
+            if ($response->status === 0 || !empty($response->error)) {
+                HD::set_last_error("pl_last_error", $response->error);
+                HD::set_last_error("rq_last_error", $response->error);
+            } else if (isset($response->data->sessionId)) {
+                $this->setCredential(MACRO_SESSION_ID, $response->data->sessionId);
+                $this->setCredential(MACRO_EXPIRE_DATA, time());
+                $this->save_credentials();
+                HD::set_last_error("rq_last_error", null);
+                return true;
+            }
         }
 
         return false;
@@ -43,11 +55,7 @@ class api_tvteam extends api_default
     public function get_provider_info($force = false)
     {
         hd_debug_print(null, true);
-
-        if (!$this->request_provider_token()) {
-            hd_debug_print("Failed to get session id");
-            return false;
-        }
+        hd_debug_print("force get_provider_info: " . var_export($force, true), true);
 
         if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);

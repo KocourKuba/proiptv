@@ -507,12 +507,13 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param $plugin_cookies
+     * @param bool $force
      * @return int
      */
-    public function reload_channels(&$plugin_cookies)
+    public function reload_channels(&$plugin_cookies, $force = false)
     {
         $this->unload_channels();
-        return $this->load_channels($plugin_cookies);
+        return $this->load_channels($plugin_cookies, $force);
     }
 
     /**
@@ -528,9 +529,10 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param $plugin_cookies
+     * @param bool $force
      * @return int
      */
-    public function load_channels(&$plugin_cookies)
+    public function load_channels(&$plugin_cookies, $force = false)
     {
         if ($this->channels->size() !== 0) {
             hd_debug_print("Channels already loaded", true);
@@ -541,12 +543,12 @@ class Starnet_Tv implements User_Input_Handler
 
         HD::set_last_error("pl_last_error", null);
 
-        $this->plugin->load_settings(true);
+        $this->plugin->load_settings($force);
 
         $this->plugin->create_screen_views();
 
         // first check if playlist in cache
-        if (!$this->plugin->init_playlist()) {
+        if (!$this->plugin->init_playlist($force)) {
             return 0;
         }
 
