@@ -1652,20 +1652,19 @@ class Default_Dune_Plugin implements DunePlugin
 
                 hd_debug_print("m3u playlist: $playlist->name ({$this->get_active_playlist_key()})");
                 if ($playlist->type === PARAM_FILE) {
-                    $res = true;
-                    copy($playlist->params[PARAM_URI], $tmp_file);
-                    hd_debug_print("m3u load local file: {$playlist->params[PARAM_URI]}");
+                    hd_debug_print("m3u copy local file: {$playlist->params[PARAM_URI]} to $tmp_file");
+                    $res = copy($playlist->params[PARAM_URI], $tmp_file);
                 } else if ($playlist->type === PARAM_LINK) {
                     $playlist_url = $playlist->params[PARAM_URI];
                     hd_debug_print("m3u download link: $playlist_url");
                     if (!preg_match(HTTP_PATTERN, $playlist_url)) {
-                        throw new Exception("Malformed playlist url: $playlist_url");
+                        throw new Exception("Incorrect playlist url: $playlist_url");
                     }
                     $res = HD::http_download_https_proxy($playlist_url, $tmp_file);
                 } else if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
                     if (is_null($provider)) {
-                        throw new Exception("Unable to init provider $playlist");
+                        throw new Exception("Unable to init provider " . $playlist);
                     }
 
                     if ($provider->get_provider_info($force) === false) {
@@ -1678,19 +1677,16 @@ class Default_Dune_Plugin implements DunePlugin
                     throw new Exception("Unknown playlist type");
                 }
 
-                if ($res === false) {
+                if ($res === false || !file_exists($tmp_file)) {
                     $exception_msg = TR::load_string('err_load_playlist');
-                    $log_path = get_temp_path(HD::HTTPS_PROXY_LOG);
-                    if (file_exists($log_path)) {
-                        $logfile = file_get_contents($log_path);
-                        $exception_msg .= "\n\n$logfile";
-                        unlink($log_path);
+                    if ($playlist->type !== PARAM_FILE) {
+                        $log_path = get_temp_path(HD::HTTPS_PROXY_LOG);
+                        if (file_exists($log_path)) {
+                            $logfile = file_get_contents($log_path);
+                            $exception_msg .= "\n\n$logfile";
+                            unlink($log_path);
+                        }
                     }
-                    throw new Exception($exception_msg);
-                }
-
-                if (!file_exists($tmp_file)) {
-                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$tmp_file";
                     throw new Exception($exception_msg);
                 }
 
@@ -1706,7 +1702,6 @@ class Default_Dune_Plugin implements DunePlugin
                     $contents = iconv($encoding, 'utf-8', $contents);
                     file_put_contents($tmp_file, $contents);
                 }
-
             }
 
             $mtime = filemtime($tmp_file);
@@ -1715,7 +1710,8 @@ class Default_Dune_Plugin implements DunePlugin
             $this->tv->get_m3u_parser()->setupParser($tmp_file, $force);
             if ($this->tv->get_m3u_parser()->getEntriesCount() === 0) {
                 if (!$this->tv->get_m3u_parser()->parseInMemory()) {
-                    $exception_msg = TR::load_string('err_load_playlist');
+                    $contents = @file_get_contents($tmp_file);
+                    $exception_msg = TR::load_string('err_load_playlist') . " Incorrect playlist!\n\n$contents";
                     throw new Exception($exception_msg);
                 }
 
@@ -1739,7 +1735,7 @@ class Default_Dune_Plugin implements DunePlugin
             }
             HD::set_last_error("pl_last_error", $err);
             print_backtrace_exception($ex);
-            if (isset($playlist->type) && $playlist->type !== PARAM_FILE && file_exists($tmp_file)) {
+            if (isset($playlist->type) && file_exists($tmp_file)) {
                 unlink($tmp_file);
             }
             return false;
