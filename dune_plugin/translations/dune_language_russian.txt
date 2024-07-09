@@ -37,6 +37,7 @@ clear_changed = Очистить Измененные
 no_category = Без категории
 category = Категория
 by_default = По умолчанию
+hash_url = Хэш ссылки
 channel_name = Название канала
 attribute_name__1 = M3U атрибут '%s'
 yes_no_confirm_msg = Вы уверены?

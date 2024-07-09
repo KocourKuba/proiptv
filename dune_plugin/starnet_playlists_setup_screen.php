@@ -85,7 +85,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         $provider = $this->plugin->get_current_provider();
         if (is_null($provider)) {
             $mapper_ops = array(
-                'by_default' => TR::t('by_default'),
+                'by_default' => TR::t('hash_url'),
                 'tvg-id' => TR::t('attribute_name__1', 'tvg-id'),
                 'tvg-name' => TR::t('attribute_name__1', 'tvg-name'),
                 'name' => TR::t('channel_name'));
@@ -253,7 +253,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
                 $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
-                $result = $this->plugin->tv->reload_channels($plugin_cookies);
+                $result = $this->plugin->tv->reload_channels($plugin_cookies, true);
                 $action = Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );

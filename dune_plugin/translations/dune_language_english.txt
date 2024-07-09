@@ -37,6 +37,7 @@ clear_changed = Clear Changed
 no_category = No Category
 category = Category
 by_default = By default
+hash_url = Link hash
 channel_name = Channel name
 attribute_name__1 = M3U attribute '%s'
 yes_no_confirm_msg = Are you sure?
