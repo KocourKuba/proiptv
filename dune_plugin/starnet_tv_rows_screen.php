@@ -512,7 +512,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $tv_play_action = Action_Factory::tv_play($user_input->selected_item_id);
 
                 if (isset($user_input->action_origin)) {
-                    return Action_Factory::close_and_run(Starnet_Epfs_Handler::invalidate_folders(null, $tv_play_action));
+                    return Action_Factory::close_and_run(Starnet_Epfs_Handler::epfs_invalidate_folders(null, $tv_play_action));
                 }
 
                 $new_actions = array_merge($this->get_action_map($media_url, $plugin_cookies),

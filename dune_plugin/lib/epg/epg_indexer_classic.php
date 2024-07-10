@@ -65,7 +65,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
         try {
             $t = microtime(true);
             if (empty($this->xmltv_positions)) {
-                $index_file = $this->get_index_name('positions');
+                $index_file = $this->get_index_name(self::INDEX_POSITIONS);
                 hd_debug_print("load positions index $$index_file");
                 $data = HD::ReadContentFromFile($index_file);
                 if (empty($data)) {
@@ -76,7 +76,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
             }
 
             if (empty($this->xmltv_channels)) {
-                $index_file = $this->get_index_name('channels');
+                $index_file = $this->get_index_name(self::INDEX_CHANNELS);
                 hd_debug_print("load channels index $$index_file");
                 $this->xmltv_channels = HD::ReadContentFromFile($index_file);
                 if (empty($this->xmltv_channels)) {
@@ -123,7 +123,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
     public function get_picon($alias)
     {
         if (!isset($this->xmltv_picons)) {
-            $name = $this->get_index_name('picons');
+            $name = $this->get_index_name(self::INDEX_PICONS);
             hd_debug_print("Load picons from: $name");
             $this->xmltv_picons = HD::ReadContentFromFile($name);
         }
@@ -137,8 +137,8 @@ class Epg_Indexer_Classic extends Epg_Indexer
      */
     public function index_xmltv_channels()
     {
-        $channels_file = $this->get_index_name('channels');
-        if (file_exists($channels_file)) {
+        $channels_file = $this->get_index_name(self::INDEX_CHANNELS);
+        if ($this->is_index_valid(self::INDEX_CHANNELS)) {
             hd_debug_print("Load cache channels index: $channels_file");
             $this->xmltv_channels = HD::ReadContentFromFile($channels_file);
             return;
@@ -196,7 +196,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
             }
             fclose($file);
 
-            HD::StoreContentToFile($this->get_index_name('picons'), $this->xmltv_picons);
+            HD::StoreContentToFile($this->get_index_name(self::INDEX_PICONS), $this->xmltv_picons);
             HD::StoreContentToFile($channels_file, $this->xmltv_channels);
 
             hd_debug_print("Total entries id's: " . count($this->xmltv_channels));
@@ -225,8 +225,8 @@ class Epg_Indexer_Classic extends Epg_Indexer
         }
 
         $cache_valid = false;
-        $index_program = $this->get_index_name('positions');
-        if (file_exists($index_program)) {
+        $index_program = $this->get_index_name(self::INDEX_POSITIONS);
+        if ($this->is_index_valid(self::INDEX_POSITIONS)) {
             hd_debug_print("Load cache program index: $index_program");
             $this->xmltv_positions = HD::ReadContentFromFile($index_program);
             if ($this->xmltv_positions !== false) {
@@ -246,6 +246,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
 
             $t = microtime(true);
 
+            $this->remove_index(self::INDEX_POSITIONS);
             $file = $this->open_xmltv_file();
 
             $start_program_block = 0;
@@ -301,7 +302,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
 
             if (!empty($xmltv_index)) {
                 hd_debug_print("Save index: $index_program", true);
-                HD::StoreContentToFile($this->get_index_name('positions'), $xmltv_index);
+                HD::StoreContentToFile($this->get_index_name(self::INDEX_POSITIONS), $xmltv_index);
                 $this->xmltv_positions = $xmltv_index;
             }
 
@@ -329,6 +330,19 @@ class Epg_Indexer_Classic extends Epg_Indexer
         $this->xmltv_picons = null;
         $this->xmltv_channels = null;
         $this->xmltv_positions = null;
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function remove_index($name)
+    {
+        $name = $this->get_index_name($name);
+        if (file_exists($name)) {
+            hd_debug_print("Remove index: $name");
+            unlink($name);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////

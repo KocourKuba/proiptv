@@ -137,8 +137,8 @@ class Epg_Indexer_Sql extends Epg_Indexer
     public function index_xmltv_channels()
     {
         try {
-            if ($this->is_index_valid('channels') && $this->is_index_valid('picons')) {
-                $channels = $this->epg_db->querySingle('SELECT count(*) FROM channels;');
+            if ($this->is_index_valid(self::INDEX_CHANNELS) && $this->is_index_valid(self::INDEX_PICONS)) {
+                $channels = $this->epg_db->querySingle('SELECT count(*) FROM ' . self::INDEX_CHANNELS . ';');
                 if (!empty($channels) && (int)$channels !== 0) {
                     hd_debug_print("EPG channels info already indexed", true);
                     return;
@@ -152,21 +152,23 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $t = microtime(true);
 
-            $this->epg_db->exec('DROP TABLE IF EXISTS channels;');
-            $this->epg_db->exec('CREATE TABLE channels (alias STRING not null, channel_id STRING not null, picon_hash STRING);');
+            $channels_table = self::INDEX_CHANNELS;
+            $picons_table = self::INDEX_PICONS;
+            $this->remove_index($channels_table);
+            $this->epg_db->exec("CREATE TABLE $channels_table (alias STRING not null, channel_id STRING not null, picon_hash STRING);");
 
-            $this->epg_db->exec('DROP TABLE IF EXISTS picons;');
-            $this->epg_db->exec('CREATE TABLE picons (picon_hash STRING UNIQUE PRIMARY KEY not null, picon STRING);');
+            $this->remove_index($picons_table);
+            $this->epg_db->exec("CREATE TABLE $picons_table (picon_hash STRING UNIQUE PRIMARY KEY not null, picon STRING);");
 
             $this->epg_db->exec('PRAGMA journal_mode=MEMORY;');
             $this->epg_db->exec('BEGIN;');
 
-            $stm_channels = $this->epg_db->prepare('INSERT OR REPLACE INTO channels(alias, channel_id, picon_hash) VALUES(:alias, :channel_id, :picon_hash);');
+            $stm_channels = $this->epg_db->prepare("INSERT OR REPLACE INTO $channels_table(alias, channel_id, picon_hash) VALUES(:alias, :channel_id, :picon_hash);");
             $stm_channels->bindParam(":alias", $alias);
             $stm_channels->bindParam(":channel_id", $channel_id);
             $stm_channels->bindParam(":picon_hash", $picon_hash);
 
-            $stm_picons = $this->epg_db->prepare('INSERT OR REPLACE INTO picons(picon_hash, picon) VALUES(:picon_hash, :picon);');
+            $stm_picons = $this->epg_db->prepare("INSERT OR REPLACE INTO $picons_table(picon_hash, picon) VALUES(:picon_hash, :picon);");
             $stm_picons->bindParam(":picon_hash", $picon_hash);
             $stm_picons->bindParam(":picon", $picon);
 
@@ -211,10 +213,10 @@ class Epg_Indexer_Sql extends Epg_Indexer
             fclose($file);
             $this->epg_db->exec('COMMIT;');
 
-            $result = $this->epg_db->querySingle('SELECT count(*) FROM channels;');
+            $result = $this->epg_db->querySingle("SELECT count(*) FROM $channels_table;");
             $channels = empty($result) ? 0 : (int)$result;
 
-            $result = $this->epg_db->querySingle('SELECT count(*) FROM picons;');
+            $result = $this->epg_db->querySingle("SELECT count(*) FROM $picons_table;");
             $picons = empty($result) ? 0 : (int)$result;
 
             hd_debug_print("Total entries id's: $channels");
@@ -244,8 +246,9 @@ class Epg_Indexer_Sql extends Epg_Indexer
         }
 
         try {
-            if ($this->is_index_valid('positions')) {
-                $total_pos = $this->epg_db->querySingle('SELECT count(*) FROM positions;');
+            $positions_table = self::INDEX_POSITIONS;
+            if ($this->is_index_valid($positions_table)) {
+                $total_pos = $this->epg_db->querySingle("SELECT count(*) FROM $positions_table;");
                 if (!empty($total_pos) && (int)$total_pos !== 0) {
                     hd_debug_print("EPG positions info already indexed", true);
                     return;
@@ -258,15 +261,14 @@ class Epg_Indexer_Sql extends Epg_Indexer
             $this->set_index_locked(true);
 
             $t = microtime(true);
-
-            $this->epg_db->exec('DROP TABLE IF EXISTS positions;');
-            $this->epg_db->exec('CREATE TABLE positions (channel_id STRING, start INTEGER, end INTEGER);');
+            $this->remove_index($positions_table);
+            $this->epg_db->exec("CREATE TABLE $positions_table (channel_id STRING, start INTEGER, end INTEGER);");
             $this->epg_db->exec('PRAGMA journal_mode=MEMORY;');
             $this->epg_db->exec('BEGIN;');
 
             hd_debug_print("Begin transactions...");
 
-            $stm = $this->epg_db->prepare('INSERT INTO positions(channel_id, start, end) VALUES(:channel_id, :start, :end);');
+            $stm = $this->epg_db->prepare("INSERT INTO $positions_table(channel_id, start, end) VALUES(:channel_id, :start, :end);");
             $stm->bindParam(":channel_id", $prev_channel);
             $stm->bindParam(":start", $start_program_block);
             $stm->bindParam(":end", $tag_end_pos);
@@ -336,7 +338,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
             hd_debug_print("End transactions...");
             $this->epg_db->exec('COMMIT;');
 
-            $result = $this->epg_db->querySingle('SELECT count(channel_id) FROM positions;');
+            $result = $this->epg_db->querySingle("SELECT count(channel_id) FROM $positions_table;");
             $total_epg = empty($result) ? 0 : (int)$result;
 
             hd_debug_print("Total unique epg id's indexed: $total_epg");
@@ -350,6 +352,18 @@ class Epg_Indexer_Sql extends Epg_Indexer
         }
 
         $this->set_index_locked(false);
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function remove_index($name)
+    {
+        if ($this->is_index_valid($name)) {
+            hd_debug_print("Remove index: $name");
+            $this->epg_db->exec("DROP TABLE IF EXISTS $name;");
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////

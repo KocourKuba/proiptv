@@ -31,6 +31,9 @@ require_once 'lib/hashed_array.php';
 abstract class Epg_Indexer implements Epg_Indexer_Interface
 {
     const STREAM_CHUNK = 131072; // 128Kb
+    const INDEX_PICONS = 'picons';
+    const INDEX_CHANNELS = 'channels';
+    const INDEX_POSITIONS = 'positions';
 
     /**
      * path where cache is stored
@@ -136,12 +139,15 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             case 1:
                 // downloaded xmltv file not exists or expired
                 hd_debug_print("Download and indexing xmltv source");
+                $this->clear_current_epg_files();
                 $this->download_xmltv_source();
                 $this->index_xmltv_channels();
                 break;
             case 3:
                 // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
                 hd_debug_print("Indexing xmltv source");
+                $this->remove_index(self::INDEX_CHANNELS);
+                $this->remove_index(self::INDEX_PICONS);
                 $this->index_xmltv_channels();
                 break;
             default:
@@ -182,18 +188,21 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                     . date("Y-m-d H:i", $check_time_file)
                     . " date expiration: " . date("Y-m-d H:i", $check_time_file + $max_cache_time));
 
-                $channels_index_valid = $this->is_index_valid('channels');
-                $picons_index_valid = $this->is_index_valid('picons');
-                $pos_index_valid = $this->is_index_valid('positions');
+                $channels_index_valid = $this->is_index_valid(self::INDEX_CHANNELS);
+                $picons_index_valid = $this->is_index_valid(self::INDEX_PICONS);
+                $pos_index_valid = $this->is_index_valid(self::INDEX_POSITIONS);
 
-                if ($pos_index_valid && $channels_index_valid && $picons_index_valid) {
+                if ($channels_index_valid && $picons_index_valid && $pos_index_valid) {
+                    hd_debug_print("Xmltv cache valid");
                     return 0;
                 }
 
                 if ($channels_index_valid && $picons_index_valid) {
+                    hd_debug_print("Xmltv cache channels and picons valid");
                     return 2;
                 }
 
+                hd_debug_print("Xmltv cache indexes invalid");
                 return 3;
             }
 
@@ -364,6 +373,13 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     {
         return $this->get_cache_stem(".xmltv");
     }
+
+    /**
+     * Remove is selected index
+     *
+     * @param $name string
+     */
+    abstract public function remove_index($name);
 
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods

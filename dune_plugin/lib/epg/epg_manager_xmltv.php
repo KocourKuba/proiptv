@@ -300,22 +300,7 @@ class Epg_Manager_Xmltv
     {
         $start = microtime(true);
 
-        $res = $this->indexer->is_xmltv_cache_valid();
-        if ($res === -1) {
-            hd_debug_print("Error load xmltv, url not set");
-            return;
-        }
-
-        if ($res === 0) {
-            hd_debug_print("XMLTV source valid, no need to processing");
-            return;
-        }
-
-        if ($res === 1) {
-            $this->indexer->download_xmltv_source();
-            $this->indexer->index_xmltv_channels();
-        }
-
+        $this->indexer->index_only_channels();
         $this->indexer->index_xmltv_positions();
 
         hd_print("Script execution time: ". format_duration(round(1000 * (microtime(true) - $start))));

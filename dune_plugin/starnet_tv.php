@@ -434,7 +434,7 @@ class Starnet_Tv implements User_Input_Handler
             return Action_Factory::invalidate_folders(array(), null, true);
         }
 
-        return Starnet_Epfs_Handler::invalidate_folders(
+        return Starnet_Epfs_Handler::epfs_invalidate_folders(
             array(Starnet_Tv_Favorites_Screen::get_media_url_string(FAVORITES_GROUP_ID),
                 Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNEL_GROUP_ID)
             )
@@ -534,7 +534,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function load_channels(&$plugin_cookies, $force = false)
     {
-        if ($this->channels->size() !== 0) {
+        if (!$force && $this->channels->size() !== 0) {
             hd_debug_print("Channels already loaded", true);
             return 1;
         }
@@ -982,6 +982,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         $changed = count($this->get_changed_channels_ids());
+        hd_debug_print("Changed channels: $changed");
         $this->get_special_group(CHANGED_CHANNELS_GROUP_ID)->set_disabled($changed === 0);
 
         // cleanup orders if saved group removed from playlist

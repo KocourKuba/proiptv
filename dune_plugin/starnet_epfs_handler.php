@@ -41,17 +41,17 @@ class Starnet_Epfs_Handler
     /**
      * @var string
      */
-    protected static $dir_path;
+    public static $epf_id;
 
     /**
      * @var bool
      */
-    protected static $enabled;
+    public static $enabled;
 
     /**
      * @var string
      */
-    protected static $epf_id;
+    protected static $dir_path;
 
     /**
      * @var string
@@ -129,7 +129,7 @@ class Starnet_Epfs_Handler
      * @param $post_action
      * @return array
      */
-    public static function invalidate_folders($media_urls = null, $post_action = null)
+    public static function epfs_invalidate_folders($media_urls = null, $post_action = null)
     {
         if (self::$enabled) {
             $arr = array_merge(array(self::$epf_id), (is_array($media_urls) ? $media_urls : array()));
@@ -138,29 +138,6 @@ class Starnet_Epfs_Handler
         }
 
         return Action_Factory::invalidate_folders($arr, $post_action);
-    }
-
-    /**
-     * @param array|null $media_urls
-     * @param $post_action
-     * @param array|null $except_media_urls
-     * @return array
-     */
-    public static function invalidate_all_folders($media_urls = null, $post_action = null, $except_media_urls = null)
-    {
-        if (self::$enabled) {
-            $arr = array_merge(array(self::$epf_id), (is_array($media_urls) ? $media_urls : array()));
-        } else {
-            $arr = $media_urls;
-        }
-
-        if ($except_media_urls !== null) {
-            $post_invalidate = Action_Factory::invalidate_folders($except_media_urls, $post_action, true);
-        } else {
-            $post_invalidate = $post_action;
-        }
-
-        return Action_Factory::invalidate_folders($arr, $post_invalidate);
     }
 
     /**

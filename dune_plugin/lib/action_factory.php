@@ -454,14 +454,19 @@ class Action_Factory
     /**
      * @param $plugin_cookies
      * @param array|null $post_action
-     * @param array|null $except_media_urls
      * @return array|null
      */
-    public static function invalidate_all_folders($plugin_cookies, $post_action = null, $except_media_urls = null)
+    public static function invalidate_all_folders($plugin_cookies, $post_action = null)
     {
         Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
 
-        return Starnet_Epfs_Handler::invalidate_all_folders(null, $post_action, $except_media_urls);
+        if (Starnet_Epfs_Handler::$enabled) {
+            $post_invalidate = self::invalidate_folders(array(Starnet_Epfs_Handler::$epf_id), $post_action);
+        } else {
+            $post_invalidate = $post_action;
+        }
+
+        return self::invalidate_folders(array(), $post_invalidate, true);
     }
 
     /**

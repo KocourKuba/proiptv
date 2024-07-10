@@ -130,7 +130,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if ($this->plugin->get_playback_points()->size() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
-                return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
+                return Starnet_Epfs_Handler::epfs_invalidate_folders(array($user_input->parent_media_url));
 
             case ACTION_ITEMS_CLEAR:
                 $this->set_changes();
