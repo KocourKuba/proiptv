@@ -1,4 +1,5 @@
 ﻿### Upcoming version
+- TV Team API update
 
 ### Version 4.1.770
 - Reducing the number of authorization requests for TV Team, so that the provider does not block when entering incorrect access data.
