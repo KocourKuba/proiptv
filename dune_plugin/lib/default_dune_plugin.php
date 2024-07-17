@@ -1324,11 +1324,14 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function save_orders($force = false)
     {
+        $id = '';
         if (isset($this->cur_provider)) {
             $id = $this->cur_provider->getCredential(MACRO_PLAYLIST_ID);
-            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
-        } else {
+        }
+        if (empty($id)) {
             $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . ".settings";
+        } else {
+            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
         }
 
         if ($force || $this->is_dirty(PLUGIN_ORDERS)) {

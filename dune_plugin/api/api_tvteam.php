@@ -71,11 +71,22 @@ class api_tvteam extends api_default
 
         if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
+            hd_debug_print("get provider info response: " . raw_json_encode($this->account_info), true);
+
             if (isset($this->account_info->data->userData->userToken)) {
                 $this->setCredential(MACRO_TOKEN, $this->account_info->data->userData->userToken);
                 $this->save_credentials();
             }
-            hd_debug_print("get provider info response: " . raw_json_encode($this->account_info), true);
+
+            if (isset($this->account_info->data->userData->groupId)) {
+                $this->setCredential(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
+            }
+
+            if (isset($this->account_info->data->serversGroupsList)) {
+                foreach ($this->account_info->data->serversGroupsList as $server) {
+                    $this->servers[$server->groupId] = "$server->groupCountry ($server->streamDomainName)";
+                }
+            }
         }
 
         return $this->account_info;
@@ -123,13 +134,10 @@ class api_tvteam extends api_default
             }
 
             if (isset($info->userBalance)) {
-                Control_Factory::add_label($defs, TR::t('balance'), $info->userBalance, -15);
+                Control_Factory::add_label($defs, TR::t('balance'), "$info->userBalance$", -15);
             }
 
             if (isset($info->groupId)) {
-                if (empty($this->servers)) {
-                    $this->GetServers();
-                }
                 $name = isset($this->servers[$info->groupId]) ? $this->servers[$info->groupId] : 'Not set';
                 Control_Factory::add_label($defs, TR::t('server'), $name, -15);
             }
@@ -138,51 +146,21 @@ class api_tvteam extends api_default
                 Control_Factory::add_label($defs, TR::t('disable_adult'), $info->showPorno ? TR::t('no') : TR::t('yes'), -15);
             }
 
-            if (empty($this->packages)) {
-                $response = $this->execApiCommand(API_COMMAND_GET_PACKAGES);
-                if (isset($response->data->userPackagesList)) {
-                    $this->packages = $response->data->userPackagesList;
+            if (isset($account_info->data->userPackagesList)) {
+                $packages = '';
+                foreach ($account_info->data->userPackagesList as $package) {
+                    $packages .= TR::load_string('package') . " " . $package->packageName . PHP_EOL;
+                    $packages .= TR::load_string('start_date') . " " . $package->fromDate . PHP_EOL;
+                    $packages .= TR::load_string('end_date') . " " . $package->toDate . PHP_EOL;
+                    $packages .= TR::load_string('money_need') . " " . "$package->salePrice$" . PHP_EOL;
                 }
+                Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }
-
-            $packages = '';
-            foreach ($this->packages as $package) {
-                $packages .= TR::load_string('package') . " " . $package->packageId . PHP_EOL;
-                $packages .= TR::load_string('start_date') . " " . $package->fromDate . PHP_EOL;
-                $packages .= TR::load_string('end_date') . " " . $package->toDate . PHP_EOL;
-                $packages .= TR::load_string('package_timed') . " " . TR::load_string($package->packageIsTimed ? 'yes' : 'no') . PHP_EOL;
-                $packages .= TR::load_string('money_need') . " " . $package->salePrice . PHP_EOL;
-            }
-            Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
         }
 
         Control_Factory::add_vgap($defs, 20);
 
         return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000, null /*$attrs*/);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function GetServers()
-    {
-        hd_debug_print(null, true);
-
-        if (empty($this->servers)) {
-            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-            hd_debug_print("GetServers: " . raw_json_encode($response), true);
-            if (((int)$response->status === 1) && isset($response->status, $response->data->serversGroupsList)) {
-                foreach ($response->data->serversGroupsList as $server) {
-                    $this->servers[$server->groupId] = "$server->portalDomainName ($server->streamDomainName)";
-                }
-            }
-
-            if (isset($this->account_info->data->userData->groupId)) {
-                $this->setCredential(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
-            }
-        }
-
-        return $this->servers;
     }
 
     /**
