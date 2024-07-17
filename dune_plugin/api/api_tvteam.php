@@ -69,6 +69,11 @@ class api_tvteam extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force get_provider_info: " . var_export($force, true), true);
 
+        if (!$this->request_provider_token()) {
+            hd_debug_print("Failed to get provider token", true);
+            return null;
+        }
+
         if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
             hd_debug_print("get provider info response: " . raw_json_encode($this->account_info), true);
