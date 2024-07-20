@@ -122,12 +122,13 @@ if (isset($url_params['query'])) {
     parse_str($url_params['query'], $params);
 }
 
+$name = '';
 if (isset($params['ver'])) {
     $request = getenv("REQUEST_URI");
     $ver = explode('.', $params['ver']);
     $name ="providers_$ver[0].$ver[1].json";
     $time = time();
-    $date = date("m.d.Y H:i:s");
+    $date = date("Y.m.d H:i:s");
     $ip = get_ip();
     $country = IP2Country($ip);
     $version = $params['ver'];
@@ -148,8 +149,6 @@ if (isset($params['ver'])) {
     $logbuf .= "serial    : $serial" . PHP_EOL;
 
     write_to_log($logbuf, 'providers.log');
-    header("HTTP/1.1 200 OK");
-    echo file_get_contents($name);
 
     $DB = new db_driver;
     $DB->obj['sql_database'] = IPTV_DATABASE;
@@ -179,6 +178,12 @@ if (isset($params['ver'])) {
     } else {
 	    write_to_log("can't connect to database", 'error.log');
 	}
-} else {
+}
+
+if (empty($name)) {
     header("HTTP/1.1 404 Not found");
+    echo '["error" : "This version not supported"]';
+} else {
+    header("HTTP/1.1 200 OK");
+    echo file_get_contents($name);
 }
