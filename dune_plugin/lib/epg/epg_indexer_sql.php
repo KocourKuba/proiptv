@@ -424,7 +424,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
     {
         if ($this->epg_db === null) {
             try {
-                $index_name = $this->get_cache_stem("_epg$this->index_ext");
+                $stem = $this->get_cache_stem("");
+                if (empty($stem)) {
+                    throw new Exception("Database name is empty");
+                }
+
+                $index_name = "{$stem}_epg$this->index_ext";
                 hd_debug_print("Open db: $index_name", true);
                 $this->epg_db = new SQLite3($index_name, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE, '');
             } catch (Exception $ex) {

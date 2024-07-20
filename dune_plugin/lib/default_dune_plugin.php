@@ -1924,7 +1924,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function &get_ext_xmltv_sources()
     {
-        return $this->get_parameter(PARAM_XMLTV_SOURCES, new Hashed_Array());
+        return $this->get_parameter(PARAM_EXT_XMLTV_SOURCES, new Hashed_Array());
     }
 
     /**
@@ -1997,7 +1997,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_active_xmltv_source_key()
     {
-        return $this->get_setting(PARAM_XMLTV_SOURCE_KEY, '');
+        return $this->get_setting(PARAM_CUR_XMLTV_SOURCE_KEY, '');
     }
 
     /**
@@ -2007,13 +2007,13 @@ class Default_Dune_Plugin implements DunePlugin
     public function set_active_xmltv_source_key($key)
     {
         if (empty($key)) {
-            $this->remove_setting(PARAM_XMLTV_SOURCE_KEY);
+            $this->remove_setting(PARAM_CUR_XMLTV_SOURCE_KEY);
             $this->set_active_xmltv_source('');
         } else {
             /** @var Named_Storage $xmltv_source */
             $xmltv_source = $this->get_all_xmltv_sources()->get($key);
             if (!is_null($xmltv_source)) {
-                $this->set_setting(PARAM_XMLTV_SOURCE_KEY, $key);
+                $this->set_setting(PARAM_CUR_XMLTV_SOURCE_KEY, $key);
                 $this->set_active_xmltv_source($xmltv_source->params[PARAM_URI]);
             }
         }

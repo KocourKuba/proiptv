@@ -158,11 +158,11 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$/",
         "epg_preset": "drm",
         "epg_alias": "only4",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "xmltv_sources": [
           "http://only4.tv/epg/epg.xml.gz",
           "https://iptvx.one/epg/epg.xml.gz"
-        ],
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+        ]
       }
     },
     {
@@ -203,6 +203,7 @@
         "id_map": "tvg-name",
         "epg_preset": "tvteam",
         "ext_params": true,
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "url_subst": {
           "regex": "/^(.+\\/)mono\\.m3u8(.+)$/",
           "replace": "$1{STREAM_ID}$2"
@@ -216,8 +217,7 @@
           "http://epg.team/tvteam.3.3.xml.tar.gz",
           "http://epg.team/tvteam.5.5.xml.tar.gz",
           "http://epg.team/tvteam.7.7.xml.tar.gz"
-        ],
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+        ]
       }
     },
     {
@@ -1020,6 +1020,7 @@
         "id_map": "tvg-name",
         "epg_preset": "tvteam",
         "ext_params": true,
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "url_subst": {
           "regex": "/^(.+\\/\\/.+\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
           "replace": "$1{STREAM_ID}$2"
@@ -1033,8 +1034,7 @@
           "http://epg.team/tvteam.3.3.xml.tar.gz",
           "http://epg.team/tvteam.5.5.xml.tar.gz",
           "http://epg.team/tvteam.7.7.xml.tar.gz"
-        ],
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+        ]
       }
     },
     {

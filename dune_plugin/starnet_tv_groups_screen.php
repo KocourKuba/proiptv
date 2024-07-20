@@ -308,7 +308,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->save_if_changed();
                 $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg_change'));
+                $this->plugin->init_epg_manager();
+                $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
+                if ($res === -1) {
+                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
+                }
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -325,7 +330,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
                 }
                 break;
 
@@ -336,7 +341,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
                 }
                 break;
 
@@ -384,7 +389,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return $res;
                 }
 
-                return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);
+                return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD, null, array('reload_action' => 'playlist'));
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
@@ -519,22 +524,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 hd_debug_print("Action reload", true);
                 $this->save_if_changed();
                 $force = false;
-                if (isset($user_input->reload_action)) {
-                    if ($user_input->reload_action === 'playlist') {
-                        $force = true;
-                        $this->plugin->clear_playlist_cache();
-                    } else if ($user_input->reload_action === 'epg' || $user_input->reload_action === 'epg_change') {
-                        $this->plugin->safe_clear_epg_cache();
-                        $this->plugin->init_epg_manager();
-                        $this->plugin->get_epg_manager()->get_indexer()->clear_current_epg_files();
-                        $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
-                        if ($res === -1) {
-                            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
-                        }
-                    }
+                if (isset($user_input->reload_action) && $user_input->reload_action === 'playlist') {
+                    $force = true;
                 }
-
-                $this->plugin->safe_clear_epg_cache();
 
                 if ($this->plugin->tv->reload_channels($plugin_cookies, $force) === 0) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());

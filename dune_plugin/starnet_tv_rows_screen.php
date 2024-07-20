@@ -726,11 +726,20 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $this->save_if_changed();
                 $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'epg_change'));
+                $this->plugin->init_epg_manager();
+                $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
+                if ($res === -1) {
+                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
+                }
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_EPG_CACHE_ENGINE => true));
+
+            case ACTION_CHANGE_PICONS_SOURCE:
+                hd_debug_print("Start event popup menu for picons source", true);
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_PICONS_SOURCE => true));
 
             case ENGINE_XMLTV:
             case ENGINE_JSON:
@@ -739,7 +748,18 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                }
+                break;
+
+            case PLAYLIST_PICONS:
+            case XMLTV_PICONS:
+                if ($this->plugin->get_setting(PARAM_USE_PICONS) !== $user_input->control_id) {
+                    hd_debug_print("Selected icons source: $user_input->control_id", true);
+                    $this->plugin->tv->unload_channels();
+                    $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
+                    $this->plugin->init_epg_manager();
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
                 }
                 break;
 
@@ -811,7 +831,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return $id;
                 }
 
-            return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD);
+            return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD, null, array('reload_action' => 'playlist'));
 
             case GUI_EVENT_KEY_INFO:
                 if (isset($media_url->channel_id)) {
@@ -822,28 +842,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
                 $this->save_if_changed();
-
-                if (isset($user_input->reload_action)) {
-                    if ($user_input->reload_action === 'playlist') {
-                        $this->plugin->clear_playlist_cache();
-                    } else if ($user_input->reload_action === 'epg' || $user_input->reload_action === 'epg_change') {
-                        $this->plugin->safe_clear_epg_cache();
-                        $this->plugin->init_epg_manager();
-                        $this->plugin->get_epg_manager()->get_indexer()->clear_current_epg_files();
-                        $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
-                        if ($res === -1) {
-                            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
-                        }
-                    }
+                $force = false;
+                if (isset($user_input->reload_action) && $user_input->reload_action === 'playlist') {
+                    $force = true;
                 }
 
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                }
-
-                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
+                if ($this->plugin->tv->reload_channels($plugin_cookies, $force) === 0) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
+                    $post_action = Action_Factory::close_and_run(
+                        Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
+
                     return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
                 }
 
@@ -855,10 +863,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->set_no_changes();
                 }
 
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
-                    $this->plugin->safe_clear_epg_cache();
-                }
-
+                $this->plugin->safe_clear_epg_cache();
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
         }
 
@@ -1335,6 +1340,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $menu_items = $this->plugin->epg_source_menu($this);
         } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
             $menu_items = $this->plugin->epg_engine_menu($this);
+        } else if (isset($user_input->{ACTION_CHANGE_PICONS_SOURCE})) {
+            $menu_items = $this->plugin->picons_source_menu($this);
         } else if (isset($user_input->{ACTION_SORT_POPUP})) {
             hd_debug_print("sort menu", true);
             $media_url = MediaURL::decode($user_input->selected_row_id);

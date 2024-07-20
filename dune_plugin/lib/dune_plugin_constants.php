@@ -151,9 +151,9 @@ const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_SOURCE = 'epg_source';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_CACHE_PATH = 'xmltv_cache_path';
-const PARAM_XMLTV_SOURCES = 'xmltv_sources';
-const PARAM_CUR_XMLTV_SOURCE_KEY = 'cur_xmltv_source_key';
+const PARAM_EXT_XMLTV_SOURCES = 'xmltv_sources';
 const PARAM_CUR_XMLTV_SOURCE = 'cur_xmltv_source';
+const PARAM_CUR_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_DUNE_FORCE_TS = 'dune_force_ts';
 const PARAM_EXT_VLC_OPTS = 'ext_vlc_opts';
@@ -172,7 +172,6 @@ const PARAM_GROUPS_ICONS = 'groups_icons';
 const PARAM_PLUGIN_BACKGROUND = 'plugin_background';
 const PARAM_ENABLE_DEBUG = 'enable_debug';
 const PARAM_PER_CHANNELS_ZOOM = 'per_channels_zoom';
-const PARAM_FUZZY_SEARCH_EPG = 'fuzzy_search_epg';
 const PARAM_FAKE_EPG = 'fake_epg';
 const PARAM_USE_HTTPS_PROXY = 'use_proxy';
 const PARAM_STREAM_FORMAT = 'stream_format';
@@ -189,13 +188,6 @@ const PARAM_REPLACE_ICON = 'replace_playlist_icon';
 const LIST_IDX = 'list_idx';
 const PLAYLIST_PICONS = 'playlist_picons';
 const XMLTV_PICONS = 'xmltv_picons';
-
-// deprecated and removed after upgrade
-const PARAM_PLAYLISTS = 'playlists';
-const PARAM_PLAYLISTS_NAMES = 'playlists_names';
-const PARAM_EXT_XMLTV_SOURCES = 'ext_xmltv_sources';
-const PARAM_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
-const PARAM_XMLTV_SOURCE_NAMES = 'xmltv_source_names';
 
 // macroses used to replace template in providers playlists
 const MACRO_API = '{API}';

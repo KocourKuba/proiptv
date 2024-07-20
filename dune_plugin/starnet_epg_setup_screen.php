@@ -98,14 +98,15 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // EPG cache
         $epg_cache_ops = array();
-        $epg_cache_ops[0.5] = 0.5;
-        $epg_cache_ops[1] = 1;
-        $epg_cache_ops[2] = 2;
-        $epg_cache_ops[3] = 3;
-        $epg_cache_ops[4] = 4;
-        $epg_cache_ops[5] = 5;
-        $epg_cache_ops[6] = 6;
-        $epg_cache_ops[7] = 7;
+        $epg_cache_ops['0.25'] = 0.25;
+        $epg_cache_ops['0.5'] = 0.5;
+        $epg_cache_ops['1'] = 1;
+        $epg_cache_ops['2'] = 2;
+        $epg_cache_ops['3'] = 3;
+        $epg_cache_ops['4'] = 4;
+        $epg_cache_ops['5'] = 5;
+        $epg_cache_ops['6'] = 6;
+        $epg_cache_ops['7'] = 7;
 
         $cache_ttl = $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
         Control_Factory::add_combobox($defs, $this, null,
@@ -229,7 +230,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
-            case PARAM_FUZZY_SEARCH_EPG:
             case PARAM_FAKE_EPG:
                 $this->plugin->toggle_parameter($control_id, false);
                 $this->plugin->init_epg_manager();
