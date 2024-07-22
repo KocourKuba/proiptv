@@ -28,6 +28,7 @@ require_once 'hd.php';
 
 class smb_tree
 {
+    const NETWORK_CONFIG = '/config/network_folders.properties';
     private $descriptor_spec;
     private $smb_tree_output = '';
     private $return_value = 0;
@@ -156,34 +157,6 @@ class smb_tree
 
         hd_debug_print("nmblookup: $path$cmd");
         return $path . $cmd;
-    }
-
-    public static function get_network_folder_smb()
-    {
-        $d = array();
-        $network = parse_ini_file('/config/network_folders.properties', true);
-        $network_folder = array();
-        foreach ($network as $k => $v) {
-            if (preg_match("/(.*)\.(.*)/", $k, $match)) {
-                $network_folder[$match[2]][$match[1]] = $v;
-            }
-        }
-
-        if (count($network_folder) > 0) {
-            foreach ($network_folder as $v) {
-                if ((int)$v['type'] === 0) {
-                    $dd['foldername'] = $v['name'];
-                    if (!empty($v['user'])) {
-                        $dd['user'] = $v['user'];
-                    }
-                    if (!empty($v['password'])) {
-                        $dd['password'] = $v['password'];
-                    }
-                    $d[$v['server']][$v['directory']] = $dd;
-                }
-            }
-        }
-        return $d;
     }
 
     public function get_server_shares_smb()
@@ -411,27 +384,41 @@ class smb_tree
         return self::get_mount_smb($ip);
     }
 
+    public static function get_network_folder_smb()
+    {
+        $d = array();
+        $network_folder = self::parse_network_config();
+        if (count($network_folder) > 0) {
+            foreach ($network_folder as $v) {
+                if ((int)$v['type'] !== 0) continue;
+
+                $dd['foldername'] = $v['name'];
+                if (!empty($v['user'])) {
+                    $dd['user'] = $v['user'];
+                }
+                if (!empty($v['password'])) {
+                    $dd['password'] = $v['password'];
+                }
+                $d[$v['server']][$v['directory']] = $dd;
+            }
+        }
+
+        return $d;
+    }
+
     public static function get_network_folder_nfs()
     {
         $nfs = array();
-        if (file_exists('/config/network_folders.properties')) {
-            $network = parse_ini_file('/config/network_folders.properties', true);
-            foreach ($network as $k => $v) {
-                if (preg_match("/(.*)\.(.*)/", $k, $match)) {
-                    $network_folder[$match[2]][$match[1]] = $v;
-                }
-            }
+        $network_folder = self::parse_network_config();
+        if (count($network_folder) > 0) {
+            foreach ($network_folder as $v) {
+                if ((int)$v['type'] !== 1) continue;
 
-            if (isset($network_folder)) {
-                foreach ($network_folder as $v) {
-                    if ((int)$v['type'] === 1) {
-                        $p = ((int)$v['protocol'] === 1) ? 'tcp' : 'udp';
-                        $nfs[$v['server'] . ':' . $v['directory']]['foldername'] = $v['name'];
-                        $nfs[$v['server'] . ':' . $v['directory']]['protocol'] = $p;
-                        $nfs[$v['server'] . ':' . $v['directory']]['server'] = $v['server'];
-                        $nfs[$v['server'] . ':' . $v['directory']]['directory'] = $v['directory'];
-                    }
-                }
+                $p = ((int)$v['protocol'] === 1) ? 'tcp' : 'udp';
+                $nfs[$v['server'] . ':' . $v['directory']]['foldername'] = $v['name'];
+                $nfs[$v['server'] . ':' . $v['directory']]['protocol'] = $p;
+                $nfs[$v['server'] . ':' . $v['directory']]['server'] = $v['server'];
+                $nfs[$v['server'] . ':' . $v['directory']]['directory'] = $v['directory'];
             }
         }
 
@@ -543,5 +530,19 @@ class smb_tree
         }
 
         return empty($select_folder) ? $default : $select_folder;
+    }
+
+    protected static function parse_network_config()
+    {
+        $network_folder = array();
+        if (file_exists(self::NETWORK_CONFIG)) {
+            $network = parse_ini_file(self::NETWORK_CONFIG, true);
+            foreach ($network as $k => $v) {
+                if (preg_match("/(.*)\.(.*)/", $k, $match)) {
+                    $network_folder[$match[2]][$match[1]] = $v;
+                }
+            }
+        }
+        return $network_folder;
     }
 }
