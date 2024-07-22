@@ -3,8 +3,8 @@ require_once 'api_default.php';
 
 class api_iptvonline extends api_default
 {
-    const TOKEN_FILE = "%s_token";
-    const REFRESH_TOKEN_FILE = "%s_refresh_token";
+    const TOKEN_FILE = "%s.token";
+    const REFRESH_TOKEN_FILE = "%s.refresh_token";
 
     /**
      * @var Object
@@ -19,17 +19,11 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $token_file = get_temp_path(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
-        $expired = true;
-        if (file_exists($token_file)) {
-            $token = file_get_contents($token_file);
-            $expired = time() > filemtime($token_file);
-            if ($expired) {
-                unlink($token_file);
-            }
-        }
+        $token_file = sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id());
+        $token = HD::get_cookie($token_file);
+        $expired = empty($token);
 
-        if (!$force && !empty($token) && !$expired) {
+        if (!$force && !$expired) {
             hd_debug_print("request not required", true);
             return true;
         }
@@ -42,12 +36,8 @@ class api_iptvonline extends api_default
             $this->save_credentials();
         }
 
-        $refresh_token = '';
-        $refresh_token_file = get_temp_path(sprintf(self::REFRESH_TOKEN_FILE, $this->get_provider_playlist_id()));
-        if (file_exists($refresh_token_file)) {
-            $refresh_token = file_get_contents($refresh_token_file);
-        }
-
+        $refresh_token_file = sprintf(self::REFRESH_TOKEN_FILE, $this->get_provider_playlist_id());
+        $refresh_token = HD::get_cookie($refresh_token_file, true);
         $need_refresh = $expired && !empty($refresh_token);
         if ($need_refresh) {
             /*
@@ -90,9 +80,8 @@ class api_iptvonline extends api_default
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
             hd_debug_print("token requested", true);
-            file_put_contents($token_file, $data->access_token);
-            touch($token_file, $data->expires_time);
-            file_put_contents($refresh_token_file, $data->refresh_token);
+            HD::set_cookie($token_file, $data->access_token, $data->expires_time);
+            HD::set_cookie($refresh_token_file, $data->refresh_token, PHP_INT_MAX, true);
             return true;
         }
 
@@ -122,12 +111,7 @@ class api_iptvonline extends api_default
      */
     public function replace_macros($string)
     {
-        $token_file = get_temp_path(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
-        $token = '';
-        if (file_exists($token_file)) {
-            $token = file_get_contents($token_file);
-        }
-
+        $token = HD::get_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
         $string = str_replace(MACRO_TOKEN, $token, $string);
 
         return parent::replace_macros($string);

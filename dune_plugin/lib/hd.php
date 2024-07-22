@@ -1227,4 +1227,42 @@ class HD
         }
         return null;
     }
+
+    /**
+     * Set cookie with expired time (timestamp)
+     *
+     * @param string $filename - file name without path
+     * @param string $content
+     * @param int $expired_time - expired time
+     * @param bool $persistent - is stored in persistent file storage
+     */
+    public static function set_cookie($filename, $content, $expired_time, $persistent = false)
+    {
+        $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
+        file_put_contents($file_path, $content);
+        touch($file_path, $expired_time);
+    }
+
+    /**
+     * Get cookie if it not expired
+     *
+     * @param string $filename - file name without path
+     * @param bool $persistent - is stored in persistent file storage
+     * @return false|string
+     */
+    public static function get_cookie($filename, $persistent = false)
+    {
+        $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
+        $content = '';
+        if (file_exists($file_path)) {
+            $expired = time() > filemtime($file_path);
+            if ($expired) {
+                unlink($file_path);
+            } else {
+                $content = file_get_contents($file_path);
+            }
+        }
+
+        return $content;
+    }
 }
