@@ -307,12 +307,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->save_if_changed();
                 $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
-
                 $this->plugin->init_epg_manager();
-                $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
-                if ($res === -1) {
-                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
-                }
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_EPG_CACHE_ENGINE:
@@ -524,8 +519,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 hd_debug_print("Action reload", true);
                 $this->save_if_changed();
                 $force = false;
-                if (isset($user_input->reload_action) && $user_input->reload_action === 'playlist') {
-                    $force = true;
+                if (isset($user_input->reload_action)) {
+                    if( $user_input->reload_action === 'playlist') {
+                        $force = true;
+                    } else if ($user_input->reload_action === 'epg') {
+                        $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
+                        if ($res === -1) {
+                            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
+                        }
+                    }
                 }
 
                 if ($this->plugin->tv->reload_channels($plugin_cookies, $force) === 0) {

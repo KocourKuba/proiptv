@@ -139,7 +139,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             case 1:
                 // downloaded xmltv file not exists or expired
                 hd_debug_print("Download and indexing xmltv source");
-                $this->clear_current_epg_files();
                 $this->download_xmltv_source();
                 $this->index_xmltv_channels();
                 break;
@@ -215,6 +214,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * Download XMLTV source.
+     *
      * @return int
      */
     public function download_xmltv_source()
@@ -227,22 +228,23 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         $ret = -1;
         $t = microtime(true);
 
+        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+        $cached_file = $this->get_cached_filename();
+        $tmp_filename = $cached_file . '.tmp';
+        if (file_exists($tmp_filename)) {
+            unlink($tmp_filename);
+        }
+
+        if (file_exists($cached_file)) {
+            unlink($cached_file);
+        }
+
         try {
             HD::set_last_error("xmltv_last_error", null);
             $this->set_index_locked(true);
 
             if (preg_match("/jtv.?\.zip$/", basename($this->xmltv_url))) {
                 throw new Exception("Unsupported EPG format (JTV)");
-            }
-
-            hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
-            $cached_file = $this->get_cached_filename();
-            $tmp_filename = $cached_file . '.tmp';
-            if (file_exists($cached_file)) {
-                unlink($cached_file);
-            }
-            if (file_exists($tmp_filename)) {
-                unlink($tmp_filename);
             }
 
             if (HD::http_download_https_proxy($this->xmltv_url, $tmp_filename) === false) {
@@ -322,10 +324,16 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             }
 
             $ret = 1;
+            $this->remove_index(self::INDEX_CHANNELS);
+            $this->remove_index(self::INDEX_PICONS);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
             if (!empty($tmp_filename) && file_exists($tmp_filename)) {
                 unlink($tmp_filename);
+            }
+
+            if (file_exists($cached_file)) {
+                unlink($cached_file);
             }
         }
 
