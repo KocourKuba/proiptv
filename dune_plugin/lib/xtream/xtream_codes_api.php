@@ -24,6 +24,7 @@
  */
 
 require_once 'lib/hd.php';
+require_once 'lib/curl_wrapper.php';
 
 class xtream_codes_api
 {
@@ -189,12 +190,11 @@ class xtream_codes_api
     /**
      * Get response if it already requested return cached value
      * @param string $url
-     * @param array $opts CURLOPT_PARAMS
      * @return mixed|false
      */
-    protected function get_cached_response($url, $opts = null)
+    protected function get_cached_response($url)
     {
-        $url_hash = hash('crc32', $url . json_encode($opts));
+        $url_hash = hash('crc32', $url);
         if (!is_null($this->cache) && isset($this->cache[$url_hash])) {
             return $this->cache[$url_hash];
         }
@@ -212,7 +212,7 @@ class xtream_codes_api
             unlink($tmp_file);
         }
 
-        $cached_data = HD::decodeResponse(false, HD::download_https_proxy($url, false, $opts));
+        $cached_data = Curl_Wrapper::decodeJsonResponse(false, Curl_Wrapper::simple_download_content($url));
         if ($cached_data !== false) {
             HD::StoreContentToFile($tmp_file, $cached_data);
         }

@@ -24,6 +24,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+require_once "lib/curl_wrapper.php";
+
 /*
     {
       "enable": true,
@@ -150,6 +152,11 @@ class api_default
     protected $packages = array();
 
     /**
+     * @var Curl_Wrapper
+     */
+    protected $curl_wrapper;
+
+    /**
      * @var array
      */
     protected $playlists = array();
@@ -157,6 +164,7 @@ class api_default
     public function __construct(DunePlugin $plugin)
     {
         $this->plugin = $plugin;
+        $this->curl_wrapper = new Curl_Wrapper();
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -606,38 +614,67 @@ class api_default
      * @param string $command
      * @param string $file
      * @param bool $decode
-     * @param array $curl_options
+     * @param array $curl_opt
      * @return bool|object
      */
-    public function execApiCommand($command, $file = null, $decode = true, $curl_options = array())
+    public function execApiCommand($command, $file = null, $decode = true, $curl_opt = array())
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
-        hd_debug_print("curl options: " . raw_json_encode($curl_options), true);
+        hd_debug_print("curl options: " . raw_json_encode($curl_opt), true);
 
         $command_url = $this->getApiCommand($command);
         if (empty($command_url)) {
             return false;
         }
 
-        if (isset($curl_options[CURLOPT_CUSTOMREQUEST])) {
-            $command_url .= $curl_options[CURLOPT_CUSTOMREQUEST];
-            unset($curl_options[CURLOPT_CUSTOMREQUEST]);
+        if (isset($curl_opt[CURLOPT_CUSTOMREQUEST])) {
+            $command_url .= $curl_opt[CURLOPT_CUSTOMREQUEST];
+            unset($curl_opt[CURLOPT_CUSTOMREQUEST]);
         }
 
         hd_debug_print("ApiCommandUrl: $command_url", true);
 
         $config_headers = $this->getConfigValue(CONFIG_HEADERS);
+        $send_headers = array();
         if (!empty($config_headers)) {
             foreach ($config_headers as $key => $header) {
                 $value = $this->replace_macros($header);
                 if (!empty($value)) {
-                    $curl_options[CURLOPT_HTTPHEADER][] = "$key: $value";
+                    $send_headers[] = "$key: $value";
                 }
             }
         }
 
-        $response = HD::download_https_proxy($command_url, $file, $curl_options);
+        $this->curl_wrapper->init($command_url);
+
+        if (isset($curl_opt[CURLOPT_HTTPHEADER])) {
+            $send_headers = array_merge($send_headers, $curl_opt[CURLOPT_HTTPHEADER]);
+        }
+
+        if (!empty($send_headers)) {
+            foreach ($send_headers as $header) {
+                hd_debug_print("CURLOPT_HTTPHEADER: " . $header, true);
+            }
+            $this->curl_wrapper->set_send_headers($send_headers);
+        }
+
+        if (isset($curl_opt[CURLOPT_POST])) {
+            hd_debug_print("CURLOPT_POST: " . var_export($curl_opt[CURLOPT_POST], true), true);
+            $this->curl_wrapper->set_post($curl_opt[CURLOPT_POST]);
+        }
+
+        if (isset($curl_opt[CURLOPT_POSTFIELDS])) {
+            hd_debug_print("CURLOPT_POSTFIELDS: {$curl_opt[CURLOPT_POSTFIELDS]}", true);
+            $this->curl_wrapper->set_post_data($curl_opt[CURLOPT_POSTFIELDS]);
+        }
+
+        if (is_null($file)) {
+            $response = $this->curl_wrapper->download_content();
+        } else {
+            $response = $this->curl_wrapper->download_file($file, false);
+        }
+
         if ($response === false) {
             hd_debug_print("Can't get response on request: " . $command_url);
             return false;
@@ -651,12 +688,20 @@ class api_default
             return $response;
         }
 
-        $data = HD::decodeResponse(false, $response);
+        $data = Curl_Wrapper::decodeJsonResponse(false, $response);
         if ($data === false || $data === null) {
             hd_debug_print("Can't decode response on request: " . $command_url);
         }
 
         return $data;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_api_response_headers()
+    {
+        return $this->curl_wrapper->get_response_headers_string();
     }
 
     /**

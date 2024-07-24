@@ -460,8 +460,8 @@ function get_platform_info()
                 $platform['type'] = 'apk';
             }
         } else {
-            $ini_arr = parse_ini_file('/tmp/run/versions.txt');
-            if (isset($ini_arr['platform_kind'])) {
+            $ini_arr = @parse_ini_file('/tmp/run/versions.txt');
+            if ($ini_arr !== false && isset($ini_arr['platform_kind'])) {
                 if ($ini_arr['platform_kind'] === 'android') {
                     $platform['platform'] = $ini_arr['platform_kind'];
                     if (isset($ini_arr['android_platform'])) {

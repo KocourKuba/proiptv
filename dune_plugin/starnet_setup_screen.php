@@ -25,6 +25,7 @@
 
 require_once 'lib/abstract_controls_screen.php';
 require_once 'lib/user_input_handler.php';
+require_once 'lib/curl_wrapper.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -130,7 +131,9 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $doc = HD::download_https_proxy(Default_Dune_Plugin::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
+            $curl_wrapper = new Curl_Wrapper();
+            $curl_wrapper->init(Default_Dune_Plugin::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
+            $doc = $curl_wrapper->download_content();
             if ($doc === false) {
                 hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
                 $path = get_install_path("changelog.$lang.md");

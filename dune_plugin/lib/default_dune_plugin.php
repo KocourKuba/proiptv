@@ -34,6 +34,7 @@ require_once 'catchup_params.php';
 require_once 'named_storage.php';
 require_once 'api/api_default.php';
 require_once 'm3u/M3uParser.php';
+require_once 'lib/curl_wrapper.php';
 require_once 'lib/epg/epg_manager_json.php';
 
 class Default_Dune_Plugin implements DunePlugin
@@ -1538,7 +1539,7 @@ class Default_Dune_Plugin implements DunePlugin
                     $provider->setLogo("plugin_file://logo/$filename");
                 } else {
                     $cached_file = get_cached_image_path($filename);
-                    if (HD::download_https_proxy($logo, $cached_file)) {
+                    if (Curl_Wrapper::simple_download_file($logo, $cached_file, false)) {
                         $provider->setLogo($cached_file);
                     } else {
                         hd_debug_print("failed to download provider logo: $logo");
@@ -1652,7 +1653,8 @@ class Default_Dune_Plugin implements DunePlugin
                     hd_debug_print("Tv playlist not defined");
                     throw new Exception("Tv playlist not defined");
                 }
-
+                $curl_wrapper = new Curl_Wrapper();
+                $response_headers = '';
                 hd_debug_print("m3u playlist: $playlist->name ({$this->get_active_playlist_key()})");
                 if ($playlist->type === PARAM_FILE) {
                     hd_debug_print("m3u copy local file: {$playlist->params[PARAM_URI]} to $tmp_file");
@@ -1663,7 +1665,9 @@ class Default_Dune_Plugin implements DunePlugin
                     if (!preg_match(HTTP_PATTERN, $playlist_url)) {
                         throw new Exception("Incorrect playlist url: $playlist_url");
                     }
-                    $res = HD::download_https_proxy($playlist_url, $tmp_file);
+                    $curl_wrapper->init($playlist_url);
+                    $res = $curl_wrapper->download_file($tmp_file, false);
+                    $response_headers = $curl_wrapper->get_response_headers_string();
                 } else if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
                     if (is_null($provider)) {
@@ -1676,19 +1680,15 @@ class Default_Dune_Plugin implements DunePlugin
 
                     hd_debug_print("Load provider playlist to: $tmp_file");
                     $res = $provider->load_playlist($tmp_file);
+                    $response_headers = $provider->get_api_response_headers();
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
 
                 if ($res === false || !file_exists($tmp_file)) {
                     $exception_msg = TR::load_string('err_load_playlist');
-                    if ($playlist->type !== PARAM_FILE) {
-                        $log_path = get_temp_path(HD::HTTPS_PROXY_LOG);
-                        if (file_exists($log_path)) {
-                            $logfile = file_get_contents($log_path);
-                            $exception_msg .= "\n\n$logfile";
-                            unlink($log_path);
-                        }
+                    if ($playlist->type !== PARAM_FILE && !empty($response_headers)) {
+                        $exception_msg .= "\n\n$response_headers";
                     }
                     throw new Exception($exception_msg);
                 }
@@ -1783,8 +1783,7 @@ class Default_Dune_Plugin implements DunePlugin
             if ($force !== false) {
                 $response = $provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
                 if ($response === false) {
-                    $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
-                    $exception_msg = TR::load_string('err_load_vod') . "\n\n$logfile";
+                    $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $provider->get_api_response_headers();
                     HD::set_last_error("vod_last_error", $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);
@@ -2855,7 +2854,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $doc = HD::download_https_proxy(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
+            $doc = Curl_Wrapper::simple_download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
             if ($doc === false) {
                 hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
                 $path = get_install_path("changelog.$lang.md");
@@ -2895,8 +2894,8 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print(null, true);
             $img_ym = get_temp_path('qr_ym.png');
             $img_pp = get_temp_path('qr_pp.png');
-            HD::download_https_proxy(self::RESOURCE_URL . "QR_YM.png", $img_ym);
-            HD::download_https_proxy(self::RESOURCE_URL . "QR_PP.png", $img_pp);
+            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym, false);
+            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp, false);
 
             Control_Factory::add_vgap($defs, 50);
             Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");

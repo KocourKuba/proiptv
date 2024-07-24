@@ -28,6 +28,7 @@ require_once 'lib/abstract_regular_screen.php';
 require_once 'lib/user_input_handler_registry.php';
 require_once 'lib/smb_tree.php';
 require_once 'lib/hd.php';
+require_once 'lib/curl_wrapper.php';
 
 class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Input_Handler
 {
@@ -457,7 +458,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         }
 
                         $package_name = get_temp_path($lib['package']);
-                        if ($need_download && !file_exists($package_name) && HD::download_https_proxy($lib['url'], $package_name) === false) {
+                        if ($need_download
+                            && !file_exists($package_name)
+                            && Curl_Wrapper::simple_download_file($lib['url'], $package_name, false) === false) {
                             hd_debug_print("can't download image pack: $package_name");
                             break;
                         }

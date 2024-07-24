@@ -27,6 +27,7 @@ require_once 'epg_indexer_interface.php';
 
 require_once 'lib/hd.php';
 require_once 'lib/hashed_array.php';
+require_once 'lib/curl_wrapper.php';
 
 abstract class Epg_Indexer implements Epg_Indexer_Interface
 {
@@ -62,6 +63,16 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      * @var int
      */
     protected $cache_ttl;
+
+    /**
+     * @var Curl_Wrapper
+     */
+    protected $curl_wrapper;
+
+    public function __construct()
+    {
+        $this->curl_wrapper = new Curl_Wrapper();
+    }
 
     /**
      * @param string $cache_dir
@@ -177,41 +188,38 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         }
 
         HD::set_last_error("xmltv_last_error", null);
+
         $cached_file = $this->get_cached_filename();
         hd_debug_print("Checking cached xmltv file: $cached_file");
-
-        if (file_exists($cached_file) && filesize($cached_file) !== 0) {
-            $check_time_file = filemtime($cached_file);
-            $max_cache_time = 3600 * 24 * $this->cache_ttl;
-            if ($check_time_file && $check_time_file + $max_cache_time > time()) {
-                hd_debug_print("Cached file: $cached_file is not expired "
-                    . date("Y-m-d H:i", $check_time_file)
-                    . " date expiration: " . date("Y-m-d H:i", $check_time_file + $max_cache_time));
-
-                $channels_index_valid = $this->is_index_valid(self::INDEX_CHANNELS);
-                $picons_index_valid = $this->is_index_valid(self::INDEX_PICONS);
-                $pos_index_valid = $this->is_index_valid(self::INDEX_POSITIONS);
-
-                if ($channels_index_valid && $picons_index_valid && $pos_index_valid) {
-                    hd_debug_print("Xmltv cache valid");
-                    return 0;
-                }
-
-                if ($channels_index_valid && $picons_index_valid) {
-                    hd_debug_print("Xmltv cache channels and picons valid");
-                    return 2;
-                }
-
-                hd_debug_print("Xmltv cache indexes invalid");
-                return 3;
-            }
-
-            hd_debug_print("Xmltv cache expired");
-        } else {
+        if (!file_exists($cached_file)) {
             hd_debug_print("Cached xmltv file not exist");
+            return 1;
         }
 
-        return 1;
+        $this->curl_wrapper->init($this->xmltv_url);
+        if ($this->curl_wrapper->check_is_expired()) {
+            $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
+            hd_debug_print("Xmltv cache expired");
+            return 1;
+        }
+
+        hd_debug_print("Cached file: $cached_file is not expired");
+        $channels_index_valid = $this->is_index_valid(self::INDEX_CHANNELS);
+        $picons_index_valid = $this->is_index_valid(self::INDEX_PICONS);
+        $pos_index_valid = $this->is_index_valid(self::INDEX_POSITIONS);
+
+        if ($channels_index_valid && $picons_index_valid && $pos_index_valid) {
+            hd_debug_print("Xmltv cache valid");
+            return 0;
+        }
+
+        if ($channels_index_valid && $picons_index_valid) {
+            hd_debug_print("Xmltv cache channels and picons valid");
+            return 2;
+        }
+
+        hd_debug_print("Xmltv cache indexes invalid");
+        return 3;
     }
 
     /**
@@ -236,10 +244,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             unlink($tmp_filename);
         }
 
-        if (file_exists($cached_file)) {
-            unlink($cached_file);
-        }
-
         try {
             HD::set_last_error("xmltv_last_error", null);
             $this->set_index_locked(true);
@@ -248,9 +252,22 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 throw new Exception("Unsupported EPG format (JTV)");
             }
 
-            if (HD::download_https_proxy($this->xmltv_url, $tmp_filename) === false) {
-                $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
-                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n$logfile");
+            $this->curl_wrapper->init($this->xmltv_url);
+            $expired = $this->curl_wrapper->check_is_expired() || !file_exists($tmp_filename);
+            if (!$expired) {
+                hd_debug_print("File not changed, using cached file: $cached_file");
+                $this->set_index_locked(false);
+                hd_debug_print_separator();
+                return 1;
+            }
+
+            $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
+            if (!$this->curl_wrapper->download_file($tmp_filename, true)) {
+                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_response_headers_string());
+            }
+
+            if ($this->curl_wrapper->get_response_code() !== 200) {
+                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_response_headers_string());
             }
 
             $file_time = filemtime($tmp_filename);
@@ -263,6 +280,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
             hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", $file_time));
             hd_debug_print("Download xmltv source $this->xmltv_url done in: $dl_time secs (speed $speed)");
+
+            if (file_exists($cached_file)) {
+                unlink($cached_file);
+            }
 
             $t = microtime(true);
 
@@ -312,9 +333,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             } else if (false !== mb_strpos($hdr, "<?xml")) {
                 hd_debug_print("XML signature: " . substr($hdr, 0, 5), true);
                 hd_debug_print("rename $tmp_filename to $cached_file");
-                if (file_exists($cached_file)) {
-                    unlink($cached_file);
-                }
                 rename($tmp_filename, $cached_file);
                 $size = filesize($cached_file);
                 touch($cached_file, $file_time);

@@ -39,11 +39,12 @@ class HD
      */
     private static $default_user_agent;
 
+    /**
+     * @var string
+     */
     private static $plugin_user_agent;
 
-    private static $token = '05ba6358d39c4f298f43024b654b7387';
     const DUNE_PARAMS_MAGIC = "|||dune_params|||";
-    const HTTPS_PROXY_LOG = "https_proxy.log";
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -149,7 +150,7 @@ class HD
         self::$default_user_agent = "DuneHD/1.0";
 
         $extra_useragent = "";
-        $sysinfo = file("/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
+        $sysinfo = @file("/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
         if ($sysinfo !== false) {
             foreach ($sysinfo as $line) {
                 if (preg_match("/product_id:/", $line) ||
@@ -218,7 +219,6 @@ class HD
         curl_setopt($ch, CURLOPT_URL, $url);
 
         if (isset($opts)) {
-            //self::dump_curl_opts($opts);
             foreach ($opts as $k => $v) {
                 curl_setopt($ch, $k, $v);
             }
@@ -251,145 +251,6 @@ class HD
         curl_close($ch);
 
         return $content;
-    }
-
-    /**
-     * download and return contents
-     * if $save_file is null return content
-     * otherwise save content to $save_file and return true or false
-     *
-     * @param string $url
-     * @param string|null $save_file
-     * @param array $curl_options
-     * @return string|bool content of the downloaded file or result of operation
-     */
-    public static function download_https_proxy($url, $save_file = null, $curl_options = array())
-    {
-        if (!empty($curl_options)) {
-            hd_debug_print("curl options: " . json_encode($curl_options), true);
-        }
-
-        $ret_content = empty($save_file);
-
-        $logfile = get_temp_path(self::HTTPS_PROXY_LOG);
-        if (file_exists($logfile)) {
-            unlink($logfile);
-        }
-
-        $config_file = get_temp_path('curl_config.txt');
-        if (file_exists($config_file)) {
-            unlink($config_file);
-        }
-
-        if (empty($save_file)) {
-            $save_file = get_temp_path(Hashed_Array::hash($url));
-        }
-
-        $config_data  = "--insecure" . PHP_EOL;
-        $config_data .= "--silent" . PHP_EOL;
-        $config_data .= "--show-error" . PHP_EOL;
-        $config_data .= "--dump-header -" . PHP_EOL;
-        $config_data .= "--connect-timeout 30" . PHP_EOL;
-        $config_data .= "--max-time 90" . PHP_EOL;
-        $config_data .= "--location" . PHP_EOL;
-        $config_data .= "--max-redirs 4" . PHP_EOL;
-        $config_data .= "--compressed" . PHP_EOL;
-        $config_data .= "--parallel" . PHP_EOL;
-        $config_data .= "--user-agent \"" . self::get_dune_user_agent() ."\"" . PHP_EOL;
-        $config_data .= "--url \"$url\"" . PHP_EOL;
-        $config_data .= "--output \"$save_file\"" . PHP_EOL;
-
-        if (!empty($curl_options)) {
-            if (!isset($curl_options[CURLOPT_POST])) {
-                $curl_options[CURLOPT_POST] = false;
-            }
-            foreach ($curl_options as $opt_name => $parameters) {
-                if ($opt_name === CURLOPT_HTTPHEADER) {
-                    foreach ($parameters as $parameter) {
-                        $config_data .= "--header \"$parameter\"" . PHP_EOL;
-                    }
-                } else if ($opt_name === CURLOPT_POST) {
-                    $config_data .= "--request " . ($parameters ? "POST" : "GET") . PHP_EOL;
-                } else if ($opt_name === CURLOPT_POSTFIELDS) {
-                    $config_data .= "--data \"$parameters\"" . PHP_EOL;
-                }
-            }
-        }
-
-        file_put_contents($config_file, $config_data);
-
-        if (LogSeverity::$is_debug) {
-            $lines = file($config_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            hd_debug_print("Curl config:", true);
-            foreach ($lines as $line) {
-                hd_debug_print($line, true);
-            }
-        }
-
-        $cmd = get_install_path('bin/https_proxy.sh') . " " . get_platform_curl() . " '$config_file' '$logfile'";
-        hd_debug_print("Exec: $cmd", true);
-        $result = shell_exec($cmd);
-        if ($result === false) {
-            hd_debug_print("Problem with exec https_proxy script");
-        } else {
-            hd_debug_print("Exec result: " . (int)$result);
-        }
-
-        if (!file_exists($logfile)) {
-            $log_content = "No http_proxy log!";
-            hd_debug_print($log_content);
-        } else {
-            $log_content = file($logfile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if (LogSeverity::$is_debug && $log_content !== false) {
-                hd_debug_print("---------  Read http_proxy log ---------");
-                foreach ($log_content as $line) {
-                    hd_debug_print($line);
-                }
-                hd_debug_print("---------     Read finished    ---------");
-            }
-        }
-
-        if (!file_exists($save_file)) {
-            hd_debug_print("Can't download to $save_file");
-            return false;
-        }
-
-        if ($ret_content) {
-            $content = file_get_contents($save_file);
-            unlink($save_file);
-            return $content;
-        }
-
-        return file_exists($save_file);
-    }
-
-    /**
-     * @param bool $is_file
-     * @param string $source contains data or file name
-     * @param bool $assoc
-     * @return mixed|false
-     */
-    public static function decodeResponse($is_file, $source, $assoc = false)
-    {
-        if ($source === false) {
-            return  false;
-        }
-
-        if ($is_file) {
-            $data = file_get_contents($source);
-        } else {
-            $data = $source;
-        }
-
-        $contents = json_decode($data, $assoc);
-        if ($contents !== null && $contents !== false) {
-            return $contents;
-        }
-
-        hd_debug_print("failed to decode json");
-        hd_debug_print("doc: $data", true);
-
-        return false;
     }
 
     /**
@@ -991,30 +852,6 @@ class HD
         return $out;
     }
 
-    public static function str_cif($string, $str = null)
-    {
-        $result = '';
-        $len = strlen(self::$token);
-        if ($str !== null) {
-            $str = base64_decode($str);
-            for ($i = 0, $iMax = strlen($str); $i < $iMax; $i++) {
-                $char = $str[$i];
-                $key_char = self::$token[($i % $len) - 1];
-                $char = chr(ord($char) - ord($key_char));
-                $result .= $char;
-            }
-            return $result;
-        }
-
-        for ($i = 0, $iMax = strlen($string); $i < $iMax; $i++) {
-            $char = $string[$i];
-            $key_char = self::$token[($i % $len) - 1];
-            $char = chr(ord($char) + ord($key_char));
-            $result .= $char;
-        }
-        return base64_encode($result);
-    }
-
     /**
      * @param string $string
      * @param int $max_size
@@ -1229,12 +1066,13 @@ class HD
     }
 
     /**
-     * Set cookie with expired time (timestamp)
+     * Set cookie with expired time (timestamp).
+     * If $persistent is true cookie stored to plugin data path
      *
-     * @param string $filename - file name without path
+     * @param string $filename file name without path
      * @param string $content
-     * @param int $expired_time - expired time
-     * @param bool $persistent - is stored in persistent file storage
+     * @param int $expired_time expired time
+     * @param bool $persistent [optional] is stored in persistent file storage
      */
     public static function set_cookie($filename, $content, $expired_time, $persistent = false)
     {
@@ -1244,10 +1082,11 @@ class HD
     }
 
     /**
-     * Get cookie if it not expired
+     * Get cookie if it not expired.
+     * If $persistent is true cookie readed from plugin data path
      *
-     * @param string $filename - file name without path
-     * @param bool $persistent - is stored in persistent file storage
+     * @param string $filename file name without path
+     * @param bool $persistent [optional] is stored in persistent file storage
      * @return false|string
      */
     public static function get_cookie($filename, $persistent = false)

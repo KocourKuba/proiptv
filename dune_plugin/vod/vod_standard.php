@@ -774,16 +774,15 @@ class vod_standard extends Abstract_Vod
         if (!$need_load) {
             $this->vod_items = HD::ReadContentFromFile($tmp_file, $assoc);
         } else {
-            $responce = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
-            if ($responce === false) {
-                $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
-                $exception_msg = TR::load_string('err_load_vod') . "\n\n$logfile";
+            $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
+            if ($response === false) {
+                $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->get_api_response_headers();
                 HD::set_last_error("vod_last_error", $exception_msg);
                 if (file_exists($tmp_file)) {
                     unlink($tmp_file);
                 }
             } else {
-                $this->vod_items = HD::decodeResponse(true, $tmp_file, $assoc);
+                $this->vod_items = Curl_Wrapper::decodeJsonResponse(true, $tmp_file, $assoc);
                 if ($this->vod_items === false) {
                     $exception_msg = TR::load_string('err_decoding_vod');
                     HD::set_last_error("vod_last_error", $exception_msg);
