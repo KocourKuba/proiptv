@@ -1538,7 +1538,7 @@ class Default_Dune_Plugin implements DunePlugin
                     $provider->setLogo("plugin_file://logo/$filename");
                 } else {
                     $cached_file = get_cached_image_path($filename);
-                    if (HD::http_download_https_proxy($logo, $cached_file)) {
+                    if (HD::download_https_proxy($logo, $cached_file)) {
                         $provider->setLogo($cached_file);
                     } else {
                         hd_debug_print("failed to download provider logo: $logo");
@@ -1663,7 +1663,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if (!preg_match(HTTP_PATTERN, $playlist_url)) {
                         throw new Exception("Incorrect playlist url: $playlist_url");
                     }
-                    $res = HD::http_download_https_proxy($playlist_url, $tmp_file);
+                    $res = HD::download_https_proxy($playlist_url, $tmp_file);
                 } else if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
                     if (is_null($provider)) {
@@ -2855,7 +2855,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $doc = HD::http_download_https_proxy(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
+            $doc = HD::download_https_proxy(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
             if ($doc === false) {
                 hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
                 $path = get_install_path("changelog.$lang.md");
@@ -2895,8 +2895,8 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print(null, true);
             $img_ym = get_temp_path('qr_ym.png');
             $img_pp = get_temp_path('qr_pp.png');
-            HD::http_download_https_proxy(self::RESOURCE_URL . "QR_YM.png", $img_ym);
-            HD::http_download_https_proxy(self::RESOURCE_URL . "QR_PP.png", $img_pp);
+            HD::download_https_proxy(self::RESOURCE_URL . "QR_YM.png", $img_ym);
+            HD::download_https_proxy(self::RESOURCE_URL . "QR_PP.png", $img_pp);
 
             Control_Factory::add_vgap($defs, 50);
             Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");

@@ -100,7 +100,7 @@ class api_iptvonline extends api_default
         $data = parent::load_playlist(null);
 
         if (isset($data->success, $data->data)) {
-            return HD::http_download_https_proxy($data->data, $tmp_file);
+            return HD::download_https_proxy($data->data, $tmp_file);
         }
 
         return false;

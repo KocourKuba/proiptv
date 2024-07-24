@@ -263,7 +263,7 @@ class HD
      * @param array $curl_options
      * @return string|bool content of the downloaded file or result of operation
      */
-    public static function http_download_https_proxy($url, $save_file = null, $curl_options = array())
+    public static function download_https_proxy($url, $save_file = null, $curl_options = array())
     {
         if (!empty($curl_options)) {
             hd_debug_print("curl options: " . json_encode($curl_options), true);

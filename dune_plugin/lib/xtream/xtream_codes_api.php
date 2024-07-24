@@ -199,7 +199,7 @@ class xtream_codes_api
             unlink($tmp_file);
         }
 
-        $cached_data = HD::decodeResponse(false, HD::http_download_https_proxy($url, false, $opts));
+        $cached_data = HD::decodeResponse(false, HD::download_https_proxy($url, false, $opts));
         if ($cached_data !== false) {
             HD::StoreContentToFile($tmp_file, $cached_data);
         }

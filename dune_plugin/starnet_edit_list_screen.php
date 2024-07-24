@@ -422,7 +422,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $qr_code = get_temp_path($provider->getId()) . ".jpg";
                 if (!file_exists($qr_code)) {
                     $link = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
-                    if (false === HD::http_download_https_proxy($link, $qr_code)) break;
+                    if (false === HD::download_https_proxy($link, $qr_code)) break;
                 }
 
                 Control_Factory::add_vgap($defs, 20);
@@ -867,7 +867,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
             try {
                 $tmp_file = get_temp_path(Hashed_Array::hash($url));
-                if (HD::http_download_https_proxy($url, $tmp_file) === false) {
+                if (HD::download_https_proxy($url, $tmp_file) === false) {
                     $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                     throw new Exception("Ошибка скачивания плейлиста: $url\n\n$logfile");
                 }
@@ -1011,7 +1011,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     hd_debug_print("import link: '$line'", true);
                     try {
                         $tmp_file = get_temp_path(Hashed_Array::hash($line));
-                        if (!HD::http_download_https_proxy($line, $tmp_file)) {
+                        if (!HD::download_https_proxy($line, $tmp_file)) {
                             $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                             throw new Exception("Ошибка скачивания : $line\n\n$logfile");
                         }

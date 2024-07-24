@@ -637,7 +637,7 @@ class api_default
             }
         }
 
-        $response = HD::http_download_https_proxy($command_url, $file, $curl_options);
+        $response = HD::download_https_proxy($command_url, $file, $curl_options);
         if ($response === false) {
             hd_debug_print("Can't get response on request: " . $command_url);
             return false;

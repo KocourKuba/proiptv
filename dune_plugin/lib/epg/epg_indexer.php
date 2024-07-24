@@ -247,7 +247,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 throw new Exception("Unsupported EPG format (JTV)");
             }
 
-            if (HD::http_download_https_proxy($this->xmltv_url, $tmp_filename) === false) {
+            if (HD::download_https_proxy($this->xmltv_url, $tmp_filename) === false) {
                 $logfile = file_get_contents(get_temp_path(HD::HTTPS_PROXY_LOG));
                 throw new Exception("Ошибка скачивания $this->xmltv_url\n\n$logfile");
             }

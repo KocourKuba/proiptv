@@ -457,7 +457,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         }
 
                         $package_name = get_temp_path($lib['package']);
-                        if ($need_download && !file_exists($package_name) && HD::http_download_https_proxy($lib['url'], $package_name) === false) {
+                        if ($need_download && !file_exists($package_name) && HD::download_https_proxy($lib['url'], $package_name) === false) {
                             hd_debug_print("can't download image pack: $package_name");
                             break;
                         }
