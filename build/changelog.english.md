@@ -1,5 +1,12 @@
 ﻿### Upcoming version
-- TV Team API update
+
+### Version 4.1.784
+- Additional functions for TV Team API
+- Added additional XMLTV source for Yosso TV
+- Fixed a bug with clearing indexes after updating the XMLTV source
+- Fixed a minor bug with playlist loading
+- Minor improvements for storing session/token files
+- Updated translation
 
 ### Version 4.1.770
 - Reducing the number of authorization requests for TV Team, so that the provider does not block when entering incorrect access data.
