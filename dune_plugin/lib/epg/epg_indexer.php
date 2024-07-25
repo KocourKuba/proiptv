@@ -147,6 +147,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 hd_debug_print("Indexing xmltv source");
                 $this->remove_index(self::INDEX_CHANNELS);
                 $this->remove_index(self::INDEX_PICONS);
+                $this->remove_index(self::INDEX_POSITIONS);
                 $this->index_xmltv_channels();
                 break;
             default:
@@ -326,6 +327,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             $ret = 1;
             $this->remove_index(self::INDEX_CHANNELS);
             $this->remove_index(self::INDEX_PICONS);
+            $this->remove_index(self::INDEX_POSITIONS);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
             if (!empty($tmp_filename) && file_exists($tmp_filename)) {
