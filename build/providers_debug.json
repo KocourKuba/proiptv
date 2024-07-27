@@ -25,7 +25,7 @@
   },
   "epg_presets": {
     "cbilling": {
-      "json_source": "{API}/epg/{EPG_ID}/?date=",
+      "json_source": "http://protected-api.com/epg/{EPG_ID}/?date=",
       "parser": {
         "epg_root": "",
         "epg_name": "name",
@@ -46,7 +46,7 @@
       }
     },
     "itvlive": {
-      "json_source": "{API}/epg/{EPG_ID}",
+      "json_source": "http://api.itv.live/epg/{EPG_ID}",
       "parser": {
         "epg_root": "res",
         "epg_name": "title",
@@ -56,7 +56,7 @@
       }
     },
     "ottclub": {
-      "json_source": "{API}/api/channel/{ID}",
+      "json_source": "http://myott.top/api/channel/{ID}",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -86,7 +86,7 @@
       }
     },
     "sharavoz": {
-      "json_source": "{API}/program?epg={ID}&date=",
+      "json_source": "http://api.program.spr24.net/api/program?epg={ID}&date=",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -96,7 +96,7 @@
       }
     },
     "tvclub": {
-      "json_source": "{API}/epg?token={SESSION_ID}&channels={EPG_ID}&time={TIMESTAMP}&period=24",
+      "json_source": "http://api.iptv.so/0.9/json/epg?token={SESSION_ID}&channels={EPG_ID}&time={TIMESTAMP}&period=24",
       "parser": {
         "epg_root": "epg|channels|[0]|epg",
         "epg_name": "text",
@@ -116,7 +116,7 @@
       }
     },
     "vidok": {
-      "json_source": "{API}/epg2?cid={EPG_ID}&token={SESSION_ID}",
+      "json_source": "http://sapi.ott.st/v2.4/json/epg2?cid={EPG_ID}&token={SESSION_ID}",
       "parser": {
         "epg_root": "epg",
         "epg_name": "title",
