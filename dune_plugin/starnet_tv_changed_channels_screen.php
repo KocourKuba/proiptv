@@ -199,11 +199,9 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             if (is_null($channel)) continue;
 
             $group = $channel->get_parent_group();
-            $groups[] = str_replace('|', '¦', (is_null($group) ? "" : $group->get_title()));
-
             $detailed_info = TR::t('tv_screen_ch_channel_info__5',
                 $channel->get_title(),
-                rtrim(implode(',', $groups), ","),
+                str_replace('|', '¦', (is_null($group) ? "" : $group->get_title())),
                 $channel->get_archive(),
                 $channel->get_id(),
                 implode(", ", $channel->get_epg_ids())
