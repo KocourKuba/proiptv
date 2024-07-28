@@ -106,7 +106,7 @@ class Default_Group extends Json_Serializer implements Group
     }
 
     /**
-     * @param $plugin
+     * @param Default_Dune_Plugin $plugin
      * @param string $id
      * @param string $title
      * @param string|null $icon_url

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The MIT License (MIT)
  *
@@ -60,9 +59,9 @@ class xtream_codes_api
     ///////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $base_url string
-     * @param $username string
-     * @param $password string
+     * @param string $base_url
+     * @param string $username
+     * @param string $password
      * @return void
      */
     public function init($base_url, $username, $password)
@@ -72,6 +71,10 @@ class xtream_codes_api
         $this->password = $password;
     }
 
+    /**
+     * Reset cache
+     * @return void
+     */
     public function reset_cache()
     {
         $this->auth_info = null;
@@ -79,6 +82,7 @@ class xtream_codes_api
     }
 
     /**
+     * Get authentication info
      * @return false|mixed
      */
     public function get_auth()
@@ -91,6 +95,7 @@ class xtream_codes_api
     }
 
     /**
+     * Get categories
      * @return array|false
      */
     public function get_categories($stream_type = self::VOD)
@@ -99,7 +104,8 @@ class xtream_codes_api
     }
 
     /**
-     * @param $category_id string|null
+     * Get streams
+     * @param string|null $category_id
      * @return mixed|false
      */
     public function get_streams($stream_type = self::VOD, $category_id = null)
@@ -108,7 +114,8 @@ class xtream_codes_api
     }
 
     /**
-     * @param $id string
+     * Get stream info
+     * @param string $id
      * @return mixed|false
      */
     public function get_stream_info($id, $stream_type = self::VOD)
@@ -117,7 +124,8 @@ class xtream_codes_api
     }
 
     /**
-     * @param $id string
+     * Get stream url
+     * @param string $id
      * @return string
      */
     public function get_stream_url($id, $stream_type = self::VOD)
@@ -133,6 +141,7 @@ class xtream_codes_api
     ///////////////////////////////////////////////////////////////////////////////
 
     /**
+     * Get auth url
      * @return string
      */
     protected function get_auth_url()
@@ -141,6 +150,7 @@ class xtream_codes_api
     }
 
     /**
+     * Get categories url
      * @return string
      */
     protected function get_categories_url($stream_type = self::VOD)
@@ -149,6 +159,7 @@ class xtream_codes_api
     }
 
     /**
+     * Get streams url
      * @return string|null
      */
     protected function get_streams_url($stream_type = self::VOD, $category_id = null)
@@ -167,6 +178,7 @@ class xtream_codes_api
     }
 
     /**
+     * Get stream info url
      * @return string
      */
     protected function get_stream_info_url($id, $stream_type = self::VOD)
@@ -175,8 +187,9 @@ class xtream_codes_api
     }
 
     /**
-     * @param $url string
-     * @param $opts array CURLOPT_PARAMS
+     * Get response if it already requested return cached value
+     * @param string $url
+     * @param array $opts CURLOPT_PARAMS
      * @return mixed|false
      */
     protected function get_cached_response($url, $opts = null)
@@ -208,8 +221,9 @@ class xtream_codes_api
     }
 
     /**
-     * @param $url_hash string
-     * @param $cached_data mixed
+     * Update cache
+     * @param string $url_hash
+     * @param mixed $cached_data
      * @return mixed
      */
     protected function update_cache($url_hash, $cached_data)

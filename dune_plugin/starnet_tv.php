@@ -506,7 +506,7 @@ class Starnet_Tv implements User_Input_Handler
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @param bool $force
      * @return int
      */
@@ -528,7 +528,7 @@ class Starnet_Tv implements User_Input_Handler
     }
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @param bool $force
      * @return int
      */
@@ -1347,7 +1347,7 @@ class Starnet_Tv implements User_Input_Handler
      * @param string $channel_id
      * @param int $archive_ts
      * @param string $protect_code
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return string
      */
     public function get_tv_playback_url($channel_id, $archive_ts, $protect_code, &$plugin_cookies)
@@ -1385,7 +1385,7 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param MediaURL $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      */
     public function get_tv_info(MediaURL $media_url, &$plugin_cookies)

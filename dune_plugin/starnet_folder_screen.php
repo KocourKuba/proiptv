@@ -391,7 +391,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     /// protected methods
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @param array $path
      * @return array
      */
@@ -607,7 +607,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array|null
      */
     protected function do_action_fs($user_input)
@@ -657,7 +657,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array
      */
     protected function do_open_folder($user_input)
@@ -691,7 +691,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array
      */
     protected function do_new_smb_data($user_input)
@@ -738,7 +738,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      */
     protected function do_smb_setup($plugin_cookies)
@@ -767,8 +767,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
-     * @param $plugin_cookies
+     * @param Object $user_input
+     * @param Object $plugin_cookies
      * @return array
      */
     protected function do_save_smb_setup($user_input, $plugin_cookies)
@@ -806,7 +806,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array|null
      */
     protected function do_select_folder($user_input)
@@ -836,7 +836,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array
      */
     protected function do_mkdir($user_input)
@@ -852,7 +852,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array|null
      */
     protected function do_reset_folder($user_input)
@@ -873,7 +873,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array|null
      */
     protected function do_reload_folder($user_input)

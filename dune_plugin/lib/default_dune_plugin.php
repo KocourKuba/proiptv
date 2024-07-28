@@ -363,7 +363,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $preset_name string
+     * @param string $preset_name
      * @return array|null
      */
     public function get_image_lib($preset_name)
@@ -378,7 +378,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $object
+     * @param Object $object
      * @return void
      */
     public function create_screen($object)
@@ -461,8 +461,8 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @override DunePlugin
-     * @param $user_input
-     * @param $plugin_cookies
+     * @param Object $user_input
+     * @param Object $plugin_cookies
      * @return array|null
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
@@ -475,7 +475,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @override DunePlugin
      * @param string $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array|null
      * @throws Exception
      */
@@ -492,7 +492,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @override DunePlugin
      * @param string $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array|null
      * @throws Exception
      */
@@ -511,7 +511,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @override DunePlugin
      * @param string $media_url
      * @param int $from_ndx
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      * @throws Exception
      */
@@ -529,7 +529,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @override DunePlugin
      * @param string $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      * @throws Exception
      */
@@ -553,7 +553,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @override DunePlugin
      * @param string $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return string
      * @throws Exception
      */
@@ -577,7 +577,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $channel_id
      * @param int $archive_tm_sec
      * @param string $protect_code
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return string
      * @throws Exception
      */
@@ -600,7 +600,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @override DunePlugin
      * @param string $channel_id
      * @param int $day_start_tm_sec
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      */
     public function get_day_epg($channel_id, $day_start_tm_sec, &$plugin_cookies)
@@ -671,9 +671,9 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @override DunePlugin
-     * @param $channel_id
-     * @param $program_ts
-     * @param $plugin_cookies
+     * @param string $channel_id
+     * @param int $program_ts
+     * @param Object $plugin_cookies
      * @return mixed|null
      */
     public function get_program_info($channel_id, $program_ts, $plugin_cookies)
@@ -702,7 +702,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @override DunePlugin
      * @param string $op_type
      * @param string $channel_id
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      */
     public function change_tv_favorites($op_type, $channel_id, &$plugin_cookies = null)
@@ -723,7 +723,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @override DunePlugin
      * @param string $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array|null
      * @throws Exception
      */
@@ -741,7 +741,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @override DunePlugin
      * @param string $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return string
      */
     public function get_vod_stream_url($media_url, &$plugin_cookies)
@@ -994,7 +994,7 @@ class Default_Dune_Plugin implements DunePlugin
      * Get channels orders for selected playlist
      *
      * @param string $id
-     * @param $default
+     * @param mixed|null $default
      * @return mixed
      */
     public function &get_orders($id, $default = null)
@@ -2183,7 +2183,7 @@ class Default_Dune_Plugin implements DunePlugin
      * @param string $action_id
      * @param string $caption
      * @param string $icon
-     * @param $add_params array|null
+     * @param array|null $add_params
      * @return array
      */
     public function create_menu_item($handler, $action_id, $caption = null, $icon = null, $add_params = null)
@@ -2509,7 +2509,7 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * @param string $source_screen_id
      * @param string $action_edit
-     * @param $media_url
+     * @param MediaURL|null $media_url
      * @return array|null
      */
     public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null)
@@ -2580,7 +2580,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $handler
+     * @param User_Input_Handler $handler
      * @param string $provider_id
      * @param string $playlist_id
      * @return array|null
@@ -2630,7 +2630,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $handler
+     * @param User_Input_Handler $handler
      * @return array|null
      */
     public function do_edit_provider_ext_dlg($handler)
@@ -2654,7 +2654,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return bool|array|string
      */
     public function apply_edit_provider_dlg($user_input)
@@ -2676,7 +2676,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return bool|array
      */
     public function apply_edit_provider_ext_dlg($user_input)
@@ -2692,7 +2692,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $channel_id
+     * @param string $channel_id
      * @return array|null
      */
     public function do_show_channel_info($channel_id)
@@ -2786,7 +2786,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param $handler
+     * @param User_Input_Handler $handler
      * @return array|null
      */
     public function do_show_subscription($handler)

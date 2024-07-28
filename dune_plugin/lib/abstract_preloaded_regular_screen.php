@@ -32,7 +32,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
 
     /**
      * @param MediaURL $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      */
     abstract public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies);
@@ -71,7 +71,7 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
 
     /**
      * @param MediaURL $parent_media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @param int $sel_ndx
      * @return array
      */

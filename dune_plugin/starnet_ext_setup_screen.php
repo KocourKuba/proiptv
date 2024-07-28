@@ -390,7 +390,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
     /**
      * adult pass dialog defs
-     * @param $adult bool
+     * @param bool $adult
      * @return array
      */
     public function do_get_pass_control_defs($adult)

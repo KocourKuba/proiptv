@@ -48,7 +48,7 @@ class Movie_Series
     public $playback_url_is_stream_url = true;
 
     /**
-     * @param $id string
+     * @param string $id
      * @throws Exception
      */
     public function __construct($id)

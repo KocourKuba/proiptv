@@ -242,7 +242,7 @@ class Movie implements User_Input_Handler
     }
 
     /**
-     * @param $v string|null
+     * @param string|null $v
      * @return string
      */
     private function to_string($v)
@@ -251,8 +251,8 @@ class Movie implements User_Input_Handler
     }
 
     /**
-     * @param $v
-     * @param $default_value
+     * @param string|int $v
+     * @param string|int $default_value
      * @return int
      */
     private function to_int($v, $default_value)
@@ -337,13 +337,13 @@ class Movie implements User_Input_Handler
     }
 
     /**
-     * @param $id string
-     * @param $name string
-     * @param $description
-     * @param $playback_url string
-     * @param $season_id string
-     * @param $movie_image string
-     * @param $playback_url_is_stream_url bool
+     * @param string $id
+     * @param string $name
+     * @param string $description
+     * @param string $playback_url
+     * @param string $season_id
+     * @param string $movie_image
+     * @param bool $playback_url_is_stream_url
      * @throws Exception
      */
     public function add_series_data($id, $name, $description, $playback_url, $season_id = '', $movie_image = '', $playback_url_is_stream_url = true)
@@ -360,14 +360,14 @@ class Movie implements User_Input_Handler
     }
 
     /**
-     * @param $id
-     * @param $name
-     * @param $description
-     * @param $playback_url
-     * @param $qualities
-     * @param $audios
-     * @param $season_id
-     * @param $playback_url_is_stream_url
+     * @param string $id
+     * @param string $name
+     * @param string $description
+     * @param string $playback_url
+     * @param array $qualities
+     * @param array $audios
+     * @param string $season_id
+     * @param bool $playback_url_is_stream_url
      * @throws Exception
      */
     public function add_series_with_variants_data($id,

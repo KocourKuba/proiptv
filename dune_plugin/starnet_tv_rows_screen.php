@@ -46,10 +46,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $pane
-     * @param $rows_before
-     * @param $rows_after
-     * @param $min_row_index_for_y2
+     * @param array $pane
+     * @param array|null $rows_before
+     * @param array|null $rows_after
+     * @param int|null $min_row_index_for_y2
      * @return void
      */
     public function add_rows_to_pane(&$pane, $rows_before = null, $rows_after = null, $min_row_index_for_y2 = null)
@@ -65,7 +65,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @param $parent_sel_state
+     * @param string $parent_sel_state
      * @return MediaURL|null
      */
     public function get_parent_media_url($parent_sel_state)
@@ -80,8 +80,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @param $media_url
-     * @param $plugin_cookies
+     * @param MediaURL $media_url
+     * @param Object $plugin_cookies
      * @return array|null
      */
     protected function do_get_info_children($media_url, $plugin_cookies)
@@ -322,7 +322,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array|null
      */
     public function get_folder_view_for_epf(&$plugin_cookies)
@@ -876,7 +876,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     ////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array|null
      */
     private function get_history_rows($plugin_cookies)
@@ -1309,7 +1309,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array
      */
     protected function do_popup_menu($user_input)

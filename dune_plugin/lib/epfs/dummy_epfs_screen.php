@@ -75,8 +75,8 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
     }
 
     /**
-     * @param $no_internet
-     * @param $plugin_cookies
+     * @param string $no_internet
+     * @param Object $plugin_cookies
      * @return array|null
      */
     public function get_folder_view_for_epf($no_internet, &$plugin_cookies)

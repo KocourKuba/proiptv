@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The MIT License (MIT)
  *
@@ -328,10 +327,10 @@ class Control_Factory_Ext extends Control_Factory
     }
 
     /**
-     * @param $defs
-     * @param $viewport_width
-     * @param $height
-     * @return mixed
+     * @param array $defs
+     * @param int $viewport_width
+     * @param int $height
+     * @return array
      */
     protected static function set_controls($defs, $viewport_width, $height)
     {

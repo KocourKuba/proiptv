@@ -484,7 +484,7 @@ class smb_tree
     }
 
     /**
-     * @param $selected_url MediaURL
+     * @param MediaURL $selected_url
      * @return string encoded path
      */
     public static function set_folder_info(&$selected_url)

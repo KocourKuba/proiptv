@@ -128,8 +128,8 @@ class User_Input_Handler_Registry
     }
 
     /**
-     * @param $user_input
-     * @param $plugin_cookies
+     * @param Object $user_input
+     * @param Object $plugin_cookies
      * @return array|null
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)

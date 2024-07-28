@@ -44,7 +44,7 @@ class TR
     }
 
     /**
-     * @param $key string
+     * @param string $key
      */
     public static function g($key)
     {
@@ -66,7 +66,7 @@ class TR
     }
 
     /**
-     * @param $string_key
+     * @param string $string_key
      * @return string constant in the system language by key
      */
     public static function load_string($string_key)

@@ -28,7 +28,7 @@ interface Epg_Indexer_Interface
     /**
      * Get picon for channel
      *
-     * @param $alias string
+     * @param string $alias
      * @return string
      */
     public function get_picon($alias);

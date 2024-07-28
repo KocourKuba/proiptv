@@ -870,7 +870,7 @@ function get_shell_exec($cmd)
 }
 
 /**
- * @param $key
+ * @param string $key
  * @return false|string|null
  */
 function send_ir_code($key)
@@ -884,7 +884,7 @@ function send_ir_code($key)
 }
 
 /**
- * @param $key
+ * @param string $key
  * @return string
  */
 function send_ir_code_return_status($key)
@@ -931,7 +931,7 @@ function get_standby_mode()
 }
 
 /**
- * @param $mode
+ * @param int $mode
  * @return string
  */
 function set_standby_mode($mode)
@@ -1024,7 +1024,7 @@ function get_speed()
 }
 
 /**
- * @param $value
+ * @param int $value
  * @return string
  */
 function set_speed($value)
@@ -1068,7 +1068,7 @@ function get_position_seconds()
 }
 
 /**
- * @param $seconds
+ * @param int $seconds
  * @return string
  */
 function set_position_seconds($seconds)
@@ -1079,8 +1079,8 @@ function set_position_seconds($seconds)
 }
 
 /**
- * @param $speed
- * @param $seconds
+ * @param string $speed
+ * @param int $seconds
  * @return string
  */
 function set_speed_and_position_seconds($speed, $seconds)
@@ -1534,7 +1534,7 @@ function get_video_zoom()
 }
 
 /**
- * @param $value string
+ * @param string $value
  * @return string
  */
 function set_video_zoom($value)
@@ -1549,7 +1549,7 @@ function set_video_zoom($value)
 }
 
 /**
- * @param $preset DuneVideoZoomPresets::const
+ * @param DuneVideoZoomPresets::const $preset
  * @return string
  */
 function get_zoom_value($preset)
@@ -2027,8 +2027,8 @@ function raw_json_encode($arr)
 /**
  * return wrapped string
  *
- * @param $long_string
- * @param $max_chars
+ * @param string $long_string
+ * @param int $max_chars
  * @return string
  */
 function wrap_string_to_lines($long_string, $max_chars)

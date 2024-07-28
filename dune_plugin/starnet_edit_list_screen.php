@@ -693,7 +693,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array|null
      */
     protected function create_popup_menu($user_input)
@@ -817,8 +817,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param $user_input
-     * @param $plugin_cookies
+     * @param Object $user_input
+     * @param Object $plugin_cookies
      * @return array|null
      */
     protected function apply_edit_url_dlg($user_input, $plugin_cookies)
@@ -903,8 +903,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param $user_input
-     * @param $plugin_cookies
+     * @param Object $user_input
+     * @param Object $plugin_cookies
      * @return array
      */
     protected function do_select_file($user_input, $plugin_cookies)
@@ -930,7 +930,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return array
      */
     protected function do_select_folder($user_input)

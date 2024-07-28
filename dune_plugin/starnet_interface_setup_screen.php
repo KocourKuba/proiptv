@@ -39,7 +39,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
     /**
      * interface dialog defs
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      */
     public function do_get_control_defs(&$plugin_cookies)

@@ -387,7 +387,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     /**
      * Remove is selected index
      *
-     * @param $name string
+     * @param string $name
      */
     abstract public function remove_index($name);
 
@@ -410,7 +410,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     /**
      * Check is selected index is valid
      *
-     * @param $name string
+     * @param string $name
      * @return bool
      */
     abstract protected function is_index_valid($name);

@@ -53,7 +53,7 @@ class Abstract_Screen extends Changes_Impl implements Screen
 
     /**
      * @param MediaURL $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return mixed|null
      * @noinspection PhpReturnDocTypeMismatchInspection
      */

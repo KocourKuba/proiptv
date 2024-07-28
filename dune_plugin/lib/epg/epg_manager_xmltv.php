@@ -338,7 +338,7 @@ class Epg_Manager_Xmltv
 
     /**
      * @param Channel $channel
-     * @param $day_start_ts
+     * @param int $day_start_ts
      * @param array $day_epg
      * @return array
      */

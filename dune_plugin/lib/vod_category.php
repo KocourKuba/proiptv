@@ -79,7 +79,7 @@ class Vod_Category
     }
 
     /**
-     * @param $arr
+     * @param array $arr
      */
     public function set_sub_categories($arr)
     {

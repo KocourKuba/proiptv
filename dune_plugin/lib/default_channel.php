@@ -92,7 +92,7 @@ class Default_Channel extends Json_Serializer implements Channel
     }
 
     /**
-     * @param $plugin
+     * @param Default_Dune_Plugin $plugin
      * @param string $id
      * @param string $title
      * @param string $icon_url
@@ -106,7 +106,7 @@ class Default_Channel extends Json_Serializer implements Channel
      * @param bool $protected
      * @param int $timeshift_hours
      * @param array $ext_params
-     * @param $disabled
+     * @param bool $disabled
      */
     public function __construct($plugin, $id, $title, $icon_url,
                                 $streaming_url, $archive_url, $catchup,
@@ -317,8 +317,8 @@ class Default_Channel extends Json_Serializer implements Channel
 
     /**
      * set additional parameters (filled from provider m3u8)
-     * @param $param
-     * @param $value
+     * @param string $param
+     * @param string $value
      */
     public function set_ext_param($param, $value)
     {

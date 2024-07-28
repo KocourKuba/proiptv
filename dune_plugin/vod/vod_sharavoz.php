@@ -349,8 +349,8 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param $data object
-     * @param $names array|string
+     * @param Object $data
+     * @param array|string $names
      * @return string
      */
     protected static function get_data_variant($data, $names)

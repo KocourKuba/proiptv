@@ -196,9 +196,9 @@ class HD
     }
 
     /**
-     * @param $url string
-     * @param $opts array
-     * @param $info array
+     * @param string $url
+     * @param array $opts
+     * @param array $info
      * @return bool|string
      * @throws Exception
      */
@@ -938,8 +938,8 @@ class HD
     }
 
     /**
-     * @param $path string
-     * @param $content mixed
+     * @param string $path
+     * @param mixed $content
      */
     public static function StoreContentToFile($path, $content)
     {
@@ -951,8 +951,8 @@ class HD
     }
 
     /**
-     * @param $path string
-     * @param $assoc boolean
+     * @param string $path
+     * @param boolean $assoc
      */
     public static function ReadContentFromFile($path, $assoc = true)
     {
@@ -1034,8 +1034,8 @@ class HD
 
     /**
      * case insensitive search in array
-     * @param $needle
-     * @param $haystack
+     * @param string|array $needle
+     * @param string|array $haystack
      * @return false|int|string
      */
     public static function array_search_i($needle, $haystack) {
@@ -1072,7 +1072,7 @@ class HD
     }
 
     /**
-     * @param $source
+     * @param string $source
      * @param string|null $error
      */
     public static function set_last_error($source, $error)

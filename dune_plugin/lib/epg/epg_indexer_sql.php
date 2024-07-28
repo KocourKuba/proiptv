@@ -403,7 +403,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
     /// private methods
 
     /**
-     * @param $name string
+     * @param string $name
      * @return bool
      */
     private function check_table($name)

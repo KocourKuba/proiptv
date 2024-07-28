@@ -81,8 +81,8 @@ class MediaURL extends Json_Serializer
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $str string
-     * @param $map array|null
+     * @param string $str
+     * @param array|null $map
      */
     private function __construct($str, $map)
     {
@@ -94,8 +94,8 @@ class MediaURL extends Json_Serializer
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param $key
-     * @param $value
+     * @param mixed $key
+     * @param mixed $value
      */
     public function __set($key, $value)
     {
@@ -107,7 +107,7 @@ class MediaURL extends Json_Serializer
     }
 
     /**
-     * @param $key
+     * @param mixed $key
      */
     public function __unset($key)
     {
@@ -119,7 +119,7 @@ class MediaURL extends Json_Serializer
     }
 
     /**
-     * @param $key
+     * @param mixed $key
      * @return mixed|null
      */
     public function __get($key)
@@ -132,7 +132,7 @@ class MediaURL extends Json_Serializer
     }
 
     /**
-     * @param $key
+     * @param mixed $key
      * @return bool
      */
     public function __isset($key)

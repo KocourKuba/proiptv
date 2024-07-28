@@ -452,7 +452,7 @@ class Action_Factory
     }
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @param array|null $post_action
      * @return array|null
      */
@@ -494,11 +494,11 @@ class Action_Factory
     }
 
     /**
-     * @param $channel_id
-     * @param $clear
-     * @param $day_start_tm_sec
-     * @param $programs
-     * @param $post_action
+     * @param string $channel_id
+     * @param bool $clear
+     * @param int $day_start_tm_sec
+     * @param string $programs
+     * @param array $post_action
      * @return array
      */
     public static function update_epg($channel_id, $clear, $day_start_tm_sec = 0, $programs = null, $post_action = null)
@@ -556,7 +556,7 @@ class Action_Factory
     }
 
     /**
-     * @param $comps
+     * @param array $comps
      * @param array $post_action
      * @return array
      */

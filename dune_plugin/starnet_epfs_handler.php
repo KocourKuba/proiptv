@@ -100,7 +100,7 @@ class Starnet_Epfs_Handler
 
     /**
      * @param bool $first_run
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return void
      */
     private static function ensure_no_internet_epfs_created($first_run, &$plugin_cookies)
@@ -126,7 +126,7 @@ class Starnet_Epfs_Handler
 
     /**
      * @param array|null $media_urls
-     * @param $post_action
+     * @param array|null $post_action
      * @return array
      */
     public static function epfs_invalidate_folders($media_urls = null, $post_action = null)
@@ -141,8 +141,8 @@ class Starnet_Epfs_Handler
     }
 
     /**
-     * @param $first_run
-     * @param $plugin_cookies
+     * @param bool $first_run
+     * @param Object $plugin_cookies
      * @return array|null
      */
     public static function update_all_epfs(&$plugin_cookies, $first_run = false)

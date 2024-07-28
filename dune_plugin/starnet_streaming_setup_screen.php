@@ -42,7 +42,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
     /**
      * streaming parameters dialog defs
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      */
     public function do_get_control_defs(&$plugin_cookies)

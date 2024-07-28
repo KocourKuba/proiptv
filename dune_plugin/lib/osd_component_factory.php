@@ -96,7 +96,7 @@ class OSD_Component_Factory
 
     /**
      * Предзагрузка OSD компонент (кэширование картинок)
-     * @param $post_action
+     * @param array $post_action
      * @return array
      * @throws Exception
      */
@@ -141,11 +141,11 @@ class OSD_Component_Factory
     }
 
     /**
-     * @param $comps
-     * @param $dx
-     * @param $dy
-     * @param $width
-     * @param $height
+     * @param array $comps
+     * @param int $dx
+     * @param int $dy
+     * @param int $width
+     * @param int $height
      * @throws Exception
      */
     public static function add_widget_box(&$comps, $dx, $dy, $width, $height)
@@ -229,11 +229,11 @@ class OSD_Component_Factory
     }
 
     /**
-     * @param $comps
-     * @param $dx
-     * @param $dy
-     * @param $width
-     * @param $height
+     * @param array $comps
+     * @param int $dx
+     * @param int $dy
+     * @param int $width
+     * @param int $height
      * @return void
      * @throws Exception
      */
@@ -313,4 +313,3 @@ class OSD_Component_Factory
 			);
     }
 }
-

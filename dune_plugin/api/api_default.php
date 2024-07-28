@@ -532,7 +532,7 @@ class api_default
     }
 
     /**
-     * @param $tmp_file string
+     * @param string $tmp_file
      * @return bool
      */
     public function load_playlist($tmp_file)
@@ -660,7 +660,7 @@ class api_default
     }
 
     /**
-     * @param $handler
+     * @param User_Input_Handler $handler
      * @return array|null
      */
     public function GetInfoUI($handler)
@@ -677,9 +677,9 @@ class api_default
     }
 
     /**
-     * @param $name string
-     * @param $playlist_id string
-     * @param $handler
+     * @param string $name
+     * @param string $playlist_id
+     * @param User_Input_Handler $handler
      * @return array|null
      */
     public function GetSetupUI($name, $playlist_id, $handler)
@@ -725,7 +725,7 @@ class api_default
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return bool|array|string
      */
     public function ApplySetupUI($user_input)
@@ -818,7 +818,7 @@ class api_default
     }
 
     /**
-     * @param $handler
+     * @param User_Input_Handler $handler
      * @return array|null
      */
     public function GetExtSetupUI($handler)
@@ -929,7 +929,7 @@ class api_default
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @return bool|array
      */
     public function ApplyExtSetupUI($user_input)
@@ -1198,7 +1198,7 @@ class api_default
     }
 
     /**
-     * @param $user_input
+     * @param Object $user_input
      * @param string $id
      * @return void
      */

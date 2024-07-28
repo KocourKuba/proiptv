@@ -521,7 +521,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
     /**
      * @param Group $group
-     * @param $find_text
+     * @param string $find_text
      * @return array
      */
     protected function do_search(Group $group, $find_text)

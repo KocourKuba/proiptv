@@ -34,7 +34,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
 
     /**
      * @param MediaURL $media_url
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @return array
      */
     abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);
@@ -73,7 +73,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     }
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @param string $param
      * @param bool $default
      * @return mixed
@@ -87,7 +87,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     }
 
     /**
-     * @param $plugin_cookies
+     * @param Object $plugin_cookies
      * @param string $param
      * @return void
      */

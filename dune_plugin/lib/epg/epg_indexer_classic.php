@@ -349,7 +349,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
     /// protected methods
 
     /**
-     * @param $name string
+     * @param string $name
      * @return string
      */
     protected function get_index_name($name)
