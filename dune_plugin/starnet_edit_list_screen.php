@@ -168,6 +168,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
 
             case ACTION_SET_CURRENT:
+                if (!isset($user_input->selected_media_url)) {
+                    return null;
+                }
                 $id = MediaURL::decode($user_input->selected_media_url)->id;
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     $this->plugin->set_active_playlist_key($id);
