@@ -375,6 +375,34 @@ class M3uParser extends Json_Serializer
     }
 
     /**
+     * @param string|array $attrs
+     * @param null $tag
+     * @param null $found_attr
+     * @return string
+     */
+    public function getAnyHeaderAttribute($attrs, $tag = null, &$found_attr = null)
+    {
+        if (!is_array($attrs)) {
+            $attrs = array($attrs);
+        }
+
+        $val = '';
+        foreach ($this->m3u_info as $entry) {
+            foreach ($attrs as $attr) {
+                $val = $entry->getEntryAttribute($attr, $tag);
+                if (empty($val)) continue;
+
+                if ($found_attr !== null) {
+                    $found_attr = $attr;
+                }
+                break;
+            }
+        }
+
+        return $val;
+    }
+
+    /**
      * @return Ordered_Array
      */
     public function getXmltvSources()

@@ -635,6 +635,15 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
+        $used_tag = '';
+        $playlist_archive = (int)$this->m3u_parser->getAnyHeaderAttribute(self::$tvg_archive, Entry::TAG_EXTM3U, $used_tag);
+        if (!empty($used_tag)) {
+            if ($used_tag === 'catchup-time') {
+                $playlist_archive /= 86400;
+            }
+            hd_debug_print("Using global archive value: $playlist_archive days from tag $used_tag");
+        }
+
         $icon_base_url = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
         if (!empty($icon_base_url)) {
             hd_debug_print("Using base url for icons: $icon_base_url");
@@ -907,6 +916,10 @@ class Starnet_Tv implements User_Input_Handler
             $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, Entry::TAG_EXTINF, $used_tag);
             if ($used_tag === 'catchup-time') {
                 $archive /= 86400;
+            }
+
+            if (empty($archive) && !empty($playlist_archive)) {
+                $archive = $playlist_archive;
             }
 
             $archive_url = $entry->getCatchupSource();
