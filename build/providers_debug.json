@@ -682,6 +682,26 @@
     },
     {
       "enable": true,
+      "id": "nasharu",
+      "name": "Nasharu TV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_nasharu.png",
+      "provider_url": "https://nasharu.tv/",
+      "api_url": "http://nasharu.tv/iptv",
+      "api_commands": {
+        "get_playlist": "{API}/{PASSWORD}/m3u8/playlist.m3u8",
+        "get_vod": "{API}/mediateka/{PASSWORD}/m3u8/playlist.m3u8"
+      },
+      "config": {
+        "epg_preset": "drm",
+        "epg_alias": "iptvx.one",
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8?\\?(?<token>.+)$/",
+        "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<year>\\d+)\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "onlineott",
       "name": "OnlineOTT TV",
       "type": "login",
@@ -716,6 +736,43 @@
           "myott.top": "myott.top",
           "myott.tv": "myott.tv"
         },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "ottpub",
+      "name": "OTT Pub",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_ottpub.png",
+      "provider_url": "https://ott.pub/",
+      "api_commands": {
+        "get_playlist": "https://cassy.tv/pls/{PASSWORD}/playlist.m3u8",
+        "get_vod": "https://cassy.tv/md/{PASSWORD}/playlist.m3u8"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
+        "url_subst": {
+          "regex": "/^(.+\\/\\/).+(\\/play\\/.+\\/).+$/",
+          "replace": "$1{SERVER_ID}$2{STREAM_ID}"
+        },
+        "epg_preset": "drm",
+        "epg_alias": "iptv.online",
+        "ext_params": true,
+        "streams": {
+          "video.m3u8": "HLS",
+          "mpegts": "MPEG-TS"
+        },
+        "servers": {
+          "pl.seetv.cc": "Poland",
+          "de.seetv.cc": "Germany",
+          "nl.seetv.cc": "Netherlands",
+          "ru.seetv.cc": "Russia",
+          "ca.seetv.cc": "Canada",
+          "gr.seetv.cc": "Greece",
+          "ukr.seetv.cc": "Ukraine"
+        },
+        "vod_parser": "/^(?<title>.+)\\|(?<year>.+)\\|(?<rating>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
