@@ -1,5 +1,12 @@
 ﻿### Upcoming version
 
+### Version 4.1.790
+- Added support for the provider Nasharu TV (https://nasharu.tv/)
+- Added support for Ott Pub provider (https://ott.pub/)
+- Added support for the global catchup-days parameter
+- Fixed a bug with displaying categories in Changed channels
+- Updated preset settings for EPG web sources
+
 ### Version 4.1.784
 - Additional functions for TV Team API
 - Added additional XMLTV source for Yosso TV
