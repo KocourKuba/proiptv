@@ -776,7 +776,7 @@ class vod_standard extends Abstract_Vod
         } else {
             $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($response === false) {
-                $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->get_api_response_headers();
+                $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_logfile();
                 HD::set_last_error("vod_last_error", $exception_msg);
                 if (file_exists($tmp_file)) {
                     unlink($tmp_file);

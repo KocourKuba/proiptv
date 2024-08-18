@@ -338,6 +338,14 @@ class api_default
         $this->config = $config;
     }
 
+    /**
+     * @return  Curl_Wrapper
+     */
+    public function getCurlWrapper()
+    {
+        return $this->curl_wrapper;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     /// Methods
 
@@ -646,7 +654,7 @@ class api_default
             }
         }
 
-        $this->curl_wrapper->init($command_url);
+        $this->curl_wrapper->set_url($command_url);
 
         if (isset($curl_opt[CURLOPT_HTTPHEADER])) {
             $send_headers = array_merge($send_headers, $curl_opt[CURLOPT_HTTPHEADER]);
@@ -694,14 +702,6 @@ class api_default
         }
 
         return $data;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_api_response_headers()
-    {
-        return $this->curl_wrapper->get_response_headers_string();
     }
 
     /**

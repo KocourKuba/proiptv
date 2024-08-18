@@ -133,7 +133,7 @@ class vod_cbilling extends vod_standard
     {
         $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD);
         if ($jsonItems === false) {
-            $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->get_api_response_headers();
+            $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_logfile();
             hd_debug_print($exception_msg);
             HD::set_last_error("vod_last_error", $exception_msg);
             return false;

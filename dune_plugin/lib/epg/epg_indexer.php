@@ -213,7 +213,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
         $expired = true;
         if ($this->cache_type === XMLTV_CACHE_AUTO) {
-            $this->curl_wrapper->init($this->xmltv_url);
+            $this->curl_wrapper->set_url($this->xmltv_url);
             if ($this->curl_wrapper->check_is_expired()) {
                 $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
             } else {
@@ -280,7 +280,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 throw new Exception("Unsupported EPG format (JTV)");
             }
 
-            $this->curl_wrapper->init($this->xmltv_url);
+            $this->curl_wrapper->set_url($this->xmltv_url);
             $expired = $this->curl_wrapper->check_is_expired() || !file_exists($tmp_filename);
             if (!$expired) {
                 hd_debug_print("File not changed, using cached file: $cached_file");
@@ -291,11 +291,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
             $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
             if (!$this->curl_wrapper->download_file($tmp_filename, true)) {
-                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_response_headers_string());
+                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_logfile());
             }
 
             if ($this->curl_wrapper->get_response_code() !== 200) {
-                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_response_headers_string());
+                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_logfile());
             }
 
             $file_time = filemtime($tmp_filename);

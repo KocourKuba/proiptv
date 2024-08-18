@@ -128,7 +128,7 @@ class api_iptvonline extends api_default
             return Curl_Wrapper::simple_download_file($data->data, $tmp_file, false);
         }
 
-        return false;
+        return array(false, '');
     }
 
     /**

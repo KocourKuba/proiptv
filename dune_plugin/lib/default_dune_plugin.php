@@ -1539,7 +1539,8 @@ class Default_Dune_Plugin implements DunePlugin
                     $provider->setLogo("plugin_file://logo/$filename");
                 } else {
                     $cached_file = get_cached_image_path($filename);
-                    if (Curl_Wrapper::simple_download_file($logo, $cached_file, false)) {
+                    list($res, ) = Curl_Wrapper::simple_download_file($logo, $cached_file, false);
+                    if ($res) {
                         $provider->setLogo($cached_file);
                     } else {
                         hd_debug_print("failed to download provider logo: $logo");
@@ -1653,8 +1654,8 @@ class Default_Dune_Plugin implements DunePlugin
                     hd_debug_print("Tv playlist not defined");
                     throw new Exception("Tv playlist not defined");
                 }
-                $curl_wrapper = new Curl_Wrapper();
-                $response_headers = '';
+
+                $logfile = '';
                 hd_debug_print("m3u playlist: $playlist->name ({$this->get_active_playlist_key()})");
                 if ($playlist->type === PARAM_FILE) {
                     hd_debug_print("m3u copy local file: {$playlist->params[PARAM_URI]} to $tmp_file");
@@ -1665,9 +1666,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if (!preg_match(HTTP_PATTERN, $playlist_url)) {
                         throw new Exception("Incorrect playlist url: $playlist_url");
                     }
-                    $curl_wrapper->init($playlist_url);
-                    $res = $curl_wrapper->download_file($tmp_file, false);
-                    $response_headers = $curl_wrapper->get_response_headers_string();
+                    list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file, false);
                 } else if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
                     if (is_null($provider)) {
@@ -1680,15 +1679,15 @@ class Default_Dune_Plugin implements DunePlugin
 
                     hd_debug_print("Load provider playlist to: $tmp_file");
                     $res = $provider->load_playlist($tmp_file);
-                    $response_headers = $provider->get_api_response_headers();
+                    $logfile = $provider->getCurlWrapper()->get_logfile();
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
 
                 if ($res === false || !file_exists($tmp_file)) {
                     $exception_msg = TR::load_string('err_load_playlist');
-                    if ($playlist->type !== PARAM_FILE && !empty($response_headers)) {
-                        $exception_msg .= "\n\n$response_headers";
+                    if ($playlist->type !== PARAM_FILE && !empty($logfile)) {
+                        $exception_msg .= "\n\n$logfile";
                     }
                     throw new Exception($exception_msg);
                 }
@@ -1783,7 +1782,7 @@ class Default_Dune_Plugin implements DunePlugin
             if ($force !== false) {
                 $response = $provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
                 if ($response === false) {
-                    $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $provider->get_api_response_headers();
+                    $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $provider->getCurlWrapper()->get_logfile();
                     HD::set_last_error("vod_last_error", $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);

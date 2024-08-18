@@ -28,8 +28,9 @@ require_once 'hd.php';
 
 class Curl_Wrapper
 {
-    const HTTP_HEADERS_LOG = "headers_%s.log";
-    const HTTP_LOG = "response_%s.log";
+    const HTTP_HEADERS_LOG = "%s_headers_.log";
+    const HTTP_LOG = "%s_response.log";
+    const CURL_CONFIG = "%s_curl_config.txt";
 
     /**
      * @var string
@@ -53,7 +54,7 @@ class Curl_Wrapper
 
     /**
      * @var int
-    */
+     */
     private $response_code;
 
     /**
@@ -96,7 +97,6 @@ class Curl_Wrapper
         $path = get_data_path('curl_cache');
         create_path($path);
         $this->cache_path = $path . DIRECTORY_SEPARATOR . 'cache.dat';
-        $this->config_file = get_temp_path("curl_config.txt");
         if (file_exists($this->cache_path)) {
             $this->cache_db = unserialize(file_get_contents($this->cache_path));
         } else {
@@ -123,10 +123,11 @@ class Curl_Wrapper
     /**
      * @param string $url
      */
-    public function init($url)
+    public function set_url($url)
     {
         $this->url = $url;
         $this->url_hash = hash('crc32', $url);
+        $this->config_file = get_temp_path(sprintf(self::CURL_CONFIG, $this->url_hash));
         $this->headers_path = get_temp_path(sprintf(self::HTTP_HEADERS_LOG, $this->url_hash));
         $this->logfile = get_temp_path(sprintf(self::HTTP_LOG, $this->url_hash));
         $this->send_headers = array();
@@ -207,19 +208,6 @@ class Curl_Wrapper
     /**
      * @return string
      */
-    public function get_response_headers_string()
-    {
-        $str = '';
-        foreach ($this->response_headers as $key => $value) {
-            $str .= "$key: $value" . PHP_EOL;
-        }
-
-        return $str;
-    }
-
-    /**
-     * @return string
-     */
     public function get_response_header($header)
     {
         return isset($this->response_headers[$header]) ? $this->response_headers[$header] : '';
@@ -230,7 +218,15 @@ class Curl_Wrapper
      */
     public function get_etag_header()
     {
-        return isset($this->response_headers['ETag']) ? $this->response_headers['ETag'] : '';
+        return $this->get_response_header('ETag');
+    }
+
+    /**
+     * @return string
+     */
+    public function get_logfile()
+    {
+        return $this->logfile;
     }
 
     /**
@@ -295,14 +291,14 @@ class Curl_Wrapper
      * @param string $url url
      * @param string $save_file path to file
      * @param bool $use_cache use ETag caching
-     * @return bool result of operation
+     * @return array result of operation (first bool, second string)
      */
     public static function simple_download_file($url, $save_file, $use_cache)
     {
         hd_debug_print(null, true);
         $wrapper = new Curl_Wrapper();
-        $wrapper->init($url);
-        return $wrapper->download_file($save_file, $use_cache);
+        $wrapper->set_url($url);
+        return array($wrapper->download_file($save_file, $use_cache), $wrapper->get_logfile());
     }
 
     /**
@@ -315,7 +311,7 @@ class Curl_Wrapper
     {
         hd_debug_print(null, true);
         $wrapper = new Curl_Wrapper();
-        $wrapper->init($url);
+        $wrapper->set_url($url);
         return $wrapper->download_content();
     }
 
@@ -439,6 +435,8 @@ class Curl_Wrapper
                     hd_debug_print($line, true);
                     if (preg_match("/^(.*):(.*)$/", $line, $m)) {
                         $this->response_headers[$m[1]] = trim($m[2]);
+                    } else {
+                        $this->response_headers[] = $line;
                     }
                 }
 
@@ -460,7 +458,7 @@ class Curl_Wrapper
     public static function decodeJsonResponse($is_file, $source, $assoc = false)
     {
         if ($source === false) {
-            return  false;
+            return false;
         }
 
         if ($is_file) {

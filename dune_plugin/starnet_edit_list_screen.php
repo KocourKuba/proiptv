@@ -426,7 +426,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $qr_code = get_temp_path($provider->getId()) . ".jpg";
                 if (!file_exists($qr_code)) {
                     $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
-                    if (Curl_Wrapper::simple_download_file($url, $qr_code, false)) break;
+                    list($res, ) = Curl_Wrapper::simple_download_file($url, $qr_code, false);
+                    if ($res) break;
                 }
 
                 Control_Factory::add_vgap($defs, 20);
@@ -870,11 +871,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
             try {
-                $curl_wrapper = new Curl_Wrapper();
-                $curl_wrapper->init($url);
                 $tmp_file = get_temp_path(Hashed_Array::hash($url));
-                if ($curl_wrapper->download_file($tmp_file, false) === false) {
-                    throw new Exception("Ошибка скачивания плейлиста: $url\n\n" . $curl_wrapper->get_response_headers_string());
+                list($res, $log) = Curl_Wrapper::simple_download_file($url, $tmp_file, false);
+                if ($res === false) {
+                    throw new Exception("Ошибка скачивания плейлиста: $url\n\n" . $log);
                 }
 
                 $contents = file_get_contents($tmp_file, false, null, 0, 512);
@@ -1016,10 +1016,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     hd_debug_print("import link: '$line'", true);
                     try {
                         $tmp_file = get_temp_path(Hashed_Array::hash($line));
-                        $curl_wrapper = new Curl_Wrapper();
-                        $curl_wrapper->init($line);
-                        if (!$curl_wrapper->download_file($tmp_file, false)) {
-                            throw new Exception("Ошибка скачивания : $line\n\n" . $curl_wrapper->get_response_headers_string());
+                        list($res, $log) = Curl_Wrapper::simple_download_file($line, $tmp_file, false);
+                        if (!$res) {
+                            throw new Exception("Ошибка скачивания : $line\n\n" . $log);
                         }
 
                         if (file_exists($tmp_file)) {
