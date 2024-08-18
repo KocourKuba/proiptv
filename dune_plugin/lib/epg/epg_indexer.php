@@ -65,6 +65,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     protected $cache_ttl;
 
     /**
+     * @var string
+     */
+    protected $cache_type = XMLTV_CACHE_AUTO;
+
+    /**
      * @var Curl_Wrapper
      */
     protected $curl_wrapper;
@@ -102,6 +107,14 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         $this->cache_ttl = $cache_ttl;
     }
 
+    /**
+     * @param string $type
+     * @return void
+     */
+    public function set_cache_type($type)
+    {
+        $this->cache_type = $type;
+    }
     /**
      * @param string $ext
      * @return string
@@ -188,7 +201,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         }
 
         HD::set_last_error("xmltv_last_error", null);
-
         $cached_file = $this->get_cached_filename();
         hd_debug_print("Checking cached xmltv file: $cached_file");
         if (!file_exists($cached_file)) {
@@ -196,10 +208,26 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             return 1;
         }
 
-        $this->curl_wrapper->init($this->xmltv_url);
-        if ($this->curl_wrapper->check_is_expired()) {
-            $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
-            hd_debug_print("Xmltv cache expired");
+        $check_time_file = filemtime($cached_file);
+        hd_debug_print("Xmltv cache last modified: " . date("Y-m-d H:i", $check_time_file));
+
+        $expired = true;
+        if ($this->cache_type === XMLTV_CACHE_AUTO) {
+            $this->curl_wrapper->init($this->xmltv_url);
+            if ($this->curl_wrapper->check_is_expired()) {
+                $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
+            } else {
+                $expired = false;
+            }
+        } else if (filesize($cached_file) !== 0) {
+            $max_cache_time = 3600 * 24 * $this->cache_ttl;
+            if ($check_time_file && $check_time_file + $max_cache_time > time()) {
+                $expired = false;
+            }
+        }
+
+        if ($expired) {
+            hd_debug_print("Xmltv cache expired.");
             return 1;
         }
 
@@ -214,11 +242,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         }
 
         if ($channels_index_valid && $picons_index_valid) {
-            hd_debug_print("Xmltv cache channels and picons valid");
+            hd_debug_print("Xmltv cache channels and picons are valid");
             return 2;
         }
 
-        hd_debug_print("Xmltv cache indexes invalid");
+        hd_debug_print("Xmltv cache indexes are invalid");
         return 3;
     }
 

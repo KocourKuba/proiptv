@@ -95,23 +95,32 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
             $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
 
-        //////////////////////////////////////
-        // EPG cache
-        $epg_cache_ops = array();
-        $epg_cache_ops['0.25'] = 0.25;
-        $epg_cache_ops['0.5'] = 0.5;
-        $epg_cache_ops['1'] = 1;
-        $epg_cache_ops['2'] = 2;
-        $epg_cache_ops['3'] = 3;
-        $epg_cache_ops['4'] = 4;
-        $epg_cache_ops['5'] = 5;
-        $epg_cache_ops['6'] = 6;
-        $epg_cache_ops['7'] = 7;
-
-        $cache_ttl = $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
+        $cache_variants[XMLTV_CACHE_AUTO] = TR::t('setup_epg_cache_type_auto');
+        $cache_variants[XMLTV_CACHE_MANUAL] = TR::t('setup_epg_cache_type_manual');
+        $cache_type = $this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO);
         Control_Factory::add_combobox($defs, $this, null,
-            PARAM_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
-            $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
+            PARAM_EPG_CACHE_TYPE, TR::t('setup_epg_cache_type'),
+            $cache_type, $cache_variants, self::CONTROLS_WIDTH, true);
+
+        if ($cache_type === XMLTV_CACHE_MANUAL) {
+            //////////////////////////////////////
+            // EPG cache interval
+            $epg_cache_ops = array();
+            $epg_cache_ops['0.25'] = 0.25;
+            $epg_cache_ops['0.5'] = 0.5;
+            $epg_cache_ops['1'] = 1;
+            $epg_cache_ops['2'] = 2;
+            $epg_cache_ops['3'] = 3;
+            $epg_cache_ops['4'] = 4;
+            $epg_cache_ops['5'] = 5;
+            $epg_cache_ops['6'] = 6;
+            $epg_cache_ops['7'] = 7;
+
+            $cache_ttl = $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_EPG_CACHE_TTL, TR::t('setup_epg_cache_ttl'),
+                $cache_ttl, $epg_cache_ops, self::CONTROLS_WIDTH, true);
+        }
 
         //////////////////////////////////////
         // clear epg cache
@@ -192,8 +201,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 return Action_Factory::open_folder($media_url_str, TR::t('setup_epg_xmltv_cache_caption'));
 
             case PARAM_EPG_CACHE_ENGINE:
+            case PARAM_EPG_CACHE_TYPE:
                 $this->plugin->tv->unload_channels();
-                $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->{$control_id});
+                $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
