@@ -67,14 +67,14 @@ class vod_iptvonline extends vod_standard
 
         $movie = new Movie($movie_id, $this->plugin);
         $movieData = $json->data;
-        if ($arr[0] === self::API_ACTION_MOVIES) {
+        if ($arr[0] === self::API_ACTION_MOVIES && !isset($movieData->seasons)) {
             $audios = array();
             foreach ($movieData->medias->audios as $item) {
                 $key = $item->translate;
                 $audios[$key] = new Movie_Variant($key, $key, $item->url);
             }
             $movie->add_series_with_variants_data($arr[1], $movieData->medias->title, '', array(), $audios, $movieData->medias->url);
-        } else if ($arr[0] === self::API_ACTION_SERIALS) {
+        } else if ($arr[0] === self::API_ACTION_SERIALS || isset($movieData->seasons)) {
             // collect series
             foreach ($movieData->seasons as $season) {
                 $movie->add_season_data($season->season,
