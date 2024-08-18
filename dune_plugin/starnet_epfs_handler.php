@@ -99,23 +99,6 @@ class Starnet_Epfs_Handler
     }
 
     /**
-     * @param bool $first_run
-     * @param Object $plugin_cookies
-     * @return void
-     */
-    private static function ensure_no_internet_epfs_created($first_run, &$plugin_cookies)
-    {
-        if (!self::$enabled || self::$no_internet_epfs_created)
-            return;
-
-        if ($first_run || !is_file(self::get_epf_path(self::$no_internet_epfs))) {
-            self::write_epf_view(self::$no_internet_epfs, self::$dummy_epf_screen->get_folder_view_for_epf(true, $plugin_cookies));
-        }
-
-        self::$no_internet_epfs_created = true;
-    }
-
-    /**
      * @return void
      */
     public static function need_update_epf_mapping()
@@ -170,6 +153,46 @@ class Starnet_Epfs_Handler
     }
 
     /**
+     * @param bool $first_run
+     * @param Object $plugin_cookies
+     * @return void
+     */
+    private static function ensure_no_internet_epfs_created($first_run, &$plugin_cookies)
+    {
+        if (!self::$enabled || self::$no_internet_epfs_created)
+            return;
+
+        if ($first_run || !is_file(self::get_epf_path(self::$no_internet_epfs))) {
+            self::write_epf_view(self::$no_internet_epfs, self::$dummy_epf_screen->get_folder_view_for_epf(true, $plugin_cookies));
+        }
+
+        self::$no_internet_epfs_created = true;
+    }
+
+    /**
+     * @param string $epf_id
+     * @return string
+     */
+    protected static function get_epf_path($epf_id)
+    {
+        return self::$dir_path . "/$epf_id.json";
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $epf_id
+     * @param array|object $folder_view
+     * @return void
+     */
+    protected static function write_epf_view($epf_id, $folder_view)
+    {
+        if ($folder_view) {
+            self::do_write_epf_data(self::get_epf_path($epf_id), json_encode($folder_view));
+        }
+    }
+
+    /**
      * @param string $path
      * @param string $data
      * @return void
@@ -188,27 +211,9 @@ class Starnet_Epfs_Handler
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param string $epf_id
-     * @return object|null
-     */
-    protected static function read_epf_data($epf_id)
+    public static function warmed_up_path()
     {
-        return file_exists($path = self::get_epf_path($epf_id)) ? HD::ReadContentFromFile($path, false) : null;
-    }
-
-    /**
-     * @param string $epf_id
-     * @param array|object $folder_view
-     * @return void
-     */
-    protected static function write_epf_view($epf_id, $folder_view)
-    {
-        if ($folder_view) {
-            self::do_write_epf_data(self::get_epf_path($epf_id), json_encode($folder_view));
-        }
+        return get_temp_path('epfs_warmed_up');
     }
 
     /**
@@ -221,35 +226,13 @@ class Starnet_Epfs_Handler
         return (json_encode($folder_view) !== self::read_epf_data($epf_id));
     }
 
-    protected static function get_ilang_path()
-    {
-        return self::$dir_path . '/ilang';
-    }
-
-    protected static function get_epfs_ts_path($id)
-    {
-        return self::$dir_path . "/{$id}_timestamp";
-    }
-
-    protected static function read_epfs_ts($id)
-    {
-        return is_file($path = self::get_epfs_ts_path($id)) ? file_get_contents($path) : '';
-    }
-
     /**
      * @param string $epf_id
-     * @return string
+     * @return object|null
      */
-    protected static function get_epf_path($epf_id)
+    protected static function read_epf_data($epf_id)
     {
-        return self::$dir_path . "/$epf_id.json";
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    public static function warmed_up_path()
-    {
-        return get_temp_path('epfs_warmed_up');
+        return file_exists($path = self::get_epf_path($epf_id)) ? HD::ReadContentFromFile($path, false) : null;
     }
 
     public static function async_worker_warmed_up_path()
@@ -260,5 +243,22 @@ class Starnet_Epfs_Handler
     public static function get_epfs_changed_path()
     {
         return get_temp_path('update_epfs_if_needed_flag');
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    protected static function get_ilang_path()
+    {
+        return self::$dir_path . '/ilang';
+    }
+
+    protected static function read_epfs_ts($id)
+    {
+        return is_file($path = self::get_epfs_ts_path($id)) ? file_get_contents($path) : '';
+    }
+
+    protected static function get_epfs_ts_path($id)
+    {
+        return self::$dir_path . "/{$id}_timestamp";
     }
 }

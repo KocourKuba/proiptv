@@ -26,21 +26,6 @@
 
 class GComps_Factory
 {
-    /** convert standard RGBA representation of the color
-     * to DUNE ARGB GComps representation
-     *
-     * @param string $rgba # RGBA color
-     * @return string # ARGB color
-     */
-    public static function rgba_to_argb($rgba)
-    {
-        if (empty($rgba))
-            return $rgba;
-
-        $part = substr($rgba, 1);
-        return '#' . substr($part, -2) . substr($part, 0, -2);
-    }
-
     /**
      * @param array $geom # GCompGeometryDef
      * @param array $margins # GCompMarginsDef
@@ -66,6 +51,50 @@ class GComps_Factory
                 GCompLabelDef::font_size => $font_size,
             ),
         );
+    }
+
+    /** convert standard RGBA representation of the color
+     * to DUNE ARGB GComps representation
+     *
+     * @param string $rgba # RGBA color
+     * @return string # ARGB color
+     */
+    public static function rgba_to_argb($rgba)
+    {
+        if (empty($rgba))
+            return $rgba;
+
+        $part = substr($rgba, 1);
+        return '#' . substr($part, -2) . substr($part, 0, -2);
+    }
+
+    /**
+     * @param array $geom # GCompGeometryDef
+     * @param array|null $margins # GCompMarginsDef
+     * @param string $text
+     * @param int $max_num_lines
+     * @param string $color # RGBA format
+     * @param string $font_size # size in pt
+     * @param string|null $id
+     * @param array|null $attrs
+     * @return array
+     */
+    public static function label($geom, $margins, $text,
+                                 $max_num_lines = 1, $color = "#FFFFE0FF",
+                                 $font_size = 36, $id = null, $attrs = null)
+    {
+        $arr2 = self::getSpecificDefs($attrs, $text, $color, $font_size, $max_num_lines);
+        $arr = array(
+            GComponentDef::id => $id,
+            GComponentDef::geom_def => $geom,
+            GComponentDef::kind => GCOMPONENT_TTF_LABEL,
+            GComponentDef::specific_def => $arr2,
+        );
+
+        if ($margins)
+            $arr[GComponentDef::margins_def] = $margins;
+
+        return $arr;
     }
 
     /**
@@ -96,35 +125,6 @@ class GComps_Factory
         if ($halign)
             $arr2[GCompTtfLabelDef::halign] = $halign;
         return $arr2;
-    }
-
-    /**
-     * @param array $geom # GCompGeometryDef
-     * @param array|null $margins # GCompMarginsDef
-     * @param string $text
-     * @param int $max_num_lines
-     * @param string $color # RGBA format
-     * @param string $font_size # size in pt
-     * @param string|null $id
-     * @param array|null $attrs
-     * @return array
-     */
-    public static function label($geom, $margins, $text,
-                                 $max_num_lines = 1, $color = "#FFFFE0FF",
-                                 $font_size = 36, $id = null, $attrs = null)
-    {
-        $arr2 = self::getSpecificDefs($attrs, $text, $color, $font_size, $max_num_lines);
-        $arr = array(
-            GComponentDef::id => $id,
-            GComponentDef::geom_def => $geom,
-            GComponentDef::kind => GCOMPONENT_TTF_LABEL,
-            GComponentDef::specific_def => $arr2,
-        );
-
-        if ($margins)
-            $arr[GComponentDef::margins_def] = $margins;
-
-        return $arr;
     }
 
     /**

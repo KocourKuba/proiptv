@@ -57,43 +57,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $actions = array();
-        if (!isset($media_url->deny_edit) && $this->get_order($media_url->edit_list)->size() !== 0) {
-            if (isset($media_url->allow_order)) {
-                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-            }
-
-            $hidden = ($media_url->edit_list === self::SCREEN_EDIT_GROUPS || $media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
-                ACTION_ITEM_DELETE,
-                $hidden ? TR::t('restore') : TR::t('delete'));
-        }
-
-        if ($media_url->edit_list === self::SCREEN_EDIT_PROVIDERS) {
-            $info = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_QR, TR::t('info'));
-            $actions[GUI_EVENT_KEY_B_GREEN] = $info;
-            $actions[GUI_EVENT_KEY_INFO] = $info;
-        } else {
-            $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
-        }
-
-        $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        $actions[GUI_EVENT_KEY_RETURN] = $action_return;
-        $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
-        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
-        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
-
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -353,7 +316,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_file' => $user_input->selected_action,
-                        'extension'	=> $user_input->extension,
+                        'extension' => $user_input->extension,
                         'allow_network' => ($user_input->selected_action === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk(),
                         'read_only' => true,
                         'windowCounter' => 1,
@@ -371,7 +334,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_folder' => $user_input->control_id,
-                        'extension'	=> $user_input->extension,
+                        'extension' => $user_input->extension,
                         'allow_network' => false,
                         'read_only' => true,
                         'windowCounter' => 1,
@@ -426,7 +389,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $qr_code = get_temp_path($provider->getId()) . ".jpg";
                 if (!file_exists($qr_code)) {
                     $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
-                    list($res, ) = Curl_Wrapper::simple_download_file($url, $qr_code, false);
+                    list($res,) = Curl_Wrapper::simple_download_file($url, $qr_code, false);
                     if ($res) break;
                 }
 
@@ -437,234 +400,21 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         if ($only_refresh) {
-            $post_action = $this->get_folder_range(MediaURL::decode($user_input->parent_media_url),0, $plugin_cookies);
+            $post_action = $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies);
             return Action_Factory::update_regular_folder($post_action, true, $user_input->sel_ndx);
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
+    protected function force_save($user_input)
     {
-        hd_debug_print(null, true);
-        hd_debug_print("MediaUrl: " . $media_url, true);
-
-        switch($media_url->edit_list) {
-            case self::SCREEN_EDIT_CHANNELS:
-                $items = $this->collect_channels($media_url);
-                break;
-
-            case self::SCREEN_EDIT_GROUPS:
-                $items = $this->collect_groups($media_url);
-                break;
-
-            case self::SCREEN_EDIT_PLAYLIST:
-                $items = $this->collect_playlists($media_url);
-                break;
-
-            case self::SCREEN_EDIT_EPG_LIST:
-                $items = $this->collect_epg_lists($media_url);
-                break;
-
-            case self::SCREEN_EDIT_PROVIDERS:
-                $items = $this->collect_providers($media_url);
-                break;
-
-            default:
-                $items = array();
+        if (isset($parent_media_url->save_data)) {
+            $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+            $this->plugin->set_postpone_save(false, $parent_media_url->save_data);
+            $this->plugin->set_postpone_save(true, $parent_media_url->save_data);
+            $this->set_no_changes();
         }
-
-        return $items;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
-
-        $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = null;
-        if (($media_url->edit_list === static::SCREEN_EDIT_PLAYLIST && $this->plugin->get_playlists()->size() === 0) ||
-            ($media_url->edit_list === static::SCREEN_EDIT_EPG_LIST && $this->plugin->get_ext_xmltv_sources()->size() === 0)) {
-            $msg = is_limited_apk()
-                ? TR::t('edit_list_add_prompt_apk__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW)
-                : TR::t('edit_list_add_prompt__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW);
-            $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;
-        }
-
-        return $folder_view;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view('list_1x11_info'),
-            $this->plugin->get_screen_view('list_2x11_small_info'),
-            $this->plugin->get_screen_view('list_3x11_no_info'),
-        );
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    protected function collect_channels($media_url)
-    {
-        $items = array();
-        /** @var string $item */
-        foreach ($this->get_order($media_url->edit_list) as $item) {
-            if ($media_url->group_id === ALL_CHANNEL_GROUP_ID) {
-                $channel = $this->plugin->tv->get_channel($item);
-            } else {
-                $group = $this->plugin->tv->get_group($media_url->group_id);
-                if (is_null($group)) continue;
-
-                $channel = $group->get_group_channel($item);
-            }
-
-            if (is_null($channel)) continue;
-
-            $items[] = self::add_item($item, $channel->get_title(), false, $channel->get_icon_url(), null);
-        }
-
-        return $items;
-    }
-
-    protected function collect_groups($media_url)
-    {
-        $items = array();
-        /** @var string $item */
-        foreach ($this->get_order($media_url->edit_list) as $item) {
-            $items[] = self::add_item($item, $item, false, Default_Group::DEFAULT_GROUP_ICON, null);
-        }
-
-        return $items;
-    }
-
-    protected function collect_playlists($media_url)
-    {
-        $items = array();
-        /** @var Named_Storage $item */
-        foreach ($this->get_order($media_url->edit_list) as $key => $playlist) {
-            $starred = ($key === $this->plugin->get_active_playlist_key());
-            $title = empty($playlist->name) ? $playlist->params[PARAM_URI] : $playlist->name;
-            if (empty($title)) {
-                $title = "Unrecognized or bad playlist entry";
-            }
-
-            $detailed_info = '';
-            if ($playlist->type === PARAM_PROVIDER) {
-                $provider = $this->plugin->create_provider_class($playlist->params[PARAM_PROVIDER]);
-                if (is_null($provider)) continue;
-
-                $icon_file = $provider->getLogo();
-                $title = $playlist->name;
-                if ($playlist->name !== $provider->getName()) {
-                    $title .= " ({$provider->getName()})";
-                }
-                $detailed_info = $playlist->name;
-            } else if ($playlist->type === PARAM_FILE) {
-                $detailed_info = null;
-                $icon_file = get_image_path("m3u_file.png");
-            } else {
-                if (isset($playlist->params[PARAM_URI])) {
-                    $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
-                }
-                $icon_file = get_image_path("link.png");
-            }
-
-            $items[] = self::add_item($key, $title, $starred, $icon_file, $detailed_info);
-        }
-
-        return $items;
-    }
-
-    protected function collect_epg_lists($media_url)
-    {
-        $items = array();
-        $all_sources['pl'] = $this->plugin->get_playlist_xmltv_sources();
-        $all_sources['ext'] = $this->get_order($media_url->edit_list);
-        $active_key = $this->plugin->get_active_xmltv_source_key();
-        $dupes = array();
-        foreach ($all_sources as $idx => $source) {
-            foreach ($source as $key => $item) {
-                if (isset($dupes[$key])) {
-                    continue;
-                }
-
-                $dupes[$key] = '';
-                $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
-                $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
-                if (empty($title)) {
-                    $title = "Unrecognized or bad xmltv entry";
-                }
-
-                if (file_exists($cached_xmltv_file)) {
-                    $check_time_file = filemtime($cached_xmltv_file);
-                    $dl_date = date("d.m H:i", $check_time_file);
-                    $max_cache_time = $check_time_file + 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
-                    $expired = date("d.m H:i", $max_cache_time);
-
-                    $title = TR::t('edit_list_title_info__2', $title, $dl_date);
-                    $detailed_info = TR::t('edit_list_detail_info__4',
-                        $item->params[PARAM_URI],
-                        HD::get_file_size($cached_xmltv_file),
-                        $dl_date,
-                        $expired
-                        );
-                } else if (isset($item->params[PARAM_URI])) {
-                    $detailed_info = TR::t('edit_list_detail_info__1', $item->params[PARAM_URI]);
-                } else {
-                    $detailed_info = $item->name;
-                }
-
-                if ($idx === 'pl') {
-                    $icon_file = get_image_path("m3u_file.png" );
-                } else if ($item->type === PARAM_FILE) {
-                    $icon_file = get_image_path("xmltv_file.png" );
-                } else {
-                    $icon_file = get_image_path("link.png" );
-                }
-                $items[] = self::add_item($key, $title, $key === $active_key, $icon_file, $detailed_info);
-            }
-        }
-
-        return $items;
-    }
-
-    protected function collect_providers($media_url)
-    {
-        $items = array();
-        /** @var api_default $provider */
-        foreach ($this->get_order($media_url->edit_list) as $provider) {
-            $items[] = self::add_item($provider->getId(), $provider->getName(), false, $provider->getLogo(), $provider->getProviderUrl());
-        }
-
-        return $items;
-    }
-
-    protected static function add_item($id, $title, $starred, $icon_file, $detailed_info)
-    {
-        return array(
-            PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $id)),
-            PluginRegularFolderItem::caption => $title,
-            PluginRegularFolderItem::view_item_params => array(
-                ViewItemParams::item_sticker => ($starred ? Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2) : null),
-                ViewItemParams::icon_path => $icon_file,
-                ViewItemParams::item_detailed_info => $detailed_info,
-                ViewItemParams::item_detailed_icon_path => $icon_file,
-            ),
-        );
     }
 
     protected function &get_order($edit_list, $default = 'Ordered_Array')
@@ -696,6 +446,92 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         return $order;
     }
+
+    /**
+     * @param string $edit_list
+     * @param string $id
+     * @return array|null
+     */
+    protected function do_edit_url_dlg($edit_list = null, $id = '')
+    {
+        hd_debug_print(null, true);
+        $defs = array();
+
+        if ($edit_list !== null && !empty($id)) {
+            $item = $this->get_order($edit_list)->get($id);
+            if (is_null($item)) {
+                return $defs;
+            }
+
+            $window_title = TR::t('edit_list_edit_item');
+            $name = $item->name;
+            $url = $item->params[PARAM_URI];
+            $param = array(CONTROL_EDIT_ACTION => CONTROL_EDIT_ITEM);
+        } else {
+            $window_title = TR::t('edit_list_add_url');
+            $name = '';
+            $url = 'http://';
+            $param = null;
+        }
+
+        Control_Factory::add_vgap($defs, 20);
+
+        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, TR::t('name'),
+            $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
+            $url, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, $param,
+            ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($window_title, $defs, true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $actions = array();
+        if (!isset($media_url->deny_edit) && $this->get_order($media_url->edit_list)->size() !== 0) {
+            if (isset($media_url->allow_order)) {
+                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+            }
+
+            $hidden = ($media_url->edit_list === self::SCREEN_EDIT_GROUPS || $media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
+            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
+                ACTION_ITEM_DELETE,
+                $hidden ? TR::t('restore') : TR::t('delete'));
+        }
+
+        if ($media_url->edit_list === self::SCREEN_EDIT_PROVIDERS) {
+            $info = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_QR, TR::t('info'));
+            $actions[GUI_EVENT_KEY_B_GREEN] = $info;
+            $actions[GUI_EVENT_KEY_INFO] = $info;
+        } else {
+            $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
+        }
+
+        $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_RETURN] = $action_return;
+        $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
+        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+
+        return $actions;
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    /// protected methods
 
     /**
      * @param Object $user_input
@@ -773,52 +609,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
-    }
-
-    /**
-     * @param string $edit_list
-     * @param string $id
-     * @return array|null
-     */
-    protected function do_edit_url_dlg($edit_list = null, $id = '')
-    {
-        hd_debug_print(null, true);
-        $defs = array();
-
-        if ($edit_list !== null && !empty($id)) {
-            $item = $this->get_order($edit_list)->get($id);
-            if (is_null($item)) {
-                return $defs;
-            }
-
-            $window_title = TR::t('edit_list_edit_item');
-            $name = $item->name;
-            $url = $item->params[PARAM_URI];
-            $param = array(CONTROL_EDIT_ACTION => CONTROL_EDIT_ITEM);
-        } else {
-            $window_title = TR::t('edit_list_add_url');
-            $name = '';
-            $url = 'http://';
-            $param = null;
-        }
-
-        Control_Factory::add_vgap($defs, 20);
-
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, TR::t('name'),
-            $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
-
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
-            $url, false, false, false, true, self::DLG_CONTROLS_WIDTH);
-
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, $param,
-            ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog($window_title, $defs, true);
     }
 
     /**
@@ -903,7 +693,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
         }
 
-        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url,$plugin_cookies), 0,
+        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
             $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
     }
 
@@ -932,64 +722,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
-    }
-
-    /**
-     * @param Object $user_input
-     * @return array
-     */
-    protected function do_select_folder($user_input)
-    {
-        hd_debug_print(null, true);
-
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $selected_media_url = MediaURL::decode($user_input->selected_data);
-        $files = glob_dir($selected_media_url->filepath, "/\.$parent_media_url->extension$/i");
-        if (empty($files)) {
-            return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
-        }
-
-        $edit_list = $parent_media_url->edit_list;
-        $order = $this->get_order($edit_list);
-        $old_count = $order->size();
-        foreach ($files as $file) {
-            $hash = Hashed_Array::hash($file);
-            if ($order->has($hash)) continue;
-
-            if ($user_input->selected_action === self::ACTION_FILE_PLAYLIST) {
-                $contents = file_get_contents($file);
-                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
-                    hd_debug_print("Problem with import playlist: $file");
-                    continue;
-                }
-            }
-
-            $playlist = new Named_Storage();
-            $playlist->type = PARAM_FILE;
-            $playlist->name = basename($file);
-            $playlist->params[PARAM_URI] = $file;
-            $order->put($hash, $playlist);
-            $this->set_changes($parent_media_url->save_data);
-        }
-
-        $window_title = ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST)
-            ? TR::t('setup_channels_src_edit_playlists')
-            : TR::t('setup_edit_xmltv_list');
-
-        return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', $order->size() - $old_count),
-            Action_Factory::close_and_run(
-                Action_Factory::open_folder($parent_media_url->get_media_url_str(), $window_title))
-        );
-    }
-
-    protected function force_save($user_input)
-    {
-        if (isset($parent_media_url->save_data)) {
-            $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-            $this->plugin->set_postpone_save(false, $parent_media_url->save_data);
-            $this->plugin->set_postpone_save(true, $parent_media_url->save_data);
-            $this->set_no_changes();
-        }
     }
 
     protected function select_text_file($user_input)
@@ -1140,5 +872,273 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $this->set_changes($parent_media_url->save_data);
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+    }
+
+    /**
+     * @param Object $user_input
+     * @return array
+     */
+    protected function do_select_folder($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_data);
+        $files = glob_dir($selected_media_url->filepath, "/\.$parent_media_url->extension$/i");
+        if (empty($files)) {
+            return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
+        }
+
+        $edit_list = $parent_media_url->edit_list;
+        $order = $this->get_order($edit_list);
+        $old_count = $order->size();
+        foreach ($files as $file) {
+            $hash = Hashed_Array::hash($file);
+            if ($order->has($hash)) continue;
+
+            if ($user_input->selected_action === self::ACTION_FILE_PLAYLIST) {
+                $contents = file_get_contents($file);
+                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                    hd_debug_print("Problem with import playlist: $file");
+                    continue;
+                }
+            }
+
+            $playlist = new Named_Storage();
+            $playlist->type = PARAM_FILE;
+            $playlist->name = basename($file);
+            $playlist->params[PARAM_URI] = $file;
+            $order->put($hash, $playlist);
+            $this->set_changes($parent_media_url->save_data);
+        }
+
+        $window_title = ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST)
+            ? TR::t('setup_channels_src_edit_playlists')
+            : TR::t('setup_edit_xmltv_list');
+
+        return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', $order->size() - $old_count),
+            Action_Factory::close_and_run(
+                Action_Factory::open_folder($parent_media_url->get_media_url_str(), $window_title))
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("MediaUrl: " . $media_url, true);
+
+        switch ($media_url->edit_list) {
+            case self::SCREEN_EDIT_CHANNELS:
+                $items = $this->collect_channels($media_url);
+                break;
+
+            case self::SCREEN_EDIT_GROUPS:
+                $items = $this->collect_groups($media_url);
+                break;
+
+            case self::SCREEN_EDIT_PLAYLIST:
+                $items = $this->collect_playlists($media_url);
+                break;
+
+            case self::SCREEN_EDIT_EPG_LIST:
+                $items = $this->collect_epg_lists($media_url);
+                break;
+
+            case self::SCREEN_EDIT_PROVIDERS:
+                $items = $this->collect_providers($media_url);
+                break;
+
+            default:
+                $items = array();
+        }
+
+        return $items;
+    }
+
+    protected function collect_channels($media_url)
+    {
+        $items = array();
+        /** @var string $item */
+        foreach ($this->get_order($media_url->edit_list) as $item) {
+            if ($media_url->group_id === ALL_CHANNEL_GROUP_ID) {
+                $channel = $this->plugin->tv->get_channel($item);
+            } else {
+                $group = $this->plugin->tv->get_group($media_url->group_id);
+                if (is_null($group)) continue;
+
+                $channel = $group->get_group_channel($item);
+            }
+
+            if (is_null($channel)) continue;
+
+            $items[] = self::add_item($item, $channel->get_title(), false, $channel->get_icon_url(), null);
+        }
+
+        return $items;
+    }
+
+    protected static function add_item($id, $title, $starred, $icon_file, $detailed_info)
+    {
+        return array(
+            PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $id)),
+            PluginRegularFolderItem::caption => $title,
+            PluginRegularFolderItem::view_item_params => array(
+                ViewItemParams::item_sticker => ($starred ? Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2) : null),
+                ViewItemParams::icon_path => $icon_file,
+                ViewItemParams::item_detailed_info => $detailed_info,
+                ViewItemParams::item_detailed_icon_path => $icon_file,
+            ),
+        );
+    }
+
+    protected function collect_groups($media_url)
+    {
+        $items = array();
+        /** @var string $item */
+        foreach ($this->get_order($media_url->edit_list) as $item) {
+            $items[] = self::add_item($item, $item, false, Default_Group::DEFAULT_GROUP_ICON, null);
+        }
+
+        return $items;
+    }
+
+    protected function collect_playlists($media_url)
+    {
+        $items = array();
+        /** @var Named_Storage $item */
+        foreach ($this->get_order($media_url->edit_list) as $key => $playlist) {
+            $starred = ($key === $this->plugin->get_active_playlist_key());
+            $title = empty($playlist->name) ? $playlist->params[PARAM_URI] : $playlist->name;
+            if (empty($title)) {
+                $title = "Unrecognized or bad playlist entry";
+            }
+
+            $detailed_info = '';
+            if ($playlist->type === PARAM_PROVIDER) {
+                $provider = $this->plugin->create_provider_class($playlist->params[PARAM_PROVIDER]);
+                if (is_null($provider)) continue;
+
+                $icon_file = $provider->getLogo();
+                $title = $playlist->name;
+                if ($playlist->name !== $provider->getName()) {
+                    $title .= " ({$provider->getName()})";
+                }
+                $detailed_info = $playlist->name;
+            } else if ($playlist->type === PARAM_FILE) {
+                $detailed_info = null;
+                $icon_file = get_image_path("m3u_file.png");
+            } else {
+                if (isset($playlist->params[PARAM_URI])) {
+                    $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
+                }
+                $icon_file = get_image_path("link.png");
+            }
+
+            $items[] = self::add_item($key, $title, $starred, $icon_file, $detailed_info);
+        }
+
+        return $items;
+    }
+
+    protected function collect_epg_lists($media_url)
+    {
+        $items = array();
+        $all_sources['pl'] = $this->plugin->get_playlist_xmltv_sources();
+        $all_sources['ext'] = $this->get_order($media_url->edit_list);
+        $active_key = $this->plugin->get_active_xmltv_source_key();
+        $dupes = array();
+        foreach ($all_sources as $idx => $source) {
+            foreach ($source as $key => $item) {
+                if (isset($dupes[$key])) {
+                    continue;
+                }
+
+                $dupes[$key] = '';
+                $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
+                $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
+                if (empty($title)) {
+                    $title = "Unrecognized or bad xmltv entry";
+                }
+
+                if (file_exists($cached_xmltv_file)) {
+                    $check_time_file = filemtime($cached_xmltv_file);
+                    $dl_date = date("d.m H:i", $check_time_file);
+                    $max_cache_time = $check_time_file + 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
+                    $expired = date("d.m H:i", $max_cache_time);
+
+                    $title = TR::t('edit_list_title_info__2', $title, $dl_date);
+                    $detailed_info = TR::t('edit_list_detail_info__4',
+                        $item->params[PARAM_URI],
+                        HD::get_file_size($cached_xmltv_file),
+                        $dl_date,
+                        $expired
+                    );
+                } else if (isset($item->params[PARAM_URI])) {
+                    $detailed_info = TR::t('edit_list_detail_info__1', $item->params[PARAM_URI]);
+                } else {
+                    $detailed_info = $item->name;
+                }
+
+                if ($idx === 'pl') {
+                    $icon_file = get_image_path("m3u_file.png");
+                } else if ($item->type === PARAM_FILE) {
+                    $icon_file = get_image_path("xmltv_file.png");
+                } else {
+                    $icon_file = get_image_path("link.png");
+                }
+                $items[] = self::add_item($key, $title, $key === $active_key, $icon_file, $detailed_info);
+            }
+        }
+
+        return $items;
+    }
+
+    protected function collect_providers($media_url)
+    {
+        $items = array();
+        /** @var api_default $provider */
+        foreach ($this->get_order($media_url->edit_list) as $provider) {
+            $items[] = self::add_item($provider->getId(), $provider->getName(), false, $provider->getLogo(), $provider->getProviderUrl());
+        }
+
+        return $items;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
+
+        $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = null;
+        if (($media_url->edit_list === static::SCREEN_EDIT_PLAYLIST && $this->plugin->get_playlists()->size() === 0) ||
+            ($media_url->edit_list === static::SCREEN_EDIT_EPG_LIST && $this->plugin->get_ext_xmltv_sources()->size() === 0)) {
+            $msg = is_limited_apk()
+                ? TR::t('edit_list_add_prompt_apk__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW)
+                : TR::t('edit_list_add_prompt__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW);
+            $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = $msg;
+        }
+
+        return $folder_view;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_folder_views()
+    {
+        hd_debug_print(null, true);
+
+        return array(
+            $this->plugin->get_screen_view('list_1x11_info'),
+            $this->plugin->get_screen_view('list_2x11_small_info'),
+            $this->plugin->get_screen_view('list_3x11_no_info'),
+        );
     }
 }

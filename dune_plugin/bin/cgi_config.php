@@ -29,9 +29,9 @@ class DuneSystem
     public static $properties = array();
 }
 
-function get_value_of_global_variables ($name, $key)
+function get_value_of_global_variables($name, $key)
 {
-    return (isset ($name[$key]) ) ? ($name[$key]) : ('');
+    return (isset ($name[$key])) ? ($name[$key]) : ('');
 }
 
 function hd_print($str)
@@ -48,14 +48,14 @@ function hd_print($str)
     }
 }
 
-error_reporting (E_ALL & ~E_NOTICE);
+error_reporting(E_ALL & ~E_NOTICE);
 
-DuneSystem::$properties['plugin_name']      = get_value_of_global_variables ($_ENV, 'PLUGIN_NAME');
-DuneSystem::$properties['install_dir_path'] = get_value_of_global_variables ($_ENV, 'PLUGIN_INSTALL_DIR_PATH');
-DuneSystem::$properties['tmp_dir_path']     = get_value_of_global_variables ($_ENV, 'PLUGIN_TMP_DIR_PATH');
-DuneSystem::$properties['plugin_www_url']   = get_value_of_global_variables ($_ENV, 'PLUGIN_WWW_URL');
-DuneSystem::$properties['plugin_cgi_url']   = get_value_of_global_variables ($_ENV, 'PLUGIN_CGI_URL');
-DuneSystem::$properties['data_dir_path']    = get_value_of_global_variables ($_ENV, 'PLUGIN_DATA_DIR_PATH');
+DuneSystem::$properties['plugin_name'] = get_value_of_global_variables($_ENV, 'PLUGIN_NAME');
+DuneSystem::$properties['install_dir_path'] = get_value_of_global_variables($_ENV, 'PLUGIN_INSTALL_DIR_PATH');
+DuneSystem::$properties['tmp_dir_path'] = get_value_of_global_variables($_ENV, 'PLUGIN_TMP_DIR_PATH');
+DuneSystem::$properties['plugin_www_url'] = get_value_of_global_variables($_ENV, 'PLUGIN_WWW_URL');
+DuneSystem::$properties['plugin_cgi_url'] = get_value_of_global_variables($_ENV, 'PLUGIN_CGI_URL');
+DuneSystem::$properties['data_dir_path'] = get_value_of_global_variables($_ENV, 'PLUGIN_DATA_DIR_PATH');
 
 $HD_NEW_LINE = PHP_EOL;
 $LOG_FILE = DuneSystem::$properties['tmp_dir_path'] . "/error.log";

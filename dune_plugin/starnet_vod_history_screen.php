@@ -33,15 +33,6 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $group_id
-     * @return false|string
-     */
-    public static function get_media_url_string($group_id)
-    {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param Object $plugin_cookies
      * @return array
@@ -49,13 +40,13 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         return array(
-            GUI_EVENT_KEY_ENTER    => Action_Factory::open_folder(),
-            GUI_EVENT_KEY_PLAY     => Action_Factory::vod_play(),
-            GUI_EVENT_KEY_B_GREEN  => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
+            GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
+            GUI_EVENT_KEY_PLAY => Action_Factory::vod_play(),
+            GUI_EVENT_KEY_B_GREEN => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history')),
-            GUI_EVENT_KEY_D_BLUE   => User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite')),
-            GUI_EVENT_KEY_RETURN   => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
-            GUI_EVENT_KEY_STOP     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite')),
+            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -74,8 +65,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
         $movie_id = MediaURL::decode($user_input->selected_media_url)->movie_id;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
-        switch ($user_input->control_id)
-		{
+        switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
                 if ($this->has_changes()) {
                     $this->plugin->save_history(true);
@@ -97,7 +87,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 $this->set_no_changes();
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
 
-			case ACTION_ITEM_DELETE:
+            case ACTION_ITEM_DELETE:
                 $history = $this->plugin->get_history(HISTORY_MOVIES);
                 $history->erase($movie_id);
                 $this->set_changes();
@@ -105,11 +95,11 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
 
-				$sel_ndx = $user_input->sel_ndx + 1;
-				if ($sel_ndx < 0)
-					$sel_ndx = 0;
-				$range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
-				return Action_Factory::update_regular_folder($range, true, $sel_ndx);
+                $sel_ndx = $user_input->sel_ndx + 1;
+                if ($sel_ndx < 0)
+                    $sel_ndx = 0;
+                $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
+                return Action_Factory::update_regular_folder($range, true, $sel_ndx);
 
             case ACTION_ITEMS_CLEAR:
                 $this->plugin->get_history(HISTORY_MOVIES)->clear();
@@ -121,11 +111,20 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 $opt_type = $fav_group->in_items_order($movie_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->vod->change_vod_favorites($opt_type, $movie_id);
                 $this->plugin->save_orders(true);
-				$message = $opt_type === PLUGIN_FAVORITES_OP_REMOVE ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
-				return Action_Factory::show_title_dialog($message);
-		}
+                $message = $opt_type === PLUGIN_FAVORITES_OP_REMOVE ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
+                return Action_Factory::show_title_dialog($message);
+        }
 
         return null;
+    }
+
+    /**
+     * @param string $group_id
+     * @return false|string
+     */
+    public static function get_media_url_string($group_id)
+    {
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
     }
 
     /**

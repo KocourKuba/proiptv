@@ -38,37 +38,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $actions = array();
-
-        $actions[GUI_EVENT_KEY_ENTER]      = User_Input_Handler_Registry::create_action($this, ACTION_OPEN_FOLDER);
-        $actions[GUI_EVENT_KEY_PLAY]       = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_FOLDER);
-
-        $actions[GUI_EVENT_KEY_RETURN]     = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        $actions[GUI_EVENT_KEY_TOP_MENU]   = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_STOP]       = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
-        $actions[GUI_EVENT_TIMER]          = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-
-        $order = $this->plugin->tv->get_groups_order();
-        if (!is_null($order) && $order->size() !== 0) {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-        }
-
-        $actions[GUI_EVENT_KEY_D_BLUE]     = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_INFO, TR::t('plugin_info'));
-        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
-
-        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
-
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -85,8 +54,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $sel_media_url = MediaURL::make(array());
         }
 
-        switch ($user_input->control_id)
-        {
+        switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 $this->save_if_changed();
@@ -94,7 +62,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
 
-            return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_DLG_APPLY);
+                return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
                 clearstatcache();
@@ -142,7 +110,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $has_error = HD::get_last_error('vod_last_error');
                 }
 
-                return Action_Factory::show_title_dialog(TR::t('err_load_any'),null, $has_error);
+                return Action_Factory::show_title_dialog(TR::t('err_load_any'), null, $has_error);
 
             case ACTION_ITEM_UP:
                 if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::UP))
@@ -384,7 +352,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return $res;
                 }
 
-                return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
@@ -397,7 +365,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_file' => $user_input->control_id,
-                        'extension'	=> IMAGE_PREVIEW_PATTERN,
+                        'extension' => IMAGE_PREVIEW_PATTERN,
                         'allow_network' => !is_limited_apk(),
                         'allow_image_lib' => true,
                         'allow_reset' => true,
@@ -520,7 +488,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->save_if_changed();
                 $force = false;
                 if (isset($user_input->reload_action)) {
-                    if( $user_input->reload_action === 'playlist') {
+                    if ($user_input->reload_action === 'playlist') {
                         $force = true;
                     } else if ($user_input->reload_action === 'epg') {
                         $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
@@ -542,7 +510,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_INFO_DLG:
                 $provider = $this->plugin->get_current_provider();
-                if (is_null($provider) ||!$provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+                if (is_null($provider) || !$provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
                     return null;
                 }
 
@@ -595,8 +563,39 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
         }
 
-        $post_action = $this->get_folder_range(MediaURL::decode($user_input->parent_media_url),0, $plugin_cookies);
+        $post_action = $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies);
         return Action_Factory::update_regular_folder($post_action, true, $sel_ndx);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $actions = array();
+
+        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, ACTION_OPEN_FOLDER);
+        $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_FOLDER);
+
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+
+        $order = $this->plugin->tv->get_groups_order();
+        if (!is_null($order) && $order->size() !== 0) {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+        }
+
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_INFO, TR::t('plugin_info'));
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
+
+        return $actions;
     }
 
     /**
@@ -682,8 +681,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     ViewItemParams::icon_path => $group->get_icon_url(),
                     ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
                     ViewItemParams::item_detailed_info => $item_detailed_info,
-                    )
-                );
+                )
+            );
         }
 
         /** @var Default_Group $group */

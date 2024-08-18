@@ -87,17 +87,17 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             if (strpos($epg_url, '{YEAR}') !== false) {
                 $epg_date = gmdate('Y', $cur_time);
                 hd_debug_print("using YEAR: $epg_date", true);
-                $epg_url = str_replace( '{YEAR}', $epg_date, $epg_url);
+                $epg_url = str_replace('{YEAR}', $epg_date, $epg_url);
             }
             if (strpos($epg_url, '{MONTH}') !== false) {
                 $epg_date = gmdate('m', $cur_time);
                 hd_debug_print("using MONTH: $epg_date", true);
-                $epg_url = str_replace( '{MONTH}', $epg_date, $epg_url);
+                $epg_url = str_replace('{MONTH}', $epg_date, $epg_url);
             }
             if (strpos($epg_url, '{DAY}') !== false) {
                 $epg_date = gmdate('d', $cur_time);
                 hd_debug_print("using DAY: $epg_date", true);
-                $epg_url = str_replace( '{DAY}', $epg_date, $epg_url);
+                $epg_url = str_replace('{DAY}', $epg_date, $epg_url);
             }
 
             $epg_id = str_replace(' ', '%20', $epg_id);
@@ -160,23 +160,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         }
 
         return $day_epg;
-     }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    public function clear_epg_cache()
-    {
-        $this->epg_cache = array();
-        $files = get_temp_path('*.cache');
-        hd_debug_print("clear cache files: $files");
-        shell_exec('rm -f '. $files);
-        flush();
     }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
 
     /**
      * request server for epg and parse json response
@@ -259,5 +243,21 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         ksort($channel_epg, SORT_NUMERIC);
         return $channel_epg;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function clear_epg_cache()
+    {
+        $this->epg_cache = array();
+        $files = get_temp_path('*.cache');
+        hd_debug_print("clear cache files: $files");
+        shell_exec('rm -f ' . $files);
+        flush();
     }
 }

@@ -84,13 +84,6 @@ class Default_Channel extends Json_Serializer implements Channel
      */
     private $plugin;
 
-    public function __sleep()
-    {
-        $vars = get_object_vars($this);
-        unset($vars['plugin']);
-        return array_keys($vars);
-    }
-
     /**
      * @param Default_Dune_Plugin $plugin
      * @param string $id
@@ -129,6 +122,13 @@ class Default_Channel extends Json_Serializer implements Channel
         $this->_timeshift_hours = $timeshift_hours;
         $this->_ext_params = $ext_params;
         $this->_disabled = $disabled;
+    }
+
+    public function __sleep()
+    {
+        $vars = get_object_vars($this);
+        unset($vars['plugin']);
+        return array_keys($vars);
     }
 
     /**
@@ -174,14 +174,6 @@ class Default_Channel extends Json_Serializer implements Channel
     /**
      * @inheritDoc
      */
-    public function get_parent_group()
-    {
-        return $this->_group;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function get_number()
     {
         return $this->_number;
@@ -216,6 +208,14 @@ class Default_Channel extends Json_Serializer implements Channel
             $this->plugin->tv->get_disabled_channel_ids()->remove_item($this->_id);
             $this->get_parent_group()->get_items_order()->add_item($this->_id);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_parent_group()
+    {
+        return $this->_group;
     }
 
     /**

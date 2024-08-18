@@ -197,6 +197,35 @@ class vod_glanz extends vod_standard
     }
 
     /**
+     * @param Object $movie_obj
+     * @return Short_Movie
+     */
+    protected static function CreateShortMovie($movie_obj)
+    {
+        if (isset($movie_obj->id)) {
+            $id = (string)$movie_obj->id;
+        } else {
+            $id = '-1';
+        }
+
+        $genres = array();
+        foreach ($movie_obj->genres as $genre) {
+            $genre = (object)$genre;
+            if (!empty($genre->title)) {
+                $genres[] = $genre->title;
+            }
+        }
+        $genres_str = implode(", ", $genres);
+
+        return new Short_Movie(
+            $id,
+            (string)$movie_obj->name,
+            (string)$movie_obj->cover,
+            TR::t('vod_screen_movie_info__4', $movie_obj->name, $movie_obj->year, $movie_obj->country, $genres_str)
+        );
+    }
+
+    /**
      * @inheritDoc
      */
     public function getMovieList($query_id)
@@ -291,34 +320,5 @@ class vod_glanz extends vod_standard
 
         hd_debug_print("Movies found: " . count($movies));
         return $movies;
-    }
-
-    /**
-     * @param Object $movie_obj
-     * @return Short_Movie
-     */
-    protected static function CreateShortMovie($movie_obj)
-    {
-        if (isset($movie_obj->id)) {
-            $id = (string)$movie_obj->id;
-        } else {
-            $id = '-1';
-        }
-
-        $genres = array();
-        foreach ($movie_obj->genres as $genre) {
-            $genre = (object)$genre;
-            if (!empty($genre->title)) {
-                $genres[] = $genre->title;
-            }
-        }
-        $genres_str = implode(", ", $genres);
-
-        return new Short_Movie(
-            $id,
-            (string)$movie_obj->name,
-            (string)$movie_obj->cover,
-            TR::t('vod_screen_movie_info__4', $movie_obj->name, $movie_obj->year, $movie_obj->country, $genres_str)
-        );
     }
 }

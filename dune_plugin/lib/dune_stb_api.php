@@ -110,31 +110,31 @@ if (!defined('GUI_EVENT_DISCRETE_POWER_OFF')) define('GUI_EVENT_DISCRETE_POWER_O
 
 # Dune colors const's.
 # Common:
-const DEF_LABEL_TEXT_COLOR_BLACK        = 0;  #0x000000	Black						IPTV plugin playback time and number of EPG item
-const DEF_LABEL_TEXT_COLOR_BLUE         = 1;  #0x0000a0	Blue						unknown
-const DEF_LABEL_TEXT_COLOR_PALEGREEN    = 2;  #0xc0e0c0	Light light grin			unknown
-const DEF_LABEL_TEXT_COLOR_LIGHTBLUE    = 3;  #0xa0c0ff	Light blue					unknown
-const DEF_LABEL_TEXT_COLOR_RED          = 4;  #0xff4040	Red							Symbol R Recorded Channel Kartina TV
-const DEF_LABEL_TEXT_COLOR_LIMEGREEN    = 5;  #0xc0ff40	Light green					unknown
-const DEF_LABEL_TEXT_COLOR_GOLD         = 6;  #0xffe040	Light yellow				unknown
-const DEF_LABEL_TEXT_COLOR_SILVER       = 7;  #0xc0c0c0	Light grey					File browser (right sub description)
-const DEF_LABEL_TEXT_COLOR_GRAY         = 8;  #0x808080	Grey						IPTV plugin playback, categories
-const DEF_LABEL_TEXT_COLOR_VIOLET       = 9;  #0x4040c0	Violet						unknown
-const DEF_LABEL_TEXT_COLOR_GREEN        = 10; #0x40ff40	Green						VOD description rating(IMDB..)
-const DEF_LABEL_TEXT_COLOR_TURQUOISE    = 11; #0x40ffff	Cyan						unknown
-const DEF_LABEL_TEXT_COLOR_ORANGE       = 12; #0xff8040	Orange						unknown
-const DEF_LABEL_TEXT_COLOR_MAGENTA      = 13; #0xff40ff	Purple						unknown
-const DEF_LABEL_TEXT_COLOR_LIGHTYELLOW  = 14; #0xffff40	Light yellow				Widget(time, temp), path (last item), messages, IPTV playback (channels number, )
-const DEF_LABEL_TEXT_COLOR_WHITE        = 15; #0xffffe0	White						Main color, widget, combobox etc
+const DEF_LABEL_TEXT_COLOR_BLACK = 0;  #0x000000	Black						IPTV plugin playback time and number of EPG item
+const DEF_LABEL_TEXT_COLOR_BLUE = 1;  #0x0000a0	Blue						unknown
+const DEF_LABEL_TEXT_COLOR_PALEGREEN = 2;  #0xc0e0c0	Light light grin			unknown
+const DEF_LABEL_TEXT_COLOR_LIGHTBLUE = 3;  #0xa0c0ff	Light blue					unknown
+const DEF_LABEL_TEXT_COLOR_RED = 4;  #0xff4040	Red							Symbol R Recorded Channel Kartina TV
+const DEF_LABEL_TEXT_COLOR_LIMEGREEN = 5;  #0xc0ff40	Light green					unknown
+const DEF_LABEL_TEXT_COLOR_GOLD = 6;  #0xffe040	Light yellow				unknown
+const DEF_LABEL_TEXT_COLOR_SILVER = 7;  #0xc0c0c0	Light grey					File browser (right sub description)
+const DEF_LABEL_TEXT_COLOR_GRAY = 8;  #0x808080	Grey						IPTV plugin playback, categories
+const DEF_LABEL_TEXT_COLOR_VIOLET = 9;  #0x4040c0	Violet						unknown
+const DEF_LABEL_TEXT_COLOR_GREEN = 10; #0x40ff40	Green						VOD description rating(IMDB..)
+const DEF_LABEL_TEXT_COLOR_TURQUOISE = 11; #0x40ffff	Cyan						unknown
+const DEF_LABEL_TEXT_COLOR_ORANGE = 12; #0xff8040	Orange						unknown
+const DEF_LABEL_TEXT_COLOR_MAGENTA = 13; #0xff40ff	Purple						unknown
+const DEF_LABEL_TEXT_COLOR_LIGHTYELLOW = 14; #0xffff40	Light yellow				Widget(time, temp), path (last item), messages, IPTV playback (channels number, )
+const DEF_LABEL_TEXT_COLOR_WHITE = 15; #0xffffe0	White						Main color, widget, combobox etc
 # Extra:
-const DEF_LABEL_TEXT_COLOR_DARKGRAY     = 16; #0x404040	Dark grey					Color buttons,
-const DEF_LABEL_TEXT_COLOR_DIMGRAY      = 17; #0xaaaaa0	Grey						Some VOD description text
-const DEF_LABEL_TEXT_COLOR_YELLOW       = 18; #0xffff00	Yellow						VOD descr
-const DEF_LABEL_TEXT_COLOR_LIGHTGREEN   = 19; #0x50ff50	Green						VOD descr
-const DEF_LABEL_TEXT_COLOR_SKYBLUE      = 20; #0x5080ff	Blue						VOD descr
-const DEF_LABEL_TEXT_COLOR_CORAL        = 21; #0xff5030	Light red					VOD descr
-const DEF_LABEL_TEXT_COLOR_DARKGRAY2    = 22; #0x404040	Dark grey					VOD descr
-const DEF_LABEL_TEXT_COLOR_GAINSBORO    = 23; #0xe0e0e0	Light light light grey		P+ P-
+const DEF_LABEL_TEXT_COLOR_DARKGRAY = 16; #0x404040	Dark grey					Color buttons,
+const DEF_LABEL_TEXT_COLOR_DIMGRAY = 17; #0xaaaaa0	Grey						Some VOD description text
+const DEF_LABEL_TEXT_COLOR_YELLOW = 18; #0xffff00	Yellow						VOD descr
+const DEF_LABEL_TEXT_COLOR_LIGHTGREEN = 19; #0x50ff50	Green						VOD descr
+const DEF_LABEL_TEXT_COLOR_SKYBLUE = 20; #0x5080ff	Blue						VOD descr
+const DEF_LABEL_TEXT_COLOR_CORAL = 21; #0xff5030	Light red					VOD descr
+const DEF_LABEL_TEXT_COLOR_DARKGRAY2 = 22; #0x404040	Dark grey					VOD descr
+const DEF_LABEL_TEXT_COLOR_GAINSBORO = 23; #0xe0e0e0	Light light light grey		P+ P-
 
 const CMD_STATUS_GREP = '" /firmware/ext_command/cgi-bin/do | grep "command_status" | sed -n "s|^<param name=\"command_status\" value=\"(.*)\"/>|\1|p"';
 
@@ -150,7 +150,7 @@ class LogSeverity
 
 class SetupControlSwitchDefs
 {
-    const switch_on  = 'yes';
+    const switch_on = 'yes';
     const switch_off = 'no';
 
     public static $on_off_translated = array
@@ -218,67 +218,67 @@ class DuneParamsDeintMode
 class DuneIrControl
 {
     public static $key_codes = array(
-        GUI_EVENT_KEY_VENDOR            => '0',
-        GUI_EVENT_KEY_ENTER             => 'EB14BF00',
-        GUI_EVENT_KEY_PLAY              => 'B748BF00',
-        GUI_EVENT_KEY_A_RED             => 'BF40BF00',
-        GUI_EVENT_KEY_B_GREEN           => 'E01FBF00',
-        GUI_EVENT_KEY_C_YELLOW          => 'FF00BF00',
-        GUI_EVENT_KEY_D_BLUE            => 'BE41BF00',
-        GUI_EVENT_KEY_POPUP_MENU        => 'F807BF00',
-        GUI_EVENT_KEY_INFO              => 'AF50BF00',
-        GUI_EVENT_KEY_LEFT              => 'E817BF00',
-        GUI_EVENT_KEY_RIGHT             => 'E718BF00',
-        GUI_EVENT_KEY_UP                => 'EA15BF00',
-        GUI_EVENT_KEY_DOWN              => 'E916BF00',
-        GUI_EVENT_KEY_P_PLUS            => 'B44BBF00',
-        GUI_EVENT_KEY_P_MINUS           => 'B34CBF00',
-        GUI_EVENT_KEY_NEXT              => 'E21DBF00',
-        GUI_EVENT_KEY_PREV              => 'B649BF00',
-        GUI_EVENT_KEY_SETUP             => 'B14EBF00',
-        GUI_EVENT_KEY_RETURN            => 'FB04BF00',
-        GUI_EVENT_KEY_SELECT            => 'BD42BF00',
-        GUI_EVENT_KEY_CLEAR             => 'FA05BF00',
-        GUI_EVENT_KEY_PAUSE             => 'E11EBF00',
-        GUI_EVENT_KEY_FWD               => 'E41BBF00',
-        GUI_EVENT_KEY_REW               => 'E31CBF00',
-        GUI_EVENT_KEY_SLOW              => 'E51ABF00',
-        GUI_EVENT_KEY_STOP              => 'E619BF00',
-        GUI_EVENT_KEY_TOP_MENU          => 'AE51BF00',
-        GUI_EVENT_KEY_POWER             => 'BC43BF00',
-        GUI_EVENT_KEY_EJECT             => 'EF10BF00',
-        GUI_EVENT_KEY_MODE              => 'BA45BF00',
-        GUI_EVENT_KEY_MUTE              => 'B946BF00',
-        GUI_EVENT_KEY_V_PLUS            => 'AD52BF00',
-        GUI_EVENT_KEY_V_MINUS           => 'AC53BF00',
-        GUI_EVENT_KEY_SEARCH            => 'F906BF00',
-        GUI_EVENT_KEY_ZOOM              => 'FD02BF00',
-        GUI_EVENT_KEY_SUBTITLE          => 'AB54BF00',
-        GUI_EVENT_KEY_REPEAT            => 'B24DBF00',
-        GUI_EVENT_KEY_AUDIO             => 'BB44BF00',
-        GUI_EVENT_KEY_REC               => '9F60BF00',
-        GUI_EVENT_KEY_DUNE              => '9E61BF00',
-        GUI_EVENT_KEY_URL               => '9D62BF00',
-        GUI_EVENT_KEY_0                 => 'F50ABF00',
-        GUI_EVENT_KEY_1                 => 'F40BBF00',
-        GUI_EVENT_KEY_2                 => 'F30CBF00',
-        GUI_EVENT_KEY_3                 => 'F20DBF00',
-        GUI_EVENT_KEY_4                 => 'F10EBF00',
-        GUI_EVENT_KEY_5                 => 'F00FBF00',
-        GUI_EVENT_KEY_6                 => 'FE01BF00',
-        GUI_EVENT_KEY_7                 => 'EE11BF00',
-        GUI_EVENT_KEY_8                 => 'ED12BF00',
-        GUI_EVENT_KEY_9                 => 'EC13BF00',
-        GUI_EVENT_KEY_SHUFFLE           => 'B847BF00',
-        GUI_EVENT_KEY_KEYBRD            => 'FC03BF00',
-        GUI_EVENT_KEY_MOUSE             => 'B04FBF00',
-        GUI_EVENT_KEY_RECENT            => '9E61BF00',
-        GUI_EVENT_KEY_TV                => '9C63BF00',
-        GUI_EVENT_KEY_MOVIES            => 'B847BF00',
-        GUI_EVENT_KEY_MUSIC             => 'A758BF00',
-        GUI_EVENT_KEY_ANGLE             => 'B24DBF00',
-        GUI_EVENT_DISCRETE_POWER_ON     => 'A05FBF00',
-        GUI_EVENT_DISCRETE_POWER_OFF    => 'A15EBF00');
+        GUI_EVENT_KEY_VENDOR => '0',
+        GUI_EVENT_KEY_ENTER => 'EB14BF00',
+        GUI_EVENT_KEY_PLAY => 'B748BF00',
+        GUI_EVENT_KEY_A_RED => 'BF40BF00',
+        GUI_EVENT_KEY_B_GREEN => 'E01FBF00',
+        GUI_EVENT_KEY_C_YELLOW => 'FF00BF00',
+        GUI_EVENT_KEY_D_BLUE => 'BE41BF00',
+        GUI_EVENT_KEY_POPUP_MENU => 'F807BF00',
+        GUI_EVENT_KEY_INFO => 'AF50BF00',
+        GUI_EVENT_KEY_LEFT => 'E817BF00',
+        GUI_EVENT_KEY_RIGHT => 'E718BF00',
+        GUI_EVENT_KEY_UP => 'EA15BF00',
+        GUI_EVENT_KEY_DOWN => 'E916BF00',
+        GUI_EVENT_KEY_P_PLUS => 'B44BBF00',
+        GUI_EVENT_KEY_P_MINUS => 'B34CBF00',
+        GUI_EVENT_KEY_NEXT => 'E21DBF00',
+        GUI_EVENT_KEY_PREV => 'B649BF00',
+        GUI_EVENT_KEY_SETUP => 'B14EBF00',
+        GUI_EVENT_KEY_RETURN => 'FB04BF00',
+        GUI_EVENT_KEY_SELECT => 'BD42BF00',
+        GUI_EVENT_KEY_CLEAR => 'FA05BF00',
+        GUI_EVENT_KEY_PAUSE => 'E11EBF00',
+        GUI_EVENT_KEY_FWD => 'E41BBF00',
+        GUI_EVENT_KEY_REW => 'E31CBF00',
+        GUI_EVENT_KEY_SLOW => 'E51ABF00',
+        GUI_EVENT_KEY_STOP => 'E619BF00',
+        GUI_EVENT_KEY_TOP_MENU => 'AE51BF00',
+        GUI_EVENT_KEY_POWER => 'BC43BF00',
+        GUI_EVENT_KEY_EJECT => 'EF10BF00',
+        GUI_EVENT_KEY_MODE => 'BA45BF00',
+        GUI_EVENT_KEY_MUTE => 'B946BF00',
+        GUI_EVENT_KEY_V_PLUS => 'AD52BF00',
+        GUI_EVENT_KEY_V_MINUS => 'AC53BF00',
+        GUI_EVENT_KEY_SEARCH => 'F906BF00',
+        GUI_EVENT_KEY_ZOOM => 'FD02BF00',
+        GUI_EVENT_KEY_SUBTITLE => 'AB54BF00',
+        GUI_EVENT_KEY_REPEAT => 'B24DBF00',
+        GUI_EVENT_KEY_AUDIO => 'BB44BF00',
+        GUI_EVENT_KEY_REC => '9F60BF00',
+        GUI_EVENT_KEY_DUNE => '9E61BF00',
+        GUI_EVENT_KEY_URL => '9D62BF00',
+        GUI_EVENT_KEY_0 => 'F50ABF00',
+        GUI_EVENT_KEY_1 => 'F40BBF00',
+        GUI_EVENT_KEY_2 => 'F30CBF00',
+        GUI_EVENT_KEY_3 => 'F20DBF00',
+        GUI_EVENT_KEY_4 => 'F10EBF00',
+        GUI_EVENT_KEY_5 => 'F00FBF00',
+        GUI_EVENT_KEY_6 => 'FE01BF00',
+        GUI_EVENT_KEY_7 => 'EE11BF00',
+        GUI_EVENT_KEY_8 => 'ED12BF00',
+        GUI_EVENT_KEY_9 => 'EC13BF00',
+        GUI_EVENT_KEY_SHUFFLE => 'B847BF00',
+        GUI_EVENT_KEY_KEYBRD => 'FC03BF00',
+        GUI_EVENT_KEY_MOUSE => 'B04FBF00',
+        GUI_EVENT_KEY_RECENT => '9E61BF00',
+        GUI_EVENT_KEY_TV => '9C63BF00',
+        GUI_EVENT_KEY_MOVIES => 'B847BF00',
+        GUI_EVENT_KEY_MUSIC => 'A758BF00',
+        GUI_EVENT_KEY_ANGLE => 'B24DBF00',
+        GUI_EVENT_DISCRETE_POWER_ON => 'A05FBF00',
+        GUI_EVENT_DISCRETE_POWER_OFF => 'A15EBF00');
 }
 
 
@@ -303,22 +303,23 @@ function print_backtrace()
  *                leave as NULL when calling this function
  * @return array|string of strings, one entry per trace line
  */
-function backtrace_exception($ex, $as_string = false, $seen = null) {
+function backtrace_exception($ex, $as_string = false, $seen = null)
+{
     $starter = $seen ? 'Caused by: ' : '';
     $result = array();
     if (!$seen) {
         $seen = array();
     }
 
-    $trace  = $ex->getTrace();
-    $prev   = $ex->getPrevious();
+    $trace = $ex->getTrace();
+    $prev = $ex->getPrevious();
     $result[] = sprintf('%s%s: %s', $starter, get_class($ex), $ex->getMessage());
     $file = $ex->getFile();
     $line = $ex->getLine();
     while (true) {
         $current = "$file:$line";
         if (is_array($seen) && in_array($current, $seen)) {
-            $result[] = sprintf(' ... %d more', count($trace)+1);
+            $result[] = sprintf(' ... %d more', count($trace) + 1);
             break;
         }
         $result[] = sprintf(' at %s%s%s(%s%s%s)',
@@ -396,15 +397,14 @@ function hd_debug_print($val = null, $is_debug = false)
             $prefix .= "unknown line: $caller ";
             print_backtrace();
         } else {
-            $prefix .= "called from: (". str_pad($caller_name['line'], 4) . ") ";
+            $prefix .= "called from: (" . str_pad($caller_name['line'], 4) . ") ";
         }
         if (isset($parent_caller['class'])) {
             $prefix .= "{$parent_caller['class']}:";
         }
 
         $prefix .= "{$parent_caller['function']}(): ";
-    }
-    else if (is_bool($val)) {
+    } else if (is_bool($val)) {
         $val = $val ? 'true' : 'false';
     }
 
@@ -422,7 +422,7 @@ function hd_debug_print_separator()
  */
 function is_apk()
 {
-    return (bool) getenv("HD_APK");
+    return (bool)getenv("HD_APK");
 }
 
 /**
@@ -431,7 +431,7 @@ function is_apk()
  */
 function is_fw_apk()
 {
-    return (bool) getenv("HD_FW_APK");
+    return (bool)getenv("HD_FW_APK");
 }
 
 /**
@@ -451,7 +451,7 @@ function get_platform_info()
 {
     static $platform = null;
 
-    if (is_null($platform)){
+    if (is_null($platform)) {
         if (is_apk()) {
             $platform['platform'] = 'android';
             if (is_fw_apk()) {
@@ -752,7 +752,7 @@ function is_android()
  * @return string
  * @throws Exception
  */
-function getAndroidTime ($format)
+function getAndroidTime($format)
 {
     $airDate = exec('date');
     $date = new DateTime($airDate);
@@ -1638,7 +1638,7 @@ function get_plugin_manifest_info()
         $result['app_background'] = (string)$xml->background;
         $result['app_manifest_path'] = $manifest_path;
 
-        foreach(func_get_args() as $node_name) {
+        foreach (func_get_args() as $node_name) {
             $result[$node_name] = json_decode(json_encode($xml->xpath("//$node_name")), true);
         }
     } catch (Exception $ex) {
@@ -1796,7 +1796,8 @@ function print_sysinfo()
 /**
  * @return string Model name
  */
-function get_dune_model() {
+function get_dune_model()
+{
     static $models = array(
         // android models
         'boxy_apk' => 'Boxy',
@@ -2046,7 +2047,8 @@ function wrap_string_to_lines($long_string, $max_chars)
     return implode(PHP_EOL, $lines);
 }
 
-function is_assoc_array($array){
+function is_assoc_array($array)
+{
     $keys = array_keys($array);
     return $keys !== array_keys($keys);
 }

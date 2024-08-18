@@ -31,23 +31,6 @@ class Starnet_Vod_Seasons_List_Screen extends Abstract_Preloaded_Regular_Screen 
     const ID = 'vod_seasons';
 
     /**
-     * @param string $movie_id
-     * @param string|null $season_id
-     * @return false|string
-     */
-    public static function get_media_url_string($movie_id, $season_id = null)
-    {
-        $arr = array('screen_id' => self::ID, 'movie_id' => $movie_id);
-        if ($season_id !== null) {
-            $arr['season_id'] = $season_id;
-        }
-
-        return MediaURL::encode($arr);
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
      * @inheritDoc
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
@@ -66,8 +49,8 @@ class Starnet_Vod_Seasons_List_Screen extends Abstract_Preloaded_Regular_Screen 
     {
         return array(
             GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
-            GUI_EVENT_KEY_PLAY  => Action_Factory::open_folder(),
-            GUI_EVENT_KEY_STOP  => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_KEY_PLAY => Action_Factory::open_folder(),
+            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -99,6 +82,23 @@ class Starnet_Vod_Seasons_List_Screen extends Abstract_Preloaded_Regular_Screen 
         }
 
         return $items;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $movie_id
+     * @param string|null $season_id
+     * @return false|string
+     */
+    public static function get_media_url_string($movie_id, $season_id = null)
+    {
+        $arr = array('screen_id' => self::ID, 'movie_id' => $movie_id);
+        if ($season_id !== null) {
+            $arr['season_id'] = $season_id;
+        }
+
+        return MediaURL::encode($arr);
     }
 
     /**

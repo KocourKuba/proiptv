@@ -43,15 +43,6 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     private $category_index;
 
     /**
-     * @param string $category_id
-     * @return false|string
-     */
-    public static function get_media_url_string($category_id)
-    {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => VOD_GROUP_ID, 'category_id' => $category_id,));
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param Object $plugin_cookies
      * @return array
@@ -59,10 +50,10 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         return array(
-            GUI_EVENT_KEY_ENTER    => Action_Factory::open_folder(),
+            GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, TR::t('vod_screen_reload_playlist')),
-            GUI_EVENT_KEY_STOP     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
-            GUI_EVENT_TIMER        => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
+            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
         );
     }
 
@@ -96,6 +87,20 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         }
 
         return null;
+    }
+
+    /**
+     * Clear vod information
+     * @return void
+     */
+    public function clear_vod()
+    {
+        unset($this->category_list, $this->category_index);
+        $this->plugin->vod->clear_movie_cache();
+        $vod_cache = $this->plugin->vod->get_vod_cache_file();
+        if (file_exists($vod_cache)) {
+            unlink($vod_cache);
+        }
     }
 
     /**
@@ -203,17 +208,12 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     }
 
     /**
-     * Clear vod information
-     * @return void
+     * @param string $category_id
+     * @return false|string
      */
-    public function clear_vod()
+    public static function get_media_url_string($category_id)
     {
-        unset($this->category_list, $this->category_index);
-        $this->plugin->vod->clear_movie_cache();
-        $vod_cache = $this->plugin->vod->get_vod_cache_file();
-        if (file_exists($vod_cache)) {
-            unlink($vod_cache);
-        }
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => VOD_GROUP_ID, 'category_id' => $category_id,));
     }
 
     /**

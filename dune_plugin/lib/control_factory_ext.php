@@ -71,23 +71,38 @@ class Control_Factory_Ext extends Control_Factory
     private static $instance;
 
     ///////////////////////////////////////////////////////////////////////////
-
-    private $dots;
-    private $skin_path;
-
-    # Arrays of cut images manifest
     protected $scrollbar_inner_manifest;
     protected $scrollbar_outer_manifest;
+
+    # Arrays of cut images manifest
     protected $progressbar_inner_manifest;
     protected $progressbar_outer_manifest;
     protected $sandwich_cover_manifest;
     protected $sandwich_mask_manifest;
     protected $sandwich_cover_center;
+    private $dots;
+    private $skin_path;
 
     ///////////////////////////////////////////////////////////////////////////
 
     private function __construct()
     {
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @throws Exception
+     */
+    public static function add_box(&$defs, $height, $viewport_width)
+    {
+        if (is_null(self::$instance)) {
+            self::init();
+        }
+
+        $viewport_width = max(300, $viewport_width);
+
+        $defs = self::set_controls($defs, $viewport_width, $height);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -151,20 +166,23 @@ class Control_Factory_Ext extends Control_Factory
         }
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-
     /**
-     * @throws Exception
+     * @param array $defs
+     * @param int $viewport_width
+     * @param int $height
+     * @return array
      */
-    public static function add_box(&$defs, $height, $viewport_width)
+    protected static function set_controls($defs, $viewport_width, $height)
     {
-        if (is_null(self::$instance)) {
-            self::init();
-        }
-
-        $viewport_width = max(300, $viewport_width);
-
-        $defs = self::set_controls($defs, $viewport_width, $height);
+        self::add_smart_label($defs, null, '<gap width=5/><icon dy=8 width=' . ($viewport_width - 10) . ' height=' . ($height - 10) . '>' . self::$instance->sandwich_cover_center . '</icon>');
+        self::add_vgap($defs, -69);
+        self::add_smart_label($defs, null, '<icon>' . self::sandwich_cover_top_left . '</icon><icon width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . ' height=' . self::$instance->sandwich_cover_manifest['top'] . '>' . self::sandwich_cover_top . '</icon><icon>' . self::sandwich_cover_top_right . '</icon>');
+        self::add_vgap($defs, self::$instance->sandwich_cover_manifest['top'] - 69);
+        self::add_smart_label($defs, null, '<icon width=' . self::$instance->sandwich_cover_manifest['left'] . ' height=' . ($height - self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom']) . '>' . self::sandwich_cover_left . '</icon><gap width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . '/><icon width=' . self::$instance->sandwich_cover_manifest['right'] . ' height=' . ($height - self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom']) . '>' . self::sandwich_cover_right . '</icon>');
+        self::add_vgap($defs, -self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom'] + $height - 69);
+        self::add_smart_label($defs, null, '<icon>' . self::sandwich_cover_bottom_left . '</icon><icon width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . ' height=' . self::$instance->sandwich_cover_manifest['bottom'] . '>' . self::sandwich_cover_bottom . '</icon><icon>' . self::sandwich_cover_bottom_right . '</icon>');
+        self::add_vgap($defs, self::$instance->sandwich_cover_manifest['bottom'] - $height - 69 + 20);
+        return $defs;
     }
 
     /**
@@ -265,6 +283,15 @@ class Control_Factory_Ext extends Control_Factory
         }
     }
 
+    # Возвращает отцентрованную по горизонтали кнопку.
+    # Входные данные:
+    #	$button_defs - массив описаний кнопки
+    # 	$viewport_width - ширина вьюпорта (или диалогового окна)
+    #
+    # Example:
+    #	Control_Factory::add_button($button_defs, ...);
+    #	$defs[] = get_centered_button($button_defs, 1000);
+
     /**
      * @throws Exception
      */
@@ -310,38 +337,11 @@ class Control_Factory_Ext extends Control_Factory
         self::add_vgap($defs, abs($vgap_inner) - $slider_height - 69 - $padding_bottom + self::$instance->scrollbar_inner_manifest['bottom']);
     }
 
-    # Возвращает отцентрованную по горизонтали кнопку.
-    # Входные данные:
-    #	$button_defs - массив описаний кнопки
-    # 	$viewport_width - ширина вьюпорта (или диалогового окна)
-    #
-    # Example:
-    #	Control_Factory::add_button($button_defs, ...);
-    #	$defs[] = get_centered_button($button_defs, 1000);
     public static function get_centered_button($button_defs, $viewport_width)
     {
         $def = end($button_defs);
         $def[GuiControlDef::title] = str_repeat(' ', ($viewport_width - $def[GuiControlDef::specific_def][GuiButtonDef::width]) / (15 * 2));
 
         return $def;
-    }
-
-    /**
-     * @param array $defs
-     * @param int $viewport_width
-     * @param int $height
-     * @return array
-     */
-    protected static function set_controls($defs, $viewport_width, $height)
-    {
-        self::add_smart_label($defs, null, '<gap width=5/><icon dy=8 width=' . ($viewport_width - 10) . ' height=' . ($height - 10) . '>' . self::$instance->sandwich_cover_center . '</icon>');
-        self::add_vgap($defs, -69);
-        self::add_smart_label($defs, null, '<icon>' . self::sandwich_cover_top_left . '</icon><icon width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . ' height=' . self::$instance->sandwich_cover_manifest['top'] . '>' . self::sandwich_cover_top . '</icon><icon>' . self::sandwich_cover_top_right . '</icon>');
-        self::add_vgap($defs, self::$instance->sandwich_cover_manifest['top'] - 69);
-        self::add_smart_label($defs, null, '<icon width=' . self::$instance->sandwich_cover_manifest['left'] . ' height=' . ($height - self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom']) . '>' . self::sandwich_cover_left . '</icon><gap width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . '/><icon width=' . self::$instance->sandwich_cover_manifest['right'] . ' height=' . ($height - self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom']) . '>' . self::sandwich_cover_right . '</icon>');
-        self::add_vgap($defs, -self::$instance->sandwich_cover_manifest['top'] - self::$instance->sandwich_cover_manifest['bottom'] + $height - 69);
-        self::add_smart_label($defs, null, '<icon>' . self::sandwich_cover_bottom_left . '</icon><icon width=' . ($viewport_width - self::$instance->sandwich_cover_manifest['left'] - self::$instance->sandwich_cover_manifest['right']) . ' height=' . self::$instance->sandwich_cover_manifest['bottom'] . '>' . self::sandwich_cover_bottom . '</icon><icon>' . self::sandwich_cover_bottom_right . '</icon>');
-        self::add_vgap($defs, self::$instance->sandwich_cover_manifest['bottom'] - $height - 69 + 20);
-        return $defs;
     }
 }

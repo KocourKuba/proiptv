@@ -33,16 +33,6 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
     const ID = 'vod_list';
 
     /**
-     * @param string $category_id
-     * @param string $genre_id
-     * @return false|string
-     */
-    public static function get_media_url_string($category_id, $genre_id)
-    {
-        return MediaURL::encode(array('screen_id' => self::ID, 'category_id' => $category_id, 'genre_id' => $genre_id));
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param Object $plugin_cookies
      * @return array
@@ -52,11 +42,11 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
         $add_action = User_Input_Handler_Registry::create_action($this, ACTION_CREATE_SEARCH, TR::t('search'));
 
         return array(
-            GUI_EVENT_KEY_ENTER      => Action_Factory::open_folder(),
-            GUI_EVENT_KEY_SEARCH     => $add_action,
-            GUI_EVENT_KEY_C_YELLOW   => $add_action,
-            GUI_EVENT_KEY_D_BLUE     => User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite')),
-            GUI_EVENT_KEY_STOP       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
+            GUI_EVENT_KEY_SEARCH => $add_action,
+            GUI_EVENT_KEY_C_YELLOW => $add_action,
+            GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite')),
+            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -119,6 +109,16 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
         }
 
         return null;
+    }
+
+    /**
+     * @param string $category_id
+     * @param string $genre_id
+     * @return false|string
+     */
+    public static function get_media_url_string($category_id, $genre_id)
+    {
+        return MediaURL::encode(array('screen_id' => self::ID, 'category_id' => $category_id, 'genre_id' => $genre_id));
     }
 
     /**
@@ -190,32 +190,6 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param Object $plugin_cookies
-     * @return array|null
-     */
-    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
-    {
-        $this->plugin->vod->reset_movie_counter();
-        $this->plugin->vod->clear_movie_cache();
-
-        return parent::get_folder_view($media_url, $plugin_cookies);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
-            $this->plugin->get_screen_view('list_1x10_movie_info_normal'),
-        );
-    }
-
-    /**
      * @param array $items
      * @param int $from_ndx
      * @param int $total
@@ -242,6 +216,32 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
             PluginRegularFolderRange::from_ndx => (int)$from_ndx,
             PluginRegularFolderRange::count => count($items),
             PluginRegularFolderRange::items => $items
+        );
+    }
+
+    /**
+     * @param MediaURL $media_url
+     * @param Object $plugin_cookies
+     * @return array|null
+     */
+    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
+    {
+        $this->plugin->vod->reset_movie_counter();
+        $this->plugin->vod->clear_movie_cache();
+
+        return parent::get_folder_view($media_url, $plugin_cookies);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_folder_views()
+    {
+        hd_debug_print(null, true);
+
+        return array(
+            $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
+            $this->plugin->get_screen_view('list_1x10_movie_info_normal'),
         );
     }
 }

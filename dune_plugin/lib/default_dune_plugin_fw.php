@@ -15,14 +15,6 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @return mixed
-     */
-    public function create_plugin()
-    {
-        return new self::$plugin_class_name;
-    }
-
-    /**
      * @param $call_ctx_json
      * @return false|string
      * @throws Exception
@@ -63,7 +55,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
                                 'Call the PHP plugin vendor.'
                             )
                         )
-                    );
+                );
             }
         }
 
@@ -71,8 +63,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
 
         try {
             $out_data = $this->invoke_operation($plugin, $call_ctx);
-        }
-        /** @noinspection PhpRedundantCatchClauseInspection */
+        } /** @noinspection PhpRedundantCatchClauseInspection */
         catch (Dune_Exception $e) {
             hd_debug_print("Error: DuneException caught: " . $e->getMessage());
             return array(
@@ -97,7 +88,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
                             'Call the PHP plugin vendor.'
                         )
                     )
-                );
+            );
         }
 
         // Note: change_tv_favorites() may return NULL even if it's completed
@@ -116,6 +107,14 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
         }
 
         return $plugin_output_data;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function create_plugin()
+    {
+        return new self::$plugin_class_name;
     }
 }
 

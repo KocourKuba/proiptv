@@ -91,6 +91,7 @@ interface Channel
      * @return void
      */
     public function set_disabled($disabled);
+
     /**
      * primary EPG source
      * @return array

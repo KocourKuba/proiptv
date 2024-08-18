@@ -31,11 +31,22 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     const DLG_CONTROLS_WIDTH = 850;
 
     /**
-     * @param MediaURL $media_url
+     * @param MediaURL $parent_media_url
      * @param Object $plugin_cookies
+     * @param int $sel_ndx
      * @return array
      */
-    abstract public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies);
+    public function invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx = -1)
+    {
+        hd_debug_print(null, true);
+
+        return Starnet_Epfs_Handler::epfs_invalidate_folders(array(static::ID, $parent_media_url->get_media_url_str()),
+            Action_Factory::update_regular_folder(
+                $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
+                true,
+                $sel_ndx)
+        );
+    }
 
     /**
      * @inheritDoc
@@ -70,20 +81,9 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     }
 
     /**
-     * @param MediaURL $parent_media_url
+     * @param MediaURL $media_url
      * @param Object $plugin_cookies
-     * @param int $sel_ndx
      * @return array
      */
-    public function invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx = -1)
-    {
-        hd_debug_print(null, true);
-
-        return Starnet_Epfs_Handler::epfs_invalidate_folders(array(static::ID, $parent_media_url->get_media_url_str()),
-            Action_Factory::update_regular_folder(
-            $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
-            true,
-            $sel_ndx)
-        );
-    }
+    abstract public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies);
 }

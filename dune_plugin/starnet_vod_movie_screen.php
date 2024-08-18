@@ -33,39 +33,12 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
     const ID = 'vod_movie';
 
     /**
-     * @param string $movie_id
-     * @param string|false $name
-     * @param string|false $poster_url
-     * @param string|false $info
-     * @return false|string
-     */
-    public static function get_media_url_string($movie_id, $name = false, $poster_url = false, $info = false)
-    {
-        $arr = array('screen_id' => self::ID, 'movie_id' => $movie_id);
-        if ($name !== false) {
-            $arr['name'] = $name;
-        }
-
-        if ($poster_url !== false) {
-            $arr['poster_url'] = $poster_url;
-        }
-
-        if ($info !== false) {
-            $arr['info'] = $info;
-        }
-
-        return MediaURL::encode($arr);
-    }
-
-    /**
      * @inheritDoc
      */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
         return array();
     }
-
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param MediaURL $media_url
@@ -136,6 +109,33 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
             PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_MOVIE,
             PluginFolderView::data => $movie_folder_view,
         );
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $movie_id
+     * @param string|false $name
+     * @param string|false $poster_url
+     * @param string|false $info
+     * @return false|string
+     */
+    public static function get_media_url_string($movie_id, $name = false, $poster_url = false, $info = false)
+    {
+        $arr = array('screen_id' => self::ID, 'movie_id' => $movie_id);
+        if ($name !== false) {
+            $arr['name'] = $name;
+        }
+
+        if ($poster_url !== false) {
+            $arr['poster_url'] = $poster_url;
+        }
+
+        if ($info !== false) {
+            $arr['info'] = $info;
+        }
+
+        return MediaURL::encode($arr);
     }
 
     /**

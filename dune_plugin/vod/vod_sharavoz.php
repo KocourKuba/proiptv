@@ -193,6 +193,30 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
+     * @param Object $data
+     * @param array|string $names
+     * @return string
+     */
+    protected static function get_data_variant($data, $names)
+    {
+        $ret_val = '';
+        if (is_array($names)) {
+            foreach ($names as $name) {
+                if (!empty($data->{$name})) {
+                    $ret_val = $data->{$name};
+                    break;
+                }
+            }
+        } else if (!empty($data->{$names})) {
+            $ret_val = $data->{$names};
+        }
+
+        return $ret_val;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
      * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
@@ -225,7 +249,24 @@ class vod_sharavoz extends vod_standard
         return true;
     }
 
-    ///////////////////////////////////////////////////////////////////////
+    /**
+     * @param string $stream_type
+     * @param array &$category_tree
+     */
+    protected function parse_categories($stream_type, &$category_tree)
+    {
+        $categories = $this->xtream->get_categories($stream_type);
+        if ($categories !== false) {
+            foreach ($categories as $item) {
+                hd_debug_print("$item->category_id ($item->category_name)", true);
+                $pair = explode("|", $item->category_name);
+
+                $parent_id = trim($pair[0]);
+                $query_id = trim($pair[1]) . "_" . $item->category_id . "_" . $stream_type;
+                $category_tree[$parent_id][] = $query_id;
+            }
+        }
+    }
 
     /**
      * @inheritDoc
@@ -265,26 +306,6 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @inheritDoc
-     */
-    public function getSearchList($keyword)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print($keyword);
-
-        $movies = array();
-
-        $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
-
-        $this->search(xtream_codes_api::VOD, $keyword, $movies);
-        $this->search(xtream_codes_api::SERIES, $keyword, $movies);
-
-        hd_debug_print("Movies found: " . count($movies));
-
-        return array_values($movies);
-    }
-
-    /**
      * @param Object $movie_obj
      * @return Short_Movie
      */
@@ -309,22 +330,23 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param string $stream_type
-     * @param array &$category_tree
+     * @inheritDoc
      */
-    protected function parse_categories($stream_type, &$category_tree)
+    public function getSearchList($keyword)
     {
-        $categories = $this->xtream->get_categories($stream_type);
-        if ($categories !== false) {
-            foreach ($categories as $item) {
-                hd_debug_print("$item->category_id ($item->category_name)", true);
-                $pair = explode("|", $item->category_name);
+        hd_debug_print(null, true);
+        hd_debug_print($keyword);
 
-                $parent_id = trim($pair[0]);
-                $query_id = trim($pair[1]) . "_" . $item->category_id . "_" . $stream_type;
-                $category_tree[$parent_id][] = $query_id;
-            }
-        }
+        $movies = array();
+
+        $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
+
+        $this->search(xtream_codes_api::VOD, $keyword, $movies);
+        $this->search(xtream_codes_api::SERIES, $keyword, $movies);
+
+        hd_debug_print("Movies found: " . count($movies));
+
+        return array_values($movies);
     }
 
     protected function search($stream_type, $keyword, &$movies)
@@ -346,27 +368,5 @@ class vod_sharavoz extends vod_standard
                 $movies[$id] = self::CreateShortMovie($stream);
             }
         }
-    }
-
-    /**
-     * @param Object $data
-     * @param array|string $names
-     * @return string
-     */
-    protected static function get_data_variant($data, $names)
-    {
-        $ret_val = '';
-        if (is_array($names)) {
-            foreach ($names as $name) {
-                if (!empty($data->{$name})) {
-                    $ret_val = $data->{$name};
-                    break;
-                }
-            }
-        } else if (!empty($data->{$names})) {
-            $ret_val = $data->{$names};
-        }
-
-        return $ret_val;
     }
 }

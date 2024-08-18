@@ -61,105 +61,85 @@ class Default_Dune_Plugin implements DunePlugin
 
     const DEFAULT_MOV_ICON_PATH = 'plugin_file://icons/mov_unset.png';
     const VOD_ICON_PATH = 'gui_skin://small_icons/movie.aai';
-
-    private $plugin_cookies;
-    private $internet_status = -2;
-    private $opexec_id = -1;
-
-    /**
-     * @var bool
-     */
-    protected $inited = false;
-
     /**
      * @var array
      */
     public $plugin_info;
-
-    /**
-     * @var Epg_Manager_Xmltv|Epg_Manager_Json
-     */
-    protected $epg_manager;
-
     /**
      * @var Starnet_Tv
      */
     public $tv;
-
     /**
      * @var vod_standard
      */
     public $vod;
-
     /**
      * @var bool
      */
     public $vod_enabled = false;
-
+    /**
+     * @var bool
+     */
+    protected $inited = false;
+    /**
+     * @var Epg_Manager_Xmltv|Epg_Manager_Json
+     */
+    protected $epg_manager;
     /**
      * @var Playback_Points
      */
     protected $playback_points;
-
     /**
      * @var Screen[]
      */
     protected $screens;
-
     /**
      * @var array
      */
     protected $screens_views;
-
     /**
      * @var array
      */
     protected $settings;
-
     /**
      * @var array
      */
     protected $parameters;
-
     /**
      * @var array
      */
     protected $orders;
-
     /**
      * @var array
      */
     protected $history;
-
     /**
      * @var array
      */
     protected $postpone_save;
-
     /**
      * @var array
      */
     protected $is_dirty;
-
     /**
      * @var Hashed_Array
      */
     protected $providers;
-
     /**
      * @var Hashed_Array
      */
     protected $epg_presets;
-
     /**
      * @var Hashed_Array
      */
     protected $image_libs;
-
     /**
      * @var api_default
      */
     protected $cur_provider;
+    private $plugin_cookies;
+    private $internet_status = -2;
+    private $opexec_id = -1;
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -173,15 +153,15 @@ class Default_Dune_Plugin implements DunePlugin
         $this->image_libs = new Hashed_Array();
     }
 
+    public function get_plugin_cookies()
+    {
+        return $this->plugin_cookies;
+    }
+
     public function set_plugin_cookies(&$plugin_cookies)
     {
         hd_debug_print(null, true);
         $this->plugin_cookies = $plugin_cookies;
-    }
-
-    public function get_plugin_cookies()
-    {
-        return $this->plugin_cookies;
     }
 
     public function set_plugin_cookie($name, $value)
@@ -190,24 +170,24 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->plugin_cookies->{$name} = $value;
     }
 
-    public function set_internet_status($internet_status)
-    {
-        $this->internet_status = $internet_status;
-    }
-
     public function get_internet_status()
     {
         return $this->internet_status;
     }
 
-    public function set_opexec_id($opexec_id)
+    public function set_internet_status($internet_status)
     {
-        $this->opexec_id = $opexec_id;
+        $this->internet_status = $internet_status;
     }
 
     public function get_opexec_id()
     {
         return $this->opexec_id;
+    }
+
+    public function set_opexec_id($opexec_id)
+    {
+        $this->opexec_id = $opexec_id;
     }
 
     /**
@@ -216,6 +196,39 @@ class Default_Dune_Plugin implements DunePlugin
     public function get_providers()
     {
         return $this->providers;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function get_epg_preset_parser()
+    {
+        $preset = $this->get_epg_preset();
+        if (is_null($preset) || !isset($preset[EPG_JSON_PARSER])) {
+            return null;
+        }
+
+        return $preset[EPG_JSON_PARSER];
+    }
+
+    /**
+     * @return array|null
+     */
+    protected function get_epg_preset()
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            hd_debug_print("Not supported provider");
+            return null;
+        }
+
+        $preset_name = $provider->getConfigValue(EPG_JSON_PRESET);
+        if (empty($preset_name)) {
+            hd_debug_print("No preset for selected provider");
+            return null;
+        }
+
+        return $this->epg_presets->get($preset_name);
     }
 
     /**
@@ -254,6 +267,207 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @return Named_Storage
+     */
+    public function get_current_playlist()
+    {
+        return $this->get_playlists()->get($this->get_active_playlist_key());
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function &get_playlists()
+    {
+        return $this->get_parameter(PARAM_PLAYLIST_STORAGE, new Hashed_Array());
+    }
+
+    /**
+     * Get plugin parameters
+     * Parameters does not depend on playlists and used globally
+     *
+     * @param string $param
+     * @param mixed|null $default
+     * @return mixed
+     */
+    public function &get_parameter($param, $default = null)
+    {
+        $this->load_parameters();
+
+        if (!isset($this->parameters[$param])) {
+            if ($default !== null) {
+                hd_debug_print("load default $param: $default", true);
+            }
+            $this->parameters[$param] = $default;
+        } else {
+            $default_type = gettype($default);
+            $param_type = gettype($this->parameters[$param]);
+            if ($default_type === 'object' && $param_type !== $default_type) {
+                hd_debug_print("Parameter type requested: $default_type. But $param_type loaded. Reset to default", true);
+                $this->parameters[$param] = $default;
+            }
+        }
+
+        return $this->parameters[$param];
+    }
+
+    /**
+     * load plugin settings
+     *
+     * @param bool $force
+     * @return void
+     */
+    public function load_parameters($force = false)
+    {
+        if (!isset($this->{PLUGIN_PARAMETERS}) || $force) {
+            hd_debug_print(null, true);
+            $this->load('common.settings', PLUGIN_PARAMETERS, $force);
+        }
+    }
+
+    /**
+     * load plugin/playlist/orders/history settings
+     *
+     * @param string $name
+     * @param string $type
+     * @param bool $force
+     * @return void
+     */
+    private function load($name, $type, $force = false)
+    {
+        if ($force) {
+            hd_debug_print(null, true);
+            hd_debug_print("Force load ($type): $name");
+            $this->{$type} = null;
+        }
+
+        if (!isset($this->{$type})) {
+            hd_debug_print(null, true);
+            hd_debug_print("Load ($type): $name");
+            $this->{$type} = HD::get_data_items($name, true, false);
+            if (LogSeverity::$is_debug) {
+                foreach ($this->{$type} as $key => $param) {
+                    hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
+                }
+            }
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function get_active_playlist_key()
+    {
+        $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
+        $playlists = $this->get_playlists();
+        if (empty($id) || !$playlists->has($id)) {
+            if ($playlists->size()) {
+                $playlists->rewind();
+                $id = $playlists->key();
+                if (empty($id)) {
+                    /** @var $playlist Named_Storage */
+                    $playlist = $playlists->get($id);
+                    hd_debug_print("empty id for: " . $playlist->name);
+                } else {
+                    $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
+                }
+            }
+        }
+
+        return $id;
+    }
+
+    /**
+     * set plugin parameters
+     *
+     * @param string $param
+     * @param mixed $val
+     */
+    public function set_parameter($param, $val)
+    {
+        $this->parameters[$param] = $val;
+        $this->set_dirty(true, PLUGIN_PARAMETERS);
+        $this->save_parameters();
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    //
+    // Screen support.
+    //
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * Is settings contains unsaved changes
+     *
+     * @param bool $val
+     * @param string $item
+     */
+    public function set_dirty($val = true, $item = PLUGIN_SETTINGS)
+    {
+        //hd_debug_print("$item: set_dirty: " . var_export($val, true), true);
+        if (!is_null($item)) {
+            $this->is_dirty[$item] = $val;
+        }
+    }
+
+    /**
+     * save plugin parameters
+     *
+     * @param bool $force
+     * @return bool
+     */
+    public function save_parameters($force = false)
+    {
+        if ($force || $this->is_dirty(PLUGIN_PARAMETERS)) {
+            hd_debug_print(null, true);
+        }
+
+        return $this->save('common.settings', PLUGIN_PARAMETERS, $force);
+    }
+
+    /**
+     * Is settings contains unsaved changes
+     *
+     * @return bool
+     */
+    public function is_dirty($item = PLUGIN_SETTINGS)
+    {
+        return $this->is_dirty[$item];
+    }
+
+    /**
+     * save data
+     * @param string $name
+     * @param string $type
+     * @param bool $force
+     * @return bool
+     */
+    private function save($name, $type, $force = false)
+    {
+        if (is_null($this->{$type})) {
+            hd_debug_print("this->$type is not set!", true);
+            return false;
+        }
+
+        if ($this->postpone_save[$type] && !$force) {
+            return false;
+        }
+
+        if ($force || $this->is_dirty($type)) {
+            hd_debug_print("Save: $name", true);
+            if (LogSeverity::$is_debug) {
+                foreach ($this->{$type} as $key => $param) {
+                    hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
+                }
+            }
+            HD::put_data_items($name, $this->{$type}, false);
+            $this->set_dirty(false, $type);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * @param string $name
      * @return api_default|null
      */
@@ -263,45 +477,11 @@ class Default_Dune_Plugin implements DunePlugin
         return is_null($config) ? null : clone $config;
     }
 
-    /**
-     * @return string|null
-     */
-    public function get_epg_preset_url()
-    {
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            hd_debug_print("Not supported provider");
-            return null;
-        }
-
-        $preset = $this->get_epg_preset();
-        if (is_null($preset)) {
-            return null;
-        }
-
-        $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $preset[EPG_JSON_SOURCE]);
-        if (strpos($epg_url, MACRO_PROVIDER) !== false) {
-            $epg_alias = $provider->getConfigValue(EPG_JSON_ALIAS);
-            $alias = empty($epg_alias) ? $provider->getId() : $epg_alias;
-            hd_debug_print("using alias: $alias", true);
-            $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
-        }
-
-        return $provider->replace_macros($epg_url);
-    }
-
-    /**
-     * @return array|null
-     */
-    public function get_epg_preset_parser()
-    {
-        $preset = $this->get_epg_preset();
-        if (is_null($preset) || !isset($preset[EPG_JSON_PARSER])) {
-            return null;
-        }
-
-        return $preset[EPG_JSON_PARSER];
-    }
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    // DunePlugin implementations
+    //
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @return Epg_Manager_Xmltv|Epg_Manager_Json
@@ -323,6 +503,8 @@ class Default_Dune_Plugin implements DunePlugin
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+
     /**
      * clear cache for JSON epg manager
      *
@@ -335,25 +517,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
     }
 
-    /**
-     * @return array|null
-     */
-    protected function get_epg_preset()
-    {
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            hd_debug_print("Not supported provider");
-            return null;
-        }
-
-        $preset_name = $provider->getConfigValue(EPG_JSON_PRESET);
-        if (empty($preset_name)) {
-            hd_debug_print("No preset for selected provider");
-            return null;
-        }
-
-        return $this->epg_presets->get($preset_name);
-    }
+    ///////////////////////////////////////////////////////////////////////////
 
     /**
      * @return Hashed_Array
@@ -362,6 +526,8 @@ class Default_Dune_Plugin implements DunePlugin
     {
         return $this->image_libs;
     }
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param string $preset_name
@@ -372,10 +538,6 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->image_libs->get($preset_name);
     }
 
-    ///////////////////////////////////////////////////////////////////////
-    //
-    // Screen support.
-    //
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -399,6 +561,8 @@ class Default_Dune_Plugin implements DunePlugin
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////
+
     /**
      * @param string $id
      * @return void
@@ -415,6 +579,8 @@ class Default_Dune_Plugin implements DunePlugin
         }
     }
 
+    ///////////////////////////////////////////////////////////////////////
+
     /**
      * @return array const
      */
@@ -422,6 +588,52 @@ class Default_Dune_Plugin implements DunePlugin
     {
         return $this->screens;
     }
+
+    /**
+     * @override DunePlugin
+     * @param Object $user_input
+     * @param Object $plugin_cookies
+     * @return array|null
+     */
+    public function handle_user_input(&$user_input, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        return User_Input_Handler_Registry::get_instance()->handle_user_input($user_input, $plugin_cookies);
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @override DunePlugin
+     * @param string $media_url
+     * @param Object $plugin_cookies
+     * @return array|null
+     * @throws Exception
+     */
+    public function get_folder_view($media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $decoded_media_url = MediaURL::decode($media_url);
+        return $this->get_screen_by_url($decoded_media_url)->get_folder_view($decoded_media_url, $plugin_cookies);
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param MediaURL $media_url
+     * @return Screen
+     * @throws Exception
+     */
+    protected function get_screen_by_url(MediaURL $media_url)
+    {
+        $screen_id = isset($media_url->screen_id) ? $media_url->screen_id : $media_url->get_raw_string();
+
+        return $this->get_screen_by_id($screen_id);
+    }
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param string $screen_id
@@ -442,53 +654,9 @@ class Default_Dune_Plugin implements DunePlugin
         throw new Exception('Screen not found');
     }
 
-    /**
-     * @param MediaURL $media_url
-     * @return Screen
-     * @throws Exception
-     */
-    protected function get_screen_by_url(MediaURL $media_url)
-    {
-        $screen_id = isset($media_url->screen_id) ? $media_url->screen_id : $media_url->get_raw_string();
-
-        return $this->get_screen_by_id($screen_id);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    //
-    // DunePlugin implementations
-    //
     ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @override DunePlugin
-     * @param Object $user_input
-     * @param Object $plugin_cookies
-     * @return array|null
-     */
-    public function handle_user_input(&$user_input, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        return User_Input_Handler_Registry::get_instance()->handle_user_input($user_input, $plugin_cookies);
-    }
-
-    /**
-     * @override DunePlugin
-     * @param string $media_url
-     * @param Object $plugin_cookies
-     * @return array|null
-     * @throws Exception
-     */
-    public function get_folder_view($media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $decoded_media_url = MediaURL::decode($media_url);
-        return $this->get_screen_by_url($decoded_media_url)->get_folder_view($decoded_media_url, $plugin_cookies);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
+    // Playlist settings methods
+    //
 
     /**
      * @override DunePlugin
@@ -506,8 +674,6 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->get_screen_by_url($decoded_media_url)->get_next_folder_view($decoded_media_url, $plugin_cookies);
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-
     /**
      * @override DunePlugin
      * @param string $media_url
@@ -524,8 +690,6 @@ class Default_Dune_Plugin implements DunePlugin
 
         return $this->get_screen_by_url($decoded_media_url)->get_folder_range($decoded_media_url, $from_ndx, $plugin_cookies);
     }
-
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @override DunePlugin
@@ -549,8 +713,6 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->tv->get_tv_info($decoded_media_url, $plugin_cookies);
     }
 
-    ///////////////////////////////////////////////////////////////////////
-
     /**
      * @override DunePlugin
      * @param string $media_url
@@ -570,8 +732,6 @@ class Default_Dune_Plugin implements DunePlugin
 
         return $media_url;
     }
-
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @override DunePlugin
@@ -595,7 +755,32 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->tv->get_tv_playback_url($channel_id, $archive_tm_sec, $protect_code, $plugin_cookies);
     }
 
-    ///////////////////////////////////////////////////////////////////////
+    /**
+     * @override DunePlugin
+     * @param string $channel_id
+     * @param int $program_ts
+     * @param Object $plugin_cookies
+     * @return mixed|null
+     */
+    public function get_program_info($channel_id, $program_ts, $plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $program_ts = ($program_ts > 0 ? $program_ts : time());
+        hd_debug_print("channel ID: $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), true);
+        $day_epg = $this->get_day_epg($channel_id,
+            strtotime(date("Y-m-d", $program_ts)) + get_local_time_zone_offset(),
+            $plugin_cookies);
+
+        foreach ($day_epg as $item) {
+            if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
+                return $item;
+            }
+        }
+
+        hd_debug_print("No entries found for time $program_ts");
+        return null;
+    }
 
     /**
      * @override DunePlugin
@@ -670,91 +855,8 @@ class Default_Dune_Plugin implements DunePlugin
         return $day_epg;
     }
 
-    /**
-     * @override DunePlugin
-     * @param string $channel_id
-     * @param int $program_ts
-     * @param Object $plugin_cookies
-     * @return mixed|null
-     */
-    public function get_program_info($channel_id, $program_ts, $plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $program_ts = ($program_ts > 0 ? $program_ts : time());
-        hd_debug_print("channel ID: $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), true);
-        $day_epg = $this->get_day_epg($channel_id,
-            strtotime(date("Y-m-d", $program_ts)) + get_local_time_zone_offset(),
-            $plugin_cookies);
-
-        foreach ($day_epg as $item) {
-            if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
-                return $item;
-            }
-        }
-
-        hd_debug_print("No entries found for time $program_ts");
-        return null;
-    }
-
     ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @override DunePlugin
-     * @param string $op_type
-     * @param string $channel_id
-     * @param Object $plugin_cookies
-     * @return array
-     */
-    public function change_tv_favorites($op_type, $channel_id, &$plugin_cookies = null)
-    {
-        hd_debug_print(null, true);
-
-        if (is_null($this->tv)) {
-            hd_debug_print("TV is not supported");
-            print_backtrace();
-            return array();
-        }
-
-        return $this->tv->change_tv_favorites($op_type, $channel_id);
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @override DunePlugin
-     * @param string $media_url
-     * @param Object $plugin_cookies
-     * @return array|null
-     * @throws Exception
-     */
-    public function get_vod_info($media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("VOD is not supported");
-
-        print_backtrace();
-        throw new Exception("VOD is not supported");
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @override DunePlugin
-     * @param string $media_url
-     * @param Object $plugin_cookies
-     * @return string
-     */
-    public function get_vod_stream_url($media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("VOD is not supported");
-
-        return '';
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-    // Playlist settings methods
+    // Plugin parameters methods
     //
 
     /**
@@ -783,16 +885,70 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * Set settings for selected playlist
+     * load playlist settings
      *
-     * @param string $type
-     * @param mixed $val
+     * @param bool $force
+     * @return void
      */
-    public function set_setting($type, $val)
+    public function load_settings($force = false)
     {
-        $this->settings[$type] = $val;
-        $this->set_dirty();
-        $this->save_settings();
+        $active_playlist_key = $this->get_active_playlist_key();
+        if (!empty($active_playlist_key)) {
+            if (!isset($this->{PLUGIN_SETTINGS}) || $force) {
+                hd_debug_print(null, true);
+                $this->load("$active_playlist_key.settings", PLUGIN_SETTINGS, $force);
+            }
+        }
+    }
+
+    /**
+     * @override DunePlugin
+     * @param string $op_type
+     * @param string $channel_id
+     * @param Object $plugin_cookies
+     * @return array
+     */
+    public function change_tv_favorites($op_type, $channel_id, &$plugin_cookies = null)
+    {
+        hd_debug_print(null, true);
+
+        if (is_null($this->tv)) {
+            hd_debug_print("TV is not supported");
+            print_backtrace();
+            return array();
+        }
+
+        return $this->tv->change_tv_favorites($op_type, $channel_id);
+    }
+
+    /**
+     * @override DunePlugin
+     * @param string $media_url
+     * @param Object $plugin_cookies
+     * @return array|null
+     * @throws Exception
+     */
+    public function get_vod_info($media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("VOD is not supported");
+
+        print_backtrace();
+        throw new Exception("VOD is not supported");
+    }
+
+    /**
+     * @override DunePlugin
+     * @param string $media_url
+     * @param Object $plugin_cookies
+     * @return string
+     */
+    public function get_vod_stream_url($media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("VOD is not supported");
+
+        return '';
     }
 
     /**
@@ -803,30 +959,6 @@ class Default_Dune_Plugin implements DunePlugin
     public function has_setting($type)
     {
         return array_key_exists($type, $this->settings);
-    }
-
-    /**
-     * Get plugin boolean parameters
-     *
-     * @param string $type
-     * @param bool $default
-     * @return bool
-     */
-    public function get_bool_setting($type, $default = true)
-    {
-        return $this->get_setting($type,
-                $default ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
-    }
-
-    /**
-     * Set plugin boolean parameters
-     *
-     * @param string $type
-     * @param bool $val
-     */
-    public function set_bool_setting($type, $val = true)
-    {
-        $this->set_setting($type, $val ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off);
     }
 
     /**
@@ -842,48 +974,55 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * Remove setting for selected playlist
+     * Get plugin boolean parameters
      *
      * @param string $type
+     * @param bool $default
+     * @return bool
      */
-    public function remove_setting($type)
+    public function get_bool_setting($type, $default = true)
     {
-        unset($this->settings[$type]);
+        return $this->get_setting($type,
+                $default ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) === SetupControlSwitchDefs::switch_on;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    // Orders settings
+    //
+
+    /**
+     * Set plugin boolean parameters
+     *
+     * @param string $type
+     * @param bool $val
+     */
+    public function set_bool_setting($type, $val = true)
+    {
+        $this->set_setting($type, $val ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off);
+    }
+
+    /**
+     * Set settings for selected playlist
+     *
+     * @param string $type
+     * @param mixed $val
+     */
+    public function set_setting($type, $val)
+    {
+        $this->settings[$type] = $val;
         $this->set_dirty();
         $this->save_settings();
     }
 
-    ///////////////////////////////////////////////////////////////////////
-    // Plugin parameters methods
-    //
-
     /**
-     * Get plugin parameters
-     * Parameters does not depend on playlists and used globally
+     * save playlist settings
      *
-     * @param string $param
-     * @param mixed|null $default
-     * @return mixed
+     * @param bool $force
+     * @return bool
      */
-    public function &get_parameter($param, $default = null)
+    public function save_settings($force = false)
     {
-        $this->load_parameters();
-
-        if (!isset($this->parameters[$param])) {
-            if ($default !== null) {
-                hd_debug_print("load default $param: $default", true);
-            }
-            $this->parameters[$param] = $default;
-        } else {
-            $default_type = gettype($default);
-            $param_type = gettype($this->parameters[$param]);
-            if ($default_type === 'object' && $param_type !== $default_type) {
-                hd_debug_print("Parameter type requested: $default_type. But $param_type loaded. Reset to default", true);
-                $this->parameters[$param] = $default;
-            }
-        }
-
-        return $this->parameters[$param];
+        return $this->save($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
     }
 
     /**
@@ -904,18 +1043,9 @@ class Default_Dune_Plugin implements DunePlugin
         return ($type === 'object') ? get_class($this->parameters[$param]) : $type;
     }
 
-    /**
-     * set plugin parameters
-     *
-     * @param string $param
-     * @param mixed $val
-     */
-    public function set_parameter($param, $val)
-    {
-        $this->parameters[$param] = $val;
-        $this->set_dirty(true,PLUGIN_PARAMETERS);
-        $this->save_parameters();
-    }
+    ///////////////////////////////////////////////////////////////////////
+    // History settings
+    //
 
     /**
      * Is set settings for selected playlist
@@ -925,6 +1055,18 @@ class Default_Dune_Plugin implements DunePlugin
     public function has_parameter($type)
     {
         return array_key_exists($type, $this->parameters);
+    }
+
+    /**
+     * @param string $param
+     * @param bool $default
+     * @return bool
+     */
+    public function toggle_parameter($param, $default = true)
+    {
+        $new_val = !$this->get_bool_parameter($param, $default);
+        $this->set_bool_parameter($param, $new_val);
+        return $new_val;
     }
 
     /**
@@ -950,46 +1092,9 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $this->set_parameter($type, $val ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off);
     }
-
-    /**
-     * Remove parameter
-     * @param string $param
-     */
-    public function remove_parameter($param)
-    {
-        unset($this->parameters[$param]);
-        $this->set_dirty(true,PLUGIN_PARAMETERS);
-        $this->save_parameters();
-    }
-
-    /**
-     * @param string $param
-     * @param bool $default
-     * @return bool
-     */
-    public function toggle_parameter($param, $default = true)
-    {
-        $new_val = !$this->get_bool_parameter($param, $default);
-        $this->set_bool_parameter($param, $new_val);
-        return $new_val;
-    }
-
     ///////////////////////////////////////////////////////////////////////
-    // Orders settings
+    // Storages methods
     //
-
-    /**
-     * Set channels order for selected playlist
-     *
-     * @param string $id
-     * @param mixed $val
-     */
-    public function set_orders($id, $val)
-    {
-        $this->orders[$id] = $val;
-        $this->set_dirty(true, PLUGIN_ORDERS);
-        $this->save_orders();
-    }
 
     /**
      * Get channels orders for selected playlist
@@ -1010,198 +1115,16 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * Remove order from storage
-     *
-     * @param string $id
-     */
-    public function remove_order($id)
-    {
-        unset($this->orders[$id]);
-        $this->set_dirty(true, PLUGIN_ORDERS);
-        $this->save_orders();
-    }
-
-    /**
-     * Get order names in storage
-     *
-     * @return array
-     */
-    public function get_order_names()
-    {
-        $this->load_orders();
-        return is_array($this->orders) ? array_keys($this->orders) : array();
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-    // History settings
-    //
-
-    /**
      * Set channels order for selected playlist
      *
      * @param string $id
      * @param mixed $val
      */
-    public function set_history($id, $val)
+    public function set_orders($id, $val)
     {
-        $this->history[$id] = $val;
-        $this->set_dirty(true, PLUGIN_HISTORY);
-        $this->save_history();
-    }
-
-    /**
-     * Get history for selected playlist
-     *
-     * @param string $id
-     * @param mixed|null $default
-     * @return Hashed_Array<string, History_Item>|Ordered_Array
-     */
-    public function &get_history($id, $default = null)
-    {
-        $this->load_history();
-
-        if (!isset($this->history[$id])) {
-            $this->history[$id] = is_null($default) ? new Hashed_Array() : $default;
-        }
-
-        return $this->history[$id];
-    }
-
-    /**
-     * Remove order from storage
-     *
-     * @param string $id
-     */
-    public function remove_history($id)
-    {
-        unset($this->history[$id]);
-        $this->set_dirty(true, PLUGIN_HISTORY);
-        $this->save_history();
-    }
-
-    /**
-     * Get order names in storage
-     *
-     * @return array
-     */
-    public function get_history_names()
-    {
-        $this->load_history();
-        return is_array($this->history) ? array_keys($this->history) : array();
-    }
-    ///////////////////////////////////////////////////////////////////////
-    // Storages methods
-    //
-
-    /**
-     * Block or release save settings action
-     * If released will perform save action
-     *
-     * @param bool $snooze
-     * @param string $item
-     */
-    public function set_postpone_save($snooze, $item)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("Snooze: " . var_export($snooze, true) . ", item: $item", true);
-        $this->postpone_save[$item] = $snooze;
-        if ($snooze) {
-            return;
-        }
-
-        if ($item === PLUGIN_SETTINGS) {
-            $this->save_settings();
-        } else if ($item === PLUGIN_PARAMETERS) {
-            $this->save_parameters();
-        } else if ($item === PLUGIN_ORDERS) {
-            $this->save_orders();
-        } else if ($item === PLUGIN_HISTORY) {
-            $this->save_history();
-        }
-    }
-
-    /**
-     * Is settings contains unsaved changes
-     *
-     * @return bool
-     */
-    public function is_dirty($item = PLUGIN_SETTINGS)
-    {
-        return $this->is_dirty[$item];
-    }
-
-    /**
-     * Is settings contains unsaved changes
-     *
-     * @param bool $val
-     * @param string $item
-     */
-    public function set_dirty($val = true, $item = PLUGIN_SETTINGS)
-    {
-        //hd_debug_print("$item: set_dirty: " . var_export($val, true), true);
-        if (!is_null($item)) {
-            $this->is_dirty[$item] = $val;
-        }
-    }
-
-    /**
-     * load playlist settings by ID
-     *
-     * @param string $id
-     * @return array
-     */
-    public function get_settings($id)
-    {
-        if (empty($id)) {
-            return array();
-        }
-
-        return HD::get_data_items("$id.settings", true, false);
-    }
-
-    /**
-     * load playlist settings by ID
-     *
-     * @param string $id
-     * @param array $data
-     * @return void
-     */
-    public function put_settings($id, $data)
-    {
-        if (!empty($id)) {
-            HD::put_data_items("$id.settings", $data, false);
-        }
-    }
-
-    /**
-     * load playlist settings
-     *
-     * @param bool $force
-     * @return void
-     */
-    public function load_settings($force = false)
-    {
-        $active_playlist_key = $this->get_active_playlist_key();
-        if (!empty($active_playlist_key)) {
-            if (!isset($this->{PLUGIN_SETTINGS}) || $force) {
-                hd_debug_print(null, true);
-                $this->load("$active_playlist_key.settings", PLUGIN_SETTINGS, $force);
-            }
-        }
-    }
-
-    /**
-     * load plugin settings
-     *
-     * @param bool $force
-     * @return void
-     */
-    public function load_parameters($force = false)
-    {
-        if (!isset($this->{PLUGIN_PARAMETERS}) || $force) {
-            hd_debug_print(null, true);
-            $this->load('common.settings', PLUGIN_PARAMETERS, $force);
-        }
+        $this->orders[$id] = $val;
+        $this->set_dirty(true, PLUGIN_ORDERS);
+        $this->save_orders();
     }
 
     /**
@@ -1238,6 +1161,85 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * save playlist channels orders
+     *
+     * @param bool $force
+     * @return bool
+     */
+    public function save_orders($force = false)
+    {
+        $id = '';
+        if (isset($this->cur_provider)) {
+            $id = $this->cur_provider->getCredential(MACRO_PLAYLIST_ID);
+        }
+        if (empty($id)) {
+            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . ".settings";
+        } else {
+            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
+        }
+
+        if ($force || $this->is_dirty(PLUGIN_ORDERS)) {
+            hd_debug_print(null, true);
+        }
+
+        return $this->save($order_name, PLUGIN_ORDERS, $force);
+    }
+
+    /**
+     * Remove order from storage
+     *
+     * @param string $id
+     */
+    public function remove_order($id)
+    {
+        unset($this->orders[$id]);
+        $this->set_dirty(true, PLUGIN_ORDERS);
+        $this->save_orders();
+    }
+
+    /**
+     * Get order names in storage
+     *
+     * @return array
+     */
+    public function get_order_names()
+    {
+        $this->load_orders();
+        return is_array($this->orders) ? array_keys($this->orders) : array();
+    }
+
+    /**
+     * Get history for selected playlist
+     *
+     * @param string $id
+     * @param mixed|null $default
+     * @return Hashed_Array<string, History_Item>|Ordered_Array
+     */
+    public function &get_history($id, $default = null)
+    {
+        $this->load_history();
+
+        if (!isset($this->history[$id])) {
+            $this->history[$id] = is_null($default) ? new Hashed_Array() : $default;
+        }
+
+        return $this->history[$id];
+    }
+
+    /**
+     * Set channels order for selected playlist
+     *
+     * @param string $id
+     * @param mixed $val
+     */
+    public function set_history($id, $val)
+    {
+        $this->history[$id] = $val;
+        $this->set_dirty(true, PLUGIN_HISTORY);
+        $this->save_history();
+    }
+
+    /**
      * load playlist history
      *
      * @param bool $force
@@ -1264,82 +1266,35 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * load plugin/playlist/orders/history settings
-     *
-     * @param string $name
-     * @param string $type
-     * @param bool $force
-     * @return void
+     * @return string
      */
-    private function load($name, $type, $force = false)
+    public function get_history_path()
     {
-        if ($force) {
-            hd_debug_print(null, true);
-            hd_debug_print("Force load ($type): $name");
-            $this->{$type} = null;
-        }
-
-        if (!isset($this->{$type})) {
-            hd_debug_print(null, true);
-            hd_debug_print("Load ($type): $name");
-            $this->{$type} = HD::get_data_items($name, true, false);
-            if (LogSeverity::$is_debug) {
-                foreach ($this->{$type} as $key => $param) {
-                    hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
-                }
+        $path = smb_tree::get_folder_info($this->get_parameter(PARAM_HISTORY_PATH));
+        if (is_null($path)) {
+            $path = get_data_path('history');
+        } else {
+            $path = get_slash_trailed_path($path);
+            if ($path === get_data_path() || $path === get_data_path('history/')) {
+                // reset old settings to new
+                $this->remove_parameter(PARAM_HISTORY_PATH);
+                $path = get_data_path('history');
             }
         }
+        hd_debug_print($path, true);
+
+        return rtrim($path, DIRECTORY_SEPARATOR);
     }
 
     /**
-     * save playlist settings
-     *
-     * @param bool $force
-     * @return bool
+     * Remove parameter
+     * @param string $param
      */
-    public function save_settings($force = false)
+    public function remove_parameter($param)
     {
-        return $this->save($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
-    }
-
-    /**
-     * save plugin parameters
-     *
-     * @param bool $force
-     * @return bool
-     */
-    public function save_parameters($force = false)
-    {
-        if ($force || $this->is_dirty(PLUGIN_PARAMETERS)) {
-            hd_debug_print(null, true);
-        }
-
-        return $this->save('common.settings', PLUGIN_PARAMETERS, $force);
-    }
-
-    /**
-     * save playlist channels orders
-     *
-     * @param bool $force
-     * @return bool
-     */
-    public function save_orders($force = false)
-    {
-        $id = '';
-        if (isset($this->cur_provider)) {
-            $id = $this->cur_provider->getCredential(MACRO_PLAYLIST_ID);
-        }
-        if (empty($id)) {
-            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . ".settings";
-        } else {
-            $order_name = $this->get_active_playlist_key() . '_' . PLUGIN_ORDERS . "_$id.settings";
-        }
-
-        if ($force || $this->is_dirty(PLUGIN_ORDERS)) {
-            hd_debug_print(null, true);
-        }
-
-        return $this->save($order_name, PLUGIN_ORDERS, $force);
+        unset($this->parameters[$param]);
+        $this->set_dirty(true, PLUGIN_PARAMETERS);
+        $this->save_parameters();
     }
 
     /**
@@ -1377,36 +1332,59 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * save data
-     * @param string $name
-     * @param string $type
-     * @param bool $force
-     * @return bool
+     * Remove order from storage
+     *
+     * @param string $id
      */
-    private function save($name, $type, $force = false)
+    public function remove_history($id)
     {
-        if (is_null($this->{$type})) {
-            hd_debug_print("this->$type is not set!", true);
-            return false;
-        }
-
-        if ($this->postpone_save[$type] && !$force) {
-            return false;
-        }
-
-        if ($force || $this->is_dirty($type)) {
-            hd_debug_print("Save: $name", true);
-            if (LogSeverity::$is_debug) {
-                foreach ($this->{$type} as $key => $param) {
-                    hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
-                }
-            }
-            HD::put_data_items($name, $this->{$type}, false);
-            $this->set_dirty(false, $type);
-            return true;
-        }
-        return false;
+        unset($this->history[$id]);
+        $this->set_dirty(true, PLUGIN_HISTORY);
+        $this->save_history();
     }
+
+    /**
+     * Get order names in storage
+     *
+     * @return array
+     */
+    public function get_history_names()
+    {
+        $this->load_history();
+        return is_array($this->history) ? array_keys($this->history) : array();
+    }
+
+    /**
+     * load playlist settings by ID
+     *
+     * @param string $id
+     * @return array
+     */
+    public function get_settings($id)
+    {
+        if (empty($id)) {
+            return array();
+        }
+
+        return HD::get_data_items("$id.settings", true, false);
+    }
+
+    /**
+     * load playlist settings by ID
+     *
+     * @param string $id
+     * @param array $data
+     * @return void
+     */
+    public function put_settings($id, $data)
+    {
+        if (!empty($id)) {
+            HD::put_data_items("$id.settings", $data, false);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    // Methods
 
     /**
      * Remove settings for selected playlist
@@ -1428,8 +1406,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
     }
 
-    ///////////////////////////////////////////////////////////////////////
-    // Methods
+    /** @noinspection PhpUnusedParameterInspection */
 
     /**
      * @return void
@@ -1539,7 +1516,7 @@ class Default_Dune_Plugin implements DunePlugin
                     $provider->setLogo("plugin_file://logo/$filename");
                 } else {
                     $cached_file = get_cached_image_path($filename);
-                    list($res, ) = Curl_Wrapper::simple_download_file($logo, $cached_file, false);
+                    list($res,) = Curl_Wrapper::simple_download_file($logo, $cached_file, false);
                     if ($res) {
                         $provider->setLogo($cached_file);
                     } else {
@@ -1582,1332 +1559,12 @@ class Default_Dune_Plugin implements DunePlugin
         $this->inited = true;
     }
 
-    /** @noinspection PhpUnusedParameterInspection */
-    public function upgrade_parameters(&$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $this->load_parameters(true);
-        $this->update_log_level();
-    }
-
-    /**
-     * @return void
-     */
-    public function init_epg_manager()
-    {
-        $this->epg_manager = null;
-        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
-        $provider = $this->get_current_provider();
-        if (($engine === ENGINE_JSON) && !is_null($provider)) {
-            $preset = $provider->getConfigValue(EPG_JSON_PRESET);
-            if (!empty($preset)) {
-                hd_debug_print("Using 'Epg_Manager_Json' cache engine");
-                $this->epg_manager = new Epg_Manager_Json($this);
-            }
-        }
-
-        if (is_null($this->epg_manager)) {
-            hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
-            $this->epg_manager = new Epg_Manager_Xmltv($this);
-        }
-
-        $this->epg_manager->init_indexer($this->get_cache_dir(), $this->get_active_xmltv_source());
-    }
-
-    /**
-     * Initialize and parse selected playlist
-     *
-     * @param bool $force
-     * @return bool
-     */
-    public function init_playlist($force = false)
-    {
-        $this->init_user_agent();
-
-        // first check if playlist in cache
-        if ($this->get_playlists()->size() === 0) {
-            hd_debug_print("No playlists!");
-            return false;
-        }
-
-        $tmp_file = $this->get_current_playlist_cache(true);
-
-        if (!$force) {
-            if (file_exists($tmp_file)) {
-                $mtime = filemtime($tmp_file);
-                $diff = time() - $mtime;
-                if ($diff > 3600) {
-                    hd_debug_print("Playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
-                    unlink($tmp_file);
-                    $force = true;
-                }
-            } else {
-                $force = true;
-            }
-        }
-
-        $playlist = $this->get_current_playlist();
-        try {
-            if ($force !== false) {
-                if (empty($playlist->type)) {
-                    hd_debug_print("Tv playlist not defined");
-                    throw new Exception("Tv playlist not defined");
-                }
-
-                $logfile = '';
-                hd_debug_print("m3u playlist: $playlist->name ({$this->get_active_playlist_key()})");
-                if ($playlist->type === PARAM_FILE) {
-                    hd_debug_print("m3u copy local file: {$playlist->params[PARAM_URI]} to $tmp_file");
-                    $res = copy($playlist->params[PARAM_URI], $tmp_file);
-                } else if ($playlist->type === PARAM_LINK) {
-                    $playlist_url = $playlist->params[PARAM_URI];
-                    hd_debug_print("m3u download link: $playlist_url");
-                    if (!preg_match(HTTP_PATTERN, $playlist_url)) {
-                        throw new Exception("Incorrect playlist url: $playlist_url");
-                    }
-                    list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file, false);
-                } else if ($playlist->type === PARAM_PROVIDER) {
-                    $provider = $this->get_current_provider();
-                    if (is_null($provider)) {
-                        throw new Exception("Unable to init provider " . $playlist);
-                    }
-
-                    if ($provider->get_provider_info($force) === false) {
-                        throw new Exception("Unable to get provider info");
-                    }
-
-                    hd_debug_print("Load provider playlist to: $tmp_file");
-                    $res = $provider->load_playlist($tmp_file);
-                    $logfile = $provider->getCurlWrapper()->get_logfile();
-                } else {
-                    throw new Exception("Unknown playlist type");
-                }
-
-                if ($res === false || !file_exists($tmp_file)) {
-                    $exception_msg = TR::load_string('err_load_playlist');
-                    if ($playlist->type !== PARAM_FILE && !empty($logfile)) {
-                        $exception_msg .= "\n\n$logfile";
-                    }
-                    throw new Exception($exception_msg);
-                }
-
-                $contents = file_get_contents($tmp_file);
-                if (strpos($contents, '#EXTM3U') === false) {
-                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$contents";
-                    throw new Exception($exception_msg);
-                }
-
-                $encoding = HD::detect_encoding($contents);
-                if ($encoding !== 'utf-8') {
-                    hd_debug_print("Fixing playlist encoding: $encoding");
-                    $contents = iconv($encoding, 'utf-8', $contents);
-                    file_put_contents($tmp_file, $contents);
-                }
-            }
-
-            $mtime = filemtime($tmp_file);
-            hd_debug_print("Parse playlist $tmp_file (timestamp: $mtime)");
-            // Is already parsed?
-            $this->tv->get_m3u_parser()->setupParser($tmp_file, $force);
-            if ($this->tv->get_m3u_parser()->getEntriesCount() === 0) {
-                if (!$this->tv->get_m3u_parser()->parseInMemory()) {
-                    $contents = @file_get_contents($tmp_file);
-                    $exception_msg = TR::load_string('err_load_playlist') . " Incorrect playlist!\n\n$contents";
-                    throw new Exception($exception_msg);
-                }
-
-                $count = $this->tv->get_m3u_parser()->getEntriesCount();
-                if ($count === 0) {
-                    $contents = @file_get_contents($tmp_file);
-                    $exception_msg = TR::load_string('err_load_playlist') . " Empty playlist!\n\n$contents";
-                    $this->clear_playlist_cache();
-                    throw new Exception($exception_msg);
-                }
-
-                hd_debug_print("Total entries loaded from playlist m3u file: $count");
-                HD::ShowMemoryUsage();
-            }
-        } catch (Exception $ex) {
-            $err = HD::get_last_error();
-            if (!empty($err)) {
-                $err .= "\n\n" . $ex->getMessage();
-            } else {
-                $err = $ex->getMessage();
-            }
-            HD::set_last_error("pl_last_error", $err);
-            print_backtrace_exception($ex);
-            if (isset($playlist->type) && file_exists($tmp_file)) {
-                unlink($tmp_file);
-            }
-            return false;
-        }
-
-        hd_debug_print("Init playlist done!");
-        return true;
-    }
-
-    /**
-     * Initialize and parse selected playlist
-     *
-     * @return bool
-     */
-    public function init_vod_playlist()
-    {
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            return false;
-        }
-
-        if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
-            return false;
-        }
-
-        $this->init_user_agent();
-        $force = false;
-        $tmp_file = $this->get_current_playlist_cache(false);
-        if (file_exists($tmp_file)) {
-            $mtime = filemtime($tmp_file);
-            $diff = time() - $mtime;
-            if ($diff > 3600) {
-                hd_debug_print("Playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
-                unlink($tmp_file);
-                $force = true;
-            }
-        } else {
-            $force = true;
-        }
-
-        try {
-            if ($force !== false) {
-                $response = $provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
-                if ($response === false) {
-                    $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $provider->getCurlWrapper()->get_logfile();
-                    HD::set_last_error("vod_last_error", $exception_msg);
-                    if (file_exists($tmp_file)) {
-                        unlink($tmp_file);
-                    }
-                    throw new Exception($exception_msg);
-                }
-
-                $playlist = file_get_contents($tmp_file);
-                if (strpos($playlist, '#EXTM3U') === false) {
-                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$playlist";
-                    HD::set_last_error("vod_last_error", $exception_msg);
-                    unlink($tmp_file);
-                    throw new Exception($exception_msg);
-                }
-
-                $mtime = filemtime($tmp_file);
-                hd_debug_print("Stored $tmp_file (timestamp: $mtime)");
-            }
-
-            // Is already parsed?
-            $this->vod->get_m3u_parser()->setupParser($tmp_file, $force);
-        } catch (Exception $ex) {
-            hd_debug_print("Unable to load VOD playlist");
-            print_backtrace_exception($ex);
-            return false;
-        }
-
-        hd_debug_print("Init VOD playlist done!");
-        return true;
-    }
-
-    /**
-     * @return void
-     */
-    public function init_user_agent()
-    {
-        $user_agent = $this->get_setting(PARAM_USER_AGENT);
-        if (!empty($user_agent) && $user_agent !== HD::get_default_user_agent()) {
-            HD::set_dune_user_agent($user_agent);
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    ///
-
-    /**
-     * @return Playback_Points
-     */
-    public function get_playback_points()
-    {
-        return $this->playback_points;
-    }
-
-    /**
-     * @return Hashed_Array
-     */
-    public function &get_playlists()
-    {
-        return $this->get_parameter(PARAM_PLAYLIST_STORAGE, new Hashed_Array());
-    }
-
-    /**
-     * @return string
-     */
-    public function get_active_playlist_key()
-    {
-        $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
-        $playlists = $this->get_playlists();
-        if (empty($id) || !$playlists->has($id)) {
-            if ($playlists->size()) {
-                $playlists->rewind();
-                $id = $playlists->key();
-                if (empty($id)) {
-                    /** @var $playlist Named_Storage */
-                    $playlist = $playlists->get($id);
-                    hd_debug_print("empty id for: " . $playlist->name);
-                } else {
-                    $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
-                }
-            }
-        }
-
-        return $id;
-    }
-
-    /**
-     * $param string $id
-     * @return void
-     */
-    public function set_active_playlist_key($id)
-    {
-        hd_debug_print(null, true);
-
-        $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
-        $this->cur_provider = null;
-    }
-
-    /**
-     * @return Named_Storage
-     */
-    public function get_current_playlist()
-    {
-        return $this->get_playlists()->get($this->get_active_playlist_key());
-    }
-
-    /**
-     * @param bool $is_tv
-     * @return string
-     */
-    public function get_current_playlist_cache($is_tv)
-    {
-        return get_temp_path($this->get_active_playlist_key() . ($is_tv ? "_playlist.m3u8" : "_vod_playlist.m3u8"));
-    }
-
-    /**
-     * Clear downloaded playlist
-     * @param string $playlist_id
-     * @return void
-     */
-    public function clear_playlist_cache($playlist_id = null)
-    {
-        if ($playlist_id === null) {
-            $playlist_id = $this->get_active_playlist_key();
-        }
-        $tmp_file = get_temp_path($playlist_id . "_playlist.m3u8");
-        if (file_exists($tmp_file)) {
-            $this->tv->get_m3u_parser()->setupParser('');
-            hd_debug_print("clear_playlist_cache: remove $tmp_file");
-            unlink($tmp_file);
-        }
-    }
-
-    /**
-     * get external xmltv sources
-     *
-     * @return Hashed_Array
-     */
-    public function &get_ext_xmltv_sources()
-    {
-        return $this->get_parameter(PARAM_EXT_XMLTV_SOURCES, new Hashed_Array());
-    }
-
-    /**
-     * get playlist xmltv source
-     *
-     * @return Hashed_Array<string, Named_Storage>
-     */
-    public function get_playlist_xmltv_sources()
-    {
-        hd_debug_print(null, true);
-
-        /** @var Hashed_Array $sources */
-        $xmltv_sources = new Hashed_Array();
-        foreach ($this->tv->get_m3u_parser()->getXmltvSources() as $m3u8source) {
-            if (!preg_match(HTTP_PATTERN, $m3u8source, $m)
-                || preg_match("/jtv.?\.zip$/", basename($m3u8source))) continue;
-
-            $item = new Named_Storage();
-            $item->type = PARAM_LINK;
-            $item->params[PARAM_URI] = $m3u8source;
-            $item->name = $m[2];
-            $xmltv_sources->put(Hashed_Array::hash($m3u8source), $item);
-        }
-
-        $provider = $this->get_current_provider();
-        if (!is_null($provider)) {
-            $sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
-            if (!empty($sources)) {
-                foreach ($sources as $source) {
-                    if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
-
-                    $item = new Named_Storage();
-                    $item->type = PARAM_LINK;
-                    $item->params[PARAM_URI] = $source;
-                    $item->name = $m[2];
-                    $xmltv_sources->put(Hashed_Array::hash($source), $item);
-                }
-            }
-        }
-
-        return $xmltv_sources;
-    }
-
-    /**
-     * get all xmltv source
-     *
-     * @return Hashed_Array<string, Named_Storage>
-     */
-    public function get_all_xmltv_sources()
-    {
-        hd_debug_print(null, true);
-
-        /** @var Hashed_Array $sources */
-        $xmltv_sources = $this->get_playlist_xmltv_sources();
-
-        if ($xmltv_sources->size() !== 0) {
-            $xmltv_sources->add(EPG_SOURCES_SEPARATOR_TAG);
-        }
-
-        /** @var Named_Storage $source */
-        foreach ($this->get_ext_xmltv_sources() as $key => $source) {
-            $xmltv_sources->set($key, $source);
-        }
-
-        return $xmltv_sources;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_active_xmltv_source_key()
-    {
-        return $this->get_setting(PARAM_CUR_XMLTV_SOURCE_KEY, '');
-    }
-
-    /**
-     * @param string $key
-     * @return void
-     */
-    public function set_active_xmltv_source_key($key)
-    {
-        if (empty($key)) {
-            $this->remove_setting(PARAM_CUR_XMLTV_SOURCE_KEY);
-            $this->set_active_xmltv_source('');
-        } else {
-            /** @var Named_Storage $xmltv_source */
-            $xmltv_source = $this->get_all_xmltv_sources()->get($key);
-            if (!is_null($xmltv_source)) {
-                $this->set_setting(PARAM_CUR_XMLTV_SOURCE_KEY, $key);
-                $this->set_active_xmltv_source($xmltv_source->params[PARAM_URI]);
-            }
-        }
-    }
-
-    /**
-     * @return string
-     */
-    public function get_active_xmltv_source()
-    {
-        return $this->get_setting(PARAM_CUR_XMLTV_SOURCE, '');
-    }
-
-    /**
-     * @param string $source
-     * @return void
-     */
-    public function set_active_xmltv_source($source)
-    {
-        $this->set_setting(PARAM_CUR_XMLTV_SOURCE, $source);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_cache_dir()
-    {
-        $cache_dir = smb_tree::get_folder_info($this->get_parameter(PARAM_CACHE_PATH));
-        if (!is_null($cache_dir) && rtrim($cache_dir, DIRECTORY_SEPARATOR) === get_data_path(EPG_CACHE_SUBDIR)) {
-            $this->remove_parameter(PARAM_CACHE_PATH);
-            $cache_dir = null;
-        }
-
-        if (is_null($cache_dir)) {
-            $cache_dir = get_data_path(EPG_CACHE_SUBDIR);
-        }
-
-        return str_replace("//", "/", $cache_dir);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_history_path()
-    {
-        $path = smb_tree::get_folder_info($this->get_parameter(PARAM_HISTORY_PATH));
-        if (is_null($path)) {
-            $path = get_data_path('history');
-        } else {
-            $path = get_slash_trailed_path($path);
-            if ($path === get_data_path() || $path === get_data_path('history/')) {
-                // reset old settings to new
-                $this->remove_parameter(PARAM_HISTORY_PATH);
-                $path = get_data_path('history');
-            }
-        }
-        hd_debug_print($path, true);
-
-        return rtrim($path, DIRECTORY_SEPARATOR);
-    }
-
-    /**
-     * @param string|null $path
-     * @return void
-     */
-    public function set_history_path($path = null)
-    {
-        if (is_null($path) || $path === get_data_path('history')) {
-            $this->remove_parameter(PARAM_HISTORY_PATH);
-            return;
-        }
-
-        create_path($path);
-        $this->set_parameter(PARAM_HISTORY_PATH, $path);
-    }
-
     /**
      * @return void
      */
     public function update_log_level()
     {
         set_debug_log($this->get_bool_parameter(PARAM_ENABLE_DEBUG, false));
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-    //
-    // Misc.
-    //
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param array $defs
-     */
-    public function create_setup_header(&$defs)
-    {
-        Control_Factory::add_vgap($defs, -10);
-        Control_Factory::add_label($defs, self::AUTHOR_LOGO,
-            " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
-            14);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_background_image()
-    {
-        $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND);
-        if ($background === $this->plugin_info['app_background']) {
-            $this->remove_setting(PARAM_PLUGIN_BACKGROUND);
-        } else if (strncmp($background, get_cached_image_path(), strlen(get_cached_image_path())) === 0) {
-            $this->set_setting(PARAM_PLUGIN_BACKGROUND, basename($background));
-        } else if (is_null($background) || !file_exists(get_cached_image_path($background))) {
-            $background = $this->plugin_info['app_background'];
-        } else {
-            $background = get_cached_image_path($background);
-        }
-
-        return $background;
-    }
-
-    /**
-     * @return bool
-     */
-    public function is_background_image_default()
-    {
-        return ($this->get_background_image() === $this->plugin_info['app_background']);
-    }
-
-    /**
-     * @param string|null $path
-     * @return void
-     */
-    public function set_background_image($path)
-    {
-        if (is_null($path) || $path === $this->plugin_info['app_background'] || !file_exists($path)) {
-            $this->remove_setting(PARAM_PLUGIN_BACKGROUND);
-        } else {
-            $this->set_setting(PARAM_PLUGIN_BACKGROUND, $path);
-        }
-    }
-
-    public function get_icon($id)
-    {
-        $archive = $this->get_image_archive();
-
-        return is_null($archive) ? null : $archive->get_archive_url($id);
-    }
-
-    public function get_image_archive()
-    {
-        return Default_Archive::get_image_archive(self::ARCHIVE_ID,self::ARCHIVE_URL_PREFIX);
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-    //
-    // Screen views parameters
-    //
-    ///////////////////////////////////////////////////////////////////////
-
-    public function get_screen_view($name)
-    {
-        return isset($this->screens_views[$name]) ? $this->screens_views[$name] : array();
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $action_id
-     * @param string $caption
-     * @param string $icon
-     * @param array|null $add_params
-     * @return array
-     */
-    public function create_menu_item($handler, $action_id, $caption = null, $icon = null, $add_params = null)
-    {
-        if ($action_id === GuiMenuItemDef::is_separator) {
-            return array($action_id => true);
-        }
-
-        if (!empty($icon)) {
-            if (strpos($icon,"://") === false) {
-                $icon = get_image_path($icon);
-            } else if (strpos($icon, "plugin_file://") === false
-                && file_exists(get_cached_image_path(basename($icon)))) {
-                $icon = get_cached_image_path(basename($icon));
-            }
-        }
-
-        return User_Input_Handler_Registry::create_popup_item($handler, $action_id, $caption, $icon, $add_params);
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @return array
-     */
-    public function playlist_menu($handler)
-    {
-        $menu_items = array();
-
-        $cur = $this->get_active_playlist_key();
-        $idx = 0;
-        foreach ($this->get_playlists() as $key => $item) {
-            if ($idx !== 0 && ($idx % 17) === 0) {
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            }
-            $idx++;
-
-            $icon = null;
-            $title = $item->name;
-            if ($item->type === PARAM_PROVIDER) {
-                $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
-                if (!is_null($provider)) {
-                    $icon = $provider->getLogo();
-                    if ($item->name !== $provider->getName()) {
-                        $title .= " ({$provider->getName()})";
-                    }
-                }
-            } else if ($item->type === PARAM_LINK) {
-                $icon = "link.png";
-            } else if ($item->type === PARAM_FILE) {
-                $icon = "m3u_file.png";
-            }
-
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_PLAYLIST_SELECTED,
-                $title,
-                ($cur !== $key) ? $icon : "check.png",
-                array(LIST_IDX => $key));
-        }
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_playlist'), "refresh.png", array('reload_action' => 'playlist'));
-
-        return $menu_items;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @return array
-     */
-    public function epg_source_menu($handler)
-    {
-        $menu_items = array();
-
-        $sources = $this->get_all_xmltv_sources();
-        $source_key = $this->get_active_xmltv_source_key();
-
-        $idx = 0;
-        foreach ($sources as $key => $item) {
-            if ($idx !== 0 && ($idx % 17) === 0) {
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            }
-            $idx++;
-
-            if ($item === EPG_SOURCES_SEPARATOR_TAG) {
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-                continue;
-            }
-
-            $name = $item->name;
-            $cached_xmltv_file = $this->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
-            if (file_exists($cached_xmltv_file)) {
-                $check_time_file = filemtime($cached_xmltv_file);
-                $name .= " (" . date("d.m H:i", $check_time_file) . ")";
-            }
-
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_EPG_SOURCE_SELECTED,
-                $name,
-                ($source_key === $key) ? "check.png" : null,
-                array(LIST_IDX => $key)
-            );
-        }
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_epg'), "refresh.png", array('reload_action' => 'epg'));
-
-        return $menu_items;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @return array
-     */
-    public function epg_engine_menu($handler)
-    {
-        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
-
-        $menu_items[] = $this->create_menu_item($handler, ENGINE_XMLTV, TR::t('setup_epg_cache_xmltv'),
-            ($engine === ENGINE_XMLTV) ? "check.png" : null
-        );
-
-        $provider = $this->get_current_provider();
-        $epg_preset = is_null($provider) ? '?' : $provider->getConfigValue(EPG_JSON_PRESET);
-        $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, TR::t('setup_epg_cache_json__1', $epg_preset),
-            ($engine === ENGINE_JSON) ? "check.png" : null
-        );
-        return $menu_items;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @return array
-     */
-    public function picons_source_menu($handler)
-    {
-        $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-
-        $menu_items[] = $this->create_menu_item($handler, PLAYLIST_PICONS, TR::t('playlist_picons'),
-            ($icons_playlist === PLAYLIST_PICONS) ? "check.png" : null);
-        $menu_items[] = $this->create_menu_item($handler, XMLTV_PICONS, TR::t('xmltv_picons'),
-            ($icons_playlist === XMLTV_PICONS) ? "check.png" : null);
-        return $menu_items;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $group_id
-     * @param bool $top
-     * @return array
-     */
-    public function edit_hidden_menu($handler, $group_id, $top = true)
-    {
-        $menu_items = array();
-
-        if ($group_id === null) {
-            return $menu_items;
-        }
-
-        if ($top) {
-            if ($this->tv->get_special_group($group_id) === null) {
-                $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_ITEM_DELETE,
-                    TR::t('tv_screen_hide_group'),
-                    "hide.png");
-            }
-
-            hd_debug_print("Disabled groups: " . $this->tv->get_disabled_group_ids()->size(), true);
-            if ($this->tv->get_disabled_group_ids()->size() !== 0) {
-                $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_ITEMS_EDIT,
-                    TR::t('tv_screen_edit_hidden_group'),
-                    "edit.png",
-                    array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
-            }
-        } else {
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_ITEM_DELETE,
-                TR::t('tv_screen_hide_channel'),
-                "remove.png");
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_ITEM_DELETE_CHANNELS,
-                TR::t('tv_screen_hide_group_channels'),
-                "remove.png");
-        }
-
-        $has_hidden_channels = false;
-        if (!is_null($group = $this->tv->get_group($group_id))) {
-            $has_hidden_channels = $group->get_group_channels()->size() !== $group->get_items_order()->size();
-            hd_debug_print("Disabled channels: " . $group->get_group_channels()->size(), true);
-        } else if ($group_id === ALL_CHANNEL_GROUP_ID) {
-            $has_hidden_channels = $this->tv->get_disabled_channel_ids()->size() !== 0;
-            hd_debug_print("Disabled channels: " . $this->tv->get_disabled_channel_ids()->size(), true);
-        }
-
-        if (!$top && $has_hidden_channels) {
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_ITEMS_EDIT,
-                TR::t('tv_screen_edit_hidden_channels'),
-                "edit.png",
-                array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS) );
-        }
-
-        if (!empty($menu_items)) {
-            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        }
-
-        return $menu_items;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $group_id
-     * @param bool $is_classic
-     * @return array
-     */
-    public function common_categories_menu($handler, $group_id, $is_classic = true)
-    {
-        $menu_items = array();
-        if ($group_id !== null) {
-            if ($group_id === HISTORY_GROUP_ID && $this->get_playback_points()->size() !== 0) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            } else if ($group_id === FAVORITES_GROUP_ID && $this->tv->get_special_group($group_id)->get_items_order()->size() !== 0) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            } else if ($group_id === CHANGED_CHANNELS_GROUP_ID) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            }
-
-            if ($is_classic) {
-                $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
-            } else {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
-            }
-
-            if ($this->tv->get_special_group($group_id) === null) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
-            }
-
-            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        }
-
-        if ($is_classic) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
-        } else {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'), "image.png");
-        }
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-
-        if ($this->get_playlists()->size()) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
-        }
-
-        if ($this->get_all_xmltv_sources()->size()) {
-            $acitve_source = $this->get_active_xmltv_source();
-            if (!empty($acitve_source)) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
-                $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-                $sources = TR::load_string(($icons_playlist === PLAYLIST_PICONS) ? 'playlist_picons' : 'xmltv_picons');
-                $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source__1', $sources), "image.png");
-            }
-        }
-
-        $epg_url = $this->get_epg_preset_url();
-        $provider = $this->get_current_provider();
-        if (!is_null($provider)) {
-            if (!empty($epg_url)) {
-                $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-                $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
-                $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
-            }
-
-            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
-            }
-
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_EDIT_PROVIDER_DLG,
-                TR::t('edit_account'),
-                $provider->getLogo(),
-                array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_ID => $provider->get_provider_playlist_id())
-            );
-
-            if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
-                $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_EDIT_PROVIDER_EXT_DLG,
-                    TR::t('edit_ext_account'),
-                    "settings.png",
-                    array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_ID => $provider->get_provider_playlist_id())
-                );
-            }
-        }
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-
-        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
-            TR::t('setup_channels_src_edit_playlists'), "m3u_file.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) );
-
-        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
-            TR::t('setup_edit_xmltv_list'), "epg.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) );
-
-        $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,
-            TR::t('entry_setup'), "settings.png");
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-
-        return $menu_items;
-    }
-
-    public function create_plugin_title()
-    {
-        $playlist = $this->get_current_playlist();
-        $name = is_null($playlist) ? '' : $playlist->name;
-        $plugin_name = $this->plugin_info['app_caption'];
-        $name = empty($name) ? $plugin_name : "$plugin_name ($name)";
-        hd_debug_print("plugin title: $name");
-        return $name;
-    }
-
-    /**
-     * @param string $source_screen_id
-     * @param string $action_edit
-     * @param MediaURL|null $media_url
-     * @return array|null
-     */
-    public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null)
-    {
-        $params = array(
-            'screen_id' => Starnet_Edit_List_Screen::ID,
-            'source_window_id' => $source_screen_id,
-            'source_media_url_str' => $source_screen_id,
-            'edit_list' => $action_edit,
-            'windowCounter' => 1,
-        );
-
-        if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS || $action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS) {
-            $this->set_postpone_save(true, PLUGIN_ORDERS);
-            $params['save_data'] = PLUGIN_ORDERS;
-            $params['end_action'] = ACTION_RELOAD;
-            $params['cancel_action'] = ACTION_EMPTY;
-        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) {
-            $this->set_postpone_save(true, PLUGIN_PARAMETERS);
-            $params['allow_order'] = true;
-            $params['save_data'] = PLUGIN_PARAMETERS;
-            $params['end_action'] = ACTION_REFRESH_SCREEN;
-            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
-        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) {
-            $this->set_postpone_save(true, PLUGIN_PARAMETERS);
-            $params['save_data'] = PLUGIN_PARAMETERS;
-            $params['end_action'] = ACTION_REFRESH_SCREEN;
-            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
-        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_PROVIDERS) {
-            $params['deny_edit'] = true;
-            $params['end_action'] = ACTION_EDIT_PROVIDER_DLG;
-            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
-        }
-
-        $sel_id = null;
-        switch ($action_edit) {
-            case Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS:
-                if (!is_null($media_url) && isset($media_url->group_id)) {
-                    $params['group_id'] = $media_url->group_id;
-                }
-                $title = TR::t('tv_screen_edit_hidden_channels');
-                break;
-
-            case Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS:
-                $title = TR::t('tv_screen_edit_hidden_group');
-                break;
-
-            case Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST:
-                $params['extension'] = PLAYLIST_PATTERN;
-                $title = TR::t('setup_channels_src_edit_playlists');
-                $sel_id = $this->get_active_playlist_key();
-                break;
-
-            case Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST:
-                $params['extension'] = EPG_PATTERN;
-                $title = TR::t('setup_edit_xmltv_list');
-                break;
-
-            case Starnet_Edit_List_Screen::SCREEN_EDIT_PROVIDERS:
-                $title = TR::t('edit_list_add_provider');
-                break;
-
-            default:
-                return null;
-        }
-
-        return Action_Factory::open_folder(MediaURL::encode($params), $title, null, $sel_id);
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $provider_id
-     * @param string $playlist_id
-     * @return array|null
-     */
-    public function do_edit_provider_dlg($handler, $provider_id, $playlist_id = '')
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("Provider id: $provider_id, Playlist id: $playlist_id", true);
-
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
-        if (empty($playlist_id)) {
-            // add new provider
-            $provider = $this->create_provider_class($provider_id);
-            hd_debug_print("new provider : $provider", true);
-        } else {
-            // edit existing provider
-            $item = $this->get_playlists()->get($playlist_id);
-            if (!is_null($item)) {
-                $name = $item->name;
-                hd_debug_print("provider info:" . json_encode($item), true);
-                $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
-                if (!is_null($provider)) {
-                    $provider->set_provider_playlist_id($playlist_id);
-                    hd_debug_print("existing provider : " . json_encode($provider), true);
-                }
-            } else {
-                $provider = $this->create_provider_class($provider_id);
-            }
-        }
-
-        if (is_null($provider)) {
-            return $defs;
-        }
-
-        if (empty($name)) {
-            $name = $provider->getName();
-        }
-
-        $defs = $provider->GetSetupUI($name, $playlist_id, $handler);
-        if (empty($defs)) {
-            return null;
-        }
-
-        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @return array|null
-     */
-    public function do_edit_provider_ext_dlg($handler)
-    {
-        hd_debug_print(null, true);
-
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            return array();
-        }
-
-        $defs = $provider->GetExtSetupUI($handler);
-        if (empty($defs)) {
-            return null;
-        }
-
-        $head = array();
-        Control_Factory::add_vgap($head, 20);
-
-        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", array_merge($head, $defs), true);
-    }
-
-    /**
-     * @param Object $user_input
-     * @return bool|array|string
-     */
-    public function apply_edit_provider_dlg($user_input)
-    {
-        hd_debug_print(null, true);
-
-        if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
-            $provider = $this->get_current_provider();
-        } else {
-            // edit existing or new provider in starnet_edit_list_screen
-            $provider = $this->create_provider_class($user_input->{PARAM_PROVIDER});
-        }
-
-        if (is_null($provider)) {
-            return false;
-        }
-
-        return $provider->ApplySetupUI($user_input);
-    }
-
-    /**
-     * @param Object $user_input
-     * @return bool|array
-     */
-    public function apply_edit_provider_ext_dlg($user_input)
-    {
-        hd_debug_print(null, true);
-
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            return false;
-        }
-
-        return $provider->ApplyExtSetupUI($user_input);
-    }
-
-    /**
-     * @param string $channel_id
-     * @return array|null
-     */
-    public function do_show_channel_info($channel_id)
-    {
-        $channel = $this->tv->get_channel($channel_id);
-        if (is_null($channel)) {
-            return null;
-        }
-
-        $info = "ID: " . $channel->get_id() . PHP_EOL;
-        $info .= "Name: " . $channel->get_title() . PHP_EOL;
-        $info .= "Archive: " . $channel->get_archive() . " days" . PHP_EOL;
-        $info .= "Protected: " . TR::load_string($channel->is_protected() ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) . PHP_EOL;
-        $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . PHP_EOL;
-        if ($channel->get_timeshift_hours() !== 0) {
-            $info .= "Timeshift hours: " . $channel->get_timeshift_hours() . PHP_EOL;
-        }
-        $info .= "Category: " . $channel->get_parent_group()->get_id() . PHP_EOL;
-        $info .= "Icon: " . wrap_string_to_lines($channel->get_icon_url(), 70) . PHP_EOL;
-        $info .= PHP_EOL;
-
-        try {
-            $live_url = $this->tv->generate_stream_url($channel_id, -1, true);
-            $info .= "Live URL: " . wrap_string_to_lines($live_url, 70) . PHP_EOL;
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
-        }
-
-        if ($channel->get_archive() > 0 ) {
-            try {
-                $archive_url = $this->tv->generate_stream_url($channel_id, time() - 3600, true);
-                $info .= "Archive URL: " . wrap_string_to_lines($archive_url, 70) . PHP_EOL;
-            } catch (Exception $ex) {
-                print_backtrace_exception($ex);
-            }
-        }
-
-        $dune_params = $this->tv->generate_dune_params($channel);
-        if (!empty($dune_params)) {
-            $info .= "dune_params: " . substr($dune_params, strlen(HD::DUNE_PARAMS_MAGIC)) . PHP_EOL;
-        }
-
-        if (!empty($live_url) && !is_limited_apk()) {
-            $descriptors = array(
-                0 => array("pipe", "r"), // stdin
-                1 => array("pipe", "w"), // sdout
-                2 => array("pipe", "w"), // stderr
-            );
-
-            hd_debug_print("Get media info for: $live_url");
-            $process = proc_open(
-                get_install_path("bin/media_check.sh $live_url"),
-                $descriptors,
-                $pipes);
-
-            if (is_resource($process)) {
-                $output = stream_get_contents($pipes[1]);
-
-                fclose($pipes[1]);
-                proc_close($process);
-
-                $info .= "\n";
-                foreach(explode("\n", $output) as $line) {
-                    $line = trim($line);
-                    if (empty($line)) continue;
-                    if (strpos($line, "Output") !== false) break;
-                    if (strpos($line, "Stream") !== false) {
-                        $info .= preg_replace("/ \([\[].*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+/", "", $line) . PHP_EOL;
-                    }
-                }
-            }
-        }
-
-        Control_Factory::add_multiline_label($defs, null, $info, 18);
-        Control_Factory::add_vgap($defs, 10);
-
-        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            1200,
-            get_image_path('page_plus_btn.png'),
-            get_image_path('page_minus_btn.png'),
-            DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load_string('scroll_page')
-        );
-        Control_Factory::add_smart_label($defs, '', $text);
-        Control_Factory::add_vgap($defs, -80);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1750);
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @return array|null
-     */
-    public function do_show_subscription($handler)
-    {
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            return null;
-        }
-
-        if (!$provider->request_provider_token()) {
-            hd_debug_print("Can't get provider token");
-            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), TR::t('err_cant_get_token'));
-        }
-
-        return $provider->GetInfoUI($handler);
-    }
-
-    /**
-     * @return array|null
-     */
-    public function do_show_add_money()
-    {
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            return null;
-        }
-
-        return $provider->GetPayUI();
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $param_action
-     * @return array
-     */
-    public function show_protect_settings_dialog($handler, $param_action)
-    {
-        $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
-        if (empty($pass_settings)) {
-            return User_Input_Handler_Registry::create_action($handler, $param_action);
-        }
-
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
-        Control_Factory::add_text_field($defs, $handler, null, 'pass', TR::t('setup_pass'),
-            '', true, true, false, true, 500, true);
-
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, array("param_action" => $param_action),
-            ACTION_PASSWORD_APPLY, TR::t('ok'), 300);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
-    }
-
-    /**
-     * @return array
-     */
-    public function get_plugin_info_dlg($handler)
-    {
-        static $history_txt;
-
-        $lang = strtolower(TR::get_current_language());
-        if (empty($history_txt)) {
-            $doc = Curl_Wrapper::simple_download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
-            if ($doc === false) {
-                hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
-                $path = get_install_path("changelog.$lang.md");
-                if (!file_exists($path)) {
-                    $path = get_install_path("changelog.english.md");
-                }
-                $doc = file_get_contents($path);
-            }
-
-            $history_txt = str_replace(array("###", "\r"), '', $doc);
-        }
-
-        $defs = array();
-        Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
-        Control_Factory::add_vgap($defs, 20);
-
-        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            1160,
-            get_image_path('page_plus_btn.png'),
-            get_image_path('page_minus_btn.png'),
-            DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load_string('scroll_page')
-        );
-        Control_Factory::add_smart_label($defs, '', $text);
-        Control_Factory::add_vgap($defs, -80);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,null, ACTION_DONATE_DLG, TR::t('setup_donate_title'), 300);
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
-    }
-
-    public function do_donate_dialog()
-    {
-        try {
-            hd_debug_print(null, true);
-            $img_ym = get_temp_path('qr_ym.png');
-            $img_pp = get_temp_path('qr_pp.png');
-            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym, false);
-            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp, false);
-
-            Control_Factory::add_vgap($defs, 50);
-            Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");
-            Control_Factory::add_smart_label($defs, "", "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
-            Control_Factory::add_vgap($defs, 450);
-
-            $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-            return Action_Factory::show_dialog(TR::t('setup_donate_title'), $defs, true, 1150, $attrs);
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
-        }
-
-        return Action_Factory::status(0);
     }
 
     /**
@@ -2930,7 +1587,7 @@ class Default_Dune_Plugin implements DunePlugin
                 (
                     ViewParams::num_cols => 1,
                     ViewParams::num_rows => 11,
-                    ViewParams::paint_icon_selection_box=> true,
+                    ViewParams::paint_icon_selection_box => true,
                     ViewParams::paint_details => true,
                     ViewParams::paint_details_box_background => true,
                     ViewParams::paint_content_box_background => true,
@@ -2979,7 +1636,7 @@ class Default_Dune_Plugin implements DunePlugin
                 (
                     ViewParams::num_cols => 1,
                     ViewParams::num_rows => 11,
-                    ViewParams::paint_icon_selection_box=> true,
+                    ViewParams::paint_icon_selection_box => true,
                     ViewParams::paint_details => true,
                     ViewParams::paint_details_box_background => true,
                     ViewParams::paint_content_box_background => true,
@@ -3527,5 +2184,1329 @@ class Default_Dune_Plugin implements DunePlugin
                 PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
         );
+    }
+
+    /**
+     * @return string
+     */
+    public function get_background_image()
+    {
+        $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND);
+        if ($background === $this->plugin_info['app_background']) {
+            $this->remove_setting(PARAM_PLUGIN_BACKGROUND);
+        } else if (strncmp($background, get_cached_image_path(), strlen(get_cached_image_path())) === 0) {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, basename($background));
+        } else if (is_null($background) || !file_exists(get_cached_image_path($background))) {
+            $background = $this->plugin_info['app_background'];
+        } else {
+            $background = get_cached_image_path($background);
+        }
+
+        return $background;
+    }
+
+    /**
+     * Remove setting for selected playlist
+     *
+     * @param string $type
+     */
+    public function remove_setting($type)
+    {
+        unset($this->settings[$type]);
+        $this->set_dirty();
+        $this->save_settings();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    ///
+
+    public function upgrade_parameters(&$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $this->load_parameters(true);
+        $this->update_log_level();
+    }
+
+    /**
+     * @return void
+     */
+    public function init_epg_manager()
+    {
+        $this->epg_manager = null;
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+        $provider = $this->get_current_provider();
+        if (($engine === ENGINE_JSON) && !is_null($provider)) {
+            $preset = $provider->getConfigValue(EPG_JSON_PRESET);
+            if (!empty($preset)) {
+                hd_debug_print("Using 'Epg_Manager_Json' cache engine");
+                $this->epg_manager = new Epg_Manager_Json($this);
+            }
+        }
+
+        if (is_null($this->epg_manager)) {
+            hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
+            $this->epg_manager = new Epg_Manager_Xmltv($this);
+        }
+
+        $this->epg_manager->init_indexer($this->get_cache_dir(), $this->get_active_xmltv_source());
+    }
+
+    /**
+     * @return string
+     */
+    public function get_cache_dir()
+    {
+        $cache_dir = smb_tree::get_folder_info($this->get_parameter(PARAM_CACHE_PATH));
+        if (!is_null($cache_dir) && rtrim($cache_dir, DIRECTORY_SEPARATOR) === get_data_path(EPG_CACHE_SUBDIR)) {
+            $this->remove_parameter(PARAM_CACHE_PATH);
+            $cache_dir = null;
+        }
+
+        if (is_null($cache_dir)) {
+            $cache_dir = get_data_path(EPG_CACHE_SUBDIR);
+        }
+
+        return str_replace("//", "/", $cache_dir);
+    }
+
+    /**
+     * @return string
+     */
+    public function get_active_xmltv_source()
+    {
+        return $this->get_setting(PARAM_CUR_XMLTV_SOURCE, '');
+    }
+
+    /**
+     * Initialize and parse selected playlist
+     *
+     * @param bool $force
+     * @return bool
+     */
+    public function init_playlist($force = false)
+    {
+        $this->init_user_agent();
+
+        // first check if playlist in cache
+        if ($this->get_playlists()->size() === 0) {
+            hd_debug_print("No playlists!");
+            return false;
+        }
+
+        $tmp_file = $this->get_current_playlist_cache(true);
+
+        if (!$force) {
+            if (file_exists($tmp_file)) {
+                $mtime = filemtime($tmp_file);
+                $diff = time() - $mtime;
+                if ($diff > 3600) {
+                    hd_debug_print("Playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
+                    unlink($tmp_file);
+                    $force = true;
+                }
+            } else {
+                $force = true;
+            }
+        }
+
+        $playlist = $this->get_current_playlist();
+        try {
+            if ($force !== false) {
+                if (empty($playlist->type)) {
+                    hd_debug_print("Tv playlist not defined");
+                    throw new Exception("Tv playlist not defined");
+                }
+
+                $logfile = '';
+                hd_debug_print("m3u playlist: $playlist->name ({$this->get_active_playlist_key()})");
+                if ($playlist->type === PARAM_FILE) {
+                    hd_debug_print("m3u copy local file: {$playlist->params[PARAM_URI]} to $tmp_file");
+                    $res = copy($playlist->params[PARAM_URI], $tmp_file);
+                } else if ($playlist->type === PARAM_LINK) {
+                    $playlist_url = $playlist->params[PARAM_URI];
+                    hd_debug_print("m3u download link: $playlist_url");
+                    if (!preg_match(HTTP_PATTERN, $playlist_url)) {
+                        throw new Exception("Incorrect playlist url: $playlist_url");
+                    }
+                    list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file, false);
+                } else if ($playlist->type === PARAM_PROVIDER) {
+                    $provider = $this->get_current_provider();
+                    if (is_null($provider)) {
+                        throw new Exception("Unable to init provider " . $playlist);
+                    }
+
+                    if ($provider->get_provider_info($force) === false) {
+                        throw new Exception("Unable to get provider info");
+                    }
+
+                    hd_debug_print("Load provider playlist to: $tmp_file");
+                    $res = $provider->load_playlist($tmp_file);
+                    $logfile = $provider->getCurlWrapper()->get_logfile();
+                } else {
+                    throw new Exception("Unknown playlist type");
+                }
+
+                if ($res === false || !file_exists($tmp_file)) {
+                    $exception_msg = TR::load_string('err_load_playlist');
+                    if ($playlist->type !== PARAM_FILE && !empty($logfile)) {
+                        $exception_msg .= "\n\n$logfile";
+                    }
+                    throw new Exception($exception_msg);
+                }
+
+                $contents = file_get_contents($tmp_file);
+                if (strpos($contents, '#EXTM3U') === false) {
+                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$contents";
+                    throw new Exception($exception_msg);
+                }
+
+                $encoding = HD::detect_encoding($contents);
+                if ($encoding !== 'utf-8') {
+                    hd_debug_print("Fixing playlist encoding: $encoding");
+                    $contents = iconv($encoding, 'utf-8', $contents);
+                    file_put_contents($tmp_file, $contents);
+                }
+            }
+
+            $mtime = filemtime($tmp_file);
+            hd_debug_print("Parse playlist $tmp_file (timestamp: $mtime)");
+            // Is already parsed?
+            $this->tv->get_m3u_parser()->setupParser($tmp_file, $force);
+            if ($this->tv->get_m3u_parser()->getEntriesCount() === 0) {
+                if (!$this->tv->get_m3u_parser()->parseInMemory()) {
+                    $contents = @file_get_contents($tmp_file);
+                    $exception_msg = TR::load_string('err_load_playlist') . " Incorrect playlist!\n\n$contents";
+                    throw new Exception($exception_msg);
+                }
+
+                $count = $this->tv->get_m3u_parser()->getEntriesCount();
+                if ($count === 0) {
+                    $contents = @file_get_contents($tmp_file);
+                    $exception_msg = TR::load_string('err_load_playlist') . " Empty playlist!\n\n$contents";
+                    $this->clear_playlist_cache();
+                    throw new Exception($exception_msg);
+                }
+
+                hd_debug_print("Total entries loaded from playlist m3u file: $count");
+                HD::ShowMemoryUsage();
+            }
+        } catch (Exception $ex) {
+            $err = HD::get_last_error();
+            if (!empty($err)) {
+                $err .= "\n\n" . $ex->getMessage();
+            } else {
+                $err = $ex->getMessage();
+            }
+            HD::set_last_error("pl_last_error", $err);
+            print_backtrace_exception($ex);
+            if (isset($playlist->type) && file_exists($tmp_file)) {
+                unlink($tmp_file);
+            }
+            return false;
+        }
+
+        hd_debug_print("Init playlist done!");
+        return true;
+    }
+
+    /**
+     * @return void
+     */
+    public function init_user_agent()
+    {
+        $user_agent = $this->get_setting(PARAM_USER_AGENT);
+        if (!empty($user_agent) && $user_agent !== HD::get_default_user_agent()) {
+            HD::set_dune_user_agent($user_agent);
+        }
+    }
+
+    /**
+     * @param bool $is_tv
+     * @return string
+     */
+    public function get_current_playlist_cache($is_tv)
+    {
+        return get_temp_path($this->get_active_playlist_key() . ($is_tv ? "_playlist.m3u8" : "_vod_playlist.m3u8"));
+    }
+
+    /**
+     * Clear downloaded playlist
+     * @param string $playlist_id
+     * @return void
+     */
+    public function clear_playlist_cache($playlist_id = null)
+    {
+        if ($playlist_id === null) {
+            $playlist_id = $this->get_active_playlist_key();
+        }
+        $tmp_file = get_temp_path($playlist_id . "_playlist.m3u8");
+        if (file_exists($tmp_file)) {
+            $this->tv->get_m3u_parser()->setupParser('');
+            hd_debug_print("clear_playlist_cache: remove $tmp_file");
+            unlink($tmp_file);
+        }
+    }
+
+    /**
+     * Initialize and parse selected playlist
+     *
+     * @return bool
+     */
+    public function init_vod_playlist()
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            return false;
+        }
+
+        if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
+            return false;
+        }
+
+        $this->init_user_agent();
+        $force = false;
+        $tmp_file = $this->get_current_playlist_cache(false);
+        if (file_exists($tmp_file)) {
+            $mtime = filemtime($tmp_file);
+            $diff = time() - $mtime;
+            if ($diff > 3600) {
+                hd_debug_print("Playlist cache expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
+                unlink($tmp_file);
+                $force = true;
+            }
+        } else {
+            $force = true;
+        }
+
+        try {
+            if ($force !== false) {
+                $response = $provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
+                if ($response === false) {
+                    $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $provider->getCurlWrapper()->get_logfile();
+                    HD::set_last_error("vod_last_error", $exception_msg);
+                    if (file_exists($tmp_file)) {
+                        unlink($tmp_file);
+                    }
+                    throw new Exception($exception_msg);
+                }
+
+                $playlist = file_get_contents($tmp_file);
+                if (strpos($playlist, '#EXTM3U') === false) {
+                    $exception_msg = TR::load_string('err_load_playlist') . "\n\n$playlist";
+                    HD::set_last_error("vod_last_error", $exception_msg);
+                    unlink($tmp_file);
+                    throw new Exception($exception_msg);
+                }
+
+                $mtime = filemtime($tmp_file);
+                hd_debug_print("Stored $tmp_file (timestamp: $mtime)");
+            }
+
+            // Is already parsed?
+            $this->vod->get_m3u_parser()->setupParser($tmp_file, $force);
+        } catch (Exception $ex) {
+            hd_debug_print("Unable to load VOD playlist");
+            print_backtrace_exception($ex);
+            return false;
+        }
+
+        hd_debug_print("Init VOD playlist done!");
+        return true;
+    }
+
+    /**
+     * $param string $id
+     * @return void
+     */
+    public function set_active_playlist_key($id)
+    {
+        hd_debug_print(null, true);
+
+        $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
+        $this->cur_provider = null;
+    }
+
+    /**
+     * @param string $key
+     * @return void
+     */
+    public function set_active_xmltv_source_key($key)
+    {
+        if (empty($key)) {
+            $this->remove_setting(PARAM_CUR_XMLTV_SOURCE_KEY);
+            $this->set_active_xmltv_source('');
+        } else {
+            /** @var Named_Storage $xmltv_source */
+            $xmltv_source = $this->get_all_xmltv_sources()->get($key);
+            if (!is_null($xmltv_source)) {
+                $this->set_setting(PARAM_CUR_XMLTV_SOURCE_KEY, $key);
+                $this->set_active_xmltv_source($xmltv_source->params[PARAM_URI]);
+            }
+        }
+    }
+
+    /**
+     * @param string $source
+     * @return void
+     */
+    public function set_active_xmltv_source($source)
+    {
+        $this->set_setting(PARAM_CUR_XMLTV_SOURCE, $source);
+    }
+
+    /**
+     * get all xmltv source
+     *
+     * @return Hashed_Array<string, Named_Storage>
+     */
+    public function get_all_xmltv_sources()
+    {
+        hd_debug_print(null, true);
+
+        /** @var Hashed_Array $sources */
+        $xmltv_sources = $this->get_playlist_xmltv_sources();
+
+        if ($xmltv_sources->size() !== 0) {
+            $xmltv_sources->add(EPG_SOURCES_SEPARATOR_TAG);
+        }
+
+        /** @var Named_Storage $source */
+        foreach ($this->get_ext_xmltv_sources() as $key => $source) {
+            $xmltv_sources->set($key, $source);
+        }
+
+        return $xmltv_sources;
+    }
+
+    /**
+     * get playlist xmltv source
+     *
+     * @return Hashed_Array<string, Named_Storage>
+     */
+    public function get_playlist_xmltv_sources()
+    {
+        hd_debug_print(null, true);
+
+        /** @var Hashed_Array $sources */
+        $xmltv_sources = new Hashed_Array();
+        foreach ($this->tv->get_m3u_parser()->getXmltvSources() as $m3u8source) {
+            if (!preg_match(HTTP_PATTERN, $m3u8source, $m)
+                || preg_match("/jtv.?\.zip$/", basename($m3u8source))) continue;
+
+            $item = new Named_Storage();
+            $item->type = PARAM_LINK;
+            $item->params[PARAM_URI] = $m3u8source;
+            $item->name = $m[2];
+            $xmltv_sources->put(Hashed_Array::hash($m3u8source), $item);
+        }
+
+        $provider = $this->get_current_provider();
+        if (!is_null($provider)) {
+            $sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
+            if (!empty($sources)) {
+                foreach ($sources as $source) {
+                    if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
+
+                    $item = new Named_Storage();
+                    $item->type = PARAM_LINK;
+                    $item->params[PARAM_URI] = $source;
+                    $item->name = $m[2];
+                    $xmltv_sources->put(Hashed_Array::hash($source), $item);
+                }
+            }
+        }
+
+        return $xmltv_sources;
+    }
+
+    /**
+     * get external xmltv sources
+     *
+     * @return Hashed_Array
+     */
+    public function &get_ext_xmltv_sources()
+    {
+        return $this->get_parameter(PARAM_EXT_XMLTV_SOURCES, new Hashed_Array());
+    }
+
+    /**
+     * @param string|null $path
+     * @return void
+     */
+    public function set_history_path($path = null)
+    {
+        if (is_null($path) || $path === get_data_path('history')) {
+            $this->remove_parameter(PARAM_HISTORY_PATH);
+            return;
+        }
+
+        create_path($path);
+        $this->set_parameter(PARAM_HISTORY_PATH, $path);
+    }
+
+    /**
+     * @param array $defs
+     */
+    public function create_setup_header(&$defs)
+    {
+        Control_Factory::add_vgap($defs, -10);
+        Control_Factory::add_label($defs, self::AUTHOR_LOGO,
+            " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
+            14);
+    }
+
+    /**
+     * @return bool
+     */
+    public function is_background_image_default()
+    {
+        return ($this->get_background_image() === $this->plugin_info['app_background']);
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    //
+    // Misc.
+    //
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string|null $path
+     * @return void
+     */
+    public function set_background_image($path)
+    {
+        if (is_null($path) || $path === $this->plugin_info['app_background'] || !file_exists($path)) {
+            $this->remove_setting(PARAM_PLUGIN_BACKGROUND);
+        } else {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, $path);
+        }
+    }
+
+    public function get_icon($id)
+    {
+        $archive = $this->get_image_archive();
+
+        return is_null($archive) ? null : $archive->get_archive_url($id);
+    }
+
+    public function get_image_archive()
+    {
+        return Default_Archive::get_image_archive(self::ARCHIVE_ID, self::ARCHIVE_URL_PREFIX);
+    }
+
+    public function get_screen_view($name)
+    {
+        return isset($this->screens_views[$name]) ? $this->screens_views[$name] : array();
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function playlist_menu($handler)
+    {
+        $menu_items = array();
+
+        $cur = $this->get_active_playlist_key();
+        $idx = 0;
+        foreach ($this->get_playlists() as $key => $item) {
+            if ($idx !== 0 && ($idx % 17) === 0) {
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            }
+            $idx++;
+
+            $icon = null;
+            $title = $item->name;
+            if ($item->type === PARAM_PROVIDER) {
+                $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
+                if (!is_null($provider)) {
+                    $icon = $provider->getLogo();
+                    if ($item->name !== $provider->getName()) {
+                        $title .= " ({$provider->getName()})";
+                    }
+                }
+            } else if ($item->type === PARAM_LINK) {
+                $icon = "link.png";
+            } else if ($item->type === PARAM_FILE) {
+                $icon = "m3u_file.png";
+            }
+
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_PLAYLIST_SELECTED,
+                $title,
+                ($cur !== $key) ? $icon : "check.png",
+                array(LIST_IDX => $key));
+        }
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_playlist'), "refresh.png", array('reload_action' => 'playlist'));
+
+        return $menu_items;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $action_id
+     * @param string $caption
+     * @param string $icon
+     * @param array|null $add_params
+     * @return array
+     */
+    public function create_menu_item($handler, $action_id, $caption = null, $icon = null, $add_params = null)
+    {
+        if ($action_id === GuiMenuItemDef::is_separator) {
+            return array($action_id => true);
+        }
+
+        if (!empty($icon)) {
+            if (strpos($icon, "://") === false) {
+                $icon = get_image_path($icon);
+            } else if (strpos($icon, "plugin_file://") === false
+                && file_exists(get_cached_image_path(basename($icon)))) {
+                $icon = get_cached_image_path(basename($icon));
+            }
+        }
+
+        return User_Input_Handler_Registry::create_popup_item($handler, $action_id, $caption, $icon, $add_params);
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    //
+    // Screen views parameters
+    //
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function epg_source_menu($handler)
+    {
+        $menu_items = array();
+
+        $sources = $this->get_all_xmltv_sources();
+        $source_key = $this->get_active_xmltv_source_key();
+
+        $idx = 0;
+        foreach ($sources as $key => $item) {
+            if ($idx !== 0 && ($idx % 17) === 0) {
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            }
+            $idx++;
+
+            if ($item === EPG_SOURCES_SEPARATOR_TAG) {
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+                continue;
+            }
+
+            $name = $item->name;
+            $cached_xmltv_file = $this->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
+            if (file_exists($cached_xmltv_file)) {
+                $check_time_file = filemtime($cached_xmltv_file);
+                $name .= " (" . date("d.m H:i", $check_time_file) . ")";
+            }
+
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_EPG_SOURCE_SELECTED,
+                $name,
+                ($source_key === $key) ? "check.png" : null,
+                array(LIST_IDX => $key)
+            );
+        }
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_epg'), "refresh.png", array('reload_action' => 'epg'));
+
+        return $menu_items;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_active_xmltv_source_key()
+    {
+        return $this->get_setting(PARAM_CUR_XMLTV_SOURCE_KEY, '');
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function epg_engine_menu($handler)
+    {
+        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
+
+        $menu_items[] = $this->create_menu_item($handler, ENGINE_XMLTV, TR::t('setup_epg_cache_xmltv'),
+            ($engine === ENGINE_XMLTV) ? "check.png" : null
+        );
+
+        $provider = $this->get_current_provider();
+        $epg_preset = is_null($provider) ? '?' : $provider->getConfigValue(EPG_JSON_PRESET);
+        $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, TR::t('setup_epg_cache_json__1', $epg_preset),
+            ($engine === ENGINE_JSON) ? "check.png" : null
+        );
+        return $menu_items;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array
+     */
+    public function picons_source_menu($handler)
+    {
+        $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+
+        $menu_items[] = $this->create_menu_item($handler, PLAYLIST_PICONS, TR::t('playlist_picons'),
+            ($icons_playlist === PLAYLIST_PICONS) ? "check.png" : null);
+        $menu_items[] = $this->create_menu_item($handler, XMLTV_PICONS, TR::t('xmltv_picons'),
+            ($icons_playlist === XMLTV_PICONS) ? "check.png" : null);
+        return $menu_items;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $group_id
+     * @param bool $is_classic
+     * @return array
+     */
+    public function common_categories_menu($handler, $group_id, $is_classic = true)
+    {
+        $menu_items = array();
+        if ($group_id !== null) {
+            if ($group_id === HISTORY_GROUP_ID && $this->get_playback_points()->size() !== 0) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            } else if ($group_id === FAVORITES_GROUP_ID && $this->tv->get_special_group($group_id)->get_items_order()->size() !== 0) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            } else if ($group_id === CHANGED_CHANNELS_GROUP_ID) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
+                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            }
+
+            if ($is_classic) {
+                $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
+            } else {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_group'), "hide.png");
+            }
+
+            if ($this->tv->get_special_group($group_id) === null) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
+            }
+
+            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        }
+
+        if ($is_classic) {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
+        } else {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'), "image.png");
+        }
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+
+        if ($this->get_playlists()->size()) {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
+        }
+
+        if ($this->get_all_xmltv_sources()->size()) {
+            $acitve_source = $this->get_active_xmltv_source();
+            if (!empty($acitve_source)) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
+                $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+                $sources = TR::load_string(($icons_playlist === PLAYLIST_PICONS) ? 'playlist_picons' : 'xmltv_picons');
+                $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source__1', $sources), "image.png");
+            }
+        }
+
+        $epg_url = $this->get_epg_preset_url();
+        $provider = $this->get_current_provider();
+        if (!is_null($provider)) {
+            if (!empty($epg_url)) {
+                $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+                $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
+            }
+
+            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+            if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
+            }
+
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_EDIT_PROVIDER_DLG,
+                TR::t('edit_account'),
+                $provider->getLogo(),
+                array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_ID => $provider->get_provider_playlist_id())
+            );
+
+            if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_EDIT_PROVIDER_EXT_DLG,
+                    TR::t('edit_ext_account'),
+                    "settings.png",
+                    array(PARAM_PROVIDER => $provider->getId(), PARAM_PLAYLIST_ID => $provider->get_provider_playlist_id())
+                );
+            }
+        }
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+
+        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
+            TR::t('setup_channels_src_edit_playlists'), "m3u_file.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+
+        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
+            TR::t('setup_edit_xmltv_list'), "epg.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST));
+
+        $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,
+            TR::t('entry_setup'), "settings.png");
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+
+        return $menu_items;
+    }
+
+    /**
+     * @return Playback_Points
+     */
+    public function get_playback_points()
+    {
+        return $this->playback_points;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $group_id
+     * @param bool $top
+     * @return array
+     */
+    public function edit_hidden_menu($handler, $group_id, $top = true)
+    {
+        $menu_items = array();
+
+        if ($group_id === null) {
+            return $menu_items;
+        }
+
+        if ($top) {
+            if ($this->tv->get_special_group($group_id) === null) {
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_ITEM_DELETE,
+                    TR::t('tv_screen_hide_group'),
+                    "hide.png");
+            }
+
+            hd_debug_print("Disabled groups: " . $this->tv->get_disabled_group_ids()->size(), true);
+            if ($this->tv->get_disabled_group_ids()->size() !== 0) {
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_ITEMS_EDIT,
+                    TR::t('tv_screen_edit_hidden_group'),
+                    "edit.png",
+                    array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
+            }
+        } else {
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_ITEM_DELETE,
+                TR::t('tv_screen_hide_channel'),
+                "remove.png");
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_ITEM_DELETE_CHANNELS,
+                TR::t('tv_screen_hide_group_channels'),
+                "remove.png");
+        }
+
+        $has_hidden_channels = false;
+        if (!is_null($group = $this->tv->get_group($group_id))) {
+            $has_hidden_channels = $group->get_group_channels()->size() !== $group->get_items_order()->size();
+            hd_debug_print("Disabled channels: " . $group->get_group_channels()->size(), true);
+        } else if ($group_id === ALL_CHANNEL_GROUP_ID) {
+            $has_hidden_channels = $this->tv->get_disabled_channel_ids()->size() !== 0;
+            hd_debug_print("Disabled channels: " . $this->tv->get_disabled_channel_ids()->size(), true);
+        }
+
+        if (!$top && $has_hidden_channels) {
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_ITEMS_EDIT,
+                TR::t('tv_screen_edit_hidden_channels'),
+                "edit.png",
+                array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS));
+        }
+
+        if (!empty($menu_items)) {
+            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+        }
+
+        return $menu_items;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function get_epg_preset_url()
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            hd_debug_print("Not supported provider");
+            return null;
+        }
+
+        $preset = $this->get_epg_preset();
+        if (is_null($preset)) {
+            return null;
+        }
+
+        $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $preset[EPG_JSON_SOURCE]);
+        if (strpos($epg_url, MACRO_PROVIDER) !== false) {
+            $epg_alias = $provider->getConfigValue(EPG_JSON_ALIAS);
+            $alias = empty($epg_alias) ? $provider->getId() : $epg_alias;
+            hd_debug_print("using alias: $alias", true);
+            $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
+        }
+
+        return $provider->replace_macros($epg_url);
+    }
+
+    public function create_plugin_title()
+    {
+        $playlist = $this->get_current_playlist();
+        $name = is_null($playlist) ? '' : $playlist->name;
+        $plugin_name = $this->plugin_info['app_caption'];
+        $name = empty($name) ? $plugin_name : "$plugin_name ($name)";
+        hd_debug_print("plugin title: $name");
+        return $name;
+    }
+
+    /**
+     * @param string $source_screen_id
+     * @param string $action_edit
+     * @param MediaURL|null $media_url
+     * @return array|null
+     */
+    public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null)
+    {
+        $params = array(
+            'screen_id' => Starnet_Edit_List_Screen::ID,
+            'source_window_id' => $source_screen_id,
+            'source_media_url_str' => $source_screen_id,
+            'edit_list' => $action_edit,
+            'windowCounter' => 1,
+        );
+
+        if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS || $action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS) {
+            $this->set_postpone_save(true, PLUGIN_ORDERS);
+            $params['save_data'] = PLUGIN_ORDERS;
+            $params['end_action'] = ACTION_RELOAD;
+            $params['cancel_action'] = ACTION_EMPTY;
+        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) {
+            $this->set_postpone_save(true, PLUGIN_PARAMETERS);
+            $params['allow_order'] = true;
+            $params['save_data'] = PLUGIN_PARAMETERS;
+            $params['end_action'] = ACTION_REFRESH_SCREEN;
+            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
+        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) {
+            $this->set_postpone_save(true, PLUGIN_PARAMETERS);
+            $params['save_data'] = PLUGIN_PARAMETERS;
+            $params['end_action'] = ACTION_REFRESH_SCREEN;
+            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
+        } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_PROVIDERS) {
+            $params['deny_edit'] = true;
+            $params['end_action'] = ACTION_EDIT_PROVIDER_DLG;
+            $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
+        }
+
+        $sel_id = null;
+        switch ($action_edit) {
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS:
+                if (!is_null($media_url) && isset($media_url->group_id)) {
+                    $params['group_id'] = $media_url->group_id;
+                }
+                $title = TR::t('tv_screen_edit_hidden_channels');
+                break;
+
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS:
+                $title = TR::t('tv_screen_edit_hidden_group');
+                break;
+
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST:
+                $params['extension'] = PLAYLIST_PATTERN;
+                $title = TR::t('setup_channels_src_edit_playlists');
+                $sel_id = $this->get_active_playlist_key();
+                break;
+
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST:
+                $params['extension'] = EPG_PATTERN;
+                $title = TR::t('setup_edit_xmltv_list');
+                break;
+
+            case Starnet_Edit_List_Screen::SCREEN_EDIT_PROVIDERS:
+                $title = TR::t('edit_list_add_provider');
+                break;
+
+            default:
+                return null;
+        }
+
+        return Action_Factory::open_folder(MediaURL::encode($params), $title, null, $sel_id);
+    }
+
+    /**
+     * Block or release save settings action
+     * If released will perform save action
+     *
+     * @param bool $snooze
+     * @param string $item
+     */
+    public function set_postpone_save($snooze, $item)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("Snooze: " . var_export($snooze, true) . ", item: $item", true);
+        $this->postpone_save[$item] = $snooze;
+        if ($snooze) {
+            return;
+        }
+
+        if ($item === PLUGIN_SETTINGS) {
+            $this->save_settings();
+        } else if ($item === PLUGIN_PARAMETERS) {
+            $this->save_parameters();
+        } else if ($item === PLUGIN_ORDERS) {
+            $this->save_orders();
+        } else if ($item === PLUGIN_HISTORY) {
+            $this->save_history();
+        }
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $provider_id
+     * @param string $playlist_id
+     * @return array|null
+     */
+    public function do_edit_provider_dlg($handler, $provider_id, $playlist_id = '')
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("Provider id: $provider_id, Playlist id: $playlist_id", true);
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        if (empty($playlist_id)) {
+            // add new provider
+            $provider = $this->create_provider_class($provider_id);
+            hd_debug_print("new provider : $provider", true);
+        } else {
+            // edit existing provider
+            $item = $this->get_playlists()->get($playlist_id);
+            if (!is_null($item)) {
+                $name = $item->name;
+                hd_debug_print("provider info:" . json_encode($item), true);
+                $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
+                if (!is_null($provider)) {
+                    $provider->set_provider_playlist_id($playlist_id);
+                    hd_debug_print("existing provider : " . json_encode($provider), true);
+                }
+            } else {
+                $provider = $this->create_provider_class($provider_id);
+            }
+        }
+
+        if (is_null($provider)) {
+            return $defs;
+        }
+
+        if (empty($name)) {
+            $name = $provider->getName();
+        }
+
+        $defs = $provider->GetSetupUI($name, $playlist_id, $handler);
+        if (empty($defs)) {
+            return null;
+        }
+
+        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array|null
+     */
+    public function do_edit_provider_ext_dlg($handler)
+    {
+        hd_debug_print(null, true);
+
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            return array();
+        }
+
+        $defs = $provider->GetExtSetupUI($handler);
+        if (empty($defs)) {
+            return null;
+        }
+
+        $head = array();
+        Control_Factory::add_vgap($head, 20);
+
+        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", array_merge($head, $defs), true);
+    }
+
+    /**
+     * @param Object $user_input
+     * @return bool|array|string
+     */
+    public function apply_edit_provider_dlg($user_input)
+    {
+        hd_debug_print(null, true);
+
+        if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
+            $provider = $this->get_current_provider();
+        } else {
+            // edit existing or new provider in starnet_edit_list_screen
+            $provider = $this->create_provider_class($user_input->{PARAM_PROVIDER});
+        }
+
+        if (is_null($provider)) {
+            return false;
+        }
+
+        return $provider->ApplySetupUI($user_input);
+    }
+
+    /**
+     * @param Object $user_input
+     * @return bool|array
+     */
+    public function apply_edit_provider_ext_dlg($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            return false;
+        }
+
+        return $provider->ApplyExtSetupUI($user_input);
+    }
+
+    /**
+     * @param string $channel_id
+     * @return array|null
+     */
+    public function do_show_channel_info($channel_id)
+    {
+        $channel = $this->tv->get_channel($channel_id);
+        if (is_null($channel)) {
+            return null;
+        }
+
+        $info = "ID: " . $channel->get_id() . PHP_EOL;
+        $info .= "Name: " . $channel->get_title() . PHP_EOL;
+        $info .= "Archive: " . $channel->get_archive() . " days" . PHP_EOL;
+        $info .= "Protected: " . TR::load_string($channel->is_protected() ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) . PHP_EOL;
+        $info .= "EPG IDs: " . implode(', ', $channel->get_epg_ids()) . PHP_EOL;
+        if ($channel->get_timeshift_hours() !== 0) {
+            $info .= "Timeshift hours: " . $channel->get_timeshift_hours() . PHP_EOL;
+        }
+        $info .= "Category: " . $channel->get_parent_group()->get_id() . PHP_EOL;
+        $info .= "Icon: " . wrap_string_to_lines($channel->get_icon_url(), 70) . PHP_EOL;
+        $info .= PHP_EOL;
+
+        try {
+            $live_url = $this->tv->generate_stream_url($channel_id, -1, true);
+            $info .= "Live URL: " . wrap_string_to_lines($live_url, 70) . PHP_EOL;
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+        }
+
+        if ($channel->get_archive() > 0) {
+            try {
+                $archive_url = $this->tv->generate_stream_url($channel_id, time() - 3600, true);
+                $info .= "Archive URL: " . wrap_string_to_lines($archive_url, 70) . PHP_EOL;
+            } catch (Exception $ex) {
+                print_backtrace_exception($ex);
+            }
+        }
+
+        $dune_params = $this->tv->generate_dune_params($channel);
+        if (!empty($dune_params)) {
+            $info .= "dune_params: " . substr($dune_params, strlen(HD::DUNE_PARAMS_MAGIC)) . PHP_EOL;
+        }
+
+        if (!empty($live_url) && !is_limited_apk()) {
+            $descriptors = array(
+                0 => array("pipe", "r"), // stdin
+                1 => array("pipe", "w"), // sdout
+                2 => array("pipe", "w"), // stderr
+            );
+
+            hd_debug_print("Get media info for: $live_url");
+            $process = proc_open(
+                get_install_path("bin/media_check.sh $live_url"),
+                $descriptors,
+                $pipes);
+
+            if (is_resource($process)) {
+                $output = stream_get_contents($pipes[1]);
+
+                fclose($pipes[1]);
+                proc_close($process);
+
+                $info .= "\n";
+                foreach (explode("\n", $output) as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+                    if (strpos($line, "Output") !== false) break;
+                    if (strpos($line, "Stream") !== false) {
+                        $info .= preg_replace("/ \([\[].*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+/", "", $line) . PHP_EOL;
+                    }
+                }
+            }
+        }
+
+        Control_Factory::add_multiline_label($defs, null, $info, 18);
+        Control_Factory::add_vgap($defs, 10);
+
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            1200,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load_string('scroll_page')
+        );
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1750);
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @return array|null
+     */
+    public function do_show_subscription($handler)
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            return null;
+        }
+
+        if (!$provider->request_provider_token()) {
+            hd_debug_print("Can't get provider token");
+            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), TR::t('err_cant_get_token'));
+        }
+
+        return $provider->GetInfoUI($handler);
+    }
+
+    /**
+     * @return array|null
+     */
+    public function do_show_add_money()
+    {
+        $provider = $this->get_current_provider();
+        if (is_null($provider)) {
+            return null;
+        }
+
+        return $provider->GetPayUI();
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $param_action
+     * @return array
+     */
+    public function show_protect_settings_dialog($handler, $param_action)
+    {
+        $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
+        if (empty($pass_settings)) {
+            return User_Input_Handler_Registry::create_action($handler, $param_action);
+        }
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        Control_Factory::add_text_field($defs, $handler, null, 'pass', TR::t('setup_pass'),
+            '', true, true, false, true, 500, true);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, array("param_action" => $param_action),
+            ACTION_PASSWORD_APPLY, TR::t('ok'), 300);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
+    }
+
+    /**
+     * @return array
+     */
+    public function get_plugin_info_dlg($handler)
+    {
+        static $history_txt;
+
+        $lang = strtolower(TR::get_current_language());
+        if (empty($history_txt)) {
+            $doc = Curl_Wrapper::simple_download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
+            if ($doc === false) {
+                hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
+                $path = get_install_path("changelog.$lang.md");
+                if (!file_exists($path)) {
+                    $path = get_install_path("changelog.english.md");
+                }
+                $doc = file_get_contents($path);
+            }
+
+            $history_txt = str_replace(array("###", "\r"), '', $doc);
+        }
+
+        $defs = array();
+        Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
+        Control_Factory::add_vgap($defs, 20);
+
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            1160,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load_string('scroll_page')
+        );
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, null, ACTION_DONATE_DLG, TR::t('setup_donate_title'), 300);
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('setup_changelog'), $defs, true, 1600);
+    }
+
+    public function do_donate_dialog()
+    {
+        try {
+            hd_debug_print(null, true);
+            $img_ym = get_temp_path('qr_ym.png');
+            $img_pp = get_temp_path('qr_pp.png');
+            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym, false);
+            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp, false);
+
+            Control_Factory::add_vgap($defs, 50);
+            Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");
+            Control_Factory::add_smart_label($defs, "", "<icon>$img_ym</icon><gap width=140/><icon>$img_pp</icon>");
+            Control_Factory::add_vgap($defs, 450);
+
+            $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
+            return Action_Factory::show_dialog(TR::t('setup_donate_title'), $defs, true, 1150, $attrs);
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+        }
+
+        return Action_Factory::status(0);
     }
 }

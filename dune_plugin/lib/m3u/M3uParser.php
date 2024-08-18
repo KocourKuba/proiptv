@@ -64,7 +64,7 @@ class M3uParser extends Json_Serializer
             $this->clear_data();
 
             try {
-                if (!empty($this->file_name)){
+                if (!empty($this->file_name)) {
                     $file = new SplFileObject($this->file_name);
                     $file->setFlags(SplFileObject::DROP_NEW_LINE);
                     $this->m3u_file = $file;
@@ -75,6 +75,17 @@ class M3uParser extends Json_Serializer
                 return;
             }
         }
+    }
+
+    /**
+     * @return void
+     */
+    protected function clear_data()
+    {
+        unset($this->m3u_entries, $this->m3u_info);
+        $this->m3u_entries = array();
+        $this->m3u_info = array();
+        $this->xmltv_sources = null;
     }
 
     /**
@@ -98,7 +109,7 @@ class M3uParser extends Json_Serializer
         $t = microtime(true);
 
         $entry = new Entry();
-        foreach($this->m3u_file as $line) {
+        foreach ($this->m3u_file as $line) {
             // something wrong or not supported
             switch ($this->parseLine($line, $entry)) {
                 case 1: // parse done
@@ -117,6 +128,31 @@ class M3uParser extends Json_Serializer
         hd_debug_print("parseFile " . (microtime(true) - $t) . " secs");
         hd_debug_print_separator();
         return true;
+    }
+
+    /**
+     * Parse one line
+     * return true if line is a url or parsed tag is header tag
+     *
+     * @param string $line
+     * @param Entry& $entry
+     * @return int
+     */
+    protected function parseLine($line, &$entry)
+    {
+        $line = trim($line);
+        if (empty($line)) {
+            return -1;
+        }
+
+        $tag = $entry->parseExtTag($line, true);
+        if (is_null($tag)) {
+            // untagged line must be a stream url
+            $entry->setPath($line);
+            return 1;
+        }
+
+        return $entry->isM3U_Header() ? 2 : 0;
     }
 
     /**
@@ -185,7 +221,7 @@ class M3uParser extends Json_Serializer
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
         $entry = new Entry();
-        foreach($lines as $line) {
+        foreach ($lines as $line) {
             // if parsed line is not path or is not header tag parse next line
             switch ($this->parseLine($line, $entry)) {
                 case 1: // parse done
@@ -205,6 +241,8 @@ class M3uParser extends Json_Serializer
         hd_debug_print_separator();
         return true;
     }
+
+    ///////////////////////////////////////////////////////////
 
     /**
      * get entry by idx
@@ -258,58 +296,6 @@ class M3uParser extends Json_Serializer
         }
 
         return '';
-    }
-
-    ///////////////////////////////////////////////////////////
-
-    /**
-     * Parse one line
-     * return true if line is a url or parsed tag is header tag
-     *
-     * @param string $line
-     * @param Entry& $entry
-     * @return int
-     */
-    protected function parseLine($line, &$entry)
-    {
-        $line = trim($line);
-        if (empty($line)) {
-            return -1;
-        }
-
-        $tag = $entry->parseExtTag($line, true);
-        if (is_null($tag)) {
-            // untagged line must be a stream url
-            $entry->setPath($line);
-            return 1;
-        }
-
-        return $entry->isM3U_Header() ? 2 : 0;
-    }
-
-    /**
-     * Parse one line
-     * return true if line is a url or parsed tag is header tag
-     *
-     * @param string $line
-     * @param Entry& $entry
-     * @return bool
-     */
-    protected function parseLineFast($line, &$entry)
-    {
-        $line = trim($line);
-        if (empty($line)) {
-            return false;
-        }
-
-        $tag = $entry->parseExtTag($line, false);
-        if (is_null($tag)) {
-            // untagged line must be a stream url
-            $entry->setPath($line);
-            return true;
-        }
-
-        return $entry->isM3U_Header();
     }
 
     /**
@@ -428,13 +414,27 @@ class M3uParser extends Json_Serializer
     }
 
     /**
-     * @return void
+     * Parse one line
+     * return true if line is a url or parsed tag is header tag
+     *
+     * @param string $line
+     * @param Entry& $entry
+     * @return bool
      */
-    protected function clear_data()
+    protected function parseLineFast($line, &$entry)
     {
-        unset($this->m3u_entries, $this->m3u_info);
-        $this->m3u_entries = array();
-        $this->m3u_info = array();
-        $this->xmltv_sources = null;
+        $line = trim($line);
+        if (empty($line)) {
+            return false;
+        }
+
+        $tag = $entry->parseExtTag($line, false);
+        if (is_null($tag)) {
+            // untagged line must be a stream url
+            $entry->setPath($line);
+            return true;
+        }
+
+        return $entry->isM3U_Header();
     }
 }

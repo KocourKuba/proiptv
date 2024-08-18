@@ -147,6 +147,29 @@ class vod_edem extends vod_standard
     }
 
     /**
+     * @param array|null $params
+     * @return bool|object
+     */
+    protected function make_json_request($params = null)
+    {
+        $pairs = array();
+        if ($params !== null) {
+            $pairs = $params;
+        }
+
+        // fill default params
+        $pairs['key'] = $this->vportal_key;
+        $pairs['mac'] = "000000000000"; // dummy
+        $pairs['app'] = "ProIPTV_dune_plugin";
+
+        $curl_opt[CURLOPT_POST] = true;
+        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
+        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($pairs);
+
+        return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
+    }
+
+    /**
      * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
@@ -194,6 +217,42 @@ class vod_edem extends vod_standard
         $searchRes = $this->make_json_request(array('cmd' => "search", 'query' => $keyword));
 
         return $searchRes === false ? array() : $this->CollectSearchResult($keyword, $searchRes);
+    }
+
+    /**
+     * @param string $query_id
+     * @param Object $json
+     * @return array
+     */
+    protected function CollectSearchResult($query_id, $json)
+    {
+        hd_debug_print("query_id: $query_id");
+        $movies = array();
+
+        $current_offset = $this->get_current_page($query_id);
+        if ($current_offset < 0)
+            return $movies;
+
+        foreach ($json->items as $entry) {
+            if ($entry->type === 'next') {
+                $this->get_next_page($query_id, $entry->request->offset - $current_offset);
+            } else {
+                $movie = new Short_Movie(
+                    $entry->request->fid,
+                    $entry->title,
+                    $entry->imglr,
+                    TR::t('vod_screen_movie_info__3', $entry->title, $entry->year)
+                );
+                $movie->big_poster_url = $entry->img;
+                $movies[] = $movie;
+            }
+        }
+        if ($current_offset === $this->get_current_page($query_id)) {
+            $this->set_next_page($query_id, -1);
+        }
+
+        hd_debug_print("Movies found: " . count($movies));
+        return $movies;
     }
 
     /**
@@ -250,64 +309,5 @@ class vod_edem extends vod_standard
         $json = $this->make_json_request($post_params);
 
         return $json === false ? array() : $this->CollectSearchResult($query_id, $json);
-    }
-
-    /**
-     * @param string $query_id
-     * @param Object $json
-     * @return array
-     */
-    protected function CollectSearchResult($query_id, $json)
-    {
-        hd_debug_print("query_id: $query_id");
-        $movies = array();
-
-        $current_offset = $this->get_current_page($query_id);
-        if ($current_offset < 0)
-            return $movies;
-
-        foreach ($json->items as $entry) {
-            if ($entry->type === 'next') {
-                $this->get_next_page($query_id, $entry->request->offset - $current_offset);
-            } else {
-                $movie = new Short_Movie(
-                    $entry->request->fid,
-                    $entry->title,
-                    $entry->imglr,
-                    TR::t('vod_screen_movie_info__3', $entry->title, $entry->year)
-                );
-                $movie->big_poster_url = $entry->img;
-                $movies[] = $movie;
-            }
-        }
-        if ($current_offset === $this->get_current_page($query_id)) {
-            $this->set_next_page($query_id, -1);
-        }
-
-        hd_debug_print("Movies found: " . count($movies));
-        return $movies;
-    }
-
-    /**
-     * @param array|null $params
-     * @return bool|object
-     */
-    protected function make_json_request($params = null)
-    {
-        $pairs = array();
-        if ($params !== null) {
-            $pairs = $params;
-        }
-
-        // fill default params
-        $pairs['key'] = $this->vportal_key;
-        $pairs['mac'] = "000000000000"; // dummy
-        $pairs['app'] = "ProIPTV_dune_plugin";
-
-        $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($pairs);
-
-        return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
     }
 }

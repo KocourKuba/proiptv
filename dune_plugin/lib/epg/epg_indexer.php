@@ -115,39 +115,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     {
         $this->cache_type = $type;
     }
-    /**
-     * @param string $ext
-     * @return string
-     */
-    public function get_cache_stem($ext)
-    {
-        return $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . $ext;
-    }
-
-    /**
-     * @return bool
-     */
-    public function is_index_locked()
-    {
-        $lock_dir = $this->get_cache_stem('.lock');
-        return is_dir($lock_dir);
-    }
-
-    /**
-     * @param bool $lock
-     */
-    public function set_index_locked($lock)
-    {
-        $lock_dir = $this->get_cache_stem('.lock');
-        if ($lock) {
-            if (!create_path($lock_dir, 0644)) {
-                hd_debug_print("Directory '$lock_dir' was not created");
-            }
-        } else if (is_dir($lock_dir)){
-            hd_debug_print("Unlock $lock_dir");
-            @rmdir($lock_dir);
-        }
-    }
 
     /**
      * indexing xmltv file to make channel to display-name map
@@ -251,6 +218,31 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * @return string
+     */
+    public function get_cached_filename()
+    {
+        return $this->get_cache_stem(".xmltv");
+    }
+
+    /**
+     * @param string $ext
+     * @return string
+     */
+    public function get_cache_stem($ext)
+    {
+        return $this->cache_dir . DIRECTORY_SEPARATOR . $this->url_hash . $ext;
+    }
+
+    /**
+     * Check is selected index is valid
+     *
+     * @param string $name
+     * @return bool
+     */
+    abstract protected function is_index_valid($name);
+
+    /**
      * Download XMLTV source.
      *
      * @return int
@@ -319,7 +311,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             $hdr = fread($handle, 8);
             fclose($handle);
 
-            if (0 === mb_strpos($hdr , "\x1f\x8b\x08")) {
+            if (0 === mb_strpos($hdr, "\x1f\x8b\x08")) {
                 hd_debug_print("GZ signature: " . bin2hex(substr($hdr, 0, 3)), true);
                 rename($tmp_filename, $cached_file . '.gz');
                 $tmp_filename = $cached_file . '.gz';
@@ -393,6 +385,51 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * @return bool
+     */
+    public function is_index_locked()
+    {
+        $lock_dir = $this->get_cache_stem('.lock');
+        return is_dir($lock_dir);
+    }
+
+    /**
+     * @param bool $lock
+     */
+    public function set_index_locked($lock)
+    {
+        $lock_dir = $this->get_cache_stem('.lock');
+        if ($lock) {
+            if (!create_path($lock_dir, 0644)) {
+                hd_debug_print("Directory '$lock_dir' was not created");
+            }
+        } else if (is_dir($lock_dir)) {
+            hd_debug_print("Unlock $lock_dir");
+            @rmdir($lock_dir);
+        }
+    }
+
+    /**
+     * Remove is selected index
+     *
+     * @param string $name
+     */
+    abstract public function remove_index($name);
+
+    /**
+     * clear memory cache and cache for current xmltv source
+     *
+     * @return void
+     */
+    public function clear_current_epg_files()
+    {
+        $this->clear_epg_files($this->url_hash);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
      * clear memory cache and cache for selected filename mask
      *
      * @return void
@@ -407,44 +444,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
         $files = $this->cache_dir . DIRECTORY_SEPARATOR . "$filename*";
         hd_debug_print("clear epg files: $files");
-        shell_exec('rm -f '. $files);
+        shell_exec('rm -f ' . $files);
         flush();
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
-
-    /**
-     * clear memory cache and cache for current xmltv source
-     *
-     * @return void
-     */
-    public function clear_current_epg_files()
-    {
-        $this->clear_epg_files($this->url_hash);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_cached_filename()
-    {
-        return $this->get_cache_stem(".xmltv");
-    }
-
-    /**
-     * Remove is selected index
-     *
-     * @param string $name
-     */
-    abstract public function remove_index($name);
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    /**
-     * @param Channel $channel
-     * @return array
-     */
-    abstract protected function load_program_index($channel);
 
     /**
      * Clear memory index
@@ -454,12 +457,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     abstract protected function clear_memory_index();
 
     /**
-     * Check is selected index is valid
-     *
-     * @param string $name
-     * @return bool
+     * @param Channel $channel
+     * @return array
      */
-    abstract protected function is_index_valid($name);
+    abstract protected function load_program_index($channel);
 
     /**
      * check version of index file

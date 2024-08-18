@@ -85,19 +85,6 @@ class TR
         return vsprintf($string_key, $args);
     }
 
-    public static function get_current_language()
-    {
-        $lang = 'english';
-        if (file_exists('/config/settings.properties')) {
-            $sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW);
-            if ($sys_settings !== false) {
-                $lang = $sys_settings['interface_language'];
-            }
-        }
-
-        return $lang;
-    }
-
     protected static function get_translation_filename($lang)
     {
         $lang_file = get_install_path("translations/dune_language_$lang.txt");
@@ -111,5 +98,18 @@ class TR
         }
 
         return '';
+    }
+
+    public static function get_current_language()
+    {
+        $lang = 'english';
+        if (file_exists('/config/settings.properties')) {
+            $sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW);
+            if ($sys_settings !== false) {
+                $lang = $sys_settings['interface_language'];
+            }
+        }
+
+        return $lang;
     }
 }

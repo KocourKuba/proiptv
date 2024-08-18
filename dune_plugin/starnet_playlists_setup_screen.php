@@ -55,6 +55,15 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     }
 
     /**
+     * @inheritDoc
+     */
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        return $this->do_get_control_defs();
+    }
+
+    /**
      * defs for all controls on screen
      * @return array
      */
@@ -135,51 +144,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     /**
      * @inheritDoc
      */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        return $this->do_get_control_defs();
-    }
-
-    /**
-     * adult pass dialog defs
-     * @return array
-     */
-    public function do_get_ext_params_control_defs()
-    {
-        hd_debug_print(null, true);
-        $defs = array();
-
-        Control_Factory::add_vgap($defs, 20);
-
-        $user_agent = $this->plugin->get_setting(PARAM_USER_AGENT, '');
-        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_USER_AGENT, TR::t('setup_channels_user_agent'),
-            $user_agent, false, false, false, true, 1200);
-
-        $dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
-        $dune_params_str = '';
-        foreach ($dune_params as $key => $param) {
-            if (!empty($dune_params_str)) {
-                $dune_params_str .= ',';
-            }
-            $dune_params_str .= "$key:$param";
-        }
-
-        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
-            $dune_params_str, false, false, false, true, 1200);
-
-        Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, self::ACTION_EXT_PARAMS_DLG_APPLY, TR::t('ok'), 300);
-        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-        Control_Factory::add_vgap($defs, 10);
-
-        return $defs;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -194,10 +158,10 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         switch ($control_id) {
             case GUI_EVENT_KEY_RETURN:
-            return Action_Factory::close_and_run(
-                User_Input_Handler_Registry::create_action_screen(
-                    Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
-            );
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(
+                        Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
+                );
 
             case PARAM_USER_CATCHUP:
             case PARAM_USE_PICONS:
@@ -266,5 +230,41 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());
+    }
+
+    /**
+     * adult pass dialog defs
+     * @return array
+     */
+    public function do_get_ext_params_control_defs()
+    {
+        hd_debug_print(null, true);
+        $defs = array();
+
+        Control_Factory::add_vgap($defs, 20);
+
+        $user_agent = $this->plugin->get_setting(PARAM_USER_AGENT, '');
+        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_USER_AGENT, TR::t('setup_channels_user_agent'),
+            $user_agent, false, false, false, true, 1200);
+
+        $dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
+        $dune_params_str = '';
+        foreach ($dune_params as $key => $param) {
+            if (!empty($dune_params_str)) {
+                $dune_params_str .= ',';
+            }
+            $dune_params_str .= "$key:$param";
+        }
+
+        Control_Factory::add_text_field($defs, $this, null, self::CONTROL_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
+            $dune_params_str, false, false, false, true, 1200);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, self::ACTION_EXT_PARAMS_DLG_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        return $defs;
     }
 }

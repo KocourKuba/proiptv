@@ -53,6 +53,15 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     }
 
     /**
+     * @inheritDoc
+     */
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        return $this->do_get_control_defs();
+    }
+
+    /**
      * defs for all controls on screen
      * @return array
      */
@@ -108,15 +117,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         return $defs;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        return $this->do_get_control_defs();
     }
 
     /**

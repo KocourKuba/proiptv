@@ -63,37 +63,6 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @param string $cache_dir
-     * @param string $url
-     */
-    public function init_indexer($cache_dir, $url)
-    {
-        if (class_exists('SQLite3')) {
-            $this->indexer = new Epg_Indexer_Sql();
-        } else {
-            $this->indexer = new Epg_Indexer_Classic();
-        }
-
-        $this->indexer->init($cache_dir, $url);
-
-        if ($this->plugin) {
-            $flags = 0;
-            $flags |= $this->plugin->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
-            $this->set_flags($flags);
-            $this->indexer->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
-            $this->indexer->set_cache_type($this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO));
-        }
-    }
-
-    /**
-     * @return Epg_Indexer
-     */
-    public function get_indexer()
-    {
-        return $this->indexer;
-    }
-
-    /**
      * @return bool
      */
     public function init_by_config()
@@ -133,6 +102,29 @@ class Epg_Manager_Xmltv
         $this->indexer->set_cache_type($config->cache_type);
 
         return true;
+    }
+
+    /**
+     * @param string $cache_dir
+     * @param string $url
+     */
+    public function init_indexer($cache_dir, $url)
+    {
+        if (class_exists('SQLite3')) {
+            $this->indexer = new Epg_Indexer_Sql();
+        } else {
+            $this->indexer = new Epg_Indexer_Classic();
+        }
+
+        $this->indexer->init($cache_dir, $url);
+
+        if ($this->plugin) {
+            $flags = 0;
+            $flags |= $this->plugin->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
+            $this->set_flags($flags);
+            $this->indexer->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
+            $this->indexer->set_cache_type($this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO));
+        }
     }
 
     /**
@@ -237,6 +229,28 @@ class Epg_Manager_Xmltv
     }
 
     /**
+     * @param Channel $channel
+     * @param int $day_start_ts
+     * @param array $day_epg
+     * @return array
+     */
+    protected function getFakeEpg(Channel $channel, $day_start_ts, $day_epg)
+    {
+        if (($this->flags & EPG_FAKE_EPG) && $channel->get_archive() !== 0) {
+            hd_debug_print("Create fake data for non existing EPG data");
+            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
+                $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
+                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load_string('fake_epg_program') . " $n";
+                $day_epg[$start][Epg_Params::EPG_DESC] = '';
+            }
+        } else {
+            hd_debug_print("No EPG for channel: {$channel->get_id()}");
+        }
+
+        return $day_epg;
+    }
+
+    /**
      * Import indexing log to plugin logs
      *
      * @return void
@@ -306,7 +320,7 @@ class Epg_Manager_Xmltv
         $this->indexer->index_only_channels();
         $this->indexer->index_xmltv_positions();
 
-        hd_print("Script execution time: ". format_duration(round(1000 * (microtime(true) - $start))));
+        hd_print("Script execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
     }
 
     /**
@@ -320,6 +334,14 @@ class Epg_Manager_Xmltv
     }
 
     /**
+     * @return Epg_Indexer
+     */
+    public function get_indexer()
+    {
+        return $this->indexer;
+    }
+
+    /**
      * returns list of requested epg when indexing in process
      *
      * @return array
@@ -329,35 +351,13 @@ class Epg_Manager_Xmltv
         return $this->delayed_epg;
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
     /**
      */
     public function clear_delayed_epg()
     {
         $this->delayed_epg = array();
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    /**
-     * @param Channel $channel
-     * @param int $day_start_ts
-     * @param array $day_epg
-     * @return array
-     */
-    protected function getFakeEpg(Channel $channel, $day_start_ts, $day_epg)
-    {
-        if (($this->flags & EPG_FAKE_EPG) && $channel->get_archive() !== 0) {
-            hd_debug_print("Create fake data for non existing EPG data");
-            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
-                $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
-                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load_string('fake_epg_program') . " $n";
-                $day_epg[$start][Epg_Params::EPG_DESC] = '';
-            }
-        } else {
-            hd_debug_print("No EPG for channel: {$channel->get_id()}");
-        }
-
-        return $day_epg;
     }
 }

@@ -39,23 +39,16 @@ abstract class Abstract_Rows_Screen extends Changes_Impl implements Rows_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @return string|null
+     * This is not override of User_Input_Handler interface!
+     * It helper method to call inherited classes
+     * that implemens User_Input_Handler interface
+     *
+     * @return string
      */
-    public function get_cur_sel_state_str()
+    public static function get_handler_id()
     {
-        return $this->cur_sel_state;
+        return static::get_id() . '_handler';
     }
-
-    /**
-     * @param string|null $sel_state_str
-     * @return void
-     */
-    public function set_cur_sel_state_str($sel_state_str)
-    {
-        $this->cur_sel_state = $sel_state_str;
-    }
-
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @inheritDoc
@@ -65,33 +58,7 @@ abstract class Abstract_Rows_Screen extends Changes_Impl implements Rows_Screen
         return static::ID;
     }
 
-    /**
-     * This is not override of User_Input_Handler interface!
-     * It helper method to call inherited classes
-     * that implemens User_Input_Handler interface
-     *
-     * @return string
-     */
-    public static function get_handler_id()
-    {
-    	return static::get_id() . '_handler';
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_timer(MediaURL $media_url, $plugin_cookies)
-    {
-        return null;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function get_folder_type()
-    {
-    	return null;
-    }
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @inheritDoc
@@ -113,7 +80,16 @@ abstract class Abstract_Rows_Screen extends Changes_Impl implements Rows_Screen
         return null;
     }
 
-    ///////////////////////////////////////////////////////////////////////
+    /**
+     * @inheritDoc
+     */
+    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
+
+        return $this->get_folder_view_v2($media_url, null, $plugin_cookies);
+    }
 
     /**
      * @param MediaURL $media_url
@@ -129,27 +105,51 @@ abstract class Abstract_Rows_Screen extends Changes_Impl implements Rows_Screen
 
         return array(
             PluginFolderView::folder_type => $this->get_folder_type(),
-	        PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_ROWS,
-	        PluginFolderView::multiple_views_supported => false,
-	        PluginFolderView::archive => null,
-	        PluginFolderView::data => array
+            PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_ROWS,
+            PluginFolderView::multiple_views_supported => false,
+            PluginFolderView::archive => null,
+            PluginFolderView::data => array
             (
-                PluginRowsFolderView::pane      => $this->get_rows_pane($media_url, $plugin_cookies),
+                PluginRowsFolderView::pane => $this->get_rows_pane($media_url, $plugin_cookies),
                 PluginRowsFolderView::sel_state => $this->get_cur_sel_state_str(),
-                PluginRowsFolderView::actions   => $this->get_action_map($media_url, $plugin_cookies),
-                PluginRowsFolderView::timer     => $this->get_timer($media_url, $plugin_cookies),
+                PluginRowsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
+                PluginRowsFolderView::timer => $this->get_timer($media_url, $plugin_cookies),
             )
         );
     }
 
     /**
+     * @param string|null $sel_state_str
+     * @return void
+     */
+    public function set_cur_sel_state_str($sel_state_str)
+    {
+        $this->cur_sel_state = $sel_state_str;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function get_folder_type()
+    {
+        return null;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @return string|null
+     */
+    public function get_cur_sel_state_str()
+    {
+        return $this->cur_sel_state;
+    }
+
+    /**
      * @inheritDoc
      */
-    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
+    public function get_timer(MediaURL $media_url, $plugin_cookies)
     {
-        hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
-
-    	return $this->get_folder_view_v2($media_url, null, $plugin_cookies);
+        return null;
     }
 }

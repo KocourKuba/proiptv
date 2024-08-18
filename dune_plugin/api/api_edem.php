@@ -74,6 +74,32 @@ class api_edem extends api_default
     }
 
     /**
+     * @param Named_Storage $info
+     * @return string
+     */
+    public function get_hash($info)
+    {
+        $str = '';
+        if (isset($info->params[MACRO_SUBDOMAIN])) {
+            $str .= $info->params[MACRO_SUBDOMAIN];
+        }
+
+        if (isset($info->params[MACRO_OTTKEY])) {
+            $str .= $info->params[MACRO_OTTKEY];
+        }
+
+        if (isset($info->params[MACRO_VPORTAL])) {
+            $str .= $info->params[MACRO_VPORTAL];
+        }
+
+        if (empty($str)) {
+            return '';
+        }
+
+        return $this->getId() . "_" . Hashed_Array::hash($info->type . $info->name . $str);
+    }
+
+    /**
      * @inheritDoc
      */
     public function GetSetupUI($name, $playlist_id, $handler)
@@ -133,7 +159,7 @@ class api_edem extends api_default
                 $this->playlist_info->params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
                 $changed = true;
             }
-        } else if ($this->check_control_parameters($user_input,CONTROL_OTT_SUBDOMAIN, MACRO_SUBDOMAIN)) {
+        } else if ($this->check_control_parameters($user_input, CONTROL_OTT_SUBDOMAIN, MACRO_SUBDOMAIN)) {
             $this->playlist_info->params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
             $changed = true;
         }
@@ -142,7 +168,7 @@ class api_edem extends api_default
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
 
-        if ($this->check_control_parameters($user_input,CONTROL_OTT_KEY, MACRO_OTTKEY)) {
+        if ($this->check_control_parameters($user_input, CONTROL_OTT_KEY, MACRO_OTTKEY)) {
             $this->playlist_info->params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
             $changed = true;
         }
@@ -151,7 +177,7 @@ class api_edem extends api_default
             return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'));
         }
 
-        if ($this->check_control_parameters($user_input,CONTROL_VPORTAL, MACRO_VPORTAL)) {
+        if ($this->check_control_parameters($user_input, CONTROL_VPORTAL, MACRO_VPORTAL)) {
             $this->playlist_info->params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
             $changed = true;
         }
@@ -179,31 +205,5 @@ class api_edem extends api_default
         }
 
         return $id;
-    }
-
-    /**
-     * @param Named_Storage $info
-     * @return string
-     */
-    public function get_hash($info)
-    {
-        $str = '';
-        if (isset($info->params[MACRO_SUBDOMAIN])) {
-            $str .= $info->params[MACRO_SUBDOMAIN];
-        }
-
-        if (isset($info->params[MACRO_OTTKEY])) {
-            $str .= $info->params[MACRO_OTTKEY];
-        }
-
-        if (isset($info->params[MACRO_VPORTAL])) {
-            $str .= $info->params[MACRO_VPORTAL];
-        }
-
-        if (empty($str)) {
-            return '';
-        }
-
-        return $this->getId() . "_" . Hashed_Array::hash($info->type . $info->name . $str);
     }
 }

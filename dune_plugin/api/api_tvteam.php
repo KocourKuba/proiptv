@@ -34,93 +34,6 @@ class api_tvteam extends api_default
     /**
      * @inheritDoc
      */
-    public function request_provider_token($force = false)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("force request provider token: " . var_export($force, true));
-
-        $session_file = sprintf(self::SESSION_FILE, $this->get_provider_playlist_id());
-        $session_id = HD::get_cookie($session_file);
-        $expired = empty($session_id);
-
-        if (!$force && !$expired) {
-            hd_debug_print("request not required", true);
-            return true;
-        }
-
-        // remove old settings
-        $res = $this->removeCredential(MACRO_SESSION_ID);
-        $res |= $this->removeCredential(MACRO_EXPIRE_DATA);
-        if ($res) {
-            $this->save_credentials();
-        }
-
-        $error_msg = HD::check_last_error('rq_last_error');
-        if (!$force && !empty($error_msg)) {
-            $info_msg = str_replace('|', PHP_EOL, TR::load_string('err_auth_no_spam'));
-            hd_debug_print($info_msg);
-            HD::set_last_error("pl_last_error", "$info_msg\n\n$error_msg");
-        } else {
-            HD::set_last_error("pl_last_error", null);
-            HD::set_last_error("rq_last_error", null);
-            $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
-            hd_debug_print("request provider token response: " . raw_json_encode($response), true);
-            if ($response->status === 0 || !empty($response->error)) {
-                HD::set_last_error("pl_last_error", $response->error);
-                HD::set_last_error("rq_last_error", $response->error);
-            } else if (isset($response->data->sessionId)) {
-                HD::set_cookie($session_file, $response->data->sessionId, time() + 86400 * 7);
-                HD::set_last_error("rq_last_error", null);
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param bool $force
-     * @return bool|object
-     */
-    public function get_provider_info($force = false)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("force get_provider_info: " . var_export($force, true), true);
-
-        if (!$this->request_provider_token()) {
-            hd_debug_print("Failed to get provider token", true);
-            return null;
-        }
-
-        if (empty($this->account_info) || $force) {
-            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
-            hd_debug_print("get provider info response: " . raw_json_encode($this->account_info), true);
-
-            if (isset($this->account_info->data->userData->userToken)) {
-                HD::set_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()),
-                    $this->account_info->data->userData->userToken,
-                    PHP_INT_MAX,
-                    true);
-            }
-
-            if (isset($this->account_info->data->userData->groupId)) {
-                $this->setCredential(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
-            }
-
-            if (isset($this->account_info->data->serversGroupsList)) {
-                foreach ($this->account_info->data->serversGroupsList as $server) {
-                    $this->servers[$server->groupId] = "$server->groupCountry ($server->streamDomainName)";
-                }
-            }
-        }
-
-        return $this->account_info;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function replace_macros($string)
     {
         $hash_password = md5($this->getCredential(MACRO_PASSWORD));
@@ -185,6 +98,93 @@ class api_tvteam extends api_default
         Control_Factory::add_vgap($defs, 20);
 
         return Action_Factory::show_dialog(TR::t('subscription'), $defs, true, 1000, null /*$attrs*/);
+    }
+
+    /**
+     * @param bool $force
+     * @return bool|object
+     */
+    public function get_provider_info($force = false)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("force get_provider_info: " . var_export($force, true), true);
+
+        if (!$this->request_provider_token()) {
+            hd_debug_print("Failed to get provider token", true);
+            return null;
+        }
+
+        if (empty($this->account_info) || $force) {
+            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
+            hd_debug_print("get provider info response: " . raw_json_encode($this->account_info), true);
+
+            if (isset($this->account_info->data->userData->userToken)) {
+                HD::set_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()),
+                    $this->account_info->data->userData->userToken,
+                    PHP_INT_MAX,
+                    true);
+            }
+
+            if (isset($this->account_info->data->userData->groupId)) {
+                $this->setCredential(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
+            }
+
+            if (isset($this->account_info->data->serversGroupsList)) {
+                foreach ($this->account_info->data->serversGroupsList as $server) {
+                    $this->servers[$server->groupId] = "$server->groupCountry ($server->streamDomainName)";
+                }
+            }
+        }
+
+        return $this->account_info;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function request_provider_token($force = false)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("force request provider token: " . var_export($force, true));
+
+        $session_file = sprintf(self::SESSION_FILE, $this->get_provider_playlist_id());
+        $session_id = HD::get_cookie($session_file);
+        $expired = empty($session_id);
+
+        if (!$force && !$expired) {
+            hd_debug_print("request not required", true);
+            return true;
+        }
+
+        // remove old settings
+        $res = $this->removeCredential(MACRO_SESSION_ID);
+        $res |= $this->removeCredential(MACRO_EXPIRE_DATA);
+        if ($res) {
+            $this->save_credentials();
+        }
+
+        $error_msg = HD::check_last_error('rq_last_error');
+        if (!$force && !empty($error_msg)) {
+            $info_msg = str_replace('|', PHP_EOL, TR::load_string('err_auth_no_spam'));
+            hd_debug_print($info_msg);
+            HD::set_last_error("pl_last_error", "$info_msg\n\n$error_msg");
+        } else {
+            HD::set_last_error("pl_last_error", null);
+            HD::set_last_error("rq_last_error", null);
+            $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
+            hd_debug_print("request provider token response: " . raw_json_encode($response), true);
+            if ($response->status === 0 || !empty($response->error)) {
+                HD::set_last_error("pl_last_error", $response->error);
+                HD::set_last_error("rq_last_error", $response->error);
+            } else if (isset($response->data->sessionId)) {
+                HD::set_cookie($session_file, $response->data->sessionId, time() + 86400 * 7);
+                HD::set_last_error("rq_last_error", null);
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

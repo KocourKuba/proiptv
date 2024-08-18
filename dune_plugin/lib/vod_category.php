@@ -79,19 +79,19 @@ class Vod_Category
     }
 
     /**
-     * @param array $arr
-     */
-    public function set_sub_categories($arr)
-    {
-        $this->sub_categories = $arr;
-    }
-
-    /**
      * @return array
      */
     public function get_sub_categories()
     {
         return $this->sub_categories;
+    }
+
+    /**
+     * @param array $arr
+     */
+    public function set_sub_categories($arr)
+    {
+        $this->sub_categories = $arr;
     }
 
     /**

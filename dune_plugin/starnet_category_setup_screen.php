@@ -37,6 +37,25 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        return $actions;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        return $this->do_get_control_defs();
+    }
+
+    /**
      * interface dialog defs
      * @return array
      */
@@ -83,25 +102,6 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_changed]), self::CONTROLS_WIDTH);
 
         return $defs;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        return $this->do_get_control_defs();
     }
 
     /**

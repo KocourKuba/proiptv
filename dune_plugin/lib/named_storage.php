@@ -27,25 +27,23 @@
 class Named_Storage
 {
     /**
+     * @var string
+     */
+    public $type = '';
+    /**
+     * @var string
+     */
+    public $name = '';
+    /**
+     * @var array
+     */
+    public $params = array();
+
+    /**
      * @return string
      */
     public function __toString()
     {
         return (string)raw_json_encode($this);
     }
-
-    /**
-     * @var string
-     */
-    public $type = '';
-
-    /**
-     * @var string
-     */
-    public $name = '';
-
-    /**
-     * @var array
-     */
-    public $params = array();
 }

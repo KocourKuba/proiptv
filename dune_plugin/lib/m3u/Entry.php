@@ -28,10 +28,10 @@ require_once 'ExtTagDefault.php';
 
 class Entry extends Json_Serializer
 {
-    const TAG_EXTM3U    = '#EXTM3U';
-    const TAG_EXTINF    = '#EXTINF';
-    const TAG_EXTGRP    = '#EXTGRP';
-    const TAG_EXTHTTP   = '#EXTHTTP';
+    const TAG_EXTM3U = '#EXTM3U';
+    const TAG_EXTINF = '#EXTINF';
+    const TAG_EXTGRP = '#EXTGRP';
+    const TAG_EXTHTTP = '#EXTHTTP';
     const TAG_EXTVLCOPT = '#EXTVLCOPT';
 
     /**
@@ -63,14 +63,6 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * @return ExtTag
-     */
-    public function getEntryTag($tag)
-    {
-        return isset($this->tags[$tag]) ? $this->tags[$tag] : null;
-    }
-
-    /**
      * @param string $line
      * @param bool $full
      * @return ExtTag
@@ -86,15 +78,6 @@ class Entry extends Json_Serializer
         $this->addTag($parsed_tag);
         $this->is_header = ($parsed_tag->isTag(self::TAG_EXTM3U));
         return $parsed_tag;
-    }
-
-    /**
-     * @param string $tag_name
-     * @return bool
-     */
-    public function hasTag($tag_name)
-    {
-        return isset($this->tags[$tag_name]);
     }
 
     /**
@@ -147,6 +130,23 @@ class Entry extends Json_Serializer
     }
 
     /**
+     * @param string $tag_name
+     * @return bool
+     */
+    public function hasTag($tag_name)
+    {
+        return isset($this->tags[$tag_name]);
+    }
+
+    /**
+     * @return ExtTag
+     */
+    public function getEntryTag($tag)
+    {
+        return isset($this->tags[$tag]) ? $this->tags[$tag] : null;
+    }
+
+    /**
      * @param string $attribute_name
      * @param string $tag
      * @return bool
@@ -167,79 +167,6 @@ class Entry extends Json_Serializer
         }
         return false;
     }
-
-    /**
-     * Get attribute for selected tag
-     * If tag not specified search attribute in all tags
-     *
-     * @param string $attribute_name
-     * @param string|null $tag
-     * @return string
-     */
-    public function getEntryAttribute($attribute_name, $tag = null)
-    {
-        if (!is_null($this->tags)) {
-            if (is_null($tag)) {
-                foreach ($this->tags as $item) {
-                    $val = $item->getAttributeValue($attribute_name);
-                    if (!is_null($val)) {
-                        return $val;
-                    }
-                }
-            } else if ($this->hasTag($tag)) {
-                return $this->tags[$tag]->getAttributeValue($attribute_name);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param string|array $attrs
-     * @param null $tag
-     * @param null $found_attr
-     * @return string
-     */
-    public function getAnyEntryAttribute($attrs, $tag = null, &$found_attr = null)
-    {
-        if (!is_array($attrs)) {
-            return $this->getEntryAttribute($attrs, $tag);
-        }
-
-        $val = '';
-        foreach ($attrs as $attr) {
-            $val = $this->getEntryAttribute($attr, $tag);
-            if (empty($val)) continue;
-
-            if ($found_attr !== null) {
-                $found_attr = $attr;
-            }
-            break;
-        }
-        return $val;
-    }
-
-    /**
-     * @param array $attrs
-     * @param null $tag
-     * @return array
-     */
-    public function getAllEntryAttributes($attrs, $tag = null)
-    {
-        $ret = array();
-        foreach ($attrs as $attr) {
-            $val = $this->getEntryAttribute($attr, $tag);
-            if (empty($val)) continue;
-
-            $ret[$attr] = $val;
-        }
-
-        return $ret;
-    }
-
-    //////////////////////////////////////////////////////////////////////////////
-    /// Specialized methods to get specific data
-    ///
 
     /**
      * Returns EXTINF Title
@@ -277,6 +204,36 @@ class Entry extends Json_Serializer
     }
 
     /**
+     * Get attribute for selected tag
+     * If tag not specified search attribute in all tags
+     *
+     * @param string $attribute_name
+     * @param string|null $tag
+     * @return string
+     */
+    public function getEntryAttribute($attribute_name, $tag = null)
+    {
+        if (!is_null($this->tags)) {
+            if (is_null($tag)) {
+                foreach ($this->tags as $item) {
+                    $val = $item->getAttributeValue($attribute_name);
+                    if (!is_null($val)) {
+                        return $val;
+                    }
+                }
+            } else if ($this->hasTag($tag)) {
+                return $this->tags[$tag]->getAttributeValue($attribute_name);
+            }
+        }
+
+        return null;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    /// Specialized methods to get specific data
+    ///
+
+    /**
      * Returns entry id. Need for identify channel if possible
      *
      * @return string
@@ -290,6 +247,31 @@ class Entry extends Json_Serializer
         static $attrs = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number");
 
         return $this->getAnyEntryAttribute($attrs);
+    }
+
+    /**
+     * @param string|array $attrs
+     * @param null $tag
+     * @param null $found_attr
+     * @return string
+     */
+    public function getAnyEntryAttribute($attrs, $tag = null, &$found_attr = null)
+    {
+        if (!is_array($attrs)) {
+            return $this->getEntryAttribute($attrs, $tag);
+        }
+
+        $val = '';
+        foreach ($attrs as $attr) {
+            $val = $this->getEntryAttribute($attr, $tag);
+            if (empty($val)) continue;
+
+            if ($found_attr !== null) {
+                $found_attr = $attr;
+            }
+            break;
+        }
+        return $val;
     }
 
     /**
@@ -357,11 +339,30 @@ class Entry extends Json_Serializer
     }
 
     /**
+     * @param array $attrs
+     * @param null $tag
+     * @return array
+     */
+    public function getAllEntryAttributes($attrs, $tag = null)
+    {
+        $ret = array();
+        foreach ($attrs as $attr) {
+            $val = $this->getEntryAttribute($attr, $tag);
+            if (empty($val)) continue;
+
+            $ret[$attr] = $val;
+        }
+
+        return $ret;
+    }
+
+    /**
      * Get protected parameter for channel
      *
      * @return string
      */
-    public function getProtectedCode() {
+    public function getProtectedCode()
+    {
         static $adult_attrs = array("adult", "parent-code", "censored");
 
         $adult_code = $this->getAnyEntryAttribute($adult_attrs, self::TAG_EXTINF, $used_tag);

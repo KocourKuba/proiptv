@@ -209,27 +209,11 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @return M3uParser
-     */
-    public function get_m3u_parser()
-    {
-        return $this->m3u_parser;
-    }
-
-    /**
      * @return Hashed_Array
      */
     public function get_special_groups()
     {
         return $this->special_groups;
-    }
-
-    /**
-     * @return Group
-     */
-    public function get_special_group($id)
-    {
-        return $this->special_groups->get($id);
     }
 
     /**
@@ -299,22 +283,72 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param string $page_id
-     * @param int $increment
-     * @return int
+     * @param string $movie_id
+     * @return Movie
+     * @throws Exception
      */
-    public function get_next_page($page_id, $increment = 1)
+    public function TryLoadMovie($movie_id)
     {
-        if (!array_key_exists($page_id, $this->pages)) {
-            $this->pages[$page_id] = 0;
+        hd_debug_print(null, true);
+        hd_debug_print($movie_id);
+
+        $entry = $this->get_m3u_parser()->getEntryByIdx($movie_id);
+        if ($entry === null) {
+            hd_debug_print("Movie not found");
+            $movie = null;
+        } else {
+            $logo = $entry->getEntryAttribute('tvg-logo');
+            $title = $entry->getEntryTitle();
+            $title_orig = '';
+            $country = '';
+            $year = '';
+
+            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
+                $title = isset($match['title']) ? $match['title'] : $title;
+                $title_orig = isset($match['title_orig']) ? $match['title_orig'] : $title_orig;
+                $country = isset($match['country']) ? $match['country'] : $country;
+                $year = isset($match['year']) ? $match['year'] : $year;
+            }
+
+            $category = '';
+            foreach ($this->vod_m3u_indexes as $group => $indexes) {
+                if ($group === Vod_Category::FLAG_ALL_MOVIES) continue;
+                if (in_array($movie_id, $indexes)) {
+                    $category = $group;
+                    break;
+                }
+            }
+
+            $movie = new Movie($movie_id, $this->plugin);
+            $movie->set_data(
+                $title,            // caption,
+                $title_orig,       // caption_original,
+                '',      // description,
+                $logo,             // poster_url,
+                '',      // length,
+                $year,             // year,
+                '',     // director,
+                '',     // scenario,
+                '',       // actors,
+                $category,         // genres,
+                '',       // rate_imdb,
+                '',    // rate_kinopoisk,
+                '',       // rate_mpaa,
+                $country           // country,
+            );
+
+            $movie->add_series_data($movie_id, $title, '', $entry->getPath());
         }
 
-        if ($this->pages[$page_id] !== -1) {
-            $this->pages[$page_id] += $increment;
-        }
+        return $movie;
+    }
 
-        hd_debug_print("get_next_page page_id: $page_id next_idx: {$this->pages[$page_id]}", true);
-        return $this->pages[$page_id];
+    /**
+     * @return M3uParser
+     */
+    public function get_m3u_parser()
+    {
+        return $this->m3u_parser;
     }
 
     /**
@@ -325,26 +359,6 @@ class vod_standard extends Abstract_Vod
     {
         hd_debug_print("set_next_page page_id: $page_id idx: $value", true);
         $this->pages[$page_id] = $value;
-    }
-
-    /**
-     * @param string $page_id
-     * @return int
-     */
-    public function get_current_page($page_id)
-    {
-        $current_idx = array_key_exists($page_id, $this->pages) ? $this->pages[$page_id] : 0;
-        hd_debug_print("get_current_page page_id: $page_id current_idx: $current_idx", true);
-        return $current_idx;
-    }
-
-    /**
-     * @param string $name
-     * @return mixed|null
-     */
-    public function get_filter($name)
-    {
-        return isset($this->filters[$name]) ? $this->filters[$name] : null;
     }
 
     /**
@@ -392,6 +406,14 @@ class vod_standard extends Abstract_Vod
                 break;
             default:
         }
+    }
+
+    /**
+     * @return Group
+     */
+    public function get_special_group($id)
+    {
+        return $this->special_groups->get($id);
     }
 
     /**
@@ -542,7 +564,7 @@ class vod_standard extends Abstract_Vod
         hd_debug_print("Read from: $page_idx to $ubound");
 
         $pos = $page_idx;
-        while($pos < $ubound) {
+        while ($pos < $ubound) {
             $index = $indexes[$pos++];
             $entry = $this->m3u_parser->getEntryByIdx($index);
             if ($entry === null || $entry->isM3U_Header()) continue;
@@ -562,64 +584,33 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param string $movie_id
-     * @return Movie
-     * @throws Exception
+     * @param string $page_id
+     * @return int
      */
-    public function TryLoadMovie($movie_id)
+    public function get_current_page($page_id)
     {
-        hd_debug_print(null, true);
-        hd_debug_print($movie_id);
+        $current_idx = array_key_exists($page_id, $this->pages) ? $this->pages[$page_id] : 0;
+        hd_debug_print("get_current_page page_id: $page_id current_idx: $current_idx", true);
+        return $current_idx;
+    }
 
-        $entry = $this->get_m3u_parser()->getEntryByIdx($movie_id);
-        if ($entry === null) {
-            hd_debug_print("Movie not found");
-            $movie = null;
-        } else {
-            $logo = $entry->getEntryAttribute('tvg-logo');
-            $title = $entry->getEntryTitle();
-            $title_orig = '';
-            $country = '';
-            $year = '';
-
-            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = isset($match['title']) ? $match['title'] : $title;
-                $title_orig = isset($match['title_orig']) ? $match['title_orig'] : $title_orig;
-                $country = isset($match['country']) ? $match['country'] : $country;
-                $year = isset($match['year']) ? $match['year'] : $year;
-            }
-
-            $category = '';
-            foreach ($this->vod_m3u_indexes as $group => $indexes) {
-                if ($group === Vod_Category::FLAG_ALL_MOVIES) continue;
-                if (in_array($movie_id, $indexes)) {
-                    $category = $group;
-                    break;
-                }
-            }
-
-            $movie = new Movie($movie_id, $this->plugin);
-            $movie->set_data(
-                $title,            // caption,
-                $title_orig,       // caption_original,
-                '',      // description,
-                $logo,             // poster_url,
-                '',      // length,
-                $year,             // year,
-                '',     // director,
-                '',     // scenario,
-                '',       // actors,
-                $category,         // genres,
-                '',       // rate_imdb,
-                '',    // rate_kinopoisk,
-                '',       // rate_mpaa,
-                $country           // country,
-            );
-
-            $movie->add_series_data($movie_id, $title, '', $entry->getPath());
+    /**
+     * @param string $page_id
+     * @param int $increment
+     * @return int
+     */
+    public function get_next_page($page_id, $increment = 1)
+    {
+        if (!array_key_exists($page_id, $this->pages)) {
+            $this->pages[$page_id] = 0;
         }
 
-        return $movie;
+        if ($this->pages[$page_id] !== -1) {
+            $this->pages[$page_id] += $increment;
+        }
+
+        hd_debug_print("get_next_page page_id: $page_id next_idx: {$this->pages[$page_id]}", true);
+        return $this->pages[$page_id];
     }
 
     /**
@@ -692,6 +683,15 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
+     * @param string $name
+     * @return mixed|null
+     */
+    public function get_filter($name)
+    {
+        return isset($this->filters[$name]) ? $this->filters[$name] : null;
+    }
+
+    /**
      * @param Object $user_input
      * @return string
      */
@@ -712,7 +712,7 @@ class vod_standard extends Abstract_Vod
             $add_text = '';
             if (isset($filter['text']) && !empty($user_input->{$name})) {
                 $add_text = $user_input->{$name};
-            } else if ((int)$user_input->{$name} !== -1){
+            } else if ((int)$user_input->{$name} !== -1) {
                 $add_text = $filter['values'][$user_input->{$name}];
             }
 

@@ -63,39 +63,6 @@ class Default_Archive implements Archive
     }
 
     /**
-     * @inheritDoc
-     */
-    public function get_id()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_image_archive_def()
-    {
-        $urls_with_keys = array();
-        foreach ($this->version_by_name as $name => $version) {
-            $pos = strrpos($name, ".");
-            if ($pos === false)
-                $key = "$name.$version";
-            else {
-                $key = substr($name, 0, $pos) . '.' . $version . substr($name, $pos);
-            }
-
-            $urls_with_keys[$key] = "$this->url_prefix/$name";
-        }
-
-        return array(
-            PluginArchiveDef::id => $this->id,
-            PluginArchiveDef::urls_with_keys => $urls_with_keys,
-            PluginArchiveDef::all_tgz_url => "$this->url_prefix/all.tgz",
-            PluginArchiveDef::total_size => $this->total_size,
-        );
-    }
-
-    /**
      * @return void
      */
     public static function clear_cache()
@@ -171,6 +138,39 @@ class Default_Archive implements Archive
         Archive_Cache::set_archive($archive);
 
         return $archive;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_id()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_image_archive_def()
+    {
+        $urls_with_keys = array();
+        foreach ($this->version_by_name as $name => $version) {
+            $pos = strrpos($name, ".");
+            if ($pos === false)
+                $key = "$name.$version";
+            else {
+                $key = substr($name, 0, $pos) . '.' . $version . substr($name, $pos);
+            }
+
+            $urls_with_keys[$key] = "$this->url_prefix/$name";
+        }
+
+        return array(
+            PluginArchiveDef::id => $this->id,
+            PluginArchiveDef::urls_with_keys => $urls_with_keys,
+            PluginArchiveDef::all_tgz_url => "$this->url_prefix/all.tgz",
+            PluginArchiveDef::total_size => $this->total_size,
+        );
     }
 
     /**

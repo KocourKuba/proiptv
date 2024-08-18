@@ -33,13 +33,35 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param MediaURL $media_url
      * @param Object $plugin_cookies
-     * @return array
+     * @param string $param
+     * @param bool $default
+     * @return mixed
      */
-    abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);
+    protected static function get_cookie_bool_param($plugin_cookies, $param, $default = true)
+    {
+        if (!isset($plugin_cookies->{$param}))
+            $plugin_cookies->{$param} = $default ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off;
+
+        return $plugin_cookies->{$param};
+    }
 
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param Object $plugin_cookies
+     * @param string $param
+     * @return void
+     */
+    protected static function toggle_cookie_param($plugin_cookies, $param)
+    {
+        hd_debug_print("toggle old param $param: " . $plugin_cookies->{$param}, true);
+        $plugin_cookies->{$param} = $plugin_cookies->{$param} === SetupControlSwitchDefs::switch_off
+            ? SetupControlSwitchDefs::switch_on
+            : SetupControlSwitchDefs::switch_off;
+
+        hd_debug_print("toggle new param $param: " . $plugin_cookies->{$param}, true);
+    }
 
     /**
      * @inheritDoc
@@ -73,31 +95,9 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     }
 
     /**
+     * @param MediaURL $media_url
      * @param Object $plugin_cookies
-     * @param string $param
-     * @param bool $default
-     * @return mixed
+     * @return array
      */
-    protected static function get_cookie_bool_param($plugin_cookies, $param, $default = true)
-    {
-        if (!isset($plugin_cookies->{$param}))
-            $plugin_cookies->{$param} = $default ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off;
-
-        return $plugin_cookies->{$param};
-    }
-
-    /**
-     * @param Object $plugin_cookies
-     * @param string $param
-     * @return void
-     */
-    protected static function toggle_cookie_param($plugin_cookies, $param)
-    {
-        hd_debug_print("toggle old param $param: " . $plugin_cookies->{$param}, true);
-        $plugin_cookies->{$param} = $plugin_cookies->{$param} === SetupControlSwitchDefs::switch_off
-            ? SetupControlSwitchDefs::switch_on
-            : SetupControlSwitchDefs::switch_off;
-
-        hd_debug_print("toggle new param $param: " . $plugin_cookies->{$param}, true);
-    }
+    abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);
 }

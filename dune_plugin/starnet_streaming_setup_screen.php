@@ -41,6 +41,25 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        return $actions;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        return $this->do_get_control_defs($plugin_cookies);
+    }
+
+    /**
      * streaming parameters dialog defs
      * @param Object $plugin_cookies
      * @return array
@@ -66,7 +85,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         // auto resume
         $value = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'),  SetupControlSwitchDefs::$on_off_translated[$value],
+            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SetupControlSwitchDefs::$on_off_translated[$value],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
@@ -113,9 +132,9 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         $show_delay_time_ops[10] = TR::t('setup_buffer_sec__1', "10");
         $show_delay_time_ops[20] = TR::t('setup_buffer_sec__1', "20");
         $show_delay_time_ops[30] = TR::t('setup_buffer_sec__1', "30");
-        $show_delay_time_ops[2*60] = TR::t('setup_buffer_sec__1', "120");
-        $show_delay_time_ops[3*60] = TR::t('setup_buffer_sec__1', "180");
-        $show_delay_time_ops[5*60] = TR::t('setup_buffer_sec__1', "300");
+        $show_delay_time_ops[2 * 60] = TR::t('setup_buffer_sec__1', "120");
+        $show_delay_time_ops[3 * 60] = TR::t('setup_buffer_sec__1', "180");
+        $show_delay_time_ops[5 * 60] = TR::t('setup_buffer_sec__1', "300");
 
         $delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
         hd_debug_print("Current archive delay: $delay");
@@ -130,25 +149,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
             true);
 
         return $defs;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        return $this->do_get_control_defs($plugin_cookies);
     }
 
     /**

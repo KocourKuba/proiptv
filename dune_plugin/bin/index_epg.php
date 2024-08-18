@@ -26,7 +26,7 @@
 
 require_once "cgi_config.php";
 
-set_include_path(get_include_path(). PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
+set_include_path(get_include_path() . PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
 
 require_once 'lib/epg/epg_manager_xmltv.php';
 

@@ -33,15 +33,6 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $group_id
-     * @return false|string
-     */
-    public static function get_media_url_string($group_id)
-    {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
-    }
-
-    /**
      * @param MediaURL $media_url
      * @param Object $plugin_cookies
      * @return array
@@ -51,14 +42,14 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
 
         return array(
-            GUI_EVENT_KEY_ENTER      => $action_play,
-            GUI_EVENT_KEY_PLAY       => $action_play,
-            GUI_EVENT_KEY_B_GREEN    => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('left')),
-            GUI_EVENT_KEY_C_YELLOW   => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('right')),
-            GUI_EVENT_KEY_D_BLUE     => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
+            GUI_EVENT_KEY_ENTER => $action_play,
+            GUI_EVENT_KEY_PLAY => $action_play,
+            GUI_EVENT_KEY_B_GREEN => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('left')),
+            GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('right')),
+            GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
             GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
-            GUI_EVENT_KEY_RETURN     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
-            GUI_EVENT_KEY_STOP       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -146,6 +137,15 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
         }
 
         return null;
+    }
+
+    /**
+     * @param string $group_id
+     * @return false|string
+     */
+    public static function get_media_url_string($group_id)
+    {
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
     }
 
     ///////////////////////////////////////////////////////////////////////

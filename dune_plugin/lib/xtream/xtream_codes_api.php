@@ -96,98 +96,6 @@ class xtream_codes_api
     }
 
     /**
-     * Get categories
-     * @return array|false
-     */
-    public function get_categories($stream_type = self::VOD)
-    {
-        return $this->get_cached_response($this->get_categories_url($stream_type));
-    }
-
-    /**
-     * Get streams
-     * @param string|null $category_id
-     * @return mixed|false
-     */
-    public function get_streams($stream_type = self::VOD, $category_id = null)
-    {
-        return $this->get_cached_response($this->get_streams_url($stream_type, $category_id));
-    }
-
-    /**
-     * Get stream info
-     * @param string $id
-     * @return mixed|false
-     */
-    public function get_stream_info($id, $stream_type = self::VOD)
-    {
-        return $this->get_cached_response($this->get_stream_info_url($id, $stream_type));
-    }
-
-    /**
-     * Get stream url
-     * @param string $id
-     * @return string
-     */
-    public function get_stream_url($id, $stream_type = self::VOD)
-    {
-        $stream_type = ($stream_type !== self::LIVE) ? "movie" : $stream_type;
-        return sprintf("%s/%s/%s/%s/$id",
-            $this->base_url,
-            $stream_type,
-            $this->username,
-            $this->password);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Get auth url
-     * @return string
-     */
-    protected function get_auth_url()
-    {
-        return sprintf("%s/player_api.php?username=%s&password=%s", $this->base_url, $this->username, $this->password);
-    }
-
-    /**
-     * Get categories url
-     * @return string
-     */
-    protected function get_categories_url($stream_type = self::VOD)
-    {
-        return sprintf("%s&action=get_%s_categories", $this->get_auth_url(), $stream_type);
-    }
-
-    /**
-     * Get streams url
-     * @return string|null
-     */
-    protected function get_streams_url($stream_type = self::VOD, $category_id = null)
-    {
-        if ($stream_type === self::SERIES) {
-            $url = sprintf("%s&action=get_%s", $this->get_auth_url(), $stream_type);
-        } else {
-            $url = sprintf("%s&action=get_%s_streams", $this->get_auth_url(), $stream_type);
-        }
-
-        if (!empty($category_id)) {
-            $url .= "&category_id=$category_id";
-        }
-
-        return $url;
-    }
-
-    /**
-     * Get stream info url
-     * @return string
-     */
-    protected function get_stream_info_url($id, $stream_type = self::VOD)
-    {
-        return sprintf("%s&action=get_%s_info&%s_id=%s", $this->get_auth_url(), $stream_type, $stream_type, $id);
-    }
-
-    /**
      * Get response if it already requested return cached value
      * @param string $url
      * @return mixed|false
@@ -233,5 +141,97 @@ class xtream_codes_api
         }
 
         return $cached_data;
+    }
+
+    /**
+     * Get auth url
+     * @return string
+     */
+    protected function get_auth_url()
+    {
+        return sprintf("%s/player_api.php?username=%s&password=%s", $this->base_url, $this->username, $this->password);
+    }
+
+    /**
+     * Get categories
+     * @return array|false
+     */
+    public function get_categories($stream_type = self::VOD)
+    {
+        return $this->get_cached_response($this->get_categories_url($stream_type));
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Get categories url
+     * @return string
+     */
+    protected function get_categories_url($stream_type = self::VOD)
+    {
+        return sprintf("%s&action=get_%s_categories", $this->get_auth_url(), $stream_type);
+    }
+
+    /**
+     * Get streams
+     * @param string|null $category_id
+     * @return mixed|false
+     */
+    public function get_streams($stream_type = self::VOD, $category_id = null)
+    {
+        return $this->get_cached_response($this->get_streams_url($stream_type, $category_id));
+    }
+
+    /**
+     * Get streams url
+     * @return string|null
+     */
+    protected function get_streams_url($stream_type = self::VOD, $category_id = null)
+    {
+        if ($stream_type === self::SERIES) {
+            $url = sprintf("%s&action=get_%s", $this->get_auth_url(), $stream_type);
+        } else {
+            $url = sprintf("%s&action=get_%s_streams", $this->get_auth_url(), $stream_type);
+        }
+
+        if (!empty($category_id)) {
+            $url .= "&category_id=$category_id";
+        }
+
+        return $url;
+    }
+
+    /**
+     * Get stream info
+     * @param string $id
+     * @return mixed|false
+     */
+    public function get_stream_info($id, $stream_type = self::VOD)
+    {
+        return $this->get_cached_response($this->get_stream_info_url($id, $stream_type));
+    }
+
+    /**
+     * Get stream info url
+     * @return string
+     */
+    protected function get_stream_info_url($id, $stream_type = self::VOD)
+    {
+        return sprintf("%s&action=get_%s_info&%s_id=%s", $this->get_auth_url(), $stream_type, $stream_type, $id);
+    }
+
+    /**
+     * Get stream url
+     * @param string $id
+     * @return string
+     */
+    public function get_stream_url($id, $stream_type = self::VOD)
+    {
+        $stream_type = ($stream_type !== self::LIVE) ? "movie" : $stream_type;
+        return sprintf("%s/%s/%s/%s/$id",
+            $this->base_url,
+            $stream_type,
+            $this->username,
+            $this->password);
     }
 }

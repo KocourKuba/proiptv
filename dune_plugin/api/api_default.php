@@ -177,53 +177,6 @@ class api_default
 
     ////////////////////////////////////////////////////////////////////////
     /// Getters/Setters
-    /**
-     * @return string
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param string $id
-     */
-    public function setId($id)
-    {
-        $this->id = $id;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param string $name
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * @return string
-     */
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    /**
-     * @param string $type
-     */
-    public function setType($type)
-    {
-        $this->type = $type;
-    }
 
     /**
      * @return string
@@ -255,22 +208,6 @@ class api_default
     public function setProviderUrl($provider_url)
     {
         $this->provider_url = $provider_url;
-    }
-
-    /**
-     * @return string
-     */
-    public function getApiUrl()
-    {
-        return $this->api_url;
-    }
-
-    /**
-     * @param string $api_url
-     */
-    public function setApiUrl($api_url)
-    {
-        $this->api_url = $api_url;
     }
 
     /**
@@ -329,7 +266,6 @@ class api_default
         return $this->config;
     }
 
-
     /**
      * @param array $config
      */
@@ -345,9 +281,6 @@ class api_default
     {
         return $this->curl_wrapper;
     }
-
-    ////////////////////////////////////////////////////////////////////////
-    /// Methods
 
     /**
      * @return string
@@ -437,141 +370,6 @@ class api_default
     }
 
     /**
-     * @param array $matches
-     * @param string $hash
-     * @return bool|Named_Storage
-     */
-    public function fill_default_provider_info($matches, &$hash)
-    {
-        $info = new Named_Storage();
-        $info->type = PARAM_PROVIDER;
-        $info->params[PARAM_PROVIDER] = $matches[1];
-        $info->name = $this->getName();
-
-        $vars = explode(':', $matches[2]);
-        if (empty($vars)) {
-            hd_debug_print("invalid provider_info: $matches[0]", true);
-            return false;
-        }
-
-        hd_debug_print("parse imported provider_info: $vars[0]", true);
-
-        switch ($this->getType()) {
-            case PROVIDER_TYPE_PIN:
-                hd_debug_print("set pin: $vars[0]", true);
-                $info->params[MACRO_PASSWORD] = $vars[0];
-                break;
-
-            case PROVIDER_TYPE_LOGIN:
-                hd_debug_print("set login: $vars[0]", true);
-                $info->params[MACRO_LOGIN] = $vars[0];
-                hd_debug_print("set password: $vars[1]", true);
-                $info->params[MACRO_PASSWORD] = $vars[1];
-                break;
-            default:
-        }
-
-        $hash = Hashed_Array::hash($info->type . $info->name . $info->params[MACRO_LOGIN] . $info->params[MACRO_PASSWORD]);
-
-        return $info;
-    }
-
-    /**
-     * @param string $val
-     * @return string|array|null
-     */
-    public function getConfigValue($val)
-    {
-        return isset($this->config[$val]) ? $this->config[$val] : null;
-    }
-
-    /**
-     * @param string $name
-     * @param string $default
-     * @return string
-     */
-    public function getCredential($name, $default = '')
-    {
-        return isset($this->playlist_info->params[$name]) ? $this->playlist_info->params[$name] : $default;
-    }
-
-    /**
-     * @param string $name
-     * @param array|string $value
-     * @return void
-     */
-    public function setCredential($name, $value)
-    {
-        $this->playlist_info->params[$name] = $value;
-    }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function removeCredential($name)
-    {
-        if (isset($this->playlist_info->params[$name])) {
-           unset($this->playlist_info->params[$name]);
-           return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function get_vod_class()
-    {
-        if ($this->hasApiCommand(API_COMMAND_GET_VOD)) {
-            $vod_class = "vod_" . $this->getId();
-            if (class_exists($vod_class)) {
-                hd_debug_print("Used VOD class: $vod_class");
-                return $vod_class;
-            }
-
-            hd_debug_print("Used VOD class: vod_standard");
-            return  "vod_standard";
-        }
-
-        return null;
-    }
-
-    /**
-     * @param bool $force
-     * @return bool
-     */
-    public function request_provider_token($force = false)
-    {
-        return true;
-    }
-
-    /**
-     * @param string $tmp_file
-     * @return bool
-     */
-    public function load_playlist($tmp_file)
-    {
-        hd_debug_print(null, true);
-
-        $playlists = $this->GetPlaylists();
-        if (!empty($playlists)) {
-            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
-            $playlist = '';
-            if ($idx === CUSTOM_PLAYLIST_ID) {
-                $playlist = $this->getCredential(MACRO_CUSTOM_PLAYLIST);
-            } else if (!empty($playlists[$idx]['url'])) {
-                $playlist = $playlists[$idx]['url'];
-            }
-
-            $this->setCredential(MACRO_PLAYLIST, $playlist);
-        }
-
-        return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
-    }
-
-    /**
      * @param bool $force
      * @return bool|object
      */
@@ -594,28 +392,6 @@ class api_default
     public function hasApiCommand($command)
     {
         return isset($this->api_commands[$command]);
-    }
-
-    /**
-     * @param string $command
-     * @return string
-     */
-    public function getApiCommand($command)
-    {
-        hd_debug_print(null, true);
-
-        return $this->replace_macros($this->getRawApiCommand($command));
-    }
-
-    /**
-     * @param string $command
-     * @return string
-     */
-    public function getRawApiCommand($command)
-    {
-        hd_debug_print(null, true);
-
-        return $this->hasApiCommand($command) ? $this->api_commands[$command] : '';
     }
 
     /**
@@ -702,6 +478,348 @@ class api_default
         }
 
         return $data;
+    }
+
+    /**
+     * @param string $command
+     * @return string
+     */
+    public function getApiCommand($command)
+    {
+        hd_debug_print(null, true);
+
+        return $this->replace_macros($this->getRawApiCommand($command));
+    }
+
+    /**
+     * @param string $string
+     * @return string
+     */
+    public function replace_macros($string)
+    {
+        static $macroses = array(
+            MACRO_LOGIN,
+            MACRO_PASSWORD,
+            MACRO_STREAM_ID,
+            MACRO_SUBDOMAIN,
+            MACRO_OTTKEY,
+            MACRO_SESSION_ID,
+            MACRO_DOMAIN_ID,
+            MACRO_DEVICE_ID,
+            MACRO_SERVER_ID,
+            MACRO_QUALITY_ID,
+            MACRO_PLAYLIST_ID,
+            MACRO_VPORTAL,
+        );
+
+        hd_debug_print("template: $string", true);
+        $string = str_replace(
+            array(MACRO_API, MACRO_PLAYLIST),
+            array($this->getApiUrl(), $this->getCredential(MACRO_PLAYLIST)),
+            $string);
+
+        foreach ($macroses as $macro) {
+            if (strpos($string, $macro) !== false) {
+                $string = str_replace($macro, trim($this->getCredential($macro)), $string);
+            }
+        }
+        hd_debug_print("result: $string", true);
+
+        return $string;
+    }
+
+    /**
+     * @return string
+     */
+    public function getApiUrl()
+    {
+        return $this->api_url;
+    }
+
+    ////////////////////////////////////////////////////////////////////////
+    /// Methods
+
+    /**
+     * @param string $api_url
+     */
+    public function setApiUrl($api_url)
+    {
+        $this->api_url = $api_url;
+    }
+
+    /**
+     * @param string $name
+     * @param string $default
+     * @return string
+     */
+    public function getCredential($name, $default = '')
+    {
+        return isset($this->playlist_info->params[$name]) ? $this->playlist_info->params[$name] : $default;
+    }
+
+    /**
+     * @param string $command
+     * @return string
+     */
+    public function getRawApiCommand($command)
+    {
+        hd_debug_print(null, true);
+
+        return $this->hasApiCommand($command) ? $this->api_commands[$command] : '';
+    }
+
+    /**
+     * @param string $val
+     * @return string|array|null
+     */
+    public function getConfigValue($val)
+    {
+        return isset($this->config[$val]) ? $this->config[$val] : null;
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetStreams()
+    {
+        hd_debug_print(null, true);
+
+        if (empty($this->streams)) {
+            $this->streams = $this->getConfigValue(CONFIG_STREAMS);
+        }
+
+        return $this->streams;
+    }
+
+    /**
+     * @param string $name
+     * @param array|string $value
+     * @return void
+     */
+    public function setCredential($name, $value)
+    {
+        $this->playlist_info->params[$name] = $value;
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetDomains()
+    {
+        hd_debug_print(null, true);
+
+        if (empty($this->domains)) {
+            $this->domains = $this->getConfigValue(CONFIG_DOMAINS);
+        }
+
+        return $this->domains;
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetServers()
+    {
+        hd_debug_print(null, true);
+
+        if (empty($this->servers)) {
+            $this->servers = $this->getConfigValue(CONFIG_SERVERS);
+        }
+
+        return $this->servers;
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetDevices()
+    {
+        hd_debug_print(null, true);
+
+        if (empty($this->devices)) {
+            $this->devices = $this->getConfigValue(CONFIG_DEVICES);
+        }
+
+        return $this->devices;
+    }
+
+    /**
+     * returns list of provider servers
+     * @return array|null
+     */
+    public function GetQualities()
+    {
+        hd_debug_print(null, true);
+
+        if (empty($this->qualities)) {
+            $this->qualities = $this->getConfigValue(CONFIG_QUALITIES);
+        }
+
+        return $this->qualities;
+    }
+
+    /**
+     * returns list of account playlists
+     * @return array|null
+     */
+    public function GetPlaylists()
+    {
+        hd_debug_print(null, true);
+
+        if (empty($this->playlists)) {
+            $this->playlists = $this->getConfigValue(CONFIG_PLAYLISTS);
+        }
+
+        return $this->playlists;
+    }
+
+    /**
+     * @param array $matches
+     * @param string $hash
+     * @return bool|Named_Storage
+     */
+    public function fill_default_provider_info($matches, &$hash)
+    {
+        $info = new Named_Storage();
+        $info->type = PARAM_PROVIDER;
+        $info->params[PARAM_PROVIDER] = $matches[1];
+        $info->name = $this->getName();
+
+        $vars = explode(':', $matches[2]);
+        if (empty($vars)) {
+            hd_debug_print("invalid provider_info: $matches[0]", true);
+            return false;
+        }
+
+        hd_debug_print("parse imported provider_info: $vars[0]", true);
+
+        switch ($this->getType()) {
+            case PROVIDER_TYPE_PIN:
+                hd_debug_print("set pin: $vars[0]", true);
+                $info->params[MACRO_PASSWORD] = $vars[0];
+                break;
+
+            case PROVIDER_TYPE_LOGIN:
+                hd_debug_print("set login: $vars[0]", true);
+                $info->params[MACRO_LOGIN] = $vars[0];
+                hd_debug_print("set password: $vars[1]", true);
+                $info->params[MACRO_PASSWORD] = $vars[1];
+                break;
+            default:
+        }
+
+        $hash = Hashed_Array::hash($info->type . $info->name . $info->params[MACRO_LOGIN] . $info->params[MACRO_PASSWORD]);
+
+        return $info;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param string $type
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+    }
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    public function removeCredential($name)
+    {
+        if (isset($this->playlist_info->params[$name])) {
+            unset($this->playlist_info->params[$name]);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function get_vod_class()
+    {
+        if ($this->hasApiCommand(API_COMMAND_GET_VOD)) {
+            $vod_class = "vod_" . $this->getId();
+            if (class_exists($vod_class)) {
+                hd_debug_print("Used VOD class: $vod_class");
+                return $vod_class;
+            }
+
+            hd_debug_print("Used VOD class: vod_standard");
+            return "vod_standard";
+        }
+
+        return null;
+    }
+
+    /**
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param string $id
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
+
+    /**
+     * @param string $tmp_file
+     * @return bool
+     */
+    public function load_playlist($tmp_file)
+    {
+        hd_debug_print(null, true);
+
+        $playlists = $this->GetPlaylists();
+        if (!empty($playlists)) {
+            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
+            $playlist = '';
+            if ($idx === CUSTOM_PLAYLIST_ID) {
+                $playlist = $this->getCredential(MACRO_CUSTOM_PLAYLIST);
+            } else if (!empty($playlists[$idx]['url'])) {
+                $playlist = $playlists[$idx]['url'];
+            }
+
+            $this->setCredential(MACRO_PLAYLIST, $playlist);
+        }
+
+        return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
     }
 
     /**
@@ -806,7 +924,7 @@ class api_default
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($this->check_control_parameters($user_input,CONTROL_PASSWORD, MACRO_PASSWORD)) {
+                if ($this->check_control_parameters($user_input, CONTROL_PASSWORD, MACRO_PASSWORD)) {
                     $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                     $changed = true;
                 }
@@ -817,12 +935,12 @@ class api_default
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($this->check_control_parameters($user_input,CONTROL_LOGIN, MACRO_LOGIN)) {
+                if ($this->check_control_parameters($user_input, CONTROL_LOGIN, MACRO_LOGIN)) {
                     $this->playlist_info->params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
                     $changed = true;
                 }
 
-                if ($this->check_control_parameters($user_input,CONTROL_PASSWORD, MACRO_PASSWORD)) {
+                if ($this->check_control_parameters($user_input, CONTROL_PASSWORD, MACRO_PASSWORD)) {
                     $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                     $changed = true;
                 }
@@ -860,6 +978,81 @@ class api_default
         }
 
         return $id;
+    }
+
+    protected function check_control_parameters($user_input, $param, $param_settings)
+    {
+        return (isset($user_input->{$param})
+            && (!isset($this->playlist_info->params[$param_settings])
+                || $this->playlist_info->params[$param_settings] !== $user_input->{$param}));
+    }
+
+    /**
+     * @param Named_Storage $info
+     * @return string
+     */
+    public function get_hash($info)
+    {
+        $str = '';
+        if (isset($info->params[MACRO_LOGIN])) {
+            $str .= $info->params[MACRO_LOGIN];
+        }
+
+        if (isset($info->params[MACRO_PASSWORD])) {
+            $str .= $info->params[MACRO_PASSWORD];
+        }
+
+        if (empty($str)) {
+            return '';
+        }
+
+        return $this->getId() . "_" . Hashed_Array::hash($info->type . $info->name . $str);
+    }
+
+    /**
+     * @param Object $user_input
+     * @param string $id
+     * @return void
+     */
+    protected function set_default_settings($user_input, $id)
+    {
+        if (empty($user_input->{CONTROL_EDIT_ITEM})) {
+            // new provider. Fill default values
+            $settings = $this->plugin->get_settings($id);
+            $xmltv_picons = $this->getConfigValue(XMLTV_PICONS);
+            if ($xmltv_picons) {
+                $settings[PARAM_USE_PICONS] = XMLTV_PICONS;
+            }
+
+            $epg_preset = $this->getConfigValue(EPG_JSON_PRESET);
+            if (!empty($epg_preset)) {
+                $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
+            }
+
+            $detect_stream = $this->getConfigValue(PARAM_DUNE_FORCE_TS);
+            if ($detect_stream) {
+                $settings[PARAM_DUNE_FORCE_TS] = $detect_stream;
+            }
+
+            if (!empty($settings)) {
+                $this->plugin->put_settings($id, $settings);
+            }
+        }
+
+        $this->plugin->get_playlists()->set($id, $this->playlist_info);
+
+        if ($this->plugin->get_active_playlist_key() === $id) {
+            $this->plugin->set_active_playlist_key($id);
+        }
+    }
+
+    /**
+     * @param bool $force
+     * @return bool
+     */
+    public function request_provider_token($force = false)
+    {
+        return true;
     }
 
     /**
@@ -1034,47 +1227,6 @@ class api_default
     }
 
     /**
-     * returns list of provider servers
-     * @return array|null
-     */
-    public function GetStreams()
-    {
-        hd_debug_print(null, true);
-
-        if (empty($this->streams)) {
-            $this->streams = $this->getConfigValue(CONFIG_STREAMS);
-        }
-
-        return $this->streams;
-    }
-
-    /**
-     * set stream
-     * @param string $stream
-     * @return void
-     */
-    public function SetStream($stream)
-    {
-        hd_debug_print(null, true);
-        $this->setCredential(MACRO_STREAM_ID, $stream);
-    }
-
-    /**
-     * returns list of provider servers
-     * @return array|null
-     */
-    public function GetServers()
-    {
-        hd_debug_print(null, true);
-
-        if (empty($this->servers)) {
-            $this->servers = $this->getConfigValue(CONFIG_SERVERS);
-        }
-
-        return $this->servers;
-    }
-
-    /**
      * set server
      * @param string $server
      * @param string $error_msg
@@ -1091,21 +1243,6 @@ class api_default
     }
 
     /**
-     * returns list of account playlists
-     * @return array|null
-     */
-    public function GetPlaylists()
-    {
-        hd_debug_print(null, true);
-
-        if (empty($this->playlists)) {
-            $this->playlists = $this->getConfigValue(CONFIG_PLAYLISTS);
-        }
-
-        return $this->playlists;
-    }
-
-    /**
      * set playlist
      * @param string $id
      * @return void
@@ -1116,36 +1253,6 @@ class api_default
         hd_debug_print("SetPlaylist: $id");
 
         $this->setCredential(MACRO_PLAYLIST_ID, $id);
-    }
-
-    /**
-     * returns list of provider servers
-     * @return array|null
-     */
-    public function GetDomains()
-    {
-        hd_debug_print(null, true);
-
-        if (empty($this->domains)) {
-            $this->domains = $this->getConfigValue(CONFIG_DOMAINS);
-        }
-
-        return $this->domains;
-    }
-
-    /**
-     * returns list of provider servers
-     * @return array|null
-     */
-    public function GetDevices()
-    {
-        hd_debug_print(null, true);
-
-        if (empty($this->devices)) {
-            $this->devices = $this->getConfigValue(CONFIG_DEVICES);
-        }
-
-        return $this->devices;
     }
 
     /**
@@ -1161,40 +1268,14 @@ class api_default
     }
 
     /**
-     * returns list of provider servers
-     * @return array|null
+     * set stream
+     * @param string $stream
+     * @return void
      */
-    public function GetQualities()
+    public function SetStream($stream)
     {
         hd_debug_print(null, true);
-
-        if (empty($this->qualities)) {
-            $this->qualities = $this->getConfigValue(CONFIG_QUALITIES);
-        }
-
-        return $this->qualities;
-    }
-
-    /**
-     * @param Named_Storage $info
-     * @return string
-     */
-    public function get_hash($info)
-    {
-        $str = '';
-        if (isset($info->params[MACRO_LOGIN])) {
-            $str .= $info->params[MACRO_LOGIN];
-        }
-
-        if (isset($info->params[MACRO_PASSWORD])) {
-            $str .= $info->params[MACRO_PASSWORD];
-        }
-
-        if (empty($str)) {
-            return '';
-        }
-
-        return $this->getId() . "_" . Hashed_Array::hash($info->type . $info->name . $str);
+        $this->setCredential(MACRO_STREAM_ID, $stream);
     }
 
     protected function save_credentials()
@@ -1203,86 +1284,5 @@ class api_default
             $this->plugin->get_playlists()->set($this->playlist_id, $this->playlist_info);
             $this->plugin->save_parameters(true);
         }
-    }
-
-    /**
-     * @param string $string
-     * @return string
-     */
-    public function replace_macros($string)
-    {
-        static $macroses = array(
-            MACRO_LOGIN,
-            MACRO_PASSWORD,
-            MACRO_STREAM_ID,
-            MACRO_SUBDOMAIN,
-            MACRO_OTTKEY,
-            MACRO_SESSION_ID,
-            MACRO_DOMAIN_ID,
-            MACRO_DEVICE_ID,
-            MACRO_SERVER_ID,
-            MACRO_QUALITY_ID,
-            MACRO_PLAYLIST_ID,
-            MACRO_VPORTAL,
-        );
-
-        hd_debug_print("template: $string", true);
-        $string = str_replace(
-            array(MACRO_API, MACRO_PLAYLIST),
-            array($this->getApiUrl(), $this->getCredential(MACRO_PLAYLIST)),
-            $string);
-
-        foreach ($macroses as $macro) {
-            if (strpos($string, $macro) !== false) {
-                $string = str_replace($macro, trim($this->getCredential($macro)), $string);
-            }
-        }
-        hd_debug_print("result: $string", true);
-
-        return $string;
-    }
-
-    /**
-     * @param Object $user_input
-     * @param string $id
-     * @return void
-     */
-    protected function set_default_settings($user_input, $id)
-    {
-        if (empty($user_input->{CONTROL_EDIT_ITEM})) {
-            // new provider. Fill default values
-            $settings = $this->plugin->get_settings($id);
-            $xmltv_picons = $this->getConfigValue(XMLTV_PICONS);
-            if ($xmltv_picons) {
-                $settings[PARAM_USE_PICONS] = XMLTV_PICONS;
-            }
-
-            $epg_preset = $this->getConfigValue(EPG_JSON_PRESET);
-            if (!empty($epg_preset)) {
-                $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
-            }
-
-            $detect_stream = $this->getConfigValue(PARAM_DUNE_FORCE_TS);
-            if ($detect_stream) {
-                $settings[PARAM_DUNE_FORCE_TS] = $detect_stream;
-            }
-
-            if (!empty($settings)) {
-                $this->plugin->put_settings($id, $settings);
-            }
-        }
-
-        $this->plugin->get_playlists()->set($id, $this->playlist_info);
-
-        if ($this->plugin->get_active_playlist_key() === $id) {
-            $this->plugin->set_active_playlist_key($id);
-        }
-    }
-
-    protected function check_control_parameters($user_input, $param, $param_settings)
-    {
-        return (isset($user_input->{$param})
-            && (!isset($this->playlist_info->params[$param_settings])
-                || $this->playlist_info->params[$param_settings] !== $user_input->{$param}));
     }
 }

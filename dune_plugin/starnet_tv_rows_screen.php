@@ -37,11 +37,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     const ID = 'rows_epf';
 
     ///////////////////////////////////////////////////////////////////////////
-
+    public $need_update_epf_mapping_flag = false;
     private $removed_playback_point;
     private $clear_playback_points = false;
-
-    public $need_update_epf_mapping_flag = false;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -62,263 +60,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         if (!is_null($min_row_index_for_y2))
             $pane[PluginRowsPane::min_row_index_for_y2] = $min_row_index_for_y2;
-    }
-
-    /**
-     * @param string $parent_sel_state
-     * @return MediaURL|null
-     */
-    public function get_parent_media_url($parent_sel_state)
-    {
-        foreach (explode("\n", $parent_sel_state) as $line) {
-            if (strpos($line, 'channel_id')) {
-                return MediaURL::decode($line);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param MediaURL $media_url
-     * @param Object $plugin_cookies
-     * @return array|null
-     */
-    protected function do_get_info_children($media_url, $plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $group_id = isset($media_url->group_id) ? $media_url->group_id : null;
-        $channel_id = isset($media_url->channel_id) ? $media_url->channel_id : null;
-
-        if (is_null($channel_id) || empty($group_id))
-            return null;
-
-        $channel = $this->plugin->tv->get_channel($channel_id);
-        if (is_null($channel)) {
-            hd_debug_print("Unknown channel $channel_id");
-            return null;
-        }
-
-        $title_num = 1;
-        $defs = array();
-
-        ///////////// Channel number /////////////////
-
-        $number = $channel->get_number();
-        $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(130, 50, 690, 520),
-            null,
-            $number,
-            1,
-            PaneParams::ch_num_font_color,
-            PaneParams::ch_num_font_size,
-            'ch_number'
-        );
-
-        ///////////// Channel title /////////////////
-
-        $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width + 200, PaneParams::prog_item_height),
-            null,
-            $channel->get_title(),
-            1,
-            PaneParams::ch_title_font_color,
-            PaneParams::ch_title_font_size,
-            'ch_title'
-        );
-        $y = PaneParams::prog_item_height;
-
-        ///////////// start_time, end_time, genre, country, person /////////////////
-
-        if (is_null($epg_data = $this->plugin->get_program_info($channel_id, -1, $plugin_cookies))) {
-            hd_debug_print("no epg data");
-            $channel_desc = $channel->get_desc();
-            if (!empty($channel_desc)) {
-                $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $y);
-                $defs[] = GComps_Factory::label($geom,
-                    null,
-                    $channel_desc,
-                    13 - $title_num,
-                    PaneParams::prog_item_font_color,
-                    PaneParams::prog_item_font_size,
-                    'ch_desc',
-                    array('line_spacing' => 6)
-                );
-            }
-        } else {
-            $program = (object)array();
-            $program->time = sprintf("%s - %s",
-                gmdate('H:i', $epg_data[PluginTvEpgProgram::start_tm_sec] + get_local_time_zone_offset()),
-                gmdate('H:i', $epg_data[PluginTvEpgProgram::end_tm_sec] +  get_local_time_zone_offset())
-            );
-            //$program->year = preg_match('/\s+\((\d{4,4})\)$/', $epg_data[Ext_Epg_Program::main_category], $matches) ? $matches[1] : '';
-            //$program->age = preg_match('/\s+\((\d{1,2}\+)\)$/', $epg_data[Ext_Epg_Program::main_category], $matches) ? $matches[1] : '';
-
-            $title = $epg_data[PluginTvEpgProgram::name];
-            $desc = (!empty($epg_data[Ext_Epg_Program::sub_title]) ? $epg_data[Ext_Epg_Program::sub_title] . "\n" : '') . $epg_data[PluginTvEpgProgram::description];
-            $fanart_url = '';
-
-            // duration
-            $geom = GComp_Geom::place_top_left(PaneParams::info_width, PaneParams::prog_item_height, 0, $y);
-            $defs[] = GComps_Factory::label($geom, null, $program->time, 1, PaneParams::prog_item_font_color, PaneParams::prog_item_font_size);
-            $y += PaneParams::prog_item_height;
-
-            ///////////// Program title ////////////////
-
-            if (!empty($title)) {
-                $lines = array_slice(explode("\n",
-                    iconv('Windows-1251', 'UTF-8',
-                        wordwrap(iconv('UTF-8', 'Windows-1251',
-                            trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $title))),
-                            40, "\n", true)
-                    )),
-                    0, 2);
-
-                $prog_title = implode("\n", $lines);
-
-                if (strlen($prog_title) < strlen($title))
-                    $prog_title = $title;
-
-                $lines = min(2, count($lines));
-                $geom = GComp_Geom::place_top_left(PaneParams::info_width + 100, PaneParams::prog_item_height, 0, $y + ($lines > 1 ? 20 : 0));
-                $defs[] = GComps_Factory::label($geom,
-                    null,
-                    $prog_title,
-                    2,
-                    PaneParams::prog_title_font_color,
-                    PaneParams::prog_title_font_size,
-                    'prog_title',
-                    array('line_spacing' => 5)
-                );
-                $y += (PaneParams::prog_item_height - 20) * $lines + ($lines > 1 ? 10 : 0);
-                $title_num += $lines > 1 ? 1 : 0;
-            } else {
-                $title_num--;
-            }
-
-            ///////////// Description ////////////////
-
-            if (!empty($desc)) {
-                $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $y + 5);
-                $defs[] = GComps_Factory::label($geom,
-                    null,
-                    $desc,
-                    10 - $title_num,
-                    PaneParams::prog_item_font_color,
-                    PaneParams::prog_item_font_size,
-                    'prog_desc',
-                    array('line_spacing' => 5)
-                );
-            }
-        }
-
-        // separator line
-        $defs[] = GComps_Factory::get_rect_def(GComp_Geom::place_top_left(510, 4, 0, 590), null, PaneParams::separator_line_color);
-
-        $dy_icon = 530;
-        $dy_txt = $dy_icon - 4;
-        $dx = 15;
-        hd_debug_print("newUI: $group_id");
-        if ($group_id === HISTORY_GROUP_ID || $group_id === ALL_CHANNEL_GROUP_ID || $group_id === CHANGED_CHANNELS_GROUP_ID) {
-
-            // blue button image (D)
-            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
-                null,
-                PaneParams::fav_button_blue);
-
-            $dx += 55;
-            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
-                null,
-                ($group_id === CHANGED_CHANNELS_GROUP_ID) ? TR::load_string('clear_changed') : TR::load_string('add_delete_favorite'),
-                1,
-                PaneParams::fav_btn_font_color,
-                PaneParams::fav_btn_font_size
-            );
-        } else {
-            /** @var Default_Group $group */
-            if ($group_id === FAVORITES_GROUP_ID) {
-                $group = $this->plugin->tv->get_special_group($group_id);
-            } else {
-                $group = $this->plugin->tv->get_group($group_id);
-            }
-            $order = $group->get_items_order()->get_order();
-
-            $is_first_channel = ($channel_id === reset($order));
-            // green button image (B) 52x50
-            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
-                null,
-                PaneParams::fav_button_green,
-                false,
-                true,
-                null,
-                null,
-                null,
-                $is_first_channel ? 99 : 255);
-
-            $dx += 55;
-            // green button text
-            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
-                null,
-                TR::t('left'),
-                1,
-                $is_first_channel ? PaneParams::fav_btn_disabled_font_color : PaneParams::fav_btn_font_color,
-                PaneParams::fav_btn_font_size
-            );
-
-            $is_last_channel = ($channel_id === end($order));
-            $dx += 105;
-            // yellow button image (C)
-            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
-                null,
-                PaneParams::fav_button_yellow,
-                1,
-                false,
-                null,
-                null,
-                null,
-                $is_last_channel ? 99 : 255
-            );
-
-            $dx += 55;
-            // yellow button text
-            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
-                null,
-                TR::t('right'),
-                1,
-                $is_last_channel ? PaneParams::fav_btn_disabled_font_color : PaneParams::fav_btn_font_color,
-                PaneParams::fav_btn_font_size
-            );
-
-            $dx += 105;
-            // blue button image (D)
-            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
-                null,
-                PaneParams::fav_button_blue);
-
-            $dx += 55;
-            // blue button text
-            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
-                null,
-                TR::t('delete'),
-                1,
-                PaneParams::fav_btn_font_color,
-                PaneParams::fav_btn_font_size
-            );
-        }
-
-        ///////////// Enclosing panel ////////////////
-
-        $pane_def = GComps_Factory::get_panel_def('info_pane',
-            GComp_Geom::place_top_left(PaneParams::pane_width, PaneParams::pane_height),
-            null,
-            $defs,
-            GCOMP_OPT_PREPAINT
-        );
-        GComps_Factory::add_extra_var($pane_def, 'info_inf_dimmed', null, array('alpha' => 64));
-
-        return array(
-            'defs' => array($pane_def),
-            'fanart_url' => empty($fanart_url) ? '' : $fanart_url,
-        );
     }
 
     /**
@@ -397,7 +138,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             PaneParams::vod_width, PaneParams::vod_height
         );
 
-        $square_icons =  $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
+        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
         $icon_width = $square_icons ? RowsItemsParams::icon_width_sq : RowsItemsParams::icon_width;
         $icon_prop = $icon_width / RowsItemsParams::icon_height;
 
@@ -460,22 +201,438 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
-     * @inheritDoc
+     * @param Object $plugin_cookies
+     * @return array|null
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    private function get_history_rows($plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        if (!$this->plugin->get_bool_parameter(PARAM_SHOW_HISTORY)) {
+            hd_debug_print("History group disabled");
+            return null;
+        }
+
+        if ($this->clear_playback_points) {
+            $this->clear_playback_points = false;
+            return null;
+        }
+
+        // Fill view history data
+        $now = time();
+        $rows = array();
+        $watched = array();
+        $playback_points = $this->plugin->get_playback_points();
+        if ($playback_points !== null) {
+            foreach ($playback_points->get_all() as $channel_id => $channel_ts) {
+                if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
+
+                $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
+                $progress = 0;
+
+                if (is_null($prog_info)) {
+                    $title = $channel->get_title();
+                } else {
+                    // program epg available
+                    $title = $prog_info[PluginTvEpgProgram::name];
+                    if ($channel_ts > 0) {
+                        $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
+                        $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
+                        if ($channel_ts >= $now - $channel->get_archive_past_sec() - 60) {
+                            $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
+                        }
+                    }
+                }
+
+                $watched[(string)$channel_id] = array(
+                    'channel_id' => $channel_id,
+                    'archive_tm' => $channel_ts,
+                    'view_progress' => $progress,
+                    'program_title' => $title,
+                );
+            }
+        }
+
+        // fill view history row items
+        $items = array();
+        foreach ($watched as $item) {
+            if (!is_null($channel = $this->plugin->tv->get_channel($item['channel_id']))) {
+                $id = json_encode(array('group_id' => HISTORY_GROUP_ID, 'channel_id' => $item['channel_id'], 'archive_tm' => $item['archive_tm']));
+                //hd_debug_print("MediaUrl info for {$item['channel_id']} - $id");
+                if (isset($this->removed_playback_point))
+                    if ($this->removed_playback_point === $id) {
+                        $this->removed_playback_point = null;
+                        $this->plugin->get_playback_points()->erase_point($item['channel_id']);
+                        continue;
+                    }
+
+                $stickers = null;
+
+                if ($item['view_progress'] > 0) {
+                    // item size 229x142
+                    if (!empty($item['program_icon_url'])) {
+                        // add small channel logo
+                        $rect = Rows_Factory::r(129, 0, 100, 64);
+                        $stickers[] = Rows_Factory::add_regular_sticker_rect(RowsItemsParams::fav_sticker_logo_bg_color, $rect);
+                        $stickers[] = Rows_Factory::add_regular_sticker_image($channel->get_icon_url(), $rect);
+                    }
+
+                    // add progress indicator
+                    $stickers[] = Rows_Factory::add_regular_sticker_rect(
+                        RowsItemsParams::view_total_color,
+                        Rows_Factory::r(0,
+                            RowsItemsParams::fav_progress_dy,
+                            RowsItemsParams::view_progress_width,
+                            RowsItemsParams::view_progress_height)); // total
+
+                    $stickers[] = Rows_Factory::add_regular_sticker_rect(
+                        RowsItemsParams::view_viewed_color,
+                        Rows_Factory::r(0,
+                            RowsItemsParams::fav_progress_dy,
+                            round(RowsItemsParams::view_progress_width * $item['view_progress']),
+                            RowsItemsParams::view_progress_height)); // viewed
+                }
+
+                $items[] = Rows_Factory::add_regular_item(
+                    $id,
+                    $channel->get_icon_url(),
+                    $item['program_title'],
+                    $stickers);
+            }
+        }
+
+        // create view history group
+        if (!empty($items)) {
+            $new_rows = $this->create_rows($items,
+                json_encode(array('group_id' => HISTORY_GROUP_ID)),
+                TR::t('tv_screen_continue'),
+                TR::t('tv_screen_continue_view'),
+                null,
+                TitleRowsParams::history_caption_color
+            );
+
+            foreach ($new_rows as $row) {
+                $rows[] = $row;
+            }
+        }
+
+        //hd_debug_print("History rows: " . count($rows));
+        return $rows;
+    }
+
+    /**
+     * @param array $items
+     * @param string $row_id
+     * @param string $title
+     * @param string $caption
+     * @param array|null $action
+     * @param string|null $color
+     * @return array
+     */
+    private function create_rows($items, $row_id, $title, $caption, $action, $color = null)
+    {
+        $rows = array();
+        $rows[] = Rows_Factory::title_row(
+            $row_id,
+            $caption,
+            $row_id,
+            TitleRowsParams::width, TitleRowsParams::height,
+            is_null($color) ? TitleRowsParams::def_caption_color : $color,
+            TitleRowsParams::font_size,
+            TitleRowsParams::left_padding,
+            0, 0,
+            TitleRowsParams::fade_enabled,
+            TitleRowsParams::fade_color,
+            TitleRowsParams::lite_fade_color);
+
+        for ($i = 0, $iMax = count($items); $i < $iMax; $i += PaneParams::max_items_in_row) {
+            $row_items = array_slice($items, $i, PaneParams::max_items_in_row);
+            $rows[] = Rows_Factory::regular_row(
+                json_encode(array('row_ndx' => (int)($i / PaneParams::max_items_in_row), 'row_id' => $row_id)),
+                $row_items,
+                'common',
+                null,
+                $title,
+                $row_id,
+                RowsParams::width,
+                RowsParams::height,
+                RowsParams::height - TitleRowsParams::height,
+                RowsParams::left_padding,
+                RowsParams::inactive_left_padding,
+                RowsParams::right_padding,
+                RowsParams::hide_captions,
+                false,
+                RowsParams::fade_enable,
+                null,
+                $action,
+                RowsParams::fade_icon_mix_color,
+                RowsParams::fade_icon_mix_alpha,
+                RowsParams::lite_fade_icon_mix_alpha,
+                RowsParams::fade_caption_color
+            );
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return array|null
+     */
+    private function get_favorites_rows()
     {
         hd_debug_print(null, true);
 
-        $actions[GUI_EVENT_KEY_PLAY]                = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY);
-        $actions[GUI_EVENT_KEY_ENTER]               = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
-        $actions[GUI_EVENT_KEY_B_GREEN]             = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_UP);
-        $actions[GUI_EVENT_KEY_C_YELLOW]            = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_DOWN);
-        $actions[GUI_EVENT_KEY_D_BLUE]              = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_ADD);
-        $actions[GUI_EVENT_KEY_INFO]                = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
-        $actions[GUI_EVENT_KEY_POPUP_MENU]          = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
-        $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
+        $group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+        if (is_null($group)) {
+            hd_debug_print("Favorites group not found");
+            return null;
+        }
 
-        return $actions;
+        if ($group->is_disabled()) {
+            hd_debug_print("Favorites group disabled");
+            return null;
+        }
+
+        foreach ($group->get_items_order() as $channel_id) {
+            $channel = $this->plugin->tv->get_channel($channel_id);
+            if (is_null($channel) || $channel->is_disabled()) continue;
+
+            $items[] = Rows_Factory::add_regular_item(
+                json_encode(array('group_id' => FAVORITES_GROUP_ID, 'channel_id' => $channel_id)),
+                $channel->get_icon_url(),
+                $channel->get_title()
+            );
+        }
+
+        if (empty($items)) {
+            return null;
+        }
+
+        return $this->create_rows($items,
+            json_encode(array('group_id' => FAVORITES_GROUP_ID)),
+            $group->get_title(),
+            $group->get_title(),
+            User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
+            TitleRowsParams::fav_caption_color
+        );
+    }
+
+    /**
+     * @return array|null
+     */
+    private function get_changed_channels_rows()
+    {
+        hd_debug_print(null, true);
+
+        $group = $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID);
+        if (is_null($group)) {
+            hd_debug_print("Changed channels group not found");
+            return null;
+        }
+
+        if ($group->is_disabled()) {
+            hd_debug_print("Changed channels group disabled");
+            return null;
+        }
+
+        $changed = $this->plugin->tv->get_changed_channels_ids();
+        if (empty($changed)) {
+            return null;
+        }
+
+        $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
+        hd_debug_print("New channels: " . raw_json_encode($new_channels), true);
+        $removed_channels = $this->plugin->tv->get_changed_channels_ids('removed');
+        hd_debug_print("Removed channels: " . raw_json_encode($removed_channels), true);
+
+        $bg = Rows_Factory::add_regular_sticker_rect(
+            RowsItemsParams::fav_sticker_bg_color,
+            Rows_Factory::r(
+                0,
+                0,
+                RowsItemsParams::fav_sticker_bg_width,
+                RowsItemsParams::fav_sticker_bg_width));
+        $added_stickers[] = $bg;
+
+        $added_stickers[] = Rows_Factory::add_regular_sticker_image(
+            get_image_path('add.png'),
+            Rows_Factory::r(
+                0,
+                2,
+                RowsItemsParams::fav_sticker_icon_width,
+                RowsItemsParams::fav_sticker_icon_height));
+
+        $removed_stickers[] = $bg;
+        $removed_stickers[] = Rows_Factory::add_regular_sticker_image(
+            get_image_path('del.png'),
+            Rows_Factory::r(
+                0,
+                2,
+                RowsItemsParams::fav_sticker_icon_width,
+                RowsItemsParams::fav_sticker_icon_height));
+
+        /** @var Default_Channel $channel */
+        foreach ($this->plugin->tv->get_filtered_channels($new_channels) as $channel) {
+            if (is_null($channel) || $channel->is_disabled()) continue;
+
+            $items[] = Rows_Factory::add_regular_item(
+                json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $channel->get_id())),
+                $channel->get_icon_url(),
+                $channel->get_title(),
+                $added_stickers
+            );
+        }
+
+        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false)
+            ? RowsItemsParams::icon_sq_loading_failed_url
+            : RowsItemsParams::icon_loading_failed_url;
+
+        foreach ($removed_channels as $item) {
+            $items[] = Rows_Factory::add_regular_item(
+                json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $item)),
+                $square_icons,
+                $this->plugin->tv->get_known_channels()->get($item),
+                $removed_stickers
+            );
+        }
+
+        if (empty($items)) {
+            return null;
+        }
+
+        return $this->create_rows($items,
+            json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID)),
+            $group->get_title(),
+            $group->get_title(),
+            User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
+            TitleRowsParams::fav_caption_color
+        );
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * @return array|null
+     */
+    private function get_all_channels_row()
+    {
+        hd_debug_print(null, true);
+
+        $all_channels_group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
+        if (is_null($all_channels_group)) {
+            hd_debug_print("All channels group not found");
+            return null;
+        }
+
+        if ($all_channels_group->is_disabled()) {
+            hd_debug_print("All channels group disabled");
+            return null;
+        }
+
+        $row_item_width = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false) ? RowsItemsParams::width_sq : RowsItemsParams::width;
+
+        $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
+            RowsItemsParams::fav_sticker_bg_color,
+            Rows_Factory::r(
+                $row_item_width - RowsItemsParams::fav_sticker_bg_width - 21,
+                0,
+                RowsItemsParams::fav_sticker_bg_width,
+                RowsItemsParams::fav_sticker_bg_width));
+
+        $fav_stickers[] = Rows_Factory::add_regular_sticker_image(
+            get_image_path(RowsItemsParams::fav_sticker_icon_url),
+            Rows_Factory::r(
+                $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
+                2,
+                RowsItemsParams::fav_sticker_icon_width,
+                RowsItemsParams::fav_sticker_icon_height));
+
+        $channels_order = $all_channels_group->get_group_enabled_channels();
+
+        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+
+        $items = array();
+        foreach ($channels_order as $channel) {
+            $items[] = Rows_Factory::add_regular_item(
+                json_encode(array('group_id' => ALL_CHANNEL_GROUP_ID, 'channel_id' => $channel->get_id())),
+                $channel->get_icon_url(),
+                $channel->get_title(),
+                $fav_group->in_items_order($channel->get_id()) ? $fav_stickers : null
+            );
+        }
+
+        if (empty($items)) {
+            return null;
+        }
+
+        return $this->create_rows($items,
+            json_encode(array('group_id' => ALL_CHANNEL_GROUP_ID)),
+            $all_channels_group->get_title(),
+            $all_channels_group->get_title(),
+            User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER)
+        );
+    }
+
+    /**
+     * @return array|null
+     */
+    private function get_regular_rows()
+    {
+        hd_debug_print(null, true);
+
+        $row_item_width = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false) ? RowsItemsParams::width_sq : RowsItemsParams::width;
+
+        $action_enter = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
+
+        $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
+            RowsItemsParams::fav_sticker_bg_color,
+            Rows_Factory::r(
+                $row_item_width - RowsItemsParams::fav_sticker_bg_width - 21,
+                0,
+                RowsItemsParams::fav_sticker_bg_width,
+                RowsItemsParams::fav_sticker_bg_width));
+
+        $fav_stickers[] = Rows_Factory::add_regular_sticker_image(
+            get_image_path(RowsItemsParams::fav_sticker_icon_url),
+            Rows_Factory::r(
+                $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
+                2,
+                RowsItemsParams::fav_sticker_icon_width,
+                RowsItemsParams::fav_sticker_icon_height));
+
+        $rows = array();
+        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+        /** @var Default_Group $group */
+        /** @var Default_Channel $channel */
+        $groups = $this->plugin->tv->get_groups()->filter($this->plugin->tv->get_groups_order()->get_order());
+        foreach ($groups as $group) {
+            if (is_null($group)) continue;
+
+            $group_id = $group->get_id();
+            $items = array();
+            foreach ($group->get_group_enabled_channels() as $channel) {
+                $items[] = Rows_Factory::add_regular_item(
+                    json_encode(array('group_id' => $group_id, 'channel_id' => $channel->get_id())),
+                    $channel->get_icon_url(),
+                    $channel->get_title(),
+                    $fav_group->in_items_order($channel->get_id()) ? $fav_stickers : null
+                );
+            }
+
+            if (empty($items)) continue;
+
+            $new_rows = $this->create_rows($items,
+                json_encode(array('group_id' => $group_id)),
+                $group->get_title(),
+                $group->get_title(),
+                $action_enter
+            );
+
+            foreach ($new_rows as $row) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
     }
 
     /**
@@ -827,7 +984,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return $id;
                 }
 
-            return User_Input_Handler_Registry::create_action($this,ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
 
             case GUI_EVENT_KEY_INFO:
                 if (isset($media_url->channel_id)) {
@@ -840,7 +997,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $this->save_if_changed();
                 $force = false;
                 if (isset($user_input->reload_action)) {
-                    if( $user_input->reload_action === 'playlist') {
+                    if ($user_input->reload_action === 'playlist') {
                         $force = true;
                     } else if ($user_input->reload_action === 'epg') {
                         $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
@@ -873,439 +1030,280 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////////
+    /**
+     * @param string $parent_sel_state
+     * @return MediaURL|null
+     */
+    public function get_parent_media_url($parent_sel_state)
+    {
+        foreach (explode("\n", $parent_sel_state) as $line) {
+            if (strpos($line, 'channel_id')) {
+                return MediaURL::decode($line);
+            }
+        }
+
+        return null;
+    }
 
     /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY);
+        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_UP);
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_MOVE_DOWN);
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_ADD);
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
+
+        return $actions;
+    }
+
+    /**
+     * @param MediaURL $media_url
      * @param Object $plugin_cookies
      * @return array|null
      */
-    private function get_history_rows($plugin_cookies)
+    protected function do_get_info_children($media_url, $plugin_cookies)
     {
         hd_debug_print(null, true);
-        if (!$this->plugin->get_bool_parameter(PARAM_SHOW_HISTORY)) {
-            hd_debug_print("History group disabled");
+
+        $group_id = isset($media_url->group_id) ? $media_url->group_id : null;
+        $channel_id = isset($media_url->channel_id) ? $media_url->channel_id : null;
+
+        if (is_null($channel_id) || empty($group_id))
+            return null;
+
+        $channel = $this->plugin->tv->get_channel($channel_id);
+        if (is_null($channel)) {
+            hd_debug_print("Unknown channel $channel_id");
             return null;
         }
 
-        if ($this->clear_playback_points) {
-            $this->clear_playback_points = false;
-            return null;
-        }
+        $title_num = 1;
+        $defs = array();
 
-        // Fill view history data
-        $now = time();
-        $rows = array();
-        $watched = array();
-        $playback_points = $this->plugin->get_playback_points();
-        if ($playback_points !== null) {
-            foreach ($playback_points->get_all() as $channel_id => $channel_ts) {
-                if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
+        ///////////// Channel number /////////////////
 
-                $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
-                $progress = 0;
+        $number = $channel->get_number();
+        $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(130, 50, 690, 520),
+            null,
+            $number,
+            1,
+            PaneParams::ch_num_font_color,
+            PaneParams::ch_num_font_size,
+            'ch_number'
+        );
 
-                if (is_null($prog_info)) {
-                    $title = $channel->get_title();
-                } else {
-                    // program epg available
-                    $title = $prog_info[PluginTvEpgProgram::name];
-                    if ($channel_ts > 0) {
-                        $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
-                        $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
-                        if ($channel_ts >= $now - $channel->get_archive_past_sec() - 60) {
-                            $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
-                        }
-                    }
-                }
+        ///////////// Channel title /////////////////
 
-                $watched[(string)$channel_id] = array(
-                    'channel_id' => $channel_id,
-                    'archive_tm' => $channel_ts,
-                    'view_progress' => $progress,
-                    'program_title' => $title,
+        $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width + 200, PaneParams::prog_item_height),
+            null,
+            $channel->get_title(),
+            1,
+            PaneParams::ch_title_font_color,
+            PaneParams::ch_title_font_size,
+            'ch_title'
+        );
+        $y = PaneParams::prog_item_height;
+
+        ///////////// start_time, end_time, genre, country, person /////////////////
+
+        if (is_null($epg_data = $this->plugin->get_program_info($channel_id, -1, $plugin_cookies))) {
+            hd_debug_print("no epg data");
+            $channel_desc = $channel->get_desc();
+            if (!empty($channel_desc)) {
+                $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $y);
+                $defs[] = GComps_Factory::label($geom,
+                    null,
+                    $channel_desc,
+                    13 - $title_num,
+                    PaneParams::prog_item_font_color,
+                    PaneParams::prog_item_font_size,
+                    'ch_desc',
+                    array('line_spacing' => 6)
+                );
+            }
+        } else {
+            $program = (object)array();
+            $program->time = sprintf("%s - %s",
+                gmdate('H:i', $epg_data[PluginTvEpgProgram::start_tm_sec] + get_local_time_zone_offset()),
+                gmdate('H:i', $epg_data[PluginTvEpgProgram::end_tm_sec] + get_local_time_zone_offset())
+            );
+            //$program->year = preg_match('/\s+\((\d{4,4})\)$/', $epg_data[Ext_Epg_Program::main_category], $matches) ? $matches[1] : '';
+            //$program->age = preg_match('/\s+\((\d{1,2}\+)\)$/', $epg_data[Ext_Epg_Program::main_category], $matches) ? $matches[1] : '';
+
+            $title = $epg_data[PluginTvEpgProgram::name];
+            $desc = (!empty($epg_data[Ext_Epg_Program::sub_title]) ? $epg_data[Ext_Epg_Program::sub_title] . "\n" : '') . $epg_data[PluginTvEpgProgram::description];
+            $fanart_url = '';
+
+            // duration
+            $geom = GComp_Geom::place_top_left(PaneParams::info_width, PaneParams::prog_item_height, 0, $y);
+            $defs[] = GComps_Factory::label($geom, null, $program->time, 1, PaneParams::prog_item_font_color, PaneParams::prog_item_font_size);
+            $y += PaneParams::prog_item_height;
+
+            ///////////// Program title ////////////////
+
+            if (!empty($title)) {
+                $lines = array_slice(explode("\n",
+                    iconv('Windows-1251', 'UTF-8',
+                        wordwrap(iconv('UTF-8', 'Windows-1251',
+                            trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $title))),
+                            40, "\n", true)
+                    )),
+                    0, 2);
+
+                $prog_title = implode("\n", $lines);
+
+                if (strlen($prog_title) < strlen($title))
+                    $prog_title = $title;
+
+                $lines = min(2, count($lines));
+                $geom = GComp_Geom::place_top_left(PaneParams::info_width + 100, PaneParams::prog_item_height, 0, $y + ($lines > 1 ? 20 : 0));
+                $defs[] = GComps_Factory::label($geom,
+                    null,
+                    $prog_title,
+                    2,
+                    PaneParams::prog_title_font_color,
+                    PaneParams::prog_title_font_size,
+                    'prog_title',
+                    array('line_spacing' => 5)
+                );
+                $y += (PaneParams::prog_item_height - 20) * $lines + ($lines > 1 ? 10 : 0);
+                $title_num += $lines > 1 ? 1 : 0;
+            } else {
+                $title_num--;
+            }
+
+            ///////////// Description ////////////////
+
+            if (!empty($desc)) {
+                $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $y + 5);
+                $defs[] = GComps_Factory::label($geom,
+                    null,
+                    $desc,
+                    10 - $title_num,
+                    PaneParams::prog_item_font_color,
+                    PaneParams::prog_item_font_size,
+                    'prog_desc',
+                    array('line_spacing' => 5)
                 );
             }
         }
 
-        // fill view history row items
-        $items = array();
-        foreach ($watched as $item) {
-            if (!is_null($channel = $this->plugin->tv->get_channel($item['channel_id']))) {
-                $id = json_encode(array('group_id' => HISTORY_GROUP_ID, 'channel_id' => $item['channel_id'], 'archive_tm' => $item['archive_tm']));
-                //hd_debug_print("MediaUrl info for {$item['channel_id']} - $id");
-                if (isset($this->removed_playback_point))
-                    if ($this->removed_playback_point === $id) {
-                        $this->removed_playback_point = null;
-                        $this->plugin->get_playback_points()->erase_point($item['channel_id']);
-                        continue;
-                    }
+        // separator line
+        $defs[] = GComps_Factory::get_rect_def(GComp_Geom::place_top_left(510, 4, 0, 590), null, PaneParams::separator_line_color);
 
-                $stickers = null;
+        $dy_icon = 530;
+        $dy_txt = $dy_icon - 4;
+        $dx = 15;
+        hd_debug_print("newUI: $group_id");
+        if ($group_id === HISTORY_GROUP_ID || $group_id === ALL_CHANNEL_GROUP_ID || $group_id === CHANGED_CHANNELS_GROUP_ID) {
 
-                if ($item['view_progress'] > 0) {
-                    // item size 229x142
-                    if (!empty($item['program_icon_url'])) {
-                        // add small channel logo
-                        $rect = Rows_Factory::r(129, 0, 100, 64);
-                        $stickers[] = Rows_Factory::add_regular_sticker_rect(RowsItemsParams::fav_sticker_logo_bg_color, $rect);
-                        $stickers[] = Rows_Factory::add_regular_sticker_image($channel->get_icon_url(), $rect);
-                    }
-
-                    // add progress indicator
-                    $stickers[] = Rows_Factory::add_regular_sticker_rect(
-                        RowsItemsParams::view_total_color,
-                        Rows_Factory::r(0,
-                            RowsItemsParams::fav_progress_dy,
-                            RowsItemsParams::view_progress_width,
-                            RowsItemsParams::view_progress_height)); // total
-
-                    $stickers[] = Rows_Factory::add_regular_sticker_rect(
-                        RowsItemsParams::view_viewed_color,
-                        Rows_Factory::r(0,
-                            RowsItemsParams::fav_progress_dy,
-                            round(RowsItemsParams::view_progress_width * $item['view_progress']),
-                            RowsItemsParams::view_progress_height)); // viewed
-                }
-
-                $items[] = Rows_Factory::add_regular_item(
-                    $id,
-                    $channel->get_icon_url(),
-                    $item['program_title'],
-                    $stickers);
-            }
-        }
-
-        // create view history group
-        if (!empty($items)) {
-            $new_rows = $this->create_rows($items,
-                json_encode(array('group_id' => HISTORY_GROUP_ID)),
-                TR::t('tv_screen_continue'),
-                TR::t('tv_screen_continue_view'),
+            // blue button image (D)
+            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
                 null,
-                TitleRowsParams::history_caption_color
-            );
+                PaneParams::fav_button_blue);
 
-            foreach ($new_rows as $row) {
-                $rows[] = $row;
-            }
-        }
-
-        //hd_debug_print("History rows: " . count($rows));
-        return $rows;
-    }
-
-    /**
-     * @return array|null
-     */
-    private function get_favorites_rows()
-    {
-        hd_debug_print(null, true);
-
-        $group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
-        if (is_null($group)) {
-            hd_debug_print("Favorites group not found");
-            return null;
-        }
-
-        if ($group->is_disabled()) {
-            hd_debug_print("Favorites group disabled");
-            return null;
-        }
-
-        foreach ($group->get_items_order() as $channel_id) {
-            $channel = $this->plugin->tv->get_channel($channel_id);
-            if (is_null($channel) || $channel->is_disabled()) continue;
-
-            $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => FAVORITES_GROUP_ID, 'channel_id' => $channel_id)),
-                $channel->get_icon_url(),
-                $channel->get_title()
-            );
-        }
-
-        if (empty($items)) {
-            return null;
-        }
-
-        return $this->create_rows($items,
-            json_encode(array('group_id' => FAVORITES_GROUP_ID)),
-            $group->get_title(),
-            $group->get_title(),
-            User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
-            TitleRowsParams::fav_caption_color
-        );
-    }
-
-    /**
-     * @return array|null
-     */
-    private function get_changed_channels_rows()
-    {
-        hd_debug_print(null, true);
-
-        $group = $this->plugin->tv->get_special_group(CHANGED_CHANNELS_GROUP_ID);
-        if (is_null($group)) {
-            hd_debug_print("Changed channels group not found");
-            return null;
-        }
-
-        if ($group->is_disabled()) {
-            hd_debug_print("Changed channels group disabled");
-            return null;
-        }
-
-        $changed = $this->plugin->tv->get_changed_channels_ids();
-        if (empty($changed)) {
-            return null;
-        }
-
-        $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
-        hd_debug_print("New channels: " . raw_json_encode($new_channels), true);
-        $removed_channels = $this->plugin->tv->get_changed_channels_ids('removed');
-        hd_debug_print("Removed channels: " . raw_json_encode($removed_channels), true);
-
-        $bg = Rows_Factory::add_regular_sticker_rect(
-            RowsItemsParams::fav_sticker_bg_color,
-            Rows_Factory::r(
-                0,
-                0,
-                RowsItemsParams::fav_sticker_bg_width,
-                RowsItemsParams::fav_sticker_bg_width));
-        $added_stickers[] = $bg;
-
-        $added_stickers[] = Rows_Factory::add_regular_sticker_image(
-            get_image_path('add.png'),
-            Rows_Factory::r(
-                0,
-                2,
-                RowsItemsParams::fav_sticker_icon_width,
-                RowsItemsParams::fav_sticker_icon_height));
-
-        $removed_stickers[] = $bg;
-        $removed_stickers[] = Rows_Factory::add_regular_sticker_image(
-            get_image_path('del.png'),
-            Rows_Factory::r(
-                0,
-                2,
-                RowsItemsParams::fav_sticker_icon_width,
-                RowsItemsParams::fav_sticker_icon_height));
-
-        /** @var Default_Channel $channel */
-        foreach ($this->plugin->tv->get_filtered_channels($new_channels) as $channel) {
-            if (is_null($channel) || $channel->is_disabled()) continue;
-
-            $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $channel->get_id())),
-                $channel->get_icon_url(),
-                $channel->get_title(),
-                $added_stickers
-            );
-        }
-
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false)
-            ? RowsItemsParams::icon_sq_loading_failed_url
-            : RowsItemsParams::icon_loading_failed_url;
-
-        foreach ($removed_channels as $item) {
-            $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $item)),
-                $square_icons,
-                $this->plugin->tv->get_known_channels()->get($item),
-                $removed_stickers
-            );
-        }
-
-        if (empty($items)) {
-            return null;
-        }
-
-        return $this->create_rows($items,
-            json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID)),
-            $group->get_title(),
-            $group->get_title(),
-            User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
-            TitleRowsParams::fav_caption_color
-        );
-    }
-
-    /**
-     * @return array|null
-     */
-    private function get_all_channels_row()
-    {
-        hd_debug_print(null, true);
-
-        $all_channels_group = $this->plugin->tv->get_special_group(ALL_CHANNEL_GROUP_ID);
-        if (is_null($all_channels_group)) {
-            hd_debug_print("All channels group not found");
-            return null;
-        }
-
-        if ($all_channels_group->is_disabled()) {
-            hd_debug_print("All channels group disabled");
-            return null;
-        }
-
-        $row_item_width = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false) ? RowsItemsParams::width_sq : RowsItemsParams::width;
-
-        $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
-            RowsItemsParams::fav_sticker_bg_color,
-            Rows_Factory::r(
-                $row_item_width - RowsItemsParams::fav_sticker_bg_width - 21,
-                0,
-                RowsItemsParams::fav_sticker_bg_width,
-                RowsItemsParams::fav_sticker_bg_width));
-
-        $fav_stickers[] = Rows_Factory::add_regular_sticker_image(
-            get_image_path(RowsItemsParams::fav_sticker_icon_url),
-            Rows_Factory::r(
-                $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
-                2,
-                RowsItemsParams::fav_sticker_icon_width,
-                RowsItemsParams::fav_sticker_icon_height));
-
-        $channels_order = $all_channels_group->get_group_enabled_channels();
-
-        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
-
-        $items = array();
-        foreach ($channels_order as $channel) {
-            $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => ALL_CHANNEL_GROUP_ID, 'channel_id' => $channel->get_id())),
-                $channel->get_icon_url(),
-                $channel->get_title(),
-                $fav_group->in_items_order($channel->get_id()) ? $fav_stickers : null
-            );
-        }
-
-        if (empty($items)) {
-            return null;
-        }
-
-        return $this->create_rows($items,
-            json_encode(array('group_id' => ALL_CHANNEL_GROUP_ID)),
-            $all_channels_group->get_title(),
-            $all_channels_group->get_title(),
-            User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER)
-        );
-    }
-
-    /**
-     * @return array|null
-     */
-    private function get_regular_rows()
-    {
-        hd_debug_print(null, true);
-
-        $row_item_width = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false) ? RowsItemsParams::width_sq : RowsItemsParams::width;
-
-        $action_enter = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
-
-        $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
-            RowsItemsParams::fav_sticker_bg_color,
-            Rows_Factory::r(
-                $row_item_width - RowsItemsParams::fav_sticker_bg_width - 21,
-                0,
-                RowsItemsParams::fav_sticker_bg_width,
-                RowsItemsParams::fav_sticker_bg_width));
-
-        $fav_stickers[] = Rows_Factory::add_regular_sticker_image(
-            get_image_path(RowsItemsParams::fav_sticker_icon_url),
-            Rows_Factory::r(
-                $row_item_width - RowsItemsParams::fav_sticker_icon_width - 23,
-                2,
-                RowsItemsParams::fav_sticker_icon_width,
-                RowsItemsParams::fav_sticker_icon_height));
-
-        $rows = array();
-        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
-        /** @var Default_Group $group */
-        /** @var Default_Channel $channel */
-        $groups = $this->plugin->tv->get_groups()->filter($this->plugin->tv->get_groups_order()->get_order());
-        foreach ($groups as $group) {
-            if (is_null($group)) continue;
-
-            $group_id = $group->get_id();
-            $items = array();
-            foreach ($group->get_group_enabled_channels() as $channel) {
-                $items[] = Rows_Factory::add_regular_item(
-                    json_encode(array('group_id' => $group_id, 'channel_id' => $channel->get_id())),
-                    $channel->get_icon_url(),
-                    $channel->get_title(),
-                    $fav_group->in_items_order($channel->get_id()) ? $fav_stickers : null
-                );
-            }
-
-            if (empty($items)) continue;
-
-            $new_rows = $this->create_rows($items,
-                json_encode(array('group_id' => $group_id)),
-                $group->get_title(),
-                $group->get_title(),
-                $action_enter
-            );
-
-            foreach ($new_rows as $row) {
-                $rows[] = $row;
-            }
-        }
-
-        return $rows;
-    }
-
-    /**
-     * @param array $items
-     * @param string $row_id
-     * @param string $title
-     * @param string $caption
-     * @param array|null $action
-     * @param string|null $color
-     * @return array
-     */
-    private function create_rows($items, $row_id, $title, $caption, $action, $color = null)
-    {
-        $rows = array();
-        $rows[] = Rows_Factory::title_row(
-            $row_id,
-            $caption,
-            $row_id,
-            TitleRowsParams::width, TitleRowsParams::height,
-            is_null($color) ? TitleRowsParams::def_caption_color : $color,
-            TitleRowsParams::font_size,
-            TitleRowsParams::left_padding,
-            0, 0,
-            TitleRowsParams::fade_enabled,
-            TitleRowsParams::fade_color,
-            TitleRowsParams::lite_fade_color);
-
-        for ($i = 0, $iMax = count($items); $i < $iMax; $i += PaneParams::max_items_in_row) {
-            $row_items = array_slice($items, $i, PaneParams::max_items_in_row);
-            $rows[] = Rows_Factory::regular_row(
-                json_encode(array('row_ndx' => (int)($i / PaneParams::max_items_in_row), 'row_id' => $row_id)),
-                $row_items,
-                'common',
+            $dx += 55;
+            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
-                $title,
-                $row_id,
-                RowsParams::width,
-                RowsParams::height,
-                RowsParams::height - TitleRowsParams::height,
-                RowsParams::left_padding,
-                RowsParams::inactive_left_padding,
-                RowsParams::right_padding,
-                RowsParams::hide_captions,
+                ($group_id === CHANGED_CHANNELS_GROUP_ID) ? TR::load_string('clear_changed') : TR::load_string('add_delete_favorite'),
+                1,
+                PaneParams::fav_btn_font_color,
+                PaneParams::fav_btn_font_size
+            );
+        } else {
+            /** @var Default_Group $group */
+            if ($group_id === FAVORITES_GROUP_ID) {
+                $group = $this->plugin->tv->get_special_group($group_id);
+            } else {
+                $group = $this->plugin->tv->get_group($group_id);
+            }
+            $order = $group->get_items_order()->get_order();
+
+            $is_first_channel = ($channel_id === reset($order));
+            // green button image (B) 52x50
+            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+                null,
+                PaneParams::fav_button_green,
                 false,
-                RowsParams::fade_enable,
+                true,
                 null,
-                $action,
-                RowsParams::fade_icon_mix_color,
-                RowsParams::fade_icon_mix_alpha,
-                RowsParams::lite_fade_icon_mix_alpha,
-                RowsParams::fade_caption_color
+                null,
+                null,
+                $is_first_channel ? 99 : 255);
+
+            $dx += 55;
+            // green button text
+            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+                null,
+                TR::t('left'),
+                1,
+                $is_first_channel ? PaneParams::fav_btn_disabled_font_color : PaneParams::fav_btn_font_color,
+                PaneParams::fav_btn_font_size
+            );
+
+            $is_last_channel = ($channel_id === end($order));
+            $dx += 105;
+            // yellow button image (C)
+            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+                null,
+                PaneParams::fav_button_yellow,
+                1,
+                false,
+                null,
+                null,
+                null,
+                $is_last_channel ? 99 : 255
+            );
+
+            $dx += 55;
+            // yellow button text
+            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+                null,
+                TR::t('right'),
+                1,
+                $is_last_channel ? PaneParams::fav_btn_disabled_font_color : PaneParams::fav_btn_font_color,
+                PaneParams::fav_btn_font_size
+            );
+
+            $dx += 105;
+            // blue button image (D)
+            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+                null,
+                PaneParams::fav_button_blue);
+
+            $dx += 55;
+            // blue button text
+            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+                null,
+                TR::t('delete'),
+                1,
+                PaneParams::fav_btn_font_color,
+                PaneParams::fav_btn_font_size
             );
         }
 
-        return $rows;
+        ///////////// Enclosing panel ////////////////
+
+        $pane_def = GComps_Factory::get_panel_def('info_pane',
+            GComp_Geom::place_top_left(PaneParams::pane_width, PaneParams::pane_height),
+            null,
+            $defs,
+            GCOMP_OPT_PREPAINT
+        );
+        GComps_Factory::add_extra_var($pane_def, 'info_inf_dimmed', null, array('alpha' => 64));
+
+        return array(
+            'defs' => array($pane_def),
+            'fanart_url' => empty($fanart_url) ? '' : $fanart_url,
+        );
     }
 
     /**

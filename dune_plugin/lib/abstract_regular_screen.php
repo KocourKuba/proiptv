@@ -30,12 +30,51 @@ require_once 'archive.php';
 abstract class Abstract_Regular_Screen extends Abstract_Screen
 {
     /**
-     * @return array[]
+     * @inheritDoc
      */
-    abstract public function get_folder_views();
+    public function get_next_folder_view(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $idx = $this->get_folder_view_index($plugin_cookies);
+        $folder_views = $this->get_folder_views();
+        if (++$idx >= count($folder_views)) {
+            $idx = 0;
+        }
+
+        $folder_views_index = "screen." . static::ID . ".view_idx";
+        $plugin_cookies->{$folder_views_index} = $idx;
+
+        return $this->get_folder_view($media_url, $plugin_cookies);
+    }
 
     ///////////////////////////////////////////////////////////////////////
     // Screen interface
+
+    private function get_folder_view_index(&$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $folder_views_index = "screen." . static::ID . ".view_idx";
+        $idx = isset($plugin_cookies->{$folder_views_index}) ? $plugin_cookies->{$folder_views_index} : 0;
+
+        $folder_views = $this->get_folder_views();
+        $cnt = count($folder_views);
+        if ($idx < 0) {
+            $idx = 0;
+        } else if ($idx >= $cnt) {
+            $idx = $cnt - 1;
+        }
+
+        return $idx;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @return array[]
+     */
+    abstract public function get_folder_views();
 
     /**
      * @inheritDoc
@@ -63,50 +102,11 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @inheritDoc
-     */
-    public function get_next_folder_view(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $idx = $this->get_folder_view_index($plugin_cookies);
-        $folder_views = $this->get_folder_views();
-        if (++$idx >= count($folder_views)) {
-            $idx = 0;
-        }
-
-        $folder_views_index = "screen." . static::ID . ".view_idx";
-        $plugin_cookies->{$folder_views_index} = $idx;
-
-        return $this->get_folder_view($media_url, $plugin_cookies);
-    }
-
-    /**
      * @param MediaURL $media_url
      * @return Archive|null
      */
     public function get_image_archive(MediaURL $media_url)
     {
         return null;
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    private function get_folder_view_index(&$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $folder_views_index = "screen." . static::ID . ".view_idx";
-        $idx = isset($plugin_cookies->{$folder_views_index}) ? $plugin_cookies->{$folder_views_index} : 0;
-
-        $folder_views = $this->get_folder_views();
-        $cnt = count($folder_views);
-        if ($idx < 0) {
-            $idx = 0;
-        } else if ($idx >= $cnt) {
-            $idx = $cnt - 1;
-        }
-
-        return $idx;
     }
 }

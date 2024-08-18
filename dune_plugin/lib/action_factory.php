@@ -78,7 +78,7 @@ class Action_Factory
                 PluginTvPlayActionData::initial_group_id => isset($media_url->group_id) ? $media_url->group_id : null,
                 PluginTvPlayActionData::initial_channel_id => isset($media_url->channel_id) ? $media_url->channel_id : null,
                 PluginTvPlayActionData::initial_is_favorite => isset($media_url->is_favorite) && $media_url->is_favorite,
-                PluginTvPlayActionData::initial_archive_tm => isset($media_url->archive_tm) ? (int) $media_url->archive_tm : -1,
+                PluginTvPlayActionData::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
             );
         }
 
@@ -134,39 +134,11 @@ class Action_Factory
     }
 
     /**
-     * @param string $title
-     * @param array &$defs
-     * @param bool $close_by_return
-     * @param int $preferred_width
-     * @param array $attrs
      * @return array
      */
-    public static function show_dialog($title, $defs, $close_by_return = false, $preferred_width = 0, $attrs = array())
+    public static function close_dialog()
     {
-        $initial_sel_ndx = isset($attrs['initial_sel_ndx']) ? $attrs['initial_sel_ndx'] : -1;
-        $actions = isset($attrs['actions']) ? $attrs['actions'] : null;
-        $timer = isset($attrs['timer']) ? $attrs['timer'] : null;
-        $min_item_title_width = isset($attrs['min_item_title_width']) ? $attrs['min_item_title_width'] : 0;
-        $max_height = isset($attrs['max_height']) ? $attrs['max_height'] : 0;
-        $dialog_params = isset($attrs['dialog_params']) ? $attrs['dialog_params'] : array();
-
-        return array(
-            GuiAction::handler_string_id => SHOW_DIALOG_ACTION_ID,
-            GuiAction::caption => null,
-            GuiAction::data => array(
-                ShowDialogActionData::title => $title,
-                ShowDialogActionData::defs => $defs,
-                ShowDialogActionData::close_by_return => $close_by_return,
-                ShowDialogActionData::preferred_width => $preferred_width,
-                ShowDialogActionData::max_height => $max_height,
-                ShowDialogActionData::min_item_title_width => $min_item_title_width,
-                ShowDialogActionData::initial_sel_ndx => $initial_sel_ndx,
-                ShowDialogActionData::actions => $actions,
-                ShowDialogActionData::timer => $timer,
-                ShowDialogActionData::params => $dialog_params
-            ),
-            GuiAction::params => null
-        );
+        return self::close_dialog_and_run(null);
     }
 
     /**
@@ -181,14 +153,6 @@ class Action_Factory
             GuiAction::data => array(CloseDialogAndRunActionData::post_action => $post_action),
             GuiAction::params => null
         );
-    }
-
-    /**
-     * @return array
-     */
-    public static function close_dialog()
-    {
-        return self::close_dialog_and_run(null);
     }
 
     /**
@@ -229,6 +193,42 @@ class Action_Factory
     }
 
     /**
+     * @param string $title
+     * @param array &$defs
+     * @param bool $close_by_return
+     * @param int $preferred_width
+     * @param array $attrs
+     * @return array
+     */
+    public static function show_dialog($title, $defs, $close_by_return = false, $preferred_width = 0, $attrs = array())
+    {
+        $initial_sel_ndx = isset($attrs['initial_sel_ndx']) ? $attrs['initial_sel_ndx'] : -1;
+        $actions = isset($attrs['actions']) ? $attrs['actions'] : null;
+        $timer = isset($attrs['timer']) ? $attrs['timer'] : null;
+        $min_item_title_width = isset($attrs['min_item_title_width']) ? $attrs['min_item_title_width'] : 0;
+        $max_height = isset($attrs['max_height']) ? $attrs['max_height'] : 0;
+        $dialog_params = isset($attrs['dialog_params']) ? $attrs['dialog_params'] : array();
+
+        return array(
+            GuiAction::handler_string_id => SHOW_DIALOG_ACTION_ID,
+            GuiAction::caption => null,
+            GuiAction::data => array(
+                ShowDialogActionData::title => $title,
+                ShowDialogActionData::defs => $defs,
+                ShowDialogActionData::close_by_return => $close_by_return,
+                ShowDialogActionData::preferred_width => $preferred_width,
+                ShowDialogActionData::max_height => $max_height,
+                ShowDialogActionData::min_item_title_width => $min_item_title_width,
+                ShowDialogActionData::initial_sel_ndx => $initial_sel_ndx,
+                ShowDialogActionData::actions => $actions,
+                ShowDialogActionData::timer => $timer,
+                ShowDialogActionData::params => $dialog_params
+            ),
+            GuiAction::params => null
+        );
+    }
+
+    /**
      * Confirmation dialog
      * @return array
      */
@@ -247,15 +247,6 @@ class Action_Factory
     }
 
     /**
-     * @param int $delay_ms
-     * @return array
-     */
-    public static function timer($delay_ms)
-    {
-        return array(GuiTimerDef::delay_ms => $delay_ms);
-    }
-
-    /**
      * @param int $status
      * @return array
      */
@@ -266,23 +257,6 @@ class Action_Factory
             GuiAction::caption => null,
             GuiAction::data => array(StatusActionData::status => $status),
             GuiAction::params => null
-        );
-    }
-
-    /**
-     * @param array $media_urls
-     * @param array $post_action
-     * @return array
-     */
-    public static function invalidate_folders($media_urls, $post_action = null, $all_except = false)
-    {
-        return array(
-            GuiAction::handler_string_id => PLUGIN_INVALIDATE_FOLDERS_ACTION_ID,
-            GuiAction::data => array(
-                PluginInvalidateFoldersActionData::media_urls => $media_urls,
-                PluginInvalidateFoldersActionData::post_action => $post_action,
-                PluginInvalidateFoldersActionData::all_except => $all_except
-            )
         );
     }
 
@@ -396,6 +370,15 @@ class Action_Factory
     }
 
     /**
+     * @param int $delay_ms
+     * @return array
+     */
+    public static function timer($delay_ms)
+    {
+        return array(GuiTimerDef::delay_ms => $delay_ms);
+    }
+
+    /**
      * @param string $url
      * @param array|null $post_action
      * @return array
@@ -467,6 +450,23 @@ class Action_Factory
         }
 
         return self::invalidate_folders(array(), $post_invalidate, true);
+    }
+
+    /**
+     * @param array $media_urls
+     * @param array $post_action
+     * @return array
+     */
+    public static function invalidate_folders($media_urls, $post_action = null, $all_except = false)
+    {
+        return array(
+            GuiAction::handler_string_id => PLUGIN_INVALIDATE_FOLDERS_ACTION_ID,
+            GuiAction::data => array(
+                PluginInvalidateFoldersActionData::media_urls => $media_urls,
+                PluginInvalidateFoldersActionData::post_action => $post_action,
+                PluginInvalidateFoldersActionData::all_except => $all_except
+            )
+        );
     }
 
     /**
@@ -622,7 +622,7 @@ class Action_Factory
         return array();
     }
 
-    public static function clear_rows_info_cache($post_action=null)
+    public static function clear_rows_info_cache($post_action = null)
     {
         return array(
             GuiAction::handler_string_id => PLUGIN_UPDATE_ROWS_INFO_ACTION_ID,
@@ -634,7 +634,7 @@ class Action_Factory
     }
 
     public static function update_rows_info($folder_key, $item_id, $info_defs,
-        $bg_url = null, $nl_bg_url = null, $mask_url = null, $playback_urls = null, $post_action = null)
+                                            $bg_url = null, $nl_bg_url = null, $mask_url = null, $playback_urls = null, $post_action = null)
     {
         $info = array(
             PluginRowsInfo::folder_key => $folder_key,

@@ -49,42 +49,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
-        $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
-
-        $actions = array(
-            GUI_EVENT_KEY_ENTER      => $action_play,
-            GUI_EVENT_KEY_PLAY       => $action_play,
-            GUI_EVENT_KEY_SEARCH     => $search_action,
-            GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
-            GUI_EVENT_KEY_SETUP      => User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS),
-            GUI_EVENT_KEY_INFO       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO),
-            GUI_EVENT_KEY_RETURN     => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
-            GUI_EVENT_KEY_TOP_MENU   => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
-            GUI_EVENT_KEY_STOP       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
-            GUI_EVENT_TIMER          => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
-        );
-
-        if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
-            $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
-            $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
-        } else if (!is_null($group = $this->plugin->tv->get_group($media_url->group_id)) && $group->get_items_order()->size() !== 0) {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
-        }
-
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -409,114 +373,37 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     /**
      * @inheritDoc
      */
-    public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
 
-        $items = array();
+        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
+        $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
 
-        try {
-            if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
-                throw new Exception("Channels not loaded!");
-            }
-
-            if ($media_url->group_id === ALL_CHANNEL_GROUP_ID) {
-                $groups_order = $this->plugin->tv->get_groups_order()->get_order();
-            } else {
-                $groups_order[] = $media_url->group_id;
-            }
-
-            foreach($groups_order as $id) {
-                $group = $this->plugin->tv->get_group($id);
-                if (is_null($group) || $group->is_disabled()) continue;
-
-                foreach ($group->get_items_order() as $channel_id) {
-                    if (($item = $this->get_folder_item($media_url->group_id, $channel_id)) !== null) {
-                        $items[] = $item;
-                    }
-                }
-            }
-        } catch (Exception $ex) {
-            hd_debug_print("Failed collect folder items!");
-            print_backtrace_exception($ex);
-        }
-
-        return $items;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_timer(MediaURL $media_url, $plugin_cookies)
-    {
-        return Action_Factory::timer(1000);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view('icons_4x3_caption'),
-            $this->plugin->get_screen_view('icons_4x3_no_caption'),
-            $this->plugin->get_screen_view('icons_3x3_caption'),
-            $this->plugin->get_screen_view('icons_3x3_no_caption'),
-            $this->plugin->get_screen_view('icons_5x3_caption'),
-            $this->plugin->get_screen_view('icons_5x3_no_caption'),
-            $this->plugin->get_screen_view('icons_5x4_caption'),
-            $this->plugin->get_screen_view('icons_5x4_no_caption'),
-
-            $this->plugin->get_screen_view('list_1x11_small_info'),
-            $this->plugin->get_screen_view('list_2x11_small_info'),
-            $this->plugin->get_screen_view('list_3x11_no_info'),
+        $actions = array(
+            GUI_EVENT_KEY_ENTER => $action_play,
+            GUI_EVENT_KEY_PLAY => $action_play,
+            GUI_EVENT_KEY_SEARCH => $search_action,
+            GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
+            GUI_EVENT_KEY_SETUP => User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS),
+            GUI_EVENT_KEY_INFO => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO),
+            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_TOP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
+            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
         );
-    }
 
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param string $group_id
-     * @param string $channel_id
-     * @return array|null
-     */
-    private function get_folder_item($group_id, $channel_id)
-    {
-        $channel = $this->plugin->tv->get_channel($channel_id);
-        if (is_null($channel) || $channel->is_disabled()) {
-            return null;
+        if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
+            $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
+            $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
+            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+        } else if (!is_null($group = $this->plugin->tv->get_group($media_url->group_id)) && $group->get_items_order()->size() !== 0) {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
         }
 
-        $zoom_data = $this->plugin->tv->get_channel_zoom($channel_id);
-        if ($zoom_data === DuneVideoZoomPresets::not_set) {
-            $detailed_info = TR::t('tv_screen_channel_info__4',
-                $channel->get_title(),
-                $channel->get_archive(),
-                $channel->get_id(),
-                implode(", ", $channel->get_epg_ids())
-            );
-        } else {
-            $detailed_info = TR::t('tv_screen_channel_info__4',
-                $channel->get_title(),
-                $channel->get_archive(),
-                $channel->get_id(),
-                implode(", ", $channel->get_epg_ids()),
-                TR::load_string(DuneVideoZoomPresets::$zoom_ops[$zoom_data])
-                );
-        }
-
-        return array(
-            PluginRegularFolderItem::media_url => MediaURL::encode(array('channel_id' => $channel_id, 'group_id' => $group_id)),
-            PluginRegularFolderItem::caption => $channel->get_title(),
-            PluginRegularFolderItem::starred => $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->in_items_order($channel_id),
-            PluginRegularFolderItem::view_item_params => array(
-                ViewItemParams::icon_path => $channel->get_icon_url(),
-                ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
-                ViewItemParams::item_detailed_info => $detailed_info,
-            ),
-        );
+        return $actions;
     }
 
     /**
@@ -556,5 +443,118 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         return Action_Factory::show_dialog(TR::t('search'), $defs, true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $items = array();
+
+        try {
+            if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
+                throw new Exception("Channels not loaded!");
+            }
+
+            if ($media_url->group_id === ALL_CHANNEL_GROUP_ID) {
+                $groups_order = $this->plugin->tv->get_groups_order()->get_order();
+            } else {
+                $groups_order[] = $media_url->group_id;
+            }
+
+            foreach ($groups_order as $id) {
+                $group = $this->plugin->tv->get_group($id);
+                if (is_null($group) || $group->is_disabled()) continue;
+
+                foreach ($group->get_items_order() as $channel_id) {
+                    if (($item = $this->get_folder_item($media_url->group_id, $channel_id)) !== null) {
+                        $items[] = $item;
+                    }
+                }
+            }
+        } catch (Exception $ex) {
+            hd_debug_print("Failed collect folder items!");
+            print_backtrace_exception($ex);
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param string $group_id
+     * @param string $channel_id
+     * @return array|null
+     */
+    private function get_folder_item($group_id, $channel_id)
+    {
+        $channel = $this->plugin->tv->get_channel($channel_id);
+        if (is_null($channel) || $channel->is_disabled()) {
+            return null;
+        }
+
+        $zoom_data = $this->plugin->tv->get_channel_zoom($channel_id);
+        if ($zoom_data === DuneVideoZoomPresets::not_set) {
+            $detailed_info = TR::t('tv_screen_channel_info__4',
+                $channel->get_title(),
+                $channel->get_archive(),
+                $channel->get_id(),
+                implode(", ", $channel->get_epg_ids())
+            );
+        } else {
+            $detailed_info = TR::t('tv_screen_channel_info__4',
+                $channel->get_title(),
+                $channel->get_archive(),
+                $channel->get_id(),
+                implode(", ", $channel->get_epg_ids()),
+                TR::load_string(DuneVideoZoomPresets::$zoom_ops[$zoom_data])
+            );
+        }
+
+        return array(
+            PluginRegularFolderItem::media_url => MediaURL::encode(array('channel_id' => $channel_id, 'group_id' => $group_id)),
+            PluginRegularFolderItem::caption => $channel->get_title(),
+            PluginRegularFolderItem::starred => $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->in_items_order($channel_id),
+            PluginRegularFolderItem::view_item_params => array(
+                ViewItemParams::icon_path => $channel->get_icon_url(),
+                ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
+                ViewItemParams::item_detailed_info => $detailed_info,
+            ),
+        );
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @inheritDoc
+     */
+    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    {
+        return Action_Factory::timer(1000);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_folder_views()
+    {
+        hd_debug_print(null, true);
+
+        return array(
+            $this->plugin->get_screen_view('icons_4x3_caption'),
+            $this->plugin->get_screen_view('icons_4x3_no_caption'),
+            $this->plugin->get_screen_view('icons_3x3_caption'),
+            $this->plugin->get_screen_view('icons_3x3_no_caption'),
+            $this->plugin->get_screen_view('icons_5x3_caption'),
+            $this->plugin->get_screen_view('icons_5x3_no_caption'),
+            $this->plugin->get_screen_view('icons_5x4_caption'),
+            $this->plugin->get_screen_view('icons_5x4_no_caption'),
+
+            $this->plugin->get_screen_view('list_1x11_small_info'),
+            $this->plugin->get_screen_view('list_2x11_small_info'),
+            $this->plugin->get_screen_view('list_3x11_no_info'),
+        );
     }
 }

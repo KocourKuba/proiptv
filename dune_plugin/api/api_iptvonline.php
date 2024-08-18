@@ -218,6 +218,27 @@ class api_iptvonline extends api_default
     }
 
     /**
+     * collect servers information
+     * @param string $selected
+     * @return array
+     */
+    protected function collect_servers(&$selected = "-1")
+    {
+        $this->servers = array();
+
+        if (isset($this->device->device->settings->server_location->value)) {
+            foreach ($this->device->device->settings->server_location->value as $server) {
+                $this->servers[(string)$server->id] = $server->label;
+                if ($server->selected) {
+                    $selected = (string)$server->id;
+                }
+            }
+        }
+
+        return $this->servers;
+    }
+
+    /**
      * @inheritDoc
      */
     public function SetServer($server, &$error_msg)
@@ -268,6 +289,28 @@ class api_iptvonline extends api_default
     }
 
     /**
+     * collect playlists information
+     * @param string &$selected
+     * @return array
+     */
+    protected function collect_playlists(&$selected = "-1")
+    {
+        $this->playlists = array();
+
+        if (isset($this->device->device->settings->user_playlists->value)) {
+            foreach ($this->device->device->settings->user_playlists->value as $playlist) {
+                $idx = (string)$playlist->id;
+                $this->playlists[$idx]['name'] = $playlist->label;
+                if ($playlist->selected) {
+                    $selected = $idx;
+                }
+            }
+        }
+
+        return $this->playlists;
+    }
+
+    /**
      * set server
      * @param string $id
      * @return void
@@ -290,48 +333,5 @@ class api_iptvonline extends api_default
         } else {
             hd_debug_print("Can't set playlist: " . json_encode($response));
         }
-    }
-
-    /**
-     * collect servers information
-     * @param string $selected
-     * @return array
-     */
-    protected function collect_servers(&$selected = "-1")
-    {
-        $this->servers = array();
-
-        if (isset($this->device->device->settings->server_location->value)) {
-            foreach ($this->device->device->settings->server_location->value as $server) {
-                $this->servers[(string)$server->id] = $server->label;
-                if ($server->selected) {
-                    $selected = (string)$server->id;
-                }
-            }
-        }
-
-        return $this->servers;
-    }
-
-    /**
-     * collect playlists information
-     * @param string &$selected
-     * @return array
-     */
-    protected function collect_playlists(&$selected = "-1")
-    {
-        $this->playlists = array();
-
-        if (isset($this->device->device->settings->user_playlists->value)) {
-            foreach ($this->device->device->settings->user_playlists->value as $playlist) {
-                $idx = (string)$playlist->id;
-                $this->playlists[$idx]['name'] = $playlist->label;
-                if ($playlist->selected) {
-                    $selected = $idx;
-                }
-            }
-        }
-
-        return $this->playlists;
     }
 }

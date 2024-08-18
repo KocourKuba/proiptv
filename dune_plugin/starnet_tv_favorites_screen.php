@@ -51,8 +51,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $actions = array();
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
 
-        $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
-        $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
+        $actions[GUI_EVENT_KEY_ENTER] = $action_play;
+        $actions[GUI_EVENT_KEY_PLAY] = $action_play;
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);

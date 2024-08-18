@@ -45,243 +45,53 @@ class smb_tree
         );
     }
 
-    private function get_auth_options()
-    {
-        return ($this->is_no_pass()) ? '-N' : '';
-    }
-
-    private function get_debug_level()
-    {
-        return '--debuglevel ' . $this->debug_level;
-    }
-
-    private function is_no_pass()
-    {
-        return $this->no_pass;
-    }
-
-    /*
-     * @return 0 if success
+    /**
+     * @param MediaURL $selected_url
+     * @return string encoded path
      */
-    private function execute($args = '')
+    public static function set_folder_info(&$selected_url)
     {
-        $cmd = '$FS_PREFIX' . "/firmware/bin/smbtree {$this->get_auth_options()} {$this->get_debug_level()} $args";
-        hd_debug_print("smbtree exec: $cmd", true);
-        $env = array('LD_LIBRARY_PATH' => '$FS_PREFIX/firmware/lib');
-        $process = proc_open($cmd, $this->descriptor_spec, $pipes, '/tmp', $env);
-
-        if (is_resource($process)) {
-            $this->smb_tree_output = stream_get_contents($pipes[1]);
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-
-            // Важно закрывать все каналы перед вызовом
-            // proc_close во избежание мертвой блокировки
-            $this->return_value = proc_close($process);
-        }
-
-        return $this->return_value;
-    }
-
-    private static function parse_smbtree_output($input_lines)
-    {
-        $output = array();
-
-        if (empty($input_lines)) {
-            return array();
-        }
-
-        $output_lines = explode("\n", $input_lines);
-        if ($output_lines === false) {
-            return array();
-        }
-
-        foreach ($output_lines as $line) {
-            if (!empty($line)) {
-                $detail_info = explode("\t", $line);
-
-                if (count($detail_info)) {
-                    $q = isset($detail_info[1]) ? $detail_info[1] : '';
-                    $output[$detail_info[0]] = array
-                    (
-                        'name' => $detail_info[0],
-                        'comment' => $q,
-                    );
-                }
-            }
-        }
-
-        return $output;
-    }
-
-    public function get_xdomains()
-    {
-        return ($this->execute('-X') !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
-    }
-
-    public function get_workgroup_servers($domain)
-    {
-        return ($this->execute('-W ' . $domain) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
-    }
-
-    public function get_server_shares($server)
-    {
-        return ($this->execute('-E ' . $server) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
-    }
-
-    public static function get_df_smb()
-    {
-        $df_smb = array();
-        $out_mount = file_get_contents("/proc/mounts");
-        if (preg_match_all('|(.+)/tmp/mnt/smb/(.+?) |', $out_mount, $match)) {
-            foreach ($match[2] as $k => $v) {
-                $df_smb[str_replace(array('/', '\134'), '', $match[1][$k])] = $v;
-            }
-        }
-        return $df_smb;
-    }
-
-    public static function get_nmblookup_path()
-    {
-        $cmd = '&&$FS_PREFIX/firmware_ext/smbserver/bin/nmblookup --configfile=$FS_PREFIX/etc/samba/smb.conf';
-        if (file_exists("/firmware_ext/smbserver/lib")) {
-            // android
-            $path = 'export LD_LIBRARY_PATH=$FS_PREFIX/firmware_ext/smbserver/lib:$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH';
-        } else if (file_exists("/firmware/bin/nmblookup")) {
-            // sigma
-            $path = 'export LD_LIBRARY_PATH=/firmware/lib:$LD_LIBRARY_PATH';
-            $cmd = '&&/firmware/bin/nmblookup';
+        if (!isset($selected_url->ip_path) || $selected_url->ip_path === false) {
+            $save_folder['filepath'] = $selected_url->filepath;
+        } else if ($selected_url->nfs_protocol !== false) {
+            $save_folder[$selected_url->ip_path]['foldername'] = preg_replace("|^/tmp/mnt/network/\d*|", '', $selected_url->filepath);
         } else {
-            $path = 'export LD_LIBRARY_PATH=$FS_PREFIX/lib:$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH';
+            $save_folder[$selected_url->ip_path]['foldername'] = preg_replace("|^/tmp/mnt/smb/\d*|", '', $selected_url->filepath);
+            $save_folder[$selected_url->ip_path]['user'] = isset($selected_url->user) ? $selected_url->user : false;
+            $save_folder[$selected_url->ip_path]['password'] = isset($selected_url->password) ? $selected_url->password : false;
         }
 
-        hd_debug_print("nmblookup: $path$cmd");
-        return $path . $cmd;
+        return json_encode($save_folder);
     }
 
-    public function get_server_shares_smb()
+    /**
+     * @param string $encoded_data
+     * @param string|null $default
+     * @return string
+     */
+    public static function get_folder_info($encoded_data, $default = null)
     {
-        $d = array();
-        $data = $this->get_xdomains();
-        foreach ($data as $domain) {
-            $data = $this->get_workgroup_servers($domain['name']);
-            foreach ($data as $shares) {
-                $d[$shares['name']] = $this->get_server_shares($shares['name']);
-            }
+        if (empty($encoded_data)) {
+            return $default;
         }
-        return $d;
-    }
 
-    public static function get_ip_network_folder_smb()
-    {
-        $d = array();
-        $network_folder_smb = self::get_network_folder_smb();
-        foreach ($network_folder_smb as $k => $v) {
-            if (!preg_match('/((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)/', $k)) {
-                $out = shell_exec(self::get_nmblookup_path() . ' "' . $k . '" -S');
-                if (preg_match('/(.*) (.*)<00>/', $out, $matches)) {
-                    $ip = '//' . $matches[1] . '/';
-                    if ($matches[2] === (string)$k) {
-                        foreach ($v as $key => $vel) {
-                            $d[$ip . $key] = $vel;
-                        }
-                    }
-                }
-            } else {
-                foreach ($v as $key => $vel) {
-                    $d['//' . $k . '/' . $key] = $vel;
+        $settings = @json_decode($encoded_data, true);
+        if ($settings === null) {
+            $select_folder = $encoded_data;
+        } else if (isset($settings['filepath'])) {
+            $select_folder = $settings['filepath'];
+        } else {
+            $select_folder = '';
+            foreach ($settings as $item) {
+                if (isset($item['foldername'])) {
+                    $q = isset($item['user']) ? self::get_mount_smb($settings) : self::get_mount_nfs();
+                    $select_folder = key($q) . $item['foldername'];
+                    break;
                 }
             }
         }
-        return $d;
-    }
 
-    public function get_ip_server_shares_smb()
-    {
-        $d = array();
-        $my_ip = get_ip_address();
-        $server_shares_smb = $this->get_server_shares_smb();
-        foreach ($server_shares_smb as $k => $v) {
-            //hd_debug_print("server shares: $k");
-            $out = shell_exec(self::get_nmblookup_path() . ' "' . $k . '" -R');
-            if (preg_match('/(.*) (.*)<00>/', $out, $matches)) {
-                if ($my_ip === $matches[1]) {
-                    continue;
-                }
-
-                $ip = '//' . $matches[1] . '/';
-                if ($matches[2] === (string)$k) {
-                    foreach ($v as $key => $vel) {
-                        $vel['foldername'] = $key . ' in ' . $k;
-                        $d[$ip . $key] = $vel;
-                    }
-                }
-            }
-        }
-        return $d;
-    }
-
-    public static function write_request($server_id, $cmd_name, $cmd_id, $params)
-    {
-        $dir_path = "/tmp/run/ipc__$server_id";
-        if (!is_dir($dir_path)) {
-            return false;
-        }
-
-        $pid = posix_getpid();
-        $path = "$dir_path/$cmd_name.$pid-$cmd_id.cmd";
-        $tmp_path = "$path.tmp";
-
-        $fp = fopen($tmp_path, 'wb');
-        if ($fp === false) {
-            return false;
-        }
-
-        foreach ($params as $key => $value) {
-            fprintf($fp, "$key = $value\n");
-        }
-
-        fclose($fp);
-
-        if (false === rename($tmp_path, $path)) {
-            unlink($tmp_path);
-            return false;
-        }
-
-        $path = "$dir_path/$cmd_name.$pid-$cmd_id.res";
-        sleep(1);
-        if (!file_exists($path)) {
-            return false;
-        }
-
-        $res = parse_ini_file($path, true);
-        unlink($path);
-        $path = '/tmp/run/network_mount_list.xml';
-        if (!file_exists($path)) {
-            return false;
-        }
-
-        $xml = simplexml_load_string(file_get_contents($path));
-        if ($xml === false) {
-            hd_debug_print("Error parsing $path.");
-            return false;
-        }
-
-        foreach ($xml->children() as $elt) {
-            $elt_name = $elt->getName();
-            if ($elt_name !== 'mount') {
-                continue;
-            }
-
-            $id = (int)$elt["id"];
-            $path = (string)$elt["path"];
-            $type = (string)$elt["type"];
-            if (($id === (int)$res['id']) && ($type === $params['type'])) {
-                return $path;
-            }
-        }
-
-        return false;
+        return empty($select_folder) ? $default : $select_folder;
     }
 
     public static function get_mount_smb($ip_smb)
@@ -362,79 +172,83 @@ class smb_tree
         return $mounts;
     }
 
-    public function get_mount_all_smb($info)
+    /*
+     * @return 0 if success
+     */
+
+    public static function get_df_smb()
     {
-        switch ($info) {
-            case 1:
-                // only network folders
-                $ip = self::get_ip_network_folder_smb();
-                break;
-            case 2:
-                // network folders and network folders + SMB search
-                $ip = array_merge($this->get_ip_server_shares_smb(), self::get_ip_network_folder_smb());
-                break;
-            case 3:
-                // only SMB search
-                $ip = $this->get_ip_server_shares_smb();
-                break;
-            default:
-                $ip = array();
-        }
-
-        return self::get_mount_smb($ip);
-    }
-
-    public static function get_network_folder_smb()
-    {
-        $d = array();
-        $network_folder = self::parse_network_config();
-        if (count($network_folder) > 0) {
-            foreach ($network_folder as $v) {
-                if ((int)$v['type'] !== 0) continue;
-
-                $dd['foldername'] = $v['name'];
-                if (!empty($v['user'])) {
-                    $dd['user'] = $v['user'];
-                }
-                if (!empty($v['password'])) {
-                    $dd['password'] = $v['password'];
-                }
-                $d[$v['server']][$v['directory']] = $dd;
-            }
-        }
-
-        return $d;
-    }
-
-    public static function get_network_folder_nfs()
-    {
-        $nfs = array();
-        $network_folder = self::parse_network_config();
-        if (count($network_folder) > 0) {
-            foreach ($network_folder as $v) {
-                if ((int)$v['type'] !== 1) continue;
-
-                $p = ((int)$v['protocol'] === 1) ? 'tcp' : 'udp';
-                $nfs[$v['server'] . ':' . $v['directory']]['foldername'] = $v['name'];
-                $nfs[$v['server'] . ':' . $v['directory']]['protocol'] = $p;
-                $nfs[$v['server'] . ':' . $v['directory']]['server'] = $v['server'];
-                $nfs[$v['server'] . ':' . $v['directory']]['directory'] = $v['directory'];
-            }
-        }
-
-        return $nfs;
-    }
-
-    public static function get_df_nfs()
-    {
-        $df_nfs = array();
+        $df_smb = array();
         $out_mount = file_get_contents("/proc/mounts");
-        if (preg_match_all('|(.+) /tmp/mnt/network/(.+?) |', $out_mount, $match)) {
+        if (preg_match_all('|(.+)/tmp/mnt/smb/(.+?) |', $out_mount, $match)) {
             foreach ($match[2] as $k => $v) {
-                $df_nfs[$match[1][$k]] = $v;
+                $df_smb[str_replace(array('/', '\134'), '', $match[1][$k])] = $v;
             }
         }
-        return $df_nfs;
+        return $df_smb;
+    }
+
+    public static function write_request($server_id, $cmd_name, $cmd_id, $params)
+    {
+        $dir_path = "/tmp/run/ipc__$server_id";
+        if (!is_dir($dir_path)) {
+            return false;
+        }
+
+        $pid = posix_getpid();
+        $path = "$dir_path/$cmd_name.$pid-$cmd_id.cmd";
+        $tmp_path = "$path.tmp";
+
+        $fp = fopen($tmp_path, 'wb');
+        if ($fp === false) {
+            return false;
+        }
+
+        foreach ($params as $key => $value) {
+            fprintf($fp, "$key = $value\n");
+        }
+
+        fclose($fp);
+
+        if (false === rename($tmp_path, $path)) {
+            unlink($tmp_path);
+            return false;
+        }
+
+        $path = "$dir_path/$cmd_name.$pid-$cmd_id.res";
+        sleep(1);
+        if (!file_exists($path)) {
+            return false;
+        }
+
+        $res = parse_ini_file($path, true);
+        unlink($path);
+        $path = '/tmp/run/network_mount_list.xml';
+        if (!file_exists($path)) {
+            return false;
+        }
+
+        $xml = simplexml_load_string(file_get_contents($path));
+        if ($xml === false) {
+            hd_debug_print("Error parsing $path.");
+            return false;
+        }
+
+        foreach ($xml->children() as $elt) {
+            $elt_name = $elt->getName();
+            if ($elt_name !== 'mount') {
+                continue;
+            }
+
+            $id = (int)$elt["id"];
+            $path = (string)$elt["path"];
+            $type = (string)$elt["type"];
+            if (($id === (int)$res['id']) && ($type === $params['type'])) {
+                return $path;
+            }
+        }
+
+        return false;
     }
 
     public static function get_mount_nfs()
@@ -483,53 +297,23 @@ class smb_tree
         return $d;
     }
 
-    /**
-     * @param MediaURL $selected_url
-     * @return string encoded path
-     */
-    public static function set_folder_info(&$selected_url)
+    public static function get_network_folder_nfs()
     {
-        if (!isset($selected_url->ip_path) || $selected_url->ip_path === false) {
-            $save_folder['filepath'] = $selected_url->filepath;
-        } else if ($selected_url->nfs_protocol !== false) {
-            $save_folder[$selected_url->ip_path]['foldername'] = preg_replace("|^/tmp/mnt/network/\d*|", '', $selected_url->filepath);
-        } else {
-            $save_folder[$selected_url->ip_path]['foldername'] = preg_replace("|^/tmp/mnt/smb/\d*|", '', $selected_url->filepath);
-            $save_folder[$selected_url->ip_path]['user'] = isset($selected_url->user) ? $selected_url->user : false;
-            $save_folder[$selected_url->ip_path]['password'] = isset($selected_url->password) ? $selected_url->password : false;
-        }
+        $nfs = array();
+        $network_folder = self::parse_network_config();
+        if (count($network_folder) > 0) {
+            foreach ($network_folder as $v) {
+                if ((int)$v['type'] !== 1) continue;
 
-        return json_encode($save_folder);
-    }
-
-    /**
-     * @param string $encoded_data
-     * @param string|null $default
-     * @return string
-     */
-    public static function get_folder_info($encoded_data, $default = null)
-    {
-        if (empty($encoded_data)) {
-            return $default;
-        }
-
-        $settings = @json_decode($encoded_data, true);
-        if ($settings === null) {
-            $select_folder = $encoded_data;
-        } else if (isset($settings['filepath'])) {
-            $select_folder = $settings['filepath'];
-        } else {
-            $select_folder = '';
-            foreach ($settings as $item) {
-                if (isset($item['foldername'])) {
-                    $q = isset($item['user']) ? self::get_mount_smb($settings) : self::get_mount_nfs();
-                    $select_folder = key($q) . $item['foldername'];
-                    break;
-                }
+                $p = ((int)$v['protocol'] === 1) ? 'tcp' : 'udp';
+                $nfs[$v['server'] . ':' . $v['directory']]['foldername'] = $v['name'];
+                $nfs[$v['server'] . ':' . $v['directory']]['protocol'] = $p;
+                $nfs[$v['server'] . ':' . $v['directory']]['server'] = $v['server'];
+                $nfs[$v['server'] . ':' . $v['directory']]['directory'] = $v['directory'];
             }
         }
 
-        return empty($select_folder) ? $default : $select_folder;
+        return $nfs;
     }
 
     protected static function parse_network_config()
@@ -544,5 +328,222 @@ class smb_tree
             }
         }
         return $network_folder;
+    }
+
+    public static function get_df_nfs()
+    {
+        $df_nfs = array();
+        $out_mount = file_get_contents("/proc/mounts");
+        if (preg_match_all('|(.+) /tmp/mnt/network/(.+?) |', $out_mount, $match)) {
+            foreach ($match[2] as $k => $v) {
+                $df_nfs[$match[1][$k]] = $v;
+            }
+        }
+        return $df_nfs;
+    }
+
+    public function get_mount_all_smb($info)
+    {
+        switch ($info) {
+            case 1:
+                // only network folders
+                $ip = self::get_ip_network_folder_smb();
+                break;
+            case 2:
+                // network folders and network folders + SMB search
+                $ip = array_merge($this->get_ip_server_shares_smb(), self::get_ip_network_folder_smb());
+                break;
+            case 3:
+                // only SMB search
+                $ip = $this->get_ip_server_shares_smb();
+                break;
+            default:
+                $ip = array();
+        }
+
+        return self::get_mount_smb($ip);
+    }
+
+    public static function get_ip_network_folder_smb()
+    {
+        $d = array();
+        $network_folder_smb = self::get_network_folder_smb();
+        foreach ($network_folder_smb as $k => $v) {
+            if (!preg_match('/((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)/', $k)) {
+                $out = shell_exec(self::get_nmblookup_path() . ' "' . $k . '" -S');
+                if (preg_match('/(.*) (.*)<00>/', $out, $matches)) {
+                    $ip = '//' . $matches[1] . '/';
+                    if ($matches[2] === (string)$k) {
+                        foreach ($v as $key => $vel) {
+                            $d[$ip . $key] = $vel;
+                        }
+                    }
+                }
+            } else {
+                foreach ($v as $key => $vel) {
+                    $d['//' . $k . '/' . $key] = $vel;
+                }
+            }
+        }
+        return $d;
+    }
+
+    public static function get_network_folder_smb()
+    {
+        $d = array();
+        $network_folder = self::parse_network_config();
+        if (count($network_folder) > 0) {
+            foreach ($network_folder as $v) {
+                if ((int)$v['type'] !== 0) continue;
+
+                $dd['foldername'] = $v['name'];
+                if (!empty($v['user'])) {
+                    $dd['user'] = $v['user'];
+                }
+                if (!empty($v['password'])) {
+                    $dd['password'] = $v['password'];
+                }
+                $d[$v['server']][$v['directory']] = $dd;
+            }
+        }
+
+        return $d;
+    }
+
+    public static function get_nmblookup_path()
+    {
+        $cmd = '&&$FS_PREFIX/firmware_ext/smbserver/bin/nmblookup --configfile=$FS_PREFIX/etc/samba/smb.conf';
+        if (file_exists("/firmware_ext/smbserver/lib")) {
+            // android
+            $path = 'export LD_LIBRARY_PATH=$FS_PREFIX/firmware_ext/smbserver/lib:$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH';
+        } else if (file_exists("/firmware/bin/nmblookup")) {
+            // sigma
+            $path = 'export LD_LIBRARY_PATH=/firmware/lib:$LD_LIBRARY_PATH';
+            $cmd = '&&/firmware/bin/nmblookup';
+        } else {
+            $path = 'export LD_LIBRARY_PATH=$FS_PREFIX/lib:$FS_PREFIX/firmware/lib:$LD_LIBRARY_PATH';
+        }
+
+        hd_debug_print("nmblookup: $path$cmd");
+        return $path . $cmd;
+    }
+
+    public function get_ip_server_shares_smb()
+    {
+        $d = array();
+        $my_ip = get_ip_address();
+        $server_shares_smb = $this->get_server_shares_smb();
+        foreach ($server_shares_smb as $k => $v) {
+            //hd_debug_print("server shares: $k");
+            $out = shell_exec(self::get_nmblookup_path() . ' "' . $k . '" -R');
+            if (preg_match('/(.*) (.*)<00>/', $out, $matches)) {
+                if ($my_ip === $matches[1]) {
+                    continue;
+                }
+
+                $ip = '//' . $matches[1] . '/';
+                if ($matches[2] === (string)$k) {
+                    foreach ($v as $key => $vel) {
+                        $vel['foldername'] = $key . ' in ' . $k;
+                        $d[$ip . $key] = $vel;
+                    }
+                }
+            }
+        }
+        return $d;
+    }
+
+    public function get_server_shares_smb()
+    {
+        $d = array();
+        $data = $this->get_xdomains();
+        foreach ($data as $domain) {
+            $data = $this->get_workgroup_servers($domain['name']);
+            foreach ($data as $shares) {
+                $d[$shares['name']] = $this->get_server_shares($shares['name']);
+            }
+        }
+        return $d;
+    }
+
+    public function get_xdomains()
+    {
+        return ($this->execute('-X') !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
+    }
+
+    private function execute($args = '')
+    {
+        $cmd = '$FS_PREFIX' . "/firmware/bin/smbtree {$this->get_auth_options()} {$this->get_debug_level()} $args";
+        hd_debug_print("smbtree exec: $cmd", true);
+        $env = array('LD_LIBRARY_PATH' => '$FS_PREFIX/firmware/lib');
+        $process = proc_open($cmd, $this->descriptor_spec, $pipes, '/tmp', $env);
+
+        if (is_resource($process)) {
+            $this->smb_tree_output = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+
+            // Важно закрывать все каналы перед вызовом
+            // proc_close во избежание мертвой блокировки
+            $this->return_value = proc_close($process);
+        }
+
+        return $this->return_value;
+    }
+
+    private function get_auth_options()
+    {
+        return ($this->is_no_pass()) ? '-N' : '';
+    }
+
+    private function is_no_pass()
+    {
+        return $this->no_pass;
+    }
+
+    private function get_debug_level()
+    {
+        return '--debuglevel ' . $this->debug_level;
+    }
+
+    private static function parse_smbtree_output($input_lines)
+    {
+        $output = array();
+
+        if (empty($input_lines)) {
+            return array();
+        }
+
+        $output_lines = explode("\n", $input_lines);
+        if ($output_lines === false) {
+            return array();
+        }
+
+        foreach ($output_lines as $line) {
+            if (!empty($line)) {
+                $detail_info = explode("\t", $line);
+
+                if (count($detail_info)) {
+                    $q = isset($detail_info[1]) ? $detail_info[1] : '';
+                    $output[$detail_info[0]] = array
+                    (
+                        'name' => $detail_info[0],
+                        'comment' => $q,
+                    );
+                }
+            }
+        }
+
+        return $output;
+    }
+
+    public function get_workgroup_servers($domain)
+    {
+        return ($this->execute('-W ' . $domain) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
+    }
+
+    public function get_server_shares($server)
+    {
+        return ($this->execute('-E ' . $server) !== 0) ? array() : self::parse_smbtree_output($this->smb_tree_output);
     }
 }

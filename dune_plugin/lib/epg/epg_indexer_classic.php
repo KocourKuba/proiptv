@@ -117,6 +117,15 @@ class Epg_Indexer_Classic extends Epg_Indexer
     }
 
     /**
+     * @param string $name
+     * @return string
+     */
+    protected function get_index_name($name)
+    {
+        return $this->get_cache_stem("_$name$this->index_ext");
+    }
+
+    /**
      * @inheritDoc
      * @override
      */
@@ -170,7 +179,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
 
                 $xml_node = new DOMDocument();
                 $xml_node->loadXML($line);
-                foreach($xml_node->getElementsByTagName('channel') as $tag) {
+                foreach ($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
 
@@ -211,6 +220,16 @@ class Epg_Indexer_Classic extends Epg_Indexer
         }
 
         $this->set_index_locked(false);
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    protected function is_index_valid($name)
+    {
+        $name = $this->get_index_name($name);
+        return file_exists($name) && filesize($name) !== 0;
     }
 
     /**
@@ -319,18 +338,8 @@ class Epg_Indexer_Classic extends Epg_Indexer
         $this->set_index_locked(false);
     }
 
-    /**
-     * @inheritDoc
-     * @override
-     */
-    protected function clear_memory_index()
-    {
-        hd_debug_print("clear legacy index");
-
-        $this->xmltv_picons = null;
-        $this->xmltv_channels = null;
-        $this->xmltv_positions = null;
-    }
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
 
     /**
      * @inheritDoc
@@ -345,26 +354,17 @@ class Epg_Indexer_Classic extends Epg_Indexer
         }
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    /**
-     * @param string $name
-     * @return string
-     */
-    protected function get_index_name($name)
-    {
-        return $this->get_cache_stem("_$name$this->index_ext");
-    }
-
     /**
      * @inheritDoc
      * @override
      */
-    protected function is_index_valid($name)
+    protected function clear_memory_index()
     {
-        $name = $this->get_index_name($name);
-        return file_exists($name) && filesize($name) !== 0;
+        hd_debug_print("clear legacy index");
+
+        $this->xmltv_picons = null;
+        $this->xmltv_channels = null;
+        $this->xmltv_positions = null;
     }
 
     /**

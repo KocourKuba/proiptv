@@ -31,7 +31,8 @@ Default_Dune_Plugin_Fw::$plugin_class_name = 'Starnet_Plugin';
 /**
  * @throws Exception
  */
-function __autoload($className) {
+function __autoload($className)
+{
     //hd_debug_print("__autoload class $className", true);
 
     $path = __DIR__ . "/$className.php";

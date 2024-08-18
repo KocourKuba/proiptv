@@ -32,15 +32,6 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
     const SEARCH_ICON_PATH = 'plugin_file://icons/icon_search.png';
 
     /**
-     * @param string $group_id
-     * @return false|string
-     */
-    public static function get_media_url_string($group_id)
-    {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
-    }
-
-    /**
      * @param string $category
      * @return false|string
      */
@@ -57,14 +48,14 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         return array(
-            GUI_EVENT_KEY_ENTER    => User_Input_Handler_Registry::create_action($this,
+            GUI_EVENT_KEY_ENTER => User_Input_Handler_Registry::create_action($this,
                 ACTION_CREATE_SEARCH, null, array(ACTION_SEARCH => ACTION_OPEN_FOLDER)),
-            GUI_EVENT_KEY_B_GREEN  => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up')),
+            GUI_EVENT_KEY_B_GREEN => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up')),
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down')),
-            GUI_EVENT_KEY_D_BLUE   => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
-            GUI_EVENT_KEY_RETURN   => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
+            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
             GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
-            GUI_EVENT_KEY_STOP       => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -175,6 +166,15 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
         }
 
         return null;
+    }
+
+    /**
+     * @param string $group_id
+     * @return false|string
+     */
+    public static function get_media_url_string($group_id)
+    {
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
     }
 
     ///////////////////////////////////////////////////////////////////////

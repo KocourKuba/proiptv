@@ -60,6 +60,30 @@ class Epg_Indexer_Sql extends Epg_Indexer
     }
 
     /**
+     * open sqlite database
+     * @return bool
+     */
+    private function open_sqlite_db()
+    {
+        if ($this->epg_db === null) {
+            try {
+                $stem = $this->get_cache_stem("");
+                if (empty($stem)) {
+                    throw new Exception("Database name is empty");
+                }
+
+                $index_name = "{$stem}_epg$this->index_ext";
+                hd_debug_print("Open db: $index_name", true);
+                $this->epg_db = new SQLite3($index_name, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE, '');
+            } catch (Exception $ex) {
+                print_backtrace_exception($ex);
+            }
+        }
+
+        return $this->epg_db !== null;
+    }
+
+    /**
      * @inheritDoc
      * @override
      */
@@ -120,7 +144,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
             }
 
             if (empty($channel_position)) {
-                throw new Exception("No positions for channel $channel_id ($channel_title) and epg id's: ". raw_json_encode($epg_ids));
+                throw new Exception("No positions for channel $channel_id ($channel_title) and epg id's: " . raw_json_encode($epg_ids));
             }
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
@@ -188,7 +212,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
                 $xml_node = new DOMDocument();
                 $xml_node->loadXML($line);
-                foreach($xml_node->getElementsByTagName('channel') as $tag) {
+                foreach ($xml_node->getElementsByTagName('channel') as $tag) {
                     $channel_id = $tag->getAttribute('id');
                 }
 
@@ -232,6 +256,44 @@ class Epg_Indexer_Sql extends Epg_Indexer
         }
 
         $this->set_index_locked(false);
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    protected function is_index_valid($name)
+    {
+        return $this->check_table($name);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
+     * @param string $name
+     * @return bool
+     */
+    private function check_table($name)
+    {
+        if ($this->open_sqlite_db()) {
+            $table = $this->epg_db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';");
+            return !empty($table);
+        }
+
+        return false;
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function remove_index($name)
+    {
+        if ($this->is_index_valid($name)) {
+            hd_debug_print("Remove index: $name");
+            $this->epg_db->exec("DROP TABLE IF EXISTS $name;");
+        }
     }
 
     /**
@@ -354,29 +416,8 @@ class Epg_Indexer_Sql extends Epg_Indexer
         $this->set_index_locked(false);
     }
 
-    /**
-     * @inheritDoc
-     * @override
-     */
-    public function remove_index($name)
-    {
-        if ($this->is_index_valid($name)) {
-            hd_debug_print("Remove index: $name");
-            $this->epg_db->exec("DROP TABLE IF EXISTS $name;");
-        }
-    }
-
     ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    protected function is_index_valid($name)
-    {
-        return $this->check_table($name);
-    }
+    /// private methods
 
     /**
      * @inheritDoc
@@ -397,46 +438,5 @@ class Epg_Indexer_Sql extends Epg_Indexer
             $this->epg_db->close();
             $this->epg_db = null;
         }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// private methods
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    private function check_table($name)
-    {
-        if ($this->open_sqlite_db()) {
-            $table = $this->epg_db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';");
-            return !empty($table);
-        }
-
-        return false;
-    }
-
-    /**
-     * open sqlite database
-     * @return bool
-     */
-    private function open_sqlite_db()
-    {
-        if ($this->epg_db === null) {
-            try {
-                $stem = $this->get_cache_stem("");
-                if (empty($stem)) {
-                    throw new Exception("Database name is empty");
-                }
-
-                $index_name = "{$stem}_epg$this->index_ext";
-                hd_debug_print("Open db: $index_name", true);
-                $this->epg_db = new SQLite3($index_name, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE, '');
-            } catch (Exception $ex) {
-                print_backtrace_exception($ex);
-            }
-        }
-
-        return $this->epg_db !== null;
     }
 }

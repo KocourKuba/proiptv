@@ -51,6 +51,15 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     }
 
     /**
+     * @inheritDoc
+     */
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        return $this->do_get_control_defs();
+    }
+
+    /**
      * EPG dialog defs
      * @return array
      */
@@ -83,7 +92,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 PARAM_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine'),
                 $engine, $cache_engine, self::CONTROLS_WIDTH, true);
         } else if (count($cache_engine) === 1) {
-            Control_Factory::add_button($defs, $this,null, "dummy",
+            Control_Factory::add_button($defs, $this, null, "dummy",
                 TR::t('setup_epg_cache_engine'), reset($cache_engine), self::CONTROLS_WIDTH);
         }
 
@@ -157,15 +166,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     /**
      * @inheritDoc
      */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        return $this->do_get_control_defs();
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -181,10 +181,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         switch ($control_id) {
             case GUI_EVENT_KEY_RETURN:
-            return Action_Factory::close_and_run(
-                User_Input_Handler_Registry::create_action_screen(
-                    Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
-            );
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(
+                        Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
+                );
 
             case self::CONTROL_CHANGE_CACHE_PATH:
                 $media_url_str = MediaURL::encode(

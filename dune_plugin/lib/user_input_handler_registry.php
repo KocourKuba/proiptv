@@ -43,17 +43,6 @@ class User_Input_Handler_Registry
     }
 
     /**
-     * @return User_Input_Handler_Registry
-     */
-    public static function get_instance()
-    {
-        if (is_null(self::$instance)) {
-            self::$instance = new User_Input_Handler_Registry();
-        }
-        return self::$instance;
-    }
-
-    /**
      * @param string $screen_id
      * @param string $name
      * @param string|null $caption
@@ -86,6 +75,43 @@ class User_Input_Handler_Registry
     }
 
     /**
+     * @param string $id
+     * @return User_Input_Handler|null
+     */
+    public function get_registered_handler($id)
+    {
+        return isset($this->handlers[$id]) ? $this->handlers[$id] : null;
+    }
+
+    /**
+     * @return User_Input_Handler_Registry
+     */
+    public static function get_instance()
+    {
+        if (is_null(self::$instance)) {
+            self::$instance = new User_Input_Handler_Registry();
+        }
+        return self::$instance;
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $name
+     * @param string $caption
+     * @param string|null $icon
+     * @param array|null $add_params
+     * @return array
+     */
+    public static function create_popup_item(User_Input_Handler $handler, $name, $caption, $icon = null, $add_params = null)
+    {
+        return array(
+            GuiMenuItemDef::caption => $caption,
+            GuiMenuItemDef::action => self::create_action($handler, $name, $caption, $add_params),
+            GuiMenuItemDef::icon_url => $icon,
+        );
+    }
+
+    /**
      * @param User_Input_Handler $handler
      * @param string $name
      * @param string|null $caption
@@ -107,23 +133,6 @@ class User_Input_Handler_Registry
             GuiAction::caption => $caption,
             GuiAction::data => null,
             GuiAction::params => $params,
-        );
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $name
-     * @param string $caption
-     * @param string|null $icon
-     * @param array|null $add_params
-     * @return array
-     */
-    public static function create_popup_item(User_Input_Handler $handler, $name, $caption, $icon = null, $add_params = null)
-    {
-        return array(
-            GuiMenuItemDef::caption => $caption,
-            GuiMenuItemDef::action => self::create_action($handler, $name, $caption, $add_params),
-            GuiMenuItemDef::icon_url => $icon,
         );
     }
 
@@ -165,14 +174,5 @@ class User_Input_Handler_Registry
         if (isset($this->handlers[$handler_id])) {
             unset($this->handlers[$handler_id]);
         }
-    }
-
-    /**
-     * @param string $id
-     * @return User_Input_Handler|null
-     */
-    public function get_registered_handler($id)
-    {
-        return isset($this->handlers[$id]) ? $this->handlers[$id] : null;
     }
 }

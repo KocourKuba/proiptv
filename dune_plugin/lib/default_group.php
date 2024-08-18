@@ -98,13 +98,6 @@ class Default_Group extends Json_Serializer implements Group
      */
     private $plugin;
 
-    public function __sleep()
-    {
-        $vars = get_object_vars($this);
-        unset($vars['plugin']);
-        return array_keys($vars);
-    }
-
     /**
      * @param Default_Dune_Plugin $plugin
      * @param string $id
@@ -130,20 +123,11 @@ class Default_Group extends Json_Serializer implements Group
         $this->_channels_ids = new Ordered_Array();
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function get_id()
+    public function __sleep()
     {
-        return $this->_id;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_title()
-    {
-        return $this->_title;
+        $vars = get_object_vars($this);
+        unset($vars['plugin']);
+        return array_keys($vars);
     }
 
     /**
@@ -165,24 +149,6 @@ class Default_Group extends Json_Serializer implements Group
     /**
      * @inheritDoc
      */
-    public function is_special_group()
-    {
-        return in_array($this->_id, array(
-            ALL_CHANNEL_GROUP_ID,
-            FAVORITES_GROUP_ID,
-            HISTORY_GROUP_ID,
-            CHANGED_CHANNELS_GROUP_ID,
-            VOD_GROUP_ID,
-            FAVORITES_MOVIE_GROUP_ID,
-            SEARCH_MOVIES_GROUP_ID,
-            FILTER_MOVIES_GROUP_ID,
-            )
-        );
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function is_adult_group()
     {
         return $this->_adult;
@@ -194,6 +160,69 @@ class Default_Group extends Json_Serializer implements Group
     public function set_adult($adult)
     {
         $this->_adult = $adult;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_group_channel($id)
+    {
+        $channel = $this->plugin->tv->get_channel($id);
+        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
+            return $channel;
+        }
+
+        return $this->_channels_ids->in_order($id) ? $channel : null;
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_group_enabled_channels()
+    {
+        $channels = new Hashed_Array();
+        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
+            foreach ($this->plugin->tv->get_enabled_groups() as $egroup) {
+                foreach ($egroup->get_group_channels() as $channel) {
+                    if (is_null($channel) || $channel->is_disabled()) continue;
+                    $channels->put($channel->get_id(), $channel);
+                }
+            }
+        } else {
+            foreach ($this->get_group_channels() as $channel) {
+                if (is_null($channel) || $channel->is_disabled()) continue;
+                $channels->put($channel->get_id(), $channel);
+            }
+        }
+
+        return $channels;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_group_channels()
+    {
+        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
+            return $this->plugin->tv->get_channels();
+        }
+
+        $group_channels = new Hashed_Array();
+        foreach ($this->_channels_ids as $channel_id) {
+            $channel = $this->plugin->tv->get_channel($channel_id);
+            if (!is_null($channel)) {
+                $group_channels->set($channel->get_id(), $channel);
+            }
+        }
+        return $group_channels;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_id()
+    {
+        return $this->_id;
     }
 
     /**
@@ -240,56 +269,19 @@ class Default_Group extends Json_Serializer implements Group
     /**
      * @inheritDoc
      */
-    public function get_group_channels()
+    public function is_special_group()
     {
-        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
-            return $this->plugin->tv->get_channels();
-        }
-
-        $group_channels = new Hashed_Array();
-        foreach($this->_channels_ids as $channel_id) {
-            $channel = $this->plugin->tv->get_channel($channel_id);
-            if (!is_null($channel)) {
-                $group_channels->set($channel->get_id(), $channel);
-            }
-        }
-        return $group_channels;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_group_channel($id)
-    {
-        $channel = $this->plugin->tv->get_channel($id);
-        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
-            return $channel;
-        }
-
-        return $this->_channels_ids->in_order($id) ? $channel : null;
-    }
-
-    /**
-     * @return Hashed_Array
-     */
-    public function get_group_enabled_channels()
-    {
-        $channels = new Hashed_Array();
-        if ($this->_id === ALL_CHANNEL_GROUP_ID) {
-            foreach ($this->plugin->tv->get_enabled_groups() as $egroup) {
-                foreach ($egroup->get_group_channels() as $channel) {
-                    if (is_null($channel) || $channel->is_disabled()) continue;
-                    $channels->put($channel->get_id(), $channel);
-                }
-            }
-        } else {
-            foreach ($this->get_group_channels() as $channel) {
-                if (is_null($channel) || $channel->is_disabled()) continue;
-                $channels->put($channel->get_id(), $channel);
-            }
-        }
-
-        return $channels;
+        return in_array($this->_id, array(
+                ALL_CHANNEL_GROUP_ID,
+                FAVORITES_GROUP_ID,
+                HISTORY_GROUP_ID,
+                CHANGED_CHANNELS_GROUP_ID,
+                VOD_GROUP_ID,
+                FAVORITES_MOVIE_GROUP_ID,
+                SEARCH_MOVIES_GROUP_ID,
+                FILTER_MOVIES_GROUP_ID,
+            )
+        );
     }
 
     /**
@@ -312,19 +304,6 @@ class Default_Group extends Json_Serializer implements Group
         }
 
         return $channels;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function &get_items_order()
-    {
-        if ($this->_order_support) {
-            return $this->plugin->get_orders($this->_id);
-        }
-
-        $empty = new Ordered_Array();
-        return $empty;
     }
 
     /**
@@ -384,9 +363,6 @@ class Default_Group extends Json_Serializer implements Group
         return Starnet_Tv_Channel_List_Screen::get_media_url_string($this->get_id());
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-    /// Methods
-
     /**
      * @param Default_Channel $channel
      */
@@ -397,6 +373,22 @@ class Default_Group extends Json_Serializer implements Group
             $this->get_items_order()->add_item($channel->get_id());
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function &get_items_order()
+    {
+        if ($this->_order_support) {
+            return $this->plugin->get_orders($this->_id);
+        }
+
+        $empty = new Ordered_Array();
+        return $empty;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// Methods
 
     /**
      * Sort channels in group
@@ -427,5 +419,13 @@ class Default_Group extends Json_Serializer implements Group
             $names->value_sort();
             $order->add_items($names->get_keys());
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_title()
+    {
+        return $this->_title;
     }
 }

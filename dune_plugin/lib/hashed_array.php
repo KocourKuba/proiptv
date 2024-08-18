@@ -35,21 +35,28 @@ class Hashed_Array extends Json_Serializer implements Iterator
 {
     const UP = -1;
     const DOWN = 1;
-
+    /**
+     * @var array
+     */
+    protected $seq = array();
+    /**
+     * @var TValue[]
+     */
+    protected $map = array();
     /**
      * @var integer
      */
     private $pos = 0;
 
     /**
-     * @var array
+     * @param string $a
+     * @param string $b
+     * @return int
      */
-    protected $seq = array();
-
-    /**
-     * @var TValue[]
-     */
-    protected $map = array();
+    protected static function sort_array_cb($a, $b)
+    {
+        return strnatcasecmp($a, $b);
+    }
 
     public function __sleep()
     {
@@ -65,15 +72,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
     public function __wakeup()
     {
         $this->seq = array_keys($this->map);
-    }
-
-    /**
-     * Default hashing algorithm
-     * @return string
-     */
-    public static function hash($item)
-    {
-        return empty($item) ? '' : hash('crc32', $item);
     }
 
     /**
@@ -94,6 +92,26 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * return value associated with key
+     *
+     * @param TKey $key
+     * @return TValue|null
+     */
+    public function get($key)
+    {
+        return $this->has($key) ? $this->map[$key] : null;
+    }
+
+    /**
+     * @param TKey $key
+     * @return bool
+     */
+    public function has($key)
+    {
+        return isset($this->map[$key]);
+    }
+
+    /**
      * @param TKey $key
      * @return integer|false
      */
@@ -101,7 +119,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
     {
         return array_search($key, $this->seq);
     }
-
 
     /**
      * add item. key for item is hash of item
@@ -111,6 +128,29 @@ class Hashed_Array extends Json_Serializer implements Iterator
     {
         $key = self::hash($item);
         $this->put($key, $item);
+    }
+
+    /**
+     * Default hashing algorithm
+     * @return string
+     */
+    public static function hash($item)
+    {
+        return empty($item) ? '' : hash('crc32', $item);
+    }
+
+    /**
+     * Add only new item to array
+     *
+     * @param TKey $key
+     * @param TValue $item
+     */
+    public function put($key, $item)
+    {
+        if (!$this->has($key)) {
+            $this->seq[] = $key;
+            $this->map[$key] = $item;
+        }
     }
 
     /**
@@ -137,31 +177,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
             $this->seq[] = $key;
         }
         $this->map[$key] = $item;
-    }
-
-    /**
-     * Add only new item to array
-     *
-     * @param TKey $key
-     * @param TValue $item
-     */
-    public function put($key, $item)
-    {
-        if (!$this->has($key)) {
-            $this->seq[] = $key;
-            $this->map[$key] = $item;
-        }
-    }
-
-    /**
-     * return value associated with key
-     *
-     * @param TKey $key
-     * @return TValue|null
-     */
-    public function get($key)
-    {
-        return $this->has($key) ? $this->map[$key] : null;
     }
 
     /**
@@ -202,15 +217,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
         $this->seq = array_values(array_diff($this->seq, $keys));
         $this->map = array_diff_key($this->map, array_fill_keys($keys, null));
         return $cnt - count($this->seq);
-    }
-
-    /**
-     * @param TKey $key
-     * @return bool
-     */
-    public function has($key)
-    {
-        return isset($this->map[$key]);
     }
 
     /**
@@ -282,16 +288,6 @@ class Hashed_Array extends Json_Serializer implements Iterator
         }
 
         return true;
-    }
-
-    /**
-     * @param string $a
-     * @param string $b
-     * @return int
-     */
-    protected static function sort_array_cb($a, $b)
-    {
-        return strnatcasecmp($a, $b);
     }
 
     public function clear()

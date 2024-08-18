@@ -53,18 +53,6 @@ class Changes_Impl
     }
 
     /**
-     * Reset changes
-     * @param string $save_data
-     * @return bool previous state
-     */
-    protected function set_no_changes($save_data = PLUGIN_ORDERS)
-    {
-        $old = isset($this->has_changes[$save_data]) && $this->has_changes[$save_data];
-        $this->has_changes[$save_data] = false;
-        return $old;
-    }
-
-    /**
      * Return true if changes exist
      * @return bool
      */
@@ -112,5 +100,17 @@ class Changes_Impl
         }
 
         return $saved;
+    }
+
+    /**
+     * Reset changes
+     * @param string $save_data
+     * @return bool previous state
+     */
+    protected function set_no_changes($save_data = PLUGIN_ORDERS)
+    {
+        $old = isset($this->has_changes[$save_data]) && $this->has_changes[$save_data];
+        $this->has_changes[$save_data] = false;
+        return $old;
     }
 }

@@ -51,8 +51,8 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         $actions = array();
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
 
-        $actions[GUI_EVENT_KEY_ENTER]  = $action_play;
-        $actions[GUI_EVENT_KEY_PLAY]   = $action_play;
+        $actions[GUI_EVENT_KEY_ENTER] = $action_play;
+        $actions[GUI_EVENT_KEY_PLAY] = $action_play;
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
@@ -81,8 +81,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
 
-        switch ($user_input->control_id)
-		{
+        switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 if ($this->has_changes()) {
@@ -124,7 +123,7 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
                 return $post_action;
 
-			case ACTION_ITEM_DELETE:
+            case ACTION_ITEM_DELETE:
                 $this->set_changes();
                 $this->plugin->get_playback_points()->erase_point($selected_media_url->channel_id);
                 if ($this->plugin->get_playback_points()->size() === 0) {
@@ -137,13 +136,13 @@ class Starnet_TV_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 $this->plugin->get_playback_points()->clear_points();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
-			case ACTION_ADD_FAV:
+            case ACTION_ADD_FAV:
                 $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
-				$is_favorite = $fav_group->in_items_order($selected_media_url->channel_id);
-				$opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-				$message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
+                $is_favorite = $fav_group->in_items_order($selected_media_url->channel_id);
+                $opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
                 $this->set_changes();
-				return Action_Factory::show_title_dialog($message,
+                return Action_Factory::show_title_dialog($message,
                     $this->plugin->tv->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:

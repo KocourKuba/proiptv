@@ -30,19 +30,6 @@ class Control_Factory
 {
     /**
      * @param array &$defs
-     * @param int $vgap
-     */
-    public static function add_vgap(&$defs, $vgap)
-    {
-        $defs[] = array
-        (
-            GuiControlDef::kind => GUI_CONTROL_VGAP,
-            GuiControlDef::specific_def => array(GuiVGapDef::vgap => $vgap),
-        );
-    }
-
-    /**
-     * @param array &$defs
      * @param string $title
      * @param string $text
      * @param bool $vgap_after
@@ -64,17 +51,14 @@ class Control_Factory
 
     /**
      * @param array &$defs
-     * @param string $title
-     * @param string $text
+     * @param int $vgap
      */
-    public static function add_smart_label(&$defs, $title, $text)
+    public static function add_vgap(&$defs, $vgap)
     {
-        $defs[] = array(
-            GuiControlDef::name => '',
-            GuiControlDef::title => $title,
-            GuiControlDef::kind => GUI_CONTROL_LABEL,
-            GuiControlDef::specific_def => array(GuiLabelDef::caption => $text),
-            GuiControlDef::params => array('smart' => true),
+        $defs[] = array
+        (
+            GuiControlDef::kind => GUI_CONTROL_VGAP,
+            GuiControlDef::specific_def => array(GuiVGapDef::vgap => $vgap),
         );
     }
 
@@ -137,7 +121,7 @@ class Control_Factory
             GuiControlDef::name => $name,
             GuiControlDef::title => $title,
             GuiControlDef::kind => GUI_CONTROL_BUTTON,
-            GuiControlDef::specific_def =>array
+            GuiControlDef::specific_def => array
             (
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
@@ -176,6 +160,22 @@ class Control_Factory
 
         self::add_vgap($defs, -65);
         self::add_smart_label($defs, null, "<gap width=15/><icon dy='-2'>$image</icon><gap width=20/><text dy='-2'>$caption</text>");
+    }
+
+    /**
+     * @param array &$defs
+     * @param string $title
+     * @param string $text
+     */
+    public static function add_smart_label(&$defs, $title, $text)
+    {
+        $defs[] = array(
+            GuiControlDef::name => '',
+            GuiControlDef::title => $title,
+            GuiControlDef::kind => GUI_CONTROL_LABEL,
+            GuiControlDef::specific_def => array(GuiLabelDef::caption => $text),
+            GuiControlDef::params => array('smart' => true),
+        );
     }
 
     /**
@@ -378,15 +378,6 @@ class Control_Factory
         self::add_vgap($defs, 4);
     }
 
-
-    public static function sticker_geometry($img, $img_x, $img_y, $img_halign, $img_valign)
-    {
-        return array(
-            'geom' => array('x' => $img_x, 'y' => $img_y, 'halign' => $img_halign, 'valign' => $img_valign),
-            'comp' => array('items' => array(array('type' => 'icon', 'url' => $img)))
-        );
-    }
-
     /**
      * @param string|array $img
      * @param int $img_x
@@ -411,5 +402,13 @@ class Control_Factory
         }
 
         return json_encode(array('items' => $items, 'above_selection' => $above_selection));
+    }
+
+    public static function sticker_geometry($img, $img_x, $img_y, $img_halign, $img_valign)
+    {
+        return array(
+            'geom' => array('x' => $img_x, 'y' => $img_y, 'halign' => $img_halign, 'valign' => $img_valign),
+            'comp' => array('items' => array(array('type' => 'icon', 'url' => $img)))
+        );
     }
 }

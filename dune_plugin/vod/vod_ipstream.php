@@ -100,7 +100,7 @@ class vod_ipstream extends vod_standard
                         empty($season->info->plot)
                             ? TR::t('vod_screen_season__1', $season->season)
                             : $season->info->plot
-                        ,'');
+                        , '');
 
                     foreach ($season->episodes as $episode) {
                         hd_debug_print("movie playback_url: $episode->video");
@@ -208,6 +208,31 @@ class vod_ipstream extends vod_standard
     }
 
     /**
+     * @param Object $movie_obj
+     * @return Short_Movie
+     */
+    protected static function CreateShortMovie($movie_obj)
+    {
+        if (isset($movie_obj->id)) {
+            $id = (string)$movie_obj->id;
+        } else if (isset($movie_obj->series_id)) {
+            $id = $movie_obj->series_id . "_serial";
+        } else {
+            $id = Hashed_Array::hash($movie_obj->name);
+        }
+
+        $genres = HD::ArrayToStr($movie_obj->info->genre);
+        $country = HD::ArrayToStr($movie_obj->info->country);
+
+        return new Short_Movie(
+            $id,
+            (string)$movie_obj->name,
+            (string)$movie_obj->info->poster,
+            TR::t('vod_screen_movie_info__5', $movie_obj->name, $movie_obj->info->year, $country, $genres, $movie_obj->info->rating)
+        );
+    }
+
+    /**
      * @inheritDoc
      */
     public function getMovieList($query_id)
@@ -299,30 +324,5 @@ class vod_ipstream extends vod_standard
 
         hd_debug_print("Movies found: " . count($movies));
         return $movies;
-    }
-
-    /**
-     * @param Object $movie_obj
-     * @return Short_Movie
-     */
-    protected static function CreateShortMovie($movie_obj)
-    {
-        if (isset($movie_obj->id)) {
-            $id = (string)$movie_obj->id;
-        } else if (isset($movie_obj->series_id)) {
-            $id = $movie_obj->series_id . "_serial";
-        } else {
-            $id = Hashed_Array::hash($movie_obj->name);
-        }
-
-        $genres = HD::ArrayToStr($movie_obj->info->genre);
-        $country = HD::ArrayToStr($movie_obj->info->country);
-
-        return new Short_Movie(
-            $id,
-            (string)$movie_obj->name,
-            (string)$movie_obj->info->poster,
-            TR::t('vod_screen_movie_info__5', $movie_obj->name, $movie_obj->info->year, $country, $genres, $movie_obj->info->rating)
-        );
     }
 }

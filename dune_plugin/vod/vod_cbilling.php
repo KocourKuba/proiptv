@@ -192,33 +192,6 @@ class vod_cbilling extends vod_standard
     }
 
     /**
-     * @inheritDoc
-     */
-    public function getMovieList($query_id)
-    {
-        hd_debug_print($query_id);
-        $page_idx = $this->get_next_page($query_id);
-        if ($page_idx < 0)
-            return array();
-
-        if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
-            $params[CURLOPT_CUSTOMREQUEST] = "/filter/new?page=$page_idx";
-        } else {
-            $arr = explode("_", $query_id);
-            if ($arr === false) {
-                $genre_id = $query_id;
-            } else {
-                $genre_id = $arr[1];
-            }
-
-            $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=$page_idx";
-        }
-
-        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
-        return $response === false ? array() : $this->CollectSearchResult($response);
-    }
-
-    /**
      * @param Object $json
      * @return array
      */
@@ -246,5 +219,32 @@ class vod_cbilling extends vod_standard
 
         hd_debug_print("Movies found: " . count($movies));
         return $movies;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getMovieList($query_id)
+    {
+        hd_debug_print($query_id);
+        $page_idx = $this->get_next_page($query_id);
+        if ($page_idx < 0)
+            return array();
+
+        if ($query_id === Vod_Category::FLAG_ALL_MOVIES) {
+            $params[CURLOPT_CUSTOMREQUEST] = "/filter/new?page=$page_idx";
+        } else {
+            $arr = explode("_", $query_id);
+            if ($arr === false) {
+                $genre_id = $query_id;
+            } else {
+                $genre_id = $arr[1];
+            }
+
+            $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=$page_idx";
+        }
+
+        $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $params);
+        return $response === false ? array() : $this->CollectSearchResult($response);
     }
 }

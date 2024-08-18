@@ -53,19 +53,19 @@ interface ExtTag
     public function getTagValue($idx = 0);
 
     /**
-     * @param string $tag_value;
+     * @param string $tag_value ;
      * @return void
      */
     public function setTagValue($tag_value, $idx = 0);
 
     /**
-     * @param string $tag_value;
+     * @param string $tag_value ;
      * @return void
      */
     public function addTagValue($tag_value);
 
     /**
-     * @param string $data;
+     * @param string $data ;
      * @return void
      */
     public function parseTagAttributes($data);
@@ -76,7 +76,7 @@ interface ExtTag
     public function getAttributes();
 
     /**
-     * @param array $attributes;
+     * @param array $attributes ;
      * @return void
      */
     public function setAttributes($attributes);

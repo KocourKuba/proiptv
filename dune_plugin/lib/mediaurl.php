@@ -44,7 +44,7 @@ require_once 'json_serializer.php';
  * @property string|null $cancel_action // action called for parent window
  * @property string|null $extension // pattern for show files with specified extension
  * @property string|null $caption // Caption of the selected media url
- * @property bool|null  $allow_network // Allow to use network folders NFS/SMB for Starnet_Folder_Screen
+ * @property bool|null $allow_network // Allow to use network folders NFS/SMB for Starnet_Folder_Screen
  * @property bool|null $allow_image_lib // Allow to use image lib folders for Starnet_Folder_Screen
  * @property string|null $nfs_protocol // symbolic name of NFS protocol
  * @property bool|null $is_favorite // Is selected media url point to the favorite folder
@@ -94,16 +94,36 @@ class MediaURL extends Json_Serializer
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param mixed $key
-     * @param mixed $value
+     * @param array $m
+     * @param bool $raw_encode
+     * @return MediaURL
      */
-    public function __set($key, $value)
+    public static function make($m, $raw_encode = false)
     {
-        if (is_null($this->map)) {
-            $this->map = (object)array();
+        return self::decode(self::encode($m, $raw_encode));
+    }
+
+    /**
+     * @param string $s
+     * @return MediaURL
+     */
+    public static function decode($s = '')
+    {
+        if (strpos($s, '{') !== 0) {
+            return new MediaURL($s, null);
         }
 
-        $this->map->{$key} = $value;
+        return new MediaURL($s, json_decode($s));
+    }
+
+    /**
+     * @param array $m
+     * @param bool $raw_encode
+     * @return false|string
+     */
+    public static function encode($m, $raw_encode = false)
+    {
+        return $raw_encode ? raw_json_encode($m) : json_encode($m);
     }
 
     /**
@@ -131,6 +151,22 @@ class MediaURL extends Json_Serializer
         return isset($this->map->{$key}) ? $this->map->{$key} : null;
     }
 
+    ///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param mixed $key
+     * @param mixed $value
+     */
+    public function __set($key, $value)
+    {
+        if (is_null($this->map)) {
+            $this->map = (object)array();
+        }
+
+        $this->map->{$key} = $value;
+    }
+
     /**
      * @param mixed $key
      * @return bool
@@ -144,6 +180,9 @@ class MediaURL extends Json_Serializer
         return isset($this->map->{$key});
     }
 
+    ///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
+
     /**
      * @return string
      */
@@ -152,7 +191,6 @@ class MediaURL extends Json_Serializer
         return (string)MediaUrl::encode($this->map, true);
     }
 
-    ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -170,43 +208,5 @@ class MediaURL extends Json_Serializer
     public function get_media_url_str($raw_encode = false)
     {
         return MediaUrl::encode($this->map, $raw_encode);
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param array $m
-     * @param bool $raw_encode
-     * @return false|string
-     */
-    public static function encode($m, $raw_encode = false)
-    {
-        return $raw_encode ? raw_json_encode($m) : json_encode($m);
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param string $s
-     * @return MediaURL
-     */
-    public static function decode($s = '')
-    {
-        if (strpos($s, '{') !== 0) {
-            return new MediaURL($s, null);
-        }
-
-        return new MediaURL($s, json_decode($s));
-    }
-
-    /**
-     * @param array $m
-     * @param bool $raw_encode
-     * @return MediaURL
-     */
-    public static function make($m, $raw_encode = false)
-    {
-        return self::decode(self::encode($m, $raw_encode));
     }
 }

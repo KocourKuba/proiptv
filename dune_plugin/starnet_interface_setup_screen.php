@@ -38,6 +38,25 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @inheritDoc
+     */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        return $actions;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        return $this->do_get_control_defs($plugin_cookies);
+    }
+
+    /**
      * interface dialog defs
      * @param Object $plugin_cookies
      * @return array
@@ -105,25 +124,6 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        return $this->do_get_control_defs($plugin_cookies);
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -170,7 +170,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_file' => ACTION_CHANGE_BACKGROUND,
-                        'extension'	=> 'png|jpg|jpeg',
+                        'extension' => 'png|jpg|jpeg',
                         'allow_network' => !is_limited_apk(),
                         'allow_image_lib' => true,
                         'allow_reset' => true,

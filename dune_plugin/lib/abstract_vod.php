@@ -51,14 +51,6 @@ abstract class Abstract_Vod
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param Short_Movie $short_movie
-     */
-    public function set_cached_short_movie(Short_Movie $short_movie)
-    {
-        $this->short_movie_by_id[$short_movie->id] = $short_movie;
-    }
-
-    /**
      * @param Movie $movie
      */
     public function set_cached_movie(Movie $movie)
@@ -66,6 +58,14 @@ abstract class Abstract_Vod
         hd_debug_print("set movie to cache: $movie->id, movie: " . json_encode($movie), true);
         $this->movie_by_id[$movie->id] = $movie;
         $this->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url));
+    }
+
+    /**
+     * @param Short_Movie $short_movie
+     */
+    public function set_cached_short_movie(Short_Movie $short_movie)
+    {
+        $this->short_movie_by_id[$short_movie->id] = $short_movie;
     }
 
     /**
@@ -83,27 +83,9 @@ abstract class Abstract_Vod
      * @param string $movie_id
      * @return bool
      */
-    public function is_failed_movie_id($movie_id)
-    {
-        return isset($this->failed_movie_ids[$movie_id]);
-    }
-
-    /**
-     * @param string $movie_id
-     * @return bool
-     */
     public function has_cached_movie($movie_id)
     {
         return isset($this->movie_by_id[$movie_id]);
-    }
-
-    /**
-     * @param string $movie_id
-     * @return Movie|null
-     */
-    public function get_cached_movie($movie_id)
-    {
-        return isset($this->movie_by_id[$movie_id]) ? $this->movie_by_id[$movie_id] : null;
     }
 
     /**
@@ -146,6 +128,34 @@ abstract class Abstract_Vod
         $this->genres = null;
     }
 
+    /**
+     * @param MediaURL $media_url
+     * @return array|null
+     */
+    public function get_vod_info(MediaURL $media_url)
+    {
+        hd_debug_print(null, true);
+        $movie = $this->get_loaded_movie($media_url->movie_id);
+        if ($movie === null) {
+            return null;
+        }
+
+        return $movie->get_movie_play_info($media_url);
+    }
+
+    /**
+     * @param string $movie_id
+     * @return Movie|null
+     */
+    public function get_loaded_movie($movie_id)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("movie_id: $movie_id", true);
+        $this->ensure_movie_loaded($movie_id);
+
+        return $this->get_cached_movie($movie_id);
+    }
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -176,32 +186,22 @@ abstract class Abstract_Vod
 
     /**
      * @param string $movie_id
-     * @return Movie|null
+     * @return bool
      */
-    public function get_loaded_movie($movie_id)
+    public function is_failed_movie_id($movie_id)
     {
-        hd_debug_print(null, true);
-        hd_debug_print("movie_id: $movie_id", true);
-        $this->ensure_movie_loaded($movie_id);
-
-        return $this->get_cached_movie($movie_id);
+        return isset($this->failed_movie_ids[$movie_id]);
     }
 
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param MediaURL $media_url
-     * @return array|null
+     * @param string $movie_id
+     * @return Movie|null
      */
-    public function get_vod_info(MediaURL $media_url)
+    public function get_cached_movie($movie_id)
     {
-        hd_debug_print(null, true);
-        $movie = $this->get_loaded_movie($media_url->movie_id);
-        if ($movie === null) {
-            return null;
-        }
-
-        return $movie->get_movie_play_info($media_url);
+        return isset($this->movie_by_id[$movie_id]) ? $this->movie_by_id[$movie_id] : null;
     }
 
     /**
@@ -212,15 +212,6 @@ abstract class Abstract_Vod
 
     ///////////////////////////////////////////////////////////////////////
     // Genres.
-
-    /**
-     * @return array|null
-     */
-    protected function load_genres()
-    {
-        hd_debug_print("Not implemented.");
-        return null;
-    }
 
     /**
      * @param string $genre_id
@@ -258,6 +249,15 @@ abstract class Abstract_Vod
         if ($this->genres === null) {
             hd_debug_print("Not implemented.");
         }
+    }
+
+    /**
+     * @return array|null
+     */
+    protected function load_genres()
+    {
+        hd_debug_print("Not implemented.");
+        return null;
     }
 
     /**

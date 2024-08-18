@@ -56,6 +56,15 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     }
 
     /**
+     * @inheritDoc
+     */
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        return $this->do_get_control_defs();
+    }
+
+    /**
      * defs for all controls on screen
      * @return array
      */
@@ -124,15 +133,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
     /**
      * @inheritDoc
      */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        return $this->do_get_control_defs();
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -149,10 +149,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         switch ($control_id) {
             case GUI_EVENT_KEY_RETURN:
-            return Action_Factory::close_and_run(
-                User_Input_Handler_Registry::create_action_screen(
-                    Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
-            );
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(
+                        Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
+                );
 
             case self::CONTROL_BACKUP:
                 $media_url_str = MediaURL::encode(
@@ -160,7 +160,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_folder' => $user_input->control_id,
-                        'extension'	=> 'zip',
+                        'extension' => 'zip',
                         'allow_network' => !is_limited_apk(),
                         'windowCounter' => 1,
                     )
@@ -173,7 +173,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_file' => $user_input->control_id,
-                        'extension'	=> 'zip',
+                        'extension' => 'zip',
                         'allow_network' => !is_limited_apk(),
                         'read_only' => true,
                         'windowCounter' => 1,
@@ -232,7 +232,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $history_path = $this->plugin->get_history_path();
                 hd_debug_print("copy to: $history_path");
                 try {
-                    HD::copy_data(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS ."$/", $history_path);
+                    HD::copy_data(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS . "$/", $history_path);
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
@@ -243,7 +243,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case self::CONTROL_COPY_TO_PLUGIN:
                 hd_debug_print("copy to: " . get_data_path());
                 try {
-                    HD::copy_data($this->plugin->get_history_path(), "/" . PARAM_TV_HISTORY_ITEMS ."$/", get_data_path('history'));
+                    HD::copy_data($this->plugin->get_history_path(), "/" . PARAM_TV_HISTORY_ITEMS . "$/", get_data_path('history'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
@@ -368,8 +368,8 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         flush();
 
-        shell_exec('rm -f '. get_data_path('*.prev'));
-        shell_exec('rm -f '. get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*'));
+        shell_exec('rm -f ' . get_data_path('*.prev'));
+        shell_exec('rm -f ' . get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*'));
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         $this->plugin->load_parameters(true);

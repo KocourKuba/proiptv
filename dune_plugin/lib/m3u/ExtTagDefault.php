@@ -46,14 +46,6 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     /**
      * @inheritDoc
      */
-    public function isTag($tag_name)
-    {
-        return is_null($this->tag_name) ? null : (stripos($this->tag_name, $tag_name) === 0);
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function getTagName()
     {
         return $this->tag_name;
@@ -86,29 +78,9 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     /**
      * @inheritDoc
      */
-    public function setTagValue($tag_value, $idx = 0)
-    {
-        $this->tag_values[$idx] = $tag_value;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function addTagValue($tag_value)
     {
         $this->tag_values[] = $tag_value;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function parseTagAttributes($data)
-    {
-        preg_match_all('/([a-z0-9\-]+?)=("[^"]*"|[\S]+)/i', $data, $matches, PREG_SET_ORDER);
-
-        foreach ($matches as $match) {
-            $this->attributes[$match[1]] = trim($match[2], " \"");
-        }
     }
 
     /**
@@ -185,5 +157,33 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
         }
 
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isTag($tag_name)
+    {
+        return is_null($this->tag_name) ? null : (stripos($this->tag_name, $tag_name) === 0);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setTagValue($tag_value, $idx = 0)
+    {
+        $this->tag_values[$idx] = $tag_value;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function parseTagAttributes($data)
+    {
+        preg_match_all('/([a-z0-9\-]+?)=("[^"]*"|[\S]+)/i', $data, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $match) {
+            $this->attributes[$match[1]] = trim($match[2], " \"");
+        }
     }
 }

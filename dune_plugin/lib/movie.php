@@ -13,133 +13,102 @@ class Movie implements User_Input_Handler
     const WATCHED_POSITION = 'position';
     const WATCHED_DURATION = 'duration';
     const WATCHED_DATE = 'date';
-
-    /**
-     * @var Default_Dune_Plugin
-     */
-    private $plugin;
-
     /**
      * @var string
      */
     public $id;
-
     /**
      * @var string
      */
     public $name = '';
-
     /**
      * @var string
      */
     public $name_original = '';
-
     /**
      * @var string
      */
     public $description = '';
-
     /**
      * @var string
      */
     public $poster_url = '';
-
     /**
      * @var int
      */
     public $length_min = -1;
-
     /**
      * @var int
      */
     public $year = 0;
-
     /**
      * @var string
      */
     public $directors_str = '';
-
     /**
      * @var string
      */
     public $scenarios_str = '';
-
     /**
      * @var string
      */
     public $actors_str = '';
-
     /**
      * @var string
      */
     public $genres_str = '';
-
     /**
      * @var string
      */
     public $rate_imdb = '';
-
     /**
      * @var string
      */
     public $rate_kinopoisk = '';
-
     /**
      * @var string
      */
     public $rate_mpaa = '';
-
     /**
      * @var string
      */
     public $country = '';
-
     /**
      * @var string
      */
     public $budget = '';
-
     /**
      * @var array
      */
     public $details = array();
-
     /**
      * @var array
      */
     public $rate_details = array();
-
     /**
      * @var string
      */
     public $type = 'movie';
-
     /**
      * @var array|Movie_Season[]
      */
     public $season_list;
-
     /**
      * @var array|Movie_Series[]
      */
     public $series_list;
-
     /**
      * @var array|string[]
      */
     public $qualities_list;
-
     /**
      * @var array|string[]
      */
     public $audio_list;
-
-    public function __sleep()
-    {
-        $vars = get_object_vars($this);
-        unset($vars['plugin']);
-        return array_keys($vars);
-    }
+    /**
+     * @var Default_Dune_Plugin
+     */
+    private $plugin;
 
     /**
      * @param string $id
@@ -158,21 +127,18 @@ class Movie implements User_Input_Handler
     }
 
     /**
-    * @return string
-    */
+     * @return string
+     */
     public static function get_handler_id()
     {
         return self::ID;
     }
 
-    public function get_action_map()
+    public function __sleep()
     {
-        User_Input_Handler_Registry::get_instance()->register_handler($this);
-
-        $actions = array();
-        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
-
-        return $actions;
+        $vars = get_object_vars($this);
+        unset($vars['plugin']);
+        return array_keys($vars);
     }
 
     /**
@@ -205,7 +171,7 @@ class Movie implements User_Input_Handler
         $episode = $series_list[$user_input->plugin_vod_series_ndx];
 
         $watched = (isset($user_input->playback_end_of_stream) && (int)$user_input->playback_end_of_stream !== 0)
-                    || ($user_input->plugin_vod_duration - $user_input->plugin_vod_stop_position) < 60;
+            || ($user_input->plugin_vod_duration - $user_input->plugin_vod_stop_position) < 60;
 
         $series_idx = empty($episode->id) ? $user_input->plugin_vod_series_ndx : $episode->id;
         $id = $user_input->plugin_vod_id;
@@ -239,30 +205,6 @@ class Movie implements User_Input_Handler
                 Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID)
             )
         );
-    }
-
-    /**
-     * @param string|null $v
-     * @return string
-     */
-    private function to_string($v)
-    {
-        return $v === null ? '' : (string)$v;
-    }
-
-    /**
-     * @param string|int $v
-     * @param string|int $default_value
-     * @return int
-     */
-    private function to_int($v, $default_value)
-    {
-        $v = (string)$v;
-        if (!is_numeric($v)) {
-            return $default_value;
-        }
-        $v = (int)$v;
-        return $v <= 0 ? $default_value : $v;
     }
 
     /**
@@ -320,6 +262,30 @@ class Movie implements User_Input_Handler
         $this->budget = $this->to_string($budget);
         $this->details = $details;
         $this->rate_details = $rate_details;
+    }
+
+    /**
+     * @param string|null $v
+     * @return string
+     */
+    private function to_string($v)
+    {
+        return $v === null ? '' : (string)$v;
+    }
+
+    /**
+     * @param string|int $v
+     * @param string|int $default_value
+     * @return int
+     */
+    private function to_int($v, $default_value)
+    {
+        $v = (string)$v;
+        if (!is_numeric($v)) {
+            return $default_value;
+        }
+        $v = (int)$v;
+        return $v <= 0 ? $default_value : $v;
     }
 
     /**
@@ -564,9 +530,19 @@ class Movie implements User_Input_Handler
             PluginVodInfo::poster_url => $this->poster_url,
             PluginVodInfo::series => $series_array,
             PluginVodInfo::initial_series_ndx => $initial_series_ndx,
-            PluginVodInfo::buffering_ms => (int)$this->plugin->get_parameter(PARAM_BUFFERING_TIME,1000),
+            PluginVodInfo::buffering_ms => (int)$this->plugin->get_parameter(PARAM_BUFFERING_TIME, 1000),
             PluginVodInfo::actions => $this->get_action_map(),
             PluginVodInfo::initial_position_ms => $initial_start,
         );
+    }
+
+    public function get_action_map()
+    {
+        User_Input_Handler_Registry::get_instance()->register_handler($this);
+
+        $actions = array();
+        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
+
+        return $actions;
     }
 }

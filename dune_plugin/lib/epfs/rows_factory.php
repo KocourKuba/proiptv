@@ -70,6 +70,19 @@ class Rows_Factory
     }
 
     /**
+     * @param string $focus_type
+     * @param string $focus2_type
+     * @return array
+     */
+    public static function focus($focus_type = GCOMP_FOCUS_SYSTEM, $focus2_type = GCOMP_FOCUS_NONE)
+    {
+        return array(
+            GCompFocusDef::type => $focus_type,
+            GCompFocusDef::type2 => $focus2_type
+        );
+    }
+
+    /**
      * @param array $pane
      * @param int $w
      * @param int $h
@@ -95,19 +108,6 @@ class Rows_Factory
         $pane[PluginRowsPane::min_row_index_for_y2] = $min_row_index_for_y2;
         $pane[PluginRowsPane::info_r] = array('w' => $info_w, 'h' => $info_h, 'x' => $info_x, 'y' => $info_y);
         $pane[PluginRowsPane::vod_r] = array('w' => $vod_w, 'h' => $vod_h, 'x' => $w - $vod_w, 'y' => 0);
-    }
-
-    /**
-     * @param string $focus_type
-     * @param string $focus2_type
-     * @return array
-     */
-    public static function focus($focus_type = GCOMP_FOCUS_SYSTEM, $focus2_type = GCOMP_FOCUS_NONE)
-    {
-        return array(
-            GCompFocusDef::type => $focus_type,
-            GCompFocusDef::type2 => $focus2_type
-        );
     }
 
     /**

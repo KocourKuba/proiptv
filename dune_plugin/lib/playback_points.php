@@ -48,13 +48,6 @@ class Playback_Points
 
     ///////////////////////////////////////////////////////////////////////////
 
-    public function __sleep()
-    {
-        $vars = get_object_vars($this);
-        unset($vars['plugin']);
-        return array_keys($vars);
-    }
-
     /**
      * @param Default_Dune_Plugin $plugin
      */
@@ -62,22 +55,6 @@ class Playback_Points
     {
         $this->plugin = $plugin;
         $this->load_points();
-    }
-
-    /**
-     * @return array
-     */
-    public function get_all()
-    {
-        return $this->points;
-    }
-
-    /**
-     * @return int
-     */
-    public function size()
-    {
-        return count($this->points);
     }
 
     /**
@@ -102,21 +79,40 @@ class Playback_Points
     }
 
     /**
-     * @return void
+     * @return string
      */
-    public function save()
+    private function get_playback_points_file()
     {
-        $path = $this->get_playback_points_file();
-        if (empty($path)) {
-            return;
+        $path = $this->plugin->get_history_path();
+        if (!create_path($path)) {
+            hd_debug_print("History path not exist: $path");
+            return '';
         }
 
-        if (count($this->points) !== 0) {
-            hd_debug_print(count($this->points) . " to: $path", true);
-            HD::put_items($path, $this->points);
-        } else if (file_exists($path)) {
-            unlink($path);
-        }
+        return get_slash_trailed_path($path) . $this->plugin->get_active_playlist_key() . PARAM_TV_HISTORY_ITEMS;
+    }
+
+    public function __sleep()
+    {
+        $vars = get_object_vars($this);
+        unset($vars['plugin']);
+        return array_keys($vars);
+    }
+
+    /**
+     * @return array
+     */
+    public function get_all()
+    {
+        return $this->points;
+    }
+
+    /**
+     * @return int
+     */
+    public function size()
+    {
+        return count($this->points);
     }
 
     /**
@@ -170,6 +166,24 @@ class Playback_Points
     }
 
     /**
+     * @return void
+     */
+    public function save()
+    {
+        $path = $this->get_playback_points_file();
+        if (empty($path)) {
+            return;
+        }
+
+        if (count($this->points) !== 0) {
+            hd_debug_print(count($this->points) . " to: $path", true);
+            HD::put_items($path, $this->points);
+        } else if (file_exists($path)) {
+            unlink($path);
+        }
+    }
+
+    /**
      * @param string $id
      */
     public function erase_point($id)
@@ -178,6 +192,7 @@ class Playback_Points
         unset($this->points[$id]);
         $this->save();
     }
+    ///////////////////////////////////////////////////////////////////////////
 
     /**
      * @return void
@@ -187,20 +202,5 @@ class Playback_Points
         hd_debug_print();
         $this->points = array();
         $this->save();
-    }
-    ///////////////////////////////////////////////////////////////////////////
-
-    /**
-     * @return string
-     */
-    private function get_playback_points_file()
-    {
-        $path = $this->plugin->get_history_path();
-        if (!create_path($path)) {
-            hd_debug_print("History path not exist: $path");
-            return '';
-        }
-
-        return get_slash_trailed_path($path) . $this->plugin->get_active_playlist_key() . PARAM_TV_HISTORY_ITEMS;
     }
 }

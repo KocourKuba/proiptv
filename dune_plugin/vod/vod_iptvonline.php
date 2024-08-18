@@ -127,6 +127,68 @@ class vod_iptvonline extends vod_standard
     }
 
     /**
+     * @param array|null $params
+     * @return bool|object
+     */
+    protected function make_json_request($params = null)
+    {
+        if (!$this->provider->request_provider_token()) {
+            return false;
+        }
+
+        $curl_opt = array();
+
+        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
+            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
+        }
+
+        if (isset($params[CURLOPT_POSTFIELDS])) {
+            $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
+            $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);
+        }
+
+        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
+        if (!isset($data->success, $data->status) || !$data->success || $data->status !== 200) {
+            hd_debug_print("Wrong response: " . json_encode($data));
+            return false;
+        }
+
+        return $data;
+    }
+
+    protected static function collect_genres($entry)
+    {
+        $genres_str = '';
+        if (isset($entry->genres)) {
+            $genres = array();
+            foreach ($entry->genres as $genre) {
+                if (!empty($genre)) {
+                    $genres[] = $genre;
+                }
+            }
+            $genres_str = implode(", ", $genres);
+        }
+
+        return $genres_str;
+    }
+
+    protected static function collect_countries($entry)
+    {
+        $countries_str = '';
+        if (isset($entry->countries)) {
+            $countries = array();
+            foreach ($entry->countries as $country) {
+                if (!empty($country)) {
+                    $countries[] = $country;
+                }
+            }
+            $countries_str = implode(", ", $countries);
+        }
+
+        return $countries_str;
+    }
+
+    /**
      * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
@@ -212,6 +274,48 @@ class vod_iptvonline extends vod_standard
     }
 
     /**
+     * @param string $query_id
+     * @param Object $json
+     * @param string|null $search
+     * @return array
+     */
+    protected function CollectSearchResult($query_id, $json, $search = null)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("query_id: $query_id");
+
+        $movies = array();
+        if (!isset($json->data->items))
+            return $movies;
+
+        $page_id = is_null($search) ? $query_id : "{$query_id}_$search";
+        $current_idx = $this->get_current_page($page_id);
+        if ($current_idx < 0)
+            return $movies;
+
+        $data = $json->data;
+        foreach ($data->items as $entry) {
+            $movie = new Short_Movie(
+                "{$query_id}_$entry->id",
+                $entry->ru_title,
+                $entry->posters->medium,
+                TR::t('vod_screen_movie_info__4', $entry->ru_title, $entry->year, self::collect_countries($entry), self::collect_genres($entry))
+            );
+
+            $movie->big_poster_url = $entry->posters->big;
+            $movies[] = $movie;
+        }
+
+        if ($data->pagination->pages === $current_idx) {
+            hd_debug_print("Last page: {$data->pagination->pages}");
+            $this->set_next_page($page_id, -1);
+        }
+
+        hd_debug_print("Movies found: " . count($movies));
+        return $movies;
+    }
+
+    /**
      * @inheritDoc
      */
     public function getFilterList($params)
@@ -282,109 +386,5 @@ class vod_iptvonline extends vod_standard
         $json = $this->make_json_request($params);
 
         return ($json === false || $json === null) ? array() : $this->CollectSearchResult($query_id, $json);
-    }
-
-    /**
-     * @param string $query_id
-     * @param Object $json
-     * @param string|null $search
-     * @return array
-     */
-    protected function CollectSearchResult($query_id, $json, $search = null)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("query_id: $query_id");
-
-        $movies = array();
-        if (!isset($json->data->items))
-            return $movies;
-
-        $page_id = is_null($search) ? $query_id : "{$query_id}_$search";
-        $current_idx = $this->get_current_page($page_id);
-        if ($current_idx < 0)
-            return $movies;
-
-        $data = $json->data;
-        foreach ($data->items as $entry) {
-            $movie = new Short_Movie(
-                "{$query_id}_$entry->id",
-                $entry->ru_title,
-                $entry->posters->medium,
-                TR::t('vod_screen_movie_info__4', $entry->ru_title, $entry->year, self::collect_countries($entry), self::collect_genres($entry))
-            );
-
-            $movie->big_poster_url = $entry->posters->big;
-            $movies[] = $movie;
-        }
-
-        if ($data->pagination->pages === $current_idx) {
-            hd_debug_print("Last page: {$data->pagination->pages}");
-            $this->set_next_page($page_id, -1);
-        }
-
-        hd_debug_print("Movies found: " . count($movies));
-        return $movies;
-    }
-
-    /**
-     * @param array|null $params
-     * @return bool|object
-     */
-    protected function make_json_request($params = null)
-    {
-        if (!$this->provider->request_provider_token()) {
-            return false;
-        }
-
-        $curl_opt = array();
-
-        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
-            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
-        }
-
-        if (isset($params[CURLOPT_POSTFIELDS])) {
-            $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-            $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);
-        }
-
-        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
-        if (!isset($data->success, $data->status) || !$data->success || $data->status !== 200) {
-            hd_debug_print("Wrong response: " . json_encode($data));
-            return false;
-        }
-
-        return $data;
-    }
-
-    protected static function collect_countries($entry)
-    {
-        $countries_str = '';
-        if (isset($entry->countries)) {
-            $countries = array();
-            foreach ($entry->countries as $country) {
-                if (!empty($country)) {
-                    $countries[] = $country;
-                }
-            }
-            $countries_str = implode(", ", $countries);
-        }
-
-        return $countries_str;
-    }
-
-    protected static function collect_genres($entry)
-    {
-        $genres_str = '';
-        if (isset($entry->genres)) {
-            $genres = array();
-            foreach ($entry->genres as $genre) {
-                if (!empty($genre)) {
-                    $genres[] = $genre;
-                }
-            }
-            $genres_str = implode(", ", $genres);
-        }
-
-        return $genres_str;
     }
 }
