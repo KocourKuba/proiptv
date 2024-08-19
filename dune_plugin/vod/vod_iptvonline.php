@@ -28,8 +28,8 @@ require_once 'vod_standard.php';
 
 class vod_iptvonline extends vod_standard
 {
-    const API_ACTION_MOVIES = 'movies';
-    const API_ACTION_SERIALS = 'serials';
+    const API_ACTION_MOVIE = 'movie';
+    const API_ACTION_SERIAL = 'serial';
     const API_ACTION_FILTERS = 'filters';
     const API_ACTION_SEARCH = 'search';
     const API_ACTION_FILTER = 'filter';
@@ -67,14 +67,14 @@ class vod_iptvonline extends vod_standard
 
         $movie = new Movie($movie_id, $this->plugin);
         $movieData = $json->data;
-        if ($arr[0] === self::API_ACTION_MOVIES && !isset($movieData->seasons)) {
+        if ($arr[0] === self::API_ACTION_MOVIE) {
             $audios = array();
             foreach ($movieData->medias->audios as $item) {
                 $key = $item->translate;
                 $audios[$key] = new Movie_Variant($key, $key, $item->url);
             }
             $movie->add_series_with_variants_data($arr[1], $movieData->medias->title, '', array(), $audios, $movieData->medias->url);
-        } else if ($arr[0] === self::API_ACTION_SERIALS || isset($movieData->seasons)) {
+        } else if ($arr[0] === self::API_ACTION_SERIAL) {
             // collect series
             foreach ($movieData->seasons as $season) {
                 $movie->add_season_data($season->season,
@@ -196,10 +196,10 @@ class vod_iptvonline extends vod_standard
         $category_list = array();
         $category_index = array();
 
-        $cat = new Vod_Category(self::API_ACTION_MOVIES, TR::t('vod_screen_all_movies'));
+        $cat = new Vod_Category(self::API_ACTION_MOVIE, TR::t('vod_screen_all_movies'));
         $category_list[] = $cat;
         $category_index[$cat->get_id()] = $cat;
-        $cat = new Vod_Category(self::API_ACTION_SERIALS, TR::t('vod_screen_all_serials'));
+        $cat = new Vod_Category(self::API_ACTION_SERIAL, TR::t('vod_screen_all_serials'));
         $category_list[] = $cat;
         $category_index[$cat->get_id()] = $cat;
 
@@ -214,8 +214,8 @@ class vod_iptvonline extends vod_standard
         $exist_filters['source'] = array(
             'title' => TR::load_string('category'),
             'values' => array(
-                self::API_ACTION_MOVIES => TR::load_string('vod_screen_all_movies'),
-                self::API_ACTION_SERIALS => TR::load_string('vod_screen_all_serials')
+                self::API_ACTION_MOVIE => TR::load_string('vod_screen_all_movies'),
+                self::API_ACTION_SERIAL => TR::load_string('vod_screen_all_serials')
             )
         );
 
@@ -251,24 +251,24 @@ class vod_iptvonline extends vod_standard
         $params[CURLOPT_POSTFIELDS] = array("search" => $keyword);
 
         $movies = array();
-        $page_id = self::API_ACTION_MOVIES . "_" . self::API_ACTION_SEARCH;
+        $page_id = self::API_ACTION_MOVIE . "_" . self::API_ACTION_SEARCH;
         $page_idx = $this->get_next_page($page_id);
         if ($page_idx < 0)
             return $movies;
 
-        $params[CURLOPT_CUSTOMREQUEST] = "/" . self::API_ACTION_MOVIES . "?limit=100&page=$page_idx";
+        $params[CURLOPT_CUSTOMREQUEST] = "/movies?limit=100&page=$page_idx&category=" . self::API_ACTION_MOVIE;
         $searchRes = $this->make_json_request($params);
 
-        $movies = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_MOVIES, $searchRes, self::API_ACTION_SEARCH);
+        $movies = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_MOVIE, $searchRes, self::API_ACTION_SEARCH);
 
-        $page_id = self::API_ACTION_SERIALS . "_" . self::API_ACTION_SEARCH;
+        $page_id = self::API_ACTION_SERIAL . "_" . self::API_ACTION_SEARCH;
         $page_idx = $this->get_next_page($page_id);
         if ($page_idx < 0)
             return $movies;
 
-        $params[CURLOPT_CUSTOMREQUEST] = "/" . self::API_ACTION_SERIALS . "?limit=100&page=$page_idx";
+        $params[CURLOPT_CUSTOMREQUEST] = "/movies?limit=100&page=$page_idx&category=" . self::API_ACTION_SERIAL;
         $searchRes = $this->make_json_request($params);
-        $serials = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_SERIALS, $searchRes, self::API_ACTION_SEARCH);
+        $serials = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_SERIAL, $searchRes, self::API_ACTION_SEARCH);
 
         return array_merge($movies, $serials);
     }
@@ -349,7 +349,7 @@ class vod_iptvonline extends vod_standard
         }
 
         $param_str = '';
-        $query_id = self::API_ACTION_MOVIES;
+        $query_id = self::API_ACTION_MOVIE;
         foreach ($filter_params as $key => $value) {
             if ($key === 'source') {
                 $query_id = $value;
@@ -382,7 +382,7 @@ class vod_iptvonline extends vod_standard
     public function getMovieList($query_id)
     {
         $page_idx = $this->get_next_page($query_id);
-        $params[CURLOPT_CUSTOMREQUEST] = "/$query_id?limit=100&page=$page_idx";
+        $params[CURLOPT_CUSTOMREQUEST] = "/movies?limit=100&page=$page_idx&category=$query_id";
         $json = $this->make_json_request($params);
 
         return ($json === false || $json === null) ? array() : $this->CollectSearchResult($query_id, $json);

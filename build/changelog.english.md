@@ -1,6 +1,6 @@
 ﻿### Upcoming version
 - Added a new XMLTV cache management mode. Enabled by default. Most providers support the use of ETag. For those providers who can't properly configure their server or Cloudflare to use ETag, there is an option to switch to the old "manual" mode in the plugin settings.
-- A patch has been added to fix incorrect list of movies in the media library for IPTV Online
+- Changes in API IPTV Online
 
 ### Version 4.1.790
 - Added support for the provider Nasharu TV (https://nasharu.tv/)

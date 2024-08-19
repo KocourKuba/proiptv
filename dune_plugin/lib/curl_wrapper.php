@@ -28,7 +28,7 @@ require_once 'hd.php';
 
 class Curl_Wrapper
 {
-    const HTTP_HEADERS_LOG = "%s_headers_.log";
+    const HTTP_HEADERS_LOG = "%s_headers.log";
     const HTTP_LOG = "%s_response.log";
     const CURL_CONFIG = "%s_curl_config.txt";
 
@@ -192,15 +192,6 @@ class Curl_Wrapper
             $config_data[] = "--output \"$save_file\"";
         }
 
-        if (!$this->is_post) {
-            $config_data[] = "--request GET";
-        } else {
-            $config_data[] = "--request POST";
-            if (!empty($this->post_data)) {
-                $config_data[] = "--data \"$this->post_data\"";
-            }
-        }
-
         foreach ($this->send_headers as $header) {
             $config_data[] = "--header \"$header\"";
         }
@@ -211,6 +202,16 @@ class Curl_Wrapper
                 $header = "If-None-Match: " . str_replace('"', '\"', $etag);
                 $config_data[] = "--header \"$header\"";
             }
+        }
+
+        if ($this->is_post) {
+            $config_data[] = "--request POST";
+        } else {
+            $config_data[] = "--request GET";
+        }
+
+        if (!empty($this->post_data)) {
+            $config_data[] = "--data \"$this->post_data\"";
         }
 
         if (LogSeverity::$is_debug) {
