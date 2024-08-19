@@ -1516,7 +1516,7 @@ class Default_Dune_Plugin implements DunePlugin
                     $provider->setLogo("plugin_file://logo/$filename");
                 } else {
                     $cached_file = get_cached_image_path($filename);
-                    list($res,) = Curl_Wrapper::simple_download_file($logo, $cached_file, false);
+                    list($res,) = Curl_Wrapper::simple_download_file($logo, $cached_file);
                     if ($res) {
                         $provider->setLogo($cached_file);
                     } else {
@@ -2329,7 +2329,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if (!preg_match(HTTP_PATTERN, $playlist_url)) {
                         throw new Exception("Incorrect playlist url: $playlist_url");
                     }
-                    list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file, false);
+                    list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file);
                 } else if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
                     if (is_null($provider)) {
@@ -2342,7 +2342,7 @@ class Default_Dune_Plugin implements DunePlugin
 
                     hd_debug_print("Load provider playlist to: $tmp_file");
                     $res = $provider->load_playlist($tmp_file);
-                    $logfile = $provider->getCurlWrapper()->get_logfile();
+                    $logfile = $provider->getCurlWrapper()->get_raw_response_headers();
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
@@ -2483,7 +2483,7 @@ class Default_Dune_Plugin implements DunePlugin
             if ($force !== false) {
                 $response = $provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
                 if ($response === false) {
-                    $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $provider->getCurlWrapper()->get_logfile();
+                    $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $provider->getCurlWrapper()->get_raw_response_headers();
                     HD::set_last_error("vod_last_error", $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);
@@ -3493,8 +3493,8 @@ class Default_Dune_Plugin implements DunePlugin
             hd_debug_print(null, true);
             $img_ym = get_temp_path('qr_ym.png');
             $img_pp = get_temp_path('qr_pp.png');
-            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym, false);
-            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp, false);
+            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym);
+            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp);
 
             Control_Factory::add_vgap($defs, 50);
             Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");

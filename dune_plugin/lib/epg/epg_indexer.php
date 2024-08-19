@@ -283,11 +283,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
             $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
             if (!$this->curl_wrapper->download_file($tmp_filename, true)) {
-                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_logfile());
+                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_raw_response_headers());
             }
 
             if ($this->curl_wrapper->get_response_code() !== 200) {
-                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_logfile());
+                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_raw_response_headers());
             }
 
             $file_time = filemtime($tmp_filename);

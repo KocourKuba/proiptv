@@ -198,7 +198,6 @@ const PARAM_PLUGIN_BACKGROUND = 'plugin_background';
 const PARAM_ENABLE_DEBUG = 'enable_debug';
 const PARAM_PER_CHANNELS_ZOOM = 'per_channels_zoom';
 const PARAM_FAKE_EPG = 'fake_epg';
-const PARAM_USE_HTTPS_PROXY = 'use_proxy';
 const PARAM_STREAM_FORMAT = 'stream_format';
 const PARAM_CUSTOM_DELETE_STRING = 'custom_delete_string';
 const PARAM_CUSTOM_DELETE_REGEX = 'custom_delete_regex';

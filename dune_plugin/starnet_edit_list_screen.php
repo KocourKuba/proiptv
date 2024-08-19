@@ -389,7 +389,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $qr_code = get_temp_path($provider->getId()) . ".jpg";
                 if (!file_exists($qr_code)) {
                     $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
-                    list($res,) = Curl_Wrapper::simple_download_file($url, $qr_code, false);
+                    list($res,) = Curl_Wrapper::simple_download_file($url, $qr_code);
                     if ($res) break;
                 }
 
@@ -662,7 +662,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
             try {
                 $tmp_file = get_temp_path(Hashed_Array::hash($url));
-                list($res, $log) = Curl_Wrapper::simple_download_file($url, $tmp_file, false);
+                list($res, $log) = Curl_Wrapper::simple_download_file($url, $tmp_file);
                 if ($res === false) {
                     throw new Exception("Ошибка скачивания плейлиста: $url\n\n" . $log);
                 }
@@ -748,7 +748,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     hd_debug_print("import link: '$line'", true);
                     try {
                         $tmp_file = get_temp_path(Hashed_Array::hash($line));
-                        list($res, $log) = Curl_Wrapper::simple_download_file($line, $tmp_file, false);
+                        list($res, $log) = Curl_Wrapper::simple_download_file($line, $tmp_file);
                         if (!$res) {
                             throw new Exception("Ошибка скачивания : $line\n\n" . $log);
                         }

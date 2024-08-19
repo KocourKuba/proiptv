@@ -456,7 +456,7 @@ class api_default
         if (is_null($file)) {
             $response = $this->curl_wrapper->download_content();
         } else {
-            $response = $this->curl_wrapper->download_file($file, false);
+            $response = $this->curl_wrapper->download_file($file);
         }
 
         if ($response === false) {

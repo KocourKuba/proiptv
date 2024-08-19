@@ -70,6 +70,11 @@ class Curl_Wrapper
     /**
      * @var string
      */
+    private $raw_response_headers;
+
+    /**
+     * @var string
+     */
     private $post_data;
 
     /**
@@ -112,12 +117,12 @@ class Curl_Wrapper
      * @param bool $use_cache use ETag caching
      * @return array result of operation (first bool, second string)
      */
-    public static function simple_download_file($url, $save_file, $use_cache)
+    public static function simple_download_file($url, $save_file, $use_cache = false)
     {
         hd_debug_print(null, true);
         $wrapper = new Curl_Wrapper();
         $wrapper->set_url($url);
-        return array($wrapper->download_file($save_file, $use_cache), $wrapper->get_logfile());
+        return array($wrapper->download_file($save_file, $use_cache), $wrapper->get_raw_response_headers());
     }
 
     /**
@@ -144,7 +149,7 @@ class Curl_Wrapper
      * @param bool $use_cache use ETag caching
      * @return bool result of operation
      */
-    public function download_file($save_file, $use_cache)
+    public function download_file($save_file, $use_cache = false)
     {
         hd_debug_print(null, true);
 
@@ -165,12 +170,55 @@ class Curl_Wrapper
     }
 
     /**
+     * download and return contents
+     *
+     * @param string $url url
+     * @return string|bool content of the downloaded file or result of operation
+     */
+    public static function simple_download_content($url)
+    {
+        hd_debug_print(null, true);
+        $wrapper = new Curl_Wrapper();
+        $wrapper->set_url($url);
+        return $wrapper->download_content();
+    }
+
+    /**
+     * download and return contents
+     *
+     * @return string|bool content of the downloaded file or result of operation
+     */
+    public function download_content()
+    {
+        hd_debug_print(null, true);
+
+        if (file_exists($this->logfile)) {
+            unlink($this->logfile);
+        }
+
+        $save_file = get_temp_path($this->url_hash);
+        $this->create_curl_config($save_file);
+        if ($this->exec_curl()) {
+            if (!file_exists($save_file)) {
+                hd_debug_print("Can't download to $save_file");
+                return false;
+            }
+
+            $content = file_get_contents($save_file);
+            unlink($save_file);
+            return $content;
+        }
+
+        return false;
+    }
+
+    /**
      * Create curl config
      *
      * @param string $save_file
      * @param bool $use_cache
      */
-    private function create_curl_config($save_file, $use_cache)
+    private function create_curl_config($save_file, $use_cache = false)
     {
         $config_data[] = "--insecure";
         $config_data[] = "--silent";
@@ -188,6 +236,7 @@ class Curl_Wrapper
 
         if (is_null($save_file)) {
             $config_data[] = "--head";
+            $config_data[] = "--output /dev/null";
         } else {
             $config_data[] = "--output \"$save_file\"";
         }
@@ -240,11 +289,11 @@ class Curl_Wrapper
             unlink($this->logfile);
         }
 
-        $cmd = get_install_path('bin/https_proxy.sh') . " " . get_platform_curl() . " '$this->config_file' '$this->logfile'";
+        $cmd = get_platform_curl() . " --config $this->config_file >>$this->logfile";
         hd_debug_print("Exec: $cmd", true);
         $result = shell_exec($cmd);
         if ($result === false) {
-            hd_debug_print("Problem with exec https_proxy script");
+            hd_debug_print("Problem with exec curl");
             return false;
         }
 
@@ -258,22 +307,24 @@ class Curl_Wrapper
                 $this->response_code = (int)trim(substr($log_content, $pos + strlen("RESPONSE_CODE:")));
                 hd_debug_print("Response code: $this->response_code", true);
             }
+            unlink($this->logfile);
         }
 
         if (file_exists($this->headers_path)) {
-            $headers_content = file($this->headers_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if ($headers_content !== false) {
+            $this->raw_response_headers = file_get_contents($this->headers_path);
+            if (!empty($this->raw_response_headers)) {
                 if (LogSeverity::$is_debug) {
                     hd_debug_print("---------  Read response headers ---------");
                 }
 
+                $headers = explode("\r\n", $this->raw_response_headers);
                 $this->response_headers = array();
-                foreach ($headers_content as $line) {
+                foreach ($headers as $line) {
+                    if (empty($line)) continue;
+
                     hd_debug_print($line, true);
                     if (preg_match("/^(.*):(.*)$/", $line, $m)) {
                         $this->response_headers[$m[1]] = trim($m[2]);
-                    } else {
-                        $this->response_headers[] = $line;
                     }
                 }
 
@@ -308,57 +359,6 @@ class Curl_Wrapper
     public function set_cached_etag($etag)
     {
         return $this->cache_db[$this->url_hash] = $etag;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_logfile()
-    {
-        return $this->logfile;
-    }
-
-    /**
-     * download and return contents
-     *
-     * @param string $url url
-     * @return string|bool content of the downloaded file or result of operation
-     */
-    public static function simple_download_content($url)
-    {
-        hd_debug_print(null, true);
-        $wrapper = new Curl_Wrapper();
-        $wrapper->set_url($url);
-        return $wrapper->download_content();
-    }
-
-    /**
-     * download and return contents
-     *
-     * @return string|bool content of the downloaded file or result of operation
-     */
-    public function download_content()
-    {
-        hd_debug_print(null, true);
-
-        if (file_exists($this->logfile)) {
-            unlink($this->logfile);
-        }
-
-        $save_file = get_temp_path($this->url_hash);
-        $this->create_curl_config($save_file, false);
-        if ($this->exec_curl()) {
-            if (!file_exists($save_file)) {
-                hd_debug_print("Can't download to $save_file");
-                return false;
-            }
-
-            $content = file_get_contents($save_file);
-            unlink($save_file);
-            return $content;
-        }
-
-        return false;
     }
 
     /**
@@ -448,6 +448,14 @@ class Curl_Wrapper
     public function get_response_headers()
     {
         return $this->response_headers;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_raw_response_headers()
+    {
+        return $this->raw_response_headers;
     }
 
     /**

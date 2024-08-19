@@ -318,7 +318,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
                         $package_name = get_temp_path($lib['package']);
                         if ($need_download && !file_exists($package_name)) {
-                            list($res, $log) = Curl_Wrapper::simple_download_file($lib['url'], $package_name, false);
+                            list($res, $log) = Curl_Wrapper::simple_download_file($lib['url'], $package_name);
                             if ($res === false) {
                                 hd_debug_print("can't download image pack: $package_name\n\n$log");
                                 break;
