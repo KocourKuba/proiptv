@@ -1,4 +1,6 @@
 ﻿### Upcoming version
+
+### Version 4.2.802
 - Added a new XMLTV cache management mode. Enabled by default. Most providers support the use of ETag. For those providers who can't properly configure their server or Cloudflare to use ETag, there is an option to switch to the old "manual" mode in the plugin settings.
 - Changes in API IPTV Online
 
