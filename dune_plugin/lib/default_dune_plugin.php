@@ -1406,8 +1406,6 @@ class Default_Dune_Plugin implements DunePlugin
         }
     }
 
-    /** @noinspection PhpUnusedParameterInspection */
-
     /**
      * @return void
      */
@@ -2220,7 +2218,7 @@ class Default_Dune_Plugin implements DunePlugin
     ///////////////////////////////////////////////////////////////////////////////////
     ///
 
-    public function upgrade_parameters(&$plugin_cookies)
+    public function upgrade_parameters()
     {
         hd_debug_print(null, true);
 

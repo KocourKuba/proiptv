@@ -264,7 +264,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_INSTALL:
                     case self::ACTION_UPDATE:
-                        $this->plugin->upgrade_parameters($plugin_cookies);
+                        $this->plugin->upgrade_parameters();
                         break;
 
                     case self::ACTION_UNINSTALL:
