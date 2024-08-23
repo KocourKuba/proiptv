@@ -70,6 +70,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     protected $cache_type = XMLTV_CACHE_AUTO;
 
     /**
+     * @var Hashed_Array
+     */
+    protected $active_sources;
+
+    /**
      * @var Curl_Wrapper
      */
     protected $curl_wrapper;
@@ -81,21 +86,44 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
     /**
      * @param string $cache_dir
-     * @param string $url
      */
-    public function init($cache_dir, $url)
+    public function init($cache_dir)
     {
         $this->cache_dir = $cache_dir;
-        $this->xmltv_url = $url;
-        $this->url_hash = Hashed_Array::hash($this->xmltv_url);
-
         create_path($this->cache_dir);
 
         hd_debug_print("Indexer engine: " . get_class($this));
         hd_debug_print("Cache dir: $this->cache_dir");
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+    }
+
+    /**
+     * @param string $url
+     * @return void
+     */
+    public function set_url($url)
+    {
+        $this->xmltv_url = $url;
+        $this->url_hash = Hashed_Array::hash($this->xmltv_url);
         hd_debug_print("XMLTV EPG url: $this->xmltv_url");
         hd_debug_print("EPG url hash: $this->url_hash");
+    }
+
+    /**
+     * @param Hashed_Array $urls
+     * @return void
+     */
+    public function set_active_sources($urls)
+    {
+        $this->active_sources = $urls;
+    }
+
+    /**
+     * @return Hashed_Array
+     */
+    public function get_active_sources()
+    {
+        return $this->active_sources;
     }
 
     /**
@@ -114,6 +142,48 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     public function set_cache_type($type)
     {
         $this->cache_type = $type;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_cache_dir()
+    {
+        return $this->cache_dir;
+    }
+
+    /**
+     * Indexing xmltv file to make channel to display-name map
+     * This function called from script only and plugin not available in this call
+     * Parsing channels is cheap for all Dune variants
+     *
+     * @return void
+     */
+    public function index_all_channels()
+    {
+        $start = microtime(true);
+        foreach ($this->active_sources as $source) {
+            $this->set_url($source);
+            $this->index_only_channels();
+        }
+        hd_print("Channels parsing execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
+    }
+
+    /**
+     * Indexing xmltv file to make channel to display-name map and collect picons for channels.
+     * This function called from script only and plugin not available in this call
+     *
+     * @return void
+     */
+    public function index_all()
+    {
+        $this->index_all_channels();
+        $start = microtime(true);
+        foreach ($this->active_sources as $source) {
+            $this->set_url($source);
+            $this->index_xmltv_positions();
+        }
+        hd_print("Script to parse position execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
     }
 
     /**
@@ -243,13 +313,22 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     abstract protected function is_index_valid($name);
 
     /**
+     * @return bool
+     */
+    protected function is_current_index_locked()
+    {
+        $lock_dir = $this->get_cache_stem('.lock');
+        return is_dir($lock_dir);
+    }
+
+    /**
      * Download XMLTV source.
      *
      * @return int
      */
     public function download_xmltv_source()
     {
-        if ($this->is_index_locked()) {
+        if ($this->is_current_index_locked()) {
             hd_debug_print("File is indexing or downloading, skipped");
             return 0;
         }
@@ -385,12 +464,29 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * @param string $hash
      * @return bool
      */
-    public function is_index_locked()
+    public function is_index_locked($hash)
     {
-        $lock_dir = $this->get_cache_stem('.lock');
+        $lock_dir = $this->cache_dir . DIRECTORY_SEPARATOR . "$hash.lock";
         return is_dir($lock_dir);
+    }
+
+    /**
+     * @param Hashed_Array $sources
+     * @return bool
+     */
+    public function is_any_index_locked($sources)
+    {
+        foreach ($sources as $key => $value) {
+            $lock_dir = $this->cache_dir . DIRECTORY_SEPARATOR . "$key.lock";
+            if (is_dir($lock_dir)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -430,19 +526,20 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     /// protected methods
 
     /**
-     * clear memory cache and cache for selected filename mask
+     * clear memory cache and cache for selected filename (hash) mask
      *
+     * @param string $hash
      * @return void
      */
-    public function clear_epg_files($filename)
+    public function clear_epg_files($hash)
     {
-        $this->clear_memory_index();
+        $this->clear_memory_index($hash);
 
         if (empty($this->cache_dir)) {
             return;
         }
 
-        $files = $this->cache_dir . DIRECTORY_SEPARATOR . "$filename*";
+        $files = $this->cache_dir . DIRECTORY_SEPARATOR . "$hash*";
         hd_debug_print("clear epg files: $files");
         shell_exec('rm -f ' . $files);
         flush();
@@ -452,9 +549,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     /**
      * Clear memory index
      *
+     * @param string $id
      * @return void
      */
-    abstract protected function clear_memory_index();
+    abstract protected function clear_memory_index($id = '');
 
     /**
      * @param Channel $channel

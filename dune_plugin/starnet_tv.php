@@ -36,6 +36,11 @@ class Starnet_Tv implements User_Input_Handler
     const ID = 'tv';
 
     const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
+    const PARSE_CONFIG = "%s_parse_config.json";
+
+    // deprecated settings
+    const PARAM_CUR_XMLTV_SOURCE = 'cur_xmltv_source';
+    const PARAM_CUR_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -474,24 +479,27 @@ class Starnet_Tv implements User_Input_Handler
 
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
-                $post_action = null;
 
+                $post_action = null;
                 if (isset($user_input->locked)) {
-                    clearstatcache();
                     $epg_manager = $this->plugin->get_epg_manager();
-                    if ($epg_manager->get_indexer()->is_index_locked()) {
-                        $new_actions = $this->get_action_map();
-                        $post_action = Action_Factory::change_behaviour($new_actions, 1000);
-                    } else {
-                        $epg_manager->import_indexing_log();
-                        foreach ($this->plugin->get_epg_manager()->get_delayed_epg() as $channel_id) {
-                            hd_debug_print("Refresh EPG for channel ID: $channel_id");
-                            $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
-                            $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
-                            $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
-                        }
-                        $epg_manager->clear_delayed_epg();
+                    if (!$epg_manager) {
+                        return null;
                     }
+
+                    clearstatcache();
+
+                    if (!$epg_manager->import_indexing_log()) {
+                        return Action_Factory::change_behaviour($this->get_action_map(), 1000);
+                    }
+
+                    foreach ($this->plugin->get_epg_manager()->get_delayed_epg() as $channel_id) {
+                        hd_debug_print("Refresh EPG for channel ID: $channel_id");
+                        $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
+                        $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+                        $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
+                    }
+                    $epg_manager->clear_delayed_epg();
                 }
 
                 return $post_action;
@@ -568,6 +576,14 @@ class Starnet_Tv implements User_Input_Handler
             return 0;
         }
 
+        // upgrade old settings
+        if ($this->plugin->has_setting(self::PARAM_CUR_XMLTV_SOURCE)) {
+            $cur_key = $this->plugin->get_setting(self::PARAM_CUR_XMLTV_SOURCE_KEY, '');
+            $this->plugin->set_active_xmltv_source($cur_key);
+            $this->plugin->remove_setting(self::PARAM_CUR_XMLTV_SOURCE);
+            $this->plugin->remove_setting(self::PARAM_CUR_XMLTV_SOURCE_KEY);
+        }
+
         $provider = $this->plugin->get_current_provider();
 
         $this->plugin->init_epg_manager();
@@ -636,10 +652,10 @@ class Starnet_Tv implements User_Input_Handler
         /** @var Hashed_Array<string, string> $custom_group_icons */
         $custom_group_icons = $this->plugin->get_orders(PARAM_GROUPS_ICONS, new Hashed_Array());
         // convert absolute path to filename
-        foreach ($custom_group_icons as $key => $icon) {
+        foreach ($custom_group_icons as $active_sources => $icon) {
             if (strpos($icon, DIRECTORY_SEPARATOR) !== false) {
                 $icon = basename($icon);
-                $custom_group_icons->set($key, $icon);
+                $custom_group_icons->set($active_sources, $icon);
             }
         }
 
@@ -736,28 +752,21 @@ class Starnet_Tv implements User_Input_Handler
         $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
 
         if ($is_xml_engine) {
-            $source = $this->plugin->get_active_xmltv_source();
-            if (empty($source)) {
-                $sources = $this->plugin->get_playlist_xmltv_sources();
-                $key = $this->plugin->get_active_xmltv_source_key();
-                hd_debug_print("XMLTV active source key: $key");
-                $source = $sources->get($key);
-                if (is_null($source) && $sources->size()) {
-                    hd_debug_print("Unknown key for XMLTV source, try use first");
-                    $sources->rewind();
-                }
-                $this->plugin->set_active_xmltv_source_key($sources->key());
-                $source = $this->plugin->get_active_xmltv_source();
+            $active_sources = $this->plugin->get_active_xmltv_sources();
+            if ($active_sources->size() === 0) {
+                hd_debug_print("No XMLTV source selected");
+            } else {
+                hd_debug_print("XMLTV sources selected: $active_sources");
             }
 
-            hd_debug_print("XMLTV source selected: $source");
         }
 
         $this->plugin->init_epg_manager();
         $epg_manager = $this->plugin->get_epg_manager();
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
+        $epg_manager->get_indexer()->set_active_sources($this->plugin->get_active_xmltv_sources());
         if (!$use_playlist_picons) {
-            $epg_manager->get_indexer()->index_only_channels();
+            $epg_manager->get_indexer()->index_all_channels();
         }
 
         hd_debug_print("Build categories and channels...");
@@ -905,9 +914,9 @@ class Starnet_Tv implements User_Input_Handler
             } else {
                 $lc_channel = mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8");
                 $icon_url = $epg_manager->get_indexer()->get_picon($lc_channel);
-                if (empty($icon_url)) {
-                    $icon_url = $playlist_icon;
-                }
+                if (!empty($icon_url)) break;
+
+                $icon_url = $playlist_icon;
             }
 
             if (empty($icon_url)) {
@@ -1053,8 +1062,26 @@ class Starnet_Tv implements User_Input_Handler
         HD::ShowMemoryUsage();
 
         if ($is_xml_engine) {
-            hd_debug_print("Run background indexing: {$this->plugin->get_active_xmltv_source()} ({$this->plugin->get_active_xmltv_source_key()})");
-            $this->plugin->get_epg_manager()->start_bg_indexing();
+            foreach ($this->plugin->get_active_xmltv_sources() as $key => $value) {
+                if (empty($value)) continue;
+
+                hd_debug_print("Run background indexing for: ($key) $value");
+                $config = array(
+                    'debug' => LogSeverity::$is_debug,
+                    'cache_dir' => $this->plugin->get_cache_dir(),
+                    'cache_ttl' => $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3),
+                    'cache_type' => $this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO),
+                    'xmltv_urls' => array($key => $value)
+                );
+                $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $key));
+                hd_debug_print("Config: " . json_encode($config), true);
+                file_put_contents($config_file, HD::pretty_json_format(json_encode($config)));
+
+                $cmd = get_install_path('bin/cgi_wrapper.sh') . " index_epg.php $config_file &";
+                hd_debug_print("exec: $cmd", true);
+                exec($cmd);
+                sleep(1);
+            }
         }
 
         return 2;

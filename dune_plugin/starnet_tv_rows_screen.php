@@ -880,10 +880,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_EPG_SOURCE_SELECTED:
                 if (!isset($user_input->{LIST_IDX})) break;
 
+                $this->plugin->set_active_xmltv_source($user_input->{LIST_IDX}, !$user_input->{IS_LIST_SELECTED});
                 $this->save_if_changed();
-                $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
-                $this->plugin->init_epg_manager();
-
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_EPG_CACHE_ENGINE:

@@ -256,6 +256,30 @@ class Hashed_Array extends Json_Serializer implements Iterator
         return $values;
     }
 
+    /**
+     * @return array
+     */
+    public function to_array()
+    {
+        $values = array();
+        foreach ($this->seq as $key) {
+            $values[$key] = $this->get($key);
+        }
+
+        return $values;
+    }
+
+    /**
+     * @oaram array $values
+     */
+    public function from_array($values)
+    {
+        $this->clear();
+        foreach ($values as $value) {
+            $this->add($value);
+        }
+    }
+
     public function value_sort()
     {
         uasort($this->map, array(__CLASS__, "sort_array_cb"));

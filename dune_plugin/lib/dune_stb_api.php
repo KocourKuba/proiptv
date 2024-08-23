@@ -1831,6 +1831,7 @@ function get_dune_model()
         'tv292b' => 'Pro 4K',
         'tv393a' => 'Pro 4K Plus',
         'tv494b' => 'Real Vision 4K Duo',
+        'tv788a' => 'Max 8K',
         'tv793a' => 'Max 4K',
         'tv794a' => 'Max 4K Vision',
         'tv993a' => 'Ultra 4K',

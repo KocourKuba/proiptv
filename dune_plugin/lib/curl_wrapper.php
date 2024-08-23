@@ -99,7 +99,7 @@ class Curl_Wrapper
 
     public function __construct()
     {
-        $path = get_data_path('curl_cache');
+        $path = get_data_path();
         create_path($path);
         $this->cache_path = $path . DIRECTORY_SEPARATOR . 'cache.dat';
         if (file_exists($this->cache_path)) {

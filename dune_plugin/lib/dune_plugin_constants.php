@@ -177,8 +177,7 @@ const PARAM_EPG_SOURCE = 'epg_source';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_EXT_XMLTV_SOURCES = 'xmltv_sources';
-const PARAM_CUR_XMLTV_SOURCE = 'cur_xmltv_source';
-const PARAM_CUR_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
+const PARAM_CUR_XMLTV_SOURCES = 'cur_xmltv_sources';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_DUNE_FORCE_TS = 'dune_force_ts';
 const PARAM_EXT_VLC_OPTS = 'ext_vlc_opts';
@@ -210,6 +209,7 @@ const PARAM_FORCE_HTTP = 'force_http';
 const PARAM_REPLACE_ICON = 'replace_playlist_icon';
 
 const LIST_IDX = 'list_idx';
+const IS_LIST_SELECTED = 'is_list_selected';
 const PLAYLIST_PICONS = 'playlist_picons';
 const XMLTV_PICONS = 'xmltv_picons';
 

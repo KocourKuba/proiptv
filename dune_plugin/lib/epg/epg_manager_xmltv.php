@@ -33,7 +33,6 @@ require_once 'epg_indexer_sql.php';
 
 class Epg_Manager_Xmltv
 {
-    const PARSER_CONFIG_NAME = 'parse_config.json';
     /**
      * @var Default_Dune_Plugin
      */
@@ -63,52 +62,60 @@ class Epg_Manager_Xmltv
     }
 
     /**
+     * Function to parse xmltv source in soparate process
+     *
+     * @param $config_file
      * @return bool
      */
-    public function init_by_config()
+    public function index_by_config($config_file)
     {
         global $LOG_FILE;
 
-        $config_file = get_temp_path(self::PARSER_CONFIG_NAME);
         if (!file_exists($config_file)) {
             HD::set_last_error("xmltv_last_error", "Config file for indexing not exist");
             return false;
         }
 
         $config = json_decode(file_get_contents($config_file));
+        @unlink($config_file);
         if ($config === false) {
             HD::set_last_error("xmltv_last_error", "Invalid config file for indexing");
-            @unlink($config_file);
             return false;
         }
 
-        $LOG_FILE = $config->log_file;
-        if (!empty($config->log_file)) {
-            if (file_exists($config->log_file)) {
-                @unlink($config->log_file);
-            }
-            date_default_timezone_set('UTC');
+        if (empty($config->xmltv_urls)) {
+            return false;
         }
+
+        $sources = new Hashed_Array();
+        $sources->from_array($config->xmltv_urls);
+        $LOG_FILE = get_temp_path($sources->key() . "_indexing.log");
+        if (file_exists($LOG_FILE)) {
+            @unlink($LOG_FILE);
+        }
+        date_default_timezone_set('UTC');
 
         set_debug_log($config->debug);
 
-        hd_print("Script start");
-        hd_print("Log: $config->log_file");
-        hd_print("XMLTV source: $config->xmltv_url");
+        hd_print("Script config");
+        hd_print("Log: $LOG_FILE");
+        hd_print("XMLTV sources: " . json_encode($config->xmltv_urls));
+        hd_print("Cache type: $config->cache_type");
         hd_print("Cache TTL: $config->cache_ttl");
 
-        $this->init_indexer($config->cache_dir, $config->xmltv_url);
-        $this->indexer->set_cache_ttl($config->cache_ttl);
+        $this->init_indexer($config->cache_dir);
+        $this->indexer->set_active_sources($sources);
         $this->indexer->set_cache_type($config->cache_type);
+        $this->indexer->set_cache_ttl($config->cache_ttl);
+        $this->indexer->index_all();
 
         return true;
     }
 
     /**
      * @param string $cache_dir
-     * @param string $url
      */
-    public function init_indexer($cache_dir, $url)
+    public function init_indexer($cache_dir)
     {
         if (class_exists('SQLite3')) {
             $this->indexer = new Epg_Indexer_Sql();
@@ -116,8 +123,7 @@ class Epg_Manager_Xmltv
             $this->indexer = new Epg_Indexer_Classic();
         }
 
-        $this->indexer->init($cache_dir, $url);
-
+        $this->indexer->init($cache_dir);
         if ($this->plugin) {
             $flags = 0;
             $flags |= $this->plugin->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
@@ -146,78 +152,89 @@ class Epg_Manager_Xmltv
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
         $t = microtime(true);
-
-        $lock = $this->indexer->is_index_locked();
-        hd_debug_print("index is locked: " . var_export($lock, true));
-        if ($lock) {
-            hd_debug_print("EPG still indexing");
-            $this->delayed_epg[] = $channel->get_id();
-            return array($day_start_ts => array(
-                Epg_Params::EPG_END => $day_start_ts + 86400,
-                Epg_Params::EPG_NAME => TR::load_string('epg_not_ready'),
-                Epg_Params::EPG_DESC => TR::load_string('epg_not_ready_desc'),
-            ));
-        }
-
-        // filter out epg only for selected day
+        $active_sources = $this->plugin->get_active_xmltv_sources();
+        $any_lock = $this->indexer->is_any_index_locked($active_sources);
         $day_epg = array();
-        $day_end_ts = $day_start_ts + 86400;
-        $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
-        $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-        hd_debug_print("Fetch entries for from: $date_start_l ($day_start_ts) to: $date_end_l ($day_end_ts)", true);
+        foreach($active_sources as $key => $source) {
+            if ($this->indexer->is_index_locked($key)) {
+                hd_debug_print("EPG $source still indexing, append to deleyed queue channel id: " . $channel->get_id());
+                $this->delayed_epg[] = $channel->get_id();
+                continue;
+            }
 
-        $xml_str = '';
-        try {
-            $positions = $this->indexer->load_program_index($channel);
-            if (!empty($positions)) {
-                $t = microtime(true);
-                $cached_file = $this->indexer->get_cached_filename();
-                if (!file_exists($cached_file)) {
-                    throw new Exception("cache file $cached_file not exist");
-                }
+            $this->indexer->set_url($source);
+            // filter out epg only for selected day
+            $day_end_ts = $day_start_ts + 86400;
+            $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
+            $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
+            hd_debug_print("Fetch entries for from: $date_start_l ($day_start_ts) to: $date_end_l ($day_end_ts)", true);
 
-                $handle = fopen($cached_file, 'rb');
-                if ($handle) {
-                    foreach ($positions as $pos) {
-                        fseek($handle, $pos['start']);
-
-                        $xml_str = "<tv>" . fread($handle, $pos['end'] - $pos['start']) . "</tv>";
-
-                        $xml_node = new DOMDocument();
-                        $xml_node->loadXML($xml_str);
-                        foreach ($xml_node->getElementsByTagName('programme') as $tag) {
-                            $program_start = strtotime($tag->getAttribute('start'));
-                            if ($program_start < $day_start_ts) continue;
-                            if ($program_start >= $day_end_ts) break;
-
-                            $day_epg[$program_start][Epg_Params::EPG_END] = strtotime($tag->getAttribute('stop'));
-
-                            $day_epg[$program_start][Epg_Params::EPG_NAME] = '';
-                            foreach ($tag->getElementsByTagName('title') as $tag_title) {
-                                $day_epg[$program_start][Epg_Params::EPG_NAME] = $tag_title->nodeValue;
-                            }
-
-                            $day_epg[$program_start][Epg_Params::EPG_DESC] = '';
-                            foreach ($tag->getElementsByTagName('desc') as $tag_desc) {
-                                $day_epg[$program_start][Epg_Params::EPG_DESC] = trim($tag_desc->nodeValue);
-                            }
-
-                            foreach ($tag->getElementsByTagName('icon') as $tag_icon) {
-                                $day_epg[$program_start][Epg_Params::EPG_ICON] = $tag_icon->getAttribute('src');
-                            }
-                        }
+            try {
+                $positions = $this->indexer->load_program_index($channel);
+                if (!empty($positions)) {
+                    $t = microtime(true);
+                    $cached_file = $this->indexer->get_cached_filename();
+                    if (!file_exists($cached_file)) {
+                        throw new Exception("cache file $cached_file not exist");
                     }
 
-                    fclose($handle);
+                    $handle = fopen($cached_file, 'rb');
+                    if ($handle) {
+                        foreach ($positions as $pos) {
+                            fseek($handle, $pos['start']);
+
+                            $xml_str = "<tv>" . fread($handle, $pos['end'] - $pos['start']) . "</tv>";
+
+                            $xml_node = new DOMDocument();
+                            $res = $xml_node->loadXML($xml_str);
+                            if ($res === false) {
+                                throw new Exception("Exception in line: $xml_str");
+                            }
+
+                            foreach ($xml_node->getElementsByTagName('programme') as $tag) {
+                                $program_start = strtotime($tag->getAttribute('start'));
+                                if ($program_start < $day_start_ts) continue;
+                                if ($program_start >= $day_end_ts) break;
+
+                                $day_epg[$program_start][Epg_Params::EPG_END] = strtotime($tag->getAttribute('stop'));
+
+                                $day_epg[$program_start][Epg_Params::EPG_NAME] = '';
+                                foreach ($tag->getElementsByTagName('title') as $tag_title) {
+                                    $day_epg[$program_start][Epg_Params::EPG_NAME] = $tag_title->nodeValue;
+                                }
+
+                                $day_epg[$program_start][Epg_Params::EPG_DESC] = '';
+                                foreach ($tag->getElementsByTagName('desc') as $tag_desc) {
+                                    $day_epg[$program_start][Epg_Params::EPG_DESC] = trim($tag_desc->nodeValue);
+                                }
+
+                                foreach ($tag->getElementsByTagName('icon') as $tag_icon) {
+                                    $day_epg[$program_start][Epg_Params::EPG_ICON] = $tag_icon->getAttribute('src');
+                                }
+                            }
+                        }
+
+                        fclose($handle);
+
+                        if (!empty($day_epg)) break;
+                    }
                 }
-                hd_debug_print("Fetch data from XMLTV cache in: " . (microtime(true) - $t) . " secs");
+            } catch (Exception $ex) {
+                print_backtrace_exception($ex);
             }
-        } catch (Exception $ex) {
-            hd_debug_print("Exception in line: $xml_str");
-            print_backtrace_exception($ex);
         }
 
+        hd_debug_print("Fetch data from XMLTV cache in: " . (microtime(true) - $t) . " secs");
+
         if (empty($day_epg)) {
+            if ($any_lock) {
+                $this->delayed_epg = array_unique($this->delayed_epg);
+                return array($day_start_ts => array(
+                    Epg_Params::EPG_END => $day_start_ts + 86400,
+                    Epg_Params::EPG_NAME => TR::load_string('epg_not_ready'),
+                    Epg_Params::EPG_DESC => TR::load_string('epg_not_ready_desc'),
+                ));
+            }
             return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
         }
 
@@ -229,98 +246,34 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @param Channel $channel
-     * @param int $day_start_ts
-     * @param array $day_epg
-     * @return array
-     */
-    protected function getFakeEpg(Channel $channel, $day_start_ts, $day_epg)
-    {
-        if (($this->flags & EPG_FAKE_EPG) && $channel->get_archive() !== 0) {
-            hd_debug_print("Create fake data for non existing EPG data");
-            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
-                $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
-                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load_string('fake_epg_program') . " $n";
-                $day_epg[$start][Epg_Params::EPG_DESC] = '';
-            }
-        } else {
-            hd_debug_print("No EPG for channel: {$channel->get_id()}");
-        }
-
-        return $day_epg;
-    }
-
-    /**
      * Import indexing log to plugin logs
      *
-     * @return void
+     * @return bool - true if log is imported
      */
     public function import_indexing_log()
     {
-        $index_log = $this->indexer->get_cache_stem('.log');
-        if (file_exists($index_log)) {
-            hd_debug_print("Read epg indexing log $index_log...");
-            hd_debug_print_separator();
-            $logfile = @file_get_contents($index_log);
-            foreach (explode(PHP_EOL, $logfile) as $l) {
-                hd_print(preg_replace("|^\[.+\]\s(.*)$|", "$1", rtrim($l)));
+        $has_locks = false;
+        foreach ($this->indexer->get_active_sources() as $key => $source) {
+            if ($this->indexer->is_index_locked($key)) {
+                $has_locks = true;
+                continue;
             }
-            hd_debug_print_separator();
-            hd_debug_print("Read finished");
-            unlink($index_log);
-        } else {
-            hd_debug_print("Log to import $index_log not exist");
-        }
-    }
 
-    /**
-     * Start indexing in background and return immediately
-     *
-     * @return void
-     */
-    public function start_bg_indexing()
-    {
-        if (is_null($this->plugin)) {
-            hd_debug_print("plugin not set");
-            return;
+            $index_log = get_temp_path("{$key}_indexing.log");
+            if (file_exists($index_log)) {
+                hd_debug_print("Read epg indexing log $index_log...");
+                hd_debug_print_separator();
+                $logfile = @file_get_contents($index_log);
+                foreach (explode(PHP_EOL, $logfile) as $l) {
+                    hd_print(preg_replace("|^\[.+\]\s(.*)$|", "$1", rtrim($l)));
+                }
+                hd_debug_print_separator();
+                hd_debug_print("Read finished");
+                @unlink($index_log);
+            }
         }
 
-        $res = $this->indexer->is_xmltv_cache_valid();
-        if ($res === -1) {
-            hd_debug_print("XMLTV not set or problem with download");
-            return;
-        }
-
-        if ($res === 0) {
-            hd_debug_print("Indexing not required");
-            return;
-        }
-
-        $config = array(
-            'debug' => LogSeverity::$is_debug,
-            'log_file' => $this->indexer->get_cache_stem('.log'),
-            'cache_dir' => $this->plugin->get_cache_dir(),
-            'cache_ttl' => $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3),
-            'cache_type' => $this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO),
-            'xmltv_url' => $this->plugin->get_active_xmltv_source(),
-        );
-
-        file_put_contents(get_temp_path(self::PARSER_CONFIG_NAME), json_encode($config));
-
-        $cmd = get_install_path('bin/cgi_wrapper.sh') . " 'index_epg.php' &";
-        hd_debug_print("exec: $cmd", true);
-        exec($cmd);
-        sleep(1);
-    }
-
-    public function index_all()
-    {
-        $start = microtime(true);
-
-        $this->indexer->index_only_channels();
-        $this->indexer->index_xmltv_positions();
-
-        hd_print("Script execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
+        return !$has_locks;
     }
 
     /**
@@ -351,13 +304,36 @@ class Epg_Manager_Xmltv
         return $this->delayed_epg;
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
     /**
+     * clear all delayed epg
      */
     public function clear_delayed_epg()
     {
         $this->delayed_epg = array();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
+     * @param Channel $channel
+     * @param int $day_start_ts
+     * @param array $day_epg
+     * @return array
+     */
+    protected function getFakeEpg(Channel $channel, $day_start_ts, $day_epg)
+    {
+        if (($this->flags & EPG_FAKE_EPG) && $channel->get_archive() !== 0) {
+            hd_debug_print("Create fake data for non existing EPG data");
+            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
+                $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
+                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load_string('fake_epg_program') . " $n";
+                $day_epg[$start][Epg_Params::EPG_DESC] = '';
+            }
+        } else {
+            hd_debug_print("No EPG for channel: {$channel->get_id()}");
+        }
+
+        return $day_epg;
     }
 }

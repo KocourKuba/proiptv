@@ -28,7 +28,7 @@ require_once 'epg_indexer.php';
 class Epg_Indexer_Sql extends Epg_Indexer
 {
     /**
-     * @var SQLite3
+     * @var SQLite3[]
      */
     protected $epg_db;
 
@@ -36,9 +36,9 @@ class Epg_Indexer_Sql extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    public function init($cache_dir, $url)
+    public function init($cache_dir)
     {
-        parent::init($cache_dir, $url);
+        parent::init($cache_dir);
 
         $this->index_ext = '.db';
     }
@@ -49,38 +49,20 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function get_picon($alias)
     {
-        $picon = '';
-        if ($this->open_sqlite_db()) {
+        $res = '';
+        foreach ($this->active_sources as $source) {
+            $this->set_url($source);
+            if (!$this->open_sqlite_db()) {
+                continue;
+            }
+
             $alias = SQLite3::escapeString($alias);
             $qry = "SELECT distinct (picon) FROM picons INNER JOIN channels ON picons.picon_hash = channels.picon_hash WHERE alias = '$alias';";
-            $picon = $this->epg_db->querySingle($qry);
+            $res = $this->get_epg_db()->querySingle($qry);
+            if (!empty($res)) break;
         }
 
-        return $picon;
-    }
-
-    /**
-     * open sqlite database
-     * @return bool
-     */
-    private function open_sqlite_db()
-    {
-        if ($this->epg_db === null) {
-            try {
-                $stem = $this->get_cache_stem("");
-                if (empty($stem)) {
-                    throw new Exception("Database name is empty");
-                }
-
-                $index_name = "{$stem}_epg$this->index_ext";
-                hd_debug_print("Open db: $index_name", true);
-                $this->epg_db = new SQLite3($index_name, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE, '');
-            } catch (Exception $ex) {
-                print_backtrace_exception($ex);
-            }
-        }
-
-        return $this->epg_db !== null;
+        return $res;
     }
 
     /**
@@ -92,15 +74,15 @@ class Epg_Indexer_Sql extends Epg_Indexer
         $channel_position = array();
 
         try {
-            if (!$this->open_sqlite_db()) {
-                throw new Exception("EPG not indexed!");
+            if (!$this->check_table(self::INDEX_CHANNELS) && !$this->check_table(self::INDEX_POSITIONS)) {
+                throw new Exception("EPG for $this->xmltv_url not indexed!");
             }
 
             $channel_title = $channel->get_title();
             $epg_ids = array_values($channel->get_epg_ids());
 
             $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
-            $stm = $this->epg_db->prepare("SELECT DISTINCT channel_id FROM channels WHERE alias IN ($placeHolders);");
+            $stm = $this->get_epg_db()->prepare("SELECT DISTINCT channel_id FROM channels WHERE alias IN ($placeHolders);");
             if ($stm !== false) {
                 foreach ($epg_ids as $index => $val) {
                     $stm->bindValue($index + 1, mb_convert_case(SQLite3::escapeString($val), MB_CASE_LOWER, "UTF-8"));
@@ -122,7 +104,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
             if (!empty($epg_ids)) {
                 hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
                 $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
-                $stmt = $this->epg_db->prepare("SELECT start, end FROM positions WHERE channel_id IN ($placeHolders);");
+                $stmt = $this->get_epg_db()->prepare("SELECT start, end FROM positions WHERE channel_id IN ($placeHolders);");
                 if ($stmt !== false) {
                     foreach ($epg_ids as $index => $val) {
                         $stmt->bindValue($index + 1, SQLite3::escapeString($val));
@@ -144,7 +126,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
             }
 
             if (empty($channel_position)) {
-                throw new Exception("No positions for channel $channel_id ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
+                hd_debug_print("No positions for channel $channel_id ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
             }
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
@@ -162,11 +144,15 @@ class Epg_Indexer_Sql extends Epg_Indexer
     {
         try {
             if ($this->is_index_valid(self::INDEX_CHANNELS) && $this->is_index_valid(self::INDEX_PICONS)) {
-                $channels = $this->epg_db->querySingle('SELECT count(*) FROM ' . self::INDEX_CHANNELS . ';');
+                $channels = $this->get_epg_db()->querySingle('SELECT count(*) FROM ' . self::INDEX_CHANNELS . ';');
                 if (!empty($channels) && (int)$channels !== 0) {
                     hd_debug_print("EPG channels info already indexed", true);
                     return;
                 }
+            }
+
+            if (!$this->open_sqlite_db()) {
+                return;
             }
 
             $this->set_index_locked(true);
@@ -179,20 +165,20 @@ class Epg_Indexer_Sql extends Epg_Indexer
             $channels_table = self::INDEX_CHANNELS;
             $picons_table = self::INDEX_PICONS;
             $this->remove_index($channels_table);
-            $this->epg_db->exec("CREATE TABLE $channels_table (alias STRING not null, channel_id STRING not null, picon_hash STRING);");
+            $this->get_epg_db()->exec("CREATE TABLE $channels_table (alias STRING not null, channel_id STRING not null, picon_hash STRING);");
 
             $this->remove_index($picons_table);
-            $this->epg_db->exec("CREATE TABLE $picons_table (picon_hash STRING UNIQUE PRIMARY KEY not null, picon STRING);");
+            $this->get_epg_db()->exec("CREATE TABLE $picons_table (picon_hash STRING UNIQUE PRIMARY KEY not null, picon STRING);");
 
-            $this->epg_db->exec('PRAGMA journal_mode=MEMORY;');
-            $this->epg_db->exec('BEGIN;');
+            $this->get_epg_db()->exec('PRAGMA journal_mode=MEMORY;');
+            $this->get_epg_db()->exec('BEGIN;');
 
-            $stm_channels = $this->epg_db->prepare("INSERT OR REPLACE INTO $channels_table(alias, channel_id, picon_hash) VALUES(:alias, :channel_id, :picon_hash);");
+            $stm_channels = $this->get_epg_db()->prepare("INSERT OR REPLACE INTO $channels_table(alias, channel_id, picon_hash) VALUES(:alias, :channel_id, :picon_hash);");
             $stm_channels->bindParam(":alias", $alias);
             $stm_channels->bindParam(":channel_id", $channel_id);
             $stm_channels->bindParam(":picon_hash", $picon_hash);
 
-            $stm_picons = $this->epg_db->prepare("INSERT OR REPLACE INTO $picons_table(picon_hash, picon) VALUES(:picon_hash, :picon);");
+            $stm_picons = $this->get_epg_db()->prepare("INSERT OR REPLACE INTO $picons_table(picon_hash, picon) VALUES(:picon_hash, :picon);");
             $stm_picons->bindParam(":picon_hash", $picon_hash);
             $stm_picons->bindParam(":picon", $picon);
 
@@ -235,12 +221,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 }
             }
             fclose($file);
-            $this->epg_db->exec('COMMIT;');
+            $this->get_epg_db()->exec('COMMIT;');
 
-            $result = $this->epg_db->querySingle("SELECT count(*) FROM $channels_table;");
+            $result = $this->get_epg_db()->querySingle("SELECT count(*) FROM $channels_table;");
             $channels = empty($result) ? 0 : (int)$result;
 
-            $result = $this->epg_db->querySingle("SELECT count(*) FROM $picons_table;");
+            $result = $this->get_epg_db()->querySingle("SELECT count(*) FROM $picons_table;");
             $picons = empty($result) ? 0 : (int)$result;
 
             hd_debug_print("Total entries id's: $channels");
@@ -256,6 +242,14 @@ class Epg_Indexer_Sql extends Epg_Indexer
         }
 
         $this->set_index_locked(false);
+    }
+
+    /**
+     * @return SQLite3
+     */
+    protected function get_epg_db()
+    {
+        return $this->epg_db[$this->url_hash];
     }
 
     /**
@@ -276,12 +270,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     private function check_table($name)
     {
-        if ($this->open_sqlite_db()) {
-            $table = $this->epg_db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';");
-            return !empty($table);
+        if (!$this->open_sqlite_db()) {
+            return false;
         }
 
-        return false;
+        $table = $this->get_epg_db()->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';");
+        return !empty($table);
     }
 
     /**
@@ -292,7 +286,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
     {
         if ($this->is_index_valid($name)) {
             hd_debug_print("Remove index: $name");
-            $this->epg_db->exec("DROP TABLE IF EXISTS $name;");
+            $this->get_epg_db()->exec("DROP TABLE IF EXISTS $name;");
         }
     }
 
@@ -302,15 +296,19 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function index_xmltv_positions()
     {
-        if ($this->is_index_locked()) {
+        if ($this->is_current_index_locked()) {
             hd_debug_print("File is indexing now, skipped");
             return;
         }
 
         try {
+            if (!$this->open_sqlite_db()) {
+                return;
+            }
+
             $positions_table = self::INDEX_POSITIONS;
             if ($this->is_index_valid($positions_table)) {
-                $total_pos = $this->epg_db->querySingle("SELECT count(*) FROM $positions_table;");
+                $total_pos = $this->get_epg_db()->querySingle("SELECT count(*) FROM $positions_table;");
                 if (!empty($total_pos) && (int)$total_pos !== 0) {
                     hd_debug_print("EPG positions info already indexed", true);
                     return;
@@ -324,13 +322,13 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $t = microtime(true);
             $this->remove_index($positions_table);
-            $this->epg_db->exec("CREATE TABLE $positions_table (channel_id STRING, start INTEGER, end INTEGER);");
-            $this->epg_db->exec('PRAGMA journal_mode=MEMORY;');
-            $this->epg_db->exec('BEGIN;');
+            $this->get_epg_db()->exec("CREATE TABLE $positions_table (channel_id STRING, start INTEGER, end INTEGER);");
+            $this->get_epg_db()->exec('PRAGMA journal_mode=MEMORY;');
+            $this->get_epg_db()->exec('BEGIN;');
 
             hd_debug_print("Begin transactions...");
 
-            $stm = $this->epg_db->prepare("INSERT INTO $positions_table(channel_id, start, end) VALUES(:channel_id, :start, :end);");
+            $stm = $this->get_epg_db()->prepare("INSERT INTO $positions_table(channel_id, start, end) VALUES(:channel_id, :start, :end);");
             $stm->bindParam(":channel_id", $prev_channel);
             $stm->bindParam(":start", $start_program_block);
             $stm->bindParam(":end", $tag_end_pos);
@@ -390,7 +388,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
                     $tag_end_pos = $tag_start_pos;
                     $stm->execute();
                     if (($i % 100) === 0) {
-                        $this->epg_db->exec('COMMIT;BEGIN;');
+                        $this->get_epg_db()->exec('COMMIT;BEGIN;');
                     }
                     $prev_channel = $channel_id;
                     $start_program_block = $tag_start_pos;
@@ -398,9 +396,9 @@ class Epg_Indexer_Sql extends Epg_Indexer
             }
 
             hd_debug_print("End transactions...");
-            $this->epg_db->exec('COMMIT;');
+            $this->get_epg_db()->exec('COMMIT;');
 
-            $result = $this->epg_db->querySingle("SELECT count(channel_id) FROM $positions_table;");
+            $result = $this->get_epg_db()->querySingle("SELECT count(channel_id) FROM $positions_table;");
             $total_epg = empty($result) ? 0 : (int)$result;
 
             hd_debug_print("Total unique epg id's indexed: $total_epg");
@@ -416,9 +414,6 @@ class Epg_Indexer_Sql extends Epg_Indexer
         $this->set_index_locked(false);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    /// private methods
-
     /**
      * @inheritDoc
      * @override
@@ -432,11 +427,44 @@ class Epg_Indexer_Sql extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    protected function clear_memory_index()
+    protected function clear_memory_index($id = '')
     {
-        if (!is_null($this->epg_db)) {
-            $this->epg_db->close();
-            $this->epg_db = null;
+        if (empty($id)) {
+            $this->epg_db = array();
+        } else if (isset($this->epg_db[$id])) {
+            $this->epg_db[$id]->close();
+            unset($this->epg_db[$id]);
         }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// private methods
+
+    /**
+     * open sqlite database
+     * @return bool
+     */
+    private function open_sqlite_db()
+    {
+        try {
+            if (empty($this->url_hash)) {
+                throw new Exception("Database name is empty. Url not set!");
+            }
+
+            if (!isset($this->epg_db[$this->url_hash])) {
+                $index_name = $this->get_cache_stem($this->index_ext);
+                hd_debug_print("Open db: $index_name", true);
+                $this->epg_db[$this->url_hash] = new SQLite3($index_name, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE, '');
+            }
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+        }
+
+        $is_open = isset($this->epg_db[$this->url_hash]);
+        if (!$is_open) {
+            hd_debug_print("Can't open SQLite3 database $this->url_hash.db!");
+        }
+
+        return $is_open;
     }
 }

@@ -139,11 +139,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     $this->plugin->set_active_playlist_key($id);
                 } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    if ($id === $this->plugin->get_active_xmltv_source_key()) {
-                        $this->plugin->set_active_xmltv_source_key(null);
-                    } else {
-                        $this->plugin->set_active_xmltv_source_key($id);
-                    }
+                    $active_sources = $this->plugin->get_active_xmltv_sources();
+                    $this->plugin->set_active_xmltv_source($id, !$active_sources->has($id));
                 } else {
                     return null;
                 }
@@ -1048,7 +1045,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $items = array();
         $all_sources['pl'] = $this->plugin->get_playlist_xmltv_sources();
         $all_sources['ext'] = $this->get_order($media_url->edit_list);
-        $active_key = $this->plugin->get_active_xmltv_source_key();
+        $active_sources_order = $this->plugin->get_active_xmltv_sources()->get_ordered_values();
         $dupes = array();
         foreach ($all_sources as $idx => $source) {
             foreach ($source as $key => $item) {
@@ -1056,11 +1053,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     continue;
                 }
 
+                $order_key = false;
                 $dupes[$key] = '';
                 $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
                 $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
                 if (empty($title)) {
                     $title = "Unrecognized or bad xmltv entry";
+                } else {
+                    $order_key = array_search($item->params[PARAM_URI], $active_sources_order);
+                    $title = $order_key !== false ? ($order_key + 1) .  " - $title" : $title;
                 }
 
                 if (file_exists($cached_xmltv_file)) {
@@ -1089,7 +1090,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 } else {
                     $icon_file = get_image_path("link.png");
                 }
-                $items[] = self::add_item($key, $title, $key === $active_key, $icon_file, $detailed_info);
+                $items[] = self::add_item($key, $title, $order_key !== false, $icon_file, $detailed_info);
             }
         }
 

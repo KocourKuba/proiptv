@@ -83,15 +83,19 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::close_and_run();
 
             case GUI_EVENT_TIMER:
-                clearstatcache();
                 $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager->get_indexer()->is_index_locked()) {
-                    $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                    return Action_Factory::change_behaviour($actions, 2000);
+                if (!$epg_manager) {
+                    return null;
                 }
 
-                $epg_manager->import_indexing_log();
-                return null;
+                clearstatcache();
+
+                if ($epg_manager->import_indexing_log()) {
+                    return null;
+                }
+
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                return Action_Factory::change_behaviour($actions, 2000);
 
             case GUI_EVENT_KEY_STOP:
                 $this->plugin->save_orders(true);

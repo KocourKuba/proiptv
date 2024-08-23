@@ -47,6 +47,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return null;
         }
 
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+
         $sel_ndx = isset($user_input->sel_ndx) ? $user_input->sel_ndx : 0;
         if (isset($user_input->selected_media_url)) {
             $sel_media_url = MediaURL::decode($user_input->selected_media_url);
@@ -65,21 +67,20 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
-                clearstatcache();
                 $epg_manager = $this->plugin->get_epg_manager();
-                if (!is_null($epg_manager)) {
-                    if ($epg_manager->get_indexer()->is_index_locked()) {
-                        $actions = $this->get_action_map(MediaURL::decode($user_input->parent_media_url), $plugin_cookies);
+                if ($epg_manager) {
+                    clearstatcache();
+                    if (!$epg_manager->import_indexing_log()) {
+                        $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                        hd_debug_print("Change behaviour", true);
                         return Action_Factory::change_behaviour($actions, 2000);
                     }
 
-                    $epg_manager->import_indexing_log();
-                }
-
-                foreach (array('pl_last_error', 'xmltv_last_error') as $last_error) {
-                    $error_msg = HD::get_last_error($last_error);
-                    if (!empty($error_msg)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
+                    foreach (array('pl_last_error', 'xmltv_last_error') as $last_error) {
+                        $error_msg = HD::get_last_error($last_error);
+                        if (!empty($error_msg)) {
+                            return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
+                        }
                     }
                 }
 
@@ -273,9 +274,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EPG_SOURCE_SELECTED:
                 if (!isset($user_input->{LIST_IDX})) break;
 
+                $this->plugin->set_active_xmltv_source($user_input->{LIST_IDX}, !$user_input->{IS_LIST_SELECTED});
                 $this->save_if_changed();
-                $this->plugin->set_active_xmltv_source_key($user_input->{LIST_IDX});
-                $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_EPG_CACHE_ENGINE:
@@ -521,7 +521,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_REFRESH_SCREEN:
                 $this->save_if_changed();
-                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 $post_action = Action_Factory::close_and_run(Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title()));
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0, $post_action)
@@ -563,7 +562,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
         }
 
-        $post_action = $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies);
+        $post_action = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
         return Action_Factory::update_regular_folder($post_action, true, $sel_ndx);
     }
 

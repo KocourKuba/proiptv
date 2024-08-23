@@ -30,7 +30,7 @@ set_include_path(get_include_path() . PATH_SEPARATOR . DuneSystem::$properties['
 
 require_once 'lib/epg/epg_manager_xmltv.php';
 
+list(, $config) = $argv;
+
 $epg_manager = new Epg_Manager_Xmltv();
-if ($epg_manager->init_by_config()) {
-    $epg_manager->index_all();
-}
+$epg_manager->index_by_config($config);
