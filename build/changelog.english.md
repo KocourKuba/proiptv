@@ -1,4 +1,5 @@
 ﻿### Upcoming version
+- Added support for multiple XMLTV sources for a single playlist. Unfortunately, processing XMLTV is still a difficult task for older devices and low-end models, so it is not recommended to put all available sources. The order in which the EPG is searched is determined by the order of the sources in the list.
 
 ### Version 4.2.802
 - Added a new XMLTV cache management mode. Enabled by default. Most providers support the use of ETag. For those providers who can't properly configure their server or Cloudflare to use ETag, there is an option to switch to the old "manual" mode in the plugin settings.
