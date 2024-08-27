@@ -790,10 +790,11 @@ class Starnet_Tv implements User_Input_Handler
 
             $group = new Default_Group($this->plugin, $title, $title, $group_icon);
 
-            $adult = (strpos($title, "зрослы") !== false
-                || strpos($title, "adult") !== false
-                || strpos($title, "18+") !== false
-                || strpos($title, "xxx") !== false);
+            $lower_title = mb_strtolower($title, 'UTF-8');
+            $adult = (strpos($lower_title, "взрослы") !== false
+                || strpos($lower_title, "adult") !== false
+                || strpos($lower_title, "18+") !== false
+                || strpos($lower_title, "xxx") !== false);
 
             $group->set_adult($adult);
 
