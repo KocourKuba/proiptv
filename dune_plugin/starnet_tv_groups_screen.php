@@ -68,19 +68,22 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager) {
-                    clearstatcache();
-                    if (!$epg_manager->import_indexing_log()) {
-                        $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                        hd_debug_print("Change behaviour", true);
-                        return Action_Factory::change_behaviour($actions, 2000);
-                    }
+                clearstatcache();
 
-                    foreach (array('pl_last_error', 'xmltv_last_error') as $last_error) {
-                        $error_msg = HD::get_last_error($last_error);
-                        if (!empty($error_msg)) {
-                            return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
-                        }
+                list($res, ) = $epg_manager->import_indexing_log();
+                if ($res !== false) {
+                    return null;
+                }
+
+                if ($res === false) {
+                    $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                    return Action_Factory::change_behaviour($actions, 2000);
+                }
+
+                foreach (array('pl_last_error', 'xmltv_last_error') as $last_error) {
+                    $error_msg = HD::get_last_error($last_error);
+                    if (!empty($error_msg)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
                     }
                 }
 

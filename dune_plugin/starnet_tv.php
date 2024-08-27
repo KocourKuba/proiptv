@@ -36,7 +36,6 @@ class Starnet_Tv implements User_Input_Handler
     const ID = 'tv';
 
     const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
-    const PARSE_CONFIG = "%s_parse_config.json";
 
     // deprecated settings
     const PARAM_CUR_XMLTV_SOURCE = 'cur_xmltv_source';
@@ -482,15 +481,12 @@ class Starnet_Tv implements User_Input_Handler
 
                 $post_action = null;
                 if (isset($user_input->locked)) {
-                    $epg_manager = $this->plugin->get_epg_manager();
-                    if (!$epg_manager) {
-                        return null;
-                    }
-
                     clearstatcache();
-
-                    if (!$epg_manager->import_indexing_log()) {
-                        return Action_Factory::change_behaviour($this->get_action_map(), 1000);
+                    $epg_manager = $this->plugin->get_epg_manager();
+                    list($res, ) = $epg_manager->import_indexing_log();
+                    if ($res === false) {
+                        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                        return Action_Factory::change_behaviour($actions, 2000);
                     }
 
                     foreach ($this->plugin->get_epg_manager()->get_delayed_epg() as $channel_id) {
@@ -1062,26 +1058,7 @@ class Starnet_Tv implements User_Input_Handler
         HD::ShowMemoryUsage();
 
         if ($is_xml_engine) {
-            foreach ($this->plugin->get_active_xmltv_sources() as $key => $value) {
-                if (empty($value)) continue;
-
-                hd_debug_print("Run background indexing for: ($key) $value");
-                $config = array(
-                    'debug' => LogSeverity::$is_debug,
-                    'cache_dir' => $this->plugin->get_cache_dir(),
-                    'cache_ttl' => $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3),
-                    'cache_type' => $this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO),
-                    'xmltv_urls' => array($key => $value)
-                );
-                $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $key));
-                hd_debug_print("Config: " . json_encode($config), true);
-                file_put_contents($config_file, HD::pretty_json_format(json_encode($config)));
-
-                $cmd = get_install_path('bin/cgi_wrapper.sh') . " index_epg.php $config_file &";
-                hd_debug_print("exec: $cmd", true);
-                exec($cmd);
-                sleep(1);
-            }
+            $this->plugin->run_bg_epg_indexing();
         }
 
         return 2;

@@ -87,8 +87,7 @@ class Epg_Manager_Xmltv
             return false;
         }
 
-        $sources = new Hashed_Array();
-        $sources->from_array($config->xmltv_urls);
+        $sources = Hashed_Array::from_array($config->xmltv_urls);
         $LOG_FILE = get_temp_path($sources->key() . "_indexing.log");
         if (file_exists($LOG_FILE)) {
             @unlink($LOG_FILE);
@@ -227,7 +226,7 @@ class Epg_Manager_Xmltv
         hd_debug_print("Fetch data from XMLTV cache in: " . (microtime(true) - $t) . " secs");
 
         if (empty($day_epg)) {
-            if ($any_lock) {
+            if ($any_lock !== false) {
                 $this->delayed_epg = array_unique($this->delayed_epg);
                 return array($day_start_ts => array(
                     Epg_Params::EPG_END => $day_start_ts + 86400,
@@ -248,12 +247,18 @@ class Epg_Manager_Xmltv
     /**
      * Import indexing log to plugin logs
      *
-     * @return bool - true if log is imported
+     * @param array|null $sources
+     * @return array
      */
-    public function import_indexing_log()
+    public function import_indexing_log($sources = null)
     {
+        $indexed = array();
         $has_locks = false;
-        foreach ($this->indexer->get_active_sources() as $key => $source) {
+        if (is_null($sources)) {
+            $sources = $this->indexer->get_active_sources()->get_order();
+        }
+
+        foreach ($sources as $key => $source) {
             if ($this->indexer->is_index_locked($key)) {
                 $has_locks = true;
                 continue;
@@ -270,10 +275,11 @@ class Epg_Manager_Xmltv
                 hd_debug_print_separator();
                 hd_debug_print("Read finished");
                 @unlink($index_log);
+                $indexed[] = $key;
             }
         }
 
-        return !$has_locks;
+        return array(!$has_locks, $indexed);
     }
 
     /**

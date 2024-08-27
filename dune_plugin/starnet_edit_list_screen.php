@@ -62,6 +62,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $edit_list = $parent_media_url->edit_list;
 
@@ -102,8 +103,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case GUI_EVENT_KEY_ENTER:
-                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST || $edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     $this->force_save($user_input);
                     $item = $this->get_order($edit_list)->get($selected_media_url->id);
@@ -131,11 +130,26 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return null;
 
-            case ACTION_SET_CURRENT:
-                if (!isset($user_input->selected_media_url)) {
+            case GUI_EVENT_TIMER:
+                if ($edit_list !== self::SCREEN_EDIT_EPG_LIST) break;
+
+                clearstatcache();
+
+                list($res, $indexed) = $this->plugin->get_epg_manager()->import_indexing_log($this->plugin->get_all_xmltv_sources()->get_order());
+                if ($res !== false) {
                     return null;
                 }
-                $id = MediaURL::decode($user_input->selected_media_url)->id;
+
+                $post_action = null;
+                if (!empty($indexed)) {
+                    $post_action = $this->invalidate_current_folder($parent_media_url, $plugin_cookies);
+                }
+
+                $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                return Action_Factory::change_behaviour($actions, 2000, $post_action);
+
+            case ACTION_SET_CURRENT:
+                $id = $selected_media_url->id;
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     $this->plugin->set_active_playlist_key($id);
                 } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
@@ -154,8 +168,26 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 break;
 
+            case ACTION_INDEX_EPG:
+                $id = $selected_media_url->id;
+                $item = $this->plugin->get_all_xmltv_sources()->get($id);
+                if (is_null($item) || empty($item->params[PARAM_URI])) break;
+
+                $source = new Hashed_Array();
+                $source->put($id, $item->params[PARAM_URI]);
+                hd_debug_print("index ($id) {$item->params[PARAM_URI]}", true);
+                $this->plugin->run_bg_epg_indexing($source);
+
+                $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER, null, array('ids' => $id));
+                return Action_Factory::change_behaviour($actions, 2000,
+                    $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+
+            case ACTION_CLEAR_CACHE:
+                $id = $selected_media_url->id;
+                $this->plugin->get_epg_manager()->get_indexer()->clear_epg_files($id);
+                break;
+
             case ACTION_ITEM_UP:
-                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
                 if (!$this->get_order($edit_list)->arrange_item($selected_media_url->id, Ordered_Array::UP)) {
                     return null;
                 }
@@ -170,7 +202,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DOWN:
-                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
                 $order = $this->get_order($edit_list);
                 if (!$order->arrange_item($selected_media_url->id, Ordered_Array::DOWN)) {
                     return null;
@@ -187,7 +218,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DELETE:
-                $item = MediaURL::decode($user_input->selected_media_url)->id;
+                $item = $selected_media_url->id;
 
                 switch ($edit_list) {
                     case self::SCREEN_EDIT_PLAYLIST:
@@ -227,7 +258,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case self::ACTION_REMOVE_ITEM_DLG_APPLY:
                 hd_debug_print(null, true);
 
-                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
                 $id = $selected_media_url->id;
                 hd_debug_print("edit_list: $parent_media_url->edit_list", true);
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
@@ -236,6 +266,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return Action_Factory::show_error(false, TR::t('edit_list_title_cant_delete'));
                     }
                     $this->plugin->get_epg_manager()->get_indexer()->clear_epg_files($id);
+                    $this->plugin->set_active_xmltv_source($id, false);
                     $this->get_order($edit_list)->erase($id);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     hd_debug_print("remove playlist settings: $id", true);
@@ -244,7 +275,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $this->set_changes($parent_media_url->save_data);
 
-                return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
+                $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                return Action_Factory::change_behaviour($actions, 0,
                     $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
 
             case ACTION_ITEMS_SORT:
@@ -267,6 +299,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $this->plugin->get_epg_manager()->get_indexer()->clear_epg_files($key);
                         }
                         $this->get_order($edit_list)->clear();
+                        $this->plugin->remove_setting(PARAM_CUR_XMLTV_SOURCES);
                         break;
 
                     case self::SCREEN_EDIT_PLAYLIST:
@@ -378,7 +411,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->do_select_folder($user_input);
 
             case self::ACTION_SHOW_QR:
-                $selected_media_url = MediaURL::decode($user_input->selected_media_url);
                 /** @var api_default $provider */
                 $provider = $this->get_order($edit_list)->get($selected_media_url->id);
                 if (is_null($provider)) break;
@@ -523,6 +555,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
         $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
         return $actions;
     }
@@ -549,6 +582,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $edit_list === self::SCREEN_EDIT_PLAYLIST ? TR::t('change_playlist') : TR::t('change_epg_source'),
                 "star_small.png"
             );
+
+            if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'));
+            }
 
             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
@@ -1067,16 +1105,25 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (file_exists($cached_xmltv_file)) {
                     $check_time_file = filemtime($cached_xmltv_file);
                     $dl_date = date("d.m H:i", $check_time_file);
-                    $max_cache_time = $check_time_file + 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
-                    $expired = date("d.m H:i", $max_cache_time);
-
                     $title = TR::t('edit_list_title_info__2', $title, $dl_date);
-                    $detailed_info = TR::t('edit_list_detail_info__4',
-                        $item->params[PARAM_URI],
-                        HD::get_file_size($cached_xmltv_file),
-                        $dl_date,
-                        $expired
-                    );
+
+                    if ($this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO) === XMLTV_CACHE_MANUAL) {
+                        $max_cache_time = $check_time_file + 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
+                        $expired = date("d.m H:i", $max_cache_time);
+                        $detailed_info = TR::t('edit_list_detail_info__4',
+                            $item->params[PARAM_URI],
+                            HD::get_file_size($cached_xmltv_file),
+                            $dl_date,
+                            $expired
+                        );
+                    } else {
+                        $detailed_info = TR::t('edit_list_detail_info__3',
+                            $item->params[PARAM_URI],
+                            HD::get_file_size($cached_xmltv_file),
+                            $dl_date
+                        );
+                    }
+
                 } else if (isset($item->params[PARAM_URI])) {
                     $detailed_info = TR::t('edit_list_detail_info__1', $item->params[PARAM_URI]);
                 } else {

@@ -475,18 +475,19 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
     /**
      * @param Hashed_Array $sources
-     * @return bool
+     * @return bool|array
      */
     public function is_any_index_locked($sources)
     {
+        $keys = array();
         foreach ($sources as $key => $value) {
             $lock_dir = $this->cache_dir . DIRECTORY_SEPARATOR . "$key.lock";
             if (is_dir($lock_dir)) {
-                return true;
+                $keys[] = $key;
             }
         }
 
-        return false;
+        return empty($keys) ? false : $keys;
     }
 
     /**

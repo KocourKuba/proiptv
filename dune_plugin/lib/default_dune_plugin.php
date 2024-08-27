@@ -2929,7 +2929,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if ($this->get_all_xmltv_sources()->size() !== 0) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_sources'), "epg.png");
             $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             $sources = TR::load_string(($icons_playlist === PLAYLIST_PICONS) ? 'playlist_picons' : 'xmltv_picons');
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source__1', $sources), "image.png");

@@ -101,6 +101,8 @@ const ACTION_JUMP_TO_CHANNEL = 'jump_to_channel';
 const ACTION_JUMP_TO_CHANNEL_IN_GROUP = 'jump_to_channel_in_group';
 const ACTION_ADD_URL_DLG = 'add_url_dialog';
 const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
+const ACTION_CLEAR_CACHE = 'clear_cache';
+const ACTION_INDEX_EPG = 'index_epg';
 
 const CONTROL_EDIT_ACTION = 'edit_action';
 const CONTROL_EDIT_NAME = 'set_item_name';
