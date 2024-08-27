@@ -224,7 +224,7 @@ class Curl_Wrapper
         $config_data[] = "--silent";
         $config_data[] = "--show-error";
         $config_data[] = "--dump-header " . $this->headers_path;
-        $config_data[] = "--connect-timeout 30";
+        $config_data[] = "--connect-timeout 60";
         $config_data[] = "--max-time 90";
         $config_data[] = "--location";
         $config_data[] = "--max-redirs 5";
