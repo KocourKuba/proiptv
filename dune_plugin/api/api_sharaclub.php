@@ -46,6 +46,25 @@ require_once 'api_default.php';
 class api_sharaclub extends api_default
 {
     /**
+     * @param bool $force
+     * @return bool|object
+     */
+    public function get_provider_info($force = false)
+    {
+        parent::get_provider_info($force);
+
+        if (isset($this->account_info->data->listdomain)) {
+            $this->setCredential(MACRO_PLAYLIST, $this->account_info->data->listdomain);
+        }
+
+        if (isset($this->account_info->data->jsonEpgDomain)) {
+            $this->setCredential(MACRO_EPG_DOMAIN, $this->account_info->data->jsonEpgDomain);
+        }
+
+        return $this->account_info;
+    }
+
+    /**
      * @inheritDoc
      */
     public function GetInfoUI($handler)
@@ -129,7 +148,7 @@ class api_sharaclub extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-            hd_debug_print("GetServers: " . raw_json_encode($response), true);
+            hd_debug_print("GetServers: " . pretty_json_format($response), true);
             if (isset($response->status)) {
                 foreach ($response->allow_nums as $server) {
                     $this->servers[(int)$server->id] = $server->name;

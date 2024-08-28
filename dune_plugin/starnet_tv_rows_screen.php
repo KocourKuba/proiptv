@@ -440,9 +440,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         }
 
         $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
-        hd_debug_print("New channels: " . raw_json_encode($new_channels), true);
+        hd_debug_print("New channels: " . pretty_json_format($new_channels), true);
         $removed_channels = $this->plugin->tv->get_changed_channels_ids('removed');
-        hd_debug_print("Removed channels: " . raw_json_encode($removed_channels), true);
+        hd_debug_print("Removed channels: " . pretty_json_format($removed_channels), true);
 
         $bg = Rows_Factory::add_regular_sticker_rect(
             RowsItemsParams::fav_sticker_bg_color,

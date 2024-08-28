@@ -110,8 +110,8 @@ class api_iptvonline extends api_default
             return true;
         }
 
-        hd_debug_print("token not received: " . raw_json_encode($data), true);
-        HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token') . "\n\n" . raw_json_encode($data));
+        hd_debug_print("token not received: " . pretty_json_format($data), true);
+        HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token') . "\n\n" . pretty_json_format($data));
         return false;
     }
 
@@ -201,7 +201,7 @@ class api_iptvonline extends api_default
 
         if (empty($this->device)) {
             $response = $this->execApiCommand(API_COMMAND_GET_DEVICE);
-            hd_debug_print("GetServers: " . raw_json_encode($response), true);
+            hd_debug_print("GetServers: " . pretty_json_format($response), true);
             if (isset($response->status) && $response->status === 200) {
                 $this->device = $response;
             }

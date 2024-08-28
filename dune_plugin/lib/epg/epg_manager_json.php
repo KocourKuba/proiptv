@@ -110,7 +110,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 $max_check_time = 3600;
                 $cache_expired = filemtime($epg_cache_file) + $max_check_time;
                 if ($cache_expired > time()) {
-                    $all_epg = HD::ReadContentFromFile($epg_cache_file);
+                    $all_epg = parse_json_file($epg_cache_file);
                     $from_cache = true;
                     hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
                 } else {
@@ -124,7 +124,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 $all_epg = self::get_epg_json($epg_url, $this->plugin->get_epg_preset_parser());
                 if (!empty($all_epg)) {
                     hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
-                    HD::StoreContentToFile($epg_cache_file, $all_epg);
+                    store_to_json_file($epg_cache_file, $all_epg);
                 }
             }
 

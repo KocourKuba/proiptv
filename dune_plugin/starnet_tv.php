@@ -1288,7 +1288,7 @@ class Starnet_Tv implements User_Input_Handler
             $replaces[catchup_params::CU_END_MIN] = date('M', $now);
             $replaces[catchup_params::CU_END_SEC] = date('S', $now);
 
-            hd_debug_print("replaces: " . raw_json_encode($replaces), true);
+            hd_debug_print("replaces: " . pretty_json_format($replaces), true);
             foreach ($replaces as $key => $value) {
                 if (strpos($stream_url, $key) !== false) {
                     hd_debug_print("replace $key to $value", true);
@@ -1570,8 +1570,8 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if (LogSeverity::$is_debug) {
-            hd_debug_print("All groups: " . raw_json_encode($groups));
-            hd_debug_print("All channels: " . raw_json_encode($all_channels->get_ordered_values()));
+            hd_debug_print("All groups: " . pretty_json_format($groups));
+            hd_debug_print("All channels: " . pretty_json_format($all_channels->get_ordered_values()));
         }
 
         return array(

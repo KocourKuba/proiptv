@@ -48,6 +48,7 @@ class Default_Dune_Plugin implements DunePlugin
     const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
     const CHANGELOG_URL_PREFIX = 'https://raw.githubusercontent.com/KocourKuba/proiptv/master/build/';
     const ARCHIVE_ID = 'common';
+    const PARSE_CONFIG = "%s_parse_config.json";
 
     /////////////////////////////////////////////////////////////////////////////
     // views variables
@@ -845,7 +846,7 @@ class Default_Dune_Plugin implements DunePlugin
                         );
                     }
                 } else {
-                    hd_debug_print("malformed epg data: " . raw_json_encode($value));
+                    hd_debug_print("malformed epg data: " . pretty_json_format($value));
                 }
             }
         } catch (Exception $ex) {
@@ -1441,7 +1442,7 @@ class Default_Dune_Plugin implements DunePlugin
             $tmp_file = get_install_path("providers_debug.json");
             if (file_exists($tmp_file)) {
                 hd_debug_print("Load debug providers configuration: $tmp_file");
-                $jsonArray = HD::ReadContentFromFile($tmp_file);
+                $jsonArray = parse_json_file($tmp_file);
             } else {
                 $name = "providers_{$this->plugin_info['app_base_version']}.json";
                 $tmp_file = get_data_path($name);
@@ -1457,13 +1458,13 @@ class Default_Dune_Plugin implements DunePlugin
                 if ($jsonArray === false || !isset($jsonArray['providers'])) {
                     if (file_exists($tmp_file)) {
                         hd_debug_print("Load actual providers configuration");
-                        $jsonArray = HD::ReadContentFromFile($tmp_file);
+                        $jsonArray = parse_json_file($tmp_file);
                     } else if (file_exists($tmp_file = get_install_path($name))) {
                         hd_debug_print("Load installed providers configuration");
-                        $jsonArray = HD::ReadContentFromFile($tmp_file);
+                        $jsonArray = parse_json_file($tmp_file);
                     }
                 } else {
-                    HD::StoreContentToFile($tmp_file, $jsonArray);
+                    store_to_json_file($tmp_file, $jsonArray);
                 }
             }
 
@@ -2247,7 +2248,7 @@ class Default_Dune_Plugin implements DunePlugin
             $this->epg_manager = new Epg_Manager_Xmltv($this);
         }
 
-        $this->epg_manager->init_indexer($this->get_cache_dir(), $this->get_active_xmltv_source());
+        $this->epg_manager->init_indexer($this->get_cache_dir());
     }
 
     /**
@@ -2266,14 +2267,6 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         return str_replace("//", "/", $cache_dir);
-    }
-
-    /**
-     * @return string
-     */
-    public function get_active_xmltv_source()
-    {
-        return $this->get_setting(PARAM_CUR_XMLTV_SOURCE, '');
     }
 
     /**
@@ -2526,31 +2519,32 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @param string $key
-     * @return void
+     * @return Hashed_Array
      */
-    public function set_active_xmltv_source_key($key)
+    public function get_active_xmltv_sources()
     {
-        if (empty($key)) {
-            $this->remove_setting(PARAM_CUR_XMLTV_SOURCE_KEY);
-            $this->set_active_xmltv_source('');
-        } else {
-            /** @var Named_Storage $xmltv_source */
-            $xmltv_source = $this->get_all_xmltv_sources()->get($key);
-            if (!is_null($xmltv_source)) {
-                $this->set_setting(PARAM_CUR_XMLTV_SOURCE_KEY, $key);
-                $this->set_active_xmltv_source($xmltv_source->params[PARAM_URI]);
-            }
-        }
+        return $this->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
     }
 
     /**
-     * @param string $source
+     * @param string $key
+     * @param bool $set
      * @return void
      */
-    public function set_active_xmltv_source($source)
+    public function set_active_xmltv_source($key, $set = true)
     {
-        $this->set_setting(PARAM_CUR_XMLTV_SOURCE, $source);
+        $active_sources = $this->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
+        if ($set) {
+            /** @var Named_Storage $xmltv_source */
+            $xmltv_source = $this->get_all_xmltv_sources()->get($key);
+            if (!is_null($xmltv_source)) {
+                $active_sources->set($key, $xmltv_source->params[PARAM_URI]);
+            }
+        } else {
+            $active_sources->erase($key);
+        }
+
+        $this->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
     }
 
     /**
@@ -2660,6 +2654,39 @@ class Default_Dune_Plugin implements DunePlugin
     public function is_background_image_default()
     {
         return ($this->get_background_image() === $this->plugin_info['app_background']);
+    }
+
+    /**
+     * @param Hashed_Array|null $sources
+     * @return void
+     */
+    public function run_bg_epg_indexing($sources = null)
+    {
+        hd_debug_print(null, true);
+        if (is_null($sources)) {
+            $sources = $this->get_active_xmltv_sources();
+        }
+
+        foreach ($sources as $key => $value) {
+            if (empty($value)) continue;
+
+            hd_debug_print("Run background indexing for: ($key) $value");
+            $config = array(
+                'debug' => LogSeverity::$is_debug,
+                'cache_dir' => $this->get_cache_dir(),
+                'cache_ttl' => $this->get_setting(PARAM_EPG_CACHE_TTL, 3),
+                'cache_type' => $this->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO),
+                'xmltv_urls' => array($key => $value)
+            );
+            $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $key));
+            hd_debug_print("Config: " . json_encode($config), true);
+            file_put_contents($config_file, pretty_json_format($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+            $cmd = get_install_path('bin/cgi_wrapper.sh') . " index_epg.php $config_file &";
+            hd_debug_print("exec: $cmd", true);
+            exec($cmd);
+            sleep(1);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -2784,8 +2811,8 @@ class Default_Dune_Plugin implements DunePlugin
         $menu_items = array();
 
         $sources = $this->get_all_xmltv_sources();
-        $source_key = $this->get_active_xmltv_source_key();
-
+        $active_sources_order = $this->get_active_xmltv_sources()->get_ordered_values();
+        hd_debug_print("active sources: " . json_encode($active_sources_order));
         $idx = 0;
         foreach ($sources as $key => $item) {
             if ($idx !== 0 && ($idx % 17) === 0) {
@@ -2805,11 +2832,13 @@ class Default_Dune_Plugin implements DunePlugin
                 $name .= " (" . date("d.m H:i", $check_time_file) . ")";
             }
 
+            hd_debug_print("source: {$item->params[PARAM_URI]}");
+            $order_key = array_search($item->params[PARAM_URI], $active_sources_order);
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_EPG_SOURCE_SELECTED,
-                $name,
-                ($source_key === $key) ? "check.png" : null,
-                array(LIST_IDX => $key)
+                $order_key !== false ? ($order_key + 1) .  " - $name" : $name,
+                $order_key !== false ? "check.png" : null,
+                array(LIST_IDX => $key, IS_LIST_SELECTED => $order_key !== false)
             );
         }
 
@@ -2817,14 +2846,6 @@ class Default_Dune_Plugin implements DunePlugin
         $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_epg'), "refresh.png", array('reload_action' => 'epg'));
 
         return $menu_items;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_active_xmltv_source_key()
-    {
-        return $this->get_setting(PARAM_CUR_XMLTV_SOURCE_KEY, '');
     }
 
     /**
@@ -2908,7 +2929,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if ($this->get_all_xmltv_sources()->size() !== 0) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_sources'), "epg.png");
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_source'), "epg.png");
             $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             $sources = TR::load_string(($icons_playlist === PLAYLIST_PICONS) ? 'playlist_picons' : 'xmltv_picons');
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source__1', $sources), "image.png");

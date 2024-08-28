@@ -47,7 +47,7 @@ class vod_ipstream extends vod_standard
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
-        $jsonItems = HD::parse_json_file($this->get_vod_cache_file());
+        $jsonItems = parse_json_file($this->get_vod_cache_file(), false);
 
         if ($jsonItems === false) {
             hd_debug_print("failed to load movie: $movie_id");

@@ -190,8 +190,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
         $removed_channels = $this->plugin->tv->get_changed_channels_ids('removed');
         if (LogSeverity::$is_debug) {
-            hd_debug_print("New channels: " . raw_json_encode($new_channels), true);
-            hd_debug_print("Removed channels: " . raw_json_encode($removed_channels), true);
+            hd_debug_print("New channels: " . pretty_json_format($new_channels), true);
+            hd_debug_print("Removed channels: " . pretty_json_format($removed_channels), true);
         }
 
         /** @var Default_Channel $channel */

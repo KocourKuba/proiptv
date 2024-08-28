@@ -123,7 +123,7 @@ class MediaURL extends Json_Serializer
      */
     public static function encode($m, $raw_encode = false)
     {
-        return $raw_encode ? raw_json_encode($m) : json_encode($m);
+        return $raw_encode ? pretty_json_format($m) : json_encode($m);
     }
 
     /**

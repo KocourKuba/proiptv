@@ -135,7 +135,7 @@ class api_vidok extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-            hd_debug_print("GetServers: " . raw_json_encode($response), true);
+            hd_debug_print("GetServers: " . pretty_json_format($response), true);
             if (isset($response->servers)) {
                 foreach ($response->servers as $server) {
                     $this->servers[(int)$server->id] = $server->name;

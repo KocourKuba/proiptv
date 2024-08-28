@@ -172,7 +172,7 @@ class api_default
 
     public function __toString()
     {
-        return (string)raw_json_encode(get_object_vars($this));
+        return (string)pretty_json_format(get_object_vars($this));
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -376,10 +376,16 @@ class api_default
     public function get_provider_info($force = false)
     {
         hd_debug_print(null, true);
+        hd_debug_print("force get_provider_info: " . var_export($force, true), true);
+
+        if (!$this->request_provider_token()) {
+            hd_debug_print("Failed to get provider token", true);
+            return null;
+        }
 
         if ((empty($this->account_info) || $force) && $this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
-            hd_debug_print("get_provider_info: " . raw_json_encode($this->account_info), true);
+            hd_debug_print("get_provider_info: " . pretty_json_format($this->account_info), true);
         }
 
         return $this->account_info;
@@ -405,7 +411,7 @@ class api_default
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
-        hd_debug_print("curl options: " . raw_json_encode($curl_opt), true);
+        hd_debug_print("curl options: " . pretty_json_format($curl_opt), true);
 
         $command_url = $this->getApiCommand($command);
         if (empty($command_url)) {
@@ -514,8 +520,8 @@ class api_default
 
         hd_debug_print("template: $string", true);
         $string = str_replace(
-            array(MACRO_API, MACRO_PLAYLIST),
-            array($this->getApiUrl(), $this->getCredential(MACRO_PLAYLIST)),
+            array(MACRO_API, MACRO_PLAYLIST, MACRO_EPG_DOMAIN),
+            array($this->getApiUrl(), $this->getCredential(MACRO_PLAYLIST), $this->getCredential(MACRO_EPG_DOMAIN)),
             $string);
 
         foreach ($macroses as $macro) {
@@ -900,7 +906,7 @@ class api_default
         if (!empty($id)) {
             hd_debug_print("load info for playlist id: $id", true);
             $this->playlist_info = $this->plugin->get_playlists()->get($id);
-            hd_debug_print("provider info: " . raw_json_encode($this->playlist_info), true);
+            hd_debug_print("provider info: " . pretty_json_format($this->playlist_info), true);
         }
 
         if (is_null($this->playlist_info)) {
@@ -961,7 +967,7 @@ class api_default
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
 
-        hd_debug_print("ApplySetupUI compiled provider ($id) info: " . raw_json_encode($this->playlist_info), true);
+        hd_debug_print("ApplySetupUI compiled provider ($id) info: " . pretty_json_format($this->playlist_info), true);
 
         if ($is_new) {
             hd_debug_print("Set default values for id: $id", true);
@@ -1212,7 +1218,7 @@ class api_default
             $changed = true;
         }
 
-        hd_debug_print("ApplyExtSetupUI compiled provider info: " . raw_json_encode($this->playlist_info), true);
+        hd_debug_print("ApplyExtSetupUI compiled provider info: " . pretty_json_format($this->playlist_info), true);
 
         if (!$changed) {
             return false;

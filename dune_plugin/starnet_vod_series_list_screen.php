@@ -291,7 +291,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             return array();
         }
 
-        hd_debug_print("Movie: " . raw_json_encode($movie), true);
+        hd_debug_print("Movie: " . pretty_json_format($movie), true);
         /** @var History_Item[] $movie_info */
         $viewed_items = $this->plugin->get_history(HISTORY_MOVIES)->get($media_url->movie_id);
 
@@ -325,7 +325,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             if (!empty($episode->audios)) {
                 $this->audios[$episode->id] = $episode->audios;
-                hd_debug_print("Audio: " . raw_json_encode($episode->audios), true);
+                hd_debug_print("Audio: " . pretty_json_format($episode->audios), true);
             }
 
             $items[] = array(

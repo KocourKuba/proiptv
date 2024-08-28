@@ -112,7 +112,7 @@ class xtream_codes_api
             $mtime = filemtime($tmp_file);
             $diff = time() - $mtime;
             if ($diff <= 3600) {
-                $cached_data = HD::ReadContentFromFile($tmp_file, false);
+                $cached_data = parse_json_file($tmp_file, false);
                 return $this->update_cache($url_hash, $cached_data);
             }
 
@@ -122,7 +122,7 @@ class xtream_codes_api
 
         $cached_data = Curl_Wrapper::decodeJsonResponse(false, Curl_Wrapper::simple_download_content($url));
         if ($cached_data !== false) {
-            HD::StoreContentToFile($tmp_file, $cached_data);
+            store_to_json_file($tmp_file, $cached_data);
         }
 
         return $this->update_cache($url_hash, $cached_data);

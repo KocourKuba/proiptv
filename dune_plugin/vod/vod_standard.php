@@ -279,7 +279,10 @@ class vod_standard extends Abstract_Vod
      */
     public function try_load_movie($movie_id)
     {
-        $this->set_cached_movie($this->TryLoadMovie($movie_id));
+        $movie = $this->TryLoadMovie($movie_id);
+        if (!is_null($movie)) {
+            $this->set_cached_movie($movie);
+        }
     }
 
     /**
@@ -772,7 +775,7 @@ class vod_standard extends Abstract_Vod
         }
 
         if (!$need_load) {
-            $this->vod_items = HD::ReadContentFromFile($tmp_file, $assoc);
+            $this->vod_items = parse_json_file($tmp_file, $assoc);
         } else {
             $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($response === false) {

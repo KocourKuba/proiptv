@@ -232,7 +232,7 @@ class Starnet_Epfs_Handler
      */
     protected static function read_epf_data($epf_id)
     {
-        return file_exists($path = self::get_epf_path($epf_id)) ? HD::ReadContentFromFile($path, false) : null;
+        return file_exists($path = self::get_epf_path($epf_id)) ? parse_json_file($path, false) : null;
     }
 
     public static function async_worker_warmed_up_path()

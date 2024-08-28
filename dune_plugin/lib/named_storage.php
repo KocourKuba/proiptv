@@ -44,6 +44,6 @@ class Named_Storage
      */
     public function __toString()
     {
-        return (string)raw_json_encode($this);
+        return (string)pretty_json_format($this);
     }
 }

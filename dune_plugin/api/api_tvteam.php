@@ -116,7 +116,7 @@ class api_tvteam extends api_default
 
         if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
-            hd_debug_print("get provider info response: " . raw_json_encode($this->account_info), true);
+            hd_debug_print("get provider info response: " . pretty_json_format($this->account_info), true);
 
             if (isset($this->account_info->data->userData->userToken)) {
                 HD::set_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()),
@@ -172,7 +172,7 @@ class api_tvteam extends api_default
             HD::set_last_error("pl_last_error", null);
             HD::set_last_error("rq_last_error", null);
             $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
-            hd_debug_print("request provider token response: " . raw_json_encode($response), true);
+            hd_debug_print("request provider token response: " . pretty_json_format($response), true);
             if ($response->status === 0 || !empty($response->error)) {
                 HD::set_last_error("pl_last_error", $response->error);
                 HD::set_last_error("rq_last_error", $response->error);
@@ -196,7 +196,7 @@ class api_tvteam extends api_default
         $this->setCredential(MACRO_SERVER_ID, $server);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
-        hd_debug_print("SetServer: " . raw_json_encode($response), true);
+        hd_debug_print("SetServer: " . pretty_json_format($response), true);
         if (isset($response->status) && (int)$response->status === 1) {
             $this->account_info = null;
             $this->servers = array();

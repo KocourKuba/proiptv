@@ -935,8 +935,8 @@
       "provider_url": "https://shara.club/",
       "api_url": "http://list.playtv.pro/api/players.php",
       "api_commands": {
-        "get_playlist": "http://list.playtv.pro/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}",
-        "get_vod": "http://list.playtv.pro/kino-full/{LOGIN}-{PASSWORD}",
+        "get_playlist": "http://{PLAYLIST}/tv_live-{STREAM_ID}/{LOGIN}-{PASSWORD}",
+        "get_vod": "http://{PLAYLIST}/kino-full/{LOGIN}-{PASSWORD}",
         "account_info": "{API}?a=subscr_info&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "pay": "{API}?a=qr_pay&u={LOGIN}-{PASSWORD}&source=dune_editor",
         "get_servers": "{API}?a=ch_cdn&u={LOGIN}-{PASSWORD}&source=dune_editor",

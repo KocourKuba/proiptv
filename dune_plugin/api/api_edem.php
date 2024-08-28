@@ -197,7 +197,7 @@ class api_edem extends api_default
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
         }
 
-        hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . raw_json_encode($this->playlist_info), true);
+        hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . pretty_json_format($this->playlist_info), true);
 
         if ($is_new) {
             hd_debug_print("Set default values for id: $id", true);

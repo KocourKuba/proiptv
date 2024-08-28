@@ -91,7 +91,7 @@ class api_cbilling extends api_default
 
         if (empty($this->servers)) {
             $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
-            hd_debug_print("GetServers: " . raw_json_encode($response), true);
+            hd_debug_print("GetServers: " . pretty_json_format($response), true);
             if (isset($response->data)) {
                 foreach ($response->data as $server) {
                     $this->servers[$server->name] = $server->country;

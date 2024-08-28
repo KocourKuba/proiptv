@@ -324,7 +324,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
-                    hd_debug_print(raw_json_encode($provider));
+                    hd_debug_print(pretty_json_format($provider));
 
                     return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
                 }

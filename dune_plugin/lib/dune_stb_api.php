@@ -384,7 +384,7 @@ function hd_debug_print($val = null, $is_debug = false)
     $prefix = "(" . str_pad($caller['line'], 4) . ") ";
     if (isset($caller_name['class'])) {
         if (!is_null($val)) {
-            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)raw_json_encode($val));
+            $val = str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)pretty_json_format($val));
         }
         $prefix .= "{$caller_name['class']}::";
     }
@@ -1622,7 +1622,7 @@ function get_plugin_manifest_info()
             throw new Exception("Plugin manifest not found!");
         }
 
-        $xml = HD::parse_xml_file($manifest_path);
+        $xml = parse_xml_file($manifest_path);
         if ($xml === null) {
             throw new Exception("Empty plugin manifest!");
         }
@@ -2012,19 +2012,175 @@ function safe_merge_array($ar1, $ar2)
     return $ar1;
 }
 
-function escaped_raw_json_encode($param)
+/**
+ * @param string $doc
+ * @return SimpleXMLElement
+ * @throws Exception
+ */
+function parse_xml_document($doc)
 {
-    return str_replace('"', '\"', raw_json_encode($param));
+    $xml = simplexml_load_string($doc);
+
+    if ($xml === false) {
+        hd_debug_print("Error: can not parse XML document.");
+        hd_debug_print("XML-text: $doc.");
+        throw new Exception('Illegal XML document');
+    }
+
+    return $xml;
 }
 
-function raw_json_encode($arr)
+/**
+ * @param string $path
+ * @return SimpleXMLElement
+ * @throws Exception
+ */
+function parse_xml_file($path)
 {
-    $pattern = "/\\\\u([0-9a-fA-F]{4})/";
-    $callback = function ($m) {
-        return html_entity_decode("&#x$m[1];", ENT_QUOTES, 'UTF-8');
-    };
+    $xml = simplexml_load_string(file_get_contents($path));
 
-    return preg_replace_callback($pattern, $callback, json_encode($arr));
+    if ($xml === false) {
+        hd_debug_print("Error: can't parse XML document.");
+        hd_debug_print("path to XML: $path");
+        throw new Exception('Illegal XML document');
+    }
+
+    return $xml;
+}
+
+/**
+ * @param string $path
+ * @param mixed $content
+ */
+function store_to_json_file($path, $content)
+{
+    if (empty($path)) {
+        hd_debug_print("Path not set");
+    } else {
+        file_put_contents($path, json_encode($content));
+    }
+}
+
+/**
+ * @param string $path
+ * @param boolean $assoc
+ */
+function parse_json_file($path, $assoc = true)
+{
+    if (empty($path) || !file_exists($path)) {
+        hd_debug_print("Path not exists: $path");
+        return false;
+    }
+
+    return json_decode(file_get_contents($path), $assoc);
+}
+
+function escaped_raw_json_encode($param)
+{
+    return str_replace('"', '\"', pretty_json_format($param));
+}
+
+function pretty_json_format($content, $options = JSON_UNESCAPED_UNICODE)
+{
+    $pretty_print = (bool)($options & JSON_PRETTY_PRINT);
+    $unescape_unicode = (bool)($options & JSON_UNESCAPED_UNICODE);
+    $unescape_slashes = (bool)($options & JSON_UNESCAPED_SLASHES);
+
+    $json = json_encode($content);
+    if (!$json || (!$pretty_print && !$unescape_unicode && !$unescape_slashes)) {
+        return $json;
+    }
+
+    $result = '';
+    $pos = 0;
+    $strLen = strlen($json);
+    $indentStr = $pretty_print ? ' ': '';
+    $newLine = $pretty_print ? PHP_EOL : '';
+    $outOfQuotes = true;
+    $buffer = '';
+    $noescape = true;
+
+    for ($i = 0; $i < $strLen; $i++) {
+        // take the next character in the string
+        $char = $json[$i];
+
+        // Inside a quoted string?
+        if ('"' === $char && $noescape) {
+            $outOfQuotes = !$outOfQuotes;
+        }
+
+        if (!$outOfQuotes) {
+            $buffer .= $char;
+            $noescape = !('\\' === $char) || !$noescape;
+            continue;
+        }
+
+        if ('' !== $buffer) {
+            if ($unescape_slashes) {
+                $buffer = str_replace('\\/', '/', $buffer);
+            }
+
+            if ($unescape_unicode) {
+                $pattern = "/\\\\u([0-9a-fA-F]{4})/";
+                if (function_exists('mb_convert_encoding')) {
+                    $callback = function ($match) {
+                        return mb_convert_encoding(pack('H*', $match[1]), 'UTF-8', 'UCS-2BE');
+                    };
+                } else {
+                    $callback = function ($match) {
+                        return html_entity_decode("&#x$match[1];", ENT_QUOTES, 'UTF-8');
+                    };
+                }
+                $buffer = preg_replace_callback($pattern, $callback, $buffer);
+            }
+
+            $result .= $buffer . $char;
+            $buffer = '';
+            continue;
+        }
+
+        if (false !== strpos(" \t\r\n", $char)) {
+            continue;
+        }
+
+        if (':' === $char) {
+            // Add a space after the : character
+            $char .= $indentStr;
+        } else if ('}' === $char || ']' === $char) {
+            $pos--;
+            $prevChar = $json[$i - 1];
+
+            if ('{' !== $prevChar && '[' !== $prevChar) {
+                // If this character is the end of an element,
+                // output a new line and indent the next line
+                $result .= $newLine . str_repeat($indentStr, $pos);
+            } else {
+                // Collapse empty {} and []
+                $result = rtrim($result) . $newLine . $newLine . $indentStr;
+            }
+        }
+
+        $result .= $char;
+
+        // If the last character was the beginning of an element,
+        // output a new line and indent the next line
+        if (',' === $char || '{' === $char || '[' === $char) {
+            $result .= $newLine;
+
+            if ('{' === $char || '[' === $char) {
+                $pos++;
+            }
+            $result .= str_repeat($indentStr, $pos);
+        }
+    }
+
+    // If buffer not empty after formating we have an unclosed quote
+    if ($buffer !== '') {
+        //json is incorrectly formatted
+        $result = false;
+    }
+
+    return $result;
 }
 
 /**
