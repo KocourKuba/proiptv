@@ -1,5 +1,11 @@
 ﻿### Upcoming version
-- Added support for multiple XMLTV sources for a single playlist. Unfortunately, processing XMLTV is still a difficult task for older devices and low-end models, so it is not recommended to put all available sources. The order in which the EPG is searched is determined by the order of the sources in the list.
+
+### Version 5.0.816
+- Added support for multiple XMLTV sources for a single playlist. Unfortunately, processing XMLTV is still a heavy task for older devices and low-end models, so it is not recommended to include all available sources. The order in which the EPG is searched is determined by the order of the sources in the list.
+- Ability to manually start indexing the XMLTV source in the source list
+- Added support for Blink TV (https://blinktv.cc/) provider
+- API update for Sharaclub
+- Fixed a bug with getting information about a movie in the IPTV Online VOD
 
 ### Version 4.2.802
 - Added a new XMLTV cache management mode. Enabled by default. Most providers support the use of ETag. For those providers who can't properly configure their server or Cloudflare to use ETag, there is an option to switch to the old "manual" mode in the plugin settings.
