@@ -246,6 +246,8 @@ class Epg_Indexer_Classic extends Epg_Indexer
      */
     public function index_xmltv_positions()
     {
+        hd_debug_print("Indexing channels for: $this->xmltv_url", true);
+
         if ($this->is_current_index_locked()) {
             hd_debug_print("File is indexing now, skipped");
             return;

@@ -214,6 +214,7 @@ const LIST_IDX = 'list_idx';
 const IS_LIST_SELECTED = 'is_list_selected';
 const PLAYLIST_PICONS = 'playlist_picons';
 const XMLTV_PICONS = 'xmltv_picons';
+const COMBINED_PICONS = 'combined_picons';
 
 // macroses used to replace template in providers playlists
 const MACRO_API = '{API}';

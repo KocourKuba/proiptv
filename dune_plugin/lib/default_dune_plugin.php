@@ -2880,6 +2880,8 @@ class Default_Dune_Plugin implements DunePlugin
             ($icons_playlist === PLAYLIST_PICONS) ? "check.png" : null);
         $menu_items[] = $this->create_menu_item($handler, XMLTV_PICONS, TR::t('xmltv_picons'),
             ($icons_playlist === XMLTV_PICONS) ? "check.png" : null);
+        $menu_items[] = $this->create_menu_item($handler, COMBINED_PICONS, TR::t('combined_picons'),
+            ($icons_playlist === COMBINED_PICONS) ? "check.png" : null);
         return $menu_items;
     }
 
@@ -2931,7 +2933,13 @@ class Default_Dune_Plugin implements DunePlugin
         if ($this->get_all_xmltv_sources()->size() !== 0) {
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_sources'), "epg.png");
             $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-            $sources = TR::load_string(($icons_playlist === PLAYLIST_PICONS) ? 'playlist_picons' : 'xmltv_picons');
+            if ($icons_playlist === PLAYLIST_PICONS) {
+                $sources = TR::load_string('playlist_picons');
+            } else if ($icons_playlist === XMLTV_PICONS) {
+                $sources = TR::load_string('xmltv_picons');
+            } else {
+                $sources = TR::load_string('combined_picons');
+            }
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source__1', $sources), "image.png");
         }
 

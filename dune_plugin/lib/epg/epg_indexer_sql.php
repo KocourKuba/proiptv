@@ -52,9 +52,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
         $res = '';
         foreach ($this->active_sources as $source) {
             $this->set_url($source);
-            if (!$this->open_sqlite_db()) {
-                continue;
-            }
+            $this->open_sqlite_db();
 
             $alias = SQLite3::escapeString($alias);
             $qry = "SELECT distinct (picon) FROM picons INNER JOIN channels ON picons.picon_hash = channels.picon_hash WHERE alias = '$alias';";
@@ -156,15 +154,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 }
             }
 
-            if (!$this->open_sqlite_db()) {
-                return;
-            }
-
-            $this->set_index_locked(true);
+            $this->open_sqlite_db();
 
             hd_debug_print_separator();
             hd_debug_print("Start reindex channels and picons...");
 
+            $this->set_index_locked(true);
             $t = microtime(true);
 
             $channels_table = self::INDEX_CHANNELS;
@@ -275,7 +270,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     private function check_table($name)
     {
-        if (!$this->open_sqlite_db()) {
+        if (!$this->is_sqlite_handle_valid()) {
             return false;
         }
 
@@ -291,7 +286,11 @@ class Epg_Indexer_Sql extends Epg_Indexer
     {
         if ($this->is_index_valid($name)) {
             hd_debug_print("Remove index: $name");
-            $this->get_epg_db()->exec("DROP TABLE IF EXISTS $name;");
+            if (!$this->is_index_locked($name)) {
+                $this->get_epg_db()->exec("DROP TABLE IF EXISTS $name;");
+            } else {
+                hd_debug_print("Unable to drop table because index $name is locked");
+            }
         }
     }
 
@@ -301,16 +300,14 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function index_xmltv_positions()
     {
+        hd_debug_print("Indexing channels for: $this->xmltv_url", true);
+
         if ($this->is_current_index_locked()) {
             hd_debug_print("File is indexing now, skipped");
             return;
         }
 
         try {
-            if (!$this->open_sqlite_db()) {
-                return;
-            }
-
             $positions_table = self::INDEX_POSITIONS;
             if ($this->is_index_valid($positions_table)) {
                 $total_pos = $this->get_epg_db()->querySingle("SELECT count(*) FROM $positions_table;");
@@ -319,6 +316,8 @@ class Epg_Indexer_Sql extends Epg_Indexer
                     return;
                 }
             }
+
+            $this->open_sqlite_db();
 
             hd_debug_print_separator();
             hd_debug_print("Start reindex positions...");
@@ -435,6 +434,9 @@ class Epg_Indexer_Sql extends Epg_Indexer
     protected function clear_memory_index($id = '')
     {
         if (empty($id)) {
+            foreach ($this->epg_db as $db) {
+                $db->close();
+            }
             $this->epg_db = array();
         } else if (isset($this->epg_db[$id])) {
             $this->epg_db[$id]->close();
@@ -447,29 +449,32 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
     /**
      * open sqlite database
-     * @return bool
      */
     private function open_sqlite_db()
     {
-        try {
-            if (empty($this->url_hash)) {
-                throw new Exception("Database name is empty. Url not set!");
+        if (!$this->is_sqlite_handle_valid()) {
+            $index_name = $this->get_cache_stem($this->index_ext);
+            hd_debug_print("Open db: $index_name", true);
+            $flags = SQLITE3_OPEN_READWRITE;
+            if (!file_exists($index_name)) {
+                $flags |= SQLITE3_OPEN_CREATE;
             }
+            $this->epg_db[$this->url_hash] = new SQLite3($index_name, $flags, '');
+            $this->epg_db[$this->url_hash]->busyTimeout(30);
+        }
+    }
 
-            if (!isset($this->epg_db[$this->url_hash])) {
-                $index_name = $this->get_cache_stem($this->index_ext);
-                hd_debug_print("Open db: $index_name", true);
-                $this->epg_db[$this->url_hash] = new SQLite3($index_name, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE, '');
-            }
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
+    /**
+     * open sqlite database
+     * @return bool
+     */
+    private function is_sqlite_handle_valid()
+    {
+        if (empty($this->url_hash)) {
+            hd_debug_print("No handler for empty url!");
+            return false;
         }
 
-        $is_open = isset($this->epg_db[$this->url_hash]);
-        if (!$is_open) {
-            hd_debug_print("Can't open SQLite3 database $this->url_hash.db!");
-        }
-
-        return $is_open;
+        return isset($this->epg_db[$this->url_hash]);
     }
 }

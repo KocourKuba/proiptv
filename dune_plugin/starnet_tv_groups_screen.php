@@ -302,6 +302,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case PLAYLIST_PICONS:
             case XMLTV_PICONS:
+            case COMBINED_PICONS:
                 if ($this->plugin->get_setting(PARAM_USE_PICONS) !== $user_input->control_id) {
                     hd_debug_print("Selected icons source: $user_input->control_id", true);
                     $this->plugin->tv->unload_channels();

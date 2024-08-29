@@ -101,6 +101,7 @@ type = Тип
 city = Город
 playlist_picons = Плейлист
 xmltv_picons = XMLTV
+combined_picons = XMLTV + Плейлист
 edit_account = Редактировать данные доступа
 edit_ext_account = Настройки провайдера
 jump_to_channel = Перейти к каналу в группе

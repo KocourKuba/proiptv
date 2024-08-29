@@ -165,8 +165,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         foreach ($this->active_sources as $source) {
             $this->set_url($source);
             $this->index_only_channels();
+            hd_debug_print("Channels for $source parsing execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
         }
-        hd_print("Channels parsing execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
     }
 
     /**
@@ -183,7 +183,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             $this->set_url($source);
             $this->index_xmltv_positions();
         }
-        hd_print("Script to parse position execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
+        hd_debug_print("Script to parse position execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
     }
 
     /**
@@ -196,12 +196,14 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     {
         $res = $this->is_xmltv_cache_valid();
         hd_debug_print("cache valid status: $res", true);
+        hd_debug_print("Indexing channels for: $this->xmltv_url", true);
         switch ($res) {
             case 1:
                 // downloaded xmltv file not exists or expired
                 hd_debug_print("Download and indexing xmltv source");
-                $this->download_xmltv_source();
-                $this->index_xmltv_channels();
+                if ($this->download_xmltv_source() === 1) {
+                    $this->index_xmltv_channels();
+                }
                 break;
             case 3:
                 // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists

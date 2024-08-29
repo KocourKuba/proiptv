@@ -84,6 +84,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         if ($sources->size() !== 0) {
             $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
             $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
+            $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
             $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
                 TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, self::CONTROLS_WIDTH, true);

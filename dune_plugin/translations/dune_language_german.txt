@@ -101,6 +101,7 @@ type = Typ
 city = Stadt
 playlist_picons = Wiedergabeliste
 xmltv_picons = XMLTV
+combined_picons = XMLTV + Wiedergabeliste
 edit_account = Kontozugriffe bearbeiten
 edit_ext_account = Account Einstellungen
 jump_to_channel = Springe zum Kanal in der Gruppe

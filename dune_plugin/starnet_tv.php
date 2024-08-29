@@ -759,9 +759,9 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->init_epg_manager();
         $epg_manager = $this->plugin->get_epg_manager();
-        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === PLAYLIST_PICONS;
+        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         $epg_manager->get_indexer()->set_active_sources($this->plugin->get_active_xmltv_sources());
-        if (!$use_playlist_picons) {
+        if ($use_playlist_picons !== PLAYLIST_PICONS) {
             $epg_manager->get_indexer()->index_all_channels();
         }
 
@@ -900,7 +900,7 @@ class Starnet_Tv implements User_Input_Handler
                 $playlist_icon = $icon_base_url . $playlist_icon;
             }
 
-            if ($use_playlist_picons) {
+            if ($use_playlist_picons === PLAYLIST_PICONS) {
                 $icon_url = $playlist_icon;
                 if ($replace_icons && !empty($icon_replace_pattern)) {
                     foreach ($icon_replace_pattern as $pattern) {
@@ -910,7 +910,7 @@ class Starnet_Tv implements User_Input_Handler
             } else {
                 $lc_channel = mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8");
                 $icon_url = $epg_manager->get_indexer()->get_picon($lc_channel);
-                if (empty($icon_url)) {
+                if (empty($icon_url) && $use_playlist_picons === COMBINED_PICONS) {
                     $icon_url = $playlist_icon;
                 }
             }
@@ -1456,7 +1456,7 @@ class Starnet_Tv implements User_Input_Handler
                 throw new Exception("Channels not loaded!");
             }
 
-            $pass_sex = ($this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000'));
+            $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
             // get channel by hash
             $channel = $this->get_channel($channel_id);
             if (is_null($channel)) {
