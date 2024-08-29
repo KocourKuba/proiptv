@@ -910,9 +910,9 @@ class Starnet_Tv implements User_Input_Handler
             } else {
                 $lc_channel = mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8");
                 $icon_url = $epg_manager->get_indexer()->get_picon($lc_channel);
-                if (!empty($icon_url)) break;
-
-                $icon_url = $playlist_icon;
+                if (empty($icon_url)) {
+                    $icon_url = $playlist_icon;
+                }
             }
 
             if (empty($icon_url)) {
