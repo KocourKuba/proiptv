@@ -142,6 +142,11 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function index_xmltv_channels()
     {
+        if ($this->is_current_index_locked()) {
+            hd_debug_print("File is indexing or downloading, skipped");
+            return;
+        }
+
         try {
             if ($this->is_index_valid(self::INDEX_CHANNELS) && $this->is_index_valid(self::INDEX_PICONS)) {
                 $channels = $this->get_epg_db()->querySingle('SELECT count(*) FROM ' . self::INDEX_CHANNELS . ';');

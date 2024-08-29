@@ -149,6 +149,11 @@ class Epg_Indexer_Classic extends Epg_Indexer
      */
     public function index_xmltv_channels()
     {
+        if ($this->is_current_index_locked()) {
+            hd_debug_print("File is indexing or downloading, skipped");
+            return;
+        }
+
         $channels_file = $this->get_index_name(self::INDEX_CHANNELS);
         if ($this->is_index_valid(self::INDEX_CHANNELS)) {
             hd_debug_print("Load cache channels index: $channels_file");
