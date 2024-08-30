@@ -70,13 +70,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $epg_manager = $this->plugin->get_epg_manager();
                 clearstatcache();
 
-                list($res, ) = $epg_manager->import_indexing_log();
-                if ($res !== false) {
-                    return null;
-                }
-
+                $res = $epg_manager->import_indexing_log();
                 if ($res === false) {
-                    $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                    $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                     return Action_Factory::change_behaviour($actions, 2000);
                 }
 
@@ -526,8 +522,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_REFRESH_SCREEN:
                 $this->save_if_changed();
                 $post_action = Action_Factory::close_and_run(Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title()));
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
-                    Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0, $post_action)
+                    Action_Factory::change_behaviour($actions, 0, $post_action)
                 );
 
             case CONTROL_PLAYLIST:

@@ -478,15 +478,13 @@ class Starnet_Tv implements User_Input_Handler
 
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
-
                 $post_action = null;
                 if (isset($user_input->locked)) {
                     clearstatcache();
                     $epg_manager = $this->plugin->get_epg_manager();
-                    list($res, ) = $epg_manager->import_indexing_log();
+                    $res = $epg_manager->import_indexing_log();
                     if ($res === false) {
-                        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-                        return Action_Factory::change_behaviour($actions, 2000);
+                        return Action_Factory::change_behaviour($this->get_action_map(), 2000);
                     }
 
                     foreach ($this->plugin->get_epg_manager()->get_delayed_epg() as $channel_id) {

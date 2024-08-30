@@ -85,12 +85,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case GUI_EVENT_TIMER:
                 clearstatcache();
 
-                list($res, ) = $this->plugin->get_epg_manager()->import_indexing_log();
+                $res = $this->plugin->get_epg_manager()->import_indexing_log();
                 if ($res !== false) {
                     return null;
                 }
 
-                $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 return Action_Factory::change_behaviour($actions, 2000);
 
             case GUI_EVENT_KEY_STOP:

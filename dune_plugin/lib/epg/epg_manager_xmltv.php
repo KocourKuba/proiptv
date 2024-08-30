@@ -248,23 +248,22 @@ class Epg_Manager_Xmltv
      * Import indexing log to plugin logs
      *
      * @param array|null $sources
-     * @return array
+     * @return bool
      */
     public function import_indexing_log($sources = null)
     {
-        $indexed = array();
         $has_locks = false;
         if (is_null($sources)) {
             $sources = $this->indexer->get_active_sources()->get_order();
         }
 
-        foreach ($sources as $key => $source) {
-            if ($this->indexer->is_index_locked($key)) {
+        foreach ($sources as $source) {
+            if ($this->indexer->is_index_locked($source)) {
                 $has_locks = true;
                 continue;
             }
 
-            $index_log = get_temp_path("{$key}_indexing.log");
+            $index_log = get_temp_path("{$source}_indexing.log");
             if (file_exists($index_log)) {
                 hd_debug_print("Read epg indexing log $index_log...");
                 hd_debug_print_separator();
@@ -275,11 +274,10 @@ class Epg_Manager_Xmltv
                 hd_debug_print_separator();
                 hd_debug_print("Read finished");
                 @unlink($index_log);
-                $indexed[] = $key;
             }
         }
 
-        return array(!$has_locks, $indexed);
+        return !$has_locks;
     }
 
     /**

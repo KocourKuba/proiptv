@@ -57,6 +57,44 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     /**
      * @inheritDoc
      */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $actions = array();
+        if (!isset($media_url->deny_edit) && $this->get_order($media_url->edit_list)->size() !== 0) {
+            if (isset($media_url->allow_order)) {
+                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+            }
+
+            $hidden = ($media_url->edit_list === self::SCREEN_EDIT_GROUPS || $media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
+            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
+                ACTION_ITEM_DELETE,
+                $hidden ? TR::t('restore') : TR::t('delete'));
+        }
+
+        if ($media_url->edit_list === self::SCREEN_EDIT_PROVIDERS) {
+            $info = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_QR, TR::t('info'));
+            $actions[GUI_EVENT_KEY_B_GREEN] = $info;
+            $actions[GUI_EVENT_KEY_INFO] = $info;
+        } else {
+            $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
+        }
+
+        $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_RETURN] = $action_return;
+        $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
+        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+
+        return $actions;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -135,17 +173,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 clearstatcache();
 
-                list($res, $indexed) = $this->plugin->get_epg_manager()->import_indexing_log($this->plugin->get_all_xmltv_sources()->get_order());
+                $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
+                $res = $this->plugin->get_epg_manager()->import_indexing_log($this->plugin->get_all_xmltv_sources()->get_order());
+
                 if ($res !== false) {
-                    return null;
+                    return $post_action;
                 }
 
-                $post_action = null;
-                if (!empty($indexed)) {
-                    $post_action = $this->invalidate_current_folder($parent_media_url, $plugin_cookies);
-                }
-
-                $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 return Action_Factory::change_behaviour($actions, 2000, $post_action);
 
             case ACTION_SET_CURRENT:
@@ -178,9 +213,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 hd_debug_print("index ($id) {$item->params[PARAM_URI]}", true);
                 $this->plugin->run_bg_epg_indexing($source);
 
-                $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER, null, array('ids' => $id));
-                return Action_Factory::change_behaviour($actions, 2000,
-                    $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                return Action_Factory::change_behaviour($actions, 2000);
 
             case ACTION_CLEAR_CACHE:
                 $id = $selected_media_url->id;
@@ -275,9 +309,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $this->set_changes($parent_media_url->save_data);
 
-                $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-                return Action_Factory::change_behaviour($actions, 0,
-                    $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEMS_SORT:
                 $this->get_order($edit_list)->sort_order();
@@ -520,44 +552,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog($window_title, $defs, true);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $actions = array();
-        if (!isset($media_url->deny_edit) && $this->get_order($media_url->edit_list)->size() !== 0) {
-            if (isset($media_url->allow_order)) {
-                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-            }
-
-            $hidden = ($media_url->edit_list === self::SCREEN_EDIT_GROUPS || $media_url->edit_list === self::SCREEN_EDIT_CHANNELS);
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
-                ACTION_ITEM_DELETE,
-                $hidden ? TR::t('restore') : TR::t('delete'));
-        }
-
-        if ($media_url->edit_list === self::SCREEN_EDIT_PROVIDERS) {
-            $info = User_Input_Handler_Registry::create_action($this, self::ACTION_SHOW_QR, TR::t('info'));
-            $actions[GUI_EVENT_KEY_B_GREEN] = $info;
-            $actions[GUI_EVENT_KEY_INFO] = $info;
-        } else {
-            $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, TR::t('add'));
-        }
-
-        $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        $actions[GUI_EVENT_KEY_RETURN] = $action_return;
-        $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
-        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
-        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
-        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-
-        return $actions;
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
@@ -1091,6 +1085,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     continue;
                 }
 
+                $locked = false;
                 $order_key = false;
                 $dupes[$key] = '';
                 $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
@@ -1103,6 +1098,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if (file_exists($cached_xmltv_file)) {
+                    $locked = $this->plugin->get_epg_manager()->get_indexer()->is_index_locked($key);
+
                     $check_time_file = filemtime($cached_xmltv_file);
                     $dl_date = date("d.m H:i", $check_time_file);
                     $title = TR::t('edit_list_title_info__2', $title, $dl_date);
@@ -1130,7 +1127,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $detailed_info = $item->name;
                 }
 
-                if ($idx === 'pl') {
+                if ($locked) {
+                    $icon_file = get_image_path("refresh.png");
+                } else if ($idx === 'pl') {
                     $icon_file = get_image_path("m3u_file.png");
                 } else if ($item->type === PARAM_FILE) {
                     $icon_file = get_image_path("xmltv_file.png");
