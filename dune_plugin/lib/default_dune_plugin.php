@@ -284,7 +284,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * Get plugin parameters
+     * Get global plugin parameters
      * Parameters does not depend on playlists and used globally
      *
      * @param string $param
@@ -313,7 +313,7 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * load plugin settings
+     * Load global plugin settings
      *
      * @param bool $force
      * @return void
@@ -379,7 +379,8 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * set plugin parameters
+     * Set global plugin parameter
+     * Parameters does not depend on playlists and used globally
      *
      * @param string $param
      * @param mixed $val

@@ -38,7 +38,7 @@ class PaneParams
     const pane_width                    = 1790;
     const pane_height                   = 640;
     const group_list_width              = 350;
-	const info_width				    = 700;
+	const info_width				    = 670;
 	const info_height				    = 640;
 	const vod_width				        = 1120;
 	const vod_height				    = 630;
@@ -48,11 +48,11 @@ class PaneParams
 	const ch_num_font_color	    	    = '#EFAA16FF';
 	const ch_num_font_size	    	    = 50; # size in pt
 	const ch_title_font_color		    = '#EFAA16FF';
-	const ch_title_font_size		    = 64; # size in pt
+	const ch_title_font_size		    = 56; # size in pt
 	const prog_title_font_color		    = '#FFFFD0FF';
-	const prog_title_font_size		    = 40; # size in pt
+	const prog_title_font_size		    = 38; # size in pt
 	const prog_item_font_color		    = '#AFAFA0FF';
-	const prog_item_font_size		    = 30; # size in pt
+	const prog_item_font_size		    = 28; # size in pt
 	const prog_item_height			    = 60;
     const separator_line_color		    = '#1919BE9F';
     const fav_btn_width      		    = 52;
@@ -63,6 +63,13 @@ class PaneParams
     const fav_button_green              = 'gui_skin://special_icons/controls_button_green.aai';
     const fav_button_yellow             = 'gui_skin://special_icons/controls_button_yellow.aai';
     const fav_button_blue               = 'gui_skin://special_icons/controls_button_blue.aai';
+
+    public static $ch_num_pos = array(
+            0 => array('x' => 690,  'y' => 520), // bottom left
+            1 => array('x' => 690,  'y' => 0),   // top left
+            2 => array('x' => 1670, 'y' => 0),   // top right
+            3 => array('x' => 1670, 'y' => 520), // bottom right
+        );
 }
 
 class RowsParams
@@ -117,8 +124,10 @@ class RowsItemsParams
     const fav_sticker_icon_url		= 'star.png';
     const fav_sticker_bg_width		= 40;
     const fav_sticker_bg_height		= 40;
+    const fav_sticker_bg_dx 		= 61;
     const fav_sticker_icon_width	= 36;
     const fav_sticker_icon_height	= 36;
+    const fav_sticker_icon_dx 		= 59;
     const fav_sticker_bg_color		= '#000000FF';
     const fav_sticker_logo_bg_color	= '#FFFFFFFF';
     const fav_progress_dy           = 134;

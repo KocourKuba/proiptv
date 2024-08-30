@@ -64,13 +64,13 @@ class GComp_Geom
     public static function place_center($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_CENTER, VALIGN_CENTER, HALIGN_CENTER, VALIGN_CENTER, false, $base_id));
     }
 
     public static function align($x = 0, $y = 0,
-                                 $use_base_width = null, $use_base_height = null,
-                                 $halign = null, $valign = null, $base_halign = null, $base_valign = null,
+                                 $use_base_width = false, $use_base_height = false,
+                                 $halign = HALIGN_LEFT, $valign = VALIGN_TOP, $base_halign = HALIGN_LEFT, $base_valign = VALIGN_TOP,
                                  $base_to_prev = false, $base_id = null)
     {
         $arr = array();
@@ -100,35 +100,35 @@ class GComp_Geom
     public static function place_top_left($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
-                null, null, null, null, false, $base_id));
+            self::align($x, $y, false, false,
+                HALIGN_LEFT, VALIGN_TOP, HALIGN_LEFT, VALIGN_TOP, false, $base_id));
     }
 
     public static function place_top_center($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_CENTER, VALIGN_TOP, HALIGN_CENTER, VALIGN_TOP, false, $base_id));
     }
 
     public static function place_top_right($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_RIGHT, VALIGN_TOP, HALIGN_RIGHT, VALIGN_TOP, false, $base_id));
     }
 
     public static function place_left_center($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_LEFT, VALIGN_CENTER, HALIGN_LEFT, VALIGN_CENTER, false, $base_id));
     }
 
     public static function place_top_left_by_center($w, $h, $x, $y)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_LEFT, VALIGN_CENTER, HALIGN_LEFT, VALIGN_TOP));
     }
 
@@ -140,7 +140,7 @@ class GComp_Geom
     public static function place_bottom_left($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_LEFT, VALIGN_BOTTOM, HALIGN_LEFT, VALIGN_BOTTOM,
                 false, $base_id));
     }
@@ -148,7 +148,7 @@ class GComp_Geom
     public static function place_bottom_right($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_RIGHT, VALIGN_BOTTOM, HALIGN_RIGHT, VALIGN_BOTTOM,
                 false, $base_id));
     }
@@ -156,7 +156,7 @@ class GComp_Geom
     public static function place_bottom_center($w = -1, $h = -1, $x = 0, $y = 0, $base_id = null)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_CENTER, VALIGN_BOTTOM, HALIGN_CENTER, VALIGN_BOTTOM,
                 false, $base_id));
     }
@@ -173,56 +173,56 @@ class GComp_Geom
     public static function place_below_left($w = -1, $h = -1, $x = 0, $y = 0)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_LEFT, VALIGN_TOP, HALIGN_LEFT, VALIGN_BOTTOM, true));
     }
 
     public static function place_below_right($w = -1, $h = -1, $x = 0, $y = 0)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_RIGHT, VALIGN_TOP, HALIGN_RIGHT, VALIGN_BOTTOM, true));
     }
 
     public static function place_below_center($w = -1, $h = -1, $x = 0, $y = 0)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_CENTER, VALIGN_TOP, HALIGN_CENTER, VALIGN_BOTTOM, true));
     }
 
     public static function place_below_left_same_width($w_diff = 0, $h = -1, $x = 0, $y = 0)
     {
         return self::geom($w_diff, $h, null,
-            self::align($x, $y, true, null,
+            self::align($x, $y, true, false,
                 HALIGN_LEFT, VALIGN_TOP, HALIGN_LEFT, VALIGN_BOTTOM, true));
     }
 
     public static function place_next_right_align_top($w = -1, $h = -1, $x = 0, $y = 0)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_LEFT, VALIGN_TOP, HALIGN_RIGHT, VALIGN_TOP, true));
     }
 
     public static function place_next_right_align_center($w = -1, $h = -1, $x = 0, $y = 0)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_LEFT, VALIGN_CENTER, HALIGN_RIGHT, VALIGN_CENTER, true));
     }
 
     public static function place_next_right_same_height($w = -1, $h_diff = -1, $x = 0, $y = 0)
     {
         return self::geom($w, $h_diff, null,
-            self::align($x, $y, null, true,
+            self::align($x, $y, false, true,
                 HALIGN_LEFT, VALIGN_CENTER, HALIGN_RIGHT, VALIGN_CENTER, true));
     }
 
     public static function place_next_left_align_top($w = -1, $h = -1, $x = 0, $y = 0)
     {
         return self::geom($w, $h, null,
-            self::align($x, $y, null, null,
+            self::align($x, $y, false, false,
                 HALIGN_RIGHT, VALIGN_TOP, HALIGN_LEFT, VALIGN_TOP, true));
     }
 }

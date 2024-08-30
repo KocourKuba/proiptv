@@ -176,6 +176,7 @@ const PARAM_EPG_CACHE_TTL = 'epg_cache_ttl';
 const PARAM_EPG_SHIFT = 'epg_shift';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_SOURCE = 'epg_source';
+const PARAM_CHANNEL_POSITION = 'channel_position';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_EXT_XMLTV_SOURCES = 'xmltv_sources';
