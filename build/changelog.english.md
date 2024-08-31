@@ -1,5 +1,13 @@
 ﻿### Upcoming version
 
+### Version 5.0.830
+- Added a new mode to find channel icons 'Playlist + XMLTV'. If no channel icons are found in the playlist, the search will continue in the selected XMLTV sources
+- Added UI setting for NewUI to change the location of the channel number on the preview screen
+- An additional icon on the 'Edit XMLTV sources' screen indicating that the source is indexed
+- Small fixes for NewUI (so that text does not overlaps the preview area)
+- Fixed the order of the list of channels in a category for NewUI (the order set by the user was not taken into account)
+- Fixed a bug with detecting the end of indexing process of an XMLTV source
+
 ### Version 5.0.820
 - Fixed a bug for the "Use icons from XMLTV" setting, which breaks the loading of the channel list
 
