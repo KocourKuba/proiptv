@@ -634,7 +634,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $group_id = $group->get_id();
             $items = array();
-            foreach ($group->get_group_enabled_channels() as $channel) {
+            foreach ($group->get_items_order() as $channel_id) {
+                $channel = $this->plugin->tv->get_channel($channel_id);
+                if (is_null($channel) || $channel->is_disabled()) continue;
+
                 $items[] = Rows_Factory::add_regular_item(
                     json_encode(array('group_id' => $group_id, 'channel_id' => $channel->get_id())),
                     $channel->get_icon_url(),
