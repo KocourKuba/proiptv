@@ -3492,11 +3492,21 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $defs = array();
+        $qr_code = get_temp_path('tg.jpg');
+        if (!file_exists($qr_code)) {
+            $url = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&format=jpg&data=https%3A%2F%2Ft.me%2Fdunehd_iptv";
+            list($res,) = Curl_Wrapper::simple_download_file($url, $qr_code);
+            if ($res) {
+                Control_Factory::add_smart_label($defs, "", "<gap width=1400/><icon dy=-10 width=100 height=100>$qr_code</icon>");
+                Control_Factory::add_vgap($defs, 15);
+            }
+        }
+
         Control_Factory::add_multiline_label($defs, null, $history_txt, 12);
         Control_Factory::add_vgap($defs, 20);
 
         $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            1160,
+            1130,
             get_image_path('page_plus_btn.png'),
             get_image_path('page_minus_btn.png'),
             DEF_LABEL_TEXT_COLOR_SILVER,
