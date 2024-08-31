@@ -106,17 +106,18 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
 
-        //////////////////////////////////////
-        // Channel position in NewUI
-        $channel_position[0] = TR::t('setup_channel_bottom_left');
-        $channel_position[1] = TR::t('setup_channel_top_left');
-        $channel_position[2] = TR::t('setup_channel_top_right');
-        $channel_position[3] = TR::t('setup_channel_bottom_right');
-        $ch_pos = $this->plugin->get_parameter(PARAM_CHANNEL_POSITION, 0);
-        Control_Factory::add_combobox($defs, $this, null,
-            PARAM_CHANNEL_POSITION, TR::t('setup_channel_position'),
-            $ch_pos, $channel_position, self::CONTROLS_WIDTH, true);
-
+        if (HD::rows_api_support()) {
+            //////////////////////////////////////
+            // Channel position in NewUI
+            $channel_position[0] = TR::t('setup_channel_bottom_left');
+            $channel_position[1] = TR::t('setup_channel_top_left');
+            $channel_position[2] = TR::t('setup_channel_top_right');
+            $channel_position[3] = TR::t('setup_channel_bottom_right');
+            $ch_pos = $this->plugin->get_parameter(PARAM_CHANNEL_POSITION, 0);
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_CHANNEL_POSITION, TR::t('setup_channel_position'),
+                $ch_pos, $channel_position, self::CONTROLS_WIDTH, true);
+        }
         //////////////////////////////////////
         // change background
         if ($this->plugin->is_background_image_default()) {
