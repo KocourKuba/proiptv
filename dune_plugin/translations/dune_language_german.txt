@@ -372,6 +372,7 @@ err_no_internet = Keine Internetverbindung!
 err_copy = Kopierfehler!
 err_copy__2 = Fehler beim Kopieren: %s nach %s
 err_load_xmltv_epg = Fehler beim Laden des XMLTV EPG!
+err_xmltv_manager = XMLTV-Manager nicht initialisiert!
 err_write_items = Artikel können nicht geschrieben werden. Hier stimmt etwas nicht!!!
 err_backup = Sicherungsfehler!
 err_restore = Fehler wiederherstellen!

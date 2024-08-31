@@ -480,14 +480,18 @@ class Starnet_Tv implements User_Input_Handler
             case GUI_EVENT_TIMER:
                 $post_action = null;
                 if (isset($user_input->locked)) {
-                    clearstatcache();
                     $epg_manager = $this->plugin->get_epg_manager();
+                    if ($epg_manager === null) {
+                        return null;
+                    }
+
+                    clearstatcache();
                     $res = $epg_manager->import_indexing_log();
                     if ($res === false) {
                         return Action_Factory::change_behaviour($this->get_action_map(), 2000);
                     }
 
-                    foreach ($this->plugin->get_epg_manager()->get_delayed_epg() as $channel_id) {
+                    foreach ($epg_manager->get_delayed_epg() as $channel_id) {
                         hd_debug_print("Refresh EPG for channel ID: $channel_id");
                         $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
                         $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);

@@ -371,6 +371,7 @@ err_no_internet = No internet connection!
 err_copy = Copy error!
 err_copy__2 = Error copy: %s to %s
 err_load_xmltv_epg = Error loading XMLTV EPG!
+err_xmltv_manager = XMLTV manager not initialized!
 err_write_items = Unable to write items. Something wrong right here!!!
 err_backup = Backup error!
 err_restore = Restore error!

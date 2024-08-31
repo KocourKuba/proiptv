@@ -68,6 +68,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();
+                if ($epg_manager === null) {
+                    return null;
+                }
+
                 clearstatcache();
 
                 $res = $epg_manager->import_indexing_log();
@@ -491,7 +495,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if ($user_input->reload_action === 'playlist') {
                         $force = true;
                     } else if ($user_input->reload_action === 'epg') {
-                        $res = $this->plugin->get_epg_manager()->get_indexer()->download_xmltv_source();
+                        $epg_manager = $this->plugin->get_epg_manager();
+                        if ($epg_manager === null) {
+                            return Action_Factory::show_title_dialog(TR::t('err_xmltv_manager'));
+                        }
+
+                        $res = $epg_manager->get_indexer()->download_xmltv_source();
                         if ($res === -1) {
                             return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
                         }
