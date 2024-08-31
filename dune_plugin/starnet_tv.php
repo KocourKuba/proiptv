@@ -681,6 +681,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->vod = null;
         $this->plugin->vod_enabled = false;
+        $domain_id = '';
         if (is_null($provider)) {
             $replace_icons = false;
             $icon_replace_pattern = '';
@@ -854,8 +855,8 @@ class Starnet_Tv implements User_Input_Handler
             if (empty($channel_id)) {
                 if (!empty($id_map)) {
                     $channel_id = ($id_map === 'name') ? $entry->getEntryTitle() : $entry->getEntryAttribute($id_map);
-                } else if (!empty($id_parser) && preg_match($id_parser, $entry->getPath(), $m)) {
-                    $channel_id = $m['id'];
+                } else if (!empty($id_parser) && preg_match($id_parser, $entry->getPath(), $matches)) {
+                    $channel_id = $matches['id'];
                 }
 
                 if (empty($channel_id)) {
@@ -902,36 +903,33 @@ class Starnet_Tv implements User_Input_Handler
                 $playlist_icon = $icon_base_url . $playlist_icon;
             }
 
-            if ($use_playlist_picons === PLAYLIST_PICONS) {
-                $icon_url = $playlist_icon;
-                if ($replace_icons && !empty($icon_replace_pattern)) {
-                    foreach ($icon_replace_pattern as $pattern) {
-                        $icon_url = preg_replace($pattern['search'], $pattern['replace'], $icon_url);
-                    }
-                }
-            } else {
-                $lc_channel = mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8");
-                $icon_url = $epg_manager->get_indexer()->get_picon($lc_channel);
-                if (empty($icon_url) && $use_playlist_picons === COMBINED_PICONS) {
-                    $icon_url = $playlist_icon;
+            // replace patterns in playlist icon
+            if ($replace_icons && !empty($icon_replace_pattern)) {
+                foreach ($icon_replace_pattern as $pattern) {
+                    $playlist_icon = preg_replace($pattern['search'], $pattern['replace'], $playlist_icon);
                 }
             }
 
-            if (empty($icon_url)) {
-                if (!empty($icon_template)) {
-                    $icon_url = $icon_template;
-                    if (isset($m)) {
-                        $icon_url = str_replace(
-                            array(MACRO_SCHEME, MACRO_DOMAIN, MACRO_ID),
-                            array($m['scheme'], $m['domain'], $channel_id),
-                            $icon_url);
-                    }
-                    if (isset($domain_id)) {
-                        $icon_url = str_replace(MACRO_DOMAIN_ID, $domain_id, $icon_url);
-                    }
-                } else {
-                    $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
+            // playlist icons first in priority
+            if ($use_playlist_picons === PLAYLIST_PICONS || $use_playlist_picons === COMBINED_PICONS) {
+                $icon_url = $playlist_icon;
+                // special icon url generation based on icon url regex matching
+                if (!empty($icon_template) && isset($matches)) {
+                    $icon_url = str_replace(
+                        array(MACRO_SCHEME, MACRO_DOMAIN, MACRO_ID, MACRO_DOMAIN_ID),
+                        array($matches['scheme'], $matches['domain'], $channel_id, $domain_id),
+                        $icon_template);
                 }
+            }
+
+            // if selected xmltv or combined mode looking into xmltv source
+            if ($use_playlist_picons !== PLAYLIST_PICONS && empty($icon_url)) {
+                $lc_channel = mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8");
+                $icon_url = $epg_manager->get_indexer()->get_picon($lc_channel);
+            }
+
+            if (empty($icon_url)) {
+                $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
             }
 
             $stream_path = $entry->getPath();
