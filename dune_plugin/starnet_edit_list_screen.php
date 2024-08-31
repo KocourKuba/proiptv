@@ -216,7 +216,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->plugin->run_bg_epg_indexing($source);
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions, 2000);
+                return Action_Factory::change_behaviour($actions);
 
             case ACTION_CLEAR_CACHE:
                 $epg_manager = $this->plugin->get_epg_manager();

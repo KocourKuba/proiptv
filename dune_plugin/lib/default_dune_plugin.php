@@ -2686,7 +2686,6 @@ class Default_Dune_Plugin implements DunePlugin
             $cmd = get_install_path('bin/cgi_wrapper.sh') . " index_epg.php $config_file &";
             hd_debug_print("exec: $cmd", true);
             exec($cmd);
-            sleep(1);
         }
     }
 
