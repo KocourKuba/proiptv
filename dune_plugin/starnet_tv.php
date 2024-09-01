@@ -479,27 +479,26 @@ class Starnet_Tv implements User_Input_Handler
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
                 $post_action = null;
-                if (isset($user_input->locked)) {
-                    $epg_manager = $this->plugin->get_epg_manager();
-                    if ($epg_manager === null) {
-                        return null;
-                    }
-
-                    clearstatcache();
-                    $res = $epg_manager->import_indexing_log();
-                    if ($res === false) {
-                        return Action_Factory::change_behaviour($this->get_action_map(), 2000);
-                    }
-
-                    foreach ($epg_manager->get_delayed_epg() as $channel_id) {
-                        hd_debug_print("Refresh EPG for channel ID: $channel_id");
-                        $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
-                        $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
-                        $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
-                    }
-                    $epg_manager->clear_delayed_epg();
+                $epg_manager = $this->plugin->get_epg_manager();
+                if ($epg_manager === null) {
+                    return null;
                 }
 
+                clearstatcache();
+                $res = $epg_manager->import_indexing_log();
+                if ($res === false) {
+                    return Action_Factory::change_behaviour($this->get_action_map(), 1000);
+                }
+                hd_debug_print("delayed epg: " . json_encode($epg_manager->get_delayed_epg()));
+
+                foreach ($epg_manager->get_delayed_epg() as $channel_id) {
+                    hd_debug_print("Refresh EPG for channel ID: $channel_id");
+                    $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
+                    $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+                    $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
+                }
+
+                $epg_manager->clear_delayed_epg();
                 return $post_action;
 
             case GUI_EVENT_PLAYBACK_STOP:
@@ -925,8 +924,9 @@ class Starnet_Tv implements User_Input_Handler
 
             // if selected xmltv or combined mode looking into xmltv source
             if ($use_playlist_picons !== PLAYLIST_PICONS && empty($icon_url)) {
-                $lc_channel = mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8");
-                $icon_url = $epg_manager->get_indexer()->get_picon($lc_channel);
+                $aliases = array(mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8"),
+                    $entry->getEntryAttribute('tvg-id'));
+                $icon_url = $epg_manager->get_indexer()->get_picon(array_filter($aliases));
             }
 
             if (empty($icon_url)) {
@@ -1599,7 +1599,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::epg_font_size => $epg_font_size,
 
             PluginTvInfo::actions => $this->get_action_map(),
-            PluginTvInfo::timer => Action_Factory::timer(1000),
+            PluginTvInfo::timer => Action_Factory::timer(2000),
         );
     }
 

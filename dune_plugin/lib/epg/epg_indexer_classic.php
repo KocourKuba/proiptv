@@ -129,7 +129,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    public function get_picon($alias)
+    public function get_picon($aliases)
     {
         foreach ($this->active_sources as $source) {
             $this->set_url($source);
@@ -138,9 +138,14 @@ class Epg_Indexer_Classic extends Epg_Indexer
             $name = $this->get_index_name(self::INDEX_PICONS);
             hd_debug_print("Load picons from: $name");
             $this->xmltv_picons[$this->url_hash] = parse_json_file($name);
+            foreach ($aliases as $alias) {
+                if (isset($this->xmltv_picons[$this->url_hash][$alias])) {
+                    return $this->xmltv_picons[$this->url_hash][$alias];
+                }
+            }
         }
 
-        return isset($this->xmltv_picons[$this->url_hash][$alias]) ? $this->xmltv_picons[$this->url_hash][$alias] : '';
+        return '';
     }
 
     /**
@@ -379,14 +384,5 @@ class Epg_Indexer_Classic extends Epg_Indexer
         } else {
             unset($this->xmltv_picons[$id], $this->xmltv_channels[$id], $this->xmltv_positions[$id]);
         }
-    }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    protected function check_index_version()
-    {
-        return file_exists(get_data_path($this->url_hash . '_version')) && file_get_contents(get_data_path($this->url_hash . '_version')) > '4.0.730';
     }
 }

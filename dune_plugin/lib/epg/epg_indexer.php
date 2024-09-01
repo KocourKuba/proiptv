@@ -32,9 +32,9 @@ require_once 'lib/curl_wrapper.php';
 abstract class Epg_Indexer implements Epg_Indexer_Interface
 {
     const STREAM_CHUNK = 131072; // 128Kb
-    const INDEX_PICONS = 'picons';
-    const INDEX_CHANNELS = 'channels';
-    const INDEX_POSITIONS = 'positions';
+    const INDEX_PICONS = 'epg_picons';
+    const INDEX_CHANNELS = 'epg_channels';
+    const INDEX_POSITIONS = 'epg_positions';
 
     /**
      * path where cache is stored
@@ -105,8 +105,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     {
         $this->xmltv_url = $url;
         $this->url_hash = Hashed_Array::hash($this->xmltv_url);
-        hd_debug_print("XMLTV EPG url: $this->xmltv_url");
-        hd_debug_print("EPG url hash: $this->url_hash");
     }
 
     /**
@@ -564,13 +562,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      * @return array
      */
     abstract protected function load_program_index($channel);
-
-    /**
-     * check version of index file
-     *
-     * @return bool
-     */
-    abstract protected function check_index_version();
 
     /**
      * @return resource

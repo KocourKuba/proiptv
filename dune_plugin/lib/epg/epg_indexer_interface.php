@@ -28,10 +28,10 @@ interface Epg_Indexer_Interface
     /**
      * Get picon for channel
      *
-     * @param string $alias
+     * @param array $aliases
      * @return string
      */
-    public function get_picon($alias);
+    public function get_picon($aliases);
 
     /**
      * indexing xmltv file to make channel to display-name map
