@@ -1,4 +1,5 @@
-﻿### Upcoming version
+﻿### Версия 5.0.832
+- Fixed a bug with duplicating icons in the 'XMLTV' icon source mode
 
 ### Version 5.0.830
 - Added a new mode to find channel icons 'Playlist + XMLTV'. If no channel icons are found in the playlist, the search will continue in the selected XMLTV sources

@@ -911,6 +911,7 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             // playlist icons first in priority
+            $icon_url = '';
             if ($use_playlist_picons === PLAYLIST_PICONS || $use_playlist_picons === COMBINED_PICONS) {
                 $icon_url = $playlist_icon;
                 // special icon url generation based on icon url regex matching
