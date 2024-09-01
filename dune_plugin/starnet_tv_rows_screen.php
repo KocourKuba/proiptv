@@ -1056,7 +1056,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->set_no_changes();
                 }
 
-                $this->plugin->safe_clear_epg_cache();
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
         }
 
