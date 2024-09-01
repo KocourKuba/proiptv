@@ -924,9 +924,20 @@ class Starnet_Tv implements User_Input_Handler
 
             // if selected xmltv or combined mode looking into xmltv source
             if ($use_playlist_picons !== PLAYLIST_PICONS && empty($icon_url)) {
-                $aliases = array(mb_convert_case($channel_name, MB_CASE_LOWER, "UTF-8"),
-                    $entry->getEntryAttribute('tvg-id'));
-                $icon_url = $epg_manager->get_indexer()->get_picon(array_filter($aliases));
+                $aliases = array();
+                if (isset($epg_ids['tvg-id'])) {
+                    $aliases[] = $epg_ids['tvg-id'];
+                }
+                if (isset($epg_ids['tvg-name'])) {
+                    $aliases[] = mb_convert_case($epg_ids['tvg-name'], MB_CASE_LOWER, "UTF-8");
+                }
+                $aliases[] = mb_convert_case($epg_ids['name'], MB_CASE_LOWER, "UTF-8");
+
+                $aliases = array_unique($aliases);
+                $icon_url = $epg_manager->get_indexer()->get_picon($aliases);
+                if (empty($icon_url)) {
+                    hd_debug_print("no picon for " . pretty_json_format($aliases), true);
+                }
             }
 
             if (empty($icon_url)) {
@@ -1007,10 +1018,6 @@ class Starnet_Tv implements User_Input_Handler
             $this->channels->set($channel->get_id(), $channel);
             if ($first_run) {
                 $this->get_known_channels()->set($channel->get_id(), $channel->get_title());
-            }
-
-            foreach ($epg_ids as $epg_id) {
-                $epg_ids[$epg_id] = '';
             }
 
             // Link group and channel.

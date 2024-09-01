@@ -159,11 +159,9 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     public function index_all_channels()
     {
-        $start = microtime(true);
         foreach ($this->active_sources as $source) {
             $this->set_url($source);
             $this->index_only_channels();
-            hd_debug_print("Channels for $source parsing execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
         }
     }
 
@@ -176,12 +174,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     public function index_all()
     {
         $this->index_all_channels();
-        $start = microtime(true);
         foreach ($this->active_sources as $source) {
             $this->set_url($source);
             $this->index_xmltv_positions();
         }
-        hd_debug_print("Script to parse position execution time: " . format_duration(round(1000 * (microtime(true) - $start))));
     }
 
     /**
@@ -196,6 +192,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         hd_debug_print("cache valid status: $res", true);
         hd_debug_print("Indexing channels for: $this->xmltv_url", true);
         switch ($res) {
+            case 0:
+                $this->index_xmltv_channels();
+                break;
+
             case 1:
                 // downloaded xmltv file not exists or expired
                 hd_debug_print("Download and indexing xmltv source");
