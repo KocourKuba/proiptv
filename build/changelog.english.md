@@ -1,4 +1,9 @@
-﻿### Версия 5.0.832
+﻿### Version 5.0.836
+- Improved icon search mechanism in xmltv source. It is advisable to completely clear the weight of the EPG cache after the first run, because there have been changes in the database for storing information about icons.
+- Removed erroneous clearing of the EPG cache when updating NewUI
+- EPG for the channel was not updated during viewing after indexing ended
+
+### Версия 5.0.832
 - Fixed a bug with duplicating icons in the 'XMLTV' icon source mode
 
 ### Version 5.0.830
