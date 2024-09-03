@@ -172,7 +172,6 @@ setup_enter_pass = Geben Sie das Passwort ein
 setup_old_pass = Altes Passwortes
 setup_new_pass = Neues Passwort
 setup_wrong_pass = Falscher Login/Passwort oder Abonnement nicht aktiv
-setup_play_setup = Wiedergabeeinstellungen
 setup_settings_protection = Einstellungsschutz
 setup_adult_password = Elterliche Kontrolle
 setup_pass_disabled = Passwort deaktiviert!
@@ -198,9 +197,7 @@ setup_force_http = Konvertierung von https -> http Links
 
 setup_channels_src_reset_playlist = Playlist-Einstellungen zurücksetzen
 setup_channels_src_edit_playlists = Wiedergabeliste bearbeiten
-setup_channels_src_playlist = Wiedergabeliste
 setup_channels_src_no_playlists = Keine Playlists!!!
-setup_channels_src_playlist = Playlist-Quelle
 setup_channels_archive_type = Archivtyp der Wiedergabeliste
 setup_channels_square_icons = Verwenden Sie quadratische Symbole
 setup_channels_picons_source = Quelle der Kanalsymbole
@@ -252,7 +249,6 @@ folder_screen_search_smb_setup = Sucheinstellungen für SMB
 folder_screen_used__1 = Gebraucht: %s
 folder_screen_user = Benutzername für den SMB-Ordner
 folder_screen_password = Passwort für den SMB-Ordner
-folder_screen_saved__1 = Gerettet: %s
 folder_screen_playlist__1 = Ausgewählte Playlist %s
 
 edit_list_added__1 = %s Dateien hinzugefügt

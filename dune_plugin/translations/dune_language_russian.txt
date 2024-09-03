@@ -197,9 +197,7 @@ setup_force_http = Замена ссылок https -> http
 
 setup_channels_src_reset_playlist = Сбросить настройки плейлиста
 setup_channels_src_edit_playlists = Редактировать плейлисты
-setup_channels_src_playlist = Плейлист
 setup_channels_src_no_playlists = Нет плейлистов!!!
-setup_channels_src_playlist = Источник плейлистов
 setup_channels_archive_type = Тип архива для плейлиста
 setup_channels_square_icons = Квадратные иконки
 setup_channels_picons_source = Источник иконок каналов

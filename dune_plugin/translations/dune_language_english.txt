@@ -197,9 +197,7 @@ setup_force_http = Force https -> http links conversion
 
 setup_channels_src_reset_playlist = Reset playlist settings
 setup_channels_src_edit_playlists = Edit Playlists
-setup_channels_src_playlist = Playlist
 setup_channels_src_no_playlists = No playlists!!!
-setup_channels_src_playlist = Playlist source
 setup_channels_archive_type = Playlist archive type
 setup_channels_square_icons = Use square icons
 setup_channels_picons_source = Channel icons source
@@ -251,7 +249,6 @@ folder_screen_search_smb_setup = Search settings for SMB
 folder_screen_used__1 = Used: %s
 folder_screen_user = User name for SMB folder
 folder_screen_password = Password for SMB folder
-folder_screen_saved__1 = Saved: %s
 folder_screen_playlist__1 = Selected playlist %s
 
 edit_list_added__1 = Added %s files
