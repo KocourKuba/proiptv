@@ -190,7 +190,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $this->remove_index($this->channels_table);
 
-            $db->exec("CREATE TABLE $this->channels_table(alias STRING not null, channel_id STRING not null, picon_hash STRING);");
+            $db->exec("CREATE TABLE $this->channels_table(alias STRING UNIQUE PRIMARY KEY not null, channel_id STRING not null, picon_hash STRING);");
 
             $this->remove_index($this->picons_table);
             $db->exec("CREATE TABLE $this->picons_table(picon_hash STRING UNIQUE PRIMARY KEY not null, picon_url STRING);");
