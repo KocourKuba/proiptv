@@ -101,8 +101,10 @@ class Epg_Manager_Xmltv
         hd_print("XMLTV sources: " . json_encode($config->xmltv_urls));
         hd_print("Cache type: $config->cache_type");
         hd_print("Cache TTL: $config->cache_ttl");
+        hd_print("Process ID:");
 
         $this->init_indexer($config->cache_dir);
+        $this->indexer->set_pid(getmypid());
         $this->indexer->set_active_sources($sources);
         $this->indexer->set_cache_type($config->cache_type);
         $this->indexer->set_cache_ttl($config->cache_ttl);
@@ -151,9 +153,9 @@ class Epg_Manager_Xmltv
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
         $t = microtime(true);
-        $active_sources = $this->plugin->get_active_xmltv_sources();
-        $any_lock = $this->indexer->is_any_index_locked($active_sources);
+        $any_lock = $this->indexer->is_any_index_locked();
         $day_epg = array();
+        $active_sources = $this->plugin->get_active_xmltv_sources();
         foreach($active_sources as $key => $source) {
             if ($this->indexer->is_index_locked($key)) {
                 hd_debug_print("EPG $source still indexing, append to deleyed queue channel id: " . $channel->get_id());
@@ -248,7 +250,7 @@ class Epg_Manager_Xmltv
      * Import indexing log to plugin logs
      *
      * @param array|null $sources
-     * @return bool
+     * @return bool true if import successful and no other active locks, false if any active source is locked
      */
     public function import_indexing_log($sources = null)
     {

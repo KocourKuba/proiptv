@@ -2292,3 +2292,11 @@ function dune_params_to_array($str)
     }
     return $params_array;
 }
+
+function send_process_signal($pid, $sig_num) {
+    if (function_exists("posix_kill")) {
+        return posix_kill($pid, $sig_num);
+    }
+    exec("kill -s $sig_num $pid 2>&1", $junk, $return_code);
+    return !$return_code;
+}

@@ -75,19 +75,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 clearstatcache();
 
                 $res = $epg_manager->import_indexing_log();
-                if ($res === false) {
-                    $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                    return Action_Factory::change_behaviour($actions, 2000);
-                }
-
-                foreach (array('pl_last_error', 'xmltv_last_error') as $last_error) {
-                    $error_msg = HD::get_last_error($last_error);
-                    if (!empty($error_msg)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
+                if ($res !== false) {
+                    foreach (array('pl_last_error', 'xmltv_last_error') as $last_error) {
+                        $error_msg = HD::get_last_error($last_error);
+                        if (!empty($error_msg)) {
+                            return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
+                        }
                     }
+                    return null;
                 }
 
-                return null;
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                return Action_Factory::change_behaviour($actions, 2000);
 
             case GUI_EVENT_KEY_STOP:
                 $this->plugin->save_orders(true);

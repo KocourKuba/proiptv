@@ -79,6 +79,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     protected $curl_wrapper;
 
+    /**
+     * @var int
+     */
+    protected $pid = 0;
+
     public function __construct()
     {
         $this->curl_wrapper = new Curl_Wrapper();
@@ -98,6 +103,23 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * @param int $pid
+     * @return void
+     */
+    public function set_pid($pid)
+    {
+        $this->pid = $pid;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_pid()
+    {
+        return $this->pid;
+    }
+
+    /**
      * @param string $url
      * @return void
      */
@@ -114,6 +136,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     public function set_active_sources($urls)
     {
         $this->active_sources = $urls;
+        if ($this->active_sources->size() === 0) {
+            hd_debug_print("No XMLTV source selected");
+        } else {
+            hd_debug_print("XMLTV sources selected: $this->active_sources");
+        }
     }
 
     /**
@@ -469,25 +496,29 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     public function is_index_locked($hash)
     {
-        $lock_dir = $this->cache_dir . DIRECTORY_SEPARATOR . "$hash.lock";
-        return is_dir($lock_dir);
+        $dirs = glob($this->cache_dir . DIRECTORY_SEPARATOR . $hash . "_*.lock", GLOB_ONLYDIR);
+        return !empty($dirs);
     }
 
     /**
-     * @param Hashed_Array $sources
      * @return bool|array
      */
-    public function is_any_index_locked($sources)
+    public function is_any_index_locked()
     {
-        $keys = array();
-        foreach ($sources as $key => $value) {
-            $lock_dir = $this->cache_dir . DIRECTORY_SEPARATOR . "$key.lock";
-            if (is_dir($lock_dir)) {
-                $keys[] = $key;
+        $locks = array();
+        $dirs = array();
+        if ($this->active_sources->size() === 0) {
+            $dirs = glob($this->cache_dir . DIRECTORY_SEPARATOR . "*_*.lock", GLOB_ONLYDIR);
+        } else {
+            foreach ($this->active_sources as $key => $value) {
+                $dirs = safe_merge_array($dirs, glob($this->cache_dir . DIRECTORY_SEPARATOR . $key . "_*.lock", GLOB_ONLYDIR));
             }
         }
 
-        return empty($keys) ? false : $keys;
+        foreach ($dirs as $dir) {
+            $locks[] = basename($dir);
+        }
+        return empty($locks) ? false : $locks;
     }
 
     /**
@@ -495,7 +526,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     public function set_index_locked($lock)
     {
-        $lock_dir = $this->get_cache_stem('.lock');
+        $lock_dir = $this->get_cache_stem("_$this->pid.lock");
         if ($lock) {
             if (!create_path($lock_dir, 0644)) {
                 hd_debug_print("Directory '$lock_dir' was not created");
@@ -525,9 +556,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         $this->clear_epg_files($this->url_hash);
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
     /**
      * clear memory cache and cache for selected filename (hash) mask
      *
@@ -542,12 +570,51 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             return;
         }
 
+        $dirs = glob($this->cache_dir . DIRECTORY_SEPARATOR . (empty($hash) ? "*" : $hash) . "_*.lock", GLOB_ONLYDIR);
+        $locks = array();
+        foreach ($dirs as $dir) {
+            $locks[] = basename($dir);
+        }
+
+        if (!empty($locks)) {
+            foreach ($locks as $lock) {
+                $ar = explode('_', $lock);
+                $pid = (int)end($ar);
+
+                if ($pid !== 0 && send_process_signal($pid, 0)) {
+                    hd_debug_print("Kill process $pid");
+                    send_process_signal($pid, -9);
+                }
+                hd_debug_print("Remove lock: $lock");
+                shell_exec("rmdir $this->cache_dir" . DIRECTORY_SEPARATOR . $lock);
+            }
+        }
+
         $files = $this->cache_dir . DIRECTORY_SEPARATOR . "$hash*";
         hd_debug_print("clear epg files: $files");
         shell_exec('rm -f ' . $files);
         flush();
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
+
+    public function clear_stalled_locks()
+    {
+        $locks = $this->is_any_index_locked();
+        if ($locks !== false) {
+            foreach ($locks as $lock) {
+                $ar = explode('_', $lock);
+                $pid = (int)end($ar);
+
+                if ($pid !== 0 && !send_process_signal($pid, 0)) {
+                    hd_debug_print("Remove stalled lock: $lock");
+                    shell_exec("rmdir $this->cache_dir" . DIRECTORY_SEPARATOR . $lock);
+                }
+            }
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
 
     /**
      * Clear memory index

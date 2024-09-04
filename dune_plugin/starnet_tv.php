@@ -748,23 +748,15 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->get_playback_points()->load_points(true);
 
         $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-
-        if ($is_xml_engine) {
-            $active_sources = $this->plugin->get_active_xmltv_sources();
-            if ($active_sources->size() === 0) {
-                hd_debug_print("No XMLTV source selected");
-            } else {
-                hd_debug_print("XMLTV sources selected: $active_sources");
-            }
-
-        }
-
-        $this->plugin->init_epg_manager();
-        $epg_manager = $this->plugin->get_epg_manager();
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-        $epg_manager->get_indexer()->set_active_sources($this->plugin->get_active_xmltv_sources());
+
+        $epg_indexer = $this->plugin->get_epg_manager()->get_indexer();
+        $active_sources = $this->plugin->get_active_xmltv_sources();
+        $epg_indexer->set_active_sources($active_sources);
+        $epg_indexer->clear_stalled_locks();
+
         if ($use_playlist_picons !== PLAYLIST_PICONS) {
-            $epg_manager->get_indexer()->index_all_channels();
+            $epg_indexer->index_all_channels();
         }
 
         hd_debug_print("Build categories and channels...");
@@ -890,6 +882,9 @@ class Starnet_Tv implements User_Input_Handler
             // if no parent group nowhere to add, strange but possible
             if (is_null($parent_group)) continue;
 
+            // If group disabled - no need to add it
+            if ($parent_group->is_disabled()) continue;
+
             $number++;
 
             $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
@@ -932,9 +927,9 @@ class Starnet_Tv implements User_Input_Handler
                     $aliases[] = mb_convert_case($epg_ids['tvg-name'], MB_CASE_LOWER, "UTF-8");
                 }
                 $aliases[] = mb_convert_case($epg_ids['name'], MB_CASE_LOWER, "UTF-8");
-
                 $aliases = array_unique($aliases);
-                $icon_url = $epg_manager->get_indexer()->get_picon($aliases);
+
+                $icon_url = $epg_indexer->get_picon($aliases);
                 if (empty($icon_url)) {
                     hd_debug_print("no picon for " . pretty_json_format($aliases), true);
                 }
