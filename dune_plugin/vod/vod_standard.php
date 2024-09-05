@@ -28,6 +28,7 @@ require_once 'lib/abstract_vod.php';
 require_once 'lib/movie.php';
 require_once 'lib/default_dune_plugin.php';
 require_once 'lib/history_item.php';
+require_once 'lib/perf_collector.php';
 
 require_once 'starnet_vod_search_screen.php';
 require_once 'starnet_vod_filter_screen.php';
@@ -118,6 +119,11 @@ class vod_standard extends Abstract_Vod
     protected $vod_parser;
 
     /**
+     * @var Perf_Collector
+     */
+    protected $perf;
+
+    /**
      * @param Default_Dune_Plugin $plugin
      */
     public function __construct(Default_Dune_Plugin $plugin)
@@ -125,6 +131,7 @@ class vod_standard extends Abstract_Vod
         $this->plugin = $plugin;
         $this->m3u_parser = new M3uParser();
         $this->special_groups = new Hashed_Array();
+        $this->perf = new Perf_Collector();
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -459,7 +466,7 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        $t = microtime(1);
+        $this->perf->reset('start');
 
         $this->vod_m3u_indexes = $this->m3u_parser->indexFile();
 
@@ -488,9 +495,12 @@ class vod_standard extends Abstract_Vod
             $category_list[] = $cat;
             $category_index[$group] = $cat;
         }
+
+        $this->perf->setLabel('end');
         hd_debug_print("Categories read: " . count($category_list));
-        hd_debug_print("Fetched categories at " . (microtime(1) - $t) . " secs");
-        HD::ShowMemoryUsage();
+        hd_debug_print("Fetched time: " . $this->perf->getReportItem(Perf_Collector::TIME) . " secs");
+        hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+
         return true;
     }
 
@@ -503,7 +513,8 @@ class vod_standard extends Abstract_Vod
         hd_debug_print(null, true);
         hd_debug_print($keyword);
 
-        $t = microtime(1);
+        $this->perf->reset('start');
+
         $movies = array();
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
 
@@ -526,8 +537,9 @@ class vod_standard extends Abstract_Vod
             $movies[] = new Short_Movie($index, $title, $poster_url);
         }
 
+        $this->perf->setLabel('end');
         hd_debug_print("Movies found: " . count($movies));
-        hd_debug_print("Search at " . (microtime(1) - $t) . " secs");
+        hd_debug_print("Search at " . $this->perf->getReportItem(Perf_Collector::TIME) . " secs");
 
         return $movies;
     }

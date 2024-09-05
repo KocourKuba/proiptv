@@ -858,11 +858,6 @@ class HD
         return $contents;
     }
 
-    public static function ShowMemoryUsage()
-    {
-        hd_debug_print("Memory usage: " . round(memory_get_usage(true) / 1024) . "kb / " . ini_get('memory_limit'));
-    }
-
     public static function array_unshift_assoc(&$arr, $key, $val)
     {
         $arr = array_reverse($arr, true);

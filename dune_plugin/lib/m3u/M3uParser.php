@@ -24,6 +24,7 @@
  */
 
 require_once 'Entry.php';
+require_once 'lib/perf_collector.php';
 
 class M3uParser extends Json_Serializer
 {
@@ -51,6 +52,16 @@ class M3uParser extends Json_Serializer
      * @var SplFileObject
      */
     private $m3u_file;
+
+    /**
+     * @var Perf_Collector
+     */
+    private $perf;
+
+    public function __construct()
+    {
+        $this->perf = new Perf_Collector();
+    }
 
     /**
      * @param string $file_name
@@ -106,7 +117,7 @@ class M3uParser extends Json_Serializer
 
         $this->m3u_file->rewind();
 
-        $t = microtime(true);
+        $this->perf->reset('start');
 
         $entry = new Entry();
         foreach ($this->m3u_file as $line) {
@@ -125,7 +136,7 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("parseFile " . (microtime(true) - $t) . " secs");
+        hd_debug_print("parseFile " . $this->perf->getReportItemCurrent(Perf_Collector::TIME) . " secs");
         hd_debug_print_separator();
         return true;
     }
@@ -177,7 +188,7 @@ class M3uParser extends Json_Serializer
 
         $this->m3u_file->rewind();
 
-        $t = microtime(true);
+        $this->perf->reset('start');
 
         $entry = new Entry();
         $pos = $this->m3u_file->ftell();
@@ -194,7 +205,7 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("indexFile " . (microtime(true) - $t) . " secs");
+        hd_debug_print("indexFile " . $this->perf->getReportItemCurrent(Perf_Collector::TIME) . " secs");
         hd_debug_print_separator();
         return $data;
     }
@@ -215,7 +226,7 @@ class M3uParser extends Json_Serializer
 
         $this->clear_data();
 
-        $t = microtime(true);
+        $this->perf->reset('start');
 
         hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -237,7 +248,7 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("parseInMemory " . (microtime(true) - $t) . " sec.");
+        hd_debug_print("parseInMemory " . $this->perf->getReportItemCurrent(Perf_Collector::TIME) . " sec.");
         hd_debug_print_separator();
         return true;
     }

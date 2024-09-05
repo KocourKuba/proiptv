@@ -127,9 +127,7 @@ class GComp_Geom
 
     public static function place_top_left_by_center($w, $h, $x, $y)
     {
-        return self::geom($w, $h, null,
-            self::align($x, $y, false, false,
-                HALIGN_LEFT, VALIGN_CENTER, HALIGN_LEFT, VALIGN_TOP));
+        return self::geom($w, $h, null, self::align($x, $y, false, false, HALIGN_LEFT, VALIGN_CENTER));
     }
 
     public static function place_top_left_same_width($w_diff = 0, $h = -1, $x = 0, $y = 0)

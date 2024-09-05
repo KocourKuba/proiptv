@@ -35,6 +35,7 @@ require_once 'named_storage.php';
 require_once 'api/api_default.php';
 require_once 'm3u/M3uParser.php';
 require_once 'lib/curl_wrapper.php';
+require_once 'lib/perf_collector.php';
 require_once 'lib/epg/epg_manager_json.php';
 
 class Default_Dune_Plugin implements DunePlugin
@@ -62,6 +63,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     const DEFAULT_MOV_ICON_PATH = 'plugin_file://icons/mov_unset.png';
     const VOD_ICON_PATH = 'gui_skin://small_icons/movie.aai';
+
     /**
      * @var array
      */
@@ -138,6 +140,12 @@ class Default_Dune_Plugin implements DunePlugin
      * @var api_default
      */
     protected $cur_provider;
+
+    /**
+     * @var Perf_Collector
+     */
+    protected $perf;
+
     private $plugin_cookies;
     private $internet_status = -2;
     private $opexec_id = -1;
@@ -152,6 +160,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->providers = new Hashed_Array();
         $this->epg_presets = new Hashed_Array();
         $this->image_libs = new Hashed_Array();
+        $this->perf = new Perf_Collector();
     }
 
     public function get_plugin_cookies()
@@ -2286,6 +2295,8 @@ class Default_Dune_Plugin implements DunePlugin
             return false;
         }
 
+        $this->perf->reset('start');
+
         $tmp_file = $this->get_current_playlist_cache(true);
 
         if (!$force) {
@@ -2380,8 +2391,9 @@ class Default_Dune_Plugin implements DunePlugin
                     throw new Exception($exception_msg);
                 }
 
+                $this->perf->setLabel('end');
                 hd_debug_print("Total entries loaded from playlist m3u file: $count");
-                HD::ShowMemoryUsage();
+                hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
             }
         } catch (Exception $ex) {
             $err = HD::get_last_error();

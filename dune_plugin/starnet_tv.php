@@ -29,6 +29,7 @@ require_once 'lib/default_group.php';
 require_once 'lib/default_channel.php';
 require_once 'lib/epg/default_epg_item.php';
 require_once 'lib/m3u/KnownCatchupSourceTags.php';
+require_once 'lib/perf_collector.php';
 require_once 'vod/vod_standard.php';
 
 class Starnet_Tv implements User_Input_Handler
@@ -89,6 +90,11 @@ class Starnet_Tv implements User_Input_Handler
      */
     protected $m3u_parser;
 
+    /**
+     * @var Perf_Collector
+     */
+    protected $perf;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -107,6 +113,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->channels = new Hashed_Array();
         $this->special_groups = new Hashed_Array();
         $this->m3u_parser = new M3uParser();
+        $this->perf = new Perf_Collector();
     }
 
     /**
@@ -555,6 +562,8 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function load_channels(&$plugin_cookies, $force = false)
     {
+        hd_debug_print_separator();
+
         if (!$force && $this->channels->size() !== 0) {
             hd_debug_print("Channels already loaded", true);
             return 1;
@@ -563,6 +572,8 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print();
 
         HD::set_last_error("pl_last_error", null);
+
+        $this->perf->reset('start');
 
         $this->plugin->load_settings($force);
 
@@ -760,13 +771,13 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         hd_debug_print("Build categories and channels...");
-        $t = microtime(true);
 
         // suppress save after add group
         $this->plugin->set_postpone_save(true, PLUGIN_SETTINGS);
         $this->plugin->set_postpone_save(true, PLUGIN_ORDERS);
 
         // Collect categories from playlist
+        $this->perf->setLabel('load_groups');
         $disabled_group = $this->get_disabled_group_ids();
         $playlist_groups = new Ordered_Array();
         $pl_entries = $this->m3u_parser->getM3uEntries();
@@ -839,6 +850,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         // Read channels
+        $this->perf->setLabel('load_channels');
         $playlist_group_channels = array();
         $number = 0;
         foreach ($pl_entries as $entry) {
@@ -1054,11 +1066,12 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->set_postpone_save(false, PLUGIN_SETTINGS);
         $this->plugin->set_postpone_save(false, PLUGIN_ORDERS);
 
+        $this->perf->setLabel('end');
         hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channel_ids()->size()}, changed channels: $changed");
         hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->get_groups_order()->size()));
-        hd_debug_print("Load channels done: " . (microtime(true) - $t) . " secs");
+        hd_debug_print("Load channels done: " . $this->perf->getReportItem(Perf_Collector::TIME) . " secs");
         hd_debug_print_separator();
-        HD::ShowMemoryUsage();
+        hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
 
         if ($is_xml_engine) {
             $this->plugin->run_bg_epg_indexing();

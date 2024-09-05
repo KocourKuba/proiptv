@@ -28,6 +28,7 @@ require_once 'epg_indexer_interface.php';
 require_once 'lib/hd.php';
 require_once 'lib/hashed_array.php';
 require_once 'lib/curl_wrapper.php';
+require_once 'lib/perf_collector.php';
 
 abstract class Epg_Indexer implements Epg_Indexer_Interface
 {
@@ -84,9 +85,16 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     protected $pid = 0;
 
+    /**
+     * @var Perf_Collector
+     */
+    protected $perf;
+
     public function __construct()
     {
         $this->curl_wrapper = new Curl_Wrapper();
+        $this->perf = new Perf_Collector();
+        $this->active_sources = new Hashed_Array();
     }
 
     /**
@@ -361,7 +369,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         }
 
         $ret = -1;
-        $t = microtime(true);
+        $this->perf->reset('start');
 
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
         $cached_file = $this->get_cached_filename();
@@ -397,21 +405,22 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             }
 
             $file_time = filemtime($tmp_filename);
-            $dl_time = microtime(true) - $t;
-            $bps = filesize($tmp_filename) / $dl_time;
+            $dl_time = $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'start');
+            $file_size = filesize($tmp_filename);
+            $bps = $file_size / $dl_time;
             $si_prefix = array('B/s', 'KB/s', 'MB/s');
             $base = 1024;
             $class = min((int)log($bps, $base), count($si_prefix) - 1);
             $speed = sprintf('%1.2f', $bps / pow($base, $class)) . ' ' . $si_prefix[$class];
 
             hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", $file_time));
-            hd_debug_print("Download xmltv source $this->xmltv_url done in: $dl_time secs (speed $speed)");
+            hd_debug_print("Download $file_size bytes of xmltv source $this->xmltv_url done in: $dl_time secs (speed $speed)");
 
             if (file_exists($cached_file)) {
                 unlink($cached_file);
             }
 
-            $t = microtime(true);
+            $this->perf->setLabel('unpack');
 
             $handle = fopen($tmp_filename, "rb");
             $hdr = fread($handle, 8);
@@ -430,7 +439,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 flush();
                 $size = filesize($cached_file);
                 touch($cached_file, $file_time);
-                hd_debug_print("$size bytes ungzipped to $cached_file in " . (microtime(true) - $t) . " secs");
+                hd_debug_print("$size bytes ungzipped to $cached_file in " . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
             } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
                 hd_debug_print("ZIP signature: " . bin2hex(substr($hdr, 0, 4)), true);
                 hd_debug_print("unzip $tmp_filename to $cached_file");
@@ -455,14 +464,14 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 rename($filename, $cached_file);
                 $size = filesize($cached_file);
                 touch($cached_file, $file_time);
-                hd_debug_print("$size bytes unzipped to $cached_file in " . (microtime(true) - $t) . " secs");
+                hd_debug_print("$size bytes unzipped to $cached_file in " . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
             } else if (false !== mb_strpos($hdr, "<?xml")) {
                 hd_debug_print("XML signature: " . substr($hdr, 0, 5), true);
                 hd_debug_print("rename $tmp_filename to $cached_file");
                 rename($tmp_filename, $cached_file);
                 $size = filesize($cached_file);
                 touch($cached_file, $file_time);
-                hd_debug_print("$size bytes stored to $cached_file in " . (microtime(true) - $t) . " secs");
+                hd_debug_print("$size bytes stored to $cached_file in " . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
             } else {
                 hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
                 throw new Exception(TR::load_string('err_unknown_file_type'));
