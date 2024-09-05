@@ -1,4 +1,9 @@
-﻿### Version 5.0.836
+﻿### Версия 5.0.846
+- Accelerated algorithm for searching icons in xmltv source
+- Added checking and removal of hung xmltv indexing flags
+- Updated translation
+
+### Version 5.0.836
 - Improved icon search mechanism in xmltv source. It is advisable to completely clear the weight of the EPG cache after the first run, because there have been changes in the database for storing information about icons.
 - Removed erroneous clearing of the EPG cache when updating NewUI
 - EPG for the channel was not updated during viewing after indexing ended
