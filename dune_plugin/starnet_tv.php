@@ -1065,7 +1065,7 @@ class Starnet_Tv implements User_Input_Handler
 
         hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channel_ids()->size()}, changed channels: $changed");
         hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->get_groups_order()->size()));
-        hd_debug_print("Load channels done: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Load channels time: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
 

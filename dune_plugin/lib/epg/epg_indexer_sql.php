@@ -95,7 +95,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 throw new Exception("Problem with open SQLite db! Possible url not set");
             }
 
-            if (!$this->check_table($this->channels_table) && !$this->check_table($this->positions_table)) {
+            if (!$this->check_table($this->channels_table) || !$this->check_table($this->positions_table)) {
                 throw new Exception("EPG for $this->xmltv_url not indexed!");
             }
 
