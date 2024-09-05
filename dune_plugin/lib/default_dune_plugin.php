@@ -2277,9 +2277,13 @@ class Default_Dune_Plugin implements DunePlugin
             if ($active_sources->size() === 0) {
                 $pl_xmltv_sources = $this->get_playlist_xmltv_sources();
                 foreach ($pl_xmltv_sources as $pl_source) {
-                    if (!empty($pl_source[PARAM_URI])) {
-                        $active_sources->add($pl_source[PARAM_URI]);
+                    if (!empty($pl_source->params[PARAM_URI])) {
+                        $active_sources->add($pl_source->params[PARAM_URI]);
                     }
+                }
+
+                if ($active_sources->size()) {
+                    $this->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
                 }
             }
 
