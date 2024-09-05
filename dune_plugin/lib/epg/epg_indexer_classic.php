@@ -73,7 +73,11 @@ class Epg_Indexer_Classic extends Epg_Indexer
                     throw new Exception("load positions index failed '$index_file'");
                 }
                 $this->xmltv_positions[$this->url_hash] = $data;
-                hd_debug_print("Memory usage: " . $this->perf->getReportItemCurrent(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+                $this->perf->setLabel('end_load');
+
+                $report = $this->perf->getFullReport();
+                hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
+                hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             }
 
             if (empty($this->xmltv_channels[$this->url_hash])) {
@@ -84,7 +88,11 @@ class Epg_Indexer_Classic extends Epg_Indexer
                     unset($this->xmltv_channels[$this->url_hash]);
                     throw new Exception("load channels index failed '$index_file'");
                 }
-                hd_debug_print("Memory usage: " . $this->perf->getReportItemCurrent(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+
+                $this->perf->setLabel('end_load');
+                $report = $this->perf->getFullReport();
+                hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
+                hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             }
 
             $this->perf->setLabel('fetch');
@@ -107,10 +115,11 @@ class Epg_Indexer_Classic extends Epg_Indexer
             }
 
             $this->perf->setLabel('end');
+            $report = $this->perf->getFullReport('fetch');
+
             hd_debug_print("Fetch positions "
                 . count($this->xmltv_positions[$this->url_hash][$channel_id])
-                . " for '$channel_id' by channel: '{$channel->get_title()}' ({$channel->get_id()}) done in: "
-                . $this->perf->getReportItem(Perf_Collector::TIME, 'fetch') . " secs");
+                . " for '$channel_id' by channel: '{$channel->get_title()}' ({$channel->get_id()}) done in: {$report[Perf_Collector::TIME]} secs");
 
             return $this->xmltv_positions[$this->url_hash][$channel_id];
         } catch (Exception $ex) {
@@ -166,7 +175,12 @@ class Epg_Indexer_Classic extends Epg_Indexer
             hd_debug_print("Load cache channels and picons index: $channels_file");
             $this->xmltv_channels[$this->url_hash] = parse_json_file($channels_file);
             $this->xmltv_picons[$this->url_hash] = parse_json_file($picons_file);
-            hd_debug_print("Memory usage: " . $this->perf->getReportItemCurrent(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+
+            $this->perf->setLabel('end');
+            $report = $this->perf->getFullReport();
+            hd_debug_print("ParseFile: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+            hd_debug_print_separator();
             return;
         }
 
@@ -226,11 +240,12 @@ class Epg_Indexer_Classic extends Epg_Indexer
             store_to_json_file($picons_file, $this->xmltv_picons[$this->url_hash]);
 
             $this->perf->setLabel('end');
+            $report = $this->perf->getFullReport('reindex');
             hd_debug_print("Total entries id's: " . count($this->xmltv_channels[$this->url_hash]));
             hd_debug_print("Total known picons: " . count($this->xmltv_picons[$this->url_hash]));
-            hd_debug_print("Reindexing EPG channels done: " . $this->perf->getReportItem(Perf_Collector::TIME, 'reindex') . " secs");
+            hd_debug_print("Reindexing EPG channels done: {$report[Perf_Collector::TIME]} secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
-            hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             hd_debug_print_separator();
         } catch (Exception $ex) {
             hd_debug_print("Reindexing EPG channels failed");
@@ -272,7 +287,11 @@ class Epg_Indexer_Classic extends Epg_Indexer
             $this->xmltv_positions[$this->url_hash] = parse_json_file($positions_file);
 
             $this->perf->setLabel('end');
-            hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+            $report = $this->perf->getFullReport();
+
+            hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+
             if ($this->xmltv_positions[$this->url_hash] !== false) {
                 $cache_valid = true;
             }
@@ -351,10 +370,11 @@ class Epg_Indexer_Classic extends Epg_Indexer
             }
 
             $this->perf->setLabel('end');
+            $report = $this->perf->getFullReport('reindex');
             hd_debug_print("Total unique epg id's indexed: " . count($xmltv_index));
-            hd_debug_print("Reindexing EPG program done: " . $this->perf->getReportItem(Perf_Collector::TIME, 'reindex') . " secs");
+            hd_debug_print("Reindexing EPG program done: {$report[Perf_Collector::TIME]} secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
-            hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             hd_debug_print_separator();
         } catch (Exception $ex) {
             hd_debug_print("Reindexing EPG positions failed");

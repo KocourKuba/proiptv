@@ -136,8 +136,12 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("parseFile " . $this->perf->getReportItemCurrent(Perf_Collector::TIME) . " secs");
+        $this->perf->setLabel('end');
+        $report = $this->perf->getFullReport();
+        hd_debug_print("ParseFile: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
+
         return true;
     }
 
@@ -205,8 +209,12 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("indexFile " . $this->perf->getReportItemCurrent(Perf_Collector::TIME) . " secs");
+        $this->perf->setLabel('end');
+        $report = $this->perf->getFullReport();
+        hd_debug_print("IndexFile: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
+
         return $data;
     }
 
@@ -248,8 +256,12 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        hd_debug_print("parseInMemory " . $this->perf->getReportItemCurrent(Perf_Collector::TIME) . " sec.");
+        $this->perf->setLabel('end');
+        $report = $this->perf->getFullReport();
+        hd_debug_print("ParseInMemory: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
+
         return true;
     }
 

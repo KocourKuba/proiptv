@@ -259,11 +259,13 @@ class Epg_Indexer_Sql extends Epg_Indexer
             $picons = empty($result) ? 0 : (int)$result;
 
             $this->perf->setLabel('end');
+            $report = $this->perf->getFullReport('reindex');
+
             hd_debug_print("Total entries id's: $channels");
             hd_debug_print("Total known picons: $picons");
-            hd_debug_print("Reindexing EPG channels done: " . $this->perf->getReportItem(Perf_Collector::TIME, 'reindex') . " secs");
+            hd_debug_print("Reindexing EPG channels done: {$report[Perf_Collector::TIME]} secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
-            hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             hd_debug_print_separator();
 
         } catch (Exception $ex) {
@@ -438,10 +440,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
             $total_epg = empty($result) ? 0 : (int)$result;
 
             $this->perf->setLabel('end');
+            $report = $this->perf->getFullReport('reindex');
+
             hd_debug_print("Total unique epg id's indexed: $total_epg");
-            hd_debug_print("Reindexing EPG positions done: " . $this->perf->getReportItem(Perf_Collector::TIME, 'reindex') . " secs");
+            hd_debug_print("Reindexing EPG positions done: {$report[Perf_Collector::TIME]} secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
-            hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             hd_debug_print_separator();
         } catch (Exception $ex) {
             hd_debug_print("Reindexing EPG positions failed");

@@ -405,7 +405,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             }
 
             $file_time = filemtime($tmp_filename);
-            $dl_time = $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'start');
+            $dl_time = $this->perf->getReportItemCurrent(Perf_Collector::TIME);
             $file_size = filesize($tmp_filename);
             $bps = $file_size / $dl_time;
             $si_prefix = array('B/s', 'KB/s', 'MB/s');

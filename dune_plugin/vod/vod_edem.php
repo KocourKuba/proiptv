@@ -247,6 +247,7 @@ class vod_edem extends vod_standard
                 $movies[] = $movie;
             }
         }
+
         if ($current_offset === $this->get_current_page($query_id)) {
             $this->set_next_page($query_id, -1);
         }

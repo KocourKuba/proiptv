@@ -497,9 +497,12 @@ class vod_standard extends Abstract_Vod
         }
 
         $this->perf->setLabel('end');
+        $report = $this->perf->getFullReport();
+
         hd_debug_print("Categories read: " . count($category_list));
-        hd_debug_print("Fetched time: " . $this->perf->getReportItem(Perf_Collector::TIME) . " secs");
-        hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+        hd_debug_print("Fetched time: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+        hd_debug_print_separator();
 
         return true;
     }
@@ -538,8 +541,10 @@ class vod_standard extends Abstract_Vod
         }
 
         $this->perf->setLabel('end');
+        $report = $this->perf->getFullReport();
+
         hd_debug_print("Movies found: " . count($movies));
-        hd_debug_print("Search at " . $this->perf->getReportItem(Perf_Collector::TIME) . " secs");
+        hd_debug_print("Search time: {$report[Perf_Collector::TIME]} secs");
 
         return $movies;
     }
@@ -604,6 +609,7 @@ class vod_standard extends Abstract_Vod
      */
     public function get_current_page($page_id)
     {
+        hd_debug_print(null, true);
         $current_idx = array_key_exists($page_id, $this->pages) ? $this->pages[$page_id] : 0;
         hd_debug_print("get_current_page page_id: $page_id current_idx: $current_idx", true);
         return $current_idx;

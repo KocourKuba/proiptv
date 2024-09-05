@@ -2422,8 +2422,11 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 $this->perf->setLabel('end');
+                $report = $this->perf->getFullReport();
+
                 hd_debug_print("Total entries loaded from playlist m3u file: $count");
-                hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
+                hd_debug_print("Load time: {$report[Perf_Collector::TIME]} sec");
+                hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             }
         } catch (Exception $ex) {
             $err = HD::get_last_error();

@@ -1061,11 +1061,13 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->set_postpone_save(false, PLUGIN_ORDERS);
 
         $this->perf->setLabel('end');
+        $report = $this->perf->getFullReport();
+
         hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channel_ids()->size()}, changed channels: $changed");
         hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->get_groups_order()->size()));
-        hd_debug_print("Load channels done: " . $this->perf->getReportItem(Perf_Collector::TIME) . " secs");
+        hd_debug_print("Load channels done: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
-        hd_debug_print("Memory usage: " . $this->perf->getReportItem(Perf_Collector::MEMORY_USAGE_KB) . " kb");
 
         if ($is_xml_engine) {
             $this->plugin->run_bg_epg_indexing();

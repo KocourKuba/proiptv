@@ -27,13 +27,17 @@ class Perf_Collector
 {
     const TIME = 'Time';
     const USER_MODE_TIME = 'UserModeTime';
-    const SYS_MODE_TIME = 'SysModeTime';
-    const KERNEL_MODE_TIME = 'KernelModeTime';
     const MEMORY_LIMIT = 'MemoryLimit';
     const MEMORY_USAGE_KB = 'MemoryUsageKb';
     const MEMORY_USAGE_MB = 'MemoryUsageMb';
     const PEAK_MEMORY_USAGE_KB = 'PeakMemoryUsageKb';
     const PEAK_MEMORY_USAGE_MB = 'PeakMemoryUsageMb';
+
+    const STAT_TIME = 'time';
+    const STAT_UTIME = 'utime';
+    const STAT_MEMORY = 'memory';
+    const STAT_PMEMORY = 'peak_memory';
+    const STAT_USAGE = 'usage';
 
     /**
      * @var array
@@ -63,10 +67,10 @@ class Perf_Collector
         }
 
         $this->labels[$label] = array(
-            'time' => microtime(true),
-            'memory' => memory_get_usage(),
-            'peak_memory' => memory_get_peak_usage(),
-            'usage' => getrusage()
+            self::STAT_TIME => microtime(true),
+            self::STAT_MEMORY => memory_get_usage(),
+            self::STAT_PMEMORY => memory_get_peak_usage(),
+            self::STAT_USAGE => getrusage()
         );
     }
 
@@ -102,23 +106,33 @@ class Perf_Collector
      * @param string $endLabel End label
      * @return array
      */
-    public function getFullReport($startLabel, $endLabel)
+    public function getFullReport($startLabel = false, $endLabel = false)
     {
         if ($startLabel === false) {
-            $startLabel = reset($this->labels);
+            reset($this->labels);
+            $startLabel = (string)key($this->labels);
         }
 
-        $time = $this->labels[$endLabel]['time'] - $this->labels[$startLabel]['time'];
-        $memory = $this->labels[$endLabel]['memory'] - $this->labels[$startLabel]['memory'];
+        if ($endLabel === false) {
+            $endLabel = (string)key(array_slice($this->labels, -1, 1, true));
+        }
+
+        if (!isset($this->labels[$startLabel])) {
+            hd_print("Wrong start label: $startLabel");
+        }
+
+        if (!isset($this->labels[$endLabel])) {
+            hd_print("Wrong end label: $endLabel");
+        }
+
+        $time = $this->labels[$endLabel][self::STAT_TIME] - $this->labels[$startLabel][self::STAT_TIME];
+        $memory = $this->labels[$endLabel][self::STAT_MEMORY] - $this->labels[$startLabel][self::STAT_MEMORY];
         $usage = $this->getUsageDifference($startLabel, $endLabel);
         $memoryPeak = memory_get_peak_usage();
 
         // Prepare report.
         $report[self::TIME] = $time;
-        $report[self::USER_MODE_TIME] = $usage['ru_utime.tv'];
-        $report[self::SYS_MODE_TIME] = $usage['ru_stime.tv'];
-        $report[self::KERNEL_MODE_TIME] = $usage['ru_stime.tv'] + $usage['ru_utime.tv'];
-
+        $report[self::USER_MODE_TIME] = $usage[self::STAT_UTIME];
         $report[self::MEMORY_LIMIT] = self::getMemoryLimit();
         $report[self::MEMORY_USAGE_KB] = round($memory / 1024);
         $report[self::MEMORY_USAGE_MB] = round($memory / 1024 / 1024, 2);
@@ -142,10 +156,6 @@ class Perf_Collector
             return array();
         }
 
-        if ($endLabel === false) {
-            $endLabel = end($this->labels);
-        }
-
         $report = $this->getFullReport($startLabel, $endLabel);
 
         return $report[$item];
@@ -162,12 +172,11 @@ class Perf_Collector
             return array();
         }
 
-        $endLabel = 'temporaryLabel';
-        $this->setLabel($endLabel);
+        $this->setLabel('temporaryLabel');
 
-        $report = $this->getFullReport($startLabel, $endLabel);
+        $report = $this->getFullReport($startLabel, 'temporaryLabel');
 
-        $this->unsetLabel($endLabel);
+        $this->unsetLabel('temporaryLabel');
 
         return $report[$item];
     }
@@ -183,31 +192,23 @@ class Perf_Collector
      */
     private function getUsageDifference($startLabel, $endLabel)
     {
-        $arr1 = $this->labels[$startLabel]['usage'];
-        $arr2 = $this->labels[$endLabel]['usage'];
+        $arr_start = $this->labels[$startLabel][self::STAT_USAGE];
+        $arr_end = $this->labels[$endLabel][self::STAT_USAGE];
 
         // Add user mode time.
-        $arr1['ru_utime.tv'] = ($arr1['ru_utime.tv_usec'] / 1000000) + $arr1['ru_utime.tv_sec'];
-        $arr2['ru_utime.tv'] = ($arr2['ru_utime.tv_usec'] / 1000000) + $arr2['ru_utime.tv_sec'];
-
-        // Add system mode time.
-        $arr1['ru_stime.tv'] = ($arr1['ru_stime.tv_usec'] / 1000000) + $arr1['ru_stime.tv_sec'];
-        $arr2['ru_stime.tv'] = ($arr2['ru_stime.tv_usec'] / 1000000) + $arr2['ru_stime.tv_sec'];
+        $arr_start[self::STAT_UTIME] = ($arr_start['ru_utime.tv_usec'] / 1000000) + $arr_start['ru_utime.tv_sec'];
+        $arr_end[self::STAT_UTIME] = ($arr_end['ru_utime.tv_usec'] / 1000000) + $arr_end['ru_utime.tv_sec'];
 
         // Unset time splits.
         unset(
-            $arr1['ru_utime.tv_usec'],
-            $arr1['ru_utime.tv_sec'],
-            $arr1['ru_stime.tv_usec'],
-            $arr1['ru_stime.tv_sec'],
-            $arr2['ru_utime.tv_usec'],
-            $arr2['ru_utime.tv_sec'],
-            $arr2['ru_stime.tv_usec'],
-            $arr2['ru_stime.tv_sec']
+            $arr_start['ru_utime.tv_usec'],
+            $arr_start['ru_utime.tv_sec'],
+            $arr_end['ru_utime.tv_usec'],
+            $arr_end['ru_utime.tv_sec']
         );
 
-        foreach ($arr1 as $key => $value) {
-            $arrDiff[$key] = $arr2[$key] - $value;
+        foreach ($arr_start as $key => $value) {
+            $arrDiff[$key] = $arr_end[$key] - $value;
         }
 
         return $arrDiff;
