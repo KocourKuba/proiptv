@@ -503,14 +503,16 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * clear memory cache and entire cache folder
+     * clear memory cache and entire cache folder for selected hash
+     * if hash is empty clear all cache
      *
+     * @param string $hash
      * @return void
      */
-    public function clear_all_epg_cache()
+    public function safe_clear_selected_epg_cache($hash)
     {
         if (isset($this->epg_manager)) {
-            $this->epg_manager->get_indexer()->clear_epg_files('');
+            $this->epg_manager->clear_selected_epg_cache($hash);
         }
     }
 
@@ -521,10 +523,10 @@ class Default_Dune_Plugin implements DunePlugin
      *
      * @return void
      */
-    public function safe_clear_epg_cache()
+    public function safe_clear_current_epg_cache()
     {
         if (isset($this->epg_manager)) {
-            $this->epg_manager->clear_epg_cache();
+            $this->epg_manager->clear_current_epg_cache();
         }
     }
 
@@ -2259,6 +2261,34 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $this->epg_manager->init_indexer($this->get_cache_dir());
+    }
+
+    /**
+     * Load active xmltv sources
+     * @return void
+     */
+    public function load_active_xmltv_sources()
+    {
+        $is_xml_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+        $use_playlist_picons = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+
+        if (($is_xml_engine || $use_playlist_picons !== PLAYLIST_PICONS)) {
+            $active_sources = $this->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
+            if ($active_sources->size() === 0) {
+                $pl_xmltv_sources = $this->get_playlist_xmltv_sources();
+                foreach ($pl_xmltv_sources as $pl_source) {
+                    if (!empty($pl_source[PARAM_URI])) {
+                        $active_sources->add($pl_source[PARAM_URI]);
+                    }
+                }
+            }
+
+            $epg_manager = $this->get_epg_manager();
+            if ($epg_manager !== null) {
+                $epg_manager->get_indexer()->set_active_sources($active_sources);
+                $epg_manager->get_indexer()->clear_stalled_locks();
+            }
+        }
     }
 
     /**

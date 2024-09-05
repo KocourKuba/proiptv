@@ -219,11 +219,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_CLEAR_CACHE:
-                $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager !== null) {
-                    $id = $selected_media_url->id;
-                    $epg_manager->get_indexer()->clear_epg_files($id);
-                }
+                $this->plugin->safe_clear_selected_epg_cache($selected_media_url->id);
                 break;
 
             case ACTION_ITEM_UP:
@@ -304,10 +300,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (!$this->get_order($edit_list)->has($id)) {
                         return Action_Factory::show_error(false, TR::t('edit_list_title_cant_delete'));
                     }
-                    $epg_manager = $this->plugin->get_epg_manager();
-                    if ($epg_manager !== null) {
-                        $epg_manager->get_indexer()->clear_epg_files($id);
-                    }
+                    $this->plugin->safe_clear_selected_epg_cache($id);
                     $this->plugin->set_active_xmltv_source($id, false);
                     $this->get_order($edit_list)->erase($id);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
@@ -338,7 +331,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $epg_manager = $this->plugin->get_epg_manager();
                         if ($epg_manager !== null) {
                             foreach ($this->get_order($edit_list) as $key) {
-                                $epg_manager->get_indexer()->clear_epg_files($key);
+                                $this->plugin->safe_clear_selected_epg_cache($key);
                             }
                         }
                         $this->get_order($edit_list)->clear();
@@ -683,10 +676,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                 $order->erase($id);
                 $item = null;
-                $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager !== null) {
-                    $epg_manager->get_indexer()->clear_epg_files($id);
-                }
+                $this->plugin->safe_clear_selected_epg_cache($id);
             } else {
                 $item = $order->get($id);
             }

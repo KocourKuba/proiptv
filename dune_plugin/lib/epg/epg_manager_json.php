@@ -252,7 +252,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      * @inheritDoc
      * @override
      */
-    public function clear_epg_cache()
+    public function clear_current_epg_cache()
     {
         $this->epg_cache = array();
         $files = get_temp_path('*.cache');

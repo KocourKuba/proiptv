@@ -499,6 +499,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             return Action_Factory::show_title_dialog(TR::t('err_xmltv_manager'));
                         }
 
+                        $epg_manager->clear_current_epg_cache();
                         $res = $epg_manager->get_indexer()->download_xmltv_source();
                         if ($res === -1) {
                             return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));

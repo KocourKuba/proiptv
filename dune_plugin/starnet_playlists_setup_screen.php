@@ -178,7 +178,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY: // handle streaming settings dialog result
-                $this->plugin->safe_clear_epg_cache();
+                $this->plugin->safe_clear_current_epg_cache();
                 $this->plugin->remove_settings($this->plugin->get_active_playlist_key());
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 

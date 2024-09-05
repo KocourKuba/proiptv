@@ -281,9 +281,21 @@ class Epg_Manager_Xmltv
      *
      * @return void
      */
-    public function clear_epg_cache()
+    public function clear_current_epg_cache()
     {
-        $this->get_indexer()->clear_current_epg_files();
+        $this->indexer->clear_current_epg_files();
+    }
+
+    /**
+     * clear memory cache and cache for selected filename (hash) mask
+     * if hash is empty clear all cache
+     *
+     * @param string $hash
+     * @return void
+     */
+    public function clear_selected_epg_cache($hash)
+    {
+        $this->indexer->clear_epg_files($hash);
     }
 
     /**

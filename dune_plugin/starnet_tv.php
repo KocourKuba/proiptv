@@ -577,6 +577,12 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->load_settings($force);
 
+        // upgrade old settings
+        if ($this->plugin->has_setting(self::PARAM_CUR_XMLTV_SOURCE)) {
+            $this->plugin->remove_setting(self::PARAM_CUR_XMLTV_SOURCE);
+            $this->plugin->remove_setting(self::PARAM_CUR_XMLTV_SOURCE_KEY);
+        }
+
         $this->plugin->create_screen_views();
 
         // first check if playlist in cache
@@ -584,17 +590,13 @@ class Starnet_Tv implements User_Input_Handler
             return 0;
         }
 
-        // upgrade old settings
-        if ($this->plugin->has_setting(self::PARAM_CUR_XMLTV_SOURCE)) {
-            $cur_key = $this->plugin->get_setting(self::PARAM_CUR_XMLTV_SOURCE_KEY, '');
-            $this->plugin->set_active_xmltv_source($cur_key);
-            $this->plugin->remove_setting(self::PARAM_CUR_XMLTV_SOURCE);
-            $this->plugin->remove_setting(self::PARAM_CUR_XMLTV_SOURCE_KEY);
-        }
-
         $provider = $this->plugin->get_current_provider();
 
         $this->plugin->init_epg_manager();
+        $this->plugin->load_active_xmltv_sources();
+
+        $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
@@ -660,10 +662,10 @@ class Starnet_Tv implements User_Input_Handler
         /** @var Hashed_Array<string, string> $custom_group_icons */
         $custom_group_icons = $this->plugin->get_orders(PARAM_GROUPS_ICONS, new Hashed_Array());
         // convert absolute path to filename
-        foreach ($custom_group_icons as $active_sources => $icon) {
+        foreach ($custom_group_icons as $key => $icon) {
             if (strpos($icon, DIRECTORY_SEPARATOR) !== false) {
                 $icon = basename($icon);
-                $custom_group_icons->set($active_sources, $icon);
+                $custom_group_icons->set($key, $icon);
             }
         }
 
@@ -758,16 +760,8 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->get_playback_points()->load_points(true);
 
-        $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-
-        $epg_indexer = $this->plugin->get_epg_manager()->get_indexer();
-        $active_sources = $this->plugin->get_active_xmltv_sources();
-        $epg_indexer->set_active_sources($active_sources);
-        $epg_indexer->clear_stalled_locks();
-
         if ($use_playlist_picons !== PLAYLIST_PICONS) {
-            $epg_indexer->index_all_channels();
+            $this->plugin->get_epg_manager()->get_indexer()->index_all_channels();
         }
 
         hd_debug_print("Build categories and channels...");
@@ -941,7 +935,7 @@ class Starnet_Tv implements User_Input_Handler
                 $aliases[] = mb_convert_case($epg_ids['name'], MB_CASE_LOWER, "UTF-8");
                 $aliases = array_unique($aliases);
 
-                $icon_url = $epg_indexer->get_picon($aliases);
+                $icon_url = $this->plugin->get_epg_manager()->get_indexer()->get_picon($aliases);
                 if (empty($icon_url)) {
                     hd_debug_print("no picon for " . pretty_json_format($aliases), true);
                 }
