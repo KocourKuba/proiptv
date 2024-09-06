@@ -34,6 +34,8 @@ class vod_iptvonline extends vod_standard
     const API_ACTION_SEARCH = 'search';
     const API_ACTION_FILTER = 'filter';
 
+    const REQUEST_TEMPLATE = "/movies?limit=100&page=%s&category=%s";
+
     /**
      * @inheritDoc
      */
@@ -256,7 +258,7 @@ class vod_iptvonline extends vod_standard
         if ($page_idx < 0)
             return $movies;
 
-        $params[CURLOPT_CUSTOMREQUEST] = "/movies?limit=100&page=$page_idx&category=" . self::API_ACTION_MOVIE;
+        $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, self::API_ACTION_MOVIE);
         $searchRes = $this->make_json_request($params);
 
         $movies = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_MOVIE, $searchRes, self::API_ACTION_SEARCH);
@@ -266,7 +268,7 @@ class vod_iptvonline extends vod_standard
         if ($page_idx < 0)
             return $movies;
 
-        $params[CURLOPT_CUSTOMREQUEST] = "/movies?limit=100&page=$page_idx&category=" . self::API_ACTION_SERIAL;
+        $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, self::API_ACTION_SERIAL);
         $searchRes = $this->make_json_request($params);
         $serials = ($searchRes === false) ? array() : $this->CollectSearchResult(self::API_ACTION_SERIAL, $searchRes, self::API_ACTION_SEARCH);
 
@@ -356,20 +358,29 @@ class vod_iptvonline extends vod_standard
                 continue;
             }
 
+            if ($key === 'year' && !empty($value)) {
+                $values = explode('-', $value);
+                if (count($values) === 1) {
+                    $value = "$value-$value";
+                }
+            }
+
             if (!empty($param_str)) {
                 $param_str .= "_";
             }
+
             $param_str .= "$key-$value";
         }
 
         $page_id = $query_id . "_" . self::API_ACTION_FILTER;
         $page_idx = $this->get_next_page($page_id);
-        if ($page_idx < 0)
+        if ($page_idx < 0) {
             return array();
+        }
 
         hd_debug_print("filter page_idx:  $page_idx");
 
-        $post_params[CURLOPT_CUSTOMREQUEST] = "/$query_id?limit=100&page=$page_idx";
+        $post_params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id);
         $post_params[CURLOPT_POSTFIELDS]['features_hash'] = $param_str;
         $json = $this->make_json_request($post_params);
 
@@ -382,7 +393,7 @@ class vod_iptvonline extends vod_standard
     public function getMovieList($query_id)
     {
         $page_idx = $this->get_next_page($query_id);
-        $params[CURLOPT_CUSTOMREQUEST] = "/movies?limit=100&page=$page_idx&category=$query_id";
+        $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id);
         $json = $this->make_json_request($params);
 
         return ($json === false || $json === null) ? array() : $this->CollectSearchResult($query_id, $json);
