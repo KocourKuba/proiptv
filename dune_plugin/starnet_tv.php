@@ -989,7 +989,7 @@ class Starnet_Tv implements User_Input_Handler
                     }
                 }
 
-                hd_debug_print("Set picon: $group_logo", true);
+                hd_debug_print("Set picon for group {$parent_group->get_title()} :  $group_logo", true);
                 $parent_group->set_icon_url($group_logo);
             }
 
