@@ -49,9 +49,35 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         $epg_ids = $channel->get_epg_ids();
 
         try {
-            $epg_url = $this->plugin->get_epg_preset_url();
+            $provider = $this->plugin->get_current_provider();
+            if (is_null($provider)) {
+                return null;
+            }
+
+            $presets = $this->plugin->get_epg_presets();
+            $preset_name = $provider->getConfigValue(EPG_JSON_PRESET);
+            if (empty($preset_name)) {
+                hd_debug_print("No preset for selected provider");
+                return null;
+            }
+
+            $preset = $presets->get($preset_name);
+            if (empty($preset)) {
+                hd_debug_print("$preset_name Not exist in configuration");
+                return null;
+            }
+
+            $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $preset[EPG_JSON_SOURCE]);
+            if (strpos($epg_url, MACRO_PROVIDER) !== false) {
+                $epg_alias = $provider->getConfigValue(EPG_JSON_ALIAS);
+                $alias = empty($epg_alias) ? $provider->getId() : $epg_alias;
+                hd_debug_print("using alias: $alias", true);
+                $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
+            }
+            $epg_url =  $provider->replace_macros($epg_url);
+
             if (empty($epg_url)) {
-                throw new Exception("No EPG url defined");
+                throw new Exception("No EPG url defined for current provider");
             }
 
             if (strpos($epg_url, '{ID}') !== false) {
@@ -121,7 +147,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             if ($from_cache === false) {
                 hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
-                $all_epg = self::get_epg_json($epg_url, $this->plugin->get_epg_preset_parser());
+                $all_epg = self::get_epg_json($epg_url, $preset[EPG_JSON_PARSER]);
                 if (!empty($all_epg)) {
                     hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
                     store_to_json_file($epg_cache_file, $all_epg);
@@ -172,8 +198,9 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     {
         $channel_epg = array();
 
-        if (empty($parser_params))
+        if (empty($parser_params)) {
             return $channel_epg;
+        }
 
         hd_debug_print("parser params: " . json_encode($parser_params), true);
 

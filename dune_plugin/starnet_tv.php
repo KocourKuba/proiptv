@@ -562,8 +562,6 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function load_channels(&$plugin_cookies, $force = false)
     {
-        hd_debug_print_separator();
-
         if (!$force && $this->channels->size() !== 0) {
             hd_debug_print("Channels already loaded", true);
             return 1;

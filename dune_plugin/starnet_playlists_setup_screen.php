@@ -92,8 +92,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // ID detection settings
-        $provider = $this->plugin->get_current_provider();
-        if (is_null($provider)) {
+        $playlist = $this->plugin->get_current_playlist();
+        if (!is_null($playlist) && $playlist->type !== PARAM_PROVIDER) {
             $mapper_ops = array(
                 'by_default' => TR::t('hash_url'),
                 'tvg-id' => TR::t('attribute_name__1', 'tvg-id'),

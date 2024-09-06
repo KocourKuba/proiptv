@@ -304,7 +304,6 @@ class Epg_Indexer_Classic extends Epg_Indexer
         try {
             $this->set_index_locked(true);
 
-            hd_debug_print_separator();
             hd_debug_print("Start reindex: $positions_file");
 
             $this->perf->setLabel('reindex');

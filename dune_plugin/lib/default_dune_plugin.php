@@ -209,36 +209,11 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return array|null
+     * @return Hashed_Array<array>
      */
-    public function get_epg_preset_parser()
+    public function get_epg_presets()
     {
-        $preset = $this->get_epg_preset();
-        if (is_null($preset) || !isset($preset[EPG_JSON_PARSER])) {
-            return null;
-        }
-
-        return $preset[EPG_JSON_PARSER];
-    }
-
-    /**
-     * @return array|null
-     */
-    protected function get_epg_preset()
-    {
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            hd_debug_print("Not supported provider");
-            return null;
-        }
-
-        $preset_name = $provider->getConfigValue(EPG_JSON_PRESET);
-        if (empty($preset_name)) {
-            hd_debug_print("No preset for selected provider");
-            return null;
-        }
-
-        return $this->epg_presets->get($preset_name);
+        return $this->epg_presets;
     }
 
     /**
@@ -2244,6 +2219,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function init_epg_manager()
     {
+        hd_debug_print(null, true);
+
         $this->epg_manager = null;
         $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         $provider = $this->get_current_provider();
@@ -2321,6 +2298,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function init_playlist($force = false)
     {
+        hd_debug_print(null, true);
+
         $this->init_user_agent();
 
         // first check if playlist in cache
@@ -2349,12 +2328,12 @@ class Default_Dune_Plugin implements DunePlugin
 
         $playlist = $this->get_current_playlist();
         try {
-            if ($force !== false) {
-                if (empty($playlist->type)) {
-                    hd_debug_print("Tv playlist not defined");
-                    throw new Exception("Tv playlist not defined");
-                }
+            if ($playlist === null || empty($playlist->type)) {
+                hd_debug_print("Tv playlist not defined");
+                throw new Exception("Tv playlist not defined");
+            }
 
+            if ($force !== false) {
                 $logfile = '';
                 hd_debug_print("m3u playlist: $playlist->name ({$this->get_active_playlist_key()})");
                 if ($playlist->type === PARAM_FILE) {
@@ -2432,13 +2411,15 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("Load time: {$report[Perf_Collector::TIME]} sec");
                 hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             }
+
+            hd_debug_print_separator();
+            hd_debug_print("Init playlist done!");
         } catch (Exception $ex) {
             $err = HD::get_last_error();
             if (!empty($err)) {
-                $err .= "\n\n" . $ex->getMessage();
-            } else {
-                $err = $ex->getMessage();
+                $err .= "\n\n";
             }
+            $err .= $ex->getMessage();
             HD::set_last_error("pl_last_error", $err);
             print_backtrace_exception($ex);
             if (isset($playlist->type) && file_exists($tmp_file)) {
@@ -2447,7 +2428,6 @@ class Default_Dune_Plugin implements DunePlugin
             return false;
         }
 
-        hd_debug_print("Init playlist done!");
         return true;
     }
 
@@ -2496,6 +2476,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function init_vod_playlist()
     {
+        hd_debug_print(null, true);
+
         $provider = $this->get_current_provider();
         if (is_null($provider)) {
             return false;
@@ -2992,15 +2974,12 @@ class Default_Dune_Plugin implements DunePlugin
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source__1', $sources), "image.png");
         }
 
-        $epg_url = $this->get_epg_preset_url();
         $provider = $this->get_current_provider();
         if (!is_null($provider)) {
-            if (!empty($epg_url)) {
-                $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-                $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
-                $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
-            }
+            $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+            $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
 
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
@@ -3111,33 +3090,6 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         return $menu_items;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function get_epg_preset_url()
-    {
-        $provider = $this->get_current_provider();
-        if (is_null($provider)) {
-            hd_debug_print("Not supported provider");
-            return null;
-        }
-
-        $preset = $this->get_epg_preset();
-        if (is_null($preset)) {
-            return null;
-        }
-
-        $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $preset[EPG_JSON_SOURCE]);
-        if (strpos($epg_url, MACRO_PROVIDER) !== false) {
-            $epg_alias = $provider->getConfigValue(EPG_JSON_ALIAS);
-            $alias = empty($epg_alias) ? $provider->getId() : $epg_alias;
-            hd_debug_print("using alias: $alias", true);
-            $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
-        }
-
-        return $provider->replace_macros($epg_url);
     }
 
     public function create_plugin_title()
@@ -3462,6 +3414,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function do_show_subscription($handler)
     {
+        hd_debug_print(null, true);
+
         $provider = $this->get_current_provider();
         if (is_null($provider)) {
             return null;
@@ -3480,6 +3434,8 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function do_show_add_money()
     {
+        hd_debug_print(null, true);
+
         $provider = $this->get_current_provider();
         if (is_null($provider)) {
             return null;

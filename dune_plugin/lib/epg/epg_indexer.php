@@ -391,7 +391,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             if (!$expired) {
                 hd_debug_print("File not changed, using cached file: $cached_file");
                 $this->set_index_locked(false);
-                hd_debug_print_separator();
                 return 1;
             }
 

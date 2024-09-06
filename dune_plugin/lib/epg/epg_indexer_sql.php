@@ -182,7 +182,6 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 }
             }
 
-            hd_debug_print_separator();
             hd_debug_print("Start reindex channels and picons...");
 
             $this->perf->reset('reindex');
@@ -352,7 +351,6 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 }
             }
 
-            hd_debug_print_separator();
             hd_debug_print("Start reindex positions...");
 
             $this->perf->reset('reindex');

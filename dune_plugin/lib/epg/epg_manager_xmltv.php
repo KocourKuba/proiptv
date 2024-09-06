@@ -157,7 +157,7 @@ class Epg_Manager_Xmltv
         $active_sources = $this->plugin->get_active_xmltv_sources();
         foreach($active_sources as $key => $source) {
             if ($this->indexer->is_index_locked($key)) {
-                hd_debug_print("EPG $source still indexing, append to deleyed queue channel id: " . $channel->get_id());
+                hd_debug_print("EPG $source still indexing, append to delayed queue channel id: " . $channel->get_id());
                 $this->delayed_epg[] = $channel->get_id();
                 continue;
             }
