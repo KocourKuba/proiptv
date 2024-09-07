@@ -1,4 +1,7 @@
-﻿### Версия 5.0.846
+﻿### Version 5.0.850
+- Fixed the media library filter when selecting the year for IPTV Online/Tvizi
+
+### Версия 5.0.846
 - Accelerated algorithm for searching icons in xmltv source
 - Added checking and removal of hung xmltv indexing flags
 - Updated translation
