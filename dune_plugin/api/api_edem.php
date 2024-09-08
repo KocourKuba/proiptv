@@ -150,17 +150,15 @@ class api_edem extends api_default
             $this->playlist_info = new Named_Storage();
             $this->playlist_info->type = PARAM_PROVIDER;
             $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
-            $this->playlist_info->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
+            $this->setCredential(PARAM_PROVIDER, $user_input->{PARAM_PROVIDER});
         }
 
         $changed = false;
         if (empty($user_input->{CONTROL_OTT_SUBDOMAIN})) {
-            if ($this->playlist_info->params[MACRO_SUBDOMAIN] !== $this->getConfigValue(CONFIG_SUBDOMAIN)) {
-                $this->playlist_info->params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
-                $changed = true;
-            }
+            $this->setCredential(MACRO_SUBDOMAIN, $this->getConfigValue(CONFIG_SUBDOMAIN));
+            $changed = true;
         } else if ($this->check_control_parameters($user_input, CONTROL_OTT_SUBDOMAIN, MACRO_SUBDOMAIN)) {
-            $this->playlist_info->params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
+            $this->setCredential(MACRO_SUBDOMAIN, $user_input->{CONTROL_OTT_SUBDOMAIN});
             $changed = true;
         }
 
@@ -169,7 +167,7 @@ class api_edem extends api_default
         }
 
         if ($this->check_control_parameters($user_input, CONTROL_OTT_KEY, MACRO_OTTKEY)) {
-            $this->playlist_info->params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
+            $this->setCredential(MACRO_OTTKEY, $user_input->{CONTROL_OTT_KEY});
             $changed = true;
         }
 
@@ -178,7 +176,7 @@ class api_edem extends api_default
         }
 
         if ($this->check_control_parameters($user_input, CONTROL_VPORTAL, MACRO_VPORTAL)) {
-            $this->playlist_info->params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
+            $this->setCredential(MACRO_VPORTAL, $user_input->{CONTROL_VPORTAL});
             $changed = true;
         }
 
@@ -197,12 +195,16 @@ class api_edem extends api_default
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
         }
 
-        hd_debug_print("compiled provider info: {$this->playlist_info->name}, provider params: " . pretty_json_format($this->playlist_info), true);
+        hd_debug_print("ApplySetupUI compiled provider ($id) info: " . pretty_json_format($this->playlist_info), true);
 
         if ($is_new) {
             hd_debug_print("Set default values for id: $id", true);
             $this->set_default_settings($user_input, $id);
         }
+
+        $this->plugin->get_playlists()->set($id, $this->playlist_info);
+        $this->plugin->save_parameters(true);
+        $this->plugin->clear_playlist_cache($id);
 
         return $id;
     }

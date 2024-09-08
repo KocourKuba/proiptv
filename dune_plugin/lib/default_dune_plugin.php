@@ -3219,17 +3219,17 @@ class Default_Dune_Plugin implements DunePlugin
         if (empty($playlist_id)) {
             // add new provider
             $provider = $this->create_provider_class($provider_id);
-            hd_debug_print("new provider : $provider", true);
+            hd_debug_print("new provider : $provider_id", true);
         } else {
             // edit existing provider
             $item = $this->get_playlists()->get($playlist_id);
             if (!is_null($item)) {
                 $name = $item->name;
-                hd_debug_print("provider info:" . json_encode($item), true);
+                hd_debug_print("existing provider: $playlist_id", true);
+                hd_debug_print("provider info:" . pretty_json_format($item), true);
                 $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
                 if (!is_null($provider)) {
                     $provider->set_provider_playlist_id($playlist_id);
-                    hd_debug_print("existing provider : " . json_encode($provider), true);
                 }
             } else {
                 $provider = $this->create_provider_class($provider_id);

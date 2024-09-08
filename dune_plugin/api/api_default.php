@@ -307,7 +307,7 @@ class api_default
         $item = $this->plugin->get_playlists()->get($playlist_id);
         if ($item !== null && isset($item->params)) {
             $this->playlist_info = $item;
-            hd_debug_print("provider info: ($playlist_id) " . json_encode($this->playlist_info), true);
+            hd_debug_print("provider info: ($playlist_id) " . pretty_json_format($this->playlist_info), true);
         } else {
             hd_debug_print("incorrect provider info: $playlist_id");
         }
@@ -904,7 +904,7 @@ class api_default
         $id = empty($user_input->{CONTROL_EDIT_ITEM}) ? '' : $user_input->{CONTROL_EDIT_ITEM};
 
         if (!empty($id)) {
-            hd_debug_print("load info for playlist id: $id", true);
+            hd_debug_print("load info for existing playlist id: $id", true);
             $this->playlist_info = $this->plugin->get_playlists()->get($id);
             hd_debug_print("provider info: " . pretty_json_format($this->playlist_info), true);
         }
@@ -914,7 +914,7 @@ class api_default
             $this->playlist_info = new Named_Storage();
             $this->playlist_info->type = PARAM_PROVIDER;
             $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
-            $this->playlist_info->params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
+            $this->setCredential(PARAM_PROVIDER, $user_input->{PARAM_PROVIDER});
         }
 
         $changed = false;
@@ -931,7 +931,7 @@ class api_default
                 }
 
                 if ($this->check_control_parameters($user_input, CONTROL_PASSWORD, MACRO_PASSWORD)) {
-                    $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                    $this->setCredential(MACRO_PASSWORD, $user_input->{CONTROL_PASSWORD});
                     $changed = true;
                 }
                 break;
@@ -942,12 +942,12 @@ class api_default
                 }
 
                 if ($this->check_control_parameters($user_input, CONTROL_LOGIN, MACRO_LOGIN)) {
-                    $this->playlist_info->params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
+                    $this->setCredential(MACRO_LOGIN, $user_input->{CONTROL_LOGIN});
                     $changed = true;
                 }
 
                 if ($this->check_control_parameters($user_input, CONTROL_PASSWORD, MACRO_PASSWORD)) {
-                    $this->playlist_info->params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                    $this->setCredential(MACRO_PASSWORD, $user_input->{CONTROL_PASSWORD});
                     $changed = true;
                 }
 

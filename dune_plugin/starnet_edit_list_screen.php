@@ -434,12 +434,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->set_changes($parent_media_url->save_data);
-                if (($this->plugin->get_active_playlist_key() === $id) && $this->plugin->tv->reload_channels($plugin_cookies) === 0) {
+                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $id;
+                if ($this->force_parent_reload && $this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
 
-                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $id;
                 $idx = $this->plugin->get_playlists()->get_idx($id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $idx);
 
