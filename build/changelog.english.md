@@ -1,4 +1,7 @@
-﻿### Version 5.0.850
+﻿### Version 5.0.852
+- Changes to the access parameters for the iEdem/iLook provider were not saved
+
+### Version 5.0.850
 - Fixed the media library filter when selecting the year for IPTV Online/Tvizi
 
 ### Версия 5.0.846
