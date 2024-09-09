@@ -43,6 +43,29 @@ require_once 'api_default.php';
 class api_cbilling extends api_default
 {
     /**
+     * @param bool $force
+     * @return bool|object
+     */
+    public function get_provider_info($force = false)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("force get_provider_info: " . var_export($force, true), true);
+
+        if (!$this->request_provider_token()) {
+            hd_debug_print("Failed to get provider token", true);
+            return null;
+        }
+
+        if ((empty($this->account_info) || $force)) {
+            $curl_opt[CURLOPT_HTTPHEADER][] = "x-public-key: {PASSWORD}";
+            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO, null, true, $curl_opt);
+            hd_debug_print("get_provider_info: " . pretty_json_format($this->account_info), true);
+        }
+
+        return $this->account_info;
+    }
+
+    /**
      * @inheritDoc
      */
     public function GetInfoUI($handler)

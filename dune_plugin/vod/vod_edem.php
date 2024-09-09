@@ -163,7 +163,7 @@ class vod_edem extends vod_standard
         $pairs['app'] = "ProIPTV_dune_plugin";
 
         $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
+        $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
         $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($pairs);
 
         return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);

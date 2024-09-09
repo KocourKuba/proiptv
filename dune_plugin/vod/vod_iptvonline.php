@@ -129,68 +129,6 @@ class vod_iptvonline extends vod_standard
     }
 
     /**
-     * @param array|null $params
-     * @return bool|object
-     */
-    protected function make_json_request($params = null)
-    {
-        if (!$this->provider->request_provider_token()) {
-            return false;
-        }
-
-        $curl_opt = array();
-
-        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
-            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
-        }
-
-        if (isset($params[CURLOPT_POSTFIELDS])) {
-            $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-            $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);
-        }
-
-        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
-        if (!isset($data->success, $data->status) || !$data->success || $data->status !== 200) {
-            hd_debug_print("Wrong response: " . json_encode($data));
-            return false;
-        }
-
-        return $data;
-    }
-
-    protected static function collect_genres($entry)
-    {
-        $genres_str = '';
-        if (isset($entry->genres)) {
-            $genres = array();
-            foreach ($entry->genres as $genre) {
-                if (!empty($genre)) {
-                    $genres[] = $genre;
-                }
-            }
-            $genres_str = implode(", ", $genres);
-        }
-
-        return $genres_str;
-    }
-
-    protected static function collect_countries($entry)
-    {
-        $countries_str = '';
-        if (isset($entry->countries)) {
-            $countries = array();
-            foreach ($entry->countries as $country) {
-                if (!empty($country)) {
-                    $countries[] = $country;
-                }
-            }
-            $countries_str = implode(", ", $countries);
-        }
-
-        return $countries_str;
-    }
-
-    /**
      * @inheritDoc
      */
     public function fetchVodCategories(&$category_list, &$category_index)
@@ -397,5 +335,68 @@ class vod_iptvonline extends vod_standard
         $json = $this->make_json_request($params);
 
         return ($json === false || $json === null) ? array() : $this->CollectSearchResult($query_id, $json);
+    }
+
+    protected static function collect_genres($entry)
+    {
+        $genres_str = '';
+        if (isset($entry->genres)) {
+            $genres = array();
+            foreach ($entry->genres as $genre) {
+                if (!empty($genre)) {
+                    $genres[] = $genre;
+                }
+            }
+            $genres_str = implode(", ", $genres);
+        }
+
+        return $genres_str;
+    }
+
+    protected static function collect_countries($entry)
+    {
+        $countries_str = '';
+        if (isset($entry->countries)) {
+            $countries = array();
+            foreach ($entry->countries as $country) {
+                if (!empty($country)) {
+                    $countries[] = $country;
+                }
+            }
+            $countries_str = implode(", ", $countries);
+        }
+
+        return $countries_str;
+    }
+
+    /**
+     * @param array|null $params
+     * @return bool|object
+     */
+    protected function make_json_request($params = null)
+    {
+        if (!$this->provider->request_provider_token()) {
+            return false;
+        }
+
+        $curl_opt = array();
+
+        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
+            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
+        }
+
+        $curl_opt[CURLOPT_HTTPHEADER][] = "Authorization: Bearer {TOKEN}";
+        if (isset($params[CURLOPT_POSTFIELDS])) {
+            $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
+            $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);
+        }
+
+        $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
+        if (!isset($data->success, $data->status) || !$data->success || $data->status !== 200) {
+            hd_debug_print("Wrong response: " . json_encode($data));
+            return false;
+        }
+
+        return $data;
     }
 }

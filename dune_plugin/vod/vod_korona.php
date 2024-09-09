@@ -283,6 +283,22 @@ class vod_korona extends vod_standard
         return $response === false ? array() : $this->CollectSearchResult($response);
     }
 
+    protected static function collect_genres($entry)
+    {
+        $genres_str = '';
+        if (isset($entry->genres)) {
+            $genres = array();
+            foreach ($entry->genres as $genre) {
+                if (!empty($genre)) {
+                    $genres[] = $genre->title;
+                }
+            }
+            $genres_str = implode(", ", $genres);
+        }
+
+        return $genres_str;
+    }
+
     /**
      * @param array|null $params
      * @return bool|object
@@ -299,6 +315,8 @@ class vod_korona extends vod_standard
             $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
         }
 
+        $curl_opt[CURLOPT_HTTPHEADER][] = "Authorization: Bearer {TOKEN}";
+
         $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
         if ($jsonItems === false) {
             $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
@@ -308,21 +326,5 @@ class vod_korona extends vod_standard
         }
 
         return $jsonItems;
-    }
-
-    protected static function collect_genres($entry)
-    {
-        $genres_str = '';
-        if (isset($entry->genres)) {
-            $genres = array();
-            foreach ($entry->genres as $genre) {
-                if (!empty($genre)) {
-                    $genres[] = $genre->title;
-                }
-            }
-            $genres_str = implode(", ", $genres);
-        }
-
-        return $genres_str;
     }
 }

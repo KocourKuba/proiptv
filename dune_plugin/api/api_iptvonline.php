@@ -99,7 +99,7 @@ class api_iptvonline extends api_default
         $pairs['device_id'] = get_serial_number();
 
         $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
+        $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
         $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($pairs);
 
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
@@ -131,7 +131,7 @@ class api_iptvonline extends api_default
     {
         hd_debug_print(null, true);
 
-        $data = parent::load_playlist(null);
+        $data = $this->make_json_request(API_COMMAND_GET_PLAYLIST);
 
         if (isset($data->success, $data->data)) {
             return Curl_Wrapper::simple_download_file($data->data, $tmp_file);
@@ -209,7 +209,7 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->device)) {
-            $response = $this->execApiCommand(API_COMMAND_GET_DEVICE);
+            $response = $this->make_json_request(API_COMMAND_GET_DEVICE);
             hd_debug_print("GetServers: " . pretty_json_format($response), true);
             if (isset($response->status) && $response->status === 200) {
                 $this->device = $response;
@@ -252,11 +252,10 @@ class api_iptvonline extends api_default
      */
     public function SetServer($server, &$error_msg)
     {
-        $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode(array("server_location" => $server));
+        $params[CURLOPT_POST] = true;
+        $params[CURLOPT_POSTFIELDS] = array("server_location" => $server);
 
-        $response = $this->execApiCommand(API_COMMAND_SET_DEVICE, null, true, $curl_opt);
+        $response = $this->make_json_request(API_COMMAND_SET_DEVICE, $params);
         if (isset($response->status) && $response->status === 200) {
             $this->device = $response;
             $this->collect_servers($selected);
@@ -281,7 +280,7 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->device)) {
-            $data = $this->execApiCommand(API_COMMAND_GET_DEVICE);
+            $data = $this->make_json_request(API_COMMAND_GET_DEVICE);
             if (isset($data->status) && $data->status === 200) {
                 $this->device = $data;
             }
@@ -329,11 +328,10 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
         hd_debug_print("SetPlaylist: $id");
 
-        $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/json; charset=utf-8");
-        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode(array("user_playlists" => $id));
+        $params[CURLOPT_POST] = true;
+        $params[CURLOPT_POSTFIELDS] = array("user_playlists" => $id);
 
-        $response = $this->execApiCommand(API_COMMAND_SET_DEVICE, null, true, $curl_opt);
+        $response = $this->make_json_request(API_COMMAND_SET_DEVICE, $params);
         if (isset($response->status) && $response->status === 200) {
             $this->device = $response;
             $this->collect_playlists($selected);
@@ -342,5 +340,31 @@ class api_iptvonline extends api_default
         } else {
             hd_debug_print("Can't set playlist: " . json_encode($response));
         }
+    }
+
+    /**
+     * @param string $cmd
+     * @param array|null $params
+     * @return bool|object
+     */
+    protected function make_json_request($cmd, $params = null)
+    {
+        if (!$this->request_provider_token()) {
+            return false;
+        }
+
+        $curl_opt = array();
+
+        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
+            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
+        }
+
+        $curl_opt[CURLOPT_HTTPHEADER][] = "Authorization: Bearer {TOKEN}";
+        if (isset($params[CURLOPT_POSTFIELDS])) {
+            $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
+            $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);
+        }
+
+        return $this->execApiCommand($cmd, null, true, $curl_opt);
     }
 }

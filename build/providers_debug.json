@@ -246,9 +246,6 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "headers": {
-          "x-public-key": "{PASSWORD}"
-        },
         "epg_preset": "cbilling",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -322,9 +319,6 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "headers": {
-          "x-public-key": "{PASSWORD}"
-        },
         "epg_preset": "cbilling",
         "ext_params": true,
         "url_subst": {
@@ -572,9 +566,6 @@
         "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
-        "headers": {
-          "Authorization": "Bearer {TOKEN}"
-        },
         "streams": {
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"
@@ -654,9 +645,6 @@
         "epg_preset": "drm",
         "epg_alias": "korona",
         "ext_params": true,
-        "headers": {
-          "Authorization": "Bearer {TOKEN}"
-        },
         "qualities": {
           "hi": "High",
           "lo": "Medium"
@@ -1185,9 +1173,6 @@
         "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
-        "headers": {
-          "Authorization": "Bearer {TOKEN}"
-        },
         "streams": {
           "video.m3u8": "HLS",
           "mpegts": "MPEG-TS"

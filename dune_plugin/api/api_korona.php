@@ -74,7 +74,7 @@ class api_korona extends api_default
         }
 
         $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER] = array("Content-Type: application/x-www-form-urlencoded");
+        $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/x-www-form-urlencoded";
         $data = '';
         foreach($pairs as $key => $value) {
             if (!empty($data)) {
@@ -154,7 +154,7 @@ class api_korona extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
+            $response = $this->make_json_request(API_COMMAND_GET_SERVERS);
             hd_debug_print("GetServers: " . pretty_json_format($response), true);
             if (isset($response->data)) {
                 foreach ($response->data as $server) {
@@ -164,5 +164,27 @@ class api_korona extends api_default
         }
 
         return $this->servers;
+    }
+
+    /**
+     * @param string $cmd
+     * @param array|null $params
+     * @return bool|object
+     */
+    protected function make_json_request($cmd, $params = null)
+    {
+        if (!$this->request_provider_token()) {
+            return false;
+        }
+
+        $curl_opt = array();
+
+        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
+            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
+        }
+
+        $curl_opt[CURLOPT_HTTPHEADER][] = "Authorization: Bearer {TOKEN}";
+
+        return $this->execApiCommand($cmd, null, true, $curl_opt);
     }
 }

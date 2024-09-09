@@ -635,41 +635,6 @@
     },
     {
       "enable": true,
-      "id": "korona",
-      "name": "Korona TV",
-      "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_korona.png",
-      "provider_url": "https://korona-tv.top/",
-      "api_url": "http://dev.korona-tv.top/api",
-      "api_commands": {
-        "get_playlist": "http://pl.korona-tv.top/{QUALITY_ID}/{SERVER_ID}/{LOGIN}/{PASSWORD}/{STREAM_ID}",
-        "request_token": "{API}/auth/",
-        "refresh_token": "{API}/auth/",
-        "account_info": "{API}/xapi10/accountinfo",
-        "get_servers": "{API}/xapi10/tv/servers",
-        "get_vod": "{API}/xapi10"
-      },
-      "config": {
-        "id_map": "CUID",
-        "epg_preset": "drm",
-        "epg_alias": "korona",
-        "ext_params": true,
-        "headers": {
-          "Authorization": "Bearer {TOKEN}"
-        },
-        "qualities": {
-          "hi": "High",
-          "lo": "Medium"
-        },
-        "streams": {
-          "multihls.m3u8": "HLS",
-          "mpegts.m3u": "MPEG-TS"
-        },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
       "id": "klimedia",
       "name": "KLI Media",
       "type": "login",

@@ -161,6 +161,8 @@ class api_default
      */
     protected $playlists = array();
 
+    protected $auth;
+
     public function __construct(DunePlugin $plugin)
     {
         $this->plugin = $plugin;
@@ -424,29 +426,14 @@ class api_default
         }
 
         hd_debug_print("ApiCommandUrl: $command_url", true);
-
-        $config_headers = $this->getConfigValue(CONFIG_HEADERS);
-        $send_headers = array();
-        if (!empty($config_headers)) {
-            foreach ($config_headers as $key => $header) {
-                $value = $this->replace_macros($header);
-                if (!empty($value)) {
-                    $send_headers[] = "$key: $value";
-                }
-            }
-        }
-
         $this->curl_wrapper->set_url($command_url);
 
-        if (isset($curl_opt[CURLOPT_HTTPHEADER])) {
-            $send_headers = array_merge($send_headers, $curl_opt[CURLOPT_HTTPHEADER]);
-        }
-
-        if (!empty($send_headers)) {
-            foreach ($send_headers as $header) {
-                hd_debug_print("CURLOPT_HTTPHEADER: " . $header, true);
+        if (!empty($curl_opt[CURLOPT_HTTPHEADER])) {
+            foreach ($curl_opt[CURLOPT_HTTPHEADER] as $key => $header) {
+                $curl_opt[CURLOPT_HTTPHEADER][$key] = $this->replace_macros($header);
+                hd_debug_print("CURLOPT_HTTPHEADER: {$curl_opt[CURLOPT_HTTPHEADER][$key]}", true);
             }
-            $this->curl_wrapper->set_send_headers($send_headers);
+            $this->curl_wrapper->set_send_headers($curl_opt[CURLOPT_HTTPHEADER]);
         }
 
         if (isset($curl_opt[CURLOPT_POST])) {
