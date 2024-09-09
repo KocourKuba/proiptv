@@ -235,12 +235,7 @@ class vod_cbilling extends vod_standard
             $params[CURLOPT_CUSTOMREQUEST] = "/filter/new?page=$page_idx";
         } else {
             $arr = explode("_", $query_id);
-            if ($arr === false) {
-                $genre_id = $query_id;
-            } else {
-                $genre_id = $arr[1];
-            }
-
+            $genre_id = isset($arr[1]) ? $arr[1] : $query_id;
             $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=$page_idx";
         }
 

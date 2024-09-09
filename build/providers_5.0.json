@@ -55,6 +55,16 @@
         "epg_end": "stopTime"
       }
     },
+    "korona": {
+      "json_source": "{API}/xapi10/epg/{ID}",
+      "parser": {
+        "epg_root": "data",
+        "epg_name": "title",
+        "epg_desc": "info",
+        "epg_start": "start",
+        "epg_end": "end"
+      }
+    },
     "ottclub": {
       "json_source": "http://myott.top/api/channel/{ID}",
       "parser": {
@@ -312,14 +322,14 @@
       },
       "config": {
         "id_map": "tvg-id",
+        "headers": {
+          "x-public-key": "{PASSWORD}"
+        },
         "epg_preset": "cbilling",
         "ext_params": true,
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(:.+)$/",
           "replace": "$1{SERVER_ID}$2"
-        },
-        "headers": {
-          "x-public-key": "{PASSWORD}"
         },
         "devices": {
           "1": "1",
@@ -625,6 +635,41 @@
     },
     {
       "enable": true,
+      "id": "korona",
+      "name": "Korona TV",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_korona.png",
+      "provider_url": "https://korona-tv.top/",
+      "api_url": "http://dev.korona-tv.top/api",
+      "api_commands": {
+        "get_playlist": "http://pl.korona-tv.top/{QUALITY_ID}/{SERVER_ID}/{LOGIN}/{PASSWORD}/{STREAM_ID}",
+        "request_token": "{API}/auth/",
+        "refresh_token": "{API}/auth/",
+        "account_info": "{API}/xapi10/accountinfo",
+        "get_servers": "{API}/xapi10/tv/servers",
+        "get_vod": "{API}/xapi10"
+      },
+      "config": {
+        "id_map": "CUID",
+        "epg_preset": "drm",
+        "epg_alias": "korona",
+        "ext_params": true,
+        "headers": {
+          "Authorization": "Bearer {TOKEN}"
+        },
+        "qualities": {
+          "hi": "High",
+          "lo": "Medium"
+        },
+        "streams": {
+          "multihls.m3u8": "HLS",
+          "mpegts.m3u": "MPEG-TS"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "klimedia",
       "name": "KLI Media",
       "type": "login",
@@ -816,8 +861,12 @@
           "ts": "MPEG-TS"
         },
         "servers": {
-          "188.68.217.223": "Russia",
-          "88.198.7.213": "Germany"
+          "peaktv.pro": "Russia 1",
+          "peak-tv.shop": "Russia 2",
+          "peaktv.com.ru": "Germany 1",
+          "peak-tv.xyz": "Germany 2",
+          "peaktv.space ": "Poland",
+          "peaktv.fun": "Czech Republic"
         },
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(\\/.+)(\\/.+)$/",

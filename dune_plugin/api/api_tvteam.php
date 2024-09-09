@@ -190,6 +190,14 @@ class api_tvteam extends api_default
     /**
      * @inheritDoc
      */
+    public function clear_session_info()
+    {
+        HD::clear_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function SetServer($server, &$error_msg)
     {
         $old = $this->getCredential(MACRO_SERVER_ID);

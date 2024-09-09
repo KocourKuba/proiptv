@@ -248,11 +248,7 @@ class vod_ipstream extends vod_standard
 
         $movies = array();
         $arr = explode("_", $query_id);
-        if ($arr === false) {
-            $category_id = $query_id;
-        } else {
-            $category_id = $arr[0];
-        }
+        $category_id = isset($arr[1]) ? $arr[0] : $query_id;
 
         $pos = 0;
         foreach ($this->vod_items as $movie) {

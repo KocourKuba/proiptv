@@ -917,11 +917,8 @@ class api_default
             $this->setCredential(PARAM_PROVIDER, $user_input->{PARAM_PROVIDER});
         }
 
-        $changed = false;
-
         if ($this->playlist_info->name !== $user_input->{CONTROL_EDIT_NAME}) {
             $this->playlist_info->name = $user_input->{CONTROL_EDIT_NAME};
-            $changed = true;
         }
 
         switch ($this->getType()) {
@@ -930,10 +927,7 @@ class api_default
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($this->check_control_parameters($user_input, CONTROL_PASSWORD, MACRO_PASSWORD)) {
-                    $this->setCredential(MACRO_PASSWORD, $user_input->{CONTROL_PASSWORD});
-                    $changed = true;
-                }
+                $this->setCredential(MACRO_PASSWORD, $user_input->{CONTROL_PASSWORD});
                 break;
 
             case PROVIDER_TYPE_LOGIN:
@@ -941,24 +935,12 @@ class api_default
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($this->check_control_parameters($user_input, CONTROL_LOGIN, MACRO_LOGIN)) {
-                    $this->setCredential(MACRO_LOGIN, $user_input->{CONTROL_LOGIN});
-                    $changed = true;
-                }
-
-                if ($this->check_control_parameters($user_input, CONTROL_PASSWORD, MACRO_PASSWORD)) {
-                    $this->setCredential(MACRO_PASSWORD, $user_input->{CONTROL_PASSWORD});
-                    $changed = true;
-                }
-
+                $this->setCredential(MACRO_LOGIN, $user_input->{CONTROL_LOGIN});
+                $this->setCredential(MACRO_PASSWORD, $user_input->{CONTROL_PASSWORD});
                 break;
 
             default:
                 return null;
-        }
-
-        if (!$changed) {
-            return null;
         }
 
         $is_new = empty($id);
@@ -978,9 +960,11 @@ class api_default
         $this->plugin->save_parameters(true);
         $this->plugin->clear_playlist_cache($id);
 
+        $this->clear_session_info();
+
         if (!$this->request_provider_token(true)) {
             hd_debug_print("Can't get provider token");
-            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), TR::t('err_cant_get_token'));
+            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
         }
 
         return $id;
@@ -1059,6 +1043,13 @@ class api_default
     public function request_provider_token($force = false)
     {
         return true;
+    }
+
+    /**
+     * @return void
+     */
+    public function clear_session_info()
+    {
     }
 
     /**

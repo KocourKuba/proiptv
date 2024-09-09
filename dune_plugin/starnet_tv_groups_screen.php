@@ -334,7 +334,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 if (!$provider->request_provider_token()) {
                     hd_debug_print("Can't get provider token");
-                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), TR::t('err_cant_get_token'));
+                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
                 }
                 return $this->plugin->do_edit_provider_ext_dlg($this);
 

@@ -244,7 +244,7 @@ class vod_glanz extends vod_standard
         }
 
         $arr = explode("_", $query_id);
-        $category_id = ($arr === false) ? $query_id : $arr[0];
+        $category_id = isset($arr[1]) ? $arr[0] : $query_id;
 
         $page_idx = $this->get_current_page($query_id);
         if ($page_idx < 0)

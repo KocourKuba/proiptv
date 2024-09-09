@@ -118,6 +118,15 @@ class api_iptvonline extends api_default
     /**
      * @inheritDoc
      */
+    public function clear_session_info()
+    {
+        HD::clear_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
+        HD::clear_cookie(sprintf(self::REFRESH_TOKEN_FILE, $this->get_provider_playlist_id()), true);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function load_playlist($tmp_file)
     {
         hd_debug_print(null, true);

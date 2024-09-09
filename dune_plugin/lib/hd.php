@@ -1039,4 +1039,19 @@ class HD
 
         return $content;
     }
+
+    /**
+     * Set cookie with expired time (timestamp).
+     * If $persistent is true cookie stored to plugin data path
+     *
+     * @param string $filename file name without path
+     * @param bool $persistent [optional] is stored in persistent file storage
+     */
+    public static function clear_cookie($filename, $persistent = false)
+    {
+        $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
+        if (file_exists($file_path)) {
+            unlink($file_path);
+        }
+    }
 }
