@@ -147,7 +147,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             if ($from_cache === false) {
                 hd_debug_print("Fetching EPG ID: '$epg_id' from server: $epg_url");
-                $all_epg = self::get_epg_json($epg_url, $preset[EPG_JSON_PARSER]);
+                $all_epg = self::get_epg_json($epg_url, $provider, $preset);
                 if (!empty($all_epg)) {
                     hd_debug_print("Save EPG ID: '$epg_id' to file cache $epg_cache_file");
                     store_to_json_file($epg_cache_file, $all_epg);
@@ -191,21 +191,27 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     /**
      * request server for epg and parse json response
      * @param string $url
-     * @param array $parser_params
+     * @param api_default $provider
+     * @param array $preset
      * @return array
      */
-    protected static function get_epg_json($url, $parser_params)
+    protected static function get_epg_json($url, $provider, $preset)
     {
         $channel_epg = array();
 
-        if (empty($parser_params)) {
+        if (empty($preset[EPG_JSON_PARSER])) {
             return $channel_epg;
         }
 
-        hd_debug_print("parser params: " . json_encode($parser_params), true);
+        $parser = $preset[EPG_JSON_PARSER];
+        hd_debug_print("parser params: " . json_encode($parser), true);
 
         try {
-            $ch_data = HD::DownloadJson($url);
+            $opts = null;
+            if (isset($preset[EPG_JSON_AUTH])) {
+                $opts[CURLOPT_HTTPHEADER] = array($provider->replace_macros($preset[EPG_JSON_AUTH]));
+            }
+            $ch_data = HD::DownloadJson($url, true, $opts);
             if (empty($ch_data)) {
                 hd_debug_print("Empty document returned.");
                 return $channel_epg;
@@ -215,8 +221,8 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             return $channel_epg;
         }
 
-        if (!empty($parser_params[Epg_Params::EPG_ROOT])) {
-            foreach (explode('|', $parser_params[Epg_Params::EPG_ROOT]) as $level) {
+        if (!empty($parser[Epg_Params::EPG_ROOT])) {
+            foreach (explode('|', $parser[Epg_Params::EPG_ROOT]) as $level) {
                 $epg_root = trim($level, "[]");
                 $ch_data = $ch_data[$epg_root];
             }
@@ -224,21 +230,21 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         // Possible need to add this to setup
         // disabling end can help problem with overlapping end/start EPG
-        $parser_params[Epg_Params::EPG_END] = '';
+        $parser[Epg_Params::EPG_END] = '';
 
-        hd_debug_print("json epg root: " . $parser_params[Epg_Params::EPG_ROOT], true);
-        hd_debug_print("json start: " . $parser_params[Epg_Params::EPG_START], true);
-        hd_debug_print("json end: " . $parser_params[Epg_Params::EPG_END], true);
-        hd_debug_print("json title: " . $parser_params[Epg_Params::EPG_NAME], true);
-        hd_debug_print("json desc: " . $parser_params[Epg_Params::EPG_DESC], true);
+        hd_debug_print("json epg root: " . $parser[Epg_Params::EPG_ROOT], true);
+        hd_debug_print("json start: " . $parser[Epg_Params::EPG_START], true);
+        hd_debug_print("json end: " . $parser[Epg_Params::EPG_END], true);
+        hd_debug_print("json title: " . $parser[Epg_Params::EPG_NAME], true);
+        hd_debug_print("json desc: " . $parser[Epg_Params::EPG_DESC], true);
 
         // collect all program that starts after day start and before day end
         $prev_start = 0;
-        $no_end = empty($parser_params[Epg_Params::EPG_END]);
+        $no_end = empty($parser[Epg_Params::EPG_END]);
         foreach ($ch_data as $entry) {
-            if (!isset($entry[$parser_params[Epg_Params::EPG_START]])) continue;
+            if (!isset($entry[$parser[Epg_Params::EPG_START]])) continue;
 
-            $program_start = $entry[$parser_params[Epg_Params::EPG_START]];
+            $program_start = $entry[$parser[Epg_Params::EPG_START]];
 
             if ($no_end) {
                 if ($prev_start !== 0) {
@@ -246,17 +252,17 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 }
                 $prev_start = $program_start;
             } else {
-                $channel_epg[$program_start][Epg_Params::EPG_END] = (int)$entry[$parser_params[Epg_Params::EPG_END]];
+                $channel_epg[$program_start][Epg_Params::EPG_END] = (int)$entry[$parser[Epg_Params::EPG_END]];
             }
 
-            if (isset($entry[$parser_params[Epg_Params::EPG_NAME]])) {
-                $channel_epg[$program_start][Epg_Params::EPG_NAME] = HD::unescape_entity_string($entry[$parser_params[Epg_Params::EPG_NAME]]);
+            if (isset($entry[$parser[Epg_Params::EPG_NAME]])) {
+                $channel_epg[$program_start][Epg_Params::EPG_NAME] = HD::unescape_entity_string($entry[$parser[Epg_Params::EPG_NAME]]);
             } else {
                 $channel_epg[$program_start][Epg_Params::EPG_NAME] = '';
             }
 
-            if (isset($entry[$parser_params[Epg_Params::EPG_DESC]])) {
-                $desc = HD::unescape_entity_string($entry[$parser_params[Epg_Params::EPG_DESC]]);
+            if (isset($entry[$parser[Epg_Params::EPG_DESC]])) {
+                $desc = HD::unescape_entity_string($entry[$parser[Epg_Params::EPG_DESC]]);
                 $desc = str_replace('<br>', PHP_EOL, $desc);
                 $channel_epg[$program_start][Epg_Params::EPG_DESC] = $desc;
             } else {

@@ -260,6 +260,7 @@ const EPG_JSON_PRESET = 'epg_preset';
 const EPG_JSON_SOURCE = 'json_source';
 const EPG_JSON_PARSER = 'parser';
 const EPG_JSON_ALIAS = 'epg_alias';
+const EPG_JSON_AUTH = 'json_auth';
 const CUSTOM_PLAYLIST_ID = 'custom';
 
 # HTTP params
