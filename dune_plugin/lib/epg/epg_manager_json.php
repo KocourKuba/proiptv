@@ -291,6 +291,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         $files = get_temp_path('*.cache');
         hd_debug_print("clear cache files: $files");
         shell_exec('rm -f ' . $files);
-        flush();
+        clearstatcache();
     }
 }

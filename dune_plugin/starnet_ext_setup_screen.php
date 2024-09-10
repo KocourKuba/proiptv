@@ -366,7 +366,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             }
         }
 
-        flush();
+        clearstatcache();
 
         shell_exec('rm -f ' . get_data_path('*.prev'));
         shell_exec('rm -f ' . get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*'));

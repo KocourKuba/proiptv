@@ -682,7 +682,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         shell_exec('rm -f ' . get_temp_path('*.zip'));
         delete_directory(get_temp_path('imagelib'));
 
-        flush();
+        clearstatcache();
 
         return Starnet_Epfs_Handler::epfs_invalidate_folders(array($user_input->parent_media_url));
     }

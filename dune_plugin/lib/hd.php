@@ -317,7 +317,7 @@ class HD
             return false;
         }
 
-        flush();
+        clearstatcache();
         if ($zip_file !== $backup_path) {
             hd_print("unlink $zip_file");
             unlink($zip_file);

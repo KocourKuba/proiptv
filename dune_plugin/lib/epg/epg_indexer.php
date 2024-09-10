@@ -435,7 +435,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 if ($ret !== 0) {
                     throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
                 }
-                flush();
+                clearstatcache();
                 $size = filesize($cached_file);
                 touch($cached_file, $file_time);
                 hd_debug_print("$size bytes ungzipped to $cached_file in " . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
@@ -458,7 +458,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 if ($ret !== 0) {
                     throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
                 }
-                flush();
+                clearstatcache();
 
                 rename($filename, $cached_file);
                 $size = filesize($cached_file);
@@ -539,11 +539,12 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             if (!create_path($lock_dir, 0644)) {
                 hd_debug_print("Directory '$lock_dir' was not created");
             } else {
-                hd_debug_print("Unlock $lock_dir");
+                hd_debug_print("Lock $lock_dir");
             }
         } else if (is_dir($lock_dir)) {
             hd_debug_print("Unlock $lock_dir");
-            @rmdir($lock_dir);
+            shell_exec("rm -rf $lock_dir");
+            clearstatcache();
         }
     }
 
@@ -604,7 +605,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         $files = $this->cache_dir . DIRECTORY_SEPARATOR . "$hash*";
         hd_debug_print("clear epg files: $files");
         shell_exec('rm -rf ' . $files);
-        flush();
+        clearstatcache();
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
 
