@@ -81,9 +81,9 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         $cache_engine[ENGINE_XMLTV] = TR::t('setup_epg_cache_xmltv');
         $provider = $this->plugin->get_current_provider();
         if (!is_null($provider)) {
-            $epg_preset = $provider->getConfigValue(EPG_JSON_PRESET);
-            if (!empty($epg_preset)) {
-                $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json__1', $epg_preset);
+            $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
+            if (!empty($epg_presets)) {
+                $cache_engine[ENGINE_JSON] = TR::t('setup_epg_cache_json');
             }
         }
 
@@ -94,6 +94,17 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         } else if (count($cache_engine) === 1) {
             Control_Factory::add_button($defs, $this, null, "dummy",
                 TR::t('setup_epg_cache_engine'), reset($cache_engine), self::CONTROLS_WIDTH);
+        }
+
+        if (isset($epg_presets) && count($epg_presets) > 1) {
+            $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
+            $presets = array();
+            foreach ($epg_presets as $epg_preset) {
+                $presets[] = $epg_preset['name'];
+            }
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_EPG_JSON_PRESET, TR::t('setup_epg_cache_json'),
+                $preset, $presets, self::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -202,6 +213,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case PARAM_EPG_CACHE_ENGINE:
             case PARAM_EPG_CACHE_TYPE:
+            case PARAM_EPG_JSON_PRESET:
                 $this->plugin->tv->unload_channels();
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();

@@ -910,8 +910,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_EPG_SOURCE_SELECTED:
                 if (!isset($user_input->{LIST_IDX})) break;
 
-                $this->plugin->set_active_xmltv_source($user_input->{LIST_IDX}, !$user_input->{IS_LIST_SELECTED});
-                $this->save_if_changed();
+                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) === ENGINE_XMLTV) {
+                    $this->plugin->set_active_xmltv_source($user_input->{LIST_IDX}, !$user_input->{IS_LIST_SELECTED});
+                } else {
+                    $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
+                }
+
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_EPG_CACHE_ENGINE:
@@ -1031,7 +1035,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     } else if ($user_input->reload_action === 'epg') {
                         $epg_manager = $this->plugin->get_epg_manager();
                         if ($epg_manager === null) {
-                            return Action_Factory::show_title_dialog(TR::t('err_xmltv_manager'));
+                            return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
                         }
 
                         $epg_manager->clear_current_epg_cache();

@@ -54,23 +54,29 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return null;
             }
 
-            $presets = $this->plugin->get_epg_presets();
-            $preset_name = $provider->getConfigValue(EPG_JSON_PRESET);
-            if (empty($preset_name)) {
+            $all_presets = $this->plugin->get_epg_presets();
+            $presets = $provider->getConfigValue(EPG_JSON_PRESETS);
+            if (empty($presets)) {
                 hd_debug_print("No preset for selected provider");
                 return null;
             }
 
-            $preset = $presets->get($preset_name);
+            $preset_idx = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
+            if (!isset($presets[$preset_idx])) {
+                hd_debug_print("Index $preset_idx not exist in provider preset list");
+                return null;
+            }
+            $selected_preset = $presets[$preset_idx];
+            hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}");
+            $preset = $all_presets->get($selected_preset[EPG_JSON_PRESET_NAME]);
             if (empty($preset)) {
-                hd_debug_print("$preset_name Not exist in configuration");
+                hd_debug_print("{$selected_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
                 return null;
             }
 
             $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $preset[EPG_JSON_SOURCE]);
             if (strpos($epg_url, MACRO_PROVIDER) !== false) {
-                $epg_alias = $provider->getConfigValue(EPG_JSON_ALIAS);
-                $alias = empty($epg_alias) ? $provider->getId() : $epg_alias;
+                $alias = empty($selected_preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $selected_preset[EPG_JSON_PRESET_ALIAS];
                 hd_debug_print("using alias: $alias", true);
                 $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
             }
@@ -230,30 +236,23 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         // Possible need to add this to setup
         // disabling end can help problem with overlapping end/start EPG
-        $parser[Epg_Params::EPG_END] = '';
 
         hd_debug_print("json epg root: " . $parser[Epg_Params::EPG_ROOT], true);
         hd_debug_print("json start: " . $parser[Epg_Params::EPG_START], true);
-        hd_debug_print("json end: " . $parser[Epg_Params::EPG_END], true);
         hd_debug_print("json title: " . $parser[Epg_Params::EPG_NAME], true);
         hd_debug_print("json desc: " . $parser[Epg_Params::EPG_DESC], true);
 
         // collect all program that starts after day start and before day end
         $prev_start = 0;
-        $no_end = empty($parser[Epg_Params::EPG_END]);
         foreach ($ch_data as $entry) {
             if (!isset($entry[$parser[Epg_Params::EPG_START]])) continue;
 
             $program_start = $entry[$parser[Epg_Params::EPG_START]];
 
-            if ($no_end) {
-                if ($prev_start !== 0) {
-                    $channel_epg[$prev_start][Epg_Params::EPG_END] = $program_start;
-                }
-                $prev_start = $program_start;
-            } else {
-                $channel_epg[$program_start][Epg_Params::EPG_END] = (int)$entry[$parser[Epg_Params::EPG_END]];
+            if ($prev_start !== 0) {
+                $channel_epg[$prev_start][Epg_Params::EPG_END] = $program_start;
             }
+            $prev_start = $program_start;
 
             if (isset($entry[$parser[Epg_Params::EPG_NAME]])) {
                 $channel_epg[$program_start][Epg_Params::EPG_NAME] = HD::unescape_entity_string($entry[$parser[Epg_Params::EPG_NAME]]);
@@ -270,7 +269,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
         }
 
-        if ($no_end && $prev_start !== 0) {
+        if ($prev_start !== 0) {
             $channel_epg[$prev_start][Epg_Params::EPG_END] = $prev_start + 3600; // fake end
         }
 
@@ -287,6 +286,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      */
     public function clear_current_epg_cache()
     {
+        hd_debug_print(null, true);
         $this->epg_cache = array();
         $files = get_temp_path('*.cache');
         hd_debug_print("clear cache files: $files");

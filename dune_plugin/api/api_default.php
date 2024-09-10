@@ -1001,9 +1001,10 @@ class api_default
                 $settings[PARAM_USE_PICONS] = XMLTV_PICONS;
             }
 
-            $epg_preset = $this->getConfigValue(EPG_JSON_PRESET);
+            $epg_preset = $this->getConfigValue(EPG_JSON_PRESETS);
             if (!empty($epg_preset)) {
                 $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
+                $settings[PARAM_EPG_JSON_PRESET] = 0;
             }
 
             $detect_stream = $this->getConfigValue(PARAM_DUNE_FORCE_TS);

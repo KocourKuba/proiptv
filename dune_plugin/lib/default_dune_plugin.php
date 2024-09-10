@@ -484,6 +484,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function safe_clear_selected_epg_cache($hash)
     {
+        hd_debug_print(null, true);
         if (isset($this->epg_manager)) {
             $this->epg_manager->clear_selected_epg_cache($hash);
         }
@@ -498,6 +499,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function safe_clear_current_epg_cache()
     {
+        hd_debug_print(null, true);
         if (isset($this->epg_manager)) {
             $this->epg_manager->clear_current_epg_cache();
         }
@@ -2223,7 +2225,7 @@ class Default_Dune_Plugin implements DunePlugin
         $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         $provider = $this->get_current_provider();
         if (($engine === ENGINE_JSON) && !is_null($provider)) {
-            $preset = $provider->getConfigValue(EPG_JSON_PRESET);
+            $preset = $provider->getConfigValue(EPG_JSON_PRESETS);
             if (!empty($preset)) {
                 hd_debug_print("Using 'Epg_Manager_Json' cache engine");
                 $this->epg_manager = new Epg_Manager_Json($this);
@@ -2839,36 +2841,55 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $menu_items = array();
 
-        $sources = $this->get_all_xmltv_sources();
-        $active_sources_order = $this->get_active_xmltv_sources()->get_ordered_values();
-        hd_debug_print("active sources: " . json_encode($active_sources_order));
-        $idx = 0;
-        foreach ($sources as $key => $item) {
-            if ($idx !== 0 && ($idx % 17) === 0) {
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            }
-            $idx++;
+        if ($this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV) {
+            $sources = $this->get_all_xmltv_sources();
+            $active_sources_order = $this->get_active_xmltv_sources()->get_ordered_values();
+            hd_debug_print("active sources: " . json_encode($active_sources_order));
+            $idx = 0;
+            foreach ($sources as $key => $item) {
+                if ($idx !== 0 && ($idx % 17) === 0) {
+                    $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+                }
+                $idx++;
 
-            if ($item === EPG_SOURCES_SEPARATOR_TAG) {
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-                continue;
-            }
+                if ($item === EPG_SOURCES_SEPARATOR_TAG) {
+                    $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
+                    continue;
+                }
 
-            $name = $item->name;
-            $cached_xmltv_file = $this->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
-            if (file_exists($cached_xmltv_file)) {
-                $check_time_file = filemtime($cached_xmltv_file);
-                $name .= " (" . date("d.m H:i", $check_time_file) . ")";
-            }
+                $name = $item->name;
+                $cached_xmltv_file = $this->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
+                if (file_exists($cached_xmltv_file)) {
+                    $check_time_file = filemtime($cached_xmltv_file);
+                    $name .= " (" . date("d.m H:i", $check_time_file) . ")";
+                }
 
-            hd_debug_print("source: {$item->params[PARAM_URI]}");
-            $order_key = array_search($item->params[PARAM_URI], $active_sources_order);
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_EPG_SOURCE_SELECTED,
-                $order_key !== false ? ($order_key + 1) .  " - $name" : $name,
-                $order_key !== false ? "check.png" : null,
-                array(LIST_IDX => $key, IS_LIST_SELECTED => $order_key !== false)
-            );
+                hd_debug_print("source: {$item->params[PARAM_URI]}");
+                $order_key = array_search($item->params[PARAM_URI], $active_sources_order);
+                $menu_items[] = $this->create_menu_item($handler,
+                    ACTION_EPG_SOURCE_SELECTED,
+                    $order_key !== false ? ($order_key + 1) . " - $name" : $name,
+                    $order_key !== false ? "check.png" : null,
+                    array(LIST_IDX => $key, IS_LIST_SELECTED => $order_key !== false)
+                );
+            }
+        } else {
+            $provider = $this->get_current_provider();
+            if (!is_null($provider)) {
+                $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
+                if (!empty($epg_presets)) {
+                    $current = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
+                    foreach ($epg_presets as $key => $epg_preset) {
+                        $selected = (int)$key === (int)$current;
+                        $menu_items[] = $this->create_menu_item($handler,
+                            ACTION_EPG_SOURCE_SELECTED,
+                            $epg_preset['name'],
+                            $selected ? "check.png" : null,
+                            array(LIST_IDX => $key, IS_LIST_SELECTED => $selected)
+                        );
+                    }
+                }
+            }
         }
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
@@ -2890,10 +2911,13 @@ class Default_Dune_Plugin implements DunePlugin
         );
 
         $provider = $this->get_current_provider();
-        $epg_preset = is_null($provider) ? '?' : $provider->getConfigValue(EPG_JSON_PRESET);
-        $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, TR::t('setup_epg_cache_json__1', $epg_preset),
-            ($engine === ENGINE_JSON) ? "check.png" : null
-        );
+        if ($provider !== null) {
+            $epg_preset = $provider->getConfigValue(EPG_JSON_PRESETS);
+            $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
+            $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, TR::t('setup_epg_cache_json__1', $epg_preset[$preset]['name']),
+                ($engine === ENGINE_JSON) ? "check.png" : null
+            );
+        }
         return $menu_items;
     }
 
@@ -2960,7 +2984,6 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         if ($this->get_all_xmltv_sources()->size() !== 0) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_sources'), "epg.png");
             $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             if ($icons_playlist === PLAYLIST_PICONS) {
                 $sources = TR::load_string('playlist_picons');
@@ -2972,13 +2995,25 @@ class Default_Dune_Plugin implements DunePlugin
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source__1', $sources), "image.png");
         }
 
-        $provider = $this->get_current_provider();
-        if (!is_null($provider)) {
-            $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-            $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
+        $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+        $engine = TR::load_string(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
+        $menu_items[] = $this->create_menu_item($handler,
+            ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
 
+        $provider = $this->get_current_provider();
+        $show_epg_source = false;
+        if ($is_xmltv_engine) {
+            $show_epg_source = ($this->get_all_xmltv_sources()->size() !== 0);
+        } else if (!is_null($provider)) {
+            $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
+            $show_epg_source = count($epg_presets) > 1;
+        }
+
+        if ($show_epg_source) {
+            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_sources'), "epg.png");
+        }
+
+        if (!is_null($provider)) {
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
                 $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");

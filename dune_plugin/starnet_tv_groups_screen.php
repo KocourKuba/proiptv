@@ -276,9 +276,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EPG_SOURCE_SELECTED:
                 if (!isset($user_input->{LIST_IDX})) break;
 
-                $this->plugin->set_active_xmltv_source($user_input->{LIST_IDX}, !$user_input->{IS_LIST_SELECTED});
-                $this->save_if_changed();
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) === ENGINE_XMLTV) {
+                    $this->plugin->set_active_xmltv_source($user_input->{LIST_IDX}, !$user_input->{IS_LIST_SELECTED});
+                } else {
+                    $epg_manager = $this->plugin->get_epg_manager();
+                    if ($epg_manager === null) {
+                        return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
+                    }
+                    $epg_manager->clear_current_epg_cache();
+                    $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
+                }
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -496,13 +504,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     } else if ($user_input->reload_action === 'epg') {
                         $epg_manager = $this->plugin->get_epg_manager();
                         if ($epg_manager === null) {
-                            return Action_Factory::show_title_dialog(TR::t('err_xmltv_manager'));
+                            return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
                         }
 
-                        $epg_manager->clear_current_epg_cache();
-                        $res = $epg_manager->get_indexer()->download_xmltv_source();
-                        if ($res === -1) {
-                            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
+                        if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV) {
+                            $res = $epg_manager->get_indexer()->download_xmltv_source();
+                            if ($res === -1) {
+                                return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
+                            }
                         }
                     }
                 }

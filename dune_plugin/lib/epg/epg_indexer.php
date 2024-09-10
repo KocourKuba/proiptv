@@ -561,6 +561,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     public function clear_current_epg_files()
     {
+        hd_debug_print(null, true);
         $this->clear_epg_files($this->url_hash);
     }
 
@@ -572,6 +573,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     public function clear_epg_files($hash)
     {
+        hd_debug_print(null, true);
         $this->clear_memory_index($hash);
 
         if (empty($this->cache_dir)) {
@@ -581,12 +583,13 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         $dirs = glob($this->cache_dir . DIRECTORY_SEPARATOR . (empty($hash) ? "*" : $hash) . "_*.lock", GLOB_ONLYDIR);
         $locks = array();
         foreach ($dirs as $dir) {
-            $locks[] = basename($dir);
+            hd_debug_print("Found locks: $dir");
+            $locks[] = $dir;
         }
 
         if (!empty($locks)) {
             foreach ($locks as $lock) {
-                $ar = explode('_', $lock);
+                $ar = explode('_', basename($lock));
                 $pid = (int)end($ar);
 
                 if ($pid !== 0 && send_process_signal($pid, 0)) {
@@ -594,13 +597,13 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                     send_process_signal($pid, -9);
                 }
                 hd_debug_print("Remove lock: $lock");
-                shell_exec("rmdir $this->cache_dir" . DIRECTORY_SEPARATOR . $lock);
+                shell_exec("rm -rf $lock");
             }
         }
 
         $files = $this->cache_dir . DIRECTORY_SEPARATOR . "$hash*";
         hd_debug_print("clear epg files: $files");
-        shell_exec('rm -f ' . $files);
+        shell_exec('rm -rf ' . $files);
         flush();
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }

@@ -30,8 +30,7 @@
         "epg_root": "",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time",
-        "epg_end": "time_to"
+        "epg_start": "time"
       }
     },
     "drm": {
@@ -41,7 +40,6 @@
         "epg_name": "name",
         "epg_desc": "descr",
         "epg_start": "time",
-        "epg_end": "time_to",
         "epg_icon": "icon"
       }
     },
@@ -51,8 +49,7 @@
         "epg_root": "res",
         "epg_name": "title",
         "epg_desc": "desc",
-        "epg_start": "startTime",
-        "epg_end": "stopTime"
+        "epg_start": "startTime"
       }
     },
     "korona": {
@@ -62,8 +59,7 @@
         "epg_root": "data",
         "epg_name": "title",
         "epg_desc": "info",
-        "epg_start": "start",
-        "epg_end": "end"
+        "epg_start": "start"
       }
     },
     "ottclub": {
@@ -72,8 +68,7 @@
         "epg_root": "epg_data",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time",
-        "epg_end": "time_to"
+        "epg_start": "time"
       }
     },
     "shuratv": {
@@ -82,8 +77,7 @@
         "epg_root": "",
         "epg_name": "epg",
         "epg_desc": "desc",
-        "epg_start": "start",
-        "epg_end": "stop"
+        "epg_start": "start"
       }
     },
     "sharaclub": {
@@ -92,8 +86,7 @@
         "epg_root": "",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time",
-        "epg_end": "time_to"
+        "epg_start": "time"
       }
     },
     "sharavoz": {
@@ -102,8 +95,7 @@
         "epg_root": "epg_data",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time",
-        "epg_end": "time_to"
+        "epg_start": "time"
       }
     },
     "tvclub": {
@@ -112,8 +104,7 @@
         "epg_root": "epg|channels|[0]|epg",
         "epg_name": "text",
         "epg_desc": "description",
-        "epg_start": "start",
-        "epg_end": "end"
+        "epg_start": "start"
       }
     },
     "tvteam": {
@@ -122,8 +113,7 @@
         "epg_root": "epg_data",
         "epg_name": "name",
         "epg_desc": "descr",
-        "epg_start": "time",
-        "epg_end": "time_to"
+        "epg_start": "time"
       }
     },
     "vidok": {
@@ -132,8 +122,7 @@
         "epg_root": "epg",
         "epg_name": "title",
         "epg_desc": "description",
-        "epg_start": "start",
-        "epg_end": "end"
+        "epg_start": "start"
       }
     }
   },
@@ -149,7 +138,11 @@
         "get_playlist": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u"
       },
       "config": {
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "drm"
+          }
+        ],
         "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
         "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -167,8 +160,12 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8\\?.+$/",
-        "epg_preset": "drm",
-        "epg_alias": "only4",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "only4"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "xmltv_sources": [
           "http://only4.tv/epg/epg.xml.gz",
@@ -191,7 +188,11 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/~[^\\/]+\\/(?<id>\\d+)(?:\\/.+\\.m3u8)?$/",
         "token_response": "token",
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "streams": {
           "unix.m3u8": "HLS",
@@ -212,7 +213,15 @@
       },
       "config": {
         "id_map": "tvg-name",
-        "epg_preset": "tvteam",
+        "epg_presets": [
+          {
+            "name": "tvteam"
+          },
+          {
+            "name": "drm",
+            "alias": "tvteam"
+          }
+        ],
         "ext_params": true,
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "url_subst": {
@@ -247,7 +256,15 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "cbilling",
+        "epg_presets": [
+          {
+            "name": "cbilling"
+          },
+          {
+            "name": "drm",
+            "alias": "cbilling"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -263,8 +280,12 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "drm",
-        "epg_alias": "bcu",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "bcu"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -280,8 +301,12 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.*\\.m3u8\\?.*$/",
-        "epg_preset": "drm",
-        "epg_alias": "iptvx.one",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "iptvx.one"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -320,7 +345,14 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "cbilling",
+        "epg_presets": [
+          {
+            "name": "cbilling"
+          },
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(:.+)$/",
@@ -360,7 +392,11 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/iptv\\/(?<ottkey>.+)\\/(?<id>.+)\\/.*\\.m3u8?$/",
         "domain": "junior.edmonst.net",
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "replace_icon_patterns": [
           {
@@ -405,7 +441,11 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/)index\\.m3u8(.+)$/",
@@ -439,8 +479,12 @@
         "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "fox-tv",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "fox-tv"
+          }
+        ],
         "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -458,8 +502,12 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
-        "epg_preset": "drm",
-        "epg_alias": "ottg",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "ottg"
+          }
+        ],
         "ext_params": true,
         "streams": {
           "hls": "HLS",
@@ -499,7 +547,11 @@
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
         "ignore_groups": ["Video on Demand","Сериалы"],
-        "epg_preset": "sharaclub",
+        "epg_presets": [
+          {
+            "name": "sharaclub"
+          }
+        ],
         "ext_params": true,
         "streams": {
           "-m3u8": "HLS",
@@ -519,8 +571,12 @@
         "get_playlist": "https://smotrim.uno/pl/{PASSWORD}/playlist.m3u8"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "iptv.online",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "iptv.online"
+          }
+        ],
         "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
@@ -562,8 +618,12 @@
         "get_vod": "{API}/catalog"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "iptv.online",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "iptv.online"
+          }
+        ],
         "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
@@ -589,7 +649,11 @@
       "config": {
         "id_map": "tvg-id",
         "playlist_catchup": "flussonic",
-        "epg_preset": "itvlive",
+        "epg_presets": [
+          {
+            "name": "itvlive"
+          }
+        ],
         "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/)video\\.m3u8(.+)$/",
@@ -614,7 +678,11 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "servers": {
           "DE": "DE",
@@ -643,7 +711,14 @@
       },
       "config": {
         "id_map": "CUID",
-        "epg_preset": "korona",
+        "epg_presets": [
+          {
+            "name": "korona"
+          },
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "qualities": {
           "hi": "High",
@@ -688,7 +763,11 @@
       },
       "config": {
         "id_map": "name",
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/)video\\.m3u8(.+)$/",
@@ -713,8 +792,12 @@
         "get_playlist": "http://pl.mymagic.tv/srv/{SERVER_ID}/{QUALITY_ID}/{LOGIN}/{PASSWORD}/tv.m3u"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "magic",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "magic"
+          }
+        ],
         "ext_params": true,
         "servers": {
           "0": "Default",
@@ -745,8 +828,12 @@
         "get_vod": "{API}/mediateka/{PASSWORD}/m3u8/playlist.m3u8"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "iptvx.one",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "iptvx.one"
+          }
+        ],
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\.m3u8?\\?(?<token>.+)$/",
         "vod_parser": "/^(?<title>[^\\/]+)\\s+\\((?<year>\\d+)\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
@@ -782,7 +869,11 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/.+\\/(?<id>.+)\\.m3u8?$/",
-        "epg_preset": "ottclub",
+        "epg_presets": [
+          {
+            "name": "ottclub"
+          }
+        ],
         "ext_params": true,
         "domains": {
           "myott.top": "myott.top",
@@ -808,8 +899,12 @@
           "regex": "/^(.+\\/\\/).+(\\/play\\/.+\\/).+$/",
           "replace": "$1{SERVER_ID}$2{STREAM_ID}"
         },
-        "epg_preset": "drm",
-        "epg_alias": "iptv.online",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "iptv.online"
+          }
+        ],
         "ext_params": true,
         "streams": {
           "video.m3u8": "HLS",
@@ -840,8 +935,12 @@
         "get_playlist": "{API}/{PASSWORD}/{STREAM_ID}/peaktvinfo.m3u8"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "gabbarit",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "gabbarit"
+          }
+        ],
         "ext_params": true,
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "streams": {
@@ -876,8 +975,12 @@
         "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "fox-tv",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "fox-tv"
+          }
+        ],
         "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -911,7 +1014,11 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "cbilling",
+        "epg_presets": [
+          {
+            "name": "cbilling"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -957,8 +1064,12 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "drm",
-        "epg_alias": "shara-tv",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "shara-tv"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "dune_force_ts": true
       }
@@ -981,7 +1092,11 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(\\/.+|\\.ts)$/",
-        "epg_preset": "sharaclub",
+        "epg_presets": [
+          {
+            "name": "sharaclub"
+          }
+        ],
         "ext_params": true,
         "streams": {
           "m3u8": "HLS",
@@ -1004,7 +1119,14 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
-        "epg_preset": "sharavoz",
+        "epg_presets": [
+          {
+            "name": "sharavoz"
+          },
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
@@ -1039,7 +1161,11 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/hls\\/.+\\.m3u8$/",
-        "epg_preset": "shuratv",
+        "epg_presets": [
+          {
+            "name": "shuratv"
+          }
+        ],
         "ext_params": true,
         "servers": {
           "0": "Server 1",
@@ -1061,7 +1187,11 @@
         "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}"
       },
       "config": {
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "servers": {
           "0": "Auto Select",
@@ -1105,7 +1235,11 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "tvclub",
+        "epg_presets": [
+          {
+            "name": "tvclub"
+          }
+        ],
         "ext_params": true,
         "streams": {
           "mpegts": "MPEG-TS"
@@ -1131,7 +1265,14 @@
       },
       "config": {
         "id_map": "tvg-name",
-        "epg_preset": "tvteam",
+        "epg_presets": [
+          {
+            "name": "tvteam"
+          },
+          {
+            "name": "drm"
+          }
+        ],
         "ext_params": true,
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "url_subst": {
@@ -1168,8 +1309,12 @@
         "get_vod": "{API}/catalog"
       },
       "config": {
-        "epg_preset": "drm",
-        "epg_alias": "iptv.online",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "iptv.online"
+          }
+        ],
         "ext_params": true,
         "playlist_catchup": "flussonic",
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
@@ -1213,7 +1358,11 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "vidok",
+        "epg_presets": [
+          {
+            "name": "vidok"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1231,7 +1380,11 @@
       },
       "config": {
         "id_map": "tvg-id",
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "viplime"
+          }
+        ],
         "ext_params": true,
         "vod_parser": "/^(?<title>[^\\(]*)\\s\\((?<year>\\d+)\\)$/",
         "url_subst": {
@@ -1264,7 +1417,11 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
-        "epg_preset": "drm",
+        "epg_presets": [
+          {
+            "name": "drm"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
         "xmltv_sources": [
           "http://epg.streaming-elbrus.su/xmltv/epg.xml.gz"

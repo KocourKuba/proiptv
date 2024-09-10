@@ -283,6 +283,7 @@ class Epg_Manager_Xmltv
      */
     public function clear_current_epg_cache()
     {
+        hd_debug_print(null, true);
         $this->indexer->clear_current_epg_files();
     }
 
