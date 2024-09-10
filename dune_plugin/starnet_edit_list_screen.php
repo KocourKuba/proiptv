@@ -1187,6 +1187,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     /**
      * @inheritDoc
      */
+    public function get_timer(MediaURL $media_url, $plugin_cookies)
+    {
+        return Action_Factory::timer(500);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function get_folder_views()
     {
         hd_debug_print(null, true);
