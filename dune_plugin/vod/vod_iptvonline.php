@@ -385,7 +385,6 @@ class vod_iptvonline extends vod_standard
             $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
         }
 
-        $curl_opt[CURLOPT_HTTPHEADER][] = "Authorization: Bearer {TOKEN}";
         if (isset($params[CURLOPT_POSTFIELDS])) {
             $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
             $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);

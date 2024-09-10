@@ -57,8 +57,7 @@ class api_cbilling extends api_default
         }
 
         if ((empty($this->account_info) || $force)) {
-            $curl_opt[CURLOPT_HTTPHEADER][] = "x-public-key: {PASSWORD}";
-            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO, null, true, $curl_opt);
+            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
             hd_debug_print("get_provider_info: " . pretty_json_format($this->account_info), true);
         }
 
@@ -128,5 +127,17 @@ class api_cbilling extends api_default
         }
 
         return $this->servers;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function get_additional_headers($command)
+    {
+        if ($command === API_COMMAND_ACCOUNT_INFO) {
+            return array($this->replace_macros("x-public-key: {PASSWORD}"));
+        }
+
+        return array();
     }
 }

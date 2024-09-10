@@ -154,7 +154,7 @@ class api_korona extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->servers)) {
-            $response = $this->make_json_request(API_COMMAND_GET_SERVERS);
+            $response = $this->execApiCommand(API_COMMAND_GET_SERVERS);
             hd_debug_print("GetServers: " . pretty_json_format($response), true);
             if (isset($response->data)) {
                 foreach ($response->data as $server) {
@@ -167,24 +167,14 @@ class api_korona extends api_default
     }
 
     /**
-     * @param string $cmd
-     * @param array|null $params
-     * @return bool|object
+     * @inheritDoc
      */
-    protected function make_json_request($cmd, $params = null)
+    protected function get_additional_headers($command)
     {
-        if (!$this->request_provider_token()) {
-            return false;
+        if ($command !== API_COMMAND_REQUEST_TOKEN && $command !== API_COMMAND_REFRESH_TOKEN) {
+            return array($this->replace_macros("Authorization: Bearer {TOKEN}"));
         }
 
-        $curl_opt = array();
-
-        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
-            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
-        }
-
-        $curl_opt[CURLOPT_HTTPHEADER][] = "Authorization: Bearer {TOKEN}";
-
-        return $this->execApiCommand($cmd, null, true, $curl_opt);
+        return array();
     }
 }

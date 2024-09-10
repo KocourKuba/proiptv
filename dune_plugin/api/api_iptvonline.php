@@ -131,10 +131,10 @@ class api_iptvonline extends api_default
     {
         hd_debug_print(null, true);
 
-        $data = $this->make_json_request(API_COMMAND_GET_PLAYLIST);
+        $response = $this->make_json_request(API_COMMAND_GET_PLAYLIST);
 
-        if (isset($data->success, $data->data)) {
-            return Curl_Wrapper::simple_download_file($data->data, $tmp_file);
+        if (isset($response->success, $response->data)) {
+            return Curl_Wrapper::simple_download_file($response->data, $tmp_file);
         }
 
         return array(false, '');
@@ -280,9 +280,9 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
 
         if (empty($this->device)) {
-            $data = $this->make_json_request(API_COMMAND_GET_DEVICE);
-            if (isset($data->status) && $data->status === 200) {
-                $this->device = $data;
+            $response = $this->make_json_request(API_COMMAND_GET_DEVICE);
+            if (isset($response->status) && $response->status === 200) {
+                $this->device = $response;
             }
         }
 
@@ -359,12 +359,23 @@ class api_iptvonline extends api_default
             $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
         }
 
-        $curl_opt[CURLOPT_HTTPHEADER][] = "Authorization: Bearer {TOKEN}";
         if (isset($params[CURLOPT_POSTFIELDS])) {
             $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
             $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);
         }
 
         return $this->execApiCommand($cmd, null, true, $curl_opt);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function get_additional_headers($command)
+    {
+        if ($command !== API_COMMAND_REQUEST_TOKEN && $command !== API_COMMAND_REFRESH_TOKEN) {
+            return array($this->replace_macros("Authorization: Bearer {TOKEN}"));
+        }
+
+        return array();
     }
 }

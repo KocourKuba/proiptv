@@ -386,8 +386,13 @@ class api_default
         }
 
         if ((empty($this->account_info) || $force) && $this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
-            $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
-            hd_debug_print("get_provider_info: " . pretty_json_format($this->account_info), true);
+            $account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
+            if ($account_info === false || isset($account_info->error)) {
+                hd_debug_print("Failed to get provider token", true);
+            } else {
+                hd_debug_print("get_provider_info: " . pretty_json_format($account_info), true);
+                $this->account_info = $account_info;
+            }
         }
 
         return $this->account_info;
@@ -428,11 +433,15 @@ class api_default
         hd_debug_print("ApiCommandUrl: $command_url", true);
         $this->curl_wrapper->set_url($command_url);
 
+        $add_headers = $this->get_additional_headers($command);
+
+        if (empty($curl_opt[CURLOPT_HTTPHEADER]) && !empty($add_headers)) {
+            $curl_opt[CURLOPT_HTTPHEADER] = $add_headers;
+        } else if (!empty($curl_opt[CURLOPT_HTTPHEADER]) && !empty($add_headers)) {
+            $curl_opt[CURLOPT_HTTPHEADER] = array_merge($curl_opt[CURLOPT_HTTPHEADER], $add_headers);
+        }
+
         if (!empty($curl_opt[CURLOPT_HTTPHEADER])) {
-            foreach ($curl_opt[CURLOPT_HTTPHEADER] as $key => $header) {
-                $curl_opt[CURLOPT_HTTPHEADER][$key] = $this->replace_macros($header);
-                hd_debug_print("CURLOPT_HTTPHEADER: {$curl_opt[CURLOPT_HTTPHEADER][$key]}", true);
-            }
             $this->curl_wrapper->set_send_headers($curl_opt[CURLOPT_HTTPHEADER]);
         }
 
@@ -1263,11 +1272,24 @@ class api_default
         $this->setCredential(MACRO_STREAM_ID, $stream);
     }
 
+    /**
+     * Save credentials
+     */
     protected function save_credentials()
     {
         if (!empty($this->playlist_id)) {
             $this->plugin->get_playlists()->set($this->playlist_id, $this->playlist_info);
             $this->plugin->save_parameters(true);
         }
+    }
+
+    /**
+     * Get additional curl headers
+     * @param string $command command for wich can be added http headers
+     * @return array
+     */
+    protected function get_additional_headers($command)
+    {
+        return array();
     }
 }

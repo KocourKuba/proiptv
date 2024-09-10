@@ -67,19 +67,16 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return null;
             }
             $selected_preset = $presets[$preset_idx];
-            hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}");
+            hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}", true);
             $preset = $all_presets->get($selected_preset[EPG_JSON_PRESET_NAME]);
             if (empty($preset)) {
                 hd_debug_print("{$selected_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
                 return null;
             }
 
-            $epg_url = str_replace(MACRO_API, $provider->getApiUrl(), $preset[EPG_JSON_SOURCE]);
-            if (strpos($epg_url, MACRO_PROVIDER) !== false) {
-                $alias = empty($selected_preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $selected_preset[EPG_JSON_PRESET_ALIAS];
-                hd_debug_print("using alias: $alias", true);
-                $epg_url = str_replace(MACRO_PROVIDER, $alias, $epg_url);
-            }
+            hd_debug_print("Preset json url: {$preset[EPG_JSON_SOURCE]}", true);
+            $alias = empty($selected_preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $selected_preset[EPG_JSON_PRESET_ALIAS];
+            $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $preset[EPG_JSON_SOURCE]);
             $epg_url =  $provider->replace_macros($epg_url);
 
             if (empty($epg_url)) {

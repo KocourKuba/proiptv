@@ -3454,11 +3454,6 @@ class Default_Dune_Plugin implements DunePlugin
             return null;
         }
 
-        if (!$provider->request_provider_token()) {
-            hd_debug_print("Can't get provider token");
-            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
-        }
-
         return $provider->GetInfoUI($handler);
     }
 
