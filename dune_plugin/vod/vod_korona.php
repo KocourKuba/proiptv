@@ -57,8 +57,7 @@ class vod_korona extends vod_standard
         $arr = explode("_", $movie_id);
         $id = isset($arr[1]) ? $arr[1] : $movie_id;
 
-        $params[CURLOPT_CUSTOMREQUEST] = "/video/$id";
-        $json = $this->make_json_request($params);
+        $json = $this->make_json_request("/video/$id");
 
         if ($json === false || $json === null) {
             hd_debug_print("failed to load movie: $movie_id");
@@ -119,8 +118,7 @@ class vod_korona extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $params[CURLOPT_CUSTOMREQUEST] = "/cat";
-        $jsonItems = $this->make_json_request($params);
+        $jsonItems = $this->make_json_request("/cat");
         if ($jsonItems === false) {
             return false;
         }
@@ -133,8 +131,7 @@ class vod_korona extends vod_standard
             $category = new Vod_Category($id, "$node->name ($node->count)");
 
             // fetch genres for category
-            $params[CURLOPT_CUSTOMREQUEST] = "/cat/$id/genres";
-            $genres = $this->make_json_request($params);
+            $genres = $this->make_json_request("/cat/$id/genres");
             if ($genres === false) {
                 continue;
             }
@@ -162,8 +159,7 @@ class vod_korona extends vod_standard
     {
         hd_debug_print("getSearchList $keyword");
         $keyword = urlencode($keyword);
-        $params[CURLOPT_CUSTOMREQUEST] = "/filter/by_name?name=$keyword&page=1&per_page=999999999";
-        $searchRes = $this->make_json_request($params);
+        $searchRes = $this->make_json_request("/filter/by_name?name=$keyword&page=1&per_page=999999999");
 
         return ($searchRes === false) ? array() : $this->CollectSearchResult($searchRes);
     }
@@ -231,8 +227,7 @@ class vod_korona extends vod_standard
 
         hd_debug_print("filter page_idx:  $page_idx");
 
-        $params[CURLOPT_CUSTOMREQUEST] = "/filter";
-        $jsonItems = $this->make_json_request($params);
+        $jsonItems = $this->make_json_request("/filter");
 
         return $jsonItems === false ? array() : $this->CollectSearchResult($query_id);
     }
@@ -275,9 +270,7 @@ class vod_korona extends vod_standard
         hd_debug_print($query_id);
         $arr = explode("_", $query_id);
         $genre_id = isset($arr[1]) ? $arr[1] : $query_id;
-        $params[CURLOPT_CUSTOMREQUEST] = "/genres/$genre_id?page=1&per_page=999999999";
-
-        $response = $this->make_json_request($params);
+        $response = $this->make_json_request("/genres/$genre_id?page=1&per_page=999999999");
         return $response === false ? array() : $this->CollectSearchResult($response);
     }
 
@@ -298,27 +291,28 @@ class vod_korona extends vod_standard
     }
 
     /**
-     * @param array|null $params
+     * @param string|null $params
      * @return bool|object
      */
-    protected function make_json_request($params = null)
+    protected function make_json_request($params)
     {
         if (!$this->provider->request_provider_token()) {
             return false;
         }
 
-        $curl_opt = array();
-
-        if (isset($params[CURLOPT_CUSTOMREQUEST])) {
-            $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
-        }
-
+        $curl_opt[CURLOPT_CUSTOMREQUEST] = $params;
         $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
         if ($jsonItems === false) {
             $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
             hd_debug_print($exception_msg);
             HD::set_last_error("vod_last_error", $exception_msg);
             return false;
+        }
+
+        if (LogSeverity::$is_debug) {
+            $command_url = $this->provider->getApiCommand(API_COMMAND_GET_VOD) . $params;
+            file_put_contents(get_temp_path(Hashed_Array::hash($command_url) . '.json'),
+                pretty_json_format($jsonItems, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
 
         return $jsonItems;

@@ -2883,7 +2883,7 @@ class Default_Dune_Plugin implements DunePlugin
                         $selected = (int)$key === (int)$current;
                         $menu_items[] = $this->create_menu_item($handler,
                             ACTION_EPG_SOURCE_SELECTED,
-                            $epg_preset['name'],
+                            isset($epg_preset['title']) ? $epg_preset['title'] : $epg_preset['name'],
                             $selected ? "check.png" : null,
                             array(LIST_IDX => $key, IS_LIST_SELECTED => $selected)
                         );
@@ -2914,7 +2914,10 @@ class Default_Dune_Plugin implements DunePlugin
         if ($provider !== null) {
             $epg_preset = $provider->getConfigValue(EPG_JSON_PRESETS);
             $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
-            $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, TR::t('setup_epg_cache_json__1', $epg_preset[$preset]['name']),
+            $name = isset($epg_preset[$preset]['title']) ? $epg_preset[$preset]['title'] : $epg_preset[$preset]['name'];
+            $menu_items[] = $this->create_menu_item($handler,
+                ENGINE_JSON,
+                TR::t('setup_epg_cache_json__1', $name),
                 ($engine === ENGINE_JSON) ? "check.png" : null
             );
         }

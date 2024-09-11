@@ -100,7 +100,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
             $presets = array();
             foreach ($epg_presets as $epg_preset) {
-                $presets[] = $epg_preset['name'];
+                $presets[] = isset($epg_preset['title']) ? $epg_preset['title'] : $epg_preset['name'];
             }
             Control_Factory::add_combobox($defs, $this, null,
                 PARAM_EPG_JSON_PRESET, TR::t('setup_epg_cache_json'),

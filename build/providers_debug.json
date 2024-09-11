@@ -140,7 +140,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
@@ -163,6 +164,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "only4"
           }
         ],
@@ -190,7 +192,8 @@
         "token_response": "token",
         "epg_presets": [
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -219,6 +222,7 @@
           },
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "tvteam"
           }
         ],
@@ -262,6 +266,7 @@
           },
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "cbilling"
           }
         ],
@@ -283,6 +288,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "bcu"
           }
         ],
@@ -304,6 +310,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "iptvx.one"
           }
         ],
@@ -350,7 +357,8 @@
             "name": "cbilling"
           },
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -394,7 +402,8 @@
         "domain": "junior.edmonst.net",
         "epg_presets": [
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -443,7 +452,8 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -482,6 +492,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "fox-tv"
           }
         ],
@@ -505,6 +516,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "ottg"
           }
         ],
@@ -574,6 +586,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "iptv.online"
           }
         ],
@@ -621,6 +634,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "iptv.online"
           }
         ],
@@ -680,7 +694,8 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/.+\\/(?<id>.+)\\/.+\\.m3u8$/",
         "epg_presets": [
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -716,7 +731,8 @@
             "name": "korona"
           },
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -765,7 +781,8 @@
         "id_map": "name",
         "epg_presets": [
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -795,6 +812,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "magic"
           }
         ],
@@ -831,6 +849,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "iptvx.one"
           }
         ],
@@ -902,6 +921,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "iptv.online"
           }
         ],
@@ -938,6 +958,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "gabbarit"
           }
         ],
@@ -964,6 +985,45 @@
     },
     {
       "enable": true,
+      "id": "piktv",
+      "name": "Pik TV",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_piktv.png",
+      "provider_url": "https://pa.piktv.top/",
+      "api_url": "http://stb.piktv.top/api",
+      "api_commands": {
+        "get_playlist": "http://pl.piktv.top/{QUALITY_ID}/{SERVER_ID}/{LOGIN}/{PASSWORD}/{STREAM_ID}",
+        "request_token": "{API}/auth/",
+        "refresh_token": "{API}/auth/",
+        "account_info": "{API}/xapi10/accountinfo",
+        "get_servers": "{API}/xapi10/tv/servers"
+      },
+      "config": {
+        "id_map": "CUID",
+        "epg_presets": [
+          {
+            "name": "korona",
+            "title": "piktv"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play.com"
+          }
+        ],
+        "ext_params": true,
+        "qualities": {
+          "hi": "High",
+          "lo": "Medium"
+        },
+        "streams": {
+          "multihls.m3u8": "HLS",
+          "mpegts.m3u": "MPEG-TS"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "ping",
       "name": "Ping TV",
       "type": "login",
@@ -978,6 +1038,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "fox-tv"
           }
         ],
@@ -1067,6 +1128,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "shara-tv"
           }
         ],
@@ -1124,7 +1186,8 @@
             "name": "sharavoz"
           },
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -1189,7 +1252,8 @@
       "config": {
         "epg_presets": [
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -1270,7 +1334,8 @@
             "name": "tvteam"
           },
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "ext_params": true,
@@ -1312,6 +1377,7 @@
         "epg_presets": [
           {
             "name": "drm",
+            "title": "epg.drm-play.com",
             "alias": "iptv.online"
           }
         ],
@@ -1419,7 +1485,8 @@
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "epg_presets": [
           {
-            "name": "drm"
+            "name": "drm",
+            "title": "epg.drm-play.com"
           }
         ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
