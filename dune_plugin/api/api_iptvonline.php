@@ -110,6 +110,11 @@ class api_iptvonline extends api_default
             return true;
         }
 
+        if ($need_refresh) {
+            $this->clear_session_info();
+            return $this->request_provider_token(true);
+        }
+
         hd_debug_print("token not received: " . pretty_json_format($data), true);
         HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token') . "\n\n" . pretty_json_format($data));
         return false;

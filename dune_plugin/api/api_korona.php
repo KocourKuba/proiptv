@@ -44,7 +44,7 @@ class api_korona extends api_default
         $expired = empty($token);
 
         if (!$force && !$expired) {
-            hd_debug_print("request not required", true);
+            hd_debug_print("request or refresh token not required", true);
             return true;
         }
 
@@ -90,6 +90,11 @@ class api_korona extends api_default
             HD::set_cookie($token_file, $data->access_token, time() + $data->expires_in);
             HD::set_cookie($refresh_token_file, $data->refresh_token, PHP_INT_MAX, true);
             return true;
+        }
+
+        if ($need_refresh) {
+            $this->clear_session_info();
+            return $this->request_provider_token(true);
         }
 
         hd_debug_print("token not received: " . pretty_json_format($data), true);
