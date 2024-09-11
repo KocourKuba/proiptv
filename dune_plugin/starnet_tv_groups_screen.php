@@ -228,9 +228,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->plugin->do_donate_dialog();
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                if (isset($user_input->{ACTION_CHANGE_PLAYLIST})) {
-                    $menu_items = $this->plugin->playlist_menu($this);
-                } else if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
+                if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
                     $menu_items = $this->plugin->epg_source_menu($this);
                 } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
                     $menu_items = $this->plugin->epg_engine_menu($this);
@@ -246,18 +244,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 } else {
                     $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
                     $menu_items = $this->plugin->common_categories_menu($this, $group_id);
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_RELOAD,
-                        TR::t('refresh_playlist'),
-                        "refresh.png",
-                        array('reload_action' => 'playlist'));
                 }
 
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
-
-            case ACTION_CHANGE_PLAYLIST:
-                hd_debug_print("Start event popup menu for playlist", true);
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_PLAYLIST => true));
 
             case ACTION_PLAYLIST_SELECTED:
                 if (!isset($user_input->{LIST_IDX}) || $user_input->{LIST_IDX} === $this->plugin->get_active_playlist_key()) break;

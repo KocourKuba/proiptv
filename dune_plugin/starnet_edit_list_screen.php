@@ -169,9 +169,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
 
             case GUI_EVENT_TIMER:
-                if ($edit_list !== self::SCREEN_EDIT_EPG_LIST) break;
+                if ($edit_list !== self::SCREEN_EDIT_EPG_LIST) {
+                    return null;
+                }
+
                 $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager === null) break;
+                if ($epg_manager === null) {
+                    return null;
+                }
 
                 clearstatcache();
 
@@ -531,7 +536,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $window_title = TR::t('edit_list_edit_item');
             $name = $item->name;
             $url = $item->params[PARAM_URI];
-            $param = array(CONTROL_EDIT_ACTION => CONTROL_EDIT_ITEM);
+            $param = array(CONTROL_ACTION_EDIT => CONTROL_EDIT_ITEM);
         } else {
             $window_title = TR::t('edit_list_add_url');
             $name = '';
@@ -577,7 +582,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             // Add set current
             $menu_items[] = $this->plugin->create_menu_item($this,
                 ACTION_SET_CURRENT,
-                $edit_list === self::SCREEN_EDIT_PLAYLIST ? TR::t('change_playlist') : TR::t('change_epg_source'),
+                $edit_list === self::SCREEN_EDIT_PLAYLIST ? TR::t('change_playlist') : TR::t('set_unset_xmltv_epg_source'),
                 "star_small.png"
             );
 
@@ -671,7 +676,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $order = $this->get_order($edit_list);
         $id = MediaURL::decode($user_input->selected_media_url)->id;
-        if (isset($user_input->{CONTROL_EDIT_ACTION})) {
+        if (isset($user_input->{CONTROL_ACTION_EDIT})) {
             // edit existing url
             if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                 $order->erase($id);

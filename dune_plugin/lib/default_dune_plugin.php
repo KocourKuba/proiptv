@@ -2873,6 +2873,7 @@ class Default_Dune_Plugin implements DunePlugin
                     array(LIST_IDX => $key, IS_LIST_SELECTED => $order_key !== false)
                 );
             }
+            $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_epg'), "refresh.png", array('reload_action' => 'epg'));
         } else {
             $provider = $this->get_current_provider();
             if (!is_null($provider)) {
@@ -2891,9 +2892,6 @@ class Default_Dune_Plugin implements DunePlugin
                 }
             }
         }
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_epg'), "refresh.png", array('reload_action' => 'epg'));
 
         return $menu_items;
     }
@@ -2982,9 +2980,25 @@ class Default_Dune_Plugin implements DunePlugin
         }
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
-        if ($this->get_playlists()->size()) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PLAYLIST, TR::t('change_playlist'), "playlist.png");
-        }
+        $menu_items[] = $this->create_menu_item($handler,
+            ACTION_ITEMS_EDIT,
+            TR::t('setup_channels_src_edit_playlists'),
+            "m3u_file.png",
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+
+        $menu_items[] = $this->create_menu_item($handler,
+            ACTION_ITEMS_EDIT,
+            TR::t('setup_edit_xmltv_list'),
+            "epg.png",
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST));
+
+        $menu_items[] = $this->create_menu_item($handler,
+            ACTION_RELOAD,
+            TR::t('refresh_playlist'),
+            "refresh.png",
+            array('reload_action' => 'playlist'));
+
+        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
         if ($this->get_all_xmltv_sources()->size() !== 0) {
             $icons_playlist = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
@@ -3004,16 +3018,13 @@ class Default_Dune_Plugin implements DunePlugin
             ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
 
         $provider = $this->get_current_provider();
-        $show_epg_source = false;
-        if ($is_xmltv_engine) {
-            $show_epg_source = ($this->get_all_xmltv_sources()->size() !== 0);
-        } else if (!is_null($provider)) {
+        if (!is_null($provider)) {
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
-            $show_epg_source = count($epg_presets) > 1;
-        }
-
-        if ($show_epg_source) {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_epg_sources'), "epg.png");
+            if (count($epg_presets) > 1) {
+                $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
+                $name = isset($epg_presets[$preset]['title']) ? $epg_presets[$preset]['title'] : $epg_presets[$preset]['name'];
+                $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_json_epg_source__1', $name), "epg.png");
+            }
         }
 
         if (!is_null($provider)) {
@@ -3041,16 +3052,8 @@ class Default_Dune_Plugin implements DunePlugin
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
-        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
-            TR::t('setup_channels_src_edit_playlists'), "m3u_file.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
-
-        $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_EDIT,
-            TR::t('setup_edit_xmltv_list'), "epg.png", array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST));
-
         $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,
             TR::t('entry_setup'), "settings.png");
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
         return $menu_items;
     }
@@ -3091,7 +3094,7 @@ class Default_Dune_Plugin implements DunePlugin
                     ACTION_ITEMS_EDIT,
                     TR::t('tv_screen_edit_hidden_group'),
                     "edit.png",
-                    array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
+                    array(CONTROL_ACTION_EDIT => Starnet_Edit_List_Screen::SCREEN_EDIT_GROUPS));
             }
         } else {
             $menu_items[] = $this->create_menu_item($handler,
@@ -3118,7 +3121,7 @@ class Default_Dune_Plugin implements DunePlugin
                 ACTION_ITEMS_EDIT,
                 TR::t('tv_screen_edit_hidden_channels'),
                 "edit.png",
-                array('action_edit' => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS));
+                array(CONTROL_ACTION_EDIT => Starnet_Edit_List_Screen::SCREEN_EDIT_CHANNELS));
         }
 
         if (!empty($menu_items)) {
@@ -3192,7 +3195,7 @@ class Default_Dune_Plugin implements DunePlugin
             case Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST:
                 $params['extension'] = PLAYLIST_PATTERN;
                 $title = TR::t('setup_channels_src_edit_playlists');
-                $sel_id = $this->get_active_playlist_key();
+                $sel_id = $this->get_playlists()->get_idx($this->get_active_playlist_key());
                 break;
 
             case Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST:

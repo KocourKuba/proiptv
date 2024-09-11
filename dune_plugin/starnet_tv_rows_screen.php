@@ -890,10 +890,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
-            case ACTION_CHANGE_PLAYLIST:
-                hd_debug_print("Start event popup menu for playlist");
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_PLAYLIST => true));
-
             case ACTION_PLAYLIST_SELECTED:
                 if (!isset($user_input->{LIST_IDX}) || $user_input->{LIST_IDX} === $this->plugin->get_active_playlist_key()) break;
 
@@ -1381,11 +1377,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         // show changing playlist and xmltv source in any place
         $menu_items = array();
         $add_param = null;
-        if (isset($user_input->{ACTION_CHANGE_PLAYLIST})) {
-            // popup menu for change playlist
-            hd_debug_print("change playlist menu", true);
-            $menu_items = $this->plugin->playlist_menu($this);
-        } else if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
+        if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
             // popup menu for change epg source
             hd_debug_print("change epg source menu", true);
             $menu_items = $this->plugin->epg_source_menu($this);
@@ -1487,7 +1479,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $row_id = json_decode($media_url->row_id);
             $group_id = isset($row_id->group_id) ? $row_id->group_id : null;
             $menu_items = array_merge($menu_items, $this->plugin->common_categories_menu($this, $group_id, false));
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_REFRESH_SCREEN, TR::t('refresh'), "refresh.png", $add_param);
         }
 
         return $menu_items;

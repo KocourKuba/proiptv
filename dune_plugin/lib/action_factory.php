@@ -45,16 +45,16 @@ class Action_Factory
             )
         );
 
-        if (!is_null($id) && defined('PluginOpenFolderActionData::id'))
+        if (!is_null($id))
             $action[GuiAction::data][PluginOpenFolderActionData::id] = $id;
 
-        if (!is_null($sel_id) && defined('PluginOpenFolderActionData::sel_id'))
+        if (!is_null($sel_id))
             $action[GuiAction::data][PluginOpenFolderActionData::sel_id] = $sel_id;
 
-        if (!is_null($post_action) && defined('PluginOpenFolderActionData::post_action'))
+        if (!is_null($post_action))
             $action[GuiAction::data][PluginOpenFolderActionData::post_action] = $post_action;
 
-        if ($keep_osd_context && defined('PluginOpenFolderActionData::keep_osd_context'))
+        if ($keep_osd_context)
             $action[GuiAction::data][PluginOpenFolderActionData::keep_osd_context] = $keep_osd_context;
 
         return $action;

@@ -26,7 +26,6 @@
 
 # Common actions
 const ACTION_ADD_FAV = 'add_favorite';
-const ACTION_CHANGE_PLAYLIST = 'change_playlist';
 const ACTION_EXTERNAL_PLAYER = 'use_external_player';
 const ACTION_INTERNAL_PLAYER = 'use_internal_player';
 const ACTION_FOLDER_SELECTED = 'folder_selected';
@@ -104,7 +103,7 @@ const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
 const ACTION_CLEAR_CACHE = 'clear_cache';
 const ACTION_INDEX_EPG = 'index_epg';
 
-const CONTROL_EDIT_ACTION = 'edit_action';
+const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
 const CONTROL_EDIT_ITEM = 'edit_item';
 const CONTROL_URL_PATH = 'url_path';
