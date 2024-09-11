@@ -128,11 +128,9 @@ class vod_korona extends vod_standard
         $category_list = array();
         $category_index = array();
 
-        $total = 0;
         foreach ($jsonItems->data as $node) {
             $id = (string)$node->id;
             $category = new Vod_Category($id, "$node->name ($node->count)");
-            $total += $node->count;
 
             // fetch genres for category
             $params[CURLOPT_CUSTOMREQUEST] = "/cat/$id/genres";

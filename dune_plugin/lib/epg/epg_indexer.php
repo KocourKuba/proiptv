@@ -227,13 +227,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         hd_debug_print("cache valid status: $res", true);
         hd_debug_print("Indexing channels for: $this->xmltv_url", true);
         switch ($res) {
-            case 0:
-                $this->index_xmltv_channels();
-                break;
-
             case 1:
                 // downloaded xmltv file not exists or expired
                 hd_debug_print("Download and indexing xmltv source");
+                $this->remove_indexes(array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_POSITIONS));
                 if ($this->download_xmltv_source() === 1) {
                     $this->index_xmltv_channels();
                 }
@@ -241,9 +238,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             case 3:
                 // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
                 hd_debug_print("Indexing xmltv source");
-                $this->remove_index(self::INDEX_CHANNELS);
-                $this->remove_index(self::INDEX_PICONS);
-                $this->remove_index(self::INDEX_POSITIONS);
+                $this->remove_indexes(array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_POSITIONS));
                 $this->index_xmltv_channels();
                 break;
             default:
@@ -304,9 +299,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         }
 
         hd_debug_print("Cached file: $cached_file is not expired");
-        $channels_index_valid = $this->is_index_valid(self::INDEX_CHANNELS);
-        $picons_index_valid = $this->is_index_valid(self::INDEX_PICONS);
-        $pos_index_valid = $this->is_index_valid(self::INDEX_POSITIONS);
+        $indexed = array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_POSITIONS);
+        list($channels_index_valid, $picons_index_valid, $pos_index_valid) = $this->get_indexes_valid($indexed);
 
         if ($channels_index_valid && $picons_index_valid && $pos_index_valid) {
             hd_debug_print("Xmltv cache valid");
@@ -340,12 +334,20 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
-     * Check is selected index is valid
+     * Check is selected any indexes is valid
      *
-     * @param string $name
+     * @param array $names
      * @return bool
      */
-    abstract protected function is_index_valid($name);
+    abstract protected function get_indexes_valid($names);
+
+    /**
+     * Check is all indexes is valid
+     *
+     * @param array $names
+     * @return bool
+     */
+    abstract protected function is_all_indexes_valid($names);
 
     /**
      * @return bool
@@ -367,6 +369,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             hd_debug_print("File is indexing or downloading, skipped");
             return 0;
         }
+
+        hd_debug_print_separator();
 
         $ret = -1;
         $this->perf->reset('start');
@@ -477,9 +481,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             }
 
             $ret = 1;
-            $this->remove_index(self::INDEX_CHANNELS);
-            $this->remove_index(self::INDEX_PICONS);
-            $this->remove_index(self::INDEX_POSITIONS);
+            $this->remove_indexes(array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_POSITIONS));
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
             if (!empty($tmp_filename) && file_exists($tmp_filename)) {
@@ -552,8 +554,16 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      * Remove is selected index
      *
      * @param string $name
+     * @return bool
      */
     abstract public function remove_index($name);
+
+    /**
+     * Remove is selected index
+     *
+     * @param array $names
+     */
+    abstract public function remove_indexes($names);
 
     /**
      * clear memory cache and cache for current xmltv source

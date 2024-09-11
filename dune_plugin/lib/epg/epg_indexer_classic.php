@@ -171,7 +171,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
 
         $channels_file = $this->get_index_name(self::INDEX_CHANNELS);
         $picons_file = $this->get_index_name(self::INDEX_PICONS);
-        if ($this->is_index_valid(self::INDEX_CHANNELS) && $this->is_index_valid(self::INDEX_PICONS)) {
+        if ($this->is_all_indexes_valid(array(self::INDEX_CHANNELS, self::INDEX_PICONS))) {
             hd_debug_print("Load cache channels and picons index: $channels_file");
             $this->xmltv_channels[$this->url_hash] = parse_json_file($channels_file);
             $this->xmltv_picons[$this->url_hash] = parse_json_file($picons_file);
@@ -246,25 +246,44 @@ class Epg_Indexer_Classic extends Epg_Indexer
             hd_debug_print("Reindexing EPG channels done: {$report[Perf_Collector::TIME]} secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
             hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-            hd_debug_print_separator();
         } catch (Exception $ex) {
             hd_debug_print("Reindexing EPG channels failed");
             print_backtrace_exception($ex);
         }
 
         $this->set_index_locked(false);
+        hd_debug_print_separator();
     }
 
     /**
      * @inheritDoc
      * @override
      */
-    protected function is_index_valid($name)
+    protected function get_indexes_valid($names)
     {
-        $name = $this->get_index_name($name);
-        return file_exists($name) && filesize($name) !== 0;
+        foreach ($names as $name) {
+            $name = $this->get_index_name($name);
+            $result[] = file_exists($name) && filesize($name) !== 0;
+        }
+
+        return empty($result) ? false : $result;
     }
 
+    /**
+     * @inheritDoc
+     * @override
+     */
+    protected function is_all_indexes_valid($names)
+    {
+        foreach ($names as $name) {
+            $name = $this->get_index_name($name);
+            if (!file_exists($name) || filesize($name) === 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
     /**
      * @inheritDoc
      * @override
@@ -282,7 +301,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
 
         $cache_valid = false;
         $positions_file = $this->get_index_name(self::INDEX_POSITIONS);
-        if ($this->is_index_valid(self::INDEX_POSITIONS)) {
+        if ($this->is_all_indexes_valid(array(self::INDEX_POSITIONS))) {
             hd_debug_print("Load cache program index: $positions_file");
             $this->xmltv_positions[$this->url_hash] = parse_json_file($positions_file);
 
@@ -302,13 +321,14 @@ class Epg_Indexer_Classic extends Epg_Indexer
         }
 
         try {
-            $this->set_index_locked(true);
 
             hd_debug_print("Start reindex: $positions_file");
 
             $this->perf->setLabel('reindex');
 
             $this->remove_index(self::INDEX_POSITIONS);
+
+            $this->set_index_locked(true);
             $file = $this->open_xmltv_file();
 
             $start_program_block = 0;
@@ -374,17 +394,14 @@ class Epg_Indexer_Classic extends Epg_Indexer
             hd_debug_print("Reindexing EPG program done: {$report[Perf_Collector::TIME]} secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
             hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-            hd_debug_print_separator();
         } catch (Exception $ex) {
             hd_debug_print("Reindexing EPG positions failed");
             print_backtrace_exception($ex);
         }
 
         $this->set_index_locked(false);
+        hd_debug_print_separator();
     }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
 
     /**
      * @inheritDoc
@@ -397,7 +414,25 @@ class Epg_Indexer_Classic extends Epg_Indexer
             hd_debug_print("Remove index: $name");
             unlink($name);
         }
+        return true;
     }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function remove_indexes($names)
+    {
+        foreach ($names as $name) {
+            $filename = $this->get_index_name($name);
+            if (file_exists($filename)) {
+                hd_debug_print("Remove index: $filename");
+                @unlink($filename);
+            }
+        }
+    }
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
 
     /**
      * @inheritDoc
