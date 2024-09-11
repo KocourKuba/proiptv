@@ -192,6 +192,22 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     }
 
     /**
+     * @inheritDoc
+     * @override
+     */
+    public function clear_current_epg_cache()
+    {
+        hd_debug_print(null, true);
+        $this->epg_cache = array();
+        $files = get_temp_path('*.cache');
+        hd_debug_print("clear cache files: $files");
+        shell_exec('rm -f ' . $files);
+        clearstatcache();
+    }
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
      * request server for epg and parse json response
      * @param string $url
      * @param api_default $provider
@@ -272,22 +288,5 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         ksort($channel_epg, SORT_NUMERIC);
         return $channel_epg;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    public function clear_current_epg_cache()
-    {
-        hd_debug_print(null, true);
-        $this->epg_cache = array();
-        $files = get_temp_path('*.cache');
-        hd_debug_print("clear cache files: $files");
-        shell_exec('rm -f ' . $files);
-        clearstatcache();
     }
 }

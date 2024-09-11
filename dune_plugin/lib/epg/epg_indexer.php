@@ -334,31 +334,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
-     * Check is selected any indexes is valid
-     *
-     * @param array $names
-     * @return bool
-     */
-    abstract protected function get_indexes_valid($names);
-
-    /**
-     * Check is all indexes is valid
-     *
-     * @param array $names
-     * @return bool
-     */
-    abstract protected function is_all_indexes_valid($names);
-
-    /**
-     * @return bool
-     */
-    protected function is_current_index_locked()
-    {
-        $lock_dir = $this->get_cache_stem('.lock');
-        return is_dir($lock_dir);
-    }
-
-    /**
      * Download XMLTV source.
      *
      * @return int
@@ -551,21 +526,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
-     * Remove is selected index
-     *
-     * @param string $name
-     * @return bool
-     */
-    abstract public function remove_index($name);
-
-    /**
-     * Remove is selected index
-     *
-     * @param array $names
-     */
-    abstract public function remove_indexes($names);
-
-    /**
      * clear memory cache and cache for current xmltv source
      *
      * @return void
@@ -636,7 +596,22 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
+    /// abstract methods
+
+    /**
+     * Remove is selected index
+     *
+     * @param string $name
+     * @return bool
+     */
+    abstract public function remove_index($name);
+
+    /**
+     * Remove is selected index
+     *
+     * @param array $names
+     */
+    abstract public function remove_indexes($names);
 
     /**
      * Clear memory index
@@ -651,6 +626,34 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      * @return array
      */
     abstract protected function load_program_index($channel);
+
+    /**
+     * Check is selected any indexes is valid
+     *
+     * @param array $names
+     * @return bool
+     */
+    abstract protected function get_indexes_valid($names);
+
+    /**
+     * Check is all indexes is valid
+     *
+     * @param array $names
+     * @return bool
+     */
+    abstract protected function is_all_indexes_valid($names);
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
+     * @return bool
+     */
+    protected function is_current_index_locked()
+    {
+        $lock_dir = $this->get_cache_stem('.lock');
+        return is_dir($lock_dir);
+    }
 
     /**
      * @return resource

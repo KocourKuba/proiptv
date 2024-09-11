@@ -277,92 +277,6 @@ class Epg_Indexer_Sql extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    protected function get_indexes_valid($names)
-    {
-        hd_debug_print(null, true);
-        $db = $this->open_sqlite_db();
-        if (is_null($db)) {
-            hd_debug_print("Problem with open SQLite db! Possible url not set");
-            return false;
-        }
-
-        foreach ($names as $name) {
-            $result[] = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';");
-        }
-        return empty($result) ? false : $result;
-    }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    protected function is_all_indexes_valid($names)
-    {
-        hd_debug_print(null, true);
-        $db = $this->open_sqlite_db();
-        if (is_null($db)) {
-            hd_debug_print("Problem with open SQLite db! Possible url not set");
-            return false;
-        }
-
-        foreach ($names as $name) {
-            if (!$db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';")) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    public function remove_index($name)
-    {
-        if ($this->is_current_index_locked()) {
-            hd_debug_print("Unable to drop table because index $name is locked");
-            return false;
-        }
-
-        $db = $this->open_sqlite_db();
-        if (is_null($db)) {
-            hd_debug_print("Problem with open SQLite db! Possible url not set");
-        } else {
-            hd_debug_print("Remove index: $name");
-            $db->exec("DROP TABLE IF EXISTS $name;");
-        }
-        return true;
-    }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    public function remove_indexes($names)
-    {
-        if ($this->is_current_index_locked()) {
-            hd_debug_print("Unable to drop table because current index is locked");
-            return;
-        }
-
-        $db = $this->open_sqlite_db();
-        if (is_null($db)) {
-            hd_debug_print("Problem with open SQLite db! Possible url not set");
-            return;
-        }
-
-        foreach ($names as $name) {
-            $db->exec("DROP TABLE IF EXISTS $name;");
-        }
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    /**
-     * @inheritDoc
-     * @override
-     */
     public function index_xmltv_positions()
     {
         hd_debug_print("Indexing positions for: $this->xmltv_url", true);
@@ -487,6 +401,92 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
         $this->set_index_locked(false);
         hd_debug_print_separator();
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function remove_index($name)
+    {
+        if ($this->is_current_index_locked()) {
+            hd_debug_print("Unable to drop table because index $name is locked");
+            return false;
+        }
+
+        $db = $this->open_sqlite_db();
+        if (is_null($db)) {
+            hd_debug_print("Problem with open SQLite db! Possible url not set");
+        } else {
+            hd_debug_print("Remove index: $name");
+            $db->exec("DROP TABLE IF EXISTS $name;");
+        }
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function remove_indexes($names)
+    {
+        if ($this->is_current_index_locked()) {
+            hd_debug_print("Unable to drop table because current index is locked");
+            return;
+        }
+
+        $db = $this->open_sqlite_db();
+        if (is_null($db)) {
+            hd_debug_print("Problem with open SQLite db! Possible url not set");
+            return;
+        }
+
+        foreach ($names as $name) {
+            $db->exec("DROP TABLE IF EXISTS $name;");
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// protected methods
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    protected function get_indexes_valid($names)
+    {
+        hd_debug_print(null, true);
+        $db = $this->open_sqlite_db();
+        if (is_null($db)) {
+            hd_debug_print("Problem with open SQLite db! Possible url not set");
+            return false;
+        }
+
+        foreach ($names as $name) {
+            $result[] = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';");
+        }
+        return empty($result) ? false : $result;
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    protected function is_all_indexes_valid($names)
+    {
+        hd_debug_print(null, true);
+        $db = $this->open_sqlite_db();
+        if (is_null($db)) {
+            hd_debug_print("Problem with open SQLite db! Possible url not set");
+            return false;
+        }
+
+        foreach ($names as $name) {
+            if (!$db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';")) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

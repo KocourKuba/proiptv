@@ -130,15 +130,6 @@ class Epg_Indexer_Classic extends Epg_Indexer
     }
 
     /**
-     * @param string $name
-     * @return string
-     */
-    protected function get_index_name($name)
-    {
-        return $this->get_cache_stem("_$name$this->index_ext");
-    }
-
-    /**
      * @inheritDoc
      * @override
      */
@@ -255,35 +246,6 @@ class Epg_Indexer_Classic extends Epg_Indexer
         hd_debug_print_separator();
     }
 
-    /**
-     * @inheritDoc
-     * @override
-     */
-    protected function get_indexes_valid($names)
-    {
-        foreach ($names as $name) {
-            $name = $this->get_index_name($name);
-            $result[] = file_exists($name) && filesize($name) !== 0;
-        }
-
-        return empty($result) ? false : $result;
-    }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    protected function is_all_indexes_valid($names)
-    {
-        foreach ($names as $name) {
-            $name = $this->get_index_name($name);
-            if (!file_exists($name) || filesize($name) === 0) {
-                return false;
-            }
-        }
-
-        return true;
-    }
     /**
      * @inheritDoc
      * @override
@@ -431,8 +393,48 @@ class Epg_Indexer_Classic extends Epg_Indexer
             }
         }
     }
+
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods
+
+    /**
+     * @param string $name
+     * @return string
+     */
+    protected function get_index_name($name)
+    {
+        return $this->get_cache_stem("_$name$this->index_ext");
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    protected function get_indexes_valid($names)
+    {
+        foreach ($names as $name) {
+            $name = $this->get_index_name($name);
+            $result[] = file_exists($name) && filesize($name) !== 0;
+        }
+
+        return empty($result) ? false : $result;
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    protected function is_all_indexes_valid($names)
+    {
+        foreach ($names as $name) {
+            $name = $this->get_index_name($name);
+            if (!file_exists($name) || filesize($name) === 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /**
      * @inheritDoc
