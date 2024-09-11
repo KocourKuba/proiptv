@@ -29,7 +29,6 @@ const ACTION_ADD_FAV = 'add_favorite';
 const ACTION_EXTERNAL_PLAYER = 'use_external_player';
 const ACTION_INTERNAL_PLAYER = 'use_internal_player';
 const ACTION_FOLDER_SELECTED = 'folder_selected';
-const ACTION_PLAYLIST_SELECTED = 'playlist_selected';
 const ACTION_DO_EDIT_PROVIDER = 'do_edit_provider';
 const ACTION_DO_EDIT_PROVIDER_EXT = 'do_edit_provider_ext';
 const ACTION_EDIT_PROVIDER_DLG = 'select_provider';

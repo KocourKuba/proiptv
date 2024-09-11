@@ -2758,51 +2758,6 @@ class Default_Dune_Plugin implements DunePlugin
 
     /**
      * @param User_Input_Handler $handler
-     * @return array
-     */
-    public function playlist_menu($handler)
-    {
-        $menu_items = array();
-
-        $cur = $this->get_active_playlist_key();
-        $idx = 0;
-        foreach ($this->get_playlists() as $key => $item) {
-            if ($idx !== 0 && ($idx % 17) === 0) {
-                $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-            }
-            $idx++;
-
-            $icon = null;
-            $title = $item->name;
-            if ($item->type === PARAM_PROVIDER) {
-                $provider = $this->create_provider_class($item->params[PARAM_PROVIDER]);
-                if (!is_null($provider)) {
-                    $icon = $provider->getLogo();
-                    if ($item->name !== $provider->getName()) {
-                        $title .= " ({$provider->getName()})";
-                    }
-                }
-            } else if ($item->type === PARAM_LINK) {
-                $icon = "link.png";
-            } else if ($item->type === PARAM_FILE) {
-                $icon = "m3u_file.png";
-            }
-
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_PLAYLIST_SELECTED,
-                $title,
-                ($cur !== $key) ? $icon : "check.png",
-                array(LIST_IDX => $key));
-        }
-
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_playlist'), "refresh.png", array('reload_action' => 'playlist'));
-
-        return $menu_items;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
      * @param string $action_id
      * @param string $caption
      * @param string $icon
@@ -2841,54 +2796,19 @@ class Default_Dune_Plugin implements DunePlugin
     {
         $menu_items = array();
 
-        if ($this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV) {
-            $sources = $this->get_all_xmltv_sources();
-            $active_sources_order = $this->get_active_xmltv_sources()->get_ordered_values();
-            hd_debug_print("active sources: " . json_encode($active_sources_order));
-            $idx = 0;
-            foreach ($sources as $key => $item) {
-                if ($idx !== 0 && ($idx % 17) === 0) {
-                    $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-                }
-                $idx++;
-
-                if ($item === EPG_SOURCES_SEPARATOR_TAG) {
-                    $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-                    continue;
-                }
-
-                $name = $item->name;
-                $cached_xmltv_file = $this->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
-                if (file_exists($cached_xmltv_file)) {
-                    $check_time_file = filemtime($cached_xmltv_file);
-                    $name .= " (" . date("d.m H:i", $check_time_file) . ")";
-                }
-
-                hd_debug_print("source: {$item->params[PARAM_URI]}");
-                $order_key = array_search($item->params[PARAM_URI], $active_sources_order);
-                $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_EPG_SOURCE_SELECTED,
-                    $order_key !== false ? ($order_key + 1) . " - $name" : $name,
-                    $order_key !== false ? "check.png" : null,
-                    array(LIST_IDX => $key, IS_LIST_SELECTED => $order_key !== false)
-                );
-            }
-            $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, TR::t('refresh_epg'), "refresh.png", array('reload_action' => 'epg'));
-        } else {
-            $provider = $this->get_current_provider();
-            if (!is_null($provider)) {
-                $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
-                if (!empty($epg_presets)) {
-                    $current = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
-                    foreach ($epg_presets as $key => $epg_preset) {
-                        $selected = (int)$key === (int)$current;
-                        $menu_items[] = $this->create_menu_item($handler,
-                            ACTION_EPG_SOURCE_SELECTED,
-                            isset($epg_preset['title']) ? $epg_preset['title'] : $epg_preset['name'],
-                            $selected ? "check.png" : null,
-                            array(LIST_IDX => $key, IS_LIST_SELECTED => $selected)
-                        );
-                    }
+        $provider = $this->get_current_provider();
+        if (!is_null($provider) && $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
+            $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
+            if (!empty($epg_presets)) {
+                $current = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
+                foreach ($epg_presets as $key => $epg_preset) {
+                    $selected = (int)$key === (int)$current;
+                    $menu_items[] = $this->create_menu_item($handler,
+                        ACTION_EPG_SOURCE_SELECTED,
+                        isset($epg_preset['title']) ? $epg_preset['title'] : $epg_preset['name'],
+                        $selected ? "check.png" : null,
+                        array(LIST_IDX => $key, IS_LIST_SELECTED => $selected)
+                    );
                 }
             }
         }

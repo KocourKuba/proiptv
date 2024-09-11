@@ -890,29 +890,21 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
-            case ACTION_PLAYLIST_SELECTED:
-                if (!isset($user_input->{LIST_IDX}) || $user_input->{LIST_IDX} === $this->plugin->get_active_playlist_key()) break;
-
-                $this->save_if_changed();
-                $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
-                HD::set_last_error("pl_last_error", null);
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
-
             case ACTION_CHANGE_EPG_SOURCE:
                 hd_debug_print("Start event popup menu for epg source");
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
 
             case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->{LIST_IDX})) break;
+                if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) !== ENGINE_JSON) break;
 
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) === ENGINE_XMLTV) {
-                    $this->plugin->set_active_xmltv_source($user_input->{LIST_IDX}, !$user_input->{IS_LIST_SELECTED});
-                } else {
-                    $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
+                $epg_manager = $this->plugin->get_epg_manager();
+
+                if ($epg_manager === null) {
+                    return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
                 }
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                $epg_manager->clear_current_epg_cache();
+                $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -944,6 +936,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
                 }
                 break;
+
+            case ACTION_ITEMS_EDIT:
+                $this->save_if_changed();
+                return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit);
 
             case ACTION_SETTINGS:
                 $this->save_if_changed();
@@ -1378,8 +1374,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $menu_items = array();
         $add_param = null;
         if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
-            // popup menu for change epg source
-            hd_debug_print("change epg source menu", true);
             $menu_items = $this->plugin->epg_source_menu($this);
         } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
             $menu_items = $this->plugin->epg_engine_menu($this);

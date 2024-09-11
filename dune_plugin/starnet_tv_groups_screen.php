@@ -248,33 +248,20 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
 
-            case ACTION_PLAYLIST_SELECTED:
-                if (!isset($user_input->{LIST_IDX}) || $user_input->{LIST_IDX} === $this->plugin->get_active_playlist_key()) break;
-
-                hd_debug_print("Select playlist: " . $user_input->{LIST_IDX}, true);
-                $this->save_if_changed();
-                $this->plugin->set_active_playlist_key($user_input->{LIST_IDX});
-                HD::set_last_error("pl_last_error", null);
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
-
             case ACTION_CHANGE_EPG_SOURCE:
                 hd_debug_print("Start event popup menu for epg source", true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
 
             case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->{LIST_IDX})) break;
+                if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) !== ENGINE_JSON) break;
 
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) === ENGINE_XMLTV) {
-                    $this->plugin->set_active_xmltv_source($user_input->{LIST_IDX}, !$user_input->{IS_LIST_SELECTED});
-                } else {
-                    $epg_manager = $this->plugin->get_epg_manager();
-                    if ($epg_manager === null) {
-                        return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
-                    }
-                    $epg_manager->clear_current_epg_cache();
-                    $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
+                $epg_manager = $this->plugin->get_epg_manager();
+
+                if ($epg_manager === null) {
+                    return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
                 }
+                $epg_manager->clear_current_epg_cache();
+                $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
 
             case ACTION_EPG_CACHE_ENGINE:
