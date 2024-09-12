@@ -180,15 +180,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 clearstatcache();
 
-                $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
+                if (!isset($plugin_cookies->ticker)) {
+                    $plugin_cookies->ticker = 0;
+                }
                 $res = $epg_manager->import_indexing_log($this->plugin->get_all_xmltv_sources()->get_order());
+                $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
 
                 if ($res !== false) {
+                    hd_debug_print("Return post action. Timer stopped");
                     return $post_action;
                 }
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions, 2000, $post_action);
+                return Action_Factory::change_behaviour($actions, 1000, $post_action);
 
             case ACTION_SET_CURRENT:
                 $id = $selected_media_url->id;
@@ -215,13 +219,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $item = $this->plugin->get_all_xmltv_sources()->get($id);
                 if (is_null($item) || empty($item->params[PARAM_URI])) break;
 
-                $source = new Hashed_Array();
-                $source->put($id, $item->params[PARAM_URI]);
+                $sources = new Hashed_Array();
+                $sources->put($id, $item->params[PARAM_URI]);
                 hd_debug_print("index ($id) {$item->params[PARAM_URI]}", true);
-                $this->plugin->run_bg_epg_indexing($source);
+                $this->plugin->run_bg_epg_indexing($sources);
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions);
+                return Action_Factory::change_behaviour($actions, 1000);
 
             case ACTION_CLEAR_CACHE:
                 $this->plugin->safe_clear_selected_epg_cache($selected_media_url->id);
@@ -967,7 +971,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         hd_debug_print(null, true);
         hd_debug_print("MediaUrl: " . $media_url, true);
-
         switch ($media_url->edit_list) {
             case self::SCREEN_EDIT_CHANNELS:
                 $items = $this->collect_channels($media_url);
@@ -982,7 +985,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case self::SCREEN_EDIT_EPG_LIST:
-                $items = $this->collect_epg_lists($media_url);
+                if (++$plugin_cookies->ticker > 3) {
+                    $plugin_cookies->ticker = 1;
+                }
+                $items = $this->collect_epg_lists($media_url, $plugin_cookies);
                 break;
 
             case self::SCREEN_EDIT_PROVIDERS:
@@ -1081,7 +1087,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         return $items;
     }
 
-    protected function collect_epg_lists($media_url)
+    protected function collect_epg_lists($media_url, $plugin_cookies)
     {
         $items = array();
         $epg_manager = $this->plugin->get_epg_manager();
@@ -1093,13 +1099,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $all_sources['ext'] = $this->get_order($media_url->edit_list);
         $active_sources_order = $this->plugin->get_active_xmltv_sources()->get_ordered_values();
         $dupes = array();
-        foreach ($all_sources as $idx => $source) {
+        foreach ($all_sources as $source_type => $source) {
             foreach ($source as $key => $item) {
                 if (isset($dupes[$key])) {
                     continue;
                 }
 
-                $locked = false;
+                $detailed_info = '';
                 $order_key = false;
                 $dupes[$key] = '';
                 $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
@@ -1111,39 +1117,48 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $title = $order_key !== false ? ($order_key + 1) .  " - $title" : $title;
                 }
 
-                if (file_exists($cached_xmltv_file)) {
-                    $locked = $epg_manager->get_indexer()->is_index_locked($key);
-
+                $locked = $epg_manager->get_indexer()->is_index_locked($key);
+                if ($locked) {
+                    $title = TR::t('edit_list_title_info__1', $title);
+                } else if (file_exists($cached_xmltv_file)) {
+                    $size = HD::get_file_size($cached_xmltv_file);
                     $check_time_file = filemtime($cached_xmltv_file);
                     $dl_date = date("d.m H:i", $check_time_file);
                     $title = TR::t('edit_list_title_info__2', $title, $dl_date);
+                    $info = '';
+                    foreach ($epg_manager->get_indexer()->get_indexes_info($key) as $index => $cnt) {
+                        $cnt = ($cnt !== -1) ? $cnt : TR::load_string('err_error_no_data');
+                        $info .= "$index: $cnt|";
+                    }
 
                     if ($this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO) === XMLTV_CACHE_MANUAL) {
                         $max_cache_time = $check_time_file + 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
                         $expired = date("d.m H:i", $max_cache_time);
-                        $detailed_info = TR::t('edit_list_detail_info__4',
-                            $item->params[PARAM_URI],
-                            HD::get_file_size($cached_xmltv_file),
-                            $dl_date,
-                            $expired
-                        );
                     } else {
-                        $detailed_info = TR::t('edit_list_detail_info__3',
-                            $item->params[PARAM_URI],
-                            HD::get_file_size($cached_xmltv_file),
-                            $dl_date
-                        );
+                        $expired = TR::load_string('setup_epg_cache_type_auto');
                     }
 
-                } else if (isset($item->params[PARAM_URI])) {
-                    $detailed_info = TR::t('edit_list_detail_info__1', $item->params[PARAM_URI]);
-                } else {
-                    $detailed_info = $item->name;
+                    $detailed_info = TR::load_string('edit_list_detail_info__5',
+                        $item->params[PARAM_URI],
+                        $size,
+                        $dl_date,
+                        $expired,
+                        $info
+                    );
+                }
+
+                if (empty($detailed_info)) {
+                    if (isset($item->params[PARAM_URI])) {
+                        $detailed_info = TR::t('edit_list_detail_info__1', $item->params[PARAM_URI]);
+                    } else {
+                        $detailed_info = $item->name;
+                    }
                 }
 
                 if ($locked) {
-                    $icon_file = get_image_path("refresh.png");
-                } else if ($idx === 'pl') {
+                    $icon_file = get_image_path("refresh$plugin_cookies->ticker.png");
+                    hd_debug_print("icon: $icon_file");
+                } else if ($source_type === 'pl') {
                     $icon_file = get_image_path("m3u_file.png");
                 } else if ($item->type === PARAM_FILE) {
                     $icon_file = get_image_path("xmltv_file.png");

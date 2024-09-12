@@ -268,8 +268,8 @@ edit_list_add_name = Name einsetzen
 edit_list_edit_item = Bearbeiten
 edit_list_add_provider = IPTV-Anbieter hinzufügen
 edit_list_detail_info__1 = URL:|%s
-edit_list_detail_info__3 = URL:|%s||Größe:|%s||Heruntergeladen:|%s
-edit_list_detail_info__4 = URL:|%s||Größe:|%s||Heruntergeladen:|%s||Abgelaufen:|%s
+edit_list_detail_info__5 = URL:|%s||Größe:|%s||Heruntergeladen:|%s||Abgelaufen:|%s||Info:|%s
+edit_list_title_info__1 = %s|Indizierung...
 edit_list_title_info__2 = %s|Heruntergeladen: %s
 edit_list_title_cant_delete = Can't delete the playlist XMLTV source!
 
@@ -384,3 +384,4 @@ err_vod_not_available = Das VOD ist für die ausgewählte Playlist/den ausgewäh
 err_load_vod = Fehler beim Laden des VOD!
 err_decoding_vod = Fehler beim Dekodieren von VOD-Daten!
 err_auth_no_spam = Vorherige Autorisierungsanforderung fehlgeschlagen|um zu vermeiden, dass die Anfrage blockiert wird.|Ändern Sie die Zugangsdaten oder laden Sie die Wiedergabeliste neu.
+err_error_no_data = Keine Daten
