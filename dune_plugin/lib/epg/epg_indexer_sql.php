@@ -49,10 +49,14 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function get_picon($aliases)
     {
+        $res = '';
+        if ($this->is_index_locked($this->url_hash)) {
+            return $res;
+        }
+
         $table_pic = self::INDEX_PICONS;
         $table_ch = self::INDEX_CHANNELS;
 
-        $res = '';
         $placeHolders = '';
         foreach ($aliases as $alias) {
             if (empty($alias)) continue;
@@ -467,7 +471,6 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
         foreach ($result as $key => $name) {
             $res = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$key';");
-            hd_debug_print("get_indexes_info: " . var_export($res, true), true);
             if (!empty($res)) {
                 $result[$key] = $db->querySingle("SELECT count(*) FROM $key;");
             }
@@ -526,7 +529,6 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     private function open_sqlite_db($db_name)
     {
-        hd_debug_print(null, true);
         if (empty($db_name)) {
             hd_debug_print("No handler for empty url!");
             return null;
