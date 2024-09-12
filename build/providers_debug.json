@@ -615,6 +615,27 @@
     },
     {
       "enable": true,
+      "id": "iptv360",
+      "name": "IPTV 360",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptv360.png",
+      "provider_url": "https://iptv360.ru/",
+      "api_commands": {
+        "get_playlist": "https://iptv360.ru/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "ext_params": true,
+        "streams": {
+          "hls": "HLS",
+          "hls2": "HLS2",
+          "siptv": "MPEG-TS"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "iptvonline",
       "name": "IPTV Online",
       "type": "login",
@@ -1174,10 +1195,10 @@
       "name": "Sharavoz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
-      "provider_url": "https://www.sharavoz.tv/",
+      "provider_url": "https://shrv.gb.net/",
       "api_url": "http://api.program.spr24.net/api",
       "api_commands": {
-        "get_playlist": "http://www.sharavoz.tv/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
+        "get_playlist": "http://{DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
         "get_vod": "http://app.media24.cc/json/c"
       },
       "config": {
@@ -1185,16 +1206,16 @@
         "epg_presets": [
           {
             "name": "sharavoz"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play"
           }
         ],
         "ext_params": true,
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
           "replace": "$1{SERVER_ID}$2{STREAM_ID}$3"
+        },
+        "domains": {
+          "shrv.gb.net": "shrv.gb.net",
+          "www.sharavoz.tv": "www.sharavoz.tv"
         },
         "streams": {
           "video.m3u8": "HLS",
