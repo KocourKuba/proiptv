@@ -79,7 +79,7 @@ class TR
         if (($lang_txt = file_get_contents($lang_file)) && preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
             $args = func_get_args();
             array_shift($args);
-            return vsprintf($m[1], $args);
+            return vsprintf(trim($m[1]), $args);
         }
 
         return $string_key;
