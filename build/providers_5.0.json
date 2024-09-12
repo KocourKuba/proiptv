@@ -551,6 +551,27 @@
     },
     {
       "enable": true,
+      "id": "iptv360",
+      "name": "IPTV 360",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptv360.png",
+      "provider_url": "https://iptv360.ru/",
+      "api_commands": {
+        "get_playlist": "https://iptv360.ru/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
+        "ext_params": true,
+        "streams": {
+          "hls": "HLS",
+          "hls2": "HLS2",
+          "siptv": "MPEG-TS"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "iptvonline",
       "name": "IPTV Online",
       "type": "login",
