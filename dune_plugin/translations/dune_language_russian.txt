@@ -221,7 +221,30 @@ entry_reboot = Перезагрузить плеер
 entry_reboot_need = Требуется перезагрузка
 entry_shutdown = Выключить Dune
 entry_setup = Настройки плагина
-entry_index_epg = Запустить индексирование EPG
+entry_index_epg = Запустить обработку EPG
+
+edit_list_added__1 = Добавлено файлов: %s
+edit_list_added__2 = Добавлено файлов: %s из: %s
+edit_list_empty_file = Пустой файл!!!
+edit_list_bad_vportal = Неверные данные для VPortal!
+edit_list_bad_vportal_fmt = Формат данных должен быть:\nportal::[key:xxxxx-xxxxx]http://xxxx.xxxx.xxx/api/v1/
+edit_list_no_files = Нет файлов!!!
+edit_list_add_url = Добавить ссылку
+edit_list_folder_path = Выбрать папку с файлами
+edit_list_import_list = Импорт файла с ссылками
+edit_list_src_folder = Папка с файлами
+edit_list_src_list = Файл со содержащий список
+edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Нажмите Popup Menu на пульте для добавления файлов}
+edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Долгое нажатие OK на пульте для вызова меню}
+edit_list_add_name = Задать имя
+edit_list_edit_item = Редактировать
+edit_list_add_provider = Добавить провайдера IPTV
+edit_list_detail_info__1 = Ссылка:|%s
+edit_list_detail_info__5 = Ссылка:|%s||Размер:|%s||Скачан:|%s||Действителен до:|%s||Информация:|%s
+edit_list_title_info__1 = %s|Обработка...
+edit_list_title_info__2 = %s|Скачан: %s
+edit_list_title_info_download__1 = %s|Cкачивание...
+edit_list_title_cant_delete = Нельзя удалить XMLTV источник плейлиста!
 
 folder_screen_open_folder = Открыть папку
 folder_screen_create_folder = Создать папку
@@ -315,30 +338,8 @@ vod_screen_movie_info__5 = %s|Год: %s|Страна: %s|Жанр: %s|Рейт�
 vod_movie_title__3 = %s|Сезон %s|%s
 vod_screen_group_info__2 = %s|Фильмов: %s
 
-edit_list_added__1 = Добавлено файлов: %s
-edit_list_added__2 = Добавлено файлов: %s из: %s
-edit_list_empty_file = Пустой файл!!!
-edit_list_bad_vportal = Неверные данные для VPortal!
-edit_list_bad_vportal_fmt = Формат данных должен быть:\nportal::[key:xxxxx-xxxxx]http://xxxx.xxxx.xxx/api/v1/
-edit_list_no_files = Нет файлов!!!
-edit_list_add_url = Добавить ссылку
-edit_list_folder_path = Выбрать папку с файлами
-edit_list_import_list = Импорт файла с ссылками
-edit_list_src_folder = Папка с файлами
-edit_list_src_list = Файл со содержащий список
-edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Нажмите Popup Menu на пульте для добавления файлов}
-edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Долгое нажатие OK на пульте для вызова меню}
-edit_list_add_name = Задать имя
-edit_list_edit_item = Редактировать
-edit_list_add_provider = Добавить провайдера IPTV
-edit_list_detail_info__1 = Ссылка:|%s
-edit_list_detail_info__5 = Ссылка:|%s||Размер:|%s||Скачан:|%s||Действителен до:|%s||Инфо:|%s
-edit_list_title_info__1 = %s|Идет индексирование...
-edit_list_title_info__2 = %s|Скачано: %s
-edit_list_title_cant_delete = Нельзя удалить XMLTV источник плейлиста!
-
 epg_not_ready = Программа передач еще не готова
-epg_not_ready_desc = Идет индексирование программ передач, пожалуйста подождите
+epg_not_ready_desc = Идет обработка программ передач, пожалуйста подождите
 fake_epg_program = Телепрограмма
 playlist_name_msg__1 = Текущий плейлист: %s
 

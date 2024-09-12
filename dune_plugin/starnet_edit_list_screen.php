@@ -1117,7 +1117,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $locked = $epg_manager->get_indexer()->is_index_locked($key);
                 if ($locked) {
-                    $title = TR::t('edit_list_title_info__1', $title);
+                    $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
                 } else if (file_exists($cached_xmltv_file)) {
                     $size = HD::get_file_size($cached_xmltv_file);
                     $check_time_file = filemtime($cached_xmltv_file);

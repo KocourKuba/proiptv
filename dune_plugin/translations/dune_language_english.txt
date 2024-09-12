@@ -221,7 +221,30 @@ entry_reboot = Reboot Dune
 entry_reboot_need = Reboot required
 entry_shutdown = Shutdown Dune
 entry_setup = Plugin setting
-entry_index_epg = Run indexing EPG
+entry_index_epg = Run processing EPG
+
+edit_list_added__1 = Added %s files
+edit_list_added__2 = Added %s files from %s
+edit_list_empty_file = Empty file!!!
+edit_list_bad_vportal = Incorrect data for VPortal!\nportal::[key:xxxxxxxxxxxxx-xxxxxxxxxxxxx]http://xxxxxxxxx.xxxxxxxxx.xxxx/api/v1/
+edit_list_bad_vportal_fmt = Correct format must be:\nportal::[key:xxxxx-xxxxx]http://xxxx.xxxx.xxx/api/v1/
+edit_list_no_files = No files!!!
+edit_list_add_url = Add URL to the list
+edit_list_folder_path = Select folder with files
+edit_list_import_list = Import file with list of URLs
+edit_list_src_folder = Folder with files
+edit_list_src_list = File with list
+edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Press Popup Menu on Remote to add items}
+edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Long press OK on Remote to call Popup Menu}
+edit_list_add_name = Set name
+edit_list_edit_item = Edit
+edit_list_add_provider = Add IPTV provider
+edit_list_detail_info__1 = URL:|%s
+edit_list_detail_info__5 = URL:|%s||Size:|%s||Downloaded:|%s||Expired:|%s||Info:|%s
+edit_list_title_info__1 = %s|Processing...
+edit_list_title_info__2 = %s|Downloaded: %s
+edit_list_title_info_download__1 = %s|Downloading...
+edit_list_title_cant_delete = Can't delete the playlist XMLTV source!
 
 folder_screen_open_folder = Open folder
 folder_screen_create_folder = Create folder
@@ -250,28 +273,6 @@ folder_screen_used__1 = Used: %s
 folder_screen_user = User name for SMB folder
 folder_screen_password = Password for SMB folder
 folder_screen_playlist__1 = Selected playlist %s
-
-edit_list_added__1 = Added %s files
-edit_list_added__2 = Added %s files from %s
-edit_list_empty_file = Empty file!!!
-edit_list_bad_vportal = Incorrect data for VPortal!\nportal::[key:xxxxxxxxxxxxx-xxxxxxxxxxxxx]http://xxxxxxxxx.xxxxxxxxx.xxxx/api/v1/
-edit_list_bad_vportal_fmt = Correct format must be:\nportal::[key:xxxxx-xxxxx]http://xxxx.xxxx.xxx/api/v1/
-edit_list_no_files = No files!!!
-edit_list_add_url = Add URL to the list
-edit_list_folder_path = Select folder with files
-edit_list_import_list = Import file with list of URLs
-edit_list_src_folder = Folder with files
-edit_list_src_list = File with list
-edit_list_add_prompt__3 = label{x=%s}{y=%s}{color=%s}{text=Press Popup Menu on Remote to add items}
-edit_list_add_prompt_apk__3 = label{x=%s}{y=%s}{color=%s}{text=Long press OK on Remote to call Popup Menu}
-edit_list_add_name = Set name
-edit_list_edit_item = Edit
-edit_list_add_provider = Add IPTV provider
-edit_list_detail_info__1 = URL:|%s
-edit_list_detail_info__5 = URL:|%s||Size:|%s||Downloaded:|%s||Expired:|%s||Info:|%s
-edit_list_title_info__1 = %s|Indexing...
-edit_list_title_info__2 = %s|Downloaded: %s
-edit_list_title_cant_delete = Die XMLTV-Quelle der Wiedergabeliste kann nicht gelöscht werden!
 
 tv_screen_zoom_channel = Channel zoom
 tv_screen_search_channel = Enter name or part of the name for search
@@ -338,7 +339,7 @@ vod_movie_title__3 = %s|Season %s|%s
 vod_screen_group_info__2 = %s|Movies: %s
 
 epg_not_ready = EPG not ready
-epg_not_ready_desc = EPG is still indexing, please wait
+epg_not_ready_desc = EPG is still processing, please wait
 fake_epg_program = Program
 playlist_name_msg__1 = Current playlist: %s
 
