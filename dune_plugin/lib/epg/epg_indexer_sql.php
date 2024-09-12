@@ -197,8 +197,8 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $this->remove_indexes(array($table_ch, $table_pic));
 
-            $db->exec("CREATE TABLE $table_ch(alias STRING UNIQUE PRIMARY KEY not null, channel_id STRING not null, picon_hash STRING);");
-            $db->exec("CREATE TABLE $table_pic(picon_hash STRING UNIQUE PRIMARY KEY not null, picon_url STRING);");
+            $db->exec("CREATE TABLE $table_ch(alias STRING PRIMARY KEY not null, channel_id STRING not null, picon_hash STRING);");
+            $db->exec("CREATE TABLE $table_pic(picon_hash STRING PRIMARY KEY not null, picon_url STRING);");
 
             $db->exec('PRAGMA journal_mode=MEMORY;');
             $db->exec('BEGIN;');
@@ -316,7 +316,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $this->set_index_locked(true);
 
-            $db->exec("CREATE TABLE $table_pos (channel_id STRING, start INTEGER, end INTEGER);");
+            $db->exec("CREATE TABLE $table_pos (channel_id STRING PRIMARY KEY not null, start INTEGER, end INTEGER);");
             $db->exec('PRAGMA journal_mode=MEMORY;');
             $db->exec('BEGIN;');
 
