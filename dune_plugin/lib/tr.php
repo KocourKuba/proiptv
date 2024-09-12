@@ -77,12 +77,12 @@ class TR
         }
 
         if (($lang_txt = file_get_contents($lang_file)) && preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
-            return trim($m[1]);
+            $args = func_get_args();
+            array_shift($args);
+            return vsprintf($m[1], $args);
         }
 
-        $args = func_get_args();
-        array_shift($args);
-        return vsprintf($string_key, $args);
+        return $string_key;
     }
 
     protected static function get_translation_filename($lang)
