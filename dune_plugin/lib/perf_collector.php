@@ -30,6 +30,8 @@ class Perf_Collector
     const MEMORY_LIMIT = 'MemoryLimit';
     const MEMORY_USAGE_KB = 'MemoryUsageKb';
     const MEMORY_USAGE_MB = 'MemoryUsageMb';
+    const MEMORY_USAGE_DIFF_KB = 'MemoryUsageDiffKb';
+    const MEMORY_USAGE_DIFF_MB = 'MemoryUsageDiffMb';
     const PEAK_MEMORY_USAGE_KB = 'PeakMemoryUsageKb';
     const PEAK_MEMORY_USAGE_MB = 'PeakMemoryUsageMb';
 
@@ -135,8 +137,10 @@ class Perf_Collector
         // Prepare report.
         $report[self::TIME] = $time;
         $report[self::MEMORY_LIMIT] = self::getMemoryLimit();
-        $report[self::MEMORY_USAGE_KB] = round($memory / 1024);
-        $report[self::MEMORY_USAGE_MB] = round($memory / 1024 / 1024, 2);
+        $report[self::MEMORY_USAGE_KB] = round($this->labels[$endLabel][self::STAT_MEMORY] / 1024);
+        $report[self::MEMORY_USAGE_MB] = round($this->labels[$endLabel][self::STAT_MEMORY] / 1024 / 1024, 2);
+        $report[self::MEMORY_USAGE_DIFF_KB] = round($memory / 1024);
+        $report[self::MEMORY_USAGE_DIFF_MB] = round($memory / 1024 / 1024, 2);
         $report[self::PEAK_MEMORY_USAGE_KB] = round($memoryPeak / 1024);
         $report[self::PEAK_MEMORY_USAGE_MB] = round($memoryPeak / 1024 / 1024, 2);
 
