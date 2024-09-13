@@ -72,7 +72,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
      */
     public function getTagValue($idx = 0)
     {
-        return isset($this->tag_values[$idx]) ? $this->tag_values[$idx] : null;
+        return isset($this->tag_values[$idx]) ? $this->tag_values[$idx] : '';
     }
 
     /**

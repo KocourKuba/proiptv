@@ -178,7 +178,7 @@ class Entry extends Json_Serializer
     public function getEntryTitle()
     {
         $extInf = $this->getEntryTag(self::TAG_EXTINF);
-        return is_null($extInf) ? null : $extInf->getTagValue();
+        return is_null($extInf) ? '' : $extInf->getTagValue();
     }
 
     /**
@@ -213,6 +213,14 @@ class Entry extends Json_Serializer
      */
     public function getEntryAttribute($attribute_name, $tag = null)
     {
+        if ($attribute_name === 'name') {
+            return $this->getEntryTitle();
+        }
+
+        if ($attribute_name === 'channel_id_attributes') {
+            return $this->getEntryId();
+        }
+
         if (!is_null($this->tags)) {
             if (is_null($tag)) {
                 foreach ($this->tags as $item) {

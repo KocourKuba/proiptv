@@ -106,7 +106,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
-        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $selected_id = isset($user_input->selected_media_url) ? MediaURL::decode($user_input->selected_media_url)->id : 0;
+
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $edit_list = $parent_media_url->edit_list;
 
@@ -149,17 +150,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case GUI_EVENT_KEY_ENTER:
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST || $edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     $this->force_save($user_input);
-                    $item = $this->get_order($edit_list)->get($selected_media_url->id);
+                    $selected_id = $this->get_order($edit_list)->get($selected_id);
 
-                    hd_debug_print("item: " . $item, true);
-                    if (($item->type === PARAM_LINK || empty($item->type))
-                        && isset($item->params[PARAM_URI])
-                        && preg_match(HTTP_PATTERN, $item->params[PARAM_URI])) {
-                        return $this->do_edit_url_dlg($edit_list, $selected_media_url->id);
+                    hd_debug_print("item: " . $selected_id, true);
+                    if (($selected_id->type === PARAM_LINK || empty($selected_id->type))
+                        && isset($selected_id->params[PARAM_URI])
+                        && preg_match(HTTP_PATTERN, $selected_id->params[PARAM_URI])) {
+                        return $this->do_edit_url_dlg($edit_list, $selected_id);
                     }
 
-                    if ($item->type === PARAM_PROVIDER) {
-                        return $this->plugin->do_edit_provider_dlg($this, $item->params[PARAM_PROVIDER], $selected_media_url->id);
+                    if ($selected_id->type === PARAM_PROVIDER) {
+                        return $this->plugin->do_edit_provider_dlg($this, $selected_id->params[PARAM_PROVIDER], $selected_id);
                     }
                 } else if ($edit_list === self::SCREEN_EDIT_PROVIDERS) {
                     return Action_Factory::close_and_run(
@@ -167,7 +168,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $parent_media_url->source_window_id,
                             $parent_media_url->end_action,
                             null,
-                            array(PARAM_PROVIDER => $selected_media_url->id)
+                            array(PARAM_PROVIDER => $selected_id)
                         )
                     );
                 }
@@ -201,12 +202,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::change_behaviour($actions, 1000, $post_action);
 
             case ACTION_SET_CURRENT:
-                $id = $selected_media_url->id;
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                    $this->plugin->set_active_playlist_key($id);
+                    $this->plugin->set_active_playlist_key($selected_id);
                 } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     $active_sources = $this->plugin->get_active_xmltv_sources();
-                    $this->plugin->set_active_xmltv_source($id, !$active_sources->has($id));
+                    $this->plugin->set_active_xmltv_source($selected_id, !$active_sources->has($selected_id));
                 } else {
                     return null;
                 }
@@ -221,24 +221,23 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_INDEX_EPG:
-                $id = $selected_media_url->id;
-                $item = $this->plugin->get_all_xmltv_sources()->get($id);
-                if (is_null($item) || empty($item->params[PARAM_URI])) break;
+                $selected_id = $this->plugin->get_all_xmltv_sources()->get($selected_id);
+                if (is_null($selected_id) || empty($selected_id->params[PARAM_URI])) break;
 
                 $sources = new Hashed_Array();
-                $sources->put($id, $item->params[PARAM_URI]);
-                hd_debug_print("index ($id) {$item->params[PARAM_URI]}", true);
+                $sources->put($selected_id, $selected_id->params[PARAM_URI]);
+                hd_debug_print("index ($selected_id) {$selected_id->params[PARAM_URI]}", true);
                 $this->plugin->run_bg_epg_indexing($sources);
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 return Action_Factory::change_behaviour($actions, 1000);
 
             case ACTION_CLEAR_CACHE:
-                $this->plugin->safe_clear_selected_epg_cache($selected_media_url->id);
+                $this->plugin->safe_clear_selected_epg_cache($selected_id);
                 break;
 
             case ACTION_ITEM_UP:
-                if (!$this->get_order($edit_list)->arrange_item($selected_media_url->id, Ordered_Array::UP)) {
+                if (!$this->get_order($edit_list)->arrange_item($selected_id, Ordered_Array::UP)) {
                     return null;
                 }
 
@@ -253,7 +252,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEM_DOWN:
                 $order = $this->get_order($edit_list);
-                if (!$order->arrange_item($selected_media_url->id, Ordered_Array::DOWN)) {
+                if (!$order->arrange_item($selected_id, Ordered_Array::DOWN)) {
                     return null;
                 }
 
@@ -268,16 +267,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DELETE:
-                $item = $selected_media_url->id;
-
                 switch ($edit_list) {
                     case self::SCREEN_EDIT_PLAYLIST:
                     case self::SCREEN_EDIT_EPG_LIST:
                         return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_REMOVE_ITEM_DLG_APPLY);
 
                     case self::SCREEN_EDIT_HIDDEN_CHANNELS:
-                        if ($this->plugin->tv->disable_channel($item, false)) {
-                            $this->get_order($edit_list)->remove_item($item);
+                        if ($this->plugin->tv->disable_channel($selected_id, false)) {
+                            $this->get_order($edit_list)->remove_item($selected_id);
                             $group = $this->plugin->tv->get_any_group($parent_media_url->group_id);
                             if (!is_null($group)) {
                                 $force_return = $group->get_group_disabled_channels()->size() === 0;
@@ -288,9 +285,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return null;
 
                     case self::SCREEN_EDIT_HIDDEN_GROUPS:
-                        $this->get_order($edit_list)->remove_item($item);
+                        $this->get_order($edit_list)->remove_item($selected_id);
                         $force_return = $this->get_order($edit_list)->size() === 0;
-                        hd_debug_print("restore group: " . $item, true);
+                        hd_debug_print("restore group: " . $selected_id, true);
                         break;
 
                     default:
@@ -308,20 +305,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case self::ACTION_REMOVE_ITEM_DLG_APPLY:
                 hd_debug_print(null, true);
 
-                $id = $selected_media_url->id;
                 hd_debug_print("edit_list: $parent_media_url->edit_list", true);
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    hd_debug_print("remove xmltv source: $id", true);
-                    if (!$this->get_order($edit_list)->has($id)) {
+                    hd_debug_print("remove xmltv source: $selected_id", true);
+                    if (!$this->get_order($edit_list)->has($selected_id)) {
                         return Action_Factory::show_error(false, TR::t('edit_list_title_cant_delete'));
                     }
-                    $this->plugin->safe_clear_selected_epg_cache($id);
-                    $this->plugin->set_active_xmltv_source($id, false);
-                    $this->get_order($edit_list)->erase($id);
+                    $this->plugin->safe_clear_selected_epg_cache($selected_id);
+                    $this->plugin->set_active_xmltv_source($selected_id, false);
+                    $this->get_order($edit_list)->erase($selected_id);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
-                    hd_debug_print("remove playlist settings: $id", true);
-                    $this->plugin->remove_settings($id);
-                    $this->get_order($edit_list)->erase($id);
+                    hd_debug_print("remove playlist settings: $selected_id", true);
+                    $this->plugin->remove_settings($selected_id);
+                    $this->get_order($edit_list)->erase($selected_id);
                 }
                 $this->set_changes($parent_media_url->save_data);
 
@@ -435,27 +431,27 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->set_no_changes();
-                $id = $this->plugin->apply_edit_provider_dlg($user_input);
-                if ($id === false) {
+                $selected_id = $this->plugin->apply_edit_provider_dlg($user_input);
+                if ($selected_id === false) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($id === null) {
+                if ($selected_id === null) {
                     return null;
                 }
 
-                if (is_array($id)) {
-                    return $id;
+                if (is_array($selected_id)) {
+                    return $selected_id;
                 }
 
                 $this->set_changes($parent_media_url->save_data);
-                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $id;
+                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $selected_id;
                 if ($this->force_parent_reload && $this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
 
-                $idx = $this->plugin->get_playlists()->get_idx($id);
+                $idx = $this->plugin->get_playlists()->get_idx($selected_id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $idx);
 
             case ACTION_FOLDER_SELECTED:
@@ -463,7 +459,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case self::ACTION_SHOW_QR:
                 /** @var api_default $provider */
-                $provider = $this->get_order($edit_list)->get($selected_media_url->id);
+                $provider = $this->get_order($edit_list)->get($selected_id);
                 if (is_null($provider)) break;
 
                 $qr_code = get_temp_path($provider->getId()) . ".jpg";
@@ -712,6 +708,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     unlink($tmp_file);
                     throw new Exception("Пустой или неправильный плейлист! '$url'\n\n$contents");
                 }
+
+                $parser = new M3uParser();
+                $parser->setupParser($tmp_file);
+                $parser->parseInMemory();
+                $id_mapper = $parser->detectBestChannelId();
+                $item->params[PARAM_ID_MAPPER] = $id_mapper;
+
                 unlink($tmp_file);
                 hd_debug_print("Playlist: '$url' imported successfully");
             } catch (Exception $ex) {
@@ -722,7 +725,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $item->name = $name;
-        $item->type = preg_match(HTTP_PATTERN, $url) ? PARAM_LINK : PARAM_FILE;
+        $item->type = PARAM_LINK;
         $item->params[PARAM_URI] = $url;
         $order->set($id, $item);
         $this->set_changes($parent_media_url->save_data);
@@ -884,10 +887,16 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return Action_Factory::show_title_dialog(TR::t('err_bad_m3u_file'));
         }
 
+        $parser = new M3uParser();
+        $parser->setupParser($selected_media_url->filepath);
+        $parser->parseInMemory();
+        $id_mapper = $parser->detectBestChannelId();
+
         $playlist = new Named_Storage();
         $playlist->type = PARAM_FILE;
         $playlist->name = basename($selected_media_url->filepath);
         $playlist->params[PARAM_URI] = $selected_media_url->filepath;
+        $playlist->params[PARAM_ID_MAPPER] = $id_mapper;
         $order->put($hash, $playlist);
         $this->set_changes($parent_media_url->save_data);
 

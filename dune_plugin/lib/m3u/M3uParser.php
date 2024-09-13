@@ -436,6 +436,50 @@ class M3uParser extends Json_Serializer
         return $this->xmltv_sources;
     }
 
+    public function detectBestChannelId()
+    {
+        if ($this->getEntriesCount() === 0) {
+            return 'by_default';
+        }
+
+        $entries = $this->getM3uEntries();
+        $stat = array(
+            'channel_id_attributes' => array('stat' => 0, 'items' => array()),
+            'tvg-id' => array('stat' => 0, 'items' => array()),
+            'tvg-name' => array('stat' => 0, 'items' => array()),
+            'name' => array('stat' => 0, 'items' => array()),
+            'by_default' => array('stat' => 0, 'items' => array())
+        );
+
+        foreach ($entries as $entry) {
+            foreach ($stat as $key => $value) {
+                if ($key === 'by_default') {
+                    $val = Hashed_Array::hash($entry->getPath());
+                } else {
+                    $val = $entry->getEntryAttribute($key);
+                }
+
+                $val = empty($val) ? 'dupe' : $val;
+                if (array_key_exists($val, $value['items'])) {
+                    ++$value['stat'];
+                } else {
+                    $value['items'][$val] = '';
+                }
+            }
+        }
+
+        $min_key = '';
+        $min_dupes = PHP_INT_MAX;
+        foreach ($stat as $key => $value) {
+            if ($value['stat'] < $min_dupes) {
+                $min_key = $key;
+                $min_dupes = $value['stat'];
+            }
+        }
+
+        return (empty($min_key) || $min_key === 'channel_id_attributes') ? 'by_default' : $min_key;
+    }
+
     /**
      * Parse one line
      * return true if line is a url or parsed tag is header tag
