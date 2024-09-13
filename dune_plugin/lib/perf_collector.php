@@ -69,9 +69,12 @@ class Perf_Collector
         $this->labels[$label] = array(
             self::STAT_TIME => microtime(true),
             self::STAT_MEMORY => memory_get_usage(),
-            self::STAT_PMEMORY => memory_get_peak_usage(),
-            self::STAT_USAGE => getrusage()
+            self::STAT_PMEMORY => memory_get_peak_usage()
         );
+
+        if (function_exists('getrusage')) {
+            $this->labels[$label][self::STAT_USAGE] = getrusage();
+        }
     }
 
     /**
@@ -127,17 +130,20 @@ class Perf_Collector
 
         $time = $this->labels[$endLabel][self::STAT_TIME] - $this->labels[$startLabel][self::STAT_TIME];
         $memory = $this->labels[$endLabel][self::STAT_MEMORY] - $this->labels[$startLabel][self::STAT_MEMORY];
-        $usage = $this->getUsageDifference($startLabel, $endLabel);
         $memoryPeak = memory_get_peak_usage();
 
         // Prepare report.
         $report[self::TIME] = $time;
-        $report[self::USER_MODE_TIME] = $usage[self::STAT_UTIME];
         $report[self::MEMORY_LIMIT] = self::getMemoryLimit();
         $report[self::MEMORY_USAGE_KB] = round($memory / 1024);
         $report[self::MEMORY_USAGE_MB] = round($memory / 1024 / 1024, 2);
         $report[self::PEAK_MEMORY_USAGE_KB] = round($memoryPeak / 1024);
         $report[self::PEAK_MEMORY_USAGE_MB] = round($memoryPeak / 1024 / 1024, 2);
+
+        if (function_exists('getrusage')) {
+            $usage = $this->getUsageDifference($startLabel, $endLabel);
+            $report[self::USER_MODE_TIME] = $usage[self::STAT_UTIME];
+        }
 
         return $report;
     }
