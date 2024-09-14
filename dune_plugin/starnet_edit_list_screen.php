@@ -307,19 +307,30 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 hd_debug_print("edit_list: $parent_media_url->edit_list", true);
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    hd_debug_print("remove xmltv source: $selected_id", true);
                     if (!$this->get_order($edit_list)->has($selected_id)) {
+                        hd_debug_print("remove xmltv source: $selected_id", true);
                         return Action_Factory::show_error(false, TR::t('edit_list_title_cant_delete'));
                     }
+
                     $this->plugin->safe_clear_selected_epg_cache($selected_id);
                     $this->plugin->set_active_xmltv_source($selected_id, false);
-                    $this->get_order($edit_list)->erase($selected_id);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     hd_debug_print("remove playlist settings: $selected_id", true);
+                    if ($this->plugin->get_active_playlist_key() === $selected_id) {
+                        $this->force_parent_reload = true;
+                        $this->plugin->get_playlists()->rewind();
+                        $this->plugin->set_active_playlist_key($this->plugin->get_playlists()->key());
+                    }
                     $this->plugin->remove_settings($selected_id);
-                    $this->get_order($edit_list)->erase($selected_id);
                 }
+
+                $this->get_order($edit_list)->erase($selected_id);
                 $this->set_changes($parent_media_url->save_data);
+
+                if ($this->force_parent_reload && $this->plugin->tv->reload_channels($plugin_cookies) === 0) {
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+                }
 
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
@@ -640,7 +651,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
 

@@ -695,10 +695,13 @@ class Starnet_Tv implements User_Input_Handler
         if (is_null($provider)) {
             $replace_icons = false;
             $icon_replace_pattern = '';
-            $mapper = $this->plugin->get_setting(PARAM_ID_MAPPER, 'by_default');
-            if ($mapper !== 'default') {
-                $id_map = $mapper;
-                hd_debug_print("Use custom ID detection: $id_map");
+            $playlist = $this->plugin->get_active_playlist();
+            if (isset($playlist->params[PARAM_ID_MAPPER])) {
+                $id_map = $playlist->params[PARAM_ID_MAPPER];
+                hd_debug_print("Use ID detection for playlist: $id_map");
+            } else {
+                $id_map = $this->plugin->get_setting(PARAM_ID_MAPPER, Entry::ATTR_CHANNEL_HASH);
+                hd_debug_print("Use user defined ID detection for playlist: $id_map");
             }
         } else {
             $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
@@ -846,17 +849,17 @@ class Starnet_Tv implements User_Input_Handler
         $playlist_group_channels = array();
         $number = 0;
         foreach ($pl_entries as $entry) {
-            $channel_id = $entry->getEntryId();
-            if (empty($channel_id)) {
-                if (!empty($id_map)) {
-                    $channel_id = ($id_map === 'name') ? $entry->getEntryTitle() : $entry->getEntryAttribute($id_map);
-                } else if (!empty($id_parser) && preg_match($id_parser, $entry->getPath(), $matches)) {
-                    $channel_id = $matches['id'];
+            if (!empty($id_parser) && preg_match($id_parser, $entry->getPath(), $matches)) {
+                $channel_id = $matches['id'];
+            } else {
+                $channel_id = $entry->getEntryAttribute(Entry::ATTR_CHANNEL_ID);
+                if (empty($channel_id) && !empty($id_map)) {
+                    $channel_id = $entry->getEntryAttribute($id_map);
                 }
+            }
 
-                if (empty($channel_id)) {
-                    $channel_id = Hashed_Array::hash($entry->getPath());
-                }
+            if (empty($channel_id)) {
+                $channel_id = Hashed_Array::hash($entry->getPath());
             }
 
             // if group is not registered it was disabled

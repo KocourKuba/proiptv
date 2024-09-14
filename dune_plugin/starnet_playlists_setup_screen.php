@@ -92,16 +92,20 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // ID detection settings
-        $playlist = $this->plugin->get_current_playlist();
+        $playlist = $this->plugin->get_active_playlist();
         if (!is_null($playlist) && $playlist->type !== PARAM_PROVIDER) {
             $mapper_ops = array(
-                'by_default' => TR::t('hash_url'),
+                Entry::ATTR_CHANNEL_HASH => TR::t('hash_url'),
                 'tvg-id' => TR::t('attribute_name__1', 'tvg-id'),
                 'tvg-name' => TR::t('attribute_name__1', 'tvg-name'),
-                'name' => TR::t('channel_name'));
-            $mapper_idx = $this->plugin->get_setting(PARAM_ID_MAPPER, 'by_default');
+                Entry::ATTR_CHANNEL_NAME => TR::t('channel_name'));
+
+            if (!isset($playlist->params[PARAM_ID_MAPPER])) {
+                $playlist->params[PARAM_ID_MAPPER] = $this->plugin->get_setting(PARAM_ID_MAPPER, Entry::ATTR_CHANNEL_HASH);
+            }
+
             Control_Factory::add_combobox($defs, $this, null, PARAM_ID_MAPPER,
-                TR::t('setup_channels_id_mapper'), $mapper_idx, $mapper_ops, self::CONTROLS_WIDTH, true);
+                TR::t('setup_channels_id_mapper'), $playlist->params[PARAM_ID_MAPPER], $mapper_ops, self::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -167,7 +171,11 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case PARAM_USER_CATCHUP:
             case PARAM_USE_PICONS:
             case PARAM_ID_MAPPER:
-                $this->plugin->set_setting($control_id, $new_value);
+                $playlist = $this->plugin->get_active_playlist();
+                if (!is_null($playlist) && $playlist->type !== PARAM_PROVIDER) {
+                    $playlist->params[PARAM_ID_MAPPER] = $this->plugin->get_setting(PARAM_ID_MAPPER, Entry::ATTR_CHANNEL_HASH);
+                }
+                $this->plugin->save_parameters(true);
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case PARAM_FORCE_HTTP:

@@ -439,45 +439,45 @@ class M3uParser extends Json_Serializer
     public function detectBestChannelId()
     {
         if ($this->getEntriesCount() === 0) {
-            return 'by_default';
+            return Entry::ATTR_CHANNEL_HASH;
         }
 
-        $entries = $this->getM3uEntries();
-        $stat = array(
-            'channel_id_attributes' => array('stat' => 0, 'items' => array()),
+        $statistics = array(
+            Entry::ATTR_CHANNEL_ID => array('stat' => 0, 'items' => array()),
             'tvg-id' => array('stat' => 0, 'items' => array()),
             'tvg-name' => array('stat' => 0, 'items' => array()),
-            'name' => array('stat' => 0, 'items' => array()),
-            'by_default' => array('stat' => 0, 'items' => array())
+            Entry::ATTR_CHANNEL_NAME => array('stat' => 0, 'items' => array()),
+            Entry::ATTR_CHANNEL_HASH => array('stat' => 0, 'items' => array())
         );
 
-        foreach ($entries as $entry) {
-            foreach ($stat as $key => $value) {
-                if ($key === 'by_default') {
+        foreach ($this->getM3uEntries() as $entry) {
+            foreach ($statistics as $name => $pair) {
+                if ($name === Entry::ATTR_CHANNEL_HASH) {
                     $val = Hashed_Array::hash($entry->getPath());
                 } else {
-                    $val = $entry->getEntryAttribute($key);
+                    $val = $entry->getEntryAttribute($name);
                 }
 
                 $val = empty($val) ? 'dupe' : $val;
-                if (array_key_exists($val, $value['items'])) {
-                    ++$value['stat'];
+                if (array_key_exists($val, $pair['items'])) {
+                    ++$statistics[$name]['stat'];
                 } else {
-                    $value['items'][$val] = '';
+                    $statistics[$name]['items'][$val] = '';
                 }
             }
         }
 
         $min_key = '';
         $min_dupes = PHP_INT_MAX;
-        foreach ($stat as $key => $value) {
-            if ($value['stat'] < $min_dupes) {
-                $min_key = $key;
-                $min_dupes = $value['stat'];
+        foreach ($statistics as $name => $pair) {
+            hd_debug_print("attr: $name dupes: {$pair['stat']}", true);
+            if ($pair['stat'] < $min_dupes) {
+                $min_key = $name;
+                $min_dupes = $pair['stat'];
             }
         }
 
-        return (empty($min_key) || $min_key === 'channel_id_attributes') ? 'by_default' : $min_key;
+        return (empty($min_key) || $min_key === Entry::ATTR_CHANNEL_ID) ? Entry::ATTR_CHANNEL_HASH : $min_key;
     }
 
     /**

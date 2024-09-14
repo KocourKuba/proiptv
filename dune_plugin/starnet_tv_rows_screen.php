@@ -1465,7 +1465,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             hd_debug_print("in menu side", true);
             $menu_items[] = $this->plugin->create_menu_item($this,
                 null,
-                TR::t('playlist_name_msg__1', $this->plugin->get_current_playlist()->name));
+                TR::t('playlist_name_msg__1', $this->plugin->get_active_playlist()->name));
 
             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 

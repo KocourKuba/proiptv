@@ -100,7 +100,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 throw new Exception("Problem with open SQLite db! Possible url not set");
             }
 
-            if (!$this->is_all_indexes_valid(array($table_ch, $this->$table_pos))) {
+            if (!$this->is_all_indexes_valid(array($table_ch, $table_pos))) {
                 throw new Exception("EPG for $this->xmltv_url not indexed!");
             }
 
