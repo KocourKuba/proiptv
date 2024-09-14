@@ -34,6 +34,10 @@ class Ordered_Array extends Json_Serializer implements Iterator
 {
     const UP = -1;
     const DOWN = 1;
+
+    const TOP = PHP_INT_MIN;
+    const BOTTOM = PHP_INT_MAX;
+
     /**
      * @var array
      */
@@ -167,7 +171,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
      * @param string $id
      * @param bool $last
      */
-    public function insert_item($id, $last = true)
+    public function insert_item($id, $last)
     {
         if ($this->in_order($id)) {
             $this->remove_item($id);
@@ -286,23 +290,45 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     public function arrange_item($id, $direction)
     {
-        $selected_item = $this->get_selected_item();
         $k = array_search($id, $this->order);
-        //hd_debug_print("move id: $id from idx: $k to direction: $direction");
-
-        if ($k === false || $direction === 0)
+        if ($k === false) {
             return false;
+        }
 
-        if ($direction < 0 && $k !== 0) {
-            $t = $this->order[$k - 1];
-            $this->order[$k - 1] = $this->order[$k];
-            $this->order[$k] = $t;
-        } else if ($direction > 0 && $k !== count($this->order) - 1) {
-            $t = $this->order[$k + 1];
-            $this->order[$k + 1] = $this->order[$k];
-            $this->order[$k] = $t;
-        } else {
-            return false;
+        $selected_item = $this->get_selected_item();
+
+        switch ($direction) {
+            case self::UP:
+                if ($k !== 0) {
+                    $t = $this->order[$k - 1];
+                    $this->order[$k - 1] = $this->order[$k];
+                    $this->order[$k] = $t;
+                }
+                break;
+            case self::DOWN:
+                if ($k !== count($this->order) - 1) {
+                    $t = $this->order[$k + 1];
+                    $this->order[$k + 1] = $this->order[$k];
+                    $this->order[$k] = $t;
+                }
+                break;
+            case self::TOP:
+                if ($k !== 0) {
+                    $t = $this->order[$k];
+                    $this->remove_item_by_idx($k);
+                    $this->insert_item($t, false);
+                }
+                break;
+            case self::BOTTOM:
+                $last = count($this->order) - 1;
+                if ($k !== $last) {
+                    $t = $this->order[$k];
+                    $this->remove_item_by_idx($k);
+                    $this->insert_item($t, true);
+                }
+                break;
+            default:
+                return false;
         }
 
         $this->update_saved_pos($selected_item);

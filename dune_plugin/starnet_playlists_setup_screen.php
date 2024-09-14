@@ -154,14 +154,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
-        $control_id = $user_input->control_id;
-        $new_value = '';
-        if (isset($user_input->action_type, $user_input->{$control_id})
-            && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
-            $new_value = $user_input->{$control_id};
-        }
-
-        switch ($control_id) {
+        switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_action_screen(
@@ -179,7 +172,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case PARAM_FORCE_HTTP:
-                $this->plugin->toggle_setting($control_id, false);
+                $this->plugin->toggle_setting($user_input->control_id, false);
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_RESET_PLAYLIST_DLG:

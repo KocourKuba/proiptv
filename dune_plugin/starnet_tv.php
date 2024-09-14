@@ -423,31 +423,49 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print(null, true);
 
         $fav_group = $this->get_special_group(FAVORITES_GROUP_ID);
-        if (is_null($fav_group))
+        if (is_null($fav_group)) {
             return null;
+        }
+
         $order = &$fav_group->get_items_order();
         switch ($op_type) {
             case PLUGIN_FAVORITES_OP_ADD:
-                if (!$order->add_item($channel_id)) return null;
-
-                hd_debug_print("Add channel $channel_id to favorites", true);
-                break;
+                if ($order->add_item($channel_id)) {
+                    hd_debug_print("Add channel $channel_id to favorites", true);
+                    break;
+                }
+                return null;
 
             case PLUGIN_FAVORITES_OP_REMOVE:
-                if (!$order->remove_item($channel_id)) return null;
-
-                hd_debug_print("Remove channel $channel_id from favorites", true);
-                break;
+                if ($order->remove_item($channel_id)) {
+                    hd_debug_print("Remove channel $channel_id from favorites", true);
+                    break;
+                }
+                return null;
 
             case PLUGIN_FAVORITES_OP_MOVE_UP:
-                if (!$order->arrange_item($channel_id, Ordered_Array::UP)) return null;
-
-                break;
+                if ($order->arrange_item($channel_id, Ordered_Array::UP)) {
+                    break;
+                }
+                return null;
 
             case PLUGIN_FAVORITES_OP_MOVE_DOWN:
-                if (!$order->arrange_item($channel_id, Ordered_Array::DOWN)) return null;
+                if ($order->arrange_item($channel_id, Ordered_Array::DOWN)) {
+                    break;
+                }
+                return null;
 
-                break;
+            case ACTION_ITEM_TOP:
+                if ($order->arrange_item($channel_id, Ordered_Array::TOP)) {
+                    break;
+                }
+               return null;
+
+            case ACTION_ITEM_BOTTOM:
+                if ($order->arrange_item($channel_id, Ordered_Array::BOTTOM)) {
+                    break;
+                }
+                return null;
 
             case ACTION_ITEMS_CLEAR:
                 hd_debug_print("Clear favorites", true);
@@ -570,6 +588,8 @@ class Starnet_Tv implements User_Input_Handler
         hd_debug_print();
 
         HD::set_last_error("pl_last_error", null);
+
+        $plugin_cookies->toggle_move = false;
 
         $this->perf->reset('start');
 

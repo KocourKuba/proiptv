@@ -437,7 +437,7 @@ class Action_Factory
     /**
      * @param Object $plugin_cookies
      * @param array|null $post_action
-     * @return array|null
+     * @return array
      */
     public static function invalidate_all_folders($plugin_cookies, $post_action = null)
     {

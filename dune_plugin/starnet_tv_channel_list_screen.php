@@ -49,6 +49,49 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     /**
      * @inheritDoc
      */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
+        $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
+
+        $actions = array(
+            GUI_EVENT_KEY_ENTER => $action_play,
+            GUI_EVENT_KEY_PLAY => $action_play,
+            GUI_EVENT_KEY_SEARCH => $search_action,
+            GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
+            GUI_EVENT_KEY_SETUP => User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS),
+            GUI_EVENT_KEY_INFO => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO),
+            GUI_EVENT_KEY_CLEAR => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE),
+            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_TOP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
+            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
+            GUI_EVENT_KEY_SELECT => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE),
+            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
+        );
+
+        if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
+            $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
+            $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
+            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+        } else if (!is_null($group = $this->plugin->tv->get_group($media_url->group_id)) && $group->get_items_order()->size() !== 0) {
+            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+            if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
+                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
+                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
+            } else {
+                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+            }
+        }
+
+        return $actions;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -171,6 +214,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 return $this->plugin->tv->jump_to_channel($selected_media_url->channel_id);
 
+            case ACTION_ITEM_TOGGLE_MOVE:
+                $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                return Action_Factory::change_behaviour($actions);
+
             case ACTION_ITEM_UP:
                 $group = $this->plugin->tv->get_group($selected_media_url->group_id);
                 if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
@@ -195,6 +243,24 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $sel_ndx = $groups_cnt - 1;
                 }
 
+                $this->set_changes();
+                break;
+
+            case ACTION_ITEM_TOP:
+                $group = $this->plugin->tv->get_group($selected_media_url->group_id);
+                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::TOP))
+                    return null;
+
+                $sel_ndx = 0;
+                $this->set_changes();
+                break;
+
+            case ACTION_ITEM_BOTTOM:
+                $group = $this->plugin->tv->get_group($selected_media_url->group_id);
+                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::BOTTOM))
+                    return null;
+
+                $sel_ndx = $group->get_items_order()->size() - 1;
                 $this->set_changes();
                 break;
 
@@ -225,6 +291,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     if ($this->plugin->tv->get_special_group($selected_media_url->group_id) === null) {
                         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                         $menu_items = array_merge($menu_items, $this->plugin->edit_hidden_menu($this, $selected_media_url->group_id, false));
+                        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'));
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'));
                     }
@@ -373,42 +440,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
-        $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
-
-        $actions = array(
-            GUI_EVENT_KEY_ENTER => $action_play,
-            GUI_EVENT_KEY_PLAY => $action_play,
-            GUI_EVENT_KEY_SEARCH => $search_action,
-            GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
-            GUI_EVENT_KEY_SETUP => User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS),
-            GUI_EVENT_KEY_INFO => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO),
-            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
-            GUI_EVENT_KEY_TOP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
-            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
-            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
-        );
-
-        if ((string)$media_url->group_id === ALL_CHANNEL_GROUP_ID) {
-            $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
-            $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
-        } else if (!is_null($group = $this->plugin->tv->get_group($media_url->group_id)) && $group->get_items_order()->size() !== 0) {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
-        }
-
-        return $actions;
     }
 
     /**

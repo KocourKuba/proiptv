@@ -72,8 +72,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST || $edit_list === self::SCREEN_EDIT_EPG_LIST) {
             if (isset($media_url->allow_order) && $this->get_order($edit_list)->size() !== 0) {
-                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+                $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
+                if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
+                    $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
+                    $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
+                } else {
+                    $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+                    $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+                }
             }
 
             // Set current
@@ -236,6 +242,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
                 break;
 
+            case ACTION_ITEM_TOGGLE_MOVE:
+                $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                return Action_Factory::change_behaviour($actions);
+
             case ACTION_ITEM_UP:
                 if (!$this->get_order($edit_list)->arrange_item($selected_id, Ordered_Array::UP)) {
                     return null;
@@ -264,6 +275,26 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->set_changes($parent_media_url->save_data);
                 $only_refresh = true;
+                break;
+
+            case ACTION_ITEM_TOP:
+                $order = $this->get_order($edit_list);
+                if (!$order->arrange_item($selected_id, Ordered_Array::DOWN)) {
+                    return null;
+                }
+
+                $user_input->sel_ndx = $this->plugin->tv->get_special_groups_count();
+                $this->set_changes();
+                break;
+
+            case ACTION_ITEM_BOTTOM:
+                $order = $this->get_order($edit_list);
+                if (!$order->arrange_item($selected_id, Ordered_Array::DOWN)) {
+                    return null;
+                }
+
+                $user_input->sel_ndx = $this->plugin->tv->get_groups_order()->size() + $this->plugin->tv->get_special_groups_count() - 1;
+                $this->set_changes();
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -601,7 +632,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $menu_items = array();
         if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'));
+            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
         }
 
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
@@ -651,8 +682,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
+
+        if (isset($parent_media_url->allow_order) && $this->get_order($edit_list)->size() !== 0) {
+            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
+        }
+
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
 
         return Action_Factory::show_popup_menu($menu_items);
