@@ -2387,7 +2387,7 @@ class Default_Dune_Plugin implements DunePlugin
                     }
                 }
 
-                if ($res === false || !file_exists($tmp_file)) {
+                if (!$res || !file_exists($tmp_file)) {
                     $exception_msg = TR::load_string('err_load_playlist');
                     if ($playlist->type !== PARAM_FILE && !empty($logfile)) {
                         $exception_msg .= "\n\n$logfile";
