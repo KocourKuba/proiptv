@@ -3140,7 +3140,10 @@ class Default_Dune_Plugin implements DunePlugin
             case Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST:
                 $params['extension'] = PLAYLIST_PATTERN;
                 $title = TR::t('setup_channels_src_edit_playlists');
-                $sel_id = $this->get_playlists()->get_idx($this->get_active_playlist_key());
+                $active_key = $this->get_active_playlist_key();
+                if (!empty($active_key) && $this->get_playlists()->has($active_key)) {
+                    $sel_id = $this->get_playlists()->get_idx($active_key);
+                }
                 break;
 
             case Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST:
