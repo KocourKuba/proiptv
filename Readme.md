@@ -52,9 +52,8 @@ Also, have presets for most popular IPTV providers.
 42. [Nasharu TV](https://nasharu.tv/)
 43. [Ott Pub](https://ott.pub/)
 44. [Blink TV](https://blinktv.cc/)
-45. [IPTV 360](https://iptv360.ru/)
-46. [Korona](https://korona-tv.top/)
-47. [Pik TV](https://pa.piktv.top/)
+45. [Korona](https://korona-tv.top/)
+46. [Pik TV](https://pa.piktv.top/)
 </details>
 
 ## Donate

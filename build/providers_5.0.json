@@ -550,7 +550,7 @@
       }
     },
     {
-      "enable": true,
+      "enable": false,
       "id": "iptv360",
       "name": "IPTV 360",
       "type": "pin",
