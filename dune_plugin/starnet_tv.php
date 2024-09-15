@@ -953,7 +953,9 @@ class Starnet_Tv implements User_Input_Handler
                 if (isset($epg_ids['tvg-name'])) {
                     $aliases[] = mb_convert_case($epg_ids['tvg-name'], MB_CASE_LOWER, "UTF-8");
                 }
-                $aliases[] = mb_convert_case($epg_ids['name'], MB_CASE_LOWER, "UTF-8");
+                if (isset($epg_ids['name'])) {
+                    $aliases[] = mb_convert_case($epg_ids['name'], MB_CASE_LOWER, "UTF-8");
+                }
                 $aliases = array_unique($aliases);
 
                 $icon_url = $this->plugin->get_epg_manager()->get_indexer()->get_picon($aliases);
