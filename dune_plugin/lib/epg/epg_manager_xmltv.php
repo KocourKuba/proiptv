@@ -181,6 +181,8 @@ class Epg_Manager_Xmltv
                     if ($handle) {
                         foreach ($positions as $pos) {
                             fseek($handle, $pos['start']);
+                            $length = $pos['end'] - $pos['start'];
+                            if ($length <= 0) continue;
 
                             $xml_str = "<tv>" . fread($handle, $pos['end'] - $pos['start']) . "</tv>";
 
