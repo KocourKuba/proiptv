@@ -1210,7 +1210,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $title = $epg_data[PluginTvEpgProgram::name];
             $desc = (!empty($epg_data[Ext_Epg_Program::sub_title]) ? $epg_data[Ext_Epg_Program::sub_title] . "\n" : '') . $epg_data[PluginTvEpgProgram::description];
-            $fanart_url = '';
+            $fanart_url = $epg_data[PluginTvEpgProgram::icon_url];
 
             // duration
             $geom = GComp_Geom::place_top_left(PaneParams::info_width, PaneParams::prog_item_height, 0, $next_pos_y);

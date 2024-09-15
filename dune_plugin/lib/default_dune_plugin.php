@@ -842,6 +842,7 @@ class Default_Dune_Plugin implements DunePlugin
                         PluginTvEpgProgram::end_tm_sec => $tm_end,
                         PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
                         PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
+                        PluginTvEpgProgram::icon_url => $value[Epg_Params::EPG_ICON],
                     );
 
                     if (LogSeverity::$is_debug) {

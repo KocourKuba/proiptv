@@ -254,6 +254,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         hd_debug_print("json start: " . $parser[Epg_Params::EPG_START], true);
         hd_debug_print("json title: " . $parser[Epg_Params::EPG_NAME], true);
         hd_debug_print("json desc: " . $parser[Epg_Params::EPG_DESC], true);
+        hd_debug_print("json icon: " . $parser[Epg_Params::EPG_ICON], true);
 
         // collect all program that starts after day start and before day end
         $prev_start = 0;
@@ -279,6 +280,12 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 $channel_epg[$program_start][Epg_Params::EPG_DESC] = $desc;
             } else {
                 $channel_epg[$program_start][Epg_Params::EPG_DESC] = '';
+            }
+
+            if (isset($entry[$parser[Epg_Params::EPG_ICON]])) {
+                $channel_epg[$program_start][Epg_Params::EPG_ICON] = $entry[$parser[Epg_Params::EPG_ICON]];
+            } else {
+                $channel_epg[$program_start][Epg_Params::EPG_ICON] = '';
             }
         }
 
