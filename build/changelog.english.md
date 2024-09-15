@@ -1,4 +1,7 @@
-﻿### Version 5.1.886
+﻿### Version 5.1.890
+- Fixed a plugin crash if there are no playlists in the list
+
+### Version 5.1.886
 - Added support for the Korona provider (https://korona-tv.top/)
 - Added support for Pik TV (https://pa.piktv.top/)
 - Added support for IPTV 360 (https://iptv360.ru/) provider, including for plugin versions 5.0.x
