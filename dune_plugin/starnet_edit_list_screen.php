@@ -156,17 +156,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case GUI_EVENT_KEY_ENTER:
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST || $edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     $this->force_save($user_input);
-                    $selected_id = $this->get_order($edit_list)->get($selected_id);
+                    $playlist = $this->get_order($edit_list)->get($selected_id);
 
                     hd_debug_print("item: " . $selected_id, true);
-                    if (($selected_id->type === PARAM_LINK || empty($selected_id->type))
-                        && isset($selected_id->params[PARAM_URI])
-                        && preg_match(HTTP_PATTERN, $selected_id->params[PARAM_URI])) {
+                    if (($playlist->type === PARAM_LINK || empty($playlist->type))
+                        && isset($playlist->params[PARAM_URI])
+                        && preg_match(HTTP_PATTERN, $playlist->params[PARAM_URI])) {
                         return $this->do_edit_url_dlg($edit_list, $selected_id);
                     }
 
-                    if ($selected_id->type === PARAM_PROVIDER) {
-                        return $this->plugin->do_edit_provider_dlg($this, $selected_id->params[PARAM_PROVIDER], $selected_id);
+                    if ($playlist->type === PARAM_PROVIDER) {
+                        return $this->plugin->do_edit_provider_dlg($this, $playlist->params[PARAM_PROVIDER], $selected_id);
                     }
                 } else if ($edit_list === self::SCREEN_EDIT_PROVIDERS) {
                     return Action_Factory::close_and_run(
@@ -227,12 +227,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_INDEX_EPG:
-                $selected_id = $this->plugin->get_all_xmltv_sources()->get($selected_id);
-                if (is_null($selected_id) || empty($selected_id->params[PARAM_URI])) break;
+                $source = $this->plugin->get_all_xmltv_sources()->get($selected_id);
+                if (is_null($source) || empty($source->params[PARAM_URI])) break;
 
                 $sources = new Hashed_Array();
-                $sources->put($selected_id, $selected_id->params[PARAM_URI]);
-                hd_debug_print("index ($selected_id) {$selected_id->params[PARAM_URI]}", true);
+                $sources->put($selected_id, $source->params[PARAM_URI]);
+                hd_debug_print("index ($selected_id) {$source->params[PARAM_URI]}", true);
                 $this->plugin->run_bg_epg_indexing($sources);
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
@@ -473,27 +473,27 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
                 $this->set_no_changes();
-                $selected_id = $this->plugin->apply_edit_provider_dlg($user_input);
-                if ($selected_id === false) {
+                $id = $this->plugin->apply_edit_provider_dlg($user_input);
+                if ($id === false) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($selected_id === null) {
+                if ($id === null) {
                     return null;
                 }
 
-                if (is_array($selected_id)) {
-                    return $selected_id;
+                if (is_array($id)) {
+                    return $id;
                 }
 
                 $this->set_changes($parent_media_url->save_data);
-                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $selected_id;
+                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $id;
                 if ($this->force_parent_reload && $this->plugin->tv->reload_channels($plugin_cookies) === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }
 
-                $idx = $this->plugin->get_playlists()->get_idx($selected_id);
+                $idx = $this->plugin->get_playlists()->get_idx($id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $idx);
 
             case ACTION_FOLDER_SELECTED:
