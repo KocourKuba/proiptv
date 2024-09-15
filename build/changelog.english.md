@@ -1,4 +1,19 @@
-﻿### Version 5.0.852
+﻿### Version 5.1.886
+- Added support for the Korona provider (https://korona-tv.top/)
+- Added support for Pik TV (https://pa.piktv.top/)
+- Added support for IPTV 360 (https://iptv360.ru/) provider, including for plugin versions 5.0.x
+- Updated the configuration for Sharavoz (due to the blocking of some of their domains), including for the 5.0.x versions of the plugin
+- Added an automatic algorithm for determining the Channel ID for links and M3U files based on playlist attributes. For existing playlists, you can change the algorithm only in the settings.
+- Added the ability to move a category/channel to the beginning or end of the list. Toggle the navigation mode by pressing the SELECT button.
+- Added the Hide Category/Channel action to the CLEAR button.
+- Added additional XMLTV information on the source list editing screen.
+- Added indication of the XMLTV download or indexing process on the source list editing screen.
+- Added the ability to select an alternative Internet EPG source (not available for all providers)
+- Removed the context menu for changing the playlist/xmltv source (if there are a large number of entries Dune UI glitch).
+- Fixed the translation of some strings
+- Fixed some minor bugs in NewUI
+
+### Version 5.0.852
 - Changes to the access parameters for the iEdem/iLook provider were not saved
 
 ### Version 5.0.850
