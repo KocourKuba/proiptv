@@ -48,11 +48,6 @@ class Curl_Wrapper
     private $headers_path;
 
     /**
-     * @var string
-     */
-    private $cache_path;
-
-    /**
      * @var int
      */
     private $response_code;
@@ -80,7 +75,7 @@ class Curl_Wrapper
     /**
      * @var array
      */
-    private $cache_db;
+    private $cache_db = array();
 
     /**
      * @var string
@@ -99,14 +94,7 @@ class Curl_Wrapper
 
     public function __construct()
     {
-        $path = get_data_path();
-        create_path($path);
-        $this->cache_path = $path . DIRECTORY_SEPARATOR . 'cache.dat';
-        if (file_exists($this->cache_path)) {
-            $this->cache_db = unserialize(file_get_contents($this->cache_path));
-        } else {
-            $this->cache_db = array();
-        }
+        create_path(get_data_path());
     }
 
     /**
@@ -163,7 +151,6 @@ class Curl_Wrapper
             $etag = $this->get_etag_header();
             if (!empty($etag)) {
                 $this->set_cached_etag($etag);
-                file_put_contents($this->cache_path, serialize($this->cache_db));
             }
         }
         return true;
@@ -210,6 +197,253 @@ class Curl_Wrapper
         }
 
         return false;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_etag_header()
+    {
+        return $this->get_response_header('ETag');
+    }
+
+    /**
+     * @return string
+     */
+    public function get_response_header($header)
+    {
+        return isset($this->response_headers[$header]) ? $this->response_headers[$header] : '';
+    }
+
+    /**
+     * @param bool $is_file
+     * @param string $source contains data or file name
+     * @param bool $assoc
+     * @return mixed|false
+     */
+    public static function decodeJsonResponse($is_file, $source, $assoc = false)
+    {
+        if ($source === false) {
+            return false;
+        }
+
+        if ($is_file) {
+            $data = file_get_contents($source);
+        } else {
+            $data = $source;
+        }
+
+        $contents = json_decode($data, $assoc);
+        if ($contents !== null && $contents !== false) {
+            return $contents;
+        }
+
+        hd_debug_print("failed to decode json");
+        hd_debug_print("doc: $data", true);
+
+        return false;
+    }
+
+    /**
+     * @param $value
+     */
+    public function set_post($value = true)
+    {
+        $this->is_post = $value;
+    }
+
+    /**
+     * @param array $headers
+     */
+    public function set_send_headers($headers)
+    {
+        $this->send_headers = $headers;
+    }
+
+    /**
+     * @param array $data
+     */
+    public function set_post_data($data)
+    {
+        $this->post_data = $data;
+    }
+
+    /**
+     * @return array
+     */
+    public function get_response_headers()
+    {
+        return $this->response_headers;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_raw_response_headers()
+    {
+        return $this->raw_response_headers;
+    }
+
+    /**
+     * Check if cached url is expired
+     *
+     * @return bool result of operation
+     */
+    public function check_is_expired()
+    {
+        hd_debug_print(null, true);
+
+        $etag = $this->get_cached_etag();
+        if (!empty($etag)) {
+            $this->create_curl_config(null, true);
+            if ($this->exec_curl()) {
+                $code = $this->get_response_code();
+                hd_debug_print("http code: $code");
+                return !($code === 304 || ($code === 200 && $this->get_etag_header() === $this->get_cached_etag()));
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_response_code()
+    {
+        return $this->response_code;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_cached_etag()
+    {
+        $cache_db = self::load_cached_etag();
+        return isset($cache_db[$this->url_hash]) ? $cache_db[$this->url_hash] : '';
+    }
+
+    /**
+     * @return void
+     */
+    public function set_cached_etag($etag)
+    {
+        $cache_db = self::load_cached_etag();
+        $cache_db[$this->url_hash] = $etag;
+        self::save_cached_etag($cache_db);
+    }
+
+    /**
+     * @return bool
+     */
+    public function is_cached_etag()
+    {
+        $etag = $this->get_cached_etag();
+        return !empty($etag);
+    }
+
+    /**
+     * @return void
+     */
+    public function clear_cached_etag()
+    {
+        $cache_db = self::load_cached_etag();
+        unset($cache_db[$this->url_hash]);
+        self::save_cached_etag($cache_db);
+    }
+
+    /**
+     * @return void
+     */
+    public function clear_all_etag_cache()
+    {
+        $cache_path = get_data_path(EPG_CACHE_SUBDIR. DIRECTORY_SEPARATOR . 'etag_cache.dat');
+        if (file_exists($cache_path)) {
+            unlink($cache_path);
+        }
+    }
+
+    /**
+     * @param array $cache_db
+     * @return void
+     */
+    public static function save_cached_etag($cache_db)
+    {
+        file_put_contents(get_data_path('etag_cache.dat'), json_encode($cache_db));
+    }
+
+    /**
+     * @return array
+     */
+    public static function load_cached_etag()
+    {
+        $cache_path = get_data_path('etag_cache.dat');
+        if (file_exists($cache_path)) {
+            $cache_db = json_decode(file_get_contents($cache_path), true);
+        } else {
+            $cache_db = array();
+        }
+
+        return $cache_db;
+    }
+
+    /////////////////////////////////////////////////////////////
+    /// private functions
+
+    private function exec_curl()
+    {
+        $this->response_code = 0;
+
+        if (file_exists($this->logfile)) {
+            unlink($this->logfile);
+        }
+
+        $cmd = get_platform_curl() . " --config $this->config_file >>$this->logfile";
+        hd_debug_print("Exec: $cmd", true);
+        $result = shell_exec($cmd);
+        if ($result === false) {
+            hd_debug_print("Problem with exec curl");
+            return false;
+        }
+
+        if (!file_exists($this->logfile)) {
+            $log_content = "No http_proxy log! Exec result code: $result";
+            hd_debug_print($log_content);
+        } else {
+            $log_content = file_get_contents($this->logfile);
+            $pos = strpos($log_content, "RESPONSE_CODE:");
+            if ($pos !== false) {
+                $this->response_code = (int)trim(substr($log_content, $pos + strlen("RESPONSE_CODE:")));
+                hd_debug_print("Response code: $this->response_code", true);
+            }
+            unlink($this->logfile);
+        }
+
+        if (file_exists($this->headers_path)) {
+            $this->raw_response_headers = file_get_contents($this->headers_path);
+            if (!empty($this->raw_response_headers)) {
+                if (LogSeverity::$is_debug) {
+                    hd_debug_print("---------  Read response headers ---------");
+                }
+
+                $headers = explode("\r\n", $this->raw_response_headers);
+                $this->response_headers = array();
+                foreach ($headers as $line) {
+                    if (empty($line)) continue;
+
+                    hd_debug_print($line, true);
+                    if (preg_match("/^(.*):(.*)$/", $line, $m)) {
+                        $this->response_headers[$m[1]] = trim($m[2]);
+                    }
+                }
+
+                if (LogSeverity::$is_debug) {
+                    hd_debug_print("---------     Read finished    ---------");
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -271,219 +505,5 @@ class Curl_Wrapper
         }
 
         file_put_contents($this->config_file, implode(PHP_EOL, $config_data));
-    }
-
-    /**
-     * @return string
-     */
-    public function get_cached_etag()
-    {
-        return isset($this->cache_db[$this->url_hash]) ? $this->cache_db[$this->url_hash] : '';
-    }
-
-    private function exec_curl()
-    {
-        $this->response_code = 0;
-
-        if (file_exists($this->logfile)) {
-            unlink($this->logfile);
-        }
-
-        $cmd = get_platform_curl() . " --config $this->config_file >>$this->logfile";
-        hd_debug_print("Exec: $cmd", true);
-        $result = shell_exec($cmd);
-        if ($result === false) {
-            hd_debug_print("Problem with exec curl");
-            return false;
-        }
-
-        if (!file_exists($this->logfile)) {
-            $log_content = "No http_proxy log! Exec result code: $result";
-            hd_debug_print($log_content);
-        } else {
-            $log_content = file_get_contents($this->logfile);
-            $pos = strpos($log_content, "RESPONSE_CODE:");
-            if ($pos !== false) {
-                $this->response_code = (int)trim(substr($log_content, $pos + strlen("RESPONSE_CODE:")));
-                hd_debug_print("Response code: $this->response_code", true);
-            }
-            unlink($this->logfile);
-        }
-
-        if (file_exists($this->headers_path)) {
-            $this->raw_response_headers = file_get_contents($this->headers_path);
-            if (!empty($this->raw_response_headers)) {
-                if (LogSeverity::$is_debug) {
-                    hd_debug_print("---------  Read response headers ---------");
-                }
-
-                $headers = explode("\r\n", $this->raw_response_headers);
-                $this->response_headers = array();
-                foreach ($headers as $line) {
-                    if (empty($line)) continue;
-
-                    hd_debug_print($line, true);
-                    if (preg_match("/^(.*):(.*)$/", $line, $m)) {
-                        $this->response_headers[$m[1]] = trim($m[2]);
-                    }
-                }
-
-                if (LogSeverity::$is_debug) {
-                    hd_debug_print("---------     Read finished    ---------");
-                }
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_etag_header()
-    {
-        return $this->get_response_header('ETag');
-    }
-
-    /**
-     * @return string
-     */
-    public function get_response_header($header)
-    {
-        return isset($this->response_headers[$header]) ? $this->response_headers[$header] : '';
-    }
-
-    /**
-     * @return void
-     */
-    public function set_cached_etag($etag)
-    {
-        return $this->cache_db[$this->url_hash] = $etag;
-    }
-
-    /**
-     * @param bool $is_file
-     * @param string $source contains data or file name
-     * @param bool $assoc
-     * @return mixed|false
-     */
-    public static function decodeJsonResponse($is_file, $source, $assoc = false)
-    {
-        if ($source === false) {
-            return false;
-        }
-
-        if ($is_file) {
-            $data = file_get_contents($source);
-        } else {
-            $data = $source;
-        }
-
-        $contents = json_decode($data, $assoc);
-        if ($contents !== null && $contents !== false) {
-            return $contents;
-        }
-
-        hd_debug_print("failed to decode json");
-        hd_debug_print("doc: $data", true);
-
-        return false;
-    }
-
-    /**
-     * @param $value
-     */
-    public function set_post($value = true)
-    {
-        $this->is_post = $value;
-    }
-
-    /**
-     * @return bool
-     */
-    public function is_cached()
-    {
-        return isset($this->cache_db[$this->url_hash]) && !empty($this->cache_db[$this->url_hash]);
-    }
-
-    /**
-     * @return void
-     */
-    public function clear_cached_etag($url)
-    {
-        $hash = hash('crc32', $url);
-        unset($this->cache_db[$hash]);
-    }
-
-    /**
-     * @return void
-     */
-    public function clear_all_cache()
-    {
-        $this->cache_db = array();
-        if (file_exists($this->cache_path)) {
-            unlink($this->cache_path);
-        }
-    }
-
-    /**
-     * @param array $headers
-     */
-    public function set_send_headers($headers)
-    {
-        $this->send_headers = $headers;
-    }
-
-    /**
-     * @param array $data
-     */
-    public function set_post_data($data)
-    {
-        $this->post_data = $data;
-    }
-
-    /**
-     * @return array
-     */
-    public function get_response_headers()
-    {
-        return $this->response_headers;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_raw_response_headers()
-    {
-        return $this->raw_response_headers;
-    }
-
-    /**
-     * Check if cached url is expired
-     *
-     * @return bool result of operation
-     */
-    public function check_is_expired()
-    {
-        hd_debug_print(null, true);
-
-        $etag = $this->get_cached_etag();
-        if (!empty($etag)) {
-            $this->create_curl_config(null, true);
-            if ($this->exec_curl()) {
-                $code = $this->get_response_code();
-                return !($code === 304 || ($code === 200 && $this->get_etag_header() === $this->get_cached_etag()));
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * @return int
-     */
-    public function get_response_code()
-    {
-        return $this->response_code;
     }
 }

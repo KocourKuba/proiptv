@@ -503,8 +503,8 @@ function get_platform_curl()
     static $curl = null;
     if (is_null($curl)) {
         $v = get_platform_info();
-        hd_debug_print("platform: " . $v['platform']);
-        hd_debug_print("type: " . $v['type']);
+        hd_debug_print("platform: " . $v['platform'], true);
+        hd_debug_print("type: " . $v['type'], true);
         $curl = "curl";
         if ($v['platform'] === 'android') {
             $curl = getenv('FS_PREFIX') . "/firmware/bin/curl";
@@ -520,7 +520,7 @@ function get_platform_curl()
                 $curl = get_install_path("/bin/curl.867x");
             }
         }
-        hd_debug_print("used curl: $curl");
+        hd_debug_print("used curl: $curl", true);
     }
 
     return $curl;

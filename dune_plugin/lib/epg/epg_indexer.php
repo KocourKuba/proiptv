@@ -282,7 +282,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         if ($this->cache_type === XMLTV_CACHE_AUTO) {
             $this->curl_wrapper->set_url($this->xmltv_url);
             if ($this->curl_wrapper->check_is_expired()) {
-                $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
+                $this->curl_wrapper->clear_cached_etag();
             } else {
                 $expired = false;
             }
@@ -369,20 +369,21 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             }
 
             $this->curl_wrapper->set_url($this->xmltv_url);
-            $expired = $this->curl_wrapper->check_is_expired() || !file_exists($tmp_filename);
+            $expired = !file_exists($cached_file) || $this->curl_wrapper->check_is_expired();
             if (!$expired) {
                 hd_debug_print("File not changed, using cached file: $cached_file");
                 $this->set_index_locked(false);
                 return 1;
             }
 
-            $this->curl_wrapper->clear_cached_etag($this->xmltv_url);
+            $this->curl_wrapper->clear_cached_etag();
             if (!$this->curl_wrapper->download_file($tmp_filename, true)) {
-                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_raw_response_headers());
+                throw new Exception("Can't exec curl");
             }
 
-            if ($this->curl_wrapper->get_response_code() !== 200) {
-                throw new Exception("Ошибка скачивания $this->xmltv_url\n\n" . $this->curl_wrapper->get_raw_response_headers());
+            $http_code = $this->curl_wrapper->get_response_code();
+            if ($http_code !== 200) {
+                throw new Exception("Ошибка скачивания ($http_code) $this->xmltv_url\n\n" . $this->curl_wrapper->get_raw_response_headers());
             }
 
             $file_time = filemtime($tmp_filename);
@@ -548,6 +549,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     public function clear_epg_files($hash)
     {
         hd_debug_print(null, true);
+        if (empty($hash)) {
+            $this->curl_wrapper->clear_all_etag_cache();
+        } else {
+            $this->curl_wrapper->clear_cached_etag();
+        }
         $this->clear_memory_index($hash);
 
         if (empty($this->cache_dir)) {
