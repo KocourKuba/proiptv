@@ -556,7 +556,7 @@ class Starnet_Tv implements User_Input_Handler
      * @param bool $force
      * @return int
      */
-    public function reload_channels(&$plugin_cookies, $force = false)
+    public function reload_channels(&$plugin_cookies, $force = true)
     {
         $this->unload_channels();
         return $this->load_channels($plugin_cookies, $force);
@@ -611,10 +611,32 @@ class Starnet_Tv implements User_Input_Handler
         $provider = $this->plugin->get_current_provider();
 
         $this->plugin->init_epg_manager();
-        $this->plugin->load_active_xmltv_sources();
-
         $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+
+        if (($is_xml_engine || $use_playlist_picons !== PLAYLIST_PICONS)) {
+            $active_sources = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
+            hd_debug_print("Load active XMLTV sources selected: $active_sources");
+            if ($active_sources->size() === 0) {
+                $pl_xmltv_sources = $this->plugin->get_playlist_xmltv_sources();
+                foreach ($pl_xmltv_sources as $pl_source) {
+                    if (!empty($pl_source->params[PARAM_URI])) {
+                        $active_sources->add($pl_source->params[PARAM_URI]);
+                    }
+                }
+
+                if ($active_sources->size()) {
+                    $this->plugin->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
+                }
+            }
+
+            $epg_manager = $this->plugin->get_epg_manager();
+            if ($epg_manager !== null) {
+                $epg_manager->get_indexer()->set_active_sources($active_sources);
+                $epg_manager->get_indexer()->clear_stalled_locks();
+            }
+        }
+
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);

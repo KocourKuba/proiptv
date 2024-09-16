@@ -80,7 +80,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // picon settings
 
-        $sources = $this->plugin->get_active_xmltv_sources();
+        $sources = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
         if ($sources->size() !== 0) {
             $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
             $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
@@ -219,7 +219,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
                 $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
-                $result = $this->plugin->tv->reload_channels($plugin_cookies, true);
+                $result = $this->plugin->tv->reload_channels($plugin_cookies);
                 $action = Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );

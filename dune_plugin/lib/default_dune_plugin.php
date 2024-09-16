@@ -2260,38 +2260,6 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * Load active xmltv sources
-     * @return void
-     */
-    public function load_active_xmltv_sources()
-    {
-        $is_xml_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-        $use_playlist_picons = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-
-        if (($is_xml_engine || $use_playlist_picons !== PLAYLIST_PICONS)) {
-            $active_sources = $this->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
-            if ($active_sources->size() === 0) {
-                $pl_xmltv_sources = $this->get_playlist_xmltv_sources();
-                foreach ($pl_xmltv_sources as $pl_source) {
-                    if (!empty($pl_source->params[PARAM_URI])) {
-                        $active_sources->add($pl_source->params[PARAM_URI]);
-                    }
-                }
-
-                if ($active_sources->size()) {
-                    $this->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
-                }
-            }
-
-            $epg_manager = $this->get_epg_manager();
-            if ($epg_manager !== null) {
-                $epg_manager->get_indexer()->set_active_sources($active_sources);
-                $epg_manager->get_indexer()->clear_stalled_locks();
-            }
-        }
-    }
-
-    /**
      * @return string
      */
     public function get_cache_dir()
@@ -2576,35 +2544,6 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return Hashed_Array
-     */
-    public function get_active_xmltv_sources()
-    {
-        return $this->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
-    }
-
-    /**
-     * @param string $key
-     * @param bool $set
-     * @return void
-     */
-    public function set_active_xmltv_source($key, $set = true)
-    {
-        $active_sources = $this->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
-        if ($set) {
-            /** @var Named_Storage $xmltv_source */
-            $xmltv_source = $this->get_all_xmltv_sources()->get($key);
-            if (!is_null($xmltv_source)) {
-                $active_sources->set($key, $xmltv_source->params[PARAM_URI]);
-            }
-        } else {
-            $active_sources->erase($key);
-        }
-
-        $this->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
-    }
-
-    /**
      * get all xmltv source
      *
      * @return Hashed_Array<string, Named_Storage>
@@ -2721,7 +2660,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
         if (is_null($sources)) {
-            $sources = $this->get_active_xmltv_sources();
+            $sources = $this->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
         }
 
         foreach ($sources as $key => $value) {

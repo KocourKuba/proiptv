@@ -108,6 +108,8 @@ if (!defined('GUI_EVENT_KEY_ANGLE')) define('GUI_EVENT_KEY_ANGLE', 'key_angle');
 if (!defined('GUI_EVENT_DISCRETE_POWER_ON')) define('GUI_EVENT_DISCRETE_POWER_ON', 'key_discrete_power_on');
 if (!defined('GUI_EVENT_DISCRETE_POWER_OFF')) define('GUI_EVENT_DISCRETE_POWER_OFF', 'key_discrete_power_off');
 
+if (!defined('PHP_INT_MIN')) define('PHP_INT_MIN', ~PHP_INT_MAX);
+
 # Dune colors const's.
 # Common:
 const DEF_LABEL_TEXT_COLOR_BLACK        = 0;  #0x000000	Black						IPTV plugin playback time and number of EPG item
