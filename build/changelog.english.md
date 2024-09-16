@@ -1,4 +1,10 @@
-﻿### Version 5.1.890
+﻿### Version 5.1.898
+- Fixed selection of active XMLTV sources when changing playlist
+- Minor fixes to the HTTP ETag caching mechanism
+- If the EPG contains images of a TV program, they are shown in NewUI in the preview window
+- Playlist/XMLTV source selection is now by the Enter button, and editing by the Blue button
+
+### Version 5.1.890
 - Fixed a plugin crash if there are no playlists in the list
 
 ### Version 5.1.886
