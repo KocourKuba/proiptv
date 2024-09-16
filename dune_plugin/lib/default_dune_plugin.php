@@ -837,12 +837,13 @@ class Default_Dune_Plugin implements DunePlugin
                 if (isset($value[Epg_Params::EPG_END], $value[Epg_Params::EPG_NAME], $value[Epg_Params::EPG_DESC])) {
                     $tm_start = (int)$time + $time_shift;
                     $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
+                    $icon = isset($value[Epg_Params::EPG_ICON]) ? $value[Epg_Params::EPG_ICON] : '';
                     $day_epg[] = array(
                         PluginTvEpgProgram::start_tm_sec => $tm_start,
                         PluginTvEpgProgram::end_tm_sec => $tm_end,
                         PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
                         PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
-                        PluginTvEpgProgram::icon_url => $value[Epg_Params::EPG_ICON],
+                        PluginTvEpgProgram::icon_url => $icon,
                     );
 
                     if (LogSeverity::$is_debug) {
@@ -2663,6 +2664,11 @@ class Default_Dune_Plugin implements DunePlugin
             $sources = $this->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
         }
 
+        if ($sources->size() === 0) {
+            hd_debug_print("No sources for indexing");
+            return;
+        }
+
         foreach ($sources as $key => $value) {
             if (empty($value)) continue;
 
@@ -2882,7 +2888,7 @@ class Default_Dune_Plugin implements DunePlugin
             ACTION_RELOAD,
             TR::t('refresh_playlist'),
             "refresh.png",
-            array('reload_action' => 'playlist'));
+            array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
@@ -2904,7 +2910,7 @@ class Default_Dune_Plugin implements DunePlugin
             ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
 
         $provider = $this->get_current_provider();
-        if (!is_null($provider)) {
+        if (!is_null($provider) && !$is_xmltv_engine) {
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
             if (count($epg_presets) > 1) {
                 $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
@@ -3052,12 +3058,12 @@ class Default_Dune_Plugin implements DunePlugin
             $this->set_postpone_save(true, PLUGIN_PARAMETERS);
             $params['allow_order'] = true;
             $params['save_data'] = PLUGIN_PARAMETERS;
-            $params['end_action'] = ACTION_REFRESH_SCREEN;
+            $params['end_action'] = ACTION_RELOAD;
             $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
         } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) {
             $this->set_postpone_save(true, PLUGIN_PARAMETERS);
             $params['save_data'] = PLUGIN_PARAMETERS;
-            $params['end_action'] = ACTION_REFRESH_SCREEN;
+            $params['end_action'] = ACTION_RELOAD;
             $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
         } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_PROVIDERS) {
             $params['end_action'] = ACTION_EDIT_PROVIDER_DLG;

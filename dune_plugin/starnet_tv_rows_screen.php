@@ -628,7 +628,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
         /** @var Default_Group $group */
         /** @var Default_Channel $channel */
-        $groups = $this->plugin->tv->get_groups()->filter($this->plugin->tv->get_groups_order()->get_order());
+        $groups = $this->plugin->tv->get_groups()->filter_keys($this->plugin->tv->get_groups_order()->get_order());
         foreach ($groups as $group) {
             if (is_null($group)) continue;
 
@@ -934,7 +934,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
                 $epg_manager->clear_current_epg_cache();
                 $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -951,7 +951,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
                 }
                 break;
 
@@ -963,7 +963,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
                 }
                 break;
 
@@ -1039,7 +1039,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return $id;
                 }
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
 
             case GUI_EVENT_KEY_INFO:
                 if (isset($media_url->channel_id)) {
@@ -1052,9 +1052,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $this->save_if_changed();
                 $force = false;
                 if (isset($user_input->reload_action)) {
-                    if ($user_input->reload_action === 'playlist') {
+                    if ($user_input->reload_action === Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) {
                         $force = true;
-                    } else if ($user_input->reload_action === 'epg') {
+                    } else if ($user_input->reload_action === Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) {
                         $epg_manager = $this->plugin->get_epg_manager();
                         if ($epg_manager === null) {
                             return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));

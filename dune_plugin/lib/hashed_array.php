@@ -185,12 +185,29 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * @param array $keys
      * @return Hashed_Array
      */
-    public function &filter($keys)
+    public function &filter_keys($keys)
     {
         $filtered = new self();
         foreach ($keys as $key) {
             if ($this->has($key)) {
                 $filtered->put($key, $this->map[$key]);
+            }
+        }
+        return $filtered;
+    }
+
+    /**
+     * filter array by keys, return values only match with keys
+     *
+     * @param Hashed_Array $arr
+     * @return Hashed_Array
+     */
+    public function &filter($arr)
+    {
+        $filtered = new self();
+        foreach ($arr as $key => $value) {
+            if ($this->has($key)) {
+                $filtered->put($key, $value);
             }
         }
         return $filtered;

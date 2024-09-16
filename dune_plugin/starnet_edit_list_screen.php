@@ -139,8 +139,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $post_action = User_Input_Handler_Registry::create_action_screen(
                     $parent_media_url->source_window_id,
-                    $reload ? $parent_media_url->end_action : $parent_media_url->cancel_action
+                    $reload ? $parent_media_url->end_action : $parent_media_url->cancel_action,
+                    null,
+                    array('reload_action' => $edit_list)
                 );
+                hd_debug_print("post action: " . pretty_json_format($post_action));
 
                 return Action_Factory::invalidate_folders(
                     $reload ? array($parent_media_url->source_media_url_str) : array(),
@@ -165,8 +168,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     $this->plugin->set_active_playlist_key($selected_id);
-                } else if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
+                    $this->force_parent_reload = true;
+                    $this->force_save($user_input);
+
+                    return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+                }
+
+                if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     $active_sources = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
+                    $load_source = null;
                     if ($active_sources->has($selected_id)) {
                         $active_sources->erase($selected_id);
                     } else {
@@ -174,29 +184,38 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($selected_id);
                         if (!is_null($xmltv_source)) {
                             $active_sources->set($selected_id, $xmltv_source->params[PARAM_URI]);
+                            $load_source = $xmltv_source->params[PARAM_URI];
                         }
                     }
 
+                    $this->force_parent_reload = true;
+                    $this->force_save($user_input);
                     $this->plugin->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
-                } else {
-                    return null;
+
+                    $epg_manager = $this->plugin->get_epg_manager();
+                    if ($epg_manager === null) {
+                        return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
+                    }
+
+                    if ($load_source !== null &&
+                        ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV
+                        || $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== PLAYLIST_PICONS)) {
+                        $epg_manager->get_indexer()->set_url($load_source);
+                        $res = $epg_manager->get_indexer()->is_xmltv_cache_valid();
+                        if ($res !== 0) {
+                            $sources = new Hashed_Array();
+                            $sources->put($selected_id, $load_source);
+                            $this->plugin->run_bg_epg_indexing($sources);
+
+                            $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                            return Action_Factory::change_behaviour($actions, 1000);
+                        }
+                    }
+
+                    return $this->invalidate_current_folder($parent_media_url, $plugin_cookies);
                 }
 
-                $this->force_parent_reload = true;
-                $this->force_save($user_input);
-
-                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,
-                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
-                }
-
-                return Action_Factory::invalidate_folders(
-                    array($parent_media_url->source_media_url_str),
-                    Action_Factory::close_and_run(User_Input_Handler_Registry::create_action_screen(
-                        $parent_media_url->source_window_id,
-                        $parent_media_url->end_action
-                    ))
-                );
+                return null;
 
             case GUI_EVENT_TIMER:
                 if ($edit_list !== self::SCREEN_EDIT_EPG_LIST) {
@@ -264,6 +283,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_CLEAR_CACHE:
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
+                $this->set_changes();
                 break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
@@ -1176,7 +1196,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $all_sources['pl'] = $this->plugin->get_playlist_xmltv_sources();
-        $all_sources['ext'] = $this->get_order($media_url->edit_list);
+        $all_sources['ext'] = $this->get_order(static::SCREEN_EDIT_EPG_LIST);
         $active_sources_order = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array())->get_ordered_values();
         $dupes = array();
         foreach ($all_sources as $source_type => $source) {

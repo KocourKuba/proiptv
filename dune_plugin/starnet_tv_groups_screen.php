@@ -317,7 +317,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $epg_manager->clear_current_epg_cache();
                 $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -334,7 +334,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
                 }
                 break;
 
@@ -346,7 +346,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
                 }
                 break;
 
@@ -394,7 +394,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return $res;
                 }
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => 'playlist'));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
@@ -530,20 +530,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->save_if_changed();
                 $force = false;
                 if (isset($user_input->reload_action)) {
-                    if ($user_input->reload_action === 'playlist') {
+                    if ($user_input->reload_action === Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST
+                        || $user_input->reload_action === Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) {
                         $force = true;
-                    } else if ($user_input->reload_action === 'epg') {
-                        $epg_manager = $this->plugin->get_epg_manager();
-                        if ($epg_manager === null) {
-                            return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
-                        }
-
-                        if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV) {
-                            $res = $epg_manager->get_indexer()->download_xmltv_source();
-                            if ($res === -1) {
-                                return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_epg'), null, HD::get_last_error("xmltv_last_error"));
-                            }
-                        }
                     }
                 }
 
@@ -704,7 +693,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         /** @var Default_Group $group */
-        foreach ($this->plugin->tv->get_enabled_groups()->filter($this->plugin->tv->get_groups_order()->get_order()) as $group) {
+        foreach ($this->plugin->tv->get_enabled_groups()->filter_keys($this->plugin->tv->get_groups_order()->get_order()) as $group) {
             $group_url = $group->get_icon_url();
             $items[] = array(
                 PluginRegularFolderItem::media_url => $group->get_media_url_str(),

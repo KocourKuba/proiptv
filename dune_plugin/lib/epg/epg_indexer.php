@@ -399,6 +399,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             hd_debug_print("Download $file_size bytes of xmltv source $this->xmltv_url done in: $dl_time secs (speed $speed)");
 
             if (file_exists($cached_file)) {
+                hd_debug_print("Remove cached file: $cached_file");
                 unlink($cached_file);
             }
 
@@ -416,7 +417,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 $cmd = "gzip -d $tmp_filename 2>&1";
                 system($cmd, $ret);
                 if ($ret !== 0) {
-                    throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
+                    throw new Exception("Failed to ungzip $tmp_filename (error code: $ret)");
                 }
                 clearstatcache();
                 $size = filesize($cached_file);
