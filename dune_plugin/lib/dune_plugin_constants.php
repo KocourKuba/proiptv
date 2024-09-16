@@ -94,7 +94,6 @@ const ACTION_RESET_TYPE = 'reset_type';
 const ACTION_SORT_CHANNELS = 'channels';
 const ACTION_SORT_GROUPS = 'groups';
 const ACTION_SORT_ALL = 'all';
-const ACTION_SET_CURRENT = 'set_current';
 const ACTION_INFO_DLG = 'info_dlg';
 const ACTION_ADD_MONEY_DLG = 'add_money_dlg';
 const ACTION_PASSWORD_APPLY = 'password_apply';
