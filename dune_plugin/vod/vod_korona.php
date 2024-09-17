@@ -161,7 +161,7 @@ class vod_korona extends vod_standard
         $keyword = urlencode($keyword);
         $searchRes = $this->make_json_request("/filter/by_name?name=$keyword&page=1&per_page=999999999");
 
-        return ($searchRes === false) ? array() : $this->CollectSearchResult($searchRes);
+        return ($searchRes === false) ? array() : $this->CollectSearchResult($searchRes, $searchRes);
     }
 
     /**
@@ -229,16 +229,22 @@ class vod_korona extends vod_standard
 
         $jsonItems = $this->make_json_request("/filter");
 
-        return $jsonItems === false ? array() : $this->CollectSearchResult($query_id);
+        return $jsonItems === false ? array() : $this->CollectSearchResult($query_id, $jsonItems);
     }
 
     /**
+     * @param string $query_id
      * @param Object $json
      * @return array
      */
-    protected function CollectSearchResult($json)
+    protected function CollectSearchResult($query_id, $json)
     {
         $movies = array();
+
+        $page_id = $query_id;
+        $current_idx = $this->get_current_page($page_id);
+        if ($current_idx < 0)
+            return $movies;
 
         foreach ($json->data as $entry) {
             $genresArray = array();
@@ -259,6 +265,8 @@ class vod_korona extends vod_standard
         }
 
         hd_debug_print("Movies found: " . count($movies));
+        $this->set_next_page($page_id, -1);
+
         return $movies;
     }
 
@@ -268,10 +276,11 @@ class vod_korona extends vod_standard
     public function getMovieList($query_id)
     {
         hd_debug_print($query_id);
+        $this->get_next_page($query_id);
         $arr = explode("_", $query_id);
         $genre_id = isset($arr[1]) ? $arr[1] : $query_id;
         $response = $this->make_json_request("/genres/$genre_id?page=1&per_page=999999999");
-        return $response === false ? array() : $this->CollectSearchResult($response);
+        return $response === false ? array() : $this->CollectSearchResult($query_id, $response);
     }
 
     protected static function collect_genres($entry)
