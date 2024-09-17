@@ -10,7 +10,7 @@
 
 ### Version 5.1.886
 - Added support for the Korona provider (https://korona-tv.top/)
-- Added support for Pik TV (https://pa.piktv.top/)
+- Added support for Pik TV (http://pa.piktv.top/)
 - Added support for IPTV 360 (https://iptv360.ru/) provider, including for plugin versions 5.0.x
 - Updated the configuration for Sharavoz (due to the blocking of some of their domains), including for the 5.0.x versions of the plugin
 - Added an automatic algorithm for determining the Channel ID for links and M3U files based on playlist attributes. For existing playlists, you can change the algorithm only in the settings.

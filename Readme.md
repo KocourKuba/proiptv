@@ -53,7 +53,7 @@ Also, have presets for most popular IPTV providers.
 43. [Ott Pub](https://ott.pub/)
 44. [Blink TV](https://blinktv.cc/)
 45. [Korona](https://korona-tv.top/)
-46. [Pik TV](https://pa.piktv.top/)
+46. [Pik TV](http://pa.piktv.top/)
 </details>
 
 ## Donate

@@ -1010,7 +1010,7 @@
       "name": "Pik TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_piktv.png",
-      "provider_url": "https://pa.piktv.top/",
+      "provider_url": "http://pa.piktv.top/",
       "api_url": "http://stb.piktv.top/api",
       "api_commands": {
         "get_playlist": "http://pl.piktv.top/{QUALITY_ID}/{SERVER_ID}/{LOGIN}/{PASSWORD}/{STREAM_ID}",
@@ -1470,7 +1470,8 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "viplime"
+            "name": "drm",
+            "title": "epg.drm-play"
           }
         ],
         "ext_params": true,
