@@ -222,8 +222,8 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             return $channel_epg;
         }
 
-        $parser = $preset[EPG_JSON_PARSER];
-        hd_debug_print("parser params: " . json_encode($parser), true);
+        $parser_params = $preset[EPG_JSON_PARSER];
+        hd_debug_print("parser params: " . json_encode($parser_params), true);
 
         try {
             $opts = null;
@@ -240,8 +240,8 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             return $channel_epg;
         }
 
-        if (!empty($parser[Epg_Params::EPG_ROOT])) {
-            foreach (explode('|', $parser[Epg_Params::EPG_ROOT]) as $level) {
+        if (!empty($parser_params[Epg_Params::EPG_ROOT])) {
+            foreach (explode('|', $parser_params[Epg_Params::EPG_ROOT]) as $level) {
                 $epg_root = trim($level, "[]");
                 $ch_data = $ch_data[$epg_root];
             }
@@ -250,40 +250,40 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         // Possible need to add this to setup
         // disabling end can help problem with overlapping end/start EPG
 
-        hd_debug_print("json epg root: " . $parser[Epg_Params::EPG_ROOT], true);
-        hd_debug_print("json start: " . $parser[Epg_Params::EPG_START], true);
-        hd_debug_print("json title: " . $parser[Epg_Params::EPG_NAME], true);
-        hd_debug_print("json desc: " . $parser[Epg_Params::EPG_DESC], true);
-        hd_debug_print("json icon: " . $parser[Epg_Params::EPG_ICON], true);
+        hd_debug_print("json epg root: " . $parser_params[Epg_Params::EPG_ROOT], true);
+        hd_debug_print("json start: " . $parser_params[Epg_Params::EPG_START], true);
+        hd_debug_print("json title: " . $parser_params[Epg_Params::EPG_NAME], true);
+        hd_debug_print("json desc: " . $parser_params[Epg_Params::EPG_DESC], true);
+        hd_debug_print("json icon: " . $parser_params[Epg_Params::EPG_ICON], true);
 
         // collect all program that starts after day start and before day end
         $prev_start = 0;
         foreach ($ch_data as $entry) {
-            if (!isset($entry[$parser[Epg_Params::EPG_START]])) continue;
+            if (!isset($entry[$parser_params[Epg_Params::EPG_START]])) continue;
 
-            $program_start = $entry[$parser[Epg_Params::EPG_START]];
+            $program_start = $entry[$parser_params[Epg_Params::EPG_START]];
 
             if ($prev_start !== 0) {
                 $channel_epg[$prev_start][Epg_Params::EPG_END] = $program_start;
             }
             $prev_start = $program_start;
 
-            if (isset($entry[$parser[Epg_Params::EPG_NAME]])) {
-                $channel_epg[$program_start][Epg_Params::EPG_NAME] = HD::unescape_entity_string($entry[$parser[Epg_Params::EPG_NAME]]);
+            if (isset($entry[$parser_params[Epg_Params::EPG_NAME]])) {
+                $channel_epg[$program_start][Epg_Params::EPG_NAME] = HD::unescape_entity_string($entry[$parser_params[Epg_Params::EPG_NAME]]);
             } else {
                 $channel_epg[$program_start][Epg_Params::EPG_NAME] = '';
             }
 
-            if (isset($entry[$parser[Epg_Params::EPG_DESC]])) {
-                $desc = HD::unescape_entity_string($entry[$parser[Epg_Params::EPG_DESC]]);
+            if (isset($entry[$parser_params[Epg_Params::EPG_DESC]])) {
+                $desc = HD::unescape_entity_string($entry[$parser_params[Epg_Params::EPG_DESC]]);
                 $desc = str_replace('<br>', PHP_EOL, $desc);
                 $channel_epg[$program_start][Epg_Params::EPG_DESC] = $desc;
             } else {
                 $channel_epg[$program_start][Epg_Params::EPG_DESC] = '';
             }
 
-            if (isset($entry[$parser[Epg_Params::EPG_ICON]])) {
-                $channel_epg[$program_start][Epg_Params::EPG_ICON] = $entry[$parser[Epg_Params::EPG_ICON]];
+            if (isset($entry[$parser_params[Epg_Params::EPG_ICON]])) {
+                $channel_epg[$program_start][Epg_Params::EPG_ICON] = $entry[$parser_params[Epg_Params::EPG_ICON]];
             } else {
                 $channel_epg[$program_start][Epg_Params::EPG_ICON] = '';
             }
