@@ -72,13 +72,15 @@ class Starnet_Vod_Seasons_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
         $items = array();
 
-        foreach ($movie->season_list as $season) {
-            hd_debug_print("movie_id: $movie->id season_id: $season->id season_name: $season->name", true);
-            $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Series_List_Screen::get_media_url_string($movie->id, $season->id),
-                PluginRegularFolderItem::caption => $season->name,
-                PluginRegularFolderItem::view_item_params => array(ViewItemParams::icon_path => 'gui_skin://small_icons/folder.aai'),
-            );
+        if ($movie->has_seasons()) {
+            foreach ($movie->season_list as $season) {
+                hd_debug_print("movie_id: $movie->id season_id: $season->id season_name: $season->name", true);
+                $items[] = array(
+                    PluginRegularFolderItem::media_url => Starnet_Vod_Series_List_Screen::get_media_url_string($movie->id, $season->id),
+                    PluginRegularFolderItem::caption => $season->name,
+                    PluginRegularFolderItem::view_item_params => array(ViewItemParams::icon_path => 'gui_skin://small_icons/folder.aai'),
+                );
+            }
         }
 
         return $items;

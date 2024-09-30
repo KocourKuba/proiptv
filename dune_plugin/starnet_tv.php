@@ -595,17 +595,31 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->load_settings($force);
 
-        // upgrade old settings
-        if ($this->plugin->has_setting(self::PARAM_CUR_XMLTV_SOURCE)) {
-            $this->plugin->remove_setting(self::PARAM_CUR_XMLTV_SOURCE);
-            $this->plugin->remove_setting(self::PARAM_CUR_XMLTV_SOURCE_KEY);
-        }
-
         $this->plugin->create_screen_views();
 
         // first check if playlist in cache
-        if (!$this->plugin->init_playlist($force)) {
+        $playlist_type = $this->plugin->init_playlist($force);
+        if (0 === $playlist_type) {
             return 0;
+        }
+
+        if ($playlist_type === 2) {
+            // Vod category
+            $special_group = new Default_Group($this->plugin,
+                VOD_GROUP_ID,
+                TR::load_string(Default_Group::VOD_GROUP_CAPTION),
+                Default_Group::VOD_GROUP_ICON,
+                false);
+            $special_group->set_disabled(false);
+            $this->special_groups->set($special_group->get_id(), $special_group);
+
+            hd_debug_print("Using standart VOD implementation");
+            $vod_class = 'vod_standard';
+            $this->plugin->vod = new $vod_class($this->plugin);
+            $this->plugin->vod_enabled = true;
+            $this->plugin->vod->init_vod_screens();
+
+            return 2;
         }
 
         $provider = $this->plugin->get_current_provider();

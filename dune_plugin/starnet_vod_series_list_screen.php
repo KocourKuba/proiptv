@@ -295,6 +295,10 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
         /** @var History_Item[] $movie_info */
         $viewed_items = $this->plugin->get_history(HISTORY_MOVIES)->get($media_url->movie_id);
 
+        if (!$movie->has_series()) {
+            return array();
+        }
+
         $items = array();
         foreach ($movie->series_list as $episode) {
             if (isset($media_url->season_id) && $media_url->season_id !== $episode->season_id) continue;

@@ -56,13 +56,13 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
         if (is_null($movie)) {
             $movie = new Movie($media_url->movie_id, $this->plugin);
             hd_debug_print("empty movie or no series data");
-            $movie->description = TR::t('warn_msg5');
+            $movie->movie_info[PluginMovie::description] = TR::t('warn_msg5');
             return array(
                 PluginFolderView::multiple_views_supported => false,
                 PluginFolderView::archive => null,
                 PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_MOVIE,
                 PluginFolderView::data => array(
-                    PluginMovieFolderView::movie => $movie->get_movie_array(),
+                    PluginMovieFolderView::movie => $movie->movie_info,
                     PluginMovieFolderView::left_button_caption => TR::t('ok'),
                     PluginMovieFolderView::left_button_action => Action_Factory::close_and_run(),
                     PluginMovieFolderView::has_right_button => false,
@@ -77,20 +77,20 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
             );
         }
 
-        hd_debug_print("movie: " . pretty_json_format($movie->get_movie_array()));
+        hd_debug_print("movie: " . pretty_json_format($movie->movie_info));
 
         $right_button_caption = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID)->in_items_order($movie->id)
             ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
         $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array('movie_id' => $movie->id));
 
-        if (isset($movie->season_list)) {
+        if ($movie->has_seasons()) {
             $screen_media_url = Starnet_Vod_Seasons_List_Screen::get_media_url_string($movie->id);
         } else {
             $screen_media_url = Starnet_Vod_Series_List_Screen::get_media_url_string($movie->id);
         }
 
         $movie_folder_view = array(
-            PluginMovieFolderView::movie => $movie->get_movie_array(),
+            PluginMovieFolderView::movie => $movie->movie_info,
             PluginMovieFolderView::has_right_button => true,
             PluginMovieFolderView::right_button_caption => $right_button_caption,
             PluginMovieFolderView::right_button_action => $right_button_action,

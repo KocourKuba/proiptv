@@ -57,7 +57,7 @@ abstract class Abstract_Vod
     {
         hd_debug_print("set movie to cache: $movie->id, movie: " . json_encode($movie), true);
         $this->movie_by_id[$movie->id] = $movie;
-        $this->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url));
+        $this->set_cached_short_movie(new Short_Movie($movie->id, $movie->movie_info[PluginMovie::name], $movie->movie_info[PluginMovie::poster_url]));
     }
 
     /**

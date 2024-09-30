@@ -247,6 +247,9 @@ edit_list_title_info__1 = %s|Processing...
 edit_list_title_info__2 = %s|Downloaded: %s
 edit_list_title_info_download__1 = %s|Downloading...
 edit_list_title_cant_delete = Can't delete the playlist XMLTV source!
+edit_list_playlist_type = Playlist type
+edit_list_playlist_iptv = IPTV
+edit_list_playlist_vod = Vido on demand (VOD)
 
 folder_screen_open_folder = Open folder
 folder_screen_create_folder = Create folder

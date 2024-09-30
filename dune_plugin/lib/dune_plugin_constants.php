@@ -101,6 +101,8 @@ const ACTION_JUMP_TO_CHANNEL = 'jump_to_channel';
 const ACTION_JUMP_TO_CHANNEL_IN_GROUP = 'jump_to_channel_in_group';
 const ACTION_ADD_URL_DLG = 'add_url_dialog';
 const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
+const ACTION_EDIT_PL_TYPE_DLG = 'edit_pl_type_dlg';
+const ACTION_PL_TYPE_DLG_APPLY = 'pl_type_dlg_apply';
 const ACTION_CLEAR_CACHE = 'clear_cache';
 const ACTION_INDEX_EPG = 'index_epg';
 
@@ -120,6 +122,8 @@ const CONTROL_QUALITY = 'quality';
 const CONTROL_STREAM = 'stream';
 const CONTROL_PLAYLIST = 'playlist';
 const CONTROL_REPLACE_ICONS = 'replace_icons';
+const CONTROL_PLAYLIST_IPTV = 'iptv';
+const CONTROL_PLAYLIST_VOD = 'vod';
 
 # Special groups ID
 const FAVORITES_GROUP_ID = '##favorites##';
@@ -208,6 +212,7 @@ const PARAM_PROVIDER = 'provider';
 const PARAM_LINK = 'link';
 const PARAM_FILE = 'file';
 const PARAM_URI = 'uri';
+const PARAM_PL_TYPE = 'playlist_type';
 const PARAM_VOD_DEFAULT_QUALITY = 'quality';
 const PARAM_FORCE_HTTP = 'force_http';
 const PARAM_REPLACE_ICON = 'replace_playlist_icon';

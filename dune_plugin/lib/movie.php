@@ -13,98 +13,37 @@ class Movie implements User_Input_Handler
     const WATCHED_POSITION = 'position';
     const WATCHED_DURATION = 'duration';
     const WATCHED_DATE = 'date';
+
     /**
      * @var string
      */
     public $id;
-    /**
-     * @var string
-     */
-    public $name = '';
-    /**
-     * @var string
-     */
-    public $name_original = '';
-    /**
-     * @var string
-     */
-    public $description = '';
-    /**
-     * @var string
-     */
-    public $poster_url = '';
-    /**
-     * @var int
-     */
-    public $length_min = -1;
-    /**
-     * @var int
-     */
-    public $year = 0;
-    /**
-     * @var string
-     */
-    public $directors_str = '';
-    /**
-     * @var string
-     */
-    public $scenarios_str = '';
-    /**
-     * @var string
-     */
-    public $actors_str = '';
-    /**
-     * @var string
-     */
-    public $genres_str = '';
-    /**
-     * @var string
-     */
-    public $rate_imdb = '';
-    /**
-     * @var string
-     */
-    public $rate_kinopoisk = '';
-    /**
-     * @var string
-     */
-    public $rate_mpaa = '';
-    /**
-     * @var string
-     */
-    public $country = '';
-    /**
-     * @var string
-     */
-    public $budget = '';
+
     /**
      * @var array
      */
-    public $details = array();
-    /**
-     * @var array
-     */
-    public $rate_details = array();
-    /**
-     * @var string
-     */
-    public $type = 'movie';
+    public $movie_info;
+
     /**
      * @var array|Movie_Season[]
      */
     public $season_list;
+
     /**
      * @var array|Movie_Series[]
      */
     public $series_list;
+
     /**
      * @var array|string[]
      */
     public $qualities_list;
+
     /**
      * @var array|string[]
      */
     public $audio_list;
+
     /**
      * @var Default_Dune_Plugin
      */
@@ -241,27 +180,29 @@ class Movie implements User_Input_Handler
         $rate_kinopoisk,
         $rate_mpaa,
         $country,
-        $budget = '',
+        $budget = null,
         $details = array(),
         $rate_details = array())
     {
-        $this->name = $this->to_string($name);
-        $this->name_original = $this->to_string($name_original);
-        $this->description = $this->to_string($description);
-        $this->poster_url = $this->to_string($poster_url);
-        $this->length_min = $this->to_int($length_min, -1);
-        $this->year = $this->to_int($year, -1);
-        $this->directors_str = $this->to_string($directors_str);
-        $this->scenarios_str = $this->to_string($scenarios_str);
-        $this->actors_str = $this->to_string($actors_str);
-        $this->genres_str = $this->to_string($genres_str);
-        $this->rate_imdb = $this->to_string($rate_imdb);
-        $this->rate_kinopoisk = $this->to_string($rate_kinopoisk);
-        $this->rate_mpaa = $this->to_string($rate_mpaa);
-        $this->country = $this->to_string($country);
-        $this->budget = $this->to_string($budget);
-        $this->details = $details;
-        $this->rate_details = $rate_details;
+        $this->movie_info = array(
+            PluginMovie::name => $this->to_string($name),
+            PluginMovie::name_original => $this->to_string($name_original),
+            PluginMovie::description => $this->to_string($description),
+            PluginMovie::poster_url => $this->to_string($poster_url),
+            PluginMovie::length_min => $this->to_int($length_min, -1),
+            PluginMovie::year => $this->to_int($year, -1),
+            PluginMovie::directors_str => $this->to_string($directors_str),
+            PluginMovie::scenarios_str => $this->to_string($scenarios_str),
+            PluginMovie::actors_str => $this->to_string($actors_str),
+            PluginMovie::genres_str => $this->to_string($genres_str),
+            PluginMovie::rate_imdb => $this->to_string($rate_imdb),
+            PluginMovie::rate_kinopoisk => $this->to_string($rate_kinopoisk),
+            PluginMovie::rate_mpaa => $this->to_string($rate_mpaa),
+            PluginMovie::country => $this->to_string($country),
+            PluginMovie::budget => $this->to_string($budget),
+            PluginMovie::details => $details,
+            PluginMovie::rate_details => $rate_details,
+        );
     }
 
     /**
@@ -352,37 +293,28 @@ class Movie implements User_Input_Handler
         $series->playback_url = $this->to_string($playback_url);
         $series->playback_url_is_stream_url = $playback_url_is_stream_url;
         $series->qualities = $qualities;
-        $this->qualities_list = array_keys($qualities);
         $series->audios = $audios;
+
+        $this->qualities_list = array_keys($qualities);
         $this->audio_list = array_keys($audios);
 
         $this->series_list[$id] = $series;
     }
 
     /**
-     * @return array
+     * @return bool
      */
-    public function get_movie_array()
+    public function has_seasons()
     {
-        return array(
-            PluginMovie::name => $this->name,
-            PluginMovie::name_original => $this->name_original,
-            PluginMovie::description => $this->description,
-            PluginMovie::poster_url => $this->poster_url,
-            PluginMovie::length_min => $this->length_min,
-            PluginMovie::year => $this->year,
-            PluginMovie::directors_str => $this->directors_str,
-            PluginMovie::scenarios_str => $this->scenarios_str,
-            PluginMovie::actors_str => $this->actors_str,
-            PluginMovie::genres_str => $this->genres_str,
-            PluginMovie::rate_imdb => $this->rate_imdb,
-            PluginMovie::rate_kinopoisk => $this->rate_kinopoisk,
-            PluginMovie::rate_mpaa => $this->rate_mpaa,
-            PluginMovie::country => $this->country,
-            PluginMovie::budget => $this->budget,
-            PluginMovie::details => $this->details,
-            PluginMovie::rate_details => $this->rate_details,
-        );
+        return (is_array($this->season_list) && !empty($this->season_list));
+    }
+
+    /**
+     * @return bool
+     */
+    public function has_series()
+    {
+        return (is_array($this->series_list) && !empty($this->series_list));
     }
 
     /**
@@ -390,7 +322,7 @@ class Movie implements User_Input_Handler
      */
     public function has_qualities()
     {
-        if (empty($this->series_list)) {
+        if (!$this->has_series()) {
             return false;
         }
 
@@ -404,7 +336,7 @@ class Movie implements User_Input_Handler
      */
     public function has_audios()
     {
-        if (empty($this->series_list)) {
+        if (!$this->has_series()) {
             return false;
         }
 
@@ -430,7 +362,7 @@ class Movie implements User_Input_Handler
 
         switch ($media_url->screen_id) {
             case Starnet_Vod_Seasons_List_Screen::ID:
-                if (!is_array($this->season_list) || count($this->season_list) === 0) {
+                if (!$this->has_seasons()) {
                     hd_debug_print("get_movie_play_info: Invalid movie: season list is empty");
                     print_backtrace();
                     return array();
@@ -439,7 +371,7 @@ class Movie implements User_Input_Handler
                 break;
             case Starnet_Vod_Series_List_Screen::ID:
             case Starnet_Vod_Movie_Screen::ID:
-                if (!is_array($this->series_list) || count($this->series_list) === 0) {
+                if (!$this->has_series()) {
                     hd_debug_print("get_movie_play_info: Invalid movie: series list is empty");
                     print_backtrace();
                     return array();
@@ -525,9 +457,9 @@ class Movie implements User_Input_Handler
 
         return array(
             PluginVodInfo::id => $this->id,
-            PluginVodInfo::name => $this->name,
-            PluginVodInfo::description => $this->description,
-            PluginVodInfo::poster_url => $this->poster_url,
+            PluginVodInfo::name => $this->movie_info[PluginMovie::name],
+            PluginVodInfo::description => $this->movie_info[PluginMovie::description],
+            PluginVodInfo::poster_url => $this->movie_info[PluginMovie::poster_url],
             PluginVodInfo::series => $series_array,
             PluginVodInfo::initial_series_ndx => $initial_series_ndx,
             PluginVodInfo::buffering_ms => (int)$this->plugin->get_parameter(PARAM_BUFFERING_TIME, 1000),

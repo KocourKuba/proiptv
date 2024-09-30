@@ -207,7 +207,9 @@ setup_channels_id_mapper = Kanal-ID-Mapper
 setup_channels_ext_params = Zusätzliche Parameter
 setup_channels_user_agent = HTTP User-Agent
 setup_channels_dune_params = dune_params
-setup_channels_dune_force_ts = Force Dune to detect stream
+setup_channels_dune_force_ts = Dune zwingen, den Stream zu erkennen
+edit_list_playlist_iptv = IPTV
+edit_list_playlist_vod = Video-on-Demand (VOD)
 
 entry_not_available = Diese Funktion ist für dieses Gerät nicht verfügbar!
 entry_send_log = Protokoll an den Entwickler senden
@@ -247,6 +249,7 @@ edit_list_title_info__1 = %s|Bearbeitung...
 edit_list_title_info__2 = %s|Heruntergeladen: %s
 edit_list_title_info_download__1 = %s|Nachlad...
 edit_list_title_cant_delete = Die XMLTV-Quelle der Wiedergabeliste kann nicht gelöscht werden!
+edit_list_playlist_type = Typ der Wiedergabeliste
 
 folder_screen_open_folder = Ordner öffnen
 folder_screen_create_folder = Ordner erstellen
