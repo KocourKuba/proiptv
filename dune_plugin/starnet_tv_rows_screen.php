@@ -760,19 +760,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
 
-                if ($media_url->group_id === FAVORITES_GROUP_ID) {
-                    if ($control_id === PLUGIN_FAVORITES_OP_ADD) {
-                        if ($this->plugin->tv->get_channel($media_url->channel_id) === null) break;
+                if ($this->plugin->tv->get_channel($media_url->channel_id) === null) break;
 
-                        $is_in_favorites = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->in_items_order($media_url->channel_id);
-                        $control_id = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-                    }
+                $is_in_favorites = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->in_items_order($media_url->channel_id);
+                $control_id = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
 
-                    if ($this->plugin->tv->change_tv_favorites($control_id, $media_url->channel_id) === null) {
-                        break;
-                    }
-                    $this->set_changes();
-                }
+                if ($this->plugin->tv->change_tv_favorites($control_id, $media_url->channel_id) === null) break;
+
+                $this->set_changes();
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
@@ -1299,9 +1294,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             /** @var Default_Group $group */
             if ($group_id === FAVORITES_GROUP_ID) {
                 $group = $this->plugin->tv->get_special_group($group_id);
+                $in_fav = $group->in_items_order($channel_id);
             } else {
                 $group = $this->plugin->tv->get_group($group_id);
+                $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+                $in_fav = $fav_group->in_items_order($channel_id);
             }
+
             $order = $group->get_items_order()->get_order();
 
             $is_first_channel = ($channel_id === reset($order));
@@ -1362,7 +1361,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             // blue button text
             $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
-                TR::t('delete'),
+                $in_fav ? TR::t('delete') : TR::t('add'),
                 1,
                 PaneParams::fav_btn_font_color,
                 PaneParams::fav_btn_font_size
