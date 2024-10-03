@@ -2304,7 +2304,9 @@ class Default_Dune_Plugin implements DunePlugin
                 hd_debug_print("Tv playlist not defined");
                 throw new Exception("Tv playlist not defined");
             }
-            if ($playlist->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
+
+            if (isset($playlist->params[PARAM_PL_TYPE]) && $playlist->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
+                hd_debug_print("Playlist is vod.");
                 return 2;
             }
 
@@ -2402,7 +2404,6 @@ class Default_Dune_Plugin implements DunePlugin
                     $this->clear_playlist_cache();
                     throw new Exception($exception_msg);
                 }
-                $ret = 1;
             }
 
             $this->perf->setLabel('end');
@@ -2414,6 +2415,7 @@ class Default_Dune_Plugin implements DunePlugin
 
             hd_debug_print_separator();
             hd_debug_print("Init playlist done!");
+            $ret = 1;
         } catch (Exception $ex) {
             $err = HD::get_last_error();
             if (!empty($err)) {
