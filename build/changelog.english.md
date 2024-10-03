@@ -1,4 +1,4 @@
-﻿### Version 5.1.906
+﻿### Version 5.1.908
 - Added the ability to select the type of playlist (link or file) for IPTV or VOD.
 - Fixed a bug with adding/removing a channel to Favorites in NewUI
 
