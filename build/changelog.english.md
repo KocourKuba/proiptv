@@ -1,4 +1,8 @@
-﻿### Version 5.1.898
+﻿### Version 5.1.906
+- Added the ability to select the type of playlist (link or file) for IPTV or VOD.
+- Fixed a bug with adding/removing a channel to Favorites in NewUI
+
+### Version 5.1.900
 - Fixed selection of active XMLTV sources when changing playlist
 - Minor fixes to the HTTP ETag caching mechanism
 - If the EPG contains images of a TV program, they are shown in NewUI in the preview window
