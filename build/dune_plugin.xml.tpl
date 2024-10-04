@@ -42,13 +42,6 @@
     <params>
         <program>starnet.php</program>
     </params>
-    <check_update>
-        <schema>2</schema>
-        <url>http://iptv.esalecrm.net/update/update_proiptv.xml</url>
-        <timeout>0</timeout>
-        <required>no</required>
-        <auto>yes</auto>
-    </check_update>
     <embeddable_plugin_folders>
         <enabled>yes</enabled>
         <update_action>
@@ -213,6 +206,13 @@
         <ip_address_required>yes</ip_address_required>
         <valid_time_required>yes</valid_time_required>
     </auto_resume>
+    <check_update>
+        <schema>2</schema>
+        <url>http://iptv.esalecrm.net/update/update_proiptv.xml</url>
+        <timeout>0</timeout>
+        <required>no</required>
+        <auto>false</auto>
+    </check_update>
     <operation_timeout>
         <default>240</default>
         <get_epg_day>30</get_epg_day>
