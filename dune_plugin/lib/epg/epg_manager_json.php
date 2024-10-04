@@ -77,15 +77,17 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             hd_debug_print("Preset json url: {$preset[EPG_JSON_SOURCE]}", true);
             $alias = empty($selected_preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $selected_preset[EPG_JSON_PRESET_ALIAS];
             $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $preset[EPG_JSON_SOURCE]);
-            $epg_url =  $provider->replace_macros($epg_url);
+            $epg_url = $provider->replace_macros($epg_url);
+
+            $epg_url = str_replace(MACRO_TIMESTAMP, $day_start_ts, $epg_url);
 
             if (empty($epg_url)) {
                 throw new Exception("No EPG url defined for current provider");
             }
 
-            if (strpos($epg_url, '{ID}') !== false) {
+            if (strpos($epg_url, MACRO_ID) !== false) {
                 hd_debug_print("using ID: {$channel->get_id()}", true);
-                $epg_url = str_replace('{ID}', $channel->get_id(), $epg_url);
+                $epg_url = str_replace(MACRO_ID, $channel->get_id(), $epg_url);
                 $epg_ids['tvg-id'] = $channel->get_id();
             }
 
@@ -110,28 +112,23 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             $channel_id = $channel->get_id();
             $channel_title = $channel->get_title();
-            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
 
             $cur_time = $day_start_ts + get_local_time_zone_offset();
-            if (strpos($epg_url, '{YEAR}') !== false) {
-                $epg_date = gmdate('Y', $cur_time);
-                hd_debug_print("using YEAR: $epg_date", true);
-                $epg_url = str_replace('{YEAR}', $epg_date, $epg_url);
-            }
-            if (strpos($epg_url, '{MONTH}') !== false) {
-                $epg_date = gmdate('m', $cur_time);
-                hd_debug_print("using MONTH: $epg_date", true);
-                $epg_url = str_replace('{MONTH}', $epg_date, $epg_url);
-            }
-            if (strpos($epg_url, '{DAY}') !== false) {
-                $epg_date = gmdate('d', $cur_time);
-                hd_debug_print("using DAY: $epg_date", true);
-                $epg_url = str_replace('{DAY}', $epg_date, $epg_url);
-            }
+            $epg_date = gmdate('Y', $cur_time);
+            $epg_url = str_replace(MACRO_YEAR, $epg_date, $epg_url);
+
+            $epg_date = gmdate('m', $cur_time);
+            $epg_url = str_replace(MACRO_MONTH, $epg_date, $epg_url);
+
+            $epg_date = gmdate('d', $cur_time);
+            hd_debug_print("using DAY: $epg_date", true);
+            $epg_url = str_replace(MACRO_DAY, $epg_date, $epg_url);
 
             $epg_id = str_replace(' ', '%20', $epg_id);
-            $epg_url = str_replace(array('{EPG_ID}', '#'), array($epg_id, '%23'), $epg_url);
+            $epg_url = str_replace(array(MACRO_EPG_ID, '#'), array($epg_id, '%23'), $epg_url);
             $epg_cache_file = get_temp_path(Hashed_Array::hash($epg_url) . ".cache");
+
+            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
             $from_cache = false;
             $all_epg = array();
             if (file_exists($epg_cache_file)) {

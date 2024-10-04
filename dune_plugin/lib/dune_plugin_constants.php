@@ -246,8 +246,14 @@ const MACRO_CUSTOM_PLAYLIST = '{CUSTOM_PLAYLIST}';
 const MACRO_VPORTAL = '{VPORTAL}';
 const MACRO_SCHEME = '{SCHEME}';
 const MACRO_DOMAIN = '{DOMAIN}';
-const MACRO_ID = '{ID}';
 const MACRO_EXPIRE_DATA = '{EXPIRE_DATA}';
+const MACRO_ID = '{ID}';
+
+const MACRO_TIMESTAMP = '{TIMESTAMP}';
+const MACRO_YEAR = '{YEAR}';
+const MACRO_MONTH = '{MONTH}';
+const MACRO_DAY = '{DAY}';
+const MACRO_EPG_ID = '{EPG_ID}';
 
 // provider type access
 const PROVIDER_TYPE_PIN = 'pin';
