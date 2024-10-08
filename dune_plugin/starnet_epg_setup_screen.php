@@ -36,8 +36,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
     const CONTROL_CHANGE_CACHE_PATH = 'xmltv_cache_path';
     const CONTROL_ITEMS_CLEAR_EPG_CACHE = 'clear_epg_cache';
 
-    protected $return_index = array('initial_sel_ndx' => 8);
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -194,7 +192,11 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_action_screen(
-                        Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
+                        Starnet_Setup_Screen::ID,
+                        RESET_CONTROLS_ACTION_ID,
+                        null,
+                        array('initial_sel_ndx' => $this->return_index)
+                    )
                 );
 
             case self::CONTROL_CHANGE_CACHE_PATH:

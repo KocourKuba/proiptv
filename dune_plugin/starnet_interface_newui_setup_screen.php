@@ -28,9 +28,9 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
 {
-    const ID = 'category_setup';
+    const ID = 'interface_newui_setup';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -68,36 +68,24 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // show all channels category
-        $show_all = $this->plugin->get_parameter(PARAM_SHOW_ALL, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_ALL . ": $show_all", true);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
+        // Channel position in NewUI
+        $channel_position[0] = TR::t('setup_channel_bottom_left');
+        $channel_position[1] = TR::t('setup_channel_top_left');
+        $channel_position[2] = TR::t('setup_channel_top_right');
+        $channel_position[3] = TR::t('setup_channel_bottom_right');
+        $ch_pos = $this->plugin->get_parameter(PARAM_CHANNEL_POSITION, 0);
+        Control_Factory::add_combobox($defs, $this, null,
+            PARAM_CHANNEL_POSITION, TR::t('setup_channel_position'),
+            $ch_pos, $channel_position, self::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
-        // show favorites category
-        $show_fav = $this->plugin->get_parameter(PARAM_SHOW_FAVORITES, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_FAVORITES . ": $show_fav", true);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
-        // show history category
-        $show_history = $this->plugin->get_parameter(PARAM_SHOW_HISTORY, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_HISTORY . ": $show_history", true);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
-        // show changed channels category
-        $show_changed = $this->plugin->get_parameter(PARAM_SHOW_CHANGED_CHANNELS, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_CHANGED_CHANNELS . ": $show_changed", true);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SetupControlSwitchDefs::$on_off_translated[$show_changed],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_changed]), self::CONTROLS_WIDTH);
+        // Channels in rows in NewUI
+        $icons_in_row[5] = '5';
+        $icons_in_row[7] = '7';
+        $icon_idx = $this->plugin->get_parameter(PARAM_ICONS_IN_ROW, 7);
+        Control_Factory::add_combobox($defs, $this, null,
+            PARAM_ICONS_IN_ROW, TR::t('setup_icons_in_row'),
+            $icon_idx, $icons_in_row, self::CONTROLS_WIDTH, true);
 
         return $defs;
     }
@@ -128,18 +116,11 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
                     )
                 );
 
-            case PARAM_SHOW_ALL:
-            case PARAM_SHOW_FAVORITES:
-            case PARAM_SHOW_HISTORY:
-            case PARAM_SHOW_CHANGED_CHANNELS:
-                $this->plugin->save_settings();
-                $this->plugin->toggle_parameter($control_id);
-                $this->plugin->tv->reload_channels($plugin_cookies);
-
-                return Starnet_Epfs_Handler::epfs_invalidate_folders(
-                    array(Starnet_Tv_Groups_Screen::ID),
-                    Action_Factory::reset_controls($this->do_get_control_defs())
-                );
+            case PARAM_CHANNEL_POSITION:
+            case PARAM_ICONS_IN_ROW:
+                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                return Starnet_Epfs_Handler::epfs_invalidate_folders();
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());

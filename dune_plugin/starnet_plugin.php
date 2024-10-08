@@ -31,6 +31,7 @@ require_once 'starnet_entry_handler.php';
 require_once 'starnet_tv_groups_screen.php';
 require_once 'starnet_playlists_setup_screen.php';
 require_once 'starnet_interface_setup_screen.php';
+require_once 'starnet_interface_newui_setup_screen.php';
 require_once 'starnet_category_setup_screen.php';
 require_once 'starnet_epg_setup_screen.php';
 require_once 'starnet_streaming_setup_screen.php';
@@ -60,16 +61,26 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Tv_Groups_Screen($this));
         $this->create_screen(new Starnet_Tv_Channel_List_Screen($this));
         $this->create_screen(new Starnet_Tv_Favorites_Screen($this));
-        $this->create_screen(new Starnet_TV_History_Screen($this));
+        $this->create_screen(new Starnet_Tv_History_Screen($this));
+        $this->create_screen(new Starnet_Tv_Changed_Channels_Screen($this));
 
         $this->create_screen(new Starnet_Setup_Screen($this));
-        $this->create_screen(new Starnet_Playlists_Setup_Screen($this));
-        $this->create_screen(new Starnet_Interface_Setup_Screen($this));
-        $this->create_screen(new Starnet_Category_Setup_Screen($this));
-        $this->create_screen(new Starnet_Epg_Setup_Screen($this));
-        $this->create_screen(new Starnet_Streaming_Setup_Screen($this));
-        $this->create_screen(new Starnet_Ext_Setup_Screen($this));
-        $this->create_screen(new Starnet_Tv_Changed_Channels_Screen($this));
+        $return_index = 2;
+        $this->create_screen(new Starnet_Interface_Setup_Screen($this, $return_index));
+        if (HD::rows_api_support()) {
+            $return_index += 2;
+            $this->create_screen(new Starnet_Interface_NewUI_Setup_Screen($this, $return_index));
+        }
+        $return_index += 2;
+        $this->create_screen(new Starnet_Category_Setup_Screen($this, $return_index));
+        $return_index += 2;
+        $this->create_screen(new Starnet_Playlists_Setup_Screen($this, $return_index));
+        $return_index += 2;
+        $this->create_screen(new Starnet_Epg_Setup_Screen($this, $return_index));
+        $return_index += 2;
+        $this->create_screen(new Starnet_Streaming_Setup_Screen($this, $return_index));
+        $return_index += 2;
+        $this->create_screen(new Starnet_Ext_Setup_Screen($this, $return_index));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_List_Screen($this));

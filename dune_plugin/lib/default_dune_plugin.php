@@ -596,6 +596,15 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @param string $id
+     * @return Screen
+     */
+    public function get_screen($id)
+    {
+        return $this->screens[$id];
+    }
+
+    /**
      * @override DunePlugin
      * @param Object $user_input
      * @param Object $plugin_cookies

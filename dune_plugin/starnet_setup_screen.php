@@ -34,6 +34,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     const ID = 'setup';
 
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
+    const CONTROL_INTERFACE_NEWUI_SCREEN = 'interface_newui_screen';
     const CONTROL_CATEGORY_SCREEN = 'category_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_EPG_SCREEN = 'epg_screen';
@@ -89,6 +90,13 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         // Interface settings 2
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_INTERFACE_SCREEN,
             TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+
+        if (HD::rows_api_support()) {
+            //////////////////////////////////////
+            // Interface NewUI settings 4
+            Control_Factory::add_image_button($defs, $this, null, self::CONTROL_INTERFACE_NEWUI_SCREEN,
+                TR::t('setup_interface_newui_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+        }
 
         //////////////////////////////////////
         // Category settings 4
@@ -158,7 +166,10 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(Starnet_Interface_Setup_Screen::get_media_url_str(), TR::t('setup_interface_title'));
 
-            case self::CONTROL_CATEGORY_SCREEN: // show interface settings dialog
+            case self::CONTROL_INTERFACE_NEWUI_SCREEN: // show interface NewUI settings dialog
+                return Action_Factory::open_folder(Starnet_Interface_NewUI_Setup_Screen::get_media_url_str(), TR::t('setup_interface_newui_title'));
+
+            case self::CONTROL_CATEGORY_SCREEN: // show category settings dialog
                 return Action_Factory::open_folder(Starnet_Category_Setup_Screen::get_media_url_str(), TR::t('setup_category_title'));
 
             case self::CONTROL_PLAYLISTS_SCREEN: // show epg settings dialog

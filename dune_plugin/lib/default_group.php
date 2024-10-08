@@ -339,7 +339,7 @@ class Default_Group extends Json_Serializer implements Group
                 return Starnet_Tv_Favorites_Screen::get_media_url_string(FAVORITES_GROUP_ID);
 
             case HISTORY_GROUP_ID:
-                return Starnet_TV_History_Screen::get_media_url_string(HISTORY_GROUP_ID);
+                return Starnet_Tv_History_Screen::get_media_url_string(HISTORY_GROUP_ID);
 
             case CHANGED_CHANNELS_GROUP_ID:
                 return Starnet_Tv_Changed_Channels_Screen::get_media_url_string(CHANGED_CHANNELS_GROUP_ID);

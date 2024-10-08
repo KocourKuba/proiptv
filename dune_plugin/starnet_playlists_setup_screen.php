@@ -40,8 +40,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
     const CONTROL_USER_AGENT = 'user_agent';
     const CONTROL_DUNE_PARAMS = 'dune_params';
 
-    protected $return_index = array('initial_sel_ndx' => 6);
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -158,7 +156,11 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_action_screen(
-                        Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
+                        Starnet_Setup_Screen::ID,
+                        RESET_CONTROLS_ACTION_ID,
+                        null,
+                        array('initial_sel_ndx' => $this->return_index)
+                    )
                 );
 
             case PARAM_USER_CATCHUP:

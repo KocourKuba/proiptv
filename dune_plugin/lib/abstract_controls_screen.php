@@ -30,7 +30,16 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
 {
     const CONTROLS_WIDTH = 850;
 
+    protected $return_index = 0;
+
     ///////////////////////////////////////////////////////////////////////
+
+    public function __construct(Default_Dune_Plugin $plugin, $return_index = 0)
+    {
+        parent::__construct($plugin);
+
+        $this->return_index = $return_index;
+    }
 
     /**
      * @param Object $plugin_cookies

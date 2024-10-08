@@ -36,8 +36,6 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
     const CONTROL_AUTO_PLAY = 'auto_play';
     const CONTROL_DUNE_FORCE_TS = 'dune_force_ts';
 
-    protected $return_index = array('initial_sel_ndx' => 10);
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -170,7 +168,11 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_action_screen(
-                        Starnet_Setup_Screen::ID, RESET_CONTROLS_ACTION_ID, null, $this->return_index)
+                        Starnet_Setup_Screen::ID,
+                        RESET_CONTROLS_ACTION_ID,
+                        null,
+                        array('initial_sel_ndx' => $this->return_index)
+                    )
                 );
 
             case self::CONTROL_AUTO_PLAY:

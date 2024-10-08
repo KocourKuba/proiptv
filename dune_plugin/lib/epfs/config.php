@@ -44,8 +44,7 @@ class PaneParams
 	const vod_height				    = 630;
 	const vod_bg_url				    = '/bg.jpg';
 	const vod_mask_url		    	    = '/mask.png';
-	const max_items_in_row	    	    = 7;
-	const ch_num_font_color	    	    = '#EFAA16FF';
+    const ch_num_font_color	    	    = '#EFAA16FF';
 	const ch_num_font_size	    	    = 50; # size in pt
 	const ch_title_font_color		    = '#EFAA16FF';
 	const ch_title_font_size		    = 56; # size in pt
@@ -76,12 +75,9 @@ class RowsParams
 {
 	const dx						= 0;
 	const width						= 1920;
-	const height					= 230;
 	const left_padding				= 90;
 	const inactive_left_padding		= 120;
 	const right_padding				= 120;
-	const hide_captions				= false;
-	const fade_enable				= true;
 	const fade_icon_mix_color		= 0;
 	const fade_icon_mix_alpha		= 170; # 0-255
 	const lite_fade_icon_mix_alpha	= 128; # 0-255
@@ -94,7 +90,6 @@ class TitleRowsParams
 	const height					= 65;
 	const font_size					= 35; # size in pt
 	const left_padding				= 115;
-	const fade_enabled				= true;
 	const fade_color				= '#606060FF';
 	const lite_fade_color			= '#808080FF';
 	const def_caption_color			= '#FFFFE0FF';
@@ -104,35 +99,47 @@ class TitleRowsParams
 
 class RowsItemsParams
 {
-	const width						= 250;
-    const width_sq					= 178;
-	const height					= 230;
-	const icon_width				= 230;
-    const icon_width_sq				= 158;
-	const icon_height				= 140;
     const caption_dy				= 0;
     const caption_max_num_lines		= 2;
     const caption_line_spacing		= 0;
+    const inactive_caption_color	= '#00000000';
     const def_caption_color			= '#AFAFA0FF';
     const sel_caption_color			= '#FFFFE0FF';
-    const inactive_caption_color	= '#00000000';
     const caption_font_size			= 28; # size in pt
     const icon_loading_url			= 'loading.png';
-    const icon_sq_loading_url		= 'loading_square.png';
+    const icon_loading_url_sq		= 'loading_square.png';
     const icon_loading_failed_url	= 'unset.png';
-    const icon_sq_loading_failed_url = 'unset_square.png';
+    const icon_loading_failed_url_sq = 'unset_square.png';
     const fav_sticker_icon_url		= 'star.png';
     const fav_sticker_bg_width		= 40;
     const fav_sticker_bg_height		= 40;
-    const fav_sticker_bg_dx 		= 61;
     const fav_sticker_icon_width	= 36;
     const fav_sticker_icon_height	= 36;
-    const fav_sticker_icon_dx 		= 59;
-    const fav_sticker_bg_color		= '#000000FF';
+    const fav_sticker_bg_color		= '#40404080';
     const fav_sticker_logo_bg_color	= '#FFFFFFFF';
-    const fav_progress_dy           = 134;
-    const view_progress_width       = 228;
-    const view_progress_height      = 8;
     const view_total_color	        = '#6A6A6ACF';
     const view_viewed_color	        = '#EFAA16FF';
+    const view_progress_height      = 10;
+}
+
+class RowsItemsParams5 extends RowsItemsParams
+{
+    const width					    = 340;
+    const width_sq			    	= 340;
+    const width_inactive		    = 280;
+    const width_inactive_sq		    = 280;
+    const icon_prop 				= 0.6;
+    const icon_prop_sq 				= 1;
+    const icon_width				= 220;
+    const icon_width_sq				= 180;
+}
+
+class RowsItemsParams7 extends RowsItemsParams
+{
+    const width					    = 250;
+    const height					= 250;
+//    const width_sq				    = 178;
+    const icon_width				= 230;
+    const icon_height			    = 140;
+    const icon_width_sq		    	= 158;
 }

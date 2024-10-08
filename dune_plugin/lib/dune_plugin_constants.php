@@ -166,6 +166,7 @@ const PARAM_SHOW_VOD_ICON = 'show_vod_icon';
 const PARAM_VOD_LAST = 'vod_last';
 const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_SQUARE_ICONS = 'square_icons';
+const PARAM_ICONS_IN_ROW = 'icons_in_row';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
 const PARAM_CHANNELS_LIST_PATH = 'channels_list_path';
