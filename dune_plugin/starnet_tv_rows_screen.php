@@ -1239,12 +1239,18 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         }
 
         // separator line
-        $defs[] = GComps_Factory::get_rect_def(GComp_Geom::place_top_left(510, 4, 0, 590), null, PaneParams::separator_line_color);
+        $defs[] = GComps_Factory::get_rect_def(
+            GComp_Geom::place_top_left(510, 4, 0, 590),
+            null,
+            PaneParams::separator_line_color
+        );
 
         $dy_icon = 530;
         $dy_txt = $dy_icon - 4;
         $dx = 15;
         hd_debug_print("newUI: $group_id");
+        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
+        $in_fav = $fav_group->in_items_order($channel_id);
         if ($group_id === HISTORY_GROUP_ID || $group_id === ALL_CHANNEL_GROUP_ID || $group_id === CHANGED_CHANNELS_GROUP_ID) {
 
             // blue button image (D)
@@ -1254,9 +1260,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             );
 
             $dx += 55;
+            if ($group_id === CHANGED_CHANNELS_GROUP_ID) {
+                $btn_label = TR::load_string('clear_changed');
+            } else {
+                $btn_label = $in_fav ? TR::t('delete') : TR::t('add');
+            }
             $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
-                ($group_id === CHANGED_CHANNELS_GROUP_ID) ? TR::load_string('clear_changed') : TR::load_string('add_delete_favorite'),
+                $btn_label,
                 1,
                 PaneParams::fav_btn_font_color,
                 PaneParams::fav_btn_font_size
@@ -1265,18 +1276,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             /** @var Default_Group $group */
             if ($group_id === FAVORITES_GROUP_ID) {
                 $group = $this->plugin->tv->get_special_group($group_id);
-                $in_fav = $group->in_items_order($channel_id);
             } else {
                 $group = $this->plugin->tv->get_group($group_id);
-                $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
-                $in_fav = $fav_group->in_items_order($channel_id);
             }
 
             $order = $group->get_items_order()->get_order();
 
             $is_first_channel = ($channel_id === reset($order));
             // green button image (B) 52x50
-            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+            $defs[] = GComps_Factory::get_image_def(
+                GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
                 null,
                 PaneParams::fav_button_green,
                 false,
@@ -1289,7 +1298,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $dx += 55;
             // green button text
-            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+            $defs[] = GComps_Factory::label(
+                GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
                 (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) ? TR::t('top') : TR::t('left'),
                 1,
@@ -1300,7 +1310,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $is_last_channel = ($channel_id === end($order));
             $dx += 105;
             // yellow button image (C)
-            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+            $defs[] = GComps_Factory::get_image_def(
+                GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
                 null,
                 PaneParams::fav_button_yellow,
                 1,
@@ -1313,7 +1324,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $dx += 55;
             // yellow button text
-            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+            $defs[] = GComps_Factory::label(
+                GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
                 (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) ? TR::t('bottom') : TR::t('right'),
                 1,
@@ -1323,14 +1335,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $dx += 105;
             // blue button image (D)
-            $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
+            $defs[] = GComps_Factory::get_image_def(
+                GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
                 null,
                 PaneParams::fav_button_blue
             );
 
             $dx += 55;
             // blue button text
-            $defs[] = GComps_Factory::label(GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
+            $defs[] = GComps_Factory::label(
+                GComp_Geom::place_top_left(PaneParams::info_width, -1, $dx, $dy_txt), // label
                 null,
                 $in_fav ? TR::t('delete') : TR::t('add'),
                 1,
@@ -1492,13 +1506,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
     private function GetRowsItemsParams($param_name)
     {
-        $rowItemsClass = $this->GetRowsItemsParamsClass();
-        if (!class_exists($rowItemsClass)) {
-            hd_debug_print("class not exist: $rowItemsClass");
-            return 0;
-        }
-
-        $rClass = new ReflectionClass($rowItemsClass);
+        $rClass = new ReflectionClass('RowsItemsParams');
         $array = $rClass->getConstants();
 
         $sq_param = $param_name . ($this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false) ? '_sq' : '');
