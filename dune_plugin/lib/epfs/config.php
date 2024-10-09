@@ -76,8 +76,11 @@ class RowsParams
 	const dx						= 0;
 	const width						= 1920;
 	const left_padding				= 90;
-	const inactive_left_padding		= 120;
+	const inactive_left_padding		= 100;
 	const right_padding				= 120;
+    const hfactor                   = 1.0;
+    const vfactor                   = 0.0;
+    const vend_min_offset           = 50;
 	const fade_icon_mix_color		= 0;
 	const fade_icon_mix_alpha		= 170; # 0-255
 	const lite_fade_icon_mix_alpha	= 128; # 0-255
@@ -87,7 +90,7 @@ class RowsParams
 class TitleRowsParams
 {
 	const width						= 1920;
-	const height					= 65;
+	const height					= 80;
 	const font_size					= 35; # size in pt
 	const left_padding				= 115;
 	const fade_color				= '#606060FF';
@@ -106,6 +109,8 @@ class RowsItemsParams
     const def_caption_color			= '#AFAFA0FF';
     const sel_caption_color			= '#FFFFE0FF';
     const caption_font_size			= 28; # size in pt
+    const icon_prop 				= 0.6;
+    const icon_prop_sq 				= 1;
     const icon_loading_url			= 'loading.png';
     const icon_loading_url_sq		= 'loading_square.png';
     const icon_loading_failed_url	= 'unset.png';
@@ -124,21 +129,21 @@ class RowsItemsParams
 
 class RowsItemsParams5 extends RowsItemsParams
 {
-    const width					    = 340;
-    const width_sq			    	= 340;
-    const width_inactive		    = 280;
-    const width_inactive_sq		    = 280;
-    const icon_prop 				= 0.6;
-    const icon_prop_sq 				= 1;
-    const icon_width				= 220;
-    const icon_width_sq				= 180;
+    const width					    = 360; // (1920 - 120) / 5 = 360
+    const width_inactive		    = 280; // (1920 - 526) / 5 = 278
+    const icon_width				= 260;
+//    const icon_width_sq				= 260;
+    const icon_width_inactive       = 260;
+    const vgravity                  = -0.5;
+    const vgravity_sq               = 0.5;
 }
 
 class RowsItemsParams7 extends RowsItemsParams
 {
     const width					    = 250;
     const height					= 250;
-//    const width_sq				    = 178;
+    const width_inactive		    = 280; // (1920 - 526) / 7 = 200
+    const width_inactive_sq		    = 280;
     const icon_width				= 230;
     const icon_height			    = 140;
     const icon_width_sq		    	= 158;

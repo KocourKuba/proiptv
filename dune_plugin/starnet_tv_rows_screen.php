@@ -602,10 +602,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             -1,
             null,
             null,
-            1.0,
-            0.0,
-            -0.5,
-            250
+            RowsParams::hfactor,
+            RowsParams::vfactor,
+            $this->GetRowsItemsParams('vgravity'),
+            RowsParams::vend_min_offset
         );
 
         Rows_Factory::pane_set_geometry(
@@ -618,8 +618,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             empty($history_rows) ? 1 : 2,
             PaneParams::width - PaneParams::info_dx,
             PaneParams::info_height - PaneParams::info_dy,
-            PaneParams::info_dx, PaneParams::info_dy,
-            PaneParams::vod_width, PaneParams::vod_height
+            PaneParams::info_dx,
+            PaneParams::info_dy,
+            PaneParams::vod_width,
+            PaneParams::vod_height
         );
 
         $width = $this->GetRowsItemsParams('width');
@@ -646,13 +648,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $sel_icon_width,
             $sel_icon_width * $icon_prop,
             0,
-            RowsItemsParams::caption_dy + 10,
+            RowsItemsParams::caption_dy + 5,
             RowsItemsParams::sel_caption_color,
             RowsItemsParams::caption_font_size
         );
 
         $width_inactive = $this->GetRowsItemsParams('width_inactive');
-        $inactive_icon_width = $width_inactive - 30;
+        $inactive_icon_width = $this->GetRowsItemsParams('icon_width_inactive');
         $inactive_params = Rows_Factory::variable_params(
             $width_inactive,
             $width_inactive * $icon_prop,
@@ -711,6 +713,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $items_in_row = $this->plugin->get_parameter(PARAM_ICONS_IN_ROW, 7);
         $height = $this->GetRowsItemsParams('width') * $this->GetRowsItemsParams('icon_prop');
+        $inactive_height = $this->GetRowsItemsParams('width_inactive') * $this->GetRowsItemsParams('icon_prop');
         for ($i = 0, $iMax = count($items); $i < $iMax; $i += $items_in_row) {
             $row_items = array_slice($items, $i, $items_in_row);
             $id = json_encode(array('row_ndx' => (int)($i / $items_in_row), 'row_id' => $row_id));
@@ -723,7 +726,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $row_id,
                 RowsParams::width,
                 $height,
-                $height - TitleRowsParams::height,
+                $inactive_height,
                 RowsParams::left_padding,
                 RowsParams::inactive_left_padding,
                 RowsParams::right_padding,
