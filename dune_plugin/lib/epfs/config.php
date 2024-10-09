@@ -102,19 +102,21 @@ class TitleRowsParams
 
 class RowsItemsParams
 {
-    const caption_dy				= 0;
+    const def_caption_dy			= 0;
+    const sel_caption_dy			= 5;
+    const inactive_caption_dy		= 0;
     const caption_max_num_lines		= 2;
     const caption_line_spacing		= 0;
     const inactive_caption_color	= '#00000000';
     const def_caption_color			= '#AFAFA0FF';
     const sel_caption_color			= '#FFFFE0FF';
-    const caption_font_size			= 28; # size in pt
-    const icon_prop 				= 0.6;
-    const icon_prop_sq 				= 1;
-    const icon_loading_url			= 'loading.png';
-    const icon_loading_url_sq		= 'loading_square.png';
-    const icon_loading_failed_url	= 'unset.png';
-    const icon_loading_failed_url_sq = 'unset_square.png';
+    const def_icon_dx               = 0;
+    const def_icon_dy               = 5;
+    const sel_zoom_delta            = 15;
+    const sel_icon_dx               = 5;
+    const sel_icon_dy               = 0;
+    const inactive_icon_dx          = 0;
+    const inactive_icon_dy          = 0;
     const fav_sticker_icon_url		= 'star.png';
     const fav_sticker_bg_width		= 40;
     const fav_sticker_bg_height		= 40;
@@ -125,26 +127,42 @@ class RowsItemsParams
     const view_total_color	        = '#6A6A6ACF';
     const view_viewed_color	        = '#EFAA16FF';
     const view_progress_height      = 10;
+    const icon_prop 				= 0.6;
+    const icon_prop_sq 				= 1;
+    const vgravity                  = -0.5;
+    const vgravity_sq               = 0.5;
+    const icon_loading_url			= 'loading.png';
+    const icon_loading_url_sq		= 'loading_square.png';
+    const icon_loading_failed_url	= 'unset.png';
+    const icon_loading_failed_url_sq = 'unset_square.png';
 }
 
 class RowsItemsParams5 extends RowsItemsParams
 {
+    const items_in_row              = 5;
+    const caption_font_size			= 28; # size in pt
     const width					    = 360; // (1920 - 120) / 5 = 360
     const width_inactive		    = 280; // (1920 - 526) / 5 = 278
     const icon_width				= 260;
-//    const icon_width_sq				= 260;
     const icon_width_inactive       = 260;
-    const vgravity                  = -0.5;
-    const vgravity_sq               = 0.5;
+}
+
+class RowsItemsParams6 extends RowsItemsParams
+{
+    const items_in_row              = 6;
+    const caption_font_size			= 26; # size in pt
+    const width					    = 300; // (1920 - 120) / 6 = 300
+    const width_inactive		    = 232; // (1920 - 526) / 6 = 232
+    const icon_width				= 200;
+    const icon_width_inactive       = 200;
 }
 
 class RowsItemsParams7 extends RowsItemsParams
 {
-    const width					    = 250;
-    const height					= 250;
-    const width_inactive		    = 280; // (1920 - 526) / 7 = 200
-    const width_inactive_sq		    = 280;
-    const icon_width				= 230;
-    const icon_height			    = 140;
-    const icon_width_sq		    	= 158;
+    const items_in_row              = 7;
+    const caption_font_size			= 24; # size in pt
+    const width					    = 258; // (1920 - 120) / 7 = 258
+    const width_inactive		    = 200; // (1920 - 526) / 7 = 200
+    const icon_width				= 180;
+    const icon_width_inactive       = 180;
 }

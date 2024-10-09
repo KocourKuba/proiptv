@@ -81,6 +81,7 @@ class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen impl
         //////////////////////////////////////
         // Channels in rows in NewUI
         $icons_in_row[5] = '5';
+        $icons_in_row[6] = '6';
         $icons_in_row[7] = '7';
         $icon_idx = $this->plugin->get_parameter(PARAM_ICONS_IN_ROW, 7);
         Control_Factory::add_combobox($defs, $this, null,

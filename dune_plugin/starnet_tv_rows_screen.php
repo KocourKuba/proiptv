@@ -467,7 +467,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->set_no_changes();
                 }
 
-                //return Starnet_Epfs_Handler::epfs_invalidate_folders();
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
         }
 
@@ -624,47 +623,46 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             PaneParams::vod_height
         );
 
-        $width = $this->GetRowsItemsParams('width');
-        $icon_width = $this->GetRowsItemsParams('icon_width');
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
         $icon_prop = $this->GetRowsItemsParams('icon_prop');
 
         $def_params = Rows_Factory::variable_params(
-            $width,
-            $width,
-            0,
-            $icon_width,
-            $icon_width * $icon_prop,
-            5,
-            RowsItemsParams::caption_dy,
-            RowsItemsParams::def_caption_color,
-            RowsItemsParams::caption_font_size
+            $rowItemsParams::width,
+            $rowItemsParams::width,
+            $rowItemsParams::def_icon_dx,
+            $rowItemsParams::icon_width,
+            $rowItemsParams::icon_width * $icon_prop,
+            $rowItemsParams::def_icon_dy,
+            $rowItemsParams::def_caption_dy,
+            $rowItemsParams::def_caption_color,
+            $rowItemsParams::caption_font_size
         );
 
-        $sel_icon_width = $icon_width + 15;
+        $sel_icon_width = $rowItemsParams::icon_width + $rowItemsParams::sel_zoom_delta;
         $sel_params = Rows_Factory::variable_params(
-            $width,
-            $width,
-            5,
+            $rowItemsParams::width,
+            $rowItemsParams::width,
+            $rowItemsParams::sel_icon_dx,
             $sel_icon_width,
             $sel_icon_width * $icon_prop,
-            0,
-            RowsItemsParams::caption_dy + 5,
-            RowsItemsParams::sel_caption_color,
-            RowsItemsParams::caption_font_size
+            $rowItemsParams::sel_icon_dy,
+            $rowItemsParams::sel_caption_dy,
+            $rowItemsParams::sel_caption_color,
+            $rowItemsParams::caption_font_size
         );
 
-        $width_inactive = $this->GetRowsItemsParams('width_inactive');
-        $inactive_icon_width = $this->GetRowsItemsParams('icon_width_inactive');
+        $width_inactive = $rowItemsParams::width_inactive;
+        $inactive_icon_width = $rowItemsParams::icon_width_inactive;
         $inactive_params = Rows_Factory::variable_params(
             $width_inactive,
             $width_inactive * $icon_prop,
-            0,
+            $rowItemsParams::inactive_icon_dx,
             $inactive_icon_width,
             $inactive_icon_width * $icon_prop,
-            0,
-            RowsItemsParams::caption_dy,
-            RowsItemsParams::inactive_caption_color,
-            RowsItemsParams::caption_font_size
+            $rowItemsParams::inactive_icon_dy,
+            $rowItemsParams::inactive_caption_dy,
+            $rowItemsParams::inactive_caption_color,
+            $rowItemsParams::caption_font_size
         );
 
         $params = Rows_Factory::item_params(
@@ -673,8 +671,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $inactive_params,
             get_image_path($this->GetRowsItemsParams('icon_loading_url')),
             get_image_path($this->GetRowsItemsParams('icon_loading_failed_url')),
-            RowsItemsParams::caption_max_num_lines,
-            RowsItemsParams::caption_line_spacing,
+            $rowItemsParams::caption_max_num_lines,
+            $rowItemsParams::caption_line_spacing,
             Rows_Factory::margins(6, 2, 2, 2)
         );
 
@@ -711,12 +709,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             TitleRowsParams::lite_fade_color
         );
 
-        $items_in_row = $this->plugin->get_parameter(PARAM_ICONS_IN_ROW, 7);
-        $height = $this->GetRowsItemsParams('width') * $this->GetRowsItemsParams('icon_prop');
-        $inactive_height = $this->GetRowsItemsParams('width_inactive') * $this->GetRowsItemsParams('icon_prop');
-        for ($i = 0, $iMax = count($items); $i < $iMax; $i += $items_in_row) {
-            $row_items = array_slice($items, $i, $items_in_row);
-            $id = json_encode(array('row_ndx' => (int)($i / $items_in_row), 'row_id' => $row_id));
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
+        $icon_prop = $this->GetRowsItemsParams('icon_prop');
+        $height = $rowItemsParams::width * $icon_prop;
+        $inactive_height = $rowItemsParams::width_inactive * $icon_prop;
+        for ($i = 0, $iMax = count($items); $i < $iMax; $i += $rowItemsParams::items_in_row) {
+            $row_items = array_slice($items, $i, $rowItemsParams::items_in_row);
+            $id = json_encode(array('row_ndx' => (int)($i / $rowItemsParams::items_in_row), 'row_id' => $row_id));
             $rows[] = Rows_Factory::regular_row(
                 $id,
                 $row_items,
@@ -798,8 +797,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         }
 
         // fill view history row items
-        $sticker_width = $this->GetRowsItemsParams('icon_width');
-        $sticker_y = $this->GetRowsItemsParams('icon_width') * $this->GetRowsItemsParams('icon_prop') - RowsItemsParams::view_progress_height;
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
+        $icon_prop = $this->GetRowsItemsParams('icon_prop');
+        $sticker_y = $rowItemsParams::icon_width * $icon_prop - $rowItemsParams::view_progress_height;
         $items = array();
         foreach ($watched as $item) {
             $channel = $this->plugin->tv->get_channel($item['channel_id']);
@@ -819,35 +819,23 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (!empty($item['program_icon_url'])) {
                     // add small channel logo
                     $rect = Rows_Factory::r(129, 0, 100, 64);
-                    $stickers[] = Rows_Factory::add_regular_sticker_rect(RowsItemsParams::fav_sticker_logo_bg_color, $rect);
+                    $stickers[] = Rows_Factory::add_regular_sticker_rect($rowItemsParams::fav_sticker_logo_bg_color, $rect);
                     $stickers[] = Rows_Factory::add_regular_sticker_image($channel->get_icon_url(), $rect);
                 }
 
                 // add progress indicator
                 $stickers[] = Rows_Factory::add_regular_sticker_rect(
-                    RowsItemsParams::view_total_color,
-                    Rows_Factory::r(0,
-                        $sticker_y,
-                        $sticker_width,
-                        RowsItemsParams::view_progress_height
-                    )
+                    $rowItemsParams::view_total_color,
+                    Rows_Factory::r(0, $sticker_y, $rowItemsParams::icon_width, $rowItemsParams::view_progress_height)
                 ); // total
 
                 $stickers[] = Rows_Factory::add_regular_sticker_rect(
-                    RowsItemsParams::view_viewed_color,
-                    Rows_Factory::r(0,
-                        $sticker_y,
-                        $sticker_width * $item['view_progress'],
-                        RowsItemsParams::view_progress_height
-                    )
+                    $rowItemsParams::view_viewed_color,
+                    Rows_Factory::r(0, $sticker_y, $rowItemsParams::icon_width * $item['view_progress'], $rowItemsParams::view_progress_height)
                 ); // viewed
             }
 
-            $items[] = Rows_Factory::add_regular_item(
-                $id,
-                $channel->get_icon_url(),
-                $item['program_title'],
-                $stickers);
+            $items[] = Rows_Factory::add_regular_item($id, $channel->get_icon_url(), $item['program_title'], $stickers);
         }
 
         // create view history group
@@ -860,12 +848,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 TitleRowsParams::history_caption_color
             );
 
-            foreach ($new_rows as $row) {
-                $rows[] = $row;
-            }
+            $rows = safe_merge_array($rows, $new_rows);
         }
 
-        //hd_debug_print("History rows: " . count($rows));
         return $rows;
     }
 
@@ -934,36 +919,22 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
         $bg = Rows_Factory::add_regular_sticker_rect(
-            RowsItemsParams::fav_sticker_bg_color,
-            Rows_Factory::r(
-                0,
-                0,
-                RowsItemsParams::fav_sticker_bg_width,
-                RowsItemsParams::fav_sticker_bg_width
-            )
+            $rowItemsParams::fav_sticker_bg_color,
+            Rows_Factory::r(0, 0, $rowItemsParams::fav_sticker_bg_width, $rowItemsParams::fav_sticker_bg_width)
         );
         $added_stickers[] = $bg;
 
         $added_stickers[] = Rows_Factory::add_regular_sticker_image(
             get_image_path('add.png'),
-            Rows_Factory::r(
-                0,
-                2,
-                RowsItemsParams::fav_sticker_icon_width,
-                RowsItemsParams::fav_sticker_icon_height
-            )
+            Rows_Factory::r(0, 2, $rowItemsParams::fav_sticker_icon_width, $rowItemsParams::fav_sticker_icon_height)
         );
 
         $removed_stickers[] = $bg;
         $removed_stickers[] = Rows_Factory::add_regular_sticker_image(
             get_image_path('del.png'),
-            Rows_Factory::r(
-                0,
-                2,
-                RowsItemsParams::fav_sticker_icon_width,
-                RowsItemsParams::fav_sticker_icon_height
-            )
+            Rows_Factory::r(0, 2, $rowItemsParams::fav_sticker_icon_width, $rowItemsParams::fav_sticker_icon_height)
         );
 
         $new_channels = $this->plugin->tv->get_changed_channels_ids('new');
@@ -1102,26 +1073,24 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
     private function get_fav_stickers()
     {
-        $icon_item_width = $this->GetRowsItemsParams('icon_width');
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
         $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
-            RowsItemsParams::fav_sticker_bg_color,
+            $rowItemsParams::fav_sticker_bg_color,
             Rows_Factory::r(
-                $icon_item_width - RowsItemsParams::fav_sticker_bg_width,
+                $rowItemsParams::icon_width - $rowItemsParams::fav_sticker_bg_width,
                 0,
-                RowsItemsParams::fav_sticker_bg_width,
-                RowsItemsParams::fav_sticker_bg_width
+                $rowItemsParams::fav_sticker_bg_width,
+                $rowItemsParams::fav_sticker_bg_width
             )
         );
 
-        $icon_x = $icon_item_width - (RowsItemsParams::fav_sticker_bg_width + RowsItemsParams::fav_sticker_icon_width) / 2;
-        $icon_y = (RowsItemsParams::fav_sticker_bg_height - RowsItemsParams::fav_sticker_icon_height) / 2;
         $fav_stickers[] = Rows_Factory::add_regular_sticker_image(
-            get_image_path(RowsItemsParams::fav_sticker_icon_url),
+            get_image_path($rowItemsParams::fav_sticker_icon_url),
             Rows_Factory::r(
-                $icon_x,
-                $icon_y,
-                RowsItemsParams::fav_sticker_icon_width,
-                RowsItemsParams::fav_sticker_icon_height
+                $rowItemsParams::icon_width - ($rowItemsParams::fav_sticker_bg_width + $rowItemsParams::fav_sticker_icon_width) / 2,
+                ($rowItemsParams::fav_sticker_bg_height - $rowItemsParams::fav_sticker_icon_height) / 2,
+                $rowItemsParams::fav_sticker_icon_width,
+                $rowItemsParams::fav_sticker_icon_height
             )
         );
 
@@ -1516,19 +1485,23 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         return $menu_items;
     }
 
-    private function GetRowsItemsParams($param_name) {
-        $square = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
-        $items_count = $this->plugin->get_parameter(PARAM_ICONS_IN_ROW, 7);
-        $class_name = 'RowsItemsParams' . $items_count;
-        if (!class_exists($class_name)) {
-            hd_debug_print("class not exist: $class_name");
+    private function GetRowsItemsParamsClass()
+    {
+        return 'RowsItemsParams' . $this->plugin->get_parameter(PARAM_ICONS_IN_ROW, 7);
+    }
+
+    private function GetRowsItemsParams($param_name)
+    {
+        $rowItemsClass = $this->GetRowsItemsParamsClass();
+        if (!class_exists($rowItemsClass)) {
+            hd_debug_print("class not exist: $rowItemsClass");
             return 0;
         }
 
-        $rclass = new ReflectionClass($class_name);
-        $array = $rclass->getConstants();
+        $rClass = new ReflectionClass($rowItemsClass);
+        $array = $rClass->getConstants();
 
-        $sq_param = $param_name . ($square ? '_sq' : '');
+        $sq_param = $param_name . ($this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false) ? '_sq' : '');
 
         return (isset($array[$sq_param])) ? $array[$sq_param] : $array[$param_name];
     }
