@@ -1,4 +1,10 @@
-﻿### Version 5.1.908
+﻿### Version 5.1.916
+- NewUI: Added mode with 6 and 5 columns in a row
+- All settings for NewUI have been moved to a separate item in the plugin settings
+- Fixed caption for adding/removing to Favorites for the blue button in NewUI
+- Fixed a request error for the EPG Internet source for TV Club
+
+### Version 5.1.908
 - Added the ability to select the type of playlist (link or file) for IPTV or VOD.
 - Fixed a bug with adding/removing a channel to Favorites in NewUI
 
