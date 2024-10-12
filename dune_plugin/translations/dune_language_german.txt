@@ -145,6 +145,7 @@ setup_channel_top_left = Oben links
 setup_channel_top_right = Oben recht
 setup_channel_bottom_right = Unten rechts
 setup_icons_in_row = Symbole in Reihe
+setup_show_caption = Kanalbeschriftung anzeigen
 setup_epg_cache_engine = EPG-Engine
 setup_epg_cache_engine__1 = EPG-Engine ändern (%s)
 setup_epg_cache_type = Cache-Steuerung
@@ -317,7 +318,7 @@ tv_screen_channel_info__4 = Name:%s||Archiv:|%s Tage||Kanäle ID:|%s||EPG ID:|%s
 tv_screen_channel_info__5 = Name:%s||Archiv:|%s Tage||Kanäle ID:|%s||EPG ID:|%s||Seitenverhältnis:|%s
 tv_screen_external_player = externer Spieler
 tv_screen_internal_player = internen Spieler
-tv_screen_toggle_icons_aspect = Schalten Sie die Proportionen der Symbole um
+tv_screen_toggle_icons_aspect = Symbole für quadratische Kanäle
 tv_screen_subscription = Abonnement
 
 vod_screen_reload_playlist = Playlist neu laden

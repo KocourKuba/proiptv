@@ -74,7 +74,9 @@ class PaneParams
 class RowsParams
 {
 	const dx						= 0;
-	const width						= 1920;
+	const full_width			    = 1920;
+    const width	        		    = 1800;
+    const inactive_width	        = 1394;
 	const left_padding				= 90;
 	const inactive_left_padding		= 100;
 	const right_padding				= 120;
@@ -141,8 +143,6 @@ class RowsItemsParams5 extends RowsItemsParams
 {
     const items_in_row              = 5;
     const caption_font_size			= 28; # size in pt
-    const width					    = 360; // (1920 - 120) / 5 = 360
-    const width_inactive		    = 280; // (1920 - 526) / 5 = 278
     const icon_width				= 260;
     const icon_width_inactive       = 260;
 }
@@ -151,8 +151,6 @@ class RowsItemsParams6 extends RowsItemsParams
 {
     const items_in_row              = 6;
     const caption_font_size			= 26; # size in pt
-    const width					    = 300; // (1920 - 120) / 6 = 300
-    const width_inactive		    = 232; // (1920 - 526) / 6 = 232
     const icon_width				= 200;
     const icon_width_inactive       = 200;
 }
@@ -161,8 +159,27 @@ class RowsItemsParams7 extends RowsItemsParams
 {
     const items_in_row              = 7;
     const caption_font_size			= 24; # size in pt
-    const width					    = 258; // (1920 - 120) / 7 = 258
-    const width_inactive		    = 200; // (1920 - 526) / 7 = 200
     const icon_width				= 180;
     const icon_width_inactive       = 180;
+}
+
+class RowsItemsParams5n extends RowsItemsParams5
+{
+    const def_caption_color			= self::inactive_caption_color;
+    const sel_caption_color			= self::inactive_caption_color;
+    const icon_width				= 330;
+}
+
+class RowsItemsParams6n extends RowsItemsParams6
+{
+    const def_caption_color			= self::inactive_caption_color;
+    const sel_caption_color			= self::inactive_caption_color;
+    const icon_width				= 270;
+}
+
+class RowsItemsParams7n extends RowsItemsParams7
+{
+    const def_caption_color			= self::inactive_caption_color;
+    const sel_caption_color			= self::inactive_caption_color;
+    const icon_width				= 230;
 }

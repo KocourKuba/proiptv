@@ -145,6 +145,7 @@ setup_channel_top_left = Вверху слева
 setup_channel_top_right = Вверху справа
 setup_channel_bottom_right = Внизу справа
 setup_icons_in_row = Количество иконок в ряду
+setup_show_caption = Показывать название канала
 setup_epg_cache_engine = Движок EPG
 setup_epg_cache_engine__1 = Изменить движок EPG (%s)
 setup_epg_cache_type = Управление кэшем
@@ -317,7 +318,7 @@ tv_screen_channel_info__4 = Название:|%s||Архив:|%s дней||Ка�
 tv_screen_channel_info__5 = Название:|%s||Архив:|%s дней||Канал №:|%s||EPG №:|%s||Масштаб:|%s
 tv_screen_external_player = Воспроизводить внешним плеером
 tv_screen_internal_player = Воспроизводить внутренним плеером
-tv_screen_toggle_icons_aspect = Изменить пропорции иконок
+tv_screen_toggle_icons_aspect = Квадратные иконки каналов
 tv_screen_subscription = Подписка
 
 vod_screen_reload_playlist = Перечитать плейлист

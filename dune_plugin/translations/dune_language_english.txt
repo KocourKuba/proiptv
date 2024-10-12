@@ -145,6 +145,7 @@ setup_channel_top_left = Top left
 setup_channel_top_right = Top right
 setup_channel_bottom_right = Bottom right
 setup_icons_in_row = Icons in row
+setup_show_caption = Show channel caption
 setup_epg_cache_engine = EPG engine
 setup_epg_cache_engine__1 = Change EPG engine (%s)
 setup_epg_cache_type = Cache control
@@ -317,7 +318,7 @@ tv_screen_channel_info__4 = Name:|%s||Archive:|%s day(s)||Channel ID:|%s||EPG ID
 tv_screen_channel_info__5 = Name:|%s||Archive:|%s day(s)||Channel ID:|%s||EPG ID: %s||Aspect ratio:|%s
 tv_screen_external_player = Play by external player
 tv_screen_internal_player = Play by internal player
-tv_screen_toggle_icons_aspect = Toggle icons proportions
+tv_screen_toggle_icons_aspect = Square channels icons
 tv_screen_subscription = Subscription
 
 vod_screen_reload_playlist = Reload playlist

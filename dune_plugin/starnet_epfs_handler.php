@@ -114,6 +114,8 @@ class Starnet_Epfs_Handler
      */
     public static function epfs_invalidate_folders($media_urls = null, $post_action = null)
     {
+        self::update_all_epfs($plugin_cookies);
+
         if (self::$enabled) {
             $arr = array_merge(array(self::$epf_id), (is_array($media_urls) ? $media_urls : array()));
         } else {

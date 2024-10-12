@@ -372,11 +372,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $this->plugin->tv->set_channel_for_ext_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
 
-            case ACTION_TOGGLE_ICONS_TYPE:
-                $this->plugin->toggle_setting(PARAM_SQUARE_ICONS, false);
-                $this->set_changes();
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
-
             case ACTION_INFO_DLG:
                 return $this->plugin->do_show_subscription($this);
 
@@ -625,10 +620,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $rowItemsParams = $this->GetRowsItemsParamsClass();
         $icon_prop = $this->GetRowsItemsParams('icon_prop');
+        $width = RowsParams::width / $rowItemsParams::items_in_row;
 
         $def_params = Rows_Factory::variable_params(
-            $rowItemsParams::width,
-            $rowItemsParams::width,
+            $width,
+            $width,
             $rowItemsParams::def_icon_dx,
             $rowItemsParams::icon_width,
             $rowItemsParams::icon_width * $icon_prop,
@@ -640,8 +636,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $sel_icon_width = $rowItemsParams::icon_width + $rowItemsParams::sel_zoom_delta;
         $sel_params = Rows_Factory::variable_params(
-            $rowItemsParams::width,
-            $rowItemsParams::width,
+            $width,
+            $width,
             $rowItemsParams::sel_icon_dx,
             $sel_icon_width,
             $sel_icon_width * $icon_prop,
@@ -651,7 +647,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $rowItemsParams::caption_font_size
         );
 
-        $width_inactive = $rowItemsParams::width_inactive;
+        $width_inactive = RowsParams::inactive_width / $rowItemsParams::items_in_row;
         $inactive_icon_width = $rowItemsParams::icon_width_inactive;
         $inactive_params = Rows_Factory::variable_params(
             $width_inactive,
@@ -711,8 +707,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $rowItemsParams = $this->GetRowsItemsParamsClass();
         $icon_prop = $this->GetRowsItemsParams('icon_prop');
-        $height = $rowItemsParams::width * $icon_prop;
-        $inactive_height = $rowItemsParams::width_inactive * $icon_prop;
+        $height = RowsParams::width / $rowItemsParams::items_in_row * $icon_prop;
+        $inactive_height = RowsParams::inactive_width / $rowItemsParams::items_in_row * $icon_prop;
         for ($i = 0, $iMax = count($items); $i < $iMax; $i += $rowItemsParams::items_in_row) {
             $row_items = array_slice($items, $i, $rowItemsParams::items_in_row);
             $id = json_encode(array('row_ndx' => (int)($i / $rowItemsParams::items_in_row), 'row_id' => $row_id));
@@ -723,7 +719,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 null,
                 $title,
                 $row_id,
-                RowsParams::width,
+                RowsParams::full_width,
                 $height,
                 $inactive_height,
                 RowsParams::left_padding,
@@ -1124,7 +1120,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         ///////////// Channel number /////////////////
 
-        $pos = PaneParams::$ch_num_pos[$this->plugin->get_parameter(PARAM_CHANNEL_POSITION, 0)];
+        $pos = PaneParams::$ch_num_pos[$this->plugin->get_setting(PARAM_CHANNEL_POSITION, 0)];
         $defs[] = GComps_Factory::label(
             GComp_Geom::place_top_left(130, 50, $pos['x'], $pos['y']),
             null,
@@ -1501,7 +1497,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
     private function GetRowsItemsParamsClass()
     {
-        return 'RowsItemsParams' . $this->plugin->get_parameter(PARAM_ICONS_IN_ROW, 7);
+        $suff = $this->plugin->get_bool_setting(PARAM_SHOW_CHANNEL_CAPTION) ? "" : "n";
+        return 'RowsItemsParams' . $this->plugin->get_setting(PARAM_ICONS_IN_ROW, 7) . $suff;
     }
 
     private function GetRowsItemsParams($param_name)

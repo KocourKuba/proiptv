@@ -68,12 +68,23 @@ class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen impl
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
+        // Square icons
+        $square_icon = $this->plugin->get_setting(PARAM_SQUARE_ICONS, SetupControlSwitchDefs::switch_on);
+        hd_debug_print(PARAM_SQUARE_ICONS . ": $square_icon", true);
+        $square_icon_translated[SetupControlSwitchDefs::switch_on] = TR::t('yes');
+        $square_icon_translated[SetupControlSwitchDefs::switch_off] = TR::t('no');
+
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_SQUARE_ICONS, TR::t('tv_screen_toggle_icons_aspect'), $square_icon_translated[$square_icon],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icon]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
         // Channel position in NewUI
         $channel_position[0] = TR::t('setup_channel_bottom_left');
         $channel_position[1] = TR::t('setup_channel_top_left');
         $channel_position[2] = TR::t('setup_channel_top_right');
         $channel_position[3] = TR::t('setup_channel_bottom_right');
-        $ch_pos = $this->plugin->get_parameter(PARAM_CHANNEL_POSITION, 0);
+        $ch_pos = $this->plugin->get_setting(PARAM_CHANNEL_POSITION, 0);
         Control_Factory::add_combobox($defs, $this, null,
             PARAM_CHANNEL_POSITION, TR::t('setup_channel_position'),
             $ch_pos, $channel_position, self::CONTROLS_WIDTH, true);
@@ -83,10 +94,21 @@ class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen impl
         $icons_in_row[5] = '5';
         $icons_in_row[6] = '6';
         $icons_in_row[7] = '7';
-        $icon_idx = $this->plugin->get_parameter(PARAM_ICONS_IN_ROW, 7);
+        $icon_idx = $this->plugin->get_setting(PARAM_ICONS_IN_ROW, 7);
         Control_Factory::add_combobox($defs, $this, null,
             PARAM_ICONS_IN_ROW, TR::t('setup_icons_in_row'),
             $icon_idx, $icons_in_row, self::CONTROLS_WIDTH, true);
+
+        //////////////////////////////////////
+        // Show caption
+        $show_caption = $this->plugin->get_setting(PARAM_SHOW_CHANNEL_CAPTION, SetupControlSwitchDefs::switch_on);
+        hd_debug_print(PARAM_SHOW_CHANNEL_CAPTION . ": $show_caption", true);
+        $show_caption_translated[SetupControlSwitchDefs::switch_on] = TR::t('yes');
+        $show_caption_translated[SetupControlSwitchDefs::switch_off] = TR::t('no');
+
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_SHOW_CHANNEL_CAPTION, TR::t('setup_show_caption'), $show_caption_translated[$show_caption],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_caption]), self::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -106,6 +128,7 @@ class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen impl
             hd_debug_print("changing $control_id value to $new_value", true);
         }
 
+        $post_action = null;
         switch ($control_id) {
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
@@ -119,11 +142,17 @@ class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen impl
 
             case PARAM_CHANNEL_POSITION:
             case PARAM_ICONS_IN_ROW:
-                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                return Starnet_Epfs_Handler::epfs_invalidate_folders();
+                $this->plugin->set_setting($control_id, $user_input->{$control_id});
+                $post_action = Starnet_Epfs_Handler::epfs_invalidate_folders();
+                break;
+
+            case PARAM_SQUARE_ICONS:
+            case PARAM_SHOW_CHANNEL_CAPTION:
+                $this->plugin->toggle_setting($control_id, false);
+                $post_action = Starnet_Epfs_Handler::epfs_invalidate_folders();
+                break;
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs());
+        return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);
     }
 }

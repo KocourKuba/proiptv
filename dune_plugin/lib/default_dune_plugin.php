@@ -2908,10 +2908,8 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($is_classic) {
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
-        } else {
-            $menu_items[] = $this->create_menu_item($handler, ACTION_TOGGLE_ICONS_TYPE, TR::t('tv_screen_toggle_icons_aspect'), "image.png");
+            $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         }
-        $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
         $menu_items[] = $this->create_menu_item($handler,
             ACTION_ITEMS_EDIT,
