@@ -190,8 +190,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 }
             }
 
-            $items[] = array
-            (
+            $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array(
                         'channel_id' => $channel_id,

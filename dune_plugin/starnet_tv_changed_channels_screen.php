@@ -82,20 +82,20 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                    $post_action = null;
-                    if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
-                        $post_action = User_Input_Handler_Registry::create_action(
-                            User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
-                            ACTION_REFRESH_SCREEN);
-                    }
-                    $post_action = Action_Factory::close_and_run($post_action);
-                    return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+                if (!$this->has_changes()) {
+                    return Action_Factory::close_and_run();
                 }
 
-                return Action_Factory::close_and_run();
+                $this->plugin->save_orders(true);
+                $this->set_no_changes();
+                $post_action = null;
+                if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
+                    $post_action = User_Input_Handler_Registry::create_action(
+                        User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
+                        ACTION_REFRESH_SCREEN);
+                }
+                $post_action = Action_Factory::close_and_run($post_action);
+                return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
 
             case GUI_EVENT_KEY_STOP:
                 $this->plugin->save_orders(true);

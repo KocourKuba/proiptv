@@ -186,16 +186,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_TOP:
-                if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::TOP))
+                if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::TOP)) {
                     return null;
+                }
 
                 $sel_ndx = $this->plugin->tv->get_special_groups_count();
                 $this->set_changes();
                 break;
 
             case ACTION_ITEM_BOTTOM:
-                if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::BOTTOM))
+                if (!$this->plugin->tv->get_groups_order()->arrange_item($sel_media_url->group_id, Ordered_Array::BOTTOM)) {
                     return null;
+                }
 
                 $sel_ndx = $this->plugin->tv->get_groups_order()->size() + $this->plugin->tv->get_special_groups_count() - 1;
                 $this->set_changes();
@@ -367,15 +369,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
                     hd_debug_print(pretty_json_format($provider));
-
                     return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
                 }
 
                 if (!$provider->request_provider_token()) {
-                    hd_debug_print("Can't get provider token");
-                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
+                    return $this->plugin->do_edit_provider_ext_dlg($this);
                 }
-                return $this->plugin->do_edit_provider_ext_dlg($this);
+
+                hd_debug_print("Can't get provider token");
+                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
             case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
@@ -420,7 +422,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
                 if ($data->choose_file === ACTION_CHANGE_GROUP_ICON) {
-
                     $group = $this->plugin->tv->get_any_group($sel_media_url->group_id);
                     if (is_null($group)) break;
 

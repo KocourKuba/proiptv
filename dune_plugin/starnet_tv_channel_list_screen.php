@@ -110,20 +110,20 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                    $post_action = null;
-                    if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
-                        $post_action = User_Input_Handler_Registry::create_action(
-                            User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
-                            ACTION_REFRESH_SCREEN);
-                    }
-                    $post_action = Action_Factory::close_and_run($post_action);
-                    return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+                if (!$this->has_changes()) {
+                    return Action_Factory::close_and_run();
                 }
 
-                return Action_Factory::close_and_run();
+                $this->plugin->save_orders(true);
+                $this->set_no_changes();
+                $post_action = null;
+                if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
+                    $post_action = User_Input_Handler_Registry::create_action(
+                        User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
+                        ACTION_REFRESH_SCREEN);
+                }
+                $post_action = Action_Factory::close_and_run($post_action);
+                return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
 
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();
@@ -221,8 +221,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ITEM_UP:
                 $group = $this->plugin->tv->get_group($selected_media_url->group_id);
-                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP))
+                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::UP)) {
                     return null;
+                }
 
                 $sel_ndx--;
                 if ($sel_ndx < 0) {
@@ -234,8 +235,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ITEM_DOWN:
                 $group = $this->plugin->tv->get_group($selected_media_url->group_id);
-                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::DOWN))
+                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::DOWN)) {
                     return null;
+                }
 
                 $groups_cnt = $group->get_items_order()->size();
                 $sel_ndx++;
@@ -248,8 +250,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ITEM_TOP:
                 $group = $this->plugin->tv->get_group($selected_media_url->group_id);
-                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::TOP))
+                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::TOP)) {
                     return null;
+                }
 
                 $sel_ndx = 0;
                 $this->set_changes();
@@ -257,8 +260,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ITEM_BOTTOM:
                 $group = $this->plugin->tv->get_group($selected_media_url->group_id);
-                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::BOTTOM))
+                if (is_null($group) || !$group->get_items_order()->arrange_item($channel_id, Ordered_Array::BOTTOM)) {
                     return null;
+                }
 
                 $sel_ndx = $group->get_items_order()->size() - 1;
                 $this->set_changes();
@@ -387,6 +391,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 return Action_Factory::show_popup_menu($menu_items);
+
             case ACTION_ZOOM_APPLY:
                 if (isset($user_input->{ACTION_ZOOM_SELECT})) {
                     $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
