@@ -1,4 +1,9 @@
-﻿### Version 5.1.916
+﻿### Version 5.1.922
+- NewUI: Added a mode to disable the display of the channel name
+- NewUI: Settings are now playlist-specific instead of global for the plugin
+- Fixed EPG configuration for TV Team
+
+### Version 5.1.916
 - NewUI: Added mode with 6 and 5 columns in a row
 - All settings for NewUI have been moved to a separate item in the plugin settings
 - Fixed caption for adding/removing to Favorites for the blue button in NewUI
