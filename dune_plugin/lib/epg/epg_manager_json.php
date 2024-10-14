@@ -104,7 +104,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 throw new Exception("No EPG ID defined");
             }
 
-            $epg_id = $epg_ids[$key];
             if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
                 hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache ");
                 return $this->epg_cache[$epg_id][$day_start_ts];

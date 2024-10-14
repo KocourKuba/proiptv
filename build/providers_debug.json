@@ -108,7 +108,7 @@
       }
     },
     "tvteam": {
-      "json_source": "http://troya.one/{EPG_ID}.json",
+      "json_source": "http://tv.team/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -1354,10 +1354,6 @@
         "epg_presets": [
           {
             "name": "tvteam"
-          },
-          {
-            "name": "drm",
-            "title": "epg.drm-play"
           }
         ],
         "ext_params": true,
