@@ -372,7 +372,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
                 }
 
-                if (!$provider->request_provider_token()) {
+                if ($provider->request_provider_token()) {
                     return $this->plugin->do_edit_provider_ext_dlg($this);
                 }
 
