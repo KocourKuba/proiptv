@@ -1017,7 +1017,8 @@
         "request_token": "{API}/auth/",
         "refresh_token": "{API}/auth/",
         "account_info": "{API}/xapi10/accountinfo",
-        "get_servers": "{API}/xapi10/tv/servers"
+        "get_servers": "{API}/xapi10/tv/servers",
+        "get_vod": "{API}/xapi10"
       },
       "config": {
         "id_map": "CUID",

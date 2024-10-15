@@ -1,4 +1,8 @@
-﻿### Version 5.1.922
+﻿### Version 5.1.924
+- Fixed a bug that did not allow you to get into the additional settings of the provider
+- Enabled VOD for PikTV
+
+### Version 5.1.922
 - NewUI: Added a mode to disable the display of the channel name
 - NewUI: Settings are now playlist-specific instead of global for the plugin
 - Fixed EPG configuration for TV Team
