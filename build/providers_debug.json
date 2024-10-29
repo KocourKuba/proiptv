@@ -284,7 +284,7 @@
         "get_playlist": "https://bcumedia.pro/playlist/hls/{PASSWORD}.m3u"
       },
       "config": {
-        "id_map": "tvg-id",
+        "id_map": "name",
         "epg_presets": [
           {
             "name": "drm",
@@ -614,7 +614,7 @@
       }
     },
     {
-      "enable": true,
+      "enable": false,
       "id": "iptv360",
       "name": "IPTV 360",
       "type": "pin",
@@ -1010,14 +1010,15 @@
       "name": "Pik TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_piktv.png",
-      "provider_url": "https://pa.piktv.top/",
+      "provider_url": "http://pa.piktv.top/",
       "api_url": "http://stb.piktv.top/api",
       "api_commands": {
         "get_playlist": "http://pl.piktv.top/{QUALITY_ID}/{SERVER_ID}/{LOGIN}/{PASSWORD}/{STREAM_ID}",
         "request_token": "{API}/auth/",
         "refresh_token": "{API}/auth/",
         "account_info": "{API}/xapi10/accountinfo",
-        "get_servers": "{API}/xapi10/tv/servers"
+        "get_servers": "{API}/xapi10/tv/servers",
+        "get_vod": "{API}/xapi10"
       },
       "config": {
         "id_map": "CUID",
@@ -1195,7 +1196,7 @@
       "name": "Sharavoz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
-      "provider_url": "https://shrv.gb.net/",
+      "provider_url": "https://sh365.org/",
       "api_url": "http://api.program.spr24.net/api",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
@@ -1215,7 +1216,10 @@
         },
         "domains": {
           "shrv.gb.net": "shrv.gb.net",
-          "www.sharavoz.tv": "www.sharavoz.tv"
+          "www.sharavoz.tv": "sharavoz.tv",
+          "sharavoz.space": "sharavoz.space",
+          "sh365.org": "sh365.org",
+          "sh24.one": "sh24.one"
         },
         "streams": {
           "video.m3u8": "HLS",
@@ -1466,7 +1470,8 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "viplime"
+            "name": "drm",
+            "title": "epg.drm-play"
           }
         ],
         "ext_params": true,

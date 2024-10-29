@@ -284,7 +284,7 @@
         "get_playlist": "https://bcumedia.pro/playlist/hls/{PASSWORD}.m3u"
       },
       "config": {
-        "id_map": "tvg-id",
+        "id_map": "name",
         "epg_presets": [
           {
             "name": "drm",
@@ -1196,7 +1196,7 @@
       "name": "Sharavoz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
-      "provider_url": "https://shrv.gb.net/",
+      "provider_url": "https://sh365.org/",
       "api_url": "http://api.program.spr24.net/api",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/iptv/p/{PASSWORD}/Sharavoz.Tv.navigator-ott.m3u",
@@ -1216,7 +1216,10 @@
         },
         "domains": {
           "shrv.gb.net": "shrv.gb.net",
-          "www.sharavoz.tv": "www.sharavoz.tv"
+          "www.sharavoz.tv": "sharavoz.tv",
+          "sharavoz.space": "sharavoz.space",
+          "sh365.org": "sh365.org",
+          "sh24.one": "sh24.one"
         },
         "streams": {
           "video.m3u8": "HLS",
