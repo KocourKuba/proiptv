@@ -31,6 +31,7 @@ class Curl_Wrapper
     const HTTP_HEADERS_LOG = "%s_headers.log";
     const HTTP_LOG = "%s_response.log";
     const CURL_CONFIG = "%s_curl_config.txt";
+    const CACHE_TAG_FILE = "etag_cache.dat";
 
     /**
      * @var string
@@ -357,7 +358,7 @@ class Curl_Wrapper
      */
     public function clear_all_etag_cache()
     {
-        $cache_path = get_data_path(EPG_CACHE_SUBDIR. DIRECTORY_SEPARATOR . 'etag_cache.dat');
+        $cache_path = get_data_path(self::CACHE_TAG_FILE);
         if (file_exists($cache_path)) {
             unlink($cache_path);
         }
@@ -369,7 +370,7 @@ class Curl_Wrapper
      */
     public static function save_cached_etag($cache_db)
     {
-        file_put_contents(get_data_path('etag_cache.dat'), json_encode($cache_db));
+        file_put_contents(get_data_path(self::CACHE_TAG_FILE), json_encode($cache_db));
     }
 
     /**
@@ -377,7 +378,7 @@ class Curl_Wrapper
      */
     public static function load_cached_etag()
     {
-        $cache_path = get_data_path('etag_cache.dat');
+        $cache_path = get_data_path(self::CACHE_TAG_FILE);
         if (file_exists($cache_path)) {
             $cache_db = json_decode(file_get_contents($cache_path), true);
         } else {
