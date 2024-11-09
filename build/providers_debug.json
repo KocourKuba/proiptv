@@ -1222,7 +1222,7 @@
           "sh24.one": "sh24.one"
         },
         "streams": {
-          "video.m3u8": "HLS",
+          "index.m3u8": "HLS",
           "mpegts": "MPEG-TS"
         },
         "servers": {
