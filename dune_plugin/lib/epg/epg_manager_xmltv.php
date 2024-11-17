@@ -252,7 +252,7 @@ class Epg_Manager_Xmltv
     {
         $has_locks = false;
         if (is_null($sources)) {
-            $sources = $this->indexer->get_active_sources()->get_order();
+            $sources = $this->indexer->get_active_sources()->get_ordered_keys();
         }
 
         foreach ($sources as $source) {

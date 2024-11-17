@@ -1085,7 +1085,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if (!is_null($all_channels = $this->get_channels())) {
-            $orphans_channels = array_diff($this->get_disabled_channel_ids()->get_order(), $all_channels->get_order());
+            $orphans_channels = array_diff($this->get_disabled_channel_ids()->get_order(), $all_channels->get_ordered_keys());
             if (!empty($orphans_channels)) {
                 if (LogSeverity::$is_debug) {
                     hd_debug_print("Remove total orphaned disabled channels: "
@@ -1144,15 +1144,15 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if ($type === 'new') {
-            return array_diff($all_channels->get_order(), $known_channels->get_order());
+            return array_diff($all_channels->get_ordered_keys(), $known_channels->get_ordered_keys());
         }
 
         if ($type === 'removed') {
-            return array_diff($known_channels->get_order(), $all_channels->get_order());
+            return array_diff($known_channels->get_ordered_keys(), $all_channels->get_ordered_keys());
         }
 
-        $new_channels = array_diff($all_channels->get_order(), $known_channels->get_order());
-        $removed_channels = array_diff($known_channels->get_order(), $all_channels->get_order());
+        $new_channels = array_diff($all_channels->get_ordered_keys(), $known_channels->get_ordered_keys());
+        $removed_channels = array_diff($known_channels->get_ordered_keys(), $all_channels->get_ordered_keys());
         return array_merge($new_channels, $removed_channels);
     }
 

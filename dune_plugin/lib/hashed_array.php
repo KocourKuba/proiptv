@@ -255,7 +255,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * @return array
      */
-    public function get_order()
+    public function get_ordered_keys()
     {
         return $this->seq;
     }

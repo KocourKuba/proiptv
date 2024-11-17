@@ -234,7 +234,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (!isset($plugin_cookies->ticker)) {
                     $plugin_cookies->ticker = 0;
                 }
-                $res = $epg_manager->import_indexing_log($this->plugin->get_all_xmltv_sources()->get_order());
+                $res = $epg_manager->import_indexing_log($this->plugin->get_all_xmltv_sources()->get_ordered_keys());
                 $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
 
                 if ($res !== false) {
