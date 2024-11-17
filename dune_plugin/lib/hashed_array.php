@@ -83,6 +83,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Get value by index
+     *
      * @param integer $ndx
      * @return TValue|null
      */
@@ -103,6 +105,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Check if key exist
+     *
      * @param TKey $key
      * @return bool
      */
@@ -112,6 +116,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Return index by key
+     *
      * @param TKey $key
      * @return integer|false
      */
@@ -121,7 +127,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * add item. key for item is hash of item
+     * Add item. key for item is hash of item
+     *
      * @param TValue $item
      */
     public function add($item)
@@ -214,6 +221,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Erase by key
+     *
      * @param TKey $key
      */
     public function erase($key)
@@ -226,6 +235,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Erase by keys from array
+     *
      * @param array $keys
      */
     public function erase_keys($keys)
@@ -237,6 +248,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Return keys
+     *
      * @return TKey[]
      */
     public function get_keys()
@@ -245,6 +258,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Return values
+     *
      * @return array
      */
     public function get_values()
@@ -253,6 +268,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Return key sequences
+     *
      * @return array
      */
     public function get_ordered_keys()
@@ -261,6 +278,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Return value sequences
+     *
      * @return array
      */
     public function get_ordered_values()
@@ -274,6 +293,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Convert Hashed_Array to array
+     *
      * @return array
      */
     public function to_array()
@@ -287,6 +308,8 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Create Hashed_Array from array
+     *
      * @oaram array $values
      * @return Hashed_Array
      */
@@ -300,6 +323,9 @@ class Hashed_Array extends Json_Serializer implements Iterator
         return $result;
     }
 
+    /**
+     * Sort by values
+     */
     public function value_sort()
     {
         uasort($this->map, array(__CLASS__, "sort_array_cb"));
@@ -307,13 +333,15 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @param string $id
+     * Change position of value by key
+     *
+     * @param string $key
      * @param int $direction
      * @return bool
      */
-    public function arrange_item($id, $direction)
+    public function arrange_item($key, $direction)
     {
-        $k = array_search($id, $this->seq);
+        $k = array_search($key, $this->seq);
         //hd_debug_print("move id: $id from idx: $k to direction: $direction");
 
         if ($k === false || $direction === 0)
@@ -334,6 +362,9 @@ class Hashed_Array extends Json_Serializer implements Iterator
         return true;
     }
 
+    /**
+     * Clear Hashed_Array
+     */
     public function clear()
     {
         $this->pos = 0;
