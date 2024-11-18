@@ -194,7 +194,7 @@ class DuneVideoZoomPresets
         DuneVideoZoomPresets::full_stretch => VIDEO_ZOOM_STRETCH_TO_FULL_SCREEN
     );
 
-    public static $zoom_ops = array(
+    public static $zoom_ops_translated = array(
         DuneVideoZoomPresets::not_set => 'tv_screen_zoom_not_set',
         DuneVideoZoomPresets::normal => 'tv_screen_zoom_normal',
         DuneVideoZoomPresets::enlarge => 'tv_screen_zoom_enlarge',

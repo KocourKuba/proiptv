@@ -64,7 +64,7 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @template Group
-     * @var Hashed_Array<string, Group>
+     * @var Hashed_Array<Group>
      */
     protected $special_groups;
 
