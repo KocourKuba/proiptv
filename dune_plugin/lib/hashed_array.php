@@ -27,22 +27,28 @@
 require_once 'json_serializer.php';
 
 /**
- * @template TKey
+ * @template string
  * @template TValue
- * @implements Iterator<TKey, TValue>
+ * @implements Iterator<string, TValue>
  */
 class Hashed_Array extends Json_Serializer implements Iterator
 {
+    /** Direction to the begin */
     const UP = -1;
+
+    /** Direction to the end */
     const DOWN = 1;
+
     /**
      * @var array
      */
     protected $seq = array();
+
     /**
      * @var TValue[]
      */
     protected $map = array();
+
     /**
      * @var integer
      */
@@ -96,7 +102,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * return value associated with key
      *
-     * @param TKey $key
+     * @param string $key
      * @return TValue|null
      */
     public function get($key)
@@ -107,7 +113,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * Check if key exist
      *
-     * @param TKey $key
+     * @param string $key
      * @return bool
      */
     public function has($key)
@@ -118,7 +124,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * Return index by key
      *
-     * @param TKey $key
+     * @param string $key
      * @return integer|false
      */
     public function get_idx($key)
@@ -139,17 +145,16 @@ class Hashed_Array extends Json_Serializer implements Iterator
 
     /**
      * Default hashing algorithm
-     * @return string
      */
     public static function hash($item)
     {
-        return empty($item) ? '' : hash('crc32', $item);
+        return (empty($item) ? "" : hash('crc32', $item));
     }
 
     /**
      * Add only new item to array
      *
-     * @param TKey $key
+     * @param string $key
      * @param TValue $item
      */
     public function put($key, $item)
@@ -175,7 +180,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * add new item or replace existing
      *
-     * @param TKey $key
+     * @param string $key
      * @param TValue $item
      */
     public function set($key, $item)
@@ -223,7 +228,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * Erase by key
      *
-     * @param TKey $key
+     * @param string $key
      */
     public function erase($key)
     {
@@ -250,7 +255,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * Return keys
      *
-     * @return TKey[]
+     * @return string[]
      */
     public function get_keys()
     {
