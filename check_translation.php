@@ -54,6 +54,7 @@ foreach (glob("$translation_path/*.txt") as $file) {
     }
 
     $translations[$lang] = array();
+    $usage[$lang] = array();
     foreach($lines as $line) {
         list($key, $value) = explode("=", $line);
         $key = trim($key);
@@ -63,6 +64,7 @@ foreach (glob("$translation_path/*.txt") as $file) {
             echo "duplicate translation $key" . PHP_EOL;
         }
         $translations[$lang][$key] = $value;
+        $usage[$lang][$key] = 0;
     }
     $cnt = count($translations[$lang]);
     if ($max_cnt < $cnt) {
@@ -86,22 +88,38 @@ foreach($translations as $k => $t) {
     }
 }
 
-$regex_t = "/.*TR::(?:g|t|load_string)\(['\"]([_a-z0-9]+)['\"].*/U";
+$regex_t = "/.*TR::(?:g|t|load_string)\(['\"]([_a-z0-9]+)['\"].*|.*['\">]%tr%([_a-z0-9]+)['\"<].*/U";
 $files_to_check = glob_recursive($plugin_path, "*.php");
+$files_to_check = array_merge($files_to_check, glob_recursive($plugin_path, "*.xml"));
 foreach ($files_to_check as $php_file) {
     $lines = file($php_file, FILE_IGNORE_NEW_LINES);
     $line_num = 1;
     foreach ($lines as $line) {
         $offset = 0;
         while(preg_match($regex_t, $line, $m, PREG_OFFSET_CAPTURE, $offset)) {
-            $tr = $m[1][0];
-            $offset = $m[1][1] + strlen($tr);
+            if (isset($m[2])) {
+                $tr = $m[2][0];
+                $offset = $m[2][1] + strlen($tr);
+            } else {
+                $tr = $m[1][0];
+                $offset = $m[1][1] + strlen($tr);
+            }
             foreach ($translations as $lang_name => $lang) {
-                if (!isset($lang[$tr])) {
-                    echo "$lang_name: Unknown translation '$tr' for  in file: $php_file, line: $line_num" , PHP_EOL;
+                if (isset($lang[$tr])) {
+                    $usage[$lang_name][$tr]++;
+                } else {
+                    echo "$lang_name: Unknown translation '$tr' for  in file: $php_file, line: $line_num" . PHP_EOL;
                 }
             }
         }
         ++$line_num;
+    }
+}
+
+foreach ($usage as $lang => $key) {
+    foreach ($key as $k => $v) {
+        if ($v === 0) {
+            echo "Unused translation '$k' in file: $lang" . PHP_EOL;
+        }
     }
 }
