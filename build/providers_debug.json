@@ -1228,6 +1228,7 @@
         "servers": {
           "ru01.spr24.net": "Russia (RU01)",
           "ru02.spr24.net": "Moscow (RU02)",
+          "ru03.spr24.net": "Moscow (RU03)",
           "nl01.spr24.net": "Amsterdam (NL01)",
           "am01.spr24.net": "Amsterdam (AM01)",
           "fr01.spr24.net": "France (FR01)",
