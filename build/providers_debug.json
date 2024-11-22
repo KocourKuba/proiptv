@@ -990,12 +990,13 @@
           "ts": "MPEG-TS"
         },
         "servers": {
-          "peaktv.pro": "Russia 1",
-          "peak-tv.shop": "Russia 2",
-          "peaktv.com.ru": "Germany 1",
-          "peak-tv.xyz": "Germany 2",
-          "peaktv.space ": "Poland",
-          "peaktv.fun": "Czech Republic"
+          "serv5.peakantikli.online": "Russia 1",
+          "serv1.peakantikli.online": "Russia 2",
+          "serv6.peakantikli.online": "Russia 3",
+          "serv7.peakantikli.online": "Germany 1",
+          "serv2.peakantikli.online": "Germany 2",
+          "serv4.peakantikli.online": "Poland",
+          "serv3.peakantikli.online": "Czechia"
         },
         "url_subst": {
           "regex": "/^(https?:\\/\\/).+(\\/.+)(\\/.+)$/",
