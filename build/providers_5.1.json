@@ -1417,23 +1417,6 @@
     },
     {
       "enable": true,
-      "id": "uspeh",
-      "name": "Uspeh TV",
-      "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_uspeh.png",
-      "provider_url": "https://uspeh.tv/",
-      "api_url": "http://pl.uspeh.sbs",
-      "api_commands": {
-        "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
-        "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
-      },
-      "config": {
-        "vod_parser": "/^(?<title>.+)\\s\\((?<country>.+)\\s(?<year>\\d+)\\)$/",
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
       "id": "vidok",
       "name": "Vidok TV",
       "type": "login",
