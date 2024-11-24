@@ -38,10 +38,6 @@ class Starnet_Tv implements User_Input_Handler
 
     const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 
-    // deprecated settings
-    const PARAM_CUR_XMLTV_SOURCE = 'cur_xmltv_source';
-    const PARAM_CUR_XMLTV_SOURCE_KEY = 'cur_xmltv_key';
-
     ///////////////////////////////////////////////////////////////////////
 
     public static $tvg_id = array('tvg-id', 'tvg-name');
@@ -69,19 +65,19 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @template Default_Channel
-     * @var Hashed_Array<string, Default_Channel>
+     * @var Hashed_Array<Default_Channel>
      */
     protected $channels;
 
     /**
      * @template Default_Group
-     * @var Hashed_Array<string, Default_Group>
+     * @var Hashed_Array<Default_Group>
      */
     protected $groups;
 
     /**
      * @template Default_Group
-     * @var Hashed_Array<string, Default_Group>
+     * @var Hashed_Array<Default_Group>
      */
     protected $special_groups;
 
@@ -593,7 +589,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->perf->reset('start');
 
-        $this->plugin->load_settings($force);
+        $this->plugin->upgrade_settings();
 
         $this->plugin->create_screen_views();
 
@@ -625,12 +621,7 @@ class Starnet_Tv implements User_Input_Handler
         $provider = $this->plugin->get_current_provider();
 
         $this->plugin->init_epg_manager();
-        $is_xml_engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-
-        if (($is_xml_engine || $use_playlist_picons !== PLAYLIST_PICONS)) {
-            $this->cleanup_active_xmltv_source();
-        }
+        $this->plugin->cleanup_active_xmltv_source();
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
@@ -693,7 +684,7 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        /** @var Hashed_Array<string, string> $custom_group_icons */
+        /** @var Hashed_Array<string> $custom_group_icons */
         $custom_group_icons = $this->plugin->get_orders(PARAM_GROUPS_ICONS, new Hashed_Array());
         // convert absolute path to filename
         foreach ($custom_group_icons as $key => $icon) {
@@ -797,8 +788,22 @@ class Starnet_Tv implements User_Input_Handler
 
         $this->plugin->get_playback_points()->load_points(true);
 
+        $epg_manager = $this->plugin->get_epg_manager();
+        $epg_indexer = $epg_manager->get_indexer();
+
+        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         if ($use_playlist_picons !== PLAYLIST_PICONS) {
-            $this->plugin->get_epg_manager()->get_indexer()->index_all_channels();
+            $all_sources = $this->plugin->get_active_sources();
+            if ($all_sources->size() === 0) {
+                hd_debug_print("No active XMLTV sources found to collect playlist icons...");
+            } else {
+                // Indexing xmltv file to make channel to display-name map and picons
+                // Parsing channels is cheap for all Dune variants
+                foreach ($all_sources as $params) {
+                    $epg_indexer->set_url_params($params);
+                    $epg_indexer->index_only_channels();
+                }
+            }
         }
 
         hd_debug_print("Build categories and channels...");
@@ -810,6 +815,7 @@ class Starnet_Tv implements User_Input_Handler
         // Collect categories from playlist
         $this->perf->setLabel('load_groups');
         $disabled_group = $this->get_disabled_group_ids();
+        $groups_order = $this->get_groups_order();
         $playlist_groups = new Ordered_Array();
         $pl_entries = $this->m3u_parser->getM3uEntries();
         foreach ($pl_entries as $entry) {
@@ -839,9 +845,9 @@ class Starnet_Tv implements User_Input_Handler
 
             $group->set_adult($adult);
 
-            if (!$this->get_groups_order()->in_order($group->get_id())) {
+            if (!$groups_order->in_order($group->get_id())) {
                 hd_debug_print("New    category # $title");
-                $this->get_groups_order()->add_item($title);
+                $groups_order->add_item($title);
                 $this->plugin->set_dirty(true, PLUGIN_ORDERS);
             }
 
@@ -849,15 +855,23 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         // cleanup order if saved group removed from playlist
+        $orphans_groups = array_diff($groups_order->get_order(), $playlist_groups->get_order());
+        if (!empty($orphans_groups)) {
+            $this->plugin->set_dirty();
+            foreach ($orphans_groups as $group) {
+                hd_debug_print("Remove orphaned group orders: $group", true);
+                $groups_order->remove_item($group);
+            }
+        }
+
         // hidden groups
         $orphans_groups = array_diff($disabled_group->get_order(), $playlist_groups->get_order());
         if (!empty($orphans_groups)) {
             $this->plugin->set_dirty();
-        }
-
-        foreach ($orphans_groups as $group) {
-            hd_debug_print("Remove orphaned hidden group: $group", true);
-            $disabled_group->remove_item($group);
+            foreach ($orphans_groups as $group) {
+                hd_debug_print("Remove orphaned hidden group: $group", true);
+                $disabled_group->remove_item($group);
+            }
         }
 
         // remove disabled groups from playlist group
@@ -974,7 +988,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
                 $aliases = array_unique($aliases);
 
-                $icon_url = $this->plugin->get_epg_manager()->get_indexer()->get_picon($aliases);
+                $icon_url = $epg_manager->get_picon($aliases);
                 if (empty($icon_url)) {
                     hd_debug_print("no picon for " . pretty_json_format($aliases), true);
                 }
@@ -1102,14 +1116,16 @@ class Starnet_Tv implements User_Input_Handler
         $this->perf->setLabel('end');
         $report = $this->perf->getFullReport();
 
-        hd_debug_print("Loaded channels: {$this->channels->size()}, hidden channels: {$this->get_disabled_channel_ids()->size()}, changed channels: $changed");
-        hd_debug_print("Total groups: {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $this->get_groups_order()->size()));
+        hd_debug_print("Loaded channels:    {$this->channels->size()}, hidden channels: {$this->get_disabled_channel_ids()->size()}, changed channels: $changed");
+        hd_debug_print("Total groups:       {$this->groups->size()}, hidden groups: " . ($this->groups->size() - $groups_order->size()));
         hd_debug_print("Load channels time: {$report[Perf_Collector::TIME]} secs");
-        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+        hd_debug_print("Memory usage:       {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
 
-        if ($is_xml_engine) {
-            $this->plugin->run_bg_epg_indexing();
+        if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV) {
+            foreach ($this->plugin->get_setting(PARAM_SELECTED_XMLTV_SOURCES, array()) as $source) {
+                $this->plugin->run_bg_epg_indexing($source);
+            }
         }
 
         return 2;
@@ -1735,41 +1751,5 @@ class Starnet_Tv implements User_Input_Handler
                 )
             )
         );
-    }
-
-    private function cleanup_active_xmltv_source()
-    {
-        $active_sources = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
-        hd_debug_print("Load active XMLTV sources selected: $active_sources");
-        $xmltv_sources['pl'] = $this->plugin->get_playlist_xmltv_sources();
-        $xmltv_sources['ext'] = $this->plugin->get_ext_xmltv_sources();
-
-        $existing = new Hashed_Array();
-        $existing->add_items($xmltv_sources['pl']);
-        $existing->add_items($xmltv_sources['ext']);
-        $filtered_source = $active_sources->filter($existing);
-        if ($active_sources->size() !== $filtered_source->size()) {
-            $active_sources = $filtered_source;
-            hd_debug_print("Filtered source: " . $active_sources);
-            $this->plugin->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
-        }
-
-        if ($active_sources->size() === 0) {
-            foreach ($xmltv_sources as $value) {
-                foreach ($value as $source) {
-                    if (!empty($source->params[PARAM_URI])) {
-                        $active_sources->add($source->params[PARAM_URI]);
-                        $this->plugin->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
-                        break 2;
-                    }
-                }
-            }
-        }
-
-        $epg_manager = $this->plugin->get_epg_manager();
-        if ($epg_manager !== null) {
-            $epg_manager->get_indexer()->set_active_sources($active_sources);
-            $epg_manager->get_indexer()->clear_stalled_locks();
-        }
     }
 }

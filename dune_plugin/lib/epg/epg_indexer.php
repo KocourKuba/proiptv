@@ -44,36 +44,15 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     protected $cache_dir;
 
     /**
-     * url to download XMLTV EPG
-     * @var string
+     * url params to download XMLTV EPG
+     * @var array
      */
-    protected $xmltv_url;
-
-    /**
-     * hash of xmtlt_url
-     * @var string
-     */
-    protected $url_hash;
+    protected $xmltv_url_params;
 
     /**
      * @var string
      */
     protected $index_ext;
-
-    /**
-     * @var int
-     */
-    protected $cache_ttl;
-
-    /**
-     * @var string
-     */
-    protected $cache_type = XMLTV_CACHE_AUTO;
-
-    /**
-     * @var Hashed_Array
-     */
-    protected $active_sources;
 
     /**
      * @var Curl_Wrapper
@@ -94,13 +73,14 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     {
         $this->curl_wrapper = new Curl_Wrapper();
         $this->perf = new Perf_Collector();
-        $this->active_sources = new Hashed_Array();
     }
 
     /**
+     * Set and create cache dir
+     *
      * @param string $cache_dir
      */
-    public function init($cache_dir)
+    public function set_cache_dir($cache_dir)
     {
         $this->cache_dir = $cache_dir;
         create_path($this->cache_dir);
@@ -111,6 +91,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * Set PID of the process that index xmltv source
+     *
      * @param int $pid
      * @return void
      */
@@ -120,6 +102,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * Get current PID
+     *
      * @return int
      */
     public function get_pid()
@@ -128,91 +112,25 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
-     * @param string $url
-     * @return void
-     */
-    public function set_url($url)
-    {
-        $this->xmltv_url = $url;
-        $this->url_hash = Hashed_Array::hash($this->xmltv_url);
-    }
-
-    /**
-     * @param Hashed_Array $urls
-     * @return void
-     */
-    public function set_active_sources($urls)
-    {
-        $this->active_sources = $urls;
-        if ($this->active_sources->size() === 0) {
-            hd_debug_print("No XMLTV source selected");
-        } else {
-            hd_debug_print("XMLTV sources selected: $this->active_sources");
-        }
-    }
-
-    /**
-     * @return Hashed_Array
-     */
-    public function get_active_sources()
-    {
-        return $this->active_sources;
-    }
-
-    /**
-     * @param int $cache_ttl
-     * @return void
-     */
-    public function set_cache_ttl($cache_ttl)
-    {
-        $this->cache_ttl = $cache_ttl;
-    }
-
-    /**
-     * @param string $type
-     * @return void
-     */
-    public function set_cache_type($type)
-    {
-        $this->cache_type = $type;
-    }
-
-    /**
-     * @return string
-     */
-    public function get_cache_dir()
-    {
-        return $this->cache_dir;
-    }
-
-    /**
-     * Indexing xmltv file to make channel to display-name map
-     * This function called from script only and plugin not available in this call
-     * Parsing channels is cheap for all Dune variants
+     * Set url parameters: url, cache, hash
      *
+     * @param array $url_param
      * @return void
      */
-    public function index_all_channels()
+    public function set_url_params($url_param)
     {
-        foreach ($this->active_sources as $source) {
-            $this->set_url($source);
-            $this->index_only_channels();
-        }
+        hd_debug_print(null, true);
+        $this->xmltv_url_params = $url_param;
     }
 
     /**
-     * Indexing xmltv file to make channel to display-name map and collect picons for channels.
-     * This function called from script only and plugin not available in this call
+     * get url parameters
      *
-     * @return void
+     * @return array
      */
-    public function index_all()
+    public function get_url_params()
     {
-        $this->index_all_channels();
-        foreach ($this->active_sources as $source) {
-            $this->set_url($source);
-            $this->index_xmltv_positions();
-        }
+        return $this->xmltv_url_params;
     }
 
     /**
@@ -223,9 +141,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     public function index_only_channels()
     {
+        hd_debug_print(null, true);
+
         $res = $this->is_xmltv_cache_valid();
         hd_debug_print("cache valid status: $res", true);
-        hd_debug_print("Indexing channels for: $this->xmltv_url", true);
+        hd_debug_print("Indexing channels for: {$this->xmltv_url_params[PARAM_URI]}", true);
         switch ($res) {
             case 1:
                 // downloaded xmltv file not exists or expired
@@ -258,17 +178,21 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      */
     public function is_xmltv_cache_valid()
     {
-        hd_debug_print();
+        hd_debug_print(null, true);
 
-        if (empty($this->xmltv_url)) {
+        if (empty($this->xmltv_url_params) || !isset($this->xmltv_url_params[PARAM_URI])) {
             $exception_msg = "XMTLV EPG url not set";
             hd_debug_print($exception_msg);
             HD::set_last_error("xmltv_last_error", $exception_msg);
             return -1;
         }
 
+        $url = $this->xmltv_url_params[PARAM_URI];
+        $hash = $this->xmltv_url_params[PARAM_HASH];
+        $cache_ttl = !isset($this->xmltv_url_params[PARAM_CACHE]) ? XMLTV_CACHE_AUTO : $this->xmltv_url_params[PARAM_CACHE];
+
         HD::set_last_error("xmltv_last_error", null);
-        $cached_file = $this->get_cached_filename();
+        $cached_file = $this->cache_dir . DIRECTORY_SEPARATOR . $hash . ".xmltv";
         hd_debug_print("Checking cached xmltv file: $cached_file");
         if (!file_exists($cached_file)) {
             hd_debug_print("Cached xmltv file not exist");
@@ -279,15 +203,15 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         hd_debug_print("Xmltv cache last modified: " . date("Y-m-d H:i", $check_time_file));
 
         $expired = true;
-        if ($this->cache_type === XMLTV_CACHE_AUTO) {
-            $this->curl_wrapper->set_url($this->xmltv_url);
+        if ($cache_ttl === XMLTV_CACHE_AUTO) {
+            $this->curl_wrapper->set_url($url);
             if ($this->curl_wrapper->check_is_expired()) {
                 $this->curl_wrapper->clear_cached_etag();
             } else {
                 $expired = false;
             }
         } else if (filesize($cached_file) !== 0) {
-            $max_cache_time = 3600 * 24 * $this->cache_ttl;
+            $max_cache_time = 3600 * 24 * $cache_ttl;
             if ($check_time_file && $check_time_file + $max_cache_time > time()) {
                 $expired = false;
             }
@@ -318,32 +242,15 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
-     * @param string|null $hash
-     * @return string
-     */
-    public function get_cached_filename($hash = null)
-    {
-        return $this->get_cache_stem(".xmltv", $hash);
-    }
-
-    /**
-     * @param string $ext
-     * @param string|null $hash
-     * @return string
-     */
-    public function get_cache_stem($ext, $hash = null)
-    {
-        return $this->cache_dir . DIRECTORY_SEPARATOR . (is_null($hash) ? $this->url_hash : $hash) . $ext;
-    }
-
-    /**
      * Download XMLTV source.
      *
      * @return int
      */
     public function download_xmltv_source()
     {
-        if ($this->is_current_index_locked()) {
+        $url = $this->xmltv_url_params[PARAM_URI];
+        $url_hash = $this->xmltv_url_params[PARAM_HASH];
+        if ($this->is_index_locked($url_hash)) {
             hd_debug_print("File is indexing or downloading, skipped");
             return 0;
         }
@@ -354,7 +261,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         $this->perf->reset('start');
 
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
-        $cached_file = $this->get_cached_filename();
+        $cached_file = $this->cache_dir . DIRECTORY_SEPARATOR . $url_hash . ".xmltv";
         $tmp_filename = $cached_file . '.tmp';
         if (file_exists($tmp_filename)) {
             unlink($tmp_filename);
@@ -362,17 +269,17 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
         try {
             HD::set_last_error("xmltv_last_error", null);
-            $this->set_index_locked(true);
+            $this->set_index_locked($url_hash, true);
 
-            if (preg_match("/jtv.?\.zip$/", basename($this->xmltv_url))) {
+            if (preg_match("/jtv.?\.zip$/", basename(urldecode($url)))) {
                 throw new Exception("Unsupported EPG format (JTV)");
             }
 
-            $this->curl_wrapper->set_url($this->xmltv_url);
+            $this->curl_wrapper->set_url($url);
             $expired = !file_exists($cached_file) || $this->curl_wrapper->check_is_expired();
             if (!$expired) {
                 hd_debug_print("File not changed, using cached file: $cached_file");
-                $this->set_index_locked(false);
+                $this->set_index_locked($url_hash, false);
                 return 1;
             }
 
@@ -383,7 +290,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
             $http_code = $this->curl_wrapper->get_response_code();
             if ($http_code !== 200) {
-                throw new Exception("Ошибка скачивания ($http_code) $this->xmltv_url\n\n" . $this->curl_wrapper->get_raw_response_headers());
+                throw new Exception("Ошибка скачивания ($http_code) $url\n\n"
+                    . $this->curl_wrapper->get_raw_response_headers());
             }
 
             $file_time = filemtime($tmp_filename);
@@ -396,7 +304,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             $speed = sprintf('%1.2f', $bps / pow($base, $class)) . ' ' . $si_prefix[$class];
 
             hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", $file_time));
-            hd_debug_print("Download $file_size bytes of xmltv source $this->xmltv_url done in: $dl_time secs (speed $speed)");
+            hd_debug_print("Download $file_size bytes of xmltv source $url done in: $dl_time secs (speed $speed)");
 
             if (file_exists($cached_file)) {
                 hd_debug_print("Remove cached file: $cached_file");
@@ -422,7 +330,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 clearstatcache();
                 $size = filesize($cached_file);
                 touch($cached_file, $file_time);
-                hd_debug_print("$size bytes ungzipped to $cached_file in " . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+                hd_debug_print("$size bytes ungzipped to $cached_file in "
+                    . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
             } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
                 hd_debug_print("ZIP signature: " . bin2hex(substr($hdr, 0, 4)), true);
                 hd_debug_print("unzip $tmp_filename to $cached_file");
@@ -447,21 +356,22 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
                 rename($filename, $cached_file);
                 $size = filesize($cached_file);
                 touch($cached_file, $file_time);
-                hd_debug_print("$size bytes unzipped to $cached_file in " . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+                hd_debug_print("$size bytes unzipped to $cached_file in "
+                    . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
             } else if (false !== mb_strpos($hdr, "<?xml")) {
                 hd_debug_print("XML signature: " . substr($hdr, 0, 5), true);
                 hd_debug_print("rename $tmp_filename to $cached_file");
                 rename($tmp_filename, $cached_file);
                 $size = filesize($cached_file);
                 touch($cached_file, $file_time);
-                hd_debug_print("$size bytes stored to $cached_file in " . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+                hd_debug_print("$size bytes stored to $cached_file in "
+                    . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
             } else {
                 hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
                 throw new Exception(TR::load_string('err_unknown_file_type'));
             }
 
             $ret = 1;
-            $this->remove_indexes(array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_ENTRIES));
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
             if (!empty($tmp_filename) && file_exists($tmp_filename)) {
@@ -473,7 +383,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             }
         }
 
-        $this->set_index_locked(false);
+        $this->set_index_locked($url_hash, false);
+
+        if ($ret === 1) {
+            $this->remove_indexes(array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_ENTRIES));
+        }
 
         hd_debug_print_separator();
 
@@ -481,6 +395,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * Check if lock for specified cache is exist
+     *
      * @param string $hash
      * @return bool
      */
@@ -491,32 +407,12 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
-     * @return bool|array
-     */
-    public function is_any_index_locked()
-    {
-        $locks = array();
-        $dirs = array();
-        if ($this->active_sources->size() === 0) {
-            $dirs = glob($this->cache_dir . DIRECTORY_SEPARATOR . "*_*.lock", GLOB_ONLYDIR);
-        } else {
-            foreach ($this->active_sources as $key => $value) {
-                $dirs = safe_merge_array($dirs, glob($this->cache_dir . DIRECTORY_SEPARATOR . $key . "_*.lock", GLOB_ONLYDIR));
-            }
-        }
-
-        foreach ($dirs as $dir) {
-            $locks[] = basename($dir);
-        }
-        return empty($locks) ? false : $locks;
-    }
-
-    /**
+     * @param string $hash
      * @param bool $lock
      */
-    public function set_index_locked($lock)
+    public function set_index_locked($hash, $lock)
     {
-        $lock_dir = $this->get_cache_stem("_$this->pid.lock");
+        $lock_dir = $this->cache_dir . DIRECTORY_SEPARATOR . $hash . "_$this->pid.lock";
         if ($lock) {
             if (!create_path($lock_dir, 0644)) {
                 hd_debug_print("Directory '$lock_dir' was not created");
@@ -531,23 +427,12 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
-     * clear memory cache and cache for current xmltv source
-     *
-     * @return void
-     */
-    public function clear_current_epg_files()
-    {
-        hd_debug_print(null, true);
-        $this->clear_epg_files($this->url_hash);
-    }
-
-    /**
      * clear memory cache and cache for selected filename (hash) mask
      *
-     * @param string $hash
+     * @param string|null $hash
      * @return void
      */
-    public function clear_epg_files($hash)
+    public function clear_epg_files($hash = null)
     {
         hd_debug_print(null, true);
         if (empty($hash)) {
@@ -582,27 +467,11 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             }
         }
 
-        $files = $this->cache_dir . DIRECTORY_SEPARATOR . "$hash*";
+        $files = $this->cache_dir . DIRECTORY_SEPARATOR . (empty($hash) ? '' : $hash) ."*";
         hd_debug_print("clear epg files: $files");
         shell_exec('rm -rf ' . $files);
         clearstatcache();
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
-    }
-
-    public function clear_stalled_locks()
-    {
-        $locks = $this->is_any_index_locked();
-        if ($locks !== false) {
-            foreach ($locks as $lock) {
-                $ar = explode('_', $lock);
-                $pid = (int)end($ar);
-
-                if ($pid !== 0 && !send_process_signal($pid, 0)) {
-                    hd_debug_print("Remove stalled lock: $lock");
-                    shell_exec("rmdir $this->cache_dir" . DIRECTORY_SEPARATOR . $lock);
-                }
-            }
-        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -625,7 +494,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
 
     /**
      * Get information about indexes
-     * @param string|null $hash
      * @return array
      */
     abstract public function get_indexes_info($hash = null);
@@ -633,10 +501,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     /**
      * Clear memory index
      *
-     * @param string $id
+     * @param string|null $id
      * @return void
      */
-    abstract protected function clear_memory_index($id = '');
+    abstract protected function clear_memory_index($id = null);
 
     /**
      * @param Channel $channel
@@ -656,28 +524,19 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     /// protected methods
 
     /**
-     * @return bool
-     */
-    protected function is_current_index_locked()
-    {
-        $lock_dir = $this->get_cache_stem('.lock');
-        return is_dir($lock_dir);
-    }
-
-    /**
+     * @param string $filename
      * @return resource
      * @throws Exception
      */
-    protected function open_xmltv_file()
+    static protected function open_xmltv_file($filename)
     {
-        $cached_file = $this->get_cached_filename();
-        if (!file_exists($cached_file)) {
-            throw new Exception("cache file $cached_file not exist");
+        if (!file_exists($filename)) {
+            throw new Exception("cache file $filename not exist");
         }
 
-        $file = fopen($cached_file, 'rb');
+        $file = fopen($filename, 'rb');
         if (!$file) {
-            throw new Exception("can't open $cached_file");
+            throw new Exception("can't open $filename");
         }
 
         return $file;

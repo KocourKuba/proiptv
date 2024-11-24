@@ -304,7 +304,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
      */
     protected function do_restore_settings($name, $filename)
     {
-        $this->plugin->safe_clear_selected_epg_cache('');
+        $this->plugin->safe_clear_selected_epg_cache();
         $this->plugin->clear_playlist_cache();
 
         $temp_folder = get_temp_path("restore");

@@ -1121,10 +1121,7 @@ class api_default
 
         $playlists = $this->GetPlaylists();
         if (!empty($playlists) && count($playlists) > 1) {
-            $pl_names = array();
-            foreach ($playlists as $key => $pl) {
-                $pl_names[$key] = $pl['name'];
-            }
+            $pl_names = array_map(function ($pl) { return $pl['name']; }, $playlists);
             $idx = $this->getCredential(MACRO_PLAYLIST_ID);
             if (empty($idx)) {
                 $idx = key($pl_names);

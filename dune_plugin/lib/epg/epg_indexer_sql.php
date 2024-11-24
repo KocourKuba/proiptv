@@ -32,14 +32,9 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     protected $epg_db = array();
 
-    /**
-     * @inheritDoc
-     * @override
-     */
-    public function init($cache_dir)
+    public function __construct()
     {
-        parent::init($cache_dir);
-
+        parent::__construct();
         $this->index_ext = '.db';
     }
 
@@ -47,16 +42,8 @@ class Epg_Indexer_Sql extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    public function get_picon($aliases)
+    public function get_picon($active_sources, $aliases)
     {
-        $res = '';
-        if ($this->is_index_locked($this->url_hash)) {
-            return $res;
-        }
-
-        $table_pic = self::INDEX_PICONS;
-        $table_ch = self::INDEX_CHANNELS;
-
         $placeHolders = '';
         foreach ($aliases as $alias) {
             if (empty($alias)) continue;
@@ -66,16 +53,18 @@ class Epg_Indexer_Sql extends Epg_Indexer
             $placeHolders .= "'" . SQLite3::escapeString($alias) . "'";
         }
 
+        $res = '';
         if (empty($placeHolders)) {
             return $res;
         }
 
+        $table_pic = self::INDEX_PICONS;
+        $table_ch = self::INDEX_CHANNELS;
         $qry = "SELECT distinct (picon_url) FROM $table_pic INNER JOIN $table_ch ON $table_pic.picon_hash=$table_ch.picon_hash WHERE alias IN ($placeHolders);";
 
-        foreach ($this->active_sources as $source) {
-            $this->set_url($source);
-            $db = $this->open_sqlite_db($this->url_hash);
-            if (is_null($db)) continue;
+        foreach ($active_sources as $source) {
+            $db = $this->open_sqlite_db($source[PARAM_HASH]);
+            if (is_null($db) || $db === false) continue;
 
             $res = $db->querySingle($qry);
             if (!empty($res)) break;
@@ -95,13 +84,13 @@ class Epg_Indexer_Sql extends Epg_Indexer
         $table_pos = self::INDEX_ENTRIES;
 
         try {
-            $db = $this->open_sqlite_db($this->url_hash);
+            $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
             if (is_null($db)) {
                 throw new Exception("Problem with open SQLite db! Possible url not set");
             }
 
             if (!$this->is_all_indexes_valid(array($table_ch, $table_pos))) {
-                throw new Exception("EPG for $this->xmltv_url not indexed!");
+                throw new Exception("EPG for {$this->xmltv_url_params[PARAM_URI]} not indexed!");
             }
 
             $channel_title = $channel->get_title();
@@ -142,10 +131,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
                     }
 
                     while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
-                        $data = array();
-                        foreach ($row as $key => $col) {
-                            $data[$key] = $col;
-                        }
+                        $data = array_map(function ($col) { return $col; }, $row);
                         $channel_position[] = $data;
                     }
                 }
@@ -168,15 +154,16 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function index_xmltv_channels()
     {
-        if ($this->is_current_index_locked()) {
-            hd_debug_print("File is indexing or downloading, skipped");
-            return;
-        }
-
+        $url_hash = $this->xmltv_url_params[PARAM_HASH];
         try {
             $table_pic = self::INDEX_PICONS;
             $table_ch = self::INDEX_CHANNELS;
-            $db = $this->open_sqlite_db($this->url_hash);
+            $db = $this->open_sqlite_db($url_hash);
+            if ($db === false) {
+                hd_debug_print("File is indexing or downloading, skipped");
+                return;
+            }
+
             if (is_null($db)) {
                 throw new Exception("Problem with open SQLite db! Possible url not set");
             }
@@ -193,9 +180,9 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $this->perf->reset('reindex');
 
-            $this->set_index_locked(true);
-
             $this->remove_indexes(array($table_ch, $table_pic));
+
+            $this->set_index_locked($url_hash, true);
 
             $db->exec("CREATE TABLE $table_ch(alias STRING PRIMARY KEY not null, channel_id STRING not null, picon_hash STRING);");
             $db->exec("CREATE TABLE $table_pic(picon_hash STRING PRIMARY KEY not null, picon_url STRING);");
@@ -212,7 +199,8 @@ class Epg_Indexer_Sql extends Epg_Indexer
             $stm_picons->bindParam(":picon_hash", $picon_hash);
             $stm_picons->bindParam(":picon_url", $picon_url);
 
-            $file = $this->open_xmltv_file();
+            $cached_file = $this->cache_dir . DIRECTORY_SEPARATOR . $url_hash . ".xmltv";
+            $file = self::open_xmltv_file($cached_file);
             while (!feof($file)) {
                 $line = stream_get_line($file, self::STREAM_CHUNK, "<channel ");
                 if (empty($line)) continue;
@@ -276,7 +264,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
             print_backtrace_exception($ex);
         }
 
-        $this->set_index_locked(false);
+        $this->set_index_locked($url_hash,false);
         hd_debug_print_separator();
     }
 
@@ -286,15 +274,16 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function index_xmltv_positions()
     {
-        hd_debug_print("Indexing positions for: $this->xmltv_url", true);
-
-        if ($this->is_current_index_locked()) {
-            hd_debug_print("File is indexing now, skipped");
-            return;
-        }
+        hd_debug_print("Indexing positions for: {$this->xmltv_url_params[PARAM_URI]}", true);
+        $url_hash = $this->xmltv_url_params[PARAM_HASH];
 
         try {
-            $db = $this->open_sqlite_db($this->url_hash);
+            $db = $this->open_sqlite_db($url_hash);
+            if ($db === false) {
+                hd_debug_print("File is indexing now, skipped");
+                return;
+            }
+
             if (is_null($db)) {
                 throw new Exception("Problem with open SQLite db! Possible url not set");
             }
@@ -314,7 +303,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $this->remove_index($table_pos);
 
-            $this->set_index_locked(true);
+            $this->set_index_locked($url_hash, true);
 
             $db->exec("CREATE TABLE $table_pos (channel_id STRING PRIMARY KEY not null, start INTEGER, end INTEGER);");
             $db->exec('PRAGMA journal_mode=MEMORY;');
@@ -327,12 +316,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
             $stm->bindParam(":start", $start_program_block);
             $stm->bindParam(":end", $tag_end_pos);
 
-            $cached_file = $this->get_cached_filename();
+            $cached_file = $this->cache_dir . DIRECTORY_SEPARATOR . $url_hash . ".xmltv";
             if (!file_exists($cached_file)) {
                 throw new Exception("cache file $cached_file not exist");
             }
 
-            $file = $this->open_xmltv_file();
+            $file = self::open_xmltv_file($cached_file);
 
             $start_program_block = 0;
             $prev_channel = null;
@@ -407,7 +396,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
             print_backtrace_exception($ex);
         }
 
-        $this->set_index_locked(false);
+        $this->set_index_locked($url_hash, false);
         hd_debug_print_separator();
     }
 
@@ -417,12 +406,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function remove_index($name)
     {
-        if ($this->is_current_index_locked()) {
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        if ($db === false) {
             hd_debug_print("Unable to drop table because index $name is locked");
             return false;
         }
 
-        $db = $this->open_sqlite_db($this->url_hash);
         if (is_null($db)) {
             hd_debug_print("Problem with open SQLite db! Possible url not set");
         } else {
@@ -438,12 +427,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
      */
     public function remove_indexes($names)
     {
-        if ($this->is_current_index_locked()) {
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        if ($db === false) {
             hd_debug_print("Unable to drop table because current index is locked");
             return;
         }
 
-        $db = $this->open_sqlite_db($this->url_hash);
         if (is_null($db)) {
             hd_debug_print("Problem with open SQLite db! Possible url not set");
             return;
@@ -462,8 +451,14 @@ class Epg_Indexer_Sql extends Epg_Indexer
     {
         hd_debug_print(null, true);
         $result = array(self::INDEX_CHANNELS => -1, self::INDEX_PICONS => -1, self::INDEX_ENTRIES => -1);
-        $hash = $hash === null ? $this->url_hash : $hash;
+
+        $hash = is_null($hash) ? $this->xmltv_url_params[PARAM_HASH] : $hash;
         $db = $this->open_sqlite_db($hash);
+        if ($db === false) {
+            hd_debug_print("Unable to drop table because current index is locked");
+            return $result;
+        }
+
         if (is_null($db)) {
             hd_debug_print("Problem with open SQLite db! Possible url not set");
             return $result;
@@ -488,7 +483,13 @@ class Epg_Indexer_Sql extends Epg_Indexer
     protected function is_all_indexes_valid($names)
     {
         hd_debug_print(null, true);
-        $db = $this->open_sqlite_db($this->url_hash);
+
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        if ($db === false) {
+            hd_debug_print("Indexing is in process now");
+            return false;
+        }
+
         if (is_null($db)) {
             hd_debug_print("Problem with open SQLite db! Possible url not set");
             return false;
@@ -506,7 +507,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    protected function clear_memory_index($id = '')
+    protected function clear_memory_index($id = null)
     {
         if (empty($id)) {
             foreach ($this->epg_db as $db) {
@@ -525,7 +526,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
     /**
      * open sqlite database
      * @param string $db_name
-     * @return SQLite3|null
+     * @return SQLite3|false|null
      */
     private function open_sqlite_db($db_name)
     {
@@ -533,8 +534,14 @@ class Epg_Indexer_Sql extends Epg_Indexer
             hd_debug_print("No handler for empty url!");
             return null;
         }
+
+        if ($this->is_index_locked($db_name)) {
+            hd_debug_print("File is indexing or downloading, skipped");
+            return false;
+        }
+
         if (!isset($this->epg_db[$db_name])) {
-            $index_name = $this->get_cache_stem($this->index_ext, $db_name);
+            $index_name = $this->cache_dir . DIRECTORY_SEPARATOR . $db_name . $this->index_ext;
             hd_debug_print("Open db: $index_name", true);
             $flags = SQLITE3_OPEN_READWRITE;
             if (!file_exists($index_name)) {

@@ -462,7 +462,7 @@ class Movie implements User_Input_Handler
             PluginVodInfo::poster_url => $this->movie_info[PluginMovie::poster_url],
             PluginVodInfo::series => $series_array,
             PluginVodInfo::initial_series_ndx => $initial_series_ndx,
-            PluginVodInfo::buffering_ms => (int)$this->plugin->get_parameter(PARAM_BUFFERING_TIME, 1000),
+            PluginVodInfo::buffering_ms => (int)$this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000),
             PluginVodInfo::actions => $this->get_action_map(),
             PluginVodInfo::initial_position_ms => $initial_start,
         );

@@ -49,6 +49,11 @@ class Epg_Manager_Xmltv
     protected $flags = 0;
 
     /**
+     * @var Hashed_Array
+     */
+    protected $active_sources;
+
+    /**
      * @var Epg_Indexer
      */
     protected $indexer;
@@ -59,10 +64,12 @@ class Epg_Manager_Xmltv
     public function __construct($plugin = null)
     {
         $this->plugin = $plugin;
+        $this->active_sources = new Hashed_Array();
     }
 
     /**
-     * Function to parse xmltv source in soparate process
+     * Function to parse xmltv source in separate process
+     * Only one XMLTV source must be sent via config
      *
      * @param $config_file
      * @return bool
@@ -76,62 +83,79 @@ class Epg_Manager_Xmltv
             return false;
         }
 
-        $config = json_decode(file_get_contents($config_file));
+        $config = json_decode(file_get_contents($config_file), true);
         @unlink($config_file);
         if ($config === false) {
             HD::set_last_error("xmltv_last_error", "Invalid config file for indexing");
             return false;
         }
 
-        if (empty($config->xmltv_urls)) {
+        if (empty($config[PARAMS_XMLTV])) {
             return false;
         }
 
-        $sources = Hashed_Array::from_array($config->xmltv_urls);
-        $LOG_FILE = get_temp_path($sources->key() . "_indexing.log");
+        $LOG_FILE = get_temp_path("{$config[PARAMS_XMLTV][PARAM_HASH]}_indexing.log");
         if (file_exists($LOG_FILE)) {
             @unlink($LOG_FILE);
         }
+
         date_default_timezone_set('UTC');
 
-        set_debug_log($config->debug);
+        set_debug_log($config[PARAM_ENABLE_DEBUG]);
 
         hd_print("Script config");
-        hd_print("Log: $LOG_FILE");
-        hd_print("XMLTV sources: " . json_encode($config->xmltv_urls));
-        hd_print("Cache type: $config->cache_type");
-        hd_print("Cache TTL: $config->cache_ttl");
-        hd_print("Process ID:");
+        hd_print("Log:         " . $LOG_FILE);
+        hd_print("Cache dir:   " . $config[PARAM_CACHE_DIR]);
+        hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
+        hd_print("Process ID:  " . getmypid());
 
-        $this->init_indexer($config->cache_dir);
+        $this->init_indexer();
+        $this->indexer->set_cache_dir($config[PARAM_CACHE_DIR]);
         $this->indexer->set_pid(getmypid());
-        $this->indexer->set_active_sources($sources);
-        $this->indexer->set_cache_type($config->cache_type);
-        $this->indexer->set_cache_ttl($config->cache_ttl);
-        $this->indexer->index_all();
+        $this->indexer->set_url_params($config[PARAMS_XMLTV]);
+        $this->indexer->index_only_channels();
+        $this->indexer->index_xmltv_positions();
 
         return true;
     }
 
     /**
-     * @param string $cache_dir
+     * Initialize indexer class
      */
-    public function init_indexer($cache_dir)
+    public function init_indexer()
     {
         if (class_exists('SQLite3')) {
             $this->indexer = new Epg_Indexer_Sql();
         } else {
             $this->indexer = new Epg_Indexer_Classic();
         }
+    }
 
-        $this->indexer->init($cache_dir);
-        if ($this->plugin) {
-            $flags = 0;
-            $flags |= $this->plugin->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
-            $this->set_flags($flags);
-            $this->indexer->set_cache_ttl($this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3));
-            $this->indexer->set_cache_type($this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO));
+    /**
+     * Set active sources (Hashed_Array of url params)
+     *
+     * @param Hashed_Array<array> $sources
+     * @return void
+     */
+    public function set_active_sources($sources)
+    {
+        if ($sources->size() === 0) {
+            hd_debug_print("No XMLTV source selected");
+        } else {
+            hd_debug_print("XMLTV sources selected: $sources");
         }
+
+        $this->active_sources = $sources;
+    }
+
+    /**
+     * Get active sources
+     *
+     * @return Hashed_Array
+     */
+    public function get_active_sources()
+    {
+        return $this->active_sources;
     }
 
     /**
@@ -152,17 +176,17 @@ class Epg_Manager_Xmltv
      */
     public function get_day_epg_items(Channel $channel, $day_start_ts)
     {
-        $any_lock = $this->indexer->is_any_index_locked();
+        $any_lock = $this->is_any_index_locked();
         $day_epg = array();
-        $active_sources = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
-        foreach($active_sources as $key => $source) {
+
+        foreach($this->active_sources as $key => $params) {
+            $this->indexer->set_url_params($params);
             if ($this->indexer->is_index_locked($key)) {
-                hd_debug_print("EPG $source still indexing, append to delayed queue channel id: " . $channel->get_id());
+                hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: " . $channel->get_id());
                 $this->delayed_epg[] = $channel->get_id();
                 continue;
             }
 
-            $this->indexer->set_url($source);
             // filter out epg only for selected day
             $day_end_ts = $day_start_ts + 86400;
             $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
@@ -172,7 +196,7 @@ class Epg_Manager_Xmltv
             try {
                 $positions = $this->indexer->load_program_index($channel);
                 if (!empty($positions)) {
-                    $cached_file = $this->indexer->get_cached_filename();
+                    $cached_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "{$params[PARAM_HASH]}.xmltv";
                     if (!file_exists($cached_file)) {
                         throw new Exception("cache file $cached_file not exist");
                     }
@@ -243,25 +267,55 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * Import indexing log to plugin logs
+     * Get picon for channel
      *
-     * @param array|null $sources
-     * @return bool true if import successful and no other active locks, false if any active source is locked
+     * @param array $aliases
+     * @return string
      */
-    public function import_indexing_log($sources = null)
+    public function get_picon($aliases)
     {
-        $has_locks = false;
-        if (is_null($sources)) {
-            $sources = $this->indexer->get_active_sources()->get_ordered_keys();
+        return $this->indexer->get_picon($this->active_sources, $aliases);
+    }
+
+    /**
+     * Check if any locks for active sources
+     *
+     * @return bool|array
+     */
+    public function is_any_index_locked()
+    {
+        $locks = array();
+        $dirs = array();
+        foreach ($this->active_sources->get_keys() as $key) {
+            $dirs = safe_merge_array($dirs, glob($this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "{$key}_*.lock", GLOB_ONLYDIR));
         }
 
-        foreach ($sources as $source) {
-            if ($this->indexer->is_index_locked($source)) {
+        foreach ($dirs as $dir) {
+            $locks[] = basename($dir);
+        }
+        return empty($locks) ? false : $locks;
+    }
+
+    /**
+     * Import indexing log to plugin logs
+     *
+     * @param array|null $sources_hash
+     * @return bool true if import successful and no other active locks, false if any active source is locked
+     */
+    public function import_indexing_log($sources_hash = null)
+    {
+        $has_locks = false;
+        if (is_null($sources_hash)) {
+            $sources_hash = $this->active_sources->get_keys();
+        }
+
+        foreach ($sources_hash as $hash) {
+            if ($this->indexer->is_index_locked($hash)) {
                 $has_locks = true;
                 continue;
             }
 
-            $index_log = get_temp_path("{$source}_indexing.log");
+            $index_log = get_temp_path("{$hash}_indexing.log");
             if (file_exists($index_log)) {
                 hd_debug_print("Read epg indexing log $index_log...");
                 hd_debug_print_separator();
@@ -286,25 +340,14 @@ class Epg_Manager_Xmltv
     public function clear_current_epg_cache()
     {
         hd_debug_print(null, true);
-        $this->indexer->clear_current_epg_files();
-    }
-
-    /**
-     * clear memory cache and cache for selected filename (hash) mask
-     * if hash is empty clear all cache
-     *
-     * @param string $hash
-     * @return void
-     */
-    public function clear_selected_epg_cache($hash)
-    {
-        $this->indexer->clear_epg_files($hash);
+        $params = $this->indexer->get_url_params();
+        $this->indexer->clear_epg_files($params[PARAM_HASH]);
     }
 
     /**
      * @return Epg_Indexer
      */
-    public function get_indexer()
+    public function &get_indexer()
     {
         return $this->indexer;
     }

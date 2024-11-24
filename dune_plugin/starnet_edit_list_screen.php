@@ -46,6 +46,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ACTION_SHOW_QR = 'show_qr';
+    const ACTION_XMLTV_CACHE_POPUP = 'xmltv_cache_time';
+    const ACTION_XMLTV_CACHE_SELECTED = 'xmltv_cache_selected';
 
     const CONTROL_EDIT_TYPE = 'playlist_type';
 
@@ -177,43 +179,20 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
-                    $active_sources = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
-                    $load_source = null;
-                    if ($active_sources->has($selected_id)) {
-                        $active_sources->erase($selected_id);
-                    } else {
-                        /** @var Named_Storage $xmltv_source */
-                        $xmltv_source = $this->plugin->get_all_xmltv_sources()->get($selected_id);
-                        if (!is_null($xmltv_source)) {
-                            $active_sources->set($selected_id, $xmltv_source->params[PARAM_URI]);
-                            $load_source = $xmltv_source->params[PARAM_URI];
-                        }
+                    $selected_sources = $this->plugin->get_setting(PARAM_SELECTED_XMLTV_SOURCES, array());
+                    $offset = array_search($selected_id, $selected_sources);
+                    if ($offset !== false) {
+                        hd_debug_print("Removed Source: $selected_id", true);
+                        array_splice($selected_sources, $offset, 1);
+                    } else if ($this->plugin->get_all_xmltv_sources()->has($selected_id)) {
+                        hd_debug_print("Added Source: $selected_id", true);
+                        $selected_sources[] = $selected_id;
                     }
+                    hd_debug_print("Updated Selected Sources: " . json_encode($selected_sources), true);
 
                     $this->force_parent_reload = true;
+                    $this->plugin->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $selected_sources);
                     $this->force_save($user_input);
-                    $this->plugin->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
-
-                    $epg_manager = $this->plugin->get_epg_manager();
-                    if ($epg_manager === null) {
-                        return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
-                    }
-
-                    if ($load_source !== null &&
-                        ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV
-                        || $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== PLAYLIST_PICONS)) {
-                        $epg_manager->get_indexer()->set_url($load_source);
-                        $res = $epg_manager->get_indexer()->is_xmltv_cache_valid();
-                        if ($res !== 0) {
-                            $sources = new Hashed_Array();
-                            $sources->put($selected_id, $load_source);
-                            $this->plugin->run_bg_epg_indexing($sources);
-
-                            $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                            return Action_Factory::change_behaviour($actions, 1000);
-                        }
-                    }
-
                     return $this->invalidate_current_folder($parent_media_url, $plugin_cookies);
                 }
 
@@ -279,16 +258,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
 
             case ACTION_INDEX_EPG:
-                $source = $this->plugin->get_all_xmltv_sources()->get($selected_id);
-                if (is_null($source) || empty($source->params[PARAM_URI])) break;
-
-                $sources = new Hashed_Array();
-                $sources->put($selected_id, $source->params[PARAM_URI]);
-                hd_debug_print("index ($selected_id) {$source->params[PARAM_URI]}", true);
-                $this->plugin->run_bg_epg_indexing($sources);
-
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions, 1000);
+                $this->plugin->run_bg_epg_indexing($selected_id);
+                return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 1000);
 
             case ACTION_CLEAR_CACHE:
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
@@ -397,9 +368,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     }
 
                     $this->plugin->safe_clear_selected_epg_cache($selected_id);
-                    $active_sources = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array());
-                    $active_sources->erase($selected_id);
-                    $this->plugin->set_setting(PARAM_CUR_XMLTV_SOURCES, $active_sources);
+                    $selected_sources = $this->plugin->get_setting(PARAM_SELECTED_XMLTV_SOURCES, array());
+                    $offset = array_search($selected_id, $selected_sources);
+                    if ($offset !== false) {
+                        $selected_sources = array_splice($selected_sources, $offset, 1);
+                    $this->plugin->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $selected_sources);
+                    }
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     hd_debug_print("remove playlist settings: $selected_id", true);
                     if ($this->plugin->get_active_playlist_key() === $selected_id) {
@@ -438,17 +412,17 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     case self::SCREEN_EDIT_EPG_LIST:
                         $epg_manager = $this->plugin->get_epg_manager();
                         if ($epg_manager !== null) {
-                            foreach ($this->get_order($edit_list) as $key) {
-                                $this->plugin->safe_clear_selected_epg_cache($key);
+                            foreach ($this->get_order($edit_list) as $offset) {
+                                $this->plugin->safe_clear_selected_epg_cache($offset);
                             }
                         }
                         $this->get_order($edit_list)->clear();
-                        $this->plugin->remove_setting(PARAM_CUR_XMLTV_SOURCES);
+                        $this->plugin->remove_setting(PARAM_SELECTED_XMLTV_SOURCES);
                         break;
 
                     case self::SCREEN_EDIT_PLAYLIST:
-                        foreach ($this->get_order($edit_list)->get_keys() as $key) {
-                            $this->plugin->remove_settings($key);
+                        foreach ($this->get_order($edit_list)->get_keys() as $offset) {
+                            $this->plugin->remove_settings($offset);
                         }
                         $this->get_order($edit_list)->clear();
                         break;
@@ -557,6 +531,35 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_FOLDER_SELECTED:
                 return $this->do_select_folder($user_input);
 
+            case self::ACTION_XMLTV_CACHE_POPUP:
+                return $this->create_cache_time_popup($user_input);
+
+            case self::ACTION_XMLTV_CACHE_SELECTED:
+                if (!isset($user_input->{LIST_IDX})) break;
+
+                // if source exist in playlist and user list - user list is preferred
+                $ext_sources = $this->plugin->get_ext_xmltv_sources();
+                $source = $ext_sources->get($selected_id);
+                if ($source !== null) {
+                    $source->params[PARAM_CACHE] = $user_input->{LIST_IDX};
+                    hd_debug_print("update ext source: " . json_encode($source), true);
+                    $ext_sources->set($selected_id, $source);
+                    $this->plugin->set_parameter(PARAM_EXT_XMLTV_SOURCES, $ext_sources);
+                    $this->plugin->save_parameters(true);
+                    break;
+                }
+
+                $pl_sources = $this->plugin->get_playlist_xmltv_sources();
+                $source = $pl_sources->get($selected_id);
+                if ($source !== null) {
+                    $source->params[PARAM_CACHE] = $user_input->{LIST_IDX};
+                    hd_debug_print("update pl source: " . json_encode($source), true);
+                    $pl_sources->set($selected_id, $source);
+                    $this->plugin->set_setting(PARAM_EPG_PLAYLIST, $pl_sources);
+                    $this->plugin->save_settings(true);
+                }
+                break;
+
             case self::ACTION_SHOW_QR:
                 /** @var api_default $provider */
                 $provider = $this->get_order($edit_list)->get($selected_id);
@@ -645,6 +648,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
             $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
+            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_XMLTV_CACHE_POPUP, TR::t('entry_epg_cache_time'));
 
             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
@@ -653,17 +657,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 ACTION_ADD_URL_DLG,
                 TR::t('edit_list_add_url'),
                 "link.png"
-            );
-
-            // Add File
-            $menu_items[] = $this->plugin->create_menu_item($this,
-                self::ACTION_CHOOSE_FILE,
-                TR::t('select_file'),
-                "xmltv_file.png",
-                array(
-                    'selected_action' => self::ACTION_FILE_XMLTV,
-                    'extension' => $parent_media_url->extension
-                )
             );
         } else {
             // Add provider
@@ -691,6 +684,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     'extension' => $parent_media_url->extension
                 )
             );
+
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                self::ACTION_CHOOSE_FOLDER,
+                TR::t('edit_list_folder_path'),
+                "folder.png",
+                array('extension' => $parent_media_url->extension)
+            );
         }
 
         // Add list file
@@ -704,13 +704,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             )
         );
 
-        $menu_items[] = $this->plugin->create_menu_item($this,
-            self::ACTION_CHOOSE_FOLDER,
-            TR::t('edit_list_folder_path'),
-            "folder.png",
-            array('extension' => $parent_media_url->extension)
-        );
-
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
         if (isset($parent_media_url->allow_order) && $this->get_order($edit_list)->size() !== 0) {
@@ -720,6 +713,46 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+
+        return Action_Factory::show_popup_menu($menu_items);
+    }
+
+    protected function create_cache_time_popup($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $edit_list = $parent_media_url->edit_list;
+
+        if ($edit_list !== self::SCREEN_EDIT_EPG_LIST) {
+            return null;
+        }
+
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $all_sources = $this->plugin->get_all_xmltv_sources();
+
+        $source = $all_sources->get($selected_media_url->id);
+        $selected = isset($source->params[PARAM_CACHE]) ? $source->params[PARAM_CACHE] : XMLTV_CACHE_AUTO;
+
+        $menu_items = array();
+        $menu_items[] = $this->plugin->create_menu_item($this,
+            self::ACTION_XMLTV_CACHE_SELECTED,
+            TR::t('auto'),
+            $selected === XMLTV_CACHE_AUTO ? "check.png" : null,
+            array(LIST_IDX => 'auto')
+        );
+
+        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+
+        $list = array(0.25, 0.5, 1, 2, 3, 4, 5, 6, 7);
+        foreach ($list as $item) {
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                self::ACTION_XMLTV_CACHE_SELECTED,
+                $item,
+                (int)$selected === $item ? "check.png" : null,
+                array(LIST_IDX => $item)
+            );
+        }
 
         return Action_Factory::show_popup_menu($menu_items);
     }
@@ -805,10 +838,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $name = ($edit_list === self::SCREEN_EDIT_PLAYLIST) ? basename($name) : $url;
         }
 
+        $id = null;
         $order = $this->get_order($edit_list);
-        $id = MediaURL::decode($user_input->selected_media_url)->id;
-        if (isset($user_input->{CONTROL_ACTION_EDIT})) {
+        if (isset($user_input->{CONTROL_ACTION_EDIT}, $user_input->selected_media_url)) {
             // edit existing url
+            $id = MediaURL::decode($user_input->selected_media_url)->id;
             if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                 $order->erase($id);
                 $item = null;
@@ -838,13 +872,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $tmp_file = get_temp_path(Hashed_Array::hash($url));
                 list($res, $log) = Curl_Wrapper::simple_download_file($url, $tmp_file);
                 if (!$res) {
-                    throw new Exception("Ошибка скачивания плейлиста: $url\n\n" . $log);
+                    throw new Exception(TR::load_string('err_load_playlist') . " '$url'\n\n" . $log);
                 }
 
                 $contents = file_get_contents($tmp_file, false, null, 0, 512);
                 if ($contents === false || strpos($contents, '#EXTM3U') === false) {
                     unlink($tmp_file);
-                    throw new Exception("Пустой или неправильный плейлист! '$url'\n\n$contents");
+                    throw new Exception(TR::load_string('err_empty_playlist') . " '$url'\n\n$contents");
                 }
 
                 $parser = new M3uParser();
@@ -1302,78 +1336,73 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return $items;
         }
 
-        $all_sources['pl'] = $this->plugin->get_playlist_xmltv_sources();
-        $all_sources['ext'] = $this->get_order(static::SCREEN_EDIT_EPG_LIST);
-        $active_sources_order = $this->plugin->get_setting(PARAM_CUR_XMLTV_SOURCES, new Hashed_Array())->get_ordered_values();
-        $dupes = array();
-        foreach ($all_sources as $source_type => $source) {
-            foreach ($source as $key => $item) {
-                if (isset($dupes[$key])) {
-                    continue;
-                }
-
-                $detailed_info = '';
-                $order_key = false;
-                $dupes[$key] = '';
-                $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
-                $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
-                if (empty($title)) {
-                    $title = "Unrecognized or bad xmltv entry";
-                } else {
-                    $order_key = array_search($item->params[PARAM_URI], $active_sources_order);
-                    $title = $order_key !== false ? ($order_key + 1) .  " - $title" : $title;
-                }
-
-                $locked = $epg_manager->get_indexer()->is_index_locked($key);
-                if ($locked) {
-                    $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
-                } else if (file_exists($cached_xmltv_file)) {
-                    $size = HD::get_file_size($cached_xmltv_file);
-                    $check_time_file = filemtime($cached_xmltv_file);
-                    $dl_date = date("d.m H:i", $check_time_file);
-                    $title = TR::t('edit_list_title_info__2', $title, $dl_date);
-                    $info = '';
-                    foreach ($epg_manager->get_indexer()->get_indexes_info($key) as $index => $cnt) {
-                        $cnt = ($cnt !== -1) ? $cnt : TR::load_string('err_error_no_data');
-                        $info .= "$index: $cnt|";
-                    }
-
-                    if ($this->plugin->get_setting(PARAM_EPG_CACHE_TYPE, XMLTV_CACHE_AUTO) === XMLTV_CACHE_MANUAL) {
-                        $max_cache_time = $check_time_file + 3600 * 24 * $this->plugin->get_setting(PARAM_EPG_CACHE_TTL, 3);
-                        $expired = date("d.m H:i", $max_cache_time);
-                    } else {
-                        $expired = TR::load_string('setup_epg_cache_type_auto');
-                    }
-
-                    $detailed_info = TR::load_string('edit_list_detail_info__5',
-                        $item->params[PARAM_URI],
-                        $size,
-                        $dl_date,
-                        $expired,
-                        $info
-                    );
-                }
-
-                if (empty($detailed_info)) {
-                    if (isset($item->params[PARAM_URI])) {
-                        $detailed_info = TR::t('edit_list_detail_info__1', $item->params[PARAM_URI]);
-                    } else {
-                        $detailed_info = $item->name;
-                    }
-                }
-
-                if ($locked) {
-                    $icon_file = get_image_path("refresh$plugin_cookies->ticker.png");
-                    hd_debug_print("icon: $icon_file");
-                } else if ($source_type === 'pl') {
-                    $icon_file = get_image_path("m3u_file.png");
-                } else if ($item->type === PARAM_FILE) {
-                    $icon_file = get_image_path("xmltv_file.png");
-                } else {
-                    $icon_file = get_image_path("link.png");
-                }
-                $items[] = self::add_item($key, $title, $order_key !== false, $icon_file, $detailed_info);
+        $pl_sources = $this->plugin->get_playlist_xmltv_sources();
+        $all_sources = $this->plugin->get_all_xmltv_sources();
+        $active_sources = $this->plugin->get_setting(PARAM_SELECTED_XMLTV_SOURCES, array());
+        foreach ($all_sources as $key => $item) {
+            $detailed_info = '';
+            $order_key = false;
+            $title = empty($item->name) ? $item->params[PARAM_URI] : $item->name;
+            if (empty($title)) {
+                $title = "Unrecognized or bad xmltv entry";
+            } else {
+            $order_key = array_search($key, $active_sources);
+                $title = $order_key !== false ? ($order_key + 1) .  " - $title" : $title;
             }
+
+            $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
+            $locked = $epg_manager->get_indexer()->is_index_locked($key);
+            if ($locked) {
+                $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
+            } else if (file_exists($cached_xmltv_file)) {
+                $size = HD::get_file_size($cached_xmltv_file);
+                $check_time_file = filemtime($cached_xmltv_file);
+                $dl_date = date("d.m H:i", $check_time_file);
+                $title = TR::t('edit_list_title_info__2', $title, $dl_date);
+                $info = '';
+                foreach ($epg_manager->get_indexer()->get_indexes_info($key) as $index => $cnt) {
+                    $cnt = ($cnt !== -1) ? $cnt : TR::load_string('err_error_no_data');
+                    $info .= "$index: $cnt|";
+                }
+
+            $cache = isset($item->params[PARAM_CACHE]) ? $item->params[PARAM_CACHE] : XMLTV_CACHE_AUTO;
+            if ($cache === XMLTV_CACHE_AUTO) {
+                $expired = TR::load_string('setup_epg_cache_type_auto');
+            } else {
+                $max_cache_time = $check_time_file + 3600 * 24 * $cache;
+                    $expired = date("d.m H:i", $max_cache_time);
+                }
+
+                $detailed_info = TR::load_string('edit_list_detail_info__5',
+                    $item->params[PARAM_URI],
+                    $size,
+                    $dl_date,
+                    $expired,
+                    $info
+                );
+            }
+
+            if (empty($detailed_info)) {
+                if (isset($item->params[PARAM_URI])) {
+                $detailed_info = TR::t('edit_list_detail_info__2',
+                    $item->params[PARAM_URI],
+                    isset($item->params[PARAM_CACHE]) ? $item->params[PARAM_CACHE] : XMLTV_CACHE_AUTO);
+                } else {
+                    $detailed_info = $item->name;
+                }
+            }
+
+            if ($locked) {
+                $icon_file = get_image_path("refresh$plugin_cookies->ticker.png");
+                hd_debug_print("icon: $icon_file");
+            } else if ($pl_sources->has($key)) {
+                $icon_file = get_image_path("m3u_file.png");
+            } else if ($item->type === PARAM_FILE) {
+                $icon_file = get_image_path("xmltv_file.png");
+            } else {
+                $icon_file = get_image_path("link.png");
+            }
+            $items[] = self::add_item($key, $title, $order_key !== false, $icon_file, $detailed_info);
         }
 
         return $items;
