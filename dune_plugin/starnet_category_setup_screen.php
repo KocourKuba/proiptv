@@ -69,7 +69,7 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show all channels category
-        $show_all = $this->plugin->get_parameter(PARAM_SHOW_ALL, SetupControlSwitchDefs::switch_on);
+        $show_all = $this->plugin->get_setting(PARAM_SHOW_ALL, SetupControlSwitchDefs::switch_on);
         hd_debug_print(PARAM_SHOW_ALL . ": $show_all", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
@@ -77,7 +77,7 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show favorites category
-        $show_fav = $this->plugin->get_parameter(PARAM_SHOW_FAVORITES, SetupControlSwitchDefs::switch_on);
+        $show_fav = $this->plugin->get_setting(PARAM_SHOW_FAVORITES, SetupControlSwitchDefs::switch_on);
         hd_debug_print(PARAM_SHOW_FAVORITES . ": $show_fav", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
@@ -85,7 +85,7 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show history category
-        $show_history = $this->plugin->get_parameter(PARAM_SHOW_HISTORY, SetupControlSwitchDefs::switch_on);
+        $show_history = $this->plugin->get_setting(PARAM_SHOW_HISTORY, SetupControlSwitchDefs::switch_on);
         hd_debug_print(PARAM_SHOW_HISTORY . ": $show_history", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
@@ -93,11 +93,19 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show changed channels category
-        $show_changed = $this->plugin->get_parameter(PARAM_SHOW_CHANGED_CHANNELS, SetupControlSwitchDefs::switch_on);
+        $show_changed = $this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, SetupControlSwitchDefs::switch_on);
         hd_debug_print(PARAM_SHOW_CHANGED_CHANNELS . ": $show_changed", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SetupControlSwitchDefs::$on_off_translated[$show_changed],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$show_changed]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
+        // show VOD
+        $show_mediateka = $this->plugin->get_setting(PARAM_SHOW_VOD, SetupControlSwitchDefs::switch_on);
+        hd_debug_print(PARAM_SHOW_VOD . ": $show_mediateka", true);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_SHOW_VOD, TR::t('setup_show_vod'), SetupControlSwitchDefs::$on_off_translated[$show_mediateka],
+            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_mediateka]), self::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -132,8 +140,9 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
             case PARAM_SHOW_FAVORITES:
             case PARAM_SHOW_HISTORY:
             case PARAM_SHOW_CHANGED_CHANNELS:
+            case PARAM_SHOW_VOD:
+                $this->plugin->toggle_setting($control_id);
                 $this->plugin->save_settings();
-                $this->plugin->toggle_parameter($control_id);
                 $this->plugin->tv->reload_channels($plugin_cookies);
 
                 return Starnet_Epfs_Handler::epfs_invalidate_folders(

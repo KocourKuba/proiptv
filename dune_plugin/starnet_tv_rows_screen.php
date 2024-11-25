@@ -747,7 +747,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private function get_history_rows($plugin_cookies)
     {
         hd_debug_print(null, true);
-        if (!$this->plugin->get_bool_parameter(PARAM_SHOW_HISTORY)) {
+        if (!$this->plugin->get_bool_setting(PARAM_SHOW_HISTORY)) {
             hd_debug_print("History group disabled");
             return null;
         }

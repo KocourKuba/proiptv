@@ -124,6 +124,7 @@ setup_show_history = Show "History"
 setup_show_favorites = Show "Favorites"
 setup_show_changed_channels = Show "Changed Channels"
 setup_show_vod_icon = Show VOD as a separate application
+setup_show_vod = Show VOD
 setup_autostart = Autoplay on start
 setup_continue_play = Continue play channel on start
 setup_channel_position = NewUI preview channel position

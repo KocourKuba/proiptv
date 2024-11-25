@@ -2252,6 +2252,13 @@ class Default_Dune_Plugin implements DunePlugin
             $this->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $active_sources);
         }
 
+        $move_parameters = array(PARAM_SHOW_ALL, PARAM_SHOW_FAVORITES, PARAM_SHOW_HISTORY, PARAM_SHOW_CHANGED_CHANNELS, PARAM_SHOW_VOD);
+        foreach ($move_parameters as $parameter) {
+            if (!$this->has_setting($parameter)) {
+                $this->set_setting($parameter, $this->get_parameter($parameter, true));
+            }
+        }
+
         // obsolete settings
         $removed_parameters = array('cur_xmltv_sources', 'epg_cache_ttl', 'epg_cache_ttl');
         $this->set_postpone_save(true, PLUGIN_SETTINGS);
@@ -2274,7 +2281,8 @@ class Default_Dune_Plugin implements DunePlugin
         $removed_parameters = array(
             'config_version', 'cur_xmltv_source', 'cur_xmltv_key', '##all_channels##', 'fuzzy_search_epg',
             PARAM_EPG_JSON_PRESET, PARAM_BUFFERING_TIME, PARAM_ICONS_IN_ROW, PARAM_CHANNEL_POSITION,
-            PARAM_EPG_CACHE_ENGINE, PARAM_PER_CHANNELS_ZOOM
+            PARAM_EPG_CACHE_ENGINE, PARAM_PER_CHANNELS_ZOOM,
+            //PARAM_SHOW_ALL, PARAM_SHOW_FAVORITES, PARAM_SHOW_HISTORY, PARAM_SHOW_CHANGED_CHANNELS, PARAM_SHOW_VOD
         );
 
         $this->set_postpone_save(true, PLUGIN_PARAMETERS);
