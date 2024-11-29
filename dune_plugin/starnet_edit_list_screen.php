@@ -1365,11 +1365,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $info .= "$index: $cnt|";
                 }
 
-            $cache = isset($item->params[PARAM_CACHE]) ? $item->params[PARAM_CACHE] : XMLTV_CACHE_AUTO;
-            if ($cache === XMLTV_CACHE_AUTO) {
-                $expired = TR::load_string('setup_epg_cache_type_auto');
-            } else {
-                $max_cache_time = $check_time_file + 3600 * 24 * $cache;
+                $etag = $epg_manager->get_indexer()->get_curl_wrapper()->get_cached_etag($key);
+                $info .= TR::load_string('edit_list_cache_suport__1',
+                        empty($etag) ? TR::load_string('no') : TR::load_string('yes'));
+
+                $cache = isset($item->params[PARAM_CACHE]) ? $item->params[PARAM_CACHE] : XMLTV_CACHE_AUTO;
+                if ($cache === XMLTV_CACHE_AUTO) {
+                    $expired = TR::load_string('setup_epg_cache_type_auto');
+                } else {
+                    $max_cache_time = $check_time_file + 3600 * 24 * $cache;
                     $expired = date("d.m H:i", $max_cache_time);
                 }
 
@@ -1386,7 +1390,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (isset($item->params[PARAM_URI])) {
                 $detailed_info = TR::t('edit_list_detail_info__2',
                     $item->params[PARAM_URI],
-                    isset($item->params[PARAM_CACHE]) ? $item->params[PARAM_CACHE] : XMLTV_CACHE_AUTO);
+                    isset($item->params[PARAM_CACHE]) ? $item->params[PARAM_CACHE] : TR::load_string('setup_epg_cache_type_auto'));
                 } else {
                     $detailed_info = $item->name;
                 }

@@ -316,12 +316,14 @@ class Curl_Wrapper
     }
 
     /**
+     * @param string|null $hash
      * @return string
      */
-    public function get_cached_etag()
+    public function get_cached_etag($hash = null)
     {
         $cache_db = self::load_cached_etag();
-        return isset($cache_db[$this->url_hash]) ? $cache_db[$this->url_hash] : '';
+        $hash = $hash !== null ? $hash : $this->url_hash;
+        return isset($cache_db[$hash]) ? $cache_db[$hash] : '';
     }
 
     /**

@@ -224,6 +224,7 @@ edit_list_title_info__2 = %s|Heruntergeladen: %s
 edit_list_title_info_download__1 = %s|Nachlad...
 edit_list_title_cant_delete = Die XMLTV-Quelle der Wiedergabeliste kann nicht gelöscht werden!
 edit_list_playlist_type = Typ der Wiedergabeliste
+edit_list_cache_suport__1 = |Automatische Cache-Unterstützung:|%s
 
 folder_screen_open_folder = Ordner öffnen
 folder_screen_create_folder = Ordner erstellen

@@ -134,6 +134,16 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     }
 
     /**
+     * get curl wrapper
+     *
+     * @return Curl_Wrapper
+     */
+    public function get_curl_wrapper()
+    {
+        return $this->curl_wrapper;
+    }
+
+    /**
      * indexing xmltv file to make channel to display-name map
      * and collect picons for channels
      *
@@ -200,7 +210,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         }
 
         $check_time_file = filemtime($cached_file);
-        hd_debug_print("Xmltv cache last modified: " . date("Y-m-d H:i", $check_time_file));
+        hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $check_time_file));
 
         $expired = true;
         if ($cache_ttl === XMLTV_CACHE_AUTO) {
@@ -225,19 +235,20 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
         hd_debug_print("Cached file: $cached_file is not expired");
         $indexed = $this->get_indexes_info();
 
-        if (isset($indexed[self::INDEX_CHANNELS], $indexed[self::INDEX_PICONS], $indexed[self::INDEX_ENTRIES])
-            && $indexed[self::INDEX_CHANNELS] && $indexed[self::INDEX_PICONS] && $indexed[self::INDEX_ENTRIES]) {
-            hd_debug_print("Xmltv cache valid");
+        hd_debug_print("Indexes status: " . json_encode($indexed), true);
+        // index for picons has not verified because it always exist if channels index is present
+        if (isset($indexed[self::INDEX_CHANNELS], $indexed[self::INDEX_ENTRIES])
+            && $indexed[self::INDEX_CHANNELS] && $indexed[self::INDEX_ENTRIES]) {
+            hd_debug_print("All xmltv indexes are valid");
             return 0;
         }
 
-        if (isset($indexed[self::INDEX_CHANNELS], $indexed[self::INDEX_PICONS])
-            && $indexed[self::INDEX_CHANNELS] && $indexed[self::INDEX_PICONS]) {
-            hd_debug_print("Xmltv cache channels and picons are valid");
+        if (isset($indexed[self::INDEX_CHANNELS]) && $indexed[self::INDEX_CHANNELS]) {
+            hd_debug_print("Xmltv channels index is valid");
             return 2;
         }
 
-        hd_debug_print("Xmltv cache indexes are invalid");
+        hd_debug_print("All xmltv indexes are invalid");
         return 3;
     }
 
@@ -303,6 +314,7 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             $class = min((int)log($bps, $base), count($si_prefix) - 1);
             $speed = sprintf('%1.2f', $bps / pow($base, $class)) . ' ' . $si_prefix[$class];
 
+            hd_debug_print("ETag value: " . $this->curl_wrapper->get_cached_etag());
             hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", $file_time));
             hd_debug_print("Download $file_size bytes of xmltv source $url done in: $dl_time secs (speed $speed)");
 

@@ -2667,17 +2667,27 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
 
+        /** @var Hashed_Array $saved_sources */
+        $saved_sources = $this->get_setting(PARAM_EPG_PLAYLIST, new Hashed_Array());
+        hd_debug_print("saved playlist sources: $saved_sources", true);
+
         $playlist_sources = new Hashed_Array();
         foreach ($this->tv->get_m3u_parser()->getXmltvSources() as $m3u8source) {
             if (!preg_match(HTTP_PATTERN, $m3u8source, $m)
                 || preg_match("/jtv.?\.zip$/", basename($m3u8source))) continue;
 
-            $item = new Named_Storage();
-            $item->type = PARAM_LINK;
-            $item->params[PARAM_URI] = $m3u8source;
-            $item->params[PARAM_CACHE] = XMLTV_CACHE_AUTO;
-            $item->name = $m[2];
             $hash = Hashed_Array::hash($m3u8source);
+            $saved_source = $saved_sources->get($hash);
+            if ($saved_source !== null) {
+                $item = $saved_source;
+            } else {
+                $item = new Named_Storage();
+                $item->type = PARAM_LINK;
+                $item->params[PARAM_URI] = $m3u8source;
+                $item->params[PARAM_CACHE] = XMLTV_CACHE_AUTO;
+                $item->name = $m[2];
+            }
+
             $playlist_sources->put($hash, $item);
             hd_debug_print("playlist source: ($hash) $m3u8source", true);
         }
@@ -2689,6 +2699,7 @@ class Default_Dune_Plugin implements DunePlugin
             if (!empty($config_sources)) {
                 foreach ($config_sources as $source) {
                     if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
+
                     $id = Hashed_Array::hash($source);
                     if ($playlist_sources->has($id)) continue;
 
@@ -2704,9 +2715,6 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $changed = false;
-        /** @var Hashed_Array $saved_sources */
-        $saved_sources = $this->get_setting(PARAM_EPG_PLAYLIST, new Hashed_Array());
-        hd_debug_print("saved playlist sources: $saved_sources", true);
         foreach ($playlist_sources as $key => $source) {
             if ($saved_sources->has($key)) continue;
 
@@ -2717,10 +2725,11 @@ class Default_Dune_Plugin implements DunePlugin
         $filtered = $saved_sources->filter($playlist_sources);
         $changed |= ($filtered->size() !== $saved_sources->size());
         if ($changed) {
-            $this->set_setting(PARAM_EPG_PLAYLIST, $filtered);
             $playlist_sources = $filtered;
+            $this->set_setting(PARAM_EPG_PLAYLIST, $playlist_sources);
         }
 
+        hd_debug_print("Resulting playlist sources: $playlist_sources", true);
         return $playlist_sources;
     }
 
