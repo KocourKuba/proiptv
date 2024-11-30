@@ -185,6 +185,7 @@ const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_EXT_XMLTV_SOURCES = 'xmltv_sources';
 const PARAM_SELECTED_XMLTV_SOURCES = 'selected_xmltv_sources';
+const PARAM_DISABLE_DUNE_PARAMS = 'use_dune_params';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_DUNE_FORCE_TS = 'dune_force_ts';
 const PARAM_EXT_VLC_OPTS = 'ext_vlc_opts';

@@ -184,6 +184,7 @@ setup_channels_picons_source = Источник иконок каналов
 setup_channels_id_mapper = Определение ID канала
 setup_channels_ext_params = Дополнительные параметры
 setup_channels_user_agent = HTTP User-Agent
+setup_channels_disable_dune_params = Отключить dune_params
 setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Force Dune to detect stream
 

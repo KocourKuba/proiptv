@@ -189,6 +189,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return Action_Factory::show_dialog(TR::t('setup_channels_ext_params'), $this->do_get_ext_params_control_defs(), true);
 
             case self::ACTION_EXT_PARAMS_DLG_APPLY: // handle pass dialog result
+                $this->plugin->set_postpone_save(true, PLUGIN_SETTINGS);
                 $user_agent = $user_input->{self::CONTROL_USER_AGENT};
                 if (empty($user_agent)) {
                     $this->plugin->remove_setting(PARAM_USER_AGENT);
@@ -197,6 +198,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     $this->plugin->set_setting(PARAM_USER_AGENT, $user_agent);
                     HD::set_dune_user_agent($user_agent);
                 }
+
+                $this->plugin->set_setting(PARAM_DISABLE_DUNE_PARAMS, $user_input->{PARAM_DISABLE_DUNE_PARAMS});
 
                 $dune_params = explode(',', $user_input->{self::CONTROL_DUNE_PARAMS});
                 foreach ($dune_params as $param) {
@@ -212,9 +215,23 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
                     $params_array[$param_pair[0]] = $param_pair[1];
                 }
-                if (!empty($params_array)) {
+
+                $provider = $this->plugin->get_current_provider();
+                if (!is_null($provider)) {
+                    // do not update dune_params if they the same as config value
+                    $config_dune_params = $provider->getConfigValue(PARAM_DUNE_PARAMS);
+                    if ($user_input->{self::CONTROL_DUNE_PARAMS} === $config_dune_params) {
+                        $params_array = array();
+                    }
+                }
+
+                if (empty($params_array)) {
+                    $this->plugin->remove_setting(PARAM_DUNE_PARAMS);
+                } else {
                     $this->plugin->set_setting(PARAM_DUNE_PARAMS, $params_array);
                 }
+
+                $this->plugin->set_postpone_save(false, PLUGIN_SETTINGS);
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
@@ -259,6 +276,18 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             }
             $dune_params_str .= "$key:$param";
         }
+
+        $provider = $this->plugin->get_current_provider();
+        if (!is_null($provider) && empty($dune_params_str)) {
+            $dune_params_str = $provider->getConfigValue(PARAM_DUNE_PARAMS);
+        }
+
+        $disable_params = $this->plugin->get_setting(PARAM_DISABLE_DUNE_PARAMS, 1);
+        $params_translated[SetupControlSwitchDefs::switch_on] = TR::t('yes');
+        $params_translated[SetupControlSwitchDefs::switch_off] = TR::t('no');
+
+        Control_Factory::add_combobox($defs, $this, null, PARAM_DISABLE_DUNE_PARAMS,
+            TR::t('setup_channels_disable_dune_params'), $disable_params, $params_translated, 60);
 
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
             $dune_params_str, false, false, false, true, 1200);

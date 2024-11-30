@@ -134,8 +134,10 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_101film.png",
       "provider_url": "http://101film.org/",
+      "api_url": "http://pl.101film.org",
       "api_commands": {
-        "get_playlist": "http://pl.101film.org/{LOGIN}/{PASSWORD}/tv.m3u"
+        "get_playlist": "{API}/{LOGIN}/{PASSWORD}/tv.m3u",
+        "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
         "epg_presets": [
@@ -144,7 +146,6 @@
             "title": "epg.drm-play"
           }
         ],
-        "vod_source": "http://pl.101film.org/{LOGIN}/{PASSWORD}/vodall.m3u?srv={SERVER_ID}",
         "vod_parser": "/^(?<title>[^\\(]*)\\((?<country>[^\\d]+)\\s(?<year>\\d+)\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
@@ -558,7 +559,7 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
-        "ignore_groups": ["Video on Demand","Сериалы"],
+        "ignore_groups": ["Video on Demand","РЎРµСЂРёР°Р»С‹"],
         "epg_presets": [
           {
             "name": "sharaclub"

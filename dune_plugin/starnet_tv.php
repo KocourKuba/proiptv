@@ -1388,19 +1388,22 @@ class Starnet_Tv implements User_Input_Handler
     public function generate_dune_params(Channel $channel)
     {
         $ext_params = $channel->get_ext_params();
-        $plugin_dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
-        if (!empty($plugin_dune_params)) {
-            $plugin_dune_params = array_slice($plugin_dune_params, 0);
-        }
 
-        $provider = $this->plugin->get_current_provider();
-        $provider_dune_params = array();
-        if (!is_null($provider)) {
-            $provider_dune_params = dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS));
-        }
+        if (!$this->plugin->get_bool_setting(PARAM_DISABLE_DUNE_PARAMS, false)) {
+            $plugin_dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
+            if (!empty($plugin_dune_params)) {
+                $plugin_dune_params = array_slice($plugin_dune_params, 0);
+            }
 
-        $all_params = array_merge($provider_dune_params, $plugin_dune_params);
-        $dune_params = array_unique($all_params);
+            $provider = $this->plugin->get_current_provider();
+            $provider_dune_params = array();
+            if (!is_null($provider)) {
+                $provider_dune_params = dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS));
+            }
+
+            $all_params = array_merge($provider_dune_params, $plugin_dune_params);
+            $dune_params = array_unique($all_params);
+        }
 
         if (!empty($ext_params[PARAM_EXT_VLC_OPTS])) {
             $ext_vlc_opts = array();

@@ -184,6 +184,7 @@ setup_channels_picons_source = Quelle der Kanalsymbole
 setup_channels_id_mapper = Kanal-ID-Mapper
 setup_channels_ext_params = Zusätzliche Parameter
 setup_channels_user_agent = HTTP User-Agent
+setup_channels_disable_dune_params = Deaktivieren Sie dune_params
 setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Dune zwingen, den Stream zu erkennen
 edit_list_playlist_iptv = IPTV

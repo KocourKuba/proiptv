@@ -387,19 +387,29 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function set_parameter($param, $val)
     {
+        hd_debug_print(null, true);
+        hd_debug_print("Set parameter: $param", true);
+
         $this->parameters[$param] = $val;
         $this->set_dirty(true, PLUGIN_PARAMETERS);
         $this->save_parameters();
     }
 
-    ///////////////////////////////////////////////////////////////////////
-    //
-    // Screen support.
-    //
-    ///////////////////////////////////////////////////////////////////////
+    /**
+     * Remove parameter
+     * @param string $param
+     */
+    public function remove_parameter($param)
+    {
+        if (array_key_exists($param, $this->parameters)) {
+            unset($this->parameters[$param]);
+            $this->set_dirty(true, PLUGIN_PARAMETERS);
+            $this->save_parameters();
+        }
+    }
 
     /**
-     * Is settings contains unsaved changes
+     * Set that settings/paramters contains unsaved changes
      *
      * @param bool $val
      * @param string $item
@@ -1023,12 +1033,15 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * Set settings for selected playlist
      *
-     * @param string $type
+     * @param string $param
      * @param mixed $val
      */
-    public function set_setting($type, $val)
+    public function set_setting($param, $val)
     {
-        $this->settings[$type] = $val;
+        hd_debug_print(null, true);
+        hd_debug_print("Set setting: $param", true);
+
+        $this->settings[$param] = $val;
         $this->set_dirty();
         $this->save_settings();
     }
@@ -1041,6 +1054,10 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function save_settings($force = false)
     {
+        if ($force || $this->is_dirty(PLUGIN_SETTINGS)) {
+            hd_debug_print(null, true);
+        }
+
         return $this->save($this->get_active_playlist_key() . '.settings', PLUGIN_SETTINGS, $force);
     }
 
@@ -1303,17 +1320,6 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print($path, true);
 
         return rtrim($path, DIRECTORY_SEPARATOR);
-    }
-
-    /**
-     * Remove parameter
-     * @param string $param
-     */
-    public function remove_parameter($param)
-    {
-        unset($this->parameters[$param]);
-        $this->set_dirty(true, PLUGIN_PARAMETERS);
-        $this->save_parameters();
     }
 
     /**
@@ -2225,13 +2231,17 @@ class Default_Dune_Plugin implements DunePlugin
     /**
      * Remove setting for selected playlist
      *
-     * @param string $type
+     * @param string $param
      */
-    public function remove_setting($type)
+    public function remove_setting($param)
     {
-        unset($this->settings[$type]);
-        $this->set_dirty();
-        $this->save_settings();
+        hd_debug_print(null, true);
+        hd_debug_print("Remove setting: $param", true);
+        if (array_key_exists($param, $this->settings)) {
+            unset($this->settings[$param]);
+            $this->set_dirty();
+            $this->save_settings();
+        }
     }
 
     /**
@@ -2244,6 +2254,7 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print(null, true);
 
         $this->load_settings(true);
+        $this->set_postpone_save(true, PLUGIN_SETTINGS);
         if ($this->has_setting('cur_xmltv_sources')) {
             $active_sources = $this->get_setting('cur_xmltv_sources', new Hashed_Array());
             hd_debug_print("convert active sources to hashed array: " . $active_sources, true);
@@ -2261,11 +2272,8 @@ class Default_Dune_Plugin implements DunePlugin
 
         // obsolete settings
         $removed_parameters = array('cur_xmltv_sources', 'epg_cache_ttl', 'epg_cache_ttl');
-        $this->set_postpone_save(true, PLUGIN_SETTINGS);
         foreach ($removed_parameters as $parameter) {
-            if ($this->has_setting($parameter)) {
-                $this->remove_setting($parameter);
-            }
+            $this->remove_setting($parameter);
         }
         $this->set_postpone_save(false, PLUGIN_SETTINGS);
     }
