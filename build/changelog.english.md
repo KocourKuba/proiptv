@@ -1,4 +1,17 @@
-﻿### Version 5.1.924
+﻿### Version 5.1.942
+- Updated configurations for 101Film, BCU-Media, Sharavoz, Peak TV providers
+- Removed support for the Uspeh provider. Until their admins straighten their arms.
+- Added setting to disable the display of the VOD category
+- Category display settings are now personal for the playlist, not global for the plugin
+- Caching settings have been removed from the plugin settings and moved to the properties of xmltv sources.
+  Now they are individual for each link. The setting is available through the pop-up menu in the list of XMLTV sources
+- In the xmltv source information, information has been added to indicate whether this source supports automatic cache configuration.
+  If not, then manually set the lifetime of the source xmltv cache, in order to avoid constant downloading and indexing
+  every time you run the plugin.
+- Removed the ability to add xmtlv sources as files. Now only the links and the list of links
+- Fixed bugs related to the support of automatic caching of xmltv sources
+
+### Version 5.1.924
 - Fixed a bug that did not allow you to get into the additional settings of the provider
 - Enabled VOD for PikTV
 
