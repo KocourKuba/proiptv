@@ -224,7 +224,8 @@
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "tvteam"
+            "alias": "tvteam",
+            "epg_map": "name"
           }
         ],
         "ext_params": true,
@@ -1347,7 +1348,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
       "provider_url": "https://tv.team/",
-      "api_url": "http://tv.team/api",
+      "api_url": "http://{DOMAIN_ID}/api",
       "api_commands": {
         "account_info": "{API}/?apiAction=getUserData,getServersGroups,getUserPackages&sessionId={SESSION_ID}",
         "get_playlist": "http://troya.one/pl/11/{TOKEN}/playlist.m3u8",
@@ -1361,6 +1362,12 @@
         "epg_presets": [
           {
             "name": "tvteam"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "tvteam",
+            "epg_map": "name"
           }
         ],
         "ext_params": true,
@@ -1368,6 +1375,10 @@
         "url_subst": {
           "regex": "/^(.+\\/\\/.+\\/.+\\/)(?:mpegts|.+\\.m3u8)(.+)$/",
           "replace": "$1{STREAM_ID}$2"
+        },
+        "domains": {
+          "tv.team": "tv.team",
+          "tvteam.eu": "tvteam.eu"
         },
         "streams": {
           "mono.m3u8": "HLS",

@@ -277,6 +277,7 @@ const EPG_JSON_PARSER = 'parser';
 const EPG_JSON_PRESET_NAME = 'name';
 const EPG_JSON_PRESET_ALIAS = 'alias';
 const EPG_JSON_AUTH = 'json_auth';
+const EPG_JSON_EPG_MAP = 'epg_map';
 const CUSTOM_PLAYLIST_ID = 'custom';
 
 # HTTP params
