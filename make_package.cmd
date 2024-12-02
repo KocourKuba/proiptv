@@ -6,7 +6,7 @@ del \\DUNEAV\flash_card_d832_6f19\dune_plugin_logs\proiptv.log >nul 2>&1
 set /p VERSION=<build\version.txt
 for /f "delims=" %%a in ('git log --oneline ^| find "" /v /c') do @set BUILD=%%a
 
-php -f build\update.php %VERSION% %BUILD% %1
+php -f build\make_update.php %VERSION% %BUILD% %1
 
 del dune_plugin_proiptv.zip >nul
 
