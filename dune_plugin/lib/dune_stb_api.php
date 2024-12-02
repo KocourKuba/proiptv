@@ -2275,6 +2275,25 @@ function register_all_known_events($handler, &$actions)
     }
 }
 
+/**
+ * @param string $filename
+ * @return resource
+ * @throws Exception
+ */
+function open_file($filename)
+{
+    if (!file_exists($filename)) {
+        throw new Exception("cache file $filename not exist");
+    }
+
+    $file = fopen($filename, 'rb');
+    if (!$file) {
+        throw new Exception("can't open $filename");
+    }
+
+    return $file;
+}
+
 function dune_params_to_array($str)
 {
     $params_array = array();

@@ -204,6 +204,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         shell_exec('rm -f ' . $files);
         clearstatcache();
     }
+
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods
 

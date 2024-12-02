@@ -323,6 +323,7 @@ warn_msg5 = The movie technical information contains incorrect or missing data.\
 
 err_too_old_player = DUNE HD player is too old and not supported
 err_required_firmware = Requires firmware version r21 or higher
+err_no_sqlite = SQLite3 is not supported by this firmware!
 err_load_playlist = Playlist loading error!
 err_empty_playlist = Empty or incorrect playlist!
 err_file_exist = File in list already exist!
