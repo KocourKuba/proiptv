@@ -1166,11 +1166,9 @@ class api_default
         hd_debug_print(null, true);
 
         $changed = false;
+        $error_message = '';
         if ($this->check_control_parameters($user_input, CONTROL_SERVER, MACRO_SERVER_ID)) {
             $changed = $this->SetServer($user_input->{CONTROL_SERVER}, $error_message);
-            if (!$changed && !empty($error_message)) {
-                return Action_Factory::show_title_dialog(TR::t('err_error'), null, $error_message);
-            }
         }
 
         if ($this->check_control_parameters($user_input, CONTROL_PLAYLIST, MACRO_PLAYLIST_ID)) {
@@ -1205,14 +1203,16 @@ class api_default
 
         hd_debug_print("ApplyExtSetupUI compiled provider info: " . pretty_json_format($this->playlist_info), true);
 
-        if (!$changed) {
-            return false;
+        if ($changed) {
+            $playlist_id = $this->plugin->get_active_playlist_key();
+            $this->plugin->get_playlists()->set($playlist_id, $this->playlist_info);
+            $this->plugin->save_parameters(true);
+            $this->plugin->clear_playlist_cache($playlist_id);
         }
 
-        $playlist_id = $this->plugin->get_active_playlist_key();
-        $this->plugin->get_playlists()->set($playlist_id, $this->playlist_info);
-        $this->plugin->save_parameters(true);
-        $this->plugin->clear_playlist_cache($playlist_id);
+        if (!empty($error_message)) {
+            return Action_Factory::show_title_dialog(TR::t('err_error'), null, $error_message);
+        }
 
         return true;
     }
