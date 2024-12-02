@@ -1,4 +1,9 @@
-﻿### Version 5.1.942
+﻿### Version 5.1.946
+- Added a secondary internet source for TV Team provider
+- By the default display of the VOD category could be turned off
+- Additional provider parameters were not always saved
+
+### Version 5.1.942
 - Updated configurations for 101Film, BCU-Media, Sharavoz, Peak TV providers
 - Removed support for the Uspeh provider. Until their admins straighten their arms.
 - Added setting to disable the display of the VOD category
