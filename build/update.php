@@ -1,64 +1,51 @@
-<?php
-$plugin_info = 'dune_plugin.xml';
-$plugin_metadata = 'dune_plugin_metadata.xml';
-$update_info = 'update_proiptv.xml';
-$update_tar = 'update_proiptv.tar';
-$update_file = 'update_proiptv.tar.gz';
-$release_date = date('Y.m.d');
-list(, $version, $version_index, $is_debug) = $argv;
-$full_version = "$version.$version_index";
+﻿<?php
+require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/crm_settings.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/shared_scripts/MySQL.php");
 
-$xml = file_get_contents("build/$plugin_info.tpl");
-$xml = preg_replace("|<version>(.*)</version>|", "<version>$full_version</version>", $xml);
-$xml = preg_replace("|<release_date>(.*)</release_date>|", "<release_date>$release_date</release_date>", $xml);
-$xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
-echo "version: $full_version" . PHP_EOL;
-echo "version index: $version_index" . PHP_EOL;
-echo "update date $release_date" . PHP_EOL;
-file_put_contents("./dune_plugin/$plugin_info", $xml);
-
-$xml = file_get_contents("build/$plugin_metadata.tpl");
-$xml = preg_replace("|<version>(.*)</version>|", "<version>$full_version</version>", $xml);
-$xml = preg_replace("|<version_index>(.*)</version_index>|", "<version_index>$version_index</version_index>", $xml);
-file_put_contents("./dune_plugin/$plugin_metadata", $xml);
-
-copy("./build/changelog.russian.md", "./dune_plugin/changelog.russian.md");
-copy("./build/changelog.english.md", "./dune_plugin/changelog.english.md");
-
-$providers = ($is_debug === 'debug') ? "providers_debug.json" : "providers_$version.json";
-copy("./build/$providers", "./dune_plugin/$providers");
-
-if (!$is_debug) {
-    try
-    {
-        unlink($update_tar);
-        unlink($update_file);
-        $pd = new PharData($update_tar);
-        $pd->buildFromDirectory("./dune_plugin");
-        $pd->compress(Phar::GZ);
-        unset($pd);
-    } catch (Exception $ex) {
-        echo "Exception : " . $ex;
+function write_to_log($value, $logname, $method = 'ab')
+{
+    if(is_array($value)) {
+        $value = print_r($value, true);
     }
 
-    unlink($update_tar);
-
-    $hash = hash('md5', file_get_contents($update_file));
-    echo "md5: $hash" . PHP_EOL;
-
-    $update = simplexml_load_string(file_get_contents("./build/$update_info.tpl"));
-    $update->plugin_version_descriptor->version = $full_version;
-    $update->plugin_version_descriptor->version_index = $version_index;
-    $update->plugin_version_descriptor->md5 = hash('md5', file_get_contents($update_file));
-    $update->plugin_version_descriptor->size = filesize($update_file);
-    $update->saveXML($update_info);
-
-    $folder_path = "archive/{$full_version}_" . date('d-m_H-i-s');
-    if (!file_exists($folder_path) && !@mkdir($folder_path) && !is_dir($folder_path)) {
-        echo "Directory '$folder_path' was not created";
-        return;
+    if(substr($value, -1) !== PHP_EOL) {
+        $value .= PHP_EOL;
     }
 
-    copy($update_file, "$folder_path/$update_file");
-    copy($update_info, "$folder_path/$update_info");
+    $fp = fopen($logname, $method);
+    if($fp) {
+        fwrite($fp, $value);
+        fclose($fp);
+    }
 }
+
+$logbuf = "========================================" . PHP_EOL;
+$logbuf .= "user_agent : " . $_SERVER['HTTP_USER_AGENT'] . PHP_EOL;
+
+if (preg_match("/firmware_version:\s+([0-9_rb]+)/", $_SERVER['HTTP_USER_AGENT'], $m)) {
+    $firmware = $m[1];
+}
+
+if (!empty($firmware) && preg_match('/.+_[rb](\d{2})/', $firmware, $m)) {
+    $revision = $m[1];
+}
+
+$url_params = parse_url(getenv("REQUEST_URI"));
+if (isset($url_params['query'])) {
+    parse_str($url_params['query'], $params);
+}
+
+if (empty($url_params['path']) || empty($revision)) {
+    header("HTTP/1.1 404 Not found");
+    echo '["error" : "This version is not supported"]';
+} else {
+    header("HTTP/1.1 200 OK");
+    $info = pathinfo($url_params['path']);
+    $new_path = ($revision < 21 ? "old/" : "current/") . $info['basename'];
+    echo file_get_contents($new_path);
+
+    $logbuf .= "url path   : " . $url_params['path'] . PHP_EOL;
+    $logbuf .= "new path   : " . $new_path . PHP_EOL;
+}
+
+write_to_log($logbuf, 'update.log');
