@@ -975,35 +975,17 @@
       "provider_url": "https://peaktv.info/",
       "api_url": "https://peaktv.info",
       "api_commands": {
-        "get_playlist": "{API}/{PASSWORD}/{STREAM_ID}/peaktvinfo.m3u8"
+        "get_playlist": "{API}/{PASSWORD}/hls/peaktvinfo.m3u8"
       },
       "config": {
         "epg_presets": [
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "gabbarit"
+            "alias": "yosso"
           }
         ],
-        "ext_params": true,
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
-        "streams": {
-          "hls": "HLS",
-          "ts": "MPEG-TS"
-        },
-        "servers": {
-          "serv5.peakantikli.online": "Russia 1",
-          "serv1.peakantikli.online": "Russia 2",
-          "serv6.peakantikli.online": "Russia 3",
-          "serv7.peakantikli.online": "Germany 1",
-          "serv2.peakantikli.online": "Germany 2",
-          "serv4.peakantikli.online": "Poland",
-          "serv3.peakantikli.online": "Czechia"
-        },
-        "url_subst": {
-          "regex": "/^(https?:\\/\\/).+(\\/.+)(\\/.+)$/",
-          "replace": "$1{SERVER_ID}$2$3"
-        },
+        "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
