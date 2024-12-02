@@ -518,7 +518,7 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
         if (isset($this->epg_manager)) {
-            $this->epg_manager->get_indexer()->clear_epg_files($hash);
+            $this->epg_manager->clear_epg_files($hash);
         }
     }
 
@@ -2393,19 +2393,16 @@ class Default_Dune_Plugin implements DunePlugin
             $preset = $provider->getConfigValue(EPG_JSON_PRESETS);
             if (!empty($preset)) {
                 hd_debug_print("Using 'Epg_Manager_Json' cache engine");
-                $this->epg_manager = new Epg_Manager_Json($this);
+                $this->epg_manager = new Epg_Manager_Json();
             }
         }
 
         if (is_null($this->epg_manager)) {
             hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
-            $this->epg_manager = new Epg_Manager_Xmltv($this);
+            $this->epg_manager = new Epg_Manager_Xmltv();
         }
 
-        $this->epg_manager->set_active_sources($this->get_active_sources());
-        $this->epg_manager->init_indexer();
-        $this->epg_manager->set_flags($this->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0);
-        $this->epg_manager->get_indexer()->set_cache_dir($this->get_cache_dir());
+        $this->epg_manager->init_by_plugin($this);
     }
 
     /**
@@ -3732,7 +3729,7 @@ class Default_Dune_Plugin implements DunePlugin
             $this->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $cur_sources);
         }
 
-        $this->epg_manager->set_active_sources($this->get_active_sources());
+        $this->epg_manager->set_xmltv_sources($this->get_active_sources());
 
         $locks = $this->epg_manager->is_any_index_locked();
         if ($locks === false) {

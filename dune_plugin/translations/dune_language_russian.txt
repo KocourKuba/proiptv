@@ -326,6 +326,7 @@ warn_msg5 = Техническая информация о фильме соде
 
 err_too_old_player = DUNE HD слишком старая и не поддерживается плагином
 err_required_firmware = Требуется версия прошивки r21 или выше
+err_no_sqlite = В этой прошивке нет поддержки SQLite3!
 err_load_playlist = Ошибка загрузки плейлиста!
 err_empty_playlist = Пустой или неправильный плейлист!
 err_file_exist = Этот файл уже есть в списке!

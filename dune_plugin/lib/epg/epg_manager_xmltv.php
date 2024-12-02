@@ -23,16 +23,21 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+require_once 'lib/tr.php';
 require_once 'lib/hd.php';
 require_once 'lib/hashed_array.php';
-require_once 'lib/tr.php';
+require_once 'lib/curl_wrapper.php';
+require_once 'lib/perf_collector.php';
 
 require_once 'epg_params.php';
-require_once 'epg_indexer_classic.php';
-require_once 'epg_indexer_sql.php';
 
 class Epg_Manager_Xmltv
 {
+    const STREAM_CHUNK = 131072; // 128Kb
+    const INDEX_PICONS = 'epg_picons';
+    const INDEX_CHANNELS = 'epg_channels';
+    const INDEX_ENTRIES = 'epg_entries';
+
     /**
      * @var Default_Dune_Plugin
      */
@@ -51,20 +56,110 @@ class Epg_Manager_Xmltv
     /**
      * @var Hashed_Array
      */
-    protected $active_sources;
+    protected $xmltv_sources;
 
     /**
-     * @var Epg_Indexer
+     * path where cache is stored
+     * @var string
      */
-    protected $indexer;
+    protected $cache_dir;
 
     /**
-     * @param Default_Dune_Plugin|null $plugin
+     * url params to download XMLTV EPG
+     * @var array
      */
-    public function __construct($plugin = null)
+    protected $xmltv_url_params;
+
+    /**
+     * @var Curl_Wrapper
+     */
+    protected $curl_wrapper;
+
+    /**
+     * @var int
+     */
+    protected $pid = 0;
+
+    /**
+     * @var Perf_Collector
+     */
+    protected $perf;
+
+    /**
+     * @var SQLite3[]
+     */
+    protected $epg_db = array();
+
+    public function __construct()
+    {
+        $this->curl_wrapper = new Curl_Wrapper();
+        $this->perf = new Perf_Collector();
+    }
+
+    /**
+     * Set and create cache dir
+     *
+     * @param string $cache_dir
+     */
+    public function set_cache_dir($cache_dir)
+    {
+        $this->cache_dir = get_slash_trailed_path($cache_dir);
+        create_path($this->cache_dir);
+
+        hd_debug_print("Indexer engine: " . get_class($this));
+        hd_debug_print("Cache dir: $this->cache_dir");
+        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+    }
+
+    /**
+     * Set url parameters: url, cache, hash
+     *
+     * @param array $url_param
+     * @return void
+     */
+    public function set_url_params($url_param)
+    {
+        hd_debug_print(null, true);
+        $this->xmltv_url_params = $url_param;
+    }
+
+    /**
+     * get curl wrapper
+     *
+     * @return Curl_Wrapper
+     */
+    public function get_curl_wrapper()
+    {
+        return $this->curl_wrapper;
+    }
+
+    /**
+     * returns list of requested epg when indexing in process
+     *
+     * @return array
+     */
+    public function get_delayed_epg()
+    {
+        return $this->delayed_epg;
+    }
+
+    /**
+     * clear all delayed epg
+     */
+    public function clear_delayed_epg()
+    {
+        $this->delayed_epg = array();
+    }
+
+    /**
+     * @param Default_Dune_Plugin $plugin
+     */
+    public function init_by_plugin($plugin)
     {
         $this->plugin = $plugin;
-        $this->active_sources = new Hashed_Array();
+        $this->xmltv_sources = $this->plugin->get_active_sources();
+        $this->flags = $this->plugin->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
+        $this->set_cache_dir($this->plugin->get_cache_dir());
     }
 
     /**
@@ -103,32 +198,20 @@ class Epg_Manager_Xmltv
 
         set_debug_log($config[PARAM_ENABLE_DEBUG]);
 
+        $this->pid = getmypid();
+        $this->xmltv_sources = new Hashed_Array();
+        $this->xmltv_url_params = $config[PARAMS_XMLTV];
+        $this->set_cache_dir($config[PARAM_CACHE_DIR]);
+
         hd_print("Script config");
         hd_print("Log:         " . $LOG_FILE);
-        hd_print("Cache dir:   " . $config[PARAM_CACHE_DIR]);
-        hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
-        hd_print("Process ID:  " . getmypid());
+        hd_print("Cache dir:   " . $this->cache_dir);
+        hd_print("XMLTV param: " . json_encode($this->xmltv_url_params));
+        hd_print("Process ID:  " . $this->pid);
 
-        $this->init_indexer();
-        $this->indexer->set_cache_dir($config[PARAM_CACHE_DIR]);
-        $this->indexer->set_pid(getmypid());
-        $this->indexer->set_url_params($config[PARAMS_XMLTV]);
-        $this->indexer->index_only_channels();
-        $this->indexer->index_xmltv_positions();
+        $this->check_and_index_xmltv_source(true);
 
         return true;
-    }
-
-    /**
-     * Initialize indexer class
-     */
-    public function init_indexer()
-    {
-        if (class_exists('SQLite3')) {
-            $this->indexer = new Epg_Indexer_Sql();
-        } else {
-            $this->indexer = new Epg_Indexer_Classic();
-        }
     }
 
     /**
@@ -137,7 +220,7 @@ class Epg_Manager_Xmltv
      * @param Hashed_Array<array> $sources
      * @return void
      */
-    public function set_active_sources($sources)
+    public function set_xmltv_sources($sources)
     {
         if ($sources->size() === 0) {
             hd_debug_print("No XMLTV source selected");
@@ -145,26 +228,7 @@ class Epg_Manager_Xmltv
             hd_debug_print("XMLTV sources selected: $sources");
         }
 
-        $this->active_sources = $sources;
-    }
-
-    /**
-     * Get active sources
-     *
-     * @return Hashed_Array
-     */
-    public function get_active_sources()
-    {
-        return $this->active_sources;
-    }
-
-    /**
-     * @param int $flags
-     * @return void
-     */
-    public function set_flags($flags)
-    {
-        $this->flags = $flags;
+        $this->xmltv_sources = $sources;
     }
 
     /**
@@ -179,9 +243,9 @@ class Epg_Manager_Xmltv
         $any_lock = $this->is_any_index_locked();
         $day_epg = array();
 
-        foreach($this->active_sources as $key => $params) {
-            $this->indexer->set_url_params($params);
-            if ($this->indexer->is_index_locked($key)) {
+        foreach ($this->xmltv_sources as $key => $params) {
+            $this->xmltv_url_params = $params;
+            if ($this->is_index_locked($key)) {
                 hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: " . $channel->get_id());
                 $this->delayed_epg[] = $channel->get_id();
                 continue;
@@ -194,9 +258,9 @@ class Epg_Manager_Xmltv
             hd_debug_print("Fetch entries for from: $date_start_l ($day_start_ts) to: $date_end_l ($day_end_ts)", true);
 
             try {
-                $positions = $this->indexer->load_program_index($channel);
+                $positions = $this->load_program_index($channel);
                 if (!empty($positions)) {
-                    $cached_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "{$params[PARAM_HASH]}.xmltv";
+                    $cached_file = $this->cache_dir . $params[PARAM_HASH] . ".xmltv";
                     if (!file_exists($cached_file)) {
                         throw new Exception("cache file $cached_file not exist");
                     }
@@ -282,7 +346,33 @@ class Epg_Manager_Xmltv
      */
     public function get_picon($aliases)
     {
-        return $this->indexer->get_picon($this->active_sources, $aliases);
+        $placeHolders = '';
+        foreach ($aliases as $alias) {
+            if (empty($alias)) continue;
+            if (!empty($placeHolders)) {
+                $placeHolders .= ',';
+            }
+            $placeHolders .= "'" . SQLite3::escapeString($alias) . "'";
+        }
+
+        $res = '';
+        if (empty($placeHolders)) {
+            return $res;
+        }
+
+        $table_pic = self::INDEX_PICONS;
+        $table_ch = self::INDEX_CHANNELS;
+        $qry = "SELECT distinct (picon_url) FROM $table_pic INNER JOIN $table_ch ON $table_pic.picon_hash=$table_ch.picon_hash WHERE alias IN ($placeHolders);";
+
+        foreach ($this->xmltv_sources as $source) {
+            $db = $this->open_sqlite_db($source[PARAM_HASH]);
+            if (is_null($db) || $db === false) continue;
+
+            $res = $db->querySingle($qry);
+            if (!empty($res)) break;
+        }
+
+        return $res;
     }
 
     /**
@@ -294,8 +384,8 @@ class Epg_Manager_Xmltv
     {
         $locks = array();
         $dirs = array();
-        foreach ($this->active_sources->get_keys() as $key) {
-            $dirs = safe_merge_array($dirs, glob($this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "{$key}_*.lock", GLOB_ONLYDIR));
+        foreach ($this->xmltv_sources->get_keys() as $key) {
+            $dirs = safe_merge_array($dirs, glob($this->cache_dir . $key . "_*.lock", GLOB_ONLYDIR));
         }
 
         foreach ($dirs as $dir) {
@@ -314,11 +404,11 @@ class Epg_Manager_Xmltv
     {
         $has_locks = false;
         if (is_null($sources_hash)) {
-            $sources_hash = $this->active_sources->get_keys();
+            $sources_hash = $this->xmltv_sources->get_keys();
         }
 
         foreach ($sources_hash as $hash) {
-            if ($this->indexer->is_index_locked($hash)) {
+            if ($this->is_index_locked($hash)) {
                 $has_locks = true;
                 continue;
             }
@@ -348,38 +438,716 @@ class Epg_Manager_Xmltv
     public function clear_current_epg_cache()
     {
         hd_debug_print(null, true);
-        $params = $this->indexer->get_url_params();
-        $this->indexer->clear_epg_files($params[PARAM_HASH]);
+        $this->clear_epg_files($this->xmltv_url_params[PARAM_HASH]);
     }
 
     /**
-     * @return Epg_Indexer
-     */
-    public function &get_indexer()
-    {
-        return $this->indexer;
-    }
-
-    /**
-     * returns list of requested epg when indexing in process
+     * indexing xmltv file to make channel to display-name map and collect picons for channels
+     * or index all if $full is true
      *
+     * @param bool $full
+     * @return void
+     */
+    public function check_and_index_xmltv_source($full)
+    {
+        hd_debug_print(null, true);
+
+        if (empty($this->xmltv_url_params) || !isset($this->xmltv_url_params[PARAM_URI])) {
+            $exception_msg = "XMTLV EPG url not set";
+            hd_debug_print($exception_msg);
+            HD::set_last_error("xmltv_last_error", $exception_msg);
+            return;
+        }
+
+        $url = $this->xmltv_url_params[PARAM_URI];
+        $hash = $this->xmltv_url_params[PARAM_HASH];
+        $cache_ttl = !isset($this->xmltv_url_params[PARAM_CACHE]) ? XMLTV_CACHE_AUTO : $this->xmltv_url_params[PARAM_CACHE];
+
+        HD::set_last_error("xmltv_last_error", null);
+        $cached_file = $this->cache_dir . $hash . ".xmltv";
+        hd_debug_print("Checking cached xmltv file: $cached_file");
+        if (!file_exists($cached_file)) {
+            hd_debug_print("Cached xmltv file not exist");
+            $this->update_cache(true, $full);
+            return;
+        }
+
+        $check_time_file = filemtime($cached_file);
+        hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $check_time_file));
+
+        $expired = true;
+        if ($cache_ttl === XMLTV_CACHE_AUTO) {
+            $this->curl_wrapper->set_url($url);
+            if ($this->curl_wrapper->check_is_expired()) {
+                $this->curl_wrapper->clear_cached_etag();
+            } else {
+                $expired = false;
+            }
+        } else if (filesize($cached_file) !== 0) {
+            $max_cache_time = 3600 * 24 * $cache_ttl;
+            if ($check_time_file && $check_time_file + $max_cache_time > time()) {
+                $expired = false;
+            }
+        }
+
+        if ($expired) {
+            hd_debug_print("Xmltv cache expired.");
+            $this->update_cache(true, $full);
+            return;
+        }
+
+        hd_debug_print("Cached file: $cached_file is not expired");
+        $indexed = $this->get_indexes_info();
+
+        hd_debug_print("Indexes status: " . json_encode($indexed), true);
+        // index for picons has not verified because it always exist if channels index is present
+        if (isset($indexed[self::INDEX_CHANNELS], $indexed[self::INDEX_ENTRIES])
+            && $indexed[self::INDEX_CHANNELS] && $indexed[self::INDEX_ENTRIES]) {
+            hd_debug_print("All xmltv indexes are valid");
+            return;
+        }
+
+        if (isset($indexed[self::INDEX_CHANNELS]) && $indexed[self::INDEX_CHANNELS]) {
+            hd_debug_print("Xmltv channels index is valid");
+            return;
+        }
+
+        // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
+        hd_debug_print("All xmltv indexes are invalid");
+        $this->update_cache(false, $full);
+    }
+
+    /**
+     * Check if lock for specified cache is exist
+     *
+     * @param string $hash
+     * @return bool
+     */
+    public function is_index_locked($hash)
+    {
+        $dirs = glob($this->cache_dir . $hash . "_*.lock", GLOB_ONLYDIR);
+        return !empty($dirs);
+    }
+
+    /**
+     * @param string $hash
+     * @param bool $lock
+     */
+    public function set_index_locked($hash, $lock)
+    {
+        $lock_dir = $this->cache_dir . $hash . "_$this->pid.lock";
+        if ($lock) {
+            if (!create_path($lock_dir, 0644)) {
+                hd_debug_print("Directory '$lock_dir' was not created");
+            } else {
+                hd_debug_print("Lock $lock_dir");
+            }
+        } else if (is_dir($lock_dir)) {
+            hd_debug_print("Unlock $lock_dir");
+            shell_exec("rm -rf $lock_dir");
+            clearstatcache();
+        }
+    }
+
+    /**
+     * clear memory cache and cache for selected filename (hash) mask
+     *
+     * @param string|null $hash
+     * @return void
+     */
+    public function clear_epg_files($hash = null)
+    {
+        hd_debug_print(null, true);
+        if (empty($hash)) {
+            $this->curl_wrapper->clear_all_etag_cache();
+        } else {
+            $this->curl_wrapper->clear_cached_etag();
+        }
+
+        if (empty($hash)) {
+            foreach ($this->epg_db as $db) {
+                $db->close();
+            }
+            $this->epg_db = array();
+        } else if (isset($this->epg_db[$hash])) {
+            $this->epg_db[$hash]->close();
+            unset($this->epg_db[$hash]);
+        }
+
+        if (empty($this->cache_dir)) {
+            return;
+        }
+
+        $mask = empty($hash) ? "*" : $hash;
+        $dirs = glob($this->cache_dir . $mask . "_*.lock", GLOB_ONLYDIR);
+        $locks = array();
+        foreach ($dirs as $dir) {
+            hd_debug_print("Found locks: $dir");
+            $locks[] = $dir;
+        }
+
+        if (!empty($locks)) {
+            foreach ($locks as $lock) {
+                $ar = explode('_', basename($lock));
+                $pid = (int)end($ar);
+
+                if ($pid !== 0 && send_process_signal($pid, 0)) {
+                    hd_debug_print("Kill process $pid");
+                    send_process_signal($pid, -9);
+                }
+                hd_debug_print("Remove lock: $lock");
+                shell_exec("rm -rf $lock");
+            }
+        }
+
+        $mask = empty($hash) ? "" : $hash;
+        $files = $this->cache_dir . $mask . "*";
+        hd_debug_print("clear epg files: $files");
+        shell_exec('rm -rf ' . $files);
+        clearstatcache();
+        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+    }
+
+    /**
+     * Get information about indexes
      * @return array
      */
-    public function get_delayed_epg()
+    public function get_indexes_info($hash = null)
     {
-        return $this->delayed_epg;
-    }
+        hd_debug_print(null, true);
+        $result = array(self::INDEX_CHANNELS => -1, self::INDEX_PICONS => -1, self::INDEX_ENTRIES => -1);
 
-    /**
-     * clear all delayed epg
-     */
-    public function clear_delayed_epg()
-    {
-        $this->delayed_epg = array();
+        $hash = is_null($hash) ? $this->xmltv_url_params[PARAM_HASH] : $hash;
+        $db = $this->open_sqlite_db($hash);
+        if ($db === false) {
+            hd_debug_print("Unable to drop table because current index is locked");
+            return $result;
+        }
+
+        if (is_null($db)) {
+            hd_debug_print("Problem with open SQLite db! Possible url not set");
+            return $result;
+        }
+
+        foreach ($result as $key => $name) {
+            $res = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$key';");
+            if (!empty($res)) {
+                $result[$key] = $db->querySingle("SELECT count(*) FROM $key;");
+            }
+        }
+        return $result;
     }
 
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods
+
+    /**
+     * Remove is selected index
+     *
+     * @param array $names
+     */
+    public function remove_indexes($names)
+    {
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        if ($db === false) {
+            hd_debug_print("Unable to drop table because current index is locked");
+            return;
+        }
+
+        if (is_null($db)) {
+            hd_debug_print("Problem with open SQLite db! Possible url not set");
+            return;
+        }
+
+        foreach ($names as $name) {
+            $db->exec("DROP TABLE IF EXISTS $name;");
+        }
+    }
+
+    /**
+     * Download XMLTV source.
+     *
+     * @return int
+     */
+    protected function download_xmltv_source()
+    {
+        $url = $this->xmltv_url_params[PARAM_URI];
+        $url_hash = $this->xmltv_url_params[PARAM_HASH];
+        if ($this->is_index_locked($url_hash)) {
+            hd_debug_print("File is indexing or downloading, skipped");
+            return 0;
+        }
+
+        hd_debug_print_separator();
+
+        $ret = -1;
+        $this->perf->reset('start');
+
+        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+        $cached_file = $this->cache_dir . $url_hash . ".xmltv";
+        $tmp_filename = $cached_file . ".tmp";
+        if (file_exists($tmp_filename)) {
+            unlink($tmp_filename);
+        }
+
+        try {
+            HD::set_last_error("xmltv_last_error", null);
+            $this->set_index_locked($url_hash, true);
+
+            if (preg_match("/jtv.?\.zip$/", basename(urldecode($url)))) {
+                throw new Exception("Unsupported EPG format (JTV)");
+            }
+
+            $this->curl_wrapper->set_url($url);
+            $expired = !file_exists($cached_file) || $this->curl_wrapper->check_is_expired();
+            if (!$expired) {
+                hd_debug_print("File not changed, using cached file: $cached_file");
+                $this->set_index_locked($url_hash, false);
+                return 1;
+            }
+
+            $this->curl_wrapper->clear_cached_etag();
+            if (!$this->curl_wrapper->download_file($tmp_filename, true)) {
+                throw new Exception("Can't exec curl");
+            }
+
+            $http_code = $this->curl_wrapper->get_response_code();
+            if ($http_code !== 200) {
+                throw new Exception("Ошибка скачивания ($http_code) $url\n\n"
+                    . $this->curl_wrapper->get_raw_response_headers());
+            }
+
+            $file_time = filemtime($tmp_filename);
+            $dl_time = $this->perf->getReportItemCurrent(Perf_Collector::TIME);
+            $file_size = filesize($tmp_filename);
+            $bps = $file_size / $dl_time;
+            $si_prefix = array('B/s', 'KB/s', 'MB/s');
+            $base = 1024;
+            $class = min((int)log($bps, $base), count($si_prefix) - 1);
+            $speed = sprintf('%1.2f', $bps / pow($base, $class)) . ' ' . $si_prefix[$class];
+
+            hd_debug_print("ETag value: " . $this->curl_wrapper->get_cached_etag());
+            hd_debug_print("Last changed time of local file: " . date("Y-m-d H:i", $file_time));
+            hd_debug_print("Download $file_size bytes of xmltv source $url done in: $dl_time secs (speed $speed)");
+
+            if (file_exists($cached_file)) {
+                hd_debug_print("Remove cached file: $cached_file");
+                unlink($cached_file);
+            }
+
+            $this->perf->setLabel('unpack');
+
+            $handle = fopen($tmp_filename, "rb");
+            $hdr = fread($handle, 8);
+            fclose($handle);
+
+            if (0 === mb_strpos($hdr, "\x1f\x8b\x08")) {
+                hd_debug_print("GZ signature: " . bin2hex(substr($hdr, 0, 3)), true);
+                rename($tmp_filename, $cached_file . '.gz');
+                $tmp_filename = $cached_file . '.gz';
+                hd_debug_print("ungzip $tmp_filename to $cached_file");
+                $cmd = "gzip -d $tmp_filename 2>&1";
+                system($cmd, $ret);
+                if ($ret !== 0) {
+                    throw new Exception("Failed to ungzip $tmp_filename (error code: $ret)");
+                }
+                clearstatcache();
+                $size = filesize($cached_file);
+                touch($cached_file, $file_time);
+                hd_debug_print("$size bytes ungzipped to $cached_file in "
+                    . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+            } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
+                hd_debug_print("ZIP signature: " . bin2hex(substr($hdr, 0, 4)), true);
+                hd_debug_print("unzip $tmp_filename to $cached_file");
+                $filename = trim(shell_exec("unzip -lq '$tmp_filename'|grep -E '[\d:]+'"));
+                if (empty($filename)) {
+                    throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
+                }
+
+                if (explode('\n', $filename) > 1) {
+                    throw new Exception("Too many files in zip archive, wrong format??!\n$filename");
+                }
+
+                hd_debug_print("zip list: $filename");
+                $cmd = "unzip -oq $tmp_filename -d $this->cache_dir 2>&1";
+                system($cmd, $ret);
+                unlink($tmp_filename);
+                if ($ret !== 0) {
+                    throw new Exception("Failed to unpack $tmp_filename (error code: $ret)");
+                }
+                clearstatcache();
+
+                rename($filename, $cached_file);
+                $size = filesize($cached_file);
+                touch($cached_file, $file_time);
+                hd_debug_print("$size bytes unzipped to $cached_file in "
+                    . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+            } else if (false !== mb_strpos($hdr, "<?xml")) {
+                hd_debug_print("XML signature: " . substr($hdr, 0, 5), true);
+                hd_debug_print("rename $tmp_filename to $cached_file");
+                rename($tmp_filename, $cached_file);
+                $size = filesize($cached_file);
+                touch($cached_file, $file_time);
+                hd_debug_print("$size bytes stored to $cached_file in "
+                    . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+            } else {
+                hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
+                throw new Exception(TR::load_string('err_unknown_file_type'));
+            }
+
+            $ret = 1;
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+            if (!empty($tmp_filename) && file_exists($tmp_filename)) {
+                unlink($tmp_filename);
+            }
+
+            if (file_exists($cached_file)) {
+                unlink($cached_file);
+            }
+        }
+
+        $this->set_index_locked($url_hash, false);
+
+        if ($ret === 1) {
+            $this->remove_indexes(array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_ENTRIES));
+        }
+
+        hd_debug_print_separator();
+
+        return $ret;
+    }
+
+    /**
+     * indexing xmltv file to make channel to display-name map
+     * and collect picons for channels
+     *
+     * @return void
+     */
+    protected function index_xmltv_channels()
+    {
+        $url_hash = $this->xmltv_url_params[PARAM_HASH];
+        try {
+            $table_pic = self::INDEX_PICONS;
+            $table_ch = self::INDEX_CHANNELS;
+            $db = $this->open_sqlite_db($url_hash);
+            if ($db === false) {
+                hd_debug_print("File is indexing or downloading, skipped");
+                return;
+            }
+
+            if (is_null($db)) {
+                throw new Exception("Problem with open SQLite db! Possible url not set");
+            }
+
+            if ($this->is_all_indexes_valid(array($table_ch, $table_pic))) {
+                $channels = $db->querySingle("SELECT count(*) FROM $table_ch;");
+                if (!empty($channels) && (int)$channels !== 0) {
+                    hd_debug_print("EPG channels info already indexed", true);
+                    return;
+                }
+            }
+
+            hd_debug_print("Start reindex channels and picons...");
+
+            $this->perf->reset('reindex');
+
+            $this->remove_indexes(array($table_ch, $table_pic));
+
+            $this->set_index_locked($url_hash, true);
+
+            $db->exec("CREATE TABLE $table_ch(alias STRING PRIMARY KEY not null, channel_id STRING not null, picon_hash STRING);");
+            $db->exec("CREATE TABLE $table_pic(picon_hash STRING PRIMARY KEY not null, picon_url STRING);");
+
+            $db->exec('PRAGMA journal_mode=MEMORY;');
+            $db->exec('BEGIN;');
+
+            $stm_channels = $db->prepare("INSERT OR REPLACE INTO $table_ch (alias, channel_id, picon_hash) VALUES(:alias, :channel_id, :picon_hash);");
+            $stm_channels->bindParam(":alias", $alias);
+            $stm_channels->bindParam(":channel_id", $channel_id);
+            $stm_channels->bindParam(":picon_hash", $picon_hash);
+
+            $stm_picons = $db->prepare("INSERT OR REPLACE INTO $table_pic (picon_hash, picon_url) VALUES(:picon_hash, :picon_url);");
+            $stm_picons->bindParam(":picon_hash", $picon_hash);
+            $stm_picons->bindParam(":picon_url", $picon_url);
+
+            $cached_file = $this->cache_dir . $url_hash . ".xmltv";
+            $file = open_file($cached_file);
+            while (!feof($file)) {
+                $line = stream_get_line($file, self::STREAM_CHUNK, "<channel ");
+                if (empty($line)) continue;
+
+                fseek($file, -9, SEEK_CUR);
+                $str = fread($file, 9);
+                if ($str !== "<channel ") continue;
+
+                $line = stream_get_line($file, self::STREAM_CHUNK, "</channel>");
+                if (empty($line)) continue;
+
+                $line = "<channel $line</channel>";
+
+                $xml_node = new DOMDocument();
+                $xml_node->loadXML($line);
+                foreach ($xml_node->getElementsByTagName('channel') as $tag) {
+                    $channel_id = $tag->getAttribute('id');
+                }
+
+                if (empty($channel_id)) continue;
+
+                foreach ($xml_node->getElementsByTagName('icon') as $tag) {
+                    if (preg_match(HTTP_PATTERN, $tag->getAttribute('src'))) {
+                        $picon_url = $tag->getAttribute('src');
+                        if (!empty($picon_url)) {
+                            $picon_hash = hash('md5', $picon_url);
+                            $stm_picons->execute();
+                            break;
+                        }
+                    }
+                }
+
+                $alias = $channel_id;
+                $stm_channels->execute();
+
+                foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
+                    $alias = mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8");
+                    $stm_channels->execute();
+                }
+            }
+            fclose($file);
+            $db->exec('COMMIT;');
+
+            $result = $db->querySingle("SELECT count(*) FROM $table_ch;");
+            $channels = empty($result) ? 0 : (int)$result;
+
+            $result = $db->querySingle("SELECT count(*) FROM $table_pic;");
+            $picons = empty($result) ? 0 : (int)$result;
+
+            $this->perf->setLabel('end');
+            $report = $this->perf->getFullReport('reindex');
+
+            hd_debug_print("Total entries id's: $channels");
+            hd_debug_print("Total known picons: $picons");
+            hd_debug_print("Reindexing EPG channels done: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+
+        } catch (Exception $ex) {
+            hd_debug_print("Reindexing EPG channels failed");
+            print_backtrace_exception($ex);
+        }
+
+        $this->set_index_locked($url_hash, false);
+        hd_debug_print_separator();
+    }
+
+    /**
+     * indexing xmltv epg info
+     *
+     * @return void
+     */
+    protected function index_xmltv_positions()
+    {
+        hd_debug_print("Indexing positions for: {$this->xmltv_url_params[PARAM_URI]}", true);
+        $url_hash = $this->xmltv_url_params[PARAM_HASH];
+
+        try {
+            $db = $this->open_sqlite_db($url_hash);
+            if ($db === false) {
+                hd_debug_print("File is indexing now, skipped");
+                return;
+            }
+
+            if (is_null($db)) {
+                throw new Exception("Problem with open SQLite db! Possible url not set");
+            }
+
+            $table_pos = self::INDEX_ENTRIES;
+            if ($this->is_all_indexes_valid(array($table_pos))) {
+                $total_pos = $db->querySingle("SELECT count(*) FROM $table_pos;");
+                if (!empty($total_pos) && (int)$total_pos !== 0) {
+                    hd_debug_print("EPG positions info already indexed", true);
+                    return;
+                }
+            }
+
+            hd_debug_print("Start reindex positions...");
+
+            $this->perf->reset('reindex');
+
+            $this->set_index_locked($url_hash, true);
+
+            hd_debug_print("Remove index: $table_pos");
+            $db->exec("DROP TABLE IF EXISTS $table_pos;");
+            $db->exec("CREATE TABLE $table_pos (channel_id STRING not null, start INTEGER, end INTEGER);");
+            $db->exec('PRAGMA journal_mode=MEMORY;');
+            $db->exec('BEGIN;');
+
+            hd_debug_print("Begin transactions...");
+
+            $stm = $db->prepare("INSERT INTO $table_pos (channel_id, start, end) VALUES(:channel_id, :start, :end);");
+            $stm->bindParam(":channel_id", $prev_channel);
+            $stm->bindParam(":start", $start_program_block);
+            $stm->bindParam(":end", $tag_end_pos);
+
+            $cached_file = $this->cache_dir . $url_hash . ".xmltv";
+            if (!file_exists($cached_file)) {
+                throw new Exception("cache file $cached_file not exist");
+            }
+
+            $file = open_file($cached_file);
+
+            $start_program_block = 0;
+            $prev_channel = null;
+            while (!feof($file)) {
+                $tag_start_pos = ftell($file);
+                $line = stream_get_line($file, 0, "</programme>");
+                if ($line === false) break;
+
+                $offset = strpos($line, '<programme');
+                if ($offset === false) {
+                    // check if end
+                    $end_tv = strpos($line, "</tv>");
+                    if ($end_tv !== false) {
+                        $tag_end_pos = $end_tv + $tag_start_pos;
+                        $stm->execute();
+                        break;
+                    }
+
+                    // if open tag not found - skip chunk
+                    continue;
+                }
+
+                // end position include closing tag!
+                $tag_end_pos = ftell($file);
+                // append position of open tag to file position of chunk
+                $tag_start_pos += $offset;
+                // calculate channel id
+                $ch_start = strpos($line, 'channel="', $offset);
+                if ($ch_start === false) {
+                    continue;
+                }
+
+                $ch_start += 9;
+                $ch_end = strpos($line, '"', $ch_start);
+                if ($ch_end === false) {
+                    continue;
+                }
+
+                $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
+                if (empty($channel_id)) continue;
+
+                if ($prev_channel === null) {
+                    $prev_channel = $channel_id;
+                    $start_program_block = $tag_start_pos;
+                } else if ($prev_channel !== $channel_id) {
+                    $tag_end_pos = $tag_start_pos;
+                    $stm->execute();
+                    $prev_channel = $channel_id;
+                    $start_program_block = $tag_start_pos;
+                }
+            }
+
+            hd_debug_print("End transactions...");
+            $db->exec('COMMIT;');
+
+            $result = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $table_pos;");
+            $total_epg = empty($result) ? 0 : (int)$result;
+
+            $result = $db->querySingle("SELECT count(channel_id) FROM $table_pos;");
+            $total_blocks = empty($result) ? 0 : (int)$result;
+
+            $this->perf->setLabel('end');
+            $report = $this->perf->getFullReport('reindex');
+
+            hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
+            hd_debug_print("Reindexing EPG positions done: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+        } catch (Exception $ex) {
+            hd_debug_print("Reindexing EPG positions failed");
+            print_backtrace_exception($ex);
+        }
+
+        $this->set_index_locked($url_hash, false);
+        hd_debug_print_separator();
+    }
+
+    /**
+     * @param Channel $channel
+     * @return array
+     */
+    protected function load_program_index($channel)
+    {
+        $channel_position = array();
+        $table_ch = self::INDEX_CHANNELS;
+        $table_pos = self::INDEX_ENTRIES;
+
+        try {
+            $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+            if (is_null($db)) {
+                throw new Exception("Problem with open SQLite db! Possible url not set");
+            }
+
+            if (!$this->is_all_indexes_valid(array($table_ch, $table_pos))) {
+                throw new Exception("EPG for {$this->xmltv_url_params[PARAM_URI]} not indexed!");
+            }
+
+            $channel_title = $channel->get_title();
+            $epg_ids = array_values($channel->get_epg_ids());
+
+            $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
+            $stm = $db->prepare("SELECT DISTINCT channel_id FROM $table_ch WHERE alias IN ($placeHolders);");
+            if ($stm !== false) {
+                foreach ($epg_ids as $index => $val) {
+                    $stm->bindValue($index + 1, mb_convert_case(SQLite3::escapeString($val), MB_CASE_LOWER, "UTF-8"));
+                }
+
+                $res = $stm->execute();
+                if (!$res) {
+                    throw new Exception("Query failed for epg's: " . pretty_json_format($epg_ids) . " ($channel_title)");
+                }
+
+                while ($row = $res->fetchArray(SQLITE3_NUM)) {
+                    $epg_ids[] = (string)$row[0];
+                }
+            }
+
+            $epg_ids = array_values(array_unique($epg_ids));
+            hd_debug_print("Found epg_ids: " . pretty_json_format($epg_ids), true);
+            $channel_id = $channel->get_id();
+            if (!empty($epg_ids)) {
+                hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
+                $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
+                $stmt = $db->prepare("SELECT start, end FROM $table_pos WHERE channel_id IN ($placeHolders);");
+                if ($stmt !== false) {
+                    foreach ($epg_ids as $index => $val) {
+                        $stmt->bindValue($index + 1, SQLite3::escapeString($val));
+                    }
+
+                    $res = $stmt->execute();
+                    if (!$res) {
+                        throw new Exception("Query failed for epg's: " . pretty_json_format($epg_ids) . " ($channel_title)");
+                    }
+
+                    while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
+                        $data = array_map(function ($col) {
+                            return $col;
+                        }, $row);
+                        $channel_position[] = $data;
+                    }
+                }
+            }
+
+            if (empty($channel_position)) {
+                hd_debug_print("No positions for channel $channel_id ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
+            }
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+        }
+
+        hd_debug_print("Channel positions: " . pretty_json_format($channel_position), true);
+        return $channel_position;
+    }
 
     /**
      * @param Channel $channel
@@ -401,5 +1169,89 @@ class Epg_Manager_Xmltv
         }
 
         return $day_epg;
+    }
+
+    /**
+     * Check is all indexes is valid
+     *
+     * @param array $names
+     * @return bool
+     */
+    protected function is_all_indexes_valid($names)
+    {
+        hd_debug_print(null, true);
+
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        if ($db === false) {
+            hd_debug_print("Indexing is in process now");
+            return false;
+        }
+
+        if (is_null($db)) {
+            hd_debug_print("Problem with open SQLite db! Possible url not set");
+            return false;
+        }
+
+        foreach ($names as $name) {
+            if (!$db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
+    /// private methods
+
+    /**
+     * open sqlite database
+     * @param string $db_name
+     * @return SQLite3|false|null
+     */
+    private function open_sqlite_db($db_name)
+    {
+        if (empty($db_name)) {
+            hd_debug_print("No handler for empty url!");
+            return null;
+        }
+
+        if ($this->is_index_locked($db_name)) {
+            hd_debug_print("File is indexing or downloading, skipped");
+            return false;
+        }
+
+        if (!isset($this->epg_db[$db_name])) {
+            $index_name = $this->cache_dir . $db_name . ".db";
+            hd_debug_print("Open db: $index_name", true);
+            $flags = SQLITE3_OPEN_READWRITE;
+            if (!file_exists($index_name)) {
+                $flags |= SQLITE3_OPEN_CREATE;
+            }
+            $this->epg_db[$db_name] = new SQLite3($index_name, $flags, '');
+            $this->epg_db[$db_name]->busyTimeout(60);
+        }
+
+        return $this->epg_db[$db_name];
+    }
+
+    private function update_cache($download, $full)
+    {
+        hd_debug_print("Clear all indexes for: {$this->xmltv_url_params[PARAM_URI]}");
+        $this->remove_indexes(array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_ENTRIES));
+        if ($download) {
+            hd_debug_print("Download xmltv source: {$this->xmltv_url_params[PARAM_URI]}");
+            if ($this->download_xmltv_source() !== 1) {
+                hd_debug_print("Download failed");
+                return;
+            }
+        }
+
+        hd_debug_print("Indexing channels");
+        $this->index_xmltv_channels();
+
+        if ($full) {
+            hd_debug_print("Indexing entries");
+            $this->index_xmltv_positions();
+        }
     }
 }

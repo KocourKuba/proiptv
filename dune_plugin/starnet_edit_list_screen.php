@@ -1351,7 +1351,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             $cached_xmltv_file = $this->plugin->get_cache_dir() . DIRECTORY_SEPARATOR . "$key.xmltv";
-            $locked = $epg_manager->get_indexer()->is_index_locked($key);
+            $locked = $epg_manager->is_index_locked($key);
             if ($locked) {
                 $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
             } else if (file_exists($cached_xmltv_file)) {
@@ -1360,12 +1360,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $dl_date = date("d.m H:i", $check_time_file);
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
                 $info = '';
-                foreach ($epg_manager->get_indexer()->get_indexes_info($key) as $index => $cnt) {
+                foreach ($epg_manager->get_indexes_info($key) as $index => $cnt) {
                     $cnt = ($cnt !== -1) ? $cnt : TR::load_string('err_error_no_data');
                     $info .= "$index: $cnt|";
                 }
 
-                $etag = $epg_manager->get_indexer()->get_curl_wrapper()->get_cached_etag($key);
+                $etag = $epg_manager->get_curl_wrapper()->get_cached_etag($key);
                 $info .= TR::load_string('edit_list_cache_suport__1',
                         empty($etag) ? TR::load_string('no') : TR::load_string('yes'));
 
