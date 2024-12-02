@@ -89,6 +89,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 ));
         }
 
+        if (!class_exists('SQLite3')) {
+            return Action_Factory::show_error(true, TR::t('err_too_old_player'),
+                array(
+                    TR::load_string('err_no_sqlite'),
+                    "Dune Product ID: " . get_product_id(),
+                    "Dune Firmware: " . get_raw_firmware_version(),
+                ));
+        }
+
         switch ($user_input->control_id) {
             case self::ACTION_CALL_REBOOT:
                 return Action_Factory::restart(true);

@@ -788,7 +788,6 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->get_playback_points()->load_points(true);
 
         $epg_manager = $this->plugin->get_epg_manager();
-        $epg_indexer = $epg_manager->get_indexer();
 
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         if ($use_playlist_picons !== PLAYLIST_PICONS) {
@@ -799,8 +798,8 @@ class Starnet_Tv implements User_Input_Handler
                 // Indexing xmltv file to make channel to display-name map and picons
                 // Parsing channels is cheap for all Dune variants
                 foreach ($all_sources as $params) {
-                    $epg_indexer->set_url_params($params);
-                    $epg_indexer->index_only_channels();
+                    $epg_manager->set_url_params($params);
+                    $epg_manager->check_and_index_xmltv_source(false);
                 }
             }
         }
