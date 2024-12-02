@@ -133,12 +133,20 @@ if (isset($params['ver'])) {
     $country = IP2Country($ip);
     $version = $params['ver'];
     $model =  $params['model'];
-    $firmware = isset($params['firmware']) ? $params['firmware'] : "";
     $serial = $params['serial'];
-    $revison = '';
-    if (!empty($firmware) && preg_match('/.+_(r\d{2})/', $firmware, $m)) {
-        $revison = $m[1];
+
+    $firmware = '';
+    $revision = '';
+    if (isset($params['firmware'])) {
+        $firmware = $params['firmware'];
+    } else if (preg_match("/firmware_version:\s+([0-9_rb]+)/", $_SERVER['HTTP_USER_AGENT'], $m)) {
+        $firmware = $m[1];
     }
+
+    if (!empty($firmware) && preg_match('/.+_(r\d{2})/', $firmware, $m)) {
+        $revision = $m[1];
+    }
+
     $logbuf = "========================================" . PHP_EOL;
     $logbuf .= "date      : $date" . PHP_EOL;
     $logbuf .= "url       : $request" . PHP_EOL;
@@ -147,6 +155,7 @@ if (isset($params['ver'])) {
     $logbuf .= "model     : $model" . PHP_EOL;
     $logbuf .= "firmware  : $firmware" . PHP_EOL;
     $logbuf .= "serial    : $serial" . PHP_EOL;
+    $logbuf .= "user_agent: {$_SERVER['HTTP_USER_AGENT']}" . PHP_EOL;
 
     write_to_log($logbuf, 'providers.log');
 
@@ -158,7 +167,7 @@ if (isset($params['ver'])) {
     if($DB->connect()) {
         $data['model'] = $model;
         $data['firmware'] = $firmware;
-        $data['revision'] = $revison;
+        $data['revision'] = $revision;
         $data['serial'] = $serial;
         $data['time'] = $time;
         $data['date'] = $date;
@@ -182,7 +191,7 @@ if (isset($params['ver'])) {
 
 if (empty($name)) {
     header("HTTP/1.1 404 Not found");
-    echo '["error" : "This version not supported"]';
+    echo '["error" : "This version is not supported"]';
 } else {
     header("HTTP/1.1 200 OK");
     echo file_get_contents($name);
