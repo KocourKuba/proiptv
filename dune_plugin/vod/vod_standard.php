@@ -69,11 +69,6 @@ class vod_standard extends Abstract_Vod
     protected $special_groups;
 
     /**
-     * @var M3uParser
-     */
-    protected $m3u_parser;
-
-    /**
      * @var array[]
      */
     protected $vod_m3u_indexes;
@@ -129,7 +124,6 @@ class vod_standard extends Abstract_Vod
     public function __construct(Default_Dune_Plugin $plugin)
     {
         $this->plugin = $plugin;
-        $this->m3u_parser = new M3uParser();
         $this->special_groups = new Hashed_Array();
         $this->perf = new Perf_Collector();
     }
@@ -302,7 +296,7 @@ class vod_standard extends Abstract_Vod
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
 
-        $entry = $this->get_m3u_parser()->getEntryByIdx($movie_id);
+        $entry = $this->plugin->get_vod_m3u_parser()->getEntryByIdx($movie_id);
         if ($entry === null) {
             hd_debug_print("Movie not found");
             $movie = null;
@@ -351,14 +345,6 @@ class vod_standard extends Abstract_Vod
         }
 
         return $movie;
-    }
-
-    /**
-     * @return M3uParser
-     */
-    public function get_m3u_parser()
-    {
-        return $this->m3u_parser;
     }
 
     /**
@@ -468,7 +454,7 @@ class vod_standard extends Abstract_Vod
 
         $this->perf->reset('start');
 
-        $this->vod_m3u_indexes = $this->m3u_parser->indexFile();
+        $this->vod_m3u_indexes = $this->plugin->get_vod_m3u_parser()->indexFile();
 
         $category_list = array();
         $category_index = array();
@@ -522,7 +508,7 @@ class vod_standard extends Abstract_Vod
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
 
         foreach ($this->vod_m3u_indexes[Vod_Category::FLAG_ALL_MOVIES] as $index) {
-            $title = $this->m3u_parser->getTitleByIdx($index);
+            $title = $this->plugin->get_vod_m3u_parser()->getTitleByIdx($index);
             if (empty($title)) continue;
 
             $search_in = utf8_encode(mb_strtolower($title, 'UTF-8'));
@@ -532,7 +518,7 @@ class vod_standard extends Abstract_Vod
                 $title = isset($match['title']) ? $match['title'] : $title;
             }
 
-            $entry = $this->m3u_parser->getEntryByIdx($index);
+            $entry = $this->plugin->get_vod_m3u_parser()->getEntryByIdx($index);
             if ($entry === null) continue;
 
             $poster_url = $entry->getEntryAttribute('tvg-logo');
@@ -586,7 +572,7 @@ class vod_standard extends Abstract_Vod
         $pos = $page_idx;
         while ($pos < $ubound) {
             $index = $indexes[$pos++];
-            $entry = $this->m3u_parser->getEntryByIdx($index);
+            $entry = $this->plugin->get_vod_m3u_parser()->getEntryByIdx($index);
             if ($entry === null || $entry->isM3U_Header()) continue;
 
             $title = $entry->getEntryTitle();
