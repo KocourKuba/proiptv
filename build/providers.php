@@ -126,7 +126,12 @@ $name = '';
 if (isset($params['ver'])) {
     $request = getenv("REQUEST_URI");
     $ver = explode('.', $params['ver']);
+
     $name ="providers_$ver[0].$ver[1].json";
+    if (!file_exists($name)) {
+        $name = '';
+    }
+
     $time = time();
     $date = date("Y.m.d H:i:s");
     $ip = get_ip();
@@ -148,14 +153,14 @@ if (isset($params['ver'])) {
     }
 
     $logbuf = "========================================" . PHP_EOL;
-    $logbuf .= "date      : $date" . PHP_EOL;
-    $logbuf .= "url       : $request" . PHP_EOL;
-    $logbuf .= "ip        : $ip ( $country )" . PHP_EOL;
-    $logbuf .= "version   : $version" . PHP_EOL;
-    $logbuf .= "model     : $model" . PHP_EOL;
-    $logbuf .= "firmware  : $firmware" . PHP_EOL;
-    $logbuf .= "serial    : $serial" . PHP_EOL;
-    $logbuf .= "user_agent: {$_SERVER['HTTP_USER_AGENT']}" . PHP_EOL;
+    $logbuf .= "date       : $date" . PHP_EOL;
+    $logbuf .= "url        : $request" . PHP_EOL;
+    $logbuf .= "ip         : $ip ( $country )" . PHP_EOL;
+    $logbuf .= "version    : $version" . PHP_EOL;
+    $logbuf .= "model      : $model" . PHP_EOL;
+    $logbuf .= "firmware   : $firmware" . PHP_EOL;
+    $logbuf .= "serial     : $serial" . PHP_EOL;
+    $logbuf .= "user_agent : {$_SERVER['HTTP_USER_AGENT']}" . PHP_EOL;
 
     write_to_log($logbuf, 'providers.log');
 
@@ -194,5 +199,6 @@ if (empty($name)) {
     echo '["error" : "This version is not supported"]';
 } else {
     header("HTTP/1.1 200 OK");
-    echo file_get_contents($name);
+    header("Content-Type: application/json; charset=utf-8");
+    readfile($name);
 }
