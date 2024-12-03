@@ -34,6 +34,7 @@ require_once 'catchup_params.php';
 require_once 'named_storage.php';
 require_once 'api/api_default.php';
 require_once 'm3u/M3uParser.php';
+require_once 'm3u/M3uTags.php';
 require_once 'lib/curl_wrapper.php';
 require_once 'lib/perf_collector.php';
 require_once 'lib/epg/epg_manager_json.php';
@@ -2392,6 +2393,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
 
         $playlist = $this->get_active_playlist();
+
         $ret = 0;
         $tmp_file = '';
         try {
@@ -2428,11 +2430,11 @@ class Default_Dune_Plugin implements DunePlugin
                 if ($playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
                     if (is_null($provider)) {
-                        throw new Exception("Unable to init provider " . $playlist);
+                        throw new Exception("Unable to init provider to download: " . $playlist);
                     }
 
                     if ($provider->get_provider_info($force) === false) {
-                        throw new Exception("Unable to get provider info");
+                        throw new Exception("Unable to get provider info to download: " . $playlist);
                     }
 
                     hd_debug_print("Load provider playlist to: $tmp_file");
@@ -2452,10 +2454,6 @@ class Default_Dune_Plugin implements DunePlugin
                     } else {
                         throw new Exception("Unknown playlist type");
                     }
-
-                    if (!isset($playlist->params[PARAM_ID_MAPPER])) {
-                        $playlist->params[PARAM_ID_MAPPER] = $this->get_setting(PARAM_ID_MAPPER, Entry::ATTR_CHANNEL_HASH);
-                    }
                 }
 
                 if (!$res || !file_exists($tmp_file)) {
@@ -2467,7 +2465,7 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 $contents = file_get_contents($tmp_file);
-                if (strpos($contents, '#EXTM3U') === false) {
+                if (strpos($contents, TAG_EXTM3U) === false) {
                     $exception_msg = TR::load_string('err_load_playlist') . "\n\n$contents";
                     throw new Exception($exception_msg);
                 }
@@ -2481,9 +2479,37 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             $mtime = filemtime($tmp_file);
+            $icon_replace_pattern = array();
+            if ($playlist->type === PARAM_PROVIDER) {
+                $provider = $this->get_current_provider();
+                if (is_null($provider)) {
+                    throw new Exception("Unable to init provider");
+                }
+
+                if ($provider->get_provider_info($force) === false) {
+                    throw new Exception("Unable to get provider info");
+                }
+
+                $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
+                $id_map = $provider->getConfigValue(CONFIG_ID_MAP);
+
+                if ($provider->getCredential(PARAM_REPLACE_ICON, SetupControlSwitchDefs::switch_on) === SetupControlSwitchDefs::switch_off) {
+                    $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
+                }
+
+                $icon_template = $provider->getIconsTemplate();
+                $store_matches = !empty($icon_template) && $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== XMLTV_PICONS;
+            } else {
+                $id_parser = '';
+                $store_matches = false;
+                $id_map = isset($playlist->params[PARAM_ID_MAPPER]) ? $playlist->params[PARAM_ID_MAPPER] : "";
+            }
+
             hd_debug_print("Parse playlist $tmp_file (timestamp: $mtime)");
             // Is already parsed?
-            $this->tv_m3u_parser->setupParser($tmp_file, $force);
+            $this->tv_m3u_parser->assignPlaylist($tmp_file, $force);
+            $this->tv_m3u_parser->setupParserParameters($id_map, $id_parser, $icon_replace_pattern, $store_matches);
+
             $count = $this->tv_m3u_parser->getEntriesCount();
             if ($count === 0) {
                 if (!$this->tv_m3u_parser->parseInMemory()) {
@@ -2559,7 +2585,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
         $tmp_file = get_temp_path($playlist_id . "_playlist.m3u8");
         if (file_exists($tmp_file)) {
-            $this->tv_m3u_parser->setupParser('');
+            $this->tv_m3u_parser->assignPlaylist('');
             hd_debug_print("clear_playlist_cache: remove $tmp_file");
             unlink($tmp_file);
         }
@@ -2634,7 +2660,7 @@ class Default_Dune_Plugin implements DunePlugin
                 }
 
                 $playlist_file = file_get_contents($tmp_file);
-                if (strpos($playlist_file, '#EXTM3U') === false) {
+                if (strpos($playlist_file, TAG_EXTM3U) === false) {
                     $exception_msg = TR::load_string('err_load_vod') . "\n\nPlaylist is not a M3U file\n\n$playlist_file";
                     HD::set_last_error("vod_last_error", $exception_msg);
                     throw new Exception($exception_msg);
@@ -2645,7 +2671,7 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             // Is already parsed?
-            $this->vod_m3u_parser->setupParser($tmp_file, $force);
+            $this->vod_m3u_parser->assignPlaylist($tmp_file, $force);
         } catch (Exception $ex) {
             hd_debug_print("Unable to load VOD playlist");
             print_backtrace_exception($ex);

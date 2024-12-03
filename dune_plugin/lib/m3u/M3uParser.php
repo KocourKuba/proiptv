@@ -49,6 +49,31 @@ class M3uParser extends Json_Serializer
     protected $xmltv_sources;
 
     /**
+     * @var bool
+     */
+    protected $store_matches = false;
+
+    /**
+     * @var string
+     */
+    protected $id_map = '';
+
+    /**
+     * @var string
+     */
+    protected $id_parser = '';
+
+    /**
+     * @var string
+     */
+    protected $icon_base_url = '';
+
+    /**
+     * @var array
+     */
+    protected $icon_replace_pattern = array();
+
+    /**
      * @var SplFileObject
      */
     private $m3u_file;
@@ -58,16 +83,39 @@ class M3uParser extends Json_Serializer
      */
     private $perf;
 
+    /**
+     * Attributes contains picon information
+     * "tvg-logo", "url-logo"
+     */
+    static $icon_attrs = array(ATTR_TVG_LOGO, ATTR_URL_LOGO);
+
     public function __construct()
     {
         $this->perf = new Perf_Collector();
+    }
+
+    public function get_icon_base_url()
+    {
+        return $this->icon_base_url;
+    }
+
+    /**
+     * @return void
+     */
+    protected function clear_data()
+    {
+        unset($this->m3u_entries, $this->m3u_info);
+        $this->m3u_entries = array();
+        $this->m3u_info = array();
+        $this->xmltv_sources = null;
+        $this->icon_base_url = '';
     }
 
     /**
      * @param string $file_name
      * @param bool $force
      */
-    public function setupParser($file_name, $force = false)
+    public function assignPlaylist($file_name, $force = false)
     {
         if ($this->file_name !== $file_name || $force) {
             $this->m3u_file = null;
@@ -89,14 +137,37 @@ class M3uParser extends Json_Serializer
     }
 
     /**
-     * @return void
+     * @param string $id_map
+     * @param string $id_parser
+     * @param array $icon_replace_pattern
+     * @param bool $store_matches
      */
-    protected function clear_data()
+    public function setupParserParameters($id_map, $id_parser, $icon_replace_pattern, $store_matches)
     {
-        unset($this->m3u_entries, $this->m3u_info);
-        $this->m3u_entries = array();
-        $this->m3u_info = array();
-        $this->xmltv_sources = null;
+        if (!empty($id_parser)) {
+            hd_debug_print("Using specific ID parser: $id_parser", true);
+            if ($store_matches) {
+                hd_debug_print("Using specific icon template", true);
+            }
+        }
+
+        if (!empty($id_map)) {
+            hd_debug_print("Using specific ID mapping: $id_map", true);
+        }
+
+        if (empty($id_map) && empty($id_parser)) {
+            hd_debug_print("No specific ID mapping or URL parser", true);
+        }
+
+        // replace patterns in playlist icon
+        if (!empty($icon_replace_pattern)) {
+            hd_debug_print("Using specific playlist icon replacement: " . json_encode($icon_replace_pattern), true);
+        }
+
+        $this->id_map = $id_map;
+        $this->id_parser = $id_parser;
+        $this->icon_replace_pattern = $icon_replace_pattern;
+        $this->store_matches = $store_matches;
     }
 
     /**
@@ -164,6 +235,10 @@ class M3uParser extends Json_Serializer
         if (is_null($tag)) {
             // untagged line must be a stream url
             $entry->setPath($line);
+
+            // all information parsed. Now can set additional conversion
+            $this->updateEntry($entry);
+
             return 1;
         }
 
@@ -249,6 +324,9 @@ class M3uParser extends Json_Serializer
                     break;
                 case 2: // parse m3u header done
                     $this->m3u_info[] = $entry;
+                    if (!empty($this->icon_base_url)) {
+                        $this->icon_base_url = $this->getHeaderAttribute(ATTR_URL_LOGO, TAG_EXTM3U);
+                    }
                     $entry = new Entry();
                     break;
                 default: // parse fail or parse partial, continue parse with same entry
@@ -266,6 +344,58 @@ class M3uParser extends Json_Serializer
     }
 
     ///////////////////////////////////////////////////////////
+
+    /**
+     * Parse channel id. Set from attributes or get from path
+     *
+     * @param Entry $entry
+     */
+    public function updateEntry(&$entry)
+    {
+        $channel_id = '';
+        // first use id url parser
+        if (!empty($this->id_parser) && preg_match($this->id_parser, $entry->getPath(), $matches)) {
+            if (isset($matches['id'])) {
+                $channel_id = $matches['id'];
+            }
+
+            if ($this->store_matches) {
+                $entry->setMatches($matches);
+            }
+        }
+
+        // try to get by id mapper
+        if (empty($channel_id) && !empty($this->id_map)) {
+            $channel_id = $entry->getEntryAttribute($this->id_map);
+        }
+
+        // search in attributes
+        if (empty($channel_id)) {
+            $channel_id = $entry->getEntryAttribute(ATTR_CHANNEL_ID_ATTRS);
+        }
+
+        // Nothing - using url hash as channel id
+        if (empty($channel_id)) {
+            $channel_id = Hashed_Array::hash($entry->getPath());
+        }
+
+        $entry->setChannelId($channel_id);
+
+        // make full url for icon if used base url
+        $icon = $entry->getAnyEntryAttribute(self::$icon_attrs);
+        if (!empty($this->icon_base_url) && !preg_match(HTTP_PATTERN, $icon)) {
+            $icon = $this->icon_base_url . $icon;
+        }
+
+        // Apply replacement pattern
+        if (!empty($this->icon_replace_pattern)) {
+            foreach ($this->icon_replace_pattern as $pattern) {
+                $icon = preg_replace($pattern['search'], $pattern['replace'], $icon);
+            }
+        }
+
+        $entry->setEntryIcon($icon);
+    }
 
     /**
      * get entry by idx
@@ -310,7 +440,7 @@ class M3uParser extends Json_Serializer
 
             if ($line[0] !== '#') break;
 
-            if (stripos($line, Entry::TAG_EXTINF) === 0) {
+            if (stripos($line, TAG_EXTINF) === 0) {
                 $entry = new Entry();
                 $tag = new ExtTagDefault();
                 $entry->addTag($tag->parseFullData($line));
@@ -439,25 +569,20 @@ class M3uParser extends Json_Serializer
     public function detectBestChannelId()
     {
         if ($this->getEntriesCount() === 0) {
-            return Entry::ATTR_CHANNEL_HASH;
+            return ATTR_CHANNEL_HASH;
         }
 
         $statistics = array(
-            Entry::ATTR_CHANNEL_ID => array('stat' => 0, 'items' => array()),
-            'tvg-id' => array('stat' => 0, 'items' => array()),
-            'tvg-name' => array('stat' => 0, 'items' => array()),
-            Entry::ATTR_CHANNEL_NAME => array('stat' => 0, 'items' => array()),
-            Entry::ATTR_CHANNEL_HASH => array('stat' => 0, 'items' => array())
+            ATTR_CHANNEL_ID => array('stat' => 0, 'items' => array()),
+            ATTR_TVG_ID => array('stat' => 0, 'items' => array()),
+            ATTR_TVG_NAME => array('stat' => 0, 'items' => array()),
+            ATTR_CHANNEL_NAME => array('stat' => 0, 'items' => array()),
+            ATTR_CHANNEL_HASH => array('stat' => 0, 'items' => array())
         );
 
         foreach ($this->getM3uEntries() as $entry) {
             foreach ($statistics as $name => $pair) {
-                if ($name === Entry::ATTR_CHANNEL_HASH) {
-                    $val = Hashed_Array::hash($entry->getPath());
-                } else {
-                    $val = $entry->getEntryAttribute($name);
-                }
-
+                $val = $entry->getEntryAttribute($name);
                 $val = empty($val) ? 'dupe' : $val;
                 if (array_key_exists($val, $pair['items'])) {
                     ++$statistics[$name]['stat'];
@@ -477,7 +602,7 @@ class M3uParser extends Json_Serializer
             }
         }
 
-        return (empty($min_key) || $min_key === Entry::ATTR_CHANNEL_ID) ? Entry::ATTR_CHANNEL_HASH : $min_key;
+        return (empty($min_key) || $min_key === ATTR_CHANNEL_ID) ? ATTR_CHANNEL_HASH : $min_key;
     }
 
     /**
