@@ -33,6 +33,7 @@ git.exe push --force  --tags  -- "origin" master:master
 echo copy to Dropbox
 copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\ >nul
 copy /Y .\dune_plugin_proiptv.zip E:\Dropbox\Public\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
+copy /Y .\dune_plugin_proiptv.zip .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 copy /Y .\build\providers_%VERSION%.json .\providers_%VERSION%.json >nul
 echo.
 
@@ -43,10 +44,12 @@ echo %CREDS%
   /log="%~dp0WinSCP.log" /ini=nul ^
   /command ^
     "open %CREDS%" ^
-	"cd update" ^
+	"cd update/current" ^
 	"put update_proiptv.tar.gz" ^
 	"put update_proiptv.xml" ^
-	"cd ../config" ^
+	"cd ../archive" ^
+	"put dune_plugin_proiptv.%VERSION%.%BUILD%.zip" ^
+	"cd ../../config" ^
 	"put providers_%VERSION%.json" ^
     "exit"
 
@@ -58,5 +61,6 @@ if %WINSCP_RESULT% equ 0 (
 )
 
 del .\providers_%VERSION%.json >nul
+del .\dune_plugin_proiptv.%VERSION%.%BUILD%.zip >nul
 
 exit /b %WINSCP_RESULT%
