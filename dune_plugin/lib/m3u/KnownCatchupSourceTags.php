@@ -24,27 +24,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+require_once 'lib/m3u/M3uTags.php';
+
 class KnownCatchupSourceTags
 {
-    const cu_unknown     = 'unknown';
-    const cu_default     = 'default'; // only replace variables
-    const cu_shift       = 'shift'; // ?utc=startUnix&lutc=nowUnix
-    const cu_append      = 'append'; // appending value specified in catchup-source attribute to the base channel url
-    const cu_archive     = 'archive'; // ?archive=startUnix&archive_end=toUnix
-    const cu_timeshift   = 'timeshift'; // timeshift=startUnix&timenow=nowUnix
-    const cu_flussonic   = 'flussonic';
-    const cu_xstreamcode = 'xs'; // xstream codes
-
-    public static $catchup_tags = array(
-        self::cu_default => array('default'),
-        self::cu_shift => array('shift', 'archive'),
-        self::cu_append => array('append'),
-        self::cu_archive => array('archive'),
-        self::cu_timeshift => array('timeshift'),
-        self::cu_flussonic => array('flussonic', 'flussonic-hls', 'fs', 'flussonic-ts'),
-        self::cu_xstreamcode => array('xc'),
-    );
-
     /**
      * @param string $tag
      * @param mixed $value
@@ -52,17 +35,29 @@ class KnownCatchupSourceTags
      */
     public static function is_tag($tag, $value)
     {
-        if (!isset(self::$catchup_tags[$tag]))
+        static $catchup_tags = array(
+            ATTR_CATCHUP_DEFAULT => array(ATTR_CATCHUP_DEFAULT), // only replace variables
+            ATTR_CATCHUP_SHIFT => array(ATTR_CATCHUP_SHIFT), // ?utc=startUnix&lutc=nowUnix
+            ATTR_CATCHUP_APPEND => array(ATTR_CATCHUP_APPEND), // appending value specified in catchup-source attribute to the base channel url
+            ATTR_CATCHUP_ARCHIVE => array(ATTR_CATCHUP_ARCHIVE), // ?archive=startUnix&archive_end=toUnix
+            ATTR_TIMESHIFT => array(ATTR_TIMESHIFT), // timeshift=startUnix&timenow=nowUnix
+            ATTR_CATCHUP_FLUSSONIC => array(ATTR_CATCHUP_FLUSSONIC, ATTR_CATCHUP_FLUSSONIC_HLS, ATTR_CATCHUP_FS, ATTR_CATCHUP_FLUSSONIC_TS),
+            ATTR_CATCHUP_XTREAM_CODES => array(ATTR_CATCHUP_XTREAM_CODES),
+        );
+
+        if (!isset($catchup_tags[$tag])) {
             return false;
+        }
 
         if (is_array($value)) {
             foreach ($value as $item) {
-                if (in_array($item, self::$catchup_tags[$tag])) {
+                if (in_array($item, $catchup_tags[$tag])) {
                     return true;
                 }
             }
             return false;
         }
-        return in_array($value, self::$catchup_tags[$tag]);
+
+        return in_array($value, $catchup_tags[$tag]);
     }
 }
