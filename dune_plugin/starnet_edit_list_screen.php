@@ -876,13 +876,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $contents = file_get_contents($tmp_file, false, null, 0, 512);
-                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
                     unlink($tmp_file);
                     throw new Exception(TR::load_string('err_empty_playlist') . " '$url'\n\n$contents");
                 }
 
                 $parser = new M3uParser();
-                $parser->setupParser($tmp_file);
+                $parser->assignPlaylist($tmp_file, true);
                 if ($type === CONTROL_PLAYLIST_IPTV) {
                     $parser->parseInMemory();
                     $id_mapper = $parser->detectBestChannelId();
@@ -970,7 +970,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $item->params[PARAM_PL_TYPE] = isset($user_input->{self::CONTROL_EDIT_TYPE}) ? $user_input->{self::CONTROL_EDIT_TYPE} : CONTROL_PLAYLIST_IPTV;
         if ($item->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV && !isset($item->params[PARAM_ID_MAPPER])) {
             $parser = new M3uParser();
-            $parser->setupParser($item->params[PARAM_URI]);
+            $parser->assignPlaylist($item->params[PARAM_URI], true);
             $parser->parseInMemory();
             $item->params[PARAM_ID_MAPPER] = $parser->detectBestChannelId();
         }
@@ -1039,7 +1039,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                         if (file_exists($tmp_file)) {
                             $contents = file_get_contents($tmp_file, false, null, 0, 512);
-                            if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                            if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
                                 unlink($tmp_file);
                                 throw new Exception("Bad M3U file: $line");
                             }
@@ -1123,7 +1123,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $contents = file_get_contents($selected_media_url->filepath, false, null, 0, 512);
-        if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+        if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
             hd_debug_print("Problem with import playlist: $selected_media_url->filepath");
             return Action_Factory::show_title_dialog(TR::t('err_bad_m3u_file'));
         }
@@ -1181,7 +1181,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             if ($user_input->selected_action === self::ACTION_FILE_PLAYLIST) {
                 $contents = file_get_contents($file);
-                if ($contents === false || strpos($contents, '#EXTM3U') === false) {
+                if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
                     hd_debug_print("Problem with import playlist: $file");
                     continue;
                 }

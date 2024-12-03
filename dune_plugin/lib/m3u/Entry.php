@@ -25,19 +25,10 @@
 
 require_once 'lib/json_serializer.php';
 require_once 'ExtTagDefault.php';
+require_once 'M3uTags.php';
 
 class Entry extends Json_Serializer
 {
-    const TAG_EXTM3U = '#EXTM3U';
-    const TAG_EXTINF = '#EXTINF';
-    const TAG_EXTGRP = '#EXTGRP';
-    const TAG_EXTHTTP = '#EXTHTTP';
-    const TAG_EXTVLCOPT = '#EXTVLCOPT';
-
-    const ATTR_CHANNEL_NAME = 'name';
-    const ATTR_CHANNEL_ID = 'channel_id_attributes';
-    const ATTR_CHANNEL_HASH = 'by_default';
-
     /**
      * @var bool
      */
@@ -56,7 +47,22 @@ class Entry extends Json_Serializer
     /**
      * @var string
      */
+    protected $channel_id;
+
+    /**
+     * @var string
+     */
+    protected $channel_icon;
+
+    /**
+     * @var string
+     */
     protected $group_title;
+
+    /**
+     * @var array
+     */
+    protected $matches = array();
 
     /**
      * @return boolean
@@ -80,7 +86,7 @@ class Entry extends Json_Serializer
         }
 
         $this->addTag($parsed_tag);
-        $this->is_header = ($parsed_tag->isTag(self::TAG_EXTM3U));
+        $this->is_header = ($parsed_tag->isTag(TAG_EXTM3U));
         return $parsed_tag;
     }
 
@@ -110,6 +116,38 @@ class Entry extends Json_Serializer
     public function setPath($path)
     {
         $this->path = $path;
+    }
+
+    /**
+     * @return string
+     */
+    public function getChannelId()
+    {
+        return $this->channel_id;
+    }
+
+    /**
+     * @param string $channel_id
+     */
+    public function setChannelId($channel_id)
+    {
+        $this->channel_id = $channel_id;
+    }
+
+    /**
+     * @return array
+     */
+    public function getMatches()
+    {
+        return $this->matches;
+    }
+
+    /**
+     * @param array $matches
+     */
+    public function setMatches($matches)
+    {
+        $this->matches = $matches[0];
     }
 
     /**
@@ -147,7 +185,7 @@ class Entry extends Json_Serializer
      */
     public function getEntryTag($tag)
     {
-        return isset($this->tags[$tag]) ? $this->tags[$tag] : null;
+        return $this->hasTag($tag) ? $this->tags[$tag] : null;
     }
 
     /**
@@ -181,7 +219,7 @@ class Entry extends Json_Serializer
      */
     public function getEntryTitle()
     {
-        $extInf = $this->getEntryTag(self::TAG_EXTINF);
+        $extInf = $this->getEntryTag(TAG_EXTINF);
         return is_null($extInf) ? '' : $extInf->getTagValue();
     }
 
@@ -194,9 +232,9 @@ class Entry extends Json_Serializer
     public function getGroupTitle()
     {
         if (is_null($this->group_title)) {
-            $this->group_title = $this->getEntryAttribute('group-title', self::TAG_EXTINF);
+            $this->group_title = $this->getEntryAttribute(ATTR_GROUP_TITLE, TAG_EXTINF);
             if (empty($this->group_title)) {
-                $exgGrp = $this->getEntryTag(self::TAG_EXTGRP);
+                $exgGrp = $this->getEntryTag(TAG_EXTGRP);
                 $this->group_title = is_null($exgGrp) ? null : $exgGrp->getTagValue();
                 if (empty($this->group_title)) {
                     $this->group_title = TR::load_string('no_category');
@@ -217,15 +255,18 @@ class Entry extends Json_Serializer
      */
     public function getEntryAttribute($attribute_name, $tag = null)
     {
-        if ($attribute_name === self::ATTR_CHANNEL_NAME) {
+        if ($attribute_name === ATTR_CHANNEL_NAME) {
             return $this->getEntryTitle();
         }
 
-        if ($attribute_name === self::ATTR_CHANNEL_ID) {
-            return $this->getEntryId();
+        if ($attribute_name === ATTR_CHANNEL_ID_ATTRS) {
+            // Attributes used to get entry ID
+            // "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
+            static $attrs = array(ATTR_CUID, ATTR_CHANNEL_ID, ATTR_CH_ID, ATTR_TVG_CHNO, ATTR_CH_NUMBER);
+            return $this->getAnyEntryAttribute($attrs);
         }
 
-        if ($attribute_name === self::ATTR_CHANNEL_HASH) {
+        if ($attribute_name === ATTR_CHANNEL_HASH) {
             return hash('crc32', $this->getPath());
         }
 
@@ -248,22 +289,6 @@ class Entry extends Json_Serializer
     //////////////////////////////////////////////////////////////////////////////
     /// Specialized methods to get specific data
     ///
-
-    /**
-     * Returns entry id. Need for identify channel if possible
-     *
-     * @return string
-     */
-    public function getEntryId()
-    {
-        /*
-         * Attributes used to get entry ID
-		 * "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
-         */
-        static $attrs = array("CUID", "channel-id", "ch-id", "tvg-chno", "ch-number");
-
-        return $this->getAnyEntryAttribute($attrs);
-    }
 
     /**
      * @param string|array $attrs
@@ -291,19 +316,23 @@ class Entry extends Json_Serializer
     }
 
     /**
+     * Set icon for channel
+     *
+     * @param string $icon
+     */
+    public function setEntryIcon($icon)
+    {
+        $this->channel_icon = $icon;
+    }
+
+    /**
      * Get icon for channel
      *
      * @return string
      */
-    public function getEntryIcon()
+    public function getChannelIcon()
     {
-        /*
-         * Attributes contains picon information
-		 * "tvg-logo", "url-logo"
-         */
-        static $attrs = array("tvg-logo", "url-logo");
-
-        return $this->getAnyEntryAttribute($attrs);
+        return $this->channel_icon;
     }
 
     /**
@@ -317,7 +346,7 @@ class Entry extends Json_Serializer
          * Attributes contains catchup information
 		 * "catchup", "catchup-type"
          */
-        static $attrs = array("catchup", "catchup-type");
+        static $attrs = array(ATTR_CATCHUP, ATTR_CATCHUP_TYPE);
 
         return $this->getAnyEntryAttribute($attrs);
     }
@@ -333,7 +362,7 @@ class Entry extends Json_Serializer
          * attributes contains catchup information
 		 * "catchup", "catchup-type"
          */
-        static $attrs = array("catchup-source", "catchup-template");
+        static $attrs = array(ATTR_CATCHUP_SOURCE, ATTR_CATCHUP_TEMPLATE);
 
         return $this->getAnyEntryAttribute($attrs);
     }
@@ -349,9 +378,9 @@ class Entry extends Json_Serializer
          * Attributes contains xmltv epg sources
 		 * "catchup", "catchup-type"
          */
-        static $attrs = array("url-tvg", "x-tvg-url");
+        static $attrs = array(ATTR_URL_TVG, ATTR_X_TVG_URL);
 
-        return $this->getAllEntryAttributes($attrs, self::TAG_EXTM3U);
+        return $this->getAllEntryAttributes($attrs, TAG_EXTM3U);
     }
 
     /**
@@ -379,10 +408,10 @@ class Entry extends Json_Serializer
      */
     public function getProtectedCode()
     {
-        static $adult_attrs = array("adult", "parent-code", "censored");
+        static $adult_attrs = array(ATTR_ADULT, ATTR_PARENT_CODE, ATTR_CENSORED);
 
-        $adult_code = $this->getAnyEntryAttribute($adult_attrs, self::TAG_EXTINF, $used_tag);
-        if ($used_tag === "adult" && (int)$adult_code !== 1) {
+        $adult_code = $this->getAnyEntryAttribute($adult_attrs, TAG_EXTINF, $used_tag);
+        if ($used_tag === ATTR_ADULT && (int)$adult_code !== 1) {
             $adult_code = '';
         }
 

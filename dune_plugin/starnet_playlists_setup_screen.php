@@ -93,13 +93,13 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         $playlist = $this->plugin->get_active_playlist();
         if (!is_null($playlist) && $playlist->type !== PARAM_PROVIDER) {
             $mapper_ops = array(
-                Entry::ATTR_CHANNEL_HASH => TR::t('hash_url'),
-                'tvg-id' => TR::t('attribute_name__1', 'tvg-id'),
-                'tvg-name' => TR::t('attribute_name__1', 'tvg-name'),
-                Entry::ATTR_CHANNEL_NAME => TR::t('channel_name'));
+                ATTR_CHANNEL_HASH => TR::t('hash_url'),
+                ATTR_TVG_ID => TR::t('attribute_name__1', ATTR_TVG_ID),
+                ATTR_TVG_NAME => TR::t('attribute_name__1', ATTR_TVG_NAME),
+                ATTR_CHANNEL_NAME => TR::t('channel_name'));
 
             if (!isset($playlist->params[PARAM_ID_MAPPER])) {
-                $playlist->params[PARAM_ID_MAPPER] = Entry::ATTR_CHANNEL_HASH;
+                $playlist->params[PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
             }
 
             hd_debug_print("Mapper param: {$playlist->params[PARAM_ID_MAPPER]}", true);
@@ -111,11 +111,11 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // catchup settings
 
-        $catchup_ops[KnownCatchupSourceTags::cu_unknown] = TR::t('by_default');
-        $catchup_ops[KnownCatchupSourceTags::cu_shift] = KnownCatchupSourceTags::cu_shift;
-        $catchup_ops[KnownCatchupSourceTags::cu_flussonic] = KnownCatchupSourceTags::cu_flussonic;
+        $catchup_ops[ATTR_CATCHUP_UNKNOWN] = TR::t('by_default');
+        $catchup_ops[ATTR_CATCHUP_SHIFT] = ATTR_CATCHUP_SHIFT;
+        $catchup_ops[ATTR_CATCHUP_FLUSSONIC] = ATTR_CATCHUP_FLUSSONIC;
         //$catchup_ops[KnownCatchupSourceTags::cu_xstreamcode] = KnownCatchupSourceTags::cu_xstreamcode;
-        $catchup_idx = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
+        $catchup_idx = $this->plugin->get_setting(PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
         Control_Factory::add_combobox($defs, $this, null, PARAM_USER_CATCHUP,
             TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, self::CONTROLS_WIDTH, true);
 

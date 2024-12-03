@@ -301,7 +301,7 @@ class vod_standard extends Abstract_Vod
             hd_debug_print("Movie not found");
             $movie = null;
         } else {
-            $logo = $entry->getEntryAttribute('tvg-logo');
+            $logo = $entry->getEntryAttribute(ATTR_TVG_LOGO);
             $title = $entry->getEntryTitle();
             $title_orig = '';
             $country = '';
@@ -521,7 +521,7 @@ class vod_standard extends Abstract_Vod
             $entry = $this->plugin->get_vod_m3u_parser()->getEntryByIdx($index);
             if ($entry === null) continue;
 
-            $poster_url = $entry->getEntryAttribute('tvg-logo');
+            $poster_url = $entry->getEntryAttribute(ATTR_TVG_LOGO);
             hd_debug_print("Found at $index movie '$title', poster url: '$poster_url'", true);
             $movies[] = new Short_Movie($index, $title, $poster_url);
         }
@@ -581,7 +581,7 @@ class vod_standard extends Abstract_Vod
             }
             $title = trim($title);
 
-            $movies[] = new Short_Movie($index, $title, $entry->getEntryAttribute('tvg-logo'));
+            $movies[] = new Short_Movie($index, $title, $entry->getEntryAttribute(ATTR_TVG_LOGO));
         }
 
         $this->get_next_page($query_id, $pos - $page_idx);

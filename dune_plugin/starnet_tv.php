@@ -40,8 +40,8 @@ class Starnet_Tv implements User_Input_Handler
 
     ///////////////////////////////////////////////////////////////////////
 
-    public static $tvg_id = array('tvg-id', 'tvg-name');
-    public static $tvg_archive = array('catchup-days', 'catchup-time', 'timeshift', 'arc-timeshift', 'arc-time', 'tvg-rec');
+    public static $epg_id_tags = array(ATTR_TVG_ID, ATTR_TVG_NAME, ATTR_CHANNEL_NAME);
+    public static $tvg_archives = array(ATTR_CATCHUP_DAYS, ATTR_CATCHUP_TIME, ATTR_TIMESHIFT, ATTR_ARC_TIMESHIFT, ATTR_ARC_TIME, ATTR_TVG_REC);
 
     static public $null_hashed_array;
     static public $null_ordered_array;
@@ -687,65 +687,23 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         $used_tag = '';
-        $playlist_archive = (int)$this->plugin->get_tv_m3u_parser()->getAnyHeaderAttribute(self::$tvg_archive, Entry::TAG_EXTM3U, $used_tag);
+        $playlist_archive = (int)$this->plugin->get_tv_m3u_parser()->getAnyHeaderAttribute(self::$tvg_archives, TAG_EXTM3U, $used_tag);
         if (!empty($used_tag)) {
-            if ($used_tag === 'catchup-time') {
+            if ($used_tag === ATTR_CATCHUP_TIME) {
                 $playlist_archive /= 86400;
             }
             hd_debug_print("Using global archive value: $playlist_archive days from tag $used_tag");
         }
 
-        $icon_base_url = $this->plugin->get_tv_m3u_parser()->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
-        if (!empty($icon_base_url)) {
-            hd_debug_print("Using base url for icons: $icon_base_url");
-        }
-
+        $provider = $this->plugin->get_current_provider();
         $this->plugin->vod = null;
         $this->plugin->vod_enabled = false;
         $domain_id = '';
-        $provider = $this->plugin->get_current_provider();
-        if (is_null($provider)) {
-            $replace_icons = false;
-            $icon_replace_pattern = '';
-            $playlist = $this->plugin->get_active_playlist();
-            if (isset($playlist->params[PARAM_ID_MAPPER])) {
-                $id_map = $playlist->params[PARAM_ID_MAPPER];
-                hd_debug_print("Use ID detection for playlist: $id_map");
-            } else {
-                $id_map = Entry::ATTR_CHANNEL_HASH;
-                hd_debug_print("Using ID: $id_map");
-            }
-        } else {
-            $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
-            if (!empty($id_parser)) {
-                hd_debug_print("using provider ({$provider->getId()}) specific id parsing: $id_parser");
-            }
-
-            $id_map = $provider->getConfigValue(CONFIG_ID_MAP);
-            if (!empty($id_map)) {
-                hd_debug_print("using provider ({$provider->getId()}) specific id mapping: $id_map");
-            }
-
-            if (empty($id_map) && empty($id_parser)) {
-                hd_debug_print("no provider specific id mapping, use M3U attributes");
-            }
-
+        if (!is_null($provider)) {
+            $domain_id = $provider->getCredential(MACRO_DOMAIN_ID);
             $icon_template = $provider->getIconsTemplate();
             if (!empty($icon_template)) {
-                hd_debug_print("using provider ({$provider->getId()}) specific icon mapping: $icon_template");
-            }
-
-            $domain_id = $provider->getCredential(MACRO_DOMAIN_ID);
-            if (!empty($domain_id)) {
-                hd_debug_print("using provider ({$provider->getId()}) specific domain id mapping: $domain_id");
-            }
-
-            $replace_icons = $provider->getCredential(PARAM_REPLACE_ICON, SetupControlSwitchDefs::switch_on);
-            if ($replace_icons === SetupControlSwitchDefs::switch_off) {
-                $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
-                if (!empty($icon_replace_pattern)) {
-                    hd_debug_print("using provider ({$provider->getId()}) playlist icon replacement icon: " . json_encode($icon_replace_pattern));
-                }
+                hd_debug_print("using provider ({$provider->getId()}) specific icon template: $icon_template");
             }
 
             $vod_class = $provider->get_vod_class();
@@ -883,29 +841,14 @@ class Starnet_Tv implements User_Input_Handler
         $playlist_group_channels = array();
         $number = 0;
         foreach ($pl_entries as $entry) {
-            if (!empty($id_parser) && preg_match($id_parser, $entry->getPath(), $matches)) {
-                $channel_id = $matches['id'];
-            } else {
-                $channel_id = $entry->getEntryAttribute(Entry::ATTR_CHANNEL_ID);
-                if (empty($channel_id) && !empty($id_map)) {
-                    $channel_id = $entry->getEntryAttribute($id_map);
-                }
-            }
-
-            if (empty($channel_id)) {
-                $channel_id = Hashed_Array::hash($entry->getPath());
-            }
-
-            // if group is not registered it was disabled
-            $channel_name = $entry->getEntryTitle();
             $group_title = $entry->getGroupTitle();
+            if ($disabled_group->in_order($group_title)) continue;
+
+            $channel_id = $entry->getChannelId();
+            $channel_name = $entry->getEntryTitle();
             if (empty($channel_name)) {
                 hd_print("Bad entry: " . $entry);
                 $channel_name = "no name";
-            }
-
-            if ($disabled_group->in_order($group_title)) {
-                continue;
             }
 
             /** @var Default_Channel $channel */
@@ -928,53 +871,32 @@ class Starnet_Tv implements User_Input_Handler
 
             $number++;
 
-            $epg_ids = $entry->getAllEntryAttributes(self::$tvg_id);
-            $epg_ids['name'] = $channel_name;
+            $epg_ids = $entry->getAllEntryAttributes(self::$epg_id_tags);
             $epg_ids['id'] = $channel_id;
             $epg_ids = array_unique($epg_ids);
 
-            $playlist_icon = $entry->getEntryIcon();
-            if (!empty($icon_base_url) && !preg_match(HTTP_PATTERN, $playlist_icon)) {
-                $playlist_icon = $icon_base_url . $playlist_icon;
-            }
-
-            // replace patterns in playlist icon
-            if ($replace_icons && !empty($icon_replace_pattern)) {
-                foreach ($icon_replace_pattern as $pattern) {
-                    $playlist_icon = preg_replace($pattern['search'], $pattern['replace'], $playlist_icon);
-                }
-            }
-
-            // playlist icons first in priority
             $icon_url = '';
-            if ($use_playlist_picons === PLAYLIST_PICONS || $use_playlist_picons === COMBINED_PICONS) {
-                $icon_url = $playlist_icon;
+            if ($use_playlist_picons !== XMLTV_PICONS) {
+                // playlist icons first in priority
+                $icon_url = $entry->getChannelIcon();
                 // special icon url generation based on icon url regex matching
-                if (!empty($icon_template) && isset($matches)) {
-                    $icon_url = str_replace(
-                        array(MACRO_SCHEME, MACRO_DOMAIN, MACRO_ID, MACRO_DOMAIN_ID),
-                        array($matches['scheme'], $matches['domain'], $channel_id, $domain_id),
-                        $icon_template);
+                if (!empty($icon_template)) {
+                    $matches = $entry->getMatches();
+                    if (!empty($matches)) {
+                        $icon_url = str_replace(
+                            array(MACRO_SCHEME, MACRO_DOMAIN, MACRO_ID, MACRO_DOMAIN_ID),
+                            array($matches['scheme'], $matches['domain'], $channel_id, $domain_id),
+                            $icon_template);
+                    }
                 }
             }
 
-            // if selected xmltv or combined mode looking into xmltv source
-            if ($use_playlist_picons !== PLAYLIST_PICONS && empty($icon_url)) {
-                $aliases = array();
-                if (isset($epg_ids['tvg-id'])) {
-                    $aliases[] = $epg_ids['tvg-id'];
-                }
-                if (isset($epg_ids['tvg-name'])) {
-                    $aliases[] = mb_convert_case($epg_ids['tvg-name'], MB_CASE_LOWER, "UTF-8");
-                }
-                if (isset($epg_ids['name'])) {
-                    $aliases[] = mb_convert_case($epg_ids['name'], MB_CASE_LOWER, "UTF-8");
-                }
-                $aliases = array_unique($aliases);
-
-                $icon_url = $epg_manager->get_picon($aliases);
+            // if selected xmltv or combined mode look into xmltv source
+            // in combined mode search is not performed if already got picon from playlist
+            if ($use_playlist_picons === XMLTV_PICONS || ($use_playlist_picons === COMBINED_PICONS && empty($icon_url))) {
+                $icon_url = $epg_manager->get_picon($epg_ids);
                 if (empty($icon_url)) {
-                    hd_debug_print("no picon for " . pretty_json_format($aliases), true);
+                    hd_debug_print("no picon for " . pretty_json_format($epg_ids), true);
                 }
             }
 
@@ -985,8 +907,8 @@ class Starnet_Tv implements User_Input_Handler
             $stream_path = $entry->getPath();
 
             $used_tag = '';
-            $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archive, Entry::TAG_EXTINF, $used_tag);
-            if ($used_tag === 'catchup-time') {
+            $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archives, TAG_EXTINF, $used_tag);
+            if ($used_tag === ATTR_CATCHUP_TIME) {
                 $archive /= 86400;
             }
 
@@ -1002,12 +924,12 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             $ext_params = array();
-            $ext_tag = $entry->getEntryTag(Entry::TAG_EXTVLCOPT);
+            $ext_tag = $entry->getEntryTag(TAG_EXTVLCOPT);
             if ($ext_tag !== null) {
                 $ext_params[PARAM_EXT_VLC_OPTS] = $ext_tag->getTagValues();
             }
 
-            $ext_tag = $entry->getEntryTag(Entry::TAG_EXTHTTP);
+            $ext_tag = $entry->getEntryTag(TAG_EXTHTTP);
             if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
                 $ext_params[PARAM_EXT_HTTP] = $ext_http_values;
             }
@@ -1018,14 +940,11 @@ class Starnet_Tv implements User_Input_Handler
                 $protected = $enable_protected;
             }
 
-            $group_logo = $entry->getEntryAttribute('group-logo');
+            $group_logo = $entry->getEntryAttribute(ATTR_GROUP_LOGO);
             if (!empty($group_logo) && $parent_group->get_icon_url() === Default_Group::DEFAULT_GROUP_ICON) {
-                if (!preg_match(HTTP_PATTERN, $group_logo)) {
-                    if (!empty($icon_base_url)) {
-                        $group_logo = $icon_base_url . $group_logo;
-                    } else {
-                        $group_logo = Default_Group::DEFAULT_GROUP_ICON;
-                    }
+                $icon_base_url = $this->plugin->get_tv_m3u_parser()->get_icon_base_url();
+                if (!empty($icon_base_url) && !preg_match(HTTP_PATTERN, $group_logo)) {
+                    $group_logo = $icon_base_url . $group_logo;
                 }
 
                 hd_debug_print("Set picon for group {$parent_group->get_title()} :  $group_logo", true);
@@ -1047,7 +966,7 @@ class Starnet_Tv implements User_Input_Handler
                 $number,
                 $epg_ids,
                 $protected,
-                (int)$entry->getEntryAttribute('tvg-shift', Entry::TAG_EXTINF),
+                (int)$entry->getEntryAttribute(ATTR_TVG_SHIFT, TAG_EXTINF),
                 $ext_params,
                 $disabled
             );
@@ -1247,12 +1166,12 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             if (empty($catchup) && strpos($stream_url, 'mpegts') !== false) {
-                $catchup = KnownCatchupSourceTags::cu_flussonic;
+                $catchup = ATTR_CATCHUP_FLUSSONIC;
                 hd_debug_print("force catchup params for mpegts: $catchup", true);
             }
 
-            $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, KnownCatchupSourceTags::cu_unknown);
-            if ($user_catchup !== KnownCatchupSourceTags::cu_unknown) {
+            $user_catchup = $this->plugin->get_setting(PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
+            if ($user_catchup !== ATTR_CATCHUP_UNKNOWN) {
                 $catchup = $user_catchup;
                 hd_debug_print("force set user catchup: $catchup");
             }
@@ -1262,28 +1181,28 @@ class Starnet_Tv implements User_Input_Handler
                 // channel catchup override playlist, user and config settings
                 $catchup = $channel_catchup;
             } else if (empty($catchup)) {
-                $catchup = KnownCatchupSourceTags::cu_shift;
+                $catchup = ATTR_CATCHUP_SHIFT;
             }
 
             $archive_url = $channel->get_archive_url();
             hd_debug_print("using catchup params: $catchup", true);
             if (empty($archive_url)) {
-                if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_shift, $catchup)) {
+                if (KnownCatchupSourceTags::is_tag(ATTR_CATCHUP_SHIFT, $catchup)) {
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'utc=${start}&lutc=${timestamp}';
                     hd_debug_print("archive url template (shift): $archive_url", true);
-                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_timeshift, $catchup)) {
+                } else if (KnownCatchupSourceTags::is_tag(ATTR_TIMESHIFT, $catchup)) {
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'timeshift=${start}&timenow=${timestamp}';
                     hd_debug_print("archive url template (timeshift): $archive_url", true);
-                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_archive, $catchup)) {
+                } else if (KnownCatchupSourceTags::is_tag(ATTR_CATCHUP_ARCHIVE, $catchup)) {
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                         . 'archive=${start}&archive_end=${end}';
                     hd_debug_print("archive url template (archive): $archive_url", true);
-                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_flussonic, $catchup)
+                } else if (KnownCatchupSourceTags::is_tag(ATTR_CATCHUP_FLUSSONIC, $catchup)
                     && preg_match("#^(https?://[^/]+)/(.+)/([^/.?]+)(\.m3u8)?(\?.+=.+)?$#", $stream_url, $m)) {
                     $params = isset($m[5]) ? $m[5] : '';
                     if ($m[3] === 'mpegts') {
@@ -1293,7 +1212,7 @@ class Starnet_Tv implements User_Input_Handler
                         $archive_url = "$m[1]/$m[2]/$m[3]-" . '${start}' . "-14400$m[4]$params";
                     }
                     hd_debug_print("archive url template (flussonic): $archive_url", true);
-                } else if (KnownCatchupSourceTags::is_tag(KnownCatchupSourceTags::cu_xstreamcode, $catchup)
+                } else if (KnownCatchupSourceTags::is_tag(ATTR_CATCHUP_XTREAM_CODES, $catchup)
                     && preg_match("#^(https?://[^/]+)/(?:live/)?([^/]+)/([^/]+)/([^/.]+)(\.m3u8?)?$#", $stream_url, $m)) {
                     $extension = $m[6] ?: '.ts';
                     $archive_url = "$m[1]/timeshift/$m[2]/$m[3]/240/{Y}-{m}-{d}:{H}-{M}/$m[5].$extension";
@@ -1416,11 +1335,11 @@ class Starnet_Tv implements User_Input_Handler
 
         if (!empty($ext_params[PARAM_EXT_HTTP])) {
             foreach ($ext_params[PARAM_EXT_HTTP] as $key => $value) {
-                $ext_params[Entry::TAG_EXTHTTP][strtolower($key)] = $value;
+                $ext_params[TAG_EXTHTTP][strtolower($key)] = $value;
             }
 
-            if (isset($ext_params[Entry::TAG_EXTHTTP]['user-agent'])) {
-                $ch_useragent = "User-Agent: " . $ext_params[Entry::TAG_EXTHTTP]['user-agent'];
+            if (isset($ext_params[TAG_EXTHTTP]['user-agent'])) {
+                $ch_useragent = "User-Agent: " . $ext_params[TAG_EXTHTTP]['user-agent'];
 
                 // escape commas for dune_params
                 if (strpos($ch_useragent, ",,") !== false) {
