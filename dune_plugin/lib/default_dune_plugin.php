@@ -160,6 +160,16 @@ class Default_Dune_Plugin implements DunePlugin
     protected $cur_provider;
 
     /**
+     * @var M3uParser
+     */
+    protected $tv_m3u_parser;
+
+    /**
+     * @var M3uParser
+     */
+    protected $vod_m3u_parser;
+
+    /**
      * @var Perf_Collector
      */
     protected $perf;
@@ -179,6 +189,8 @@ class Default_Dune_Plugin implements DunePlugin
         $this->epg_presets = new Hashed_Array();
         $this->image_libs = new Hashed_Array();
         $this->perf = new Perf_Collector();
+        $this->tv_m3u_parser = new M3uParser();
+        $this->vod_m3u_parser = new M3uParser();
     }
 
     public function get_plugin_cookies()
@@ -219,14 +231,6 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
-     * @return Hashed_Array<api_default>
-     */
-    public function get_providers()
-    {
-        return $this->providers;
-    }
-
-    /**
      * @return Hashed_Array<array>
      */
     public function get_epg_presets()
@@ -234,6 +238,29 @@ class Default_Dune_Plugin implements DunePlugin
         return $this->epg_presets;
     }
 
+    /**
+     * @return M3uParser
+     */
+    public function get_vod_m3u_parser()
+    {
+        return $this->vod_m3u_parser;
+    }
+
+    /**
+     * @return M3uParser
+     */
+    public function get_tv_m3u_parser()
+    {
+        return $this->tv_m3u_parser;
+    }
+
+    /**
+     * @return Hashed_Array<api_default>
+     */
+    public function get_providers()
+    {
+        return $this->providers;
+    }
     /**
      * @return api_default|null
      */
@@ -2456,16 +2483,16 @@ class Default_Dune_Plugin implements DunePlugin
             $mtime = filemtime($tmp_file);
             hd_debug_print("Parse playlist $tmp_file (timestamp: $mtime)");
             // Is already parsed?
-            $this->tv->get_m3u_parser()->setupParser($tmp_file, $force);
-            $count = $this->tv->get_m3u_parser()->getEntriesCount();
+            $this->tv_m3u_parser->setupParser($tmp_file, $force);
+            $count = $this->tv_m3u_parser->getEntriesCount();
             if ($count === 0) {
-                if (!$this->tv->get_m3u_parser()->parseInMemory()) {
+                if (!$this->tv_m3u_parser->parseInMemory()) {
                     $contents = @file_get_contents($tmp_file);
                     $exception_msg = TR::load_string('err_load_playlist') . " Incorrect playlist!\n\n$contents";
                     throw new Exception($exception_msg);
                 }
 
-                $count = $this->tv->get_m3u_parser()->getEntriesCount();
+                $count = $this->tv_m3u_parser->getEntriesCount();
                 if ($count === 0) {
                     $contents = @file_get_contents($tmp_file);
                     $exception_msg = TR::load_string('err_load_playlist') . " Empty playlist!\n\n$contents";
@@ -2532,7 +2559,7 @@ class Default_Dune_Plugin implements DunePlugin
         }
         $tmp_file = get_temp_path($playlist_id . "_playlist.m3u8");
         if (file_exists($tmp_file)) {
-            $this->tv->get_m3u_parser()->setupParser('');
+            $this->tv_m3u_parser->setupParser('');
             hd_debug_print("clear_playlist_cache: remove $tmp_file");
             unlink($tmp_file);
         }
@@ -2618,7 +2645,7 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             // Is already parsed?
-            $this->vod->get_m3u_parser()->setupParser($tmp_file, $force);
+            $this->vod_m3u_parser->setupParser($tmp_file, $force);
         } catch (Exception $ex) {
             hd_debug_print("Unable to load VOD playlist");
             print_backtrace_exception($ex);
@@ -2677,7 +2704,7 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print("saved playlist sources: $saved_sources", true);
 
         $playlist_sources = new Hashed_Array();
-        foreach ($this->tv->get_m3u_parser()->getXmltvSources() as $m3u8source) {
+        foreach ($this->tv_m3u_parser->getXmltvSources() as $m3u8source) {
             if (!preg_match(HTTP_PATTERN, $m3u8source, $m)
                 || preg_match("/jtv.?\.zip$/", basename($m3u8source))) continue;
 
