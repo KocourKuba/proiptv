@@ -337,11 +337,23 @@ class Epg_Manager_Xmltv
     /**
      * Get picon for channel
      *
-     * @param array $aliases
+     * @param array $epg_ids
      * @return string
      */
-    public function get_picon($aliases)
+    public function get_picon($epg_ids)
     {
+        $aliases = array();
+        if (isset($epg_ids[ATTR_TVG_ID])) {
+            $aliases[] = $epg_ids[ATTR_TVG_ID];
+        }
+        if (isset($epg_ids[ATTR_TVG_NAME])) {
+            $aliases[] = mb_convert_case($epg_ids[ATTR_TVG_NAME], MB_CASE_LOWER, "UTF-8");
+        }
+        if (isset($epg_ids[ATTR_CHANNEL_NAME])) {
+            $aliases[] = mb_convert_case($epg_ids[ATTR_CHANNEL_NAME], MB_CASE_LOWER, "UTF-8");
+        }
+        $aliases = array_unique($aliases);
+
         $placeHolders = '';
         foreach ($aliases as $alias) {
             if (empty($alias)) continue;
