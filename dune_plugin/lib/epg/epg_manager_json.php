@@ -88,14 +88,14 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             if (strpos($epg_url, MACRO_ID) !== false) {
                 hd_debug_print("using ID: {$channel->get_id()}", true);
                 $epg_url = str_replace(MACRO_ID, $channel->get_id(), $epg_url);
-                $epg_ids['tvg-id'] = $channel->get_id();
+                $epg_ids[ATTR_TVG_ID] = $channel->get_id();
             }
 
             if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
                 $epg_id = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
             } else {
                 $epg_id = '';
-                $tvg_keys = array('tvg-id', 'tvg-name', 'name', 'id');
+                $tvg_keys = array(ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id');
                 foreach ($tvg_keys as $key) {
                     if (isset($epg_ids[$key])) {
                         $epg_id = $epg_ids[$key];
