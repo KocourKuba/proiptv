@@ -82,11 +82,6 @@ class Starnet_Tv implements User_Input_Handler
     protected $special_groups;
 
     /**
-     * @var M3uParser
-     */
-    protected $m3u_parser;
-
-    /**
      * @var Perf_Collector
      */
     protected $perf;
@@ -108,7 +103,6 @@ class Starnet_Tv implements User_Input_Handler
         $this->groups = new Hashed_Array();
         $this->channels = new Hashed_Array();
         $this->special_groups = new Hashed_Array();
-        $this->m3u_parser = new M3uParser();
         $this->perf = new Perf_Collector();
     }
 
@@ -118,14 +112,6 @@ class Starnet_Tv implements User_Input_Handler
     public static function get_handler_id()
     {
         return static::ID . '_handler';
-    }
-
-    /**
-     * @return M3uParser
-     */
-    public function get_m3u_parser()
-    {
-        return $this->m3u_parser;
     }
 
     /**
@@ -701,7 +687,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         $used_tag = '';
-        $playlist_archive = (int)$this->m3u_parser->getAnyHeaderAttribute(self::$tvg_archive, Entry::TAG_EXTM3U, $used_tag);
+        $playlist_archive = (int)$this->plugin->get_tv_m3u_parser()->getAnyHeaderAttribute(self::$tvg_archive, Entry::TAG_EXTM3U, $used_tag);
         if (!empty($used_tag)) {
             if ($used_tag === 'catchup-time') {
                 $playlist_archive /= 86400;
@@ -709,7 +695,7 @@ class Starnet_Tv implements User_Input_Handler
             hd_debug_print("Using global archive value: $playlist_archive days from tag $used_tag");
         }
 
-        $icon_base_url = $this->m3u_parser->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
+        $icon_base_url = $this->plugin->get_tv_m3u_parser()->getHeaderAttribute('url-logo', Entry::TAG_EXTM3U);
         if (!empty($icon_base_url)) {
             hd_debug_print("Using base url for icons: $icon_base_url");
         }
@@ -815,7 +801,7 @@ class Starnet_Tv implements User_Input_Handler
         $disabled_group = $this->get_disabled_group_ids();
         $groups_order = $this->get_groups_order();
         $playlist_groups = new Ordered_Array();
-        $pl_entries = $this->m3u_parser->getM3uEntries();
+        $pl_entries = $this->plugin->get_tv_m3u_parser()->getM3uEntries();
         foreach ($pl_entries as $entry) {
             $title = $entry->getGroupTitle();
             if ($playlist_groups->in_order($title)
@@ -1248,7 +1234,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if ((int)$archive_ts !== -1) {
-            foreach ($this->m3u_parser->getM3uInfo() as $entry) {
+            foreach ($this->plugin->get_tv_m3u_parser()->getM3uInfo() as $entry) {
                 $catchup = $entry->getCatchup();
                 if (!empty($catchup)) {
                     break;
