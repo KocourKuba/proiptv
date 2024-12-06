@@ -1,4 +1,8 @@
-﻿### Version 5.1.946
+﻿### Version 5.1.950
+- Added checking and setting default settings for plugin configuration
+  and the received settings of the provider's account in case of changes in important parameters and updates of old settings.
+
+### Version 5.1.946
 - Added a secondary internet source for TV Team provider
 - By the default display of the VOD category could be turned off
 - Additional provider parameters were not always saved
