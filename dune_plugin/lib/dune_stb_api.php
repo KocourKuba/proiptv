@@ -1687,7 +1687,7 @@ function is_newer_versions()
 {
     $versions = get_parsed_firmware_ver();
 
-    return (isset($versions['rev_number']) && $versions['rev_number'] > 10);
+    return (isset($versions['rev_number']) && $versions['rev_number'] > 20);
 }
 
 
