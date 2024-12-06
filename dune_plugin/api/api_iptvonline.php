@@ -37,6 +37,16 @@ class api_iptvonline extends api_default
     protected $device;
 
     /**
+     * @var array
+     */
+    protected $servers = array();
+
+    /**
+     * @var array
+     */
+    protected $playlists = array();
+
+    /**
      * @inheritDoc
      */
     public function request_provider_token($force = false)
@@ -344,6 +354,28 @@ class api_iptvonline extends api_default
             $this->account_info = null;
         } else {
             hd_debug_print("Can't set playlist: " . json_encode($response));
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function set_provider_defaults()
+    {
+        $servers = $this->GetServers();
+        if (!empty($servers)) {
+            $idx = $this->getCredential(MACRO_SERVER_ID);
+            if (empty($idx)) {
+                $this->setCredential(MACRO_SERVER_ID, key($servers));
+            }
+        }
+
+        $playlists = $this->GetPlaylists();
+        if (!empty($playlists)) {
+            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
+            if (empty($idx)) {
+                $this->setCredential(MACRO_PLAYLIST_ID, (string)key($playlists));
+            }
         }
     }
 

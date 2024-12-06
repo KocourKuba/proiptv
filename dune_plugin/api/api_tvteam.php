@@ -32,6 +32,11 @@ class api_tvteam extends api_default
     const TOKEN_FILE = "%s.token";
 
     /**
+     * @var array
+     */
+    protected $servers = array();
+
+    /**
      * @inheritDoc
      */
     public function replace_macros($string)
@@ -173,7 +178,10 @@ class api_tvteam extends api_default
             HD::set_last_error("rq_last_error", null);
             $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
             hd_debug_print("request provider token response: " . pretty_json_format($response), true);
-            if ($response->status === 0 || !empty($response->error)) {
+            if (!$response) {
+                HD::set_last_error("pl_last_error", "Bad provider response");
+                HD::set_last_error("rq_last_error", "Bad provider response");
+            } else if ($response->status === 0 || !empty($response->error)) {
                 HD::set_last_error("pl_last_error", $response->error);
                 HD::set_last_error("rq_last_error", $response->error);
             } else if (isset($response->data->sessionId)) {

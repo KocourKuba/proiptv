@@ -43,6 +43,11 @@ require_once 'api_default.php';
 class api_cbilling extends api_default
 {
     /**
+     * @var array
+     */
+    protected $servers = array();
+
+    /**
      * @param bool $force
      * @return bool|object
      */
@@ -139,5 +144,19 @@ class api_cbilling extends api_default
         }
 
         return array();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function set_provider_defaults()
+    {
+        $servers = $this->GetServers();
+        if (!empty($servers)) {
+            $idx = $this->getCredential(MACRO_SERVER_ID);
+            if (empty($idx)) {
+                $this->setCredential(MACRO_SERVER_ID, key($servers));
+            }
+        }
     }
 }

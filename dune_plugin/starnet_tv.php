@@ -1240,9 +1240,6 @@ class Starnet_Tv implements User_Input_Handler
             $streams = $provider->GetStreams();
             if (!empty($streams)) {
                 $idx = $provider->getCredential(MACRO_STREAM_ID);
-                if (empty($idx)) {
-                    $idx = key($streams);
-                }
                 $force_detect = ($streams[$idx] === 'MPEG-TS');
             }
 

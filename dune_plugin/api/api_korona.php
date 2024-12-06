@@ -32,6 +32,11 @@ class api_korona extends api_default
     const REFRESH_TOKEN_FILE = "%s.refresh_token";
 
     /**
+     * @var array
+     */
+    protected $servers = array();
+
+    /**
      * @inheritDoc
      */
     public function request_provider_token($force = false)
@@ -169,6 +174,20 @@ class api_korona extends api_default
         }
 
         return $this->servers;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function set_provider_defaults()
+    {
+        $servers = $this->GetServers();
+        if (!empty($servers)) {
+            $idx = $this->getCredential(MACRO_SERVER_ID);
+            if (empty($idx)) {
+                $this->setCredential(MACRO_SERVER_ID, key($servers));
+            }
+        }
     }
 
     /**

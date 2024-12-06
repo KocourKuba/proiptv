@@ -124,44 +124,12 @@ class api_default
     /**
      * @var array
      */
-    protected $servers = array();
-
-    /**
-     * @var array
-     */
-    protected $domains = array();
-
-    /**
-     * @var array
-     */
-    protected $devices = array();
-
-    /**
-     * @var array
-     */
-    protected $streams = array();
-
-    /**
-     * @var array
-     */
-    protected $qualities = array();
-
-    /**
-     * @var array
-     */
     protected $packages = array();
 
     /**
      * @var Curl_Wrapper
      */
     protected $curl_wrapper;
-
-    /**
-     * @var array
-     */
-    protected $playlists = array();
-
-    protected $auth;
 
     public function __construct(DunePlugin $plugin)
     {
@@ -314,61 +282,51 @@ class api_default
             hd_debug_print("incorrect provider info: $playlist_id");
         }
 
-        if ($this->get_provider_info() === false) {
+        $this->set_config_defaults();
+
+        if ($this->get_provider_info() !== false) {
+            $this->set_provider_defaults();
+        } else {
             hd_debug_print("Can't get provider info!");
-            return;
         }
+    }
 
-        // set credentials values if it not set
-        $streams = $this->GetStreams();
-        if (!empty($streams)) {
-            $idx = $this->getCredential(MACRO_STREAM_ID);
-            if (empty($idx)) {
-                $this->setCredential(MACRO_STREAM_ID, key($streams));
+    /**
+     * Set default values if it present in provider config but not set in user credentials
+     *
+     * @return void
+     */
+    public function set_config_defaults()
+    {
+        hd_debug_print(null, true);
+
+        static $config_items = array(
+            CONFIG_STREAMS => MACRO_STREAM_ID,
+            CONFIG_DOMAINS => MACRO_DOMAIN_ID,
+            CONFIG_SERVERS => MACRO_SERVER_ID,
+            CONFIG_DEVICES => MACRO_DEVICE_ID,
+            CONFIG_QUALITIES => MACRO_QUALITY_ID,
+            CONFIG_PLAYLISTS => MACRO_PLAYLIST_ID,
+        );
+
+        foreach ($config_items as $name => $param) {
+            $values = $this->getConfigValue($name);
+            if (!empty($values)) {
+                $idx = $this->getCredential($param);
+                if (empty($idx)) {
+                    $this->setCredential($param, (string)key($values));
+                }
             }
         }
+    }
 
-        $domains = $this->GetDomains();
-        if (!empty($domains)) {
-            $idx = $this->getCredential(MACRO_DOMAIN_ID);
-            if (empty($idx)) {
-                $this->setCredential(MACRO_DOMAIN_ID, key($domains));
-            }
-        }
-
-        $servers = $this->GetServers();
-        if (!empty($servers)) {
-            $idx = $this->getCredential(MACRO_SERVER_ID);
-            if (empty($idx)) {
-                $this->setCredential(MACRO_SERVER_ID, key($servers));
-            }
-        }
-
-        $devices = $this->GetDevices();
-        if (!empty($devices)) {
-            $idx = $this->getCredential(MACRO_DEVICE_ID);
-            if (empty($idx)) {
-                $this->setCredential(MACRO_DEVICE_ID, key($devices));
-            }
-        }
-
-        $qualities = $this->GetQualities();
-        if (!empty($qualities)) {
-            $idx = $this->getCredential(MACRO_QUALITY_ID);
-            if (empty($idx)) {
-                $this->setCredential(MACRO_QUALITY_ID, key($qualities));
-            }
-        }
-
-        $playlists = $this->GetPlaylists();
-        if (!empty($playlists)) {
-            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
-            if ($idx === '') {
-                hd_debug_print(MACRO_PLAYLIST_ID . " not set");
-                $idx = (string)key($playlists);
-                $this->setCredential(MACRO_PLAYLIST_ID, $idx);
-            }
-        }
+    /**
+     * Set default values if it present in user account but not set in user credentials
+     *
+     * @return void
+     */
+    public function set_provider_defaults()
+    {
     }
 
     /**
@@ -580,18 +538,14 @@ class api_default
     }
 
     /**
-     * returns list of provider servers
+     * returns list of provider streams
      * @return array|null
      */
     public function GetStreams()
     {
         hd_debug_print(null, true);
 
-        if (empty($this->streams)) {
-            $this->streams = $this->getConfigValue(CONFIG_STREAMS);
-        }
-
-        return $this->streams;
+        return $this->getConfigValue(CONFIG_STREAMS);
     }
 
     /**
@@ -605,18 +559,14 @@ class api_default
     }
 
     /**
-     * returns list of provider servers
+     * returns list of provider domains
      * @return array|null
      */
     public function GetDomains()
     {
         hd_debug_print(null, true);
 
-        if (empty($this->domains)) {
-            $this->domains = $this->getConfigValue(CONFIG_DOMAINS);
-        }
-
-        return $this->domains;
+        return $this->getConfigValue(CONFIG_DOMAINS);
     }
 
     /**
@@ -627,41 +577,29 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        if (empty($this->servers)) {
-            $this->servers = $this->getConfigValue(CONFIG_SERVERS);
-        }
-
-        return $this->servers;
+        return $this->getConfigValue(CONFIG_SERVERS);
     }
 
     /**
-     * returns list of provider servers
+     * returns list of provider devices
      * @return array|null
      */
     public function GetDevices()
     {
         hd_debug_print(null, true);
 
-        if (empty($this->devices)) {
-            $this->devices = $this->getConfigValue(CONFIG_DEVICES);
-        }
-
-        return $this->devices;
+        return $this->getConfigValue(CONFIG_DEVICES);
     }
 
     /**
-     * returns list of provider servers
+     * returns list of provider qualities
      * @return array|null
      */
     public function GetQualities()
     {
         hd_debug_print(null, true);
 
-        if (empty($this->qualities)) {
-            $this->qualities = $this->getConfigValue(CONFIG_QUALITIES);
-        }
-
-        return $this->qualities;
+        return $this->getConfigValue(CONFIG_QUALITIES);
     }
 
     /**
@@ -672,11 +610,7 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        if (empty($this->playlists)) {
-            $this->playlists = $this->getConfigValue(CONFIG_PLAYLISTS);
-        }
-
-        return $this->playlists;
+        return $this->getConfigValue(CONFIG_PLAYLISTS);
     }
 
     /**
