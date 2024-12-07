@@ -2266,7 +2266,7 @@ class Default_Dune_Plugin implements DunePlugin
         $move_parameters = array(PARAM_SHOW_ALL, PARAM_SHOW_FAVORITES, PARAM_SHOW_HISTORY, PARAM_SHOW_CHANGED_CHANNELS, PARAM_SHOW_VOD);
         foreach ($move_parameters as $parameter) {
             if (!$this->has_setting($parameter)) {
-                $this->set_setting($parameter, $this->get_parameter($parameter, true));
+                $this->set_setting($parameter, $this->get_parameter($parameter, SetupControlSwitchDefs::switch_on));
             }
         }
 
