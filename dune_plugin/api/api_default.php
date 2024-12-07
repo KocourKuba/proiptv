@@ -884,6 +884,7 @@ class api_default
         if ($is_new) {
             hd_debug_print("Set default values for id: $id", true);
             $this->set_default_settings($user_input, $id);
+            $this->set_config_defaults();
         }
 
         $this->plugin->get_playlists()->set($id, $this->playlist_info);
@@ -897,6 +898,7 @@ class api_default
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
         }
 
+        $this->set_provider_defaults();
         return $id;
     }
 
