@@ -1,6 +1,10 @@
-﻿### Version 5.1.952
+﻿### Version 5.1.954
+- Default setting: Show VOD category was not saved correctly
+- Soeed up exit from the plugin.
+
+### Version 5.1.952
 - Default settings were not applied when creating a new playlist
-- 
+
 - ### Version 5.1.950
 - Added checking and setting default settings for plugin configuration
   and the received settings of the provider's account in case of changes in important parameters and updates of old settings.
