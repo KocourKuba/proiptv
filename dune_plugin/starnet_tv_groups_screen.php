@@ -99,7 +99,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
 
-                return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_DLG_APPLY);
+                return Action_Factory::close_and_run();
 
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();
@@ -276,7 +276,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
 
             case self::ACTION_CONFIRM_DLG_APPLY:
-                return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
+                return Action_Factory::close_and_run();
 
             case ACTION_PLUGIN_INFO:
                 return $this->plugin->get_plugin_info_dlg($this);
