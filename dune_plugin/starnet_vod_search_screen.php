@@ -107,7 +107,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_RUN_SEARCH:
                 $search_string = $user_input->{ACTION_NEW_SEARCH};
-                hd_debug_print("search string: $search_string");
+                hd_debug_print("search string: $search_string", true);
                 /** @var Ordered_Array $search_items */
                 $search_items = &$this->plugin->get_history(VOD_SEARCH_LIST, new Ordered_Array());
                 $search_items->insert_item($search_string, false);

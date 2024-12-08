@@ -200,9 +200,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 return null;
-
             default:
-                hd_debug_print("default");
         }
 
         return null;

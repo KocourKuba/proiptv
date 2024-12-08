@@ -243,7 +243,6 @@ class Default_Dune_Plugin implements DunePlugin
 
         $playlist = $this->get_active_playlist();
         if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
-            hd_debug_print("Current playlist is not a provider");
             return null;
         }
 

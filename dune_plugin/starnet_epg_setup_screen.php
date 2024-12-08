@@ -158,7 +158,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
-            hd_debug_print("Setup: changing $control_id value to $new_value");
+            hd_debug_print("Changing $control_id value to $new_value", true);
         }
 
         switch ($control_id) {
