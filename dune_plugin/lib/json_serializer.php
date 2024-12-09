@@ -45,18 +45,27 @@ class Json_Serializer
             if (is_object($value) && method_exists($value, '_toStdClass')) {
                 $object->$name = $value->_toStdClass();
             } else if (is_array($value)) {
-                foreach ($value as $item) {
-                    if (is_object($item) && method_exists($item, '_toStdClass')) {
-                        $object->$name = $item->_toStdClass();
-                    } else {
-                        $object->$name = $value;
-                    }
-                }
+                $object->$name = $this->_toArray($value);
             } else {
                 $object->$name = $value;
             }
         }
 
         return $object;
+    }
+
+    public function _toArray($value)
+    {
+        $array = array();
+        foreach ($value as $key => $item) {
+            if (is_object($item) && method_exists($item, '_toStdClass')) {
+                $array[$key] = $item->_toStdClass();
+            } else if (is_array($item)) {
+                $array[$key] = $this->_toArray($item);
+            } else {
+                $array[$key] = $item;
+            }
+        }
+        return $array;
     }
 }
