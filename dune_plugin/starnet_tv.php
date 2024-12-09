@@ -940,13 +940,8 @@ class Starnet_Tv implements User_Input_Handler
                 $protected = $enable_protected;
             }
 
-            $group_logo = $entry->getEntryAttribute(ATTR_GROUP_LOGO);
+            $group_logo = $entry->getGroupIcon();
             if (!empty($group_logo) && $parent_group->get_icon_url() === Default_Group::DEFAULT_GROUP_ICON) {
-                $icon_base_url = $this->plugin->get_tv_m3u_parser()->get_icon_base_url();
-                if (!empty($icon_base_url) && !preg_match(HTTP_PATTERN, $group_logo)) {
-                    $group_logo = $icon_base_url . $group_logo;
-                }
-
                 hd_debug_print("Set picon for group {$parent_group->get_title()} :  $group_logo", true);
                 $parent_group->set_icon_url($group_logo);
             }

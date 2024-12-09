@@ -60,6 +60,11 @@ class Entry extends Json_Serializer
     protected $group_title;
 
     /**
+     * @var string
+     */
+    protected $group_icon;
+
+    /**
      * @var array
      */
     protected $matches = array();
@@ -211,8 +216,8 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * Returns EXTINF Title
-     * #EXTINF:0 group-title="Базовые Россия", 1 channel
+     * Returns EXTINF Title (1 channel)
+     * #EXTINF:0 group-title="base channels", 1 channel
      * example result: 1 channel
      *
      * @return string
@@ -231,18 +236,27 @@ class Entry extends Json_Serializer
      */
     public function getGroupTitle()
     {
-        if (is_null($this->group_title)) {
-            $this->group_title = $this->getEntryAttribute(ATTR_GROUP_TITLE, TAG_EXTINF);
-            if (empty($this->group_title)) {
-                $exgGrp = $this->getEntryTag(TAG_EXTGRP);
-                $this->group_title = is_null($exgGrp) ? null : $exgGrp->getTagValue();
-                if (empty($this->group_title)) {
-                    $this->group_title = TR::load_string('no_category');
-                }
-            }
-        }
-
         return $this->group_title;
+    }
+
+    /**
+     * Returns category icon
+     *
+     * @return string
+     */
+    public function getGroupIcon()
+    {
+        return $this->group_icon;
+    }
+
+    /**
+     * Set category icon
+     *
+     * @param string $group_icon
+     */
+    public function setGroupIcon($group_icon)
+    {
+        $this->group_icon = $group_icon;
     }
 
     /**
@@ -284,6 +298,25 @@ class Entry extends Json_Serializer
         }
 
         return null;
+    }
+
+    /**
+     * Calculate category title value of attribute 'group-title' or #EXTGRP value
+     *
+     * @return void
+     */
+    public function updateGroupTitle()
+    {
+        $this->group_title = $this->getEntryAttribute(ATTR_GROUP_TITLE, TAG_EXTINF);
+        if (empty($this->group_title)) {
+            $exgGrp = $this->getEntryTag(TAG_EXTGRP);
+            if (!is_null($exgGrp)) {
+                $this->group_title = $exgGrp->getTagValue();
+            }
+            if (empty($this->group_title)) {
+                $this->group_title = TR::load_string('no_category');
+            }
+        }
     }
 
     //////////////////////////////////////////////////////////////////////////////
