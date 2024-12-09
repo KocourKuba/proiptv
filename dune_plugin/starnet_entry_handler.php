@@ -46,6 +46,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_REBOOT = 'call_reboot';
     const ACTION_CALL_SEND_LOG = 'call_send_log';
     const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
+    const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0di9yZWxlYXNlcy9kb3dubG9hZC81LjEuOTU2L2R1bmVfcGx1Z2luX3Byb2lwdHYuNS4xLjk1Ni56aXA=";
 
     private $plugin;
 
@@ -81,21 +82,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         if (!is_newer_versions()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
-            return Action_Factory::show_error(true, TR::t('err_too_old_player'),
-                array(
-                    TR::load_string('err_required_firmware'),
-                    "Dune Product ID: " . get_product_id(),
-                    "Dune Firmware: " . get_raw_firmware_version(),
-                ));
+            return $this->show_old_player("err_too_old_player");
         }
 
         if (!class_exists('SQLite3')) {
-            return Action_Factory::show_error(true, TR::t('err_too_old_player'),
-                array(
-                    TR::load_string('err_no_sqlite'),
-                    "Dune Product ID: " . get_product_id(),
-                    "Dune Firmware: " . get_raw_firmware_version(),
-                ));
+            hd_debug_print("No SQLite3 support! " . get_raw_firmware_version());
+            return $this->show_old_player("err_no_sqlite");
         }
 
         switch ($user_input->control_id) {
@@ -120,14 +112,16 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return $this->plugin->show_protect_settings_dialog($this, self::ACTION_PLAYLIST_SETTINGS);
 
             case self::ACTION_PLAYLIST_SETTINGS:
-                return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
+                return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                    Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
 
             case self::ACTION_CALL_XMLTV_SOURSES_SETTINGS:
                 $this->plugin->init_plugin();
                 return $this->plugin->show_protect_settings_dialog($this, self::ACTION_XMLTV_SOURCES_SETTINGS);
 
             case self::ACTION_XMLTV_SOURCES_SETTINGS:
-                return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST);
+                return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                    Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST);
 
             case self::ACTION_CALL_SEND_LOG:
                 if (!is_newer_versions()) {
@@ -170,7 +164,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin(true);
                         if ($this->plugin->get_playlists()->size() === 0) {
-                            return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID, Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
+                            return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                                Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 
                         if ((int)$user_input->mandatory_playback === 1
@@ -292,5 +287,21 @@ class Starnet_Entry_Handler implements User_Input_Handler
         }
 
         return null;
+    }
+
+    private function show_old_player($title) {
+        $qr_code = get_temp_path("link_to_old.jpg");
+        $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode(base64_decode(self::OLD_LINK));
+        list($res,) = Curl_Wrapper::simple_download_file($url, $qr_code);
+
+        $defs = array();
+        Control_Factory::add_label($defs, TR::t('required_firmware'), TR::load_string('err_required_firmware'));
+        Control_Factory::add_label($defs, "Dune Product ID:",  get_product_id());
+        Control_Factory::add_label($defs, "Dune Firmware:", get_raw_firmware_version());
+        Control_Factory::add_label($defs, TR::t('download_link'), "");
+        Control_Factory::add_vgap($defs, 20);
+        Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
+        Control_Factory::add_vgap($defs, 450);
+        return Action_Factory::show_dialog(TR::t($title), $defs, true, 1000);
     }
 }

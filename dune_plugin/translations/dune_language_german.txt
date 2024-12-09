@@ -98,6 +98,8 @@ jump_to_channel = Springe zum Kanal in der Gruppe
 info = Information
 provider_info = Link zum IPTV-Anbieter
 auto = Automatisch
+required_firmware = Erforderliche Firmware:
+download_link = Download-Link:
 
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten
@@ -324,8 +326,8 @@ warn_msg2__1 = Fehlende oder nicht vollständige Daten für die URL-Generierung.
 warn_msg3 = Abonnementdetails können nicht angezeigt werden.
 warn_msg5 = Die technischen Informationen zum Film enthalten falsche oder fehlende Daten.\nDer Film kann nicht abgespielt werden.
 
-err_too_old_player = DUNE HD-Player ist zu alt und wird nicht unterstützt
-err_required_firmware = Erfordert Firmware-Version r21 oder höher
+err_too_old_player = Die Firmware von DUNE HD ist zu alt
+err_required_firmware = r21 oder höher
 err_no_sqlite = SQLite3 wird von dieser Firmware nicht unterstützt!
 err_load_playlist = Fehler beim Laden der Playlist!
 err_empty_playlist = Leere oder falsche Playlist!

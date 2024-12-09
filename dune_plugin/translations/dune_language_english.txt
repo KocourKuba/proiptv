@@ -98,6 +98,8 @@ jump_to_channel = Jump to the channel in the group
 info = Information
 provider_info = Link to IPTV provider
 auto = Automatic
+required_firmware = Required firmware:
+download_link = Download link:
 
 plugin_all_channels = All channels
 plugin_favorites = Favorites
@@ -324,8 +326,8 @@ warn_msg2__1 = Missed or not full data for URL generation.\nPossible not entered
 warn_msg3 = Unable to display subscription details.
 warn_msg5 = The movie technical information contains incorrect or missing data.\nThe movie cannot be played.
 
-err_too_old_player = DUNE HD player is too old and not supported
-err_required_firmware = Requires firmware version r21 or higher
+err_too_old_player = Firmware of DUNE HD is too old
+err_required_firmware = r21 or higher
 err_no_sqlite = SQLite3 is not supported by this firmware!
 err_load_playlist = Playlist loading error!
 err_empty_playlist = Empty or incorrect playlist!
