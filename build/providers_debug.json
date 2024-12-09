@@ -444,11 +444,11 @@
       "enable": true,
       "id": "filmax",
       "name": "Filmax-tv",
-      "type": "login",
+      "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_filmax.png",
       "provider_url": "https://filmax-tv.ru/",
       "api_commands": {
-        "get_playlist": "http://lk.filmax-tv.ru/{LOGIN}/{PASSWORD}/hls/p{SERVER_ID}/playlist.m3u8"
+        "get_playlist": "http://{DOMAIN_ID}/playlist/p{SERVER_ID}/hls/{PASSWORD}.m3u"
       },
       "config": {
         "id_map": "tvg-id",
@@ -459,13 +459,9 @@
           }
         ],
         "ext_params": true,
-        "url_subst": {
-          "regex": "/^(.+\\/)index\\.m3u8(.+)$/",
-          "replace": "$1{STREAM_ID}$2"
-        },
-        "streams": {
-          "index.m3u8": "HLS",
-          "mpegts": "MPEG-TS"
+        "domains": {
+          "filmax-tv.ru": "filmax-tv.ru",
+          "fm7.pp.ru": "fm7.pp.ru"
         },
         "servers": {
           "1": "Germany",
