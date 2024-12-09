@@ -357,6 +357,15 @@ class M3uParser extends Json_Serializer
         }
 
         $entry->setEntryIcon($icon);
+
+        $entry->updateGroupTitle();
+
+        $group_logo = $entry->getEntryAttribute(ATTR_GROUP_LOGO);
+        if (empty($group_logo) && !empty($this->icon_base_url) && !preg_match(HTTP_PATTERN, $group_logo)) {
+            $group_logo = $this->icon_base_url . $group_logo;
+        }
+
+        $entry->setGroupIcon($group_logo);
     }
 
     /**
