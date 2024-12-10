@@ -40,12 +40,10 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
     {
         hd_debug_print(null, true);
 
-        return Starnet_Epfs_Handler::epfs_invalidate_folders(array(static::ID, $parent_media_url->get_media_url_str()),
-            Action_Factory::update_regular_folder(
+        return Action_Factory::update_regular_folder(
                 $this->get_folder_range($parent_media_url, 0, $plugin_cookies),
                 true,
-                $sel_ndx)
-        );
+                $sel_ndx);
     }
 
     /**
