@@ -451,7 +451,7 @@
         "get_playlist": "http://{DOMAIN_ID}/playlist/p{SERVER_ID}/hls/{PASSWORD}.m3u"
       },
       "config": {
-        "id_map": "tvg-id",
+        "id_map": "name",
         "epg_presets": [
           {
             "name": "drm",
