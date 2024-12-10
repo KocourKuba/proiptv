@@ -1,4 +1,9 @@
-﻿### Version 5.1.954
+﻿### Version 5.1.962
+- Faster response times for manual channel/category sorting
+- Updated Filmax, RU TV configurations
+- Provider Uspeh support has been returned (only for playlists from the Telegram bot!)
+
+### Version 5.1.954
 - Default setting: Show VOD category was not saved correctly
 - Soeed up exit from the plugin.
 
