@@ -452,41 +452,44 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        $this->perf->reset('start');
-
         $this->vod_m3u_indexes = $this->plugin->get_vod_m3u_parser()->indexFile();
 
-        $category_list = array();
+        $this->perf->reset('start');
+
         $category_index = array();
+
+        // all movies must be first
+        $category_index[Vod_Category::FLAG_ALL_MOVIES] = null;
+
+        $category_count = 0;
         $all_indexes = array();
-        foreach ($this->vod_m3u_indexes as $index_array) {
-            foreach ($index_array as $element) {
+        foreach ($this->vod_m3u_indexes as $group => $indexes) {
+            foreach ($indexes as $element) {
                 $all_indexes[] = $element;
             }
-        }
-        sort($all_indexes);
-        $this->vod_m3u_indexes[Vod_Category::FLAG_ALL_MOVIES] = $all_indexes;
 
-        // all movies
-        $count = count($all_indexes);
-        $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($count)"));
-        $category_list[] = $category;
-        $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
-
-        foreach ($this->vod_m3u_indexes as $group => $indexes) {
-            if ($group === Vod_Category::FLAG_ALL_MOVIES) continue;
-
+            $category_count++;
             $count = count($indexes);
             $cat = new Vod_Category($group, "$group ($count)");
-            $category_list[] = $cat;
             $category_index[$group] = $cat;
+        }
+
+        // all movies
+        $all_count = count($all_indexes);
+        $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($all_count)"));
+        $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
+
+        $category_list = array();
+        foreach ($category_index as $cat) {
+            $category_list[] = $cat;
         }
 
         $this->perf->setLabel('end');
         $report = $this->perf->getFullReport();
 
-        hd_debug_print("Categories read: " . count($category_list));
-        hd_debug_print("Fetched time: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Categories read: $category_count");
+        hd_debug_print("Total movies: $all_count");
+        hd_debug_print("Fetch time: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
 
