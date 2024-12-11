@@ -292,7 +292,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     private function show_old_player($title) {
         $qr_code = get_temp_path("link_to_old.jpg");
         $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode(base64_decode(self::OLD_LINK));
-        list($res,) = Curl_Wrapper::simple_download_file($url, $qr_code);
+        Curl_Wrapper::simple_download_file($url, $qr_code);
 
         $defs = array();
         Control_Factory::add_label($defs, TR::t('required_firmware'), TR::load_string('err_required_firmware'));
