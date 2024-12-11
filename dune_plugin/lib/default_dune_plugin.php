@@ -42,9 +42,6 @@ require_once 'lib/epg/epg_manager_json.php';
 class Default_Dune_Plugin implements DunePlugin
 {
     const AUTHOR_LOGO = "ProIPTV by sharky72  [ ´¯¤¤¯(ºº)¯¤¤¯` ]";
-    const SANDWICH_BASE = 'gui_skin://special_icons/sandwich_base.aai';
-    const SANDWICH_MASK = 'cut_icon://{name=sandwich_mask}';
-    const SANDWICH_COVER = 'cut_icon://{name=sandwich_cover}';
     const RESOURCE_URL = 'http://iptv.esalecrm.net/res/';
     const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
     const ARCHIVE_URL_PREFIX = 'http://iptv.esalecrm.net/res';
@@ -54,6 +51,10 @@ class Default_Dune_Plugin implements DunePlugin
 
     /////////////////////////////////////////////////////////////////////////////
     // views variables
+    const SANDWICH_BASE = 'gui_skin://special_icons/sandwich_base.aai';
+    const SANDWICH_MASK = 'cut_icon://{name=sandwich_mask}';
+    const SANDWICH_COVER = 'cut_icon://{name=sandwich_cover}';
+
     const TV_SANDWICH_WIDTH = 246;
     const TV_SANDWICH_HEIGHT = 140;
 
@@ -2371,7 +2372,7 @@ class Default_Dune_Plugin implements DunePlugin
         $move_parameters = array(PARAM_SHOW_ALL, PARAM_SHOW_FAVORITES, PARAM_SHOW_HISTORY, PARAM_SHOW_CHANGED_CHANNELS, PARAM_SHOW_VOD);
         foreach ($move_parameters as $parameter) {
             if (!$this->has_setting($parameter)) {
-                $this->set_setting($parameter, $this->get_parameter($parameter, SetupControlSwitchDefs::switch_on));
+                $this->set_bool_setting($parameter, $this->get_bool_parameter($parameter));
             }
         }
 
@@ -2392,10 +2393,9 @@ class Default_Dune_Plugin implements DunePlugin
 
         // obsolete parameters
         $removed_parameters = array(
-            'config_version', 'cur_xmltv_source', 'cur_xmltv_key', '##all_channels##', 'fuzzy_search_epg',
+            'config_version', 'cur_xmltv_source', 'cur_xmltv_key', 'fuzzy_search_epg', ALL_CHANNEL_GROUP_ID,
             PARAM_EPG_JSON_PRESET, PARAM_BUFFERING_TIME, PARAM_ICONS_IN_ROW, PARAM_CHANNEL_POSITION,
             PARAM_EPG_CACHE_ENGINE, PARAM_PER_CHANNELS_ZOOM,
-            //PARAM_SHOW_ALL, PARAM_SHOW_FAVORITES, PARAM_SHOW_HISTORY, PARAM_SHOW_CHANGED_CHANNELS, PARAM_SHOW_VOD
         );
 
         $this->set_postpone_save(true, PLUGIN_PARAMETERS);

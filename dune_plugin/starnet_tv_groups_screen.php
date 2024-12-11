@@ -140,7 +140,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return Action_Factory::open_folder();
                     }
 
-                    if ($this->plugin->init_vod_playlist()) {
+                    $category_list = array();
+                    $category_index = array();
+                    if ($this->plugin->vod->fetchVodCategories($category_list, $category_index)) {
                         return Action_Factory::open_folder();
                     }
 
