@@ -44,6 +44,11 @@ class M3uParser extends Json_Serializer
     protected $m3u_info;
 
     /**
+     * @var array
+     */
+    protected $data_positions;
+
+    /**
      * @var Ordered_Array
      */
     protected $xmltv_sources;
@@ -107,6 +112,7 @@ class M3uParser extends Json_Serializer
         unset($this->m3u_entries, $this->m3u_info);
         $this->m3u_entries = array();
         $this->m3u_info = array();
+        $this->data_positions = array();
         $this->xmltv_sources = null;
         $this->icon_base_url = '';
     }
@@ -171,6 +177,51 @@ class M3uParser extends Json_Serializer
     }
 
     /**
+     * Parse m3u by seeks file, slower and
+     * less memory consumption for large m3u files
+     * But still may cause memory exhausting
+     *
+     * @return bool
+     */
+    public function parseFile()
+    {
+        if ($this->m3u_file === null) {
+            hd_debug_print("Bad file");
+            return false;
+        }
+
+        $this->m3u_file->rewind();
+
+        $this->perf->reset('start');
+
+        $entry = new Entry();
+        foreach ($this->m3u_file as $line) {
+            // something wrong or not supported
+            switch ($this->parseLine($line, $entry)) {
+                case 1: // parse done
+                    $this->m3u_entries[] = $entry;
+                    $entry = new Entry();
+                    break;
+                case 2: // parse m3u header done
+                    $this->m3u_info[] = $entry;
+                    $entry = new Entry();
+                    break;
+                default: // parse fail or parse partial, continue parse with same entry
+                    break;
+            }
+        }
+
+        $this->perf->setLabel('end');
+        $report = $this->perf->getFullReport();
+        hd_debug_print_separator();
+        hd_debug_print("ParseFile: {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+        hd_debug_print_separator();
+
+        return true;
+    }
+
+    /**
      * Parse one line
      * return true if line is a url or parsed tag is header tag
      *
@@ -211,48 +262,41 @@ class M3uParser extends Json_Serializer
      */
     public function indexFile()
     {
-        $data = array();
-        if ($this->m3u_file === null) {
-            hd_debug_print("Bad file");
-            return $data;
+        if (!empty($this->data_positions)) {
+            return $this->data_positions;
         }
 
-        $this->clear_data();
-
-        $this->m3u_file->rewind();
+        if ($this->m3u_file === null) {
+            hd_debug_print("Bad file");
+            return array();
+        }
 
         $this->perf->reset('start');
 
+        $this->m3u_file->rewind();
         $entry = new Entry();
         $pos = $this->m3u_file->ftell();
         while (!$this->m3u_file->eof()) {
-            $res = $this->parseLine($this->m3u_file->fgets(), $entry);
-            switch ($res) {
-                case 1:
-                    $group_name = $entry->getGroupTitle();
-                    if (!array_key_exists($group_name, $data)) {
-                        $data[$group_name] = array();
-                    }
+            if (!$this->parseLine($this->m3u_file->fgets(), $entry)) continue;
 
-                    $data[$group_name][] = $pos;
-                    $entry = new Entry();
-                    $pos = $this->m3u_file->ftell();
-                    break;
-                case 2:
-                    $this->m3u_info[] = $entry;
-                    $entry = new Entry();
-                    $pos = $this->m3u_file->ftell();
-                    break;
+            $group_name = $entry->getGroupTitle();
+            if (!array_key_exists($group_name, $this->data_positions)) {
+                $this->data_positions[$group_name] = array();
             }
+
+            $this->data_positions[$group_name][] = $pos;
+            $entry = new Entry();
+            $pos = $this->m3u_file->ftell();
         }
 
         $this->perf->setLabel('end');
         $report = $this->perf->getFullReport();
+        hd_debug_print_separator();
         hd_debug_print("IndexFile: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
 
-        return $data;
+        return $this->data_positions;
     }
 
     /**
@@ -308,40 +352,14 @@ class M3uParser extends Json_Serializer
     ///////////////////////////////////////////////////////////
 
     /**
-     * Parse channel id. Set from attributes or get from path
+     * Update specific entry values
      *
      * @param Entry $entry
      */
     public function updateEntry(&$entry)
     {
-        $channel_id = '';
-        // first use id url parser
-        if (!empty($this->id_parser) && preg_match($this->id_parser, $entry->getPath(), $matches)) {
-            if (isset($matches['id'])) {
-                $channel_id = $matches['id'];
-            }
-
-            if ($this->store_matches) {
-                $entry->setMatches($matches);
-            }
-        }
-
-        // try to get by id mapper
-        if (empty($channel_id) && !empty($this->id_map)) {
-            $channel_id = $entry->getEntryAttribute($this->id_map);
-        }
-
-        // search in attributes
-        if (empty($channel_id)) {
-            $channel_id = $entry->getEntryAttribute(ATTR_CHANNEL_ID_ATTRS);
-        }
-
-        // Nothing - using url hash as channel id
-        if (empty($channel_id)) {
-            $channel_id = Hashed_Array::hash($entry->getPath());
-        }
-
-        $entry->setChannelId($channel_id);
+        // set channel id
+        $entry->updateChannelId($this->id_parser, $this->id_map);
 
         // make full url for icon if used base url
         $icon = $entry->getAnyEntryAttribute(self::$icon_attrs);
@@ -355,17 +373,23 @@ class M3uParser extends Json_Serializer
                 $icon = preg_replace($pattern['search'], $pattern['replace'], $icon);
             }
         }
+        $entry->setChannelIcon($icon);
 
-        $entry->setEntryIcon($icon);
-
-        $entry->updateGroupTitle();
-
+        // set group logo
         $group_logo = $entry->getEntryAttribute(ATTR_GROUP_LOGO);
         if (empty($group_logo) && !empty($this->icon_base_url) && !preg_match(HTTP_PATTERN, $group_logo)) {
             $group_logo = $this->icon_base_url . $group_logo;
         }
-
         $entry->setGroupIcon($group_logo);
+
+        // set group title
+        $entry->updateGroupTitle();
+
+        // set channel archive
+        $entry->updateArchiveLength();
+
+        // set channel EPG IDs
+        $entry->updateEpgIds();
     }
 
     /**
@@ -574,30 +598,5 @@ class M3uParser extends Json_Serializer
         }
 
         return (empty($min_key) || $min_key === ATTR_CHANNEL_ID) ? ATTR_CHANNEL_HASH : $min_key;
-    }
-
-    /**
-     * Parse one line
-     * return true if line is a url or parsed tag is header tag
-     *
-     * @param string $line
-     * @param Entry& $entry
-     * @return bool
-     */
-    protected function parseLineFast($line, &$entry)
-    {
-        $line = trim($line);
-        if (empty($line)) {
-            return false;
-        }
-
-        $tag = $entry->parseExtTag($line, false);
-        if (is_null($tag)) {
-            // untagged line must be a stream url
-            $entry->setPath($line);
-            return true;
-        }
-
-        return $entry->isM3U_Header();
     }
 }

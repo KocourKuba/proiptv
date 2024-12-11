@@ -40,9 +40,6 @@ class Starnet_Tv implements User_Input_Handler
 
     ///////////////////////////////////////////////////////////////////////
 
-    public static $epg_id_tags = array(ATTR_TVG_ID, ATTR_TVG_NAME, ATTR_CHANNEL_NAME);
-    public static $tvg_archives = array(ATTR_CATCHUP_DAYS, ATTR_CATCHUP_TIME, ATTR_TIMESHIFT, ATTR_ARC_TIMESHIFT, ATTR_ARC_TIME, ATTR_TVG_REC);
-
     static public $null_hashed_array;
     static public $null_ordered_array;
 
@@ -686,13 +683,12 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        $used_tag = '';
-        $playlist_archive = (int)$this->plugin->get_tv_m3u_parser()->getAnyHeaderAttribute(self::$tvg_archives, TAG_EXTM3U, $used_tag);
-        if (!empty($used_tag)) {
-            if ($used_tag === ATTR_CATCHUP_TIME) {
-                $playlist_archive /= 86400;
+        foreach ($this->plugin->get_tv_m3u_parser()->getM3uInfo() as $entry) {
+            $playlist_archive = $entry->getArchive();
+            if (!empty($playlist_archive)) {
+                hd_debug_print("Using global archive value: $playlist_archive day(s)");
+                break;
             }
-            hd_debug_print("Using global archive value: $playlist_archive days from tag $used_tag");
         }
 
         $provider = $this->plugin->get_current_provider();
@@ -871,10 +867,6 @@ class Starnet_Tv implements User_Input_Handler
 
             $number++;
 
-            $epg_ids = $entry->getAllEntryAttributes(self::$epg_id_tags);
-            $epg_ids['id'] = $channel_id;
-            $epg_ids = array_unique($epg_ids);
-
             $icon_url = '';
             if ($use_playlist_picons !== XMLTV_PICONS) {
                 // playlist icons first in priority
@@ -891,6 +883,8 @@ class Starnet_Tv implements User_Input_Handler
                 }
             }
 
+            $epg_ids = $entry->getEpgIds();
+
             // if selected xmltv or combined mode look into xmltv source
             // in combined mode search is not performed if already got picon from playlist
             if ($use_playlist_picons === XMLTV_PICONS || ($use_playlist_picons === COMBINED_PICONS && empty($icon_url))) {
@@ -906,12 +900,7 @@ class Starnet_Tv implements User_Input_Handler
 
             $stream_path = $entry->getPath();
 
-            $used_tag = '';
-            $archive = (int)$entry->getAnyEntryAttribute(self::$tvg_archives, TAG_EXTINF, $used_tag);
-            if ($used_tag === ATTR_CATCHUP_TIME) {
-                $archive /= 86400;
-            }
-
+            $archive = $entry->getArchive();
             if (empty($archive) && !empty($playlist_archive)) {
                 $archive = $playlist_archive;
             }
@@ -961,7 +950,7 @@ class Starnet_Tv implements User_Input_Handler
                 $number,
                 $epg_ids,
                 $protected,
-                (int)$entry->getEntryAttribute(ATTR_TVG_SHIFT, TAG_EXTINF),
+                $entry->getTimeShift(),
                 $ext_params,
                 $disabled
             );
