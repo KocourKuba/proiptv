@@ -140,11 +140,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return Action_Factory::open_folder();
                     }
 
-                    $category_list = array();
-                    $category_index = array();
-                    if ($this->plugin->vod->fetchVodCategories($category_list, $category_index)) {
+                    if ($this->plugin->init_vod_playlist()) {
                         return Action_Factory::open_folder();
                     }
+
                     $has_error = HD::get_last_error('vod_last_error');
                 }
 
@@ -612,6 +611,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        hd_debug_print("MediaUrl: " . $media_url, true);
 
         $items = array();
         if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {

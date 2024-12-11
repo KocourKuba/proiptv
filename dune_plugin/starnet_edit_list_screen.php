@@ -1212,6 +1212,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         hd_debug_print(null, true);
         hd_debug_print("MediaUrl: " . $media_url, true);
+
         switch ($media_url->edit_list) {
             case self::SCREEN_EDIT_HIDDEN_CHANNELS:
                 $items = $this->collect_channels($media_url);

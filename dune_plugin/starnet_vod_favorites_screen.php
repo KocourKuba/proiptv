@@ -157,6 +157,9 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
+        hd_debug_print(null, true);
+        hd_debug_print("MediaUrl: " . $media_url, true);
+
         $movie_ids = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID)->get_items_order();
 
         $items = array();
