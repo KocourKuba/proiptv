@@ -346,7 +346,6 @@ err_channel_cant_start = Channel cannot be started!
 err_no_internet = No internet connection!
 err_copy = Copy error!
 err_copy__2 = Error copy: %s to %s
-err_load_xmltv_epg = Error loading XMLTV EPG!
 err_epg_manager = EPG manager not initialized!
 err_backup = Backup error!
 err_restore = Restore error!

@@ -346,7 +346,6 @@ err_channel_cant_start = Канал не может быть запущен!
 err_no_internet = Нет подключения к Интернет!
 err_copy = Ошибка копирования!
 err_copy__2 = Ошибка копирования %s в %s
-err_load_xmltv_epg = Ошибка загрузки XMLTV EPG!
 err_epg_manager = EPG менеджер не инициализирован!
 err_backup = Ошибка резервного копирования!
 err_restore = Ошибка восстановления резервной копии!

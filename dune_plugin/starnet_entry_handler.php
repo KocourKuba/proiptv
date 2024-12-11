@@ -82,12 +82,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         if (!is_newer_versions()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
-            return $this->show_old_player("err_too_old_player");
+            return $this->show_old_player(TR::load_string('err_too_old_player'));
         }
 
         if (!class_exists('SQLite3')) {
             hd_debug_print("No SQLite3 support! " . get_raw_firmware_version());
-            return $this->show_old_player("err_no_sqlite");
+            return $this->show_old_player(TR::load_string('err_no_sqlite'));
         }
 
         switch ($user_input->control_id) {
@@ -302,6 +302,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
         Control_Factory::add_vgap($defs, 20);
         Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$qr_code</icon>");
         Control_Factory::add_vgap($defs, 450);
-        return Action_Factory::show_dialog(TR::t($title), $defs, true, 1000);
+        return Action_Factory::show_dialog($title, $defs, true, 1000);
     }
 }
