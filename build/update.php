@@ -145,27 +145,33 @@ $ext = $info['extension'];
 
 if (empty($revision)) {
     header("HTTP/1.1 403 Forbidden");
-    echo '["error" : "Unknown version"]';
-} else if ($ext != 'xml' && $ext != 'gz') {
-    header("HTTP/1.1 404 Not found");
-} else {
-    $new_path = ($revision < 21 ? "./old/" : "./current/") . $info['basename'];
-    $logbuf .= "url path   : " . $url_params['path'] . PHP_EOL;
-    $logbuf .= "new path   : " . $new_path . PHP_EOL;
-
-    header("HTTP/1.1 200 OK");
-    if ($ext == 'gz') {
-        header("Accept-Ranges: bytes");
-        header("Content-Length: " . filesize($new_path));
-        header("Content-Type: application/octet-stream");
-    } else if ($ext == 'xml') {
-        header("Content-Type: text/xml");
-    }
-
-    header("Pragma: no-cache");
-    header("Expires: -1");
-
-    readfile($new_path);
+    $logbuf .= "Unknown version";
+	write_to_log($logbuf, 'error.log');
+	die();
 }
 
-write_to_log($logbuf, 'update.log');
+if ($ext != 'xml' && $ext != 'gz') {
+    header("HTTP/1.1 404 Not found");
+    $logbuf .= "Unknown file requested: " . $url_params['path'];
+	write_to_log($logbuf, 'error.log');
+	die();
+}
+
+$new_path = ($revision < 21 ? "./old/" : "./current/") . $info['basename'];
+$logbuf .= "url path   : " . $url_params['path'] . PHP_EOL;
+$logbuf .= "new path   : " . $new_path . PHP_EOL;
+
+header("HTTP/1.1 200 OK");
+if ($ext == 'gz') {
+    write_to_log($logbuf, 'update.log');
+    header("Accept-Ranges: bytes");
+    header("Content-Length: " . filesize($new_path));
+    header("Content-Type: application/octet-stream");
+} else if ($ext == 'xml') {
+    header("Content-Type: text/xml");
+}
+
+header("Pragma: no-cache");
+header("Expires: -1");
+
+readfile($new_path);
