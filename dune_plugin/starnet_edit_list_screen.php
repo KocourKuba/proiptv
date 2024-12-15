@@ -241,7 +241,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 if (($item->type === PARAM_LINK || empty($item->type))
                     && isset($item->params[PARAM_URI])
-                    && preg_match(HTTP_PATTERN, $item->params[PARAM_URI])) {
+                    && is_http($item->params[PARAM_URI])) {
                     return $this->do_edit_url_dlg($edit_list, $selected_id);
                 }
 
@@ -827,7 +827,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $name = isset($user_input->{CONTROL_EDIT_NAME}) ? $user_input->{CONTROL_EDIT_NAME} : '';
         $url = isset($user_input->{CONTROL_URL_PATH}) ? $user_input->{CONTROL_URL_PATH} : '';
         $type = isset($user_input->{self::CONTROL_EDIT_TYPE}) ? $user_input->{self::CONTROL_EDIT_TYPE} : CONTROL_PLAYLIST_IPTV;
-        if (!preg_match(HTTP_PATTERN, $url)) {
+        if (!is_http($url)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
         }
 

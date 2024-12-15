@@ -30,7 +30,8 @@ class Json_Serializer
 {
     public function __toString()
     {
-        return str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)pretty_json_format($this->_toStdClass()));
+        //return str_replace(array('"{', '}"', '\"'), array('{', '}', '"'), (string)pretty_json_format($this->_toStdClass()));
+        return pretty_json_format($this->_toStdClass());
     }
 
     public function _toStdClass()

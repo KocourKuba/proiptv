@@ -683,12 +683,9 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        foreach ($this->plugin->get_tv_m3u_parser()->getM3uInfo() as $entry) {
-            $playlist_archive = $entry->getArchive();
-            if (!empty($playlist_archive)) {
-                hd_debug_print("Using global archive value: $playlist_archive day(s)");
-                break;
-            }
+        $playlist_archive = $this->plugin->get_tv_m3u_parser()->getM3uInfo()->getArchive();
+        if (!empty($playlist_archive)) {
+            hd_debug_print("Using global archive value: $playlist_archive day(s)");
         }
 
         $provider = $this->plugin->get_current_provider();
@@ -1137,12 +1134,7 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         if ((int)$archive_ts !== -1) {
-            foreach ($this->plugin->get_tv_m3u_parser()->getM3uInfo() as $entry) {
-                $catchup = $entry->getCatchup();
-                if (!empty($catchup)) {
-                    break;
-                }
-            }
+            $catchup = $this->plugin->get_tv_m3u_parser()->getM3uInfo()->getCatchup();
 
             if (empty($catchup) && !is_null($provider)) {
                 $catchup = $provider->getConfigValue(CONFIG_PLAYLIST_CATCHUP);
@@ -1208,7 +1200,7 @@ class Starnet_Tv implements User_Input_Handler
                         . 'utc=${start}&lutc=${timestamp}';
                     hd_debug_print("archive url template (default shift): $archive_url", true);
                 }
-            } else if (!preg_match(HTTP_PATTERN, $archive_url)) {
+            } else if (!is_http($archive_url)) {
                 $archive_url = $stream_url
                     . ((strpos($stream_url, '?') !== false) ? '&' : '?')
                     . ltrim($archive_url, "?");
