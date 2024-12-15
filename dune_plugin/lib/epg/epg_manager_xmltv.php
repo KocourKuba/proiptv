@@ -1015,7 +1015,7 @@ class Epg_Manager_Xmltv
             if (empty($channel_id)) continue;
 
             foreach ($xml_node->getElementsByTagName('icon') as $tag) {
-                if (preg_match(HTTP_PATTERN, $tag->getAttribute('src'))) {
+                if (is_http($tag->getAttribute('src'))) {
                     $picon_url = $tag->getAttribute('src');
                     if (!empty($picon_url)) {
                         $picon_hash = hash('md5', $picon_url);

@@ -2524,7 +2524,7 @@ class Default_Dune_Plugin implements DunePlugin
                     } else if ($playlist->type === PARAM_LINK) {
                         $playlist_url = $playlist->params[PARAM_URI];
                         hd_debug_print("m3u download link: $playlist_url");
-                        if (!preg_match(HTTP_PATTERN, $playlist_url)) {
+                        if (!is_http($playlist_url)) {
                             throw new Exception("Incorrect playlist url: $playlist_url");
                         }
                         list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file);

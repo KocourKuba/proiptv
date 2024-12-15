@@ -1998,6 +1998,28 @@ function delete_directory($dir)
 }
 
 /**
+ * Check if url has http?:// scheme
+ *
+ * @param string $url
+ * @return bool
+ */
+function is_http($url)
+{
+    return strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0;
+}
+
+/**
+ * Check if url has udp:// scheme
+ *
+ * @param string $url
+ * @return bool
+ */
+function is_udp($url)
+{
+    return strpos($url, 'udp://') === 0;
+}
+
+/**
  * This is more efficient then merge_array in the loops
  *
  * @param array $ar1

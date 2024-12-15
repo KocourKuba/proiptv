@@ -102,6 +102,14 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     /**
      * @inheritDoc
      */
+    public function addAttributes($attributes)
+    {
+        $this->attributes = array_merge($this->attributes, $attributes);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getAttributeValue($attribute_name)
     {
         return isset($this->attributes[$attribute_name]) ? $this->attributes[$attribute_name] : null;
@@ -126,22 +134,6 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
 
         if (preg_match("/^(#[^: ]+)[:\s]?(.*)/", $line, $m)) {
             $this->setTagName($m[1]);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param string $line
-     */
-    public function parseFullData($line)
-    {
-        // currently duration parsing not implemented
-        if (empty($line) || $line[0] !== '#')
-            return null;
-
-        if (preg_match("/^(#[^: ]+)[:\s]?(.*)/", $line, $m)) {
-            $this->setTagName($m[1]);
             if ($this->isTag(Entry::TAG_EXTINF)) {
                 $pos = strrpos($m[2], ',');
                 if ($pos !== false) {
@@ -150,7 +142,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
                     $name = "noname";
                 }
                 $this->setTagValue($name);
-            } else {
+            } else if (!$this->isTag(TAG_EXTM3U)){
                 $this->setTagValue(trim($m[2]));
             }
             $this->parseTagAttributes($m[2]);

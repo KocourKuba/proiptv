@@ -35,6 +35,7 @@ const ATTR_GROUP_TITLE = 'group-title';
 const ATTR_TVG_ID = 'tvg-id';
 const ATTR_TVG_NAME = 'tvg-name';
 const ATTR_TVG_REC = 'tvg-rec';
+const ATTR_TVG_EPGID = 'tvg-epgid';
 const ATTR_TIMESHIFT = 'timeshift';
 const ATTR_TVG_SHIFT = 'tvg-shift';
 const ATTR_ARC_TIMESHIFT = 'arc-timeshift';
