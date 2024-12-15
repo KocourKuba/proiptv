@@ -30,7 +30,8 @@ require_once 'M3uTags.php';
 class Entry extends Json_Serializer
 {
     public static $tvg_archives = array(ATTR_CATCHUP_DAYS, ATTR_CATCHUP_TIME, ATTR_TIMESHIFT, ATTR_ARC_TIMESHIFT, ATTR_ARC_TIME, ATTR_TVG_REC);
-    public static $epg_id_tags = array(ATTR_TVG_ID, ATTR_TVG_NAME, ATTR_CHANNEL_NAME);
+    public static $epg_id_tags = array(ATTR_TVG_ID, ATTR_TVG_NAME, ATTR_TVG_EPGID, ATTR_CHANNEL_NAME);
+    public static $icon_attrs = array(ATTR_TVG_LOGO, ATTR_URL_LOGO);
 
     /**
      * @var bool
@@ -92,13 +93,12 @@ class Entry extends Json_Serializer
 
     /**
      * @param string $line
-     * @param bool $full
      * @return ExtTag
      */
-    public function parseExtTag($line, $full)
+    public function parseExtTag($line)
     {
         $tag = new ExtTagDefault();
-        $parsed_tag = $full ? $tag->parseFullData($line) : $tag->parseData($line);
+        $parsed_tag = $tag->parseData($line);
         if (is_null($parsed_tag)) {
             return null;
         }
@@ -109,12 +109,22 @@ class Entry extends Json_Serializer
     }
 
     /**
+     * @param Entry $entry
+     */
+    public function mergeEntry($entry)
+    {
+        foreach ($entry->tags as $value) {
+            $this->addTag($value);
+        }
+    }
+
+    /**
      * @param ExtTag $tag
      */
     public function addTag($tag)
     {
         if (isset($this->tags[$tag->getTagName()])) {
-            $this->tags[$tag->getTagName()]->addTagValue($tag->getTagValue());
+            $this->tags[$tag->getTagName()]->addAttributes($tag->getAttributes());
         } else {
             $this->tags[$tag->getTagName()] = $tag;
         }
@@ -249,11 +259,14 @@ class Entry extends Json_Serializer
     /**
      * Set category icon
      *
-     * @param string $group_icon
+     * @param string $icon_base_url
      */
-    public function setGroupIcon($group_icon)
+    public function updateGroupIcon($icon_base_url)
     {
-        $this->group_icon = $group_icon;
+        $this->group_icon = $this->getEntryAttribute(ATTR_GROUP_LOGO);
+        if (!empty($group_logo) && !empty($icon_base_url) && !is_http($group_logo)) {
+            $this->group_icon = $icon_base_url . $group_logo;
+        }
     }
 
     /**
@@ -289,11 +302,23 @@ class Entry extends Json_Serializer
     /**
      * Set icon for channel
      *
-     * @param string $icon
+     * @param string $icon_base_url
+     * @param array $icon_replace_pattern
      */
-    public function setChannelIcon($icon)
+    public function updateChannelIcon($icon_base_url, $icon_replace_pattern)
     {
-        $this->channel_icon = $icon;
+        // make full url for icon if used base url
+        $this->channel_icon = $this->getAnyEntryAttribute(self::$icon_attrs);
+        if (!empty($icon_base_url) && !is_http($this->channel_icon)) {
+            $this->channel_icon = $icon_base_url . $this->channel_icon;
+        }
+
+        // Apply replacement pattern
+        if (!empty($icon_replace_pattern)) {
+            foreach ($icon_replace_pattern as $pattern) {
+                $this->channel_icon = preg_replace($pattern['search'], $pattern['replace'], $this->channel_icon);
+            }
+        }
     }
 
     /**
