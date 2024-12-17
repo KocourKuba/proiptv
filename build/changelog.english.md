@@ -1,4 +1,10 @@
-﻿### Version 5.1.962
+﻿### Version 5.1.966
+- Added additional channel/favorites views (for square icons), thanks to igores
+- Settings for views categories/channels/etc. are remembered for each playlist
+- Fixed a bug with parsing M3U playlists in the VOD
+- Updated icon library by Viktor (thanks to igores)
+
+### Version 5.1.962
 - Faster response times for manual channel/category sorting
 - Updated Filmax, RU TV configurations
 - Provider Uspeh support has been returned (only for playlists from the Telegram bot!)
