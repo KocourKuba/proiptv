@@ -100,52 +100,6 @@ class M3uParser extends Json_Serializer
     }
 
     /**
-     * Parse m3u by seeks file, slower and
-     * less memory consumption for large m3u files
-     * But still may cause memory exhausting
-     *
-     * @return bool
-     */
-    public function parseFile()
-    {
-        if ($this->m3u_file === null) {
-            hd_debug_print("Bad file");
-            return false;
-        }
-
-        $this->clear_data();
-
-        $this->m3u_file->rewind();
-
-        $this->perf->reset('start');
-
-        $entry = new Entry();
-        foreach ($this->m3u_file as $line) {
-            // something wrong or not supported
-            switch ($this->parseLine($line, $entry)) {
-                case 1: // parse done
-                    $this->m3u_entries[] = $entry;
-                    $entry = new Entry();
-                    break;
-                case 2: // parse m3u header done
-                    $this->m3u_info[] = $entry;
-                    $entry = new Entry();
-                    break;
-                default: // parse fail or parse partial, continue parse with same entry
-                    break;
-            }
-        }
-
-        $this->perf->setLabel('end');
-        $report = $this->perf->getFullReport();
-        hd_debug_print("ParseFile: {$report[Perf_Collector::TIME]} secs");
-        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-        hd_debug_print_separator();
-
-        return true;
-    }
-
-    /**
      * Parse one line
      * return true if line is a url or parsed tag is header tag
      *
@@ -197,15 +151,23 @@ class M3uParser extends Json_Serializer
         $entry = new Entry();
         $pos = $this->m3u_file->ftell();
         while (!$this->m3u_file->eof()) {
-            if ($this->parseLine($this->m3u_file->fgets(), $entry)) {
-                $group_name = $entry->getGroupTitle();
-                if (!array_key_exists($group_name, $data)) {
-                    $data[$group_name] = array();
-                }
+            $res = $this->parseLine($this->m3u_file->fgets(), $entry);
+            switch ($res) {
+                case 1:
+                    $group_name = $entry->getGroupTitle();
+                    if (!array_key_exists($group_name, $data)) {
+                        $data[$group_name] = array();
+                    }
 
-                $data[$group_name][] = $pos;
-                $entry = new Entry();
-                $pos = $this->m3u_file->ftell();
+                    $data[$group_name][] = $pos;
+                    $entry = new Entry();
+                    $pos = $this->m3u_file->ftell();
+                    break;
+                case 2:
+                    $this->m3u_info[] = $entry;
+                    $entry = new Entry();
+                    $pos = $this->m3u_file->ftell();
+                    break;
             }
         }
 
