@@ -252,6 +252,9 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             $this->plugin->get_screen_view('icons_5x4_caption'),
             $this->plugin->get_screen_view('icons_5x4_no_caption'),
 
+            $this->plugin->get_screen_view('icons_7x4_no_caption'),
+            $this->plugin->get_screen_view('icons_7x4_caption'),
+
             $this->plugin->get_screen_view('list_1x11_info'),
             $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('list_3x11_no_info'),

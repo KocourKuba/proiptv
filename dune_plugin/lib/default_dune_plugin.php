@@ -56,6 +56,9 @@ class Default_Dune_Plugin implements DunePlugin
     const TV_SANDWICH_WIDTH = 246;
     const TV_SANDWICH_HEIGHT = 140;
 
+    const TV_SANDWICH_WIDTH_SMALL = 160;
+    const TV_SANDWICH_HEIGHT_SMALL = 160;
+
     const VOD_SANDWICH_WIDTH = 190;
     const VOD_SANDWICH_HEIGHT = 290;
     const VOD_CHANNEL_ICON_WIDTH = 190;
@@ -2065,6 +2068,83 @@ class Default_Dune_Plugin implements DunePlugin
                     ViewItemParams::item_paint_caption => false,
                     ViewItemParams::icon_scale_factor => 1.2,
                     ViewItemParams::icon_sel_scale_factor => 1.4,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
+            ),
+
+            'icons_7x4_no_caption' => array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 7,
+                    ViewParams::num_rows => 4,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 'before_all',
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+                    ViewParams::paint_details => false,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::sandwich_width => self::TV_SANDWICH_WIDTH_SMALL,
+                    ViewParams::sandwich_height => self::TV_SANDWICH_HEIGHT_SMALL,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::item_paint_caption => false,
+                    ViewItemParams::icon_scale_factor => 0.9,
+                    ViewItemParams::icon_sel_scale_factor => 1.0,
+                    ViewItemParams::icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
+            ),
+
+            'icons_7x4_caption' => array
+            (
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array
+                (
+                    ViewParams::num_cols => 7,
+                    ViewParams::num_rows => 4,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 'before_all',
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+                    ViewParams::paint_details => false,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::sandwich_width => self::TV_SANDWICH_WIDTH_SMALL,
+                    ViewParams::sandwich_height => self::TV_SANDWICH_HEIGHT_SMALL,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array
+                (
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::item_caption_font_size => FONT_SIZE_SMALL,
+                    ViewItemParams::item_paint_caption => true,
+                    ViewItemParams::icon_scale_factor => 0.7,
+                    ViewItemParams::icon_sel_scale_factor => 0.8,
                     ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
