@@ -609,7 +609,7 @@ class Starnet_Tv implements User_Input_Handler
             $special_group->set_disabled(false);
             $this->special_groups->set($special_group->get_id(), $special_group);
 
-            hd_debug_print("Using standart VOD implementation");
+            hd_debug_print("Using standard VOD implementation");
             $vod_class = 'vod_standard';
             $this->plugin->vod = new $vod_class($this->plugin);
             $this->plugin->vod_enabled = true;
@@ -617,8 +617,6 @@ class Starnet_Tv implements User_Input_Handler
 
             return 2;
         }
-
-        $provider = $this->plugin->get_current_provider();
 
         $this->plugin->init_epg_manager();
         $this->plugin->cleanup_active_xmltv_source();
@@ -719,6 +717,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->plugin->vod = null;
         $this->plugin->vod_enabled = false;
         $domain_id = '';
+        $provider = $this->plugin->get_current_provider();
         if (is_null($provider)) {
             $replace_icons = false;
             $icon_replace_pattern = '';
