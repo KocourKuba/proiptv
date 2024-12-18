@@ -12,7 +12,7 @@
         "url": "https://www.dropbox.com/scl/fo/hh6qm90sk8ezvirpx9179/ANu0vST1sQUI-xz6E58vwe0?rlkey=qupvstvhlb6mjlgia1ci28208&dl=1"
       },
       "viktor": {
-        "name": "Viktor",
+        "name": "igores",
         "package": "icon_pack_viktor.zip",
         "url": "https://dl.dropboxusercontent.com/scl/fi/kh6nvfodicsx62s5f4vjy/icon_pack_viktor.zip?rlkey=oj3eec3i9oew813cay5cqj718"
       },
@@ -1418,6 +1418,7 @@
         "get_vod": "{API}/movie/token={PASSWORD}"
       },
       "config": {
+        "id_map": "tvg-id",
         "vod_parser": "/^(?<title>[^(]+)\\s\\((?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

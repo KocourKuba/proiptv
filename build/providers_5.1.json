@@ -1418,6 +1418,7 @@
         "get_vod": "{API}/movie/token={PASSWORD}"
       },
       "config": {
+        "id_map": "tvg-id",
         "vod_parser": "/^(?<title>[^(]+)\\s\\((?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
