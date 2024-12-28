@@ -139,7 +139,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions, 2000);
+                return Action_Factory::change_behaviour($actions, 1000);
 
             case GUI_EVENT_KEY_STOP:
                 $this->plugin->save_orders(true);

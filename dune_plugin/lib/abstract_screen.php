@@ -44,14 +44,6 @@ class Abstract_Screen extends Changes_Impl implements Screen
     }
 
     /**
-     * @inheritDoc
-     */
-    public static function get_id()
-    {
-        return static::ID;
-    }
-
-    /**
      * @return false|string
      */
     public static function get_media_url_str()
@@ -71,6 +63,14 @@ class Abstract_Screen extends Changes_Impl implements Screen
     public function get_timer(MediaURL $media_url, $plugin_cookies)
     {
         return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function get_id()
+    {
+        return static::ID;
     }
 
     /**
