@@ -57,6 +57,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_KEY_SUBTITLE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE);
 
         if ($this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order()->size() !== 0) {
             if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
@@ -113,6 +114,17 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 $this->plugin->save_orders(true);
                 $this->set_no_changes();
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
+
+            case GUI_EVENT_KEY_SUBTITLE:
+                return $this->plugin->do_show_channel_epg($selected_media_url->channel_id, $plugin_cookies);
+
+            case GUI_EVENT_KEY_POPUP_MENU:
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_SUBTITLE, TR::t('channel_epg_dlg'), "epg.png");
+                return Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -183,12 +195,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 return $this->plugin->tv->jump_to_channel($selected_media_url->channel_id);
-
-            case GUI_EVENT_KEY_POPUP_MENU:
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
-                return Action_Factory::show_popup_menu($menu_items);
         }
 
         return null;

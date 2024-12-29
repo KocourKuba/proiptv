@@ -50,7 +50,8 @@ scroll_page = Scroll page
 video_aspect_ratio = Video aspect ratio
 change_group_icon = Change category icons
 change_background = Change background image
-channel_info_dlg = Channel info
+channel_info_dlg = Channel info (INFO)
+channel_epg_dlg = Channel EPG (SUBTITLE)
 change_json_epg_source__1 = Change EPG server (%s)
 change_picons_source__1 = Change icons source (%s)
 select_folder = Select folder
@@ -313,6 +314,7 @@ vod_screen_movie_info__4 = %s|Year: %s|Country: %s|Genre: %s
 vod_screen_movie_info__5 = %s|Year: %s|Country: %s|Genre: %s|Rating: %s
 vod_screen_group_info__2 = %s|Movies: %s
 
+epg_not_exist = EPG not exist
 epg_not_ready = EPG not ready
 epg_not_ready_desc = EPG is still processing, please wait
 epg_no_sources = No XMLTV EPG

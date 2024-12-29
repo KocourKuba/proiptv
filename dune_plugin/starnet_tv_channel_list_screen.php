@@ -68,6 +68,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             GUI_EVENT_KEY_TOP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
             GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
             GUI_EVENT_KEY_SELECT => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE),
+            GUI_EVENT_KEY_SUBTITLE => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE),
             GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
         );
 
@@ -145,6 +146,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $this->plugin->save_orders(true);
                 $this->set_no_changes();
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
+
+            case GUI_EVENT_KEY_INFO:
+                return $this->plugin->do_show_channel_info($channel_id);
+
+            case GUI_EVENT_KEY_SUBTITLE:
+                return $this->plugin->do_show_channel_epg($channel_id, $plugin_cookies);
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -327,6 +334,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 $menu_items[] = $this->plugin->create_menu_item($this,
+                    GUI_EVENT_KEY_SUBTITLE,
+                    TR::t('channel_epg_dlg'),
+                    "epg.png");
+                $menu_items[] = $this->plugin->create_menu_item($this,
                     GUI_EVENT_KEY_INFO,
                     TR::t('channel_info_dlg'),
                     "info.png");
@@ -403,9 +414,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_INTERNAL_PLAYER:
                 $this->plugin->tv->set_channel_for_ext_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
-
-            case GUI_EVENT_KEY_INFO:
-                return $this->plugin->do_show_channel_info($channel_id);
 
             case ACTION_ITEMS_SORT:
                 $group = $this->plugin->tv->get_group($parent_media_url->group_id);
