@@ -451,7 +451,7 @@
         "get_playlist": "http://{DOMAIN_ID}/playlist/p{SERVER_ID}/hls/{PASSWORD}.m3u"
       },
       "config": {
-        "id_map": "tvg-id",
+        "id_map": "name",
         "epg_presets": [
           {
             "name": "drm",
@@ -1418,7 +1418,24 @@
         "get_vod": "{API}/movie/token={PASSWORD}"
       },
       "config": {
+        "id_map": "tvg-id",
         "vod_parser": "/^(?<title>[^(]+)\\s\\((?<year>\\d{4})\\)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "velestore",
+      "name": "Velestore",
+      "type": "login",
+      "logo": "http://iptv.esalecrm.net/res/logo_velestore.png",
+      "provider_url": "https://velestore.su/",
+      "api_commands": {
+        "get_playlist": "http://p.velestore.su/play18/{LOGIN}/{PASSWORD}/playlist.m3u8"
+      },
+      "ext_params": true,
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+):(?<port>[^\\/]+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
