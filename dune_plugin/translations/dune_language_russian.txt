@@ -50,7 +50,8 @@ scroll_page = Прокрутка страницы
 video_aspect_ratio = Масштабирование изображения
 change_group_icon = Изменить иконку категории
 change_background = Изменить обои
-channel_info_dlg = Информация о канале
+channel_info_dlg = Информация о канале (INFO)
+channel_epg_dlg = Текущая передача (SUBTITLE)
 change_json_epg_source__1 = Изменить EPG сервер (%s)
 change_picons_source__1 = Изменить иконки каналов (%s)
 select_folder = Выбрать папку
@@ -315,6 +316,7 @@ vod_screen_movie_info__4 = %s|Год: %s|Страна: %s|Жанр: %s
 vod_screen_movie_info__5 = %s|Год: %s|Страна: %s|Жанр: %s|Рейтинг: %s
 vod_screen_group_info__2 = %s|Фильмов: %s
 
+epg_not_exist = Программа передач отсутствует
 epg_not_ready = Программа передач еще не готова
 epg_not_ready_desc = Идет обработка программ передач, пожалуйста подождите
 epg_no_sources = Нет EPG

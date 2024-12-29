@@ -3603,6 +3603,48 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @param string $channel_id
+     * @param $plugin_cookies
+     * @return array|null
+     */
+    public function do_show_channel_epg($channel_id, $plugin_cookies)
+    {
+        $channel = $this->tv->get_channel($channel_id);
+        if (is_null($channel)) {
+            return null;
+        }
+
+        $prog_info = $this->get_program_info($channel_id, -1, $plugin_cookies);
+
+        if (is_null($prog_info)) {
+            $title = TR::load_string('epg_not_exist');
+            $info = '';
+        } else {
+            // program epg available
+            $title = $prog_info[PluginTvEpgProgram::name];
+            $info = $prog_info[PluginTvEpgProgram::description];
+        }
+
+        Control_Factory::add_multiline_label($defs, null, $info, 18);
+        Control_Factory::add_vgap($defs, 10);
+
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            850,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load_string('scroll_page')
+        );
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($title, $defs, true, 1400);
+    }
+
+    /**
      * @param User_Input_Handler $handler
      * @return array|null
      */
