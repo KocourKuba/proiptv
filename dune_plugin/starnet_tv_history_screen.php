@@ -80,6 +80,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         }
 
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -129,7 +130,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if ($this->plugin->get_playback_points()->size() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
-                return Starnet_Epfs_Handler::epfs_invalidate_folders(array($user_input->parent_media_url));
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEMS_CLEAR:
                 $this->set_changes();
