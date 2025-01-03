@@ -1751,6 +1751,7 @@ class ViewItemParams
     const /* PositiveDouble                   */ icon_fit_scale_factor            = 'icon_fit_scale_factor';
     const /* NonNegativeInt                   */ item_caption_width               = 'item_caption_width';
     const /* MY_Bool                          */ item_caption_wrap_enabled        = 'item_caption_wrap_enabled';
+    const /* MY_Bool                          */ item_caption_scroll_enabled      = 'item_caption_scroll_enabled';
     const /* ArbitraryInt                     */ item_caption_dy                  = 'item_caption_dy';
     const /* ArbitraryInt                     */ item_caption_sel_dy              = 'item_caption_sel_dy';
     const /* ArbitraryInt                     */ item_caption_dx                  = 'item_caption_dx';
