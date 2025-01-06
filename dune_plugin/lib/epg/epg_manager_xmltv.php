@@ -250,6 +250,14 @@ class Epg_Manager_Xmltv
         }
 
         if (empty($day_epg)) {
+            if ($this->active_sources->size() === 0) {
+                return array($day_start_ts => array(
+                    Epg_Params::EPG_END => $day_start_ts + 86400,
+                    Epg_Params::EPG_NAME => TR::load_string('epg_no_sources'),
+                    Epg_Params::EPG_DESC => TR::load_string('epg_no_sources_desc'),
+                ));
+            }
+
             if ($any_lock !== false) {
                 $this->delayed_epg = array_unique($this->delayed_epg);
                 return array($day_start_ts => array(

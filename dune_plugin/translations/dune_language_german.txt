@@ -314,6 +314,8 @@ vod_screen_group_info__2 = %s|Movies: %s
 
 epg_not_ready = EPG nicht bereit
 epg_not_ready_desc = EPG wird noch verarbeitet, bitte warten
+epg_no_sources = Kein XMLTV-EPG
+epg_no_sources_desc = Keine XMLTV-EPG-Quelle ausgewählt. EPG kann nicht angezeigt werden!
 fake_epg_program = Programm
 playlist_name_msg__1 = Aktuelle Playlist: %s
 

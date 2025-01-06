@@ -160,7 +160,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             $counts = count($all_epg);
             if ($counts === 0) {
-                throw new Exception("Not EPG entries found");
+                throw new Exception("No EPG entries found");
             }
 
             hd_debug_print("Total $counts EPG entries loaded");
