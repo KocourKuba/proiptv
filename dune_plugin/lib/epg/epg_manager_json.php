@@ -124,7 +124,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $epg_url = str_replace(MACRO_MONTH, $epg_date, $epg_url);
 
             $epg_date = gmdate('d', $cur_time);
-            hd_debug_print("using DAY: $epg_date", true);
             $epg_url = str_replace(MACRO_DAY, $epg_date, $epg_url);
 
             $epg_id = str_replace(' ', '%20', $epg_id);
@@ -132,6 +131,8 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $epg_cache_file = get_temp_path(Hashed_Array::hash($epg_url) . ".cache");
 
             hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
+            hd_debug_print("EPG url: $epg_url");
+
             $from_cache = false;
             $all_epg = array();
             if (file_exists($epg_cache_file)) {
