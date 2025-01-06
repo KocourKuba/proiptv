@@ -99,8 +99,10 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 Entry::ATTR_CHANNEL_NAME => TR::t('channel_name'));
 
             if (!isset($playlist->params[PARAM_ID_MAPPER])) {
-                $playlist->params[PARAM_ID_MAPPER] = $this->plugin->get_setting(PARAM_ID_MAPPER, Entry::ATTR_CHANNEL_HASH);
+                $playlist->params[PARAM_ID_MAPPER] = Entry::ATTR_CHANNEL_HASH;
             }
+
+            hd_debug_print("Mapper param: {$playlist->params[PARAM_ID_MAPPER]}", true);
 
             Control_Factory::add_combobox($defs, $this, null, PARAM_ID_MAPPER,
                 TR::t('setup_channels_id_mapper'), $playlist->params[PARAM_ID_MAPPER], $mapper_ops, self::CONTROLS_WIDTH, true);
@@ -165,12 +167,15 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_USER_CATCHUP:
             case PARAM_USE_PICONS:
+                $this->plugin->set_setting($user_input->control_id, $user_input->{$user_input->control_id});
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
             case PARAM_ID_MAPPER:
                 $playlist = $this->plugin->get_active_playlist();
                 if (!is_null($playlist) && $playlist->type !== PARAM_PROVIDER) {
-                    $playlist->params[PARAM_ID_MAPPER] = $this->plugin->get_setting(PARAM_ID_MAPPER, Entry::ATTR_CHANNEL_HASH);
+                    $playlist->params[PARAM_ID_MAPPER] = $user_input->{$user_input->control_id};
                 }
-                $this->plugin->save_parameters(true);
+
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case PARAM_FORCE_HTTP:
@@ -231,18 +236,17 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     $this->plugin->set_setting(PARAM_DUNE_PARAMS, $params_array);
                 }
 
-                $this->plugin->set_postpone_save(false, PLUGIN_SETTINGS);
-
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
                 $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
-                $result = $this->plugin->tv->reload_channels($plugin_cookies);
+                $this->plugin->set_postpone_save(false, PLUGIN_SETTINGS);
                 $action = Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );
 
+                $result = $this->plugin->tv->reload_channels($plugin_cookies);
                 if (!$result) {
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $action);
                 }

@@ -726,8 +726,8 @@ class Starnet_Tv implements User_Input_Handler
                 $id_map = $playlist->params[PARAM_ID_MAPPER];
                 hd_debug_print("Use ID detection for playlist: $id_map");
             } else {
-                $id_map = $this->plugin->get_setting(PARAM_ID_MAPPER, Entry::ATTR_CHANNEL_HASH);
-                hd_debug_print("Use user defined ID detection for playlist: $id_map");
+                $id_map = Entry::ATTR_CHANNEL_HASH;
+                hd_debug_print("Using ID: $id_map");
             }
         } else {
             $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
