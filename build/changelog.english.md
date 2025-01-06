@@ -1,4 +1,10 @@
-﻿### Version 5.1.966
+﻿### Version 5.1.976
+- Added Velestore provider (via configuration)
+- If no XMLTV EPG source is selected, the corresponding message will be shown instead of the TV program
+- Fixed a bug where it was impossible to select the detection of the channel ID, the source of channel icons, the type of archive
+- A slight clarification of the M3U parser to determine the channel name
+
+### Version 5.1.966
 - Added additional channel/favorites views (for square icons), thanks to igores
 - Settings for views categories/channels/etc. are remembered for each playlist
 - Fixed a bug with parsing M3U playlists in the VOD
