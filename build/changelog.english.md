@@ -1,8 +1,9 @@
-﻿### Version 5.1.982
+﻿### Version 5.1.984
 - NewUI: Added channel preview for the History category
 - NewUI: Minor changes in the context menu (Playlist refres moved to the first menu item)
 - NewUI: Removed EPG fan art processing error if it is not present in the EPG source
 - Minor version checks
+- Update translation
 
 - ### Version 5.1.976
 - Added Velestore provider (via configuration)
