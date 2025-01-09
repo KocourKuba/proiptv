@@ -860,13 +860,11 @@ class Default_Dune_Plugin implements DunePlugin
                 if (isset($value[Epg_Params::EPG_END], $value[Epg_Params::EPG_NAME], $value[Epg_Params::EPG_DESC])) {
                     $tm_start = (int)$time + $time_shift;
                     $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
-                    $icon = isset($value[Epg_Params::EPG_ICON]) ? $value[Epg_Params::EPG_ICON] : '';
                     $day_epg[] = array(
                         PluginTvEpgProgram::start_tm_sec => $tm_start,
                         PluginTvEpgProgram::end_tm_sec => $tm_end,
                         PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
                         PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
-                        PluginTvEpgProgram::icon_url => $icon,
                     );
 
                     if (LogSeverity::$is_debug) {
