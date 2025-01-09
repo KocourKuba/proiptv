@@ -1,4 +1,9 @@
-﻿### Version 5.1.976
+﻿### Version 5.1.980
+- NewUI: Added channel preview for the History category
+- NewUI: Minor changes in the context menu (Playlist refres moved to the first menu item)
+- NewUI: Removed EPG fan art processing error if it is not present in the EPG source
+
+- ### Version 5.1.976
 - Added Velestore provider (via configuration)
 - If no XMLTV EPG source is selected, the corresponding message will be shown instead of the TV program
 - Fixed a bug where it was impossible to select the detection of the channel ID, the source of channel icons, the type of archive
