@@ -105,6 +105,7 @@ plugin_history = Verlau anschauen
 plugin_changed = Geänderte Kanäle
 plugin_vod = Video auf Nachfrage
 plugin_info = Plugin info
+filters = Filter
 
 setup_small = Klein
 setup_normal = Normal

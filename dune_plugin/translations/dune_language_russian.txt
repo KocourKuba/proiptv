@@ -105,6 +105,7 @@ plugin_history = История просмотра
 plugin_changed = Измененные каналы
 plugin_vod = Медиатека
 plugin_info = Информация о плагине
+filters = Фильтры
 
 setup_small = Мелкий
 setup_normal = Обычный
