@@ -3090,11 +3090,13 @@ class Default_Dune_Plugin implements DunePlugin
             "epg.png",
             array(CONTROL_ACTION_EDIT => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST));
 
-        $menu_items[] = $this->create_menu_item($handler,
-            ACTION_RELOAD,
-            TR::t('refresh_playlist'),
-            "refresh.png",
-            array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+        if ($is_classic) {
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_RELOAD,
+                TR::t('refresh_playlist'),
+                "refresh.png",
+                array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+        }
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 

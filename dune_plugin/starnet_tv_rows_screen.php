@@ -1393,7 +1393,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         // show changing playlist and xmltv source in any place
         $menu_items = array();
-        $add_param = null;
         if (isset($user_input->{ACTION_CHANGE_EPG_SOURCE})) {
             $menu_items = $this->plugin->epg_source_menu($this);
         } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
@@ -1478,15 +1477,15 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $action = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $menu_items[] = $this->plugin->create_menu_item($this, $action, $caption, PaneParams::fav_button_blue);
             }
-
-            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-            $menu_items[] = $this->plugin->create_menu_item($this, ACTION_REFRESH_SCREEN, TR::t('refresh'), "refresh.png", $add_param);
         } else {
             // popup menu for left side list
             hd_debug_print("in menu side", true);
             $menu_items[] = $this->plugin->create_menu_item($this,
-                null,
-                TR::t('playlist_name_msg__1', $this->plugin->get_active_playlist()->name));
+                ACTION_RELOAD,
+                TR::t('playlist_name_msg__1', $this->plugin->get_active_playlist()->name),
+                "refresh.png",
+                array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
+            );
 
             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
