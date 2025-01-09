@@ -552,12 +552,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
         hd_debug_print(null, true);
-        $rows = array();
+
+        $rows = $this->create_rows(array(), json_encode(array('group_id' => '__dummy__row__')), '', '', null );
 
         $history_rows = $this->get_history_rows($plugin_cookies);
         if (!is_null($history_rows)) {
-            $rows = array_merge($rows, $history_rows);
             hd_debug_print("added history: " . count($history_rows) . " rows", true);
+            $rows = array_merge($rows, $history_rows);
         }
 
         $favorites_rows = $this->get_favorites_rows();
@@ -574,8 +575,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $all_channels_rows = $this->get_all_channels_row();
         if (!is_null($all_channels_rows)) {
-            $rows = array_merge($rows, $all_channels_rows);
             hd_debug_print("added all channels: " . count($all_channels_rows) . " rows", true);
+            $rows = array_merge($rows, $all_channels_rows);
         }
 
         $category_rows = $this->get_regular_rows();
@@ -840,7 +841,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 json_encode(array('group_id' => HISTORY_GROUP_ID)),
                 TR::t('tv_screen_continue'),
                 TR::t('tv_screen_continue_view'),
-                null,
+                User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
                 TitleRowsParams::history_caption_color
             );
 
@@ -1103,6 +1104,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $group_id = isset($media_url->group_id) ? $media_url->group_id : null;
         $channel_id = isset($media_url->channel_id) ? $media_url->channel_id : null;
+        $archive_tm = isset($media_url->archive_tm) ? $media_url->archive_tm : -1;
 
         if (is_null($channel_id) || empty($group_id)) {
             return null;
@@ -1145,7 +1147,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         ///////////// start_time, end_time, genre, country, person /////////////////
 
-        if (is_null($epg_data = $this->plugin->get_program_info($channel_id, -1, $plugin_cookies))) {
+        $epg_data = $this->plugin->get_program_info($channel_id, $archive_tm, $plugin_cookies);
+        if (is_null($epg_data)) {
             hd_debug_print("no epg data");
             $channel_desc = $channel->get_desc();
             if (!empty($channel_desc)) {
@@ -1171,7 +1174,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $title = $epg_data[PluginTvEpgProgram::name];
             $desc = (!empty($epg_data[Ext_Epg_Program::sub_title]) ? $epg_data[Ext_Epg_Program::sub_title] . "\n" : '') . $epg_data[PluginTvEpgProgram::description];
-            $fanart_url = $epg_data[PluginTvEpgProgram::icon_url];
+            if (isset($epg_data[PluginTvEpgProgram::icon_url])) {
+                $fanart_url = $epg_data[PluginTvEpgProgram::icon_url];
+            }
 
             // duration
             $geom = GComp_Geom::place_top_left(PaneParams::info_width, PaneParams::prog_item_height, 0, $next_pos_y);
