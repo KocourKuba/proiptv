@@ -276,28 +276,33 @@ class Epg_Indexer_Classic extends Epg_Indexer
             return;
         }
 
+        if (!empty($this->xmltv_indexes[$url_hash][self::INDEX_ENTRIES])) {
+            hd_debug_print("EPG positions info already indexed", true);
+        }
+
         $this->perf->reset('start');
 
         $positions_file = $this->get_index_name(self::INDEX_ENTRIES);
-        if (empty($this->xmltv_indexes[$url_hash][self::INDEX_ENTRIES]) && $this->is_all_indexes_valid(array(self::INDEX_ENTRIES))) {
-            hd_debug_print("Try load cache program index: $positions_file");
-            $success = true;
-            $data = parse_json_file($positions_file);
-            if ($data !== false) {
-                $this->xmltv_indexes[$url_hash][self::INDEX_ENTRIES] = $data;
-            } else {
-                hd_debug_print("load positions index failed '$positions_file'");
-                $success = false;
-            }
+        hd_debug_print("Try load cache program index: $positions_file");
 
+        $success = false;
+        if ($this->is_all_indexes_valid(array(self::INDEX_ENTRIES))) {
+            $data = parse_json_file($positions_file);
+            if ($data === false) {
+                hd_debug_print("load positions index failed '$positions_file'");
+            } else {
+                $this->xmltv_indexes[$url_hash][self::INDEX_ENTRIES] = $data;
+                $success = true;
+            }
+        }
+
+        if ($success) {
             $this->perf->setLabel('end');
             $report = $this->perf->getFullReport();
 
-            if ($success) {
-                hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
-                hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-                return;
-            }
+            hd_debug_print("Load time: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+            return;
         }
 
         try {
