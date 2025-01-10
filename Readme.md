@@ -47,12 +47,15 @@ Also, have presets for most popular IPTV providers.
 37. [BitTV](https://bittv.ltd/)
 38. [TopIPTV](https://topiptv.info/)
 39. [IPTV Best](https://ip-tv.best/)
-40. [Peak TV](https://peaktv.info/)
-41. [Nasharu TV](https://nasharu.tv/)
-42. [Ott Pub](https://ott.pub/)
-43. [Blink TV](https://blinktv.cc/)
-44. [Korona](https://korona-tv.top/)
-45. [Pik TV](http://pa.piktv.top/)
+40. [Uspeh TV](https://uspeh.tv/)
+41. [Peak TV](https://peaktv.info/)
+42. [Nasharu TV](https://nasharu.tv/)
+43. [Ott Pub](https://ott.pub/)
+44. [Blink TV](https://blinktv.cc/)
+45. [Korona](https://korona-tv.top/)
+46. [Pik TV](http://pa.piktv.top/)
+47. [Velestore](http://pa.piktv.top/)
+48. [Velestore](http://velestore.su/)
 </details>
 
 ## Donate
