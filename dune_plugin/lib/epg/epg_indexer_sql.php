@@ -305,7 +305,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $this->set_index_locked($url_hash, true);
 
-            $db->exec("CREATE TABLE $table_pos (channel_id STRING PRIMARY KEY not null, start INTEGER, end INTEGER);");
+            $db->exec("CREATE TABLE $table_pos (channel_id STRING not null, start INTEGER, end INTEGER);");
             $db->exec('PRAGMA journal_mode=MEMORY;');
             $db->exec('BEGIN;');
 
@@ -325,13 +325,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
             $start_program_block = 0;
             $prev_channel = null;
-            $i = 0;
             while (!feof($file)) {
                 $tag_start_pos = ftell($file);
                 $line = stream_get_line($file, 0, "</programme>");
                 if ($line === false) break;
 
-                $offset = strpos($line, '<programme');
+                $offset = strpos($line, "<programme");
                 if ($offset === false) {
                     // check if end
                     $end_tv = strpos($line, "</tv>");
@@ -370,9 +369,6 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 } else if ($prev_channel !== $channel_id) {
                     $tag_end_pos = $tag_start_pos;
                     $stm->execute();
-                    if (($i % 100) === 0) {
-                        $db->exec('COMMIT;BEGIN;');
-                    }
                     $prev_channel = $channel_id;
                     $start_program_block = $tag_start_pos;
                 }
@@ -381,13 +377,16 @@ class Epg_Indexer_Sql extends Epg_Indexer
             hd_debug_print("End transactions...");
             $db->exec('COMMIT;');
 
-            $result = $db->querySingle("SELECT count(channel_id) FROM $table_pos;");
+            $result = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $table_pos;");
             $total_epg = empty($result) ? 0 : (int)$result;
+
+            $result = $db->querySingle("SELECT count(channel_id) FROM $table_pos;");
+            $total_blocks = empty($result) ? 0 : (int)$result;
 
             $this->perf->setLabel('end');
             $report = $this->perf->getFullReport('reindex');
 
-            hd_debug_print("Total unique epg id's indexed: $total_epg");
+            hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
             hd_debug_print("Reindexing EPG positions done: {$report[Perf_Collector::TIME]} secs");
             hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
             hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
@@ -466,8 +465,12 @@ class Epg_Indexer_Sql extends Epg_Indexer
 
         foreach ($result as $key => $name) {
             $res = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$key';");
-            if (!empty($res)) {
-                $result[$key] = $db->querySingle("SELECT count(*) FROM $key;");
+            if (empty($res)) continue;
+
+            if ($key === self::INDEX_PICONS) {
+                $result[$key] = $db->querySingle("SELECT count(picon_hash) FROM $key;");
+            } else {
+                $result[$key] = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $key;");
             }
         }
         return $result;
