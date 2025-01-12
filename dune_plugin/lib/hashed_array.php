@@ -122,6 +122,17 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
+     * Check if key exist
+     *
+     * @param TValue $value
+     * @return bool
+     */
+    public function has_value($value)
+    {
+        return isset($this->map[self::hash($value)]);
+    }
+
+    /**
      * Return index by key
      *
      * @param string $key
@@ -139,8 +150,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function add($item)
     {
-        $key = self::hash($item);
-        $this->put($key, $item);
+        $this->put(self::hash($item), $item);
     }
 
     /**
@@ -174,6 +184,18 @@ class Hashed_Array extends Json_Serializer implements Iterator
     {
         foreach ($items as $key => $item) {
             $this->put($key, $item);
+        }
+    }
+
+    /**
+     * Add items
+     *
+     * @param array $values
+     */
+    public function add_values($values)
+    {
+        foreach ($values as $item) {
+            $this->add($item);
         }
     }
 
@@ -246,10 +268,20 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function erase_keys($keys)
     {
-        $cnt = count($this->seq);
         $this->seq = array_values(array_diff($this->seq, $keys));
         $this->map = array_diff_key($this->map, array_fill_keys($keys, null));
-        return $cnt - count($this->seq);
+    }
+
+    /**
+     * Erase by values from array
+     *
+     * @param array $values
+     */
+    public function erase_values($values)
+    {
+        foreach ($values as $value) {
+            $this->erase(self::hash($value));
+        }
     }
 
     /**
