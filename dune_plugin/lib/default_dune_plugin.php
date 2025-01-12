@@ -2533,7 +2533,8 @@ class Default_Dune_Plugin implements DunePlugin
                     }
 
                     if (!isset($playlist->params[PARAM_ID_MAPPER])) {
-                        $playlist->params[PARAM_ID_MAPPER] = Entry::ATTR_CHANNEL_HASH;
+                        $playlist->params[PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
+                    }
                 }
 
                 if (!$res || !file_exists($tmp_file)) {

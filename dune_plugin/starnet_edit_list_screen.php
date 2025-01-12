@@ -259,7 +259,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_INDEX_EPG:
                 $this->plugin->run_bg_epg_indexing($selected_id);
-                return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 1000);
+                return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 500);
 
             case ACTION_CLEAR_CACHE:
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
@@ -885,8 +885,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $parser->assignPlaylist($tmp_file, true);
                 if ($type === CONTROL_PLAYLIST_IPTV) {
                     $parser->parseInMemory();
-                    $id_mapper = $parser->detectBestChannelId();
-                    $item->params[PARAM_ID_MAPPER] = $id_mapper;
+                    $item->params[PARAM_ID_MAPPER] = $parser->detectBestChannelId();
                 }
 
                 $item->params[PARAM_PL_TYPE] = $type;

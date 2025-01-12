@@ -318,7 +318,7 @@ class Epg_Manager_Xmltv
         }
 
         if (empty($day_epg)) {
-            if ($this->active_sources->size() === 0) {
+            if ($this->xmltv_sources->size() === 0) {
                 return array($day_start_ts => array(
                     Epg_Params::EPG_END => $day_start_ts + 86400,
                     Epg_Params::EPG_NAME => TR::load_string('epg_no_sources'),
@@ -645,10 +645,17 @@ class Epg_Manager_Xmltv
 
         foreach ($result as $key => $name) {
             $res = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$key';");
-            if (!empty($res)) {
+            if (empty($res)) continue;
+
+            if ($key === self::INDEX_PICONS) {
+                $result[$key] = $db->querySingle("SELECT count(picon_hash) FROM $key;");
+            } else if ($key === self::INDEX_CHANNELS) {
+                $result[$key] = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $key;");
+            } else {
                 $result[$key] = $db->querySingle("SELECT count(*) FROM $key;");
             }
         }
+
         return $result;
     }
 
@@ -690,12 +697,18 @@ class Epg_Manager_Xmltv
 
         try {
             $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+            if ($db === false) {
+                hd_debug_print("Unable to load index because it locked");
+                return $channel_position;
+            }
+
             if (is_null($db)) {
                 throw new Exception("Problem with open SQLite db! Possible url not set");
             }
 
             if (!$this->is_all_indexes_valid(array($table_ch, $table_pos))) {
-                throw new Exception("EPG for {$this->xmltv_url_params[PARAM_URI]} not indexed!");
+                hd_debug_print("EPG for {$this->xmltv_url_params[PARAM_URI]} not indexed!");
+                return $channel_position;
             }
 
             $channel_title = $channel->get_title();
@@ -746,12 +759,13 @@ class Epg_Manager_Xmltv
 
             if (empty($channel_position)) {
                 hd_debug_print("No positions for channel $channel_id ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
+            } else {
+                hd_debug_print("Channel positions: " . pretty_json_format($channel_position), true);
             }
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }
 
-        hd_debug_print("Channel positions: " . pretty_json_format($channel_position), true);
         return $channel_position;
     }
 
@@ -1036,10 +1050,10 @@ class Epg_Manager_Xmltv
 
         $db->exec('COMMIT;');
 
-        $result = $db->querySingle("SELECT count(*) FROM $table_ch;");
+        $result = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $table_ch;");
         $channels = empty($result) ? 0 : (int)$result;
 
-        $result = $db->querySingle("SELECT count(*) FROM $table_pic;");
+        $result = $db->querySingle("SELECT count(picon_hash) FROM $table_pic;");
         $picons = empty($result) ? 0 : (int)$result;
 
         $this->perf->setLabel('end');
@@ -1067,7 +1081,7 @@ class Epg_Manager_Xmltv
 
         $this->set_index_locked($url_hash, true);
 
-            $db->exec("CREATE TABLE $table_pos (channel_id STRING not null, start INTEGER, end INTEGER);");
+        $db->exec("CREATE TABLE $table_pos (channel_id STRING not null, start INTEGER, end INTEGER);");
         $db->exec('PRAGMA journal_mode=MEMORY;');
         $db->exec('BEGIN;');
 
@@ -1135,15 +1149,18 @@ class Epg_Manager_Xmltv
 
         fclose($file);
 
-        $result = $db->querySingle("SELECT count(channel_id) FROM $table_pos;");
+        $result = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $table_pos;");
         $total_epg = empty($result) ? 0 : (int)$result;
+
+        $result = $db->querySingle("SELECT count(*) FROM $table_pos;");
+        $total_blocks = empty($result) ? 0 : (int)$result;
 
         $this->set_index_locked($url_hash, false);
 
         $this->perf->setLabel('end');
         $report = $this->perf->getFullReport('reindex');
 
-            hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
+        hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
         hd_debug_print("Reindexing EPG positions done: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
