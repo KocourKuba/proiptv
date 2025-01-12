@@ -54,8 +54,7 @@ Also, have presets for most popular IPTV providers.
 44. [Blink TV](https://blinktv.cc/)
 45. [Korona](https://korona-tv.top/)
 46. [Pik TV](http://pa.piktv.top/)
-47. [Velestore](http://pa.piktv.top/)
-48. [Velestore](http://velestore.su/)
+47. [Velestore](http://velestore.su/)
 </details>
 
 ## Donate
