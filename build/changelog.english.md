@@ -1,4 +1,9 @@
-﻿### Version 5.1.984
+﻿### Версия 5.1.988
+- Updated XMLTV processing engine to fix new bugs of EPG providers (Yosso).
+- XMLTV processing on Android devices is speed-up by 1.5-2 times
+- Information about the XMLTV source is specified more accurately.
+
+### Version 5.1.984
 - NewUI: Added channel preview for the History category
 - NewUI: Minor changes in the context menu (Playlist refres moved to the first menu item)
 - NewUI: Removed EPG fan art processing error if it is not present in the EPG source
