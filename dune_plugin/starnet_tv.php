@@ -368,7 +368,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function &get_groups_order()
     {
-        return $this->plugin->get_orders(PARAM_GROUPS_ORDER, new Ordered_Array());
+        return $this->plugin->get_orders(PARAM_GROUPS_ORDER);
     }
 
     /**
@@ -1020,7 +1020,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function &get_disabled_group_ids()
     {
-        return $this->plugin->get_orders(PARAM_DISABLED_GROUPS, new Ordered_Array());
+        return $this->plugin->get_orders(PARAM_DISABLED_GROUPS);
     }
 
     /**
@@ -1546,32 +1546,6 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::actions => $this->get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(2000),
         );
-    }
-
-    /**
-     * @param Ordered_Array $groups_order
-     */
-    public function set_groups_order($groups_order)
-    {
-        $this->plugin->set_orders(PARAM_GROUPS_ORDER, $groups_order);
-    }
-
-    /**
-     * @param Ordered_Array $groups
-     * @return void
-     */
-    public function set_disabled_group_ids($groups)
-    {
-        $this->plugin->get_orders(PARAM_DISABLED_GROUPS, $groups);
-    }
-
-    /**
-     * @param Ordered_Array $channels
-     * @return void
-     */
-    public function set_disabled_channel_ids($channels)
-    {
-        $this->plugin->set_orders(PARAM_DISABLED_CHANNELS, $channels);
     }
 
     /**
