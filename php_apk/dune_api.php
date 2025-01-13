@@ -38,6 +38,9 @@ define ('CHANGE_OP_DELETE_ANDROID_APPS_EXCEPT', 101);
 define ('CHANGE_OP_NOP', 0);
 define ('CHANGE_OP_REPLACE', 1);
 define ('CHANGE_OP_TOGGLE', 4);
+define ('EDIT_LIST_CONFIG_OPT_ALLOW_EMPTY', 0x2);
+define ('EDIT_LIST_CONFIG_OPT_REMOVE_UNCHECKED', 0x1);
+define ('EDIT_LIST_CONFIG_OPT_WITH_DEFAULT', 0x4);
 define ('GCOMP_OPT_APPEAR_WITH_FADE', 0x100);
 define ('GCOMP_OPT_BG_PICTURE', 0x8);
 define ('GCOMP_OPT_EMPTY_WITH_VIDEO', 0x20);
@@ -266,6 +269,7 @@ define ('BLURAY_PLAY_ACTION_ID',                         'bluray_play');
 define ('BT_COMMAND_ACTION_ID',                          'bt_command');
 define ('CHANGE_BEHAVIOUR_ACTION_ID',                    'change_behaviour');
 define ('CHANGE_GCOMPS_ACTION_ID',                       'change_gcomps');
+define ('CHANGE_LIST_CONFIG_ACTION_ID',                  'change_list_config');
 define ('CHANGE_PARENTAL_CODE_ACTION_ID',                'change_parental_code');
 define ('CHANGE_SETTINGS_ACTION_ID',                     'change_settings');
 define ('CHECK_RESTRICTED_ACTION_ID',                    'check_restricted');
@@ -310,6 +314,7 @@ define ('PLUGIN_UPDATE_ROWS_MENU_ACTION_ID',             'plugin_update_rows_men
 define ('PLUGIN_UPDATE_STICKER_ACTION_ID',               'plugin_update_sticker');
 define ('PLUGIN_VOD_PLAY_ACTION_ID',                     'plugin_vod_play');
 define ('REMOVE_FROM_FAVORITES_ACTION_ID',               'remove_from_favorites');
+define ('RENAME_MENU_ITEM_ACTION_ID',                    'rename_menu_item');
 define ('RENAME_PATH_ACTION_ID',                         'rename_path');
 define ('RESET_CONTROLS_ACTION_ID',                      'reset_controls');
 define ('RESTART_ACTION_ID',                             'restart');
@@ -413,6 +418,17 @@ class ChangeGCompsActionData
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 
+class ChangeListConfigActionData
+{
+    const /* (char *)                         */ config_id                        = 'config_id';
+    const /* bool                             */ set_default                      = 'set_default';
+    const /* (char *)                         */ def_id                           = 'def_id';
+    const /* (MY_StringArray *)               */ ids_to_check                     = 'ids_to_check';
+    const /* (MY_StringArray *)               */ ids_to_uncheck                   = 'ids_to_uncheck';
+    const /* (MY_StringArray *)               */ ids_to_def                       = 'ids_to_def';
+    const /* (GuiAction *)                    */ post_action                      = 'post_action';
+}
+
 class ChangeParentalCodeActionData
 {
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
@@ -507,6 +523,9 @@ class EditListConfigActionData
     const /* (GuiItemList *)                  */ all_items                        = 'all_items';
     const /* (MY_StringArray *)               */ checked_ids                      = 'checked_ids';
     const /* (GuiItemList *)                  */ groups                           = 'groups';
+    const /* (char *)                         */ def_id                           = 'def_id';
+    const /* int                              */ options                          = 'options';
+    const /* (char *)                         */ sel_id                           = 'sel_id';
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 
@@ -763,6 +782,7 @@ class GuiComboboxDef
 {
     const /* (char *)                         */ initial_value                    = 'initial_value';
     const /* (MY_Properties *)                */ value_caption_pairs              = 'value_caption_pairs';
+    const /* (MY_StringArray *)               */ dimmed_ids                       = 'dimmed_ids';
     const /* int                              */ width                            = 'width';
     const /* (GuiAction *)                    */ apply_action                     = 'apply_action';
     const /* (GuiAction *)                    */ confirm_action                   = 'confirm_action';
@@ -890,6 +910,7 @@ class LaunchMediaUrlActionData
 class OpenFolderActionData
 {
     const /* (char *)                         */ media_url                        = 'media_url';
+    const /* (char *)                         */ caption                          = 'caption';
 }
 
 class PlaylistPlayActionData
@@ -1060,6 +1081,12 @@ class PluginPathElement
     const /* (char *)                         */ caption                          = 'caption';
 }
 
+class PluginRef
+{
+    const /* (char *)                         */ name                             = 'name';
+    const /* (char *)                         */ ep_media_url                     = 'ep_media_url';
+}
+
 class PluginRefreshEntryPointsActionData
 {
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
@@ -1072,6 +1099,7 @@ class PluginRegularFolderItem
     const /* bool                             */ starred                          = 'starred';
     const /* bool                             */ locked                           = 'locked';
     const /* (ViewItemParams *)               */ view_item_params                 = 'view_item_params';
+    const /* (PluginRef *)                    */ plugin_ref                       = 'plugin_ref';
 }
 
 class PluginRegularFolderRange
@@ -1510,6 +1538,15 @@ class RemoveFromFavoritesActionData
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 
+class RenameMenuItemActionData
+{
+    const /* (char *)                         */ id                               = 'id';
+    const /* (char *)                         */ caption                          = 'caption';
+    const /* (char *)                         */ orig_caption                     = 'orig_caption';
+    const /* bool                             */ with_dialog                      = 'with_dialog';
+    const /* (GuiAction *)                    */ post_action                      = 'post_action';
+}
+
 class RenamePathActionData
 {
     const /* (char *)                         */ caption                          = 'caption';
@@ -1600,6 +1637,7 @@ class ShowPopupMenuActionData
 {
     const /* (GuiMenuItemDefList *)           */ menu_items                       = 'menu_items';
     const /* int                              */ selected_menu_item_index         = 'selected_menu_item_index';
+    const /* bool                             */ prepend_items_from_selected_plugin = 'prepend_items_from_selected_plugin';
 }
 
 class SleepActionData
@@ -1713,6 +1751,7 @@ class ViewItemParams
     const /* PositiveDouble                   */ icon_fit_scale_factor            = 'icon_fit_scale_factor';
     const /* NonNegativeInt                   */ item_caption_width               = 'item_caption_width';
     const /* MY_Bool                          */ item_caption_wrap_enabled        = 'item_caption_wrap_enabled';
+    const /* MY_Bool                          */ item_caption_scroll_enabled      = 'item_caption_scroll_enabled';
     const /* ArbitraryInt                     */ item_caption_dy                  = 'item_caption_dy';
     const /* ArbitraryInt                     */ item_caption_sel_dy              = 'item_caption_sel_dy';
     const /* ArbitraryInt                     */ item_caption_dx                  = 'item_caption_dx';
