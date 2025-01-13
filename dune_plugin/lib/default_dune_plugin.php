@@ -2577,19 +2577,15 @@ class Default_Dune_Plugin implements DunePlugin
                 if ($provider->getCredential(PARAM_REPLACE_ICON, SetupControlSwitchDefs::switch_on) === SetupControlSwitchDefs::switch_off) {
                     $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
                 }
-
-                $icon_template = $provider->getIconsTemplate();
-                $store_matches = !empty($icon_template) && $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== XMLTV_PICONS;
             } else {
                 $id_parser = '';
-                $store_matches = false;
                 $id_map = isset($playlist->params[PARAM_ID_MAPPER]) ? $playlist->params[PARAM_ID_MAPPER] : "";
             }
 
             hd_debug_print("Parse playlist $tmp_file (timestamp: $mtime)");
             // Is already parsed?
             $this->tv_m3u_parser->assignPlaylist($tmp_file, $force);
-            $this->tv_m3u_parser->setupParserParameters($id_map, $id_parser, $icon_replace_pattern, $store_matches);
+            $this->tv_m3u_parser->setupParserParameters($id_map, $id_parser, $icon_replace_pattern);
 
             $count = $this->tv_m3u_parser->getEntriesCount();
             if ($count === 0) {

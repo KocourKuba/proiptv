@@ -901,7 +901,6 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_ottclub.png",
       "provider_url": "https://www.ottclub.cc/",
-      "icons_template": "http://{DOMAIN}/images/{ID}.png",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/playlist/{PASSWORD}/m3u"
       },

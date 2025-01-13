@@ -691,14 +691,7 @@ class Starnet_Tv implements User_Input_Handler
         $provider = $this->plugin->get_current_provider();
         $this->plugin->vod = null;
         $this->plugin->vod_enabled = false;
-        $domain_id = '';
         if (!is_null($provider)) {
-            $domain_id = $provider->getCredential(MACRO_DOMAIN_ID);
-            $icon_template = $provider->getIconsTemplate();
-            if (!empty($icon_template)) {
-                hd_debug_print("using provider ({$provider->getId()}) specific icon template: $icon_template");
-            }
-
             $vod_class = $provider->get_vod_class();
             if (!empty($vod_class)) {
                 hd_debug_print("Using VOD: $vod_class");
@@ -726,8 +719,8 @@ class Starnet_Tv implements User_Input_Handler
 
         $epg_manager = $this->plugin->get_epg_manager();
 
-        $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-        if ($use_playlist_picons !== PLAYLIST_PICONS) {
+        $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+        if ($picons_source !== PLAYLIST_PICONS) {
             $all_sources = $this->plugin->get_active_sources();
             if ($all_sources->size() === 0) {
                 hd_debug_print("No active XMLTV sources found to collect playlist icons...");
@@ -837,6 +830,7 @@ class Starnet_Tv implements User_Input_Handler
             $group_title = $entry->getGroupTitle();
             if ($disabled_group->in_order($group_title)) continue;
 
+            $epg_ids = $entry->getEpgIds();
             $channel_id = $entry->getChannelId();
             $channel_name = $entry->getEntryTitle();
             if (empty($channel_name)) {
@@ -865,26 +859,14 @@ class Starnet_Tv implements User_Input_Handler
             $number++;
 
             $icon_url = '';
-            if ($use_playlist_picons !== XMLTV_PICONS) {
+            if ($picons_source !== XMLTV_PICONS) {
                 // playlist icons first in priority
                 $icon_url = $entry->getChannelIcon();
-                // special icon url generation based on icon url regex matching
-                if (!empty($icon_template)) {
-                    $matches = $entry->getMatches();
-                    if (!empty($matches)) {
-                        $icon_url = str_replace(
-                            array(MACRO_SCHEME, MACRO_DOMAIN, MACRO_ID, MACRO_DOMAIN_ID),
-                            array($matches['scheme'], $matches['domain'], $channel_id, $domain_id),
-                            $icon_template);
-                    }
-                }
             }
-
-            $epg_ids = $entry->getEpgIds();
 
             // if selected xmltv or combined mode look into xmltv source
             // in combined mode search is not performed if already got picon from playlist
-            if ($use_playlist_picons === XMLTV_PICONS || ($use_playlist_picons === COMBINED_PICONS && empty($icon_url))) {
+            if ($picons_source === XMLTV_PICONS || ($picons_source === COMBINED_PICONS && empty($icon_url))) {
                 $icon_url = $epg_manager->get_picon($epg_ids);
                 if (empty($icon_url)) {
                     hd_debug_print("no picon for " . pretty_json_format($epg_ids), true);
@@ -982,7 +964,8 @@ class Starnet_Tv implements User_Input_Handler
             }
         }
 
-        if (!is_null($all_channels = $this->get_channels())) {
+        $all_channels = $this->get_channels();
+        if (!is_null($all_channels)) {
             $orphans_channels = array_diff($this->get_disabled_channel_ids()->get_order(), $all_channels->get_ordered_keys());
             if (!empty($orphans_channels)) {
                 if (LogSeverity::$is_debug) {

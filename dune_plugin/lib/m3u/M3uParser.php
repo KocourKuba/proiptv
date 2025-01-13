@@ -54,11 +54,6 @@ class M3uParser extends Json_Serializer
     protected $xmltv_sources;
 
     /**
-     * @var bool
-     */
-    protected $store_matches = false;
-
-    /**
      * @var string
      */
     protected $id_map = '';
@@ -140,15 +135,11 @@ class M3uParser extends Json_Serializer
      * @param string $id_map
      * @param string $id_parser
      * @param array $icon_replace_pattern
-     * @param bool $store_matches
      */
-    public function setupParserParameters($id_map, $id_parser, $icon_replace_pattern, $store_matches)
+    public function setupParserParameters($id_map, $id_parser, $icon_replace_pattern)
     {
         if (!empty($id_parser)) {
             hd_debug_print("Using specific ID parser: $id_parser", true);
-            if ($store_matches) {
-                hd_debug_print("Using specific icon template", true);
-            }
         }
 
         if (!empty($id_map)) {
@@ -167,7 +158,6 @@ class M3uParser extends Json_Serializer
         $this->id_map = $id_map;
         $this->id_parser = $id_parser;
         $this->icon_replace_pattern = $icon_replace_pattern;
-        $this->store_matches = $store_matches;
     }
 
     /**

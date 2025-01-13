@@ -83,10 +83,6 @@ class api_default
     protected $api_url = '';
 
     /**
-     * @var string
-     */
-    protected $icons_template = '';
-    /**
      * @var array
      */
     protected $api_commands = array();
@@ -178,22 +174,6 @@ class api_default
     public function setProviderUrl($provider_url)
     {
         $this->provider_url = $provider_url;
-    }
-
-    /**
-     * @return string
-     */
-    public function getIconsTemplate()
-    {
-        return $this->icons_template;
-    }
-
-    /**
-     * @param string $icons_template
-     */
-    public function setIconsTemplate($icons_template)
-    {
-        $this->icons_template = $icons_template;
     }
 
     /**
