@@ -483,13 +483,13 @@ class Epg_Manager_Xmltv
         HD::set_last_error("xmltv_last_error", null);
 
         $cached_file = $this->cache_dir . $hash . ".xmltv";
-        hd_debug_print("Checking cached xmltv file: $cached_file");
+        hd_debug_print("Checking cached xmltv file: $cached_file", true);
         $expired = true;
         if (!file_exists($cached_file)) {
             hd_debug_print("Cached xmltv file not exist");
         } else {
             $check_time_file = filemtime($cached_file);
-            hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $check_time_file));
+            hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $check_time_file), true);
 
             if ($cache_ttl === XMLTV_CACHE_AUTO) {
                 $this->curl_wrapper->set_url($url);
@@ -512,17 +512,16 @@ class Epg_Manager_Xmltv
             return;
         }
 
-        hd_debug_print("Cached file: $cached_file is not expired");
+        hd_debug_print("Cached file: $cached_file is not expired", true);
         $indexed = $this->get_indexes_info();
 
         // index for picons has not verified because it always exist if channels index is present
         if (!$index_all && !empty($indexed[self::INDEX_CHANNELS])) {
-            hd_debug_print("Xmltv channels index is valid");
+            hd_debug_print("Xmltv channels index is valid", true);
             return;
         }
 
         if (!empty($indexed[self::INDEX_CHANNELS]) && !empty($indexed[self::INDEX_ENTRIES])) {
-            hd_debug_print("All xmltv indexes are valid");
             return;
         }
 
@@ -629,7 +628,7 @@ class Epg_Manager_Xmltv
     public function get_indexes_info($hash = null)
     {
         hd_debug_print(null, true);
-        $result = array(self::INDEX_CHANNELS => -1, self::INDEX_PICONS => -1, self::INDEX_ENTRIES => -1);
+        $result = array(self::INDEX_CHANNELS => -1, self::INDEX_PICONS => -1, 'epg_ids' => -1, self::INDEX_ENTRIES => -1);
 
         $hash = is_null($hash) ? $this->xmltv_url_params[PARAM_HASH] : $hash;
         $db = $this->open_sqlite_db($hash);
@@ -644,6 +643,8 @@ class Epg_Manager_Xmltv
         }
 
         foreach ($result as $key => $name) {
+            if ($key === 'epg_ids') continue;
+
             $res = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$key';");
             if (empty($res)) continue;
 
@@ -653,6 +654,7 @@ class Epg_Manager_Xmltv
                 $result[$key] = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $key;");
             } else {
                 $result[$key] = $db->querySingle("SELECT count(*) FROM $key;");
+                $result['epg_ids'] = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $key;");
             }
         }
 

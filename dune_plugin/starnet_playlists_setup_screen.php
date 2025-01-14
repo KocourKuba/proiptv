@@ -91,7 +91,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // ID detection settings
         $playlist = $this->plugin->get_active_playlist();
-        if (!is_null($playlist) && $playlist->type !== PARAM_PROVIDER) {
+        if ($playlist !== null && $playlist->type !== PARAM_PROVIDER) {
             $mapper_ops = array(
                 ATTR_CHANNEL_HASH => TR::t('hash_url'),
                 ATTR_TVG_ID => TR::t('attribute_name__1', ATTR_TVG_ID),
@@ -172,7 +172,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_ID_MAPPER:
                 $playlist = $this->plugin->get_active_playlist();
-                if (!is_null($playlist) && $playlist->type !== PARAM_PROVIDER) {
+                if ($playlist !== null && $playlist->type !== PARAM_PROVIDER) {
                     $playlist->params[PARAM_ID_MAPPER] = $user_input->{$user_input->control_id};
                 }
 

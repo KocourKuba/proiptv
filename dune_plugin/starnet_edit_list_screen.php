@@ -1338,8 +1338,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return $items;
         }
 
+        $all_sources = new Hashed_Array();
         $pl_sources = $this->plugin->get_playlist_xmltv_sources();
-        $all_sources = $this->plugin->get_all_xmltv_sources();
+        $all_sources->add_items($pl_sources);
+        $ext_sources = $this->plugin->get_ext_xmltv_sources();
+        $all_sources->add_items($ext_sources);
+
         $active_sources = $this->plugin->get_setting(PARAM_SELECTED_XMLTV_SOURCES, array());
         foreach ($all_sources as $key => $item) {
             $detailed_info = '';
@@ -1451,7 +1455,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function get_timer(MediaURL $media_url, $plugin_cookies)
     {
-        return Action_Factory::timer(500);
+        return Action_Factory::timer(100);
     }
 
     /**

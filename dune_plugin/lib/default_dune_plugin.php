@@ -165,6 +165,11 @@ class Default_Dune_Plugin implements DunePlugin
     protected $cur_provider;
 
     /**
+     * @var Named_Storage
+     */
+    protected $cur_playlist;
+
+    /**
      * @var M3uParser
      */
     protected $tv_m3u_parser;
@@ -273,22 +278,21 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
 
-        $playlist = $this->get_active_playlist();
-        if (is_null($playlist) || $playlist->type !== PARAM_PROVIDER) {
+        if ($this->cur_playlist === null || $this->cur_playlist->type !== PARAM_PROVIDER) {
             return null;
         }
 
         if (is_null($this->cur_provider)) {
-            $provider = $this->create_provider_class($playlist->params[PARAM_PROVIDER]);
+            $provider = $this->create_provider_class($this->cur_playlist->params[PARAM_PROVIDER]);
             if (is_null($provider)) {
-                hd_debug_print("unknown provider class: " . $playlist->params[PARAM_PROVIDER]);
+                hd_debug_print("unknown provider class: " . $this->cur_playlist->params[PARAM_PROVIDER]);
             } else if (!$provider->getEnable()) {
                 hd_debug_print("provider " . $provider->getId() . " is disabled");
             } else {
                 $this->cur_provider = $provider;
-                $active_playlist = $this->get_active_playlist_key();
-                $provider->set_provider_playlist_id($active_playlist);
-                hd_debug_print("Using provider " . $provider->getId() . " (" . $provider->getName() . ") - playlist id: $active_playlist");
+                $active_playlist_id = $this->get_active_playlist_key();
+                $provider->set_provider_playlist_id($active_playlist_id);
+                hd_debug_print("Using provider " . $provider->getId() . " (" . $provider->getName() . ") - playlist id: $active_playlist_id");
                 if (!$this->cur_provider->request_provider_token()) {
                     hd_debug_print("Can't get provider token");
                 }
@@ -303,7 +307,7 @@ class Default_Dune_Plugin implements DunePlugin
      */
     public function get_active_playlist()
     {
-        return $this->get_playlists()->get($this->get_active_playlist_key());
+        return $this->cur_playlist;
     }
 
     /**
@@ -383,30 +387,6 @@ class Default_Dune_Plugin implements DunePlugin
                 }
             }
         }
-    }
-
-    /**
-     * @return string
-     */
-    public function get_active_playlist_key()
-    {
-        $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
-        $playlists = $this->get_playlists();
-        if (empty($id) || !$playlists->has($id)) {
-            if ($playlists->size()) {
-                $playlists->rewind();
-                $id = $playlists->key();
-                if (empty($id)) {
-                    /** @var $playlist Named_Storage */
-                    $playlist = $playlists->get($id);
-                    hd_debug_print("empty id for: " . $playlist->name);
-                } else {
-                    $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
-                }
-            }
-        }
-
-        return $id;
     }
 
     /**
@@ -1477,6 +1457,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->orders = null;
         $this->history = null;
         $this->cur_provider = null;
+        $this->cur_playlist = null;
 
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
         $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
@@ -1604,6 +1585,8 @@ class Default_Dune_Plugin implements DunePlugin
             }
             $this->set_parameter(PARAM_PLAYLIST_STORAGE, $new_playlists);
         }
+
+        $this->cur_playlist = $playlists->get($this->get_active_playlist_key());
 
         hd_debug_print("Init plugin done!");
         hd_debug_print_separator();
@@ -2452,37 +2435,37 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * Returns true if plugin is in VOD mode
+     *
+     * @return bool
+     */
+    public function is_vod_playlist()
+    {
+        if ($this->cur_playlist === null) {
+            return false;
+        }
+
+        return (isset($this->cur_playlist->params[PARAM_PL_TYPE]) && $this->cur_playlist->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD);
+    }
+
+    /**
      * Initialize and parse selected playlist
      *
      * @param bool $force
-     * @return int
+     * @return bool
      */
     public function init_playlist($force = false)
     {
         hd_debug_print(null, true);
 
-        $this->init_user_agent();
-
-        // first check if playlist in cache
-        if ($this->get_playlists()->size() === 0) {
-            hd_debug_print("No playlists!");
-            return 0;
-        }
-
-        $playlist = $this->get_active_playlist();
-
-        $ret = 0;
         $tmp_file = '';
         try {
-            if ($playlist === null || empty($playlist->type)) {
+            if ($this->cur_playlist === null) {
                 hd_debug_print("Tv playlist not defined");
                 throw new Exception("Tv playlist not defined");
             }
 
-            if (isset($playlist->params[PARAM_PL_TYPE]) && $playlist->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
-                hd_debug_print("Playlist is vod.");
-                return 2;
-            }
+            $this->init_user_agent();
 
             $this->perf->reset('start');
 
@@ -2503,26 +2486,26 @@ class Default_Dune_Plugin implements DunePlugin
             }
 
             if ($force !== false) {
-                hd_debug_print("m3u playlist: $playlist->name ({$this->get_active_playlist_key()})");
-                if ($playlist->type === PARAM_PROVIDER) {
+                hd_debug_print("m3u playlist: {$this->cur_playlist->name} ({$this->get_active_playlist_key()})");
+                if ($this->cur_playlist->type === PARAM_PROVIDER) {
                     $provider = $this->get_current_provider();
                     if (is_null($provider)) {
-                        throw new Exception("Unable to init provider to download: " . $playlist);
+                        throw new Exception("Unable to init provider to download: " . $this->cur_playlist);
                     }
 
                     if ($provider->get_provider_info($force) === false) {
-                        throw new Exception("Unable to get provider info to download: " . $playlist);
+                        throw new Exception("Unable to get provider info to download: " . $this->cur_playlist);
                     }
 
                     hd_debug_print("Load provider playlist to: $tmp_file");
                     $res = $provider->load_playlist($tmp_file);
                     $logfile = $provider->getCurlWrapper()->get_raw_response_headers();
                 } else {
-                    if ($playlist->type === PARAM_FILE) {
-                        hd_debug_print("m3u copy local file: {$playlist->params[PARAM_URI]} to $tmp_file");
-                        $res = copy($playlist->params[PARAM_URI], $tmp_file);
-                    } else if ($playlist->type === PARAM_LINK) {
-                        $playlist_url = $playlist->params[PARAM_URI];
+                    if ($this->cur_playlist->type === PARAM_FILE) {
+                        hd_debug_print("m3u copy local file: {$this->cur_playlist->params[PARAM_URI]} to $tmp_file");
+                        $res = copy($this->cur_playlist->params[PARAM_URI], $tmp_file);
+                    } else if ($this->cur_playlist->type === PARAM_LINK) {
+                        $playlist_url = $this->cur_playlist->params[PARAM_URI];
                         hd_debug_print("m3u download link: $playlist_url");
                         if (!is_http($playlist_url)) {
                             throw new Exception("Incorrect playlist url: $playlist_url");
@@ -2533,13 +2516,13 @@ class Default_Dune_Plugin implements DunePlugin
                     }
 
                     if (!isset($playlist->params[PARAM_ID_MAPPER])) {
-                        $playlist->params[PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
+                        $this->cur_playlist->params[PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
                     }
                 }
 
                 if (!$res || !file_exists($tmp_file)) {
                     $exception_msg = TR::load_string('err_load_playlist');
-                    if ($playlist->type !== PARAM_FILE && !empty($logfile)) {
+                    if ($this->cur_playlist->type !== PARAM_FILE && !empty($logfile)) {
                         $exception_msg .= "\n\n$logfile";
                     }
                     throw new Exception($exception_msg);
@@ -2561,7 +2544,7 @@ class Default_Dune_Plugin implements DunePlugin
 
             $mtime = filemtime($tmp_file);
             $icon_replace_pattern = array();
-            if ($playlist->type === PARAM_PROVIDER) {
+            if ($this->cur_playlist->type === PARAM_PROVIDER) {
                 $provider = $this->get_current_provider();
                 if (is_null($provider)) {
                     throw new Exception("Unable to init provider");
@@ -2607,13 +2590,15 @@ class Default_Dune_Plugin implements DunePlugin
             $this->perf->setLabel('end');
             $report = $this->perf->getFullReport();
 
+            $this->init_epg_manager();
+            $this->cleanup_active_xmltv_source();
+
             hd_debug_print("Total entries loaded from playlist m3u file: $count");
             hd_debug_print("Load time: {$report[Perf_Collector::TIME]} sec");
             hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
 
             hd_debug_print_separator();
             hd_debug_print("Init playlist done!");
-            $ret = 1;
         } catch (Exception $ex) {
             $err = HD::get_last_error();
             if (!empty($err)) {
@@ -2625,9 +2610,10 @@ class Default_Dune_Plugin implements DunePlugin
             if (isset($playlist->type) && file_exists($tmp_file)) {
                 unlink($tmp_file);
             }
+            return false;
         }
 
-        return $ret;
+        return true;
     }
 
     /**
@@ -2677,18 +2663,25 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
 
-        $playlist = $this->get_active_playlist();
+        if ($this->cur_playlist === null) {
+            hd_debug_print("Playlist not defined");
+            return false;
+        }
+
         $provider = null;
-        if ($playlist->type === PARAM_PROVIDER) {
+        if ($this->cur_playlist->type === PARAM_PROVIDER) {
             $provider = $this->get_current_provider();
             if (is_null($provider)) {
+                hd_debug_print("Unknown provider");
                 return false;
             }
 
             if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
+                hd_debug_print("Failed to get VOD playlist from provider");
                 return false;
             }
-        } else if (!isset($playlist->params[PARAM_PL_TYPE]) || $playlist->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
+        } else if (!isset($this->cur_playlist->params[PARAM_PL_TYPE]) || $this->cur_playlist->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
+            hd_debug_print("Unknown playlist type or IPTV playlist");
             return false;
         }
 
@@ -2717,15 +2710,16 @@ class Default_Dune_Plugin implements DunePlugin
                         HD::set_last_error("vod_last_error", $exception_msg);
                         throw new Exception($exception_msg);
                     }
-                } else if ($playlist->type === PARAM_FILE) {
-                    hd_debug_print("m3u copy local file: {$playlist->params[PARAM_URI]} to $tmp_file");
-                    $res = copy($playlist->params[PARAM_URI], $tmp_file);
+                } else if ($this->cur_playlist->type === PARAM_FILE) {
+                    hd_debug_print("m3u copy local file: {$this->cur_playlist->params[PARAM_URI]} to $tmp_file");
+                    $res = copy($this->cur_playlist->params[PARAM_URI], $tmp_file);
                     if ($res === false) {
-                        $exception_msg = TR::load_string('err_load_vod') . "\n\nm3u copy local file: {$playlist->params[PARAM_URI]} to $tmp_file";
+                        $exception_msg = TR::load_string('err_load_vod') . PHP_EOL . PHP_EOL .
+                            "m3u copy local file: {$this->cur_playlist->params[PARAM_URI]} to $tmp_file";
                         throw new Exception($exception_msg);
                     }
-                } else if ($playlist->type === PARAM_LINK) {
-                    $playlist_url = $playlist->params[PARAM_URI];
+                } else if ($this->cur_playlist->type === PARAM_LINK) {
+                    $playlist_url = $this->cur_playlist->params[PARAM_URI];
                     hd_debug_print("m3u download link: $playlist_url");
                     list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file);
                     if ($res === false) {
@@ -2763,6 +2757,21 @@ class Default_Dune_Plugin implements DunePlugin
     }
 
     /**
+     * @return string
+     */
+    public function get_active_playlist_key()
+    {
+        $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
+        $playlists = $this->get_parameter(PARAM_PLAYLIST_STORAGE, new Hashed_Array());
+        if ((empty($id) || !$playlists->has($id)) && $playlists->size()) {
+            $playlists->rewind();
+            $this->set_active_playlist_key($playlists->key());
+        }
+
+        return $id;
+    }
+
+    /**
      * $param string $id
      * @return void
      */
@@ -2772,6 +2781,7 @@ class Default_Dune_Plugin implements DunePlugin
 
         $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
         $this->cur_provider = null;
+        $this->cur_playlist = $this->get_playlists()->get($id);
     }
 
     /**
@@ -2784,11 +2794,7 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print(null, true);
 
         $xmltv_sources = $this->get_playlist_xmltv_sources();
-
-        /** @var Named_Storage $source */
-        foreach ($this->get_ext_xmltv_sources() as $key => $source) {
-            $xmltv_sources->set($key, $source);
-        }
+        $xmltv_sources->add_items($this->get_ext_xmltv_sources());
 
         return $xmltv_sources;
     }
@@ -2807,24 +2813,21 @@ class Default_Dune_Plugin implements DunePlugin
         hd_debug_print("saved playlist sources: $saved_sources", true);
 
         $playlist_sources = new Hashed_Array();
-        foreach ($this->tv_m3u_parser->getXmltvSources() as $m3u8source) {
-            if (!preg_match(HTTP_PATTERN, $m3u8source, $m)
-                || preg_match("/jtv.?\.zip$/", basename($m3u8source))) continue;
-
-            $hash = Hashed_Array::hash($m3u8source);
+        foreach ($this->tv_m3u_parser->getXmltvSources() as $url) {
+            $hash = Hashed_Array::hash($url);
             $saved_source = $saved_sources->get($hash);
             if ($saved_source !== null) {
                 $item = $saved_source;
             } else {
                 $item = new Named_Storage();
                 $item->type = PARAM_LINK;
-                $item->params[PARAM_URI] = $m3u8source;
+                $item->params[PARAM_URI] = $url;
                 $item->params[PARAM_CACHE] = XMLTV_CACHE_AUTO;
-                $item->name = $m[2];
+                $item->name = basename($url);
             }
 
             $playlist_sources->put($hash, $item);
-            hd_debug_print("playlist source: ($hash) $m3u8source", true);
+            hd_debug_print("playlist source: ($hash) $url", true);
         }
 
         $provider = $this->get_current_provider();
@@ -2833,8 +2836,6 @@ class Default_Dune_Plugin implements DunePlugin
             $config_sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
             if (!empty($config_sources)) {
                 foreach ($config_sources as $source) {
-                    if (!preg_match(HTTP_PATTERN, $source, $m)) continue;
-
                     $id = Hashed_Array::hash($source);
                     if ($playlist_sources->has($id)) continue;
 
@@ -2842,7 +2843,7 @@ class Default_Dune_Plugin implements DunePlugin
                     $item->type = PARAM_LINK;
                     $item->params[PARAM_URI] = $source;
                     $item->params[PARAM_CACHE] = XMLTV_CACHE_AUTO;
-                    $item->name = $m[2];
+                    $item->name = $source;
                     hd_debug_print("append source from config: " . json_encode($item), true);
                     $playlist_sources->put($id, $item);
                 }
@@ -2862,9 +2863,9 @@ class Default_Dune_Plugin implements DunePlugin
         if ($changed) {
             $playlist_sources = $filtered;
             $this->set_setting(PARAM_EPG_PLAYLIST, $playlist_sources);
+            hd_debug_print("Resulting playlist sources: $playlist_sources", true);
         }
 
-        hd_debug_print("Resulting playlist sources: $playlist_sources", true);
         return $playlist_sources;
     }
 
@@ -3283,8 +3284,7 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function create_plugin_title()
     {
-        $playlist = $this->get_active_playlist();
-        $name = is_null($playlist) ? '' : $playlist->name;
+        $name = is_null($this->cur_playlist) ? '' : $this->cur_playlist->name;
         $plugin_name = $this->plugin_info['app_caption'];
         $name = empty($name) ? $plugin_name : "$plugin_name ($name)";
         hd_debug_print("plugin title: $name");
@@ -3800,27 +3800,37 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function cleanup_active_xmltv_source()
     {
-        $is_xml_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+        $is_json_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON;
         $use_playlist_picons = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
 
-        if (!$is_xml_engine && $use_playlist_picons === PLAYLIST_PICONS) {
+        if ($is_json_engine && $use_playlist_picons === PLAYLIST_PICONS) {
+            hd_debug_print("No need to cleanup");
             return;
         }
+
+        $playlist_sources = $this->get_playlist_xmltv_sources()->get_keys();
+        $ext_sources = $this->get_ext_xmltv_sources()->get_keys();
+        $all_sources = array_unique(array_merge($playlist_sources, $ext_sources));
 
         $cur_sources = $this->get_setting(PARAM_SELECTED_XMLTV_SOURCES, array());
         hd_debug_print("Load selected XMLTV sources keys: " . json_encode($cur_sources));
 
-        $all_sources = $this->get_all_xmltv_sources();
         // remove non-existing values from active sources
         $changed = false;
-        $filtered_source = array_intersect($cur_sources, $all_sources->get_keys());
+        $filtered_source = array_intersect($cur_sources, $all_sources);
         if (count($cur_sources) !== count($filtered_source)) {
             $cur_sources = $filtered_source;
             hd_debug_print("Filtered source: " . json_encode($cur_sources));
             $changed = true;
         }
 
+        if (empty($cur_sources) && !empty($playlist_sources)) {
+            $cur_sources[] = reset($playlist_sources);
+            $changed = true;
+        }
+
         if ($changed) {
+            hd_debug_print("Save selected XMLTV sources keys: " . json_encode($cur_sources));
             $this->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $cur_sources);
         }
 

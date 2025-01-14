@@ -109,6 +109,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_PLAYLIST_SETTINGS:
                 $this->plugin->init_plugin();
+                $this->plugin->init_playlist();
                 return $this->plugin->show_protect_settings_dialog($this, self::ACTION_PLAYLIST_SETTINGS);
 
             case self::ACTION_PLAYLIST_SETTINGS:
@@ -117,6 +118,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_XMLTV_SOURSES_SETTINGS:
                 $this->plugin->init_plugin();
+                $this->plugin->init_playlist();
                 return $this->plugin->show_protect_settings_dialog($this, self::ACTION_XMLTV_SOURCES_SETTINGS);
 
             case self::ACTION_XMLTV_SOURCES_SETTINGS:

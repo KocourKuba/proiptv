@@ -410,6 +410,14 @@ class Hashed_Array extends Json_Serializer implements Iterator
         $this->map = array();
     }
 
+    /**
+     * Reset position
+     */
+    public function reset()
+    {
+        $this->pos = 0;
+    }
+
     /////////////////////////////////////////////////////////////////////
     /// Iterator implementation
 

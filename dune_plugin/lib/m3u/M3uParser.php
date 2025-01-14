@@ -49,11 +49,6 @@ class M3uParser extends Json_Serializer
     protected $data_positions;
 
     /**
-     * @var Ordered_Array
-     */
-    protected $xmltv_sources;
-
-    /**
      * @var string
      */
     protected $id_map = '';
@@ -102,7 +97,6 @@ class M3uParser extends Json_Serializer
         $this->m3u_entries = array();
         $this->m3u_info = null;
         $this->data_positions = array();
-        $this->xmltv_sources = null;
         $this->icon_base_url = '';
     }
 
@@ -468,22 +462,20 @@ class M3uParser extends Json_Serializer
      */
     public function getXmltvSources()
     {
-        if (is_null($this->xmltv_sources)) {
-            $this->xmltv_sources = new Ordered_Array();
-            if (!empty($this->m3u_info)) {
-                $arr = $this->m3u_info->getEpgSources();
-                foreach ($arr as $value) {
-                    $urls = explode(',', $value);
-                    foreach ($urls as $url) {
-                        if (!empty($url) && is_http($url)) {
-                            $this->xmltv_sources->add_item($url);
-                        }
+        $xmltv_sources = new Ordered_Array();
+        if (!empty($this->m3u_info)) {
+            $arr = $this->m3u_info->getEpgSources();
+            foreach ($arr as $value) {
+                $urls = explode(',', $value);
+                foreach ($urls as $url) {
+                    if (!empty($url) && is_http($url) && !preg_match("/jtv.?\.zip$/", basename($url))) {
+                        $xmltv_sources->add_item($url);
                     }
                 }
             }
         }
 
-        return $this->xmltv_sources;
+        return $xmltv_sources;
     }
 
     public function detectBestChannelId()

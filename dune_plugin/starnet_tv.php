@@ -570,19 +570,11 @@ class Starnet_Tv implements User_Input_Handler
 
         $plugin_cookies->toggle_move = false;
 
-        $this->perf->reset('start');
-
         $this->plugin->upgrade_settings();
 
         $this->plugin->create_screen_views();
 
-        // first check if playlist in cache
-        $playlist_type = $this->plugin->init_playlist($force);
-        if (0 === $playlist_type) {
-            return 0;
-        }
-
-        if ($playlist_type === 2) {
+        if ($this->plugin->is_vod_playlist()) {
             // Vod category
             $special_group = new Default_Group($this->plugin,
                 VOD_GROUP_ID,
@@ -601,8 +593,12 @@ class Starnet_Tv implements User_Input_Handler
             return 2;
         }
 
-        $this->plugin->init_epg_manager();
-        $this->plugin->cleanup_active_xmltv_source();
+        $this->perf->reset('start');
+
+        // first check if playlist in cache
+        if (false === $this->plugin->init_playlist($force)) {
+            return 0;
+        }
 
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD, '0000');
         $enable_protected = !empty($pass_sex);
