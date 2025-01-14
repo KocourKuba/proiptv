@@ -1313,11 +1313,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $detailed_info = $playlist->name;
             } else if ($playlist->type === PARAM_FILE) {
-                $detailed_info = null;
+                if (isset($playlist->params[PARAM_URI])) {
+                    $detailed_info = "$playlist->name ({$playlist->params[PARAM_PL_TYPE]})||{$playlist->params[PARAM_URI]}";
+                }
                 $icon_file = get_image_path("m3u_file.png");
             } else {
                 if (isset($playlist->params[PARAM_URI])) {
-                    $detailed_info = "$playlist->name|{$playlist->params[PARAM_URI]}";
+                    $detailed_info = "$playlist->name ({$playlist->params[PARAM_PL_TYPE]})||{$playlist->params[PARAM_URI]}";
                 }
                 $icon_file = get_image_path("link.png");
             }
