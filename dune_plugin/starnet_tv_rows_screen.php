@@ -1480,14 +1480,17 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         } else {
             // popup menu for left side list
             hd_debug_print("in menu side", true);
-            $menu_items[] = $this->plugin->create_menu_item($this,
-                ACTION_RELOAD,
-                TR::t('playlist_name_msg__1', $this->plugin->get_active_playlist()->name),
-                "refresh.png",
-                array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
-            );
+            $playlist = $this->plugin->get_active_playlist();
+            if ($playlist !== null) {
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    ACTION_RELOAD,
+                    TR::t('playlist_name_msg__1', $playlist->name),
+                    "refresh.png",
+                    array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
+                );
 
-            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+            }
 
             $media_url = MediaURL::decode($user_input->selected_row_id);
             $row_id = json_decode($media_url->row_id);
