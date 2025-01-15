@@ -91,7 +91,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $items = array();
         hd_debug_print("dir: " . json_encode($dir), true);
-        foreach ($this->get_file_list($plugin_cookies, $dir) as $item_type => $item) {
+        foreach ($this->get_file_list($plugin_cookies, $dir, !$choose_file) as $item_type => $item) {
             if (isset($media_url->filepath) && is_array($item)) {
                 ksort($item);
             }
@@ -253,9 +253,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     /**
      * @param Object $plugin_cookies
      * @param array $path
+     * @param bool $show_empty
      * @return array
      */
-    protected function get_file_list($plugin_cookies, $path)
+    protected function get_file_list($plugin_cookies, $path, $show_empty = true)
     {
         hd_debug_print(null, true);
         hd_debug_print(json_encode($path), true);
@@ -336,7 +337,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
                 $bug_kind = get_bug_platform_kind();
                 while (false !== ($file = readdir($handle))) {
-                    if ($file === "." || $file === "..") continue;
+                    if ($file === "." || $file === ".." || strtolower($file) === 'lost.dir') continue;
 
                     $absolute_filepath = $dir . DIRECTORY_SEPARATOR . $file;
                     $is_match = preg_match("|^" . self::SMB_PATH . "/|", $absolute_filepath);
@@ -346,6 +347,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         $fileData['file'][$file]['size'] = ($bug_kind && $is_match) ? '' : filesize($absolute_filepath);
                         $fileData['file'][$file]['filepath'] = $absolute_filepath;
                     } else if ($absolute_filepath !== self::NFS_PATH && $absolute_filepath !== self::MNT_PATH . "/D") {
+                        $files = glob("$absolute_filepath/*");
+                        if (empty($files) && !$show_empty) continue;
+
                         $fileData['folder'][$file]['filepath'] = $absolute_filepath;
                     }
                 }
