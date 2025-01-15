@@ -170,6 +170,11 @@ class Default_Dune_Plugin implements DunePlugin
     protected $cur_playlist;
 
     /**
+     * @var Hashed_Array<Named_Storage>
+     */
+    protected $playlist_xmltv_sources;
+
+    /**
      * @var M3uParser
      */
     protected $tv_m3u_parser;
@@ -1458,6 +1463,7 @@ class Default_Dune_Plugin implements DunePlugin
         $this->history = null;
         $this->cur_provider = null;
         $this->cur_playlist = null;
+        $this->playlist_xmltv_sources = null;
 
         $this->postpone_save = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
         $this->is_dirty = array(PLUGIN_PARAMETERS => false, PLUGIN_SETTINGS => false, PLUGIN_ORDERS => false, PLUGIN_HISTORY => false);
@@ -1586,7 +1592,7 @@ class Default_Dune_Plugin implements DunePlugin
             $this->set_parameter(PARAM_PLAYLIST_STORAGE, $new_playlists);
         }
 
-        $this->cur_playlist = $playlists->get($this->get_active_playlist_key());
+        $this->set_active_playlist_key($this->get_active_playlist_key());
 
         hd_debug_print("Init plugin done!");
         hd_debug_print_separator();
@@ -2504,7 +2510,7 @@ class Default_Dune_Plugin implements DunePlugin
                     if ($this->cur_playlist->type === PARAM_FILE) {
                         hd_debug_print("m3u copy local file: {$this->cur_playlist->params[PARAM_URI]} to $tmp_file");
                         $res = copy($this->cur_playlist->params[PARAM_URI], $tmp_file);
-                    } else if ($this->cur_playlist->type === PARAM_LINK) {
+                    } else if ($this->cur_playlist->type === PARAM_LINK || $this->cur_playlist->type === PARAM_CONF) {
                         $playlist_url = $this->cur_playlist->params[PARAM_URI];
                         hd_debug_print("m3u download link: $playlist_url");
                         if (!is_http($playlist_url)) {
@@ -2718,7 +2724,7 @@ class Default_Dune_Plugin implements DunePlugin
                             "m3u copy local file: {$this->cur_playlist->params[PARAM_URI]} to $tmp_file";
                         throw new Exception($exception_msg);
                     }
-                } else if ($this->cur_playlist->type === PARAM_LINK) {
+                } else if ($this->cur_playlist->type === PARAM_LINK || $this->cur_playlist->type === PARAM_CONF) {
                     $playlist_url = $this->cur_playlist->params[PARAM_URI];
                     hd_debug_print("m3u download link: $playlist_url");
                     list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file);
@@ -2779,9 +2785,11 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
 
-        $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
         $this->cur_provider = null;
+        $this->playlist_xmltv_sources = null;
         $this->cur_playlist = $this->get_playlists()->get($id);
+
+        $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
     }
 
     /**
@@ -2793,7 +2801,8 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
 
-        $xmltv_sources = $this->get_playlist_xmltv_sources();
+        $xmltv_sources = new Hashed_Array();
+        $xmltv_sources->add_items($this->get_playlist_xmltv_sources());
         $xmltv_sources->add_items($this->get_ext_xmltv_sources());
 
         return $xmltv_sources;
@@ -2808,65 +2817,68 @@ class Default_Dune_Plugin implements DunePlugin
     {
         hd_debug_print(null, true);
 
-        /** @var Hashed_Array $saved_sources */
-        $saved_sources = $this->get_setting(PARAM_EPG_PLAYLIST, new Hashed_Array());
-        hd_debug_print("saved playlist sources: $saved_sources", true);
+        if (empty($this->playlist_xmltv_sources)) {
+            /** @var Hashed_Array $saved_sources */
+            $saved_sources = $this->get_setting(PARAM_EPG_PLAYLIST, new Hashed_Array());
+            hd_debug_print("saved playlist sources: $saved_sources", true);
 
-        $playlist_sources = new Hashed_Array();
-        foreach ($this->tv_m3u_parser->getXmltvSources() as $url) {
-            $hash = Hashed_Array::hash($url);
-            $saved_source = $saved_sources->get($hash);
-            if ($saved_source !== null) {
-                $item = $saved_source;
-            } else {
-                $item = new Named_Storage();
-                $item->type = PARAM_LINK;
-                $item->params[PARAM_URI] = $url;
-                $item->params[PARAM_CACHE] = XMLTV_CACHE_AUTO;
-                $item->name = basename($url);
-            }
-
-            $playlist_sources->put($hash, $item);
-            hd_debug_print("playlist source: ($hash) $url", true);
-        }
-
-        $provider = $this->get_current_provider();
-        if (!is_null($provider)) {
-            /** @var Hashed_Array $config_sources */
-            $config_sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
-            if (!empty($config_sources)) {
-                foreach ($config_sources as $source) {
-                    $id = Hashed_Array::hash($source);
-                    if ($playlist_sources->has($id)) continue;
-
+            $playlist_sources = new Hashed_Array();
+            foreach ($this->tv_m3u_parser->getXmltvSources() as $url) {
+                $hash = Hashed_Array::hash($url);
+                $saved_source = $saved_sources->get($hash);
+                if ($saved_source !== null) {
+                    $item = $saved_source;
+                } else {
                     $item = new Named_Storage();
                     $item->type = PARAM_LINK;
-                    $item->params[PARAM_URI] = $source;
+                    $item->params[PARAM_URI] = $url;
                     $item->params[PARAM_CACHE] = XMLTV_CACHE_AUTO;
-                    $item->name = $source;
-                    hd_debug_print("append source from config: " . json_encode($item), true);
-                    $playlist_sources->put($id, $item);
+                    $item->name = basename($url);
+                }
+
+                $playlist_sources->put($hash, $item);
+                hd_debug_print("playlist source: ($hash) $url", true);
+            }
+
+            $provider = $this->get_current_provider();
+            if (!is_null($provider)) {
+                $config_sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
+                if (!empty($config_sources)) {
+                    foreach ($config_sources as $source) {
+                        $id = Hashed_Array::hash($source);
+                        if ($playlist_sources->has($id)) continue;
+
+                        $item = new Named_Storage();
+                        $item->type = PARAM_CONF;
+                        $item->params[PARAM_URI] = $source;
+                        $item->params[PARAM_CACHE] = XMLTV_CACHE_AUTO;
+                        $item->name = basename($source);
+                        hd_debug_print("append source from config: " . json_encode($item), true);
+                        $playlist_sources->put($id, $item);
+                    }
                 }
             }
+
+            $changed = false;
+            foreach ($playlist_sources as $key => $source) {
+                if ($saved_sources->has($key)) continue;
+
+                $saved_sources->put($key, $source);
+                $changed = true;
+            }
+
+            $filtered = $saved_sources->filter($playlist_sources);
+            $changed |= ($filtered->size() !== $saved_sources->size());
+            if ($changed) {
+                $playlist_sources = $filtered;
+                $this->set_setting(PARAM_EPG_PLAYLIST, $playlist_sources);
+                hd_debug_print("Resulting playlist sources: $playlist_sources", true);
+            }
+
+            $this->playlist_xmltv_sources = $playlist_sources;
         }
 
-        $changed = false;
-        foreach ($playlist_sources as $key => $source) {
-            if ($saved_sources->has($key)) continue;
-
-            $saved_sources->put($key, $source);
-            $changed = true;
-        }
-
-        $filtered = $saved_sources->filter($playlist_sources);
-        $changed |= ($filtered->size() !== $saved_sources->size());
-        if ($changed) {
-            $playlist_sources = $filtered;
-            $this->set_setting(PARAM_EPG_PLAYLIST, $playlist_sources);
-            hd_debug_print("Resulting playlist sources: $playlist_sources", true);
-        }
-
-        return $playlist_sources;
+        return $this->playlist_xmltv_sources;
     }
 
     /**

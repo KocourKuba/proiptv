@@ -210,6 +210,7 @@ const PARAM_CUSTOM_DELETE_STRING = 'custom_delete_string';
 const PARAM_CUSTOM_DELETE_REGEX = 'custom_delete_regex';
 const PARAM_PROVIDER = 'provider';
 const PARAM_LINK = 'link';
+const PARAM_CONF = 'config';
 const PARAM_FILE = 'file';
 const PARAM_URI = 'uri';
 const PARAM_CACHE = 'cache';

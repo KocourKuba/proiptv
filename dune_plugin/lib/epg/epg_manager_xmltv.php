@@ -516,12 +516,12 @@ class Epg_Manager_Xmltv
         $indexed = $this->get_indexes_info();
 
         // index for picons has not verified because it always exist if channels index is present
-        if (!$index_all && !empty($indexed[self::INDEX_CHANNELS])) {
+        if (!$index_all && $indexed[self::INDEX_CHANNELS] !== -1) {
             hd_debug_print("Xmltv channels index is valid", true);
             return;
         }
 
-        if (!empty($indexed[self::INDEX_CHANNELS]) && !empty($indexed[self::INDEX_ENTRIES])) {
+        if ($indexed[self::INDEX_CHANNELS] !== -1 && $indexed[self::INDEX_ENTRIES] !== -1) {
             return;
         }
 
@@ -895,6 +895,8 @@ class Epg_Manager_Xmltv
             return;
         }
 
+        $this->set_index_locked($url_hash, true);
+
         hd_debug_print("Clear all indexes for: $url");
         foreach (array($table_ch, $table_pic, $table_pos) as $name) {
             hd_debug_print("Remove index: $name");
@@ -904,28 +906,26 @@ class Epg_Manager_Xmltv
         if ($download) {
             HD::set_last_error("xmltv_last_error", null);
 
-            if (preg_match("/jtv.?\.zip$/", basename(urldecode($url)))) {
-                hd_debug_print("Unsupported EPG format (JTV)");
-                $this->set_index_locked($url_hash, false);
-                return;
-            }
-
-            hd_debug_print("Download xmltv source: $url");
-            hd_debug_print_separator();
-
             $ret = false;
-
-            hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
-            $tmp_filename = $cached_file . ".tmp";
-            if (file_exists($tmp_filename)) {
-                unlink($tmp_filename);
-            }
-
-            $this->set_index_locked($url_hash, true);
-
-            $this->curl_wrapper->set_url($url);
             try {
+                if (preg_match("/jtv.?\.zip$/", basename(urldecode($url)))) {
+                    hd_debug_print("Unsupported EPG format (JTV)");
+                    throw new Exception("Unsupported EPG format (JTV)");
+                }
+
+                hd_debug_print("Download xmltv source: $url");
+                hd_debug_print_separator();
+
+
+                hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+                $tmp_filename = $cached_file . ".tmp";
+                if (file_exists($tmp_filename)) {
+                    unlink($tmp_filename);
+                }
+
                 $this->perf->reset('download');
+
+                $this->curl_wrapper->set_url($url);
                 $this->curl_wrapper->clear_cached_etag();
                 if (!$this->curl_wrapper->download_file($tmp_filename, true)) {
                     throw new Exception("Can't exec curl");
@@ -933,7 +933,7 @@ class Epg_Manager_Xmltv
 
                 $http_code = $this->curl_wrapper->get_response_code();
                 if ($http_code !== 200) {
-                    throw new Exception("Download error ($http_code) $url\n\n"
+                    throw new Exception("Download error ($http_code) $url" . PHP_EOL . PHP_EOL
                         . $this->curl_wrapper->get_raw_response_headers());
                 }
 
@@ -968,10 +968,10 @@ class Epg_Manager_Xmltv
                 }
             }
 
-            $this->set_index_locked($url_hash, false);
             hd_debug_print_separator();
 
             if (!$ret) {
+                $this->set_index_locked($url_hash, false);
                 return;
             }
         }
@@ -981,12 +981,14 @@ class Epg_Manager_Xmltv
 
         if (!file_exists($cached_file)) {
             hd_debug_print("Cache file $cached_file not exist");
+            $this->set_index_locked($url_hash, false);
             return;
         }
 
         $file = fopen($cached_file, 'rb');
         if (!$file) {
             hd_debug_print("Can't open $cached_file");
+            $this->set_index_locked($url_hash, false);
             return;
         }
 
@@ -1066,12 +1068,12 @@ class Epg_Manager_Xmltv
         hd_debug_print("Reindexing EPG channels done: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-
-        $this->set_index_locked($url_hash, false);
         hd_debug_print_separator();
+
 
         if (!$index_all) {
             fclose($file);
+            $this->set_index_locked($url_hash, false);
             return;
         }
 
@@ -1080,8 +1082,6 @@ class Epg_Manager_Xmltv
 
         hd_debug_print("Indexing positions for: $url", true);
         $this->perf->reset('reindex');
-
-        $this->set_index_locked($url_hash, true);
 
         $db->exec("CREATE TABLE $table_pos (channel_id STRING not null, start INTEGER, end INTEGER);");
         $db->exec('PRAGMA journal_mode=MEMORY;');

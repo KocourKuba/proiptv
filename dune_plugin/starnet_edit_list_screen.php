@@ -372,7 +372,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $offset = array_search($selected_id, $selected_sources);
                     if ($offset !== false) {
                         $selected_sources = array_splice($selected_sources, $offset, 1);
-                    $this->plugin->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $selected_sources);
+                        $this->plugin->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $selected_sources);
                     }
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_PLAYLIST) {
                     hd_debug_print("remove playlist settings: $selected_id", true);
@@ -1406,7 +1406,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $icon_file = get_image_path("refresh$plugin_cookies->ticker.png");
                 hd_debug_print("icon: $icon_file");
             } else if ($pl_sources->has($key)) {
-                $icon_file = get_image_path("m3u_file.png");
+                if ($item->type === PARAM_CONF) {
+                    $icon_file = get_image_path("config.png");
+                } else {
+                    $icon_file = get_image_path("m3u_file.png");
+                }
             } else if ($item->type === PARAM_FILE) {
                 $icon_file = get_image_path("xmltv_file.png");
             } else {
