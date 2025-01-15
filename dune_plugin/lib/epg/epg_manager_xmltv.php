@@ -378,7 +378,9 @@ class Epg_Manager_Xmltv
 
         $table_pic = self::INDEX_PICONS;
         $table_ch = self::INDEX_CHANNELS;
-        $qry = "SELECT distinct (picon_url) FROM $table_pic INNER JOIN $table_ch ON $table_pic.picon_hash=$table_ch.picon_hash WHERE alias IN ($placeHolders);";
+        $qry = "SELECT distinct (picon_url) FROM $table_pic"
+            . " INNER JOIN $table_ch ON $table_pic.picon_hash=$table_ch.picon_hash"
+            . " WHERE alias IN ($placeHolders);";
 
         foreach ($this->xmltv_sources as $params) {
             $db = $this->open_sqlite_db($params[PARAM_HASH]);
