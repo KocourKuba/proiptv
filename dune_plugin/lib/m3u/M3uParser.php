@@ -480,9 +480,14 @@ class M3uParser extends Json_Serializer
 
     public function detectBestChannelId()
     {
-        if ($this->getEntriesCount() === 0) {
+        hd_debug_print(null, true);
+
+        $cnt = $this->getEntriesCount();
+        if ($cnt === 0) {
             return ATTR_CHANNEL_HASH;
         }
+
+        hd_debug_print("Total entries to process: $cnt", true);
 
         $statistics = array(
             ATTR_CHANNEL_ID => array('stat' => 0, 'items' => array()),
@@ -492,15 +497,22 @@ class M3uParser extends Json_Serializer
             ATTR_CHANNEL_HASH => array('stat' => 0, 'items' => array())
         );
 
+        $i = 0;
         foreach ($this->getM3uEntries() as $entry) {
+            $val = $entry->getAllEntryAttributes(array_keys($statistics), TAG_EXTINF);
             foreach ($statistics as $name => $pair) {
-                $val = $entry->getEntryAttribute($name);
-                $val = empty($val) ? 'dupe' : $val;
-                if (array_key_exists($val, $pair['items'])) {
+                if (!isset($val[$name])) continue;
+
+                $value = empty($val[$name]) ? 'dupe' : $val[$name];
+                if (array_key_exists($value, $pair['items'])) {
                     ++$statistics[$name]['stat'];
                 } else {
-                    $statistics[$name]['items'][$val] = '';
+                    $statistics[$name]['items'][$value] = '';
                 }
+            }
+
+            if ($i++ === 2000) {
+                break;
             }
         }
 
