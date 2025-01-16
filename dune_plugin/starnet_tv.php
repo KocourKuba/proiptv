@@ -596,7 +596,7 @@ class Starnet_Tv implements User_Input_Handler
         $this->perf->reset('start');
 
         // first check if playlist in cache
-        if (false === $this->plugin->init_playlist($force)) {
+        if (false === $this->plugin->init_playlist($force) || false === $this->plugin->parse_playlist()) {
             return 0;
         }
 
@@ -1496,11 +1496,6 @@ class Starnet_Tv implements User_Input_Handler
         } else {
             $initial_group_id = (string)$media_url->group_id;
             $initial_is_favorite = 0;
-        }
-
-        if (LogSeverity::$is_debug) {
-            hd_debug_print("All groups: " . pretty_json_format($groups));
-            hd_debug_print("All channels: " . pretty_json_format($all_channels->get_ordered_values()));
         }
 
         return array(
