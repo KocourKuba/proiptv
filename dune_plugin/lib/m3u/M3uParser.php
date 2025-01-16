@@ -535,11 +535,11 @@ class M3uParser extends Json_Serializer
         hd_debug_print("Total entries to process: $cnt", true);
 
         $statistics = array(
-            ATTR_CHANNEL_ID => array('stat' => 0, 'items' => array()),
-            ATTR_TVG_ID => array('stat' => 0, 'items' => array()),
-            ATTR_TVG_NAME => array('stat' => 0, 'items' => array()),
-            ATTR_CHANNEL_NAME => array('stat' => 0, 'items' => array()),
-            ATTR_CHANNEL_HASH => array('stat' => 0, 'items' => array())
+            ATTR_CHANNEL_ID => array('stat' => PHP_INT_MAX, 'items' => array()),
+            ATTR_TVG_ID => array('stat' => PHP_INT_MAX, 'items' => array()),
+            ATTR_TVG_NAME => array('stat' => PHP_INT_MAX, 'items' => array()),
+            ATTR_CHANNEL_NAME => array('stat' => PHP_INT_MAX, 'items' => array()),
+            ATTR_CHANNEL_HASH => array('stat' => PHP_INT_MAX, 'items' => array())
         );
 
         $i = 0;
@@ -553,6 +553,7 @@ class M3uParser extends Json_Serializer
                     ++$statistics[$name]['stat'];
                 } else {
                     $statistics[$name]['items'][$value] = '';
+                    $statistics[$name]['stat'] = 0;
                 }
             }
 
@@ -563,14 +564,15 @@ class M3uParser extends Json_Serializer
 
         $min_key = '';
         $min_dupes = PHP_INT_MAX;
+        hd_debug_print("Statistics: " . json_encode($statistics), true);
         foreach ($statistics as $name => $pair) {
-            hd_debug_print("attr: $name dupes: {$pair['stat']}", true);
+            hd_debug_print("attr: $name dupes: " . (($pair['stat'] === PHP_INT_MAX) ? 'not applicable' : $pair['stat']), true);
             if ($pair['stat'] < $min_dupes) {
                 $min_key = $name;
                 $min_dupes = $pair['stat'];
             }
         }
 
-        return (empty($min_key) || $min_key === ATTR_CHANNEL_ID) ? ATTR_CHANNEL_HASH : $min_key;
+        return empty($min_key) ? ATTR_CHANNEL_HASH : $min_key;
     }
 }
