@@ -104,7 +104,7 @@ class Entry extends Json_Serializer
         }
 
         $this->addTag($parsed_tag);
-        $this->is_header = ($parsed_tag->isTag(TAG_EXTM3U));
+        $this->is_header = ($parsed_tag->isTag(TAG_EXTM3U) || $parsed_tag->isTag(TAG_PLAYLIST));
         return $parsed_tag;
     }
 

@@ -28,6 +28,7 @@ const TAG_EXTINF = '#EXTINF';
 const TAG_EXTGRP = '#EXTGRP';
 const TAG_EXTHTTP = '#EXTHTTP';
 const TAG_EXTVLCOPT = '#EXTVLCOPT';
+const TAG_PLAYLIST = '#PLAYLIST';
 
 const ATTR_CHANNEL_NAME = 'name';
 const ATTR_CHANNEL_ID_ATTRS = 'channel-id-attributes';

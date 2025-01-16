@@ -88,6 +88,11 @@ class M3uParser extends Json_Serializer
         return $this->icon_base_url;
     }
 
+    public function get_filename()
+    {
+        return $this->file_name;
+    }
+
     /**
      * @return void
      */
@@ -200,6 +205,46 @@ class M3uParser extends Json_Serializer
         $entry->updateEpgIds();
 
         return 1;
+    }
+
+    /**
+     * Load m3u into the memory for faster parsing
+     * But may cause OutOfMemory for large files
+     *
+     * @return bool
+     */
+    public function parseHeader()
+    {
+        hd_debug_print();
+        if (!file_exists($this->file_name)) {
+            hd_debug_print("Can't read file: $this->file_name");
+            return false;
+        }
+
+        $this->clear_data();
+
+        hd_debug_print("Open: $this->file_name");
+        $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        $entry = new Entry();
+        foreach ($lines as $line) {
+            $res = $this->parseLine($line, $entry);
+            if ($res === -1) continue;
+            if (!$entry->isM3U_Header()) break;
+
+            if (isset($this->m3u_info)) {
+                $this->m3u_info->mergeEntry($entry);
+            } else {
+                $this->m3u_info = $entry;
+            }
+
+            if (empty($this->icon_base_url)) {
+                $this->icon_base_url = $this->m3u_info->getAnyEntryAttribute(ATTR_URL_LOGO, TAG_EXTM3U);
+            }
+            $entry = new Entry();
+        }
+
+        return true;
     }
 
     /**
