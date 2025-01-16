@@ -1085,7 +1085,7 @@ class Epg_Manager_Xmltv
         hd_debug_print("Indexing positions for: $url", true);
         $this->perf->reset('reindex');
 
-        $db->exec("CREATE TABLE $table_pos (channel_id STRING not null, start INTEGER, end INTEGER);");
+        $db->exec("CREATE TABLE $table_pos (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);");
         $db->exec('PRAGMA journal_mode=MEMORY;');
         $db->exec('BEGIN;');
 
