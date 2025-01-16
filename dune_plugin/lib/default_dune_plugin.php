@@ -197,7 +197,9 @@ class Default_Dune_Plugin implements DunePlugin
 
     protected function __construct()
     {
-        ini_set('memory_limit', '256M');
+        if (is_newer_versions()) {
+            ini_set('memory_limit', '384M');
+        }
 
         $this->plugin_info = get_plugin_manifest_info();
         $this->providers = new Hashed_Array();
@@ -2548,7 +2550,6 @@ class Default_Dune_Plugin implements DunePlugin
                 }
             }
 
-            $mtime = filemtime($tmp_file);
             $icon_replace_pattern = array();
             if ($this->cur_playlist->type === PARAM_PROVIDER) {
                 $provider = $this->get_current_provider();
@@ -2571,22 +2572,48 @@ class Default_Dune_Plugin implements DunePlugin
                 $id_map = isset($playlist->params[PARAM_ID_MAPPER]) ? $playlist->params[PARAM_ID_MAPPER] : "";
             }
 
-            hd_debug_print("Parse playlist $tmp_file (timestamp: $mtime)");
             // Is already parsed?
             $this->tv_m3u_parser->assignPlaylist($tmp_file, $force);
             $this->tv_m3u_parser->setupParserParameters($id_map, $id_parser, $icon_replace_pattern);
+            $this->tv_m3u_parser->parseHeader();
+
+            hd_debug_print("Init playlist done!");
+        } catch (Exception $ex) {
+            $err = HD::get_last_error();
+            if (!empty($err)) {
+                $err .= "\n\n";
+            }
+            $err .= $ex->getMessage();
+            HD::set_last_error("pl_last_error", $err);
+            print_backtrace_exception($ex);
+            if (isset($playlist->type) && file_exists($tmp_file)) {
+                unlink($tmp_file);
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    public function parse_playlist() {
+        try {
+            $filename = $this->tv_m3u_parser->get_filename();
+            $mtime = filemtime($filename);
+            hd_debug_print("Parse playlist $filename (timestamp: $mtime)");
+
+            $this->perf->reset('start');
 
             $count = $this->tv_m3u_parser->getEntriesCount();
             if ($count === 0) {
                 if (!$this->tv_m3u_parser->parseInMemory()) {
-                    $contents = @file_get_contents($tmp_file);
+                    $contents = @file_get_contents($filename);
                     $exception_msg = TR::load_string('err_load_playlist') . " Incorrect playlist!\n\n$contents";
                     throw new Exception($exception_msg);
                 }
 
                 $count = $this->tv_m3u_parser->getEntriesCount();
                 if ($count === 0) {
-                    $contents = @file_get_contents($tmp_file);
+                    $contents = @file_get_contents($filename);
                     $exception_msg = TR::load_string('err_load_playlist') . " Empty playlist!\n\n$contents";
                     $this->clear_playlist_cache();
                     throw new Exception($exception_msg);
@@ -2600,11 +2627,11 @@ class Default_Dune_Plugin implements DunePlugin
             $this->cleanup_active_xmltv_source();
 
             hd_debug_print("Total entries loaded from playlist m3u file: $count");
-            hd_debug_print("Load time: {$report[Perf_Collector::TIME]} sec");
+            hd_debug_print("Parse time: {$report[Perf_Collector::TIME]} sec");
             hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
 
             hd_debug_print_separator();
-            hd_debug_print("Init playlist done!");
+            hd_debug_print("Parse playlist done!");
         } catch (Exception $ex) {
             $err = HD::get_last_error();
             if (!empty($err)) {
@@ -2613,8 +2640,8 @@ class Default_Dune_Plugin implements DunePlugin
             $err .= $ex->getMessage();
             HD::set_last_error("pl_last_error", $err);
             print_backtrace_exception($ex);
-            if (isset($playlist->type) && file_exists($tmp_file)) {
-                unlink($tmp_file);
+            if (isset($playlist->type) && file_exists($filename)) {
+                unlink($filename);
             }
             return false;
         }
