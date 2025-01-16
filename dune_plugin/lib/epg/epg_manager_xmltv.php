@@ -1038,7 +1038,7 @@ class Epg_Manager_Xmltv
                 if (is_http($tag->getAttribute('src'))) {
                     $picon_url = $tag->getAttribute('src');
                     if (!empty($picon_url)) {
-                        $picon_hash = hash('md5', $picon_url);
+                        $picon_hash = md5($picon_url);
                         $stm_picons->execute();
                         break;
                     }
