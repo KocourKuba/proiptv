@@ -37,7 +37,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     const ID = 'rows_epf';
 
     ///////////////////////////////////////////////////////////////////////////
-    public $need_update_epf_mapping_flag = false;
     private $removed_playback_point;
     private $clear_playback_points = false;
 
