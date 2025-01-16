@@ -108,8 +108,7 @@ abstract class Abstract_Rows_Screen extends Changes_Impl implements Rows_Screen
             PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_ROWS,
             PluginFolderView::multiple_views_supported => false,
             PluginFolderView::archive => null,
-            PluginFolderView::data => array
-            (
+            PluginFolderView::data => array(
                 PluginRowsFolderView::pane => $this->get_rows_pane($media_url, $plugin_cookies),
                 PluginRowsFolderView::sel_state => $this->get_cur_sel_state_str(),
                 PluginRowsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
