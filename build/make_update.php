@@ -43,13 +43,13 @@ if (!$is_debug) {
 
     unlink($update_tar);
 
-    $hash = hash('md5', file_get_contents($update_file));
+    $hash = hash_file('md5', $update_file);
     echo "md5: $hash" . PHP_EOL;
 
     $update = simplexml_load_string(file_get_contents("./build/$update_info.tpl"));
     $update->plugin_version_descriptor->version = $full_version;
     $update->plugin_version_descriptor->version_index = $version_index;
-    $update->plugin_version_descriptor->md5 = hash('md5', file_get_contents($update_file));
+    $update->plugin_version_descriptor->md5 = hash_file('md5', $update_file);
     $update->plugin_version_descriptor->size = filesize($update_file);
     $update->saveXML($update_info);
 
