@@ -50,6 +50,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_XMLTV_CACHE_SELECTED = 'xmltv_cache_selected';
 
     const CONTROL_EDIT_TYPE = 'playlist_type';
+    const CONTROL_EDIT_DETECT_ID = 'detect_id';
 
     const ITEM_SET_NAME = 'set_name';
     const ITEM_EDIT = 'edit';
@@ -826,7 +827,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $name = isset($user_input->{CONTROL_EDIT_NAME}) ? $user_input->{CONTROL_EDIT_NAME} : '';
         $url = isset($user_input->{CONTROL_URL_PATH}) ? $user_input->{CONTROL_URL_PATH} : '';
-        $type = isset($user_input->{self::CONTROL_EDIT_TYPE}) ? $user_input->{self::CONTROL_EDIT_TYPE} : CONTROL_PLAYLIST_IPTV;
         if (!is_http($url)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
         }
@@ -883,9 +883,22 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $parser = new M3uParser();
                 $parser->assignPlaylist($tmp_file, true);
-                if ($type === CONTROL_PLAYLIST_IPTV) {
+                $parser->parseHeader();
+                $type = isset($user_input->{self::CONTROL_EDIT_TYPE}) ? $user_input->{self::CONTROL_EDIT_TYPE} : CONTROL_PLAYLIST_IPTV;
+                if ($type === CONTROL_PLAYLIST_IPTV && $item->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
                     $parser->parseInMemory();
-                    $item->params[PARAM_ID_MAPPER] = $parser->detectBestChannelId();
+                    $detect = isset($user_input->{self::CONTROL_EDIT_DETECT_ID}) ? $user_input->{self::CONTROL_EDIT_DETECT_ID} : SetupControlSwitchDefs::switch_on;
+                    if ($detect === SetupControlSwitchDefs::switch_on) {
+                        $item->params[PARAM_ID_MAPPER] = $parser->detectBestChannelId();
+                        hd_debug_print("detected id: " . $item->params[PARAM_ID_MAPPER]);
+                    }
+                }
+
+                hd_debug_print("Playlist info: " . $parser->getM3uInfo());
+                $pl_tag = $parser->getM3uInfo()->getEntryTag(TAG_PLAYLIST);
+                if ($pl_tag !== null) {
+                    $pl_name = $pl_tag->getTagValue();
+                    $item->name = empty($pl_name) ? $name : $pl_name;
                 }
 
                 $item->params[PARAM_PL_TYPE] = $type;
@@ -930,6 +943,16 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         Control_Factory::add_combobox($defs, $this, null, self::CONTROL_EDIT_TYPE,
             TR::t('edit_list_playlist_type'), $playlist_type, $opts, self::DLG_CONTROLS_WIDTH);
 
+        $order = $this->get_order(self::SCREEN_EDIT_PLAYLIST);
+        $item = $order->get($id);
+        $detect = (is_null($item) || !isset($item->params[PARAM_ID_MAPPER])) ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off;
+
+        $detect_opt[SetupControlSwitchDefs::switch_on] = TR::t('yes');
+        $detect_opt[SetupControlSwitchDefs::switch_off] = TR::t('no');
+
+        Control_Factory::add_combobox($defs, $this, null, self::CONTROL_EDIT_DETECT_ID,
+            TR::t('edit_list_playlist_detect_id'), $detect, $detect_opt, self::DLG_CONTROLS_WIDTH);
+
         Control_Factory::add_vgap($defs, 50);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $this,
@@ -967,11 +990,24 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $item->params[PARAM_PL_TYPE] = isset($user_input->{self::CONTROL_EDIT_TYPE}) ? $user_input->{self::CONTROL_EDIT_TYPE} : CONTROL_PLAYLIST_IPTV;
-        if ($item->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV && !isset($item->params[PARAM_ID_MAPPER])) {
-            $parser = new M3uParser();
-            $parser->assignPlaylist($item->params[PARAM_URI], true);
+        $parser = new M3uParser();
+        $parser->assignPlaylist($item->params[PARAM_URI], true);
+        if ($item->params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
+            $parser->parseHeader();
+        } else {
             $parser->parseInMemory();
-            $item->params[PARAM_ID_MAPPER] = $parser->detectBestChannelId();
+            $detect = isset($user_input->{self::CONTROL_EDIT_DETECT_ID}) ? $user_input->{self::CONTROL_EDIT_DETECT_ID} : SetupControlSwitchDefs::switch_on;
+            if ($detect === SetupControlSwitchDefs::switch_on) {
+                $item->params[PARAM_ID_MAPPER] = $parser->detectBestChannelId();
+                hd_debug_print("detected id: " . $item->params[PARAM_ID_MAPPER]);
+            }
+        }
+
+        hd_debug_print("Playlist info: " . $parser->getM3uInfo());
+        $pl_tag = $parser->getM3uInfo()->getEntryTag(TAG_PLAYLIST);
+        if ($pl_tag !== null) {
+            $pl_name = $pl_tag->getTagValue();
+            $item->name = empty($pl_name) ? $item->name : $pl_name;
         }
 
         $order->set($id, $item);

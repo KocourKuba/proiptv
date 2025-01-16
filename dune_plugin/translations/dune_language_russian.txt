@@ -229,6 +229,7 @@ edit_list_title_cant_delete = Нельзя удалить XMLTV источник
 edit_list_playlist_type = Тип плейлиста
 edit_list_playlist_iptv = IPTV
 edit_list_playlist_vod = Meдиатека
+edit_list_playlist_detect_id = Определение ID Канала (IPTV)
 edit_list_cache_suport__1 = |Поддержка авто кэширования:|%s
 
 folder_screen_open_folder = Открыть папку

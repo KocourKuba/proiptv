@@ -229,6 +229,7 @@ edit_list_title_cant_delete = Can't delete the playlist XMLTV source!
 edit_list_playlist_type = Playlist type
 edit_list_playlist_iptv = IPTV
 edit_list_playlist_vod = Video on demand (VOD)
+edit_list_playlist_detect_id = Detect Channel ID source (IPTV)
 edit_list_cache_suport__1 = |Automatic cache support:|%s
 
 folder_screen_open_folder = Open folder
