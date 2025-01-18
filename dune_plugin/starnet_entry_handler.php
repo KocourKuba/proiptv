@@ -46,6 +46,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_REBOOT = 'call_reboot';
     const ACTION_CALL_SEND_LOG = 'call_send_log';
     const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
+    const ACTION_FORCE_OPEN = 'force_open';
     const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0di9yZWxlYXNlcy9kb3dubG9hZC81LjEuOTYyL2R1bmVfcGx1Z2luX3Byb2lwdHYuNS4xLjk2Mi56aXA=";
 
     private $plugin;
@@ -150,6 +151,20 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 return $action;
+
+            case self::ACTION_FORCE_OPEN:
+                hd_debug_print_separator();
+                hd_debug_print("FORCE LANUCH PLUGIN");
+                hd_debug_print_separator();
+
+                $this->plugin->init_plugin(true);
+                if ($this->plugin->get_playlists()->size() === 0) {
+                    return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                        Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
+                }
+
+                hd_debug_print("action: launch open", true);
+                return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
 
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {

@@ -320,15 +320,29 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $epg_manager->clear_current_epg_cache();
                 $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+                return User_Input_Handler_Registry::create_action(
+                    $this,
+                    ACTION_RELOAD,
+                    null,
+                    array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_EPG_CACHE_ENGINE => true));
+                return User_Input_Handler_Registry::create_action(
+                    $this,
+                    GUI_EVENT_KEY_POPUP_MENU,
+                    null,
+                    array(ACTION_EPG_CACHE_ENGINE => true)
+                );
 
             case ACTION_CHANGE_PICONS_SOURCE:
                 hd_debug_print("Start event popup menu for picons source", true);
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_PICONS_SOURCE => true));
+                return User_Input_Handler_Registry::create_action(
+                    $this,
+                    GUI_EVENT_KEY_POPUP_MENU,
+                    null,
+                    array(ACTION_CHANGE_PICONS_SOURCE => true)
+                );
 
             case ENGINE_XMLTV:
             case ENGINE_JSON:
@@ -337,7 +351,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+                    return User_Input_Handler_Registry::create_action(
+                        $this,
+                        ACTION_RELOAD,
+                        null,
+                        array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
+                    );
                 }
                 break;
 
@@ -349,7 +368,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this->plugin->tv->unload_channels();
                     $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+                    return User_Input_Handler_Registry::create_action(
+                        $this,
+                        ACTION_RELOAD,
+                        null,
+                        array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
+                    );
                 }
                 break;
 
@@ -397,11 +421,20 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return $res;
                 }
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, null, array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+                return User_Input_Handler_Registry::create_action(
+                    $this,
+                    ACTION_RELOAD,
+                    null,
+                    array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_SORT_POPUP => true));
+                return User_Input_Handler_Registry::create_action(
+                    $this,
+                    GUI_EVENT_KEY_POPUP_MENU,
+                    null,
+                    array(ACTION_SORT_POPUP => true)
+                );
 
             case ACTION_CHANGE_GROUP_ICON:
                 $this->save_if_changed();

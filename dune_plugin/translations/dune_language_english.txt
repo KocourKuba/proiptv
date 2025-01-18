@@ -205,6 +205,7 @@ entry_epg_cache_time = EPG cache time (days)
 entry_reboot = Reboot Dune
 entry_setup = Plugin setting
 entry_index_epg = Run processing EPG
+entry_force_open = Show categories
 
 edit_list_added__1 = Added %s files
 edit_list_added__2 = Added %s files from %s

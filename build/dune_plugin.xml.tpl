@@ -154,6 +154,17 @@
                             </params>
                         </action>
                     </menu_item>
+                    <menu_item>
+                        <caption>%tr%entry_force_open</caption>
+                        <icon_url>gui_skin://small_icons/iptv.aai</icon_url>
+                        <action>
+                            <type>plugin_handle_user_input</type>
+                            <params>
+                                <handler_id>entry_handler</handler_id>
+                                <control_id>force_open</control_id>
+                            </params>
+                        </action>
+                    </menu_item>
                 </menu_items>
             </popup_menu>
             <ip_address_required>yes</ip_address_required>

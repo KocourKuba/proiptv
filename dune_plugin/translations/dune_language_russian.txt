@@ -205,6 +205,7 @@ entry_epg_cache_time = Время кэширования EPG (дней)
 entry_reboot = Перезагрузить плеер
 entry_setup = Настройки плагина
 entry_index_epg = Запустить обработку EPG
+entry_force_open = Открыть окно категорий
 
 edit_list_added__1 = Добавлено файлов: %s
 edit_list_added__2 = Добавлено файлов: %s из: %s
