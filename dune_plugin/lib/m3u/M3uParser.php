@@ -51,22 +51,27 @@ class M3uParser extends Json_Serializer
     /**
      * @var string
      */
-    protected $id_map = '';
+    public $id_map = '';
 
     /**
      * @var string
      */
-    protected $id_parser = '';
+    public $id_parser = '';
 
     /**
      * @var string
      */
-    protected $icon_base_url = '';
+    public $icon_base_url = '';
+
+    /**
+     * @var bool
+     */
+    public $replace_https = false;
 
     /**
      * @var array
      */
-    protected $icon_replace_pattern = array();
+    public $icon_replace_pattern = array();
 
     /**
      * @var SplFileObject
@@ -134,29 +139,36 @@ class M3uParser extends Json_Serializer
      * @param string $id_map
      * @param string $id_parser
      * @param array $icon_replace_pattern
+     * @param bool $replace_https
      */
-    public function setupParserParameters($id_map, $id_parser, $icon_replace_pattern)
+    public function setupParserParameters($id_map, $id_parser, $icon_replace_pattern, $replace_https)
     {
-        if (!empty($id_parser)) {
-            hd_debug_print("Using specific ID parser: $id_parser", true);
+        $this->id_map = $id_map;
+        $this->id_parser = $id_parser;
+        $this->icon_replace_pattern = $icon_replace_pattern;
+        $this->replace_https = $replace_https;
+
+        if (!empty($this->id_parser)) {
+            hd_debug_print("Using specific ID parser: $this->id_parser", true);
         }
 
-        if (!empty($id_map)) {
-            hd_debug_print("Using specific ID mapping: $id_map", true);
+        if (!empty($this->id_map)) {
+            hd_debug_print("Using specific ID mapping: $this->id_map", true);
         }
 
-        if (empty($id_map) && empty($id_parser)) {
+        if (empty($this->id_map) && empty($this->id_parser)) {
             hd_debug_print("No specific ID mapping or URL parser", true);
         }
 
         // replace patterns in playlist icon
-        if (!empty($icon_replace_pattern)) {
-            hd_debug_print("Using specific playlist icon replacement: " . json_encode($icon_replace_pattern), true);
+        if (!empty($this->icon_replace_pattern)) {
+            hd_debug_print("Using specific playlist icon replacement: " . json_encode($this->icon_replace_pattern), true);
         }
 
-        $this->id_map = $id_map;
-        $this->id_parser = $id_parser;
-        $this->icon_replace_pattern = $icon_replace_pattern;
+        // replace patterns in playlist icon
+        if ($this->replace_https) {
+            hd_debug_print("Force replace HTTPS to HTTP", true);
+        }
     }
 
     /**
@@ -182,24 +194,27 @@ class M3uParser extends Json_Serializer
         }
 
         // untagged line must be a stream url
-        $entry->setPath($line);
+        $entry->updatePath($line, $this);
 
         // all information parsed. Now can set additional parameters
 
         // set channel id
-        $entry->updateChannelId($this->id_parser, $this->id_map);
+        $entry->updateChannelId($this);
 
         // set channel icon
-        $entry->updateChannelIcon($this->icon_base_url, $this->icon_replace_pattern);
+        $entry->updateChannelIcon($this);
 
         // set group logo
-        $entry->updateGroupIcon($this->icon_base_url);
+        $entry->updateGroupIcon($this);
 
         // set group title
         $entry->updateGroupTitle();
 
         // set channel archive
         $entry->updateArchiveLength();
+
+        // set channel archive
+        $entry->updateCatchupSource($this);
 
         // set channel EPG IDs
         $entry->updateEpgIds();

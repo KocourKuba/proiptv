@@ -2572,9 +2572,10 @@ class Default_Dune_Plugin implements DunePlugin
                 $id_map = isset($playlist->params[PARAM_ID_MAPPER]) ? $playlist->params[PARAM_ID_MAPPER] : "";
             }
 
+            $replace_https = $this->get_bool_setting(PARAM_FORCE_HTTP, false);
             // Is already parsed?
             $this->tv_m3u_parser->assignPlaylist($tmp_file, $force);
-            $this->tv_m3u_parser->setupParserParameters($id_map, $id_parser, $icon_replace_pattern);
+            $this->tv_m3u_parser->setupParserParameters($id_map, $id_parser, $icon_replace_pattern, $replace_https);
             $this->tv_m3u_parser->parseHeader();
 
             hd_debug_print("Init playlist done!");

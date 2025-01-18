@@ -74,6 +74,11 @@ class Entry extends Json_Serializer
     protected $archive;
 
     /**
+     * @var string
+     */
+    protected $catchup_source;
+
+    /**
      * @var array
      */
     protected $epg_ids = array();
@@ -205,10 +210,15 @@ class Entry extends Json_Serializer
 
     /**
      * @param string $path
+     * @param M3uParser $parser
      */
-    public function setPath($path)
+    public function updatePath($path, $parser)
     {
         $this->path = $path;
+
+        if ($parser->replace_https) {
+            $this->path = str_replace('https://', 'http://', $this->path);
+        }
     }
 
     /**
@@ -264,13 +274,19 @@ class Entry extends Json_Serializer
     /**
      * Set category icon
      *
-     * @param string $icon_base_url
+     * @param M3uParser $parser
      */
-    public function updateGroupIcon($icon_base_url)
+    public function updateGroupIcon($parser)
     {
         $this->group_icon = $this->getEntryAttribute(ATTR_GROUP_LOGO);
-        if (!empty($group_logo) && !empty($icon_base_url) && !is_http($group_logo)) {
-            $this->group_icon = $icon_base_url . $group_logo;
+        if (!empty($group_logo)) {
+            if (!empty($parser->icon_base_url) && !is_http($group_logo)) {
+                $this->group_icon = $parser->icon_base_url . $group_logo;
+            }
+
+            if ($parser->replace_https) {
+                $this->group_icon = str_replace('https://', 'http://', $this->group_icon);
+            }
         }
     }
 
@@ -307,22 +323,25 @@ class Entry extends Json_Serializer
     /**
      * Set icon for channel
      *
-     * @param string $icon_base_url
-     * @param array $icon_replace_pattern
+     * @param M3uParser $parser
      */
-    public function updateChannelIcon($icon_base_url, $icon_replace_pattern)
+    public function updateChannelIcon($parser)
     {
         // make full url for icon if used base url
         $this->channel_icon = $this->getAnyEntryAttribute(self::$icon_attrs);
-        if (!empty($icon_base_url) && !is_http($this->channel_icon)) {
-            $this->channel_icon = $icon_base_url . $this->channel_icon;
+        if (!empty($parser->icon_base_url) && !is_http($this->channel_icon)) {
+            $this->channel_icon = $parser->icon_base_url . $this->channel_icon;
         }
 
         // Apply replacement pattern
-        if (!empty($icon_replace_pattern)) {
-            foreach ($icon_replace_pattern as $pattern) {
+        if (!empty($parser->icon_replace_pattern)) {
+            foreach ($parser->icon_replace_pattern as $pattern) {
                 $this->channel_icon = preg_replace($pattern['search'], $pattern['replace'], $this->channel_icon);
             }
+        }
+
+        if ($parser->replace_https) {
+            $this->channel_icon = str_replace('https://', 'http://', $this->channel_icon);
         }
     }
 
@@ -359,13 +378,26 @@ class Entry extends Json_Serializer
      */
     public function getCatchupSource()
     {
+        return $this->catchup_source;
+    }
+
+    /**
+     * Get catchup-source for channel
+     *
+     * @param M3uParser $parser
+     */
+    public function updateCatchupSource($parser)
+    {
         /*
          * attributes contains catchup information
 		 * "catchup-source", "catchup-template"
          */
         static $attrs = array(ATTR_CATCHUP_SOURCE, ATTR_CATCHUP_TEMPLATE);
 
-        return $this->getAnyEntryAttribute($attrs);
+        $this->catchup_source = $this->getAnyEntryAttribute($attrs);
+        if (!empty($this->catchup_source) && $parser->replace_https) {
+            $this->catchup_source = str_replace('https://', 'http://', $this->catchup_source);
+        }
     }
 
     /**
@@ -404,13 +436,12 @@ class Entry extends Json_Serializer
     /**
      * Calculate channel id
      *
-     * @param string $id_parser
-     * @param string $id_map
+     * @param M3uParser $parser
      */
-    public function updateChannelId($id_parser, $id_map)
+    public function updateChannelId($parser)
     {
         // first use id url parser
-        if (!empty($id_parser) && preg_match($id_parser, $this->path, $matches)) {
+        if (!empty($parser->id_parser) && preg_match($parser->id_parser, $this->path, $matches)) {
             $this->matches = $matches;
         }
 
@@ -419,8 +450,8 @@ class Entry extends Json_Serializer
         }
 
         // try to get by id mapper
-        if (empty($channel_id) && !empty($id_map)) {
-            $channel_id = $this->getEntryAttribute($id_map);
+        if (empty($channel_id) && !empty($parser->id_map)) {
+            $channel_id = $this->getEntryAttribute($parser->id_map);
         }
 
         // search in attributes

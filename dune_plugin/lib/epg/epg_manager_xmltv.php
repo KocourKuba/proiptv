@@ -70,6 +70,11 @@ class Epg_Manager_Xmltv
     protected $xmltv_url_params;
 
     /**
+     * @var bool
+     */
+    protected $replace_https = false;
+
+    /**
      * @var Curl_Wrapper
      */
     protected $curl_wrapper;
@@ -164,6 +169,7 @@ class Epg_Manager_Xmltv
         $this->xmltv_sources = $this->plugin->get_active_sources();
         $this->flags = $this->plugin->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         $this->set_cache_dir($this->plugin->get_cache_dir());
+        $this->replace_https = $this->plugin->get_bool_setting(PARAM_FORCE_HTTP, false);
     }
 
     /**
@@ -387,7 +393,12 @@ class Epg_Manager_Xmltv
             if (is_null($db) || $db === false) continue;
 
             $res = $db->querySingle($qry);
-            if (!empty($res)) break;
+            if (!empty($res)) {
+                if ($this->replace_https) {
+                    $res = str_replace('https://', 'http://', $res);
+                }
+                break;
+            }
         }
 
         return $res;

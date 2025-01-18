@@ -880,11 +880,6 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             $archive_url = $entry->getCatchupSource();
-            if ($this->plugin->get_bool_setting(PARAM_FORCE_HTTP, false)) {
-                $stream_path = str_replace('https://', 'http://', $stream_path);
-                $icon_url = str_replace('https://', 'http://', $icon_url);
-                $archive_url = str_replace('https://', 'http://', $archive_url);
-            }
 
             $protected = false;
             $adult_code = $entry->getProtectedCode();
