@@ -204,6 +204,9 @@ class M3uParser extends Json_Serializer
         // set channel EPG IDs
         $entry->updateEpgIds();
 
+        // set channel EPG IDs
+        $entry->updateExtParams();
+
         return 1;
     }
 

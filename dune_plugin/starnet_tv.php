@@ -829,6 +829,7 @@ class Starnet_Tv implements User_Input_Handler
             $epg_ids = $entry->getEpgIds();
             $channel_id = $entry->getChannelId();
             $channel_name = $entry->getEntryTitle();
+            $stream_path = $entry->getPath();
             if (empty($channel_name)) {
                 hd_print("Bad entry: " . $entry);
                 $channel_name = "no name";
@@ -838,7 +839,7 @@ class Starnet_Tv implements User_Input_Handler
             $channel = $this->channels->get($channel_id);
             if (!is_null($channel)) {
                 // duplicate channel? Same ID or same Url
-                hd_debug_print("duplicate channel id: $channel_id ($channel_name) group: $group_title, url: {$entry->getPath()}");
+                hd_debug_print("duplicate channel id: $channel_id ($channel_name) group: $group_title, url: $stream_path");
                 hd_debug_print("existing channel id:  $channel_id ({$channel->get_title()}) "
                     . "group: {$channel->get_parent_group()->get_title()}, url: {$channel->get_url()}");
                 continue;
@@ -873,8 +874,6 @@ class Starnet_Tv implements User_Input_Handler
                 $icon_url = self::DEFAULT_CHANNEL_ICON_PATH;
             }
 
-            $stream_path = $entry->getPath();
-
             $archive = $entry->getArchive();
             if (empty($archive) && !empty($playlist_archive)) {
                 $archive = $playlist_archive;
@@ -885,17 +884,6 @@ class Starnet_Tv implements User_Input_Handler
                 $stream_path = str_replace('https://', 'http://', $stream_path);
                 $icon_url = str_replace('https://', 'http://', $icon_url);
                 $archive_url = str_replace('https://', 'http://', $archive_url);
-            }
-
-            $ext_params = array();
-            $ext_tag = $entry->getEntryTag(TAG_EXTVLCOPT);
-            if ($ext_tag !== null) {
-                $ext_params[PARAM_EXT_VLC_OPTS] = $ext_tag->getTagValues();
-            }
-
-            $ext_tag = $entry->getEntryTag(TAG_EXTHTTP);
-            if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
-                $ext_params[PARAM_EXT_HTTP] = $ext_http_values;
             }
 
             $protected = false;
@@ -926,7 +914,7 @@ class Starnet_Tv implements User_Input_Handler
                 $epg_ids,
                 $protected,
                 $entry->getTimeShift(),
-                $ext_params,
+                $entry->getExtParams(),
                 $disabled
             );
 

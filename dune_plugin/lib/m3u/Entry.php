@@ -84,6 +84,11 @@ class Entry extends Json_Serializer
     protected $matches = array();
 
     /**
+     * @var array
+     */
+    protected $ext_params = array();
+
+    /**
      * @return boolean
      */
     public function isM3U_Header()
@@ -477,6 +482,34 @@ class Entry extends Json_Serializer
         $epg_ids = $this->getAllEntryAttributes(self::$epg_id_tags);
         $epg_ids['id'] = $this->channel_id;
         $this->epg_ids = array_unique($epg_ids);
+    }
+
+    /**
+     * Returns extended attributes for channel
+     *
+     * @return array
+     */
+    public function getExtParams()
+    {
+        return $this->ext_params;
+    }
+
+    /**
+     * Update extended attributes for channel
+     *
+     * @return void
+     */
+    public function updateExtParams()
+    {
+        $ext_tag = $this->getEntryTag(TAG_EXTVLCOPT);
+        if ($ext_tag !== null) {
+            $this->ext_params[PARAM_EXT_VLC_OPTS] = $ext_tag->getTagValues();
+        }
+
+        $ext_tag = $this->getEntryTag(TAG_EXTHTTP);
+        if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
+            $this->ext_params[PARAM_EXT_HTTP] = $ext_http_values;
+        }
     }
 
     /**
