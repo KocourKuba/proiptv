@@ -169,7 +169,6 @@ class Epg_Manager_Xmltv
         $this->xmltv_sources = $this->plugin->get_active_sources();
         $this->flags = $this->plugin->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         $this->set_cache_dir($this->plugin->get_cache_dir());
-        $this->replace_https = $this->plugin->get_bool_setting(PARAM_FORCE_HTTP, false);
     }
 
     /**
@@ -244,11 +243,11 @@ class Epg_Manager_Xmltv
     /**
      * Try to load epg from cached file
      *
-     * @param Channel $channel
+     * @param array $channel_row
      * @param int $day_start_ts
      * @return array
      */
-    public function get_day_epg_items(Channel $channel, $day_start_ts)
+    public function get_day_epg_items($channel_row, $day_start_ts)
     {
         $any_lock = $this->is_any_index_locked();
         $day_epg = array();
@@ -256,19 +255,21 @@ class Epg_Manager_Xmltv
         foreach ($this->xmltv_sources as $key => $params) {
             $this->xmltv_url_params = $params;
             if ($this->is_index_locked($key)) {
-                hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: " . $channel->get_id());
-                $this->delayed_epg[] = $channel->get_id();
+                hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: {$channel_row['channel_id']}");
+                $this->delayed_epg[] = $channel_row['channel_id'];
                 continue;
             }
 
             // filter out epg only for selected day
             $day_end_ts = $day_start_ts + 86400;
-            $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
-            $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-            hd_debug_print("Fetch entries for from: $date_start_l ($day_start_ts) to: $date_end_l ($day_end_ts)", true);
+            if (LogSeverity::$is_debug) {
+                $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
+                $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
+                hd_debug_print("Fetch entries for from: $date_start_l ($day_start_ts) to: $date_end_l ($day_end_ts)");
+            }
 
             try {
-                $positions = $this->load_program_index($channel);
+                $positions = $this->load_program_index($channel_row);
                 if (!empty($positions)) {
                     $cached_file = $this->cache_dir . $params[PARAM_HASH] . ".xmltv";
                     if (!file_exists($cached_file)) {
@@ -292,10 +293,11 @@ class Epg_Manager_Xmltv
 
                             foreach ($xml_node->getElementsByTagName('programme') as $tag) {
                                 $program_start = strtotime($tag->getAttribute('start'));
-                                if ($program_start < $day_start_ts) continue;
+                                $program_end = strtotime($tag->getAttribute('stop'));
+                                if ($program_start < $day_start_ts && $program_end < $day_start_ts) continue;
                                 if ($program_start >= $day_end_ts) break;
 
-                                $day_epg[$program_start][Epg_Params::EPG_END] = strtotime($tag->getAttribute('stop'));
+                                $day_epg[$program_start][Epg_Params::EPG_END] = $program_end;
 
                                 $day_epg[$program_start][Epg_Params::EPG_NAME] = '';
                                 foreach ($tag->getElementsByTagName('title') as $tag_title) {
@@ -340,7 +342,7 @@ class Epg_Manager_Xmltv
                     Epg_Params::EPG_DESC => TR::load_string('epg_not_ready_desc'),
                 ));
             }
-            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
+            return $this->getFakeEpg($channel_row, $day_start_ts, $day_epg);
         }
 
         ksort($day_epg);
@@ -570,7 +572,7 @@ class Epg_Manager_Xmltv
             }
         } else if (is_dir($lock_dir)) {
             hd_debug_print("Unlock $lock_dir");
-            shell_exec("rm -rf $lock_dir");
+            rmdir($lock_dir);
             clearstatcache();
         }
     }
@@ -622,14 +624,14 @@ class Epg_Manager_Xmltv
                     send_process_signal($pid, -9);
                 }
                 hd_debug_print("Remove lock: $lock");
-                shell_exec("rm -rf $lock");
+                rmdir($lock);
             }
         }
 
         $mask = empty($hash) ? "" : $hash;
         $files = $this->cache_dir . $mask . "*";
         hd_debug_print("clear epg files: $files");
-        shell_exec('rm -rf ' . $files);
+        array_map('unlink', glob($files));
         clearstatcache();
         hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
     }
@@ -701,10 +703,10 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @param Channel $channel
+     * @param array $channel_row
      * @return array
      */
-    protected function load_program_index($channel)
+    protected function load_program_index($channel_row)
     {
         $channel_position = array();
         $table_ch = self::INDEX_CHANNELS;
@@ -726,9 +728,8 @@ class Epg_Manager_Xmltv
                 return $channel_position;
             }
 
-            $channel_title = $channel->get_title();
-            $epg_ids = array_values($channel->get_epg_ids());
-
+            $channel_title = $channel_row['title'];
+            $epg_ids = array_unique(array($channel_row['epg_id'], $channel_row['channel_id'], $channel_row['title']));
             $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
             $stm = $db->prepare("SELECT DISTINCT channel_id FROM $table_ch WHERE alias IN ($placeHolders);");
             if ($stm !== false) {
@@ -746,11 +747,10 @@ class Epg_Manager_Xmltv
                 }
             }
 
-            $epg_ids = array_values(array_unique($epg_ids));
+            $epg_ids = array_unique($epg_ids);
             hd_debug_print("Found epg_ids: " . pretty_json_format($epg_ids), true);
-            $channel_id = $channel->get_id();
             if (!empty($epg_ids)) {
-                hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
+                hd_debug_print("Load position indexes for: {$channel_row['channel_id']} ($channel_title)", true);
                 $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
                 $stmt = $db->prepare("SELECT start, end FROM $table_pos WHERE channel_id IN ($placeHolders);");
                 if ($stmt !== false) {
@@ -773,7 +773,7 @@ class Epg_Manager_Xmltv
             }
 
             if (empty($channel_position)) {
-                hd_debug_print("No positions for channel $channel_id ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
+                hd_debug_print("No positions for channel {$channel_row['channel_id']} ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
             } else {
                 hd_debug_print("Channel positions: " . pretty_json_format($channel_position), true);
             }
@@ -785,14 +785,14 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @param Channel $channel
+     * @param array $channel_row
      * @param int $day_start_ts
      * @param array $day_epg
      * @return array
      */
-    protected function getFakeEpg(Channel $channel, $day_start_ts, $day_epg)
+    protected function getFakeEpg($channel_row, $day_start_ts, $day_epg)
     {
-        if (($this->flags & EPG_FAKE_EPG) && $channel->get_archive() !== 0) {
+        if (($this->flags & EPG_FAKE_EPG) && $channel_row['archive'] !== 0) {
             hd_debug_print("Create fake data for non existing EPG data");
             for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
                 $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
@@ -800,7 +800,7 @@ class Epg_Manager_Xmltv
                 $day_epg[$start][Epg_Params::EPG_DESC] = '';
             }
         } else {
-            hd_debug_print("No EPG for channel: {$channel->get_id()}");
+            hd_debug_print("No EPG for channel: {$channel_row['channel_id']}");
         }
 
         return $day_epg;

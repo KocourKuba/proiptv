@@ -97,7 +97,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             // EPG cache dir
             $cache_dir = $this->plugin->get_cache_dir();
             $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
-            $cache_dir = HD::string_ellipsis($cache_dir . DIRECTORY_SEPARATOR);
+            $cache_dir = HD::string_ellipsis($cache_dir . '/');
             Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
                 $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
 
@@ -186,7 +186,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case PARAM_EPG_CACHE_ENGINE:
             case PARAM_EPG_JSON_PRESET:
-                $this->plugin->tv->unload_channels();
+                $this->plugin->unload_db();
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
@@ -196,7 +196,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
-                $this->plugin->tv->unload_channels();
+                $this->plugin->unload_db();
                 $this->plugin->safe_clear_selected_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs()));
@@ -231,7 +231,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
                 $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
-                if ($this->plugin->tv->reload_channels($plugin_cookies) === 0) {
+                if ($this->plugin->reload_channels($plugin_cookies) === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
                 }

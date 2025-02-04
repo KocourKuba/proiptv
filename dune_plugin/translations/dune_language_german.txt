@@ -178,7 +178,6 @@ setup_changelog = Geschichte der Veränderungen
 setup_debug = Aktivieren Sie die Debug-Protokollierung
 setup_per_channel_zoom = Aktivieren Sie den Zoom pro Kanal
 setup_backup_folder_path = Sicherungsordner
-setup_force_http = Konvertierung von https -> http Links
 
 setup_channels_src_reset_playlist = Playlist-Einstellungen zurücksetzen
 setup_channels_src_edit_playlists = Wiedergabelisten auswählen oder bearbeiten
@@ -195,7 +194,7 @@ edit_list_playlist_iptv = IPTV
 edit_list_playlist_vod = Video-on-Demand (VOD)
 
 entry_send_log = Protokoll an den Entwickler senden
-entry_log_sent = Protokoll erfolgreich gesendet!
+entry_log_sent = Protokoll erfolgreich gesendet!\nBitte informieren Sie den Entwickler über den Grund für das Senden des Protokolls im Telegram-Kanal t.me/dunehd_iptv_chat\n oder in den Foren forum.hdtv.ru und forum.mydune.ru
 entry_log_not_sent = Das gesendete Protokoll ist fehlgeschlagen!
 entry_log_not_sent_too_old = Dune HD mit alter Firmware!\nFirmware weniger als b11 wird nicht unterstützt!\nProtokolls wurde abgebrochen.
 entry_log_not_enabled = Die erweiterte Protokollierung wurde nicht aktiviert.\nDie Protokolle enthalten möglicherweise keine nützlichen Informationen!\nDas Senden des Protokolls wurde abgebrochen.\n\n1. Debug-Logging-Modus aktivieren.\n2. Versuchen Sie, den Fehler oder Absturz zu wiederholen.\n3. Senden Sie das Protokoll vom Plugin (Kontextmenü auf dem Plugin-Symbol und den Punkt „Protokoll an Entwickler senden“)\n4. Debug-Logging-Modus deaktivieren.
@@ -290,6 +289,7 @@ tv_screen_group_changed_info__3 = Gruppe:|%s||Neu:|%s||Entfernt:|%s
 tv_screen_ch_channel_info__2 = Name:|%s||Kanäle ID:|%s
 tv_screen_ch_channel_info__5 = Name:|%s||Kategorien:|%s||Archiv:|%s day(s)||Kanäle ID:|%s|EPG ID:|%s
 tv_screen_channel_info__4 = Name:%s||Archiv:|%s Tage||Kanäle ID:|%s||EPG ID:|%s
+tv_screen_channel_info__5 = Name:%s||Archiv:|%s Tage||Kanäle ID:|%s||EPG ID:|%s||Zoom:|%s
 tv_screen_external_player = externer Spieler
 tv_screen_internal_player = internen Spieler
 tv_screen_toggle_icons_aspect = Symbole für quadratische Kanäle

@@ -24,9 +24,40 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once "cgi_config.php";
+if (!class_exists('DuneSystem')) {
+    class DuneSystem
+    {
+        public static $properties = array();
+    }
+}
+
+function hd_print($str)
+{
+    global $LOG_FILE;
+
+    if (!empty($LOG_FILE)) {
+        $log_file = fopen($LOG_FILE, 'ab+');
+        fwrite($log_file, date("[Y-m-d H:i:s] ") . $str . PHP_EOL);
+        fclose($log_file);
+    } else {
+        echo date("[Y-m-d H:i:s] ") . $str . PHP_EOL;
+    }
+}
+
+error_reporting(E_ALL & ~E_NOTICE);
+
+$apk_subst = getenv('FS_PREFIX');
+$LOG_FILE = getenv('PLUGIN_TMP_DIR_PATH') . "/error.log";
+
+DuneSystem::$properties['plugin_name'] = getenv('PLUGIN_NAME');
+DuneSystem::$properties['install_dir_path'] = getenv('PLUGIN_INSTALL_DIR_PATH');
+DuneSystem::$properties['tmp_dir_path'] = getenv('PLUGIN_TMP_DIR_PATH');
+DuneSystem::$properties['plugin_www_url'] = getenv('PLUGIN_WWW_URL');
+DuneSystem::$properties['plugin_cgi_url'] = getenv('PLUGIN_CGI_URL');
+DuneSystem::$properties['data_dir_path'] = getenv('PLUGIN_DATA_DIR_PATH');
 
 set_include_path(get_include_path() . PATH_SEPARATOR . DuneSystem::$properties['install_dir_path']);
+
 
 require_once 'lib/epg/epg_manager_xmltv.php';
 

@@ -1,6 +1,7 @@
 <?php
 ///////////////////////////////////////////////////////////////////////////
 
+require_once 'dune_plugin_fw.php';
 require_once 'tr.php';
 require_once 'action_factory.php';
 require_once 'dune_exception.php';
@@ -122,7 +123,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
 
 function plugin_error_handler($error_type, $message, $file, $line)
 {
-    hd_print("Error intercepted");
+    hd_print("Error intercepted at $file on line $line");
     print_backtrace();
     hd_error_handler($error_type, $message, $file, $line);
 }

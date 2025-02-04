@@ -178,7 +178,6 @@ setup_changelog = History of changes
 setup_debug = Enable debug logging
 setup_per_channel_zoom = Enable per-channel zoom
 setup_backup_folder_path = Backup folder
-setup_force_http = Force https -> http links conversion
 
 setup_channels_src_reset_playlist = Reset playlist settings
 setup_channels_src_edit_playlists = Select or Edit Playlists
@@ -193,7 +192,7 @@ setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Force Dune to detect stream
 
 entry_send_log = Send log to the developer
-entry_log_sent = Log sent successfully!
+entry_log_sent = Log sent successfully!\nPlease inform the developer of the reason for sending the log in the Telegram channel t.me/dunehd_iptv_chat\n or on the forums forum.hdtv.ru and forum.mydune.ru
 entry_log_not_sent = Sent log failed!
 entry_log_not_sent_too_old = Dune HD with old firmware!\nFirmware less than b11 is not supported!\nLog sending has been cancelled.
 entry_log_not_enabled = Debug logging was not enabled.\nThe logs may not contain useful information!\nLog sending has been cancelled.\n\n1. Enable debug logging mode in extended setup settings.\n2. Try to repeat the error or crash.\n3. Send the log from the plugin (context menu on the plugin icon and the item 'Send log to developer')\n4. Disable debug logging mode.
@@ -290,6 +289,7 @@ tv_screen_group_changed_info__3 = Group:|%s||New:|%s||Removed:|%s
 tv_screen_ch_channel_info__2 = Name:|%s||Channel ID:|%s
 tv_screen_ch_channel_info__5 = Name:|%s||Categories:|%s||Archive:|%s day(s)||Channel ID:|%s||EPG ID:|%s
 tv_screen_channel_info__4 = Name:|%s||Archive:|%s day(s)||Channel ID:|%s||EPG ID:|%s
+tv_screen_channel_info__5 = Name:|%s||Archive:|%s day(s)||Channel ID:|%s||EPG ID:|%s||Zoom:|%s
 tv_screen_external_player = Play by external player
 tv_screen_internal_player = Play by internal player
 tv_screen_toggle_icons_aspect = Square channels icons

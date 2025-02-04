@@ -92,16 +92,13 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
                         TR::t('search') . ": $search_string"));
 
             case ACTION_ADD_FAV:
-                $opt_type = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID)->in_items_order($movie_id)
-                    ? PLUGIN_FAVORITES_OP_REMOVE
-                    : PLUGIN_FAVORITES_OP_ADD;
-                $this->plugin->vod->change_vod_favorites($opt_type, $movie_id);
-                $this->set_changes();
-                $this->plugin->save_orders(true);
+                $fav_ids = $this->plugin->get_channels_order(FAV_MOVIE_GROUP_ID);
+                $opt_type = in_array($movie_id, $fav_ids) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $this->plugin->change_vod_favorites($opt_type, $movie_id);
                 return Action_Factory::invalidate_folders(
                     array(
                         $user_input->parent_media_url,
-                        Starnet_Vod_Favorites_Screen::get_media_url_string(FAVORITES_MOVIE_GROUP_ID),
+                        Starnet_Vod_Favorites_Screen::get_media_url_string(FAV_MOVIE_GROUP_ID),
                         Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
                         Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
                     )
@@ -166,14 +163,14 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
             return $this->create_regular_folder_range(array());
         }
 
-        $fav_group = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID);
+        $fav_ids = $this->plugin->get_channels_order(FAV_MOVIE_GROUP_ID);
         $items = array();
         if (isset($movie_range->short_movies)) {
             foreach ($movie_range->short_movies as $movie) {
                 $items[] = array(
                     PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie->id, $movie->name, $movie->poster_url, $movie->info),
                     PluginRegularFolderItem::caption => $movie->name,
-                    PluginRegularFolderItem::starred => $fav_group->in_items_order($movie->id),
+                    PluginRegularFolderItem::starred => in_array($movie->id, $fav_ids),
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::icon_path => $movie->poster_url,
                         ViewItemParams::item_detailed_info => $movie->info,

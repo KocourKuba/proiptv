@@ -920,7 +920,7 @@ class api_default
     {
         if (empty($user_input->{CONTROL_EDIT_ITEM})) {
             // new provider. Fill default values
-            $settings = $this->plugin->get_settings($id);
+            $settings = dune_plugin_settings::get_settings($id);
             $xmltv_picons = $this->getConfigValue(XMLTV_PICONS);
             if ($xmltv_picons) {
                 $settings[PARAM_USE_PICONS] = XMLTV_PICONS;
@@ -938,7 +938,7 @@ class api_default
             }
 
             if (!empty($settings)) {
-                $this->plugin->put_settings($id, $settings);
+                dune_plugin_settings::put_settings($id, $settings);
             }
         }
 

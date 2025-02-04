@@ -125,15 +125,45 @@ const CONTROL_PLAYLIST_IPTV = 'iptv';
 const CONTROL_PLAYLIST_VOD = 'vod';
 
 # Special groups ID
-const FAVORITES_GROUP_ID = '##favorites##';
-const ALL_CHANNEL_GROUP_ID = '##all_channels##';
+const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';
+
+const ALL_CHANNELS_GROUP_ID = '##all_channels##';
+const ALL_CHANNELS_GROUP_CAPTION = 'plugin_all_channels';
+const ALL_CHANNELS_GROUP_ICON = 'plugin_file://icons/all_folder.png';
+
+const FAV_CHANNELS_GROUP_ID = '##favorites##';
+const FAV_CHANNELS_GROUP_CAPTION = 'plugin_favorites';
+const FAV_CHANNELS_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
+
 const HISTORY_GROUP_ID = '##playback_history_tv_group##';
+const HISTORY_GROUP_CAPTION = 'plugin_history';
+const HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
+
 const CHANGED_CHANNELS_GROUP_ID = '##changed_channels_group##';
+const CHANGED_CHANNELS_GROUP_CAPTION = 'plugin_changed';
+const CHANGED_CHANNELS_GROUP_ICON = 'plugin_file://icons/changed_channels.png';
+
+const FAV_MOVIE_GROUP_ID = '##movie_favorites##';
+const FAV_MOVIES_GROUP_CAPTION = 'plugin_favorites';
+const FAV_MOVIES_GROUP_ICON = 'plugin_file://icons/favorite_vod_folder.png';
+
 const VOD_GROUP_ID = '##mediateka##';
-const FAVORITES_MOVIE_GROUP_ID = '##movie_favorites##';
+const VOD_GROUP_CAPTION = 'plugin_vod';
+const VOD_GROUP_ICON = "plugin_file://icons/vod_folder.png";
+
 const SEARCH_MOVIES_GROUP_ID = '##search_movie##';
+const SEARCH_MOVIES_GROUP_CAPTION = 'search';
+const SEARCH_MOVIES_GROUP_ICON = 'plugin_file://icons/search_movie_folder.png';
+
 const FILTER_MOVIES_GROUP_ID = '##filter_movie##';
+const FILTER_MOVIES_GROUP_CAPTION = 'filters';
+const FILTER_MOVIES_GROUP_ICON = 'plugin_file://icons/filter_movie_folder.png';
+
 const HISTORY_MOVIES_GROUP_ID = '##playback_history_vod_group##';
+const HISTORY_MOVIES_GROUP_CAPTION = 'plugin_history';
+const HISTORY_MOVIES_GROUP_ICON = 'plugin_file://icons/history_vod_folder.png';
+
+const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 
 # Common parameters
 const PLUGIN_PARAMETERS = "parameters";
@@ -217,7 +247,6 @@ const PARAM_CACHE = 'cache';
 const PARAM_CACHE_DIR = 'cache_dir';
 const PARAM_PL_TYPE = 'playlist_type';
 const PARAM_VOD_DEFAULT_QUALITY = 'quality';
-const PARAM_FORCE_HTTP = 'force_http';
 const PARAM_REPLACE_ICON = 'replace_playlist_icon';
 const PARAMS_XMLTV = 'xmltv_params';
 const PARAM_HASH = 'hash';

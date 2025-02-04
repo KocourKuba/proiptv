@@ -276,7 +276,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 }
 
                 if ($need_reload) {
-                    $this->plugin->tv->reload_channels($plugin_cookies);
+                    $this->plugin->reload_channels($plugin_cookies);
                 }
 
                 return Action_Factory::show_title_dialog($msg,
@@ -370,13 +370,13 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         clearstatcache();
 
-        shell_exec('rm -f ' . get_data_path('*.prev'));
-        shell_exec('rm -f ' . get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*'));
+        array_map('unlink', glob(get_data_path('*.prev')));
+        array_map('unlink', glob(get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*')));
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         $this->plugin->load_parameters(true);
         $this->plugin->remove_parameter(PARAM_CACHE_PATH);
-        $this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, false);
+        //$this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, false);
 
         $this->plugin->init_plugin(true);
 

@@ -59,7 +59,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
         $actions[GUI_EVENT_KEY_SUBTITLE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE);
 
-        if ($this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order()->size() !== 0) {
+        if ($this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) !== 0) {
             if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
@@ -90,7 +90,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -128,7 +127,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
             case ACTION_PLAY_ITEM:
                 try {
-                    $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
+                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Channel can't played");
                     print_backtrace_exception($ex);
@@ -155,42 +154,39 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 if ($user_input->sel_ndx < 0) {
                     $user_input->sel_ndx = 0;
                 }
-                $this->set_changes();
-                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
+
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DOWN:
                 $user_input->sel_ndx++;
-                if ($user_input->sel_ndx >= $fav_group->get_items_order()->size()) {
-                    $user_input->sel_ndx = $fav_group->get_items_order()->size() - 1;
+                $cnt = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID);
+                if ($user_input->sel_ndx >= $cnt) {
+                    $user_input->sel_ndx = $cnt - 1;
                 }
-                $this->set_changes();
-                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_TOP:
                 $user_input->sel_ndx = 0;
                 $this->set_changes();
-                $this->plugin->tv->change_tv_favorites(ACTION_ITEM_TOP, $selected_media_url->channel_id);
+                $this->plugin->change_tv_favorites(ACTION_ITEM_TOP, $selected_media_url->channel_id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_BOTTOM:
-                $user_input->sel_ndx = $fav_group->get_items_order()->size() - 1;
-                $this->set_changes();
-                $this->plugin->tv->change_tv_favorites(ACTION_ITEM_BOTTOM, $selected_media_url->channel_id);
+                $user_input->sel_ndx = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) - 1;
+                $this->plugin->change_tv_favorites(ACTION_ITEM_BOTTOM, $selected_media_url->channel_id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DELETE:
-                $this->set_changes();
-                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
-                if ($fav_group->get_items_order()->size() !== 0) {
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
+                if ($this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) != 0) {
                     return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
                 }
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ITEMS_CLEAR:
-                $this->set_changes();
-                $this->plugin->tv->change_tv_favorites(ACTION_ITEMS_CLEAR, null);
+                $this->plugin->remove_channels_order(FAV_CHANNELS_GROUP_ID);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
@@ -212,28 +208,16 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $items = array();
 
-        foreach ($this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order() as $channel_id) {
-            if (!preg_match('/\S/', $channel_id)) {
-                continue;
-            }
-
-            $channel = $this->plugin->tv->get_channel($channel_id);
-            if (is_null($channel)) {
-                hd_debug_print("Unknown channel $channel_id");
-                $this->set_changes();
-                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id);
-                continue;
-            }
-
+        foreach ($this->plugin->get_channels_by_order(FAV_CHANNELS_GROUP_ID) as $channel_row) {
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array('channel_id' => $channel->get_id(), 'group_id' => FAVORITES_GROUP_ID)
+                    array('channel_id' => $channel_row['channel_id'], 'group_id' => FAV_CHANNELS_GROUP_ID)
                 ),
-                PluginRegularFolderItem::caption => $channel->get_title(),
+                PluginRegularFolderItem::caption => $channel_row['title'],
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $channel->get_icon_url(),
-                    ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
+                    ViewItemParams::icon_path => $channel_row['icon'],
+                    ViewItemParams::item_detailed_icon_path => $channel_row['icon'],
                 ),
             );
         }

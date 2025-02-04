@@ -79,8 +79,8 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
 
         hd_debug_print("movie: " . pretty_json_format($movie->movie_info));
 
-        $right_button_caption = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID)->in_items_order($movie->id)
-            ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
+        $fav_ids = $this->plugin->get_channels_order(FAV_MOVIE_GROUP_ID);
+        $right_button_caption = in_array($movie->id, $fav_ids) ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
         $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array('movie_id' => $movie->id));
 
         if ($movie->has_seasons()) {
@@ -149,15 +149,15 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
         if ($user_input->control_id === PARAM_FAVORITES) {
             $movie_id = $user_input->movie_id;
 
-            $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
-            $opt_type = $fav_group->in_items_order($movie_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-            $this->plugin->vod->change_vod_favorites($opt_type, $movie_id);
+            $fav_group = $this->plugin->get_channels_order(FAV_CHANNELS_GROUP_ID);
+            $opt_type = in_array($movie_id, $fav_group) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+            $this->plugin->change_vod_favorites($opt_type, $movie_id);
             $this->plugin->save_orders(true);
             return Action_Factory::show_title_dialog(
                 $opt_type === PLUGIN_FAVORITES_OP_REMOVE ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite'),
                 Action_Factory::invalidate_folders(
                     array(
-                        self::get_media_url_string(FAVORITES_MOVIE_GROUP_ID),
+                        self::get_media_url_string(FAV_MOVIE_GROUP_ID),
                         Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
                         Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
                     ),

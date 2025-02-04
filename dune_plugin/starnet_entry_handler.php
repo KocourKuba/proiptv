@@ -203,7 +203,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 }
                             }
 
-                            if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
+                            if ($this->plugin->load_channels($plugin_cookies) === 0) {
                                 return Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
                                     $this->plugin->create_plugin_title(),
@@ -230,7 +230,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         if ($this->plugin->vod_enabled && $plugin_cookies->{PARAM_SHOW_VOD_ICON} === SetupControlSwitchDefs::switch_on) {
-                            $this->plugin->tv->load_channels($plugin_cookies);
+                            $this->plugin->load_channels($plugin_cookies);
                             return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
                         }
 
@@ -260,7 +260,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 hd_debug_print("Auto resume: " . $media_url);
                             }
 
-                            if ($this->plugin->tv->load_channels($plugin_cookies) === 0) {
+                            if ($this->plugin->load_channels($plugin_cookies) === 0) {
                                 $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error());
                                 return Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
@@ -279,7 +279,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_UPDATE_EPFS:
                         $this->plugin->init_plugin();
-                        $this->plugin->tv->load_channels($plugin_cookies);
+                        $this->plugin->load_channels($plugin_cookies);
                         return Starnet_Epfs_Handler::update_all_epfs($plugin_cookies,
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 

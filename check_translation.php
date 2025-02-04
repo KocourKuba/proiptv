@@ -12,8 +12,8 @@
 function glob_recursive($base, $pattern, $flags = 0) {
     $flags &= ~GLOB_NOCHECK;
 
-    if (substr($base, -1) !== DIRECTORY_SEPARATOR) {
-        $base .= DIRECTORY_SEPARATOR;
+    if (substr($base, -1) !== '/') {
+        $base .= '/';
     }
 
     $files = glob($base.$pattern, $flags);
@@ -43,7 +43,7 @@ $translation_path = "$plugin_path/translations";
 $max_cnt = 0;
 $max = '';
 foreach (glob("$translation_path/*.txt") as $file) {
-    $ar = explode(DIRECTORY_SEPARATOR, $file);
+    $ar = explode('/', $file);
     $ar = (explode('_',(count($ar) === 1) ? $file : end($ar)));
     $lang = end($ar);
 

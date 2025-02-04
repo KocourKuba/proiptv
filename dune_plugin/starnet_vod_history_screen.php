@@ -73,7 +73,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                     return Action_Factory::invalidate_folders(
                         array(
                             self::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
-                            Starnet_Vod_Favorites_Screen::get_media_url_string(FAVORITES_MOVIE_GROUP_ID),
+                            Starnet_Vod_Favorites_Screen::get_media_url_string(FAV_MOVIE_GROUP_ID),
                             Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
                         ),
                         Action_Factory::close_and_run()
@@ -107,10 +107,9 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_FAV:
-                $fav_group = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID);
-                $opt_type = $fav_group->in_items_order($movie_id) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-                $this->plugin->vod->change_vod_favorites($opt_type, $movie_id);
-                $this->plugin->save_orders(true);
+                $fav_ids = $this->plugin->get_channels_order(FAV_MOVIE_GROUP_ID);
+                $opt_type = in_array($movie_id, $fav_ids) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $this->plugin->change_vod_favorites($opt_type, $movie_id);
                 $message = $opt_type === PLUGIN_FAVORITES_OP_REMOVE ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
                 return Action_Factory::show_title_dialog($message);
         }

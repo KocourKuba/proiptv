@@ -120,14 +120,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, self::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
-        // HTTPS->HTTP convertion
-
-        $force_http = $this->plugin->get_setting(PARAM_FORCE_HTTP, SetupControlSwitchDefs::switch_off);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_FORCE_HTTP, TR::t('setup_force_http'), SetupControlSwitchDefs::$on_off_translated[$force_http],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$force_http]), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
         // additional parameters
 
         Control_Factory::add_image_button($defs, $this, null,
@@ -178,16 +170,15 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
-            case PARAM_FORCE_HTTP:
-                $this->plugin->toggle_setting($user_input->control_id, false);
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-
             case self::CONTROL_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY: // handle streaming settings dialog result
+                $id = $this->plugin->get_active_playlist_key();
                 $this->plugin->safe_clear_current_epg_cache();
-                $this->plugin->remove_settings($this->plugin->get_active_playlist_key());
+                $this->plugin->unlink_settings($id);
+                $this->plugin->unlink_history($id);
+                $this->plugin->unlink_orders($id);
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_EXT_PARAMS_DLG:
@@ -246,7 +237,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );
 
-                $result = $this->plugin->tv->reload_channels($plugin_cookies);
+                $result = $this->plugin->reload_channels($plugin_cookies);
                 if (!$result) {
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $action);
                 }

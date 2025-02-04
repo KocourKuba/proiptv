@@ -302,7 +302,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             }
 
             if ($dir === self::SDCARD_PATH) {
-                $fileData['folder']['internal']['filepath'] = $dir . DIRECTORY_SEPARATOR;
+                $fileData['folder']['internal']['filepath'] = $dir . '/';
             } else if ($dir === self::IMAGELIB_PATH) {
                 $fileData['folder']['imagelib']['filepath'] = get_temp_path('imagelib/');
             } else if ($handle = opendir($dir)) {
@@ -335,16 +335,12 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     }
                 }
 
-                $bug_kind = get_bug_platform_kind();
                 while (false !== ($file = readdir($handle))) {
                     if ($file === "." || $file === ".." || strtolower($file) === 'lost.dir') continue;
 
-                    $absolute_filepath = $dir . DIRECTORY_SEPARATOR . $file;
-                    $is_match = preg_match("|^" . self::SMB_PATH . "/|", $absolute_filepath);
-                    $is_dir = $bug_kind && $is_match ? (bool)trim(shell_exec("test -d \"$absolute_filepath\" && echo 1 || echo 0")) : is_dir($absolute_filepath);
-
-                    if ($is_dir === false) {
-                        $fileData['file'][$file]['size'] = ($bug_kind && $is_match) ? '' : filesize($absolute_filepath);
+                    $absolute_filepath = $dir . '/' . $file;
+                    if (is_dir($absolute_filepath) === false) {
+                        $fileData['file'][$file]['size'] = filesize($absolute_filepath);
                         $fileData['file'][$file]['filepath'] = $absolute_filepath;
                     } else if ($absolute_filepath !== self::NFS_PATH && $absolute_filepath !== self::MNT_PATH . "/D") {
                         $files = glob("$absolute_filepath/*");
@@ -683,7 +679,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     {
         hd_debug_print(null, true);
 
-        shell_exec('rm -f ' . get_temp_path('*.zip'));
+        array_map('unlink', glob(get_data_path('*.zip')));
         delete_directory(get_temp_path('imagelib'));
 
         clearstatcache();
@@ -718,7 +714,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $parent_url = MediaURL::decode($user_input->parent_media_url);
 
-        if (!create_path($parent_url->filepath . DIRECTORY_SEPARATOR . $user_input->{self::ACTION_CREATE_FOLDER})) {
+        if (!create_path($parent_url->filepath . '/' . $user_input->{self::ACTION_CREATE_FOLDER})) {
             return Action_Factory::show_title_dialog(TR::t('err_cant_create_folder'));
         }
         return Starnet_Epfs_Handler::epfs_invalidate_folders(array($user_input->parent_media_url));

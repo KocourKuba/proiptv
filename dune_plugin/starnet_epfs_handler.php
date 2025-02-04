@@ -88,7 +88,7 @@ class Starnet_Epfs_Handler
 
         self::$epf_id = $plugin->plugin_info['app_name'];
         self::$no_internet_epfs = self::$epf_id . '.no_internet';
-        self::$dir_path = self::EPFS_PATH . self::$epf_id;
+        self::$dir_path = getenv('FS_PREFIX') . self::EPFS_PATH . self::$epf_id;
         self::$tv_rows_screen = new Starnet_Tv_Rows_Screen($plugin);
 
         $plugin->create_screen(self::$tv_rows_screen);

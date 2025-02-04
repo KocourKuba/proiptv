@@ -69,11 +69,6 @@ class vod_standard extends Abstract_Vod
     protected $special_groups;
 
     /**
-     * @var array[]
-     */
-    protected $vod_m3u_indexes;
-
-    /**
      * @var array
      */
     protected $vod_filters = array();
@@ -114,6 +109,11 @@ class vod_standard extends Abstract_Vod
     protected $vod_parser;
 
     /**
+     * @var Sql_Wrapper
+     */
+    protected $wrapper = null;
+
+    /**
      * @var Perf_Collector
      */
     protected $perf;
@@ -142,6 +142,7 @@ class vod_standard extends Abstract_Vod
         }
 
         $this->vod_parser = $this->provider->getConfigValue(CONFIG_VOD_PARSER);
+        $this->wrapper = $this->plugin->get_sql_wrapper();
 
         return true;
     }
@@ -165,37 +166,43 @@ class vod_standard extends Abstract_Vod
 
         if ($this->plugin->vod_enabled) {
             // Favorites category
-            $special_group = new Default_Group($this->plugin,
-                FAVORITES_MOVIE_GROUP_ID,
-                TR::load_string(Default_Group::FAV_MOVIES_GROUP_CAPTION),
-                Default_Group::FAV_MOVIES_GROUP_ICON);
-            $this->special_groups->set($special_group->get_id(), $special_group);
+            $special_group = array(
+                'group_id' => FAV_MOVIE_GROUP_ID,
+                'title' => FAV_MOVIES_GROUP_CAPTION,
+                'icon' => FAV_MOVIES_GROUP_ICON,
+                'disabled' => true
+            );
+            $this->special_groups->set(FAV_MOVIE_GROUP_ID, $special_group);
 
             // History channels category
-            $special_group = new Default_Group($this->plugin,
-                HISTORY_MOVIES_GROUP_ID,
-                TR::load_string(Default_Group::HISTORY_MOVIES_GROUP_CAPTION),
-                Default_Group::HISTORY_MOVIES_GROUP_ICON,
-                false);
-            $this->special_groups->set($special_group->get_id(), $special_group);
+            $special_group = array(
+                'group_id' => HISTORY_MOVIES_GROUP_ID,
+                'title' => HISTORY_MOVIES_GROUP_CAPTION,
+                'icon' => HISTORY_MOVIES_GROUP_ICON,
+                'order_support' => false,
+                'disabled' => false,
+            );
+            $this->special_groups->set(HISTORY_MOVIES_GROUP_ID, $special_group);
 
             // Search category
-            $special_group = new Default_Group($this->plugin,
-                SEARCH_MOVIES_GROUP_ID,
-                TR::load_string(Default_Group::SEARCH_MOVIES_GROUP_CAPTION),
-                Default_Group::SEARCH_MOVIES_GROUP_ICON,
-                true);
-            $this->special_groups->set($special_group->get_id(), $special_group);
+            $special_group = array(
+                'group_id' => SEARCH_MOVIES_GROUP_ID,
+                'title' => SEARCH_MOVIES_GROUP_CAPTION,
+                'icon' => SEARCH_MOVIES_GROUP_ICON,
+                'order_support' => true,
+                'disabled' => false,
+            );
+            $this->special_groups->set(SEARCH_MOVIES_GROUP_ID, $special_group);
 
             // Filter category
-            $special_group = new Default_Group($this->plugin,
-                FILTER_MOVIES_GROUP_ID,
-                TR::load_string(Default_Group::FILTER_MOVIES_GROUP_CAPTION),
-                Default_Group::FILTER_MOVIES_GROUP_ICON,
-                true);
-            $special_group->set_disabled(empty($this->vod_filters));
-
-            $this->special_groups->set($special_group->get_id(), $special_group);
+            $special_group = array(
+                'group_id' => FILTER_MOVIES_GROUP_ID,
+                'title' => FILTER_MOVIES_GROUP_CAPTION,
+                'icon' => FILTER_MOVIES_GROUP_ICON,
+                'order_support' => true,
+                'disabled' => empty($this->vod_filters),
+            );
+            $this->special_groups->set(FILTER_MOVIES_GROUP_ID, $special_group);
 
             $this->plugin->create_screen(new Starnet_Vod_Favorites_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_History_Screen($this->plugin));
@@ -215,6 +222,14 @@ class vod_standard extends Abstract_Vod
     public function get_special_groups()
     {
         return $this->special_groups;
+    }
+
+    /**
+     * @return Group
+     */
+    public function get_special_group($id)
+    {
+        return $this->special_groups->get($id);
     }
 
     /**
@@ -296,13 +311,15 @@ class vod_standard extends Abstract_Vod
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
 
-        $entry = $this->plugin->get_vod_m3u_parser()->getEntryByIdx($movie_id);
-        if ($entry === null) {
+        $entry = $this->getVod($movie_id);
+        if (empty($entry)) {
             hd_debug_print("Movie not found");
             $movie = null;
         } else {
-            $logo = $entry->getEntryAttribute(ATTR_TVG_LOGO);
-            $title = $entry->getEntryTitle();
+            $logo = $entry['icon'];
+            $title = $entry['title'];
+            $category = $entry['group_id'];
+            $path = $entry['path'];
             $title_orig = '';
             $country = '';
             $year = '';
@@ -312,15 +329,6 @@ class vod_standard extends Abstract_Vod
                 $title_orig = isset($match['title_orig']) ? $match['title_orig'] : $title_orig;
                 $country = isset($match['country']) ? $match['country'] : $country;
                 $year = isset($match['year']) ? $match['year'] : $year;
-            }
-
-            $category = '';
-            foreach ($this->vod_m3u_indexes as $group => $indexes) {
-                if ($group === Vod_Category::FLAG_ALL_MOVIES) continue;
-                if (in_array($movie_id, $indexes)) {
-                    $category = $group;
-                    break;
-                }
             }
 
             $movie = new Movie($movie_id, $this->plugin);
@@ -341,7 +349,7 @@ class vod_standard extends Abstract_Vod
                 $country           // country,
             );
 
-            $movie->add_series_data($movie_id, $title, '', $entry->getPath());
+            $movie->add_series_data($movie_id, $title, '', $path);
         }
 
         return $movie;
@@ -363,53 +371,6 @@ class vod_standard extends Abstract_Vod
     public function set_filters($filters)
     {
         $this->filters = $filters;
-    }
-
-    /**
-     * @param string $fav_op_type
-     * @param string $movie_id
-     */
-    public function change_vod_favorites($fav_op_type, $movie_id)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("action: $fav_op_type, moive id: $movie_id", true);
-        $order = &$this->get_special_group(FAVORITES_MOVIE_GROUP_ID)->get_items_order();
-
-        switch ($fav_op_type) {
-            case PLUGIN_FAVORITES_OP_ADD:
-                if ($order->add_item($movie_id)) {
-                    hd_debug_print("Movie id: $movie_id added to favorites");
-                }
-                break;
-
-            case PLUGIN_FAVORITES_OP_REMOVE:
-                if ($order->remove_item($movie_id)) {
-                    hd_debug_print("Movie id: $movie_id removed from favorites");
-                }
-                break;
-
-            case ACTION_ITEMS_CLEAR:
-                hd_debug_print("Movie favorites cleared");
-                $order->clear();
-                break;
-
-            case PLUGIN_FAVORITES_OP_MOVE_UP:
-                $order->arrange_item($movie_id, Ordered_Array::UP);
-                break;
-
-            case PLUGIN_FAVORITES_OP_MOVE_DOWN:
-                $order->arrange_item($movie_id, Ordered_Array::DOWN);
-                break;
-            default:
-        }
-    }
-
-    /**
-     * @return Group
-     */
-    public function get_special_group($id)
-    {
-        return $this->special_groups->get($id);
     }
 
     /**
@@ -452,32 +413,29 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        $this->vod_m3u_indexes = $this->plugin->get_vod_m3u_parser()->indexFile();
+        if ($this->plugin->get_vod_m3u_parser()->parseVodPlaylist($this->wrapper) === false) {
+            hd_debug_print("Parse VOD failed");
+            return false;
+        }
 
         $this->perf->reset('start');
 
         $category_index = array();
 
         // all movies must be first
-        $category_index[Vod_Category::FLAG_ALL_MOVIES] = null;
+        $all_count = $this->getVodCount();
+        $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($all_count)"));
+        $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
         $category_count = 0;
-        $all_indexes = array();
-        foreach ($this->vod_m3u_indexes as $group => $indexes) {
-            foreach ($indexes as $element) {
-                $all_indexes[] = $element;
-            }
+        foreach ($this->getVodGroups() as $group) {
+            $count = $this->getVodCount($group);
+            if ($count === 0) continue;
 
             $category_count++;
-            $count = count($indexes);
             $cat = new Vod_Category($group, "$group ($count)");
             $category_index[$group] = $cat;
         }
-
-        // all movies
-        $all_count = count($all_indexes);
-        $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($all_count)"));
-        $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
         $category_list = array();
         foreach ($category_index as $cat) {
@@ -510,8 +468,8 @@ class vod_standard extends Abstract_Vod
         $movies = array();
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
 
-        foreach ($this->vod_m3u_indexes[Vod_Category::FLAG_ALL_MOVIES] as $index) {
-            $title = $this->plugin->get_vod_m3u_parser()->getTitleByIdx($index);
+        foreach ($this->getVodEntries() as $entry) {
+            $title = $entry['title'];
             if (empty($title)) continue;
 
             $search_in = utf8_encode(mb_strtolower($title, 'UTF-8'));
@@ -521,12 +479,9 @@ class vod_standard extends Abstract_Vod
                 $title = isset($match['title']) ? $match['title'] : $title;
             }
 
-            $entry = $this->plugin->get_vod_m3u_parser()->getEntryByIdx($index);
-            if ($entry === null) continue;
-
-            $poster_url = $entry->getEntryAttribute(ATTR_TVG_LOGO);
-            hd_debug_print("Found at $index movie '$title', poster url: '$poster_url'", true);
-            $movies[] = new Short_Movie($index, $title, $poster_url);
+            $poster_url = $entry['icon'];
+            hd_debug_print("Found movie '$title', poster url: '$poster_url'", true);
+            $movies[] = new Short_Movie($entry['hash'], $title, $poster_url);
         }
 
         $this->perf->setLabel('end');
@@ -566,25 +521,22 @@ class vod_standard extends Abstract_Vod
         if ($page_idx < 0)
             return array();
 
-        $indexes = $this->vod_m3u_indexes[$category_id];
+        $max = $this->getVodCount($category_id);
+        $ubound = min($max, $page_idx + 500);
 
-        $max = count($indexes);
-        $ubound = min($max, $page_idx + 5000);
         hd_debug_print("Read from: $page_idx to $ubound");
+        $entries = $this->getVodEntries($category_id, $page_idx, $ubound);
 
         $pos = $page_idx;
-        while ($pos < $ubound) {
-            $index = $indexes[$pos++];
-            $entry = $this->plugin->get_vod_m3u_parser()->getEntryByIdx($index);
-            if ($entry === null || $entry->isM3U_Header()) continue;
+        foreach ($entries as $entry) {
+            $pos++;
 
-            $title = $entry->getEntryTitle();
+            $title = $entry['title'];
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
                 $title = isset($match['title']) ? $match['title'] : $title;
             }
-            $title = trim($title);
 
-            $movies[] = new Short_Movie($index, $title, $entry->getEntryAttribute(ATTR_TVG_LOGO));
+            $movies[] = new Short_Movie($entry['hash'], trim($title), $entry['icon']);
         }
 
         $this->get_next_page($query_id, $pos - $page_idx);
@@ -812,5 +764,81 @@ class vod_standard extends Abstract_Vod
     public function get_vod_cache_file()
     {
         return get_temp_path($this->plugin->get_active_playlist_key() . "_playlist_vod.json");
+    }
+
+    /**
+     * get indexes count for selected group
+     *
+     * @param string $group_id
+     * @return int
+     */
+    public function getVodCount($group_id = '')
+    {
+        if ($this->wrapper === null) {
+            return 0;
+        }
+
+        $where = '';
+        if (!empty($groupId)) {
+            $group_id = SQLite3::escapeString($group_id);
+            $where = "WHERE group_id == '$group_id';";
+        }
+
+        $result = $this->wrapper->query_value("SELECT count(hash) FROM vod.vod_entries $where;");
+        return empty($result) ? 0 : (int)$result;
+    }
+
+    /**
+     * get indexes count for selected group
+     *
+     * @param string $group_id
+     * @return array
+     */
+    public function getVodEntries($group_id = '', $from = 0, $limit = 0)
+    {
+        if ($this->wrapper === null) {
+            return array();
+        }
+
+        $where = '';
+        if (!empty($group_id)) {
+            $group_id = SQLite3::escapeString($group_id);
+            $where = "WHERE group_id == '$group_id';";
+        }
+
+        if ($limit > 0) {
+            $limit = "LIMIT $from, $limit";
+        }
+
+        return $this->wrapper->fetch_array("SELECT * FROM vod.vod_entries $where $limit;");
+    }
+
+    /**
+     * get groups
+     *
+     * @return array
+     */
+    public function getVodGroups()
+    {
+        if ($this->wrapper === null) {
+            return array();
+        }
+
+        return $this->wrapper->fetch_single_array("SELECT DISTINCT group_id FROM vod.vod_entries", 'group_id');
+    }
+
+    /**
+     * get entry by idx
+     *
+     * @param string $hash
+     * @return array
+     */
+    public function getVod($hash)
+    {
+        if ($this->wrapper === null) {
+            return array();
+        }
+
+        return $this->wrapper->query_value("SELECT * FROM vod.vod_entries WHERE hash = '$hash';", true);
     }
 }

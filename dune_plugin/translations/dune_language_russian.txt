@@ -178,7 +178,6 @@ setup_changelog = История изменений
 setup_debug = Расширенное логирование
 setup_per_channel_zoom = Масштабирование по каналам
 setup_backup_folder_path = Папка резервных копий
-setup_force_http = Замена ссылок https -> http
 
 setup_channels_src_reset_playlist = Сбросить настройки плейлиста
 setup_channels_src_edit_playlists = Выбрать или Редактировать плейлисты
@@ -193,9 +192,9 @@ setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Force Dune to detect stream
 
 entry_send_log = Отправить лог разработчику
-entry_log_sent = Лог отправлен!
+entry_log_sent = Лог отправлен!\nПожалуйста сообщите разработчику причину отправки лога\nв Telegram канале t.me/dunehd_iptv_chat\n или на форумах forum.hdtv.ru и forum.mydune.ru
 entry_log_not_sent = Лог не отправлен!
-entry_log_not_sent_too_old = Устаревшая прошивка!\тПриставки с меньше b11 не поддерживаются!\nОтправка лога отменена.
+entry_log_not_sent_too_old = Устаревшая прошивка!\nПриставки с меньше b11 не поддерживаются!\nОтправка лога отменена.
 entry_log_not_enabled = Расширенный лог не был включен.\nЛог может не содержать полезной информации!\nОтправка лога отменена.\n\n1. Включите расширенный режим логирования.\n2. Постарайтесь повторить ошибку.\n3. Отправьте лог из плагина (контекстное меню на иконке плагина и пункт 'Отправить лог разработчику')\n4. Отключите расширенный режим логирования.
 entry_epg_fake = Эмуляция отсутствующего EPG
 entry_epg_cache_clear = Очистить кэш EPG
@@ -290,6 +289,7 @@ tv_screen_group_changed_info__3 = Категория:|%s||Новых:|%s||Уда
 tv_screen_ch_channel_info__2 = Название:|%s||Канал №:|%s
 tv_screen_ch_channel_info__5 = Название:|%s||Категории:|%s||Архив:|%s дней||Канал №:|%s||EPG №: %s
 tv_screen_channel_info__4 = Название:|%s||Архив:|%s дней||Канал №:|%s||EPG №:|%s
+tv_screen_channel_info__5 = Название:|%s||Архив:|%s дней||Канал №:|%s||EPG №:|%s||Масштаб:|%s
 tv_screen_external_player = Воспроизводить внешним плеером
 tv_screen_internal_player = Воспроизводить внутренним плеером
 tv_screen_toggle_icons_aspect = Квадратные иконки каналов

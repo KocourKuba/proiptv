@@ -1,0 +1,5 @@
+product_id: tv182a
+serial_number: 0000-0003-9289-B493-4AAD-0EF5-C340-1541
+firmware_version: 250101_0000_r22
+commercial_serial_number: FC182A001234302741
+app_version: 1.0.1-13-250101_0000

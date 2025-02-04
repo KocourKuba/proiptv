@@ -29,9 +29,48 @@ require_once 'M3uTags.php';
 
 class Entry extends Json_Serializer
 {
-    public static $tvg_archives = array(ATTR_CATCHUP_DAYS, ATTR_CATCHUP_TIME, ATTR_TIMESHIFT, ATTR_ARC_TIMESHIFT, ATTR_ARC_TIME, ATTR_TVG_REC);
-    public static $epg_id_tags = array(ATTR_TVG_ID, ATTR_TVG_NAME, ATTR_TVG_EPGID, ATTR_CHANNEL_NAME);
+    /**
+     * Attributes used to get archive length
+     * "catchup-days", "catchup-time", "timeshift", "arc-timeshift", "arc-time", "tvg-rec"
+     * "catchup-time" contains seconds instead of days in other cases
+     */
+    public static $tvg_archives_attrs = array(ATTR_CATCHUP_DAYS, ATTR_CATCHUP_TIME, ATTR_TIMESHIFT, ATTR_ARC_TIMESHIFT, ATTR_ARC_TIME, ATTR_TVG_REC);
+
+    /**
+     * Attributes used to determine channel ID
+     * "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
+     */
+    public static $channel_id_attrs = array(ATTR_CUID, ATTR_CHANNEL_ID, ATTR_CH_ID, ATTR_TVG_CHNO, ATTR_CH_NUMBER);
+
+    /**
+     * Attributes contains xmltv epg sources
+     * "url-tvg", "x-tvg-url"
+     */
+    public static $epg_src_attrs = array(ATTR_URL_TVG, ATTR_X_TVG_URL);
+
+    /*
+     * Attributes contains catchup information
+     * "catchup", "catchup-type"
+     */
+    public static $catchup_attrs = array(ATTR_CATCHUP, ATTR_CATCHUP_TYPE);
+
+    /*
+     * Attributes contains catchup source information
+     * "catchup-source", "catchup-template"
+     */
+    public static $catchup_source_attrs = array(ATTR_CATCHUP_SOURCE, ATTR_CATCHUP_TEMPLATE);
+
+    /*
+     * Attributes contains icon links
+     * "tvg-logo", "url-logo"
+     */
     public static $icon_attrs = array(ATTR_TVG_LOGO, ATTR_URL_LOGO);
+
+    /*
+     * Attributes contains epg id
+     * "adult", "parent-code", "censored"
+     */
+    public static $adult_attrs = array(ATTR_ADULT, ATTR_PARENT_CODE, ATTR_CENSORED);
 
     /**
      * @var bool
@@ -51,12 +90,32 @@ class Entry extends Json_Serializer
     /**
      * @var string
      */
+    protected $hash;
+
+    /**
+     * @var string
+     */
     protected $channel_id;
 
     /**
      * @var string
      */
-    protected $channel_icon;
+    protected $title;
+
+    /**
+     * @var int
+     */
+    protected $timeshift;
+
+    /**
+     * @var string
+     */
+    protected $icon;
+
+    /**
+     * @var array
+     */
+    protected $ext_params;
 
     /**
      * @var string
@@ -66,7 +125,17 @@ class Entry extends Json_Serializer
     /**
      * @var string
      */
-    protected $group_icon;
+    protected $group_logo;
+
+    /**
+     * @var int
+     */
+    protected $adult = 0;
+
+    /**
+     * @var string
+     */
+    protected $parent_code;
 
     /**
      * @var int
@@ -76,22 +145,12 @@ class Entry extends Json_Serializer
     /**
      * @var string
      */
+    protected $catchup_type;
+
+    /**
+     * @var string
+     */
     protected $catchup_source;
-
-    /**
-     * @var array
-     */
-    protected $epg_ids = array();
-
-    /**
-     * @var array
-     */
-    protected $matches = array();
-
-    /**
-     * @var array
-     */
-    protected $ext_params = array();
 
     /**
      * @return boolean
@@ -203,22 +262,39 @@ class Entry extends Json_Serializer
     /**
      * @return string
      */
+    public function getHash()
+    {
+        return $this->hash;
+    }
+
+    /**
+     * Update path and calculate hash
+     *
+     * @param string $hash
+     * @return void
+     */
+    public function setHash($hash)
+    {
+        $this->hash = $hash;
+    }
+
+    /**
+     * @return string
+     */
     public function getPath()
     {
         return $this->path;
     }
 
     /**
+     * Update path and calculate hash
+     *
      * @param string $path
-     * @param M3uParser $parser
+     * @return void
      */
-    public function updatePath($path, $parser)
+    public function setPath($path)
     {
         $this->path = $path;
-
-        if ($parser->replace_https) {
-            $this->path = str_replace('https://', 'http://', $this->path);
-        }
     }
 
     /**
@@ -230,30 +306,153 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * @return array
+     * @param string $id_parser
+     * @param string $id_map
+     * @return void
      */
-    public function getMatches()
+    public function updateChannelId($id_parser, $id_map)
     {
-        return $this->matches;
+        // set channel id, first use id url parser
+        $channel_id = null;
+        if (!empty($id_parser) && preg_match($id_parser, $this->path, $matches) && isset($matches['id'])) {
+            $channel_id = $matches['id'];
+        }
+
+        // try to get by id mapper
+        if (empty($channel_id) && !empty($id_map)) {
+            $channel_id = $this->getEntryAttribute($id_map);
+        }
+
+        // search in attributes
+        if (empty($channel_id)) {
+            $channel_id = $this->getEntryAttribute(ATTR_CHANNEL_ID_ATTRS);
+        }
+
+        $this->channel_id = $channel_id;
     }
 
     /**
-     * Returns EXTINF Title (1 channel)
-     * #EXTINF:0 group-title="base channels", 1 channel
-     * example result: 1 channel
-     *
      * @return string
      */
-    public function getEntryTitle()
+    public function getTitle()
     {
-        $extInf = $this->getEntryTag(TAG_EXTINF);
-        return is_null($extInf) ? '' : $extInf->getTagValue();
+        return $this->title;
     }
 
     /**
-     * Returns calculated category title
-     * value of attribute 'group-title' or #EXTGRP value or string 'no_category' if not found
-     *
+     * @return void
+     */
+    public function updateTitle()
+    {
+        $extInf = $this->getEntryTag(TAG_EXTINF);
+        $this->title = is_null($extInf) ? 'no name' : $extInf->getTagValue();
+    }
+
+    /**
+     * @return int
+     */
+    public function getTimeshift()
+    {
+        return $this->timeshift;
+    }
+
+    /**
+     * @return void
+     */
+    public function updateTimeshift()
+    {
+        $timeshift = $this->getEntryAttribute(ATTR_TVG_SHIFT, TAG_EXTINF);
+        $this->timeshift = ($timeshift !== null) ? (int)$timeshift : 0;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIcon()
+    {
+        return $this->icon;
+    }
+
+    /**
+     * @param string $icon_base_url
+     * @param array $icon_replace_pattern
+     * @return void
+     */
+    public function updateIcon($icon_base_url, $icon_replace_pattern = array())
+    {
+        // set channel icon
+        // make full url for icon if used base url
+        $channel_icon = $this->getAnyEntryAttribute(self::$icon_attrs, TAG_EXTINF);
+        if (!empty($icon_base_url)) {
+            if (!is_http($channel_icon)) {
+                $channel_icon = $icon_base_url . $channel_icon;
+            }
+        }
+
+        // Apply replacement pattern
+        if (!empty($channel_icon) && !empty($icon_replace_pattern)) {
+            foreach ($icon_replace_pattern as $pattern) {
+                $channel_icon = preg_replace($pattern['search'], $pattern['replace'], $channel_icon);
+            }
+        }
+
+        $this->icon = $channel_icon;
+    }
+
+    /**
+     * @return array
+     */
+    public function getExtParams()
+    {
+        return $this->ext_params;
+    }
+
+    /**
+     * @return void
+     */
+    public function updateExtParams()
+    {
+        // Update extended attributes for channel
+        $ext_params = array();
+        $ext_tag = $this->getEntryTag(TAG_EXTVLCOPT);
+        if ($ext_tag !== null) {
+            $ext_params[PARAM_EXT_VLC_OPTS] = $ext_tag->getTagValues();
+        }
+
+        $ext_tag = $this->getEntryTag(TAG_EXTHTTP);
+        if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
+            $ext_params[PARAM_EXT_HTTP] = $ext_http_values;
+        }
+
+        $this->ext_params = $ext_params;
+    }
+
+    /**
+     * @return string
+     */
+    public function getGroupLogo()
+    {
+        return $this->group_logo;
+    }
+
+    /**
+     * @param string $icon_base_url
+     * @return void
+     */
+    public function updateGroupLogo($icon_base_url)
+    {
+        // set group logo
+        $group_icon = $this->getEntryAttribute(ATTR_GROUP_LOGO, TAG_EXTINF);
+        if (!empty($group_logo)) {
+            if (!empty($icon_base_url) && !is_http($group_logo)) {
+                $group_icon = $icon_base_url . $group_logo;
+            }
+        }
+
+        $this->group_logo = $group_icon;
+    }
+
+    /**
      * @return string
      */
     public function getGroupTitle()
@@ -262,46 +461,97 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * Returns category icon
-     *
-     * @return string
+     * @return void
      */
-    public function getGroupIcon()
+    public function updateGroupTitle()
     {
-        return $this->group_icon;
-    }
-
-    /**
-     * Set category icon
-     *
-     * @param M3uParser $parser
-     */
-    public function updateGroupIcon($parser)
-    {
-        $this->group_icon = $this->getEntryAttribute(ATTR_GROUP_LOGO);
-        if (!empty($group_logo)) {
-            if (!empty($parser->icon_base_url) && !is_http($group_logo)) {
-                $this->group_icon = $parser->icon_base_url . $group_logo;
+        // set group title
+        $group_title = $this->getEntryAttribute(ATTR_GROUP_TITLE, TAG_EXTINF);
+        if (empty($group_title)) {
+            $exgGrp = $this->getEntryTag(TAG_EXTGRP);
+            if (!is_null($exgGrp)) {
+                $group_title = $exgGrp->getTagValue();
             }
-
-            if ($parser->replace_https) {
-                $this->group_icon = str_replace('https://', 'http://', $this->group_icon);
+            if (empty($group_title)) {
+                $group_title = TR::load_string('no_category');
             }
         }
+        $this->group_title = $group_title;
     }
 
     /**
-     * Get TimeShift for channel
-     *
      * @return int
      */
-    public function getTimeShift()
+    public function getAdult()
     {
-        return (int)$this->getEntryAttribute(ATTR_TVG_SHIFT, TAG_EXTINF);
+        return $this->adult;
+    }
+
+    /**
+     * @return string
+     */
+    public function getParentCode()
+    {
+        return $this->parent_code;
+    }
+
+    /**
+     * @return void
+     */
+    public function updateParentCode()
+    {
+        $used_tag = '';
+        $parent_code = $this->getAnyEntryAttribute(self::$adult_attrs, TAG_EXTINF, $used_tag);
+        if ($used_tag === ATTR_ADULT && (int)$parent_code !== 1) {
+            $parent_code = "0000";
+        }
+
+        if (!empty($parent_code)) {
+            $this->adult = 1;
+        }
+
+        $this->parent_code = $parent_code;
+    }
+
+    /**
+     * Get xmltv epg sources for playlist
+     * this attribute is header specific
+     *
+     * @return array
+     */
+    public function getEpgSources()
+    {
+        return $this->getAllEntryAttributes(self::$epg_src_attrs, TAG_EXTM3U);
+    }
+
+    /**
+     * Update channel archive in days
+     *
+     * @param string $tag
+     * @param int $playlist_value
+     */
+    public function updateArchive($tag, $playlist_value = 0)
+    {
+        // set channel archive in days
+        $archive = $this->getAnyEntryAttribute(self::$tvg_archives_attrs, $tag, $used_tag);
+        if ($archive === null) {
+            $archive = 0;
+        }
+
+        if ($used_tag === ATTR_CATCHUP_TIME) {
+            $archive /= 86400;
+        }
+
+        if ($archive === 0 && $playlist_value !== 0) {
+            $archive = $playlist_value;
+        }
+
+        $this->archive = $archive;
     }
 
     /**
      * Get archive in days
+     * this attribute is header or channel
      *
      * @return int
      */
@@ -311,236 +561,48 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * Get EPG IDs
+     * Update catchup type for selected tag
      *
-     * @return array
+     * @param string $tag
+     * @return void
      */
-    public function getEpgIds()
+    public function updateCatchupType($tag)
     {
-        return $this->epg_ids;
+        $this->catchup_type = $this->getAnyEntryAttribute(self::$catchup_attrs, $tag);
     }
 
     /**
-     * Set icon for channel
-     *
-     * @param M3uParser $parser
-     */
-    public function updateChannelIcon($parser)
-    {
-        // make full url for icon if used base url
-        $this->channel_icon = $this->getAnyEntryAttribute(self::$icon_attrs);
-        if (!empty($parser->icon_base_url) && !is_http($this->channel_icon)) {
-            $this->channel_icon = $parser->icon_base_url . $this->channel_icon;
-        }
-
-        // Apply replacement pattern
-        if (!empty($parser->icon_replace_pattern)) {
-            foreach ($parser->icon_replace_pattern as $pattern) {
-                $this->channel_icon = preg_replace($pattern['search'], $pattern['replace'], $this->channel_icon);
-            }
-        }
-
-        if ($parser->replace_https) {
-            $this->channel_icon = str_replace('https://', 'http://', $this->channel_icon);
-        }
-    }
-
-    /**
-     * Get icon for channel
+     * Get Catchup type
      *
      * @return string
      */
-    public function getChannelIcon()
+    public function getCatchupType()
     {
-        return $this->channel_icon;
+        return $this->catchup_type;
     }
 
     /**
-     * Get catchup type for channel
+     * Update catchup source for selected tag
      *
-     * @return string
+     * @param string $tag
+     * @return void
      */
-    public function getCatchup()
+    public function updateCatchupSource($tag)
     {
-        /*
-         * Attributes contains catchup information
-		 * "catchup", "catchup-type"
-         */
-        static $attrs = array(ATTR_CATCHUP, ATTR_CATCHUP_TYPE);
-
-        return $this->getAnyEntryAttribute($attrs);
+        $this->catchup_source = $this->getAnyEntryAttribute(self::$catchup_source_attrs, $tag);
+        if (!empty($this->catchup_source)) {
+            $this->catchup_source = replace_https($this->catchup_source);
+        }
     }
 
     /**
-     * Get catchup-source for channel
+     * Get Catchup source
      *
      * @return string
      */
     public function getCatchupSource()
     {
         return $this->catchup_source;
-    }
-
-    /**
-     * Get catchup-source for channel
-     *
-     * @param M3uParser $parser
-     */
-    public function updateCatchupSource($parser)
-    {
-        /*
-         * attributes contains catchup information
-		 * "catchup-source", "catchup-template"
-         */
-        static $attrs = array(ATTR_CATCHUP_SOURCE, ATTR_CATCHUP_TEMPLATE);
-
-        $this->catchup_source = $this->getAnyEntryAttribute($attrs);
-        if (!empty($this->catchup_source) && $parser->replace_https) {
-            $this->catchup_source = str_replace('https://', 'http://', $this->catchup_source);
-        }
-    }
-
-    /**
-     * Get xmltv epg sources for playlist
-     *
-     * @return array
-     */
-    public function getEpgSources()
-    {
-        /*
-         * Attributes contains xmltv epg sources
-		 * "url-tvg", "x-tvg-url"
-         */
-        static $attrs = array(ATTR_URL_TVG, ATTR_X_TVG_URL);
-
-        return $this->getAllEntryAttributes($attrs, TAG_EXTM3U);
-    }
-
-    /**
-     * Get protected parameter for channel
-     *
-     * @return string
-     */
-    public function getProtectedCode()
-    {
-        static $adult_attrs = array(ATTR_ADULT, ATTR_PARENT_CODE, ATTR_CENSORED);
-
-        $adult_code = $this->getAnyEntryAttribute($adult_attrs, TAG_EXTINF, $used_tag);
-        if ($used_tag === ATTR_ADULT && (int)$adult_code !== 1) {
-            $adult_code = '';
-        }
-
-        return $adult_code;
-    }
-
-    /**
-     * Calculate channel id
-     *
-     * @param M3uParser $parser
-     */
-    public function updateChannelId($parser)
-    {
-        // first use id url parser
-        if (!empty($parser->id_parser) && preg_match($parser->id_parser, $this->path, $matches)) {
-            $this->matches = $matches;
-        }
-
-        if (isset($matches['id'])) {
-            $channel_id = $matches['id'];
-        }
-
-        // try to get by id mapper
-        if (empty($channel_id) && !empty($parser->id_map)) {
-            $channel_id = $this->getEntryAttribute($parser->id_map);
-        }
-
-        // search in attributes
-        if (empty($channel_id)) {
-            $channel_id = $this->getEntryAttribute(ATTR_CHANNEL_ID_ATTRS);
-        }
-
-        // Nothing - using url hash as channel id
-        if (empty($channel_id)) {
-            $channel_id = Hashed_Array::hash($this->path);
-        }
-
-        $this->channel_id = $channel_id;
-    }
-
-    /**
-     * Calculate category title value of attribute 'group-title' or #EXTGRP value
-     *
-     * @return void
-     */
-    public function updateGroupTitle()
-    {
-        $this->group_title = $this->getEntryAttribute(ATTR_GROUP_TITLE, TAG_EXTINF);
-        if (empty($this->group_title)) {
-            $exgGrp = $this->getEntryTag(TAG_EXTGRP);
-            if (!is_null($exgGrp)) {
-                $this->group_title = $exgGrp->getTagValue();
-            }
-            if (empty($this->group_title)) {
-                $this->group_title = TR::load_string('no_category');
-            }
-        }
-    }
-
-    /**
-     * Update channel archive in days
-     *
-     * @return void
-     */
-    public function updateArchiveLength()
-    {
-        // set channel archive in days
-        $archive = (int)$this->getAnyEntryAttribute(self::$tvg_archives, TAG_EXTINF, $used_tag);
-        if ($used_tag === ATTR_CATCHUP_TIME) {
-            $archive /= 86400;
-        }
-
-        $this->archive = $archive;
-    }
-
-    /**
-     * Update EPG IDs
-     *
-     * @return void
-     */
-    public function updateEpgIds()
-    {
-        // set channel EPG IDs
-        $epg_ids = $this->getAllEntryAttributes(self::$epg_id_tags);
-        $epg_ids['id'] = $this->channel_id;
-        $this->epg_ids = array_unique($epg_ids);
-    }
-
-    /**
-     * Returns extended attributes for channel
-     *
-     * @return array
-     */
-    public function getExtParams()
-    {
-        return $this->ext_params;
-    }
-
-    /**
-     * Update extended attributes for channel
-     *
-     * @return void
-     */
-    public function updateExtParams()
-    {
-        $ext_tag = $this->getEntryTag(TAG_EXTVLCOPT);
-        if ($ext_tag !== null) {
-            $this->ext_params[PARAM_EXT_VLC_OPTS] = $ext_tag->getTagValues();
-        }
-
-        $ext_tag = $this->getEntryTag(TAG_EXTHTTP);
-        if ($ext_tag !== null && ($ext_http_values = json_decode($ext_tag->getTagValue(), true)) !== false) {
-            $this->ext_params[PARAM_EXT_HTTP] = $ext_http_values;
-        }
     }
 
     /**
@@ -553,32 +615,33 @@ class Entry extends Json_Serializer
      */
     public function getEntryAttribute($attribute_name, $tag = null)
     {
-        if ($attribute_name === ATTR_CHANNEL_NAME) {
-            return $this->getEntryTitle();
-        }
+        switch ($attribute_name) {
+            case ATTR_CHANNEL_NAME:
+                $extInf = $this->getEntryTag(TAG_EXTINF);
+                return is_null($extInf) ? '' : $extInf->getTagValue();
 
-        if ($attribute_name === ATTR_CHANNEL_ID_ATTRS) {
-            // Attributes used to get entry ID
-            // "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
-            static $attrs = array(ATTR_CUID, ATTR_CHANNEL_ID, ATTR_CH_ID, ATTR_TVG_CHNO, ATTR_CH_NUMBER);
-            return $this->getAnyEntryAttribute($attrs);
-        }
+            case ATTR_CHANNEL_ID_ATTRS:
+                return $this->getAnyEntryAttribute(self::$channel_id_attrs);
 
-        if ($attribute_name === ATTR_CHANNEL_HASH) {
-            return hash('crc32', $this->getPath());
-        }
+            case ATTR_CHANNEL_HASH:
+                return $this->getHash();
 
-        if (!is_null($this->tags)) {
-            if (is_null($tag)) {
-                foreach ($this->tags as $item) {
-                    $val = $item->getAttributeValue($attribute_name);
-                    if (!is_null($val)) {
-                        return $val;
+            default:
+                if (is_null($this->tags)) break;
+
+                if (is_null($tag)) {
+                    foreach ($this->tags as $item) {
+                        $val = $item->getAttributeValue($attribute_name);
+                        if (!is_null($val)) {
+                            return $val;
+                        }
                     }
+                    break;
                 }
-            } else if ($this->hasTag($tag)) {
-                return $this->tags[$tag]->getAttributeValue($attribute_name);
-            }
+
+                if ($this->hasTag($tag)) {
+                    return $this->tags[$tag]->getAttributeValue($attribute_name);
+                }
         }
 
         return null;

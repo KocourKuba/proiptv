@@ -155,7 +155,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case PARAM_SHOW_VOD_ICON:
                 $this->plugin->save_settings();
                 $this->plugin->toggle_parameter($control_id);
-                $this->plugin->tv->reload_channels($plugin_cookies);
+                $this->plugin->reload_channels($plugin_cookies);
 
                 return Starnet_Epfs_Handler::epfs_invalidate_folders(
                     array(Starnet_Tv_Groups_Screen::ID),

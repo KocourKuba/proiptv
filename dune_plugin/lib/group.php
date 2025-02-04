@@ -74,44 +74,12 @@ interface Group
     public function set_disabled($disabled);
 
     /**
-     * @return Hashed_Array
+     * @return int
      */
-    public function get_group_channels();
+    public function get_group_channels_count();
 
     /**
-     * @param string $id
-     * @return Channel
+     * @param string $channel_id
      */
-    public function get_group_channel($id);
-
-    /**
-     * @return Hashed_Array
-     */
-    public function get_group_enabled_channels();
-
-    /**
-     * @return Hashed_Array
-     */
-    public function get_group_disabled_channels();
-
-    /**
-     * @return Ordered_Array
-     */
-    public function get_items_order();
-
-    /**
-     * @param Ordered_Array $order
-     */
-    public function set_items_order($order);
-
-    /**
-     * @param string $id
-     * @return bool
-     */
-    public function in_items_order($id);
-
-    /**
-     * @return string;
-     */
-    public function get_media_url_str();
+    public function add_channel_id($channel_id);
 }

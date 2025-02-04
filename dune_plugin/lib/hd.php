@@ -131,7 +131,7 @@ class HD
         self::$default_user_agent = "DuneHD/1.0";
 
         $extra_useragent = "";
-        $sysinfo = @file("/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
+        $sysinfo = @file(getenv('FS_PREFIX') ."/tmp/sysinfo.txt", FILE_IGNORE_NEW_LINES);
         if ($sysinfo !== false) {
             foreach ($sysinfo as $line) {
                 if (preg_match("/product_id:/", $line) ||

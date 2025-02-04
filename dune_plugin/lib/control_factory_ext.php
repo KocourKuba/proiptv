@@ -218,7 +218,7 @@ class Control_Factory_Ext extends Control_Factory
                     }
 
                     $n++;
-                    $path .= DIRECTORY_SEPARATOR . $dir;
+                    $path .= '/' . $dir;
                     continue;
                 }
 
@@ -226,7 +226,7 @@ class Control_Factory_Ext extends Control_Factory
             }
 
             self::add_vgap($defs, -34);
-            $path .= DIRECTORY_SEPARATOR . $dir;
+            $path .= '/' . $dir;
         }
 
         self::add_vgap($defs, 150);

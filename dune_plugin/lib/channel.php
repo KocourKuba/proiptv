@@ -57,9 +57,9 @@ interface Channel
     public function get_icon_url();
 
     /**
-     * @return Group
+     * @return string
      */
-    public function get_parent_group();
+    public function get_group_id();
 
     /**
      * internal number

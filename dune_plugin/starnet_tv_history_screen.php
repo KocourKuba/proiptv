@@ -107,7 +107,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_PLAY_ITEM:
                 try {
-                    $post_action = $this->plugin->tv->tv_player_exec($selected_media_url);
+                    $post_action = $this->plugin->tv_player_exec($selected_media_url);
                 } catch (Exception $ex) {
                     hd_debug_print("Channel can't played");
                     print_backtrace_exception($ex);
@@ -138,13 +138,14 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_FAV:
-                $fav_group = $this->plugin->tv->get_special_group(FAVORITES_GROUP_ID);
-                $is_favorite = $fav_group->in_items_order($selected_media_url->channel_id);
+                $fav_ids = $this->plugin->get_channels_order(FAV_CHANNELS_GROUP_ID);
+                $is_favorite = in_array($selected_media_url->channel_id, $fav_ids);
                 $opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
+                $this->plugin->change_channels_order(FAV_CHANNELS_GROUP_ID, $selected_media_url->channel_id, $is_favorite);
                 $this->set_changes();
                 return Action_Factory::show_title_dialog($message,
-                    $this->plugin->tv->change_tv_favorites($opt_type, $selected_media_url->channel_id));
+                    $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 return $this->plugin->tv->jump_to_channel($selected_media_url->channel_id);
@@ -171,22 +172,23 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         $items = array();
         $now = time();
         foreach ($this->plugin->get_playback_points()->get_all() as $channel_id => $channel_ts) {
-            if (is_null($channel = $this->plugin->tv->get_channel($channel_id))) continue;
+            $channel_row = $this->plugin->get_channel_info($channel_id, true);
+            if (empty($channel_row)) continue;
 
             $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
             $description = '';
             if (is_null($prog_info)) {
-                $title = $channel->get_title();
+                $title = $channel_row['title'];
             } else {
                 // program epg available
                 $title = $prog_info[PluginTvEpgProgram::name];
                 if ($channel_ts > 0) {
                     $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
                     $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
-                    $description = "{$channel->get_title()}|{$prog_info[PluginTvEpgProgram::description]}";
-                    if ($channel_ts >= $now - $channel->get_archive_past_sec() - 60) {
+                    if ($channel_ts >= $now - $channel_row['archive'] * 86400 - 60) {
                         $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2))) * 100;
                         $title = "$title | " . date("j.m H:i", $channel_ts) . " [$progress%]";
+                        $description = "{$channel_row['title']}|{$prog_info[PluginTvEpgProgram::description]}";
                     }
                 }
             }
@@ -202,8 +204,8 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $channel->get_icon_url(),
-                    ViewItemParams::item_detailed_icon_path => $channel->get_icon_url(),
+                    ViewItemParams::icon_path => $channel_row['icon'],
+                    ViewItemParams::item_detailed_icon_path => $channel_row['icon'],
                     ViewItemParams::item_detailed_info => $description,
                 ),
             );

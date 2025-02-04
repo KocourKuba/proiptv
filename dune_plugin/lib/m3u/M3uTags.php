@@ -42,7 +42,7 @@ const ATTR_TVG_SHIFT = 'tvg-shift';
 const ATTR_ARC_TIMESHIFT = 'arc-timeshift';
 const ATTR_ARC_TIME = 'arc-time';
 
-const ATTR_CHANNEL_HASH = 'by_default';
+const ATTR_CHANNEL_HASH = 'hash';
 const ATTR_CHANNEL_ID = 'channel-id';
 const ATTR_CUID = 'CUID';
 const ATTR_CH_ID = 'ch-id';

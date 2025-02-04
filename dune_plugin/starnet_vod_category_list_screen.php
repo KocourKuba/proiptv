@@ -134,39 +134,38 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $parent_category = $this->category_index[$media_url->category_id];
                 $category_list = $parent_category->get_sub_categories();
             } else {
-                /** @var Default_Group $group */
                 foreach ($this->plugin->vod->get_special_groups() as $group) {
-                    if (is_null($group)) continue;
+                    if (empty($group)) continue;
 
-                    hd_debug_print("group: '{$group->get_title()}' disabled: " . var_export($group->is_disabled(), true), true);
-                    if ($group->is_disabled()) continue;
+                    hd_debug_print("group: '{$group['title']}' disabled: " . var_export($group['disabled'], true), true);
+                    if ($group['disabled']) continue;
 
-                    switch ($group->get_id()) {
-                        case FAVORITES_MOVIE_GROUP_ID:
+                    switch ($group['group_id']) {
+                        case FAV_MOVIE_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group->get_title(), $group->get_items_order()->size());
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group['title'], $this->plugin->get_channels_count());
                             break;
 
                         case HISTORY_MOVIES_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group->get_title(), $this->plugin->get_history(HISTORY_MOVIES)->size());
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group['title'], $this->plugin->get_history(HISTORY_MOVIES)->size());
                             break;
 
                         default:
                             $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
-                            $item_detailed_info = $group->get_title();
+                            $item_detailed_info = $group['title'];
                             break;
                     }
 
-                    hd_debug_print("special group: " . $group->get_media_url_str(), true);
+                    hd_debug_print("special group: " . Default_Dune_Plugin::get_group_media_url_str($group['group_id']), true);
 
                     $items[] = array(
-                        PluginRegularFolderItem::media_url => $group->get_media_url_str(),
-                        PluginRegularFolderItem::caption => $group->get_title(),
+                        PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group['group_id']),
+                        PluginRegularFolderItem::caption => TR::t($group['title']),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::item_caption_color => $color,
-                            ViewItemParams::icon_path => $group->get_icon_url(),
-                            ViewItemParams::item_detailed_icon_path => $group->get_icon_url(),
+                            ViewItemParams::icon_path => $group['icon'],
+                            ViewItemParams::item_detailed_icon_path => $group['icon'],
                             ViewItemParams::item_detailed_info => $item_detailed_info,
                         )
                     );

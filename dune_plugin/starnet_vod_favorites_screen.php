@@ -76,7 +76,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
                     $this->set_no_changes();
                     return Action_Factory::invalidate_folders(
                         array(
-                            self::get_media_url_string(FAVORITES_MOVIE_GROUP_ID),
+                            self::get_media_url_string(FAV_MOVIE_GROUP_ID),
                             Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
                             Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
                         ),
@@ -103,32 +103,28 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
                 if ($user_input->sel_ndx < 0) {
                     $user_input->sel_ndx = 0;
                 }
-                $this->set_changes();
-                $this->plugin->vod->change_vod_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $movie_id);
+                $this->plugin->change_vod_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $movie_id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DOWN:
-                $fav_group = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID);
                 $user_input->sel_ndx++;
-                if ($user_input->sel_ndx >= $fav_group->get_items_order()->size()) {
-                    $user_input->sel_ndx = $fav_group->get_items_order()->size() - 1;
+                $cnt = $this->plugin->get_channels_order_count(FAV_MOVIE_GROUP_ID);
+                if ($user_input->sel_ndx >= $cnt) {
+                    $user_input->sel_ndx = $cnt - 1;
                 }
-                $this->set_changes();
-                $this->plugin->vod->change_vod_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $movie_id);
+                $this->plugin->change_vod_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $movie_id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEM_DELETE:
-                $fav_group = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID);
-                $this->set_changes();
-                $this->plugin->vod->change_vod_favorites(PLUGIN_FAVORITES_OP_REMOVE, $movie_id);
-                if ($fav_group->get_items_order()->size() !== 0) {
+                $this->plugin->change_vod_favorites(PLUGIN_FAVORITES_OP_REMOVE, $movie_id);
+                if ($this->plugin->get_channels_order_count(FAV_MOVIE_GROUP_ID) != 0) {
                     return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
                 }
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ITEMS_CLEAR:
                 $this->set_changes();
-                $this->plugin->vod->change_vod_favorites(ACTION_ITEMS_CLEAR, null);
+                $this->plugin->change_vod_favorites(ACTION_ITEMS_CLEAR, null);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -160,12 +156,10 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
         hd_debug_print(null, true);
         hd_debug_print("MediaUrl: " . $media_url, true);
 
-        $movie_ids = $this->plugin->vod->get_special_group(FAVORITES_MOVIE_GROUP_ID)->get_items_order();
-
         $items = array();
-        foreach ($movie_ids as $movie_id) {
-            $this->plugin->vod->ensure_movie_loaded($movie_id);
-            $short_movie = $this->plugin->vod->get_cached_short_movie($movie_id);
+        foreach ($this->plugin->get_channels_by_order(FAV_MOVIE_GROUP_ID) as $movie_row) {
+            $this->plugin->vod->ensure_movie_loaded($movie_row['channel_id']);
+            $short_movie = $this->plugin->vod->get_cached_short_movie($movie_row['channel_id']);
 
             if (is_null($short_movie)) {
                 $caption = TR::t('vod_screen_no_film_info');
@@ -176,7 +170,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie_id),
+                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie_row['channel_id']),
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $poster_url,

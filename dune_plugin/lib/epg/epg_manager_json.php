@@ -43,11 +43,15 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      * @inheritDoc
      * @override
      */
-    public function get_day_epg_items(Channel $channel, $day_start_ts)
+    public function get_day_epg_items($channel_row, $day_start_ts)
     {
-        $day_epg = array();
-        $epg_ids = $channel->get_epg_ids();
+        $epg_ids = array(
+            'epg_id' => $channel_row['epg_id'],
+            'id' => $channel_row['channel_id'],
+            ATTR_TVG_NAME => $channel_row['title'],
+            'name' => $channel_row['title']);
 
+        $day_epg = array();
         try {
             $provider = $this->plugin->get_current_provider();
             if (is_null($provider)) {
@@ -86,18 +90,18 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
 
             if (strpos($epg_url, MACRO_ID) !== false) {
-                hd_debug_print("using ID: {$channel->get_id()}", true);
-                $epg_url = str_replace(MACRO_ID, $channel->get_id(), $epg_url);
-                $epg_ids[ATTR_TVG_ID] = $channel->get_id();
+                hd_debug_print("using ID: {$channel_row['channel_id']}", true);
+                $epg_url = str_replace(MACRO_ID, $channel_row['channel_id'], $epg_url);
+                $epg_ids[ATTR_TVG_ID] = $channel_row['channel_id'];
             }
 
             if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
+                hd_debug_print("EPG ID map: {$selected_preset[EPG_JSON_EPG_MAP]}", true);
                 $epg_id = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
             } else {
                 $epg_id = '';
-                $tvg_keys = array(ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id');
-                foreach ($tvg_keys as $key) {
-                    if (isset($epg_ids[$key])) {
+                foreach (array('epg_id', ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id') as $key) {
+                    if (!empty($epg_ids[$key])) {
                         $epg_id = $epg_ids[$key];
                         break;
                     }
@@ -113,9 +117,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return $this->epg_cache[$epg_id][$day_start_ts];
             }
 
-            $channel_id = $channel->get_id();
-            $channel_title = $channel->get_title();
-
             $cur_time = $day_start_ts + get_local_time_zone_offset();
             $epg_date = gmdate('Y', $cur_time);
             $epg_url = str_replace(MACRO_YEAR, $epg_date, $epg_url);
@@ -130,7 +131,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $epg_url = str_replace(array(MACRO_EPG_ID, '#'), array($epg_id, '%23'), $epg_url);
             $epg_cache_file = get_temp_path(Hashed_Array::hash($epg_url) . ".cache");
 
-            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '$channel_id' ($channel_title)");
+            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row['channel_id']}' ({$channel_row['title']})");
             hd_debug_print("EPG url: $epg_url");
 
             $from_cache = false;
@@ -166,7 +167,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             hd_debug_print("Total $counts EPG entries loaded");
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
-            return $this->getFakeEpg($channel, $day_start_ts, $day_epg);
+            return $this->getFakeEpg($channel_row, $day_start_ts, $day_epg);
         }
 
         // filter out epg only for selected day
@@ -178,10 +179,11 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
         }
 
-        foreach ($all_epg as $time_start => $entry) {
-            if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
-                $day_epg[$time_start] = $entry;
-            }
+        foreach ($all_epg as $program_start => $entry) {
+            if ($program_start < $day_start_ts && $entry[Epg_Params::EPG_END] < $day_start_ts) continue;
+            if ($program_start >= $day_end_ts) break;
+
+            $day_epg[$program_start] = $entry;
         }
 
         if (!empty($day_epg)) {
@@ -202,7 +204,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         $this->epg_cache = array();
         $files = get_temp_path('*.cache');
         hd_debug_print("clear cache files: $files");
-        shell_exec('rm -f ' . $files);
+        array_map('unlink', glob($files));
         clearstatcache();
     }
 
