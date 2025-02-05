@@ -1,4 +1,10 @@
-﻿### Версия 5.1.988
+﻿### Version 5.1.1000
+- Added display EPG on the SUB button or via the context menu in the channel list
+- Faster processing of deletion TV history
+- Minor improvements in channel ID detection when adding a playlist
+- NewUI: Slight optimization of EPFS generation
+
+### Версия 5.1.988
 - Updated XMLTV processing engine to fix new bugs of EPG providers (Yosso).
 - XMLTV processing on Android devices is speed-up by 1.5-2 times
 - Information about the XMLTV source is specified more accurately.
