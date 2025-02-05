@@ -28,6 +28,7 @@
 /dune_fs/flashdata/plugins_data/proiptv/*
 /dune_fs/flashdata/plugins_data/proiptv/cached_img
 /dune_fs/flashdata/plugins_data/proiptv/history
+/dune_fs/flashdata/plugins_epfs/proiptv/proiptv.no_internet.json
 /dune_fs/tmp/plugins/proiptv/vod_last_error
 /dune_fs/tmp/plugins/proiptv/pl_last_error
 /dune_fs/tmp/plugins/proiptv/epfs_warmed_up

@@ -713,7 +713,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $playback_points = $this->plugin->get_playback_points();
         if ($playback_points !== null) {
             foreach ($playback_points->get_all() as $channel_id => $channel_ts) {
-                $channel_row = $this->plugin->get_channel_info($channel_id);
+                $channel_row = $this->plugin->get_channel_info($channel_id, true);
                 if (empty($channel_row)) continue;
 
                 $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);

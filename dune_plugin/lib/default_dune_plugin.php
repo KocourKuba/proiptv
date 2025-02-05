@@ -870,7 +870,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
         // get name of the column for channel ID
         $id_column = $this->get_id_column();
-        hd_debug_print("Channel ID column: $id_column");
+        hd_debug_print("ID column:      $id_column");
 
         // mark as removed channels that not present iptv_channels db
         $wrapper->exec("UPDATE channels SET changed = -1 WHERE channel_id NOT IN (SELECT $id_column FROM iptv.iptv_channels);");
@@ -954,10 +954,10 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         $this->perf->setLabel('end');
         $report = $this->perf->getFullReport();
 
-        hd_debug_print("Channels:     $total_channels_cnt, hidden channels: $hidden_channels_cnt, changed channels: $changed_channels_cnt");
-        hd_debug_print("Groups:       $total_groups_cnt, hidden groups: $hidden_groups_cnt");
-        hd_debug_print("Load time:    {$report[Perf_Collector::TIME]} secs");
-        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+        hd_debug_print("Channels:       $total_channels_cnt, hidden channels: $hidden_channels_cnt, changed channels: $changed_channels_cnt");
+        hd_debug_print("Groups:         $total_groups_cnt, hidden groups: $hidden_groups_cnt");
+        hd_debug_print("Load time:      {$report[Perf_Collector::TIME]} secs");
+        hd_debug_print("Memory usage:   {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
 
         if ($this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV) {
@@ -1027,11 +1027,11 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             $this->init_epg_manager();
             $this->cleanup_active_xmltv_source();
 
-            hd_debug_print("Total entries loaded from playlist m3u file: $count");
-            hd_debug_print("Parse time: {$report[Perf_Collector::TIME]} sec");
-            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-
+            hd_debug_print_separator();
             hd_debug_print("Parse playlist done!");
+            hd_debug_print("Total entries: $count");
+            hd_debug_print("Parse time:    {$report[Perf_Collector::TIME]} sec");
+            hd_debug_print("Memory usage:  {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
             hd_debug_print_separator();
         } catch (Exception $ex) {
             $err = HD::get_last_error();
@@ -1044,6 +1044,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             if (isset($playlist->type) && file_exists($filename)) {
                 unlink($filename);
             }
+            hd_debug_print_separator();
             return false;
         }
 

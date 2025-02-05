@@ -110,7 +110,9 @@ class dune_plugin_settings extends UI_Parameters
         // obsolete settings
         $removed_parameters = array('cur_xmltv_sources', 'epg_cache_ttl', 'epg_cache_ttl');
         foreach ($removed_parameters as $parameter) {
-            $this->remove_setting($parameter);
+            if ($this->has_setting($parameter)) {
+                $this->remove_setting($parameter);
+            }
         }
         $this->set_postpone_save(false, PLUGIN_SETTINGS);
     }

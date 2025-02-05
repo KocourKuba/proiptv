@@ -266,8 +266,6 @@ class M3uParser extends Json_Serializer
 
         $stm_channels = $db->prepare_bind("INSERT OR IGNORE" , "iptv.iptv_channels", $entry_columns);
 
-        $this->perf->reset('start');
-
         hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
@@ -347,12 +345,6 @@ class M3uParser extends Json_Serializer
             $stm_groups->execute();
         }
         $db->exec('COMMIT;');
-
-        $this->perf->setLabel('end');
-        $report = $this->perf->getFullReport();
-        hd_debug_print("Parse time: {$report[Perf_Collector::TIME]} secs");
-        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-        hd_debug_print_separator();
 
         return true;
     }
