@@ -400,46 +400,54 @@ class M3uParser extends Json_Serializer
 
     public function detectBestChannelId()
     {
-        if ($this->getEntriesCount() === 0) {
+        hd_debug_print(null, true);
+
+        $cnt = $this->getEntriesCount();
+        if ($cnt === 0) {
             return Entry::ATTR_CHANNEL_HASH;
         }
 
+        hd_debug_print("Total entries to process: $cnt", true);
+
         $statistics = array(
-            Entry::ATTR_CHANNEL_ID => array('stat' => 0, 'items' => array()),
-            'tvg-id' => array('stat' => 0, 'items' => array()),
-            'tvg-name' => array('stat' => 0, 'items' => array()),
-            Entry::ATTR_CHANNEL_NAME => array('stat' => 0, 'items' => array()),
-            Entry::ATTR_CHANNEL_HASH => array('stat' => 0, 'items' => array())
+            Entry::ATTR_CHANNEL_ID => array('stat' => PHP_INT_MAX, 'items' => array()),
+            'tvg-id' => array('stat' => PHP_INT_MAX, 'items' => array()),
+            'tvg-name' => array('stat' => PHP_INT_MAX, 'items' => array()),
+            Entry::ATTR_CHANNEL_NAME => array('stat' => PHP_INT_MAX, 'items' => array()),
+            Entry::ATTR_CHANNEL_HASH => array('stat' => PHP_INT_MAX, 'items' => array())
         );
 
+        $i = 0;
         foreach ($this->getM3uEntries() as $entry) {
+            $val = $entry->getAllEntryAttributes(array_keys($statistics), Entry::TAG_EXTINF);
             foreach ($statistics as $name => $pair) {
-                if ($name === Entry::ATTR_CHANNEL_HASH) {
-                    $val = Hashed_Array::hash($entry->getPath());
-                } else {
-                    $val = $entry->getEntryAttribute($name);
-                }
+                if (!isset($val[$name])) continue;
 
-                $val = empty($val) ? 'dupe' : $val;
-                if (array_key_exists($val, $pair['items'])) {
+                $value = empty($val[$name]) ? 'dupe' : $val[$name];
+                if (array_key_exists($value, $pair['items'])) {
                     ++$statistics[$name]['stat'];
                 } else {
-                    $statistics[$name]['items'][$val] = '';
+                    $statistics[$name]['items'][$value] = '';
+                    $statistics[$name]['stat'] = 0;
                 }
+            }
+
+            if ($i++ === 2000) {
+                break;
             }
         }
 
         $min_key = '';
         $min_dupes = PHP_INT_MAX;
         foreach ($statistics as $name => $pair) {
-            hd_debug_print("attr: $name dupes: {$pair['stat']}", true);
+            hd_debug_print("attr: $name dupes: " . (($pair['stat'] === PHP_INT_MAX) ? 'not applicable' : $pair['stat']), true);
             if ($pair['stat'] < $min_dupes) {
                 $min_key = $name;
                 $min_dupes = $pair['stat'];
             }
         }
 
-        return (empty($min_key) || $min_key === Entry::ATTR_CHANNEL_ID) ? Entry::ATTR_CHANNEL_HASH : $min_key;
+        return empty($min_key) ? Entry::ATTR_CHANNEL_HASH : $min_key;
     }
 
     /**
