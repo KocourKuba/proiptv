@@ -2347,6 +2347,11 @@ class Default_Dune_Plugin implements DunePlugin
             }
         }
 
+        $show_vod = $this->get_setting(PARAM_SHOW_VOD);
+        if ($show_vod !== SetupControlSwitchDefs::switch_on && $show_vod !== SetupControlSwitchDefs::switch_off) {
+            $this->set_setting(PARAM_SHOW_VOD, SetupControlSwitchDefs::switch_on);
+        }
+
         // obsolete settings
         $removed_parameters = array('cur_xmltv_sources', 'epg_cache_ttl', 'epg_cache_ttl');
         foreach ($removed_parameters as $parameter) {
