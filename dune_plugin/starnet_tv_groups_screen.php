@@ -662,12 +662,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         foreach ($this->plugin->get_groups_by_order() as $row) {
             $channels_cnt = $this->plugin->get_channels_order_count($row['group_id']);
             $disabled_channels_cnt = $this->plugin->get_channels_count($row['group_id'], 1);
+            if (strpos($row['icon'], "plugin_file://") === false && file_exists(get_cached_image_path($row['icon']))) {
+                $icon = get_cached_image_path($row['icon']);
+            } else {
+                $icon = $row['icon'];
+            }
+
             $items[] = array(
                 PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($row['group_id']),
                 PluginRegularFolderItem::caption => $row['title'],
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $row['icon'],
-                    ViewItemParams::item_detailed_icon_path => $row['icon'],
+                    ViewItemParams::icon_path => $icon,
+                    ViewItemParams::item_detailed_icon_path => $icon,
                     ViewItemParams::item_detailed_info => TR::t('tv_screen_group_info__3',
                         str_replace('|', '¦', $row['title']),
                         $channels_cnt,

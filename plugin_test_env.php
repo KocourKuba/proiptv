@@ -9,9 +9,10 @@ if (!class_exists('DuneSystem')) {
     }
 }
 
-require_once 'bootstrap.php';
-require_once 'dune_api.php';
-
+include 'bootstrap.php';
+include 'dune_api.php';
+include 'dune_plugin.php';
+include 'dune_plugin_fw.php';
 /**
  * @throws Exception
  */

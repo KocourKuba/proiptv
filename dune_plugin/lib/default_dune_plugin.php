@@ -24,7 +24,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once "dune_plugin.php";
 require_once 'tr.php';
 require_once 'mediaurl.php';
 require_once 'control_factory_ext.php';
@@ -1005,8 +1004,8 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
                 $count = $wrapper->query_value("SELECT count(hash) FROM iptv.iptv_channels;");
             } else {
                 $count = 0;
-                //$wrapper->exec("ATTACH DATABASE ':memory:' as iptv;");
-                $wrapper->exec("ATTACH DATABASE '$filename.db' as iptv;");
+                $db_name = LogSeverity::$is_debug ? "$filename.db" : ":memory:";
+                $wrapper->exec("ATTACH DATABASE '$db_name' as iptv;");
             }
 
             if (empty($count)) {

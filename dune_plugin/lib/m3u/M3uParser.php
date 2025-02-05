@@ -381,8 +381,8 @@ class M3uParser extends Json_Serializer
             return false;
         }
 
-        //$this->vod_db->exec("ATTACH DATABASE ':memory:' as iptv;");
-        $db->exec("ATTACH DATABASE '$this->file_name.db' as vod;");
+        $db_name = LogSeverity::$is_debug ? "$this->file_name.db" : ":memory:";
+        $db->exec("ATTACH DATABASE '$db_name' as vod;");
         $db->exec("PRAGMA journal_mode=MEMORY;");
 
         $db->exec("DROP TABLE IF EXISTS vod.vod_entries;");
