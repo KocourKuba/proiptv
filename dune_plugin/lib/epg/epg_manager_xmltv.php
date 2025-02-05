@@ -218,10 +218,11 @@ class Epg_Manager_Xmltv
 
                             foreach ($xml_node->getElementsByTagName('programme') as $tag) {
                                 $program_start = strtotime($tag->getAttribute('start'));
-                                if ($program_start < $day_start_ts) continue;
+                                $program_end = strtotime($tag->getAttribute('stop'));
+                                if ($program_start < $day_start_ts && $program_end < $day_start_ts) continue;
                                 if ($program_start >= $day_end_ts) break;
 
-                                $day_epg[$program_start][Epg_Params::EPG_END] = strtotime($tag->getAttribute('stop'));
+                                $day_epg[$program_start][Epg_Params::EPG_END] = $program_end;
 
                                 $day_epg[$program_start][Epg_Params::EPG_NAME] = '';
                                 foreach ($tag->getElementsByTagName('title') as $tag_title) {

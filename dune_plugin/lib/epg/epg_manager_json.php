@@ -178,10 +178,11 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
         }
 
-        foreach ($all_epg as $time_start => $entry) {
-            if ($time_start >= $day_start_ts && $time_start < $day_end_ts) {
-                $day_epg[$time_start] = $entry;
-            }
+        foreach ($all_epg as $program_start => $entry) {
+            if ($program_start < $day_start_ts && $entry[Epg_Params::EPG_END] < $day_start_ts) continue;
+            if ($program_start >= $day_end_ts) break;
+
+            $day_epg[$program_start] = $entry;
         }
 
         if (!empty($day_epg)) {
