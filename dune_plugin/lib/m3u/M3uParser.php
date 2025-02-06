@@ -447,6 +447,9 @@ class M3uParser extends Json_Serializer
             }
         }
 
+        $min_key = empty($min_key) ? Entry::ATTR_CHANNEL_HASH : $min_key;
+        hd_debug_print("Best Channel ID: $min_key", true);
+
         return empty($min_key) ? Entry::ATTR_CHANNEL_HASH : $min_key;
     }
 
