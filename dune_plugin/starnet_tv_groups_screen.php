@@ -49,7 +49,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
         $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
@@ -94,7 +93,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $this->save_if_changed();
                 if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
@@ -123,17 +121,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return Action_Factory::change_behaviour($actions, 1000);
 
-            case GUI_EVENT_KEY_STOP:
-                $this->plugin->save_orders(true);
-                $this->set_no_changes();
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
-
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                if ($this->save_if_changed()) {
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                }
-
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 $has_error = HD::get_last_error();
                 if (empty($has_error)) {
                     if ($sel_media_url->group_id !== VOD_GROUP_ID) {
@@ -201,7 +191,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_ITEM_DELETE:
                 // hide group
                 $this->plugin->set_groups_visible($sel_media_url->group_id, true);
-                $this->set_changes();
                 break;
 
             case ACTION_ITEMS_SORT:
@@ -227,7 +216,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         foreach ($this->plugin->get_groups_by_order() as $row) {
                             $this->plugin->sort_channels_order($row['group_id'],true);
                         }
-                        $this->set_changes();
                         break;
 
                     default:
@@ -237,11 +225,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_EDIT:
-                $this->save_if_changed();
                 return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $sel_media_url);
 
             case ACTION_SETTINGS:
-                $this->save_if_changed();
                 return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
 
             case ACTION_DO_SETTINGS:
@@ -356,7 +342,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_EDIT_PROVIDER_DLG:
             case ACTION_EDIT_PROVIDER_EXT_DLG:
-                $this->save_if_changed();
                 return $this->plugin->show_protect_settings_dialog($this,
                     ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
                         ? ACTION_DO_EDIT_PROVIDER
@@ -383,7 +368,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
             case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
-                $this->set_no_changes();
                 if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
                     $res = $this->plugin->apply_edit_provider_dlg($user_input);
                 } else {
@@ -414,7 +398,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
 
             case ACTION_CHANGE_GROUP_ICON:
-                $this->save_if_changed();
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
@@ -502,7 +485,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                $this->save_if_changed();
                 $reload_playlist = false;
                 if (isset($user_input->reload_action)) {
                     if ($user_input->reload_action === Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST
@@ -533,7 +515,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->plugin->do_show_add_money();
 
             case ACTION_REFRESH_SCREEN:
-                $this->save_if_changed();
                 $post_action = Action_Factory::close_and_run(Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title()));
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 return Action_Factory::invalidate_all_folders($plugin_cookies,

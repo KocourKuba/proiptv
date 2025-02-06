@@ -177,7 +177,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if (!isset($user_input->selected_item_id) && $this->plugin->arrange_groups_order_rows($media_url->group_id, $direction)) {
-                    $this->set_changes();
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
 
@@ -200,7 +199,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 } else {
                     $this->plugin->sort_groups_order();
                 }
-                $this->set_changes();
                 return $reload_action;
 
             case ACTION_RESET_ITEMS_SORT:
@@ -217,7 +215,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     foreach ($this->plugin->get_groups_by_order() as $row) {
                         $this->plugin->sort_channels_order($row['group_id'],true);
                     }
-                    $this->set_changes();
                 }
 
                 return $reload_action;
@@ -303,11 +300,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 break;
 
             case ACTION_ITEMS_EDIT:
-                $this->save_if_changed();
                 return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit);
 
             case ACTION_SETTINGS:
-                $this->save_if_changed();
                 return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
 
             case ACTION_DO_SETTINGS:
@@ -334,7 +329,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_EDIT_PROVIDER_DLG:
             case ACTION_EDIT_PROVIDER_EXT_DLG:
-                $this->save_if_changed();
                 return $this->plugin->show_protect_settings_dialog($this,
                     ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
                         ? ACTION_DO_EDIT_PROVIDER
@@ -354,7 +348,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
             case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
-                $this->set_no_changes();
                 if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
                     $id = $this->plugin->apply_edit_provider_dlg($user_input);
                 } else {
@@ -379,7 +372,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                $this->save_if_changed();
                 $reload_playlist = false;
                 if (isset($user_input->reload_action)) {
                     if ($user_input->reload_action === Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) {
@@ -405,11 +397,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_REFRESH_SCREEN:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                }
-
                 return Action_Factory::invalidate_all_folders($plugin_cookies);
         }
 

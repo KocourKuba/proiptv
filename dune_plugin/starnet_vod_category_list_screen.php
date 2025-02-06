@@ -148,7 +148,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                         case HISTORY_MOVIES_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group['title'], $this->plugin->get_history(HISTORY_MOVIES)->size());
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group['title'], $this->plugin->get_all_history_count());
                             break;
 
                         default:

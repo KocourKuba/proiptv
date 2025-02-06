@@ -277,7 +277,7 @@ class HD
 
                 $zip->addFile("$rootPath$name", $name);
 
-                $pattern = $key . '_' . PLUGIN_ORDERS . ".*\.settings$";
+                $pattern = $key . ".*\.db";
                 foreach (glob_dir($rootPath, "/$pattern/i") as $full_path) {
                     if (file_exists($full_path)) {
                         $zip->addFile($full_path, basename($full_path));

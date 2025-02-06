@@ -56,7 +56,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
         $actions[GUI_EVENT_KEY_SUBTITLE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE);
 
         if ($this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) !== 0) {
@@ -94,12 +93,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if (!$this->has_changes()) {
-                    return Action_Factory::close_and_run();
-                }
-
-                $this->plugin->save_orders(true);
-                $this->set_no_changes();
                 $post_action = null;
                 if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
                     $post_action = User_Input_Handler_Registry::create_action(
@@ -108,11 +101,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 }
                 $post_action = Action_Factory::close_and_run($post_action);
                 return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
-
-            case GUI_EVENT_KEY_STOP:
-                $this->plugin->save_orders(true);
-                $this->set_no_changes();
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case GUI_EVENT_KEY_SUBTITLE:
                 return $this->plugin->do_show_channel_epg($selected_media_url->channel_id, $plugin_cookies);
@@ -136,12 +124,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                }
-
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return $post_action;
 
             case ACTION_ITEM_TOGGLE_MOVE:
@@ -169,7 +152,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
             case ACTION_ITEM_TOP:
                 $user_input->sel_ndx = 0;
-                $this->set_changes();
                 $this->plugin->change_tv_favorites(ACTION_ITEM_TOP, $selected_media_url->channel_id);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 

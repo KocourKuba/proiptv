@@ -37,6 +37,8 @@ class Sql_Wrapper
     }
 
     /**
+     * quote value (val1 -> 'val1')
+     * *
      * @param string $var
      * @return string
      */
@@ -46,55 +48,80 @@ class Sql_Wrapper
     }
 
     /**
+     * Make list ('array[key1]', 'array[key2]', 'array[key3]') from array values (array[key1], array[key2], array[key3])
+     *
      * @param array $arr
-     * @return array
+     * @return string
      */
-    public static function sql_quote_array($arr)
+    public static function sql_make_list_from_values($arr)
     {
-        return array_map(function($var) {
+        return implode(', ', $arr);
+    }
+
+    /**
+     * Make quoted list from array values (array[key1], array[key2], array[key3] -> 'array[key1]', 'array[key2]', 'array[key3]')
+     *
+     * @param array $arr
+     * @return string
+     */
+    public static function sql_make_list_from_quoted_values($arr)
+    {
+        $quoted_array = array_map(function($var) {
             return "'" . SQLite3::escapeString($var) . "'";
         }, $arr);
+
+        return implode(',', $quoted_array);
     }
 
     /**
+     * Make bind list from array values (array[key1], array[key2], array[key3] -> :array[key1], :array[key2], :array[key3])
+     *
      * @param array $arr
      * @return string
      */
-    public static function sql_collect_params($arr)
+    public static function sql_make_bind_list_from_values($arr)
     {
-        return implode(',', $arr);
+        return ":" . implode(', :', $arr);
     }
 
     /**
+     * Make list from array keys (array[key1], array[key2], array[key3] -> (key1,key2,key3)
+     *
      * @param array $arr
      * @return string
      */
-    public static function sql_collect_bind_values($arr)
+    public static function sql_make_list_from_keys($arr)
     {
-        return ":" . implode(',:', $arr);
+        return self::sql_make_list_from_values(array_keys($arr));
     }
 
     /**
+     * Make bind list from array keys (array[key1], array[key2], array[key3] -> :key1, :key2, :key3)
+     *
      * @param array $arr
      * @return string
      */
-    public static function sql_collect_values($arr)
+    public static function sql_make_bind_list_from_keys($arr)
     {
-        return implode(',', self::sql_quote_array($arr));
+        return self::sql_make_bind_list_from_values(array_keys($arr));
     }
 
     /**
+     * Make quotted list from array keys (array[key1], array[key2], array[key3] -> 'key1', 'key2', 'key3')
+     *
      * @param array $arr
      * @return string
      */
-    public static function sql_collect_keys($arr)
+    public static function sql_make_list_from_quoted_keys($arr)
     {
-        return implode(',', self::sql_quote_array(array_keys($arr)));
+        return self::sql_make_list_from_quoted_values(array_keys($arr));
     }
 
     /**
+     * Execute query
+     *
      * @param string $query
-     * @return bool
+     * @return bool result of exec
      */
     public function exec($query)
     {
@@ -107,6 +134,8 @@ class Sql_Wrapper
     }
 
     /**
+     * Prepare bind based on query
+     *
      * @param string $query
      * @return SQLite3Stmt
      */
@@ -116,13 +145,15 @@ class Sql_Wrapper
     }
 
     /**
+     * Prepare bind based on array of columns
+     *
      * @param string $table
      * @param array $columns
      * @return SQLite3Stmt
      */
     public function prepare_bind($action, $table, $columns)
     {
-        $query = "$action INTO $table (" . self::sql_collect_params($columns) . ") VALUES (" . self::sql_collect_bind_values($columns) . ");";
+        $query = "$action INTO $table (" . self::sql_make_list_from_values($columns) . ") VALUES (" . self::sql_make_bind_list_from_values($columns) . ");";
         $result = $this->db->prepare($query);
         if ($result === false) {
             hd_debug_print();
@@ -133,6 +164,10 @@ class Sql_Wrapper
     }
 
     /**
+     * query single value.
+     * Typically for SELECT count(), SELECT id, etc
+     * query returns only one value!
+     *
      * @param string $query
      * @param bool $full_row
      * @return mixed
@@ -148,6 +183,8 @@ class Sql_Wrapper
     }
 
     /**
+     * Fetch array of values
+     *
      * @param string $query
      * @param string $column
      * @return array
@@ -169,6 +206,8 @@ class Sql_Wrapper
     }
 
     /**
+     * Fetch array of rows that contains array of columns
+     *
      * @param string $query
      * @return array
      */
@@ -188,6 +227,13 @@ class Sql_Wrapper
         return $rows;
     }
 
+    /**
+     * Execute query as one transaction (multiple insert/update/delete etc)
+     * If transaction failed it's immediatelly rollback, i.e. database not updated!
+     *
+     * @param string $query
+     * @return bool result of transaction
+     */
     public function exec_transaction($query)
     {
         if (!empty($query)) {

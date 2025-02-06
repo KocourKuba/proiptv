@@ -152,7 +152,6 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
             $fav_group = $this->plugin->get_channels_order(FAV_CHANNELS_GROUP_ID);
             $opt_type = in_array($movie_id, $fav_group) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
             $this->plugin->change_vod_favorites($opt_type, $movie_id);
-            $this->plugin->save_orders(true);
             return Action_Factory::show_title_dialog(
                 $opt_type === PLUGIN_FAVORITES_OP_REMOVE ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite'),
                 Action_Factory::invalidate_folders(

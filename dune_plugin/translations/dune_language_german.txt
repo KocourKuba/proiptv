@@ -301,6 +301,7 @@ vod_screen_last_viewed__2 = %s|Datum: %s
 vod_screen_last_viewed__3 = %s|Datum: %s|Ansicht: %s%%
 vod_screen_all_viewed__2 = %s|Angeschaut: %s
 vod_screen_viewed__2 = %s | [Angeschaut %s]
+vod_screen_viewed__4 = %s | [%s/%s] %s
 vod_screen_viewed_not_viewed = (Nicht) Gesehen
 vod_screen_age_limit = Altersgrenze:
 vod_screen_quality = Qualität:

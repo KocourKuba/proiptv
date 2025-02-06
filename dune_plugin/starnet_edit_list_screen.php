@@ -124,7 +124,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     );
                 }
 
-                $reload = $this->set_no_changes() || $this->force_parent_reload;
+                $reload = $this->force_parent_reload;
                 $this->force_parent_reload = false;
 
                 hd_debug_print("Need reload: " . var_export($reload, true), true);
@@ -185,7 +185,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $this->force_parent_reload = true;
                     $this->plugin->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $selected_sources);
-                    $this->force_save($user_input);
+                    $this->save(PLUGIN_SETTINGS);
                     return $this->invalidate_current_folder($parent_media_url, $plugin_cookies);
                 }
 
@@ -256,7 +256,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_CLEAR_CACHE:
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
-                $this->set_changes();
                 break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
@@ -359,12 +358,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
-            case ACTION_ITEMS_SORT:
-                $this->get_order($edit_list)->sort_order();
-                $this->set_changes($parent_media_url->save_data);
-                $only_refresh = true;
-                break;
-
             case GUI_EVENT_KEY_POPUP_MENU:
                 return $this->create_popup_menu($user_input);
 
@@ -454,7 +447,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER}, $playlist_id);
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
-                $this->set_no_changes();
                 $id = $this->plugin->apply_edit_provider_dlg($user_input);
                 if ($id === false) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
@@ -540,13 +532,21 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     {
         if (isset($parent_media_url->save_data)) {
             $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-            $this->plugin->set_postpone_save(false, $parent_media_url->save_data);
-            $this->plugin->set_postpone_save(true, $parent_media_url->save_data);
-            $this->set_no_changes();
+            $this->set_changes($parent_media_url->save_data);
         }
     }
 
-    protected function &get_order($edit_list, $default = 'Ordered_Array')
+    protected function save($parameter)
+    {
+        $this->plugin->set_postpone_save(false, $parameter);
+        $this->plugin->set_postpone_save(true, $parameter);
+    }
+
+    /**
+     * @param string $edit_list
+     * @return Hashed_Array
+     */
+    protected function &get_order($edit_list)
     {
         switch ($edit_list) {
             case static::SCREEN_EDIT_PLAYLIST:
@@ -562,7 +562,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             default:
-                $order = new $default;
+                $order = new Hashed_Array();
         }
 
         return $order;
@@ -1211,13 +1211,13 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         switch ($media_url->edit_list) {
             case self::SCREEN_EDIT_PROVIDERS:
                 /** @var api_default $provider */
-                foreach ($this->get_order($media_url->edit_list) as $provider) {
+                foreach ($this->plugin->get_providers() as $provider) {
                     $items[] = self::add_item($provider->getId(), $provider->getName(), false, $provider->getLogo(), $provider->getProviderUrl());
                 }
                 break;
 
             case self::SCREEN_EDIT_PLAYLIST:
-                $items = $this->collect_playlists($media_url);
+                $items = $this->collect_playlists();
                 break;
 
             case self::SCREEN_EDIT_EPG_LIST:
@@ -1247,11 +1247,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         );
     }
 
-    protected function collect_playlists($media_url)
+    protected function collect_playlists()
     {
         $items = array();
         /** @var Named_Storage $item */
-        foreach ($this->get_order($media_url->edit_list) as $key => $playlist) {
+        foreach ($this->plugin->get_playlists() as $key => $playlist) {
             $starred = ($key === $this->plugin->get_active_playlist_key());
             $title = empty($playlist->name) ? $playlist->params[PARAM_URI] : $playlist->name;
             if (empty($title)) {

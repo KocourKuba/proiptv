@@ -46,7 +46,6 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR, TR::t('clear_history')),
             GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite')),
             GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
-            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -67,31 +66,18 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
-                if ($this->has_changes()) {
-                    $this->plugin->save_history(true);
-                    $this->set_no_changes();
-                    return Action_Factory::invalidate_folders(
-                        array(
-                            self::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
-                            Starnet_Vod_Favorites_Screen::get_media_url_string(FAV_MOVIE_GROUP_ID),
-                            Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
-                        ),
-                        Action_Factory::close_and_run()
-                    );
-                }
-
-                return Action_Factory::close_and_run();
-
-            case GUI_EVENT_KEY_STOP:
-                $this->plugin->save_orders(true);
-                $this->set_no_changes();
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
+                return Action_Factory::invalidate_folders(
+                    array(
+                        self::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
+                        Starnet_Vod_Favorites_Screen::get_media_url_string(FAV_MOVIE_GROUP_ID),
+                        Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
+                    ),
+                    Action_Factory::close_and_run()
+                );
 
             case ACTION_ITEM_DELETE:
-                $history = $this->plugin->get_history(HISTORY_MOVIES);
-                $history->erase($movie_id);
-                $this->set_changes();
-                if ($history->size() === 0) {
+                $this->plugin->remove_history($movie_id);
+                if ($this->plugin->get_all_history_count() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
 
@@ -102,8 +88,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 return Action_Factory::update_regular_folder($range, true, $sel_ndx);
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->get_history(HISTORY_MOVIES)->clear();
-                $this->set_changes();
+                $this->plugin->clear_all_history();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_FAV:
@@ -138,45 +123,45 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
         hd_debug_print("MediaUrl: " . $media_url, true);
 
         $items = array();
-        foreach ($this->plugin->get_history(HISTORY_MOVIES) as $movie_id => $movie_infos) {
-            if (empty($movie_infos)) continue;
+        foreach ($this->plugin->get_all_history() as $movie_info) {
+            if (empty($movie_info)) continue;
 
-            // $id = 95803
-            // $id = serials_95803
-            // $movie_infos = {"95803":{"watched":true,"position":null,"duration":null,"date":null}}
-            // $movie_infos = {"1:1":{"watched":true,"position":null,"duration":null,"date":null}}
-            hd_debug_print("history id: $movie_id, " . json_encode($movie_infos), true);
+            hd_debug_print("history info: " . json_encode($movie_info), true);
+            $movie_id = $movie_info['movie_id'];
+            $timestamp = $movie_info['timestamp'];
             $this->plugin->vod->ensure_movie_loaded($movie_id);
             $short_movie = $this->plugin->vod->get_cached_short_movie($movie_id);
 
             if (is_null($short_movie)) {
-                $detailed_info = $caption = TR::t('vod_screen_no_film_info');
+                $caption = TR::t('vod_screen_no_film_info');
+                $detailed_info = $caption;
                 $poster_url = "missing://";
             } else {
+                $history_items = $this->plugin->get_history($movie_id);
                 $caption = $short_movie->name;
-                $last_viewed = 0;
-                if (is_array($movie_infos)) {
-                    foreach ($movie_infos as $movie_info) {
-                        if (isset($movie_info->watched) && $movie_info->date > $last_viewed) {
-                            $last_viewed = $movie_info->date;
-                            $info = $movie_info;
+                if (count($history_items) === 1) {
+                    if ($movie_info['watched']) {
+                        $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
+                    } else if ($movie_info['duration'] !== -1) {
+                        $percent = (int)((float)$movie_info['position'] / (float)$movie_info['duration'] * 100);
+                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp), $percent);
+                    } else {
+                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
+                    }
+                } else {
+                    $all_watched = true;
+                    $recent_timestamp = 0;
+                    foreach ($history_items as $history_item) {
+                        $all_watched = $all_watched & ($history_item['watched'] === 1);
+                        if ($history_item['timestamp'] > $recent_timestamp) {
+                            $recent_timestamp = $history_item['timestamp'];
                         }
                     }
-                } else {
-                    $info = $movie_infos;
-                }
-
-                if (isset($info) && $info->date !== 0) {
-                    if ($info->watched) {
-                        $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $info->date));
-                    } else if ($info->duration !== -1 && count($movie_infos) < 2) {
-                        $percent = (int)((float)$info->position / (float)$info->duration * 100);
-                        $detailed_info = TR::t('vod_screen_last_viewed__3', $short_movie->name, format_datetime("d.m.Y H:i", $info->date), $percent);
+                    if ($all_watched) {
+                        $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $recent_timestamp));
                     } else {
-                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $info->date));
+                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $recent_timestamp));
                     }
-                } else {
-                    $detailed_info = $short_movie->name;
                 }
 
                 $poster_url = $short_movie->poster_url;

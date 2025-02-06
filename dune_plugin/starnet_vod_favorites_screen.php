@@ -49,7 +49,6 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
             GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
             GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
             GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
-            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
     }
 
@@ -71,31 +70,16 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                    return Action_Factory::invalidate_folders(
-                        array(
-                            self::get_media_url_string(FAV_MOVIE_GROUP_ID),
-                            Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
-                            Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
-                        ),
-                        Action_Factory::close_and_run()
-                    );
-                }
-
-                return Action_Factory::close_and_run();
-
-            case GUI_EVENT_KEY_STOP:
-                $this->plugin->save_orders(true);
-                $this->set_no_changes();
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
+                return Action_Factory::invalidate_folders(
+                    array(
+                        self::get_media_url_string(FAV_MOVIE_GROUP_ID),
+                        Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
+                        Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
+                    ),
+                    Action_Factory::close_and_run()
+                );
 
             case ACTION_PLAY_ITEM:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                }
                 return Action_Factory::open_folder();
 
             case ACTION_ITEM_UP:
@@ -123,7 +107,6 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ITEMS_CLEAR:
-                $this->set_changes();
                 $this->plugin->change_vod_favorites(ACTION_ITEMS_CLEAR, null);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 

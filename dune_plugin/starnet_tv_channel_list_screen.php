@@ -64,9 +64,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             GUI_EVENT_KEY_SETUP => User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS),
             GUI_EVENT_KEY_INFO => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO),
             GUI_EVENT_KEY_CLEAR => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE),
-            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
-            GUI_EVENT_KEY_TOP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
-            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
             GUI_EVENT_KEY_SELECT => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE),
             GUI_EVENT_KEY_SUBTITLE => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE),
             GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
@@ -109,23 +106,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $sel_ndx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
-            case GUI_EVENT_KEY_TOP_MENU:
-            case GUI_EVENT_KEY_RETURN:
-                if (!$this->has_changes()) {
-                    return Action_Factory::close_and_run();
-                }
-
-                $this->plugin->save_orders(true);
-                $this->set_no_changes();
-                $post_action = null;
-                if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
-                    $post_action = User_Input_Handler_Registry::create_action(
-                        User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
-                        ACTION_REFRESH_SCREEN);
-                }
-                $post_action = Action_Factory::close_and_run($post_action);
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
-
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();
                 if ($epg_manager === null) {
@@ -141,11 +121,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 return Action_Factory::change_behaviour($actions, 1000);
-
-            case GUI_EVENT_KEY_STOP:
-                $this->plugin->save_orders(true);
-                $this->set_no_changes();
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case GUI_EVENT_KEY_INFO:
                 return $this->plugin->do_show_channel_info($channel_id);
@@ -164,12 +139,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                }
-
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return $post_action;
 
             case ACTION_ADD_FAV:
@@ -179,7 +149,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_SETTINGS:
-                $this->save_if_changed();
                 return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
 
             case ACTION_DO_SETTINGS:
@@ -241,7 +210,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEMS_EDIT:
-                $this->save_if_changed();
                 return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $parent_media_url);
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -323,7 +291,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ITEM_DELETE_BY_STRING:
                 if ($user_input->hide !== 'custom_string') {
-                    $this->set_changes();
                     $this->plugin->hide_channels_by_mask($user_input->hide, $selected_media_url->group_id);
                     break;
                 }
@@ -344,7 +311,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case self::ACTION_CUSTOM_STRING_DLG_APPLY:
                 $custom_string = $user_input->{self::ACTION_CUSTOM_DELETE};
                 if (!empty($custom_string)) {
-                    $this->set_changes();
                     $this->plugin->set_parameter(PARAM_CUSTOM_DELETE_STRING, $custom_string);
                     $this->plugin->hide_channels_by_mask($custom_string, $selected_media_url->group_id, false);
                 }

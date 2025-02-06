@@ -89,16 +89,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     protected $playback_points;
 
     /**
-     * @var array
-     */
-    protected $orders;
-
-    /**
-     * @var array
-     */
-    protected $history;
-
-    /**
      * @var Hashed_Array
      */
     protected $providers;
@@ -671,7 +661,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
         $player_state = get_player_state_assoc();
         if (isset($player_state['playback_state']) && $player_state['playback_state'] === PLAYBACK_PLAYING) {
-            $this->save_orders(true);
             return Action_Factory::invalidate_folders(array(), null, true);
         }
 
@@ -791,8 +780,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             return 0;
         }
 
-        $this->load_history(true);
-
         $this->init_db();
 
         if (false === $this->parse_playlist()) {
@@ -859,8 +846,8 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         if (!empty($ignore_groups)) {
             $query = '';
             foreach ($ignore_groups as $group_id) {
-                $escaped_group_id = Sql_Wrapper::sql_quote($group_id);
-                $query .= "INSERT OR IGNORE INTO groups (group_id, disabled) VALUES ($escaped_group_id, 1);" . PHP_EOL;
+                $q_group_id = Sql_Wrapper::sql_quote($group_id);
+                $query .= "INSERT OR IGNORE INTO groups (group_id, disabled) VALUES ($q_group_id, 1);" . PHP_EOL;
             }
             $wrapper->exec_transaction($query);
         }
@@ -882,7 +869,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         $query = "INSERT OR IGNORE INTO groups (group_id, title, icon, adult) VALUES (:group_id, :title, :icon, :adult);";
         $stm_groups = $wrapper->prepare($query);
         foreach ($new_groups as $group_row) {
-            $escaped_group_id = Sql_Wrapper::sql_quote($group_row['group_id']);
+            $q_group_id = Sql_Wrapper::sql_quote($group_row['group_id']);
             $order_table_name = Default_Dune_Plugin::get_orders_table_name($group_row['group_id']);
 
             hd_debug_print("New    category # {$group_row['group_id']}");
@@ -900,7 +887,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
             // select all channels from iptv_channels for selected group that not disabled in known_channels
             $query_channels = "SELECT * FROM iptv.iptv_channels "
-                . "WHERE group_id = $escaped_group_id "
+                . "WHERE group_id = $q_group_id "
                 . "AND $id_column NOT IN (SELECT channel_id FROM channels WHERE disabled == 0) "
                 . "GROUP BY $id_column ORDER BY ROWID ASC;";
             $pl_entries = $wrapper->fetch_array($query_channels);
@@ -930,13 +917,13 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         // cleanup order if group removed from playlist
         $query = "SELECT group_id FROM groups WHERE group_id NOT IN (SELECT group_id FROM iptv.iptv_groups) AND special = 0;";
         $removed_groups = $wrapper->fetch_single_array($query, 'group_id');
-        $list_removed = Sql_Wrapper::sql_collect_values($removed_groups);
+        $list_removed = Sql_Wrapper::sql_make_list_from_quoted_values($removed_groups);
         hd_debug_print("Removed orphaned groups: $list_removed", true);
         $wrapper->exec("DELETE FROM orders_group WHERE group_id IN ($list_removed);");
         $wrapper->exec("DELETE FROM groups WHERE group_id IN ($list_removed);");
 
         // cleanup channels from each group orders
-        $removed_chanels = Sql_Wrapper::sql_collect_values($this->get_changed_channels_ids('removed'));
+        $removed_chanels = Sql_Wrapper::sql_make_list_from_quoted_values($this->get_changed_channels_ids('removed'));
         foreach ($removed_groups as $group_id) {
             $order_table_name = Default_Dune_Plugin::get_orders_table_name($group_id);
             $wrapper->exec("DELETE FROM TABLE $order_table_name WHERE channel_id IN ($removed_chanels);");
@@ -1414,102 +1401,13 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     // Storages methods
     //
 
-    public function get_all_orders()
-    {
-        return $this->orders;
-    }
-
-    /**
-     * Get channels orders for selected playlist
-     *
-     * @param string $id
-     * @param mixed|null $default
-     * @return mixed
-     */
-    public function &get_orders($id, $default = null)
-    {
-        if (!isset($this->orders[$id])) {
-            $this->orders[$id] = is_null($default) ? new Ordered_Array() : $default;
-        }
-
-        return $this->orders[$id];
-    }
-
-    /**
-     * Set channels order for selected playlist
-     *
-     * @param string $id
-     * @param mixed $val
-     */
-    public function set_orders($id, $val)
-    {
-        $this->orders[$id] = $val;
-        $this->set_dirty(true, PLUGIN_ORDERS);
-        $this->save_orders();
-    }
-
-    /**
-     * save playlist channels orders
-     *
-     * @param bool $force
-     * @return bool
-     */
-    public function save_orders($force = false)
-    {
-        if (is_null($this->{PLUGIN_ORDERS})) {
-            hd_debug_print("PLUGIN_ORDERS is not set!", true);
-            return false;
-        }
-
-        if (!$force && ($this->is_postpone(PLUGIN_ORDERS) || !$this->is_dirty(PLUGIN_ORDERS))) {
-            return false;
-        }
-
-        hd_debug_print(null, true);
-
-        $name = $this->make_name(PLUGIN_ORDERS);
-
-        hd_debug_print("Save: $name", true);
-        if (LogSeverity::$is_debug) {
-            foreach ($this->{PLUGIN_ORDERS} as $key => $param) {
-                hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
-            }
-        }
-
-        HD::put_data_items($name, $this->{PLUGIN_ORDERS}, false);
-        $this->set_dirty(false, PLUGIN_ORDERS);
-        return true;
-    }
-
-    /**
-     * Remove order from storage
-     *
-     * @param string $id
-     */
-    public function clear_order($id)
-    {
-        unset($this->orders[$id]);
-        $this->set_dirty(true, PLUGIN_ORDERS);
-        $this->save_orders();
-    }
-
-    /**
-     * Get order names in storage
-     *
-     * @return array
-     */
-    public function get_order_names()
-    {
-        return is_array($this->orders) ? array_keys($this->orders) : array();
-    }
-
     /**
      * Get all custom table values ordered by ROWID
      *
      * @param string $table
      * @return array
      */
-    public function get_table_values($table)
+    public function get_all_table_values($table)
     {
         $table_name = self::get_orders_table_name($table);
         return $this->sql_wrapper->fetch_array("SELECT * FROM $table_name ORDER BY id ASC");
@@ -1521,7 +1419,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
      * @param string $table
      * @return array
      */
-    public function get_table_values_count($table)
+    public function get_all_table_values_count($table)
     {
         $table_name = self::get_orders_table_name($table);
         return $this->sql_wrapper->query_value("SELECT count(*) FROM $table_name");
@@ -1537,8 +1435,8 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     public function get_table_value_id($table, $value)
     {
         $table_name = self::get_orders_table_name($table);
-        $escaped_value = Sql_Wrapper::sql_quote($value);
-        return $this->sql_wrapper->query_value("SELECT id FROM $table_name WHERE item = $escaped_value");
+        $q_value = Sql_Wrapper::sql_quote($value);
+        return $this->sql_wrapper->query_value("SELECT id FROM $table_name WHERE item = $q_value");
     }
 
     /**
@@ -1564,11 +1462,11 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     public function set_table_value($table, $value, $id = -1)
     {
         $table_name = self::get_orders_table_name($table);
-        $escaped_value = Sql_Wrapper::sql_quote($value);
+        $q_value = Sql_Wrapper::sql_quote($value);
         if ($id === -1) {
-            $this->sql_wrapper->exec("INSERT OR IGNORE INTO $table_name (item) VALUES ($escaped_value);");
+            $this->sql_wrapper->exec("INSERT OR IGNORE INTO $table_name (item) VALUES ($q_value);");
         } else {
-            $this->sql_wrapper->exec("UPDATE $table_name SET item = $escaped_value WHERE id = $id;");
+            $this->sql_wrapper->exec("UPDATE $table_name SET item = $q_value WHERE id = $id;");
         }
     }
 
@@ -1581,8 +1479,8 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     public function remove_table_value($table, $value)
     {
         $table_name = self::get_orders_table_name($table);
-        $escaped_value = Sql_Wrapper::sql_quote($value);
-        $this->sql_wrapper->exec("DELETE FROM $table_name WHERE item = $escaped_value;");
+        $q_value = Sql_Wrapper::sql_quote($value);
+        $this->sql_wrapper->exec("DELETE FROM $table_name WHERE item = $q_value;");
     }
 
     /**
@@ -1596,8 +1494,8 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     public function arrange_table_values($table, $item, $direction)
     {
         $table_name = self::get_orders_table_name($table);
-        $escaped_value = Sql_Wrapper::sql_quote($item);
-        $qry = "SELECT previous, current, next
+        $q_value = Sql_Wrapper::sql_quote($item);
+        $query = "SELECT previous, current, next
             FROM (SELECT item,
                          LAG(id) OVER (ORDER BY id)  AS previous,
                          id                          AS current,
@@ -1605,79 +1503,125 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
                          FIRST_VALUE(id) OVER (ORDER BY id) AS first,
                          FIRST_VALUE(id) OVER (ORDER BY id DESC) AS last
                   FROM $table_name)
-            WHERE item = $escaped_value;";
+            WHERE item = $q_value;";
 
-        return $this->arrange_rows($qry, $table_name, $direction);
+        return $this->arrange_rows($query, $table_name, $direction);
     }
 
     /**
-     * Get history for selected playlist
+     * Get VOD history for selected playlist sorted by movie_id and last viewed timestamp (most recent first)
      *
-     * @param string $id
-     * @param mixed|null $default
-     * @return Hashed_Array<History_Item>|Ordered_Array<string, History_Item>
+     * @return array
      */
-    public function &get_history($id, $default = null)
+    public function get_all_history()
     {
-        $this->load_history();
+        return $this->sql_wrapper->fetch_array("SELECT *, MAX(timestamp) FROM history.vod_history GROUP BY movie_id ORDER BY timestamp DESC;");
+    }
 
-        if (!isset($this->history[$id])) {
-            $this->history[$id] = is_null($default) ? new Hashed_Array() : $default;
+    /**
+     * Get count of VOD history for selected playlist
+     *
+     * @return int
+     */
+    public function get_all_history_count()
+    {
+        return $this->sql_wrapper->query_value("SELECT count(DISTINCT movie_id) FROM history.vod_history;");
+    }
+
+    /**
+     * Get history for selected movie_id
+     *
+     * @param string $movie_id
+     * @return array
+     */
+    public function get_history($movie_id)
+    {
+        $q_id = Sql_Wrapper::sql_quote($movie_id);
+        return $this->sql_wrapper->fetch_array("SELECT * FROM history.vod_history WHERE movie_id = $q_id;");
+    }
+
+    /**
+     * Get history for selected movie_id
+     *
+     * @param string $movie_id
+     * @return int
+     */
+    public function get_history_count($movie_id)
+    {
+        $q_id = Sql_Wrapper::sql_quote($movie_id);
+        return $this->sql_wrapper->query_value("SELECT count(*) FROM history.vod_history WHERE movie_id = $q_id;");
+    }
+
+    /**
+     * Get param for movie_id and series_id
+     *
+     * @param string $movie_id
+     * @param string $series_id
+     * @param string $param_name
+     * @return array
+     */
+    public function get_history_params($movie_id, $series_id, $param_name = null)
+    {
+        $q_id = Sql_Wrapper::sql_quote($movie_id);
+        $q_series = Sql_Wrapper::sql_quote($series_id);
+        if ($param_name === null) {
+            $query = "SELECT * FROM history.vod_history WHERE movie_id = $q_id AND series_id = $q_series;";
+        } else {
+            $q_param = Sql_Wrapper::sql_quote($param_name);
+            $query = "SELECT $q_param FROM history.vod_history WHERE movie_id = $q_id AND series_id = $q_series;";
         }
-
-        return $this->history[$id];
+        return $this->sql_wrapper->query_value($query, $param_name === null);
     }
 
     /**
-     * Get history for selected playlist
+     * Get history for selected movie_id
      *
-     * @param string $id
-     * @return bool
-     */
-    public function has_history($id)
-    {
-        $this->load_history();
-        return isset($this->history[$id]);
-    }
-
-    /**
-     * Set channels order for selected playlist
-     *
-     * @param string $id
-     * @param mixed $val
-     */
-    public function set_history($id, $val)
-    {
-        $this->history[$id] = $val;
-        $this->set_dirty(true, PLUGIN_HISTORY);
-        $this->save_history();
-    }
-
-    /**
-     * load playlist history
-     *
-     * @param bool $force
+     * @param string $movie_id
+     * @param string $series_id
+     * @param array $value
      * @return void
      */
-    public function load_history($force = false)
+    public function set_history($movie_id, $series_id, $value)
     {
-        $type = PLUGIN_HISTORY;
-        if ($force) {
-            $this->{$type} = null;
-        }
+        $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
+        $q_series_id = Sql_Wrapper::sql_quote($series_id);
+        $params = SQL_Wrapper::sql_make_list_from_keys($value);
+        $values = SQL_Wrapper::sql_make_list_from_values($value);
+        $query = "INSERT OR REPLACE INTO history.vod_history (movie_id, series_id, $params)
+                    VALUES ($q_movie_id, $q_series_id, $values);";
+        $this->sql_wrapper->exec($query);
+    }
 
-        if (!isset($this->{$type})) {
-            $history_name = $this->make_name(PLUGIN_HISTORY);
-            $file_name = $this->get_history_path() . '/' . $history_name;
-            hd_debug_print("Load ($type): $file_name");
-            hd_debug_print(null, true);
-            $this->{$type} = HD::get_items($file_name, true, false);
-            if (LogSeverity::$is_debug) {
-                foreach ($this->{$type} as $key => $param) {
-                    hd_debug_print("$key => '" . (is_array($param) ? json_encode($param) : $param) . "'");
-                }
-            }
-        }
+    /**
+     * Remove history by movie_id
+     *
+     * @param string $movie_id
+     */
+    public function remove_history($movie_id)
+    {
+        $q_value = Sql_Wrapper::sql_quote($movie_id);
+        $this->sql_wrapper->exec("DELETE FROM history.vod_history WHERE movie_id = $q_value;");
+    }
+
+    /**
+     * Remove history by movie_id and series_id
+     *
+     * @param $movie_id
+     * @param $series_id
+     */
+    public function remove_history_part($movie_id, $series_id)
+    {
+        $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
+        $q_series_id = Sql_Wrapper::sql_quote($series_id);
+        $this->sql_wrapper->exec("DELETE FROM history.vod_history WHERE movie_id = $q_movie_id AND series_id = $q_series_id;");
+    }
+
+    /**
+     * Clear all history
+     */
+    public function clear_all_history()
+    {
+        $this->sql_wrapper->exec("DELETE FROM history.vod_history;");
     }
 
     /**
@@ -1717,68 +1661,12 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     }
 
     /**
-     * save playlist history
-     *
-     * @param bool $force
-     * @return bool
-     */
-    public function save_history($force = false)
-    {
-        if (is_null($this->{PLUGIN_HISTORY})) {
-            hd_debug_print("PLUGIN_HISTORY is not set!", true);
-            return false;
-        }
-
-        if (!$force && ($this->is_postpone(PLUGIN_HISTORY) || !$this->is_dirty(PLUGIN_HISTORY))) {
-            return false;
-        }
-
-        hd_debug_print(null, true);
-        $history_name = $this->make_name(PLUGIN_HISTORY);
-
-        $file_name = $this->get_history_path() . '/' . $history_name;
-        hd_debug_print("Save: $file_name", true);
-        if (LogSeverity::$is_debug) {
-            foreach ($this->{PLUGIN_HISTORY} as $key => $param) {
-                hd_debug_print("$key => " . (is_array($param) ? json_encode($param) : $param));
-            }
-        }
-        HD::put_items($file_name, $this->{PLUGIN_HISTORY}, false);
-        $this->set_dirty(false, PLUGIN_HISTORY);
-        return true;
-    }
-
-    /**
-     * Remove order from storage
-     *
-     * @param string $id
-     */
-    public function clear_history($id)
-    {
-        unset($this->history[$id]);
-        $this->set_dirty(true, PLUGIN_HISTORY);
-        $this->save_history();
-    }
-
-    /**
-     * Get order names in storage
-     *
-     * @return array
-     */
-    public function get_history_names()
-    {
-        $this->load_history();
-        return is_array($this->history) ? array_keys($this->history) : array();
-    }
-
-    /**
      * Remove orders for selected playlist from disk
      * @param string $id
      */
     public function unlink_orders($id)
     {
-        $filename = $this->make_name(PLUGIN_ORDERS, $id);
-
+        $filename = $this->make_name(PLUGIN_ORDERS, $id) . ".db";
         hd_debug_print("remove $filename", true);
         HD::erase_data_items($filename);
     }
@@ -1789,7 +1677,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
      */
     public function unlink_history($id)
     {
-        $filename = $this->make_name(PLUGIN_HISTORY, $id);
+        $filename = $this->make_name(PLUGIN_HISTORY, $id) . ".db";
         hd_debug_print("remove $filename", true);
         HD::erase_data_items("$filename");
     }
@@ -1807,8 +1695,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         }
 
         $this->init_settings();
-        $this->orders = null;
-        $this->history = null;
         $this->cur_provider = null;
         $this->cur_playlist = null;
         $this->playlist_xmltv_sources = null;
@@ -2897,8 +2783,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
         if ($action_edit === Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_CHANNELS
             || $action_edit === Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_GROUPS) {
-            $this->set_postpone_save(true, PLUGIN_ORDERS);
-            $params['save_data'] = PLUGIN_ORDERS;
             $params['end_action'] = ACTION_RELOAD;
             $params['cancel_action'] = ACTION_EMPTY;
         } else if ($action_edit === Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST) {
@@ -3348,30 +3232,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     }
 
     /**
-     * Block or release save settings action
-     * If released will perform save action
-     *
-     * @param bool $snooze
-     * @param string $item
-     */
-    public function set_postpone_save($snooze, $item)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("Snooze: " . var_export($snooze, true) . ", item: $item", true);
-        parent::set_postpone_save($snooze, $item);
-
-        if ($snooze) {
-            return;
-        }
-
-        if ($item === PLUGIN_ORDERS) {
-            $this->save_orders();
-        } else if ($item === PLUGIN_HISTORY) {
-            $this->save_history();
-        }
-    }
-
-    /**
      * @param Sql_Wrapper $db
      * @return int|string
      */
@@ -3424,8 +3284,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         if (!empty($id)) {
             $storage_name .= "_$id";
         }
-
-        $storage_name .= ".settings";
 
         return $storage_name;
     }
@@ -3537,7 +3395,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         $disable = (int)$hide;
 
         if (is_array($channel_id)) {
-            $channels = Sql_Wrapper::sql_collect_values($channel_id);
+            $channels = Sql_Wrapper::sql_make_list_from_quoted_values($channel_id);
             $where = "WHERE id IN ($channels)";
         } else {
             $where = "WHERE id = " . Sql_Wrapper::sql_quote($channel_id);
@@ -3591,7 +3449,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         }
 
         if (!empty($disabled)) {
-            $values = Sql_Wrapper::sql_collect_values($disabled);
+            $values = Sql_Wrapper::sql_make_list_from_quoted_values($disabled);
             $this->sql_wrapper->exec("UPDATE channels SET disabled = 1 WHERE id IN ($values)");
             hd_debug_print("Total channels hidden: " . count($disabled));
         }
@@ -3697,8 +3555,8 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
      */
     public function get_any_group($group_id)
     {
-        $escaped_group = Sql_Wrapper::sql_quote($group_id);
-        $query = "SELECT * FROM groups WHERE AND group_id = $escaped_group;";
+        $q_group = Sql_Wrapper::sql_quote($group_id);
+        $query = "SELECT * FROM groups WHERE AND group_id = $q_group;";
         return $this->sql_wrapper->fetch_array($query);
     }
 
@@ -3712,8 +3570,8 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     public function get_group($group_id, $special = false)
     {
         $special = (int)$special;
-        $group_id = Sql_Wrapper::sql_quote($group_id);
-        $query = "SELECT * FROM groups WHERE special == $special AND group_id = $group_id AND disabled = 0";
+        $q_group_id = Sql_Wrapper::sql_quote($group_id);
+        $query = "SELECT * FROM groups WHERE special == $special AND group_id = $q_group_id AND disabled = 0";
         return $this->sql_wrapper->query_value($query, true);
     }
 
@@ -3755,7 +3613,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         $disabled = (int)$hide;
 
         if (is_array($group_ids)) {
-            $groups = Sql_Wrapper::sql_collect_values($group_ids);
+            $groups = Sql_Wrapper::sql_make_list_from_quoted_values($group_ids);
             $where = "WHERE id IN ($groups)";
             $to_alter = $group_ids;
         } else {
@@ -3858,11 +3716,11 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
      */
     public function change_groups_order($group_id, $remove)
     {
-        $escaped_group_id = Sql_Wrapper::sql_quote($group_id);
+        $q_group_id = Sql_Wrapper::sql_quote($group_id);
         if ($remove) {
-            $this->sql_wrapper->exec("DELETE FROM orders_group WHERE group_id = $escaped_group_id");
+            $this->sql_wrapper->exec("DELETE FROM orders_group WHERE group_id = $q_group_id");
         } else {
-            $this->sql_wrapper->exec("INSERT OR IGNORE INTO orders_group (group_id) VALUES ($escaped_group_id);");
+            $this->sql_wrapper->exec("INSERT OR IGNORE INTO orders_group (group_id) VALUES ($q_group_id);");
         }
     }
 
@@ -3875,7 +3733,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     public function arrange_channels_order_rows($group_id, $channel_id, $direction)
     {
         $table_name = self::get_orders_table_name($group_id);
-        $escaped_channel_id = Sql_Wrapper::sql_quote($channel_id);
+        $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $qry = "SELECT previous, current, next
             FROM (SELECT channel_id,
                          LAG(id) OVER (ORDER BY id)  AS previous,
@@ -3884,7 +3742,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
                          FIRST_VALUE(id) OVER (ORDER BY id) AS first,
                          FIRST_VALUE(id) OVER (ORDER BY id DESC) AS last
                   FROM $table_name)
-            WHERE channel_id = $escaped_channel_id;";
+            WHERE channel_id = $q_channel_id;";
 
         $this->arrange_rows($qry, $table_name, $direction);
     }
@@ -3896,7 +3754,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
      */
     public function arrange_groups_order_rows($group_id, $direction)
     {
-        $escaped_groups_id = Sql_Wrapper::sql_quote($group_id);
+        $q_groups_id = Sql_Wrapper::sql_quote($group_id);
         $table_name = 'orders_group';
         $qry = "SELECT previous, current, next
             FROM (SELECT group_id,
@@ -3906,7 +3764,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
                          FIRST_VALUE(id) OVER (ORDER BY id) AS first,
                          FIRST_VALUE(id) OVER (ORDER BY id DESC) AS last
                   FROM $table_name)
-            WHERE channel_id = $escaped_groups_id;";
+            WHERE channel_id = $q_groups_id;";
 
         return $this->arrange_rows($qry, $table_name, $direction);
     }
@@ -3984,11 +3842,11 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     public function change_channels_order($group_id, $channel_id, $remove)
     {
         $table_name = self::get_orders_table_name($group_id);
-        $escaped_channel_id = Sql_Wrapper::sql_quote($channel_id);
+        $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         if ($remove) {
-            $qry = "DELETE FROM $table_name WHERE channel_id = $escaped_channel_id;";
+            $qry = "DELETE FROM $table_name WHERE channel_id = $q_channel_id;";
         } else {
-            $qry = "INSERT INTO $table_name (channel_id) VALUES ($escaped_channel_id);";
+            $qry = "INSERT INTO $table_name (channel_id) VALUES ($q_channel_id);";
         }
         return $this->sql_wrapper->exec($qry);
     }
@@ -4001,7 +3859,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     public function sort_channels_order($group_id, $reset = false)
     {
         $column = self::get_id_column();
-        $escaped_group_id = Sql_Wrapper::sql_quote($group_id);
+        $q_group_id = Sql_Wrapper::sql_quote($group_id);
         $table_name = self::get_orders_table_name($group_id);
         $table_name_tmp = $table_name . "_tmp";
         $qry = "BEGIN;" . PHP_EOL;
@@ -4010,13 +3868,13 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             $qry .= "CREATE TABLE $table_name (id INTEGER PRIMARY KEY AUTOINCREMENT, channel_id TEXT UNIQUE);" . PHP_EOL;
             $qry .= "INSERT OR IGNORE INTO $table_name (channel_id)
                         SELECT $column FROM iptv.iptv_channels
-                        WHERE group_id == $escaped_group_id AND $column IN
+                        WHERE group_id == $q_group_id AND $column IN
                         (SELECT channel_id FROM channels WHERE disabled == 0);" . PHP_EOL;
         } else {
             $qry .= "CREATE TABLE $table_name_tmp (id INTEGER PRIMARY KEY AUTOINCREMENT, channel_id TEXT UNIQUE);" . PHP_EOL;
             $qry .= "INSERT OR IGNORE INTO $table_name_tmp (channel_id)
                         SELECT $column FROM iptv.iptv_channels
-                        WHERE group_id == $escaped_group_id AND $column IN
+                        WHERE group_id == $q_group_id AND $column IN
                         (SELECT channel_id FROM channels WHERE disabled == 0) ORDER BY title;" . PHP_EOL;
 
             $qry .= "INSERT INTO $table_name_tmp (channel_id) SELECT channel_id FROM $table_name ORDER BY channel_id;" . PHP_EOL;
@@ -4132,8 +3990,8 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
         $query = '';
         foreach ($special_group as $group) {
-            $param = implode(',', array_keys($group));
-            $values = Sql_Wrapper::sql_collect_values($group);
+            $param = Sql_Wrapper::sql_make_list_from_keys($group);
+            $values = Sql_Wrapper::sql_make_list_from_quoted_values($group);
             $query .= "INSERT OR IGNORE INTO groups ($param, special) VALUES ($values, 1);";
         }
 
@@ -4143,14 +4001,14 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
         // move groups order to database
         if (isset($plugin_orders[PARAM_GROUPS_ORDER]) && $plugin_orders[PARAM_GROUPS_ORDER]->size() !== 0) {
-            hd_debug_print("Move 'group_orders' to groups db");
+            hd_debug_print("Move 'group_orders' to 'groups' db table");
             $query = '';
             foreach ($plugin_orders[PARAM_GROUPS_ORDER] as $group_id) {
                 $adult = self::is_adult_group($group_id);
-                $escaped_group_id = Sql_Wrapper::sql_quote($group_id);
+                $q_group_id = Sql_Wrapper::sql_quote($group_id);
                 $group_icon = Sql_Wrapper::sql_quote($group_icons->has($group_id) ? $group_icons->get($group_id) : DEFAULT_GROUP_ICON);
-                $query .= "INSERT OR IGNORE INTO groups (group_id, title, icon, adult) VALUES ($escaped_group_id, $escaped_group_id, $group_icon, $adult);";
-                $query .= "INSERT OR IGNORE INTO orders_group (group_id) VALUES ($escaped_group_id);";
+                $query .= "INSERT OR IGNORE INTO groups (group_id, title, icon, adult) VALUES ($q_group_id, $q_group_id, $group_icon, $adult);";
+                $query .= "INSERT OR IGNORE INTO orders_group (group_id) VALUES ($q_group_id);";
             }
             $this->sql_wrapper->exec_transaction($query);
 
@@ -4159,15 +4017,15 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
         // move disabled groups to database
         if (isset($plugin_orders[PARAM_DISABLED_GROUPS]) && $plugin_orders[PARAM_DISABLED_GROUPS]->size() !== 0) {
-            hd_debug_print("Move 'disabled_group' orders to groups ta");
+            hd_debug_print("Move 'disabled_group' orders to 'groups' db table");
             $query = '';
             foreach ($plugin_orders[PARAM_DISABLED_GROUPS] as $group_id) {
                 $adult = self::is_adult_group($group_id);
-                $escaped_group_id = Sql_Wrapper::sql_quote($group_id);
+                $q_group_id = Sql_Wrapper::sql_quote($group_id);
                 $group_icon = Sql_Wrapper::sql_quote($group_icons->has($group_id) ? $group_icons->get($group_id) : DEFAULT_GROUP_ICON);
                 $query .= "INSERT OR IGNORE
                             INTO groups (group_id, title, icon, disabled, adult)
-                            VALUES ($escaped_group_id, $escaped_group_id, $group_icon, 1, $adult);";
+                            VALUES ($q_group_id, $q_group_id, $group_icon, 1, $adult);";
             }
             $this->sql_wrapper->exec_transaction($query);
             unset($plugin_orders[PARAM_DISABLED_GROUPS]);
@@ -4175,20 +4033,20 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
         // create known_channels db if not exist and import old orders settings
         if (isset($plugin_orders[PARAM_KNOWN_CHANNELS]) && $plugin_orders[PARAM_KNOWN_CHANNELS]->size() !== 0) {
-            hd_debug_print("Move 'known_channels' to channels table");
+            hd_debug_print("Move 'known_channels' to 'channels' db table");
             $query = '';
             foreach ($plugin_orders[PARAM_KNOWN_CHANNELS] as $channel_id => $title) {
-                $escaped_channel_id = Sql_Wrapper::sql_quote($channel_id);
-                $escaped_title = Sql_Wrapper::sql_quote($title);
-                $query .= "INSERT OR IGNORE INTO channels (channel_id, title) VALUES ($escaped_channel_id, $escaped_title);";
+                $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+                $q_title = Sql_Wrapper::sql_quote($title);
+                $query .= "INSERT OR IGNORE INTO channels (channel_id, title) VALUES ($q_channel_id, $q_title);";
             }
             $this->sql_wrapper->exec_transaction($query);
             unset($plugin_orders[PARAM_KNOWN_CHANNELS]);
         }
 
         if (isset($plugin_orders[PARAM_DISABLED_CHANNELS]) && $plugin_orders[PARAM_DISABLED_CHANNELS]->size() !== 0) {
-            hd_debug_print("Move 'disabled_channels' to channels db");
-            $values = Sql_Wrapper::sql_collect_values($plugin_orders[PARAM_DISABLED_CHANNELS]->get_order());
+            hd_debug_print("Move 'disabled_channels' to 'channels' db table");
+            $values = Sql_Wrapper::sql_make_list_from_quoted_values($plugin_orders[PARAM_DISABLED_CHANNELS]->get_order());
             $query = "UPDATE channels SET disabled = 1 WHERE channel_id IN ($values);";
             $this->sql_wrapper->exec($query);
             unset($plugin_orders[PARAM_DISABLED_CHANNELS]);
@@ -4202,34 +4060,77 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
 
         foreach ($plugin_orders as $order_name => $order) {
             $table_name = self::get_orders_table_name($order_name);
-            hd_debug_print("Move '$order_name' channels orders to $table_name db");
+            hd_debug_print("Move '$order_name' channels orders to $table_name db table");
             $this->sql_wrapper->exec("CREATE TABLE IF NOT EXISTS $table_name (id INTEGER PRIMARY KEY AUTOINCREMENT, channel_id TEXT UNIQUE);");
 
             $query = '';
             foreach ($order as $channel_id) {
-                $escaped_channel_id = Sql_Wrapper::sql_quote($channel_id);
-                $query .= "INSERT OR IGNORE INTO $table_name (channel_id) VALUES ($escaped_channel_id);";
+                $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+                $query .= "INSERT OR IGNORE INTO $table_name (channel_id) VALUES ($q_channel_id);";
             }
             $this->sql_wrapper->exec_transaction($query);
             unset($plugin_orders[$order_name]);
         }
 
-        foreach (array(VOD_FILTER_LIST, VOD_SEARCH_LIST) as $list) {
-            if (!$this->has_history($list)) continue;
+        $history_name = $this->get_history_path() . '/' . $this->make_name(PLUGIN_HISTORY);
+        $this->sql_wrapper->exec("ATTACH DATABASE '$history_name.db' as history");
+        $query = "CREATE TABLE IF NOT EXISTS history.vod_history
+                        (movie_id TEXT,
+                         series_id TEXT,
+                         watched INTEGER DEFAULT 0,
+                         position INTEGER DEFAULT 0,
+                         duration INTEGER DEFAULT 0,
+                         timestamp INTEGER DEFAULT 0,
+                         UNIQUE(movie_id, series_id)
+                        )";
+        $this->sql_wrapper->exec($query);
 
-            $table_name = self::get_orders_table_name($list);
-            hd_debug_print("Move '$list' to $table_name db");
-
-            $this->sql_wrapper->exec("CREATE TABLE IF NOT EXISTS $table_name (id INTEGER PRIMARY KEY AUTOINCREMENT, item TEXT UNIQUE);");
-            $items = $this->get_history($list, new Ordered_Array());
-            $query = '';
-            foreach ($items as $item) {
-                $escaped_item = Sql_Wrapper::sql_quote($item);
-                $query .= "INSERT OR IGNORE INTO $table_name (item) VALUES ($escaped_item);";
+        $file_name = $history_name . ".settings";
+        if (file_exists($file_name)) {
+            hd_debug_print("Load (PLUGIN_HISTORY): $file_name");
+            /** @var Hashed_Array $history */
+            $history = HD::get_items($file_name, true, false);
+            if (isset($history[VOD_HISTORY])) {
+                hd_debug_print("Move '" . VOD_HISTORY . "' to 'vod_history' db table");
+                $query = '';
+                /** @var array $param */
+                foreach ($history[VOD_HISTORY] as $movie_id => $param) {
+                    hd_debug_print("$movie_id => '" . (is_array($param) ? json_encode($param) : $param) . "'", true);
+                    $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
+                    /** @var History_Item $item */
+                    foreach ($param as $series_id => $item) {
+                        $q_series_id = Sql_Wrapper::sql_quote($series_id);
+                        $watched = (int)$item->watched;
+                        $query .= "INSERT OR IGNORE INTO history.vod_history
+                                (movie_id, series_id, watched, position, duration, timestamp)
+                                VALUES ($q_movie_id, $q_series_id, $watched, $item->position, $item->duration, $item->date);";
+                    }                }
+                $this->sql_wrapper->exec_transaction($query);
+                unset($history[VOD_HISTORY]);
             }
 
-            $this->sql_wrapper->exec_transaction($query);
-            $this->clear_history($list);
+            foreach (array(VOD_FILTER_LIST, VOD_SEARCH_LIST) as $list) {
+                $table_name = self::get_orders_table_name($list);
+                $this->sql_wrapper->exec("CREATE TABLE IF NOT EXISTS $table_name (id INTEGER PRIMARY KEY AUTOINCREMENT, item TEXT UNIQUE);");
+
+                if (!isset($history[$list])) continue;
+
+                hd_debug_print("Move '$list' to '$table_name' db table");
+                $query = '';
+                foreach ($history[$list] as $value) {
+                    $q_item = Sql_Wrapper::sql_quote($value);
+                    $query .= "INSERT OR IGNORE INTO $table_name (item) VALUES ($q_item);";
+                }
+
+                $this->sql_wrapper->exec_transaction($query);
+                unset($history[$list]);
+            }
+
+            if (empty($history)) {
+                HD::erase_items($file_name);
+            } else {
+                HD::put_items($file_name, $history, false);
+            }
         }
 
         if (empty($orders)) {

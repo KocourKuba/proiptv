@@ -162,25 +162,17 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $movie = $this->plugin->vod->get_loaded_movie($selected_media_url->movie_id);
                 if (is_null($movie)) break;
 
-                /** @var History_Item[] $movie_info */
-                $history_items = $this->plugin->get_history(HISTORY_MOVIES)->get($selected_media_url->movie_id);
-                if (is_null($history_items) || !isset($history_items[$selected_media_url->episode_id])) {
-                    $history_item = new History_Item(false, 0, 0, time());
-                    $history_items[$selected_media_url->episode_id] = $history_item;
-                } else {
-                    $history_item = $history_items[$selected_media_url->episode_id];
-                }
+                $value = $this->plugin->get_history_params($selected_media_url->movie_id, $selected_media_url->episode_id, 'watched');
 
-                if ($history_item->watched) {
-                    unset($history_items[$selected_media_url->episode_id]);
+                if ($value) {
+                    $this->plugin->remove_history_part($selected_media_url->movie_id, $selected_media_url->episode_id);
                 } else {
-                    $history_item->watched = true;
-                    $history_item->date = time();
-                    $history_items[$selected_media_url->episode_id] = $history_item;
+                    $this->plugin->set_history(
+                        $selected_media_url->movie_id,
+                        $selected_media_url->episode_id,
+                        array('watched' => true, 'timestamp' => time())
+                    );
                 }
-
-                $this->plugin->get_history(HISTORY_MOVIES)->set($selected_media_url->movie_id, $history_items);
-                $this->plugin->save_history(true);
 
                 return Action_Factory::invalidate_folders(array(
                         $user_input->parent_media_url,
@@ -285,41 +277,33 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $this->audios = array();
 
         $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
-        if (is_null($movie)) {
+        if (is_null($movie) || !$movie->has_series()) {
             return array();
         }
 
         hd_debug_print("Movie: " . pretty_json_format($movie), true);
-        /** @var History_Item[] $movie_info */
-        $viewed_items = $this->plugin->get_history(HISTORY_MOVIES)->get($media_url->movie_id);
-
-        if (!$movie->has_series()) {
-            return array();
-        }
-
         $items = array();
-        foreach ($movie->series_list as $episode) {
-            if (isset($media_url->season_id) && $media_url->season_id !== $episode->season_id) continue;
+        foreach ($movie->series_list as $series_id => $episode) {
+            if (isset($media_url->season_id) && $media_url->season_id !== $series_id) continue;
 
-            $info = $episode->name;
+            $viewed_params = $this->plugin->get_history_params($media_url->movie_id, $series_id);
             $color = 15;
-            if (!is_null($viewed_items) && isset($viewed_items[$episode->id])) {
-                $item_info = $viewed_items[$episode->id];
-                hd_debug_print("viewed item: " . json_encode($item_info));
-                if ($item_info->watched) {
-                    $date = format_datetime("d.m.Y H:i", $item_info->date);
+            $info = $episode->name;
+            if (!empty($viewed_params)) {
+                if ($viewed_params['watched']) {
+                    $date = format_datetime("d.m.Y H:i", $viewed_params['timestamp']);
                     $info = TR::t('vod_screen_viewed__2', $episode->name, $date);
-                } else if (isset($item_info->duration) && $item_info->duration !== -1) {
-                    $start = format_duration_seconds($item_info->position);
-                    $total = format_duration_seconds($item_info->duration);
-                    $date = format_datetime("d.m.Y H:i", $item_info->date);
-                    $info = $episode->name . " [$start/$total] $date";
+                } else if ($viewed_params['duration'] !== -1) {
+                    $info = TR::t('vod_screen_viewed__4',
+                        $episode->name,
+                        format_duration_seconds($viewed_params['position']),
+                        format_duration_seconds($viewed_params['duration']),
+                        format_datetime("d.m.Y H:i", $viewed_params['timestamp'])
+                    );
                 }
-
                 $color = 5;
             }
 
-            hd_debug_print("Movie media url: " . self::get_media_url_string($movie->id, $episode->season_id, $episode->id), true);
             if (!empty($episode->qualities)) {
                 $this->qualities = $episode->qualities;
                 hd_debug_print("Qualities: " . json_encode($episode->qualities), true);

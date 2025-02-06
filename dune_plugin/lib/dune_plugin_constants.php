@@ -170,7 +170,7 @@ const PLUGIN_PARAMETERS = "parameters";
 const PLUGIN_SETTINGS = "settings";
 const PLUGIN_ORDERS = "orders";
 const PLUGIN_HISTORY = "history";
-const HISTORY_MOVIES = 'vod_history';
+const VOD_HISTORY = 'vod_history';
 const VOD_SEARCH_LIST = 'vod_search';
 const VOD_FILTER_LIST = 'vod_filter_items';
 

@@ -53,7 +53,6 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
             GUI_EVENT_KEY_B_GREEN => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up')),
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down')),
             GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
-            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
             GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
             GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
         );
@@ -68,14 +67,6 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
         dump_input_handler($user_input);
 
         switch ($user_input->control_id) {
-            case GUI_EVENT_KEY_RETURN:
-                if ($this->has_changes()) {
-                    $this->plugin->save_history(true);
-                    $this->set_no_changes();
-                }
-
-                return Action_Factory::close_and_run();
-
             case ACTION_CREATE_SEARCH:
                 if (!isset($user_input->parent_media_url)) break;
 
@@ -195,7 +186,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
             ),
         );
 
-        foreach ($this->plugin->get_table_values(VOD_SEARCH_LIST) as $item_row) {
+        foreach ($this->plugin->get_all_table_values(VOD_SEARCH_LIST) as $item_row) {
             if (empty($item_row)) continue;
 
             $items[] = array(

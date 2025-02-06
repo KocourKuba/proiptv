@@ -56,7 +56,6 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
 
         if ($this->plugin->get_playback_points()->size() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
@@ -85,25 +84,14 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                    $post_action = null;
-                    if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
-                        $post_action = User_Input_Handler_Registry::create_action(
-                            User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
-                            ACTION_REFRESH_SCREEN);
-                    }
-                    $post_action = Action_Factory::close_and_run($post_action);
-                    return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+                $post_action = null;
+                if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
+                    $post_action = User_Input_Handler_Registry::create_action(
+                        User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
+                        ACTION_REFRESH_SCREEN);
                 }
-
-                return Action_Factory::close_and_run();
-
-            case GUI_EVENT_KEY_STOP:
-                $this->plugin->save_orders(true);
-                $this->set_no_changes();
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
+                $post_action = Action_Factory::close_and_run($post_action);
+                return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -116,16 +104,10 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                if ($this->has_changes()) {
-                    $this->plugin->save_orders(true);
-                    $this->set_no_changes();
-                    Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
-                }
-
+                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
                 return $post_action;
 
             case ACTION_ITEM_DELETE:
-                $this->set_changes();
                 $this->plugin->get_playback_points()->erase_point($selected_media_url->channel_id);
                 if ($this->plugin->get_playback_points()->size() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -133,7 +115,6 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEMS_CLEAR:
-                $this->set_changes();
                 $this->plugin->get_playback_points()->clear_points();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
@@ -143,7 +124,6 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 $opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
                 $this->plugin->change_channels_order(FAV_CHANNELS_GROUP_ID, $selected_media_url->channel_id, $is_favorite);
-                $this->set_changes();
                 return Action_Factory::show_title_dialog($message,
                     $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 

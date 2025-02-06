@@ -103,8 +103,9 @@ class Movie implements User_Input_Handler
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
-        if (!isset($user_input->control_id) || $user_input->control_id !== GUI_EVENT_PLAYBACK_STOP)
+        if (!isset($user_input->control_id) || $user_input->control_id !== GUI_EVENT_PLAYBACK_STOP) {
             return null;
+        }
 
         $series_list = array_values($this->series_list);
         $episode = $series_list[$user_input->plugin_vod_series_ndx];
@@ -113,24 +114,18 @@ class Movie implements User_Input_Handler
             || ($user_input->plugin_vod_duration - $user_input->plugin_vod_stop_position) < 60;
 
         $series_idx = empty($episode->id) ? $user_input->plugin_vod_series_ndx : $episode->id;
-        $id = $user_input->plugin_vod_id;
-        hd_debug_print("add movie to history: id: $id, series: $series_idx", true);
+        hd_debug_print("add movie to history: id: $user_input->plugin_vod_id, series: $series_idx", true);
 
-        /** @var Hashed_Array $history_items */
-        $history_item = $this->plugin->get_history(HISTORY_MOVIES)->get($id);
-        if (is_null($history_item)) {
-            $history_item = array();
-        }
-
-        $history_item[$series_idx] = new History_Item(
-            $watched,
-            $user_input->plugin_vod_stop_position,
-            $user_input->plugin_vod_duration,
-            $user_input->plugin_vod_stop_tm
+        $this->plugin->set_history(
+            $user_input->plugin_vod_id,
+            $series_idx,
+            array(
+                (int)$watched,
+                $user_input->plugin_vod_stop_position,
+                $user_input->plugin_vod_duration,
+                $user_input->plugin_vod_stop_tm
+            )
         );
-
-        $this->plugin->get_history(HISTORY_MOVIES)->set($id, $history_item);
-        $this->plugin->save_history(true);
 
         if (empty($episode->season_id)) {
             $series_media_url_str = Starnet_Vod_Series_List_Screen::get_media_url_string($user_input->plugin_vod_id);
@@ -421,7 +416,7 @@ class Movie implements User_Input_Handler
             $ids = explode(':', $media_url->movie_id);
             $movie_id = $ids[0];
             /** @var History_Item $viewed_series */
-            $viewed_series = $this->plugin->get_history(HISTORY_MOVIES)->get($movie_id);
+            $viewed_series = $this->plugin->get_history_params($movie_id, $episode->id);
             if (!is_null($viewed_series) && isset($viewed_series[$episode->id])) {
                 $info = $viewed_series[$episode->id];
                 if ($info->watched === false && $info->duration !== -1) {

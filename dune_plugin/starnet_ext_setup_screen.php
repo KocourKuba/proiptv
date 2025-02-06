@@ -349,6 +349,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             rename($file, "$file.prev");
         }
 
+        foreach (glob_dir(get_data_path(), "/\.db/i") as $file) {
+            rename($file, "$file.prev");
+        }
+
         rename(get_data_path(CACHED_IMAGE_SUBDIR), get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         /** @var SplFileInfo[] $files */

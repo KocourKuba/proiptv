@@ -44,7 +44,7 @@ class Changes_Impl
      * @param string $save_data
      * @return bool previous state
      */
-    protected function set_changes($save_data = PLUGIN_ORDERS)
+    protected function set_changes($save_data)
     {
         $old = isset($this->has_changes[$save_data]) && $this->has_changes[$save_data];
         $this->has_changes[$save_data] = true;
@@ -65,52 +65,5 @@ class Changes_Impl
         }
 
         return false;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function save_if_changed()
-    {
-        $saved = false;
-        foreach ($this->has_changes as $key => $value) {
-            if (!$value) continue;
-
-            switch ($key) {
-                case PLUGIN_PARAMETERS:
-                    $saved = $saved || $this->plugin->save_parameters();
-                    $this->set_no_changes($key);
-                    break;
-
-                case PLUGIN_SETTINGS:
-                    $saved = $saved || $this->plugin->save_settings();
-                    $this->set_no_changes($key);
-                    break;
-
-                case PLUGIN_ORDERS:
-                    $saved = $saved || $this->plugin->save_orders();
-                    $this->set_no_changes($key);
-                    break;
-
-                case PLUGIN_HISTORY:
-                    $saved = $saved || $this->plugin->save_history();
-                    $this->set_no_changes($key);
-                    break;
-            }
-        }
-
-        return $saved;
-    }
-
-    /**
-     * Reset changes
-     * @param string $save_data
-     * @return bool previous state
-     */
-    protected function set_no_changes($save_data = PLUGIN_ORDERS)
-    {
-        $old = isset($this->has_changes[$save_data]) && $this->has_changes[$save_data];
-        $this->has_changes[$save_data] = false;
-        return $old;
     }
 }
