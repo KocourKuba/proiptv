@@ -88,11 +88,9 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                     return Action_Factory::open_folder($user_input->selected_media_url);
                 }
 
-                $filter_items = $this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
                 if ($user_input->{ACTION_FILTER} === ACTION_ITEMS_EDIT) {
-                    $filter_idx = $filter_items->get_item_pos($media_url->genre_id);
+                    $filter_idx = $this->plugin->get_table_value_id(VOD_FILTER_LIST, $media_url->genre_id);
                 } else {
-                    /** @var Ordered_Array $filter_items */
                     $filter_idx = -1;
                 }
 
@@ -103,15 +101,13 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if (empty($filter_string)) break;
 
                 hd_debug_print("filter_screen filter string: $filter_string", true);
-                /** @var Ordered_Array $filter_items */
-                $filter_items = &$this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
-                if (isset($user_input->{ACTION_ITEMS_EDIT}) && (int)$user_input->{ACTION_ITEMS_EDIT} !== -1) {
-                    $filter_items->set_item_by_idx($user_input->{ACTION_ITEMS_EDIT}, $filter_string);
+                if (isset($user_input->{ACTION_ITEMS_EDIT})) {
+                    $idx = (int)$user_input->{ACTION_ITEMS_EDIT};
                 } else {
-                    $filter_items->add_item($filter_string);
+                    $idx = -1;
                 }
+                $this->plugin->set_table_value(VOD_FILTER_LIST, $filter_string, $idx);
 
-                $this->plugin->save_history(true);
                 return Action_Factory::invalidate_folders(
                     array($user_input->parent_media_url),
                     Action_Factory::open_folder(
@@ -133,25 +129,33 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if (!isset($user_input->selected_media_url)) break;
 
                 $media_url = MediaURL::decode($user_input->selected_media_url);
-                /** @var Ordered_Array $filter_items */
-                $filter_items = &$this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
-
                 switch ($user_input->control_id) {
                     case ACTION_ITEM_UP:
+                        if (!$this->plugin->arrange_table_values(VOD_FILTER_LIST, $media_url->genre_id, Ordered_Array::UP)) {
+                            return null;
+                        }
+
+                        $min_sel = $this->plugin->get_table_values_count(VOD_FILTER_LIST);
                         $user_input->sel_ndx--;
-                        $filter_items->arrange_item($media_url->genre_id, Ordered_Array::UP);
-                        $this->set_changes();
+                        if ($user_input->sel_ndx < $min_sel) {
+                            $user_input->sel_ndx = $min_sel;
+                        }
                         break;
 
                     case ACTION_ITEM_DOWN:
+                        if (!$this->plugin->arrange_table_values(VOD_FILTER_LIST, $media_url->genre_id, Ordered_Array::DOWN)) {
+                            return null;
+                        }
+
+                        $items_count = $this->plugin->get_table_values_count(VOD_FILTER_LIST) + 1;
                         $user_input->sel_ndx++;
-                        $filter_items->arrange_item($media_url->genre_id, Ordered_Array::DOWN);
-                        $this->set_changes();
+                        if ($user_input->sel_ndx >= $items_count) {
+                            $user_input->sel_ndx = $items_count - 1;
+                        }
                         break;
 
                     case ACTION_ITEM_DELETE:
-                        $filter_items->remove_item($media_url->genre_id);
-                        $this->set_changes();
+                        $this->plugin->remove_table_value(VOD_FILTER_LIST, $media_url->genre_id);
                         break;
                 }
 
@@ -192,19 +196,18 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
             ),
         );
 
-        /** @var Ordered_Array $filter_items */
-        foreach ($this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array()) as $item) {
-            if (!empty($item)) {
-                $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_Vod_List_Screen::get_media_url_string(
-                        Vod_Category::FLAG_FILTER, $item),
-                    PluginRegularFolderItem::caption => TR::t('filter__1', $item),
-                    PluginRegularFolderItem::view_item_params => array(
-                        ViewItemParams::icon_path => self::FILTER_ICON_PATH,
-                        ViewItemParams::item_detailed_icon_path => self::FILTER_ICON_PATH,
-                    ),
-                );
-            }
+        foreach ($this->plugin->get_table_values(VOD_FILTER_LIST) as $item_row) {
+            if (empty($item_row)) continue;
+
+            $items[] = array(
+                PluginRegularFolderItem::media_url => Starnet_Vod_List_Screen::get_media_url_string(
+                    Vod_Category::FLAG_FILTER, $item_row['item']),
+                PluginRegularFolderItem::caption => TR::t('filter__1', $item_row['item']),
+                PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::icon_path => self::FILTER_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => self::FILTER_ICON_PATH,
+                ),
+            );
         }
 
         return $items;

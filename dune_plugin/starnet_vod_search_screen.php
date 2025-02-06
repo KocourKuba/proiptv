@@ -86,16 +86,15 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
 
                 if ($user_input->{ACTION_SEARCH} === ACTION_ITEMS_EDIT) {
                     $search_string = $media_url->genre_id;
+                    $initial = $this->plugin->get_table_value_id(VOD_SEARCH_LIST, $search_string);
                 } else {
-                    /** @var Ordered_Array $search_items */
-                    $search_items = $this->plugin->get_history(VOD_SEARCH_LIST, new Ordered_Array());
-                    $search_items->rewind();
-                    $search_string = $search_items->size() === 0 ? "" : $search_items->current();
+                    $initial = -1;
+                    $search_string = "";
                 }
 
                 $defs = array();
                 Control_Factory::add_text_field($defs,
-                    $this, null, ACTION_NEW_SEARCH, '',
+                    $this, array(ACTION_ITEMS_EDIT => $initial), ACTION_NEW_SEARCH, '',
                     $search_string, false, false, true, true, 1300, false, true);
                 Control_Factory::add_vgap($defs, 500);
 
@@ -107,11 +106,13 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_RUN_SEARCH:
                 $search_string = $user_input->{ACTION_NEW_SEARCH};
+                if (isset($user_input->{ACTION_ITEMS_EDIT})) {
+                    $idx = (int)$user_input->{ACTION_ITEMS_EDIT};
+                } else {
+                    $idx = -1;
+                }
                 hd_debug_print("search string: $search_string", true);
-                /** @var Ordered_Array $search_items */
-                $search_items = &$this->plugin->get_history(VOD_SEARCH_LIST, new Ordered_Array());
-                $search_items->insert_item($search_string, false);
-                $this->plugin->save_history(true);
+                $this->plugin->set_table_value(VOD_SEARCH_LIST, $search_string, $idx);
                 $action = Action_Factory::open_folder(
                     Starnet_Vod_List_Screen::get_media_url_string(Vod_Category::FLAG_SEARCH, $search_string),
                     TR::t('search__1', ": $search_string"));
@@ -141,24 +142,19 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                 if (!isset($user_input->selected_media_url)) break;
 
                 $media_url = MediaURL::decode($user_input->selected_media_url);
-                /** @var Ordered_Array $search_items */
-                $search_items = &$this->plugin->get_history(VOD_SEARCH_LIST, new Ordered_Array());
                 switch ($user_input->control_id) {
                     case ACTION_ITEM_UP:
                         $user_input->sel_ndx--;
-                        $search_items->arrange_item($media_url->genre_id, Ordered_Array::UP);
-                        $this->set_changes();
+                        $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $media_url->genre_id, Ordered_Array::UP);
                         break;
 
                     case ACTION_ITEM_DOWN:
                         $user_input->sel_ndx++;
-                        $search_items->arrange_item($media_url->genre_id, Ordered_Array::DOWN);
-                        $this->set_changes();
+                        $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $media_url->genre_id, Ordered_Array::DOWN);
                         break;
 
                     case ACTION_ITEM_DELETE:
-                        $search_items->remove_item($media_url->genre_id);
-                        $this->set_changes();
+                        $this->plugin->remove_table_value(VOD_SEARCH_LIST, $media_url->genre_id);
                         break;
                 }
 
@@ -199,13 +195,13 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
             ),
         );
 
-        foreach ($this->plugin->get_history(VOD_SEARCH_LIST, new Ordered_Array()) as $item) {
-            if (empty($item)) continue;
+        foreach ($this->plugin->get_table_values(VOD_SEARCH_LIST) as $item_row) {
+            if (empty($item_row)) continue;
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => Starnet_Vod_List_Screen::get_media_url_string(
-                    Vod_Category::FLAG_SEARCH, $item),
-                PluginRegularFolderItem::caption => TR::t('search__1', ": $item"),
+                    Vod_Category::FLAG_SEARCH, $item_row['item']),
+                PluginRegularFolderItem::caption => TR::t('search__1', $item_row['item']),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => self::SEARCH_ICON_PATH,
                     ViewItemParams::item_detailed_icon_path => self::SEARCH_ICON_PATH,

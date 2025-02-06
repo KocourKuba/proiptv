@@ -292,10 +292,14 @@ function print_backtrace()
 {
     hd_print("Back trace:");
     foreach (debug_backtrace() as $f) {
+        if (!isset($f['file'], $f['line'])) {
+            hd_print($f['function'] . ": " . json_encode($f));
+            hd_print("  - " . json_encode($f));
+            continue;
+        }
+
         $func = isset($f['function']) ? $f['function'] : "unknown function";
-        $line = isset($f['line']) ? $f['line'] : "unknown line";
-        $file = isset($f['file']) ? $f['file'] : "unknown file";
-        hd_print("  - $func at $file:$line");
+        hd_print("  - $func at {$f['file']}:{$f['line']}");
     }
 }
 

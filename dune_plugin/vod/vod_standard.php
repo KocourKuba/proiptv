@@ -588,8 +588,11 @@ class vod_standard extends Abstract_Vod
 
         hd_debug_print($initial);
         $added = false;
-        $filter_items = $this->plugin->get_history(VOD_FILTER_LIST, new Ordered_Array());
-        $user_filter = ($initial !== -1) ? $filter_items->get_item_by_idx($initial) : '';
+        if ($initial !== -1) {
+            $user_filter = $this->plugin->get_table_value(VOD_FILTER_LIST, $initial);
+        } else {
+            $user_filter = '';
+        }
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
@@ -628,7 +631,7 @@ class vod_standard extends Abstract_Vod
                 }
 
                 Control_Factory::add_combobox($defs, $parent, null, $name,
-                    $filter['title'], $idx, $filter['values'], 600, true);
+                    $filter['title'], $idx, $filter['values'], 600);
                 Control_Factory::add_vgap($defs, 20);
                 $added = true;
             }

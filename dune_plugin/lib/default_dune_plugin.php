@@ -506,7 +506,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
                 }
             } else {
                 $now = $channel_row['archive'] > 0 ? time() : 0;
-                $this->get_playback_points()->push_point($channel_id, ($archive_tm_sec !== -1 ? $archive_tm_sec : $now));
+                $this->playback_points->push_point($channel_id, ($archive_tm_sec !== -1 ? $archive_tm_sec : $now));
             }
 
             $url = $this->generate_stream_url($channel_row, $archive_tm_sec);
@@ -830,7 +830,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
         hd_debug_print(PARAM_SHOW_VOD_ICON . ": $enable_vod_icon", true);
 
-        $this->get_playback_points()->load_points(true);
+        $this->playback_points->load_points(true);
 
         $epg_manager = $this->get_epg_manager();
 
@@ -1504,6 +1504,113 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     }
 
     /**
+     * Get all custom table values ordered by ROWID
+     *
+     * @param string $table
+     * @return array
+     */
+    public function get_table_values($table)
+    {
+        $table_name = self::get_orders_table_name($table);
+        return $this->sql_wrapper->fetch_array("SELECT * FROM $table_name ORDER BY id ASC");
+    }
+
+    /**
+     * count values
+     *
+     * @param string $table
+     * @return array
+     */
+    public function get_table_values_count($table)
+    {
+        $table_name = self::get_orders_table_name($table);
+        return $this->sql_wrapper->query_value("SELECT count(*) FROM $table_name");
+    }
+
+    /**
+     * Get ROWID for value
+     *
+     * @param string $table
+     * @param string $value
+     * @return array
+     */
+    public function get_table_value_id($table, $value)
+    {
+        $table_name = self::get_orders_table_name($table);
+        $escaped_value = Sql_Wrapper::sql_quote($value);
+        return $this->sql_wrapper->query_value("SELECT id FROM $table_name WHERE item = $escaped_value");
+    }
+
+    /**
+     * Get value by ROWID
+     *
+     * @param string $table
+     * @param int $id
+     * @return array
+     */
+    public function get_table_value($table, $id)
+    {
+        $table_name = self::get_orders_table_name($table);
+        return $this->sql_wrapper->query_value("SELECT item FROM $table_name WHERE id = $id");
+    }
+
+    /**
+     * Update or add value
+     *
+     * @param string $table
+     * @param string $value
+     * @param int $id
+     */
+    public function set_table_value($table, $value, $id = -1)
+    {
+        $table_name = self::get_orders_table_name($table);
+        $escaped_value = Sql_Wrapper::sql_quote($value);
+        if ($id === -1) {
+            $this->sql_wrapper->exec("INSERT OR IGNORE INTO $table_name (item) VALUES ($escaped_value);");
+        } else {
+            $this->sql_wrapper->exec("UPDATE $table_name SET item = $escaped_value WHERE id = $id;");
+        }
+    }
+
+    /**
+     * Remove value
+     *
+     * @param string $table
+     * @param string $value
+     */
+    public function remove_table_value($table, $value)
+    {
+        $table_name = self::get_orders_table_name($table);
+        $escaped_value = Sql_Wrapper::sql_quote($value);
+        $this->sql_wrapper->exec("DELETE FROM $table_name WHERE item = $escaped_value;");
+    }
+
+    /**
+     * Arrange values
+     *
+     * @param string $table
+     * @param string $item
+     * @param int $direction
+     * @return bool
+     */
+    public function arrange_table_values($table, $item, $direction)
+    {
+        $table_name = self::get_orders_table_name($table);
+        $escaped_value = Sql_Wrapper::sql_quote($item);
+        $qry = "SELECT previous, current, next
+            FROM (SELECT item,
+                         LAG(id) OVER (ORDER BY id)  AS previous,
+                         id                          AS current,
+                         LEAD(id) OVER (ORDER BY id) AS next,
+                         FIRST_VALUE(id) OVER (ORDER BY id) AS first,
+                         FIRST_VALUE(id) OVER (ORDER BY id DESC) AS last
+                  FROM $table_name)
+            WHERE item = $escaped_value;";
+
+        return $this->arrange_rows($qry, $table_name, $direction);
+    }
+
+    /**
      * Get history for selected playlist
      *
      * @param string $id
@@ -1519,6 +1626,18 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         }
 
         return $this->history[$id];
+    }
+
+    /**
+     * Get history for selected playlist
+     *
+     * @param string $id
+     * @return bool
+     */
+    public function has_history($id)
+    {
+        $this->load_history();
+        return isset($this->history[$id]);
     }
 
     /**
@@ -1548,10 +1667,11 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         }
 
         if (!isset($this->{$type})) {
-            $file = $this->get_history_path() . '/' . $this->get_active_playlist_key() . "_$type.settings";
-            hd_debug_print("Load ($type): $file");
+            $history_name = $this->make_name(PLUGIN_HISTORY);
+            $file_name = $this->get_history_path() . '/' . $history_name;
+            hd_debug_print("Load ($type): $file_name");
             hd_debug_print(null, true);
-            $this->{$type} = HD::get_items($file, true, false);
+            $this->{$type} = HD::get_items($file_name, true, false);
             if (LogSeverity::$is_debug) {
                 foreach ($this->{$type} as $key => $param) {
                     hd_debug_print("$key => '" . (is_array($param) ? json_encode($param) : $param) . "'");
@@ -2573,7 +2693,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     {
         $menu_items = array();
         if ($group_id !== null) {
-            if ($group_id === HISTORY_GROUP_ID && $this->get_playback_points()->size() !== 0) {
+            if ($group_id === HISTORY_GROUP_ID && $this->playback_points->size() !== 0) {
                 $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             } else if ($group_id === FAV_CHANNELS_GROUP_ID && $this->get_channels_order_count(FAV_CHANNELS_GROUP_ID) !== 0) {
@@ -3932,6 +4052,14 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             return "orders_fav_tv";
         }
 
+        if ($group_id === VOD_FILTER_LIST) {
+            return "vod_filters";
+        }
+
+        if ($group_id === VOD_SEARCH_LIST) {
+            return "vod_search";
+        }
+
         return "orders_" . Hashed_Array::hash($group_id);
     }
 
@@ -4084,6 +4212,24 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             }
             $this->sql_wrapper->exec_transaction($query);
             unset($plugin_orders[$order_name]);
+        }
+
+        foreach (array(VOD_FILTER_LIST, VOD_SEARCH_LIST) as $list) {
+            if (!$this->has_history($list)) continue;
+
+            $table_name = self::get_orders_table_name($list);
+            hd_debug_print("Move '$list' to $table_name db");
+
+            $this->sql_wrapper->exec("CREATE TABLE IF NOT EXISTS $table_name (id INTEGER PRIMARY KEY AUTOINCREMENT, item TEXT UNIQUE);");
+            $items = $this->get_history($list, new Ordered_Array());
+            $query = '';
+            foreach ($items as $item) {
+                $escaped_item = Sql_Wrapper::sql_quote($item);
+                $query .= "INSERT OR IGNORE INTO $table_name (item) VALUES ($escaped_item);";
+            }
+
+            $this->sql_wrapper->exec_transaction($query);
+            $this->clear_history($list);
         }
 
         if (empty($orders)) {
