@@ -453,7 +453,16 @@ function is_limited_apk()
 }
 
 /**
- * return type of platform: android, apk, 8670, etc.
+ * return is runned on dune (andriod) otherwise it runned on windows (debug)
+ * @return bool
+ */
+function is_dune()
+{
+    return (bool)getenv('SHELL');
+}
+
+/**
+ * return type of platform: android, apk, windows
  * @return array
  */
 function get_platform_info()
@@ -468,7 +477,7 @@ function get_platform_info()
             } else {
                 $platform['type'] = 'apk';
             }
-        } else if (!getenv('SHELL')) {
+        } else if (!is_dune()) {
             $platform['platform'] = 'windows';
             $platform['type'] = 'test';
         } else {
@@ -605,12 +614,8 @@ function get_serial_number()
 {
     static $result = null;
 
-    if (is_null($result)) {
-        if (preg_match("/^serial_number:(.*)/m", file_get_contents(getenv('FS_PREFIX') . "/tmp/sysinfo.txt"), $m) > 0) {
-            $result = trim($m[1]);
-        } else {
-            $result = trim(shell_exec('grep "serial_number:" $FS_PREFIX/tmp/sysinfo.txt | sed "s/^.*: *//"'));
-        }
+    if (is_null($result) && preg_match("/^serial_number:(.*)/m", file_get_contents(getenv('FS_PREFIX') . "/tmp/sysinfo.txt"), $m) > 0) {
+        $result = trim($m[1]);
     }
 
     return $result;
@@ -621,11 +626,14 @@ function get_serial_number()
  */
 function get_ip_address()
 {
-    $ip = trim(shell_exec('ifconfig eth0 2>/dev/null | head -2 | tail -1 | sed "s/^.*inet addr:\([^ ]*\).*$/\1/"'));
-    if (!is_numeric(preg_replace('/\s|\./', '', $ip))) {
-        $ip = trim(shell_exec('ifconfig wlan0 2>/dev/null | head -2 | tail -1 | sed "s/^.*inet addr:\([^ ]*\).*$/\1/"'));
+    $ip = '';
+    if (is_dune()) {
+        $ip = trim(shell_exec('ifconfig eth0 2>/dev/null | head -2 | tail -1 | sed "s/^.*inet addr:\([^ ]*\).*$/\1/"'));
         if (!is_numeric(preg_replace('/\s|\./', '', $ip))) {
-            $ip = '';
+            $ip = trim(shell_exec('ifconfig wlan0 2>/dev/null | head -2 | tail -1 | sed "s/^.*inet addr:\([^ ]*\).*$/\1/"'));
+            if (!is_numeric(preg_replace('/\s|\./', '', $ip))) {
+                $ip = '';
+            }
         }
     }
 
@@ -637,14 +645,15 @@ function get_ip_address()
  */
 function get_dns_address()
 {
-    $dns = explode(PHP_EOL, shell_exec('getprop | grep "net.dns"'));
     $addr = '';
-    foreach ($dns as $key => $server) {
-        if (preg_match("|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|", $server, $m)) {
-            $addr .= "nameserver" . ($key + 1) . ": " . $m[1] . ", ";
+    if (is_dune()) {
+        $dns = explode(PHP_EOL, shell_exec('getprop | grep "net.dns"'));
+        foreach ($dns as $key => $server) {
+            if (preg_match("|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|", $server, $m)) {
+                $addr .= "nameserver" . ($key + 1) . ": " . $m[1] . ", ";
+            }
         }
     }
-
     return $addr;
 }
 
@@ -659,8 +668,10 @@ function get_mac_address()
         if (is_apk()) {
             $mac_addr = @file_get_contents(getenv('FS_PREFIX') . '/tmp/run/dune_mac.txt');
             $mac_addr = strtoupper($mac_addr);
-        } else {
+        } else if (is_dune()) {
             $mac_addr = trim(shell_exec('ifconfig eth0 | head -1 | sed "s/^.*HWaddr //"'));
+        } else {
+            $mac_addr = '';
         }
     }
 
@@ -1764,7 +1775,11 @@ function print_sysinfo()
     $platform = get_platform_info();
     $dns = get_dns_address();
     $values = curl_version();
-    $ext_curl = trim(shell_exec(get_platform_curl() . ' --version|grep curl'));
+    if (is_dune()) {
+        $ext_curl = trim(shell_exec(get_platform_curl() . ' --version|grep curl'));
+    } else {
+        $ext_curl = trim(shell_exec(get_platform_curl() . ' --version|find "curl"'));
+    }
 
     $table = array(
         'Dune Product' => get_product_id(),

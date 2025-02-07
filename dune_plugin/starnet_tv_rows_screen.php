@@ -24,7 +24,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'lib/playback_points.php';
 require_once 'lib/epfs/abstract_rows_screen.php';
 require_once 'lib/epfs/rows_factory.php';
 require_once 'lib/epfs/gcomps_factory.php';
@@ -73,7 +72,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         switch ($control_id) {
             case GUI_EVENT_TIMER:
                 // rising after playback end + 100 ms
-                $this->plugin->get_playback_points()->update_point(null);
+                $this->plugin->update_tv_history(null);
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case GUI_EVENT_KEY_PLAY:
@@ -227,7 +226,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 hd_debug_print($media_url, true);
                 if ($media_url->group_id === HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
-                    $this->plugin->get_playback_points()->clear_points();
+                    $this->plugin->clear_tv_history();
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
 
@@ -697,36 +696,34 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $now = time();
         $rows = array();
         $watched = array();
-        $playback_points = $this->plugin->get_playback_points();
-        if ($playback_points !== null) {
-            foreach ($playback_points->get_all() as $channel_id => $channel_ts) {
-                $channel_row = $this->plugin->get_channel_info($channel_id, true);
-                if (empty($channel_row)) continue;
+        $playback_points = $this->plugin->get_tv_history();
+        foreach ($playback_points as $channel_id => $channel_ts) {
+            $channel_row = $this->plugin->get_channel_info($channel_id, true);
+            if (empty($channel_row)) continue;
 
-                $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
-                $progress = 0;
+            $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
+            $progress = 0;
 
-                if (is_null($prog_info)) {
-                    $title = $channel_row['title'];
-                } else {
-                    // program epg available
-                    $title = $prog_info[PluginTvEpgProgram::name];
-                    if ($channel_ts > 0) {
-                        $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
-                        $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
-                        if ($channel_ts >= $now - $channel_row['archive'] * 86400 - 60) {
-                            $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
-                        }
+            if (is_null($prog_info)) {
+                $title = $channel_row['title'];
+            } else {
+                // program epg available
+                $title = $prog_info[PluginTvEpgProgram::name];
+                if ($channel_ts > 0) {
+                    $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
+                    $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
+                    if ($channel_ts >= $now - $channel_row['archive'] * 86400 - 60) {
+                        $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
                     }
                 }
-
-                $watched[(string)$channel_id] = array(
-                    'channel_id' => $channel_id,
-                    'archive_tm' => $channel_ts,
-                    'view_progress' => $progress,
-                    'program_title' => $title,
-                );
             }
+
+            $watched[(string)$channel_id] = array(
+                'channel_id' => $channel_id,
+                'archive_tm' => $channel_ts,
+                'view_progress' => $progress,
+                'program_title' => $title,
+            );
         }
 
         // fill view history row items
@@ -741,7 +738,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $id = json_encode(array('group_id' => HISTORY_GROUP_ID, 'channel_id' => $item['channel_id'], 'archive_tm' => $item['archive_tm']));
             if (isset($this->removed_playback_point) && $this->removed_playback_point === $id) {
                 $this->removed_playback_point = null;
-                $this->plugin->get_playback_points()->erase_point($item['channel_id']);
+                $this->plugin->erase_tv_history($item['channel_id']);
                 continue;
             }
 

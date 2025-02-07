@@ -343,9 +343,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $this->plugin->get_playlists()->rewind();
                         $this->plugin->set_active_playlist_key($this->plugin->get_playlists()->key());
                     }
-                    $this->plugin->unlink_settings($selected_id);
-                    $this->plugin->unlink_history($selected_id);
-                    $this->plugin->unlink_orders($selected_id);
+                    $this->plugin->remove_playlist_data($selected_id);
                 }
 
                 $this->get_order($edit_list)->erase($selected_id);
@@ -380,9 +378,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     case self::SCREEN_EDIT_PLAYLIST:
                         foreach ($this->get_order($edit_list)->get_keys() as $offset) {
-                            $this->plugin->unlink_settings($offset);
-                            $this->plugin->unlink_history($offset);
-                            $this->plugin->unlink_orders($offset);
+                            $this->plugin->remove_playlist_data($offset);
                         }
                         $this->get_order($edit_list)->clear();
                         break;

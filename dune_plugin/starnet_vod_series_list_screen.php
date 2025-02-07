@@ -170,7 +170,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $this->plugin->set_history(
                         $selected_media_url->movie_id,
                         $selected_media_url->episode_id,
-                        array('watched' => true, 'timestamp' => time())
+                        array('watched' => true, 'time_stamp' => time())
                     );
                 }
 
@@ -291,14 +291,14 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $info = $episode->name;
             if (!empty($viewed_params)) {
                 if ($viewed_params['watched']) {
-                    $date = format_datetime("d.m.Y H:i", $viewed_params['timestamp']);
+                    $date = format_datetime("d.m.Y H:i", $viewed_params['time_stamp']);
                     $info = TR::t('vod_screen_viewed__2', $episode->name, $date);
                 } else if ($viewed_params['duration'] !== -1) {
                     $info = TR::t('vod_screen_viewed__4',
                         $episode->name,
                         format_duration_seconds($viewed_params['position']),
                         format_duration_seconds($viewed_params['duration']),
-                        format_datetime("d.m.Y H:i", $viewed_params['timestamp'])
+                        format_datetime("d.m.Y H:i", $viewed_params['time_stamp'])
                     );
                 }
                 $color = 5;

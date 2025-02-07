@@ -8,12 +8,12 @@ class dune_plugin_settings extends UI_Parameters
     /**
      * @var array
      */
-    private $settings;
+    protected $settings;
 
     /**
      * @var array
      */
-    private $parameters;
+    protected $parameters;
 
     /**
      * @var array
@@ -169,22 +169,6 @@ class dune_plugin_settings extends UI_Parameters
                 hd_debug_print(null, true);
                 $this->load("$id.settings", PLUGIN_SETTINGS, $force);
             }
-        }
-    }
-
-    /**
-     * Remove settings for selected playlist
-     * @param string $id
-     */
-    public function unlink_settings($id)
-    {
-        unset($this->settings);
-        hd_debug_print("remove $id.settings", true);
-        HD::erase_data_items("$id.settings");
-
-        foreach (glob_dir(get_cached_image_path(), "/^$id.*$/i") as $file) {
-            hd_debug_print("remove cached image: $file", true);
-            unlink($file);
         }
     }
 

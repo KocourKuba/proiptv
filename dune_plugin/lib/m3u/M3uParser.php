@@ -592,6 +592,10 @@ class M3uParser extends Json_Serializer
         return $this->m3u_info;
     }
 
+    /**
+     * @param string $group_id
+     * @return int
+     */
     public static function is_adult_group($group_id)
     {
         $lower_title = mb_strtolower($group_id, 'UTF-8');

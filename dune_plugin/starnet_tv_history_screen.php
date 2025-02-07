@@ -57,7 +57,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
 
-        if ($this->plugin->get_playback_points()->size() !== 0) {
+        if ($this->plugin->get_tv_history_count() !== 0) {
             $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
             $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
@@ -108,14 +108,14 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return $post_action;
 
             case ACTION_ITEM_DELETE:
-                $this->plugin->get_playback_points()->erase_point($selected_media_url->channel_id);
-                if ($this->plugin->get_playback_points()->size() === 0) {
+                $this->plugin->erase_tv_history($selected_media_url->channel_id);
+                if ($this->plugin->get_tv_history_count() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->get_playback_points()->clear_points();
+                $this->plugin->clear_tv_history();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_FAV:
@@ -151,7 +151,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         $items = array();
         $now = time();
-        foreach ($this->plugin->get_playback_points()->get_all() as $channel_id => $channel_ts) {
+        foreach ($this->plugin->get_tv_history() as $channel_id => $channel_ts) {
             $channel_row = $this->plugin->get_channel_info($channel_id, true);
             if (empty($channel_row)) continue;
 

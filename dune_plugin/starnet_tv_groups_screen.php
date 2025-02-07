@@ -434,7 +434,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_ITEMS_CLEAR:
                 $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
                 if ($group_id === HISTORY_GROUP_ID) {
-                    $this->plugin->get_playback_points()->clear_points();
+                    $this->plugin->clear_tv_history();
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
 
@@ -596,7 +596,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 case HISTORY_GROUP_ID:
                     $visible = 0;
-                    foreach ($this->plugin->get_playback_points()->get_all() as $channel_id => $channel_ts) {
+                    foreach ($this->plugin->get_tv_history() as $channel_id => $channel_ts) {
                         $channel = $this->plugin->get_channel_info($channel_id);
                         if (!empty($channel)) {
                             $visible++;

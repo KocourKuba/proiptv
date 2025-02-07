@@ -109,10 +109,9 @@ class Starnet_Tv implements User_Input_Handler
                 $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id, true);
                 if (isset($channel['adult']) && $channel['adult'] != 0) break;
 
-                $this->plugin->get_playback_points()->update_point($user_input->plugin_tv_channel_id);
+                $this->plugin->update_tv_history($user_input->plugin_tv_channel_id);
 
                 if (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed)) {
-                    $this->plugin->get_playback_points()->save();
                     return Action_Factory::invalidate_folders(array(Starnet_Tv_Groups_Screen::ID));
                 }
         }

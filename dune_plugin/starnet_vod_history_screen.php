@@ -128,7 +128,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
 
             hd_debug_print("history info: " . json_encode($movie_info), true);
             $movie_id = $movie_info['movie_id'];
-            $timestamp = $movie_info['timestamp'];
+            $timestamp = $movie_info['time_stamp'];
             $this->plugin->vod->ensure_movie_loaded($movie_id);
             $short_movie = $this->plugin->vod->get_cached_short_movie($movie_id);
 
@@ -153,8 +153,8 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                     $recent_timestamp = 0;
                     foreach ($history_items as $history_item) {
                         $all_watched = $all_watched & ($history_item['watched'] === 1);
-                        if ($history_item['timestamp'] > $recent_timestamp) {
-                            $recent_timestamp = $history_item['timestamp'];
+                        if ($history_item['time_stamp'] > $recent_timestamp) {
+                            $recent_timestamp = $history_item['time_stamp'];
                         }
                     }
                     if ($all_watched) {

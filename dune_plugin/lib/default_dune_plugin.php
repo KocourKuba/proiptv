@@ -35,7 +35,6 @@ require_once 'm3u/M3uParser.php';
 require_once 'm3u/M3uTags.php';
 require_once 'lib/dune_plugin_settings.php';
 require_once 'lib/epg/epg_manager_json.php';
-require_once 'lib/playback_points.php';
 require_once 'lib/perf_collector.php';
 require_once 'lib/smb_tree.php';
 
@@ -84,7 +83,12 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     protected $epg_manager;
 
     /**
-     * @var Playback_Points
+     * @var string
+     */
+    protected $current_playback_point_id;
+
+    /**
+     * @var array
      */
     protected $playback_points;
 
@@ -327,14 +331,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         }
     }
 
-    /**
-     * @return Playback_Points
-     */
-    public function get_playback_points()
-    {
-        return $this->playback_points;
-    }
-
     ///////////////////////////////////////////////////////////////////////////
 
     /**
@@ -496,7 +492,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
                 }
             } else {
                 $now = $channel_row['archive'] > 0 ? time() : 0;
-                $this->playback_points->push_point($channel_id, ($archive_tm_sec !== -1 ? $archive_tm_sec : $now));
+                $this->push_tv_history($channel_id, ($archive_tm_sec !== -1 ? $archive_tm_sec : $now));
             }
 
             $url = $this->generate_stream_url($channel_row, $archive_tm_sec);
@@ -817,7 +813,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
         hd_debug_print(PARAM_SHOW_VOD_ICON . ": $enable_vod_icon", true);
 
-        $this->playback_points->load_points(true);
+        $this->load_tv_history();
 
         $epg_manager = $this->get_epg_manager();
 
@@ -1509,13 +1505,13 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     }
 
     /**
-     * Get VOD history for selected playlist sorted by movie_id and last viewed timestamp (most recent first)
+     * Get VOD history for selected playlist sorted by movie_id and last viewed time_stamp (most recent first)
      *
      * @return array
      */
     public function get_all_history()
     {
-        return $this->sql_wrapper->fetch_array("SELECT *, MAX(timestamp) FROM history.vod_history GROUP BY movie_id ORDER BY timestamp DESC;");
+        return $this->sql_wrapper->fetch_array("SELECT *, MAX(time_stamp) FROM history.vod_history GROUP BY movie_id ORDER BY time_stamp DESC;");
     }
 
     /**
@@ -1660,26 +1656,114 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         return rtrim($path, '/');
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    /// Playback points
+
     /**
-     * Remove orders for selected playlist from disk
-     * @param string $id
+     * @return void
      */
-    public function unlink_orders($id)
+    public function load_tv_history()
     {
-        $filename = $this->make_name(PLUGIN_ORDERS, $id) . ".db";
-        hd_debug_print("remove $filename", true);
-        HD::erase_data_items($filename);
+        $this->playback_points = array();
+        $list = $this->sql_wrapper->fetch_array("SELECT * FROM history.tv_history;");
+        foreach ($list as $row) {
+            $this->playback_points[$row['channel_id']] = $row['time_stamp'];
+        }
     }
 
     /**
-     * Remove history for selected playlist from disk
+     * @return array
+     */
+    public function get_tv_history()
+    {
+        return $this->playback_points;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_tv_history_count()
+    {
+        return count($this->playback_points);
+    }
+
+    /**
+     * @param string|null $id
+     */
+    public function update_tv_history($id)
+    {
+        if ($this->current_playback_point_id === null && $id === null)
+            return;
+
+        // update point for selected channel
+        $id = ($id !== null) ? $id : $this->current_playback_point_id;
+
+        if (isset($this->playback_points[$id])) {
+            $player_state = get_player_state_assoc();
+            if (isset($player_state['playback_state'], $player_state['playback_position'])
+                && ($player_state['playback_state'] === PLAYBACK_PLAYING || $player_state['playback_state'] === PLAYBACK_STOPPED)) {
+
+                // if channel does support archive do not update current point
+                $this->playback_points[$id] += ($this->playback_points[$id] !== 0) ? $player_state['playback_position'] : 0;
+                hd_debug_print("channel_id $id at time mark: {$this->playback_points[$id]}", true);
+            }
+        }
+    }
+
+    /**
+     * @param string $channel_id
+     * @param integer $archive_ts
+     */
+    public function push_tv_history($channel_id, $archive_ts)
+    {
+        $player_state = get_player_state_assoc();
+        if (isset($player_state['player_state']) && $player_state['player_state'] !== 'navigator') {
+            if (!isset($player_state['last_playback_event']) || ($player_state['last_playback_event'] !== PLAYBACK_PCR_DISCONTINUITY)) {
+
+                //hd_debug_print("channel_id $channel_id time mark: $archive_ts");
+                $this->current_playback_point_id = $channel_id;
+
+                if (array_key_exists($channel_id, $this->playback_points)) {
+                    unset($this->playback_points[$channel_id]);
+                }
+                $this->playback_points = array($channel_id => $archive_ts) + $this->playback_points;
+                $i = 0;
+                $query = '';
+                foreach ($this->playback_points as $channel_id => $archive_ts) {
+                    $q_id = Sql_Wrapper::sql_quote($channel_id);
+                    $timestamp = (int)$archive_ts;
+
+                    if ($i++ > 7) {
+                        $this->erase_tv_history($channel_id);
+                        $query .= "DELETE FROM history.tv_history WHERE channel_id = $q_id;";
+                    } else {
+                        $query .= "INSERT OR REPLACE INTO history.tv_history (channel_id, time_stamp) VALUES ($q_id, $timestamp) WHERE channel_id = $channel_id;";
+                    }
+                }
+                $this->sql_wrapper->exec_transaction($query);
+            }
+        }
+    }
+
+    /**
      * @param string $id
      */
-    public function unlink_history($id)
+    public function erase_tv_history($id)
     {
-        $filename = $this->make_name(PLUGIN_HISTORY, $id) . ".db";
-        hd_debug_print("remove $filename", true);
-        HD::erase_data_items("$filename");
+        hd_debug_print("erase $id");
+        unset($this->playback_points[$id]);
+        $q_id = Sql_Wrapper::sql_quote($id);
+        $this->sql_wrapper->exec("DELETE FROM history.tv_history WHERE channel_id = $q_id;");
+    }
+
+    /**
+     * @return void
+     */
+    public function clear_tv_history()
+    {
+        hd_debug_print();
+        $this->playback_points = array();
+        $this->sql_wrapper->exec("DELETE FROM history.tv_history;");
     }
 
     /**
@@ -1800,8 +1884,6 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         }
 
         $this->create_screen_views();
-        $this->playback_points = new Playback_Points($this);
-
         $this->unload_db();
 
         $playlists = $this->get_playlists();
@@ -2579,7 +2661,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
     {
         $menu_items = array();
         if ($group_id !== null) {
-            if ($group_id === HISTORY_GROUP_ID && $this->playback_points->size() !== 0) {
+            if ($group_id === HISTORY_GROUP_ID && $this->get_tv_history_count() !== 0) {
                 $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
                 $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             } else if ($group_id === FAV_CHANNELS_GROUP_ID && $this->get_channels_order_count(FAV_CHANNELS_GROUP_ID) !== 0) {
@@ -3274,18 +3356,17 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
         return $minkey;
     }
 
-    public function make_name($storage, $id = null)
+    public function make_name($storage, $id = '')
     {
-        $storage_name = $this->get_active_playlist_key() . "_$storage";
         if (empty($id) && isset($this->cur_provider)) {
             $id = $this->cur_provider->getCredential(MACRO_PLAYLIST_ID);
         }
 
         if (!empty($id)) {
-            $storage_name .= "_$id";
+            $id = "_$id";
         }
 
-        return $storage_name;
+        return $this->get_active_playlist_key() . "_$storage$id";
     }
 
     /**
@@ -4004,7 +4085,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             hd_debug_print("Move 'group_orders' to 'groups' db table");
             $query = '';
             foreach ($plugin_orders[PARAM_GROUPS_ORDER] as $group_id) {
-                $adult = self::is_adult_group($group_id);
+                $adult = M3uParser::is_adult_group($group_id);
                 $q_group_id = Sql_Wrapper::sql_quote($group_id);
                 $group_icon = Sql_Wrapper::sql_quote($group_icons->has($group_id) ? $group_icons->get($group_id) : DEFAULT_GROUP_ICON);
                 $query .= "INSERT OR IGNORE INTO groups (group_id, title, icon, adult) VALUES ($q_group_id, $q_group_id, $group_icon, $adult);";
@@ -4020,7 +4101,7 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             hd_debug_print("Move 'disabled_group' orders to 'groups' db table");
             $query = '';
             foreach ($plugin_orders[PARAM_DISABLED_GROUPS] as $group_id) {
-                $adult = self::is_adult_group($group_id);
+                $adult = M3uParser::is_adult_group($group_id);
                 $q_group_id = Sql_Wrapper::sql_quote($group_id);
                 $group_icon = Sql_Wrapper::sql_quote($group_icons->has($group_id) ? $group_icons->get($group_id) : DEFAULT_GROUP_ICON);
                 $query .= "INSERT OR IGNORE
@@ -4072,7 +4153,13 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             unset($plugin_orders[$order_name]);
         }
 
-        $history_name = $this->get_history_path() . '/' . $this->make_name(PLUGIN_HISTORY);
+        if (empty($orders)) {
+            HD::erase_data_items($plugin_orders_name);
+        } else {
+            HD::put_data_items($plugin_orders_name, $orders, false);
+        }
+
+        $history_name = get_slash_trailed_path($this->get_history_path()) . $this->make_name(PLUGIN_HISTORY);
         $this->sql_wrapper->exec("ATTACH DATABASE '$history_name.db' as history");
         $query = "CREATE TABLE IF NOT EXISTS history.vod_history
                         (movie_id TEXT,
@@ -4080,9 +4167,9 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
                          watched INTEGER DEFAULT 0,
                          position INTEGER DEFAULT 0,
                          duration INTEGER DEFAULT 0,
-                         timestamp INTEGER DEFAULT 0,
+                         time_stamp INTEGER DEFAULT 0,
                          UNIQUE(movie_id, series_id)
-                        )";
+                        );";
         $this->sql_wrapper->exec($query);
 
         $file_name = $history_name . ".settings";
@@ -4102,9 +4189,10 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
                         $q_series_id = Sql_Wrapper::sql_quote($series_id);
                         $watched = (int)$item->watched;
                         $query .= "INSERT OR IGNORE INTO history.vod_history
-                                (movie_id, series_id, watched, position, duration, timestamp)
+                                (movie_id, series_id, watched, position, duration, time_stamp)
                                 VALUES ($q_movie_id, $q_series_id, $watched, $item->position, $item->duration, $item->date);";
-                    }                }
+                    }
+                }
                 $this->sql_wrapper->exec_transaction($query);
                 unset($history[VOD_HISTORY]);
             }
@@ -4133,26 +4221,67 @@ class Default_Dune_Plugin extends dune_plugin_settings implements DunePlugin
             }
         }
 
-        if (empty($orders)) {
-            HD::erase_data_items($plugin_orders_name);
-        } else {
-            HD::put_data_items($plugin_orders_name, $orders, false);
+        $query = "CREATE TABLE IF NOT EXISTS history.tv_history (channel_id TEXT UNIQUE NOT NULL, time_stamp INTEGER DEFAULT 0);";
+        $this->sql_wrapper->exec($query);
+
+        $history_name = get_slash_trailed_path($this->get_history_path()) . $this->get_active_playlist_key() . PARAM_TV_HISTORY_ITEMS;
+        if (file_exists($history_name)) {
+            $points = HD::get_items($history_name);
+            hd_debug_print("Load tv history: " . count($points) . " from: $history_name", true);
+            $i = 0;
+            $query = '';
+            foreach ($points as $key => $item) {
+                if ($i++ > 7) break;
+                $q_key = Sql_Wrapper::sql_quote($key);
+                $item = (int)$item;
+                $query .= "INSERT OR IGNORE INTO history.tv_history (channel_id, time_stamp) VALUES ($q_key, $item);";
+            }
+            $this->sql_wrapper->exec_transaction($query);
+            HD::erase_items($history_name);
         }
 
         return true;
     }
 
     /**
-     * @param string $group_id
-     * @return int
+     * Remove all data for selected playlist
+     * @param string $id
      */
-    public static function is_adult_group($group_id)
+    public function remove_playlist_data($id)
     {
-        $lower_title = mb_strtolower($group_id, 'UTF-8');
-        return (strpos($lower_title, "взрослы") !== false
-            || strpos($lower_title, "adult") !== false
-            || strpos($lower_title, "18+") !== false
-            || strpos($lower_title, "xxx") !== false) ? 1 : 0;
+        if (empty($id)) {
+            return;
+        }
+
+        // orders
+        $playlists = $this->get_parameter(PARAM_PLAYLIST_STORAGE, new Hashed_Array());
+        if ($playlists->has($id)) {
+            $db_name = get_data_path("$id.db");
+            if (file_exists($db_name)) {
+                hd_debug_print("remove $db_name", true);
+                unlink($db_name);
+            }
+        }
+
+        // history
+        $filename = get_data_path($this->make_name(PLUGIN_HISTORY, $id) . ".db");
+        if (file_exists($filename)) {
+            hd_debug_print("remove $filename", true);
+            unlink($filename);
+        }
+
+        // settings
+        hd_debug_print("remove $id.settings", true);
+        $filename = get_data_path("$id.settings");
+        if (file_exists($filename)) {
+            unlink($filename);
+        }
+
+        // clear cached images for selected id
+        foreach (glob_dir(get_cached_image_path(), "/^$id.*$/i") as $file) {
+            hd_debug_print("remove cached image: $file", true);
+            unlink($file);
+        }
     }
 
     /**
