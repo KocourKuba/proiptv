@@ -312,8 +312,8 @@ class vod_glanz extends vod_standard
             }
 
             $match_year = false;
-            $year_from = isset($post_params['from']) ? $post_params['from'] : ~PHP_INT_MAX;
-            $year_to = isset($post_params['to']) ? $post_params['to'] : PHP_INT_MAX;
+            $year_from = safe_get_value($post_params, 'from', ~PHP_INT_MAX);
+            $year_to = safe_get_value($post_params, 'to', PHP_INT_MAX);
 
             if ((int)$movie->year >= $year_from && (int)$movie->year <= $year_to) {
                 $match_year = true;

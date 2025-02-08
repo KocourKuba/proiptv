@@ -104,6 +104,8 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
     }
 
     /**
+     * Get MediaURL string representation (json encoded)
+     * *
      * @param string $category_id
      * @param string $genre_id
      * @return false|string

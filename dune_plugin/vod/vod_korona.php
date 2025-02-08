@@ -55,7 +55,7 @@ class vod_korona extends vod_standard
         // movies_84636 or serials_84636
         hd_debug_print("TryLoadMovie: $movie_id");
         $arr = explode("_", $movie_id);
-        $id = isset($arr[1]) ? $arr[1] : $movie_id;
+        $id = safe_get_value($arr, 1, $movie_id);
 
         $json = $this->make_json_request("/video/$id");
 
@@ -119,7 +119,7 @@ class vod_korona extends vod_standard
     public function fetchVodCategories(&$category_list, &$category_index)
     {
         $jsonItems = $this->make_json_request("/cat");
-        if ($jsonItems === false) {
+        if ($jsonItems === false || empty($jsonItems->data)) {
             return false;
         }
 
@@ -278,7 +278,7 @@ class vod_korona extends vod_standard
         hd_debug_print($query_id);
         $this->get_next_page($query_id);
         $arr = explode("_", $query_id);
-        $genre_id = isset($arr[1]) ? $arr[1] : $query_id;
+        $genre_id = safe_get_value($arr, 1, $query_id);
         $response = $this->make_json_request("/genres/$genre_id?page=1&per_page=999999999");
         return $response === false ? array() : $this->CollectSearchResult($query_id, $response);
     }

@@ -901,6 +901,7 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_ottclub.png",
       "provider_url": "https://www.ottclub.cc/",
+      "icons_template": "http://{DOMAIN}/images/{ID}.png",
       "api_commands": {
         "get_playlist": "http://{DOMAIN_ID}/playlist/{PASSWORD}/m3u"
       },
@@ -1433,7 +1434,6 @@
       "api_commands": {
         "get_playlist": "http://p.velestore.su/play18/{LOGIN}/{PASSWORD}/playlist.m3u8"
       },
-      "ext_params": true,
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+):(?<port>[^\\/]+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"

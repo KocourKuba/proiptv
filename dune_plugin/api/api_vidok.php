@@ -77,7 +77,7 @@ class api_vidok extends api_default
      */
     public function replace_macros($string)
     {
-        $token = md5(strtolower($this->getCredential(MACRO_LOGIN)) . md5($this->getCredential(MACRO_PASSWORD)));
+        $token = md5(strtolower($this->getParameter(MACRO_LOGIN)) . md5($this->getParameter(MACRO_PASSWORD)));
         $string = str_replace(MACRO_SESSION_ID, $token, $string);
 
         return parent::replace_macros($string);
@@ -147,7 +147,7 @@ class api_vidok extends api_default
                 }
 
                 if (isset($this->account_info->account->settings->server_id)) {
-                    $this->setCredential(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
+                    $this->setParameter(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
                 }
             }
         }
@@ -160,8 +160,8 @@ class api_vidok extends api_default
      */
     public function SetServer($server, &$error_msg)
     {
-        $old = $this->getCredential(MACRO_SERVER_ID);
-        $this->setCredential(MACRO_SERVER_ID, $server);
+        $old = $this->getParameter(MACRO_SERVER_ID);
+        $this->setParameter(MACRO_SERVER_ID, $server);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->settings->value)) {
@@ -170,7 +170,7 @@ class api_vidok extends api_default
             return true;
         }
 
-        $this->setCredential(MACRO_SERVER_ID, $old);
+        $this->setParameter(MACRO_SERVER_ID, $old);
 
         $error_msg = '';
         return false;
@@ -183,9 +183,9 @@ class api_vidok extends api_default
     {
         $servers = $this->GetServers();
         if (!empty($servers)) {
-            $idx = $this->getCredential(MACRO_SERVER_ID);
+            $idx = $this->getParameter(MACRO_SERVER_ID);
             if (empty($idx)) {
-                $this->setCredential(MACRO_SERVER_ID, key($servers));
+                $this->setParameter(MACRO_SERVER_ID, key($servers));
             }
         }
     }

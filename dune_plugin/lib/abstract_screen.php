@@ -25,11 +25,33 @@
  */
 
 require_once 'screen.php';
-require_once 'changes_impl.php';
 
-class Abstract_Screen extends Changes_Impl implements Screen
+class Abstract_Screen implements Screen
 {
     const ID = 'abstract_screen';
+
+    /**
+     * @var Default_Dune_Plugin
+     */
+    protected $plugin;
+
+    public function __construct(Default_Dune_Plugin $plugin)
+    {
+        $this->plugin = $plugin;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    // static methods
+
+    /**
+     * Get MediaURL string representation (json encoded)
+     *
+     * @return false|string
+     */
+    public static function get_media_url_str()
+    {
+        return MediaURL::encode(array('screen_id' => static::ID));
+    }
 
     /**
      * This is not override of User_Input_Handler interface!
@@ -41,14 +63,6 @@ class Abstract_Screen extends Changes_Impl implements Screen
     public static function get_handler_id()
     {
         return static::get_id() . '_handler';
-    }
-
-    /**
-     * @return false|string
-     */
-    public static function get_media_url_str()
-    {
-        return MediaURL::encode(array('screen_id' => static::ID));
     }
 
     ///////////////////////////////////////////////////////////////////////

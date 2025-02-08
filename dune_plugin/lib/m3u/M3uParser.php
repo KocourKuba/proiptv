@@ -36,12 +36,6 @@ class M3uParser extends Json_Serializer
      */
     public static $epg_id_attrs = array(ATTR_TVG_ID, ATTR_TVG_EPGID);
 
-    /*
-     * Possible epg id's attributes
-     * "tvg-id", "tvg-epgid", "tvg-name", "name"
-     */
-    public static $epg_ids_attrs = array(ATTR_TVG_ID, ATTR_TVG_EPGID, ATTR_TVG_NAME, ATTR_CHANNEL_NAME);
-
     /**
      * @var string
      */
@@ -164,9 +158,9 @@ class M3uParser extends Json_Serializer
     public function setupParserParameters($params)
     {
         if (!empty($params)) {
-            $this->id_map = isset($params['id_map']) ? $params['id_map'] : null;
-            $this->id_parser = isset($params['id_parser']) ? $params['id_parser'] : null;
-            $this->icon_replace_pattern = isset($params['icon_replace_pattern']) ? $params['icon_replace_pattern'] : null;
+            $this->id_map = safe_get_value($params, 'id_map');
+            $this->id_parser = safe_get_value($params, 'id_parser');
+            $this->icon_replace_pattern = safe_get_value($params, 'icon_replace_pattern');
         }
 
         // replace patterns in playlist icon
@@ -374,7 +368,7 @@ class M3uParser extends Json_Serializer
         }
 
         $db_name = LogSeverity::$is_debug ? "$this->file_name.db" : ":memory:";
-        $db->exec("ATTACH DATABASE '$db_name' as vod;");
+        $db->exec("ATTACH DATABASE '$db_name' AS vod;");
         $db->exec("PRAGMA journal_mode=MEMORY;");
 
         $db->exec("DROP TABLE IF EXISTS vod.vod_entries;");
@@ -416,9 +410,11 @@ class M3uParser extends Json_Serializer
         }
 
         $db->exec('COMMIT;');
+        $lines = null;
 
         $this->perf->setLabel('end');
         $report = $this->perf->getFullReport();
+
         hd_debug_print_separator();
         hd_debug_print("IndexFile: {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
@@ -498,7 +494,7 @@ class M3uParser extends Json_Serializer
             foreach ($arr as $value) {
                 $urls = explode(',', $value);
                 foreach ($urls as $url) {
-                    if (!empty($url) && is_http($url) && !preg_match("/jtv.?\.zip$/", basename($url))) {
+                    if (!empty($url) && is_proto_http($url) && !preg_match("/jtv.?\.zip$/", basename($url))) {
                         $xmltv_sources->add_item($url);
                     }
                 }
@@ -534,6 +530,9 @@ class M3uParser extends Json_Serializer
         }
 
         // all information parsed. Now can set additional parameters and update database
+        if (!is_supported_proto($line)) {
+            return 0;
+        }
 
         // set url and it hash
         $entry->setHash(Hashed_Array::hash($line));

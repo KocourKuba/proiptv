@@ -53,7 +53,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         $day_epg = array();
         try {
-            $provider = $this->plugin->get_current_provider();
+            $provider = $this->plugin->get_active_provider();
             if (is_null($provider)) {
                 return null;
             }

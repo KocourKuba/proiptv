@@ -17,6 +17,7 @@
 /update_config.cmd
 /format_serialize.php
 /test*
+/*test.php
 /creds.txt
 /dune_plugin/dune_plugin.xml
 /dune_plugin/dune_plugin_metadata.xml
@@ -33,3 +34,7 @@
 /dune_fs/tmp/plugins/proiptv/vod_last_error
 /dune_fs/tmp/plugins/proiptv/pl_last_error
 /dune_fs/tmp/plugins/proiptv/epfs_warmed_up
+/dune_fs/tmp/plugins/proiptv/*.json
+/dune_fs/tmp/plugins/proiptv/rq_last_error
+/dune_fs/tmp/plugins/proiptv/*.session_id
+/dune_fs/tmp/plugins/proiptv/*_session_id

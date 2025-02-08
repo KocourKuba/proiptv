@@ -128,7 +128,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $audios['auto'] = TR::t('by_default');
                 $audios = array_merge($audios, $this->audios[$selected_media_url->episode_id]);
-                $selected_audio = isset($this->default_audio[$selected_media_url->movie_id]) ? $this->default_audio[$selected_media_url->movie_id] : 'auto';
+                $selected_audio = safe_get_value($this->default_audio, $selected_media_url->movie_id, 'auto');
                 foreach ($audios as $key => $audio) {
                     $name = ($key === 'auto') ? $audio : $audio->name;
                     $icon = null;
@@ -227,7 +227,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
         if ($this->plugin->vod->getVodAudio()) {
             $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
             if (!is_null($movie)) {
-                $selected_audio = isset($this->default_audio[$media_url->movie_id]) ? $this->default_audio[$media_url->movie_id] : 'auto';
+                $selected_audio = safe_get_value($this->default_audio, $media_url->movie_id, 'auto');
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
                     ACTION_AUDIO,
                     TR::t('vod_screen_audio__1', $selected_audio));
@@ -242,6 +242,8 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
     }
 
     /**
+     * Get MediaURL string representation (json encoded)
+     * *
      * @param string $movie_id
      * @param string|null $season_id
      * @param string|null $episode_id
@@ -263,10 +265,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param MediaURL $media_url
-     * @param Object $plugin_cookies
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {

@@ -46,7 +46,6 @@ class UI_Parameters
                 hd_debug_print("Error: screen (id: " . $object->get_id() . ") already registered.");
             } else {
                 $this->screens[$object->get_id()] = $object;
-                hd_debug_print("Screen added: " . $object->get_id(), true);
                 if ($object instanceof User_Input_Handler) {
                     User_Input_Handler_Registry::get_instance()->register_handler($object);
                 }
@@ -67,8 +66,6 @@ class UI_Parameters
                 User_Input_Handler_Registry::get_instance()->unregister_handler($this->screens[$id]->get_handler_id());
             }
             unset($this->screens[$id]);
-        } else {
-            hd_debug_print("Screen not exist: $id", true);
         }
     }
 
@@ -86,7 +83,7 @@ class UI_Parameters
      */
     public function get_screen($id)
     {
-        return $this->screens[$id];
+        return safe_get_value($this->screens, $id);
     }
 
     /**
@@ -95,7 +92,7 @@ class UI_Parameters
      */
     public function get_screen_view($name)
     {
-        return isset($this->screens_views[$name]) ? $this->screens_views[$name] : array();
+        return safe_get_value($this->screens_views, $name, array());
     }
 
     /**
@@ -184,7 +181,7 @@ class UI_Parameters
      */
     protected function get_screen_by_url(MediaURL $media_url)
     {
-        $screen_id = isset($media_url->screen_id) ? $media_url->screen_id : $media_url->get_raw_string();
+        $screen_id = safe_get_member($media_url, 'screen_id', $media_url->get_raw_string());
 
         return $this->get_screen_by_id($screen_id);
     }
@@ -212,7 +209,8 @@ class UI_Parameters
      * @param string $background
      * @return void
      */
-    protected function init_screen_view_parameters($background) {
+    public function init_screen_view_parameters($background) {
+        hd_debug_print("Selected background: $background", true);
         $this->screens_views = array(
             // 1x10 title list view with right side icon
             'list_1x11_small_info' => array(

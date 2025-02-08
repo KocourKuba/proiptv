@@ -167,7 +167,7 @@ class Epg_Manager_Xmltv
     {
         $this->plugin = $plugin;
         $this->xmltv_sources = $this->plugin->get_active_sources();
-        $this->flags = $this->plugin->get_bool_parameter(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
+        $this->flags = $this->plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         $this->set_cache_dir($this->plugin->get_cache_dir());
     }
 
@@ -503,19 +503,21 @@ class Epg_Manager_Xmltv
         if (!file_exists($cached_file)) {
             hd_debug_print("Cached xmltv file not exist");
         } else {
-            $check_time_file = filemtime($cached_file);
-            hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $check_time_file), true);
+            $modify_time_file = filemtime($cached_file);
+            hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $modify_time_file), true);
 
             if ($cache_ttl === XMLTV_CACHE_AUTO) {
                 $this->curl_wrapper->set_url($url);
-                if ($this->curl_wrapper->check_is_expired()) {
-                    $this->curl_wrapper->clear_cached_etag();
-                } else {
+                if (!$this->curl_wrapper->check_is_expired()) {
                     $expired = false;
+                } else if ($this->curl_wrapper->is_cached_etag()) {
+                    $this->curl_wrapper->clear_cached_etag();
                 }
             } else if (filesize($cached_file) !== 0) {
                 $max_cache_time = 3600 * 24 * $cache_ttl;
-                if ($check_time_file && $check_time_file + $max_cache_time > time()) {
+                $expired_time = $modify_time_file + $max_cache_time;
+                hd_debug_print("Xmltv cache expired at: " . date("Y-m-d H:i", $expired_time), true);
+                if ($modify_time_file && $expired_time > time()) {
                     $expired = false;
                 }
             }
@@ -1046,7 +1048,7 @@ class Epg_Manager_Xmltv
             if (empty($channel_id)) continue;
 
             foreach ($xml_node->getElementsByTagName('icon') as $tag) {
-                if (is_http($tag->getAttribute('src'))) {
+                if (is_proto_http($tag->getAttribute('src'))) {
                     $picon_url = $tag->getAttribute('src');
                     if (!empty($picon_url)) {
                         $picon_hash = md5($picon_url);

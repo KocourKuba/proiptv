@@ -28,8 +28,6 @@ require_once 'api_cbilling.php';
 
 class api_1ott extends api_default
 {
-    const SESSION_FILE = "%s_session_id";
-
     /**
      * @inheritDoc
      */
@@ -38,22 +36,15 @@ class api_1ott extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $session_file = sprintf(self::SESSION_FILE, $this->get_provider_playlist_id());
-        $session_id = HD::get_cookie($session_file);
+        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
         if (!$force && !empty($session_id)) {
             hd_debug_print("request not required", true);
             return true;
         }
 
-        // remove old settings
-        $res = $this->removeCredential(MACRO_TOKEN);
-        if ($res) {
-            $this->save_credentials();
-        }
-
         $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
         if (isset($response->token)) {
-            HD::set_cookie($session_file, $response->token,time() + 86400);
+            $this->plugin->set_cookie(PARAM_SESSION_ID, $response->token,time() + 86400);
             HD::set_last_error("rq_last_error", null);
             return true;
         }
@@ -65,20 +56,12 @@ class api_1ott extends api_default
     /**
      * @inheritDoc
      */
-    public function clear_session_info()
-    {
-        HD::clear_cookie(sprintf(self::SESSION_FILE, $this->get_provider_playlist_id()));
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function replace_macros($string)
     {
-        $session_id = HD::get_cookie(sprintf(self::SESSION_FILE, $this->get_provider_playlist_id()));
-        $string = str_replace(MACRO_SESSION_ID, $session_id, $string);
+        hd_debug_print("current api template: $string", true);
+        $string = str_replace(MACRO_SESSION_ID, $this->plugin->get_cookie(PARAM_SESSION_ID), $string);
+        hd_debug_print("current api result: $string", true);
 
         return parent::replace_macros($string);
     }
-
 }

@@ -256,7 +256,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
 
             case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) !== ENGINE_JSON) break;
+                if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== ENGINE_JSON) break;
 
                 $epg_manager = $this->plugin->get_epg_manager();
 
@@ -277,9 +277,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ENGINE_XMLTV:
             case ENGINE_JSON:
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) !== $user_input->control_id) {
+                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== $user_input->control_id) {
                     hd_debug_print("Selected engine: $user_input->control_id", true);
-                    $this->plugin->unload_db();
+                    $this->plugin->reset_playlist_db();
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
                     return $reload_action;
@@ -289,9 +289,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case PLAYLIST_PICONS:
             case XMLTV_PICONS:
             case COMBINED_PICONS:
-                if ($this->plugin->get_setting(PARAM_USE_PICONS) !== $user_input->control_id) {
+                if ($this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== $user_input->control_id) {
                     hd_debug_print("Selected icons source: $user_input->control_id", true);
-                    $this->plugin->unload_db();
+                    $this->plugin->reset_playlist_db();
                     $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
                     $this->plugin->init_epg_manager();
                     return $reload_action;
@@ -317,7 +317,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_EXTERNAL_PLAYER:
             case ACTION_INTERNAL_PLAYER:
-                $this->plugin->set_channel_for_ext_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
+                $this->plugin->set_channel_ext_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
 
             case ACTION_INFO_DLG:
@@ -336,7 +336,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_DO_EDIT_PROVIDER:
             case ACTION_DO_EDIT_PROVIDER_EXT:
                 if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
-                    $provider = $this->plugin->get_current_provider();
+                    $provider = $this->plugin->get_active_provider();
                     if (is_null($provider)) {
                         return null;
                     }
@@ -995,9 +995,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     {
         hd_debug_print(null, true);
 
-        $group_id = isset($media_url->group_id) ? $media_url->group_id : null;
-        $channel_id = isset($media_url->channel_id) ? $media_url->channel_id : null;
-        $archive_tm = isset($media_url->archive_tm) ? $media_url->archive_tm : -1;
+        $group_id = safe_get_member($media_url, 'group_id');
+        $channel_id = safe_get_member($media_url, 'channel_id');
+        $archive_tm = safe_get_member($media_url, 'archive_tm', -1);
 
         if (is_null($channel_id) || empty($group_id)) {
             return null;
@@ -1322,7 +1322,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
                 if (!is_limited_apk()) {
-                    $is_external = $this->plugin->get_channels_for_ext_player()->in_order($channel_id);
+                    $is_external = $this->plugin->get_channel_ext_player($channel_id);
                     $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_EXTERNAL_PLAYER,
                         TR::t('tv_screen_external_player'),
@@ -1368,7 +1368,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             if ($playlist !== null) {
                 $menu_items[] = $this->plugin->create_menu_item($this,
                     ACTION_RELOAD,
-                    TR::t('playlist_name_msg__1', $playlist->name),
+                    TR::t('playlist_name_msg__1', $playlist[PARAM_NAME]),
                     "refresh.png",
                     array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
                 );
@@ -1378,7 +1378,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $media_url = MediaURL::decode($user_input->selected_row_id);
             $row_id = json_decode($media_url->row_id);
-            $group_id = isset($row_id->group_id) ? $row_id->group_id : null;
+            $group_id = safe_get_member($row_id, 'group_id');
             $menu_items = array_merge($menu_items, $this->plugin->common_categories_menu($this, $group_id, false));
         }
 

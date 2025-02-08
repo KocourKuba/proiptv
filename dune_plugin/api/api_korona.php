@@ -28,9 +28,6 @@ require_once 'api_default.php';
 
 class api_korona extends api_default
 {
-    const TOKEN_FILE = "%s.token";
-    const REFRESH_TOKEN_FILE = "%s.refresh_token";
-
     /**
      * @var array
      */
@@ -44,8 +41,7 @@ class api_korona extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $token_file = sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id());
-        $token = HD::get_cookie($token_file);
+        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
         if (!$force && !$expired) {
@@ -53,13 +49,12 @@ class api_korona extends api_default
             return true;
         }
 
-        $refresh_token_file = sprintf(self::REFRESH_TOKEN_FILE, $this->get_provider_playlist_id());
-        $refresh_token = HD::get_cookie($refresh_token_file, true);
-        $need_refresh = $expired && !empty($refresh_token);
-        if ($need_refresh) {
+        $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
+        $can_refresh = $expired && !empty($refresh_token);
+        if ($can_refresh) {
             /*
             grant_type=refresh_token
-            refresh_token={{refresh_token}}"
+            refresh_token={refresh_token}"
             */
             hd_debug_print("need to refresh token", true);
             $cmd = API_COMMAND_REFRESH_TOKEN;
@@ -74,8 +69,8 @@ class api_korona extends api_default
             hd_debug_print("need to request token", true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
             $pairs['grant_type'] = 'password';
-            $pairs['username'] = $this->getCredential(MACRO_LOGIN);
-            $pairs['password'] = $this->getCredential(MACRO_PASSWORD);
+            $pairs['username'] = $this->getParameter(MACRO_LOGIN);
+            $pairs['password'] = $this->getParameter(MACRO_PASSWORD);
         }
 
         $curl_opt[CURLOPT_POST] = true;
@@ -92,13 +87,15 @@ class api_korona extends api_default
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
             hd_debug_print("token requested: " . pretty_json_format($data), true);
-            HD::set_cookie($token_file, $data->access_token, time() + $data->expires_in);
-            HD::set_cookie($refresh_token_file, $data->refresh_token, PHP_INT_MAX, true);
+            $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, time() + $data->expires_in);
+            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $data->access_token, PHP_INT_MAX);
             return true;
         }
 
-        if ($need_refresh) {
-            $this->clear_session_info();
+        if ($can_refresh && isset($data->error)) {
+            // refresh token failed. Need to make complete auth
+            $this->plugin->remove_cookie(PARAM_TOKEN);
+            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
             return $this->request_provider_token(true);
         }
 
@@ -110,20 +107,10 @@ class api_korona extends api_default
     /**
      * @inheritDoc
      */
-    public function clear_session_info()
-    {
-        HD::clear_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
-        HD::clear_cookie(sprintf(self::REFRESH_TOKEN_FILE, $this->get_provider_playlist_id()), true);
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function replace_macros($string)
     {
         hd_debug_print("current api template: $string", true);
-        $token = HD::get_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
-        $string = str_replace(MACRO_TOKEN, $token, $string);
+        $string = str_replace(MACRO_TOKEN, $this->plugin->get_cookie(PARAM_TOKEN), $string);
         hd_debug_print("current api result: $string", true);
 
         return parent::replace_macros($string);
@@ -183,9 +170,9 @@ class api_korona extends api_default
     {
         $servers = $this->GetServers();
         if (!empty($servers)) {
-            $idx = $this->getCredential(MACRO_SERVER_ID);
+            $idx = $this->getParameter(MACRO_SERVER_ID);
             if (empty($idx)) {
-                $this->setCredential(MACRO_SERVER_ID, key($servers));
+                $this->setParameter(MACRO_SERVER_ID, key($servers));
             }
         }
     }

@@ -185,7 +185,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 return Action_Factory::open_folder(Starnet_Ext_Setup_Screen::get_media_url_str(), TR::t('setup_extended_setup'));
 
             case RESET_CONTROLS_ACTION_ID:
-                $sel_ndx = isset($user_input->initial_sel_ndx) ? $user_input->initial_sel_ndx : -1;
+                $sel_ndx = safe_get_member($user_input, 'initial_sel_ndx', -1);
                 return Action_Factory::reset_controls($this->do_get_control_defs(), null, $sel_ndx);
         }
 

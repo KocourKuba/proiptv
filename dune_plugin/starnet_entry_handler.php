@@ -106,6 +106,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 if ($this->plugin->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
                     return null;
                 }
+                $this->plugin->init_playlist_db();
                 return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
 
             case self::ACTION_CALL_PLAYLIST_SETTINGS:
@@ -143,6 +144,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_CLEAR_EPG:
                 $this->plugin->init_plugin();
+                $this->plugin->init_playlist_db();
                 $this->plugin->init_epg_manager();
                 $this->plugin->safe_clear_selected_epg_cache();
                 $action = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
@@ -157,8 +159,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print("FORCE LANUCH PLUGIN");
                 hd_debug_print_separator();
 
-                $this->plugin->init_plugin(true);
-                if ($this->plugin->get_playlists()->size() === 0) {
+                $this->plugin->init_plugin();
+                if ($this->plugin->get_all_playlists_count() === 0) {
                     return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
                         Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
                 }
@@ -179,8 +181,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print("LANUCH PLUGIN");
                         hd_debug_print_separator();
 
-                        $this->plugin->init_plugin(true);
-                        if ($this->plugin->get_playlists()->size() === 0) {
+                        $this->plugin->init_plugin();
+                        if ($this->plugin->get_all_playlists_count() === 0) {
                             return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
                                 Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST);
                         }
@@ -224,12 +226,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print("LANUCH PLUGIN VOD");
                         hd_debug_print_separator();
 
-                        $this->plugin->init_plugin($plugin_cookies);
-                        if ($this->plugin->get_playlists()->size() === 0) {
+                        $this->plugin->init_plugin();
+                        if ($this->plugin->get_all_playlists_count() === 0) {
                             return User_Input_Handler_Registry::create_action($this, self::ACTION_CALL_PLUGIN_SETTINGS);
                         }
 
-                        if ($this->plugin->vod_enabled && $plugin_cookies->{PARAM_SHOW_VOD_ICON} === SetupControlSwitchDefs::switch_on) {
+                        if ($this->plugin->is_vod_enabled() && $plugin_cookies->{PARAM_SHOW_VOD_ICON} === SetupControlSwitchDefs::switch_on) {
                             $this->plugin->load_channels($plugin_cookies);
                             return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
                         }
@@ -241,7 +243,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print("LANUCH PLUGIN AUTO RESUME MODE");
                         hd_debug_print_separator();
 
-                        $this->plugin->init_plugin(true);
+                        $this->plugin->init_plugin();
                         if ((int)$user_input->mandatory_playback !== 1
                             || (isset($plugin_cookies->auto_resume) && $plugin_cookies->auto_resume === SetupControlSwitchDefs::switch_off)) {
                             break;
@@ -283,13 +285,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Starnet_Epfs_Handler::update_all_epfs($plugin_cookies,
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
-                    case self::ACTION_INSTALL:
-                    case self::ACTION_UPDATE:
-                        $this->plugin->upgrade_parameters();
-                        break;
-
                     case self::ACTION_UNINSTALL:
                         $this->plugin->init_plugin();
+                        $this->plugin->init_playlist_db();
                         $this->plugin->init_epg_manager();
                         $this->plugin->safe_clear_selected_epg_cache();
                         Default_Archive::clear_cache();

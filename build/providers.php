@@ -164,37 +164,39 @@ if (isset($params['ver'])) {
 
     write_to_log($logbuf, 'providers.log');
 
-    $DB = new db_driver;
-    $DB->obj['sql_database'] = IPTV_DATABASE;
-    $DB->obj['sql_user'] = IPTV_USER;
-    $DB->obj['sql_pass'] = IPTV_PASSWORD;
+	if (!empty($revision)) {
+	    $DB = new db_driver;
+	    $DB->obj['sql_database'] = IPTV_DATABASE;
+	    $DB->obj['sql_user'] = IPTV_USER;
+	    $DB->obj['sql_pass'] = IPTV_PASSWORD;
 
-    if($DB->connect()) {
-        $data['model'] = $model;
-        $data['firmware'] = $firmware;
-        $data['revision'] = $revision;
-        $data['serial'] = $serial;
-        $data['time'] = $time;
-        $data['date'] = $date;
-        $data['version'] = $version;
-        $data['ip'] = $ip;
-        $data['country'] = $country;
-        if (!empty($serial)) {
-            $DB->insert_or_update_table($data, 'statistics');
-            $error = $DB->error;
-            if (!empty($error)) {
-                write_to_log("database query error $error", 'error.log');
-            }
-            $DB->close_db();
-        } else {
-            write_to_log("bad url query $request", 'error.log');
-        }
-    } else {
-	    write_to_log("can't connect to database", 'error.log');
+	    if($DB->connect()) {
+	        $data['model'] = $model;
+	        $data['firmware'] = $firmware;
+	        $data['revision'] = $revision;
+	        $data['serial'] = $serial;
+	        $data['time'] = $time;
+	        $data['date'] = $date;
+	        $data['version'] = $version;
+	        $data['ip'] = $ip;
+	        $data['country'] = $country;
+	        if (!empty($serial)) {
+    	        $DB->insert_or_update_table($data, 'statistics');
+	            $error = $DB->error;
+    	        if (!empty($error)) {
+        	        write_to_log("database query error $error", 'error.log');
+	            }
+    	        $DB->close_db();
+	        } else {
+    	        write_to_log("bad url query $request", 'error.log');
+        	}
+	    } else {
+		    write_to_log("can't connect to database", 'error.log');
+		}
 	}
 }
 
-if (empty($name)) {
+if (empty($name) || empty($revision)) {
     header("HTTP/1.1 404 Not found");
     echo '["error" : "This version is not supported"]';
 } else {

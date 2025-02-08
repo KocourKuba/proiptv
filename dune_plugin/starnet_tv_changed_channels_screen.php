@@ -30,6 +30,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
     const ID = 'tv_changed_channels';
 
     /**
+     * Get MediaURL string representation (json encoded)
+     *
      * @param string $group_id
      * @return false|string
      */
@@ -113,7 +115,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->tv->jump_to_channel($channel_id);
+                return $this->plugin->iptv->jump_to_channel($channel_id);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if ($this->plugin->get_changed_channels_count('new', $channel_id) !== 0) {

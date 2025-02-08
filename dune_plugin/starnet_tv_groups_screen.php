@@ -83,7 +83,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
-        $sel_ndx = isset($user_input->sel_ndx) ? $user_input->sel_ndx : 0;
+        $sel_ndx = safe_get_member($user_input, 'sel_ndx', 0);
         if (isset($user_input->selected_media_url)) {
             $sel_media_url = MediaURL::decode($user_input->selected_media_url);
         } else {
@@ -263,7 +263,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 } else {
-                    $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
+                    $group_id = safe_get_member($sel_media_url, 'group_id');
                     $menu_items = $this->plugin->common_categories_menu($this, $group_id);
                 }
 
@@ -274,7 +274,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
 
             case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) !== ENGINE_JSON) break;
+                if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== ENGINE_JSON) break;
 
                 $epg_manager = $this->plugin->get_epg_manager();
 
@@ -309,9 +309,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ENGINE_XMLTV:
             case ENGINE_JSON:
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE) !== $user_input->control_id) {
+                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== $user_input->control_id) {
                     hd_debug_print("Selected engine: $user_input->control_id", true);
-                    $this->plugin->unload_db();
+                    $this->plugin->reset_playlist_db();
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
                     return User_Input_Handler_Registry::create_action(
@@ -326,9 +326,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case PLAYLIST_PICONS:
             case XMLTV_PICONS:
             case COMBINED_PICONS:
-                if ($this->plugin->get_setting(PARAM_USE_PICONS) !== $user_input->control_id) {
+                if ($this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== $user_input->control_id) {
                     hd_debug_print("Selected icons source: $user_input->control_id", true);
-                    $this->plugin->unload_db();
+                    $this->plugin->reset_playlist_db();
                     $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
                     $this->plugin->init_epg_manager();
                     return User_Input_Handler_Registry::create_action(
@@ -349,7 +349,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_DO_EDIT_PROVIDER:
             case ACTION_DO_EDIT_PROVIDER_EXT:
-                $provider = $this->plugin->get_current_provider();
+                $provider = $this->plugin->get_active_provider();
                 if (is_null($provider)) {
                     return null;
                 }
@@ -432,7 +432,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_CLEAR:
-                $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
+                $group_id = safe_get_member($sel_media_url, 'group_id');
                 if ($group_id === HISTORY_GROUP_ID) {
                     $this->plugin->clear_tv_history();
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
@@ -504,7 +504,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_INFO_DLG:
-                $provider = $this->plugin->get_current_provider();
+                $provider = $this->plugin->get_active_provider();
                 if (is_null($provider) || !$provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
                     return null;
                 }
@@ -526,12 +526,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                $provider = $this->plugin->get_current_provider();
+                $provider = $this->plugin->get_active_provider();
                 if (is_null($provider)) {
                     return null;
                 }
 
-                $url = $provider->getCredential(MACRO_CUSTOM_PLAYLIST);
+                $url = $provider->getParameter(MACRO_CUSTOM_PLAYLIST);
 
                 Control_Factory::add_vgap($defs, 20);
                 Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
@@ -545,10 +545,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::show_dialog(TR::t('edit_list_add_url'), $defs, true);
 
             case ACTION_URL_DLG_APPLY:
-                $provider = $this->plugin->get_current_provider();
+                $provider = $this->plugin->get_active_provider();
                 if (!is_null($provider)) {
                     hd_debug_print("set custom playlist $user_input->url_path");
-                    $provider->setCredential(MACRO_CUSTOM_PLAYLIST, $user_input->url_path);
+                    $provider->setParameter(MACRO_CUSTOM_PLAYLIST, $user_input->url_path);
                 }
                 return null;
 

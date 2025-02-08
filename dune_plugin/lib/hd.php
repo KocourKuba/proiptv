@@ -270,14 +270,19 @@ class HD
             }
 
             $rootPath = get_data_path();
-            $zip->addFile("{$rootPath}common.settings", "common.settings");
-            foreach ($plugin->get_playlists() as $key => $playlist) {
+            $zip->addFile("{$rootPath}common.db", "common.db");
+            foreach ($plugin->get_all_playlists() as $key => $playlist) {
                 $name = $key . ".settings";
-                if (!file_exists($rootPath . $name)) continue;
+                if (file_exists($rootPath . $name)) {
+                    $zip->addFile("$rootPath$name", $name);
+                }
 
-                $zip->addFile("$rootPath$name", $name);
+                $name = $key . ".db";
+                if (file_exists($rootPath . $name)) {
+                    $zip->addFile("$rootPath$name", $name);
+                }
 
-                $pattern = $key . ".*\.db";
+                $pattern = $key . "_orders*\.db";
                 foreach (glob_dir($rootPath, "/$pattern/i") as $full_path) {
                     if (file_exists($full_path)) {
                         $zip->addFile($full_path, basename($full_path));
@@ -999,46 +1004,6 @@ class HD
             }
         }
         return null;
-    }
-
-    /**
-     * Set cookie with expired time (timestamp).
-     * If $persistent is true cookie stored to plugin data path
-     *
-     * @param string $filename file name without path
-     * @param string $content
-     * @param int $expired_time expired time
-     * @param bool $persistent [optional] is stored in persistent file storage
-     */
-    public static function set_cookie($filename, $content, $expired_time, $persistent = false)
-    {
-        $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
-        file_put_contents($file_path, $content);
-        touch($file_path, $expired_time);
-    }
-
-    /**
-     * Get cookie if it not expired.
-     * If $persistent is true cookie readed from plugin data path
-     *
-     * @param string $filename file name without path
-     * @param bool $persistent [optional] is stored in persistent file storage
-     * @return false|string
-     */
-    public static function get_cookie($filename, $persistent = false)
-    {
-        $file_path = $persistent ? get_data_path($filename) : get_temp_path($filename);
-        $content = '';
-        if (file_exists($file_path)) {
-            $expired = time() > filemtime($file_path);
-            if ($expired) {
-                unlink($file_path);
-            } else {
-                $content = file_get_contents($file_path);
-            }
-        }
-
-        return $content;
     }
 
     /**

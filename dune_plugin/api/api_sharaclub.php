@@ -59,11 +59,11 @@ class api_sharaclub extends api_default
         parent::get_provider_info($force);
 
         if (isset($this->account_info->data->listdomain)) {
-            $this->setCredential(MACRO_PLAYLIST, $this->account_info->data->listdomain);
+            $this->setParameter(MACRO_PLAYLIST, $this->account_info->data->listdomain);
         }
 
         if (isset($this->account_info->data->jsonEpgDomain)) {
-            $this->setCredential(MACRO_EPG_DOMAIN, $this->account_info->data->jsonEpgDomain);
+            $this->setParameter(MACRO_EPG_DOMAIN, $this->account_info->data->jsonEpgDomain);
         }
 
         return $this->account_info;
@@ -159,7 +159,7 @@ class api_sharaclub extends api_default
                     $this->servers[(int)$server->id] = $server->name;
                 }
 
-                $this->setCredential(MACRO_SERVER_ID, (int)$response->current);
+                $this->playlist_info[PARAM_PARAMS][MACRO_SERVER_ID] = (int)$response->current;
             }
         }
 
@@ -171,8 +171,8 @@ class api_sharaclub extends api_default
      */
     public function SetServer($server, &$error_msg)
     {
-        $old = $this->getCredential(MACRO_SERVER_ID);
-        $this->setCredential(MACRO_SERVER_ID, $server);
+        $old = $this->getParameter(MACRO_SERVER_ID);
+        $this->playlist_info[PARAM_PARAMS][MACRO_SERVER_ID] = $server;
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->status) && (int)$response->status === 1) {
@@ -180,7 +180,7 @@ class api_sharaclub extends api_default
             return true;
         }
 
-        $this->setCredential(MACRO_SERVER_ID, $old);
+        $this->playlist_info[PARAM_NAME][MACRO_SERVER_ID] = $old;
         $error_msg = '';
         return false;
     }
@@ -192,9 +192,9 @@ class api_sharaclub extends api_default
     {
         $servers = $this->GetServers();
         if (!empty($servers)) {
-            $idx = $this->getCredential(MACRO_SERVER_ID);
+            $idx = $this->getParameter(MACRO_SERVER_ID);
             if (empty($idx)) {
-                $this->setCredential(MACRO_SERVER_ID, key($servers));
+                $this->playlist_info[PARAM_PARAMS][MACRO_SERVER_ID] = key($servers);
             }
         }
     }

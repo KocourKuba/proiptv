@@ -302,7 +302,7 @@ function print_backtrace()
             continue;
         }
 
-        $func = isset($f['function']) ? $f['function'] : "unknown function";
+        $func = safe_get_value($f, 'function', "unknown function");
         hd_print("  - $func at {$f['file']}:{$f['line']}");
     }
 }
@@ -491,7 +491,7 @@ function get_platform_info()
                 $platform['type'] = 'unsupported';
             } else  {
                 $platform['platform'] = $ini_arr['platform_kind'];
-                $platform['type'] = isset($ini_arr['android_platform']) ? $ini_arr['android_platform'] : "not android";
+                $platform['type'] = safe_get_value($ini_arr, 'android_platform', "not android");
             }
         }
     }
@@ -1649,7 +1649,7 @@ function get_plugin_manifest_info()
         $result['app_version'] = (string)$xml->version;
         $ver = explode('.', $result['app_version']);
         $result['app_base_version'] = "$ver[0].$ver[1]";
-        $result['app_version_idx'] = isset($xml->version_index) ? (string)$xml->version_index : '0';
+        $result['app_version_idx'] = (string)safe_get_member($xml, 'version_index', '0');
         $result['app_release_date'] = (string)$xml->release_date;
         $result['app_background'] = (string)$xml->background;
         $result['app_manifest_path'] = $manifest_path;
@@ -2024,9 +2024,47 @@ function delete_directory($dir)
  * @param string $url
  * @return bool
  */
-function is_http($url)
+function is_proto_http($url)
 {
     return strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0;
+}
+
+/**
+ * Check if url has udp:// scheme
+ *
+ * @param string $url
+ * @return bool
+ */
+function is_proto_udp($url)
+{
+    return strpos($url, 'udp://') === 0;
+}
+
+/**
+ * Check if url has file:// scheme
+ *
+ * @param string $url
+ * @return bool
+ */
+function is_proto_file($url)
+{
+    return strpos($url, 'file://') === 0;
+}
+
+/**
+ * Check if url has rtsp:// scheme
+ *
+ * @param string $url
+ * @return bool
+ */
+function is_proto_rtsp($url)
+{
+    return strpos($url, 'rtsp://') === 0;
+}
+
+function is_supported_proto($url)
+{
+    return is_proto_http($url) || is_proto_udp($url) || is_proto_file($url) || is_proto_rtsp($url);
 }
 
 /**
@@ -2038,17 +2076,6 @@ function is_http($url)
 function replace_https($url)
 {
     return str_replace('https://', 'http://', $url);
-}
-
-/**
- * Check if url has udp:// scheme
- *
- * @param string $url
- * @return bool
- */
-function is_udp($url)
-{
-    return strpos($url, 'udp://') === 0;
 }
 
 /**
@@ -2067,6 +2094,32 @@ function safe_merge_array($ar1, $ar2)
     }
 
     return $ar1;
+}
+
+/**
+ * Safe get value from array by key
+ *
+ * @param array $ar
+ * @param string $param
+ * @param mixed|null $default
+ * @return mixed
+ */
+function safe_get_value($ar, $param, $default = null)
+{
+    return isset($ar[$param]) ? $ar[$param] : $default;
+}
+
+/**
+ * Safe get value from member
+ *
+ * @param object $obj
+ * @param string $param
+ * @param mixed|null $default
+ * @return mixed
+ */
+function safe_get_member($obj, $param, $default = null)
+{
+    return isset($obj->{$param}) ? $obj->{$param} : $default;
 }
 
 /**

@@ -205,7 +205,7 @@ class Curl_Wrapper
      */
     public function get_etag_header()
     {
-        return $this->get_response_header('ETag');
+        return $this->get_response_header('etag');
     }
 
     /**
@@ -213,7 +213,7 @@ class Curl_Wrapper
      */
     public function get_response_header($header)
     {
-        return isset($this->response_headers[$header]) ? $this->response_headers[$header] : '';
+        return safe_get_value($this->response_headers, $header, '');
     }
 
     /**
@@ -295,7 +295,9 @@ class Curl_Wrapper
         hd_debug_print(null, true);
 
         $etag = $this->get_cached_etag();
-        if (!empty($etag)) {
+        if (empty($etag)) {
+            hd_debug_print("No ETag value");
+        } else {
             $this->create_curl_config(null, true);
             if ($this->exec_curl()) {
                 $code = $this->get_response_code();
@@ -323,7 +325,7 @@ class Curl_Wrapper
     {
         $cache_db = self::load_cached_etag();
         $hash = $hash !== null ? $hash : $this->url_hash;
-        return isset($cache_db[$hash]) ? $cache_db[$hash] : '';
+        return safe_get_value($cache_db, $hash, '');
     }
 
     /**
@@ -331,6 +333,7 @@ class Curl_Wrapper
      */
     public function set_cached_etag($etag)
     {
+        hd_debug_print(null, true);
         $cache_db = self::load_cached_etag();
         $cache_db[$this->url_hash] = $etag;
         self::save_cached_etag($cache_db);
@@ -422,6 +425,8 @@ class Curl_Wrapper
             unlink($this->logfile);
         }
 
+        unlink($this->config_file);
+
         if (file_exists($this->headers_path)) {
             $this->raw_response_headers = file_get_contents($this->headers_path);
             if (!empty($this->raw_response_headers)) {
@@ -436,7 +441,7 @@ class Curl_Wrapper
 
                     hd_debug_print($line, true);
                     if (preg_match("/^(.*):(.*)$/", $line, $m)) {
-                        $this->response_headers[$m[1]] = trim($m[2]);
+                        $this->response_headers[strtolower($m[1])] = trim($m[2]);
                     }
                 }
 
@@ -444,6 +449,7 @@ class Curl_Wrapper
                     hd_debug_print("---------     Read finished    ---------");
                 }
             }
+            unlink($this->headers_path);
         }
 
         return true;
@@ -460,6 +466,7 @@ class Curl_Wrapper
         $config_data[] = "--insecure";
         $config_data[] = "--silent";
         $config_data[] = "--show-error";
+        $config_data[] = "--fail";
         $config_data[] = "--dump-header " . $this->headers_path;
         $config_data[] = "--connect-timeout 60";
         $config_data[] = "--max-time 90";

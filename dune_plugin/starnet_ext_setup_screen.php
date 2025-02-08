@@ -234,7 +234,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $history_path = $this->plugin->get_history_path();
                 hd_debug_print("copy to: $history_path");
                 try {
-                    HD::copy_data(get_data_path('history'), "/" . PARAM_TV_HISTORY_ITEMS . "$/", $history_path);
+                    HD::copy_data(get_data_path('history'), "/_" . PARAM_TV_HISTORY_ITEMS . "$/", $history_path);
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
@@ -245,7 +245,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
             case self::CONTROL_COPY_TO_PLUGIN:
                 hd_debug_print("copy to: " . get_data_path());
                 try {
-                    HD::copy_data($this->plugin->get_history_path(), "/" . PARAM_TV_HISTORY_ITEMS . "$/", get_data_path('history'));
+                    HD::copy_data($this->plugin->get_history_path(), "/_" . PARAM_TV_HISTORY_ITEMS . "$/", get_data_path('history'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
@@ -261,7 +261,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
                 $param = $user_input->adult ? PARAM_ADULT_PASSWORD : PARAM_SETTINGS_PASSWORD;
                 $pass = $this->plugin->get_parameter($param);
                 hd_debug_print("pass: $param ($pass == $user_input->pass1)", true);
-                if ($user_input->pass1 !== (string)$pass) {
+                if ($user_input->pass1 !== $pass) {
                     $msg = TR::t('err_wrong_old_password');
                 } else if (empty($user_input->pass2)) {
                     $this->plugin->set_parameter($param, '');
@@ -378,8 +378,7 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         array_map('unlink', glob(get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*')));
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
-        $this->plugin->load_parameters(true);
-        $this->plugin->remove_parameter(PARAM_CACHE_PATH);
+        $this->plugin->set_parameter(PARAM_CACHE_PATH, '');
         //$this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, false);
 
         $this->plugin->init_plugin(true);

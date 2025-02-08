@@ -78,7 +78,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // picon settings
 
-        $active_sources = $this->plugin->get_setting(PARAM_SELECTED_XMLTV_SOURCES, array());
+        $active_sources = $this->plugin->get_selected_xmltv_sources();
         if (count($active_sources) !==0) {
             $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
             $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
@@ -91,21 +91,21 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // ID detection settings
         $playlist = $this->plugin->get_active_playlist();
-        if ($playlist !== null && $playlist->type !== PARAM_PROVIDER) {
+        if ($playlist !== null && $playlist[PARAM_TYPE] !== PARAM_PROVIDER) {
             $mapper_ops = array(
                 ATTR_CHANNEL_HASH => TR::t('hash_url'),
                 ATTR_TVG_ID => TR::t('attribute_name__1', ATTR_TVG_ID),
                 ATTR_TVG_NAME => TR::t('attribute_name__1', ATTR_TVG_NAME),
                 ATTR_CHANNEL_NAME => TR::t('channel_name'));
 
-            if (!isset($playlist->params[PARAM_ID_MAPPER])) {
-                $playlist->params[PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
+            if (!isset($playlist[PARAM_PARAMS][PARAM_ID_MAPPER])) {
+                $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
             }
 
-            hd_debug_print("Mapper param: {$playlist->params[PARAM_ID_MAPPER]}", true);
+            hd_debug_print("Mapper param: {$playlist[PARAM_PARAMS][PARAM_ID_MAPPER]}", true);
 
             Control_Factory::add_combobox($defs, $this, null, PARAM_ID_MAPPER,
-                TR::t('setup_channels_id_mapper'), $playlist->params[PARAM_ID_MAPPER], $mapper_ops, self::CONTROLS_WIDTH, true);
+                TR::t('setup_channels_id_mapper'), $playlist[PARAM_PARAMS][PARAM_ID_MAPPER], $mapper_ops, self::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -163,9 +163,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case PARAM_ID_MAPPER:
-                $playlist = $this->plugin->get_active_playlist();
-                if ($playlist !== null && $playlist->type !== PARAM_PROVIDER) {
-                    $playlist->params[PARAM_ID_MAPPER] = $user_input->{$user_input->control_id};
+                $id = $this->plugin->get_active_playlist_key();
+                $playlist = $this->plugin->get_playlist($id);
+                if ($playlist !== null && $playlist[PARAM_TYPE] !== PARAM_PROVIDER) {
+                    $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = $user_input->{$user_input->control_id};
+                    $this->plugin->set_playlist($id, $playlist);
+                    $this->plugin->set_active_playlist_key($id);
                 }
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
@@ -174,19 +177,17 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY: // handle streaming settings dialog result
-                $id = $this->plugin->get_active_playlist_key();
                 $this->plugin->safe_clear_current_epg_cache();
-                $this->plugin->remove_playlist_data($id);
+                $this->plugin->remove_playlist_data($this->plugin->get_active_playlist_key());
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_EXT_PARAMS_DLG:
                 return Action_Factory::show_dialog(TR::t('setup_channels_ext_params'), $this->do_get_ext_params_control_defs(), true);
 
             case self::ACTION_EXT_PARAMS_DLG_APPLY: // handle pass dialog result
-                $this->plugin->set_postpone_save(true, PLUGIN_SETTINGS);
                 $user_agent = $user_input->{self::CONTROL_USER_AGENT};
                 if (empty($user_agent)) {
-                    $this->plugin->remove_setting(PARAM_USER_AGENT);
+                    $this->plugin->set_setting(PARAM_USER_AGENT, '');
                     HD::set_dune_user_agent(HD::get_default_user_agent());
                 } else if ($user_agent !== HD::get_default_user_agent()) {
                     $this->plugin->set_setting(PARAM_USER_AGENT, $user_agent);
@@ -196,6 +197,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->set_setting(PARAM_DISABLE_DUNE_PARAMS, $user_input->{PARAM_DISABLE_DUNE_PARAMS});
 
                 $dune_params = explode(',', $user_input->{self::CONTROL_DUNE_PARAMS});
+                $params_array = array();
                 foreach ($dune_params as $param) {
                     $param_pair = explode(':', $param);
                     if (empty($param_pair) || count($param_pair) < 2) continue;
@@ -210,7 +212,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     $params_array[$param_pair[0]] = $param_pair[1];
                 }
 
-                $provider = $this->plugin->get_current_provider();
+                $provider = $this->plugin->get_active_provider();
                 if (!is_null($provider)) {
                     // do not update dune_params if they the same as config value
                     $config_dune_params = $provider->getConfigValue(PARAM_DUNE_PARAMS);
@@ -219,18 +221,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     }
                 }
 
-                if (empty($params_array)) {
-                    $this->plugin->remove_setting(PARAM_DUNE_PARAMS);
-                } else {
-                    $this->plugin->set_setting(PARAM_DUNE_PARAMS, $params_array);
-                }
+                $this->plugin->set_dune_params($params_array);
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
-                $this->plugin->set_postpone_save(false, PLUGIN_SETTINGS);
                 $action = Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );
@@ -261,7 +257,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_USER_AGENT, TR::t('setup_channels_user_agent'),
             $user_agent, false, false, false, true, 1200);
 
-        $dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
+        $dune_params = $this->plugin->get_dune_params();
         $dune_params_str = '';
         foreach ($dune_params as $key => $param) {
             if (!empty($dune_params_str)) {
@@ -270,7 +266,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
             $dune_params_str .= "$key:$param";
         }
 
-        $provider = $this->plugin->get_current_provider();
+        $provider = $this->plugin->get_active_provider();
         if (!is_null($provider) && empty($dune_params_str)) {
             $dune_params_str = $provider->getConfigValue(PARAM_DUNE_PARAMS);
         }

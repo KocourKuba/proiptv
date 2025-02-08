@@ -131,18 +131,20 @@ class vod_standard extends Abstract_Vod
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param api_default $provider
+     * @param api_default|null $provider
      * @return bool
      */
     public function init_vod($provider)
     {
         $this->provider = $provider;
-        if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
-            return false;
+        if ($this->provider) {
+            if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
+                return false;
+            }
+            $this->vod_parser = $this->provider->getConfigValue(CONFIG_VOD_PARSER);
         }
 
-        $this->vod_parser = $this->provider->getConfigValue(CONFIG_VOD_PARSER);
-        $this->wrapper = $this->plugin->get_sql_wrapper();
+        $this->wrapper = $this->plugin->get_sql_playlist();
 
         return true;
     }
@@ -164,7 +166,7 @@ class vod_standard extends Abstract_Vod
 
         $this->special_groups->clear();
 
-        if ($this->plugin->vod_enabled) {
+        if ($this->plugin->is_vod_enabled()) {
             // Favorites category
             $special_group = array(
                 'group_id' => FAV_MOVIE_GROUP_ID,
@@ -325,10 +327,10 @@ class vod_standard extends Abstract_Vod
             $year = '';
 
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = isset($match['title']) ? $match['title'] : $title;
-                $title_orig = isset($match['title_orig']) ? $match['title_orig'] : $title_orig;
-                $country = isset($match['country']) ? $match['country'] : $country;
-                $year = isset($match['year']) ? $match['year'] : $year;
+                $title = safe_get_value($match, 'title', $title);
+                $title_orig = safe_get_value($match, 'title_orig', $title_orig);
+                $country = safe_get_value($match, 'country', $country);
+                $year = safe_get_value($match, 'year', $year);
             }
 
             $movie = new Movie($movie_id, $this->plugin);
@@ -476,7 +478,7 @@ class vod_standard extends Abstract_Vod
             if (strpos($search_in, $keyword) === false) continue;
 
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = isset($match['title']) ? $match['title'] : $title;
+                $title = safe_get_value($match, 'title', $title);
             }
 
             $poster_url = $entry['icon'];
@@ -533,7 +535,7 @@ class vod_standard extends Abstract_Vod
 
             $title = $entry['title'];
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = isset($match['title']) ? $match['title'] : $title;
+                $title = safe_get_value($match, 'title', $title);
             }
 
             $movies[] = new Short_Movie($entry['hash'], trim($title), $entry['icon']);

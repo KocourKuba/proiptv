@@ -114,6 +114,8 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * Get MediaURL string representation (json encoded)
+     * *
      * @param string $movie_id
      * @param string|false $name
      * @param string|false $poster_url

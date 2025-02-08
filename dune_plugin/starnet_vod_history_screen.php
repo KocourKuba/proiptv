@@ -103,6 +103,8 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
     }
 
     /**
+     * Get MediaURL string representation (json encoded)
+     * *
      * @param string $group_id
      * @return false|string
      */
@@ -112,10 +114,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
     }
 
     /**
-     * @param MediaURL $media_url
-     * @param Object $plugin_cookies
-     * @return array
-     * @throws Exception
+     * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {

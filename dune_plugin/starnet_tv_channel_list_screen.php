@@ -36,6 +36,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     const ACTION_CUSTOM_STRING_DLG_APPLY = 'apply_custom_string_dlg';
 
     /**
+     * Get MediaURL string representation (json encoded)
+     * *
      * @param string $group_id
      * @return false|string
      */
@@ -178,7 +180,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->tv->jump_to_channel($selected_media_url->channel_id);
+                return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
@@ -238,7 +240,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 if (!is_limited_apk()) {
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $is_external = $this->plugin->get_channels_for_ext_player()->in_order($channel_id);
+                    $is_external = $this->plugin->get_channel_ext_player($channel_id);
                     $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_EXTERNAL_PLAYER,
                         TR::t('tv_screen_external_player'),
@@ -297,7 +299,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $defs = array();
                 Control_Factory::add_text_field($defs, $this, null, self::ACTION_CUSTOM_DELETE, '',
-                    $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING, ''),
+                    $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING),
                     false, false, false, false, 800);
 
                 Control_Factory::add_vgap($defs, 100);
@@ -338,7 +340,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_EXTERNAL_PLAYER:
             case ACTION_INTERNAL_PLAYER:
-                $this->plugin->set_channel_for_ext_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
+                $this->plugin->set_channel_ext_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
                 break;
 
             case ACTION_ITEMS_SORT:

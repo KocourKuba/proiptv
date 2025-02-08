@@ -57,7 +57,6 @@ require_once 'json_serializer.php';
  * @property string|null $edit_list // type of Starnet_Edit_List_Screen (playlist, epg, hidden groups/channels)
  * @property bool|null $allow_order // allow order items, used in Starnet_Edit_List_Screen
  * @property bool|null $deny_edit // deny edit items, used in Starnet_Edit_List_Screen
- * @property string|null $postpone_save // name of controlled postpone save status
  * @property bool|null $allow_reset // show reset to default button and call action ACTION_RESET_DEFAULT
  * @property string|null movie_id // Movie ID
  * @property string|null category_id // Movie Category ID

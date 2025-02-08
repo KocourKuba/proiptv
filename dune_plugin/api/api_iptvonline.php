@@ -28,9 +28,6 @@ require_once 'api_default.php';
 
 class api_iptvonline extends api_default
 {
-    const TOKEN_FILE = "%s.token";
-    const REFRESH_TOKEN_FILE = "%s.refresh_token";
-
     /**
      * @var Object
      */
@@ -54,8 +51,7 @@ class api_iptvonline extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $token_file = sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id());
-        $token = HD::get_cookie($token_file);
+        $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
         if (!$force && !$expired) {
@@ -63,18 +59,9 @@ class api_iptvonline extends api_default
             return true;
         }
 
-        // remove old settings
-        $res = $this->removeCredential(MACRO_TOKEN);
-        $res |= $this->removeCredential(MACRO_REFRESH_TOKEN);
-        $res |= $this->removeCredential(MACRO_EXPIRE_DATA);
-        if ($res) {
-            $this->save_credentials();
-        }
-
-        $refresh_token_file = sprintf(self::REFRESH_TOKEN_FILE, $this->get_provider_playlist_id());
-        $refresh_token = HD::get_cookie($refresh_token_file, true);
-        $need_refresh = $expired && !empty($refresh_token);
-        if ($need_refresh) {
+        $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
+        $can_refresh = $expired && !empty($refresh_token);
+        if ($can_refresh) {
             /*
             {
                 "client_id" : "{{client_id}}",
@@ -100,8 +87,8 @@ class api_iptvonline extends api_default
             */
             hd_debug_print("need to request token", true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
-            $pairs['login'] = $this->getCredential(MACRO_LOGIN);
-            $pairs['password'] = $this->getCredential(MACRO_PASSWORD);
+            $pairs['login'] = $this->getParameter(MACRO_LOGIN);
+            $pairs['password'] = $this->getParameter(MACRO_PASSWORD);
         }
 
         $pairs['client_id'] = "TestAndroidAppV0";
@@ -115,28 +102,21 @@ class api_iptvonline extends api_default
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
             hd_debug_print("token requested", true);
-            HD::set_cookie($token_file, $data->access_token, $data->expires_time);
-            HD::set_cookie($refresh_token_file, $data->refresh_token, PHP_INT_MAX, true);
+            $this->plugin->set_cookie(PARAM_TOKEN, $data->access_token, $data->expires_time);
+            $this->plugin->set_cookie(PARAM_REFRESH_TOKEN, $data->refresh_token, PHP_INT_MAX);
             return true;
         }
 
-        if ($need_refresh) {
-            $this->clear_session_info();
+        if ($can_refresh && isset($data->error)) {
+            // refresh token failed. Need to make complete auth
+            $this->plugin->remove_cookie(PARAM_TOKEN);
+            $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
             return $this->request_provider_token(true);
         }
 
         hd_debug_print("token not received: " . pretty_json_format($data), true);
         HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token') . "\n\n" . pretty_json_format($data));
         return false;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function clear_session_info()
-    {
-        HD::clear_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
-        HD::clear_cookie(sprintf(self::REFRESH_TOKEN_FILE, $this->get_provider_playlist_id()), true);
     }
 
     /**
@@ -160,8 +140,9 @@ class api_iptvonline extends api_default
      */
     public function replace_macros($string)
     {
-        $token = HD::get_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
-        $string = str_replace(MACRO_TOKEN, $token, $string);
+        hd_debug_print("current api template: $string", true);
+        $string = str_replace(MACRO_TOKEN, $this->plugin->get_cookie(PARAM_TOKEN), $string);
+        hd_debug_print("current api result: $string", true);
 
         return parent::replace_macros($string);
     }
@@ -233,8 +214,8 @@ class api_iptvonline extends api_default
 
         if (empty($this->servers)) {
             $this->collect_servers($selected);
-            if ($selected !== $this->getCredential(MACRO_SERVER_ID)) {
-                $this->setCredential(MACRO_SERVER_ID, $selected);
+            if ($selected !== $this->getParameter(MACRO_SERVER_ID)) {
+                $this->setParameter(MACRO_SERVER_ID, $selected);
             }
         }
 
@@ -274,7 +255,7 @@ class api_iptvonline extends api_default
         if (isset($response->status) && $response->status === 200) {
             $this->device = $response;
             $this->collect_servers($selected);
-            $this->setCredential(MACRO_SERVER_ID, $selected);
+            $this->setParameter(MACRO_SERVER_ID, $selected);
             $this->account_info = null;
             return true;
         }
@@ -303,8 +284,8 @@ class api_iptvonline extends api_default
 
         if (empty($this->playlists)) {
             $this->collect_playlists($selected);
-            if ($selected !== $this->getCredential(MACRO_PLAYLIST_ID)) {
-                $this->setCredential(MACRO_PLAYLIST_ID, $selected);
+            if ($selected !== $this->getParameter(MACRO_PLAYLIST_ID)) {
+                $this->setParameter(MACRO_PLAYLIST_ID, $selected);
             }
         }
 
@@ -364,17 +345,17 @@ class api_iptvonline extends api_default
     {
         $servers = $this->GetServers();
         if (!empty($servers)) {
-            $idx = $this->getCredential(MACRO_SERVER_ID);
+            $idx = $this->getParameter(MACRO_SERVER_ID);
             if (empty($idx)) {
-                $this->setCredential(MACRO_SERVER_ID, key($servers));
+                $this->setParameter(MACRO_SERVER_ID, key($servers));
             }
         }
 
         $playlists = $this->GetPlaylists();
         if (!empty($playlists)) {
-            $idx = $this->getCredential(MACRO_PLAYLIST_ID);
+            $idx = $this->getParameter(MACRO_PLAYLIST_ID);
             if (empty($idx)) {
-                $this->setCredential(MACRO_PLAYLIST_ID, (string)key($playlists));
+                $this->setParameter(MACRO_PLAYLIST_ID, (string)key($playlists));
             }
         }
     }

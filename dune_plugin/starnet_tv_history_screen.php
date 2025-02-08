@@ -32,6 +32,8 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * Get MediaURL string representation (json encoded)
+     *
      * @param string $group_id
      * @return false|string
      */
@@ -109,7 +111,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->erase_tv_history($selected_media_url->channel_id);
-                if ($this->plugin->get_tv_history_count() === 0) {
+                if ($this->plugin->get_tv_history_count() !== 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
@@ -128,7 +130,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->tv->jump_to_channel($selected_media_url->channel_id);
+                return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items = array();

@@ -9,26 +9,7 @@ class Sql_Wrapper
 
     public function __construct($db)
     {
-        $this->init($db);
-    }
-
-    /**
-     * @param SQLite3|null $db
-     * @return void
-     */
-    public function init($db)
-    {
         $this->db = $db;
-    }
-
-    public function valid()
-    {
-        return !is_null($this->db);
-    }
-
-    public function reset()
-    {
-        $this->db = null;
     }
 
     public function get_db()
@@ -48,7 +29,7 @@ class Sql_Wrapper
     }
 
     /**
-     * Make list ('array[key1]', 'array[key2]', 'array[key3]') from array values (array[key1], array[key2], array[key3])
+     * Make insert list (key1, key2, key3) VALUES ('array[key1]', 'array[key2]', 'array[key3]') from array
      *
      * @param array $arr
      * @return string
@@ -56,6 +37,19 @@ class Sql_Wrapper
     public static function sql_make_list_from_values($arr)
     {
         return implode(', ', $arr);
+    }
+
+    /**
+     * Make list ('array[key1]', 'array[key2]', 'array[key3]') from array values (array[key1], array[key2], array[key3])
+     *
+     * @param array $arr
+     * @return string
+     */
+    public static function sql_make_insert_list($arr)
+    {
+        $columns = self::sql_make_list_from_keys($arr);
+        $values = self::sql_make_list_from_quoted_values($arr);
+        return "($columns) VALUES ($values)";
     }
 
     /**

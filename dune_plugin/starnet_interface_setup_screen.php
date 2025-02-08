@@ -153,7 +153,6 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 break;
 
             case PARAM_SHOW_VOD_ICON:
-                $this->plugin->save_settings();
                 $this->plugin->toggle_parameter($control_id);
                 $this->plugin->reload_channels($plugin_cookies);
 
@@ -201,7 +200,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
                     hd_debug_print("Set image $cached_image as background");
                     $this->plugin->set_background_image($cached_image);
-                    $this->plugin->create_screen_views();
+                    $this->plugin->init_screen_view_parameters($cached_image);
 
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
@@ -211,7 +210,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             case ACTION_RESET_DEFAULT:
                 hd_debug_print("Background set to default");
                 $this->plugin->set_background_image(null);
-                $this->plugin->create_screen_views();
+                $this->plugin->init_screen_view_parameters(null);
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies,
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));

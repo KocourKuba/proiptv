@@ -44,6 +44,7 @@ require_once 'starnet_tv_favorites_screen.php';
 require_once 'starnet_tv_history_screen.php';
 require_once 'starnet_epfs_handler.php';
 require_once 'starnet_edit_list_screen.php';
+require_once 'starnet_edit_providers_list_screen.php';
 require_once 'starnet_edit_hidden_list_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
@@ -57,7 +58,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         User_Input_Handler_Registry::get_instance()->register_handler(new Starnet_Entry_Handler($this));
 
-        $this->tv = new Starnet_Tv($this);
+        $this->iptv = new Starnet_Tv($this);
 
         $this->create_screen(new Starnet_Tv_Groups_Screen($this));
         $this->create_screen(new Starnet_Tv_Channel_List_Screen($this));
@@ -85,6 +86,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_List_Screen($this));
+        $this->create_screen(new Starnet_Edit_Providers_List_Screen($this));
         $this->create_screen(new Starnet_Edit_Hidden_List_Screen($this));
 
         Starnet_Epfs_Handler::init($this);

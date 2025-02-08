@@ -30,6 +30,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
     const ID = 'tv_favorites';
 
     /**
+     * Get MediaURL string representation (json encoded)
+     * *
      * @param string $group_id
      * @return false|string
      */
@@ -172,7 +174,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->tv->jump_to_channel($selected_media_url->channel_id);
+                return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
         }
 
         return null;

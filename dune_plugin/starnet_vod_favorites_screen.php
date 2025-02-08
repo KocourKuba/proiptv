@@ -130,9 +130,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param MediaURL $media_url
-     * @param Object $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {

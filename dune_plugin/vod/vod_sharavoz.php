@@ -47,7 +47,7 @@ class vod_sharavoz extends vod_standard
     {
         parent::init_vod($provider);
 
-        $pass = $this->provider->getCredential(MACRO_PASSWORD);
+        $pass = $this->provider->getParameter(MACRO_PASSWORD);
         $this->xtream->init($this->provider->getRawApiCommand(API_COMMAND_GET_VOD), $pass, $pass);
         $this->xtream->reset_cache();
 
@@ -63,8 +63,8 @@ class vod_sharavoz extends vod_standard
         hd_debug_print($movie_id);
 
         $arr = explode("_", $movie_id);
-        $stream_id = isset($arr[0]) ? $arr[0] : $movie_id;
-        $stream_type = isset($arr[1]) ? $arr[1] : xtream_codes_api::VOD;
+        $stream_id = safe_get_value($arr, 0, $movie_id);
+        $stream_type = safe_get_value($arr, 1, xtream_codes_api::VOD);
 
         $item = $this->xtream->get_stream_info($stream_id, $stream_type);
 
@@ -282,7 +282,7 @@ class vod_sharavoz extends vod_standard
 
         // Фильмы_1_vod
         $arr = explode("_", $query_id);
-        $category_id = isset($arr[1]) ? $arr[1] : $query_id;
+        $category_id = safe_get_value($arr, 1, $query_id);
 
         $vod_items = $this->xtream->get_streams($arr[2], $category_id);
         $pos = 0;

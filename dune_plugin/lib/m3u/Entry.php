@@ -384,7 +384,7 @@ class Entry extends Json_Serializer
         // make full url for icon if used base url
         $channel_icon = $this->getAnyEntryAttribute(self::$icon_attrs, TAG_EXTINF);
         if (!empty($icon_base_url)) {
-            if (!is_http($channel_icon)) {
+            if (!is_proto_http($channel_icon)) {
                 $channel_icon = $icon_base_url . $channel_icon;
             }
         }
@@ -444,7 +444,7 @@ class Entry extends Json_Serializer
         // set group logo
         $group_icon = $this->getEntryAttribute(ATTR_GROUP_LOGO, TAG_EXTINF);
         if (!empty($group_logo)) {
-            if (!empty($icon_base_url) && !is_http($group_logo)) {
+            if (!empty($icon_base_url) && !is_proto_http($group_logo)) {
                 $group_icon = $icon_base_url . $group_logo;
             }
         }

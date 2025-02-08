@@ -42,7 +42,7 @@ class vod_edem extends vod_standard
 
         $this->vod_filters = array("years", "genre");
         $this->vod_quality = true;
-        $vportal = $this->provider->getCredential(MACRO_VPORTAL);
+        $vportal = $this->provider->getParameter(MACRO_VPORTAL);
         if (empty($vportal) || !preg_match(VPORTAL_PATTERN, $vportal, $matches)) {
             hd_debug_print("Incorrect or empty VPortal data: $vportal");
             $show = false;
@@ -120,7 +120,7 @@ class vod_edem extends vod_standard
             $movie->add_series_with_variants_data($movie_id, $movieData->title, $series_desc, $qualities, array(), $movieData->url);
         }
 
-        $age = isset($movieData->agelimit) ? "$movieData->agelimit+" : '';
+        $age = !empty($movieData->agelimit) ? "$movieData->agelimit+" : '';
         $age_limit = empty($age) ? array() : array(TR::t('vod_screen_age_limit') => $age);
 
         $movie->set_data(

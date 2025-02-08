@@ -78,16 +78,16 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         }
 
         $err = false;
-        $source_window_id = isset($media_url->source_window_id) ? $media_url->source_window_id : false;
-        $allow_network = isset($media_url->allow_network) && $media_url->allow_network;
-        $allow_image_lib = isset($media_url->allow_image_lib) && $media_url->allow_image_lib;
-        $windowCounter = isset($media_url->windowCounter) ? $media_url->windowCounter + 1 : 2;
-        $ip_path = isset($media_url->ip_path) ? $media_url->ip_path : false;
-        $nfs_protocol = isset($media_url->nfs_protocol) ? $media_url->nfs_protocol : false;
-        $user = isset($media_url->user) ? $media_url->user : false;
-        $password = isset($media_url->password) ? $media_url->password : false;
-        $choose_folder = isset($media_url->choose_folder) ? $media_url->choose_folder : false;
-        $choose_file = isset($media_url->choose_file) ? $media_url->choose_file : false;
+        $source_window_id = safe_get_member($media_url, 'source_window_id', false);
+        $allow_network = safe_get_member($media_url, 'allow_network', false);
+        $allow_image_lib = safe_get_member($media_url, 'allow_image_lib', false);
+        $windowCounter = safe_get_member($media_url, 'windowCounter', 1) + 1;
+        $ip_path = safe_get_member($media_url, 'ip_path', false);
+        $nfs_protocol = safe_get_member($media_url, 'nfs_protocol', false);
+        $user = safe_get_member($media_url, 'user', false);
+        $password = safe_get_member($media_url, 'password', false);
+        $choose_folder = safe_get_member($media_url, 'choose_folder', false);
+        $choose_file = safe_get_member($media_url, 'choose_file', false);
 
         $items = array();
         hd_debug_print("dir: " . json_encode($dir), true);
@@ -276,7 +276,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 if (is_limited_apk()) {
                     $info = 1;
                 } else {
-                    $info = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
+                    $info = safe_get_member($plugin_cookies, self::ACTION_SMB_SETUP, 1);
                 }
 
                 $s['smb'] = $smb_shares->get_mount_all_smb($info);
@@ -496,8 +496,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         $actions[GUI_EVENT_KEY_SETUP] = Action_Factory::replace_path($media_url->windowCounter);
 
         if (empty($media_url->filepath)) {
-            $allow_network = isset($media_url->allow_network) && $media_url->allow_network;
-            $allow_image_lib = isset($media_url->allow_image_lib) && $media_url->allow_image_lib;
+            $allow_network = safe_get_member($media_url, 'allow_network', false);
+            $allow_image_lib = safe_get_member($media_url, 'allow_image_lib', false);
 
             if ($allow_network && !is_android()) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
@@ -571,8 +571,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             Control_Factory::add_label($defs, TR::t('folder_screen_smb_ip'), $selected_url->ip_path);
 
             if (strpos($selected_url->err, "Permission denied") !== false) {
-                $user = isset($selected_url->user) ? $selected_url->user : '';
-                $password = isset($selected_url->password) ? $selected_url->password : '';
+                $user = safe_get_member($selected_url, 'user', '');
+                $password = safe_get_member($selected_url, 'password', '');
                 $this->GetSMBAccessDefs($defs, $user, $password);
             } else {
                 Control_Factory::add_label($defs, '', '');
@@ -835,7 +835,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         hd_debug_print(null, true);
 
         $attrs['dialog_params'] = array('frame_style' => DIALOG_FRAME_STYLE_GLASS);
-        $smb_view = isset($plugin_cookies->{self::ACTION_SMB_SETUP}) ? (int)$plugin_cookies->{self::ACTION_SMB_SETUP} : 1;
+        $smb_view = safe_get_member($plugin_cookies, self::ACTION_SMB_SETUP, 1);
 
         $smb_view_ops[1] = TR::t('folder_screen_net_folders');
         $smb_view_ops[2] = TR::t('folder_screen_net_folders_smb');

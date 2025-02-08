@@ -28,9 +28,6 @@ require_once 'api_default.php';
 
 class api_tvteam extends api_default
 {
-    const SESSION_FILE = "%s.session_id";
-    const TOKEN_FILE = "%s.token";
-
     /**
      * @var array
      */
@@ -41,9 +38,9 @@ class api_tvteam extends api_default
      */
     public function replace_macros($string)
     {
-        $hash_password = md5($this->getCredential(MACRO_PASSWORD));
-        $session_id = HD::get_cookie(sprintf(self::SESSION_FILE, $this->get_provider_playlist_id()));
-        $token = HD::get_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()), true);
+        $hash_password = md5($this->getParameter(MACRO_PASSWORD));
+        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID);
+        $token = $this->plugin->get_cookie(PARAM_TOKEN);
         $string = str_replace(
             array(MACRO_SESSION_ID, MACRO_HASH_PASSWORD, MACRO_TOKEN),
             array($session_id, $hash_password, $token),
@@ -80,7 +77,7 @@ class api_tvteam extends api_default
             }
 
             if (isset($info->groupId)) {
-                $name = isset($this->servers[$info->groupId]) ? $this->servers[$info->groupId] : 'Not set';
+                $name = safe_get_value($this->servers, $info->groupId, 'Not set');
                 Control_Factory::add_label($defs, TR::t('server'), $name, -15);
             }
 
@@ -124,14 +121,11 @@ class api_tvteam extends api_default
             hd_debug_print("get provider info response: " . pretty_json_format($this->account_info), true);
 
             if (isset($this->account_info->data->userData->userToken)) {
-                HD::set_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()),
-                    $this->account_info->data->userData->userToken,
-                    PHP_INT_MAX,
-                    true);
+                $this->plugin->set_cookie(PARAM_TOKEN, $this->account_info->data->userData->userToken);
             }
 
             if (isset($this->account_info->data->userData->groupId)) {
-                $this->setCredential(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
+                $this->setParameter(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
             }
 
             if (isset($this->account_info->data->serversGroupsList)) {
@@ -152,20 +146,12 @@ class api_tvteam extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force request provider token: " . var_export($force, true));
 
-        $session_file = sprintf(self::SESSION_FILE, $this->get_provider_playlist_id());
-        $session_id = HD::get_cookie($session_file);
+        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID, true);
         $expired = empty($session_id);
 
         if (!$force && !$expired) {
             hd_debug_print("request not required", true);
             return true;
-        }
-
-        // remove old settings
-        $res = $this->removeCredential(MACRO_SESSION_ID);
-        $res |= $this->removeCredential(MACRO_EXPIRE_DATA);
-        if ($res) {
-            $this->save_credentials();
         }
 
         $error_msg = HD::check_last_error('rq_last_error');
@@ -185,7 +171,7 @@ class api_tvteam extends api_default
                 HD::set_last_error("pl_last_error", $response->error);
                 HD::set_last_error("rq_last_error", $response->error);
             } else if (isset($response->data->sessionId)) {
-                HD::set_cookie($session_file, $response->data->sessionId, time() + 86400 * 7);
+                $this->plugin->set_cookie(PARAM_SESSION_ID, $response->data->sessionId, time() + 86400 * 7);
                 HD::set_last_error("rq_last_error", null);
 
                 return true;
@@ -198,18 +184,10 @@ class api_tvteam extends api_default
     /**
      * @inheritDoc
      */
-    public function clear_session_info()
-    {
-        HD::clear_cookie(sprintf(self::TOKEN_FILE, $this->get_provider_playlist_id()));
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function SetServer($server, &$error_msg)
     {
-        $old = $this->getCredential(MACRO_SERVER_ID);
-        $this->setCredential(MACRO_SERVER_ID, $server);
+        $old = $this->getParameter(MACRO_SERVER_ID);
+        $this->setParameter(MACRO_SERVER_ID, $server);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         hd_debug_print("SetServer: " . pretty_json_format($response), true);
@@ -219,7 +197,7 @@ class api_tvteam extends api_default
             return true;
         }
 
-        $this->setCredential(MACRO_SERVER_ID, $old);
+        $this->setParameter(MACRO_SERVER_ID, $old);
         if (isset($response->error)) {
             $error_msg = $response->error;
         }

@@ -379,7 +379,7 @@ class Movie implements User_Input_Handler
                 return array();
         }
 
-        $sel_id = isset($media_url->episode_id) ? $media_url->episode_id : null;
+        $sel_id = safe_get_member($media_url, 'episode_id');
         $series_array = array();
         $initial_series_ndx = 0;
         $variant = $this->plugin->get_setting(PARAM_VOD_DEFAULT_QUALITY, 'auto');

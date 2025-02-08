@@ -75,7 +75,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
         // EPG cache engine
         $engine = $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
         $engine_variants[ENGINE_XMLTV] = TR::t('setup_epg_cache_xmltv');
-        $provider = $this->plugin->get_current_provider();
+        $provider = $this->plugin->get_active_provider();
         if (!is_null($provider)) {
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
             if (!empty($epg_presets)) {
@@ -110,7 +110,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
             $presets = array();
             foreach ($epg_presets as $epg_preset) {
-                $presets[] = isset($epg_preset['title']) ? $epg_preset['title'] : $epg_preset['name'];
+                $presets[] = safe_get_value($epg_preset, 'title', $epg_preset['name']);
             }
             Control_Factory::add_combobox($defs, $this, null,
                 PARAM_EPG_JSON_PRESET, TR::t('setup_epg_cache_json'),
@@ -119,7 +119,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // Fake EPG
-        $fake_epg = $this->plugin->get_parameter(PARAM_FAKE_EPG, SetupControlSwitchDefs::switch_off);
+        $fake_epg = $this->plugin->get_setting(PARAM_FAKE_EPG, SetupControlSwitchDefs::switch_off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SetupControlSwitchDefs::$on_off_translated[$fake_epg],
             get_image_path(SetupControlSwitchDefs::$on_off_img[$fake_epg]), self::CONTROLS_WIDTH);
@@ -186,7 +186,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case PARAM_EPG_CACHE_ENGINE:
             case PARAM_EPG_JSON_PRESET:
-                $this->plugin->unload_db();
+                $this->plugin->reset_playlist_db();
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
@@ -196,7 +196,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
-                $this->plugin->unload_db();
+                $this->plugin->reset_playlist_db();
                 $this->plugin->safe_clear_selected_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs()));
@@ -204,7 +204,7 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_RESET_DEFAULT:
                 hd_debug_print(ACTION_RESET_DEFAULT);
                 $this->plugin->safe_clear_selected_epg_cache();
-                $this->plugin->remove_parameter(PARAM_CACHE_PATH);
+                $this->plugin->set_parameter(PARAM_CACHE_PATH, '');
                 $this->plugin->init_epg_manager();
 
                 $default_path = $this->plugin->get_cache_dir();
@@ -230,7 +230,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                $this->plugin->set_postpone_save(false, PLUGIN_PARAMETERS);
                 if ($this->plugin->reload_channels($plugin_cookies) === 0) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));

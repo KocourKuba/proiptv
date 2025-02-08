@@ -151,6 +151,8 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
     }
 
     /**
+     * Get MediaURL string representation (json encoded)
+     * *
      * @param string $category
      * @return false|string
      */
@@ -162,9 +164,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param MediaURL $media_url
-     * @param Object $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {

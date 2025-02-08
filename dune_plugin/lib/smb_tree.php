@@ -57,8 +57,8 @@ class smb_tree
             $save_folder[$selected_url->ip_path]['foldername'] = preg_replace("|^/tmp/mnt/network/\d*|", '', $selected_url->filepath);
         } else {
             $save_folder[$selected_url->ip_path]['foldername'] = preg_replace("|^/tmp/mnt/smb/\d*|", '', $selected_url->filepath);
-            $save_folder[$selected_url->ip_path]['user'] = isset($selected_url->user) ? $selected_url->user : false;
-            $save_folder[$selected_url->ip_path]['password'] = isset($selected_url->password) ? $selected_url->password : false;
+            $save_folder[$selected_url->ip_path]['user'] = safe_get_member($selected_url, 'user',  false);
+            $save_folder[$selected_url->ip_path]['password'] = safe_get_member($selected_url, 'password', false);
         }
 
         return json_encode($save_folder);
@@ -524,7 +524,7 @@ class smb_tree
                 $detail_info = explode("\t", $line);
 
                 if (count($detail_info)) {
-                    $q = isset($detail_info[1]) ? $detail_info[1] : '';
+                    $q = safe_get_value($detail_info,1, '');
                     $output[$detail_info[0]] = array
                     (
                         'name' => $detail_info[0],

@@ -25,16 +25,24 @@
  */
 
 require_once 'rows_screen.php';
-require_once 'lib/changes_impl.php';
 
-abstract class Abstract_Rows_Screen extends Changes_Impl implements Rows_Screen
+abstract class Abstract_Rows_Screen implements Rows_Screen
 {
     const ID = 'abstract_rows_screen';
+
+    /**
+     * @var Default_Dune_Plugin
+     */
+    protected $plugin;
 
     /**
      * @var string|null
      */
     protected $cur_sel_state;
+    public function __construct(Default_Dune_Plugin $plugin)
+    {
+        $this->plugin = $plugin;
+    }
 
     ///////////////////////////////////////////////////////////////////////
 
