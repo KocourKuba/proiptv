@@ -110,6 +110,10 @@ if (!defined('GUI_EVENT_DISCRETE_POWER_OFF')) define('GUI_EVENT_DISCRETE_POWER_O
 
 if (!defined('PHP_INT_MIN')) define('PHP_INT_MIN', ~PHP_INT_MAX);
 
+if (!defined('JSON_UNESCAPED_SLASHES')) define("JSON_UNESCAPED_SLASHES", 64);
+if (!defined('JSON_PRETTY_PRINT')) define('JSON_PRETTY_PRINT', 128);
+if (!defined('JSON_UNESCAPED_UNICODE')) define('JSON_UNESCAPED_UNICODE', 256);
+
 # Dune colors const's.
 # Common:                               idx     default palette                 Silver palette (new)
 const DEF_LABEL_TEXT_COLOR_BLACK        = 0;  # '#000000'	Black				'#000000'	    IPTV plugin playback time and number of EPG item

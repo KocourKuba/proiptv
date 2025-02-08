@@ -330,13 +330,6 @@ const VPORTAL_PATTERN = '/^portal::\[key:([^]]+)](.+)$/';
 const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage';
 const DUNE_APK_STORAGE_PATH = '/sdcard/DuneHD/Dune_backup';
 
-if (!defined('JSON_UNESCAPED_SLASHES'))
-    define("JSON_UNESCAPED_SLASHES", 64);
-if (!defined('JSON_PRETTY_PRINT'))
-    define('JSON_PRETTY_PRINT', 128);
-if (!defined('JSON_UNESCAPED_UNICODE'))
-    define('JSON_UNESCAPED_UNICODE', 256);
-
 const CONFIG_PLAYLIST_CATCHUP = 'playlist_catchup';
 const CONFIG_ID_PARSER = 'id_parser';
 const CONFIG_ID_MAP = 'id_map';
