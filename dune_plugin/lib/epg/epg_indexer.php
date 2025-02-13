@@ -209,8 +209,8 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             return 1;
         }
 
-        $check_time_file = filemtime($cached_file);
-        hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $check_time_file));
+        $modify_time_file = filemtime($cached_file);
+        hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $modify_time_file));
 
         $expired = true;
         if ($cache_ttl === XMLTV_CACHE_AUTO) {
@@ -222,7 +222,9 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
             }
         } else if (filesize($cached_file) !== 0) {
             $max_cache_time = 3600 * 24 * $cache_ttl;
-            if ($check_time_file && $check_time_file + $max_cache_time > time()) {
+            $expired_time = $modify_time_file + $max_cache_time;
+            hd_debug_print("Xmltv cache expired at: " . date("Y-m-d H:i", $expired_time), true);
+            if ($modify_time_file && $expired_time > time()) {
                 $expired = false;
             }
         }

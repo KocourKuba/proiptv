@@ -472,7 +472,6 @@ class Curl_Wrapper
         $config_data[] = "--url \"$this->url\"";
 
         if (is_null($save_file)) {
-            $config_data[] = "--head";
             $config_data[] = "--output /dev/null";
         } else {
             $config_data[] = "--output \"$save_file\"";
