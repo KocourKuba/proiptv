@@ -83,7 +83,13 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
+                if (!$this->force_parent_reload) {
+                    return Action_Factory::close_and_run();
+                }
+
+                $this->force_parent_reload = false;
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -101,17 +107,17 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return $post_action;
 
             case ACTION_ITEM_DELETE:
+                $this->force_parent_reload = true;
                 $this->plugin->set_changed_channel($channel_id, false);
 
                 if ($this->plugin->get_changed_channels_count() == 0) {
-                    $this->plugin->set_special_group_visible(CHANGED_CHANNELS_GROUP_ID, true);
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
                 break;
 
             case ACTION_ITEMS_CLEAR:
+                $this->force_parent_reload = true;
                 $this->plugin->clear_changed_channels();
-                $this->plugin->set_special_group_visible(CHANGED_CHANNELS_GROUP_ID, true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
@@ -126,8 +132,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return null;
         }
 
-        return Action_Factory::update_regular_folder(
-            $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies), true);
+        return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies);
     }
 
     ///////////////////////////////////////////////////////////////////////

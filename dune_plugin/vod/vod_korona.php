@@ -314,7 +314,7 @@ class vod_korona extends vod_standard
         if ($jsonItems === false) {
             $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
             hd_debug_print($exception_msg);
-            HD::set_last_error("vod_last_error", $exception_msg);
+            HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
             return false;
         }
 

@@ -62,29 +62,11 @@ class api_iptvonline extends api_default
         $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
         $can_refresh = $expired && !empty($refresh_token);
         if ($can_refresh) {
-            /*
-            {
-                "client_id" : "{{client_id}}",
-                "client_secret": "{{client_secret}}",
-                "device_id": "{{DEVICE_UNIQ_ID}}",
-                "grant_type" : "refresh_token",
-                "refresh_token" : "{{refresh_token}}",
-            }
-            */
             hd_debug_print("need to refresh token", true);
             $cmd = API_COMMAND_REFRESH_TOKEN;
             $pairs['grant_type'] = 'refresh_token';
             $pairs['refresh_token'] = $refresh_token;
         } else {
-            /*
-            {
-                "client_id" : "{{client_id}}",
-                "client_secret": "{{client_secret}}",
-                "device_id": "{{DEVICE_UNIQ_ID}}".
-                "login": "{{TEST_EMAIL_CLIENT}}",
-                "password" : "{{TEST_EMAIL_CLIENT_PASSWORD}}"
-            }
-            */
             hd_debug_print("need to request token", true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
             $pairs['login'] = $this->getParameter(MACRO_LOGIN);
@@ -114,8 +96,9 @@ class api_iptvonline extends api_default
             return $this->request_provider_token(true);
         }
 
+        $rq_last_error_name = $this->plugin->get_active_playlist_key() . "_rq_last_error";
         hd_debug_print("token not received: " . pretty_json_format($data), true);
-        HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token') . "\n\n" . pretty_json_format($data));
+        HD::set_last_error($rq_last_error_name, TR::load_string('err_cant_get_token') . "\n\n" . pretty_json_format($data));
         return false;
     }
 

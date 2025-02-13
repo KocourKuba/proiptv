@@ -78,7 +78,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::update_regular_folder($range, true, -1);
 
             case GUI_EVENT_TIMER:
-                $error = HD::get_last_error('vod_last_error');
+                $error = HD::get_last_error($this->plugin->get_vod_error_name());
                 if (empty($error)) break;
 
                 return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error);
@@ -141,16 +141,30 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                     switch ($group['group_id']) {
                         case FAV_MOVIE_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group['title'], $this->plugin->get_channels_count());
+                            $item_detailed_info = TR::t('vod_screen_group_info__2',
+                                TR::load_string(FAV_MOVIES_GROUP_CAPTION),
+                                $this->plugin->get_channels_count(ALL_CHANNELS_GROUP_ID, 0));
                             break;
 
                         case HISTORY_MOVIES_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2', $group['title'], $this->plugin->get_all_history_count());
+                            $item_detailed_info = TR::t('vod_screen_group_info__2',
+                                TR::load_string(HISTORY_MOVIES_GROUP_CAPTION),
+                                $this->plugin->get_all_history_count());
+                            break;
+
+                        case FILTER_MOVIES_GROUP_ID:
+                            $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
+                            $item_detailed_info = TR::load_string(FILTER_MOVIES_GROUP_CAPTION);
+                            break;
+
+                        case SEARCH_MOVIES_GROUP_ID:
+                            $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
+                            $item_detailed_info = TR::load_string(SEARCH_MOVIES_GROUP_CAPTION);
                             break;
 
                         default:
-                            $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
+                            $color = DEF_LABEL_TEXT_COLOR_WHITE;
                             $item_detailed_info = $group['title'];
                             break;
                     }
@@ -195,6 +209,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 PluginRegularFolderItem::media_url => $media_url_str,
                 PluginRegularFolderItem::caption => $category->get_caption(),
                 PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::item_caption_color => DEF_LABEL_TEXT_COLOR_WHITE,
                     ViewItemParams::icon_path => $category->get_icon_path(),
                     ViewItemParams::item_detailed_icon_path => $category->get_icon_path(),
                 )

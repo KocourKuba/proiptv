@@ -186,7 +186,6 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case PARAM_EPG_CACHE_ENGINE:
             case PARAM_EPG_JSON_PRESET:
-                $this->plugin->reset_playlist_db();
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
@@ -230,9 +229,11 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                if ($this->plugin->reload_channels($plugin_cookies) === 0) {
+                if (!$this->plugin->reload_channels($plugin_cookies)) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies,
-                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, HD::get_last_error()));
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
+                            null,
+                            HD::get_last_error($this->plugin->get_pl_error_name())));
                 }
 
                 return Action_Factory::invalidate_all_folders($plugin_cookies,

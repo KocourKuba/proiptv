@@ -87,8 +87,8 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
                         TR::t('search') . ": $search_string"));
 
             case ACTION_ADD_FAV:
-                $fav_ids = $this->plugin->get_channels_order(FAV_MOVIE_GROUP_ID);
-                $opt_type = in_array($movie_id, $fav_ids) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $is_in_favorites = $this->plugin->is_channel_in_order(FAV_MOVIE_GROUP_ID, $movie_id);
+                $opt_type = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_vod_favorites($opt_type, $movie_id);
                 return Action_Factory::invalidate_folders(
                     array(

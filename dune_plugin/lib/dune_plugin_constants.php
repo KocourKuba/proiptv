@@ -65,6 +65,7 @@ const ACTION_ZOOM_POPUP_MENU = 'zoom_popup_menu';
 const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_ZOOM_SELECT = 'zoom_select';
 const ACTION_EMPTY = 'empty';
+const ACTION_INVALIDATE = 'invalidate';
 const ACTION_PLUGIN_INFO = 'plugin_info';
 const ACTION_DONATE_DLG = 'donate_dlg';
 const ACTION_CHANGE_GROUP_ICON = 'change_group_icon';

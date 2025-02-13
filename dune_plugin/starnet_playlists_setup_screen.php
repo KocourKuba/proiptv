@@ -231,8 +231,7 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );
 
-                $result = $this->plugin->reload_channels($plugin_cookies);
-                if (!$result) {
+                if (!$this->plugin->reload_channels($plugin_cookies)) {
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $action);
                 }
 

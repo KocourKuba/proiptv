@@ -28,9 +28,9 @@ require_once 'hd.php';
 
 class Curl_Wrapper
 {
-    const HTTP_HEADERS_LOG = "%s_headers.log";
-    const HTTP_LOG = "%s_response.log";
-    const CURL_CONFIG = "%s_curl_config.txt";
+    const HTTP_HEADERS_LOG = "%s_headers%s.log";
+    const HTTP_LOG = "%s_response%s.log";
+    const CURL_CONFIG = "%s_curl_config%s.txt";
     const CACHE_TAG_FILE = "etag_cache.dat";
 
     /**
@@ -121,9 +121,9 @@ class Curl_Wrapper
     {
         $this->url = $url;
         $this->url_hash = hash('crc32', $url);
-        $this->config_file = get_temp_path(sprintf(self::CURL_CONFIG, $this->url_hash));
-        $this->headers_path = get_temp_path(sprintf(self::HTTP_HEADERS_LOG, $this->url_hash));
-        $this->logfile = get_temp_path(sprintf(self::HTTP_LOG, $this->url_hash));
+        $this->config_file = get_temp_path(sprintf(self::CURL_CONFIG, $this->url_hash, ''));
+        $this->headers_path = get_temp_path(sprintf(self::HTTP_HEADERS_LOG, $this->url_hash, ''));
+        $this->logfile = get_temp_path(sprintf(self::HTTP_LOG, $this->url_hash, ''));
         $this->send_headers = array();
         $this->response_headers = array();
         $this->is_post = false;
@@ -301,7 +301,7 @@ class Curl_Wrapper
             $this->create_curl_config(null, true);
             if ($this->exec_curl()) {
                 $code = $this->get_response_code();
-                hd_debug_print("http code: $code");
+                hd_debug_print("http code: $code", true);
                 return !($code === 304 || ($code === 200 && $this->get_etag_header() === $this->get_cached_etag()));
             }
         }
@@ -412,17 +412,17 @@ class Curl_Wrapper
             return false;
         }
 
-        if (!file_exists($this->logfile)) {
-            $log_content = "No http_proxy log! Exec result code: $result";
-            hd_debug_print($log_content);
-        } else {
+        if (file_exists($this->logfile)) {
             $log_content = file_get_contents($this->logfile);
-            $pos = strpos($log_content, "RESPONSE_CODE:");
+            $pos = strrpos($log_content, "RESPONSE_CODE:");
             if ($pos !== false) {
                 $this->response_code = (int)trim(substr($log_content, $pos + strlen("RESPONSE_CODE:")));
-                hd_debug_print("Response code: $this->response_code", true);
+                hd_debug_print("Response code: $this->response_code from $this->logfile", true);
             }
             unlink($this->logfile);
+        } else {
+            $log_content = "No http_proxy log! Exec result code: $result";
+            hd_debug_print($log_content);
         }
 
         unlink($this->config_file);
@@ -478,8 +478,15 @@ class Curl_Wrapper
         $config_data[] = "--user-agent \"" . HD::get_dune_user_agent() . "\"";
         $config_data[] = "--url \"$this->url\"";
 
+        if ($use_cache) {
+            $etag = $this->get_cached_etag();
+            if (!empty($etag)) {
+                $header = "If-None-Match: " . str_replace('"', '\"', $etag);
+                $config_data[] = "--header \"$header\"";
+            }
+        }
+
         if (is_null($save_file)) {
-            $config_data[] = "--head";
             $config_data[] = "--output /dev/null";
         } else {
             $config_data[] = "--output \"$save_file\"";
@@ -487,14 +494,6 @@ class Curl_Wrapper
 
         foreach ($this->send_headers as $header) {
             $config_data[] = "--header \"$header\"";
-        }
-
-        if ($use_cache) {
-            $etag = $this->get_cached_etag();
-            if (!empty($etag)) {
-                $header = "If-None-Match: " . str_replace('"', '\"', $etag);
-                $config_data[] = "--header \"$header\"";
-            }
         }
 
         if ($this->is_post) {

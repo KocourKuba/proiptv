@@ -590,9 +590,6 @@ class Entry extends Json_Serializer
     public function updateCatchupSource($tag)
     {
         $this->catchup_source = $this->getAnyEntryAttribute(self::$catchup_source_attrs, $tag);
-        if (!empty($this->catchup_source)) {
-            $this->catchup_source = replace_https($this->catchup_source);
-        }
     }
 
     /**

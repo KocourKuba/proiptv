@@ -7,9 +7,15 @@ class Sql_Wrapper
     */
     protected $db = null;
 
-    public function __construct($db)
+    public function __construct($db_name, $flags = 0)
     {
-        $this->db = $db;
+        if ($flags === 0) {
+            $flags = SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE;
+        }
+
+        hd_debug_print("Open db: $db_name", true);
+        $this->db = new SQLite3($db_name, $flags, '');
+        $this->db->exec("PRAGMA journal_mode=MEMORY;");
     }
 
     public function get_db()
@@ -131,7 +137,7 @@ class Sql_Wrapper
      * Prepare bind based on query
      *
      * @param string $query
-     * @return SQLite3Stmt
+     * @return SQLite3Stmt|false
      */
     public function prepare($query)
     {

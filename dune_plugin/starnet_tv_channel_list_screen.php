@@ -62,6 +62,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             GUI_EVENT_KEY_ENTER => $action_play,
             GUI_EVENT_KEY_PLAY => $action_play,
             GUI_EVENT_KEY_SEARCH => $search_action,
+            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
+            GUI_EVENT_KEY_TOP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
             GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
             GUI_EVENT_KEY_SETUP => User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS),
             GUI_EVENT_KEY_INFO => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO),
@@ -108,6 +110,16 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $sel_ndx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
+            case GUI_EVENT_KEY_TOP_MENU:
+            case GUI_EVENT_KEY_RETURN:
+                if (!$this->force_parent_reload) {
+                    return Action_Factory::close_and_run();
+                }
+
+            $this->force_parent_reload = false;
+            return Action_Factory::close_and_run(
+                User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
+
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();
                 if ($epg_manager === null) {
@@ -145,9 +157,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $post_action;
 
             case ACTION_ADD_FAV:
-                $fav_ids = $this->plugin->get_channels_order(FAV_CHANNELS_GROUP_ID);
-                $opt_type = in_array($channel_id, $fav_ids) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-                $this->plugin->change_channels_order(FAV_CHANNELS_GROUP_ID, $channel_id, $opt_type);
+                $this->force_parent_reload = true;
+                $in_order = $this->plugin->is_channel_in_order(FAV_CHANNELS_GROUP_ID, $channel_id);
+                $opt_type = $in_order ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
                 break;
 
             case ACTION_SETTINGS:
@@ -188,26 +201,31 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
+                $this->force_parent_reload = true;
                 $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::UP);
                 $sel_ndx--;
                 break;
 
             case ACTION_ITEM_DOWN:
+                $this->force_parent_reload = true;
                 $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::DOWN);
                 $sel_ndx++;
                 break;
 
             case ACTION_ITEM_TOP:
+                $this->force_parent_reload = true;
                 $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::TOP);
                 $sel_ndx = 0;
                 break;
 
             case ACTION_ITEM_BOTTOM:
+                $this->force_parent_reload = true;
                 $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::BOTTOM);
                 $sel_ndx = $this->plugin->get_channels_order_count($selected_media_url->group_id) - 1;
                 break;
 
             case ACTION_ITEM_DELETE:
+                $this->force_parent_reload = true;
                 $this->plugin->set_channel_visible($channel_id, true);
                 break;
 
@@ -293,7 +311,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ITEM_DELETE_BY_STRING:
                 if ($user_input->hide !== 'custom_string') {
-                    $this->plugin->hide_channels_by_mask($user_input->hide, $selected_media_url->group_id);
+                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_media_url->group_id) !== 0;
                     break;
                 }
 
@@ -314,7 +332,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $custom_string = $user_input->{self::ACTION_CUSTOM_DELETE};
                 if (!empty($custom_string)) {
                     $this->plugin->set_parameter(PARAM_CUSTOM_DELETE_STRING, $custom_string);
-                    $this->plugin->hide_channels_by_mask($custom_string, $selected_media_url->group_id, false);
+                    $this->force_parent_reload = $this->plugin->hide_channels_by_mask($custom_string, $parent_media_url->group_id, false) !== 0;
                 }
                 break;
 
@@ -344,10 +362,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEMS_SORT:
+                $this->force_parent_reload = true;
                 $this->plugin->sort_channels_order($parent_media_url->group_id);
                 break;
 
             case ACTION_RESET_ITEMS_SORT:
+                $this->force_parent_reload = true;
                 $this->plugin->sort_channels_order($parent_media_url->group_id, true);
                 break;
 
@@ -360,6 +380,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         Action_Factory::open_folder($parent_media_url->get_media_url_str())
                     )
                 );
+
+            case ACTION_INVALIDATE:
+                $this->force_parent_reload = true;
+                break;
 
             case ACTION_REFRESH_SCREEN:
                 break;
@@ -420,7 +444,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $items = array();
 
         try {
-            if ($this->plugin->load_channels($plugin_cookies) === 0) {
+            if (!$this->plugin->load_channels($plugin_cookies)) {
                 throw new Exception("Channels not loaded!");
             }
 

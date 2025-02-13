@@ -42,14 +42,15 @@ class api_1ott extends api_default
             return true;
         }
 
+        $rq_last_error_name = $this->plugin->get_active_playlist_key() . "_rq_last_error";
         $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
         if (isset($response->token)) {
             $this->plugin->set_cookie(PARAM_SESSION_ID, $response->token,time() + 86400);
-            HD::set_last_error("rq_last_error", null);
+            HD::set_last_error($rq_last_error_name, null);
             return true;
         }
 
-        HD::set_last_error("rq_last_error", TR::load_string('err_cant_get_token'));
+        HD::set_last_error($rq_last_error_name, TR::load_string('err_cant_get_token'));
         return false;
     }
 

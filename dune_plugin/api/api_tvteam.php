@@ -154,25 +154,27 @@ class api_tvteam extends api_default
             return true;
         }
 
-        $error_msg = HD::check_last_error('rq_last_error');
+        $pl_last_error = $this->plugin->get_pl_error_name();
+        $rq_last_error = $this->plugin->get_request_error_name();
+        $error_msg = HD::check_last_error($rq_last_error);
         if (!$force && !empty($error_msg)) {
             $info_msg = str_replace('|', PHP_EOL, TR::load_string('err_auth_no_spam'));
             hd_debug_print($info_msg);
-            HD::set_last_error("pl_last_error", "$info_msg\n\n$error_msg");
+            HD::set_last_error($pl_last_error, "$info_msg\n\n$error_msg");
         } else {
-            HD::set_last_error("pl_last_error", null);
-            HD::set_last_error("rq_last_error", null);
+            HD::set_last_error($pl_last_error, null);
+            HD::set_last_error($pl_last_error, null);
             $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
             hd_debug_print("request provider token response: " . pretty_json_format($response), true);
             if (!$response) {
-                HD::set_last_error("pl_last_error", "Bad provider response");
-                HD::set_last_error("rq_last_error", "Bad provider response");
+                HD::set_last_error($pl_last_error, "Bad provider response");
+                HD::set_last_error($rq_last_error, "Bad provider response");
             } else if ($response->status === 0 || !empty($response->error)) {
-                HD::set_last_error("pl_last_error", $response->error);
-                HD::set_last_error("rq_last_error", $response->error);
+                HD::set_last_error($pl_last_error, $response->error);
+                HD::set_last_error($rq_last_error, $response->error);
             } else if (isset($response->data->sessionId)) {
                 $this->plugin->set_cookie(PARAM_SESSION_ID, $response->data->sessionId, time() + 86400 * 7);
-                HD::set_last_error("rq_last_error", null);
+                HD::set_last_error($rq_last_error, null);
 
                 return true;
             }

@@ -30,6 +30,8 @@ abstract class Abstract_Preloaded_Regular_Screen extends Abstract_Regular_Screen
 {
     const DLG_CONTROLS_WIDTH = 850;
 
+    protected $force_parent_reload = false;
+
     /**
      * @param MediaURL $parent_media_url
      * @param Object $plugin_cookies

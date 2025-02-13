@@ -92,10 +92,10 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_FAV:
-                $fav_ids = $this->plugin->get_channels_order(FAV_MOVIE_GROUP_ID);
-                $opt_type = in_array($movie_id, $fav_ids) ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
+                $in_order = $this->plugin->is_channel_in_order(FAV_MOVIE_GROUP_ID, $movie_id);
+                $opt_type = $in_order ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_vod_favorites($opt_type, $movie_id);
-                $message = $opt_type === PLUGIN_FAVORITES_OP_REMOVE ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
+                $message = $in_order ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
                 return Action_Factory::show_title_dialog($message);
         }
 

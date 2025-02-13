@@ -32,9 +32,9 @@
 /dune_fs/flashdata/plugins_epfs/proiptv/proiptv.json
 /dune_fs/flashdata/plugins_epfs/proiptv/proiptv.no_internet.json
 /dune_fs/tmp/plugins/proiptv/vod_last_error
-/dune_fs/tmp/plugins/proiptv/pl_last_error
 /dune_fs/tmp/plugins/proiptv/epfs_warmed_up
+/dune_fs/tmp/plugins/proiptv/*_pl_last_error
+/dune_fs/tmp/plugins/proiptv/*_rq_last_error
 /dune_fs/tmp/plugins/proiptv/*.json
-/dune_fs/tmp/plugins/proiptv/rq_last_error
 /dune_fs/tmp/plugins/proiptv/*.session_id
 /dune_fs/tmp/plugins/proiptv/*_session_id

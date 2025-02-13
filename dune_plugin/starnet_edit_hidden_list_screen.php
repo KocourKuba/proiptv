@@ -37,8 +37,6 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
     ///////////////////////////////////////////////////////////////////////
 
-    protected $force_parent_reload = false;
-
     /**
      * @inheritDoc
      */
@@ -70,42 +68,39 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
 
         switch ($user_input->control_id) {
+            case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                hd_debug_print("Need reload: " . var_export($this->force_parent_reload, true), true);
+                if (!$this->force_parent_reload) {
+                    return Action_Factory::close_and_run();
+                }
 
-                $post_action = User_Input_Handler_Registry::create_action_screen(
-                    $parent_media_url->source_window_id,
-                    $this->force_parent_reload ? $parent_media_url->end_action : $parent_media_url->cancel_action,
-                    null,
-                    array('reload_action' => $parent_media_url->edit_list)
-                );
-                hd_debug_print("post action: " . pretty_json_format($post_action));
-
-                $reload = $this->force_parent_reload;
                 $this->force_parent_reload = false;
-                return Action_Factory::invalidate_folders(
-                    $reload ? array($parent_media_url->source_media_url_str) : array(),
-                    Action_Factory::close_and_run($post_action)
-                );
-
+                return Action_Factory::close_and_run(
+                        User_Input_Handler_Registry::create_action_screen(
+                            $parent_media_url->source_window_id,
+                            $parent_media_url->end_action,
+                            null,
+                            array('reload_action' => $parent_media_url->edit_list)
+                        )
+                    );
             case ACTION_ITEM_DELETE:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
-                    $this->plugin->set_channel_visible($selected_id, 0);
+                    $this->plugin->set_channel_visible($selected_id, false);
                     $this->plugin->change_channels_order($parent_media_url->group_id, $selected_id, false);
                     $force_return = $this->plugin->get_channels_order_count($parent_media_url->group_id) === 0;
                     hd_debug_print("restore channel: " . $selected_id, true);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
                     $this->plugin->set_groups_visible($selected_id, 0);
-                    $force_return = $this->plugin->get_groups_count(false, true) === 0;
+                    $force_return = $this->plugin->get_groups_count(0, 1) === 0;
                     hd_debug_print("restore group: " . $selected_id, true);
                 } else {
                     hd_debug_print("unknown edit list");
                     return null;
                 }
 
+                $this->force_parent_reload = true;
                 if (!$force_return) break;
 
-                $this->force_parent_reload = true;
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ITEMS_CLEAR:
@@ -116,11 +111,12 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
                     $this->plugin->set_channel_visible($this->plugin->get_channels($parent_media_url->group_id, 1), false);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
-                    $this->plugin->set_groups_visible($this->plugin->get_groups(false, true), false);
+                    $this->plugin->set_groups_visible($this->plugin->get_groups(0, 1), false);
                 } else {
                     return null;
                 }
 
+                $this->force_parent_reload = true;
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         }
 
@@ -137,7 +133,8 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
         $items = array();
         if ($media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
-            foreach ($this->plugin->get_channels($media_url->group_id, 1) as $channel_row) {
+            $channels_rows = $this->plugin->get_channels($media_url->group_id, 1, true);
+            foreach ($channels_rows as $channel_row) {
                 if (empty($channel_row)) continue;
 
                 $items[] = self::add_item(
@@ -151,7 +148,8 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
         }
 
         if ($media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
-            foreach ($this->plugin->get_groups(false, true) as $group_row) {
+            $groups_rows = $this->plugin->get_groups(0, 1);
+            foreach ($groups_rows as $group_row) {
                 if (empty($group_row)) continue;
 
                 $items[] = self::add_item(

@@ -210,6 +210,7 @@ class UI_Parameters
      * @return void
      */
     public function init_screen_view_parameters($background) {
+        hd_debug_print(null, true);
         hd_debug_print("Selected background: $background", true);
         $this->screens_views = array(
             // 1x10 title list view with right side icon

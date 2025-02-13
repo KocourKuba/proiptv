@@ -891,7 +891,7 @@ class api_default
             }
 
             if (!empty($settings)) {
-                Default_Dune_Plugin::put_settings($id, $settings);
+                $this->plugin->put_settings($id, $settings);
             }
         }
 

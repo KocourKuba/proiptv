@@ -918,7 +918,7 @@ class HD
      * @param string $source
      * @return string
      */
-    public static function check_last_error($source = "pl_last_error")
+    public static function check_last_error($source)
     {
         $error_file = get_temp_path($source);
         $msg = '';
@@ -932,7 +932,7 @@ class HD
      * @param string $source
      * @return string
      */
-    public static function get_last_error($source = "pl_last_error")
+    public static function get_last_error($source)
     {
         $error_file = get_temp_path($source);
         $msg = '';

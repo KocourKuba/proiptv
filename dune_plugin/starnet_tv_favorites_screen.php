@@ -95,14 +95,13 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $post_action = null;
-                if ($user_input->control_id === GUI_EVENT_KEY_RETURN) {
-                    $post_action = User_Input_Handler_Registry::create_action(
-                        User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Tv_Groups_Screen::get_handler_id()),
-                        ACTION_REFRESH_SCREEN);
-                }
-                $post_action = Action_Factory::close_and_run($post_action);
-                return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+            if (!$this->force_parent_reload) {
+                return Action_Factory::close_and_run();
+            }
+
+            $this->force_parent_reload = false;
+            return Action_Factory::close_and_run(
+                User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case GUI_EVENT_KEY_SUBTITLE:
                 return $this->plugin->do_show_channel_epg($selected_media_url->channel_id, $plugin_cookies);
@@ -135,49 +134,55 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
+                $this->force_parent_reload = true;
                 $user_input->sel_ndx--;
                 if ($user_input->sel_ndx < 0) {
                     $user_input->sel_ndx = 0;
                 }
 
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                break;
 
             case ACTION_ITEM_DOWN:
+                $this->force_parent_reload = true;
                 $user_input->sel_ndx++;
                 $cnt = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID);
                 if ($user_input->sel_ndx >= $cnt) {
                     $user_input->sel_ndx = $cnt - 1;
                 }
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                break;
 
             case ACTION_ITEM_TOP:
+                $this->force_parent_reload = true;
                 $user_input->sel_ndx = 0;
                 $this->plugin->change_tv_favorites(ACTION_ITEM_TOP, $selected_media_url->channel_id);
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                break;
 
             case ACTION_ITEM_BOTTOM:
+                $this->force_parent_reload = true;
                 $user_input->sel_ndx = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) - 1;
                 $this->plugin->change_tv_favorites(ACTION_ITEM_BOTTOM, $selected_media_url->channel_id);
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                break;
 
             case ACTION_ITEM_DELETE:
+                $this->force_parent_reload = true;
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
-                if ($this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) != 0) {
-                    return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                if ($this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) == 0) {
+                    return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+                break;
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->remove_channels_order(FAV_CHANNELS_GROUP_ID);
+                $this->force_parent_reload = true;
+                $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null, $plugin_cookies);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
         }
 
-        return null;
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
     }
 
     ///////////////////////////////////////////////////////////////////////

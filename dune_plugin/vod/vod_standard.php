@@ -744,7 +744,7 @@ class vod_standard extends Abstract_Vod
             $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($response === false) {
                 $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
-                HD::set_last_error("vod_last_error", $exception_msg);
+                HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
                 if (file_exists($tmp_file)) {
                     unlink($tmp_file);
                 }
@@ -752,7 +752,7 @@ class vod_standard extends Abstract_Vod
                 $this->vod_items = Curl_Wrapper::decodeJsonResponse(true, $tmp_file, $assoc);
                 if ($this->vod_items === false) {
                     $exception_msg = TR::load_string('err_decoding_vod');
-                    HD::set_last_error("vod_last_error", $exception_msg);
+                    HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);
                     }
@@ -789,7 +789,8 @@ class vod_standard extends Abstract_Vod
             $where = "WHERE group_id == '$group_id';";
         }
 
-        $result = $this->wrapper->query_value("SELECT count(hash) FROM vod.vod_entries $where;");
+        $query = "SELECT count(*) FROM " . M3uParser::VOD_TABLE . " $where;";
+        $result = $this->wrapper->query_value($query);
         return empty($result) ? 0 : (int)$result;
     }
 
@@ -815,7 +816,8 @@ class vod_standard extends Abstract_Vod
             $limit = "LIMIT $from, $limit";
         }
 
-        return $this->wrapper->fetch_array("SELECT * FROM vod.vod_entries $where $limit;");
+        $query = "SELECT * FROM " . M3uParser::VOD_TABLE . " $where $limit;";
+        return $this->wrapper->fetch_array($query);
     }
 
     /**
@@ -829,7 +831,8 @@ class vod_standard extends Abstract_Vod
             return array();
         }
 
-        return $this->wrapper->fetch_single_array("SELECT DISTINCT group_id FROM vod.vod_entries", 'group_id');
+        $query = "SELECT DISTINCT group_id FROM " . M3uParser::VOD_TABLE . ";";
+        return $this->wrapper->fetch_single_array($query, 'group_id');
     }
 
     /**
@@ -844,6 +847,7 @@ class vod_standard extends Abstract_Vod
             return array();
         }
 
-        return $this->wrapper->query_value("SELECT * FROM vod.vod_entries WHERE hash = '$hash';", true);
+        $query = "SELECT * FROM " . M3uParser::VOD_TABLE . " WHERE hash = '$hash';";
+        return $this->wrapper->query_value($query, true);
     }
 }

@@ -27,6 +27,7 @@ require_once 'lib/tr.php';
 require_once 'lib/hd.php';
 require_once 'lib/hashed_array.php';
 require_once 'lib/curl_wrapper.php';
+require_once 'lib/sql_wrapper.php';
 require_once 'lib/perf_collector.php';
 
 require_once 'epg_params.php';
@@ -70,11 +71,6 @@ class Epg_Manager_Xmltv
     protected $xmltv_url_params;
 
     /**
-     * @var bool
-     */
-    protected $replace_https = false;
-
-    /**
      * @var Curl_Wrapper
      */
     protected $curl_wrapper;
@@ -90,7 +86,7 @@ class Epg_Manager_Xmltv
     protected $perf;
 
     /**
-     * @var SQLite3[]
+     * @var Sql_Wrapper[]
      */
     protected $epg_db = array();
 
@@ -370,35 +366,25 @@ class Epg_Manager_Xmltv
         }
         $aliases = array_unique($aliases);
 
-        $placeHolders = '';
-        foreach ($aliases as $alias) {
-            if (empty($alias)) continue;
-            if (!empty($placeHolders)) {
-                $placeHolders .= ',';
-            }
-            $placeHolders .= "'" . SQLite3::escapeString($alias) . "'";
+        $placeHolders = Sql_Wrapper::sql_make_list_from_quoted_values($aliases);
+        if (empty($placeHolders)) {
+            return '';
         }
+
+        $ch_table_name = self::INDEX_CHANNELS;
+        $picons_table_name = self::INDEX_PICONS;
+
+        $query = "SELECT distinct (picon_url) FROM $picons_table_name
+                    INNER JOIN $ch_table_name ON $picons_table_name.picon_hash=$ch_table_name.picon_hash
+                    WHERE alias IN ($placeHolders);";
 
         $res = '';
-        if (empty($placeHolders)) {
-            return $res;
-        }
-
-        $table_pic = self::INDEX_PICONS;
-        $table_ch = self::INDEX_CHANNELS;
-        $qry = "SELECT distinct (picon_url) FROM $table_pic"
-            . " INNER JOIN $table_ch ON $table_pic.picon_hash=$table_ch.picon_hash"
-            . " WHERE alias IN ($placeHolders);";
-
         foreach ($this->xmltv_sources as $params) {
             $db = $this->open_sqlite_db($params[PARAM_HASH]);
             if (is_null($db) || $db === false) continue;
 
-            $res = $db->querySingle($qry);
+            $res = $db->query_value($query);
             if (!empty($res)) {
-                if ($this->replace_https) {
-                    $res = str_replace('https://', 'http://', $res);
-                }
                 break;
             }
         }
@@ -529,12 +515,12 @@ class Epg_Manager_Xmltv
             return;
         }
 
-        hd_debug_print("Cached file: $cached_file is not expired", true);
+        hd_debug_print("Cached file: $cached_file is not expired");
         $indexed = $this->get_indexes_info();
 
         // index for picons has not verified because it always exist if channels index is present
         if (!$index_all && $indexed[self::INDEX_CHANNELS] !== -1) {
-            hd_debug_print("Xmltv channels index is valid", true);
+            hd_debug_print("Xmltv channels index is valid");
             return;
         }
 
@@ -595,12 +581,8 @@ class Epg_Manager_Xmltv
         }
 
         if (empty($hash)) {
-            foreach ($this->epg_db as $db) {
-                $db->close();
-            }
             $this->epg_db = array();
         } else if (isset($this->epg_db[$hash])) {
-            $this->epg_db[$hash]->close();
             unset($this->epg_db[$hash]);
         }
 
@@ -662,16 +644,16 @@ class Epg_Manager_Xmltv
         foreach ($result as $key => $name) {
             if ($key === 'epg_ids') continue;
 
-            $res = $db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$key';");
+            $res = $db->query_value("SELECT name FROM sqlite_master WHERE type='table' AND name='$key';");
             if (empty($res)) continue;
 
             if ($key === self::INDEX_PICONS) {
-                $result[$key] = $db->querySingle("SELECT count(picon_hash) FROM $key;");
+                $result[$key] = $db->query_value("SELECT count(*) FROM $key;");
             } else if ($key === self::INDEX_CHANNELS) {
-                $result[$key] = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $key;");
+                $result[$key] = $db->query_value("SELECT count(DISTINCT channel_id) FROM $key;");
             } else {
-                $result[$key] = $db->querySingle("SELECT count(*) FROM $key;");
-                $result['epg_ids'] = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $key;");
+                $result[$key] = $db->query_value("SELECT count(*) FROM $key;");
+                $result['epg_ids'] = $db->query_value("SELECT count(DISTINCT channel_id) FROM $key;");
             }
         }
 
@@ -711,8 +693,8 @@ class Epg_Manager_Xmltv
     protected function load_program_index($channel_row)
     {
         $channel_position = array();
-        $table_ch = self::INDEX_CHANNELS;
         $table_pos = self::INDEX_ENTRIES;
+        $table_channels = self::INDEX_CHANNELS;
 
         try {
             $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
@@ -725,7 +707,7 @@ class Epg_Manager_Xmltv
                 throw new Exception("Problem with open SQLite db! Possible url not set");
             }
 
-            if (!$this->is_all_indexes_valid(array($table_ch, $table_pos))) {
+            if (!$this->is_all_indexes_valid(array('epg_channels', $table_pos))) {
                 hd_debug_print("EPG for {$this->xmltv_url_params[PARAM_URI]} not indexed!");
                 return $channel_position;
             }
@@ -733,7 +715,7 @@ class Epg_Manager_Xmltv
             $channel_title = $channel_row['title'];
             $epg_ids = array_unique(array($channel_row['epg_id'], $channel_row['channel_id'], $channel_row['title']));
             $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
-            $stm = $db->prepare("SELECT DISTINCT channel_id FROM $table_ch WHERE alias IN ($placeHolders);");
+            $stm = $db->prepare("SELECT DISTINCT channel_id FROM $table_channels WHERE alias IN ($placeHolders);");
             if ($stm !== false) {
                 foreach ($epg_ids as $index => $val) {
                     $stm->bindValue($index + 1, mb_convert_case(SQLite3::escapeString($val), MB_CASE_LOWER, "UTF-8"));
@@ -830,7 +812,7 @@ class Epg_Manager_Xmltv
         }
 
         foreach ($names as $name) {
-            if (!$db->querySingle("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';")) {
+            if (!$db->query_value("SELECT name FROM sqlite_master WHERE type='table' AND name='$name';")) {
                 return false;
             }
         }
@@ -843,7 +825,7 @@ class Epg_Manager_Xmltv
     /**
      * open sqlite database
      * @param string $db_name
-     * @return SQLite3|false|null
+     * @return Sql_Wrapper|false|null
      */
     private function open_sqlite_db($db_name)
     {
@@ -858,14 +840,7 @@ class Epg_Manager_Xmltv
         }
 
         if (!isset($this->epg_db[$db_name])) {
-            $index_name = $this->cache_dir . $db_name . ".db";
-            hd_debug_print("Open db: $index_name", true);
-            $flags = SQLITE3_OPEN_READWRITE;
-            if (!file_exists($index_name)) {
-                $flags |= SQLITE3_OPEN_CREATE;
-            }
-            $this->epg_db[$db_name] = new SQLite3($index_name, $flags, '');
-            $this->epg_db[$db_name]->busyTimeout(60);
+            $this->epg_db[$db_name] = new Sql_Wrapper("$this->cache_dir$db_name.db");
         }
 
         return $this->epg_db[$db_name];
@@ -896,10 +871,6 @@ class Epg_Manager_Xmltv
             return;
         }
 
-        $table_pic = self::INDEX_PICONS;
-        $table_ch = self::INDEX_CHANNELS;
-        $table_pos = self::INDEX_ENTRIES;
-
         $db = $this->open_sqlite_db($url_hash);
         if ($db === false) {
             return;
@@ -913,7 +884,7 @@ class Epg_Manager_Xmltv
         $this->set_index_locked($url_hash, true);
 
         hd_debug_print("Clear all indexes for: $url");
-        foreach (array($table_ch, $table_pic, $table_pos) as $name) {
+        foreach (array(self::INDEX_CHANNELS, self::INDEX_PICONS, self::INDEX_ENTRIES) as $name) {
             hd_debug_print("Remove index: $name");
             $db->exec("DROP TABLE IF EXISTS $name;");
         }
@@ -1012,20 +983,13 @@ class Epg_Manager_Xmltv
 
         $this->set_index_locked($url_hash, true);
 
-        $db->exec("CREATE TABLE $table_ch(alias STRING PRIMARY KEY not null, channel_id STRING not null, picon_hash STRING);");
-        $db->exec("CREATE TABLE $table_pic(picon_hash STRING PRIMARY KEY not null, picon_url STRING);");
-        $db->exec('PRAGMA journal_mode=MEMORY;');
-        $db->exec('BEGIN;');
+        $ch_table_name = self::INDEX_CHANNELS;
+        $picons_table_name = self::INDEX_PICONS;
 
-        $stm_channels = $db->prepare("INSERT OR REPLACE INTO $table_ch (alias, channel_id, picon_hash) VALUES(:alias, :channel_id, :picon_hash);");
-        $stm_channels->bindParam(":alias", $alias);
-        $stm_channels->bindParam(":channel_id", $channel_id);
-        $stm_channels->bindParam(":picon_hash", $picon_hash);
+        $db->exec("CREATE TABLE $ch_table_name (alias TEXT PRIMARY KEY not null, channel_id TEXT not null, picon_hash TEXT);");
+        $db->exec("CREATE TABLE $picons_table_name (picon_hash TEXT PRIMARY KEY not null, picon_url TEXT);");
 
-        $stm_picons = $db->prepare("INSERT OR REPLACE INTO $table_pic (picon_hash, picon_url) VALUES(:picon_hash, :picon_url);");
-        $stm_picons->bindParam(":picon_hash", $picon_hash);
-        $stm_picons->bindParam(":picon_url", $picon_url);
-
+        $query = '';
         while (!feof($file)) {
             $line = stream_get_line($file, 0, "<channel ");
             if (empty($line)) continue;
@@ -1047,32 +1011,33 @@ class Epg_Manager_Xmltv
 
             if (empty($channel_id)) continue;
 
+            $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+            $picon_hash = '';
             foreach ($xml_node->getElementsByTagName('icon') as $tag) {
                 if (is_proto_http($tag->getAttribute('src'))) {
                     $picon_url = $tag->getAttribute('src');
                     if (!empty($picon_url)) {
                         $picon_hash = md5($picon_url);
-                        $stm_picons->execute();
+                        $q_url = Sql_Wrapper::sql_quote($picon_url);
+                        $query .= "INSERT OR REPLACE INTO $picons_table_name (picon_hash, picon_url) VALUES('$picon_hash', $q_url);";
                         break;
                     }
                 }
             }
 
-            $alias = $channel_id;
-            $stm_channels->execute();
+            $query .= "INSERT OR REPLACE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_channel_id, $q_channel_id, '$picon_hash');";
 
             foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                $alias = mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8");
-                $stm_channels->execute();
+                $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8"));
+                $query .= "INSERT OR REPLACE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_alias, $q_channel_id, '$picon_hash');";
             }
         }
+        $db->exec_transaction($query);
 
-        $db->exec('COMMIT;');
-
-        $result = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $table_ch;");
+        $result = $db->query_value("SELECT count(DISTINCT channel_id) FROM $ch_table_name;");
         $channels = empty($result) ? 0 : (int)$result;
 
-        $result = $db->querySingle("SELECT count(picon_hash) FROM $table_pic;");
+        $result = $db->query_value("SELECT count(*) FROM $picons_table_name;");
         $picons = empty($result) ? 0 : (int)$result;
 
         $this->perf->setLabel('end');
@@ -1095,16 +1060,16 @@ class Epg_Manager_Xmltv
         /////////////////////////////////////////////////////////////////
         /// Reindex positions
 
+        $pos_table_name = self::INDEX_ENTRIES;
         hd_debug_print("Indexing positions for: $url", true);
         $this->perf->reset('reindex');
 
-        $db->exec("CREATE TABLE $table_pos (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);");
-        $db->exec('PRAGMA journal_mode=MEMORY;');
+        $db->exec("CREATE TABLE $pos_table_name (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);");
         $db->exec('BEGIN;');
 
         hd_debug_print("Begin transactions...");
 
-        $stm = $db->prepare("INSERT INTO $table_pos (channel_id, start, end) VALUES(:channel_id, :start, :end);");
+        $stm = $db->prepare("INSERT INTO $pos_table_name (channel_id, start, end) VALUES(:channel_id, :start, :end);");
         $stm->bindParam(":channel_id", $prev_channel);
         $stm->bindParam(":start", $start_program_block);
         $stm->bindParam(":end", $tag_end_pos);
@@ -1166,10 +1131,10 @@ class Epg_Manager_Xmltv
 
         fclose($file);
 
-        $result = $db->querySingle("SELECT count(DISTINCT channel_id) FROM $table_pos;");
+        $result = $db->query_value("SELECT count(DISTINCT channel_id) FROM $pos_table_name;");
         $total_epg = empty($result) ? 0 : (int)$result;
 
-        $result = $db->querySingle("SELECT count(*) FROM $table_pos;");
+        $result = $db->query_value("SELECT count(*) FROM $pos_table_name;");
         $total_blocks = empty($result) ? 0 : (int)$result;
 
         $this->set_index_locked($url_hash, false);

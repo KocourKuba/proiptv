@@ -32,6 +32,8 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 {
     const ID = 'category_setup';
 
+    protected $force_parent_reload = false;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -41,6 +43,7 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
     {
         hd_debug_print(null, true);
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         return $actions;
     }
 
@@ -127,27 +130,25 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 
         switch ($control_id) {
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_action_screen(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                $reload = $this->force_parent_reload;
+                $this->force_parent_reload = false;
+
+                if ($reload) {
+                    return Starnet_Epfs_Handler::epfs_invalidate_folders(
+                        array(Starnet_Tv_Groups_Screen::ID),
+                        Action_Factory::close_and_run()
+                    );
+                }
+                return Action_Factory::close_and_run();
 
             case PARAM_SHOW_ALL:
             case PARAM_SHOW_FAVORITES:
             case PARAM_SHOW_HISTORY:
             case PARAM_SHOW_CHANGED_CHANNELS:
             case PARAM_SHOW_VOD:
+                $this->force_parent_reload = true;
                 $this->plugin->toggle_setting($control_id);
-                $this->plugin->reload_channels($plugin_cookies);
-
-                return Starnet_Epfs_Handler::epfs_invalidate_folders(
-                    array(Starnet_Tv_Groups_Screen::ID),
-                    Action_Factory::reset_controls($this->do_get_control_defs())
-                );
+                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());
