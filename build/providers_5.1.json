@@ -545,6 +545,27 @@
     },
     {
       "enable": true,
+      "id": "hnmedia",
+      "name": "HN Media",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_hnmedia.png",
+      "provider_url": "https://hnmedia.pro/",
+      "api_commands": {
+        "get_playlist": "https://hnmedia.pro/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=.+$/",
+        "ext_params": true,
+        "streams": {
+          "hls": "HLS",
+          "hls2": "HLS2",
+          "siptv": "MPEG-TS"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "ipstream",
       "name": "IPStream/iShara",
       "type": "pin",
@@ -1212,6 +1233,7 @@
           "ru03.spr24.net": "Moscow (RU03)",
           "nl01.spr24.net": "Amsterdam (NL01)",
           "am01.spr24.net": "Amsterdam (AM01)",
+          "am02.spr24.net": "Amsterdam (AM02)",
           "fr01.spr24.net": "France (FR01)",
           "ch01.spr24.net": "Zurich (CH01)",
           "eu01.spr24.net": "Europe (EU01)",
@@ -1433,7 +1455,6 @@
       "api_commands": {
         "get_playlist": "http://p.velestore.su/play18/{LOGIN}/{PASSWORD}/playlist.m3u8"
       },
-      "ext_params": true,
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+):(?<port>[^\\/]+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
