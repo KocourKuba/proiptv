@@ -437,7 +437,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 if (isset($parent_url->filepath)
                     && $parent_url->filepath !== self::SMB_PATH
                     && $parent_url->filepath !== self::NETWORK_PATH) {
-                    $invalidate = Starnet_Epfs_Handler::epfs_invalidate_folders(array($user_input->parent_media_url));
+                    $invalidate = Action_Factory::invalidate_all_folders($plugin_cookies, array($user_input->parent_media_url));
                 } else {
                     $invalidate = null;
                 }
@@ -454,7 +454,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 return $this->do_reset_folder($user_input);
 
             case self::ACTION_RELOAD_IMAGE_FOLDER:
-                return $this->do_reload_folder($user_input);
+                return $this->do_reload_folder($user_input, $plugin_cookies);
 
             case self::ACTION_GET_FOLDER_NAME_DLG:
                 return $this->do_get_folder_name_dlg();
@@ -463,7 +463,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, self::ACTION_DO_MKDIR));
 
             case self::ACTION_DO_MKDIR:
-                return $this->do_mkdir($user_input);
+                return $this->do_mkdir($user_input, $plugin_cookies);
 
             case ACTION_OPEN_FOLDER:
                 return $this->do_open_folder($user_input);
@@ -672,10 +672,11 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
+     * @param object $plugin_cookies
      * @return array|null
      */
-    protected function do_reload_folder($user_input)
+    protected function do_reload_folder($user_input, $plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -684,7 +685,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         clearstatcache();
 
-        return Starnet_Epfs_Handler::epfs_invalidate_folders(array($user_input->parent_media_url));
+        return Action_Factory::invalidate_all_folders($plugin_cookies, array($user_input->parent_media_url));
     }
 
     /**
@@ -705,10 +706,11 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
+     * @param object $plugin_cookies
      * @return array
      */
-    protected function do_mkdir($user_input)
+    protected function do_mkdir($user_input, $plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -717,7 +719,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         if (!create_path($parent_url->filepath . '/' . $user_input->{self::ACTION_CREATE_FOLDER})) {
             return Action_Factory::show_title_dialog(TR::t('err_cant_create_folder'));
         }
-        return Starnet_Epfs_Handler::epfs_invalidate_folders(array($user_input->parent_media_url));
+        return Action_Factory::invalidate_all_folders($plugin_cookies, array($user_input->parent_media_url));
     }
 
     /**

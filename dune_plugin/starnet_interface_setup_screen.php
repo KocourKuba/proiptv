@@ -156,7 +156,8 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->toggle_parameter($control_id);
                 $this->plugin->reload_channels($plugin_cookies);
 
-                return Starnet_Epfs_Handler::epfs_invalidate_folders(
+                return Action_Factory::invalidate_all_folders(
+                    $plugin_cookies,
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
                 );

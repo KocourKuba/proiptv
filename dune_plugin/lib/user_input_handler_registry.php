@@ -127,8 +127,7 @@ class User_Input_Handler_Registry
             $params = array_merge($params, $add_params);
         }
 
-        return array
-        (
+        return array(
             GuiAction::handler_string_id => PLUGIN_HANDLE_USER_INPUT_ACTION_ID,
             GuiAction::caption => $caption,
             GuiAction::data => null,

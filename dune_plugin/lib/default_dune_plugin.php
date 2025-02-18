@@ -751,10 +751,12 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 $this->change_channels_order(FAV_CHANNELS_GROUP_ID, $channel_id, true);
                 break;
 
+            case ACTION_ITEM_UP:
             case PLUGIN_FAVORITES_OP_MOVE_UP:
                 $this->arrange_channels_order_rows(FAV_CHANNELS_GROUP_ID, $channel_id, Ordered_Array::UP);
                 break;
 
+            case ACTION_ITEM_DOWN:
             case PLUGIN_FAVORITES_OP_MOVE_DOWN:
                 $this->arrange_channels_order_rows(FAV_CHANNELS_GROUP_ID, $channel_id, Ordered_Array::DOWN);
                 break;
@@ -779,13 +781,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         }
 
         return null;
-        /*
-        return Starnet_Epfs_Handler::epfs_invalidate_folders(
-            array(Starnet_Tv_Favorites_Screen::get_media_url_string(FAV_CHANNELS_GROUP_ID),
-                Starnet_Tv_Channel_List_Screen::get_media_url_string(ALL_CHANNELS_GROUP_ID)
-            )
-        );
-        */
     }
 
     /**
@@ -1187,6 +1182,21 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
+     * @return array
+     */
+    public function get_channels_zoom($group_id)
+    {
+        $order_table = self::get_table_name($group_id);
+        $query = "SELECT ch.channel_id, ch.zoom FROM $this->pl_ch_params AS ch
+                    JOIN $order_table AS ord ON ch.channel_id = ord.channel_id;";
+        $result = array();
+        foreach ($this->sql_playlist->fetch_array($query) as $value) {
+            $result[$value['channel_id']] = $value['zoom'];
+        }
+        return $result;
+    }
+
+    /**
     /**
      * @param string $channel_id
      * @param bool $external
@@ -1340,8 +1350,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_history($movie_id)
     {
-        $q_id = Sql_Wrapper::sql_quote($movie_id);
-        return $this->sql_playlist->fetch_array("SELECT * FROM $this->vod_history WHERE movie_id = $q_id;");
+        $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
+        return $this->sql_playlist->fetch_array("SELECT * FROM $this->vod_history WHERE movie_id = $q_movie_id;");
     }
 
     /**
@@ -4007,20 +4017,21 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public static function get_table_name($group_id)
     {
-        if ($group_id === FAV_MOVIE_GROUP_ID) {
-            return "orders_fav_vod";
-        }
+        switch ($group_id) {
+            case FAV_MOVIE_GROUP_ID:
+                return "orders_fav_vod";
 
-        if ($group_id === VOD_FILTER_LIST) {
-            return "vod_filters";
-        }
+            case VOD_FILTER_LIST:
+                return "vod_filters";
 
-        if ($group_id === VOD_SEARCH_LIST) {
-            return "vod_search";
-        }
+            case VOD_SEARCH_LIST:
+                return "vod_search";
 
-        if ($group_id === FAV_CHANNELS_GROUP_ID) {
-            return self::PL_ORDERS_DB . ".orders_fav_tv";
+            case FAV_CHANNELS_GROUP_ID:
+                return self::PL_ORDERS_DB . ".orders_fav_tv";
+
+            case HISTORY_MOVIES_GROUP_ID:
+                return self::VOD_HISTORY_DB . ".history";
         }
 
         return self::PL_ORDERS_DB . ".orders_" . Hashed_Array::hash($group_id);

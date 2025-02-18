@@ -69,19 +69,21 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         );
 
         $control_id = $user_input->control_id;
+        $post_action = null;
 
         switch ($control_id) {
             case GUI_EVENT_TIMER:
                 // rising after playback end + 100 ms
                 $this->plugin->update_tv_history(null);
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                break;
 
             case GUI_EVENT_KEY_PLAY:
             case GUI_EVENT_KEY_ENTER:
                 $tv_play_action = Action_Factory::tv_play($user_input->selected_item_id);
 
                 if (isset($user_input->action_origin)) {
-                    return Action_Factory::close_and_run(Starnet_Epfs_Handler::epfs_invalidate_folders(null, $tv_play_action));
+                    return Action_Factory::close_and_run(
+                        Action_Factory::invalidate_all_folders($plugin_cookies, null, $tv_play_action));
                 }
 
                 $new_actions = array_merge(
@@ -131,63 +133,48 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case PLUGIN_FAVORITES_OP_ADD:
             case PLUGIN_FAVORITES_OP_REMOVE:
-                if (!isset($media_url->group_id) || $media_url->group_id === HISTORY_GROUP_ID) break;
+                if (!isset($media_url->group_id) || $media_url->group_id === HISTORY_GROUP_ID) {
+                    return null;
+                }
 
                 if ($media_url->group_id === CHANGED_CHANNELS_GROUP_ID) {
                     $this->plugin->set_changed_channel($media_url->channel_id, false);
-                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                    break;
                 }
 
                 $is_in_favorites = $this->plugin->is_channel_in_order(FAV_CHANNELS_GROUP_ID, $media_url->channel_id);
                 $opt_type = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $media_url->channel_id);
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                break;
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                break;
 
             case ACTION_ITEM_UP:
             case ACTION_ITEM_DOWN:
             case ACTION_ITEM_TOP:
             case ACTION_ITEM_BOTTOM:
+                $direction = $this->action_to_direction($control_id);
                 if (!isset($media_url->group_id)
                     || $media_url->group_id === HISTORY_GROUP_ID
                     || $media_url->group_id === ALL_CHANNELS_GROUP_ID
                     || $media_url->group_id === CHANGED_CHANNELS_GROUP_ID
-                ) break;
-
-                switch ($control_id) {
-                    case ACTION_ITEM_UP:
-                        $control_id = PLUGIN_FAVORITES_OP_MOVE_UP;
-                        $direction = Ordered_Array::UP;
-                        break;
-                    case ACTION_ITEM_DOWN:
-                        $control_id = PLUGIN_FAVORITES_OP_MOVE_DOWN;
-                        $direction = Ordered_Array::DOWN;
-                        break;
-                    case ACTION_ITEM_TOP:
-                        $direction = Ordered_Array::TOP;
-                        break;
-                    case ACTION_ITEM_BOTTOM:
-                        $direction = Ordered_Array::BOTTOM;
-                        break;
-                    default:
-                        return null;
+                    || $direction === null) {
+                    return null;
                 }
 
                 if (!isset($user_input->selected_item_id) && $this->plugin->arrange_groups_order_rows($media_url->group_id, $direction)) {
-                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                    break;
                 }
 
                 if ($media_url->group_id === FAV_CHANNELS_GROUP_ID) {
                     $this->plugin->change_tv_favorites($control_id, $media_url->channel_id);
-                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                    break;
                 }
 
                 $this->plugin->arrange_channels_order_rows($media_url->group_id, $media_url->channel_id, $direction);
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                break;
 
             case ACTION_ITEMS_SORT:
                 $group = $this->plugin->get_group($media_url->group_id);
@@ -222,26 +209,26 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_ITEM_REMOVE:
                 $this->removed_playback_point = $media_url->get_raw_string();
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                break;
 
             case ACTION_ITEMS_CLEAR:
                 hd_debug_print($media_url, true);
                 if ($media_url->group_id === HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
                     $this->plugin->clear_tv_history();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                    break;
                 }
 
                 if ($media_url->group_id === FAV_CHANNELS_GROUP_ID) {
                     $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null, $plugin_cookies);
-                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                    break;
                 }
 
                 if ($media_url->group_id === CHANGED_CHANNELS_GROUP_ID) {
                     $this->plugin->clear_changed_channels();
-                    return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                    break;
                 }
-                break;
+                return null;
 
             case ACTION_ITEM_DELETE:
                 if (!isset($user_input->selected_item_id)) {
@@ -250,7 +237,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->plugin->set_channel_visible($media_url->channel_id, true);
                 }
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                break;
 
             case ACTION_CHANGE_EPG_SOURCE:
                 hd_debug_print("Start event popup menu for epg source");
@@ -278,26 +265,25 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ENGINE_XMLTV:
             case ENGINE_JSON:
-                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== $user_input->control_id) {
-                    hd_debug_print("Selected engine: $user_input->control_id", true);
-                    $this->plugin->reset_playlist_db();
-                    $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
-                    $this->plugin->init_epg_manager();
-                    return $reload_action;
+                if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === $user_input->control_id) {
+                    return null;
                 }
-                break;
+                hd_debug_print("Selected engine: $user_input->control_id", true);
+                $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
+                $this->plugin->reset_playlist_db();
+                return $reload_action;
 
             case PLAYLIST_PICONS:
             case XMLTV_PICONS:
             case COMBINED_PICONS:
-                if ($this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== $user_input->control_id) {
-                    hd_debug_print("Selected icons source: $user_input->control_id", true);
-                    $this->plugin->reset_playlist_db();
-                    $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
-                    $this->plugin->init_epg_manager();
-                    return $reload_action;
+                if ($this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) === $user_input->control_id) {
+                    return null;
                 }
-                break;
+
+                hd_debug_print("Selected icons source: $user_input->control_id", true);
+                $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
+                $this->plugin->reset_playlist_db();
+                return $reload_action;
 
             case ACTION_ITEMS_EDIT:
                 return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit);
@@ -314,12 +300,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
                     $this->plugin->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
                 }
-                break;
+                return null;
 
             case ACTION_EXTERNAL_PLAYER:
             case ACTION_INTERNAL_PLAYER:
                 $this->plugin->set_channel_ext_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
-                break;
+                return null;
 
             case ACTION_INFO_DLG:
                 return $this->plugin->do_show_subscription($this);
@@ -329,7 +315,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_EDIT_PROVIDER_DLG:
             case ACTION_EDIT_PROVIDER_EXT_DLG:
-                return $this->plugin->show_protect_settings_dialog($this,
+                return $this->plugin->show_protect_settings_dialog(
+                    $this,
                     ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
                         ? ACTION_DO_EDIT_PROVIDER
                         : ACTION_DO_EDIT_PROVIDER_EXT);
@@ -382,22 +369,27 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 if (!$this->plugin->reload_channels($plugin_cookies)) {
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                        null,
-                        HD::get_last_error($this->plugin->get_pl_error_name()));
                     $post_action = Action_Factory::close_and_run(
-                        Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
-
-                    return Starnet_Epfs_Handler::epfs_invalidate_folders(null, $post_action);
+                        Action_Factory::open_folder(
+                            self::ID,
+                            $this->plugin->create_plugin_title(),
+                            null,
+                            null,
+                            Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
+                                null,
+                                HD::get_last_error($this->plugin->get_pl_error_name())
+                            )
+                        )
+                    );
                 }
 
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                break;
 
             case ACTION_REFRESH_SCREEN:
-                return Action_Factory::invalidate_all_folders($plugin_cookies);
+                break;
         }
 
-        return null;
+        return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
     }
 
     /**
@@ -1417,5 +1409,28 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $sq_param = $param_name . ($square_icons ? '_sq' : '');
 
         return (isset($array[$sq_param])) ? $array[$sq_param] : $array[$param_name];
+    }
+
+    private function action_to_direction($action)
+    {
+        switch ($action) {
+            case ACTION_ITEM_UP:
+                $direction = Ordered_Array::UP;
+                break;
+            case ACTION_ITEM_DOWN:
+                $direction = Ordered_Array::DOWN;
+                break;
+            case ACTION_ITEM_TOP:
+                $direction = Ordered_Array::TOP;
+                break;
+            case ACTION_ITEM_BOTTOM:
+                $direction = Ordered_Array::BOTTOM;
+                break;
+            default:
+                $direction = null;
+                break;
+        }
+
+        return $direction;
     }
 }

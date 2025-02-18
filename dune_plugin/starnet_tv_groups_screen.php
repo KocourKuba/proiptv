@@ -124,7 +124,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
                 $has_error = HD::get_last_error($this->plugin->get_pl_error_name());
                 if (empty($has_error)) {
                     if ($sel_media_url->group_id !== VOD_GROUP_ID) {

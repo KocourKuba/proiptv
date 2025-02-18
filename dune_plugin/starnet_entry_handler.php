@@ -296,7 +296,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         $this->plugin->init_plugin();
                         $this->plugin->init_playlist_db();
                         $this->plugin->load_channels($plugin_cookies);
-                        return Starnet_Epfs_Handler::update_all_epfs($plugin_cookies,
+                        return Starnet_Epfs_Handler::update_epfs_file($plugin_cookies,
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
                     case self::ACTION_UNINSTALL:

@@ -153,7 +153,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
                 return $post_action;
 
             case ACTION_ADD_FAV:
@@ -344,7 +344,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         ACTION_ZOOM_APPLY,
                         TR::load_string($zoom_item),
                         (strcmp($idx, $zoom_data) !== 0 ? null : "check.png"),
-                        array(ACTION_ZOOM_SELECT => (string)$idx));
+                        array(ACTION_ZOOM_SELECT => (string)$idx)
+                    );
                 }
 
                 return Action_Factory::show_popup_menu($menu_items);
@@ -374,7 +375,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_RELOAD:
                 hd_debug_print("reload");
                 $this->plugin->reload_channels($plugin_cookies);
-                return Starnet_Epfs_Handler::epfs_invalidate_folders(
+                return Action_Factory::invalidate_all_folders(
+                    $plugin_cookies,
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::close_and_run(
                         Action_Factory::open_folder($parent_media_url->get_media_url_str())
@@ -458,7 +460,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $fav_ids = $this->plugin->get_channels_order(FAV_CHANNELS_GROUP_ID);
 
             foreach ($groups_order as $group_id) {
-                foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
+                $channels_rows = $this->plugin->get_channels_by_order($group_id);
+                $zoom_data = $this->plugin->get_channels_zoom($group_id);
+                foreach ($channels_rows as $channel_row) {
 
                     $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_row['channel_id'], 'name' => $channel_row['title']);
 
@@ -481,8 +485,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     }
 
                     $epg_str = HD::ArrayToStr(array_values($epg_ids));
-                    $zoom_data = $this->plugin->get_channel_zoom($channel_row['channel_id']);
-                    if ($zoom_data === DuneVideoZoomPresets::not_set) {
+                    $zoom = safe_get_value($zoom_data, $channel_row['channel_id'], DuneVideoZoomPresets::not_set);
+                    if ($zoom === DuneVideoZoomPresets::not_set) {
                         $detailed_info = TR::t('tv_screen_channel_info__4',
                             $channel_row['title'],
                             $channel_row['archive'],
@@ -495,7 +499,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                             $channel_row['archive'],
                             $channel_row['channel_id'],
                             $epg_str,
-                            TR::load_string(DuneVideoZoomPresets::$zoom_ops_translated[$zoom_data])
+                            TR::load_string(DuneVideoZoomPresets::$zoom_ops_translated[$zoom])
                         );
                     }
 

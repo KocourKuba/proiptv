@@ -143,13 +143,13 @@ class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen impl
             case PARAM_CHANNEL_POSITION:
             case PARAM_ICONS_IN_ROW:
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
-                $post_action = Starnet_Epfs_Handler::epfs_invalidate_folders();
+                $post_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 break;
 
             case PARAM_SQUARE_ICONS:
             case PARAM_SHOW_CHANNEL_CAPTION:
                 $this->plugin->toggle_setting($control_id, false);
-                $post_action = Starnet_Epfs_Handler::epfs_invalidate_folders();
+                $post_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 break;
         }
 

@@ -98,35 +98,19 @@ class Starnet_Epfs_Handler
     }
 
     /**
-     * @param array|null $media_urls
-     * @param array|null $post_action
-     * @return array
-     */
-    public static function epfs_invalidate_folders($media_urls = null, $post_action = null)
-    {
-        self::update_all_epfs($plugin_cookies);
-
-        if (self::$enabled) {
-            $arr = array_merge(array(self::$epf_id), (is_array($media_urls) ? $media_urls : array()));
-        } else {
-            $arr = $media_urls;
-        }
-
-        return Action_Factory::invalidate_folders($arr, $post_action);
-    }
-
-    /**
      * @param bool $first_run
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array|null
      */
-    public static function update_all_epfs(&$plugin_cookies, $first_run = false)
+    public static function update_epfs_file(&$plugin_cookies, $first_run = false)
     {
-        if (!self::$enabled)
+        if (!self::$enabled) {
             return null;
+        }
 
-        if ($first_run)
+        if ($first_run) {
             hd_debug_print("First run", true);
+        }
 
         self::ensure_no_internet_epfs_created($first_run, $plugin_cookies);
 
@@ -137,7 +121,7 @@ class Starnet_Epfs_Handler
             file_put_contents(self::warmed_up_path(), '');
         }
 
-        self::write_epf_view(self::$epf_id, $folder_view);
+        self::write_epfs_view(self::$epf_id, $folder_view);
 
         return Action_Factory::status(0);
     }
@@ -152,8 +136,8 @@ class Starnet_Epfs_Handler
         if (!self::$enabled || self::$no_internet_epfs_created)
             return;
 
-        if ($first_run || !is_file(self::get_epf_path(self::$no_internet_epfs))) {
-            self::write_epf_view(self::$no_internet_epfs, self::$dummy_epf_screen->get_folder_view_for_epf(true, $plugin_cookies));
+        if ($first_run || !is_file(self::get_epfs_path(self::$no_internet_epfs))) {
+            self::write_epfs_view(self::$no_internet_epfs, self::$dummy_epf_screen->get_folder_view_for_epf(true, $plugin_cookies));
         }
 
         self::$no_internet_epfs_created = true;
@@ -163,7 +147,7 @@ class Starnet_Epfs_Handler
      * @param string $epf_id
      * @return string
      */
-    protected static function get_epf_path($epf_id)
+    protected static function get_epfs_path($epf_id)
     {
         return self::$dir_path . "/$epf_id.json";
     }
@@ -171,11 +155,11 @@ class Starnet_Epfs_Handler
     ////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $epf_id
+     * @param string $epfs_id
      * @param array|object $folder_view
      * @return void
      */
-    protected static function write_epf_view($epf_id, $folder_view)
+    protected static function write_epfs_view($epfs_id, $folder_view)
     {
         hd_debug_print(null, true);
 
@@ -183,25 +167,27 @@ class Starnet_Epfs_Handler
             return;
         }
 
-        $path = self::get_epf_path($epf_id);
+        $path = self::get_epfs_path($epfs_id);
         $tmp_path = "$path.tmp";
 
         hd_debug_print("write epf path: $path", true);
 
-        $res = file_put_contents($tmp_path, json_encode($folder_view));
-        if (false === $res) {
-            hd_debug_print("Failed to write tmp file: $tmp_path");
-            return;
-        }
+        $new_json = json_encode($folder_view);
+        $md5 = md5($new_json);
 
         if (is_file($path)) {
-            if (hash_file('md5', $tmp_path) === hash_file('md5', $path)) {
-                unlink($tmp_path);
+            if ($md5 === hash_file('md5', $path)) {
                 hd_debug_print("$path is up to date", true);
                 return;
             }
 
             unlink($path);
+        }
+
+        $res = file_put_contents($tmp_path, $new_json);
+        if (false === $res) {
+            hd_debug_print("Failed to write tmp file: $tmp_path");
+            return;
         }
 
         if (!rename($tmp_path, $path)) {

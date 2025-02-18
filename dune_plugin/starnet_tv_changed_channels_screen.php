@@ -103,7 +103,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
-                Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+                Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
                 return $post_action;
 
             case ACTION_ITEM_DELETE:

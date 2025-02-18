@@ -336,7 +336,6 @@ class Action_Factory
      */
     public static function replace_path($erase_count = null, $elements = null, $post_action = null)
     {
-        //hd_debug_print("replace_path: erase_count: $erase_count,  elements: $elements, post_action: " . json_encode($post_action));
         if ($erase_count === null) {
             return $post_action;
         }
@@ -435,24 +434,29 @@ class Action_Factory
     }
 
     /**
+     * Used to invalidate classic folders and NewUI
+     *
      * @param Object $plugin_cookies
      * @param array|null $post_action
      * @return array
      */
-    public static function invalidate_all_folders($plugin_cookies, $post_action = null)
+    public static function invalidate_all_folders($plugin_cookies, $media_urls = null, $post_action = null)
     {
-        Starnet_Epfs_Handler::update_all_epfs($plugin_cookies);
+        Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
 
         if (Starnet_Epfs_Handler::$enabled) {
-            $post_invalidate = self::invalidate_folders(array(Starnet_Epfs_Handler::$epf_id), $post_action);
+            $arr = array_merge(array(Starnet_Epfs_Handler::$epf_id), is_array($media_urls) ? $media_urls : array());
+            $post_action = self::invalidate_folders(array(Starnet_Epfs_Handler::$epf_id), $post_action);
         } else {
-            $post_invalidate = $post_action;
+            $arr = $media_urls;
         }
 
-        return self::invalidate_folders(array(), $post_invalidate, true);
+        return self::invalidate_folders($arr, $post_action, true);
     }
 
     /**
+     * Used to invalidate only classic folders
+     *
      * @param array $media_urls
      * @param array $post_action
      * @return array
@@ -494,6 +498,8 @@ class Action_Factory
     }
 
     /**
+     * Update cached epg info
+     *
      * @param string $channel_id
      * @param bool $clear
      * @param int $day_start_tm_sec
