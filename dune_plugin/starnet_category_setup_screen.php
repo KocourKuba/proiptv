@@ -133,14 +133,11 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
                 $reload = $this->force_parent_reload;
                 $this->force_parent_reload = false;
 
+                $post_action = Action_Factory::close_and_run();
                 if ($reload) {
-                    return Action_Factory::invalidate_all_folders(
-                        $plugin_cookies,
-                        array(Starnet_Tv_Groups_Screen::ID),
-                        Action_Factory::close_and_run()
-                    );
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, array(Starnet_Tv_Groups_Screen::ID), $post_action);
                 }
-                return Action_Factory::close_and_run();
+                return $post_action;
 
             case PARAM_SHOW_ALL:
             case PARAM_SHOW_FAVORITES:

@@ -203,8 +203,11 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                     $this->plugin->set_background_image($cached_image);
                     $this->plugin->init_screen_view_parameters($cached_image);
 
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,
-                        Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
+                    return Action_Factory::invalidate_all_folders(
+                        $plugin_cookies,
+                        null,
+                        Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
+                    );
                 }
                 break;
 
@@ -213,8 +216,11 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->set_background_image(null);
                 $this->plugin->init_screen_view_parameters(null);
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies,
-                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
+                return Action_Factory::invalidate_all_folders(
+                    $plugin_cookies,
+                    null,
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
+                );
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

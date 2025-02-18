@@ -76,7 +76,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 );
 
             case ACTION_ITEM_DELETE:
-                $this->plugin->remove_history($movie_id);
+                $this->plugin->remove_vod_history($movie_id);
                 if ($this->plugin->get_all_history_count() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
@@ -88,7 +88,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 return Action_Factory::update_regular_folder($range, true, $sel_ndx);
 
             case ACTION_ITEMS_CLEAR:
-                $this->plugin->clear_all_history();
+                $this->plugin->clear_all_vod_history();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_FAV:
@@ -122,12 +122,12 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
         hd_debug_print("MediaUrl: " . $media_url, true);
 
         $items = array();
-        foreach ($this->plugin->get_all_history() as $movie_info) {
+        foreach ($this->plugin->get_all_vod_history() as $movie_info) {
             if (empty($movie_info)) continue;
 
             hd_debug_print("history info: " . json_encode($movie_info), true);
             $movie_id = $movie_info['movie_id'];
-            $timestamp = $movie_info['time_stamp'];
+            $timestamp = $movie_info[PARAM_TIMESTAMP];
             $this->plugin->vod->ensure_movie_loaded($movie_id);
             $short_movie = $this->plugin->vod->get_cached_short_movie($movie_id);
 
@@ -136,13 +136,13 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 $detailed_info = $caption;
                 $poster_url = "missing://";
             } else {
-                $history_items = $this->plugin->get_history($movie_id);
+                $history_cnt = $this->plugin->get_vod_history_count($movie_id);
                 $caption = $short_movie->name;
-                if (count($history_items) === 1) {
-                    if ($movie_info['watched']) {
+                if ($history_cnt === 1) {
+                    if ($movie_info[PARAM_WATCHED]) {
                         $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
-                    } else if ($movie_info['duration'] !== -1) {
-                        $percent = (int)((float)$movie_info['position'] / (float)$movie_info['duration'] * 100);
+                    } else if ($movie_info[PARAM_DURATION] !== -1) {
+                        $percent = (int)((float)$movie_info[PARAM_POSITION] / (float)$movie_info[PARAM_DURATION] * 100);
                         $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp), $percent);
                     } else {
                         $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
@@ -150,10 +150,10 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 } else {
                     $all_watched = true;
                     $recent_timestamp = 0;
-                    foreach ($history_items as $history_item) {
-                        $all_watched = $all_watched & ($history_item['watched'] === 1);
-                        if ($history_item['time_stamp'] > $recent_timestamp) {
-                            $recent_timestamp = $history_item['time_stamp'];
+                    foreach ($this->plugin->get_vod_history($movie_id) as $history_item) {
+                        $all_watched = $all_watched & ($history_item[PARAM_WATCHED] === 1);
+                        if ($history_item[PARAM_TIMESTAMP] > $recent_timestamp) {
+                            $recent_timestamp = $history_item[PARAM_TIMESTAMP];
                         }
                     }
                     if ($all_watched) {

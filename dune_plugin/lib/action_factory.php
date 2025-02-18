@@ -444,14 +444,12 @@ class Action_Factory
     {
         Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
 
+        $media_urls = is_array($media_urls) ? $media_urls : array();
         if (Starnet_Epfs_Handler::$enabled) {
-            $arr = array_merge(array(Starnet_Epfs_Handler::$epf_id), is_array($media_urls) ? $media_urls : array());
-            $post_action = self::invalidate_folders(array(Starnet_Epfs_Handler::$epf_id), $post_action);
-        } else {
-            $arr = $media_urls;
+            $media_urls = array_merge(array(Starnet_Epfs_Handler::$epf_id), $media_urls);
         }
 
-        return self::invalidate_folders($arr, $post_action, true);
+        return self::invalidate_folders($media_urls, $post_action, true);
     }
 
     /**

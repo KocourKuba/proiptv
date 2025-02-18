@@ -9,11 +9,6 @@ class Movie implements User_Input_Handler
 {
     const ID = 'movie';
 
-    const WATCHED_FLAG = 'watched';
-    const WATCHED_POSITION = 'position';
-    const WATCHED_DURATION = 'duration';
-    const WATCHED_DATE = 'date';
-
     /**
      * @var string
      */
@@ -116,14 +111,14 @@ class Movie implements User_Input_Handler
         $series_idx = empty($episode->id) ? $user_input->plugin_vod_series_ndx : $episode->id;
         hd_debug_print("add movie to history: id: $user_input->plugin_vod_id, series: $series_idx", true);
 
-        $this->plugin->set_history(
+        $this->plugin->set_vod_history(
             $user_input->plugin_vod_id,
             $series_idx,
             array(
-                (int)$watched,
-                $user_input->plugin_vod_stop_position,
-                $user_input->plugin_vod_duration,
-                $user_input->plugin_vod_stop_tm
+                PARAM_WATCHED => (int)$watched,
+                PARAM_POSITION => $user_input->plugin_vod_stop_position,
+                PARAM_DURATION => $user_input->plugin_vod_duration,
+                PARAM_TIMESTAMP => $user_input->plugin_vod_stop_tm
             )
         );
 
@@ -416,7 +411,7 @@ class Movie implements User_Input_Handler
             $ids = explode(':', $media_url->movie_id);
             $movie_id = $ids[0];
             /** @var History_Item $viewed_series */
-            $viewed_series = $this->plugin->get_history_params($movie_id, $episode->id);
+            $viewed_series = $this->plugin->get_vod_history_params($movie_id, $episode->id);
             if (!is_null($viewed_series) && isset($viewed_series[$episode->id])) {
                 $info = $viewed_series[$episode->id];
                 if ($info->watched === false && $info->duration !== -1) {

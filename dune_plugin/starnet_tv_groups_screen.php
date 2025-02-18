@@ -98,7 +98,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
             $this->force_parent_reload = false;
-            return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
+            return Action_Factory::invalidate_all_folders($plugin_cookies, null, Action_Factory::close_and_run());
 
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();
@@ -247,7 +247,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case self::ACTION_CONFIRM_DLG_APPLY:
                 $this->force_parent_reload = false;
-                return Action_Factory::invalidate_all_folders($plugin_cookies, Action_Factory::close_and_run());
+                return Action_Factory::invalidate_all_folders($plugin_cookies,null, Action_Factory::close_and_run());
 
             case ACTION_PLUGIN_INFO:
                 return $this->plugin->get_plugin_info_dlg($this);
@@ -499,7 +499,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $post_action = Action_Factory::close_and_run(
                         Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
 
-                    return Action_Factory::invalidate_all_folders($plugin_cookies, $post_action);
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
                 }
 
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);

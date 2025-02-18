@@ -288,10 +288,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if ($this->force_parent_reload) {
                         $this->plugin->get_active_playlist_key();
                         if (!$this->plugin->reload_channels($plugin_cookies)) {
-                            return Action_Factory::invalidate_all_folders($plugin_cookies,
+                            return Action_Factory::invalidate_all_folders(
+                                $plugin_cookies,
+                                null,
                                 Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                                     null,
-                                    HD::get_last_error($this->plugin->get_pl_error_name())));
+                                    HD::get_last_error($this->plugin->get_pl_error_name())
+                                )
+                            );
                         }
                     }
                 }
@@ -403,10 +407,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $id;
                 if (!$this->plugin->reload_channels($plugin_cookies)) {
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,
+                    return Action_Factory::invalidate_all_folders(
+                        $plugin_cookies,
+                        null,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                             null,
-                            HD::get_last_error($this->plugin->get_pl_error_name())));
+                            HD::get_last_error($this->plugin->get_pl_error_name())
+                        )
+                    );
                 }
 
                 $user_input->sel_ndx = $this->plugin->get_all_playlists()->get_idx($id);
@@ -754,10 +762,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         if ($reload) {
-            return Action_Factory::invalidate_all_folders($plugin_cookies,
+            return Action_Factory::invalidate_all_folders(
+                $plugin_cookies,
+                null,
                 Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                     null,
-                    HD::get_last_error($this->plugin->get_pl_error_name())));
+                    HD::get_last_error($this->plugin->get_pl_error_name())
+                )
+            );
         }
 
         return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
@@ -859,10 +871,14 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $this->plugin->set_playlist($user_input->{CONTROL_EDIT_ITEM}, $item);
 
         if ($this->plugin->get_active_playlist_key() === $user_input->{CONTROL_EDIT_ITEM} && !$this->plugin->reload_channels($plugin_cookies)) {
-            return Action_Factory::invalidate_all_folders($plugin_cookies,
+            return Action_Factory::invalidate_all_folders(
+                $plugin_cookies,
+                null,
                 Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                     null,
-                    HD::get_last_error($this->plugin->get_pl_error_name())));
+                    HD::get_last_error($this->plugin->get_pl_error_name())
+                )
+            );
         }
 
         return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,

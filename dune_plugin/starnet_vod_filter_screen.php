@@ -132,10 +132,10 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                             return null;
                         }
 
-                        $items_count = $this->plugin->get_all_table_values_count(VOD_FILTER_LIST) + 1;
+                        $max_sel = $this->plugin->get_all_table_values_count(VOD_FILTER_LIST);
                         $user_input->sel_ndx++;
-                        if ($user_input->sel_ndx >= $items_count) {
-                            $user_input->sel_ndx = $items_count - 1;
+                        if ($user_input->sel_ndx > $max_sel) {
+                            $user_input->sel_ndx = $max_sel;
                         }
                         break;
 

@@ -1322,12 +1322,15 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         return $this->arrange_rows(self::get_table_name($table), 'item', $item, $direction);
     }
 
+    ////////////////////////////////////////////////////////////////////////////
+    /// VOD history
+
     /**
      * Get VOD history for selected playlist sorted by movie_id and last viewed time_stamp (most recent first)
      *
      * @return array
      */
-    public function get_all_history()
+    public function get_all_vod_history()
     {
         return $this->sql_playlist->fetch_array("SELECT *, MAX(time_stamp) FROM $this->vod_history GROUP BY movie_id ORDER BY time_stamp DESC;");
     }
@@ -1348,7 +1351,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      * @param string $movie_id
      * @return array
      */
-    public function get_history($movie_id)
+    public function get_vod_history($movie_id)
     {
         $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
         return $this->sql_playlist->fetch_array("SELECT * FROM $this->vod_history WHERE movie_id = $q_movie_id;");
@@ -1358,9 +1361,28 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      * Get history for selected movie_id
      *
      * @param string $movie_id
+     * @param string $series_id
+     * @param array $values
+     * @return void
+     */
+    public function set_vod_history($movie_id, $series_id, $values)
+    {
+        $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
+        $q_series_id = Sql_Wrapper::sql_quote($series_id);
+        $q_params = SQL_Wrapper::sql_make_list_from_keys($values);
+        $q_values = SQL_Wrapper::sql_make_list_from_quoted_values($values);
+        $query = "INSERT OR REPLACE INTO $this->vod_history (movie_id, series_id, $q_params)
+                    VALUES ($q_movie_id, $q_series_id, $q_values);";
+        $this->sql_playlist->exec($query);
+    }
+
+    /**
+     * Get history for selected movie_id
+     *
+     * @param string $movie_id
      * @return int
      */
-    public function get_history_count($movie_id)
+    public function get_vod_history_count($movie_id)
     {
         $q_id = Sql_Wrapper::sql_quote($movie_id);
         return $this->sql_playlist->query_value("SELECT count(*) FROM $this->vod_history WHERE movie_id = $q_id;");
@@ -1374,7 +1396,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      * @param string $param_name
      * @return array
      */
-    public function get_history_params($movie_id, $series_id, $param_name = null)
+    public function get_vod_history_params($movie_id, $series_id, $param_name = null)
     {
         $q_id = Sql_Wrapper::sql_quote($movie_id);
         $q_series = Sql_Wrapper::sql_quote($series_id);
@@ -1388,30 +1410,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
-     * Get history for selected movie_id
-     *
-     * @param string $movie_id
-     * @param string $series_id
-     * @param array $value
-     * @return void
-     */
-    public function set_history($movie_id, $series_id, $value)
-    {
-        $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
-        $q_series_id = Sql_Wrapper::sql_quote($series_id);
-        $params = SQL_Wrapper::sql_make_list_from_keys($value);
-        $values = SQL_Wrapper::sql_make_list_from_values($value);
-        $query = "INSERT OR REPLACE INTO $this->vod_history (movie_id, series_id, $params)
-                    VALUES ($q_movie_id, $q_series_id, $values);";
-        $this->sql_playlist->exec($query);
-    }
-
-    /**
      * Remove history by movie_id
      *
      * @param string $movie_id
      */
-    public function remove_history($movie_id)
+    public function remove_vod_history($movie_id)
     {
         $q_value = Sql_Wrapper::sql_quote($movie_id);
         $this->sql_playlist->exec("DELETE FROM $this->vod_history WHERE movie_id = $q_value;");
@@ -1423,7 +1426,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      * @param $movie_id
      * @param $series_id
      */
-    public function remove_history_part($movie_id, $series_id)
+    public function remove_vod_history_part($movie_id, $series_id)
     {
         $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
         $q_series_id = Sql_Wrapper::sql_quote($series_id);
@@ -1433,24 +1436,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     /**
      * Clear all history
      */
-    public function clear_all_history()
+    public function clear_all_vod_history()
     {
         $this->sql_playlist->exec("DELETE FROM $this->vod_history;");
-    }
-
-    /**
-     * @param string|null $path
-     * @return void
-     */
-    public function set_history_path($path = null)
-    {
-        if (is_null($path) || $path === get_data_path('history')) {
-            $this->set_parameter(PARAM_HISTORY_PATH, '');
-            return;
-        }
-
-        create_path($path);
-        $this->set_parameter(PARAM_HISTORY_PATH, $path);
     }
 
     /**
@@ -1474,8 +1462,23 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         return rtrim($path, '/');
     }
 
+    /**
+     * @param string|null $path
+     * @return void
+     */
+    public function set_history_path($path = null)
+    {
+        if (is_null($path) || $path === get_data_path('history')) {
+            $this->set_parameter(PARAM_HISTORY_PATH, '');
+            return;
+        }
+
+        create_path($path);
+        $this->set_parameter(PARAM_HISTORY_PATH, $path);
+    }
+
     ////////////////////////////////////////////////////////////////////////////
-    /// Playback points
+    /// TV history
 
     /**
      * @return array
@@ -1485,7 +1488,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $playback_points = array();
         $list = $this->sql_playlist->fetch_array("SELECT * FROM $this->tv_history ORDER BY time_stamp DESC;");
         foreach ($list as $row) {
-            $playback_points[$row['channel_id']] = $row['time_stamp'];
+            $playback_points[$row['channel_id']] = $row[PARAM_TIMESTAMP];
         }
 
         return $playback_points;
@@ -1562,6 +1565,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         hd_debug_print();
         $this->sql_playlist->exec("DELETE FROM $this->tv_history;");
     }
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// Main methods
 
     /**
      * @return void
@@ -2225,10 +2231,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     ///////////////////////////////////////////////////////////////////////
-    //
     // Misc.
-    //
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @return Hashed_Array
@@ -2299,11 +2302,56 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         return Default_Archive::get_image_archive(self::ARCHIVE_ID, self::ARCHIVE_URL_PREFIX);
     }
 
+    public function get_id_column()
+    {
+        return M3uParser::$id_to_column_mapper[$this->channel_id_map];
+    }
+
+    public function make_name($storage, $id = '')
+    {
+        if (!empty($id)) {
+            $id = "_$id";
+        }
+
+        return $this->get_active_playlist_key() . "_$storage$id";
+    }
+
+    /**
+     * @param string $id
+     */
+    public static function get_group_media_url_str($id)
+    {
+        switch ($id) {
+            case FAV_CHANNELS_GROUP_ID:
+                return Starnet_Tv_Favorites_Screen::get_media_url_string(FAV_CHANNELS_GROUP_ID);
+
+            case HISTORY_GROUP_ID:
+                return Starnet_Tv_History_Screen::get_media_url_string(HISTORY_GROUP_ID);
+
+            case CHANGED_CHANNELS_GROUP_ID:
+                return Starnet_Tv_Changed_Channels_Screen::get_media_url_string(CHANGED_CHANNELS_GROUP_ID);
+
+            case VOD_GROUP_ID:
+                return Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID);
+
+            case FAV_MOVIE_GROUP_ID:
+                return Starnet_Vod_Favorites_Screen::get_media_url_string(FAV_MOVIE_GROUP_ID);
+
+            case HISTORY_MOVIES_GROUP_ID:
+                return Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID);
+
+            case SEARCH_MOVIES_GROUP_ID:
+                return Starnet_Vod_Search_Screen::get_media_url_string(SEARCH_MOVIES_GROUP_ID);
+
+            case FILTER_MOVIES_GROUP_ID:
+                return Starnet_Vod_Filter_Screen::get_media_url_string();
+        }
+
+        return Starnet_Tv_Channel_List_Screen::get_media_url_string($id);
+    }
+
     ///////////////////////////////////////////////////////////////////////
-    //
     // popup menus
-    //
-    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param User_Input_Handler $handler
@@ -2588,6 +2636,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         return $menu_items;
     }
+
+    ///////////////////////////////////////////////////////////////////////
+    // Dialogs and screens
 
     public function create_plugin_title()
     {
@@ -3042,56 +3093,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 shell_exec("rmdir {$this->get_cache_dir()}" . '/' . $lock);
             }
         }
-    }
-
-    ///////////////////////////////////////////////////////////
-
-    public function get_id_column()
-    {
-        return M3uParser::$id_to_column_mapper[$this->channel_id_map];
-    }
-
-    public function make_name($storage, $id = '')
-    {
-        if (!empty($id)) {
-            $id = "_$id";
-        }
-
-        return $this->get_active_playlist_key() . "_$storage$id";
-    }
-
-    /**
-     * @param string $id
-     */
-    public static function get_group_media_url_str($id)
-    {
-        switch ($id) {
-            case FAV_CHANNELS_GROUP_ID:
-                return Starnet_Tv_Favorites_Screen::get_media_url_string(FAV_CHANNELS_GROUP_ID);
-
-            case HISTORY_GROUP_ID:
-                return Starnet_Tv_History_Screen::get_media_url_string(HISTORY_GROUP_ID);
-
-            case CHANGED_CHANNELS_GROUP_ID:
-                return Starnet_Tv_Changed_Channels_Screen::get_media_url_string(CHANGED_CHANNELS_GROUP_ID);
-
-            case VOD_GROUP_ID:
-                return Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID);
-
-            case FAV_MOVIE_GROUP_ID:
-                return Starnet_Vod_Favorites_Screen::get_media_url_string(FAV_MOVIE_GROUP_ID);
-
-            case HISTORY_MOVIES_GROUP_ID:
-                return Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID);
-
-            case SEARCH_MOVIES_GROUP_ID:
-                return Starnet_Vod_Search_Screen::get_media_url_string(SEARCH_MOVIES_GROUP_ID);
-
-            case FILTER_MOVIES_GROUP_ID:
-                return Starnet_Vod_Filter_Screen::get_media_url_string();
-        }
-
-        return Starnet_Tv_Channel_List_Screen::get_media_url_string($id);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4029,9 +4030,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
             case FAV_CHANNELS_GROUP_ID:
                 return self::PL_ORDERS_DB . ".orders_fav_tv";
-
-            case HISTORY_MOVIES_GROUP_ID:
-                return self::VOD_HISTORY_DB . ".history";
         }
 
         return self::PL_ORDERS_DB . ".orders_" . Hashed_Array::hash($group_id);

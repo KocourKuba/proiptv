@@ -259,6 +259,11 @@ const PARAM_TOKEN = 'token';
 const PARAM_REFRESH_TOKEN = 'refresh_token';
 const PARAM_SESSION_ID = 'session_id';
 
+const PARAM_WATCHED = 'watched';
+const PARAM_POSITION = 'position';
+const PARAM_DURATION = 'duration';
+const PARAM_TIMESTAMP = 'time_stamp';
+
 const LIST_IDX = 'list_idx';
 const IS_LIST_SELECTED = 'is_list_selected';
 const PLAYLIST_PICONS = 'playlist_picons';

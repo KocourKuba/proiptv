@@ -227,7 +227,9 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                $action = Action_Factory::invalidate_all_folders($plugin_cookies,
+                $action = Action_Factory::invalidate_all_folders(
+                    $plugin_cookies,
+                    null,
                     Action_Factory::reset_controls($this->do_get_control_defs())
                 );
 

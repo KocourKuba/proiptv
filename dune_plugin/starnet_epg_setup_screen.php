@@ -230,14 +230,21 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
                 if (!$this->plugin->reload_channels($plugin_cookies)) {
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,
+                    return Action_Factory::invalidate_all_folders(
+                        $plugin_cookies,
+                        null,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                             null,
-                            HD::get_last_error($this->plugin->get_pl_error_name())));
+                            HD::get_last_error($this->plugin->get_pl_error_name())
+                        )
+                    );
                 }
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies,
-                    Action_Factory::reset_controls($this->do_get_control_defs()));
+                return Action_Factory::invalidate_all_folders(
+                    $plugin_cookies,
+                    null,
+                    Action_Factory::reset_controls($this->do_get_control_defs())
+                );
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());

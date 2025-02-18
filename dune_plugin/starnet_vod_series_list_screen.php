@@ -162,15 +162,15 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $movie = $this->plugin->vod->get_loaded_movie($selected_media_url->movie_id);
                 if (is_null($movie)) break;
 
-                $value = $this->plugin->get_history_params($selected_media_url->movie_id, $selected_media_url->episode_id, 'watched');
+                $value = $this->plugin->get_vod_history_params($selected_media_url->movie_id, $selected_media_url->episode_id, PARAM_WATCHED);
 
                 if ($value) {
-                    $this->plugin->remove_history_part($selected_media_url->movie_id, $selected_media_url->episode_id);
+                    $this->plugin->remove_vod_history_part($selected_media_url->movie_id, $selected_media_url->episode_id);
                 } else {
-                    $this->plugin->set_history(
+                    $this->plugin->set_vod_history(
                         $selected_media_url->movie_id,
                         $selected_media_url->episode_id,
-                        array('watched' => true, 'time_stamp' => time())
+                        array(PARAM_WATCHED => 1, PARAM_TIMESTAMP => time())
                     );
                 }
 
@@ -285,19 +285,19 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
         foreach ($movie->series_list as $series_id => $episode) {
             if (isset($media_url->season_id) && $media_url->season_id !== $series_id) continue;
 
-            $viewed_params = $this->plugin->get_history_params($media_url->movie_id, $series_id);
+            $viewed_params = $this->plugin->get_vod_history_params($media_url->movie_id, $series_id);
             $color = 15;
             $info = $episode->name;
             if (!empty($viewed_params)) {
-                if ($viewed_params['watched']) {
-                    $date = format_datetime("d.m.Y H:i", $viewed_params['time_stamp']);
+                if ($viewed_params[PARAM_WATCHED]) {
+                    $date = format_datetime("d.m.Y H:i", $viewed_params[PARAM_TIMESTAMP]);
                     $info = TR::t('vod_screen_viewed__2', $episode->name, $date);
-                } else if ($viewed_params['duration'] !== -1) {
+                } else if ($viewed_params[PARAM_DURATION] !== -1) {
                     $info = TR::t('vod_screen_viewed__4',
                         $episode->name,
-                        format_duration_seconds($viewed_params['position']),
-                        format_duration_seconds($viewed_params['duration']),
-                        format_datetime("d.m.Y H:i", $viewed_params['time_stamp'])
+                        format_duration_seconds($viewed_params[PARAM_POSITION]),
+                        format_duration_seconds($viewed_params[PARAM_DURATION]),
+                        format_datetime("d.m.Y H:i", $viewed_params[PARAM_TIMESTAMP])
                     );
                 }
                 $color = 5;
