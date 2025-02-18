@@ -257,10 +257,9 @@ class M3uParser extends Json_Serializer
 
         $query = "DROP TABLE IF EXISTS " . self::CHANNELS_TABLE . ";";
         $query .= "CREATE TABLE IF NOT EXISTS " . self::CHANNELS_TABLE .
-            " (hash TEXT KEY not null, ch_id TEXT, title TEXT, tvg_name TEXT,
+                    " (hash TEXT PRIMARY KEY NOT NULL, ch_id TEXT, title TEXT, tvg_name TEXT,
                      epg_id TEXT, archive INTEGER DEFAULT 0, timeshift INTEGER DEFAULT 0, catchup TEXT, catchup_source TEXT, icon TEXT,
-                     path TEXT, adult INTEGER default 0, parent_code TEXT, ext_params TEXT, group_id TEXT not null
-                    );";
+                     path TEXT, adult INTEGER default 0, parent_code TEXT, ext_params TEXT, group_id TEXT NOT NULL);";
         $query .= "DROP TABLE IF EXISTS " . self::GROUPS_TABLE . ";";
         $query .= "CREATE TABLE IF NOT EXISTS " . self::GROUPS_TABLE . " (group_id TEXT PRIMARY KEY, icon TEXT, adult INTEGER default 0);";
         $db->exec_transaction($query);
@@ -393,7 +392,7 @@ class M3uParser extends Json_Serializer
 
         $db->exec("DROP TABLE IF EXISTS " . self::VOD_TABLE);
         $db->exec("CREATE TABLE IF NOT EXISTS " . self::VOD_TABLE
-            . "(hash TEXT PRIMARY KEY NOT NULL, group_id TEXT not null, title TEXT not null, icon TEXT, path TEXT not null);");
+                    . "(hash TEXT PRIMARY KEY NOT NULL, group_id TEXT NOT NULL, title TEXT NOT NULL, icon TEXT, path TEXT NOT NULL);");
 
         $db->exec('BEGIN;');
 

@@ -98,22 +98,24 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $edit_list = $parent_media_url->edit_list;
 
-        $only_refresh = false;
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
-                $reload = $this->force_parent_reload;
+                if (!$this->force_parent_reload) {
+                    return Action_Factory::close_and_run();
+                }
+
                 $this->force_parent_reload = false;
-
-                hd_debug_print("Need reload: " . var_export($reload, true), true);
-                $post_action = User_Input_Handler_Registry::create_action_screen(
-                    $parent_media_url->source_window_id,
-                    $reload ? $parent_media_url->end_action : $parent_media_url->cancel_action,
-                    null,
-                    array('reload_action' => $edit_list)
+                return Action_Factory::invalidate_folders(
+                    array($parent_media_url->source_media_url_str),
+                    Action_Factory::close_and_run(
+                        User_Input_Handler_Registry::create_action_screen(
+                            $parent_media_url->source_window_id,
+                            $parent_media_url->end_action,
+                            null,
+                            array('reload_action' => $edit_list)
+                        )
+                    )
                 );
-                hd_debug_print("post action: " . pretty_json_format($post_action));
-
-                return Action_Factory::invalidate_folders(array($parent_media_url->source_media_url_str), Action_Factory::close_and_run($post_action));
 
             case GUI_EVENT_KEY_ENTER:
                 if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
@@ -223,7 +225,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $user_input->sel_ndx = 0;
                 }
 
-                $only_refresh = true;
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -231,30 +232,27 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                $cnt = $this->plugin->get_all_playlists_count();
+                $max_sel = $this->plugin->get_all_playlists_count() - 1;
                 $user_input->sel_ndx++;
-                if ($user_input->sel_ndx >= $cnt) {
-                    $user_input->sel_ndx = $cnt - 1;
+                if ($user_input->sel_ndx > $max_sel) {
+                    $user_input->sel_ndx = $max_sel;
                 }
-                $only_refresh = true;
                 break;
 
             case ACTION_ITEM_TOP:
-                if (!$this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::DOWN)) {
+                if (!$this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::TOP)) {
                     return null;
                 }
 
-                $user_input->sel_ndx = $this->plugin->get_all_playlists_count();
-                $only_refresh = true;
+                $user_input->sel_ndx = 0;
                 break;
 
             case ACTION_ITEM_BOTTOM:
-                if (!$this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::DOWN)) {
+                if (!$this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::BOTTOM)) {
                     return null;
                 }
 
                 $user_input->sel_ndx = $this->plugin->get_all_playlists_count() - 1;
-                $only_refresh = true;
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -435,11 +433,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
         }
 
-        if ($only_refresh) {
-            $post_action = $this->get_folder_range(MediaURL::decode($user_input->parent_media_url), 0, $plugin_cookies);
-            return Action_Factory::update_regular_folder($post_action, true, $user_input->sel_ndx);
-        }
-
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
     }
 
@@ -542,10 +535,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
-        $souce_type = 'ext';
+        $souce_type = XMLTV_SOURCE_EXTERNAL;
         $source = $this->plugin->get_ext_xmltv_source($selected_media_url->id);
         if ($source === null) {
-            $souce_type = 'playlist';
+            $souce_type = XMLTV_SOURCE_PLAYLIST;
             $source = $this->plugin->get_playlist_xmltv_sources()->get($selected_media_url->id);
         }
 

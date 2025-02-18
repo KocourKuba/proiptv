@@ -104,6 +104,8 @@ class Starnet_Epfs_Handler
      */
     public static function update_epfs_file(&$plugin_cookies, $first_run = false)
     {
+        hd_debug_print(null, true);
+
         if (!self::$enabled) {
             return null;
         }

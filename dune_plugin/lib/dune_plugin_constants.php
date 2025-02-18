@@ -270,6 +270,9 @@ const PLAYLIST_PICONS = 'playlist_picons';
 const XMLTV_PICONS = 'xmltv_picons';
 const COMBINED_PICONS = 'combined_picons';
 
+const XMLTV_SOURCE_PLAYLIST = 'playlist';
+const XMLTV_SOURCE_EXTERNAL = 'external';
+
 // macroses used to replace template in providers playlists
 const MACRO_API = '{API}';
 const MACRO_PROVIDER = '{PROVIDER}';
