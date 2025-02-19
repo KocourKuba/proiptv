@@ -91,6 +91,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $sel_ndx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -134,34 +135,41 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
-                $this->force_parent_reload = true;
-                $user_input->sel_ndx--;
-                if ($user_input->sel_ndx < 0) {
-                    $user_input->sel_ndx = 0;
+                $sel_ndx--;
+                if ($sel_ndx < 0) {
+                    return null;
                 }
 
+                $this->force_parent_reload = true;
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
                 break;
 
             case ACTION_ITEM_DOWN:
-                $this->force_parent_reload = true;
-                $user_input->sel_ndx++;
-                $cnt = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID);
-                if ($user_input->sel_ndx >= $cnt) {
-                    $user_input->sel_ndx = $cnt - 1;
+                $cnt = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) - 1;
+                $sel_ndx++;
+                if ($sel_ndx > $cnt) {
+                    return null;
                 }
+                $this->force_parent_reload = true;
                 $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
                 break;
 
             case ACTION_ITEM_TOP:
+                if ($sel_ndx === 0) {
+                    return null;
+                }
+                $sel_ndx = 0;
                 $this->force_parent_reload = true;
-                $user_input->sel_ndx = 0;
                 $this->plugin->change_tv_favorites(ACTION_ITEM_TOP, $selected_media_url->channel_id);
                 break;
 
             case ACTION_ITEM_BOTTOM:
+                $max_sel = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) - 1;
+                if ($sel_ndx === $max_sel) {
+                    return null;
+                }
                 $this->force_parent_reload = true;
-                $user_input->sel_ndx = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) - 1;
+                $sel_ndx = $max_sel;
                 $this->plugin->change_tv_favorites(ACTION_ITEM_BOTTOM, $selected_media_url->channel_id);
                 break;
 
@@ -182,7 +190,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
         }
 
-        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
     }
 
     ///////////////////////////////////////////////////////////////////////

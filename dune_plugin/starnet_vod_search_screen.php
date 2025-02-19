@@ -66,6 +66,8 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $sel_ndx = $user_input->sel_ndx;
         switch ($user_input->control_id) {
             case ACTION_CREATE_SEARCH:
                 if (!isset($user_input->parent_media_url)) break;
@@ -135,12 +137,19 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                 $media_url = MediaURL::decode($user_input->selected_media_url);
                 switch ($user_input->control_id) {
                     case ACTION_ITEM_UP:
-                        $user_input->sel_ndx--;
+                        $sel_ndx--;
+                        if ($sel_ndx < 1) {
+                            return null;
+                        }
                         $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $media_url->genre_id, Ordered_Array::UP);
                         break;
 
                     case ACTION_ITEM_DOWN:
-                        $user_input->sel_ndx++;
+                        $max_sel = $this->plugin->get_all_table_values_count(VOD_SEARCH_LIST) + 1;
+                        $sel_ndx++;
+                        if ($sel_ndx > $max_sel) {
+                            return null;
+                        }
                         $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $media_url->genre_id, Ordered_Array::DOWN);
                         break;
 
@@ -149,7 +158,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                         break;
                 }
 
-                return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
         }
 
         return null;

@@ -56,6 +56,8 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
+        $sel_ndx = $user_input->sel_ndx;
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->selected_media_url)
@@ -116,27 +118,20 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 $media_url = MediaURL::decode($user_input->selected_media_url);
                 switch ($user_input->control_id) {
                     case ACTION_ITEM_UP:
-                        if (!$this->plugin->arrange_table_values(VOD_FILTER_LIST, $media_url->genre_id, Ordered_Array::UP)) {
+                        $sel_ndx--;
+                        if ($sel_ndx < 1) {
                             return null;
                         }
-
-                        $min_sel = $this->plugin->get_all_table_values_count(VOD_FILTER_LIST);
-                        $user_input->sel_ndx--;
-                        if ($user_input->sel_ndx < $min_sel) {
-                            $user_input->sel_ndx = $min_sel;
-                        }
+                        $this->plugin->arrange_table_values(VOD_FILTER_LIST, $media_url->genre_id, Ordered_Array::UP);
                         break;
 
                     case ACTION_ITEM_DOWN:
-                        if (!$this->plugin->arrange_table_values(VOD_FILTER_LIST, $media_url->genre_id, Ordered_Array::DOWN)) {
+                        $max_sel = $this->plugin->get_all_table_values_count(VOD_FILTER_LIST) + 1;
+                        $sel_ndx++;
+                        if ($sel_ndx > $max_sel) {
                             return null;
                         }
-
-                        $max_sel = $this->plugin->get_all_table_values_count(VOD_FILTER_LIST);
-                        $user_input->sel_ndx++;
-                        if ($user_input->sel_ndx > $max_sel) {
-                            $user_input->sel_ndx = $max_sel;
-                        }
+                        $this->plugin->arrange_table_values(VOD_FILTER_LIST, $media_url->genre_id, Ordered_Array::DOWN);
                         break;
 
                     case ACTION_ITEM_DELETE:
@@ -144,7 +139,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                         break;
                 }
 
-                return Action_Factory::invalidate_folders(array($user_input->parent_media_url));
+                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
         }
 
         return null;

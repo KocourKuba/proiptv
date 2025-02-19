@@ -147,47 +147,46 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
-                if (!$this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::UP)) {
-                    return null;
-                }
-
                 $this->force_parent_reload = true;
                 $min_sel = $this->plugin->get_groups_count(1, 0) - 1;
                 $sel_ndx--;
                 if ($sel_ndx < $min_sel) {
-                    $sel_ndx = $min_sel;
+                    return null;
                 }
+
+                $this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::UP);
                 break;
 
             case ACTION_ITEM_DOWN:
-                if (!$this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::DOWN)) {
+                $max_sel = $this->plugin->get_groups_count(-1, 0) - 1;
+                $sel_ndx++;
+                if ($sel_ndx > $max_sel) {
                     return null;
                 }
 
                 $this->force_parent_reload = true;
-                $max_sel = $this->plugin->get_groups_count(-1, 0);
-                $sel_ndx++;
-                if ($sel_ndx >= $max_sel) {
-                    $sel_ndx = $max_sel - 1;
-                }
+                $this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::DOWN);
                 break;
 
             case ACTION_ITEM_TOP:
-                if (!$this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::TOP)) {
+                if ($sel_ndx === 0) {
                     return null;
                 }
 
                 $this->force_parent_reload = true;
-                $sel_ndx = $this->plugin->get_groups_count(1, 0) - 1;
+                $sel_ndx = 0;
+                $this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::TOP);
                 break;
 
             case ACTION_ITEM_BOTTOM:
-                if (!$this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::BOTTOM)) {
+                $max_sel = $this->plugin->get_groups_count(-1, 0) - 1;
+                if ($sel_ndx === $max_sel) {
                     return null;
                 }
 
                 $this->force_parent_reload = true;
-                $sel_ndx = $this->plugin->get_groups_count(-1, 0) - 1;
+                $sel_ndx = $max_sel;
+                $this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::BOTTOM);
                 break;
 
             case ACTION_ITEM_DELETE:

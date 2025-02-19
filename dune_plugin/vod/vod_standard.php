@@ -167,12 +167,22 @@ class vod_standard extends Abstract_Vod
         $this->special_groups->clear();
 
         if ($this->plugin->is_vod_enabled()) {
+            $this->plugin->create_screen(new Starnet_Vod_Favorites_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_History_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Category_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Movie_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Seasons_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Series_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Search_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Filter_Screen($this->plugin));
+
             // Favorites category
             $special_group = array(
                 'group_id' => FAV_MOVIE_GROUP_ID,
                 'title' => FAV_MOVIES_GROUP_CAPTION,
                 'icon' => FAV_MOVIES_GROUP_ICON,
-                'disabled' => true
+                'disabled' => false
             );
             $this->special_groups->set(FAV_MOVIE_GROUP_ID, $special_group);
 
@@ -205,16 +215,6 @@ class vod_standard extends Abstract_Vod
                 'disabled' => empty($this->vod_filters),
             );
             $this->special_groups->set(FILTER_MOVIES_GROUP_ID, $special_group);
-
-            $this->plugin->create_screen(new Starnet_Vod_Favorites_Screen($this->plugin));
-            $this->plugin->create_screen(new Starnet_Vod_History_Screen($this->plugin));
-            $this->plugin->create_screen(new Starnet_Vod_Category_List_Screen($this->plugin));
-            $this->plugin->create_screen(new Starnet_Vod_List_Screen($this->plugin));
-            $this->plugin->create_screen(new Starnet_Vod_Movie_Screen($this->plugin));
-            $this->plugin->create_screen(new Starnet_Vod_Seasons_List_Screen($this->plugin));
-            $this->plugin->create_screen(new Starnet_Vod_Series_List_Screen($this->plugin));
-            $this->plugin->create_screen(new Starnet_Vod_Search_Screen($this->plugin));
-            $this->plugin->create_screen(new Starnet_Vod_Filter_Screen($this->plugin));
         }
     }
 

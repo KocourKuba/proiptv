@@ -143,14 +143,14 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;
                             $item_detailed_info = TR::t('vod_screen_group_info__2',
                                 TR::load_string(FAV_MOVIES_GROUP_CAPTION),
-                                $this->plugin->get_channels_count(ALL_CHANNELS_GROUP_ID, 0));
+                                $this->plugin->get_all_table_values_count(FAV_MOVIE_GROUP_ID));
                             break;
 
                         case HISTORY_MOVIES_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
                             $item_detailed_info = TR::t('vod_screen_group_info__2',
                                 TR::load_string(HISTORY_MOVIES_GROUP_CAPTION),
-                                $this->plugin->get_all_history_count());
+                                $this->plugin->get_all_vod_history_count());
                             break;
 
                         case FILTER_MOVIES_GROUP_ID:

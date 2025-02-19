@@ -50,6 +50,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     const TV_HISTORY_DB = 'tv_history';
     const VOD_HISTORY_DB = 'vod_history';
 
+    const PLAYLISTS_TABLE = 'playlist';
+
     const GROUPS_INFO_TABLE = 'groups_info';
     const GROUPS_ORDER_TABLE = 'groups_order';
     const CHANNELS_INFO_TABLE = 'channels_info';
@@ -63,8 +65,16 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     const TV_HISTORY_TABLE = 'fav_history';
     const VOD_HISTORY_TABLE = 'vod_history';
 
-    const CREATE_PLAYLISTS_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, type TEXT, params TEXT);";
+    const CREATE_PLAYLISTS_TABLE = "CREATE TABLE IF NOT EXISTS %s
+                                    (playlist_id TEXT PRIMARY KEY NOT NULL,
+                                     name TEXT NOT NULL,
+                                     type TEXT,
+                                     params TEXT,
+                                     shortcut TEXT DEFAULT '');";
+
+    // orders_xxxx, GROUPS_ORDER_TABLE, VOD_SEARCHES_TABLE, VOD_FILTERS_TABLE, FAV_MOVIE_GROUP_ID
     const CREATE_ORDERED_TABLE = "CREATE TABLE IF NOT EXISTS %s (%s TEXT PRIMARY KEY NOT NULL);";
+
     const CREATE_GROUPS_INFO_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                         (id INTEGER PRIMARY KEY AUTOINCREMENT,
                                          group_id TEXT UNIQUE,
@@ -98,7 +108,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                                         duration INTEGER DEFAULT 0, time_stamp INTEGER DEFAULT 0, UNIQUE(movie_id, series_id));";
 
     protected $parameters_table = 'parameters';
-    protected $playlist_table = 'playlist';
     protected $xmltv_table = 'xmltv_sources';
 
     protected $pl_settings = 'settings';
@@ -396,9 +405,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_all_playlists()
     {
-        // (id INTEGER PRIMARY_KEY AUTOINCREMENT, db_name TEXT UNIQUE, name TEXT, params TEXT);
+        $playlists_table = self::get_table_name(self::PLAYLISTS_TABLE);
 
-        $rows = $this->sql_params->fetch_array("SELECT * FROM $this->playlist_table ORDER BY ROWID;");
+        $rows = $this->sql_params->fetch_array("SELECT * FROM $playlists_table ORDER BY ROWID;");
         $playlists = new Hashed_Array();
         foreach ($rows as $row) {
             $stg[PARAM_NAME] = $row[PARAM_NAME];
@@ -415,7 +424,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_all_playlists_count()
     {
-        return $this->sql_params->query_value("SELECT count(*) FROM $this->playlist_table;");
+        $playlists_table = self::get_table_name(self::PLAYLISTS_TABLE);
+        return $this->sql_params->query_value("SELECT count(*) FROM $playlists_table;");
     }
 
     /**
@@ -424,10 +434,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_playlist($id)
     {
-        // (id INTEGER PRIMARY_KEY AUTOINCREMENT, playlist_id TEXT UNIQUE, name TEXT, type TEXT, params TEXT);
-
+        $playlists_table = self::get_table_name(self::PLAYLISTS_TABLE);
         $q_key = Sql_Wrapper::sql_quote($id);
-        $row = $this->sql_params->query_value("SELECT * FROM $this->playlist_table WHERE playlist_id = $q_key LIMIT 1;", true);
+        $row = $this->sql_params->query_value("SELECT * FROM $playlists_table WHERE playlist_id = $q_key LIMIT 1;", true);
         if (empty($row)) {
             return null;
         }
@@ -445,13 +454,21 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function set_playlist($id, $stg)
     {
-        // 'playlists' (id INTEGER PRIMARY_KEY AUTOINCREMENT, playlist_id TEXT UNIQUE, name TEXT, type TEXT, params TEXT);
-
+        $playlists_table = self::get_table_name(self::PLAYLISTS_TABLE);
         $q_key = Sql_Wrapper::sql_quote($id);
         $q_type = Sql_Wrapper::sql_quote($stg[PARAM_TYPE]);
         $q_name = Sql_Wrapper::sql_quote($stg[PARAM_NAME]);
         $q_params = Sql_Wrapper::sql_quote(json_encode($stg[PARAM_PARAMS]));
-        $this->sql_params->exec("INSERT OR REPLACE INTO $this->playlist_table (playlist_id, name, type, params) VALUES ($q_key, $q_name, $q_type, $q_params);");
+        $this->sql_params->exec("INSERT OR REPLACE INTO $playlists_table (playlist_id, name, type, params) VALUES ($q_key, $q_name, $q_type, $q_params);");
+    }
+
+    /**
+     * @return array|null
+     */
+    public function get_playlists_shortcuts()
+    {
+        $playlists_table = self::get_table_name(self::PLAYLISTS_TABLE);
+        return $this->sql_params->fetch_array("SELECT playlist_id, shortcut FROM $playlists_table WHERE shortcut != '' ORDER BY shortcut;");
     }
 
     /**
@@ -461,7 +478,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function arrange_playlist_order_rows($playlist_id, $direction)
     {
-        return $this->arrange_rows($this->playlist_table, 'playlist_id', $playlist_id, $direction, true);
+        return $this->arrange_rows(self::PLAYLISTS_TABLE, self::CREATE_PLAYLISTS_TABLE, 'playlist_id', $playlist_id, $direction, true);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1268,7 +1285,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_all_table_values($table)
     {
         $table_name = self::get_table_name($table);
-        return $this->sql_playlist->fetch_array("SELECT * FROM $table_name ORDER BY id ASC");
+        return $this->sql_playlist->fetch_array("SELECT * FROM $table_name ORDER BY ROWID ASC");
     }
 
     /**
@@ -1342,7 +1359,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
-     * Arrange values
+     * Arrange values (VOD_SEARCH, VOD_FILTER)
      *
      * @param string $table
      * @param string $item
@@ -1351,7 +1368,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function arrange_table_values($table, $item, $direction)
     {
-        return $this->arrange_rows(self::get_table_name($table), 'item', $item, $direction);
+        return $this->arrange_rows($table, self::CREATE_ORDERED_TABLE, 'item', $item, $direction);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1373,7 +1390,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      *
      * @return int
      */
-    public function get_all_history_count()
+    public function get_all_vod_history_count()
     {
         $vod_history = self::get_table_name(self::VOD_HISTORY_TABLE);
         return $this->sql_playlist->query_value("SELECT count(DISTINCT movie_id) FROM $vod_history;");
@@ -3753,7 +3770,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $where = ($disabled === -1) ? "" : "WHERE disabled = $disabled";
         $and = empty($where) ? "WHERE" : "AND";
         $where = $type === -1 ? "" : "$where $and special = $type";
-        $query = "SELECT * FROM $groups_info_table $where ORDER by id;";
+        $query = "SELECT * FROM $groups_info_table $where ORDER by ROWID;";
         return $this->sql_playlist->fetch_array($query);
     }
 
@@ -3769,7 +3786,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $groups_info_table = self::get_table_name(self::GROUPS_INFO_TABLE);
         $q_group_id = Sql_Wrapper::sql_quote($group_id);
         $and = $type === -1 ? "" : "AND special = $type";
-        $query = "SELECT * FROM $groups_info_table WHERE group_id = $q_group_id AND disabled = 0 $and ORDER by id;";
+        $query = "SELECT * FROM $groups_info_table WHERE group_id = $q_group_id AND disabled = 0 $and ORDER by ROWID;";
         return $this->sql_playlist->query_value($query, true);
     }
 
@@ -3786,7 +3803,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $where = ($disabled === -1) ? "" : "WHERE disabled = $disabled";
         $and = empty($where) ? "WHERE" : "AND";
         $where = $type === -1 ? "" : "$where $and special = $type";
-        $query = "SELECT count(*) FROM $groups_info_table $where ORDER by id;";
+        $query = "SELECT count(*) FROM $groups_info_table $where ORDER by ROWID;";
         return $this->sql_playlist->query_value($query);
     }
 
@@ -3823,11 +3840,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 $query .= "DROP TABLE IF EXISTS $table_name;";
                 $query .= "UPDATE $channels_info_table SET disabled = 1 WHERE group_id = $q_group_id;";
             } else {
-                $query .= "INSERT OR IGNORE INTO $groups_order_table (group_id) VALUES ($q_group_id);";
                 $query .= sprintf(self::CREATE_ORDERED_TABLE, $table_name, 'channel_id');
-                $query .= "UPDATE $channels_info_table SET disabled = 0 WHERE group_id = $q_group_id;";
+                $query .= "INSERT OR IGNORE INTO $groups_order_table (group_id) VALUES ($q_group_id);";
                 $query .= "INSERT OR IGNORE INTO $table_name (channel_id )
                             SELECT channel_id FROM $channels_info_table WHERE group_id = $q_group_id AND disabled = 0;";
+                $query .= "UPDATE $channels_info_table SET disabled = 0 WHERE group_id = $q_group_id;";
             }
         }
         $this->sql_playlist->exec_transaction($query);
@@ -3879,9 +3896,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $groups_info_table = self::get_table_name(self::GROUPS_INFO_TABLE);
         $groups_order_table = self::get_table_name(self::GROUPS_ORDER_TABLE);
-        $query = "SELECT g.group_id, g.title, g.icon
-                    FROM $groups_info_table AS g
-                    INNER JOIN $groups_order_table as o USING(group_id) ORDER BY o.id;";
+        $query = "SELECT grp.group_id, grp.title, grp.icon
+                    FROM $groups_info_table AS grp
+                    INNER JOIN $groups_order_table as ord USING(group_id) ORDER BY ord.ROWID;";
         return $this->sql_playlist->fetch_array($query);
     }
 
@@ -3920,6 +3937,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
+     * Arrange channels in group
+     *
      * @param string $group_id
      * @param string $channel_id
      * @param int $direction
@@ -3927,86 +3946,92 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function arrange_channels_order_rows($group_id, $channel_id, $direction)
     {
-        return $this->arrange_rows(self::get_table_name($group_id), 'channel_id', $channel_id, $direction);
+        return $this->arrange_rows($group_id, self::CREATE_ORDERED_TABLE, 'channel_id', $channel_id, $direction);
     }
 
     /**
+     * Arrange groups
+     *
      * @param string $group_id
      * @param int $direction
      * @return bool
      */
     public function arrange_groups_order_rows($group_id, $direction)
     {
-        return $this->arrange_rows(self::get_table_name(self::GROUPS_ORDER_TABLE), 'group_id', $group_id, $direction);
+        return $this->arrange_rows(self::GROUPS_ORDER_TABLE, self::CREATE_ORDERED_TABLE, 'group_id', $group_id, $direction);
     }
 
     /**
-     * @param string $table_name
+     * @param string $table
+     * @param string $script
      * @param string $column
      * @param string $item
      * @param int $direction
      * @param bool $common
      * @return bool
      */
-    private function arrange_rows($table_name, $column, $item, $direction, $common = false)
+    private function arrange_rows($table, $script, $column, $item, $direction, $common = false)
     {
+        $table_name = self::get_table_name($table);
         $sql_wrapper = $common ? $this->sql_params : $this->sql_playlist;
-
         $q_item = Sql_Wrapper::sql_quote($item);
-        $sub_query = "SELECT ROWID AS left FROM $table_name WHERE $column = $q_item";
-
+        $cur = '';
+        $new = '';
         if ($direction === Ordered_Array::UP || $direction === Ordered_Array::DOWN) {
+            $sub_query = "SELECT ROWID AS cur FROM $table_name WHERE $column = $q_item";
             if ($direction === Ordered_Array::UP) {
-                $query = "SELECT * FROM ((SELECT MAX(ROWID) AS right FROM $table_name WHERE ROWID < ($sub_query)) INNER JOIN ($sub_query));";
+                $query = "SELECT * FROM ((SELECT MAX(ROWID) AS new FROM $table_name WHERE ROWID < ($sub_query)) INNER JOIN ($sub_query));";
             } else {
-                $query = "SELECT * FROM ((SELECT MIN(ROWID) AS right FROM $table_name WHERE ROWID > ($sub_query)) INNER JOIN ($sub_query));";
+                $query = "SELECT * FROM ((SELECT MIN(ROWID) AS new FROM $table_name WHERE ROWID > ($sub_query)) INNER JOIN ($sub_query));";
             }
             $positions = $sql_wrapper->query_value($query, true);
-            if (empty($positions) || $positions['left'] === null || $positions['right'] === null) {
+            if (empty($positions) || $positions['cur'] === null || $positions['new'] === null) {
                 return false;
             }
 
-            $left = $positions['left'];
-            $right = $positions['right'];
-            $query = "UPDATE $table_name SET ROWID = -$left WHERE ROWID = $left;
-                  UPDATE $table_name SET ROWID = $left  WHERE ROWID = $right;
-                  UPDATE $table_name SET ROWID = $right WHERE ROWID = -$left;";
+            $cur = $positions['cur'];
+            $new = $positions['new'];
+            $query = "UPDATE $table_name SET ROWID = -$cur WHERE ROWID = $cur;
+                      UPDATE $table_name SET ROWID =  $cur WHERE ROWID = $new;
+                      UPDATE $table_name SET ROWID =  $new WHERE ROWID = -$cur;";
             return $sql_wrapper->exec_transaction($query);
         }
 
-        if ($direction == Ordered_Array::TOP) {
-            $query_left = "SELECT ROWID AS left FROM $table_name WHERE $column = $q_item AND ROWID > (SELECT MIN(ROWID) FROM $q_item) LIMIT 1;";
-            $left = $sql_wrapper->query_value($query_left);
-            if (empty($left)) {
-                return false;
+        if ($direction === Ordered_Array::TOP || $direction === Ordered_Array::BOTTOM) {
+            $tmp_table =  $table_name . "_tmp";
+            $table_name_short =  self::get_table_name($table, true);
+
+            if ($direction == Ordered_Array::TOP) {
+                $query = "SELECT ROWID AS cur
+                            FROM $table_name
+                            WHERE $column = $q_item AND ROWID > (SELECT MIN(ROWID) FROM $table_name) LIMIT 1;";
+                $cur = $sql_wrapper->query_value($query);
+                if (empty($cur)) {
+                    return false;
+                }
+
+                $new = -$cur;
             }
 
-            $query = "UPDATE $table_name SET ROWID = -$left WHERE ROWID = $left;";
-            $query .= sprintf(self::CREATE_PLAYLISTS_TABLE, $table_name . "_tmp");
-            $query .= "INSERT INTO {$table_name}_tmp SELECT * FROM $table_name ORDER BY ROWID";
-            $query .= "DROP TABLE $table_name;";
-            $query .= "ALTER TABLE {$table_name}_tmp RENAME TO $table_name;";
-            return $sql_wrapper->exec_transaction($query);
-        }
+            if ($direction === Ordered_Array::BOTTOM) {
+                $query_pos = "SELECT * FROM (
+                                (SELECT ROWID AS cur FROM $table_name
+                                    WHERE $column = $q_item AND ROWID < (SELECT MAX(ROWID) FROM $table_name))
+                                INNER JOIN (SELECT ROWID AS new FROM $table_name ORDER BY ROWID DESC LIMIT 1));";
+                $positions = $sql_wrapper->query_value($query_pos, true);
+                if (empty($positions) || $positions['cur'] === null || $positions['new'] === null) {
+                    return false;
+                }
 
-        if ($direction === Ordered_Array::BOTTOM) {
-            $query_pos = "SELECT * FROM (
-                (SELECT ROWID AS left FROM $table_name
-                    WHERE $column = $q_item AND ROWID < (SELECT MAX(ROWID) FROM $table_name))
-                INNER JOIN (SELECT ROWID AS last FROM $table_name ORDER BY ROWID DESC LIMIT 1));";
-            $positions = $sql_wrapper->query_value($query_pos, true);
-            if (empty($positions) || $positions['left'] === null || $positions['last'] === null) {
-                return false;
+                $cur = $positions['cur'];
+                $new = $positions['new'] + 1;
             }
 
-            $left = $positions['left'];
-            $last = $positions['last'] + 1;
-
-            $query = "UPDATE $table_name SET ROWID = $last WHERE ROWID = $left;";
-            $query .= sprintf(self::CREATE_PLAYLISTS_TABLE, $table_name . "_tmp");
-            $query .= "INSERT INTO {$table_name}_tmp SELECT * FROM $table_name ORDER BY ROWID";
+            $query = sprintf($script, $tmp_table, $column);
+            $query .= "UPDATE $table_name SET ROWID = $new WHERE ROWID = $cur;";
+            $query .= "INSERT INTO $tmp_table SELECT * FROM $table_name ORDER BY ROWID;";
             $query .= "DROP TABLE $table_name;";
-            $query .= "ALTER TABLE {$table_name}_tmp RENAME TO $table_name;";
+            $query .= "ALTER TABLE $tmp_table RENAME TO $table_name_short;";
             return $sql_wrapper->exec_transaction($query);
         }
 
@@ -4099,63 +4124,69 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
-     * @param string $group_id
-     * @param bool $only_table
+     * Returns full table name
+     *
+     * @param string $id
+     * @param bool $only_table true - does not include database name into full table name
      * @return string
      */
-    public static function get_table_name($group_id, $only_table = false)
+    public static function get_table_name($id, $only_table = false)
     {
         $db = '';
-        switch ($group_id) {
+        switch ($id) {
             case FAV_MOVIE_GROUP_ID:
-                $table = self::FAV_VOD_ORDERS_TABLE;
+                $table_name = self::FAV_VOD_ORDERS_TABLE;
                 break;
 
             case FAV_CHANNELS_GROUP_ID:
                 $db = self::PLAYLIST_ORDERS_DB . ".";
-                $table = self::FAV_TV_ORDERS_TABLE;
+                $table_name = self::FAV_TV_ORDERS_TABLE;
                 break;
 
             case self::TV_HISTORY_TABLE:
                 $db = self::TV_HISTORY_DB;
-                $table = self::TV_HISTORY_TABLE;
+                $table_name = self::TV_HISTORY_TABLE;
                 break;
 
             case VOD_FILTER_LIST:
-                $table = self::VOD_FILTERS_TABLE;
+                $table_name = self::VOD_FILTERS_TABLE;
                 break;
 
             case VOD_SEARCH_LIST:
-                $table = self::VOD_SEARCHES_TABLE;
+                $table_name = self::VOD_SEARCHES_TABLE;
                 break;
 
             case self::VOD_HISTORY_TABLE:
                 $db = self::VOD_HISTORY_DB;
-                $table = self::VOD_HISTORY_TABLE;
+                $table_name = self::VOD_HISTORY_TABLE;
                 break;
 
             case self::GROUPS_ORDER_TABLE:
                 $db = self::PLAYLIST_ORDERS_DB . ".";
-                $table = self::GROUPS_ORDER_TABLE;
+                $table_name = self::GROUPS_ORDER_TABLE;
                 break;
 
             case self::GROUPS_INFO_TABLE:
                 $db = self::PLAYLIST_ORDERS_DB . ".";
-                $table = self::GROUPS_INFO_TABLE;
+                $table_name = self::GROUPS_INFO_TABLE;
                 break;
 
             case self::CHANNELS_INFO_TABLE:
                 $db = self::PLAYLIST_ORDERS_DB . ".";
-                $table = self::CHANNELS_INFO_TABLE;
+                $table_name = self::CHANNELS_INFO_TABLE;
+                break;
+
+            case self::PLAYLISTS_TABLE:
+                $table_name = self::PLAYLISTS_TABLE;
                 break;
 
             default:
                 $db = self::PLAYLIST_ORDERS_DB . ".";
-                $table = "orders_" . Hashed_Array::hash($group_id);
+                $table_name = "orders_" . Hashed_Array::hash($id);
                 break;
         }
 
-        return $only_table ? $table : ($db . $table);
+        return $only_table ? $table_name : ($db . $table_name);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -4173,7 +4204,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         $this->sql_params = new Sql_Wrapper(get_data_path("common.db"));
         $query =  sprintf(self::CREATE_PARAMETERS_TABLE, $this->parameters_table);
-        $query .= sprintf(self::CREATE_PLAYLISTS_TABLE, $this->playlist_table);
+        $query .= sprintf(self::CREATE_PLAYLISTS_TABLE, self::PLAYLISTS_TABLE);
         $query .= sprintf(self::CREATE_XMLTV_TABLE, $this->xmltv_table);
         $this->sql_params->exec_transaction($query);
 

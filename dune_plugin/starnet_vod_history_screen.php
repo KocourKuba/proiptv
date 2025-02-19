@@ -77,7 +77,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
 
             case ACTION_ITEM_DELETE:
                 $this->plugin->remove_vod_history($movie_id);
-                if ($this->plugin->get_all_history_count() === 0) {
+                if ($this->plugin->get_all_vod_history_count() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
 

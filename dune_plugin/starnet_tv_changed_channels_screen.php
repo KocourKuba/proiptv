@@ -78,6 +78,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             return null;
         }
 
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $channel_id = MediaURL::decode($user_input->selected_media_url)->channel_id;
 
         switch ($user_input->control_id) {
@@ -132,7 +133,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return null;
         }
 
-        return $this->invalidate_current_folder($user_input->parent_media_url, $plugin_cookies);
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies);
     }
 
     ///////////////////////////////////////////////////////////////////////

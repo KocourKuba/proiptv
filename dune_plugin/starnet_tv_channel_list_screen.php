@@ -201,27 +201,42 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
+                $sel_ndx--;
+                if ($sel_ndx < 0) {
+                    return null;
+                }
+
                 $this->force_parent_reload = true;
                 $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::UP);
-                $sel_ndx--;
                 break;
 
             case ACTION_ITEM_DOWN:
+                $cnt = $this->plugin->get_channels_order_count($selected_media_url->group_id) - 1;
+                $sel_ndx++;
+                if ($sel_ndx > $cnt) {
+                    return null;
+                }
                 $this->force_parent_reload = true;
                 $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::DOWN);
-                $sel_ndx++;
                 break;
 
             case ACTION_ITEM_TOP:
+                if ($sel_ndx === 0) {
+                    return null;
+                }
                 $this->force_parent_reload = true;
-                $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::TOP);
                 $sel_ndx = 0;
+                $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::TOP);
                 break;
 
             case ACTION_ITEM_BOTTOM:
+                $max_sel = $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID) - 1;
+                if ($sel_ndx === $max_sel) {
+                    return null;
+                }
                 $this->force_parent_reload = true;
+                $sel_ndx = $max_sel;
                 $this->plugin->arrange_channels_order_rows($selected_media_url->group_id, $channel_id, Ordered_Array::BOTTOM);
-                $sel_ndx = $this->plugin->get_channels_order_count($selected_media_url->group_id) - 1;
                 break;
 
             case ACTION_ITEM_DELETE:
