@@ -46,7 +46,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     const ARCHIVE_ID = 'common';
     const PARSE_CONFIG = "%s_parse_config.json";
 
-    const PL_ORDERS_DB = 'playlist_orders';
+    const PLAYLIST_ORDERS_DB = 'playlist_orders';
     const TV_HISTORY_DB = 'tv_history';
     const VOD_HISTORY_DB = 'vod_history';
 
@@ -65,6 +65,36 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
     const CREATE_PLAYLISTS_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, type TEXT, params TEXT);";
     const CREATE_ORDERED_TABLE = "CREATE TABLE IF NOT EXISTS %s (%s TEXT PRIMARY KEY NOT NULL);";
+    const CREATE_GROUPS_INFO_TABLE = "CREATE TABLE IF NOT EXISTS %s
+                                        (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                         group_id TEXT UNIQUE,
+                                         title TEXT DEFAULT '',
+                                         icon TEXT DEFAULT '',
+                                         adult INTEGER DEFAULT 0,
+                                         disabled INTEGER DEFAULT 0,
+                                         special INTEGER DEFAULT 0);";
+
+    const CREATE_CHANNELS_INFO_TABLE = "CREATE TABLE IF NOT EXISTS %s
+                                        (channel_id TEXT PRIMARY KEY NOT NULL,
+                                         title TEXT DEFAULT '',
+                                         group_id TEXT DEFAULT '',
+                                         disabled INTEGER DEFAULT 0,
+                                         adult INTEGER DEFAULT 0,
+                                         changed INTEGER DEFAULT 0);";
+
+    const CREATE_PARAMETERS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY, value TEXT);";
+    const CREATE_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s (hash TEXT PRIMARY KEY, type TEXT, name TEXT NOT NULL, uri TEXT NOT NULL, cache TEXT NOT NULL);";
+    const CREATE_PLAYLIST_SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', type TEXT DEFAULT '');";
+    const CREATE_PLAYLIST_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s (hash TEXT PRIMARY KEY NOT NULL, type TEXT, name TEXT, uri TEXT, cache TEXT);";
+    const CREATE_SELECTED_XMTLV_TABLE = "CREATE TABLE IF NOT EXISTS %s (hash TEXT PRIMARY KEY NOT NULL);";
+    const CREATE_CH_PARAMS_TABLE = "CREATE TABLE IF NOT EXISTS %s (channel_id TEXT PRIMARY KEY NOT NULL, zoom TEXT DEFAULT 'x', external_player INTEGER DEFAULT 0);";
+    const CREATE_DUNE_PARAMS_TABLE = "CREATE TABLE IF NOT EXISTS %s (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '');";
+    const CREATE_COOKIES_TABLE = "CREATE TABLE IF NOT EXISTS %s (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";
+
+    const CREATE_TV_HISTORY_TABLE = "CREATE TABLE IF NOT EXISTS %s (channel_id TEXT PRIMARY KEY NOT NULL, time_stamp INTEGER DEFAULT 0);";
+    const CREATE_VOD_HISTORY_TABLE = "CREATE TABLE IF NOT EXISTS %s
+                                        (movie_id TEXT, series_id TEXT, watched INTEGER DEFAULT 0, position INTEGER DEFAULT 0,
+                                        duration INTEGER DEFAULT 0, time_stamp INTEGER DEFAULT 0, UNIQUE(movie_id, series_id));";
 
     protected $parameters_table = 'parameters';
     protected $playlist_table = 'playlist';
@@ -4089,7 +4119,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 break;
 
             case FAV_CHANNELS_GROUP_ID:
-                $db = self::PL_ORDERS_DB . ".";
+                $db = self::PLAYLIST_ORDERS_DB . ".";
                 $table = self::FAV_TV_ORDERS_TABLE;
                 break;
 
@@ -4112,22 +4142,22 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 break;
 
             case self::GROUPS_ORDER_TABLE:
-                $db = self::PL_ORDERS_DB . ".";
+                $db = self::PLAYLIST_ORDERS_DB . ".";
                 $table = self::GROUPS_ORDER_TABLE;
                 break;
 
             case self::GROUPS_INFO_TABLE:
-                $db = self::PL_ORDERS_DB . ".";
+                $db = self::PLAYLIST_ORDERS_DB . ".";
                 $table = self::GROUPS_INFO_TABLE;
                 break;
 
             case self::CHANNELS_INFO_TABLE:
-                $db = self::PL_ORDERS_DB . ".";
+                $db = self::PLAYLIST_ORDERS_DB . ".";
                 $table = self::CHANNELS_INFO_TABLE;
                 break;
 
             default:
-                $db = self::PL_ORDERS_DB . ".";
+                $db = self::PLAYLIST_ORDERS_DB . ".";
                 $table = "orders_" . Hashed_Array::hash($group_id);
                 break;
         }
@@ -4149,11 +4179,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         hd_debug_print(null, true);
 
         $this->sql_params = new Sql_Wrapper(get_data_path("common.db"));
-        $query =  "CREATE TABLE IF NOT EXISTS $this->parameters_table (name TEXT PRIMARY KEY, value TEXT);";
+        $query =  sprintf(self::CREATE_PARAMETERS_TABLE, $this->parameters_table);
         $query .= sprintf(self::CREATE_PLAYLISTS_TABLE, $this->playlist_table);
-        $query .= "CREATE TABLE IF NOT EXISTS $this->xmltv_table
-                    (hash TEXT PRIMARY KEY, type TEXT, name TEXT NOT NULL, uri TEXT NOT NULL, cache TEXT NOT NULL);";
-        $this->sql_params->exec($query);
+        $query .= sprintf(self::CREATE_XMLTV_TABLE, $this->xmltv_table);
+        $this->sql_params->exec_transaction($query);
 
         $parameters = HD::get_data_items('common.settings', true, false);
         if (!empty($parameters)) {
@@ -4564,12 +4593,12 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $this->sql_playlist = new Sql_Wrapper($db_name);
 
         // create settings table
-        $query  = "CREATE TABLE IF NOT EXISTS $this->pl_settings (name TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', type TEXT DEFAULT '');";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->pl_xmltv (hash TEXT PRIMARY KEY NOT NULL, type TEXT, name TEXT, uri TEXT, cache TEXT);";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->pl_sel_xmltv (hash TEXT PRIMARY KEY NOT NULL);";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->pl_ch_params (channel_id TEXT PRIMARY KEY NOT NULL, zoom TEXT DEFAULT 'x', external_player INTEGER DEFAULT 0);";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->pl_dune_params (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '');";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->pl_cookies (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";
+        $query  = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $this->pl_settings);
+        $query .= sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, $this->pl_xmltv);
+        $query .= sprintf(self::CREATE_SELECTED_XMTLV_TABLE, $this->pl_sel_xmltv);
+        $query .= sprintf(self::CREATE_CH_PARAMS_TABLE, $this->pl_ch_params);
+        $query .= sprintf(self::CREATE_DUNE_PARAMS_TABLE, $this->pl_dune_params);
+        $query .= sprintf(self::CREATE_COOKIES_TABLE, $this->pl_cookies);
 
         // create tables for vod search, vod filters, vod favorites
         foreach (array(VOD_FILTER_LIST => 'item', VOD_SEARCH_LIST => 'item', FAV_MOVIE_GROUP_ID => 'channel_id') as $list => $column) {
@@ -4792,25 +4821,14 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         }
 
         $db_name = get_data_path("$plugin_orders_name.db");
-        $this->sql_playlist->exec("ATTACH DATABASE '$db_name' AS " . self::PL_ORDERS_DB);
+        $this->sql_playlist->exec("ATTACH DATABASE '$db_name' AS " . self::PLAYLIST_ORDERS_DB);
 
         // create group table
         $groups_info_table = self::get_table_name(self::GROUPS_INFO_TABLE);
-        $query = "CREATE TABLE IF NOT EXISTS $groups_info_table
-                                        (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                         group_id TEXT UNIQUE,
-                                         title TEXT DEFAULT '',
-                                         icon TEXT DEFAULT '',
-                                         adult INTEGER DEFAULT 0,
-                                         disabled INTEGER DEFAULT 0,
-                                         special INTEGER DEFAULT 0
-                                         );";
+        $query = sprintf(self::CREATE_GROUPS_INFO_TABLE, $groups_info_table);
         // create channels table
         $channels_info_table = self::get_table_name(self::CHANNELS_INFO_TABLE);
-        $query .= "CREATE TABLE IF NOT EXISTS $channels_info_table
-                            (channel_id TEXT PRIMARY KEY NOT NULL, title TEXT DEFAULT '',
-                             group_id TEXT DEFAULT '', disabled INTEGER DEFAULT 0,
-                             adult INTEGER DEFAULT 0, changed INTEGER DEFAULT 0);";
+        $query .= sprintf(self::CREATE_CHANNELS_INFO_TABLE, $channels_info_table);
         // create order_groups table
         $query .= sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(self::GROUPS_ORDER_TABLE), 'group_id');
 
@@ -4935,7 +4953,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $this->sql_playlist->exec("ATTACH DATABASE '$tv_history_db_name.db' AS " . self::TV_HISTORY_DB);
         // create tv history table
         $tv_history_table = self::get_table_name(self::TV_HISTORY_TABLE);
-        $query = "CREATE TABLE IF NOT EXISTS $tv_history_table (channel_id TEXT PRIMARY KEY NOT NULL, time_stamp INTEGER DEFAULT 0);";
+        $query = sprintf(self::CREATE_TV_HISTORY_TABLE, $tv_history_table);
         $this->sql_playlist->exec($query);
 
         $tv_history_name = $history_path . $this->make_name(PARAM_TV_HISTORY_ITEMS);
@@ -4960,15 +4978,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $vod_history_name = $history_path . $this->make_name(VOD_HISTORY);
             $vod_history_table = self::get_table_name(self::VOD_HISTORY_TABLE);
             $this->sql_playlist->exec("ATTACH DATABASE '$vod_history_name.db' AS " . self::VOD_HISTORY_DB);
-            $query = "CREATE TABLE IF NOT EXISTS $vod_history_table
-                        (movie_id TEXT,
-                         series_id TEXT,
-                         watched INTEGER DEFAULT 0,
-                         position INTEGER DEFAULT 0,
-                         duration INTEGER DEFAULT 0,
-                         time_stamp INTEGER DEFAULT 0,
-                         UNIQUE(movie_id, series_id)
-                        );";
+            $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, $vod_history_table);
             $this->sql_playlist->exec($query);
 
             $vod_history_filename = $history_path . $this->make_name(PLUGIN_HISTORY) . ".settings";
