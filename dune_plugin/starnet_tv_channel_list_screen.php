@@ -343,7 +343,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_ZOOM_APPLY,
                         TR::load_string($zoom_item),
-                        (strcmp($idx, $zoom_data) !== 0 ? null : "check.png"),
+                        (empty($zoom_data) || strcmp($idx, $zoom_data) !== 0 ? null : "check.png"),
                         array(ACTION_ZOOM_SELECT => (string)$idx)
                     );
                 }

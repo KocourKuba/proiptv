@@ -80,14 +80,15 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                                          group_id TEXT DEFAULT '',
                                          disabled INTEGER DEFAULT 0,
                                          adult INTEGER DEFAULT 0,
-                                         changed INTEGER DEFAULT 0);";
+                                         changed INTEGER DEFAULT 0,
+                                         zoom TEXT,
+                                         external_player INTEGER DEFAULT 0);";
 
     const CREATE_PARAMETERS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY, value TEXT);";
     const CREATE_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s (hash TEXT PRIMARY KEY, type TEXT, name TEXT NOT NULL, uri TEXT NOT NULL, cache TEXT NOT NULL);";
     const CREATE_PLAYLIST_SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', type TEXT DEFAULT '');";
     const CREATE_PLAYLIST_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s (hash TEXT PRIMARY KEY NOT NULL, type TEXT, name TEXT, uri TEXT, cache TEXT);";
     const CREATE_SELECTED_XMTLV_TABLE = "CREATE TABLE IF NOT EXISTS %s (hash TEXT PRIMARY KEY NOT NULL);";
-    const CREATE_CH_PARAMS_TABLE = "CREATE TABLE IF NOT EXISTS %s (channel_id TEXT PRIMARY KEY NOT NULL, zoom TEXT DEFAULT 'x', external_player INTEGER DEFAULT 0);";
     const CREATE_DUNE_PARAMS_TABLE = "CREATE TABLE IF NOT EXISTS %s (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '');";
     const CREATE_COOKIES_TABLE = "CREATE TABLE IF NOT EXISTS %s (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";
 
@@ -103,7 +104,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     protected $pl_settings = 'settings';
     protected $pl_xmltv = 'playlist_xmltv';
     protected $pl_sel_xmltv = 'selected_xmltv';
-    protected $pl_ch_params = 'channel_params';
     protected $pl_dune_params = 'dune_params';
     protected $pl_cookies = 'cookies';
 
@@ -1147,16 +1147,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         }
 
         if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
-            $zoom_preset = $this->get_channel_zoom($channel_id);
-            if (!is_null($zoom_preset)) {
-                if (!is_android()) {
-                    $zoom_preset = DuneVideoZoomPresets::normal;
-                    hd_debug_print("zoom_preset: reset to normal $zoom_preset");
-                }
-
-                if ($zoom_preset !== DuneVideoZoomPresets::not_set) {
-                    $dune_params['zoom'] = $zoom_preset;
-                }
+            $zoom_data = $this->get_channel_zoom($channel_id);
+            if (!empty($zoom_data)) {
+                $dune_params['zoom'] = $zoom_data;
             }
         }
 
@@ -1195,14 +1188,14 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function get_channel_zoom($channel_id)
     {
+        $channels_info_table = self::get_table_name(self::CHANNELS_INFO_TABLE);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
-        $query = "SELECT zoom FROM $this->pl_ch_params WHERE channel_id = $q_channel_id";
-        $value = $this->sql_playlist->query_value($query);
-        return empty($value) ? DuneVideoZoomPresets::not_set : $value;
+        $query = "SELECT zoom FROM $channels_info_table WHERE channel_id = $q_channel_id";
+        return $this->sql_playlist->query_value($query);
     }
 
     /**
@@ -1212,11 +1205,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function set_channel_zoom($channel_id, $preset)
     {
+        $channels_info_table = self::get_table_name(self::CHANNELS_INFO_TABLE);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $q_preset = Sql_Wrapper::sql_quote($preset === null ? "x" : $preset);
-        $query = "INSERT OR IGNORE INTO $this->pl_ch_params (channel_id, zoom) VALUES ($q_channel_id, $q_preset);";
-        $query .= "UPDATE $this->pl_ch_params SET zoom = $q_preset WHERE channel_id = $q_channel_id;";
-        $query .= "DELETE FROM $this->pl_ch_params WHERE zoom = 'x' AND external_player = 0;";
+        $query = "UPDATE $channels_info_table SET zoom = $q_preset WHERE channel_id = $q_channel_id;";
         $this->sql_playlist->exec_transaction($query);
     }
 
@@ -1225,8 +1217,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_channels_zoom($group_id)
     {
+        $channels_info_table = self::get_table_name(self::CHANNELS_INFO_TABLE);
         $order_table = self::get_table_name($group_id);
-        $query = "SELECT ch.channel_id, ch.zoom FROM $this->pl_ch_params AS ch
+        $query = "SELECT ch.channel_id, ch.zoom FROM $channels_info_table AS ch
                     JOIN $order_table AS ord ON ch.channel_id = ord.channel_id;";
         $result = array();
         foreach ($this->sql_playlist->fetch_array($query) as $value) {
@@ -1243,11 +1236,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function set_channel_ext_player($channel_id, $external)
     {
+        $channels_info_table = self::get_table_name(self::CHANNELS_INFO_TABLE);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $q_external = Sql_Wrapper::sql_quote($external ? 1 : 0);
-        $query = "INSERT OR IGNORE INTO $this->pl_ch_params (channel_id, external_player) VALUES ($q_channel_id, $q_external);";
-        $query .= "UPDATE $this->pl_ch_params SET external_player = $q_external WHERE channel_id = $q_channel_id;";
-        $query .= "DELETE FROM $this->pl_ch_params WHERE zoom = 'x' AND external_player = 0;";
+        $query = "UPDATE $channels_info_table SET external_player = $q_external WHERE channel_id = $q_channel_id;";
         $this->sql_playlist->exec_transaction($query);
     }
 
@@ -1256,8 +1248,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_channel_ext_player($channel_id)
     {
+        $channels_info_table = self::get_table_name(self::CHANNELS_INFO_TABLE);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
-        $query = "SELECT external_player FROM $this->pl_ch_params WHERE channel_id = $q_channel_id";
+        $query = "SELECT external_player FROM $channels_info_table WHERE channel_id = $q_channel_id";
         $value = $this->sql_playlist->query_value($query);
         return !empty($value);
     }
@@ -1301,7 +1294,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $table_name = self::get_table_name($table);
         $q_value = Sql_Wrapper::sql_quote($value);
-        return $this->sql_playlist->query_value("SELECT id FROM $table_name WHERE item = $q_value");
+        return $this->sql_playlist->query_value("SELECT ROWID FROM $table_name WHERE item = $q_value");
     }
 
     /**
@@ -1314,7 +1307,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_table_value($table, $id)
     {
         $table_name = self::get_table_name($table);
-        return $this->sql_playlist->query_value("SELECT item FROM $table_name WHERE id = $id");
+        return $this->sql_playlist->query_value("SELECT item FROM $table_name WHERE ROWID = $id");
     }
 
     /**
@@ -1331,7 +1324,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         if ($id === -1) {
             $this->sql_playlist->exec("INSERT OR IGNORE INTO $table_name (item) VALUES ($q_value);");
         } else {
-            $this->sql_playlist->exec("UPDATE $table_name SET item = $q_value WHERE id = $id;");
+            $this->sql_playlist->exec("UPDATE $table_name SET item = $q_value WHERE ROWID = $id;");
         }
     }
 
@@ -3975,9 +3968,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
             $left = $positions['left'];
             $right = $positions['right'];
-            $query = "UPDATE $table_name SET id = -$left WHERE id = $left;
-                  UPDATE $table_name SET id = $left  WHERE id = $right;
-                  UPDATE $table_name SET id = $right WHERE id = -$left;";
+            $query = "UPDATE $table_name SET ROWID = -$left WHERE ROWID = $left;
+                  UPDATE $table_name SET ROWID = $left  WHERE ROWID = $right;
+                  UPDATE $table_name SET ROWID = $right WHERE ROWID = -$left;";
             return $sql_wrapper->exec_transaction($query);
         }
 
@@ -4596,7 +4589,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $query  = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $this->pl_settings);
         $query .= sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, $this->pl_xmltv);
         $query .= sprintf(self::CREATE_SELECTED_XMTLV_TABLE, $this->pl_sel_xmltv);
-        $query .= sprintf(self::CREATE_CH_PARAMS_TABLE, $this->pl_ch_params);
         $query .= sprintf(self::CREATE_DUNE_PARAMS_TABLE, $this->pl_dune_params);
         $query .= sprintf(self::CREATE_COOKIES_TABLE, $this->pl_cookies);
 
@@ -4701,29 +4693,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                     }
                     $this->sql_playlist->exec_transaction($query);
                     unset($plugin_settings[PARAM_SELECTED_XMLTV_SOURCES]);
-                } else if ($key === PARAM_CHANNELS_ZOOM) {
-                    hd_debug_print("Convert 'channels_zoom' to 'channel_params' table");
-                    $query = '';
-                    foreach ($value as $channel_id => $zoom) {
-                        $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
-                        $q_zoom = Sql_Wrapper::sql_quote($zoom);
-                        $query = "INSERT OR IGNORE INTO $this->pl_ch_params (channel_id, zoom) VALUES ($q_channel_id, $q_zoom);";
-                        $query .= "UPDATE $this->pl_ch_params SET zoom = $q_zoom WHERE channel_id = $q_channel_id;";
-                    }
-                    $query .= "DELETE FROM $this->pl_ch_params WHERE zoom = 'x' AND external_player = 0;";
-                    $this->sql_playlist->exec_transaction($query);
-                    unset($plugin_settings[PARAM_CHANNELS_ZOOM]);
-                } else if ($key === PARAM_CHANNEL_PLAYER) {
-                    hd_debug_print("Convert 'channel_player' to 'channel_params' table");
-                    $query = '';
-                    foreach ($value as $channel_id) {
-                        $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
-                        $query = "INSERT OR IGNORE INTO $this->pl_ch_params (channel_id, external_player) VALUES ($q_channel_id, 1);";
-                        $query .= "UPDATE $this->pl_ch_params SET external_player = 1 WHERE channel_id = $q_channel_id;";
-                    }
-                    $query .= "DELETE FROM $this->pl_ch_params WHERE zoom = 'x' AND external_player = 0;";
-                    $this->sql_playlist->exec_transaction($query);
-                    unset($plugin_settings[PARAM_CHANNEL_PLAYER]);
+                } else if ($key === PARAM_CHANNELS_ZOOM || $key === PARAM_CHANNEL_PLAYER) {
+                    unset($plugin_settings[$key]);
                 } else if ($key === PARAM_DUNE_PARAMS) {
                     hd_debug_print("Convert 'dune_params' to 'dune_params' table");
                     $query = '';
