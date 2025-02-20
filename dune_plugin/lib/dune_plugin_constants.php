@@ -56,6 +56,7 @@ const ACTION_PLAY_FOLDER = 'play_folder';
 const ACTION_PLAY_ITEM = 'play_item';
 const ACTION_REFRESH_SCREEN = 'refresh_screen';
 const ACTION_RELOAD = 'reload';
+const ACTION_RELOAD_SOURCE = 'reload_action_source';
 const ACTION_RESTORE_GROUPS = 'restore_groups';
 const ACTION_RESTORE_CHANNELS = 'restore_chanels';
 const ACTION_RESET_DEFAULT = 'reset_default';
@@ -125,6 +126,7 @@ const CONTROL_PLAYLIST = 'playlist';
 const CONTROL_REPLACE_ICONS = 'replace_icons';
 const CONTROL_PLAYLIST_IPTV = 'iptv';
 const CONTROL_PLAYLIST_VOD = 'vod';
+const CONTROL_ACTION_SOURCE = 'source';
 
 # Special groups ID
 const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';

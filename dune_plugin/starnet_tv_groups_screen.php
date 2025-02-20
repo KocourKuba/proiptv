@@ -304,7 +304,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this,
                     ACTION_RELOAD,
                     null,
-                    array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+                    array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -335,7 +335,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $this,
                         ACTION_RELOAD,
                         null,
-                        array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
+                        array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
                     );
                 }
                 break;
@@ -352,7 +352,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $this,
                         ACTION_RELOAD,
                         null,
-                        array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
+                        array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
                     );
                 }
                 break;
@@ -403,7 +403,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $this,
                     ACTION_RELOAD,
                     null,
-                    array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+                    array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);

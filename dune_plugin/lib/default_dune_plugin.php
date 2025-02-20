@@ -1825,7 +1825,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return false;
         }
 
-        return (isset($this->active_playlist[PARAM_PARAMS][PARAM_PL_TYPE]) && $this->active_playlist[PARAM_PARAMS][PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD);
+        return (isset($this->active_playlist[PARAM_PL_TYPE]) && $this->active_playlist[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD);
     }
 
     /**
@@ -1856,7 +1856,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             }
 
             if ($force !== false) {
-                hd_debug_print("m3u playlist: {$this->active_playlist[PARAM_NAME]} ({$this->get_active_playlist_key()})");
+                $active_playlist_key = $this->get_active_playlist_key();
+                hd_debug_print("m3u playlist: {$this->active_playlist[PARAM_NAME]} ($active_playlist_key)");
                 if ($this->active_playlist[PARAM_TYPE] === PARAM_PROVIDER) {
                     $provider = $this->get_active_provider();
                     if (is_null($provider)) {
@@ -1872,10 +1873,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                     $logfile = $provider->getCurlWrapper()->get_raw_response_headers();
                 } else {
                     if ($this->active_playlist[PARAM_TYPE] === PARAM_FILE) {
-                        hd_debug_print("m3u copy local file: {$this->active_playlist[PARAM_PARAMS][PARAM_URI]} to $tmp_file");
-                        $res = copy($this->active_playlist[PARAM_PARAMS][PARAM_URI], $tmp_file);
+                        hd_debug_print("m3u copy local file: {$this->active_playlist[PARAM_URI]} to $tmp_file");
+                        $res = copy($this->active_playlist[PARAM_URI], $tmp_file);
                     } else if ($this->active_playlist[PARAM_TYPE] === PARAM_LINK || $this->active_playlist[PARAM_TYPE] === PARAM_CONF) {
-                        $playlist_url = $this->active_playlist[PARAM_PARAMS][PARAM_URI];
+                        $playlist_url = $this->active_playlist[PARAM_URI];
                         hd_debug_print("m3u download link: $playlist_url");
                         if (!is_proto_http($playlist_url)) {
                             throw new Exception("Incorrect playlist url: $playlist_url");
@@ -2042,8 +2043,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 hd_debug_print("Failed to get VOD playlist from provider");
                 return false;
             }
-        } else if (!isset($this->active_playlist[PARAM_PARAMS][PARAM_PL_TYPE])
-                    || $this->active_playlist[PARAM_PARAMS][PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
+        } else if (!isset($this->active_playlist[PARAM_PL_TYPE]) || $this->active_playlist[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
             hd_debug_print("Unknown playlist type or IPTV playlist");
             return false;
         }
@@ -2063,15 +2063,15 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                         throw new Exception($exception_msg);
                     }
                 } else if ($this->active_playlist[PARAM_TYPE] === PARAM_FILE) {
-                    hd_debug_print("m3u copy local file: {$this->active_playlist[PARAM_PARAMS][PARAM_URI]} to $tmp_file");
-                    $res = copy($this->active_playlist[PARAM_PARAMS][PARAM_URI], $tmp_file);
+                    hd_debug_print("m3u copy local file: {$this->active_playlist[PARAM_URI]} to $tmp_file");
+                    $res = copy($this->active_playlist[PARAM_URI], $tmp_file);
                     if ($res === false) {
                         $exception_msg = TR::load_string('err_load_vod') . PHP_EOL . PHP_EOL .
-                            "m3u copy local file: {$this->active_playlist[PARAM_PARAMS][PARAM_URI]} to $tmp_file";
+                            "m3u copy local file: {$this->active_playlist[PARAM_URI]} to $tmp_file";
                         throw new Exception($exception_msg);
                     }
                 } else if ($this->active_playlist[PARAM_TYPE] === PARAM_LINK || $this->active_playlist[PARAM_TYPE] === PARAM_CONF) {
-                    $playlist_url = $this->active_playlist[PARAM_PARAMS][PARAM_URI];
+                    $playlist_url = $this->active_playlist[PARAM_URI];
                     hd_debug_print("m3u download link: $playlist_url");
                     list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file);
                     if ($res === false) {
@@ -2612,20 +2612,20 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             ACTION_ITEMS_EDIT,
             TR::t('setup_channels_src_edit_playlists'),
             "m3u_file.png",
-            array(CONTROL_ACTION_EDIT => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
 
         $menu_items[] = $this->create_menu_item($handler,
             ACTION_ITEMS_EDIT,
             TR::t('setup_edit_xmltv_list'),
             "epg.png",
-            array(CONTROL_ACTION_EDIT => Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST));
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST));
 
         if ($is_classic) {
             $menu_items[] = $this->create_menu_item($handler,
                 ACTION_RELOAD,
                 TR::t('refresh_playlist'),
                 "refresh.png",
-                array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST));
+                array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
         }
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
@@ -2639,7 +2639,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             } else {
                 $sources = TR::load_string('combined_picons');
             }
-            $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_PICONS_SOURCE, TR::t('change_picons_source__1', $sources), "image.png");
+            $menu_items[] = $this->create_menu_item($handler,
+                ACTION_CHANGE_PICONS_SOURCE,
+                TR::t('change_picons_source__1', $sources),
+                "image.png"
+            );
         }
 
         $provider = $this->get_active_provider();
@@ -2655,12 +2659,13 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 if ($preset_cnt > 1) {
                     $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
                     $name = safe_get_value($epg_presets[$preset], 'title', $epg_presets[$preset]['name']);
-                    $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_EPG_SOURCE, TR::t('change_json_epg_source__1', $name), "epg.png");
+                    $menu_items[] = $this->create_menu_item($handler,
+                        ACTION_CHANGE_EPG_SOURCE,
+                        TR::t('change_json_epg_source__1', $name),
+                        "epg.png");
                 }
             }
-        }
 
-        if (!is_null($provider)) {
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
             if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
                 $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
@@ -2685,8 +2690,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
-        $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,
-            TR::t('entry_setup'), "settings.png");
+        $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,TR::t('entry_setup'), "settings.png");
 
         return $menu_items;
     }
@@ -2795,8 +2799,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 $title = TR::t('tv_screen_edit_hidden_group');
                 break;
 
-            case Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST:
-                $params['screen_id'] = Starnet_Edit_List_Screen::ID;
+            case Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST:
+                $params['screen_id'] = Starnet_Edit_Playlists_Screen::ID;
                 $params['allow_order'] = true;
                 $params['end_action'] = ACTION_REFRESH_SCREEN;
                 $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
@@ -2808,11 +2812,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 }
                 break;
 
-            case Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST:
-                $params['screen_id'] = Starnet_Edit_List_Screen::ID;
+            case Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST:
+                $params['screen_id'] = Starnet_Edit_Xmltv_List_Screen::ID;
                 $params['end_action'] = ACTION_RELOAD;
                 $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
-                $params['extension'] = EPG_PATTERN;
                 $title = TR::t('setup_edit_xmltv_list');
                 break;
 
@@ -3310,7 +3313,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $saved_source = $this->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST);
             $hashes = array();
             foreach ($saved_source as $source) {
-                $hashes[$source[PARAM_HASH]] = array(PARAM_NAME => $source[PARAM_NAME], PARAM_URI => $source[PARAM_URI], PARAM_CACHE => $source[PARAM_CACHE]);
+                $hashes[$source[PARAM_HASH]] = array(
+                    PARAM_NAME => $source[PARAM_NAME],
+                    PARAM_URI => $source[PARAM_URI],
+                    PARAM_CACHE => $source[PARAM_CACHE]
+                );
             }
             hd_debug_print("saved playlist sources: " . json_encode($hashes), true);
 

@@ -65,7 +65,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $reload_action = User_Input_Handler_Registry::create_action($this,
             ACTION_RELOAD,
             null,
-            array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
+            array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
         );
 
         $control_id = $user_input->control_id;
@@ -360,7 +360,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                if (isset($user_input->reload_action) && $user_input->reload_action === Starnet_Edit_List_Screen::SCREEN_EDIT_EPG_LIST) {
+                $action_source = safe_get_member($user_input, ACTION_RELOAD_SOURCE);
+                if ($action_source === Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST) {
                     $epg_manager = $this->plugin->get_epg_manager();
                     if ($epg_manager === null) {
                         return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
@@ -369,20 +370,20 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $epg_manager->clear_current_epg_cache();
                 }
 
-                if (!$this->plugin->reload_channels($plugin_cookies)) {
-                    $post_action = Action_Factory::close_and_run(
-                        Action_Factory::open_folder(
-                            self::ID,
-                            $this->plugin->create_plugin_title(),
+                if ($this->plugin->reload_channels($plugin_cookies)) break;
+
+                $post_action = Action_Factory::close_and_run(
+                    Action_Factory::open_folder(
+                        self::ID,
+                        $this->plugin->create_plugin_title(),
+                        null,
+                        null,
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                             null,
-                            null,
-                            Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                                null,
-                                HD::get_last_error($this->plugin->get_pl_error_name())
-                            )
+                            HD::get_last_error($this->plugin->get_pl_error_name())
                         )
-                    );
-                }
+                    )
+                );
 
                 break;
 
@@ -1381,7 +1382,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     ACTION_RELOAD,
                     TR::t('playlist_name_msg__1', $playlist[PARAM_NAME]),
                     "refresh.png",
-                    array('reload_action' => Starnet_Edit_List_Screen::SCREEN_EDIT_PLAYLIST)
+                    array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
                 );
 
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);

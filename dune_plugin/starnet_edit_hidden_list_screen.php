@@ -80,7 +80,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                             $parent_media_url->source_window_id,
                             $parent_media_url->end_action,
                             null,
-                            array('reload_action' => $parent_media_url->edit_list)
+                            array(ACTION_RELOAD_SOURCE => $parent_media_url->edit_list)
                         )
                     );
             case ACTION_ITEM_DELETE:
