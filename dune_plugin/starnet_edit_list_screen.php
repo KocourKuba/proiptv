@@ -39,10 +39,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CHOOSE_FILE = 'choose_file';
-    const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
+    const ACTION_ADD_PROVIDER = 'add_provider';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ACTION_XMLTV_CACHE_POPUP = 'xmltv_cache_time';
     const ACTION_XMLTV_CACHE_TIME_SELECTED = 'xmltv_cache_selected';
+    const ACTION_ASSIGN_SHORTCUT_POPUP = 'assign_shortcut';
+    const ACTION_SHORTCUT_SELECTED = 'shortcut_selected';
 
     const CONTROL_EDIT_TYPE = 'playlist_type';
     const CONTROL_EDIT_DETECT_ID = 'detect_id';
@@ -301,6 +303,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
+                if (isset($user_input->{self::ACTION_ASSIGN_SHORTCUT_POPUP})) {
+                    return $this->create_shortcuts_popup($user_input);
+                }
                 return $this->create_popup_menu($user_input);
 
             case ACTION_ITEMS_CLEAR:
@@ -375,9 +380,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return Action_Factory::open_folder($media_url_str, TR::t('edit_list_src_folder'));
 
-            case self::ACTION_ADD_PROVIDER_POPUP:
+            case self::ACTION_ADD_PROVIDER:
                 $params = array(
-                    'screen_id' => Starnet_Edit_List_Screen::ID,
+                    'screen_id' => Starnet_Edit_Providers_List_Screen::ID,
                     'source_window_id' => self::ID,
                     'source_media_url_str' => self::ID,
                     'windowCounter' => 1,
@@ -432,6 +437,21 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 hd_debug_print("update xmltv cache: $user_input->source_type ($selected_id) => " . $user_input->{LIST_IDX}, true);
                 $this->plugin->update_xmltv_source_cache($user_input->source_type, $selected_id, $user_input->{LIST_IDX});
                 break;
+
+            case self::ACTION_ASSIGN_SHORTCUT_POPUP:
+                hd_debug_print("Start event popup menu for assign shortcut", true);
+                return User_Input_Handler_Registry::create_action($this,
+                    GUI_EVENT_KEY_POPUP_MENU,
+                    null,
+                    array(self::ACTION_ASSIGN_SHORTCUT_POPUP => true)
+                );
+
+            case self::ACTION_SHORTCUT_SELECTED:
+                if (!isset($user_input->{LIST_IDX})) break;
+
+                $this->force_parent_reload = true;
+                $this->plugin->set_playlist_shortcut($selected_id, $user_input->{LIST_IDX});
+                break;
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
@@ -468,7 +488,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         } else {
             // Add provider
             $menu_items[] = $this->plugin->create_menu_item($this,
-                self::ACTION_ADD_PROVIDER_POPUP,
+                self::ACTION_ADD_PROVIDER,
                 TR::t('edit_list_add_provider'),
                 "iptv.png"
             );
@@ -511,6 +531,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             )
         );
 
+        if (!is_limited_apk() && $edit_list === self::SCREEN_EDIT_PLAYLIST) {
+            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
+        }
+
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST && $this->plugin->get_all_playlists_count() !== 0) {
@@ -524,6 +549,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         return Action_Factory::show_popup_menu($menu_items);
     }
 
+    /**
+     * @param object $user_input
+     * @return array|null
+     */
     protected function create_cache_time_popup($user_input)
     {
         hd_debug_print(null, true);
@@ -547,7 +576,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return null;
         }
 
+        hd_debug_print("xmltv:" . json_encode($source));
         $selected = safe_get_value($source, PARAM_CACHE, XMLTV_CACHE_AUTO);
+        hd_debug_print("selected: $selected");
 
         $menu_items = array();
         $menu_items[] = $this->plugin->create_menu_item($this,
@@ -565,7 +596,54 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 self::ACTION_XMLTV_CACHE_TIME_SELECTED,
                 $item,
                 (int)$selected === $item ? "check.png" : null,
-                array(LIST_IDX => XMLTV_CACHE_AUTO, 'source_type' => $souce_type)
+                array(LIST_IDX => $item, 'source_type' => $souce_type)
+            );
+        }
+
+        return Action_Factory::show_popup_menu($menu_items);
+    }
+
+    /**
+     * @param object $user_input
+     * @return array|null
+     */
+    protected function create_shortcuts_popup($user_input)
+    {
+        hd_debug_print(null, true);
+
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $edit_list = $parent_media_url->edit_list;
+        if ($edit_list !== self::SCREEN_EDIT_PLAYLIST) {
+            return null;
+        }
+
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+
+        $selected = '';
+        $used = array();
+        foreach ($this->plugin->get_playlists_shortcuts() as $row) {
+            $used[] = $row[PARAM_SHORTCUT];
+            if ($row[PARAM_PLAYLIST_ID] === $selected_media_url->id) {
+                $selected = $row[PARAM_SHORTCUT];
+            }
+        }
+
+        $menu_items = array();
+        $keys = array(GUI_EVENT_KEY_1, GUI_EVENT_KEY_2, GUI_EVENT_KEY_3, GUI_EVENT_KEY_4, GUI_EVENT_KEY_5,
+            GUI_EVENT_KEY_6, GUI_EVENT_KEY_7, GUI_EVENT_KEY_8, GUI_EVENT_KEY_9, GUI_EVENT_KEY_0);
+        $keys = array_diff($keys, $used);
+        $menu_items[] = $this->plugin->create_menu_item($this,
+            self::ACTION_SHORTCUT_SELECTED,
+            TR::t('no'),
+            empty($selected) ? "check.png" : null,
+            array(LIST_IDX => '')
+        );
+        foreach ($keys as $key) {
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                self::ACTION_SHORTCUT_SELECTED,
+                $key,
+                $selected === $key ? "check.png" : null,
+                array(LIST_IDX => $key)
             );
         }
 
@@ -594,7 +672,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             $window_title = TR::t('edit_list_edit_item');
-            $name = $item->name;
+            $name = $item[PARAM_NAME];
             $url = $item[PARAM_PARAMS][PARAM_URI];
             $opts_idx = safe_get_value($item[PARAM_PARAMS], PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
             $param = array(CONTROL_ACTION_EDIT => CONTROL_EDIT_ITEM);
@@ -709,7 +787,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $db->exec("ATTACH DATABASE '::memory:' AS " . M3uParser::IPTV_DB);
                     if ($parser->parseIptvPlaylist($db)) {
                         $table_name = M3uParser::CHANNELS_TABLE;
-                        $result = $db->query_value("SELECT count(*) FROM $table_name;");
+                        $result = $db->query_value("SELECT COUNT(*) FROM $table_name;");
                     }
 
                     if (empty($result)) {
@@ -841,7 +919,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $db->exec("ATTACH DATABASE '::memory:' AS " . M3uParser::IPTV_DB);
             if ($parser->parseIptvPlaylist($db)) {
                 $table_name = M3uParser::CHANNELS_TABLE;
-                $result = $db->query_value("SELECT count(*) FROM $table_name;");
+                $result = $db->query_value("SELECT COUNT(*) FROM $table_name;");
             }
 
             if (empty($result)) {
@@ -1128,9 +1206,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $items = array();
         foreach ($this->plugin->get_all_playlists() as $key => $playlist) {
             $starred = ($key === $this->plugin->get_active_playlist_key());
-            $title = safe_get_value($playlist, PARAM_NAME, $playlist[PARAM_NAME]);
+            $title = safe_get_value($playlist, PARAM_NAME, '');
             if (empty($title)) {
-                $title = "Unrecognized or bad playlist entry";
+                $title = "Unnamed";
             }
 
             $detailed_info = '';
@@ -1139,7 +1217,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (is_null($provider)) continue;
 
                 $icon_file = $provider->getLogo();
-                $title = $playlist[PARAM_NAME];
                 if ($title !== $provider->getName()) {
                     $title .= " ({$provider->getName()})";
                 }
@@ -1156,6 +1233,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $icon_file = get_image_path("link.png");
             }
 
+            $shortcut = safe_get_value($playlist, PARAM_SHORTCUT, '');
+            if (!empty($shortcut)) {
+                $title = "$title - ($shortcut)";
+            }
+
             $items[] = self::add_item($key, $title, $starred, $icon_file, $detailed_info);
         }
 
@@ -1170,18 +1252,21 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return $items;
         }
 
-        $all_sources = $this->plugin->get_all_xmltv_sources();
         $pl_sources = $this->plugin->get_playlist_xmltv_sources();
+        $all_sources = new Hashed_Array();
+        $all_sources->add_items($pl_sources);
+        $all_sources->add_items($this->plugin->get_ext_xmltv_sources());
+
         $selected_sources = $this->plugin->get_selected_xmltv_sources();
         foreach ($all_sources as $key => $item) {
             $detailed_info = '';
             $order_key = false;
-            $title = empty($item[PARAM_NAME]) ? $item[PARAM_PARAMS][PARAM_URI] : $item[PARAM_NAME];
+            $title = empty($item[PARAM_NAME]) ? $item[PARAM_URI] : $item[PARAM_NAME];
             if (empty($title)) {
                 $title = "Unrecognized or bad xmltv entry";
             } else {
                 $order_key = array_search($key, $selected_sources);
-                $title = $order_key !== false ? ($order_key + 1) .  " - $title" : $title;
+                $title = $order_key !== false ? "(" . ($order_key + 1) .  ") - $title" : $title;
             }
 
             $cached_xmltv_file = $this->plugin->get_cache_dir() . '/' . "$key.xmltv";
@@ -1212,7 +1297,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $detailed_info = TR::load_string('edit_list_detail_info__5',
-                    $item[PARAM_PARAMS][PARAM_URI],
+                    $item[PARAM_URI],
                     $size,
                     $dl_date,
                     $expired,
@@ -1226,7 +1311,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $item[PARAM_PARAMS][PARAM_URI],
                         safe_get_value($item[PARAM_PARAMS], PARAM_CACHE, TR::load_string('setup_epg_cache_type_auto')));
                 } else {
-                    $detailed_info = $item->name;
+                    $detailed_info = $item[PARAM_NAME];
                 }
             }
 
@@ -1234,12 +1319,12 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $icon_file = get_image_path("refresh$plugin_cookies->ticker.png");
                 hd_debug_print("icon: $icon_file");
             } else if ($pl_sources->has($key)) {
-                if ($item[PARAM_TYPE] === PARAM_CONF) {
+                if (safe_get_value($item, PARAM_TYPE) === PARAM_CONF) {
                     $icon_file = get_image_path("config.png");
                 } else {
                     $icon_file = get_image_path("m3u_file.png");
                 }
-            } else if ($item[PARAM_TYPE] === PARAM_FILE) {
+            } else if (safe_get_value($item, PARAM_TYPE) === PARAM_FILE) {
                 $icon_file = get_image_path("xmltv_file.png");
             } else {
                 $icon_file = get_image_path("link.png");

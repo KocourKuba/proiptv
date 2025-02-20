@@ -269,6 +269,7 @@ tv_screen_hide_uhd = Скрыть 'UHD|4K|8K'
 tv_screen_hide_string = Скрыть по подстроке
 tv_screen_hide_group = Скрыть категорию (CLEAR)
 tv_screen_toggle_move = Режим перемещения (SELECT)
+tv_screen_assign_shortcut = Присвоить быструю клавишу (0-9)
 tv_screen_edit_hidden_group = Редактировать скрытые категории
 tv_screen_edit_hidden_channels = Редактировать скрытые каналы
 tv_screen_continue = Продолжить

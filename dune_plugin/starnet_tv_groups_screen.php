@@ -66,6 +66,15 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
 
+        foreach ($this->plugin->get_playlists_shortcuts() as $row) {
+            $actions[$row[PARAM_SHORTCUT]] = User_Input_Handler_Registry::create_action($this,
+                ACTION_SHORTCUT,
+                null,
+                array(PARAM_PLAYLIST_ID => $row[PARAM_PLAYLIST_ID])
+            );
+        }
+
+        hd_debug_print(json_encode($actions));
         return $actions;
     }
 
@@ -97,8 +106,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
                 }
 
-            $this->force_parent_reload = false;
-            return Action_Factory::invalidate_all_folders($plugin_cookies, null, Action_Factory::close_and_run());
+                $this->force_parent_reload = false;
+                return Action_Factory::invalidate_all_folders($plugin_cookies, null, Action_Factory::close_and_run());
 
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();
@@ -333,8 +342,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case COMBINED_PICONS:
                 if ($this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== $user_input->control_id) {
                     hd_debug_print("Selected icons source: $user_input->control_id", true);
-                    $this->plugin->reset_playlist_db();
                     $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
+                    $this->plugin->reset_playlist_db();
                     $this->plugin->init_epg_manager();
                     $this->force_parent_reload = true;
                     return User_Input_Handler_Registry::create_action(
@@ -554,6 +563,16 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $provider->setParameter(MACRO_CUSTOM_PLAYLIST, $user_input->url_path);
                 }
                 return null;
+
+            case ACTION_SHORTCUT:
+                if (!isset($user_input->{PARAM_PLAYLIST_ID})) {
+                    return null;
+                }
+
+                if ($this->plugin->get_active_playlist_key() !== $user_input->{PARAM_PLAYLIST_ID}) {
+                    $this->plugin->set_active_playlist_key($user_input->{PARAM_PLAYLIST_ID});
+                }
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_INVALIDATE:
                 $this->force_parent_reload = true;

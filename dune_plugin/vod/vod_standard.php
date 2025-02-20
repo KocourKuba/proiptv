@@ -789,7 +789,7 @@ class vod_standard extends Abstract_Vod
             $where = "WHERE group_id == '$group_id';";
         }
 
-        $query = "SELECT count(*) FROM " . M3uParser::VOD_TABLE . " $where;";
+        $query = "SELECT COUNT(*) FROM " . M3uParser::VOD_TABLE . " $where;";
         $result = $this->wrapper->query_value($query);
         return empty($result) ? 0 : (int)$result;
     }

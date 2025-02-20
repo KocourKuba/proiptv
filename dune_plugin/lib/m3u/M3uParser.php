@@ -532,7 +532,7 @@ class M3uParser extends Json_Serializer
         hd_debug_print(null, true);
 
         $table = M3uParser::CHANNELS_TABLE;
-        $cnt = $db->query_value("SELECT count(*) FROM $table;");
+        $cnt = $db->query_value("SELECT COUNT(*) FROM $table;");
         if (empty($cnt)) {
             return ATTR_CHANNEL_HASH;
         }

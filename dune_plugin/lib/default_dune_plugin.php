@@ -412,6 +412,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         foreach ($rows as $row) {
             $stg[PARAM_NAME] = $row[PARAM_NAME];
             $stg[PARAM_TYPE] = $row[PARAM_TYPE];
+            $stg[PARAM_SHORTCUT] = $row[PARAM_SHORTCUT];
             $stg[PARAM_PARAMS] = json_decode($row[PARAM_PARAMS], true);
             $playlists->set($row['playlist_id'], $stg);
         }
@@ -425,7 +426,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_all_playlists_count()
     {
         $playlists_table = self::get_table_name(self::PLAYLISTS_TABLE);
-        return $this->sql_params->query_value("SELECT count(*) FROM $playlists_table;");
+        return $this->sql_params->query_value("SELECT COUNT(*) FROM $playlists_table;");
     }
 
     /**
@@ -469,6 +470,18 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $playlists_table = self::get_table_name(self::PLAYLISTS_TABLE);
         return $this->sql_params->fetch_array("SELECT playlist_id, shortcut FROM $playlists_table WHERE shortcut != '' ORDER BY shortcut;");
+    }
+
+    /**
+     * @param string $id
+     * @param string $shortcut
+     * @return bool
+     */
+    public function set_playlist_shortcut($id, $shortcut)
+    {
+        $playlists_table = self::get_table_name(self::PLAYLISTS_TABLE);
+        $q_shortcut = Sql_Wrapper::sql_quote($shortcut);
+        return $this->sql_params->exec("UPDATE $playlists_table SET shortcut = $q_shortcut WHERE playlist_id = '$id';");
     }
 
     /**
@@ -1297,7 +1310,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_all_table_values_count($table)
     {
         $table_name = self::get_table_name($table);
-        return $this->sql_playlist->query_value("SELECT count(*) FROM $table_name");
+        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name");
     }
 
     /**
@@ -1393,7 +1406,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_all_vod_history_count()
     {
         $vod_history = self::get_table_name(self::VOD_HISTORY_TABLE);
-        return $this->sql_playlist->query_value("SELECT count(DISTINCT movie_id) FROM $vod_history;");
+        return $this->sql_playlist->query_value("SELECT COUNT(DISTINCT movie_id) FROM $vod_history;");
     }
 
     /**
@@ -1439,7 +1452,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $vod_history = self::get_table_name(self::VOD_HISTORY_TABLE);
         $q_id = Sql_Wrapper::sql_quote($movie_id);
-        return $this->sql_playlist->query_value("SELECT count(*) FROM $vod_history WHERE movie_id = $q_id;");
+        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $vod_history WHERE movie_id = $q_id;");
     }
 
     /**
@@ -1559,7 +1572,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_tv_history_count()
     {
         $tv_history = self::get_table_name(self::TV_HISTORY_TABLE);
-        return $this->sql_playlist->query_value("SELECT count(*) FROM $tv_history;");
+        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $tv_history;");
     }
 
     /**
@@ -2114,7 +2127,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     /**
      * get playlist xmltv source
      *
-     * @return Hashed_Array<Named_Storage>
+     * @return Hashed_Array<array>
      */
     public function get_playlist_xmltv_sources()
     {
@@ -2183,20 +2196,18 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_ext_xmltv_sources_count()
     {
-        return $this->sql_params->query_value("SELECT (*) FROM $this->xmltv_table;");
+        return $this->sql_params->query_value("SELECT COUNT(*) FROM $this->xmltv_table;");
     }
 
     /**
      * get external xmltv sources
      *
      * @param string $hash
-     * @return Named_Storage
+     * @return array|null
      */
     public function get_ext_xmltv_source($hash)
     {
-        $q_hash = Sql_Wrapper::sql_quote($hash);
-        $row = $this->sql_params->query_value("SELECT * FROM $this->xmltv_table WHERE hash = $q_hash;");
-        return empty($row) ? null : $row;
+        return $this->sql_params->query_value("SELECT * FROM $this->xmltv_table WHERE hash = '$hash';", true);
     }
 
     /**
@@ -2220,8 +2231,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function remove_ext_xmltv_source($hash)
     {
-        $q_hash = Sql_Wrapper::sql_quote($hash);
-        $this->sql_params->exec("DELETE FROM $this->xmltv_table WHERE hash = $q_hash;");
+        $this->sql_params->exec("DELETE FROM $this->xmltv_table WHERE hash = '$hash';");
     }
 
     /**
@@ -3535,7 +3545,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $query = "SELECT name FROM " . M3uParser::IPTV_DB . ".sqlite_master WHERE type = 'table' AND name = '" . M3uParser::S_CHANNELS_TABLE . "';";
         if ($this->sql_playlist->query_value($query)) {
-            return $this->sql_playlist->query_value("SELECT count(*) FROM $this->iptv_channels;");
+            return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $this->iptv_channels;");
         }
 
         return 0;
@@ -3548,7 +3558,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $query = "SELECT name FROM " . M3uParser::IPTV_DB . ".sqlite_master WHERE type = 'table' AND name = '" . M3uParser::S_GROUPS_TABLE . "';";
         if ($this->sql_playlist->query_value($query)) {
-            return $this->sql_playlist->query_value("SELECT count(*) FROM $this->iptv_groups;");
+            return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $this->iptv_groups;");
         }
 
         return 0;
@@ -3739,7 +3749,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         $channels_info_table = self::get_table_name(self::CHANNELS_INFO_TABLE);
         $cond = is_null($channel_id) ? "" : ("AND channel_id = " . Sql_Wrapper::sql_quote($channel_id));
-        $query = "SELECT count(*) FROM $channels_info_table $where $cond;";
+        $query = "SELECT COUNT(*) FROM $channels_info_table $where $cond;";
 
         return $this->sql_playlist->query_value($query);
     }
@@ -3803,7 +3813,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $where = ($disabled === -1) ? "" : "WHERE disabled = $disabled";
         $and = empty($where) ? "WHERE" : "AND";
         $where = $type === -1 ? "" : "$where $and special = $type";
-        $query = "SELECT count(*) FROM $groups_info_table $where ORDER by ROWID;";
+        $query = "SELECT COUNT(*) FROM $groups_info_table $where ORDER by ROWID;";
         return $this->sql_playlist->query_value($query);
     }
 
@@ -3872,7 +3882,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         if (!empty($old_cached_image)
             && strpos($old_cached_image, 'plugin_file://') !== false
-            && $this->sql_playlist->query_value("SELECT count(*) FROM $groups_info_table WHERE icon = $q_icon;") == 0) {
+            && $this->sql_playlist->query_value("SELECT COUNT(*) FROM $groups_info_table WHERE icon = $q_icon;") == 0) {
             $old_cached_image_path = get_cached_image_path($old_cached_image);
             if (file_exists($old_cached_image_path)) {
                 unlink($old_cached_image_path);
@@ -3933,7 +3943,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_groups_order_count()
     {
         $groups_order_table = self::get_table_name(self::GROUPS_ORDER_TABLE);
-        return $this->sql_playlist->query_value("SELECT count(*) FROM $groups_order_table;");
+        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $groups_order_table;");
     }
 
     /**
@@ -4120,7 +4130,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_channels_order_count($group_id)
     {
         $table_name = self::get_table_name($group_id);
-        return $this->sql_playlist->query_value("SELECT count(*) FROM $table_name;");
+        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
     /**

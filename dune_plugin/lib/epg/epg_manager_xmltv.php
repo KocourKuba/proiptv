@@ -648,12 +648,12 @@ class Epg_Manager_Xmltv
             if (empty($res)) continue;
 
             if ($key === self::INDEX_PICONS) {
-                $result[$key] = $db->query_value("SELECT count(*) FROM $key;");
+                $result[$key] = $db->query_value("SELECT COUNT(*) FROM $key;");
             } else if ($key === self::INDEX_CHANNELS) {
-                $result[$key] = $db->query_value("SELECT count(DISTINCT channel_id) FROM $key;");
+                $result[$key] = $db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
             } else {
-                $result[$key] = $db->query_value("SELECT count(*) FROM $key;");
-                $result['epg_ids'] = $db->query_value("SELECT count(DISTINCT channel_id) FROM $key;");
+                $result[$key] = $db->query_value("SELECT COUNT(*) FROM $key;");
+                $result['epg_ids'] = $db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
             }
         }
 
@@ -1037,7 +1037,7 @@ class Epg_Manager_Xmltv
         $result = $db->query_value("SELECT count(DISTINCT channel_id) FROM $ch_table_name;");
         $channels = empty($result) ? 0 : (int)$result;
 
-        $result = $db->query_value("SELECT count(*) FROM $picons_table_name;");
+        $result = $db->query_value("SELECT COUNT(*) FROM $picons_table_name;");
         $picons = empty($result) ? 0 : (int)$result;
 
         $this->perf->setLabel('end');
@@ -1134,7 +1134,7 @@ class Epg_Manager_Xmltv
         $result = $db->query_value("SELECT count(DISTINCT channel_id) FROM $pos_table_name;");
         $total_epg = empty($result) ? 0 : (int)$result;
 
-        $result = $db->query_value("SELECT count(*) FROM $pos_table_name;");
+        $result = $db->query_value("SELECT COUNT(*) FROM $pos_table_name;");
         $total_blocks = empty($result) ? 0 : (int)$result;
 
         $this->set_index_locked($url_hash, false);

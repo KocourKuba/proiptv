@@ -269,6 +269,7 @@ tv_screen_hide_uhd = „UHD|4K|8K“ ausblenden
 tv_screen_hide_string = Durch einen Teilstring ausblenden
 tv_screen_hide_group = Kategorie ausblenden (CLEAR)
 tv_screen_toggle_move = Verschieben umschalten (SELECT)
+tv_screen_assign_shortcut = Tastenkombination zuweisen (0-9)
 tv_screen_edit_hidden_group = Verborgene Kategorie bearbeiten
 tv_screen_edit_hidden_channels = Bearbeiten Sie ausgeblendete Kanäle
 tv_screen_continue = Weitermachen

@@ -251,6 +251,7 @@ const PARAM_URI = 'uri';
 const PARAM_HASH = 'hash';
 const PARAM_CACHE = 'cache';
 const PARAM_PARAMS = 'params';
+const PARAM_SHORTCUT = 'shortcut';
 const PARAM_CACHE_DIR = 'cache_dir';
 const PARAM_PL_TYPE = 'playlist_type';
 const PARAM_VOD_DEFAULT_QUALITY = 'quality';
