@@ -137,7 +137,7 @@ const FAV_CHANNELS_GROUP_ID = '##favorites##';
 const FAV_CHANNELS_GROUP_CAPTION = 'plugin_favorites';
 const FAV_CHANNELS_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
 
-const HISTORY_GROUP_ID = '##playback_history_tv_group##';
+const TV_HISTORY_GROUP_ID = '##playback_history_tv_group##';
 const HISTORY_GROUP_CAPTION = 'plugin_history';
 const HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
 
@@ -175,6 +175,7 @@ const PLUGIN_HISTORY = "history";
 const VOD_HISTORY = 'vod_history';
 const VOD_SEARCH_LIST = 'vod_search';
 const VOD_FILTER_LIST = 'vod_filter_items';
+const TV_HISTORY = 'tv_history';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';
@@ -229,7 +230,6 @@ const PARAM_USER_CATCHUP = 'user_catchup';
 const PARAM_USE_PICONS = 'use_picons';
 const PARAM_ID_MAPPER = 'id_mapper';
 const PARAM_TV_HISTORY_ITEMS = 'tv_history_items';
-const PARAM_TV_HISTORY = 'tv_history';
 const PARAM_USER_AGENT = 'user_agent';
 const PARAM_BUFFERING_TIME = 'buffering_time';
 const PARAM_ARCHIVE_DELAY_TIME = 'archive_delay_time';
@@ -275,6 +275,10 @@ const COMBINED_PICONS = 'combined_picons';
 const XMLTV_SOURCE_PLAYLIST = 'playlist_xmltv';
 const XMLTV_SOURCE_EXTERNAL = 'external_xmltv';
 const XMLTV_SOURCE_ALL = 'all_xmltv';
+
+const GROUPS_INFO = 'groups_info';
+const GROUPS_ORDER = 'groups_order';
+const CHANNELS_INFO = 'channels_info';
 
 // macroses used to replace template in providers playlists
 const MACRO_API = '{API}';

@@ -100,6 +100,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $edit_list = $parent_media_url->edit_list;
+        $sel_idx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
@@ -159,7 +160,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if (!isset($plugin_cookies->ticker)) {
                     $plugin_cookies->ticker = 0;
                 }
-                $res = $epg_manager->import_indexing_log($this->plugin->get_xmltv_sources(XMLTV_SOURCE_ALL)->get_ordered_keys());
+                $res = $epg_manager->import_indexing_log($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL));
                 $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
 
                 if ($res !== false) {
@@ -219,43 +220,39 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::change_behaviour($actions);
 
             case ACTION_ITEM_UP:
-                if (!$this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::UP)) {
+                $sel_idx--;
+                if ($sel_idx < 0) {
                     return null;
                 }
 
-                $user_input->sel_ndx--;
-                if ($user_input->sel_ndx < 0) {
-                    $user_input->sel_ndx = 0;
-                }
-
+                $this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::UP);
                 break;
 
             case ACTION_ITEM_DOWN:
-                if (!$this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::DOWN)) {
+                $max_sel = $this->plugin->get_all_playlists_count() - 1;
+                $sel_idx++;
+                if ($sel_idx > $max_sel) {
                     return null;
                 }
-
-                $max_sel = $this->plugin->get_all_playlists_count() - 1;
-                $user_input->sel_ndx++;
-                if ($user_input->sel_ndx > $max_sel) {
-                    $user_input->sel_ndx = $max_sel;
-                }
+                $this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::DOWN);
                 break;
 
             case ACTION_ITEM_TOP:
-                if (!$this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::TOP)) {
+                if ($sel_idx === 0) {
                     return null;
                 }
 
-                $user_input->sel_ndx = 0;
+                $sel_idx = 0;
+                $this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::TOP);
                 break;
 
             case ACTION_ITEM_BOTTOM:
-                if (!$this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::BOTTOM)) {
+                $max_sel = $this->plugin->get_all_playlists_count() - 1;
+                if ($sel_idx === $max_sel) {
                     return null;
                 }
-
-                $user_input->sel_ndx = $this->plugin->get_all_playlists_count() - 1;
+                $sel_idx = $max_sel;
+                $this->plugin->arrange_playlist_order_rows($selected_id, Ordered_Array::BOTTOM);
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -315,7 +312,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case self::ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($edit_list === self::SCREEN_EDIT_EPG_LIST) {
                     if ($this->plugin->get_epg_manager() !== null) {
-                        foreach ($this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL) as $hash => $source) {
+                        foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL) as $hash) {
                             $this->plugin->safe_clear_selected_epg_cache($hash);
                         }
                     }
@@ -421,7 +418,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     );
                 }
 
-                $user_input->sel_ndx = $this->plugin->get_all_playlists()->get_idx($id);
+                $sel_idx = $this->plugin->get_all_playlists()->get_idx($id);
                 break;
 
             case ACTION_FOLDER_SELECTED:
@@ -454,7 +451,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
         }
 
-        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
@@ -531,11 +528,6 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             )
         );
 
-        if (!is_limited_apk() && $edit_list === self::SCREEN_EDIT_PLAYLIST) {
-            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
-        }
-
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
         if ($edit_list === self::SCREEN_EDIT_PLAYLIST && $this->plugin->get_all_playlists_count() !== 0) {
@@ -545,6 +537,11 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
+
+        if (!is_limited_apk() && $edit_list === self::SCREEN_EDIT_PLAYLIST) {
+            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
+        }
 
         return Action_Factory::show_popup_menu($menu_items);
     }
@@ -1288,7 +1285,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $info .= TR::load_string('edit_list_cache_suport__1',
                     empty($etag) ? TR::load_string('no') : TR::load_string('yes'));
 
-                $cache = safe_get_value($item[PARAM_PARAMS], PARAM_CACHE, XMLTV_CACHE_AUTO);
+                $cache = safe_get_value($item, PARAM_CACHE, XMLTV_CACHE_AUTO);
                 if ($cache === XMLTV_CACHE_AUTO) {
                     $expired = TR::load_string('setup_epg_cache_type_auto');
                 } else {
@@ -1306,10 +1303,8 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             if (empty($detailed_info)) {
-                if (isset($item[PARAM_PARAMS][PARAM_URI])) {
-                    $detailed_info = TR::t('edit_list_detail_info__2',
-                        $item[PARAM_PARAMS][PARAM_URI],
-                        safe_get_value($item[PARAM_PARAMS], PARAM_CACHE, TR::load_string('setup_epg_cache_type_auto')));
+                if (isset($item[PARAM_URI])) {
+                    $detailed_info = TR::t('edit_list_detail_info__2', $item[PARAM_URI], $item[PARAM_CACHE]);
                 } else {
                     $detailed_info = $item[PARAM_NAME];
                 }

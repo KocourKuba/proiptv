@@ -157,12 +157,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEM_UP:
                 $this->force_parent_reload = true;
-                $min_sel = $this->plugin->get_groups_count(1, 0) - 1;
+                $min_sel = $this->plugin->get_groups_count(1, 0);
                 $sel_ndx--;
                 if ($sel_ndx < $min_sel) {
                     return null;
                 }
 
+                hd_debug_print("min_sel: $min_sel sel_idx: $sel_ndx");
                 $this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::UP);
                 break;
 
@@ -178,12 +179,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_TOP:
-                if ($sel_ndx === 0) {
+                $min_sel = $this->plugin->get_groups_count(1, 0);
+                if ($sel_ndx === $min_sel) {
                     return null;
                 }
 
                 $this->force_parent_reload = true;
-                $sel_ndx = 0;
+                $sel_ndx = $min_sel;
+                hd_debug_print("min_sel: $min_sel sel_idx: $sel_ndx");
                 $this->plugin->arrange_groups_order_rows($sel_media_url->group_id, Ordered_Array::TOP);
                 break;
 
@@ -447,7 +450,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEMS_CLEAR:
                 $group_id = safe_get_member($sel_media_url, 'group_id');
-                if ($group_id === HISTORY_GROUP_ID) {
+                if ($group_id === TV_HISTORY_GROUP_ID) {
                     $this->plugin->clear_tv_history();
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
@@ -476,7 +479,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             $icon = FAV_CHANNELS_GROUP_ICON;
                             break;
 
-                        case HISTORY_GROUP_ID:
+                        case TV_HISTORY_GROUP_ID:
                             $icon = HISTORY_GROUP_ICON;
                             break;
 
@@ -599,17 +602,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return $items;
         }
 
-        foreach ($this->plugin->get_groups(1, 0) as $group_row) {
-            $show = false;
-            switch ($group_row['group_id']) {
+        foreach ($this->plugin->get_groups(1, -1) as $group_row) {
+            $group_id = $group_row['group_id'];
+            switch ($group_id) {
                 case ALL_CHANNELS_GROUP_ID:
                     $show = $this->plugin->get_bool_setting(PARAM_SHOW_ALL);
                     if (!$show) break;
 
                     $item_detailed_info = TR::t('tv_screen_group_info__3',
                         TR::load_string(ALL_CHANNELS_GROUP_CAPTION),
-                        $this->plugin->get_channels_count(ALL_CHANNELS_GROUP_ID, 0),
-                        $this->plugin->get_channels_count(ALL_CHANNELS_GROUP_ID, 1)
+                        $this->plugin->get_channels_count($group_id, 0),
+                        $this->plugin->get_channels_count($group_id, 1)
                     );
                     $color = DEF_LABEL_TEXT_COLOR_SKYBLUE;
                     break;
@@ -620,12 +623,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $item_detailed_info = TR::t('tv_screen_group_info__2',
                         TR::load_string(FAV_CHANNELS_GROUP_CAPTION),
-                        $this->plugin->get_channels_order_count(FAV_CHANNELS_GROUP_ID)
+                        $this->plugin->get_channels_order_count($group_id)
                     );
                     $color = DEF_LABEL_TEXT_COLOR_GOLD;
                     break;
 
-                case HISTORY_GROUP_ID:
+                case TV_HISTORY_GROUP_ID:
                     $show = $this->plugin->get_bool_setting(PARAM_SHOW_HISTORY);
                     if (!$show) break;
 
@@ -664,11 +667,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 default:
+                    $show = true;
                     $item_detailed_info = '';
                     $color = DEF_LABEL_TEXT_COLOR_WHITE;
                     break;
             }
 
+            $this->plugin->set_special_group_visible($group_id, !$show);
             if (!$show) continue;
 
             $items[] = array(

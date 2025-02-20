@@ -39,6 +39,10 @@ class M3uParser extends Json_Serializer
     const GROUPS_TABLE = 'iptv.iptv_groups';
     const VOD_TABLE = 'vod.vod_entries';
 
+    private $channels_table = self::CHANNELS_TABLE;
+    private $groups_table = self::GROUPS_TABLE;
+    private $vod_table = self::VOD_TABLE;
+
     /*
     * Map attributes to database columns
     */
@@ -255,13 +259,13 @@ class M3uParser extends Json_Serializer
 
         $this->clear_data();
 
-        $query = "DROP TABLE IF EXISTS " . self::CHANNELS_TABLE . ";";
-        $query .= "CREATE TABLE IF NOT EXISTS " . self::CHANNELS_TABLE .
-                    " (hash TEXT PRIMARY KEY NOT NULL, ch_id TEXT, title TEXT, tvg_name TEXT,
+        $query = "DROP TABLE IF EXISTS $this->channels_table;";
+        $query .= "CREATE TABLE IF NOT EXISTS $this->channels_table
+                    (hash TEXT PRIMARY KEY NOT NULL, ch_id TEXT, title TEXT, tvg_name TEXT,
                      epg_id TEXT, archive INTEGER DEFAULT 0, timeshift INTEGER DEFAULT 0, catchup TEXT, catchup_source TEXT, icon TEXT DEFAULT '',
                      path TEXT, adult INTEGER default 0, parent_code TEXT, ext_params TEXT, group_id TEXT NOT NULL);";
-        $query .= "DROP TABLE IF EXISTS " . self::GROUPS_TABLE . ";";
-        $query .= "CREATE TABLE IF NOT EXISTS " . self::GROUPS_TABLE . " (group_id TEXT PRIMARY KEY, icon TEXT, adult INTEGER default 0);";
+        $query .= "DROP TABLE IF EXISTS $this->groups_table;";
+        $query .= "CREATE TABLE IF NOT EXISTS $this->groups_table (group_id TEXT PRIMARY KEY, icon TEXT, adult INTEGER default 0);";
         $db->exec_transaction($query);
 
         if (empty($this->file_name)) {
@@ -278,7 +282,7 @@ class M3uParser extends Json_Serializer
             'epg_id', 'archive', 'timeshift', 'catchup', 'catchup_source', 'icon',
             'path', 'adult', 'parent_code', 'ext_params', 'group_id');
 
-        $stm_channels = $db->prepare_bind("INSERT OR IGNORE" , self::CHANNELS_TABLE, $entry_columns);
+        $stm_channels = $db->prepare_bind("INSERT OR IGNORE" , $this->channels_table, $entry_columns);
 
         hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -350,7 +354,7 @@ class M3uParser extends Json_Serializer
         $db->exec('COMMIT;');
 
         $entry_groups = array('group_id', 'icon', 'adult');
-        $stm_groups = $db->prepare_bind("INSERT OR IGNORE" , self::GROUPS_TABLE, $entry_groups);
+        $stm_groups = $db->prepare_bind("INSERT OR IGNORE" , $this->groups_table, $entry_groups);
         $db->exec('BEGIN;');
         foreach ($groups_cache as $group_title => $group) {
             $stm_groups->bindValue(":group_id", $group_title);
@@ -390,14 +394,14 @@ class M3uParser extends Json_Serializer
         $db_name = LogSeverity::$is_debug ? "$this->file_name.db" : ":memory:";
         $db->exec("ATTACH DATABASE '$db_name' AS " . self::VOD_DB);
 
-        $db->exec("DROP TABLE IF EXISTS " . self::VOD_TABLE);
-        $db->exec("CREATE TABLE IF NOT EXISTS " . self::VOD_TABLE
-                    . "(hash TEXT PRIMARY KEY NOT NULL, group_id TEXT NOT NULL, title TEXT NOT NULL, icon TEXT, path TEXT NOT NULL);");
+        $db->exec("DROP TABLE IF EXISTS $this->vod_table;");
+        $db->exec("CREATE TABLE IF NOT EXISTS $this->vod_table
+                    (hash TEXT PRIMARY KEY NOT NULL, group_id TEXT NOT NULL, title TEXT NOT NULL, icon TEXT, path TEXT NOT NULL);");
 
         $db->exec('BEGIN;');
 
         $entry_indexes = array('hash', 'group_id', 'title', 'icon', 'path');
-        $stm_index = $db->prepare_bind("INSERT OR IGNORE" , self::VOD_TABLE, $entry_indexes);
+        $stm_index = $db->prepare_bind("INSERT OR IGNORE" , $this->vod_table, $entry_indexes);
 
         $this->perf->reset('start');
 

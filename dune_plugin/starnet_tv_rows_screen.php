@@ -134,7 +134,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case PLUGIN_FAVORITES_OP_ADD:
             case PLUGIN_FAVORITES_OP_REMOVE:
-                if (!isset($media_url->group_id) || $media_url->group_id === HISTORY_GROUP_ID) {
+                if (!isset($media_url->group_id) || $media_url->group_id === TV_HISTORY_GROUP_ID) {
                     return null;
                 }
 
@@ -158,7 +158,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_ITEM_BOTTOM:
                 $direction = $this->action_to_direction($control_id);
                 if (!isset($media_url->group_id)
-                    || $media_url->group_id === HISTORY_GROUP_ID
+                    || $media_url->group_id === TV_HISTORY_GROUP_ID
                     || $media_url->group_id === ALL_CHANNELS_GROUP_ID
                     || $media_url->group_id === CHANGED_CHANNELS_GROUP_ID
                     || $direction === null) {
@@ -214,7 +214,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_ITEMS_CLEAR:
                 hd_debug_print($media_url, true);
-                if ($media_url->group_id === HISTORY_GROUP_ID) {
+                if ($media_url->group_id === TV_HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
                     $this->plugin->clear_tv_history();
                     break;
@@ -738,7 +738,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $channel_row = $this->plugin->get_channel_info($item['channel_id'], true);
             if ($channel_row === null) continue;
 
-            $id = json_encode(array('group_id' => HISTORY_GROUP_ID, 'channel_id' => $item['channel_id'], 'archive_tm' => $item['archive_tm']));
+            $id = json_encode(array('group_id' => TV_HISTORY_GROUP_ID, 'channel_id' => $item['channel_id'], 'archive_tm' => $item['archive_tm']));
             if (isset($this->removed_playback_point) && $this->removed_playback_point === $id) {
                 $this->removed_playback_point = null;
                 $this->plugin->erase_tv_history($item['channel_id']);
@@ -774,7 +774,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         // create view history group
         if (!empty($items)) {
             $new_rows = $this->create_rows($items,
-                json_encode(array('group_id' => HISTORY_GROUP_ID)),
+                json_encode(array('group_id' => TV_HISTORY_GROUP_ID)),
                 TR::t('tv_screen_continue'),
                 TR::t('tv_screen_continue_view'),
                 User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
@@ -1155,7 +1155,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $dx = 15;
         hd_debug_print("newUI: $group_id");
         $in_fav = $this->plugin->is_channel_in_order(FAV_CHANNELS_GROUP_ID, $channel_id);
-        if ($group_id === HISTORY_GROUP_ID || $group_id === ALL_CHANNELS_GROUP_ID || $group_id === CHANGED_CHANNELS_GROUP_ID) {
+        if ($group_id === TV_HISTORY_GROUP_ID || $group_id === ALL_CHANNELS_GROUP_ID || $group_id === CHANGED_CHANNELS_GROUP_ID) {
 
             // blue button image (D)
             $defs[] = GComps_Factory::get_image_def(GComp_Geom::place_top_left(PaneParams::fav_btn_width, PaneParams::fav_btn_height, $dx, $dy_icon),
@@ -1320,7 +1320,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             hd_debug_print("in channels rows", true);
             $media_url = MediaURL::decode($user_input->selected_item_id);
             hd_debug_print($media_url, true);
-            if ($media_url->group_id === HISTORY_GROUP_ID) {
+            if ($media_url->group_id === TV_HISTORY_GROUP_ID) {
                 hd_debug_print("in history rows", true);
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");
             } else if ($media_url->group_id === FAV_CHANNELS_GROUP_ID && !is_limited_apk()) {

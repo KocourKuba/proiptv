@@ -171,7 +171,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array(
                         'channel_id' => $channel_id,
-                        'group_id' => HISTORY_GROUP_ID,
+                        'group_id' => TV_HISTORY_GROUP_ID,
                         'archive_tm' => $channel_ts
                     )
                 ),
