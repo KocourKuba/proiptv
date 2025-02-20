@@ -138,7 +138,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                     hd_debug_print("group: '{$group['title']}' disabled: " . var_export($group['disabled'], true), true);
                     if ($group['disabled']) continue;
 
-                    switch ($group['group_id']) {
+                    switch ($group[COLUMN_GROUP_ID]) {
                         case FAV_MOVIE_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;
                             $item_detailed_info = TR::t('vod_screen_group_info__2',
@@ -169,10 +169,10 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             break;
                     }
 
-                    hd_debug_print("special group: " . Default_Dune_Plugin::get_group_media_url_str($group['group_id']), true);
+                    hd_debug_print("special group: " . Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]), true);
 
                     $items[] = array(
-                        PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group['group_id']),
+                        PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]),
                         PluginRegularFolderItem::caption => TR::t($group['title']),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::item_caption_color => $color,

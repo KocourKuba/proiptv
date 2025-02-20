@@ -186,18 +186,15 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                hd_debug_print("playlist: " . $item, true);
+                hd_debug_print("item: " . json_encode($item), true);
 
                 if (($item[PARAM_TYPE] === PARAM_LINK || empty($item[PARAM_TYPE]))
-                    && isset($item[PARAM_PARAMS][PARAM_URI])
-                    && is_proto_http($item[PARAM_PARAMS][PARAM_URI])) {
+                    && isset($item[PARAM_URI]) && is_proto_http($item[PARAM_URI])) {
                     return $this->do_edit_url_dlg($edit_list, $selected_id);
                 }
 
-                if ($edit_list === self::SCREEN_EDIT_PLAYLIST
-                    && $item[PARAM_TYPE] === PARAM_FILE
-                    && isset($item[PARAM_PARAMS][PARAM_URI])) {
-                    $playlist_type = safe_get_value($item[PARAM_PARAMS], PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
+                if ($edit_list === self::SCREEN_EDIT_PLAYLIST && $item[PARAM_TYPE] === PARAM_FILE) {
+                    $playlist_type = safe_get_value($item, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
                     return $this->do_edit_m3u_type($playlist_type, $selected_id);
                 }
 
@@ -389,7 +386,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::open_folder(MediaURL::encode($params), TR::t('edit_list_add_provider'));
 
             case ACTION_EDIT_PROVIDER_DLG:
-                $playlist_id = empty($user_input->{PARAM_PLAYLIST_ID}) ? '' : $user_input->{PARAM_PLAYLIST_ID};
+                $playlist_id = empty($user_input->{COLUMN_PLAYLIST_ID}) ? '' : $user_input->{COLUMN_PLAYLIST_ID};
                 return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER}, $playlist_id);
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
@@ -620,7 +617,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $used = array();
         foreach ($this->plugin->get_playlists_shortcuts() as $row) {
             $used[] = $row[PARAM_SHORTCUT];
-            if ($row[PARAM_PLAYLIST_ID] === $selected_media_url->id) {
+            if ($row[COLUMN_PLAYLIST_ID] === $selected_media_url->id) {
                 $selected = $row[PARAM_SHORTCUT];
             }
         }
@@ -657,11 +654,19 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         $defs = array();
 
+        $window_title = TR::t('edit_list_add_url');
+        $name = '';
+        $url = 'http://';
+        $param = null;
+        $opts_idx = CONTROL_PLAYLIST_IPTV;
+
         if (!empty($id)) {
             if ($edit_list === self::SCREEN_EDIT_PLAYLIST) {
                 $item = $this->plugin->get_playlist($id);
+                $params = safe_get_value($item, PARAM_PARAMS);
             } else {
                 $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_EXTERNAL, $id);
+                $params = $item;
             }
 
             if (is_null($item)) {
@@ -669,16 +674,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             $window_title = TR::t('edit_list_edit_item');
-            $name = $item[PARAM_NAME];
-            $url = $item[PARAM_PARAMS][PARAM_URI];
-            $opts_idx = safe_get_value($item[PARAM_PARAMS], PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
+            $name = safe_get_value($item, PARAM_NAME);
+            $url = safe_get_value($params, PARAM_URI, '');
+            $opts_idx = safe_get_value($params, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
             $param = array(CONTROL_ACTION_EDIT => CONTROL_EDIT_ITEM);
-        } else {
-            $window_title = TR::t('edit_list_add_url');
-            $name = '';
-            $url = 'http://';
-            $param = null;
-            $opts_idx = CONTROL_PLAYLIST_IPTV;
         }
 
         Control_Factory::add_vgap($defs, 20);
@@ -779,7 +778,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $parser->setPlaylist($tmp_file,true);
                 $pl_header = $parser->parseHeader(false);
                 $type = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
-                if ($type === CONTROL_PLAYLIST_IPTV && $item[PARAM_PARAMS][PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
+                if ($type === CONTROL_PLAYLIST_IPTV && $item[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
                     $db = new Sql_Wrapper(":memory:");
                     $db->exec("ATTACH DATABASE '::memory:' AS " . M3uParser::IPTV_DB);
                     if ($parser->parseIptvPlaylist($db)) {
@@ -806,7 +805,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $item[PARAM_NAME] = empty($pl_name) ? $name : $pl_name;
                 }
 
-                $item[PARAM_PARAMS][PARAM_PL_TYPE] = $type;
+                $item[PARAM_PL_TYPE] = $type;
                 unlink($tmp_file);
                 hd_debug_print("Playlist: '$url' imported successfully");
                 $this->plugin->clear_playlist_cache($id);
@@ -906,10 +905,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return null;
         }
 
-        $item[PARAM_PARAMS][PARAM_PL_TYPE] = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
+        $item[PARAM_PL_TYPE] = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
         $parser = new M3uParser();
-        $parser->setPlaylist($item[PARAM_PARAMS][PARAM_URI], true);
-        if ($item[PARAM_PARAMS][PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
+        $parser->setPlaylist($item[PARAM_URI], true);
+        if ($item[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
             $pl_header = $parser->parseHeader(false);
         } else {
             $db = new Sql_Wrapper(":memory:");
@@ -997,7 +996,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             }
                             $playlist[PARAM_TYPE] = PARAM_LINK;
                             $playlist[PARAM_NAME] = basename($m[2]);
-                            $playlist[PARAM_PARAMS][PARAM_URI] = $line;
+                            $playlist[PARAM_URI] = $line;
                             unlink($tmp_file);
                         } else {
                             throw new Exception("Can't download file: $line");
@@ -1081,7 +1080,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $playlist[PARAM_TYPE] = PARAM_FILE;
         $playlist[PARAM_NAME] = basename($selected_media_url->filepath);
-        $playlist[PARAM_PARAMS][PARAM_URI] = $selected_media_url->filepath;
+        $playlist[PARAM_URI] = $selected_media_url->filepath;
         $this->plugin->set_playlist($hash, $playlist);
         return $this->do_edit_m3u_type(CONTROL_PLAYLIST_IPTV, $hash);
     }
@@ -1115,7 +1114,7 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             $playlist[PARAM_TYPE] = PARAM_FILE;
             $playlist[PARAM_NAME] = basename($file);
-            $playlist[PARAM_PARAMS][PARAM_URI] = $file;
+            $playlist[PARAM_URI] = $file;
             $this->plugin->set_playlist($hash, $playlist);
         }
 

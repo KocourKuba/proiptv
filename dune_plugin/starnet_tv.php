@@ -151,9 +151,9 @@ class Starnet_Tv implements User_Input_Handler
         $groups = array();
         foreach ($groups_order as $group_row) {
             if (!empty($group_row)
-                && ($group_row['group_id'] === ALL_CHANNELS_GROUP_ID || $this->plugin->get_channels_order_count($group_row['group_id']) !== 0)) {
+                && ($group_row[COLUMN_GROUP_ID] === ALL_CHANNELS_GROUP_ID || $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]) !== 0)) {
                 $groups[] = array(
-                    PluginTvGroup::id => $group_row['group_id'],
+                    PluginTvGroup::id => $group_row[COLUMN_GROUP_ID],
                     PluginTvGroup::caption => $group_row['title'],
                     PluginTvGroup::icon_url => empty($group_row['icon']) ? DEFAULT_GROUP_ICON : $group_row['icon']
                 );
@@ -244,7 +244,7 @@ class Starnet_Tv implements User_Input_Handler
             return null;
         }
 
-        $group_id = $channel['group_id'];
+        $group_id = $channel[COLUMN_GROUP_ID];
         $pos = array_search($channel_id, $this->plugin->get_channels_order($group_id));
         return Action_Factory::close_and_run(
             Action_Factory::open_folder(

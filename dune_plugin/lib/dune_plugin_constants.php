@@ -177,11 +177,14 @@ const VOD_SEARCH_LIST = 'vod_search';
 const VOD_FILTER_LIST = 'vod_filter_items';
 const TV_HISTORY = 'tv_history';
 
+const COLUMN_PLAYLIST_ID = 'playlist_id';
+const COLUMN_CHANNEL_ID = 'channel_id';
+const COLUMN_GROUP_ID = 'group_id';
+
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';
 const PARAM_PLAYLIST_STORAGE = 'playlist_storage';
 const PARAM_CUR_PLAYLIST_ID = 'cur_playlist_id';
-const PARAM_PLAYLIST_ID = 'playlist_id';
 const PARAM_VOD_IDX = 'vod_idx';
 const PARAM_FAVORITES = 'favorites';
 const PARAM_GROUPS_ORDER = 'groups_order';

@@ -70,7 +70,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $actions[$row[PARAM_SHORTCUT]] = User_Input_Handler_Registry::create_action($this,
                 ACTION_SHORTCUT,
                 null,
-                array(PARAM_PLAYLIST_ID => $row[PARAM_PLAYLIST_ID])
+                array(COLUMN_PLAYLIST_ID => $row[COLUMN_PLAYLIST_ID])
             );
         }
 
@@ -229,7 +229,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     case ACTION_SORT_ALL:
                         $this->plugin->sort_groups_order(true);
                         foreach ($this->plugin->get_groups_by_order() as $row) {
-                            $this->plugin->sort_channels_order($row['group_id'],true);
+                            $this->plugin->sort_channels_order($row[COLUMN_GROUP_ID],true);
                         }
                         break;
 
@@ -280,7 +280,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 } else {
-                    $group_id = safe_get_member($sel_media_url, 'group_id');
+                    $group_id = safe_get_member($sel_media_url, COLUMN_GROUP_ID);
                     $menu_items = $this->plugin->common_categories_menu($this, $group_id);
                 }
 
@@ -449,7 +449,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_CLEAR:
-                $group_id = safe_get_member($sel_media_url, 'group_id');
+                $group_id = safe_get_member($sel_media_url, COLUMN_GROUP_ID);
                 if ($group_id === TV_HISTORY_GROUP_ID) {
                     $this->plugin->clear_tv_history();
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
@@ -567,12 +567,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
 
             case ACTION_SHORTCUT:
-                if (!isset($user_input->{PARAM_PLAYLIST_ID})) {
+                if (!isset($user_input->{COLUMN_PLAYLIST_ID})) {
                     return null;
                 }
 
-                if ($this->plugin->get_active_playlist_key() !== $user_input->{PARAM_PLAYLIST_ID}) {
-                    $this->plugin->set_active_playlist_key($user_input->{PARAM_PLAYLIST_ID});
+                if ($this->plugin->get_active_playlist_key() !== $user_input->{COLUMN_PLAYLIST_ID}) {
+                    $this->plugin->set_active_playlist_key($user_input->{COLUMN_PLAYLIST_ID});
                 }
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
@@ -603,7 +603,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         foreach ($this->plugin->get_groups(1, -1) as $group_row) {
-            $group_id = $group_row['group_id'];
+            $group_id = $group_row[COLUMN_GROUP_ID];
             switch ($group_id) {
                 case ALL_CHANNELS_GROUP_ID:
                     $show = $this->plugin->get_bool_setting(PARAM_SHOW_ALL);
@@ -677,7 +677,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             if (!$show) continue;
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row['group_id']),
+                PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row[COLUMN_GROUP_ID]),
                 PluginRegularFolderItem::caption => TR::t($group_row['title']),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_caption_color => $color,
@@ -689,8 +689,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         foreach ($this->plugin->get_groups_by_order() as $group_row) {
-            $channels_cnt = $this->plugin->get_channels_order_count($group_row['group_id']);
-            $disabled_channels_cnt = $this->plugin->get_channels_count($group_row['group_id'], 1);
+            $channels_cnt = $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]);
+            $disabled_channels_cnt = $this->plugin->get_channels_count($group_row[COLUMN_GROUP_ID], 1);
             if (strpos($group_row['icon'], "plugin_file://") === false && file_exists(get_cached_image_path($group_row['icon']))) {
                 $icon = get_cached_image_path($group_row['icon']);
             } else {
@@ -698,7 +698,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row['group_id']),
+                PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row[COLUMN_GROUP_ID]),
                 PluginRegularFolderItem::caption => $group_row['title'],
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $icon,

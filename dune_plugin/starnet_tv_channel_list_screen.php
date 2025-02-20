@@ -479,7 +479,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $zoom_data = $this->plugin->get_channels_zoom($group_id);
                 foreach ($channels_rows as $channel_row) {
 
-                    $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_row['channel_id'], 'name' => $channel_row['title']);
+                    $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row['title']);
 
                     if ($picons_source !== XMLTV_PICONS) {
                         // playlist icons first in priority
@@ -500,28 +500,29 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     }
 
                     $epg_str = HD::ArrayToStr(array_values($epg_ids));
-                    $zoom = safe_get_value($zoom_data, $channel_row['channel_id'], DuneVideoZoomPresets::not_set);
+                    $zoom = safe_get_value($zoom_data, $channel_row[COLUMN_CHANNEL_ID], DuneVideoZoomPresets::not_set);
                     if ($zoom === DuneVideoZoomPresets::not_set) {
                         $detailed_info = TR::t('tv_screen_channel_info__4',
                             $channel_row['title'],
                             $channel_row['archive'],
-                            $channel_row['channel_id'],
+                            $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str
                         );
                     } else {
                         $detailed_info = TR::t('tv_screen_channel_info__5',
                             $channel_row['title'],
                             $channel_row['archive'],
-                            $channel_row['channel_id'],
+                            $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str,
                             TR::load_string(DuneVideoZoomPresets::$zoom_ops_translated[$zoom])
                         );
                     }
 
                     $items[] = array(
-                        PluginRegularFolderItem::media_url => MediaURL::encode(array('channel_id' => $channel_row['channel_id'], 'group_id' => $group_id)),
+                        PluginRegularFolderItem::media_url => MediaURL::encode(
+                            array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => $group_id)),
                         PluginRegularFolderItem::caption => $channel_row['title'],
-                        PluginRegularFolderItem::starred => in_array($channel_row['channel_id'], $fav_ids),
+                        PluginRegularFolderItem::starred => in_array($channel_row[COLUMN_CHANNEL_ID], $fav_ids),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::icon_path => $icon_url,
                             ViewItemParams::item_detailed_icon_path => $icon_url,

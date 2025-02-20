@@ -320,7 +320,7 @@ class vod_standard extends Abstract_Vod
         } else {
             $logo = $entry['icon'];
             $title = $entry['title'];
-            $category = $entry['group_id'];
+            $category = $entry[COLUMN_GROUP_ID];
             $path = $entry['path'];
             $title_orig = '';
             $country = '';
@@ -832,7 +832,7 @@ class vod_standard extends Abstract_Vod
         }
 
         $query = "SELECT DISTINCT group_id FROM " . M3uParser::VOD_TABLE . ";";
-        return $this->wrapper->fetch_single_array($query, 'group_id');
+        return $this->wrapper->fetch_single_array($query, COLUMN_GROUP_ID);
     }
 
     /**

@@ -153,7 +153,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                 if (empty($group_row)) continue;
 
                 $items[] = self::add_item(
-                    $group_row['group_id'],
+                    $group_row[COLUMN_GROUP_ID],
                     $group_row['title'],
                     false,
                     empty($group_row['icon']) ? DEFAULT_GROUP_ICON : $group_row['icon'],

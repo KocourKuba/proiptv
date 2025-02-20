@@ -163,19 +163,19 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         }
 
         foreach ($this->plugin->get_changed_channels('new') as $channel_row) {
-            $epg_ids = array($channel_row['epg_id'], $channel_row['channel_id'], $channel_row['title']);
-            $group = $channel_row['group_id'];
+            $epg_ids = array($channel_row['epg_id'], $channel_row[COLUMN_CHANNEL_ID], $channel_row['title']);
+            $group = $channel_row[COLUMN_GROUP_ID];
             $detailed_info = TR::t('tv_screen_ch_channel_info__5',
                 $channel_row['title'],
                 str_replace('|', '¦', (is_null($group) ? "" : $group)),
                 $channel_row['archive'],
-                $channel_row['channel_id'],
+                $channel_row[COLUMN_CHANNEL_ID],
                 implode(", ", $epg_ids)
             );
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array('channel_id' => $channel_row['channel_id'], 'group_id' => CHANGED_CHANNELS_GROUP_ID)
+                    array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::caption => $channel_row['title'],
@@ -189,11 +189,11 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         }
 
         foreach ($this->plugin->get_changed_channels('removed') as $item) {
-            $detailed_info = TR::t('tv_screen_ch_channel_info__2', $item['title'], $item['channel_id']);
+            $detailed_info = TR::t('tv_screen_ch_channel_info__2', $item['title'], $item[COLUMN_CHANNEL_ID]);
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array('channel_id' => $item['channel_id'], 'group_id' => CHANGED_CHANNELS_GROUP_ID)
+                    array('channel_id' => $item[COLUMN_CHANNEL_ID], 'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::caption => $item['title'],

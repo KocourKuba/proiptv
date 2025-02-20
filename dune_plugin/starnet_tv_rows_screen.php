@@ -202,7 +202,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 } else if ($user_input->{ACTION_RESET_TYPE} === ACTION_SORT_ALL) {
                     $this->plugin->sort_groups_order(true);
                     foreach ($this->plugin->get_groups_by_order() as $row) {
-                        $this->plugin->sort_channels_order($row['group_id'],true);
+                        $this->plugin->sort_channels_order($row[COLUMN_GROUP_ID],true);
                     }
                 }
 
@@ -735,13 +735,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $sticker_y = $rowItemsParams::icon_width * $icon_prop - $rowItemsParams::view_progress_height;
         $items = array();
         foreach ($watched as $item) {
-            $channel_row = $this->plugin->get_channel_info($item['channel_id'], true);
+            $channel_row = $this->plugin->get_channel_info($item[COLUMN_CHANNEL_ID], true);
             if ($channel_row === null) continue;
 
-            $id = json_encode(array('group_id' => TV_HISTORY_GROUP_ID, 'channel_id' => $item['channel_id'], 'archive_tm' => $item['archive_tm']));
+            $id = json_encode(array('group_id' => TV_HISTORY_GROUP_ID, 'channel_id' => $item[COLUMN_CHANNEL_ID], 'archive_tm' => $item['archive_tm']));
             if (isset($this->removed_playback_point) && $this->removed_playback_point === $id) {
                 $this->removed_playback_point = null;
-                $this->plugin->erase_tv_history($item['channel_id']);
+                $this->plugin->erase_tv_history($item[COLUMN_CHANNEL_ID]);
                 continue;
             }
 
@@ -804,7 +804,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             if (empty($channel_row)) continue;
 
             $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => FAV_CHANNELS_GROUP_ID, 'channel_id' => $channel_row['channel_id'])),
+                json_encode(array('group_id' => FAV_CHANNELS_GROUP_ID, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
                 $channel_row['icon'],
                 $channel_row['title']
             );
@@ -866,7 +866,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             if (empty($channel_row)) continue;
 
             $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $channel_row['channel_id'])),
+                json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
                 $channel_row['icon'],
                 $channel_row['title'],
                 $added_stickers
@@ -877,7 +877,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $failed_url = $this->GetRowsItemsParams('icon_loading_failed_url', $square_icons);
         foreach ($removed_channels as $item) {
             $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $item['channel_id'])),
+                json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $item[COLUMN_CHANNEL_ID])),
                 $failed_url,
                 $item['title'],
                 $removed_stickers
@@ -911,10 +911,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $items = array();
         foreach ($channels_order as $channel) {
             $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => ALL_CHANNELS_GROUP_ID, 'channel_id' => $channel['channel_id'])),
+                json_encode(array('group_id' => ALL_CHANNELS_GROUP_ID, 'channel_id' => $channel[COLUMN_CHANNEL_ID])),
                 $channel['icon'],
                 $channel['title'],
-                in_array($channel['channel_id'], $fav_channels) ? $fav_stickers : null
+                in_array($channel[COLUMN_CHANNEL_ID], $fav_channels) ? $fav_stickers : null
             );
         }
 
@@ -948,7 +948,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $items = array();
             foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
                 $items[] = Rows_Factory::add_regular_item(
-                    json_encode(array('group_id' => $group_id, 'channel_id' => $channel_row['channel_id'])),
+                    json_encode(array('group_id' => $group_id, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
                     $channel_row['icon'],
                     $channel_row['title'],
                     in_array($channel_row['channel_id'], $fav_group) ? $fav_stickers : null
@@ -1005,8 +1005,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     {
         hd_debug_print(null, true);
 
-        $group_id = safe_get_member($media_url, 'group_id');
-        $channel_id = safe_get_member($media_url, 'channel_id');
+        $group_id = safe_get_member($media_url, COLUMN_GROUP_ID);
+        $channel_id = safe_get_member($media_url, COLUMN_CHANNEL_ID);
         $archive_tm = safe_get_member($media_url, 'archive_tm', -1);
 
         if (is_null($channel_id) || empty($group_id)) {
@@ -1389,7 +1389,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $media_url = MediaURL::decode($user_input->selected_row_id);
             $row_id = json_decode($media_url->row_id);
-            $group_id = safe_get_member($row_id, 'group_id');
+            $group_id = safe_get_member($row_id, COLUMN_GROUP_ID);
             $menu_items = array_merge($menu_items, $this->plugin->common_categories_menu($this, $group_id, false));
         }
 

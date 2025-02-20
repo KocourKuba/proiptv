@@ -146,8 +146,8 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
 
         $items = array();
         foreach ($this->plugin->get_channels_by_order(FAV_MOVIE_GROUP_ID) as $movie_row) {
-            $this->plugin->vod->ensure_movie_loaded($movie_row['channel_id']);
-            $short_movie = $this->plugin->vod->get_cached_short_movie($movie_row['channel_id']);
+            $this->plugin->vod->ensure_movie_loaded($movie_row[COLUMN_CHANNEL_ID]);
+            $short_movie = $this->plugin->vod->get_cached_short_movie($movie_row[COLUMN_CHANNEL_ID]);
 
             if (is_null($short_movie)) {
                 $caption = TR::t('vod_screen_no_film_info');
@@ -158,7 +158,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie_row['channel_id']),
+                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie_row[COLUMN_CHANNEL_ID]),
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $poster_url,
