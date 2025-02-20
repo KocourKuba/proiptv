@@ -258,7 +258,7 @@ class M3uParser extends Json_Serializer
         $query = "DROP TABLE IF EXISTS " . self::CHANNELS_TABLE . ";";
         $query .= "CREATE TABLE IF NOT EXISTS " . self::CHANNELS_TABLE .
                     " (hash TEXT PRIMARY KEY NOT NULL, ch_id TEXT, title TEXT, tvg_name TEXT,
-                     epg_id TEXT, archive INTEGER DEFAULT 0, timeshift INTEGER DEFAULT 0, catchup TEXT, catchup_source TEXT, icon TEXT,
+                     epg_id TEXT, archive INTEGER DEFAULT 0, timeshift INTEGER DEFAULT 0, catchup TEXT, catchup_source TEXT, icon TEXT DEFAULT '',
                      path TEXT, adult INTEGER default 0, parent_code TEXT, ext_params TEXT, group_id TEXT NOT NULL);";
         $query .= "DROP TABLE IF EXISTS " . self::GROUPS_TABLE . ";";
         $query .= "CREATE TABLE IF NOT EXISTS " . self::GROUPS_TABLE . " (group_id TEXT PRIMARY KEY, icon TEXT, adult INTEGER default 0);";

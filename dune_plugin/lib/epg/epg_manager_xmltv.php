@@ -354,15 +354,12 @@ class Epg_Manager_Xmltv
      */
     public function get_picon($epg_ids)
     {
-        $aliases = array();
-        if (isset($epg_ids[ATTR_TVG_ID])) {
-            $aliases[] = $epg_ids[ATTR_TVG_ID];
+        $aliases = $epg_ids;
+        if (isset($aliases[ATTR_TVG_NAME])) {
+            $aliases[ATTR_TVG_NAME] = mb_convert_case($aliases[ATTR_TVG_NAME], MB_CASE_LOWER, "UTF-8");
         }
-        if (isset($epg_ids[ATTR_TVG_NAME])) {
-            $aliases[] = mb_convert_case($epg_ids[ATTR_TVG_NAME], MB_CASE_LOWER, "UTF-8");
-        }
-        if (isset($epg_ids[ATTR_CHANNEL_NAME])) {
-            $aliases[] = mb_convert_case($epg_ids[ATTR_CHANNEL_NAME], MB_CASE_LOWER, "UTF-8");
+        if (isset($aliases[ATTR_CHANNEL_NAME])) {
+            $aliases[ATTR_CHANNEL_NAME] = mb_convert_case($aliases[ATTR_CHANNEL_NAME], MB_CASE_LOWER, "UTF-8");
         }
         $aliases = array_unique($aliases);
 
@@ -374,15 +371,17 @@ class Epg_Manager_Xmltv
         $ch_table_name = self::INDEX_CHANNELS;
         $picons_table_name = self::INDEX_PICONS;
 
-        $query = "SELECT distinct (picon_url) FROM $picons_table_name
+        $query = "SELECT DISTINCT picon_url FROM $picons_table_name
                     INNER JOIN $ch_table_name ON $picons_table_name.picon_hash=$ch_table_name.picon_hash
                     WHERE alias IN ($placeHolders);";
 
         $res = '';
-        foreach ($this->xmltv_sources as $params) {
-            $db = $this->open_sqlite_db($params[PARAM_HASH]);
-            if (is_null($db) || $db === false) continue;
-
+        foreach ($this->xmltv_sources as $key => $params) {
+            $db = $this->open_sqlite_db($key);
+            if (is_null($db) || $db === false) {
+                hd_debug_print("Can't connect to database $key");
+                continue;
+            }
             $res = $db->query_value($query);
             if (!empty($res)) {
                 break;

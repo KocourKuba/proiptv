@@ -343,7 +343,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 if ($this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== $user_input->control_id) {
                     hd_debug_print("Selected icons source: $user_input->control_id", true);
                     $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
-                    $this->plugin->reset_playlist_db();
                     $this->plugin->init_epg_manager();
                     $this->force_parent_reload = true;
                     return User_Input_Handler_Registry::create_action(

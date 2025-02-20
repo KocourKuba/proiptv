@@ -176,7 +176,7 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::id => $channel_row['channel_id'],
                     PluginTvChannel::caption => $channel_row['title'],
                     PluginTvChannel::group_ids => array_keys($group_id_arr),
-                    PluginTvChannel::icon_url => $channel_row['icon'],
+                    PluginTvChannel::icon_url => empty($channel_row['icon']) ? DEFAULT_CHANNEL_ICON_PATH : $channel_row['icon'],
                     PluginTvChannel::number => $ch_num++,
 
                     PluginTvChannel::have_archive => $channel_row['archive'] > 0,
