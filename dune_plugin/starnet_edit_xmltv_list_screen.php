@@ -50,12 +50,16 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        $actions = array();
-        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS, TR::t('edit'));
         $action_return = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $action_select = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER, TR::t('select'));
+
+        $actions = array();
+        $actions[GUI_EVENT_KEY_B_GREEN] = $action_select;
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS, TR::t('edit'));
+
         $actions[GUI_EVENT_KEY_RETURN] = $action_return;
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
-        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
+        $actions[GUI_EVENT_KEY_ENTER] = $action_select;
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 

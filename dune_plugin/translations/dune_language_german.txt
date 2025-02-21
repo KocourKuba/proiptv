@@ -24,6 +24,8 @@ search = Suche
 search__1 = Search: %s
 new_search = Neue Suche
 loading = Laden...
+select = Auswählen
+
 add_to_favorite = Zu Favortien hinzufügen
 delete_from_favorite = Von Favoriten entfernen
 deleted_from_favorite = Von Favoriten entfernt

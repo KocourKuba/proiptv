@@ -24,6 +24,8 @@ search = Search
 search__1 = Search: %s
 new_search = New search
 loading = Loading...
+select = Select
+
 add_to_favorite = Add to Favorites
 delete_from_favorite = Remove from Favorites
 deleted_from_favorite = Removed from Favorites
