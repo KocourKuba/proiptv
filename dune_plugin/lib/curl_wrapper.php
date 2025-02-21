@@ -419,13 +419,17 @@ class Curl_Wrapper
                 $this->response_code = (int)trim(substr($log_content, $pos + strlen("RESPONSE_CODE:")));
                 hd_debug_print("Response code: $this->response_code from $this->logfile", true);
             }
-            unlink($this->logfile);
+            if (!LogSeverity::$is_debug) {
+                unlink($this->logfile);
+            }
         } else {
             $log_content = "No http_proxy log! Exec result code: $result";
             hd_debug_print($log_content);
         }
 
-        unlink($this->config_file);
+        if (!LogSeverity::$is_debug) {
+            unlink($this->config_file);
+        }
 
         if (file_exists($this->headers_path)) {
             $this->raw_response_headers = file_get_contents($this->headers_path);
@@ -449,7 +453,9 @@ class Curl_Wrapper
                     hd_debug_print("---------     Read finished    ---------");
                 }
             }
-            unlink($this->headers_path);
+            if (!LogSeverity::$is_debug) {
+                unlink($this->headers_path);
+            }
         }
 
         return true;

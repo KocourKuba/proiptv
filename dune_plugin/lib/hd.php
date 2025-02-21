@@ -182,6 +182,7 @@ class HD
             get_temp_path("*.txt"),
             get_temp_path("*.log"),
             get_temp_path("*.m3u8"),
+            get_temp_path("*.m3u"),
             "$apk_subst/tmp/run/shell.log",
             "$apk_subst/tmp/run/shell.log.old",
         );
@@ -270,22 +271,25 @@ class HD
             }
 
             $rootPath = get_data_path();
-            $zip->addFile("{$rootPath}common.db", "common.db");
+            foreach (array("common.db", "common.settings") as $name) {
+                if (file_exists($rootPath . $name)) {
+                    $zip->addFile($rootPath . $name, $name);
+                }
+            }
             foreach ($plugin->get_all_playlists() as $key => $playlist) {
-                $name = $key . ".settings";
-                if (file_exists($rootPath . $name)) {
-                    $zip->addFile("$rootPath$name", $name);
+                foreach (array(".settings", ".db") as $ext) {
+                    $name = $key . $ext;
+                    $path = $rootPath . $name;
+                    if (file_exists($path)) {
+                        $zip->addFile($path, $name);
+                    }
                 }
 
-                $name = $key . ".db";
-                if (file_exists($rootPath . $name)) {
-                    $zip->addFile("$rootPath$name", $name);
-                }
-
-                $pattern = $key . "_orders*\.db";
-                foreach (glob_dir($rootPath, "/$pattern/i") as $full_path) {
-                    if (file_exists($full_path)) {
-                        $zip->addFile($full_path, basename($full_path));
+                foreach (array("_orders*\.db", "_orders*\.settings") as $ext) {
+                    foreach (glob_dir($rootPath, "/$key$ext/i") as $full_path) {
+                        if (file_exists($full_path)) {
+                            $zip->addFile($full_path, basename($full_path));
+                        }
                     }
                 }
             }

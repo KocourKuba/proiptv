@@ -184,7 +184,9 @@ class Epg_Manager_Xmltv
         }
 
         $config = json_decode(file_get_contents($config_file), true);
-        @unlink($config_file);
+        if (!LogSeverity::$is_debug) {
+            unlink($config_file);
+        }
         if ($config === false) {
             HD::set_last_error("xmltv_last_error", "Invalid config file for indexing");
             return false;
@@ -195,8 +197,8 @@ class Epg_Manager_Xmltv
         }
 
         $LOG_FILE = get_temp_path("{$config[PARAMS_XMLTV][PARAM_HASH]}_indexing.log");
-        if (file_exists($LOG_FILE)) {
-            @unlink($LOG_FILE);
+        if (file_exists($LOG_FILE) && !LogSeverity::$is_debug) {
+            unlink($LOG_FILE);
         }
 
         date_default_timezone_set('UTC');
@@ -439,7 +441,9 @@ class Epg_Manager_Xmltv
                 }
                 hd_debug_print_separator();
                 hd_debug_print("Read finished");
-                @unlink($index_log);
+                if (!LogSeverity::$is_debug) {
+                    unlink($index_log);
+                }
             }
         }
 

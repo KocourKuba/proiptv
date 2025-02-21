@@ -345,12 +345,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         unlink($tmp_filename);
 
-        foreach (glob_dir(get_data_path(), "/\.settings$/i") as $file) {
-            rename($file, "$file.prev");
-        }
-
-        foreach (glob_dir(get_data_path(), "/\.db/i") as $file) {
-            rename($file, "$file.prev");
+        foreach (array(".settings", ".db") as $ext) {
+            foreach (glob_dir(get_data_path(), "/\.$ext$/i") as $file) {
+                rename($file, "$file.$ext.prev");
+            }
         }
 
         rename(get_data_path(CACHED_IMAGE_SUBDIR), get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
@@ -379,7 +377,6 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         $this->plugin->set_parameter(PARAM_CACHE_PATH, '');
-        //$this->plugin->set_bool_parameter(PARAM_ENABLE_DEBUG, false);
 
         $this->plugin->init_plugin(true);
 
