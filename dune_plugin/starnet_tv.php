@@ -154,8 +154,8 @@ class Starnet_Tv implements User_Input_Handler
                 && ($group_row[COLUMN_GROUP_ID] === ALL_CHANNELS_GROUP_ID || $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]) !== 0)) {
                 $groups[] = array(
                     PluginTvGroup::id => $group_row[COLUMN_GROUP_ID],
-                    PluginTvGroup::caption => $group_row['title'],
-                    PluginTvGroup::icon_url => empty($group_row['icon']) ? DEFAULT_GROUP_ICON : $group_row['icon']
+                    PluginTvGroup::caption => $group_row[COLUMN_TITLE],
+                    PluginTvGroup::icon_url => safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON)
                 );
             }
         }
@@ -172,11 +172,11 @@ class Starnet_Tv implements User_Input_Handler
                 if (empty($channel_row)) continue;
 
                 $group_id_arr[$group_id] = '';
-                $all_channels[$channel_row['channel_id']] = array(
-                    PluginTvChannel::id => $channel_row['channel_id'],
-                    PluginTvChannel::caption => $channel_row['title'],
+                $all_channels[$channel_row[COLUMN_CHANNEL_ID]] = array(
+                    PluginTvChannel::id => $channel_row[COLUMN_CHANNEL_ID],
+                    PluginTvChannel::caption => $channel_row[COLUMN_TITLE],
                     PluginTvChannel::group_ids => array_keys($group_id_arr),
-                    PluginTvChannel::icon_url => empty($channel_row['icon']) ? DEFAULT_CHANNEL_ICON_PATH : $channel_row['icon'],
+                    PluginTvChannel::icon_url => safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
                     PluginTvChannel::number => $ch_num++,
 
                     PluginTvChannel::have_archive => $channel_row['archive'] > 0,
@@ -214,7 +214,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::channels => array_values($all_channels),
 
             PluginTvInfo::favorites_supported => true,
-            PluginTvInfo::favorites_icon_url => $fav_group['icon'],
+            PluginTvInfo::favorites_icon_url => $fav_group[COLUMN_ICON],
 
             PluginTvInfo::initial_channel_id => (string)$media_url->channel_id,
             PluginTvInfo::initial_group_id => $initial_group_id,

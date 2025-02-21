@@ -251,8 +251,8 @@ class Epg_Manager_Xmltv
         foreach ($this->xmltv_sources as $key => $params) {
             $this->xmltv_url_params = $params;
             if ($this->is_index_locked($key)) {
-                hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: {$channel_row['channel_id']}");
-                $this->delayed_epg[] = $channel_row['channel_id'];
+                hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: {$channel_row[COLUMN_CHANNEL_ID]}");
+                $this->delayed_epg[] = $channel_row[COLUMN_CHANNEL_ID];
                 continue;
             }
 
@@ -711,8 +711,8 @@ class Epg_Manager_Xmltv
                 return $channel_position;
             }
 
-            $channel_title = $channel_row['title'];
-            $epg_ids = array_unique(array($channel_row['epg_id'], $channel_row['channel_id'], $channel_row['title']));
+            $channel_title = $channel_row[COLUMN_TITLE];
+            $epg_ids = array_unique(array($channel_row['epg_id'], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]));
             $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
             $stm = $db->prepare("SELECT DISTINCT channel_id FROM $table_channels WHERE alias IN ($placeHolders);");
             if ($stm !== false) {
@@ -733,7 +733,7 @@ class Epg_Manager_Xmltv
             $epg_ids = array_unique($epg_ids);
             hd_debug_print("Found epg_ids: " . pretty_json_format($epg_ids), true);
             if (!empty($epg_ids)) {
-                hd_debug_print("Load position indexes for: {$channel_row['channel_id']} ($channel_title)", true);
+                hd_debug_print("Load position indexes for: {$channel_row[COLUMN_CHANNEL_ID]} ($channel_title)", true);
                 $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
                 $stmt = $db->prepare("SELECT start, end FROM $table_pos WHERE channel_id IN ($placeHolders);");
                 if ($stmt !== false) {
@@ -756,7 +756,7 @@ class Epg_Manager_Xmltv
             }
 
             if (empty($channel_position)) {
-                hd_debug_print("No positions for channel {$channel_row['channel_id']} ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
+                hd_debug_print("No positions for channel {$channel_row[COLUMN_CHANNEL_ID]} ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
             } else {
                 hd_debug_print("Channel positions: " . pretty_json_format($channel_position), true);
             }
@@ -783,7 +783,7 @@ class Epg_Manager_Xmltv
                 $day_epg[$start][Epg_Params::EPG_DESC] = '';
             }
         } else {
-            hd_debug_print("No EPG for channel: {$channel_row['channel_id']}");
+            hd_debug_print("No EPG for channel: {$channel_row[COLUMN_CHANNEL_ID]}");
         }
 
         return $day_epg;

@@ -705,7 +705,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $progress = 0;
 
             if (is_null($prog_info)) {
-                $title = $channel_row['title'];
+                $title = $channel_row[COLUMN_TITLE];
             } else {
                 // program epg available
                 $title = $prog_info[PluginTvEpgProgram::name];
@@ -748,13 +748,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $stickers = null;
 
+            $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
             if ($item['view_progress'] > 0) {
                 // item size 229x142
                 if (!empty($item['program_icon_url'])) {
                     // add small channel logo
                     $rect = Rows_Factory::r(129, 0, 100, 64);
                     $stickers[] = Rows_Factory::add_regular_sticker_rect($rowItemsParams::fav_sticker_logo_bg_color, $rect);
-                    $stickers[] = Rows_Factory::add_regular_sticker_image($channel_row['icon'], $rect);
+                    $stickers[] = Rows_Factory::add_regular_sticker_image($icon, $rect);
                 }
 
                 // add progress indicator
@@ -769,7 +770,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 ); // viewed
             }
 
-            $items[] = Rows_Factory::add_regular_item($id, $channel_row['icon'], $item['program_title'], $stickers);
+            $items[] = Rows_Factory::add_regular_item($id, $icon, $item['program_title'], $stickers);
         }
 
         // create view history group
@@ -806,8 +807,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => FAV_CHANNELS_GROUP_ID, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
-                $channel_row['icon'],
-                $channel_row['title']
+                safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
+                $channel_row[COLUMN_TITLE]
             );
         }
 
@@ -868,8 +869,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
-                $channel_row['icon'],
-                $channel_row['title'],
+                safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
+                $channel_row[COLUMN_TITLE],
                 $added_stickers
             );
         }
@@ -880,7 +881,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $item[COLUMN_CHANNEL_ID])),
                 $failed_url,
-                $item['title'],
+                $item[COLUMN_TITLE],
                 $removed_stickers
             );
         }
@@ -910,12 +911,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $fav_channels = $this->plugin->get_channels_order(FAV_CHANNELS_GROUP_ID);
 
         $items = array();
-        foreach ($channels_order as $channel) {
+        foreach ($channels_order as $channel_row) {
             $items[] = Rows_Factory::add_regular_item(
-                json_encode(array('group_id' => ALL_CHANNELS_GROUP_ID, 'channel_id' => $channel[COLUMN_CHANNEL_ID])),
-                $channel['icon'],
-                $channel['title'],
-                in_array($channel[COLUMN_CHANNEL_ID], $fav_channels) ? $fav_stickers : null
+                json_encode(array('group_id' => ALL_CHANNELS_GROUP_ID, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
+                safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
+                $channel_row[COLUMN_TITLE],
+                in_array($channel_row[COLUMN_CHANNEL_ID], $fav_channels) ? $fav_stickers : null
             );
         }
 
@@ -950,8 +951,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
                 $items[] = Rows_Factory::add_regular_item(
                     json_encode(array('group_id' => $group_id, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
-                    $channel_row['icon'],
-                    $channel_row['title'],
+                    safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
+                    $channel_row[COLUMN_TITLE],
                     in_array($channel_row['channel_id'], $fav_group) ? $fav_stickers : null
                 );
             }
@@ -1043,7 +1044,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $defs[] = GComps_Factory::label(
             GComp_Geom::place_top_left(PaneParams::info_width, PaneParams::prog_item_height),
             null,
-            $channel_row['title'],
+            $channel_row[COLUMN_TITLE],
             1,
             PaneParams::ch_title_font_color,
             PaneParams::ch_title_font_size,

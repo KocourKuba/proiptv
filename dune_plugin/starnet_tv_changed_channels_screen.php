@@ -163,40 +163,41 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         }
 
         foreach ($this->plugin->get_changed_channels('new') as $channel_row) {
-            $epg_ids = array($channel_row['epg_id'], $channel_row[COLUMN_CHANNEL_ID], $channel_row['title']);
+            $epg_ids = array($channel_row['epg_id'], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]);
             $group = $channel_row[COLUMN_GROUP_ID];
             $detailed_info = TR::t('tv_screen_ch_channel_info__5',
-                $channel_row['title'],
+                $channel_row[COLUMN_TITLE],
                 str_replace('|', '¦', (is_null($group) ? "" : $group)),
                 $channel_row['archive'],
                 $channel_row[COLUMN_CHANNEL_ID],
                 implode(", ", $epg_ids)
             );
 
+            $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::starred => false,
-                PluginRegularFolderItem::caption => $channel_row['title'],
+                PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_sticker => Control_Factory::create_sticker(get_image_path('add.png'), -63, 1),
-                    ViewItemParams::icon_path => $channel_row['icon'],
-                    ViewItemParams::item_detailed_icon_path => $channel_row['icon'],
+                    ViewItemParams::icon_path => $icon,
+                    ViewItemParams::item_detailed_icon_path => $icon,
                     ViewItemParams::item_detailed_info => $detailed_info,
                 ),
             );
         }
 
         foreach ($this->plugin->get_changed_channels('removed') as $item) {
-            $detailed_info = TR::t('tv_screen_ch_channel_info__2', $item['title'], $item[COLUMN_CHANNEL_ID]);
+            $detailed_info = TR::t('tv_screen_ch_channel_info__2', $item[COLUMN_TITLE], $item[COLUMN_CHANNEL_ID]);
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array('channel_id' => $item[COLUMN_CHANNEL_ID], 'group_id' => CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::starred => false,
-                PluginRegularFolderItem::caption => $item['title'],
+                PluginRegularFolderItem::caption => $item[COLUMN_TITLE],
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_sticker => Control_Factory::create_sticker(get_image_path('del.png'), -63, 1),
                     ViewItemParams::icon_path => DEFAULT_CHANNEL_ICON_PATH,

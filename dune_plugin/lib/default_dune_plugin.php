@@ -926,7 +926,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         hd_debug_print(null, true);
 
-        hd_debug_print("Generate stream url for channel id: {$channel_row[COLUMN_CHANNEL_ID]} '{$channel_row['title']}'");
+        hd_debug_print("Generate stream url for channel id: {$channel_row[COLUMN_CHANNEL_ID]} '{$channel_row[COLUMN_TITLE]}'");
 
         // replace all macros
         $stream_url = $channel_row['path'];
@@ -2955,10 +2955,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return null;
         }
 
-        $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_id, 'name' => $channel_row['title']);
+        $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_id, 'name' => $channel_row[COLUMN_TITLE]);
 
         $info = "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
-        $info .= "Name: " . $channel_row['title'] . PHP_EOL;
+        $info .= "Name: " . $channel_row[COLUMN_TITLE] . PHP_EOL;
         $info .= "Archive: " . $channel_row['archive'] . " days" . PHP_EOL;
         $info .= "Protected: " . TR::load_string($channel_row['adult'] ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off) . PHP_EOL;
         $info .= "EPG IDs: " . implode(', ', $epg_ids) . PHP_EOL;
@@ -2966,7 +2966,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $info .= "Timeshift hours: {$channel_row['timeshift']}" . PHP_EOL;
         }
         $info .= "Category: {$channel_row[COLUMN_GROUP_ID]}" . PHP_EOL;
-        $info .= "Icon: " . wrap_string_to_lines($channel_row['icon'], 70) . PHP_EOL;
+        $info .= "Icon: " . wrap_string_to_lines($channel_row[COLUMN_ICON], 70) . PHP_EOL;
         $info .= PHP_EOL;
 
         try {
@@ -3471,7 +3471,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $order_table_name = self::get_table_name($group_row[COLUMN_GROUP_ID]);
 
             $q_group_id = Sql_Wrapper::sql_quote($group_row[COLUMN_GROUP_ID]);
-            $q_group_icon = Sql_Wrapper::sql_quote(empty($group_row['icon']) ? DEFAULT_GROUP_ICON : $group_row['icon']);
+            $q_group_icon = Sql_Wrapper::sql_quote(empty($group_row[COLUMN_ICON]) ? DEFAULT_GROUP_ICON : $group_row[COLUMN_ICON]);
             $q_adult = Sql_Wrapper::sql_quote($group_row['adult']);
 
             $query = sprintf(self::CREATE_ORDERED_TABLE, $order_table_name, COLUMN_CHANNEL_ID);
@@ -3751,9 +3751,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $groups = array();
         foreach ($this->get_channels($group_id, 0) as $item) {
             if ($is_regex) {
-                $add = preg_match("#$pattern#", $item['title']);
+                $add = preg_match("#$pattern#", $item[COLUMN_TITLE]);
             } else {
-                $add = stripos($item['title'], $pattern) !== false;
+                $add = stripos($item[COLUMN_TITLE], $pattern) !== false;
             }
 
             if ($add) {
@@ -4963,11 +4963,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         // add special groups to the table if the not exists
         $special_group = array(
-            array(COLUMN_GROUP_ID => FAV_CHANNELS_GROUP_ID, 'title' => FAV_CHANNELS_GROUP_CAPTION, 'icon' => FAV_CHANNELS_GROUP_ICON),
-            array(COLUMN_GROUP_ID => TV_HISTORY_GROUP_ID, 'title' => HISTORY_GROUP_CAPTION, 'icon' => HISTORY_GROUP_ICON),
-            array(COLUMN_GROUP_ID => CHANGED_CHANNELS_GROUP_ID, 'title' => CHANGED_CHANNELS_GROUP_CAPTION, 'icon' => CHANGED_CHANNELS_GROUP_ICON),
-            array(COLUMN_GROUP_ID => VOD_GROUP_ID, 'title' => VOD_GROUP_CAPTION, 'icon' => VOD_GROUP_ICON),
-            array(COLUMN_GROUP_ID => ALL_CHANNELS_GROUP_ID, 'title' => ALL_CHANNELS_GROUP_CAPTION, 'icon' => ALL_CHANNELS_GROUP_ICON),
+            array(COLUMN_GROUP_ID => FAV_CHANNELS_GROUP_ID, COLUMN_TITLE => FAV_CHANNELS_GROUP_CAPTION, COLUMN_ICON => FAV_CHANNELS_GROUP_ICON),
+            array(COLUMN_GROUP_ID => TV_HISTORY_GROUP_ID, COLUMN_TITLE => HISTORY_GROUP_CAPTION, COLUMN_ICON => HISTORY_GROUP_ICON),
+            array(COLUMN_GROUP_ID => CHANGED_CHANNELS_GROUP_ID, COLUMN_TITLE => CHANGED_CHANNELS_GROUP_CAPTION, COLUMN_ICON => CHANGED_CHANNELS_GROUP_ICON),
+            array(COLUMN_GROUP_ID => VOD_GROUP_ID, COLUMN_TITLE => VOD_GROUP_CAPTION, COLUMN_ICON => VOD_GROUP_ICON),
+            array(COLUMN_GROUP_ID => ALL_CHANNELS_GROUP_ID, COLUMN_TITLE => ALL_CHANNELS_GROUP_CAPTION, COLUMN_ICON => ALL_CHANNELS_GROUP_ICON),
         );
 
         $query = '';

@@ -177,7 +177,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 Control_Factory::add_text_field($defs, $this, null, self::ACTION_NEW_SEARCH, '',
-                    $row['title'], false, false, true, true, 1300, false, true);
+                    $row[COLUMN_TITLE], false, false, true, true, 1300, false, true);
                 Control_Factory::add_vgap($defs, 500);
                 return Action_Factory::show_dialog(TR::t('tv_screen_search_channel'), $defs, true, 1300);
 
@@ -479,11 +479,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $zoom_data = $this->plugin->get_channels_zoom($group_id);
                 foreach ($channels_rows as $channel_row) {
 
-                    $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row['title']);
+                    $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
 
                     if ($picons_source !== XMLTV_PICONS) {
                         // playlist icons first in priority
-                        $icon_url = $channel_row['icon'];
+                        $icon_url = $channel_row[COLUMN_ICON];
                     }
 
                     // if selected xmltv or combined mode look into xmltv source
@@ -503,14 +503,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $zoom = safe_get_value($zoom_data, $channel_row[COLUMN_CHANNEL_ID], DuneVideoZoomPresets::not_set);
                     if ($zoom === DuneVideoZoomPresets::not_set) {
                         $detailed_info = TR::t('tv_screen_channel_info__4',
-                            $channel_row['title'],
+                            $channel_row[COLUMN_TITLE],
                             $channel_row['archive'],
                             $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str
                         );
                     } else {
                         $detailed_info = TR::t('tv_screen_channel_info__5',
-                            $channel_row['title'],
+                            $channel_row[COLUMN_TITLE],
                             $channel_row['archive'],
                             $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str,
@@ -521,7 +521,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $items[] = array(
                         PluginRegularFolderItem::media_url => MediaURL::encode(
                             array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => $group_id)),
-                        PluginRegularFolderItem::caption => $channel_row['title'],
+                        PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
                         PluginRegularFolderItem::starred => in_array($channel_row[COLUMN_CHANNEL_ID], $fav_ids),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::icon_path => $icon_url,

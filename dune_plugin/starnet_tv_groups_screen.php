@@ -676,13 +676,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             $this->plugin->set_special_group_visible($group_id, !$show);
             if (!$show) continue;
 
+            $icon = safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON);
             $items[] = array(
                 PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row[COLUMN_GROUP_ID]),
-                PluginRegularFolderItem::caption => TR::t($group_row['title']),
+                PluginRegularFolderItem::caption => TR::t($group_row[COLUMN_TITLE]),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_caption_color => $color,
-                    ViewItemParams::icon_path => $group_row['icon'],
-                    ViewItemParams::item_detailed_icon_path => $group_row['icon'],
+                    ViewItemParams::icon_path => $icon,
+                    ViewItemParams::item_detailed_icon_path => $icon,
                     ViewItemParams::item_detailed_info => $item_detailed_info,
                 )
             );
@@ -691,20 +692,20 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         foreach ($this->plugin->get_groups_by_order() as $group_row) {
             $channels_cnt = $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]);
             $disabled_channels_cnt = $this->plugin->get_channels_count($group_row[COLUMN_GROUP_ID], 1);
-            if (strpos($group_row['icon'], "plugin_file://") === false && file_exists(get_cached_image_path($group_row['icon']))) {
-                $icon = get_cached_image_path($group_row['icon']);
+            if (strpos($group_row[COLUMN_ICON], "plugin_file://") === false && file_exists(get_cached_image_path($group_row[COLUMN_ICON]))) {
+                $icon = get_cached_image_path($group_row[COLUMN_ICON]);
             } else {
-                $icon = $group_row['icon'];
+                $icon = safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON);
             }
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row[COLUMN_GROUP_ID]),
-                PluginRegularFolderItem::caption => $group_row['title'],
+                PluginRegularFolderItem::caption => $group_row[COLUMN_TITLE],
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $icon,
                     ViewItemParams::item_detailed_icon_path => $icon,
                     ViewItemParams::item_detailed_info => TR::t('tv_screen_group_info__3',
-                        str_replace('|', '¦', $group_row['title']),
+                        str_replace('|', '¦', $group_row[COLUMN_TITLE]),
                         $channels_cnt,
                         $disabled_channels_cnt
                     ),

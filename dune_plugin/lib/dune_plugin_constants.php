@@ -182,6 +182,8 @@ const TV_HISTORY = 'tv_history';
 const COLUMN_PLAYLIST_ID = 'playlist_id';
 const COLUMN_CHANNEL_ID = 'channel_id';
 const COLUMN_GROUP_ID = 'group_id';
+const COLUMN_ICON = 'icon';
+const COLUMN_TITLE = 'title';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';

@@ -206,15 +206,16 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $items = array();
 
         foreach ($this->plugin->get_channels_by_order(FAV_CHANNELS_GROUP_ID) as $channel_row) {
+            $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => FAV_CHANNELS_GROUP_ID)
                 ),
-                PluginRegularFolderItem::caption => $channel_row['title'],
+                PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $channel_row['icon'],
-                    ViewItemParams::item_detailed_icon_path => $channel_row['icon'],
+                    ViewItemParams::icon_path => $icon,
+                    ViewItemParams::item_detailed_icon_path => $icon,
                 ),
             );
         }

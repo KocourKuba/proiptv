@@ -152,7 +152,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
             $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
             $description = '';
             if (is_null($prog_info)) {
-                $title = $channel_row['title'];
+                $title = $channel_row[COLUMN_TITLE];
             } else {
                 // program epg available
                 $title = $prog_info[PluginTvEpgProgram::name];
@@ -162,11 +162,12 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     if ($channel_ts >= $now - $channel_row['archive'] * 86400 - 60) {
                         $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2))) * 100;
                         $title = "$title | " . date("j.m H:i", $channel_ts) . " [$progress%]";
-                        $description = "{$channel_row['title']}|{$prog_info[PluginTvEpgProgram::description]}";
+                        $description = "{$channel_row[COLUMN_TITLE]}|{$prog_info[PluginTvEpgProgram::description]}";
                     }
                 }
             }
 
+            $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array(
@@ -178,8 +179,8 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $channel_row['icon'],
-                    ViewItemParams::item_detailed_icon_path => $channel_row['icon'],
+                    ViewItemParams::icon_path => $icon,
+                    ViewItemParams::item_detailed_icon_path => $icon,
                     ViewItemParams::item_detailed_info => $description,
                 ),
             );

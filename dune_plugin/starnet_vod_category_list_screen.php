@@ -176,8 +176,8 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                         PluginRegularFolderItem::caption => TR::t($group['title']),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::item_caption_color => $color,
-                            ViewItemParams::icon_path => $group['icon'],
-                            ViewItemParams::item_detailed_icon_path => $group['icon'],
+                            ViewItemParams::icon_path => $group[COLUMN_ICON],
+                            ViewItemParams::item_detailed_icon_path => $group[COLUMN_ICON],
                             ViewItemParams::item_detailed_info => $item_detailed_info,
                         )
                     );

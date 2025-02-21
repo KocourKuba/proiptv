@@ -138,10 +138,10 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                 if (empty($channel_row)) continue;
 
                 $items[] = self::add_item(
-                    $channel_row['channel_id'],
-                    $channel_row['title'],
+                    $channel_row[COLUMN_CHANNEL_ID],
+                    $channel_row[COLUMN_TITLE],
                     false,
-                    empty($channel_row['icon']) ? DEFAULT_CHANNEL_ICON_PATH : $channel_row['icon'],
+                    safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
                     null
                 );
             }
@@ -154,9 +154,9 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
                 $items[] = self::add_item(
                     $group_row[COLUMN_GROUP_ID],
-                    $group_row['title'],
+                    $group_row[COLUMN_TITLE],
                     false,
-                    empty($group_row['icon']) ? DEFAULT_GROUP_ICON : $group_row['icon'],
+                    safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON),
                     null
                 );
             }

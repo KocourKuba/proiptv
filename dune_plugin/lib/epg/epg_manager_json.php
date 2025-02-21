@@ -47,9 +47,9 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     {
         $epg_ids = array(
             'epg_id' => $channel_row['epg_id'],
-            'id' => $channel_row['channel_id'],
-            ATTR_TVG_NAME => $channel_row['title'],
-            'name' => $channel_row['title']);
+            'id' => $channel_row[COLUMN_CHANNEL_ID],
+            ATTR_TVG_NAME => $channel_row[COLUMN_TITLE],
+            'name' => $channel_row[COLUMN_TITLE]);
 
         $day_epg = array();
         try {
@@ -90,9 +90,9 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
 
             if (strpos($epg_url, MACRO_ID) !== false) {
-                hd_debug_print("using ID: {$channel_row['channel_id']}", true);
-                $epg_url = str_replace(MACRO_ID, $channel_row['channel_id'], $epg_url);
-                $epg_ids[ATTR_TVG_ID] = $channel_row['channel_id'];
+                hd_debug_print("using ID: {$channel_row[COLUMN_CHANNEL_ID]}", true);
+                $epg_url = str_replace(MACRO_ID, $channel_row[COLUMN_CHANNEL_ID], $epg_url);
+                $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
             }
 
             if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
@@ -131,7 +131,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $epg_url = str_replace(array(MACRO_EPG_ID, '#'), array($epg_id, '%23'), $epg_url);
             $epg_cache_file = get_temp_path(Hashed_Array::hash($epg_url) . ".cache");
 
-            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row['channel_id']}' ({$channel_row['title']})");
+            hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row[COLUMN_CHANNEL_ID]}' ({$channel_row[COLUMN_TITLE]})");
             hd_debug_print("EPG url: $epg_url");
 
             $from_cache = false;
