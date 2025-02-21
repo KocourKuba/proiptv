@@ -168,6 +168,7 @@ const HISTORY_MOVIES_GROUP_CAPTION = 'plugin_history';
 const HISTORY_MOVIES_GROUP_ICON = 'plugin_file://icons/history_vod_folder.png';
 
 const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
+const DEFAULT_CHANNEL_ICON_PATH_SQ = 'plugin_file://icons/default_channel_sq.png';
 
 # Common parameters
 const PLUGIN_PARAMETERS = "parameters";
@@ -203,9 +204,9 @@ const PARAM_SHOW_CHANGED_CHANNELS = 'show_changed_channels';
 const PARAM_SHOW_VOD_ICON = 'show_vod_icon';
 const PARAM_VOD_LAST = 'vod_last';
 const PARAM_DISABLED_CHANNELS = 'disabled_channels';
-const PARAM_SQUARE_ICONS = 'square_icons';
-const PARAM_ICONS_IN_ROW = 'icons_in_row';
-const PARAM_SHOW_CHANNEL_CAPTION = 'show_channel_caption';
+const PARAM_NEWUI_SQUARE_ICONS = 'square_icons';
+const PARAM_NEWUI_ICONS_IN_ROW = 'icons_in_row';
+const PARAM_NEWUI_SHOW_CHANNEL_CAPTION = 'show_channel_caption';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
 const PARAM_CHANNELS_LIST_PATH = 'channels_list_path';
@@ -220,7 +221,7 @@ const PARAM_EPG_PLAYLIST = 'epg_playlist';
 const PARAM_EPG_SHIFT = 'epg_shift';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_SOURCE = 'epg_source';
-const PARAM_CHANNEL_POSITION = 'channel_position';
+const PARAM_NEWUI_CHANNEL_POSITION = 'channel_position';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_EXT_XMLTV_SOURCES = 'xmltv_sources';

@@ -446,7 +446,7 @@ class Action_Factory
 
         $media_urls = is_array($media_urls) ? $media_urls : array();
         if (Starnet_Epfs_Handler::$enabled) {
-            $media_urls = array_merge(array(Starnet_Epfs_Handler::$epf_id), $media_urls);
+            $post_action = self::invalidate_folders(array(Starnet_Epfs_Handler::$epf_id), $post_action);
         }
 
         return self::invalidate_folders($media_urls, $post_action, true);

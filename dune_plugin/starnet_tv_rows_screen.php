@@ -38,6 +38,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     private $removed_playback_point;
     private $clear_playback_points = false;
 
+    private $show_caption = true;
+    private $channels_in_row = 7;
+    private $square_icons = false;
+    private $default_channel_icon = DEFAULT_CHANNEL_ICON_PATH;
+    private $picons_source = PLAYLIST_PICONS;
+
     ///////////////////////////////////////////////////////////////////////////
 
     /**
@@ -354,7 +360,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case GUI_EVENT_KEY_INFO:
                 if (isset($media_url->channel_id)) {
-                    return $this->plugin->do_show_channel_info($media_url->channel_id);
+                    return $this->plugin->do_show_channel_info($media_url->channel_id, false);
                 }
                 return null;
 
@@ -469,6 +475,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             hd_debug_print("Channels not loaded!");
         }
 
+        $this->update_new_ui_settings();
+
         return $this->get_folder_view(MediaURL::decode(static::ID), $plugin_cookies);
     }
 
@@ -511,10 +519,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        $show_caption = $this->plugin->get_bool_setting(PARAM_SHOW_CHANNEL_CAPTION);
-        $channels_in_row = $this->plugin->get_setting(PARAM_ICONS_IN_ROW, 7);
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
-
         $rows = array_merge($rows, $category_rows);
         hd_debug_print("added group channels: " . count($category_rows) . " rows", true);
 
@@ -529,7 +533,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             null,
             RowsParams::hfactor,
             RowsParams::vfactor,
-            $this->GetRowsItemsParams('vgravity', $square_icons),
+            $this->GetRowsItemsParams('vgravity'),
             RowsParams::vend_min_offset
         );
 
@@ -549,8 +553,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             PaneParams::vod_height
         );
 
-        $rowItemsParams = $this->GetRowsItemsParamsClass($show_caption, $channels_in_row);
-        $icon_prop = $this->GetRowsItemsParams('icon_prop', $square_icons);
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
+        $icon_prop = $this->GetRowsItemsParams('icon_prop');
         $width = RowsParams::width / $rowItemsParams::items_in_row;
 
         $def_params = Rows_Factory::variable_params(
@@ -596,8 +600,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $def_params,
             $sel_params,
             $inactive_params,
-            get_image_path($this->GetRowsItemsParams('icon_loading_url', $square_icons)),
-            get_image_path($this->GetRowsItemsParams('icon_loading_failed_url', $square_icons)),
+            get_image_path($this->GetRowsItemsParams('icon_loading_url')),
+            get_image_path($this->GetRowsItemsParams('icon_loading_failed_url')),
             $rowItemsParams::caption_max_num_lines,
             $rowItemsParams::caption_line_spacing,
             Rows_Factory::margins(6, 2, 2, 2)
@@ -636,12 +640,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             TitleRowsParams::lite_fade_color
         );
 
-        $show_caption = $this->plugin->get_bool_setting(PARAM_SHOW_CHANNEL_CAPTION);
-        $channels_in_row = $this->plugin->get_setting(PARAM_ICONS_IN_ROW, 7);
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
-
-        $rowItemsParams = $this->GetRowsItemsParamsClass($show_caption, $channels_in_row);
-        $icon_prop = $this->GetRowsItemsParams('icon_prop', $square_icons);
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
+        $icon_prop = $this->GetRowsItemsParams('icon_prop');
         $height = RowsParams::width / $rowItemsParams::items_in_row * $icon_prop;
         $inactive_height = RowsParams::inactive_width / $rowItemsParams::items_in_row * $icon_prop;
         for ($i = 0, $iMax = count($items); $i < $iMax; $i += $rowItemsParams::items_in_row) {
@@ -726,13 +726,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             );
         }
 
-        $show_caption = $this->plugin->get_bool_setting(PARAM_SHOW_CHANNEL_CAPTION);
-        $channels_in_row = $this->plugin->get_setting(PARAM_ICONS_IN_ROW, 7);
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
-
         // fill view history row items
-        $rowItemsParams = $this->GetRowsItemsParamsClass($show_caption, $channels_in_row);
-        $icon_prop = $this->GetRowsItemsParams('icon_prop', $square_icons);
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
+        $icon_prop = $this->GetRowsItemsParams('icon_prop');
         $sticker_y = $rowItemsParams::icon_width * $icon_prop - $rowItemsParams::view_progress_height;
         $items = array();
         foreach ($watched as $item) {
@@ -748,7 +744,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $stickers = null;
 
-            $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
+            $icon = $this->plugin->get_channel_picon($channel_row, $this->picons_source, $this->default_channel_icon);
             if ($item['view_progress'] > 0) {
                 // item size 229x142
                 if (!empty($item['program_icon_url'])) {
@@ -807,7 +803,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => FAV_CHANNELS_GROUP_ID, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
-                safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
+                $this->plugin->get_channel_picon($channel_row, $this->picons_source, $this->default_channel_icon),
                 $channel_row[COLUMN_TITLE]
             );
         }
@@ -842,11 +838,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        $show_caption = $this->plugin->get_bool_setting(PARAM_SHOW_CHANNEL_CAPTION);
-        $channels_in_row = $this->plugin->get_setting(PARAM_ICONS_IN_ROW, 7);
-        $square_icons = $this->plugin->get_bool_setting(PARAM_SQUARE_ICONS, false);
-
-        $rowItemsParams = $this->GetRowsItemsParamsClass($show_caption, $channels_in_row);
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
         $bg = Rows_Factory::add_regular_sticker_rect(
             $rowItemsParams::fav_sticker_bg_color,
             Rows_Factory::r(0, 0, $rowItemsParams::fav_sticker_bg_width, $rowItemsParams::fav_sticker_bg_width)
@@ -869,14 +861,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
-                safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
+                $this->plugin->get_channel_picon($channel_row, $this->picons_source, $this->default_channel_icon),
                 $channel_row[COLUMN_TITLE],
                 $added_stickers
             );
         }
 
         $removed_channels = $this->plugin->get_changed_channels('removed');
-        $failed_url = $this->GetRowsItemsParams('icon_loading_failed_url', $square_icons);
+        $failed_url = $this->GetRowsItemsParams('icon_loading_failed_url');
         foreach ($removed_channels as $item) {
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => CHANGED_CHANNELS_GROUP_ID, 'channel_id' => $item[COLUMN_CHANNEL_ID])),
@@ -914,7 +906,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         foreach ($channels_order as $channel_row) {
             $items[] = Rows_Factory::add_regular_item(
                 json_encode(array('group_id' => ALL_CHANNELS_GROUP_ID, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
-                safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
+                $this->plugin->get_channel_picon($channel_row, $this->picons_source, $this->default_channel_icon),
                 $channel_row[COLUMN_TITLE],
                 in_array($channel_row[COLUMN_CHANNEL_ID], $fav_channels) ? $fav_stickers : null
             );
@@ -951,7 +943,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
                 $items[] = Rows_Factory::add_regular_item(
                     json_encode(array('group_id' => $group_id, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
-                    safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
+                    $this->plugin->get_channel_picon($channel_row, $this->picons_source, $this->default_channel_icon),
                     $channel_row[COLUMN_TITLE],
                     in_array($channel_row['channel_id'], $fav_group) ? $fav_stickers : null
                 );
@@ -971,10 +963,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
     private function get_fav_stickers()
     {
-        $show_caption = $this->plugin->get_bool_setting(PARAM_SHOW_CHANNEL_CAPTION);
-        $channels_in_row = $this->plugin->get_setting(PARAM_ICONS_IN_ROW, 7);
-
-        $rowItemsParams = $this->GetRowsItemsParamsClass($show_caption, $channels_in_row);
+        $rowItemsParams = $this->GetRowsItemsParamsClass();
         $fav_stickers[] = Rows_Factory::add_regular_sticker_rect(
             $rowItemsParams::fav_sticker_bg_color,
             Rows_Factory::r(
@@ -1028,7 +1017,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $channel_num = $this->plugin->is_channel_in_order($group_id, $channel_id);
 
-        $pos = PaneParams::$ch_num_pos[$this->plugin->get_setting(PARAM_CHANNEL_POSITION, 0)];
+        $pos = PaneParams::$ch_num_pos[$this->plugin->get_setting(PARAM_NEWUI_CHANNEL_POSITION, 0)];
         $defs[] = GComps_Factory::label(
             GComp_Geom::place_top_left(130, 50, $pos['x'], $pos['y']),
             null,
@@ -1398,20 +1387,29 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         return $menu_items;
     }
 
-    private function GetRowsItemsParamsClass($show_caption, $icons_in_row)
+    private function GetRowsItemsParamsClass()
     {
-        $suff = $show_caption ? "" : "n";
-        return 'RowsItemsParams' . $icons_in_row . $suff;
+        $suff = $this->show_caption ? "" : "n";
+        return 'RowsItemsParams' . $this->channels_in_row . $suff;
     }
 
-    private function GetRowsItemsParams($param_name, $square_icons)
+    private function GetRowsItemsParams($param_name)
     {
         $rClass = new ReflectionClass('RowsItemsParams');
         $array = $rClass->getConstants();
 
-        $sq_param = $param_name . ($square_icons ? '_sq' : '');
+        $sq_param = $param_name . ($this->square_icons ? '_sq' : '');
 
         return (isset($array[$sq_param])) ? $array[$sq_param] : $array[$param_name];
+    }
+
+    private function update_new_ui_settings()
+    {
+        $this->show_caption = $this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_CAPTION);
+        $this->channels_in_row = $this->plugin->get_setting(PARAM_NEWUI_ICONS_IN_ROW, 7);
+        $this->square_icons = $this->plugin->get_bool_setting(PARAM_NEWUI_SQUARE_ICONS, false);
+        $this->picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+        $this->default_channel_icon = $this->plugin->get_default_channel_icon(false);
     }
 
     private function action_to_direction($action)

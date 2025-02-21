@@ -478,22 +478,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $channels_rows = $this->plugin->get_channels_by_order($group_id);
                 $zoom_data = $this->plugin->get_channels_zoom($group_id);
                 foreach ($channels_rows as $channel_row) {
-
                     $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
-
-                    if ($picons_source !== XMLTV_PICONS) {
-                        // playlist icons first in priority
-                        $icon_url = $channel_row[COLUMN_ICON];
-                    }
-
-                    // if selected xmltv or combined mode look into xmltv source
-                    // in combined mode search is not performed if already got picon from playlist
-                    if ($picons_source === XMLTV_PICONS || ($picons_source === COMBINED_PICONS && empty($icon_url))) {
-                        $icon_url = $this->plugin->get_epg_manager()->get_picon($epg_ids);
-                        if (empty($icon_url)) {
-                            hd_debug_print("no picon for " . pretty_json_format($epg_ids), true);
-                        }
-                    }
+                    $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
 
                     if (empty($icon_url)) {
                         $icon_url = DEFAULT_CHANNEL_ICON_PATH;

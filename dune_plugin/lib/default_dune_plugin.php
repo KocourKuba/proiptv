@@ -312,6 +312,14 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         return $this->vod_enabled;
     }
 
+    public function get_default_channel_icon($classic = true)
+    {
+        if ($classic) {
+            return DEFAULT_CHANNEL_ICON_PATH;
+        }
+        return $this->get_bool_setting(PARAM_NEWUI_SQUARE_ICONS, false) ? DEFAULT_CHANNEL_ICON_PATH_SQ : DEFAULT_CHANNEL_ICON_PATH;
+    }
+
     /**
      * @param string $name
      * @return api_default|null
@@ -2418,6 +2426,32 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         return is_null($archive) ? null : $archive->get_archive_url($id);
     }
 
+    /**
+     * @param array $channel_row
+     * @param string $picons_source
+     * @param string $default
+     * @return string
+     */
+    public function get_channel_picon($channel_row, $picons_source, $default = DEFAULT_CHANNEL_ICON_PATH)
+    {
+        if ($picons_source !== XMLTV_PICONS) {
+            // playlist icons first in priority
+            $icon_url = $channel_row[COLUMN_ICON];
+        }
+
+        // if selected xmltv or combined mode look into xmltv source
+        // in combined mode search is not performed if already got picon from playlist
+        if ($picons_source === XMLTV_PICONS || ($picons_source === COMBINED_PICONS && empty($icon_url))) {
+            $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
+            $icon_url = $this->get_epg_manager()->get_picon($epg_ids);
+            if (empty($icon_url)) {
+                hd_debug_print("no picon for " . pretty_json_format($epg_ids), true);
+            }
+        }
+
+        return empty($icon_url) ? $default : $icon_url;
+    }
+
     public function get_image_archive()
     {
         return Default_Archive::get_image_archive(self::ARCHIVE_ID, self::ARCHIVE_URL_PREFIX);
@@ -2946,14 +2980,18 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
     /**
      * @param string $channel_id
+     * @param bool $classic
      * @return array|null
      */
-    public function do_show_channel_info($channel_id)
+    public function do_show_channel_info($channel_id, $classic = true)
     {
         $channel_row = $this->get_channel_info($channel_id, true);
         if (empty($channel_row)) {
             return null;
         }
+
+        $picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+        $icon = $this->get_channel_picon($channel_row, $picons_source, $this->get_default_channel_icon($classic));
 
         $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_id, 'name' => $channel_row[COLUMN_TITLE]);
 
@@ -2966,7 +3004,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $info .= "Timeshift hours: {$channel_row['timeshift']}" . PHP_EOL;
         }
         $info .= "Category: {$channel_row[COLUMN_GROUP_ID]}" . PHP_EOL;
-        $info .= "Icon: " . wrap_string_to_lines($channel_row[COLUMN_ICON], 70) . PHP_EOL;
+        $info .= "Icon: " . wrap_string_to_lines($icon, 70) . PHP_EOL;
         $info .= PHP_EOL;
 
         try {
@@ -4345,7 +4383,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             hd_debug_print("Move 'common.settings' to common.db");
             $removed_parameters = array(
                 'config_version', 'cur_xmltv_source', 'cur_xmltv_key', 'fuzzy_search_epg', ALL_CHANNELS_GROUP_ID,
-                PARAM_EPG_JSON_PRESET, PARAM_BUFFERING_TIME, PARAM_ICONS_IN_ROW, PARAM_CHANNEL_POSITION,
+                PARAM_EPG_JSON_PRESET, PARAM_BUFFERING_TIME, PARAM_NEWUI_ICONS_IN_ROW, PARAM_NEWUI_CHANNEL_POSITION,
                 PARAM_EPG_CACHE_ENGINE, PARAM_PER_CHANNELS_ZOOM,
                 PARAM_SHOW_FAVORITES, PARAM_SHOW_HISTORY, PARAM_SHOW_ALL, PARAM_SHOW_CHANGED_CHANNELS, PARAM_FAKE_EPG,
                 PARAM_SHOW_VOD_ICON, PARAM_SHOW_VOD, 'force_http',
@@ -4735,7 +4773,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $playlist_xmltv = self::get_table_name(XMLTV_SOURCE_PLAYLIST);
         $selected_xmltv = self::SELECTED_XMLTV_TABLE;
         $settings_table = self::SETTINGS_TABLE;
-        $dune_params_table = self::SETTINGS_TABLE;
+        $dune_params_table = self::DUNE_PARAMS_TABLE;
         $cookies_table = self::COOKIES_TABLE;
 
         // create settings table
