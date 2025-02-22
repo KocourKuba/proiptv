@@ -1898,7 +1898,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                         throw new Exception("Unknown playlist type");
                     }
 
-                    if (!isset($playlist[PARAM_PARAMS][PARAM_ID_MAPPER]) || $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] === 'by_default') {
+                    if (safe_get_value($this->active_playlist[PARAM_PARAMS], PARAM_ID_MAPPER, ATTR_CHANNEL_HASH) === 'by_default') {
                         $this->active_playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
                     }
                 }
@@ -1925,6 +1925,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 }
             }
 
+            hd_debug_print("Active playlist: " . json_encode($this->active_playlist), true);
             $icon_replace_pattern = array();
             if ($this->active_playlist[PARAM_TYPE] === PARAM_PROVIDER) {
                 $provider = $this->get_active_provider();
@@ -1945,7 +1946,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 }
             } else {
                 $id_parser = '';
-                $id_map = safe_get_value($this->active_playlist[PARAM_PARAMS], PARAM_ID_MAPPER, "");
+                $id_map = safe_get_value($this->active_playlist[PARAM_PARAMS], PARAM_ID_MAPPER, '');
             }
 
             $this->iptv_m3u_parser->setPlaylist($tmp_file, $force);
@@ -3456,7 +3457,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                     SET group_id = (
                         SELECT $this->iptv_channels.group_id
                         FROM $this->iptv_channels
-                        WHERE $table_name.channel_id = $this->iptv_channels.ch_id
+                        WHERE $table_name.channel_id = $this->iptv_channels.$id_column
                     )
                     WHERE EXISTS (
                         SELECT 1
@@ -3581,7 +3582,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         hd_debug_print(null, true);
         $this->reset_playlist_db();
-        $this->init_playlist_db();
         return $this->load_channels($plugin_cookies, true);
     }
 
