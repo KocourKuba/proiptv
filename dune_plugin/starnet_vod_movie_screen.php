@@ -42,7 +42,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array|null
      * @throws Exception
      */
@@ -79,7 +79,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
 
         hd_debug_print("movie: " . pretty_json_format($movie->movie_info));
 
-        $fav_ids = $this->plugin->get_channels_order(FAV_MOVIE_GROUP_ID);
+        $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
         $right_button_caption = in_array($movie->id, $fav_ids) ? TR::t('delete_from_favorite') : TR::t('add_to_favorite');
         $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array('movie_id' => $movie->id));
 
@@ -151,15 +151,15 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
         if ($user_input->control_id === PARAM_FAVORITES) {
             $movie_id = $user_input->movie_id;
 
-            $in_order = $this->plugin->is_channel_in_order(FAV_MOVIE_GROUP_ID, $movie_id);
+            $in_order = $this->plugin->is_channel_in_order(VOD_FAV_GROUP_ID, $movie_id);
             $opt_type = $in_order ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
             $this->plugin->change_vod_favorites($opt_type, $movie_id);
             return Action_Factory::show_title_dialog(
                 $in_order ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite'),
                 Action_Factory::invalidate_folders(
                     array(
-                        self::get_media_url_string(FAV_MOVIE_GROUP_ID),
-                        Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
+                        self::get_media_url_string(VOD_FAV_GROUP_ID),
+                        Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID),
                         Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
                     ),
                     Action_Factory::close_and_run()

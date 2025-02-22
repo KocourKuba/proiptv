@@ -756,7 +756,7 @@ class api_default
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return bool|array|string
      */
     public function ApplySetupUI($user_input)
@@ -830,7 +830,7 @@ class api_default
 
     /**
      * Check if parameter is changed and save it
-     * @param Object $user_input
+     * @param object $user_input
      * @param string $param
      * @param string $param_settings
      * @return bool
@@ -865,7 +865,7 @@ class api_default
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @param string $id
      * @return void
      */
@@ -998,9 +998,9 @@ class api_default
 
         $icon_replacements = $this->getConfigValue(CONFIG_ICON_REPLACE);
         if (!empty($icon_replacements)) {
-            $val = $this->getParameter(PARAM_REPLACE_ICON, SetupControlSwitchDefs::switch_on);
+            $val = $this->getParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_REPLACE_ICONS,
-                TR::t('setup_channels_square_icons'), $val, SetupControlSwitchDefs::$on_off_translated,
+                TR::t('setup_channels_square_icons'), $val, SwitchOnOff::$translated,
                 Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -1020,7 +1020,7 @@ class api_default
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return bool
      */
     public function ApplyExtSetupUI($user_input)

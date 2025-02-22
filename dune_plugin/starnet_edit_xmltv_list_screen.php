@@ -184,6 +184,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $this->plugin->set_selected_xmltv_sources($selected_sources);
                     $this->force_parent_reload = true;
                 }
+                $this->plugin->remove_xmltv_source(XMLTV_SOURCE_EXTERNAL, $selected_id);
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -200,6 +201,13 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     }
                 }
                 $this->plugin->set_selected_xmltv_sources(array());
+                foreach ($this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL) as $source) {
+                    $this->plugin->safe_clear_selected_epg_cache($source);
+                    $this->plugin->remove_xmltv_source(XMLTV_SOURCE_EXTERNAL, $source);
+                }
+
+                if ($this->plugin->get_xmltv_sources_count(XMLTV_SOURCE_EXTERNAL) !== 0) break;
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_URL_DLG:
@@ -322,8 +330,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     }
 
     /**
-     * @param Object $user_input
-     * @param Object $plugin_cookies
+     * @param object $user_input
+     * @param object $plugin_cookies
      * @return array|null
      */
     protected function apply_edit_url_dlg($user_input, $plugin_cookies)
@@ -468,22 +476,22 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
                 $info = '';
                 foreach ($epg_manager->get_indexes_info($key) as $index => $cnt) {
-                    $cnt = ($cnt !== -1) ? $cnt : TR::load_string('err_error_no_data');
+                    $cnt = ($cnt !== -1) ? $cnt : TR::load('err_error_no_data');
                     $info .= "$index: $cnt|";
                 }
 
                 $etag = $epg_manager->get_curl_wrapper()->get_cached_etag($key);
-                $info .= TR::load_string('edit_list_cache_suport__1',
-                    empty($etag) ? TR::load_string('no') : TR::load_string('yes'));
+                $info .= TR::load('edit_list_cache_suport__1',
+                    empty($etag) ? TR::load('no') : TR::load('yes'));
 
                 if ($item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
-                    $expired = TR::load_string('setup_epg_cache_type_auto');
+                    $expired = TR::load('setup_epg_cache_type_auto');
                 } else {
                     $max_cache_time = $check_time_file + 3600 * 24 * $item[PARAM_CACHE];
                     $expired = date("d.m H:i", $max_cache_time);
                 }
 
-                $detailed_info = TR::load_string('edit_list_detail_info__5',
+                $detailed_info = TR::load('edit_list_detail_info__5',
                     $item[PARAM_URI],
                     $size,
                     $dl_date,

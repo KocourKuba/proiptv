@@ -179,42 +179,42 @@ class vod_standard extends Abstract_Vod
 
             // Favorites category
             $special_group = array(
-                'group_id' => FAV_MOVIE_GROUP_ID,
-                'title' => FAV_MOVIES_GROUP_CAPTION,
-                'icon' => FAV_MOVIES_GROUP_ICON,
+                'group_id' => VOD_FAV_GROUP_ID,
+                'title' => VOD_FAV_GROUP_CAPTION,
+                'icon' => VOD_FAV_GROUP_ICON,
                 'disabled' => false
             );
-            $this->special_groups->set(FAV_MOVIE_GROUP_ID, $special_group);
+            $this->special_groups->set(VOD_FAV_GROUP_ID, $special_group);
 
             // History channels category
             $special_group = array(
-                'group_id' => HISTORY_MOVIES_GROUP_ID,
-                'title' => HISTORY_MOVIES_GROUP_CAPTION,
-                'icon' => HISTORY_MOVIES_GROUP_ICON,
+                'group_id' => VOD_HISTORY_GROUP_ID,
+                'title' => VOD_HISTORY_GROUP_CAPTION,
+                'icon' => VOD_HISTORY_GROUP_ICON,
                 'order_support' => false,
                 'disabled' => false,
             );
-            $this->special_groups->set(HISTORY_MOVIES_GROUP_ID, $special_group);
+            $this->special_groups->set(VOD_HISTORY_GROUP_ID, $special_group);
 
             // Search category
             $special_group = array(
-                'group_id' => SEARCH_MOVIES_GROUP_ID,
-                'title' => SEARCH_MOVIES_GROUP_CAPTION,
-                'icon' => SEARCH_MOVIES_GROUP_ICON,
+                'group_id' => VOD_SEARCH_GROUP_ID,
+                'title' => VOD_SEARCH_GROUP_CAPTION,
+                'icon' => VOD_SEARCH_GROUP_ICON,
                 'order_support' => true,
                 'disabled' => false,
             );
-            $this->special_groups->set(SEARCH_MOVIES_GROUP_ID, $special_group);
+            $this->special_groups->set(VOD_SEARCH_GROUP_ID, $special_group);
 
             // Filter category
             $special_group = array(
-                'group_id' => FILTER_MOVIES_GROUP_ID,
-                'title' => FILTER_MOVIES_GROUP_CAPTION,
-                'icon' => FILTER_MOVIES_GROUP_ICON,
+                'group_id' => VOD_FILTER_GROUP_ID,
+                'title' => VOD_FILTER_GROUP_CAPTION,
+                'icon' => VOD_FILTER_GROUP_ICON,
                 'order_support' => true,
                 'disabled' => empty($this->vod_filters),
             );
-            $this->special_groups->set(FILTER_MOVIES_GROUP_ID, $special_group);
+            $this->special_groups->set(VOD_FILTER_GROUP_ID, $special_group);
         }
     }
 
@@ -659,7 +659,7 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return string
      */
     public function CompileSaveFilterItem($user_input)
@@ -743,7 +743,7 @@ class vod_standard extends Abstract_Vod
         } else {
             $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($response === false) {
-                $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
+                $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
                 HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
                 if (file_exists($tmp_file)) {
                     unlink($tmp_file);
@@ -751,7 +751,7 @@ class vod_standard extends Abstract_Vod
             } else {
                 $this->vod_items = Curl_Wrapper::decodeJsonResponse(true, $tmp_file, $assoc);
                 if ($this->vod_items === false) {
-                    $exception_msg = TR::load_string('err_decoding_vod');
+                    $exception_msg = TR::load('err_decoding_vod');
                     HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);

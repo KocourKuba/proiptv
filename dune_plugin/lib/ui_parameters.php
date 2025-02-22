@@ -36,7 +36,7 @@ class UI_Parameters
     private $screens_views;
 
     /**
-     * @param Object $object
+     * @param object $object
      * @return void
      */
     public function create_screen($object)
@@ -137,7 +137,7 @@ class UI_Parameters
             get_image_path('page_plus_btn.png'),
             get_image_path('page_minus_btn.png'),
             DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load_string('scroll_page')
+            TR::load('scroll_page')
         );
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);

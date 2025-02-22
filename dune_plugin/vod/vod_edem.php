@@ -95,7 +95,7 @@ class vod_edem extends vod_standard
                     }
 
                     $qualities_str = rtrim($qualities_str, ' ,\0');
-                    $series_desc = TR::load_string('vod_screen_quality') . "|$qualities_str";
+                    $series_desc = TR::load('vod_screen_quality') . "|$qualities_str";
                     $movie->add_series_with_variants_data($item->fid, $item->title, $series_desc, $qualities, array(), $item->url);
                 }
             }
@@ -116,7 +116,7 @@ class vod_edem extends vod_standard
             }
 
             $qualities_str = rtrim($qualities_str, ' ,\0');
-            $series_desc = TR::load_string('vod_screen_quality') . "|$qualities_str";
+            $series_desc = TR::load('vod_screen_quality') . "|$qualities_str";
             $movie->add_series_with_variants_data($movie_id, $movieData->title, $series_desc, $qualities, array(), $movieData->url);
         }
 
@@ -221,7 +221,7 @@ class vod_edem extends vod_standard
 
     /**
      * @param string $query_id
-     * @param Object $json
+     * @param object $json
      * @return array
      */
     protected function CollectSearchResult($query_id, $json)

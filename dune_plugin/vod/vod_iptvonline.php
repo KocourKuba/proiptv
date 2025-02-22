@@ -154,10 +154,10 @@ class vod_iptvonline extends vod_standard
         }
 
         $exist_filters['source'] = array(
-            'title' => TR::load_string('category'),
+            'title' => TR::load('category'),
             'values' => array(
-                self::API_ACTION_MOVIE => TR::load_string('vod_screen_all_movies'),
-                self::API_ACTION_SERIAL => TR::load_string('vod_screen_all_serials')
+                self::API_ACTION_MOVIE => TR::load('vod_screen_all_movies'),
+                self::API_ACTION_SERIAL => TR::load('vod_screen_all_serials')
             )
         );
 
@@ -217,7 +217,7 @@ class vod_iptvonline extends vod_standard
 
     /**
      * @param string $query_id
-     * @param Object $json
+     * @param object $json
      * @param string|null $search
      * @return array
      */

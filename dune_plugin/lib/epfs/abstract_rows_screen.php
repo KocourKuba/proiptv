@@ -102,7 +102,7 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
     /**
      * @param MediaURL $media_url
      * @param string $sel_state
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function get_folder_view_v2(MediaURL $media_url, $sel_state, &$plugin_cookies)

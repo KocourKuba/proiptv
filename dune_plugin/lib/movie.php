@@ -115,10 +115,10 @@ class Movie implements User_Input_Handler
             $user_input->plugin_vod_id,
             $series_idx,
             array(
-                PARAM_WATCHED => (int)$watched,
-                PARAM_POSITION => $user_input->plugin_vod_stop_position,
-                PARAM_DURATION => $user_input->plugin_vod_duration,
-                PARAM_TIMESTAMP => $user_input->plugin_vod_stop_tm
+                COLUMN_WATCHED => (int)$watched,
+                COLUMN_POSITION => $user_input->plugin_vod_stop_position,
+                COLUMN_DURATION => $user_input->plugin_vod_duration,
+                COLUMN_TIMESTAMP => $user_input->plugin_vod_stop_tm
             )
         );
 
@@ -131,7 +131,7 @@ class Movie implements User_Input_Handler
             array(
                 $series_media_url_str,
                 Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID),
-                Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID)
+                Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID)
             )
         );
     }

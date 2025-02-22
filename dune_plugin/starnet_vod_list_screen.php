@@ -34,7 +34,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -81,20 +81,20 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
                 $search_string = $user_input->{ACTION_NEW_SEARCH};
                 $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $search_string, Ordered_Array::TOP);
                 return Action_Factory::invalidate_folders(
-                    array(Starnet_Vod_Search_Screen::get_media_url_string(SEARCH_MOVIES_GROUP_ID)),
+                    array(Starnet_Vod_Search_Screen::get_media_url_string(VOD_SEARCH_GROUP_ID)),
                     Action_Factory::open_folder(
                         static::get_media_url_string(Vod_Category::FLAG_SEARCH, $search_string),
                         TR::t('search') . ": $search_string"));
 
             case ACTION_ADD_FAV:
-                $is_in_favorites = $this->plugin->is_channel_in_order(FAV_MOVIE_GROUP_ID, $movie_id);
+                $is_in_favorites = $this->plugin->is_channel_in_order(VOD_FAV_GROUP_ID, $movie_id);
                 $opt_type = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_vod_favorites($opt_type, $movie_id);
                 return Action_Factory::invalidate_folders(
                     array(
                         $user_input->parent_media_url,
-                        Starnet_Vod_Favorites_Screen::get_media_url_string(FAV_MOVIE_GROUP_ID),
-                        Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID),
+                        Starnet_Vod_Favorites_Screen::get_media_url_string(VOD_FAV_GROUP_ID),
+                        Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID),
                         Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
                     )
                 );
@@ -118,7 +118,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
     /**
      * @param MediaURL $media_url
      * @param int $from_ndx
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
@@ -160,7 +160,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
             return $this->create_regular_folder_range(array());
         }
 
-        $fav_ids = $this->plugin->get_channels_order(FAV_MOVIE_GROUP_ID);
+        $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
         $items = array();
         if (isset($movie_range->short_movies)) {
             foreach ($movie_range->short_movies as $movie) {
@@ -215,7 +215,7 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array|null
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)

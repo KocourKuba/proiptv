@@ -118,6 +118,28 @@ class Sql_Wrapper
     }
 
     /**
+     * Make where clause for single value or array
+     *
+     * @param array|string $values
+     * @param string $column
+     * @param bool $not
+     * @return string
+     */
+    public static function sql_make_where_clause($values, $column, $not = false)
+    {
+        if (is_array($values)) {
+            $in = $not ? "NOT IN" : "IN";
+            $q_values = Sql_Wrapper::sql_make_list_from_quoted_values($values);
+            $where = "WHERE $column $in ($q_values)";
+        } else {
+            $eq = $not ? "!=" : "=";
+            $where = "WHERE $column $eq" . Sql_Wrapper::sql_quote($values);
+        }
+
+        return $where;
+    }
+
+    /**
      * Execute query
      *
      * @param string $query
@@ -165,7 +187,7 @@ class Sql_Wrapper
 
     /**
      * query single value.
-     * Typically for SELECT count(), SELECT id, etc
+     * Typically for SELECT count(), SELECT channel_id, group_id etc
      * query returns only one value!
      *
      * @param string $query

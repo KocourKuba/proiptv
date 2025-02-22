@@ -70,7 +70,7 @@ class Abstract_Screen implements Screen
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return mixed|null
      * @noinspection PhpReturnDocTypeMismatchInspection
      */

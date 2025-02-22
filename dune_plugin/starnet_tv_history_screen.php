@@ -86,7 +86,14 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run();
+                if (!$this->force_parent_reload) {
+                    return Action_Factory::close_and_run();
+                }
+
+                $this->force_parent_reload = false;
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(
+                        Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -103,21 +110,26 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return $post_action;
 
             case ACTION_ITEM_DELETE:
+                $this->force_parent_reload = true;
                 $this->plugin->erase_tv_history($selected_media_url->channel_id);
-                if ($this->plugin->get_tv_history_count() !== 0) {
+                if ($this->plugin->get_tv_history_count() === 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
-                return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
+                break;
 
             case ACTION_ITEMS_CLEAR:
+                $this->force_parent_reload = true;
                 $this->plugin->clear_tv_history();
+                if ($this->plugin->get_tv_history_count() !== 0) break;
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_FAV:
-                $is_favorite = $this->plugin->is_channel_in_order(FAV_CHANNELS_GROUP_ID, $selected_media_url->channel_id);
+                $this->force_parent_reload = true;
+                $is_favorite = $this->plugin->is_channel_in_order(TV_FAV_GROUP_ID, $selected_media_url->channel_id);
                 $opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
-                $this->plugin->change_channels_order(FAV_CHANNELS_GROUP_ID, $selected_media_url->channel_id, $is_favorite);
+                $this->plugin->change_channels_order(TV_FAV_GROUP_ID, $selected_media_url->channel_id, $is_favorite);
                 return Action_Factory::show_title_dialog($message,
                     $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
@@ -132,7 +144,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return Action_Factory::show_popup_menu($menu_items);
         }
 
-        return null;
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);
     }
 
     /**
@@ -145,13 +157,13 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
         $items = array();
         $now = time();
-        foreach ($this->plugin->get_tv_history() as $channel_id => $channel_ts) {
-            $channel_row = $this->plugin->get_channel_info($channel_id, true);
-            if (empty($channel_row)) continue;
-
+        foreach ($this->plugin->get_tv_history() as $channel_row) {
+            hd_debug_print("Channel: " . json_encode($channel_row));
+            $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+            $channel_ts = $channel_row[COLUMN_TIMESTAMP];
             $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
             $description = '';
-            if (is_null($prog_info)) {
+            if (empty($prog_info)) {
                 $title = $channel_row[COLUMN_TITLE];
             } else {
                 // program epg available

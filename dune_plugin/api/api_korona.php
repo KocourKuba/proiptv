@@ -92,7 +92,7 @@ class api_korona extends api_default
 
         $rq_last_error_name = $this->plugin->get_active_playlist_key() . "_rq_last_error";
         hd_debug_print("token not received: " . pretty_json_format($data), true);
-        HD::set_last_error($rq_last_error_name, TR::load_string('err_cant_get_token') . "\n\n" . pretty_json_format($data));
+        HD::set_last_error($rq_last_error_name, TR::load('err_cant_get_token') . "\n\n" . pretty_json_format($data));
         return false;
     }
 
@@ -124,9 +124,9 @@ class api_korona extends api_default
         } else if (isset($account_info->balance, $account_info->tariff)) {
             Control_Factory::add_label($defs, TR::t('balance'), "$account_info->balance {$account_info->tariff->currency}", -15);
             $packages = $account_info->tariff->name . PHP_EOL;
-            $packages .= TR::load_string('end_date') . " $account_info->expiry_date" . PHP_EOL;
-            $packages .= TR::load_string('package_timed') . " {$account_info->tariff->period}" . PHP_EOL;
-            $packages .= TR::load_string('money_need') . " {$account_info->tariff->full_price} {$account_info->tariff->currency}" . PHP_EOL;
+            $packages .= TR::load('end_date') . " $account_info->expiry_date" . PHP_EOL;
+            $packages .= TR::load('package_timed') . " {$account_info->tariff->period}" . PHP_EOL;
+            $packages .= TR::load('money_need') . " {$account_info->tariff->full_price} {$account_info->tariff->currency}" . PHP_EOL;
             Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
         }
 

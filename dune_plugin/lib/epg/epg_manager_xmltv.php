@@ -327,8 +327,8 @@ class Epg_Manager_Xmltv
             if ($this->xmltv_sources->size() === 0) {
                 return array($day_start_ts => array(
                     Epg_Params::EPG_END => $day_start_ts + 86400,
-                    Epg_Params::EPG_NAME => TR::load_string('epg_no_sources'),
-                    Epg_Params::EPG_DESC => TR::load_string('epg_no_sources_desc'),
+                    Epg_Params::EPG_NAME => TR::load('epg_no_sources'),
+                    Epg_Params::EPG_DESC => TR::load('epg_no_sources_desc'),
                 ));
             }
 
@@ -336,8 +336,8 @@ class Epg_Manager_Xmltv
                 $this->delayed_epg = array_unique($this->delayed_epg);
                 return array($day_start_ts => array(
                     Epg_Params::EPG_END => $day_start_ts + 86400,
-                    Epg_Params::EPG_NAME => TR::load_string('epg_not_ready'),
-                    Epg_Params::EPG_DESC => TR::load_string('epg_not_ready_desc'),
+                    Epg_Params::EPG_NAME => TR::load('epg_not_ready'),
+                    Epg_Params::EPG_DESC => TR::load('epg_not_ready_desc'),
                 ));
             }
             return $this->getFakeEpg($channel_row, $day_start_ts, $day_epg);
@@ -528,6 +528,7 @@ class Epg_Manager_Xmltv
         }
 
         if ($indexed[self::INDEX_CHANNELS] !== -1 && $indexed[self::INDEX_ENTRIES] !== -1) {
+            hd_debug_print("Xmltv channels and entries index are valid");
             return;
         }
 
@@ -630,7 +631,7 @@ class Epg_Manager_Xmltv
     public function get_indexes_info($hash = null)
     {
         hd_debug_print(null, true);
-        $result = array(self::INDEX_CHANNELS => -1, self::INDEX_PICONS => -1, 'epg_ids' => -1, self::INDEX_ENTRIES => -1);
+        $result = array(self::INDEX_CHANNELS => -1, self::INDEX_PICONS => -1, self::INDEX_ENTRIES => -1, 'epg_ids' => -1);
 
         $hash = is_null($hash) ? $this->xmltv_url_params[PARAM_HASH] : $hash;
         $db = $this->open_sqlite_db($hash);
@@ -654,12 +655,13 @@ class Epg_Manager_Xmltv
                 $result[$key] = $db->query_value("SELECT COUNT(*) FROM $key;");
             } else if ($key === self::INDEX_CHANNELS) {
                 $result[$key] = $db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
-            } else {
+            } else if ($key === self::INDEX_ENTRIES) {
                 $result[$key] = $db->query_value("SELECT COUNT(*) FROM $key;");
                 $result['epg_ids'] = $db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
             }
         }
 
+        hd_debug_print("Found indexes: " . json_encode($result));
         return $result;
     }
 
@@ -783,7 +785,7 @@ class Epg_Manager_Xmltv
             hd_debug_print("Create fake data for non existing EPG data");
             for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
                 $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
-                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load_string('fake_epg_program') . " $n";
+                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load('fake_epg_program') . " $n";
                 $day_epg[$start][Epg_Params::EPG_DESC] = '';
             }
         } else {
@@ -1221,7 +1223,7 @@ class Epg_Manager_Xmltv
                 . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
         } else {
             hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
-            throw new Exception(TR::load_string('err_unknown_file_type'));
+            throw new Exception(TR::load('err_unknown_file_type'));
         }
     }
 }

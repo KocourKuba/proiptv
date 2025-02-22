@@ -29,7 +29,7 @@ require_once 'api_default.php';
 class api_iptvonline extends api_default
 {
     /**
-     * @var Object
+     * @var object
      */
     protected $device;
 
@@ -98,7 +98,7 @@ class api_iptvonline extends api_default
 
         $rq_last_error_name = $this->plugin->get_active_playlist_key() . "_rq_last_error";
         hd_debug_print("token not received: " . pretty_json_format($data), true);
-        HD::set_last_error($rq_last_error_name, TR::load_string('err_cant_get_token') . "\n\n" . pretty_json_format($data));
+        HD::set_last_error($rq_last_error_name, TR::load('err_cant_get_token') . "\n\n" . pretty_json_format($data));
         return false;
     }
 
@@ -167,9 +167,9 @@ class api_iptvonline extends api_default
                 $packages = '';
                 foreach ($data->subscriptions as $subscription) {
                     $packages .= $subscription->name . PHP_EOL;
-                    $packages .= TR::load_string('end_date') . " " . $subscription->end_date . PHP_EOL;
-                    $packages .= TR::load_string('recurring') . " " .
-                        ($subscription->auto_prolong ? TR::load_string('yes') : TR::load_string('no')) . PHP_EOL;
+                    $packages .= TR::load('end_date') . " " . $subscription->end_date . PHP_EOL;
+                    $packages .= TR::load('recurring') . " " .
+                        ($subscription->auto_prolong ? TR::load('yes') : TR::load('no')) . PHP_EOL;
                 }
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }

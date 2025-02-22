@@ -34,7 +34,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -95,7 +95,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
                 break;
 
             case ACTION_ITEM_DOWN:
-                $cnt = $this->plugin->get_channels_order_count(FAV_MOVIE_GROUP_ID) - 1;
+                $cnt = $this->plugin->get_channels_order_count(VOD_FAV_GROUP_ID) - 1;
                 $sel_ndx++;
                 if ($sel_ndx > $cnt) {
                     return null;
@@ -107,14 +107,15 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
             case ACTION_ITEM_DELETE:
                 $this->force_parent_reload = true;
                 $this->plugin->change_vod_favorites(PLUGIN_FAVORITES_OP_REMOVE, $movie_id);
-                if ($this->plugin->get_channels_order_count(FAV_MOVIE_GROUP_ID) != 0) {
-                    break;
-                }
+                if ($this->plugin->get_channels_order_count(VOD_FAV_GROUP_ID) != 0) break;
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ITEMS_CLEAR:
                 $this->force_parent_reload = true;
                 $this->plugin->change_vod_favorites(ACTION_ITEMS_CLEAR, null);
+                if ($this->plugin->get_channels_order_count(VOD_FAV_GROUP_ID) != 0) break;
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -145,7 +146,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
         hd_debug_print("MediaUrl: " . $media_url, true);
 
         $items = array();
-        foreach ($this->plugin->get_channels_by_order(FAV_MOVIE_GROUP_ID) as $movie_row) {
+        foreach ($this->plugin->get_channels_by_order(VOD_FAV_GROUP_ID) as $movie_row) {
             $this->plugin->vod->ensure_movie_loaded($movie_row[COLUMN_CHANNEL_ID]);
             $short_movie = $this->plugin->vod->get_cached_short_movie($movie_row[COLUMN_CHANNEL_ID]);
 

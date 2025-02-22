@@ -44,7 +44,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -139,28 +139,28 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                     if ($group['disabled']) continue;
 
                     switch ($group[COLUMN_GROUP_ID]) {
-                        case FAV_MOVIE_GROUP_ID:
+                        case VOD_FAV_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;
                             $item_detailed_info = TR::t('vod_screen_group_info__2',
-                                TR::load_string(FAV_MOVIES_GROUP_CAPTION),
-                                $this->plugin->get_all_table_values_count(FAV_MOVIE_GROUP_ID));
+                                TR::load(VOD_FAV_GROUP_CAPTION),
+                                $this->plugin->get_all_table_values_count(VOD_FAV_GROUP_ID));
                             break;
 
-                        case HISTORY_MOVIES_GROUP_ID:
+                        case VOD_HISTORY_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
                             $item_detailed_info = TR::t('vod_screen_group_info__2',
-                                TR::load_string(HISTORY_MOVIES_GROUP_CAPTION),
+                                TR::load(VOD_HISTORY_GROUP_CAPTION),
                                 $this->plugin->get_all_vod_history_count());
                             break;
 
-                        case FILTER_MOVIES_GROUP_ID:
+                        case VOD_FILTER_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
-                            $item_detailed_info = TR::load_string(FILTER_MOVIES_GROUP_CAPTION);
+                            $item_detailed_info = TR::load(VOD_FILTER_GROUP_CAPTION);
                             break;
 
-                        case SEARCH_MOVIES_GROUP_ID:
+                        case VOD_SEARCH_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
-                            $item_detailed_info = TR::load_string(SEARCH_MOVIES_GROUP_CAPTION);
+                            $item_detailed_info = TR::load(VOD_SEARCH_GROUP_CAPTION);
                             break;
 
                         default:

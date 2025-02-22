@@ -142,12 +142,12 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         if (!$allow_network) continue;
                         $caption = 'SMB';
                     } else if ($k === 'storage') {
-                        $caption = TR::load_string('storage');
+                        $caption = TR::load('storage');
                     } else if ($k === 'internal') {
-                        $caption = TR::load_string('internal');
+                        $caption = TR::load('internal');
                     } else if ($k === 'imagelib') {
                         if (!$allow_image_lib) continue;
-                        $caption = TR::load_string('image_libs');
+                        $caption = TR::load('image_libs');
                     } else {
                         $caption = $k;
                     }
@@ -251,7 +251,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @param array $path
      * @param bool $show_empty
      * @return array
@@ -542,7 +542,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return array|null
      */
     protected function do_action_fs($user_input)
@@ -621,7 +621,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return array|null
      */
     protected function do_select_folder($user_input)
@@ -651,7 +651,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return array|null
      */
     protected function do_reset_folder($user_input)
@@ -723,7 +723,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return array
      */
     protected function do_open_folder($user_input)
@@ -757,7 +757,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return array
      */
     protected function do_new_smb_data($user_input)
@@ -829,7 +829,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     protected function do_smb_setup($plugin_cookies)
@@ -858,8 +858,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     }
 
     /**
-     * @param Object $user_input
-     * @param Object $plugin_cookies
+     * @param object $user_input
+     * @param object $plugin_cookies
      * @return array
      */
     protected function do_save_smb_setup($user_input, $plugin_cookies)
@@ -868,9 +868,9 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $smb_view_ops = array();
         $smb_view = 1;
-        $smb_view_ops[1] = TR::load_string('folder_screen_net_folders');
-        $smb_view_ops[2] = TR::load_string('folder_screen_net_folders_smb');
-        $smb_view_ops[3] = TR::load_string('folder_screen_search_smb');
+        $smb_view_ops[1] = TR::load('folder_screen_net_folders');
+        $smb_view_ops[2] = TR::load('folder_screen_net_folders_smb');
+        $smb_view_ops[3] = TR::load('folder_screen_search_smb');
         if (isset($user_input->smb_view)) {
             $smb_view = $user_input->smb_view;
             $plugin_cookies->{self::ACTION_SMB_SETUP} = $user_input->smb_view;

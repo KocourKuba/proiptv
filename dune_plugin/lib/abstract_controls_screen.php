@@ -42,7 +42,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     }
 
     /**
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @param string $param
      * @param bool $default
      * @return mixed
@@ -50,7 +50,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     protected static function get_cookie_bool_param($plugin_cookies, $param, $default = true)
     {
         if (!isset($plugin_cookies->{$param}))
-            $plugin_cookies->{$param} = $default ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off;
+            $plugin_cookies->{$param} = SwitchOnOff::to_def($default);
 
         return $plugin_cookies->{$param};
     }
@@ -58,18 +58,17 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @param string $param
      * @return void
      */
     protected static function toggle_cookie_param($plugin_cookies, $param)
     {
         hd_debug_print("toggle old param $param: " . $plugin_cookies->{$param}, true);
-        $plugin_cookies->{$param} = $plugin_cookies->{$param} === SetupControlSwitchDefs::switch_off
-            ? SetupControlSwitchDefs::switch_on
-            : SetupControlSwitchDefs::switch_off;
-
-        hd_debug_print("toggle new param $param: " . $plugin_cookies->{$param}, true);
+        $old = SwitchOnOff::to_bool($plugin_cookies->{$param});
+        $new = SwitchOnOff::to_def(!$old);
+        $plugin_cookies->{$param} = $new;
+        hd_debug_print("toggle new param $param: $new", true);
     }
 
     /**
@@ -105,7 +104,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);

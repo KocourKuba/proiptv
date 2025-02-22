@@ -436,7 +436,7 @@ class Action_Factory
     /**
      * Used to invalidate classic folders and NewUI
      *
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @param array|null $post_action
      * @return array
      */

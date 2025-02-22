@@ -50,7 +50,7 @@ class api_1ott extends api_default
             return true;
         }
 
-        HD::set_last_error($rq_last_error_name, TR::load_string('err_cant_get_token'));
+        HD::set_last_error($rq_last_error_name, TR::load('err_cant_get_token'));
         return false;
     }
 

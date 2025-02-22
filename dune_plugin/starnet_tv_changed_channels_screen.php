@@ -119,13 +119,15 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             case ACTION_ITEMS_CLEAR:
                 $this->force_parent_reload = true;
                 $this->plugin->clear_changed_channels();
+                if ($this->plugin->get_changed_channels_count() !== 0) break;
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 return $this->plugin->iptv->jump_to_channel($channel_id);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                if ($this->plugin->get_changed_channels_count('new', $channel_id) !== 0) {
+                if ($this->plugin->get_changed_channels_count(PARAM_NEW, $channel_id) !== 0) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
                     return Action_Factory::show_popup_menu($menu_items);
                 }
@@ -149,20 +151,20 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         $items = array();
 
         if (LogSeverity::$is_debug) {
-            $new_ids = $this->plugin->get_changed_channels_ids('new');
+            $new_ids = $this->plugin->get_changed_channels_ids(PARAM_NEW);
             if (!empty($new_ids)) {
                 hd_debug_print("New channels: " . pretty_json_format($new_ids), true);
             }
         }
 
         if (LogSeverity::$is_debug) {
-            $removed_ids = $this->plugin->get_changed_channels_ids('removed');
+            $removed_ids = $this->plugin->get_changed_channels_ids(PARAM_REMOVED);
             if (!empty($removed_ids)) {
                 hd_debug_print("Removed channels: " . pretty_json_format($removed_ids), true);
             }
         }
 
-        foreach ($this->plugin->get_changed_channels('new') as $channel_row) {
+        foreach ($this->plugin->get_changed_channels(PARAM_NEW) as $channel_row) {
             $epg_ids = array($channel_row['epg_id'], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]);
             $group = $channel_row[COLUMN_GROUP_ID];
             $detailed_info = TR::t('tv_screen_ch_channel_info__5',
@@ -176,7 +178,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => CHANGED_CHANNELS_GROUP_ID)
+                    array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => TV_CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
@@ -189,12 +191,12 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             );
         }
 
-        foreach ($this->plugin->get_changed_channels('removed') as $item) {
+        foreach ($this->plugin->get_changed_channels(PARAM_REMOVED) as $item) {
             $detailed_info = TR::t('tv_screen_ch_channel_info__2', $item[COLUMN_TITLE], $item[COLUMN_CHANNEL_ID]);
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
-                    array('channel_id' => $item[COLUMN_CHANNEL_ID], 'group_id' => CHANGED_CHANNELS_GROUP_ID)
+                    array('channel_id' => $item[COLUMN_CHANNEL_ID], 'group_id' => TV_CHANGED_CHANNELS_GROUP_ID)
                 ),
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::caption => $item[COLUMN_TITLE],

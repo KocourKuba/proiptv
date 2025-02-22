@@ -130,7 +130,7 @@ class Starnet_Epfs_Handler
 
     /**
      * @param bool $first_run
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return void
      */
     private static function ensure_no_internet_epfs_created($first_run, &$plugin_cookies)

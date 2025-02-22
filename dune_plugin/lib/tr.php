@@ -69,7 +69,7 @@ class TR
      * @param string $string_key
      * @return string constant in the system language by key
      */
-    public static function load_string($string_key)
+    public static function load($string_key)
     {
         $lang_file = self::get_translation_filename(self::get_current_language());
         if (empty($lang_file)) {

@@ -85,13 +85,13 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                     );
             case ACTION_ITEM_DELETE:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
-                    $this->plugin->set_channel_visible($selected_id, false);
+                    $this->plugin->set_channel_visible($selected_id, true);
                     $this->plugin->change_channels_order($parent_media_url->group_id, $selected_id, false);
                     $force_return = $this->plugin->get_channels_order_count($parent_media_url->group_id) === 0;
                     hd_debug_print("restore channel: " . $selected_id, true);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
-                    $this->plugin->set_groups_visible($selected_id, 0);
-                    $force_return = $this->plugin->get_groups_count(0, 1) === 0;
+                    $this->plugin->set_groups_visible($selected_id, true);
+                    $force_return = $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED) === 0;
                     hd_debug_print("restore group: " . $selected_id, true);
                 } else {
                     hd_debug_print("unknown edit list");
@@ -109,14 +109,18 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
             case self::ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
-                    $this->plugin->set_channel_visible($this->plugin->get_channels($parent_media_url->group_id, 1), false);
-                } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
-                    $this->plugin->set_groups_visible($this->plugin->get_groups(0, 1), false);
+                    $channels = $this->plugin->get_channels($parent_media_url->group_id, PARAM_DISABLED);
+                    $this->plugin->set_channel_visible($channels, true);
+                    $cnt = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED);
                 } else {
-                    return null;
+                    $groups = $this->plugin->get_groups(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
+                    $this->plugin->set_groups_visible($groups, true);
+                    $cnt = $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
                 }
 
                 $this->force_parent_reload = true;
+                if ($cnt !== 0) break;
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         }
 
@@ -133,7 +137,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
         $items = array();
         if ($media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
-            $channels_rows = $this->plugin->get_channels($media_url->group_id, 1, true);
+            $channels_rows = $this->plugin->get_channels($media_url->group_id, PARAM_DISABLED, true);
             foreach ($channels_rows as $channel_row) {
                 if (empty($channel_row)) continue;
 
@@ -148,7 +152,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
         }
 
         if ($media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
-            $groups_rows = $this->plugin->get_groups(0, 1);
+            $groups_rows = $this->plugin->get_groups(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
             foreach ($groups_rows as $group_row) {
                 if (empty($group_row)) continue;
 

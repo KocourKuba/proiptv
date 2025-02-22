@@ -62,6 +62,8 @@ const ACTION_RESTORE_CHANNELS = 'restore_chanels';
 const ACTION_RESET_DEFAULT = 'reset_default';
 const ACTION_SETTINGS = 'settings';
 const ACTION_DO_SETTINGS = 'do_edit_settings';
+const ACTION_UI_PARAMETERS = 'ui_parameters';
+const ACTION_SETUP_SCREEN = 'setup_screen';
 const ACTION_ZOOM_POPUP_MENU = 'zoom_popup_menu';
 const ACTION_ZOOM_APPLY = 'zoom_apply';
 const ACTION_ZOOM_SELECT = 'zoom_select';
@@ -74,7 +76,6 @@ const ACTION_CHANGE_GROUP_ICON = 'change_group_icon';
 const ACTION_CHANGE_BACKGROUND = 'change_background';
 const ACTION_CHANNEL_INFO = 'channel_info';
 const ACTION_CHANGE_EPG_SOURCE = 'change_epg_source';
-const ACTION_CHANGE_PICONS_SOURCE = 'change_picons_source';
 const ACTION_EPG_CACHE_ENGINE = 'cache_engine';
 const ACTION_EPG_SOURCE_SELECTED = 'epg_source_selected';
 const ACTION_SHOW_INDEX_PROGRESS = 'show_index_progress';
@@ -127,45 +128,54 @@ const CONTROL_REPLACE_ICONS = 'replace_icons';
 const CONTROL_PLAYLIST_IPTV = 'iptv';
 const CONTROL_PLAYLIST_VOD = 'vod';
 const CONTROL_ACTION_SOURCE = 'source';
+const CONTROL_GROUP_ID = 'group_id';
+const CONTROL_INTERFACE_SCREEN = 'interface_screen';
+const CONTROL_INTERFACE_NEWUI_SCREEN = 'interface_newui_screen';
+const CONTROL_CATEGORY_SCREEN = 'category_screen';
+const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
+const CONTROL_EPG_SCREEN = 'epg_screen';
+const CONTROL_STREAMING_SCREEN = 'streaming_screen';
+const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
+
 
 # Special groups ID
 const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';
 
-const ALL_CHANNELS_GROUP_ID = '##all_channels##';
-const ALL_CHANNELS_GROUP_CAPTION = 'plugin_all_channels';
-const ALL_CHANNELS_GROUP_ICON = 'plugin_file://icons/all_folder.png';
+const TV_ALL_CHANNELS_GROUP_ID = '##all_channels##';
+const TV_ALL_CHANNELS_GROUP_CAPTION = 'plugin_all_channels';
+const TV_ALL_CHANNELS_GROUP_ICON = 'plugin_file://icons/all_folder.png';
 
-const FAV_CHANNELS_GROUP_ID = '##favorites##';
-const FAV_CHANNELS_GROUP_CAPTION = 'plugin_favorites';
-const FAV_CHANNELS_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
+const TV_FAV_GROUP_ID = '##favorites##';
+const TV_FAV_GROUP_CAPTION = 'plugin_favorites';
+const TV_FAV_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
 
 const TV_HISTORY_GROUP_ID = '##playback_history_tv_group##';
-const HISTORY_GROUP_CAPTION = 'plugin_history';
-const HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
+const TV_HISTORY_GROUP_CAPTION = 'plugin_history';
+const TV_HISTORY_GROUP_ICON = 'plugin_file://icons/history_folder.png';
 
-const CHANGED_CHANNELS_GROUP_ID = '##changed_channels_group##';
-const CHANGED_CHANNELS_GROUP_CAPTION = 'plugin_changed';
-const CHANGED_CHANNELS_GROUP_ICON = 'plugin_file://icons/changed_channels.png';
-
-const FAV_MOVIE_GROUP_ID = '##movie_favorites##';
-const FAV_MOVIES_GROUP_CAPTION = 'plugin_favorites';
-const FAV_MOVIES_GROUP_ICON = 'plugin_file://icons/favorite_vod_folder.png';
+const TV_CHANGED_CHANNELS_GROUP_ID = '##changed_channels_group##';
+const TV_CHANGED_CHANNELS_GROUP_CAPTION = 'plugin_changed';
+const TV_CHANGED_CHANNELS_GROUP_ICON = 'plugin_file://icons/changed_channels.png';
 
 const VOD_GROUP_ID = '##mediateka##';
 const VOD_GROUP_CAPTION = 'plugin_vod';
 const VOD_GROUP_ICON = "plugin_file://icons/vod_folder.png";
 
-const SEARCH_MOVIES_GROUP_ID = '##search_movie##';
-const SEARCH_MOVIES_GROUP_CAPTION = 'search';
-const SEARCH_MOVIES_GROUP_ICON = 'plugin_file://icons/search_movie_folder.png';
+const VOD_FAV_GROUP_ID = '##movie_favorites##';
+const VOD_FAV_GROUP_CAPTION = 'plugin_favorites';
+const VOD_FAV_GROUP_ICON = 'plugin_file://icons/favorite_vod_folder.png';
 
-const FILTER_MOVIES_GROUP_ID = '##filter_movie##';
-const FILTER_MOVIES_GROUP_CAPTION = 'filters';
-const FILTER_MOVIES_GROUP_ICON = 'plugin_file://icons/filter_movie_folder.png';
+const VOD_HISTORY_GROUP_ID = '##playback_history_vod_group##';
+const VOD_HISTORY_GROUP_CAPTION = 'plugin_history';
+const VOD_HISTORY_GROUP_ICON = 'plugin_file://icons/history_vod_folder.png';
 
-const HISTORY_MOVIES_GROUP_ID = '##playback_history_vod_group##';
-const HISTORY_MOVIES_GROUP_CAPTION = 'plugin_history';
-const HISTORY_MOVIES_GROUP_ICON = 'plugin_file://icons/history_vod_folder.png';
+const VOD_SEARCH_GROUP_ID = '##search_movie##';
+const VOD_SEARCH_GROUP_CAPTION = 'search';
+const VOD_SEARCH_GROUP_ICON = 'plugin_file://icons/search_movie_folder.png';
+
+const VOD_FILTER_GROUP_ID = '##filter_movie##';
+const VOD_FILTER_GROUP_CAPTION = 'filters';
+const VOD_FILTER_GROUP_ICON = 'plugin_file://icons/filter_movie_folder.png';
 
 const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 const DEFAULT_CHANNEL_ICON_PATH_SQ = 'plugin_file://icons/default_channel_sq.png';
@@ -185,6 +195,10 @@ const COLUMN_CHANNEL_ID = 'channel_id';
 const COLUMN_GROUP_ID = 'group_id';
 const COLUMN_ICON = 'icon';
 const COLUMN_TITLE = 'title';
+const COLUMN_WATCHED = 'watched';
+const COLUMN_POSITION = 'position';
+const COLUMN_DURATION = 'duration';
+const COLUMN_TIMESTAMP = 'time_stamp';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';
@@ -269,10 +283,17 @@ const PARAM_TOKEN = 'token';
 const PARAM_REFRESH_TOKEN = 'refresh_token';
 const PARAM_SESSION_ID = 'session_id';
 
-const PARAM_WATCHED = 'watched';
-const PARAM_POSITION = 'position';
-const PARAM_DURATION = 'duration';
-const PARAM_TIMESTAMP = 'time_stamp';
+const PARAM_GROUP_ORDINARY = 0;
+const PARAM_GROUP_SPECIAL = 1;
+
+const PARAM_NOT_VISIBLE = 0;
+const PARAM_VISIBLE = 1;
+const PARAM_DISABLED = 1;
+const PARAM_ENABLED = 0;
+const PARAM_ALL = -1;
+
+const PARAM_NEW = 'new';
+const PARAM_REMOVED = 'removed';
 
 const LIST_IDX = 'list_idx';
 const IS_LIST_SELECTED = 'is_list_selected';

@@ -59,7 +59,7 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
 
     /**
      * streaming parameters dialog defs
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function do_get_control_defs(&$plugin_cookies)
@@ -76,29 +76,29 @@ class Starnet_Streaming_Setup_Screen extends Abstract_Controls_Screen implements
         // auto play
         $value = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SetupControlSwitchDefs::$on_off_translated[$value],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
+            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::$translated[$value],
+            get_image_path(SwitchOnOff::$image[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // auto resume
         $value = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SetupControlSwitchDefs::$on_off_translated[$value],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$value]), self::CONTROLS_WIDTH);
+            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::$translated[$value],
+            get_image_path(SwitchOnOff::$image[$value]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Per channel zoom
-        $per_channel_zoom = $this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SetupControlSwitchDefs::switch_on);
+        $per_channel_zoom = $this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_PER_CHANNELS_ZOOM, TR::t('setup_per_channel_zoom'), SetupControlSwitchDefs::$on_off_translated[$per_channel_zoom],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$per_channel_zoom]), self::CONTROLS_WIDTH);
+            PARAM_PER_CHANNELS_ZOOM, TR::t('setup_per_channel_zoom'), SwitchOnOff::translate($per_channel_zoom),
+            get_image_path(SwitchOnOff::to_image($per_channel_zoom)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Force detection stream
-        $force_detection = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SetupControlSwitchDefs::switch_off);
+        $force_detection = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_DUNE_FORCE_TS, TR::t('setup_channels_dune_force_ts'), SetupControlSwitchDefs::$on_off_translated[$force_detection],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$force_detection]), self::CONTROLS_WIDTH);
+            PARAM_DUNE_FORCE_TS, TR::t('setup_channels_dune_force_ts'), SwitchOnOff::translate($force_detection),
+            get_image_path(SwitchOnOff::to_image($force_detection)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // buffering time

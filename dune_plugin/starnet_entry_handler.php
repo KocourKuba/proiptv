@@ -83,12 +83,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         if (!is_newer_versions()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
-            return $this->show_old_player(TR::load_string('err_too_old_player'));
+            return $this->show_old_player(TR::load('err_too_old_player'));
         }
 
         if (!class_exists('SQLite3')) {
             hd_debug_print("No SQLite3 support! " . get_raw_firmware_version());
-            return $this->show_old_player(TR::load_string('err_no_sqlite'));
+            return $this->show_old_player(TR::load('err_no_sqlite'));
         }
 
         switch ($user_input->control_id) {
@@ -195,7 +195,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         if ((int)$user_input->mandatory_playback === 1
-                            || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SetupControlSwitchDefs::switch_on)) {
+                            || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SwitchOnOff::on)) {
                             hd_debug_print("launch auto play", true);
 
                             $media_url = null;
@@ -243,7 +243,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         if ($this->plugin->is_vod_enabled()
-                            && $plugin_cookies->{PARAM_SHOW_VOD_ICON} === SetupControlSwitchDefs::switch_on
+                            && SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON})
                             && $this->plugin->load_channels($plugin_cookies)) {
                             return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
                         }
@@ -259,7 +259,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         $this->plugin->init_playlist_db();
 
                         if ((int)$user_input->mandatory_playback !== 1
-                            || (isset($plugin_cookies->auto_resume) && $plugin_cookies->auto_resume === SetupControlSwitchDefs::switch_off)) {
+                            || (isset($plugin_cookies->auto_resume) && SwitchOnOff::to_bool($plugin_cookies->auto_resume))) {
                             break;
                         }
 
@@ -327,7 +327,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         Curl_Wrapper::simple_download_file($url, $qr_code);
 
         $defs = array();
-        Control_Factory::add_label($defs, TR::t('required_firmware'), TR::load_string('err_required_firmware'));
+        Control_Factory::add_label($defs, TR::t('required_firmware'), TR::load('err_required_firmware'));
         Control_Factory::add_label($defs, "Dune Product ID:",  get_product_id());
         Control_Factory::add_label($defs, "Dune Firmware:", get_raw_firmware_version());
         Control_Factory::add_label($defs, TR::t('download_link'), "");

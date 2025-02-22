@@ -69,13 +69,10 @@ class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen impl
 
         //////////////////////////////////////
         // Square icons
-        $square_icon = $this->plugin->get_setting(PARAM_NEWUI_SQUARE_ICONS, SetupControlSwitchDefs::switch_on);
-        $square_icon_translated[SetupControlSwitchDefs::switch_on] = TR::t('yes');
-        $square_icon_translated[SetupControlSwitchDefs::switch_off] = TR::t('no');
-
+        $square_icon = $this->plugin->get_setting(PARAM_NEWUI_SQUARE_ICONS, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_NEWUI_SQUARE_ICONS, TR::t('tv_screen_toggle_icons_aspect'), $square_icon_translated[$square_icon],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$square_icon]), self::CONTROLS_WIDTH);
+            PARAM_NEWUI_SQUARE_ICONS, TR::t('tv_screen_toggle_icons_aspect'), SwitchOnOff::translate($square_icon),
+            get_image_path(SwitchOnOff::to_image($square_icon)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Channel position in NewUI
@@ -100,13 +97,10 @@ class Starnet_Interface_NewUI_Setup_Screen extends Abstract_Controls_Screen impl
 
         //////////////////////////////////////
         // Show caption
-        $show_caption = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CHANNEL_CAPTION, SetupControlSwitchDefs::switch_on);
-        $show_caption_translated[SetupControlSwitchDefs::switch_on] = TR::t('yes');
-        $show_caption_translated[SetupControlSwitchDefs::switch_off] = TR::t('no');
-
+        $show_caption = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CHANNEL_CAPTION, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_NEWUI_SHOW_CHANNEL_CAPTION, TR::t('setup_show_caption'), $show_caption_translated[$show_caption],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_caption]), self::CONTROLS_WIDTH);
+            PARAM_NEWUI_SHOW_CHANNEL_CAPTION, TR::t('setup_show_caption'), SwitchOnOff::translate($show_caption),
+            get_image_path(SwitchOnOff::to_image($show_caption)), self::CONTROLS_WIDTH);
 
         return $defs;
     }

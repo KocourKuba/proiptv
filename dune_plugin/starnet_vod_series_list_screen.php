@@ -162,7 +162,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $movie = $this->plugin->vod->get_loaded_movie($selected_media_url->movie_id);
                 if (is_null($movie)) break;
 
-                $value = $this->plugin->get_vod_history_params($selected_media_url->movie_id, $selected_media_url->episode_id, PARAM_WATCHED);
+                $value = $this->plugin->get_vod_history_params($selected_media_url->movie_id, $selected_media_url->episode_id, COLUMN_WATCHED);
 
                 if ($value) {
                     $this->plugin->remove_vod_history_part($selected_media_url->movie_id, $selected_media_url->episode_id);
@@ -170,13 +170,13 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $this->plugin->set_vod_history(
                         $selected_media_url->movie_id,
                         $selected_media_url->episode_id,
-                        array(PARAM_WATCHED => 1, PARAM_TIMESTAMP => time())
+                        array(COLUMN_WATCHED => 1, COLUMN_TIMESTAMP => time())
                     );
                 }
 
                 return Action_Factory::invalidate_folders(array(
                         $user_input->parent_media_url,
-                        Starnet_Vod_History_Screen::get_media_url_string(HISTORY_MOVIES_GROUP_ID)
+                        Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID)
                     )
                 );
 
@@ -202,7 +202,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -289,15 +289,15 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $color = 15;
             $info = $episode->name;
             if (!empty($viewed_params)) {
-                if ($viewed_params[PARAM_WATCHED]) {
-                    $date = format_datetime("d.m.Y H:i", $viewed_params[PARAM_TIMESTAMP]);
+                if ($viewed_params[COLUMN_WATCHED]) {
+                    $date = format_datetime("d.m.Y H:i", $viewed_params[COLUMN_TIMESTAMP]);
                     $info = TR::t('vod_screen_viewed__2', $episode->name, $date);
-                } else if ($viewed_params[PARAM_DURATION] !== -1) {
+                } else if ($viewed_params[COLUMN_DURATION] !== -1) {
                     $info = TR::t('vod_screen_viewed__4',
                         $episode->name,
-                        format_duration_seconds($viewed_params[PARAM_POSITION]),
-                        format_duration_seconds($viewed_params[PARAM_DURATION]),
-                        format_datetime("d.m.Y H:i", $viewed_params[PARAM_TIMESTAMP])
+                        format_duration_seconds($viewed_params[COLUMN_POSITION]),
+                        format_duration_seconds($viewed_params[COLUMN_DURATION]),
+                        format_datetime("d.m.Y H:i", $viewed_params[COLUMN_TIMESTAMP])
                     );
                 }
                 $color = 5;

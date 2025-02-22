@@ -234,7 +234,7 @@ class vod_korona extends vod_standard
 
     /**
      * @param string $query_id
-     * @param Object $json
+     * @param object $json
      * @return array
      */
     protected function CollectSearchResult($query_id, $json)
@@ -312,7 +312,7 @@ class vod_korona extends vod_standard
         $curl_opt[CURLOPT_CUSTOMREQUEST] = $params;
         $jsonItems = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
         if ($jsonItems === false) {
-            $exception_msg = TR::load_string('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
+            $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
             hd_debug_print($exception_msg);
             HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
             return false;

@@ -120,10 +120,10 @@ class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // debugging
 
-        $debug_state = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SetupControlSwitchDefs::switch_off);
+        $debug_state = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SetupControlSwitchDefs::$on_off_translated[$debug_state],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$debug_state]), self::CONTROLS_WIDTH);
+            PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SwitchOnOff::translate($debug_state),
+            get_image_path(SwitchOnOff::to_image($debug_state)), self::CONTROLS_WIDTH);
 
         return $defs;
     }

@@ -119,10 +119,10 @@ class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // Fake EPG
-        $fake_epg = $this->plugin->get_setting(PARAM_FAKE_EPG, SetupControlSwitchDefs::switch_off);
+        $fake_epg = $this->plugin->get_setting(PARAM_FAKE_EPG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SetupControlSwitchDefs::$on_off_translated[$fake_epg],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$fake_epg]), self::CONTROLS_WIDTH);
+            PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SwitchOnOff::translate($fake_epg),
+            get_image_path(SwitchOnOff::to_image($fake_epg)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg time shift

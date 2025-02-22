@@ -193,7 +193,7 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param Object $data
+     * @param object $data
      * @param array|string $names
      * @return string
      */
@@ -292,7 +292,7 @@ class vod_sharavoz extends vod_standard
 
             $category = (string)$movie->category_id;
             if (empty($category)) {
-                $category = TR::load_string('no_category');
+                $category = TR::load('no_category');
             }
 
             if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {
@@ -306,7 +306,7 @@ class vod_sharavoz extends vod_standard
     }
 
     /**
-     * @param Object $movie_obj
+     * @param object $movie_obj
      * @return Short_Movie
      */
     protected static function CreateShortMovie($movie_obj)

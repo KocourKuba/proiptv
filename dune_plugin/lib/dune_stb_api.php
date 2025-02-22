@@ -154,22 +154,40 @@ class LogSeverity
     public static $is_debug = false;
 }
 
-class SetupControlSwitchDefs
+class SwitchOnOff
 {
-    const switch_on = 'yes';
-    const switch_off = 'no';
+    const on = 'yes';
+    const off = 'no';
 
-    public static $on_off_translated = array
-    (
-        self::switch_on => '%tr%yes',
-        self::switch_off => '%tr%no',
+    public static $translated = array(
+        self::on => '%tr%yes',
+        self::off => '%tr%no',
     );
 
-    public static $on_off_img = array
-    (
-        self::switch_on => 'on.png',
-        self::switch_off => 'off.png',
+    public static $image = array(
+        self::on => 'on.png',
+        self::off => 'off.png',
     );
+
+    public static function to_def($val)
+    {
+        return $val ? self::on : self::off;
+    }
+
+    public static function to_bool($val)
+    {
+        return $val === self::on;
+    }
+
+    public static function to_image($val)
+    {
+        return safe_get_value(self::$image, $val, self::$image[self::off]);
+    }
+
+    public static function translate($val)
+    {
+        return safe_get_value(self::$translated, $val, self::$translated[self::off]);
+    }
 }
 
 # Video zoom values for media_url string (|||dune_params|||zoom:value)
@@ -1952,7 +1970,7 @@ function debug_print(/*mixed $var1, $var2...*/)
 }
 
 /**
- * @param Object $user_input
+ * @param object $user_input
  * @return void
  */
 function dump_input_handler($user_input)

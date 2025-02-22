@@ -34,7 +34,7 @@ class Starnet_Vod_Genres_Screen extends Abstract_Preloaded_Regular_Screen implem
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)

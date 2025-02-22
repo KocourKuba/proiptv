@@ -131,7 +131,7 @@ class Starnet_Tv implements User_Input_Handler
 
     /**
      * @param MediaURL $media_url
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
@@ -145,13 +145,13 @@ class Starnet_Tv implements User_Input_Handler
 
         $buffering = $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000);
         $archive_delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
-        $group_all = $this->plugin->get_group(ALL_CHANNELS_GROUP_ID, true);
+        $group_all = $this->plugin->get_group(TV_ALL_CHANNELS_GROUP_ID, PARAM_GROUP_SPECIAL);
 
         $groups_order = array_merge(empty($group_all) ? array() : array($group_all), $this->plugin->get_groups_by_order());
         $groups = array();
         foreach ($groups_order as $group_row) {
             if (!empty($group_row)
-                && ($group_row[COLUMN_GROUP_ID] === ALL_CHANNELS_GROUP_ID || $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]) !== 0)) {
+                && ($group_row[COLUMN_GROUP_ID] === TV_ALL_CHANNELS_GROUP_ID || $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]) !== 0)) {
                 $groups[] = array(
                     PluginTvGroup::id => $group_row[COLUMN_GROUP_ID],
                     PluginTvGroup::caption => $group_row[COLUMN_TITLE],
@@ -165,7 +165,7 @@ class Starnet_Tv implements User_Input_Handler
         foreach ($this->plugin->get_groups_order() as $group_id) {
             $group_id_arr = array();
             if (!empty($group_all)) {
-                $group_id_arr[ALL_CHANNELS_GROUP_ID] = '';
+                $group_id_arr[TV_ALL_CHANNELS_GROUP_ID] = '';
             }
 
             foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
@@ -205,7 +205,7 @@ class Starnet_Tv implements User_Input_Handler
             $initial_is_favorite = 0;
         }
 
-        $fav_group = $this->plugin->get_group(FAV_CHANNELS_GROUP_ID, true);
+        $fav_group = $this->plugin->get_group(TV_FAV_GROUP_ID, PARAM_GROUP_SPECIAL);
 
         return array(
             PluginTvInfo::show_group_channels_only => true,
@@ -220,7 +220,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::initial_group_id => $initial_group_id,
 
             PluginTvInfo::initial_is_favorite => $initial_is_favorite,
-            PluginTvInfo::favorite_channel_ids => $this->plugin->get_channels_order(FAV_CHANNELS_GROUP_ID),
+            PluginTvInfo::favorite_channel_ids => $this->plugin->get_channels_order(TV_FAV_GROUP_ID),
 
             PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
 

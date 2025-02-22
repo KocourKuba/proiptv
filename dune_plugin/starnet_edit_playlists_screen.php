@@ -228,6 +228,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                     $this->plugin->remove_playlist_data($key, true);
                 }
 
+                if ($this->plugin->get_all_playlists_count() !== 0) break;
+
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_URL_DLG:
@@ -350,7 +352,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     /// protected methods
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return array|null
      */
     protected function create_popup_menu($user_input)
@@ -513,8 +515,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     }
 
     /**
-     * @param Object $user_input
-     * @param Object $plugin_cookies
+     * @param object $user_input
+     * @param object $plugin_cookies
      * @return array|null
      */
     protected function apply_edit_url_dlg($user_input, $plugin_cookies)
@@ -557,13 +559,13 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $tmp_file = get_temp_path(Hashed_Array::hash($url));
             list($res, $log) = Curl_Wrapper::simple_download_file($url, $tmp_file);
             if (!$res) {
-                throw new Exception(TR::load_string('err_load_playlist') . " '$url'\n\n" . $log);
+                throw new Exception(TR::load('err_load_playlist') . " '$url'\n\n" . $log);
             }
 
             $contents = file_get_contents($tmp_file, false, null, 0, 512);
             if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
                 unlink($tmp_file);
-                throw new Exception(TR::load_string('err_empty_playlist') . " '$url'\n\n$contents");
+                throw new Exception(TR::load('err_empty_playlist') . " '$url'\n\n$contents");
             }
 
             $parser = new M3uParser();
@@ -579,12 +581,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 }
 
                 if (empty($result)) {
-                    throw new Exception(TR::load_string('err_empty_playlist') . " '$url'\n\n$contents");
+                    throw new Exception(TR::load('err_empty_playlist') . " '$url'\n\n$contents");
                 }
 
                 $pl_header = $parser->getM3uInfo();
-                $detect = safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, SetupControlSwitchDefs::switch_on);
-                if ($detect === SetupControlSwitchDefs::switch_on) {
+                $detect = SwitchOnOff::to_bool(safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, SwitchOnOff::on));
+                if ($detect) {
                     $item[PARAM_PARAMS][PARAM_ID_MAPPER] = M3uParser::detectBestChannelId($db);
                     hd_debug_print("detected id: " . $item[PARAM_PARAMS][PARAM_ID_MAPPER]);
                 }
@@ -644,13 +646,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             TR::t('edit_list_playlist_type'), $playlist_type, $opts, self::DLG_CONTROLS_WIDTH);
 
         $item = $this->plugin->get_playlist($id);
-        $detect = (is_null($item) || !isset($item[PARAM_PARAMS][PARAM_ID_MAPPER])) ? SetupControlSwitchDefs::switch_on : SetupControlSwitchDefs::switch_off;
-
-        $detect_opt[SetupControlSwitchDefs::switch_on] = TR::t('yes');
-        $detect_opt[SetupControlSwitchDefs::switch_off] = TR::t('no');
-
+        $detect = SwitchOnOff::to_def(is_null($item) || !isset($item[PARAM_PARAMS][PARAM_ID_MAPPER]));
         Control_Factory::add_combobox($defs, $this, null, self::CONTROL_EDIT_DETECT_ID,
-            TR::t('edit_list_playlist_detect_id'), $detect, $detect_opt, self::DLG_CONTROLS_WIDTH);
+            TR::t('edit_list_playlist_detect_id'), $detect, SwitchOnOff::$translated, self::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
 
@@ -668,8 +666,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     }
 
     /**
-     * @param Object $user_input
-     * @param Object $plugin_cookies
+     * @param object $user_input
+     * @param object $plugin_cookies
      * @return array|null
      */
     protected function apply_edit_m3u_type($user_input, $plugin_cookies)
@@ -704,8 +702,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
 
             $pl_header = $parser->getM3uInfo();
-            $detect = safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, SetupControlSwitchDefs::switch_on);
-            if ($detect === SetupControlSwitchDefs::switch_on) {
+            $detect = SwitchOnOff::to_bool(safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, SwitchOnOff::on));
+            if ($detect) {
                 $item[PARAM_PARAMS][PARAM_ID_MAPPER] = M3uParser::detectBestChannelId($db);
                 hd_debug_print("detected id: " . $item[PARAM_PARAMS][PARAM_ID_MAPPER]);
             }
@@ -841,7 +839,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     }
 
     /**
-     * @param Object $user_input
+     * @param object $user_input
      * @return array
      */
     protected function do_select_folder($user_input)

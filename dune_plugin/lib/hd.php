@@ -954,11 +954,10 @@ class HD
     public static function set_last_error($source, $error)
     {
         $error_file = get_temp_path($source);
-
-        if (!empty($error)) {
-            file_put_contents($error_file, $error);
-        } else if (file_exists($error_file)) {
+        if (empty($error) && file_exists($error_file)) {
             unlink($error_file);
+        } else {
+            file_put_contents($error_file, $error);
         }
     }
 

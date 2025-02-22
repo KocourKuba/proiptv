@@ -149,7 +149,7 @@ class vod_sharaclub extends vod_standard
         foreach ($this->vod_items as $movie) {
             $category = (string)$movie->category;
             if (empty($category)) {
-                $category = TR::load_string('no_category');
+                $category = TR::load('no_category');
             }
 
             if (!array_key_exists($category, $cat_info)) {
@@ -217,7 +217,7 @@ class vod_sharaclub extends vod_standard
     }
 
     /**
-     * @param Object $movie_obj
+     * @param object $movie_obj
      * @return Short_Movie
      */
     protected static function CreateShortMovie($movie_obj)
@@ -263,7 +263,7 @@ class vod_sharaclub extends vod_standard
 
             $category = $movie->category;
             if (empty($category)) {
-                $category = TR::load_string('no_category');
+                $category = TR::load('no_category');
             }
 
             if ($category_id === Vod_Category::FLAG_ALL_MOVIES || $category_id === $category) {

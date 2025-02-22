@@ -473,7 +473,7 @@ class Entry extends Json_Serializer
                 $group_title = $exgGrp->getTagValue();
             }
             if (empty($group_title)) {
-                $group_title = TR::load_string('no_category');
+                $group_title = TR::load('no_category');
             }
         }
         $this->group_title = $group_title;

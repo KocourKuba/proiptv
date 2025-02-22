@@ -57,7 +57,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
 
     /**
      * interface dialog defs
-     * @param Object $plugin_cookies
+     * @param object $plugin_cookies
      * @return array
      */
     public function do_get_control_defs(&$plugin_cookies)
@@ -76,34 +76,34 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
             $show_tv = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_SHOW_TV);
             hd_debug_print(self::CONTROL_SHOW_TV . ": $show_tv", true);
             Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SetupControlSwitchDefs::$on_off_translated[$show_tv],
-                get_image_path(SetupControlSwitchDefs::$on_off_img[$show_tv]), self::CONTROLS_WIDTH);
+                self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SwitchOnOff::$translated[$show_tv],
+                get_image_path(SwitchOnOff::$image[$show_tv]), self::CONTROLS_WIDTH);
         }
 
-        $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SetupControlSwitchDefs::switch_on);
+        $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SwitchOnOff::on);
         hd_debug_print(PARAM_ASK_EXIT . ": $ask_exit", true);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_ASK_EXIT, TR::t('setup_ask_exit'), SetupControlSwitchDefs::$on_off_translated[$ask_exit],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$ask_exit]), self::CONTROLS_WIDTH);
+            PARAM_ASK_EXIT, TR::t('setup_ask_exit'), SwitchOnOff::translate($ask_exit),
+            get_image_path(SwitchOnOff::to_image($ask_exit)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show separate VOD icon
-        $show_vod_icon = $this->plugin->get_parameter(PARAM_SHOW_VOD_ICON, SetupControlSwitchDefs::switch_off);
+        $show_vod_icon = $this->plugin->get_parameter(PARAM_SHOW_VOD_ICON, SwitchOnOff::off);
         hd_debug_print(PARAM_SHOW_VOD_ICON . ": $show_vod_icon", true);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_VOD_ICON, TR::t('setup_show_vod_icon'), SetupControlSwitchDefs::$on_off_translated[$show_vod_icon],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_vod_icon]), self::CONTROLS_WIDTH);
+            PARAM_SHOW_VOD_ICON, TR::t('setup_show_vod_icon'), SwitchOnOff::translate($show_vod_icon),
+            get_image_path(SwitchOnOff::to_image($show_vod_icon)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg font size
-        $font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SetupControlSwitchDefs::switch_off);
+        $font_size = $this->plugin->get_parameter(PARAM_EPG_FONT_SIZE, SwitchOnOff::off);
         hd_debug_print(PARAM_EPG_FONT_SIZE . ": $font_size", true);
-        $font_ops_translated[SetupControlSwitchDefs::switch_on] = TR::t('setup_small');
-        $font_ops_translated[SetupControlSwitchDefs::switch_off] = TR::t('setup_normal');
+        $font_ops_translated[SwitchOnOff::on] = TR::t('setup_small');
+        $font_ops_translated[SwitchOnOff::off] = TR::t('setup_normal');
 
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), $font_ops_translated[$font_size],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$font_size]), self::CONTROLS_WIDTH);
+            get_image_path(SwitchOnOff::to_image($font_size)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // change background

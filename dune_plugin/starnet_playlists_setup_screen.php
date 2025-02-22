@@ -76,19 +76,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // picon settings
-
-        $active_sources = $this->plugin->get_selected_xmltv_sources();
-        if (count($active_sources) !==0) {
-            $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
-            $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
-            $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
-            $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-            Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
-                TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, self::CONTROLS_WIDTH, true);
-        }
-
-        //////////////////////////////////////
         // ID detection settings
         $playlist = $this->plugin->get_active_playlist();
         if ($playlist !== null && $playlist[PARAM_TYPE] !== PARAM_PROVIDER) {
@@ -158,7 +145,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 );
 
             case PARAM_USER_CATCHUP:
-            case PARAM_USE_PICONS:
                 $this->plugin->set_setting($user_input->control_id, $user_input->{$user_input->control_id});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
@@ -273,11 +259,8 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         }
 
         $disable_params = $this->plugin->get_setting(PARAM_DISABLE_DUNE_PARAMS, 1);
-        $params_translated[SetupControlSwitchDefs::switch_on] = TR::t('yes');
-        $params_translated[SetupControlSwitchDefs::switch_off] = TR::t('no');
-
         Control_Factory::add_combobox($defs, $this, null, PARAM_DISABLE_DUNE_PARAMS,
-            TR::t('setup_channels_disable_dune_params'), $disable_params, $params_translated, 60);
+            TR::t('setup_channels_disable_dune_params'), $disable_params, SwitchOnOff::$translated, 60);
 
         Control_Factory::add_text_field($defs, $this, null, self::CONTROL_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
             $dune_params_str, false, false, false, true, 1200);

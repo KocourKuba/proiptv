@@ -132,7 +132,7 @@ class api_sharaclub extends api_default
                 Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
                 Control_Factory::add_vgap($defs, 450);
             } else {
-                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load_string('err_incorrect_access_data') . "</text>");
+                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load('err_incorrect_access_data') . "</text>");
                 Control_Factory::add_vgap($defs, 50);
             }
 

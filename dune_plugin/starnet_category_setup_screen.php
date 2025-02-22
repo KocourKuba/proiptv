@@ -32,9 +32,16 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
 {
     const ID = 'category_setup';
 
-    protected $force_parent_reload = false;
+    const ACTION_SHOW_ALL = 'show_all_channels';
+    const ACTION_SHOW_FAVORITES = 'show_favorites';
+    const ACTION_SHOW_HISTORY = 'show_history';
+    const ACTION_SHOW_VOD = 'show_vod';
+    const ACTION_SHOW_CHANGED_CHANNELS = 'show_changed_channels';
+    const ACTION_SHOW_VOD_ICON = 'show_vod_icon';
 
     ///////////////////////////////////////////////////////////////////////
+
+    protected $force_parent_reload = false;
 
     /**
      * @inheritDoc
@@ -71,44 +78,57 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
+        // picon settings
+
+        $active_sources = $this->plugin->get_selected_xmltv_sources();
+        if (count($active_sources) !==0) {
+            $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
+            $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
+            $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
+            $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+            Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
+                TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, self::CONTROLS_WIDTH, true);
+        }
+
+        //////////////////////////////////////
         // show all channels category
-        $show_all = $this->plugin->get_setting(PARAM_SHOW_ALL, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_ALL . ": $show_all", true);
+        $show_all = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_ALL));
+        hd_debug_print("All channels group: $show_all", true);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_ALL, TR::t('setup_show_all_channels'), SetupControlSwitchDefs::$on_off_translated[$show_all],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_all]), self::CONTROLS_WIDTH);
+            PARAM_SHOW_ALL, TR::t('setup_show_all_channels'), SwitchOnOff::translate($show_all),
+            get_image_path(SwitchOnOff::to_image($show_all)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show favorites category
-        $show_fav = $this->plugin->get_setting(PARAM_SHOW_FAVORITES, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_FAVORITES . ": $show_fav", true);
+        $show_fav = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES));
+        hd_debug_print("Favorites group: $show_fav", true);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_FAVORITES, TR::t('setup_show_favorites'), SetupControlSwitchDefs::$on_off_translated[$show_fav],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_fav]), self::CONTROLS_WIDTH);
+            PARAM_SHOW_FAVORITES, TR::t('setup_show_favorites'), SwitchOnOff::translate($show_fav),
+            get_image_path(SwitchOnOff::to_image($show_fav)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show history category
-        $show_history = $this->plugin->get_setting(PARAM_SHOW_HISTORY, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_HISTORY . ": $show_history", true);
+        $show_history = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_HISTORY));
+        hd_debug_print("History group: $show_history", true);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_HISTORY, TR::t('setup_show_history'), SetupControlSwitchDefs::$on_off_translated[$show_history],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_history]), self::CONTROLS_WIDTH);
+            PARAM_SHOW_HISTORY, TR::t('setup_show_history'), SwitchOnOff::translate($show_history),
+            get_image_path(SwitchOnOff::to_image($show_history)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show changed channels category
-        $show_changed = $this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_CHANGED_CHANNELS . ": $show_changed", true);
+        $show_changed = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS));
+        hd_debug_print("Changed group: $show_changed", true);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SetupControlSwitchDefs::$on_off_translated[$show_changed],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_changed]), self::CONTROLS_WIDTH);
+            PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SwitchOnOff::translate($show_changed),
+            get_image_path(SwitchOnOff::to_image($show_changed)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show VOD
-        $show_mediateka = $this->plugin->get_setting(PARAM_SHOW_VOD, SetupControlSwitchDefs::switch_on);
-        hd_debug_print(PARAM_SHOW_VOD . ": $show_mediateka", true);
+        $show_mediateka = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_VOD));
+        hd_debug_print("VOD group: $show_mediateka", true);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_VOD, TR::t('setup_show_vod'), SetupControlSwitchDefs::$on_off_translated[$show_mediateka],
-            get_image_path(SetupControlSwitchDefs::$on_off_img[$show_mediateka]), self::CONTROLS_WIDTH);
+            PARAM_SHOW_VOD, TR::t('setup_show_vod'), SwitchOnOff::translate($show_mediateka),
+            get_image_path(SwitchOnOff::to_image($show_mediateka)), self::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -147,8 +167,36 @@ class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements 
                 $this->force_parent_reload = true;
                 $this->plugin->toggle_setting($control_id);
                 break;
+
+            case PARAM_USE_PICONS:
+                $this->force_parent_reload = true;
+                $this->plugin->set_setting($user_input->control_id, $user_input->{$user_input->control_id});
+                break;
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());
+    }
+
+    protected static function param_to_group($value)
+    {
+        switch ($value) {
+            case self::ACTION_SHOW_ALL:
+                return TV_ALL_CHANNELS_GROUP_ID;
+
+            case self::ACTION_SHOW_FAVORITES:
+                return TV_FAV_GROUP_ID;
+
+            case self::ACTION_SHOW_HISTORY:
+                return TV_HISTORY_GROUP_ID;
+
+            case self::ACTION_SHOW_CHANGED_CHANNELS:
+                return TV_CHANGED_CHANNELS_GROUP_ID;
+
+            case self::ACTION_SHOW_VOD:
+                return VOD_GROUP_ID;
+
+            default:
+                return null;
+        }
     }
 }
