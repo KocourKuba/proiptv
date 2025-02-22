@@ -478,8 +478,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
         hd_debug_print(null, true);
+        if ($this->plugin->is_vod_playlist()) {
+            return null;
+        }
 
-        $rows = $this->create_rows(array(), json_encode(array('group_id' => '__dummy__row__')), '', '', null );
+        $dummy_rows = $this->create_rows(array(), json_encode(array('group_id' => '__dummy__row__')), '', '', null );
 
         $all_channels_rows = array();
         $favorites_rows = array();
@@ -535,7 +538,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         hd_debug_print("added group channels: " . count($category_rows) . " rows", true);
 
-        $rows = array_merge($history_rows, $favorites_rows, $changed_rows, $all_channels_rows, $category_rows);
+        $rows = array_merge($dummy_rows, $history_rows, $favorites_rows, $changed_rows, $all_channels_rows, $category_rows);
 
         $pane = Rows_Factory::pane(
             $rows,

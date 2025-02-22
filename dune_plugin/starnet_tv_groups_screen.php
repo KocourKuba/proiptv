@@ -597,9 +597,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL) as $group_row) {
             $group_id = $group_row[COLUMN_GROUP_ID];
+            if ($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) continue;
+
             switch ($group_id) {
                 case TV_ALL_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_ALL, true) || $this->plugin->is_vod_playlist()) break;
+                    if (!$this->plugin->get_setting(PARAM_SHOW_ALL, true)) break;
 
                     $enabled = $this->plugin->get_channels_count($group_id, PARAM_ENABLED);
                     $disabled = $this->plugin->get_channels_count($group_id, PARAM_DISABLED);

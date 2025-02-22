@@ -425,7 +425,7 @@ class vod_standard extends Abstract_Vod
         $category_index = array();
 
         // all movies must be first
-        $all_count = $this->getVodCount();
+        $all_count = $this->getVodCount('');
         $category = new Vod_Category(Vod_Category::FLAG_ALL_MOVIES, TR::t('vod_screen_all_movies__1', " ($all_count)"));
         $category_index[Vod_Category::FLAG_ALL_MOVIES] = $category;
 
@@ -470,7 +470,7 @@ class vod_standard extends Abstract_Vod
         $movies = array();
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
 
-        foreach ($this->getVodEntries() as $entry) {
+        foreach ($this->getVodEntries('') as $entry) {
             $title = $entry['title'];
             if (empty($title)) continue;
 
@@ -523,11 +523,12 @@ class vod_standard extends Abstract_Vod
         if ($page_idx < 0)
             return array();
 
-        $max = $this->getVodCount($category_id);
+        $group_id = $category_id === Vod_Category::FLAG_ALL_MOVIES ? '' : $category_id;
+        $max = $this->getVodCount($group_id);
         $ubound = min($max, $page_idx + 500);
 
         hd_debug_print("Read from: $page_idx to $ubound");
-        $entries = $this->getVodEntries($category_id, $page_idx, $ubound);
+        $entries = $this->getVodEntries($group_id, $page_idx, $ubound);
 
         $pos = $page_idx;
         foreach ($entries as $entry) {
@@ -777,16 +778,16 @@ class vod_standard extends Abstract_Vod
      * @param string $group_id
      * @return int
      */
-    public function getVodCount($group_id = '')
+    public function getVodCount($group_id)
     {
         if ($this->wrapper === null) {
             return 0;
         }
 
         $where = '';
-        if (!empty($groupId)) {
-            $group_id = SQLite3::escapeString($group_id);
-            $where = "WHERE group_id == '$group_id';";
+        if (!empty($group_id)) {
+            $q_group_id = Sql_Wrapper::sql_quote($group_id);
+            $where = "WHERE group_id = $q_group_id";
         }
 
         $query = "SELECT COUNT(*) FROM " . M3uParser::VOD_TABLE . " $where;";
@@ -800,7 +801,7 @@ class vod_standard extends Abstract_Vod
      * @param string $group_id
      * @return array
      */
-    public function getVodEntries($group_id = '', $from = 0, $limit = 0)
+    public function getVodEntries($group_id, $from = 0, $limit = 0)
     {
         if ($this->wrapper === null) {
             return array();
@@ -808,8 +809,8 @@ class vod_standard extends Abstract_Vod
 
         $where = '';
         if (!empty($group_id)) {
-            $group_id = SQLite3::escapeString($group_id);
-            $where = "WHERE group_id == '$group_id';";
+            $q_group_id = Sql_Wrapper::sql_quote($group_id);
+            $where = "WHERE group_id = $q_group_id";
         }
 
         if ($limit > 0) {

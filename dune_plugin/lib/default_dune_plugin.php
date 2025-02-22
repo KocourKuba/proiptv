@@ -2116,6 +2116,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return false;
         }
 
+        if ($this->is_database_attached('vod')) {
+            $this->sql_playlist->exec("DETACH DATABASE vod");
+        }
+
         hd_debug_print("Init VOD playlist done!");
         return true;
     }
