@@ -95,7 +95,12 @@ class Entry extends Json_Serializer
     /**
      * @var string
      */
-    protected $channel_id;
+    protected $parsed_id;
+
+    /**
+     * @var string
+     */
+    protected $cuid;
 
     /**
      * @var string
@@ -300,35 +305,37 @@ class Entry extends Json_Serializer
     /**
      * @return string
      */
-    public function getChannelId()
+    public function getParsedId()
     {
-        return $this->channel_id;
+        return $this->parsed_id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCUID()
+    {
+        return $this->cuid;
     }
 
     /**
      * @param string $id_parser
-     * @param string $id_map
      * @return void
      */
-    public function updateChannelId($id_parser, $id_map)
+    public function updateParsedId($id_parser)
     {
         // set channel id, first use id url parser
-        $channel_id = null;
         if (!empty($id_parser) && preg_match($id_parser, $this->path, $matches) && isset($matches['id'])) {
-            $channel_id = $matches['id'];
+            $this->parsed_id = $matches['id'];
         }
+    }
 
-        // try to get by id mapper
-        if (empty($channel_id) && !empty($id_map)) {
-            $channel_id = $this->getEntryAttribute($id_map);
-        }
-
-        // search in attributes
-        if (empty($channel_id)) {
-            $channel_id = $this->getEntryAttribute(ATTR_CHANNEL_ID_ATTRS);
-        }
-
-        $this->channel_id = $channel_id;
+    /**
+     * @return void
+     */
+    public function updateCUID()
+    {
+        $this->cuid = $this->getEntryAttribute(ATTR_CHANNEL_ID_ATTRS);
     }
 
     /**

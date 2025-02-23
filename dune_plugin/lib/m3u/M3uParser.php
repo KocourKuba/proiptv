@@ -39,6 +39,20 @@ class M3uParser extends Json_Serializer
     const GROUPS_TABLE = 'iptv.iptv_groups';
     const VOD_TABLE = 'vod.vod_entries';
 
+    const COLUMN_PARSED_ID = 'parsed_id';
+    const COLUMN_HASH = 'hash';
+    const COLUMN_CUID = 'cuid';
+    const COLUMN_EPG_ID = 'epg_id';
+    const COLUMN_TVG_NAME = 'tvg_name';
+    const COLUMN_ARCHIVE = 'archive';
+    const COLUMN_TIMESHIFT = 'timeshift';
+    const COLUMN_CATCHUP = 'catchup';
+    const COLUMN_CATCHUP_SOURCE = 'catchup_source';
+    const COLUMN_PATH = 'path';
+    const COLUMN_ADULT = 'adult';
+    const COLUMN_PARENT_CODE = 'parent_code';
+    const COLUMN_EXT_PARAMS = 'ext_params';
+
     private $channels_table = self::CHANNELS_TABLE;
     private $groups_table = self::GROUPS_TABLE;
     private $vod_table = self::VOD_TABLE;
@@ -47,12 +61,12 @@ class M3uParser extends Json_Serializer
     * Map attributes to database columns
     */
     public static $id_to_column_mapper = array(
-        ATTR_CHANNEL_ID => "ch_id",     // channel id found by regex parser
-        ATTR_CUID => "ch_id",           // attribute CUID
-        ATTR_TVG_ID => "epg_id",        // attribute tvg-id
-        ATTR_TVG_NAME => "tvg_name",    // attribute tvg-name
-        ATTR_CHANNEL_NAME => "title",   // channel title
-        ATTR_CHANNEL_HASH => "hash",    // url hash
+        ATTR_PARSED_ID => self::COLUMN_PARSED_ID, // channel id found by regex parser
+        ATTR_CUID => self::COLUMN_CUID,      // attributes "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
+        ATTR_TVG_ID => self::COLUMN_EPG_ID,    // attribute tvg-id
+        ATTR_TVG_NAME => self::COLUMN_TVG_NAME,  // attribute tvg-name
+        ATTR_CHANNEL_NAME => COLUMN_TITLE,           // channel title
+        ATTR_CHANNEL_HASH => self::COLUMN_HASH,      // url hash
     );
 
     /*
@@ -75,11 +89,6 @@ class M3uParser extends Json_Serializer
      * @var array
      */
     protected $data_positions;
-
-    /**
-     * @var string
-     */
-    public $id_map = '';
 
     /**
      * @var string
@@ -183,7 +192,6 @@ class M3uParser extends Json_Serializer
     public function setupParserParameters($params)
     {
         if (!empty($params)) {
-            $this->id_map = safe_get_value($params, 'id_map');
             $this->id_parser = safe_get_value($params, 'id_parser');
             $this->icon_replace_pattern = safe_get_value($params, 'icon_replace_pattern');
         }
@@ -259,13 +267,37 @@ class M3uParser extends Json_Serializer
 
         $this->clear_data();
 
+        $init_channels = array(
+            self::COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
+            COLUMN_TITLE => 'TEXT',
+            self::COLUMN_PARSED_ID => 'TEXT',
+            self::COLUMN_CUID => 'TEXT',
+            self::COLUMN_TVG_NAME => 'TEXT',
+            self::COLUMN_EPG_ID => 'TEXT',
+            self::COLUMN_ARCHIVE => 'INTEGER DEFAULT 0',
+            self::COLUMN_TIMESHIFT => 'INTEGER DEFAULT 0',
+            self::COLUMN_CATCHUP => 'TEXT',
+            self::COLUMN_CATCHUP_SOURCE => 'TEXT',
+            COLUMN_ICON => 'TEXT',
+            self::COLUMN_PATH => 'TEXT',
+            self::COLUMN_ADULT => 'INTEGER DEFAULT 0',
+            self::COLUMN_PARENT_CODE => 'TEXT',
+            COLUMN_GROUP_ID => 'TEXT NOT NULL',
+        );
+
+        $init_groups = array(
+            COLUMN_GROUP_ID => 'TEXT PRIMARY KEY NOT NULL',
+            COLUMN_ICON => 'TEXT',
+            self::COLUMN_ADULT => 'INTEGER DEFAULT 0',
+        );
+
+        $channels_columns = Sql_Wrapper::make_table_columns($init_channels);
+        $channels_groups = Sql_Wrapper::make_table_columns($init_groups);
+
         $query = "DROP TABLE IF EXISTS $this->channels_table;";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->channels_table
-                    (hash TEXT PRIMARY KEY NOT NULL, ch_id TEXT, title TEXT, tvg_name TEXT,
-                     epg_id TEXT, archive INTEGER DEFAULT 0, timeshift INTEGER DEFAULT 0, catchup TEXT, catchup_source TEXT, icon TEXT DEFAULT '',
-                     path TEXT, adult INTEGER default 0, parent_code TEXT, ext_params TEXT, group_id TEXT NOT NULL);";
+        $query .= "CREATE TABLE IF NOT EXISTS $this->channels_table ($channels_columns);";
         $query .= "DROP TABLE IF EXISTS $this->groups_table;";
-        $query .= "CREATE TABLE IF NOT EXISTS $this->groups_table (group_id TEXT PRIMARY KEY, icon TEXT, adult INTEGER default 0);";
+        $query .= "CREATE TABLE IF NOT EXISTS $this->groups_table ($channels_groups);";
         $db->exec_transaction($query);
 
         if (empty($this->file_name)) {
@@ -278,11 +310,7 @@ class M3uParser extends Json_Serializer
             return false;
         }
 
-        $entry_columns = array('hash', 'ch_id', 'title', 'tvg_name',
-            'epg_id', 'archive', 'timeshift', 'catchup', 'catchup_source', 'icon',
-            'path', 'adult', 'parent_code', 'ext_params', 'group_id');
-
-        $stm_channels = $db->prepare_bind("INSERT OR IGNORE" , $this->channels_table, $entry_columns);
+        $stm_channels = $db->prepare_bind("INSERT OR IGNORE", $this->channels_table, array_keys($init_channels));
 
         hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -310,21 +338,22 @@ class M3uParser extends Json_Serializer
                         $adult_channel = $entry->getAdult();
                     }
 
-                    $stm_channels->bindValue(":hash", $entry->getHash());
-                    $stm_channels->bindValue(":ch_id", $entry->getChannelId());
-                    $stm_channels->bindValue(":title", $entry->getTitle());
-                    $stm_channels->bindValue(":tvg_name", $entry->getEntryAttribute(ATTR_TVG_NAME, TAG_EXTINF));
-                    $stm_channels->bindValue(":epg_id", $entry->getAnyEntryAttribute(self::$epg_id_attrs, TAG_EXTINF));
-                    $stm_channels->bindValue(":archive", $entry->getArchive(), SQLITE3_INTEGER);
-                    $stm_channels->bindValue(":timeshift", $entry->getTimeshift(), SQLITE3_INTEGER);
-                    $stm_channels->bindValue(":catchup", $entry->getCatchupType());
-                    $stm_channels->bindValue(":catchup_source", $entry->getCatchupSource());
-                    $stm_channels->bindValue(":icon", $entry->getIcon());
-                    $stm_channels->bindValue(":path", $entry->getPath());
-                    $stm_channels->bindValue(":adult", $adult_channel);
-                    $stm_channels->bindValue(":parent_code", $entry->getParentCode());
-                    $stm_channels->bindValue(":ext_params", empty($ext_params) ? null : json_encode($entry->getExtParams()));
-                    $stm_channels->bindValue(":group_id", $group_title);
+                    $stm_channels->bindValue(":" . self::COLUMN_HASH, $entry->getHash());
+                    $stm_channels->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
+                    $stm_channels->bindValue(":" . self::COLUMN_PARSED_ID, $entry->getParsedId());
+                    $stm_channels->bindValue(":" . self::COLUMN_CUID, $entry->getCUID());
+                    $stm_channels->bindValue(":" . self::COLUMN_TVG_NAME, $entry->getEntryAttribute(ATTR_TVG_NAME, TAG_EXTINF));
+                    $stm_channels->bindValue(":" . self::COLUMN_EPG_ID, $entry->getAnyEntryAttribute(self::$epg_id_attrs, TAG_EXTINF));
+                    $stm_channels->bindValue(":" . self::COLUMN_ARCHIVE, $entry->getArchive(), SQLITE3_INTEGER);
+                    $stm_channels->bindValue(":" . self::COLUMN_TIMESHIFT, $entry->getTimeshift(), SQLITE3_INTEGER);
+                    $stm_channels->bindValue(":" . self::COLUMN_CATCHUP, $entry->getCatchupType());
+                    $stm_channels->bindValue(":" . self::COLUMN_CATCHUP_SOURCE, $entry->getCatchupSource());
+                    $stm_channels->bindValue(":" . COLUMN_ICON, $entry->getIcon());
+                    $stm_channels->bindValue(":" . self::COLUMN_PATH, $entry->getPath());
+                    $stm_channels->bindValue(":" . self::COLUMN_ADULT, $adult_channel);
+                    $stm_channels->bindValue(":" . self::COLUMN_PARENT_CODE, $entry->getParentCode());
+                    $stm_channels->bindValue(":" . self::COLUMN_EXT_PARAMS, empty($ext_params) ? null : json_encode($entry->getExtParams()));
+                    $stm_channels->bindValue(":" . COLUMN_GROUP_ID, $group_title);
                     $stm_channels->execute();
 
                     $entry = new Entry();
@@ -353,13 +382,12 @@ class M3uParser extends Json_Serializer
 
         $db->exec('COMMIT;');
 
-        $entry_groups = array('group_id', 'icon', 'adult');
-        $stm_groups = $db->prepare_bind("INSERT OR IGNORE" , $this->groups_table, $entry_groups);
+        $stm_groups = $db->prepare_bind("INSERT OR IGNORE", $this->groups_table, array_keys($init_groups));
         $db->exec('BEGIN;');
         foreach ($groups_cache as $group_title => $group) {
-            $stm_groups->bindValue(":group_id", $group_title);
-            $stm_groups->bindValue(":icon", $group['icon']);
-            $stm_groups->bindValue(":adult", $group['adult']);
+            $stm_groups->bindValue(":" . COLUMN_GROUP_ID, $group_title);
+            $stm_groups->bindValue(":" . COLUMN_ICON, $group[COLUMN_ICON]);
+            $stm_groups->bindValue(":" . self::COLUMN_ADULT, $group[self::COLUMN_ADULT]);
             $stm_groups->execute();
         }
         $db->exec('COMMIT;');
@@ -391,33 +419,41 @@ class M3uParser extends Json_Serializer
             return false;
         }
 
-        $db_name = LogSeverity::$is_debug ? "$this->file_name.db" : ":memory:";
-        $db->exec("ATTACH DATABASE '$db_name' AS " . self::VOD_DB);
-
-        $db->exec("DROP TABLE IF EXISTS $this->vod_table;");
-        $db->exec("CREATE TABLE IF NOT EXISTS $this->vod_table
-                    (hash TEXT PRIMARY KEY NOT NULL, group_id TEXT NOT NULL, title TEXT NOT NULL, icon TEXT, path TEXT NOT NULL);");
-
-        $db->exec('BEGIN;');
-
-        $entry_indexes = array('hash', 'group_id', 'title', 'icon', 'path');
-        $stm_index = $db->prepare_bind("INSERT OR IGNORE" , $this->vod_table, $entry_indexes);
+        $init_vod = array(
+            self::COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
+            COLUMN_GROUP_ID => 'TEXT NOT NULL',
+            COLUMN_TITLE => 'TEXT NOT NULL',
+            COLUMN_ICON => 'TEXT',
+            self::COLUMN_PATH => 'TEXT NOT NULL',
+        );
+        $vod_columns = Sql_Wrapper::make_table_columns($init_vod);
 
         $this->perf->reset('start');
 
+        $db_name = LogSeverity::$is_debug ? "$this->file_name.db" : ":memory:";
+        $db->exec("ATTACH DATABASE '$db_name' AS " . self::VOD_DB);
+
+        $query = "DROP TABLE IF EXISTS $this->vod_table;";
+        $query .= "CREATE TABLE IF NOT EXISTS $this->vod_table ($vod_columns);";
+        $db->exec($query);
+
+        $stm_index = $db->prepare_bind("INSERT OR IGNORE", $this->vod_table, array_keys($init_vod));
+
         hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        $db->exec('BEGIN;');
 
         $entry = new Entry();
         foreach ($lines as $line) {
             $res = $this->parseLineFast($line, $entry);
             switch ($res) {
                 case 1:
-                    $stm_index->bindValue(":hash", $entry->getHash());
-                    $stm_index->bindValue(":group_id", $entry->getGroupTitle());
-                    $stm_index->bindValue(":title", $entry->getTitle());
-                    $stm_index->bindValue(":icon", $entry->getIcon());
-                    $stm_index->bindValue(":path", $entry->getPath());
+                    $stm_index->bindValue(":" . self::COLUMN_HASH, $entry->getHash());
+                    $stm_index->bindValue(":" . COLUMN_GROUP_ID, $entry->getGroupTitle());
+                    $stm_index->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
+                    $stm_index->bindValue(":" . COLUMN_ICON, $entry->getIcon());
+                    $stm_index->bindValue(":" . self::COLUMN_PATH, $entry->getPath());
                     $stm_index->execute();
                     $entry = new Entry();
                     break;
@@ -605,7 +641,8 @@ class M3uParser extends Json_Serializer
         $entry->setHash(Hashed_Array::hash($line));
         $entry->setPath($line);
         $entry->updateTitle();
-        $entry->updateChannelId($this->id_parser, $this->id_map);
+        $entry->updateParsedId($this->id_parser);
+        $entry->updateCUID();
         $entry->updateArchive(TAG_EXTINF, $this->m3u_info->getArchive());
         $entry->updateCatchupType(TAG_EXTINF);
         $entry->updateCatchupSource(TAG_EXTINF);

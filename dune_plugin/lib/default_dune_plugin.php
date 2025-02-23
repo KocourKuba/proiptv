@@ -118,9 +118,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                                         (movie_id TEXT, series_id TEXT, watched INTEGER DEFAULT 0, position INTEGER DEFAULT 0,
                                         duration INTEGER DEFAULT 0, time_stamp INTEGER DEFAULT 0, UNIQUE(movie_id, series_id));";
 
-    protected $iptv_channels = M3uParser::CHANNELS_TABLE;
-    protected $iptv_groups = M3uParser::GROUPS_TABLE;
-
     /**
      * @var array
      */
@@ -1951,12 +1948,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
             $this->iptv_m3u_parser->setPlaylist($tmp_file, $force);
 
-            $parser_params = array(
-                'id_map' => $id_map,
-                'id_parser' => $id_parser,
-                'icon_replace_pattern' => $icon_replace_pattern
-            );
-
             if (!empty($id_parser)) {
                 hd_debug_print("Using specific ID parser: $id_parser", true);
                 $this->channel_id_map = ATTR_CHANNEL_ID;
@@ -1967,11 +1958,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 $this->channel_id_map = $id_map;
             }
 
-            if (empty($id_map) && empty($id_parser)) {
-                hd_debug_print("No specific ID mapping or URL parser", true);
-                $this->channel_id_map = ATTR_CHANNEL_HASH;
-            }
-
+            $parser_params = array('id_parser' => $id_parser, 'icon_replace_pattern' => $icon_replace_pattern);
             $this->iptv_m3u_parser->setupParserParameters($parser_params);
             $this->iptv_m3u_parser->parseHeader();
             hd_debug_print("Init playlist done!");
@@ -2465,7 +2452,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
     public function get_id_column()
     {
-        return M3uParser::$id_to_column_mapper[$this->channel_id_map];
+        return safe_get_value(M3uParser::$id_to_column_mapper, $this->channel_id_map, PARAM_HASH);
     }
 
     public function make_name($storage, $id = '')
@@ -3452,28 +3439,30 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         hd_debug_print("ID column:           $id_column");
 
         // update existing database for empty group_id (converted from known_channels.settings)
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
         $table_name = self::get_table_name(CHANNELS_INFO);
         $query = "UPDATE $table_name
                     SET group_id = (
-                        SELECT $this->iptv_channels.group_id
-                        FROM $this->iptv_channels
-                        WHERE $table_name.channel_id = $this->iptv_channels.$id_column
+                        SELECT $iptv_channels.group_id
+                        FROM $iptv_channels
+                        WHERE $table_name.channel_id = $iptv_channels.$id_column
                     )
                     WHERE EXISTS (
                         SELECT 1
-                        FROM $this->iptv_channels
-                        WHERE $table_name.channel_id = $this->iptv_channels.$id_column
-                          AND $table_name.group_id != $this->iptv_channels.group_id
+                        FROM $iptv_channels
+                        WHERE $table_name.channel_id = $iptv_channels.$id_column
+                          AND $table_name.group_id != $iptv_channels.group_id
                     );";
 
         $this->sql_playlist->exec($query);
 
         // mark as removed channels that not present iptv.iptv_channels db
-        $query = "UPDATE $table_name SET changed = -1 WHERE channel_id NOT IN (SELECT $id_column FROM $this->iptv_channels);";
+        $query = "UPDATE $table_name SET changed = -1 WHERE channel_id NOT IN (SELECT $id_column FROM $iptv_channels);";
         $this->sql_playlist->exec($query);
 
         // select new groups that not present in groups table but exist in iptv_groups
-        $query_new_groups = "SELECT * FROM $this->iptv_groups WHERE group_id NOT IN (SELECT DISTINCT group_id FROM $groups_info_table);";
+        $iptv_groups = M3uParser::GROUPS_TABLE;
+        $query_new_groups = "SELECT * FROM $iptv_groups WHERE group_id NOT IN (SELECT DISTINCT group_id FROM $groups_info_table);";
         $new_groups = $this->sql_playlist->fetch_array($query_new_groups);
 
         $new_groups_ids = array();
@@ -3492,7 +3481,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $this->sql_playlist->exec_transaction($query);
 
             // select all channels from iptv_channels for selected group that not disabled in known_channels
-            $query = "SELECT * FROM $this->iptv_channels
+            $query = "SELECT * FROM $iptv_channels
                     WHERE group_id = $q_group_id
                     AND $id_column NOT IN (SELECT channel_id FROM $table_name WHERE disabled == 0) 
                     GROUP BY $id_column ORDER BY ROWID ASC;";
@@ -3514,7 +3503,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         // add new channels
         $query = "INSERT OR IGNORE INTO $table_name (channel_id, title, group_id, adult, changed)
                     SELECT $id_column, title, group_id, adult, 1
-                    FROM $this->iptv_channels
+                    FROM $iptv_channels
                     WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0)
                       AND $id_column NOT IN (SELECT channel_id FROM $table_name)
                     GROUP BY $id_column ORDER BY ROWID ASC;";
@@ -3529,7 +3518,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         }
 
         // cleanup order if group removed from playlist
-        $query = "SELECT group_id FROM $groups_info_table WHERE group_id NOT IN (SELECT group_id FROM $this->iptv_groups) AND special = 0;";
+        $query = "SELECT group_id FROM $groups_info_table WHERE group_id NOT IN (SELECT group_id FROM $iptv_groups) AND special = 0;";
         $removed_groups = $this->sql_playlist->fetch_single_array($query, COLUMN_GROUP_ID);
         if (!empty($rows)) {
             hd_debug_print("Removed groups:      " . implode(', ', $removed_groups), true);
@@ -3604,10 +3593,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $where = empty($where) ? "WHERE disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
         }
 
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
         $table_name = self::get_table_name(CHANNELS_INFO);
         if ($full) {
             $column = $this->get_id_column();
-            $query = "SELECT ch.channel_id, pl.* FROM $this->iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id $where;";
+            $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id $where;";
             return $this->sql_playlist->fetch_array($query);
         } else {
             $query = "SELECT ch.channel_id FROM $table_name AS ch $where;";
@@ -3636,8 +3626,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         }
 
         $column = $this->get_id_column();
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
         $table_name = self::get_table_name(CHANNELS_INFO);
-        $query = "SELECT count(ch.channel_id) FROM $this->iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id $where;";
+        $query = "SELECT count(ch.channel_id) FROM $iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id $where;";
         return $this->sql_playlist->query_value($query);
     }
 
@@ -3648,7 +3639,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $query = "SELECT name FROM " . M3uParser::IPTV_DB . ".sqlite_master WHERE type = 'table' AND name = '" . M3uParser::S_CHANNELS_TABLE . "';";
         if ($this->sql_playlist->query_value($query)) {
-            return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $this->iptv_channels;");
+            $iptv_channels = M3uParser::CHANNELS_TABLE;
+            return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_channels;");
         }
 
         return 0;
@@ -3661,7 +3653,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $query = "SELECT name FROM " . M3uParser::IPTV_DB . ".sqlite_master WHERE type = 'table' AND name = '" . M3uParser::S_GROUPS_TABLE . "';";
         if ($this->sql_playlist->query_value($query)) {
-            return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $this->iptv_groups;");
+            $iptv_groups = M3uParser::GROUPS_TABLE;
+            return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_groups;");
         }
 
         return 0;
@@ -3673,10 +3666,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_channels_by_order($group_id)
     {
         $order_table = self::get_table_name($group_id);
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         $column = $this->get_id_column();
         $query = "SELECT ord.channel_id, pl.*
-                    FROM $this->iptv_channels AS pl
+                    FROM $iptv_channels AS pl
                     JOIN $order_table AS ord ON pl.$column = ord.channel_id
                     JOIN $channels_info_table as ch ON ch.channel_id = ord.channel_id AND ch.disabled = 0
                     ORDER BY ord.ROWID;";
@@ -3726,9 +3720,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $channel_id = Sql_Wrapper::sql_quote($channel_id);
         $table_name = self::get_table_name(CHANNELS_INFO);
         if ($full) {
+            $iptv_channels = M3uParser::CHANNELS_TABLE;
             $column = $this->get_id_column();
             $query = "SELECT ch.channel_id, tv.*
-                        FROM $this->iptv_channels as tv
+                        FROM $iptv_channels as tv
                             JOIN $table_name AS ch ON tv.$column = ch.channel_id
                         WHERE ch.channel_id = $channel_id AND ch.disabled = 0;";
         } else {
@@ -3796,10 +3791,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $val = self::type_to_val($type);
         $column = $this->get_id_column();
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
         $table_name = self::get_table_name(CHANNELS_INFO);
         if ($type === PARAM_NEW) {
             $query = "SELECT ch.ROWID, ch.channel_id, pl.*
-                        FROM $this->iptv_channels AS pl
+                        FROM $iptv_channels AS pl
                             JOIN $table_name AS ch ON pl.$column = ch.channel_id
                         WHERE $val ORDER BY ch.ROWID;";
         } else if ($type === PARAM_REMOVED) {
@@ -3807,7 +3803,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         } else {
             $query = "SELECT ch.ROWID, ch.channel_id, pl.*, ch.title
                     FROM $table_name AS ch
-                        LEFT JOIN $this->iptv_channels AS pl ON pl.ch_id = ch.channel_id
+                        LEFT JOIN $iptv_channels AS pl ON pl.$column = ch.channel_id
                     WHERE $val
                     ORDER BY ch.ROWID;";
         }
@@ -4069,8 +4065,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $query = sprintf(self::CREATE_ORDERED_TABLE, $tmp_table, COLUMN_GROUP_ID);
 
         if ($reset) {
+            $iptv_groups = M3uParser::GROUPS_TABLE;
             $query .= "INSERT INTO $tmp_table (group_id)
-                        SELECT group_id FROM $this->iptv_groups
+                        SELECT group_id FROM $iptv_groups
                         WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE disabled == 0)
                         ORDER BY ROWID;";
         } else {
@@ -4262,6 +4259,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function sort_channels_order($group_id, $reset = false)
     {
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         $group_table = self::get_table_name($group_id);
         $tmp_table = $group_table . "_tmp";
@@ -4273,7 +4271,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         if ($reset) {
             $column = self::get_id_column();
             $query .= "INSERT INTO $tmp_table (channel_id)
-                        SELECT $column FROM $this->iptv_channels
+                        SELECT $column FROM $iptv_channels
                         WHERE group_id == $q_group_id AND $column IN
                         (SELECT channel_id FROM $channels_info_table WHERE disabled == 0);";
         } else {

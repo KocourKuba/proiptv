@@ -35,6 +35,20 @@ class Sql_Wrapper
     }
 
     /**
+     * @param array $values
+     * @return string
+     */
+    public static function make_table_columns($values)
+    {
+        $str = '';
+        foreach ($values as $col => $type) {
+            $str .= "$col $type,";
+        }
+
+        return rtrim($str, ",");
+    }
+
+    /**
      * Make insert list (key1, key2, key3) VALUES ('array[key1]', 'array[key2]', 'array[key3]') from array
      *
      * @param array $arr

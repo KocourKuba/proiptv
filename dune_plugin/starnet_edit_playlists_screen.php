@@ -574,7 +574,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $type = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
             if ($type === CONTROL_PLAYLIST_IPTV && $item[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
                 $db = new Sql_Wrapper(":memory:");
-                $db->exec("ATTACH DATABASE '::memory:' AS " . M3uParser::IPTV_DB);
+                $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
                 if ($parser->parseIptvPlaylist($db)) {
                     $table_name = M3uParser::CHANNELS_TABLE;
                     $result = $db->query_value("SELECT COUNT(*) FROM $table_name;");
@@ -652,11 +652,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         Control_Factory::add_vgap($defs, 50);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this,
-            array(
-                CONTROL_ACTION_EDIT => CONTROL_EDIT_ITEM,
-                CONTROL_EDIT_ITEM => $id
-            ),
+        Control_Factory::add_close_dialog_and_apply_button($defs,
+            $this,
+            array(CONTROL_ACTION_EDIT => CONTROL_EDIT_ITEM, CONTROL_EDIT_ITEM => $id),
             ACTION_PL_TYPE_DLG_APPLY, TR::t('ok'), 300);
 
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
@@ -691,7 +689,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $pl_header = $parser->parseHeader(false);
         } else {
             $db = new Sql_Wrapper(":memory:");
-            $db->exec("ATTACH DATABASE '::memory:' AS " . M3uParser::IPTV_DB);
+            $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
             if ($parser->parseIptvPlaylist($db)) {
                 $table_name = M3uParser::CHANNELS_TABLE;
                 $result = $db->query_value("SELECT COUNT(*) FROM $table_name;");
@@ -834,6 +832,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         $playlist[PARAM_NAME] = basename($selected_media_url->filepath);
         $playlist[PARAM_URI] = $selected_media_url->filepath;
         $playlist[PARAM_PL_TYPE] = CONTROL_PLAYLIST_IPTV;
+        $playlist[PARAM_PARAMS] = array();
         $this->plugin->set_playlist($hash, $playlist);
         return $this->do_edit_m3u_type(CONTROL_PLAYLIST_IPTV, $hash);
     }
