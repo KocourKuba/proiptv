@@ -442,15 +442,28 @@ class Action_Factory
      */
     public static function invalidate_all_folders($plugin_cookies, $media_urls = null, $post_action = null)
     {
-        Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
-
         $media_urls = is_array($media_urls) ? $media_urls : array();
+        $post_action = self::invalidate_epfs_folders($plugin_cookies, $post_action);
+        return self::invalidate_folders($media_urls, $post_action, true);
+    }
+
+    /**
+     * Used to invalidate only NewUI
+     *
+     * @param object $plugin_cookies
+     * @param array|null $post_action
+     * @return array
+     */
+    public static function invalidate_epfs_folders($plugin_cookies, $post_action = null)
+    {
         if (Starnet_Epfs_Handler::$enabled) {
             $post_action = self::invalidate_folders(array(Starnet_Epfs_Handler::$epf_id), $post_action);
         }
 
-        return self::invalidate_folders($media_urls, $post_action, true);
+        Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);
+        return $post_action;
     }
+
 
     /**
      * Used to invalidate only classic folders

@@ -103,7 +103,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->force_parent_reload = false;
-                return Action_Factory::invalidate_all_folders($plugin_cookies, null, Action_Factory::close_and_run());
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case GUI_EVENT_TIMER:
                 $error_msg = trim(HD::get_last_error($this->plugin->get_pl_error_name()));
@@ -153,7 +153,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEM_UP:
                 $this->force_parent_reload = true;
-                $min_sel = $this->plugin->get_groups_count(PARAM_GROUP_SPECIAL, PARAM_ENABLED);
+                $min_sel = $this->get_visible_groups_count();
                 $sel_ndx--;
                 if ($sel_ndx < $min_sel) {
                     return null;
@@ -164,7 +164,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_DOWN:
-                $max_sel = $this->plugin->get_groups_count(PARAM_ALL, PARAM_ENABLED) - 1;
+                $max_sel = $this->get_visible_groups_count(true) - 1;
                 $sel_ndx++;
                 if ($sel_ndx > $max_sel) {
                     return null;
@@ -175,7 +175,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_TOP:
-                $min_sel = $this->plugin->get_groups_count(PARAM_GROUP_SPECIAL, PARAM_ENABLED);
+                $min_sel = $this->get_visible_groups_count();
                 if ($sel_ndx === $min_sel) {
                     return null;
                 }
@@ -187,7 +187,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEM_BOTTOM:
-                $max_sel = $this->plugin->get_groups_count(PARAM_ALL, PARAM_ENABLED) - 1;
+                $max_sel = $this->get_visible_groups_count(true) - 1;
                 if ($sel_ndx === $max_sel) {
                     return null;
                 }
@@ -727,5 +727,57 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 ViewItemParams::item_detailed_info => $item_detailed_info,
             )
         );
+    }
+
+    private function get_visible_groups_count($include_all = false)
+    {
+        $visible = 0;
+        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ENABLED) as $group_row) {
+            $group_id = $group_row[COLUMN_GROUP_ID];
+            if ($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) continue;
+
+            switch ($group_id) {
+                case TV_ALL_CHANNELS_GROUP_ID:
+                    if ($this->plugin->get_setting(PARAM_SHOW_ALL, true)) {
+                        $visible++;
+                    }
+                    break;
+
+                case TV_FAV_GROUP_ID:
+                    if ($this->plugin->get_setting(PARAM_SHOW_FAVORITES, true)) {
+                        $channels_cnt = $this->plugin->get_channels_order_count($group_id);
+                        if ($channels_cnt) {
+                            $visible++;
+                        }
+                    }
+                    break;
+
+                case TV_HISTORY_GROUP_ID:
+                    if ($this->plugin->get_setting(PARAM_SHOW_HISTORY, true)) {
+                        $channels_cnt = $this->plugin->get_tv_history_count();
+                        if ($channels_cnt) {
+                            $visible++;
+                        }
+                    }
+                    break;
+
+                case TV_CHANGED_CHANNELS_GROUP_ID:
+                    if ($this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, true)) {
+                        $has_changes = $this->plugin->get_changed_channels_count(PARAM_ALL);
+                        if ($has_changes) {
+                            $visible++;
+                        }
+                    }
+                    break;
+
+                case VOD_GROUP_ID:
+                    if ($this->plugin->is_vod_enabled() && $this->plugin->get_setting(PARAM_SHOW_VOD, true)) {
+                        $visible++;
+                    }
+                    break;
+            }
+        }
+
+        return $visible + ($include_all ? $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_ENABLED) : 0);
     }
 }

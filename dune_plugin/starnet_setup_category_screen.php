@@ -50,8 +50,8 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         return $actions;
     }
 
@@ -158,6 +158,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         }
 
         switch ($control_id) {
+            case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 $reload = $this->force_parent_reload;
                 $this->force_parent_reload = false;

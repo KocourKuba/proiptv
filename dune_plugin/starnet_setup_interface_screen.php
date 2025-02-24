@@ -42,6 +42,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         return $actions;
     }
@@ -136,8 +137,10 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
         }
 
         switch ($control_id) {
+            case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
+
+            return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_action_screen(
                         Starnet_Setup_Screen::ID,
                         RESET_CONTROLS_ACTION_ID,
@@ -154,7 +157,6 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_SHOW_VOD_ICON:
                 $this->plugin->toggle_parameter($control_id);
-                $this->plugin->reload_channels($plugin_cookies);
 
                 return Action_Factory::invalidate_all_folders(
                     $plugin_cookies,
