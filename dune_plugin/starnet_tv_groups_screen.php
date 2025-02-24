@@ -321,7 +321,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ENGINE_JSON:
                 if ($this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== $user_input->control_id) {
                     hd_debug_print("Selected engine: $user_input->control_id", true);
-                    $this->plugin->reset_playlist_db();
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
                     return User_Input_Handler_Registry::create_action(

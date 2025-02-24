@@ -195,7 +195,6 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
-                $this->plugin->reset_playlist_db();
                 $this->plugin->safe_clear_selected_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs()));

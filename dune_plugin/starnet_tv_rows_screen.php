@@ -268,7 +268,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
                 hd_debug_print("Selected engine: $user_input->control_id", true);
                 $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
-                $this->plugin->reset_playlist_db();
                 return $reload_action;
 
             case ACTION_ITEMS_EDIT:

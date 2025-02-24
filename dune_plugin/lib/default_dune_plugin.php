@@ -5274,15 +5274,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return;
         }
 
-        $need_reset = $this->get_active_playlist_id() === $playlist_id;
-
         if ($remove_playlist) {
             $table_name = self::PLAYLISTS_TABLE;
             $this->sql_params->exec("DELETE FROM $table_name WHERE playlist_id = '$playlist_id'");
-        }
-
-        if ($need_reset) {
-            $this->reset_playlist_db();
         }
 
         // remove settings
