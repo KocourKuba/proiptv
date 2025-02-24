@@ -339,6 +339,8 @@ class M3uParser extends Json_Serializer
                         $adult_channel = $entry->getAdult();
                     }
 
+                    $ext_params = $entry->getExtParams();
+
                     $stm_channels->bindValue(":" . COLUMN_HASH, $entry->getHash());
                     $stm_channels->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
                     $stm_channels->bindValue(":" . self::COLUMN_PARSED_ID, $entry->getParsedId());
@@ -353,7 +355,7 @@ class M3uParser extends Json_Serializer
                     $stm_channels->bindValue(":" . self::COLUMN_PATH, $entry->getPath());
                     $stm_channels->bindValue(":" . self::COLUMN_ADULT, $adult_channel);
                     $stm_channels->bindValue(":" . self::COLUMN_PARENT_CODE, $entry->getParentCode());
-                    $stm_channels->bindValue(":" . self::COLUMN_EXT_PARAMS, empty($ext_params) ? null : json_encode($entry->getExtParams()));
+                    $stm_channels->bindValue(":" . self::COLUMN_EXT_PARAMS, empty($ext_params) ? null : json_encode($ext_params));
                     $stm_channels->bindValue(":" . COLUMN_GROUP_ID, $group_title);
                     $stm_channels->execute();
 
