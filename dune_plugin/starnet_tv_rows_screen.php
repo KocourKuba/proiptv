@@ -233,10 +233,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return null;
 
             case ACTION_ITEM_DELETE:
-                if (!isset($user_input->selected_item_id)) {
-                    $this->plugin->set_groups_visible($media_url->group_id, false);
-                } else {
+                if (isset($user_input->selected_item_id)) {
                     $this->plugin->set_channel_visible($media_url->channel_id, false);
+                } else {
+                    if ($media_url->group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
+                        return User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
+                    }
+                    $this->plugin->set_groups_visible($media_url->group_id, false);
                 }
 
                 break;
