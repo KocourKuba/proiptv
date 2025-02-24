@@ -537,20 +537,11 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         } else {
             // edit existing url
             $playlist_id = $user_input->{CONTROL_ACTION_EDIT};
-            $item = $this->plugin->get_playlist($playlist_id);
+            $playlist = $this->plugin->get_playlist($playlist_id);
         }
 
-        $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
-        if (empty($name)) {
-            if (($pos = strpos($name, '?')) !== false) {
-                $name = substr($name, 0, $pos);
-            }
-            $name = basename($name);
-        }
-
-        $item[PARAM_NAME] = $name;
-        $item[PARAM_TYPE] = PARAM_LINK;
-        $item[PARAM_URI] = $url;
+        $playlist[PARAM_TYPE] = PARAM_LINK;
+        $playlist[PARAM_URI] = $url;
 
         try {
             $tmp_file = get_temp_path(Hashed_Array::hash($playlist_id));
@@ -566,37 +557,55 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
 
             $parser = new M3uParser();
-            $parser->setPlaylist($tmp_file,true);
-            $pl_header = $parser->parseHeader(false);
-            $type = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
-            if ($type === CONTROL_PLAYLIST_IPTV && $item[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
-                $db = new Sql_Wrapper(":memory:");
-                $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
-                $entries_cnt = $parser->parseIptvPlaylist($db);
-                if (empty($entries_cnt)) {
-                    throw new Exception(TR::load('err_empty_playlist') . " '$url'\n\n$contents");
-                }
+            $parser->setPlaylist($playlist[PARAM_URI], true);
+            $playlist[PARAM_PL_TYPE] = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
+            if ($playlist[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
+                $detect_id = safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, CONTROL_DETECT_ID);
+                if ($detect_id === CONTROL_DETECT_ID) {
+                    $db = new Sql_Wrapper(":memory:");
+                    $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
+                    $entries_cnt = $parser->parseIptvPlaylist($db);
+                    if (empty($entries_cnt)) {
+                        throw new Exception(TR::load('err_empty_playlist') . " '$url'\n\n$contents");
+                    }
 
-                $pl_header = $parser->getM3uInfo();
-                $detect = safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, CONTROL_DETECT_ID) === CONTROL_DETECT_ID;
-                if ($detect) {
                     $detect_info = '';
-                    $item[PARAM_PARAMS][PARAM_ID_MAPPER] = $this->collect_detect_info($db, $detect_info);
+                    $detect_id = $this->collect_detect_info($db, $detect_info);
+                }
+                $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = $detect_id;
+            }
+
+            $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
+            if (empty($name)) {
+                $pl_header = $parser->parseHeader(false);
+                hd_debug_print("Playlist info: " . $pl_header);
+                $pl_tag = $pl_header->getEntryTag(TAG_PLAYLIST);
+                if ($pl_tag !== null) {
+                    $pl_name = $pl_tag->getTagValue();
+                    $name = empty($pl_name) ? $name : $pl_name;
+                }
+
+                if (empty($name)) {
+                    if (($pos = strpos($url, '?')) !== false) {
+                        $name = substr($url, 0, $pos);
+                    } else {
+                        $name = $url;
+                    }
+                    $name = basename($name);
                 }
             }
+            $playlist[PARAM_NAME] = $name;
 
-            hd_debug_print("Playlist info: " . $pl_header);
-            $pl_tag = $pl_header->getEntryTag(TAG_PLAYLIST);
-            if ($pl_tag !== null) {
-                $pl_name = $pl_tag->getTagValue();
-                $item[PARAM_NAME] = empty($pl_name) ? $name : $pl_name;
-            }
-
-            $item[PARAM_PL_TYPE] = $type;
             unlink($tmp_file);
             hd_debug_print("Playlist: '$url' edit successfully");
+
             $this->plugin->clear_playlist_cache($playlist_id);
-            $this->plugin->set_playlist($playlist_id, $item);
+            $this->plugin->set_playlist($playlist_id, $playlist);
+
+            if (!empty($detect_info)) {
+                $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
+            }
+
             $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $playlist_id;
         } catch (Exception $ex) {
             hd_debug_print("Problem with download playlist");
@@ -678,39 +687,39 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $playlist[PARAM_PL_TYPE] = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
             $parser = new M3uParser();
             $parser->setPlaylist($playlist[PARAM_URI], true);
-            if ($playlist[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
-                $pl_header = $parser->parseHeader(false);
-            } else {
-                $db = new Sql_Wrapper(":memory:");
-                $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
-                $entries_cnt = $parser->parseIptvPlaylist($db);
-                if (empty($entries_cnt)) {
-                    throw new Exception(TR::load('err_empty_playlist'));
-                }
-
-                $pl_header = $parser->getM3uInfo();
+            if ($playlist[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
                 $detect_id = safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, CONTROL_DETECT_ID);
                 hd_debug_print("Detect playlist id: $detect_id");
                 if ($detect_id === CONTROL_DETECT_ID) {
+                    $db = new Sql_Wrapper(":memory:");
+                    $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
+                    $entries_cnt = $parser->parseIptvPlaylist($db);
+                    if (empty($entries_cnt)) {
+                        throw new Exception(TR::load('err_empty_playlist'));
+                    }
+
                     $detect_info = '';
                     $detect_id = $this->collect_detect_info($db, $detect_info);
                 }
                 $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = $detect_id;
             }
 
-            $playlist[PARAM_NAME] = safe_get_member($user_input, CONTROL_EDIT_NAME);
-            if (empty($playlist[PARAM_NAME])) {
+            $name = safe_get_member($user_input, CONTROL_EDIT_NAME);
+            if (empty($name)) {
+                $pl_header = $parser->parseHeader(false);
                 hd_debug_print("Playlist info: " . $pl_header);
                 $pl_tag = $pl_header->getEntryTag(TAG_PLAYLIST);
                 if ($pl_tag !== null) {
                     $pl_name = $pl_tag->getTagValue();
-                    $playlist[PARAM_NAME] = empty($pl_name) ? $playlist[PARAM_NAME] : $pl_name;
+                    $name = empty($pl_name) ? $name : $pl_name;
+                }
+
+                if (empty($name)) {
+                    $name = basename($playlist[PARAM_URI]);
                 }
             }
 
-            if (empty($playlist[PARAM_NAME])) {
-                $playlist[PARAM_NAME] = basename($playlist[PARAM_URI]);
-            }
+            $playlist[PARAM_NAME] = $name;
 
             $this->plugin->set_playlist($playlist_id, $playlist);
 
@@ -724,7 +733,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             print_backtrace_exception($ex);
             $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $post_action, $ex->getMessage());
         }
-
 
         return $post_action;
     }
