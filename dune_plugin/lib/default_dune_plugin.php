@@ -4083,7 +4083,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         $groups_order_table = self::get_table_name(GROUPS_ORDER);
-        $query = "SELECT grp.group_id, grp.title, grp.icon
+        $query = "SELECT grp.group_id, grp.title, grp.icon, grp.adult
                     FROM $groups_info_table AS grp
                     INNER JOIN $groups_order_table as ord USING(group_id) ORDER BY ord.ROWID;";
         return $this->sql_playlist->fetch_array($query);

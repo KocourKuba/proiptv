@@ -38,6 +38,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
     const ACTION_SHOW_VOD = 'show_vod';
     const ACTION_SHOW_CHANGED_CHANNELS = 'show_changed_channels';
     const ACTION_SHOW_VOD_ICON = 'show_vod_icon';
+    const ACTION_SHOW_ADULT = 'show_adult';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -130,6 +131,14 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
             PARAM_SHOW_VOD, TR::t('setup_show_vod'), SwitchOnOff::translate($show_mediateka),
             get_image_path(SwitchOnOff::to_image($show_mediateka)), self::CONTROLS_WIDTH);
 
+        //////////////////////////////////////
+        // show VOD
+        $show_adult = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_ADULT));
+        hd_debug_print("Adult group: $show_adult", true);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_SHOW_ADULT, TR::t('setup_show_adult'), SwitchOnOff::translate($show_adult),
+            get_image_path(SwitchOnOff::to_image($show_adult)), self::CONTROLS_WIDTH);
+
         return $defs;
     }
 
@@ -152,10 +161,9 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
             case GUI_EVENT_KEY_RETURN:
                 $reload = $this->force_parent_reload;
                 $this->force_parent_reload = false;
-
                 $post_action = Action_Factory::close_and_run();
                 if ($reload) {
-                    return Action_Factory::invalidate_all_folders($plugin_cookies, array(Starnet_Tv_Groups_Screen::ID), $post_action);
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
                 }
                 return $post_action;
 
@@ -164,6 +172,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
             case PARAM_SHOW_HISTORY:
             case PARAM_SHOW_CHANGED_CHANNELS:
             case PARAM_SHOW_VOD:
+            case PARAM_SHOW_ADULT:
                 $this->force_parent_reload = true;
                 $this->plugin->toggle_setting($control_id);
                 break;
@@ -175,28 +184,5 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs());
-    }
-
-    protected static function param_to_group($value)
-    {
-        switch ($value) {
-            case self::ACTION_SHOW_ALL:
-                return TV_ALL_CHANNELS_GROUP_ID;
-
-            case self::ACTION_SHOW_FAVORITES:
-                return TV_FAV_GROUP_ID;
-
-            case self::ACTION_SHOW_HISTORY:
-                return TV_HISTORY_GROUP_ID;
-
-            case self::ACTION_SHOW_CHANGED_CHANNELS:
-                return TV_CHANGED_CHANNELS_GROUP_ID;
-
-            case self::ACTION_SHOW_VOD:
-                return VOD_GROUP_ID;
-
-            default:
-                return null;
-        }
     }
 }

@@ -222,6 +222,7 @@ const PARAM_SHOW_ALL = 'show_all';
 const PARAM_SHOW_FAVORITES = 'show_favorites';
 const PARAM_SHOW_HISTORY = 'show_history';
 const PARAM_SHOW_VOD = 'show_vod';
+const PARAM_SHOW_ADULT = 'show_adult';
 const PARAM_SHOW_CHANGED_CHANNELS = 'show_changed_channels';
 const PARAM_SHOW_VOD_ICON = 'show_vod_icon';
 const PARAM_VOD_LAST = 'vod_last';

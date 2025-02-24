@@ -473,11 +473,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             $fav_ids = $this->plugin->get_channels_order(TV_FAV_GROUP_ID);
+            $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
             foreach ($groups_order as $group_id) {
                 $channels_rows = $this->plugin->get_channels_by_order($group_id);
                 $zoom_data = $this->plugin->get_channels_zoom($group_id);
                 foreach ($channels_rows as $channel_row) {
+                    if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+
                     $epg_ids = array(
                         'epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID],
                         'id' => $channel_row[COLUMN_CHANNEL_ID],

@@ -654,7 +654,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $all_groups = $this->plugin->get_groups_by_order();
+        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         foreach ($all_groups as $group_row) {
+            if (!$show_adult && $group_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+
             $detailed_info = TR::t('tv_screen_group_info__3',
                 str_replace('|', '¦', $group_row[COLUMN_TITLE]),
                 $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]),
