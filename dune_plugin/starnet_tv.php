@@ -107,7 +107,7 @@ class Starnet_Tv implements User_Input_Handler
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id, true);
-                if (isset($channel['adult']) && $channel['adult'] != 0) break;
+                if (safe_get_value($channel, M3uParser::COLUMN_ADULT, 0) != 0) break;
 
                 $this->plugin->update_tv_history($user_input->plugin_tv_channel_id);
 
@@ -172,6 +172,7 @@ class Starnet_Tv implements User_Input_Handler
                 if (empty($channel_row)) continue;
 
                 $group_id_arr[$group_id] = '';
+                $archive = $channel_row[M3uParser::COLUMN_ARCHIVE];
                 $all_channels[$channel_row[COLUMN_CHANNEL_ID]] = array(
                     PluginTvChannel::id => $channel_row[COLUMN_CHANNEL_ID],
                     PluginTvChannel::caption => $channel_row[COLUMN_TITLE],
@@ -179,18 +180,18 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::icon_url => safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
                     PluginTvChannel::number => $ch_num++,
 
-                    PluginTvChannel::have_archive => $channel_row['archive'] > 0,
-                    PluginTvChannel::is_protected => $channel_row['adult'],
+                    PluginTvChannel::have_archive => $archive > 0,
+                    PluginTvChannel::is_protected => $channel_row[M3uParser::COLUMN_ADULT],
 
-                    PluginTvChannel::past_epg_days => $channel_row['archive'],
+                    PluginTvChannel::past_epg_days => $archive,
                     PluginTvChannel::future_epg_days => 7, // set default future epg range
 
-                    PluginTvChannel::archive_past_sec => $channel_row['archive'] * 86400,
+                    PluginTvChannel::archive_past_sec => $archive * 86400,
                     PluginTvChannel::archive_delay_sec => $archive_delay,
 
                     // Buffering time
                     PluginTvChannel::buffering_ms => $buffering,
-                    PluginTvChannel::timeshift_hours => $channel_row['timeshift'],
+                    PluginTvChannel::timeshift_hours => $channel_row[M3uParser::COLUMN_TIMESHIFT],
 
                     PluginTvChannel::playback_url_is_stream_url => $this->playback_url_is_stream_url,
                 );

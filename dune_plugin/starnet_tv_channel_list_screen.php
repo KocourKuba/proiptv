@@ -478,7 +478,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $channels_rows = $this->plugin->get_channels_by_order($group_id);
                 $zoom_data = $this->plugin->get_channels_zoom($group_id);
                 foreach ($channels_rows as $channel_row) {
-                    $epg_ids = array('epg_id' => $channel_row['epg_id'], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
+                    $epg_ids = array(
+                        'epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID],
+                        'id' => $channel_row[COLUMN_CHANNEL_ID],
+                        'name' => $channel_row[COLUMN_TITLE]
+                    );
                     $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
 
                     if (empty($icon_url)) {
@@ -490,14 +494,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     if ($zoom === DuneVideoZoomPresets::not_set) {
                         $detailed_info = TR::t('tv_screen_channel_info__4',
                             $channel_row[COLUMN_TITLE],
-                            $channel_row['archive'],
+                            $channel_row[M3uParser::COLUMN_ARCHIVE],
                             $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str
                         );
                     } else {
                         $detailed_info = TR::t('tv_screen_channel_info__5',
                             $channel_row[COLUMN_TITLE],
-                            $channel_row['archive'],
+                            $channel_row[M3uParser::COLUMN_ARCHIVE],
                             $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str,
                             TR::load(DuneVideoZoomPresets::$zoom_ops_translated[$zoom])

@@ -429,7 +429,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group = $this->plugin->get_group($sel_media_url->group_id, PARAM_ALL);
                     if (is_null($group)) break;
 
-                    $cached_image_name = "{$this->plugin->get_active_playlist_key()}_$data->caption";
+                    $cached_image_name = "{$this->plugin->get_active_playlist_id()}_$data->caption";
                     $cached_image_path = get_cached_image_path($cached_image_name);
                     hd_print("copy from: $data->filepath to: $cached_image_path");
                     if (!copy($data->filepath, $cached_image_path)) {
@@ -492,20 +492,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 break;
 
-            case ACTION_RELOAD:
-                hd_debug_print("Action reload", true);
-                if (!$this->plugin->reload_channels($plugin_cookies)) {
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                        null,
-                        HD::get_last_error($this->plugin->get_pl_error_name()));
-                    $post_action = Action_Factory::close_and_run(
-                        Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
-
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
-                }
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
-
             case ACTION_INFO_DLG:
                 $provider = $this->plugin->get_active_provider();
                 if (is_null($provider) || !$provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
@@ -564,10 +550,24 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                if ($this->plugin->get_active_playlist_key() !== $user_input->{COLUMN_PLAYLIST_ID}) {
-                    $this->plugin->set_active_playlist_key($user_input->{COLUMN_PLAYLIST_ID});
+                if ($this->plugin->get_active_playlist_id() !== $user_input->{COLUMN_PLAYLIST_ID}) {
+                    $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
                 }
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
+            case ACTION_RELOAD:
+                hd_debug_print("Action reload", true);
+                if (!$this->plugin->reload_channels($plugin_cookies)) {
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
+                        null,
+                        HD::get_last_error($this->plugin->get_pl_error_name()));
+                    $post_action = Action_Factory::close_and_run(
+                        Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
+
+                    return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
+                }
+
+                break;
 
             case ACTION_INVALIDATE:
                 $this->force_parent_reload = true;

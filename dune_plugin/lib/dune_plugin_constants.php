@@ -136,6 +136,7 @@ const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
 const CONTROL_EPG_SCREEN = 'epg_screen';
 const CONTROL_STREAMING_SCREEN = 'streaming_screen';
 const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
+const CONTROL_DETECT_ID = 'detect_id';
 
 
 # Special groups ID
@@ -191,10 +192,17 @@ const VOD_FILTER_LIST = 'vod_filter_items';
 const TV_HISTORY = 'tv_history';
 
 const COLUMN_PLAYLIST_ID = 'playlist_id';
+const COLUMN_HASH = 'hash';
 const COLUMN_CHANNEL_ID = 'channel_id';
 const COLUMN_GROUP_ID = 'group_id';
 const COLUMN_ICON = 'icon';
 const COLUMN_TITLE = 'title';
+const COLUMN_NAME = 'name';
+const COLUMN_TYPE = 'type';
+const COLUMN_URI = 'uri';
+const COLUMN_CACHE = 'cache';
+const COLUMN_PLAYLIST_TYPE = 'playlist_type';
+const COLUMN_PARAMS = 'params';
 const COLUMN_WATCHED = 'watched';
 const COLUMN_POSITION = 'position';
 const COLUMN_DURATION = 'duration';
@@ -292,8 +300,9 @@ const PARAM_DISABLED = 1;
 const PARAM_ENABLED = 0;
 const PARAM_ALL = -1;
 
-const PARAM_NEW = 'new';
-const PARAM_REMOVED = 'removed';
+const PARAM_NEW = 1;
+const PARAM_REMOVED = -1;
+const PARAM_CHANGED = 0;
 
 const LIST_IDX = 'list_idx';
 const IS_LIST_SELECTED = 'is_list_selected';

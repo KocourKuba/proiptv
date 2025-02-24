@@ -113,8 +113,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 );
 
             case GUI_EVENT_KEY_ENTER:
-                if ($this->plugin->get_active_playlist_key() !== $selected_id) {
-                    $this->plugin->set_active_playlist_key($selected_id);
+                if ($this->plugin->get_active_playlist_id() !== $selected_id) {
+                    $this->plugin->set_active_playlist_id($selected_id);
                     $this->force_parent_reload = true;
                 }
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -137,8 +137,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 }
 
                 if ($item[PARAM_TYPE] === PARAM_FILE) {
-                    $playlist_type = safe_get_value($item, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
-                    return $this->do_edit_m3u_type($playlist_type, $selected_id);
+                    return $this->do_edit_m3u_type($selected_id, $item);
                 }
 
                 if ($item[PARAM_TYPE] === PARAM_PROVIDER) {
@@ -194,23 +193,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 hd_debug_print(null, true);
 
                 hd_debug_print("edit_list: $parent_media_url->edit_list", true);
-                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $selected_id;
+                $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $selected_id;
                 hd_debug_print("remove playlist settings: $selected_id", true);
                 $this->plugin->remove_playlist_data($selected_id, true);
-
-                if (!$this->force_parent_reload) break;
-
-                $this->plugin->get_active_playlist_key();
-                if (!$this->plugin->reload_channels($plugin_cookies)) {
-                    return Action_Factory::invalidate_all_folders(
-                        $plugin_cookies,
-                        null,
-                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                            null,
-                            HD::get_last_error($this->plugin->get_pl_error_name())
-                        )
-                    );
-                }
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -235,11 +220,11 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             case ACTION_ADD_URL_DLG:
                 return $this->do_edit_url_dlg();
 
-            case ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
-                return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
+            case ACTION_URL_DLG_APPLY:
+                return $this->apply_edit_url_dlg($user_input);
 
-            case ACTION_PL_TYPE_DLG_APPLY: // handle streaming settings dialog result
-                return $this->apply_edit_m3u_type($user_input, $plugin_cookies);
+            case ACTION_PL_TYPE_DLG_APPLY:
+                return $this->apply_edit_m3u_type($user_input);
 
             case self::ACTION_CHOOSE_FILE:
                 $media_url_str = MediaURL::encode(
@@ -311,7 +296,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                     return $id;
                 }
 
-                $this->force_parent_reload = $this->plugin->get_active_playlist_key() === $id;
+                $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $id;
                 if (!$this->plugin->reload_channels($plugin_cookies)) {
                     return Action_Factory::invalidate_all_folders(
                         $plugin_cookies,
@@ -342,6 +327,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
                 $this->force_parent_reload = true;
                 $this->plugin->set_playlist_shortcut($selected_id, $user_input->{LIST_IDX});
+                break;
+
+            case ACTION_INVALIDATE:
                 break;
         }
 
@@ -474,37 +462,47 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         $defs = array();
 
         $window_title = TR::t('edit_list_add_url');
-        $name = '';
-        $url = 'http://';
-        $param = null;
-        $opts_idx = CONTROL_PLAYLIST_IPTV;
+        $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
 
-        if (!empty($id)) {
-            $item = $this->plugin->get_playlist($id);
-            $params = safe_get_value($item, PARAM_PARAMS);
-            if (is_null($item)) {
+        if (empty($id)) {
+            $name = '';
+            $url = 'http://';
+            $mapper = CONTROL_DETECT_ID;
+            $param = null;
+            $opts_idx = CONTROL_PLAYLIST_IPTV;
+        } else{
+            $playlist = $this->plugin->get_playlist($id);
+            if (is_null($playlist)) {
                 return $defs;
             }
 
             $window_title = TR::t('edit_list_edit_item');
-            $name = safe_get_value($item, PARAM_NAME);
-            $url = safe_get_value($params, PARAM_URI, '');
-            $opts_idx = safe_get_value($params, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
-            $param = array(CONTROL_ACTION_EDIT => CONTROL_EDIT_ITEM);
+            $name = safe_get_value($playlist, PARAM_NAME);
+            $url = safe_get_value($playlist[PARAM_PARAMS], PARAM_URI, '');
+            $mapper = safe_get_value($playlist[PARAM_PARAMS], PARAM_ID_MAPPER, CONTROL_DETECT_ID);
+            $opts_idx = safe_get_value($playlist[PARAM_PARAMS], PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
+            $param = array(CONTROL_ACTION_EDIT => $id);
         }
 
         Control_Factory::add_vgap($defs, 20);
 
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, TR::t('name'),
+        Control_Factory::add_label($defs, '', TR::t('name'), -10);
+        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, '',
             $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
 
         $opts[CONTROL_PLAYLIST_IPTV] = TR::t('edit_list_playlist_iptv');
         $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
+        Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_type'), -10);
         Control_Factory::add_combobox($defs, $this, null, self::CONTROL_EDIT_TYPE,
-            TR::t('edit_list_playlist_type'), $opts_idx, $opts, self::DLG_CONTROLS_WIDTH);
+            '', $opts_idx, $opts, self::DLG_CONTROLS_WIDTH);
 
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
+        Control_Factory::add_label($defs, '', TR::t('url'), -10);
+        Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, '',
             $url, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_detect_id'), -10);
+        Control_Factory::add_combobox($defs, $this, null, self::CONTROL_EDIT_DETECT_ID,
+            '', $mapper, $mapper_ops, self::DLG_CONTROLS_WIDTH, true);
 
         Control_Factory::add_vgap($defs, 50);
         Control_Factory::add_close_dialog_and_apply_button($defs, $this, $param, ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
@@ -516,19 +514,33 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
     /**
      * @param object $user_input
-     * @param object $plugin_cookies
      * @return array|null
      */
-    protected function apply_edit_url_dlg($user_input, $plugin_cookies)
+    protected function apply_edit_url_dlg($user_input)
     {
         hd_debug_print(null, true);
 
-        $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
+        $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE);
+
         $url = safe_get_member($user_input, CONTROL_URL_PATH, '');
         if (!is_proto_http($url)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
         }
 
+        $playlist_id = safe_get_member($user_input, CONTROL_ACTION_EDIT);
+        if (empty($playlist_id)) {
+            $playlist_id = Hashed_Array::hash($url);
+            $order = $this->plugin->get_all_playlists();
+            while ($order->has($playlist_id)) {
+                $playlist_id = Hashed_Array::hash("$playlist_id.$url");
+            }
+        } else {
+            // edit existing url
+            $playlist_id = $user_input->{CONTROL_ACTION_EDIT};
+            $item = $this->plugin->get_playlist($playlist_id);
+        }
+
+        $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
         if (empty($name)) {
             if (($pos = strpos($name, '?')) !== false) {
                 $name = substr($name, 0, $pos);
@@ -536,27 +548,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $name = basename($name);
         }
 
-        $id = null;
-        $item = array();
-        if (isset($user_input->{CONTROL_ACTION_EDIT}, $user_input->selected_media_url)) {
-            // edit existing url
-            $id = MediaURL::decode($user_input->selected_media_url)->id;
-            $item = $this->plugin->get_playlist($id);
-        }
-
-        if (empty($item)) {
-            $id = Hashed_Array::hash($url);
-            $order = $this->plugin->get_all_playlists();
-            while ($order->has($id)) {
-                $id = Hashed_Array::hash("$id.$url");
-            }
-        }
-
         $item[PARAM_NAME] = $name;
         $item[PARAM_TYPE] = PARAM_LINK;
         $item[PARAM_URI] = $url;
+
         try {
-            $tmp_file = get_temp_path(Hashed_Array::hash($url));
+            $tmp_file = get_temp_path(Hashed_Array::hash($playlist_id));
             list($res, $log) = Curl_Wrapper::simple_download_file($url, $tmp_file);
             if (!$res) {
                 throw new Exception(TR::load('err_load_playlist') . " '$url'\n\n" . $log);
@@ -575,20 +572,16 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             if ($type === CONTROL_PLAYLIST_IPTV && $item[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
                 $db = new Sql_Wrapper(":memory:");
                 $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
-                if ($parser->parseIptvPlaylist($db)) {
-                    $table_name = M3uParser::CHANNELS_TABLE;
-                    $result = $db->query_value("SELECT COUNT(*) FROM $table_name;");
-                }
-
-                if (empty($result)) {
+                $entries_cnt = $parser->parseIptvPlaylist($db);
+                if (empty($entries_cnt)) {
                     throw new Exception(TR::load('err_empty_playlist') . " '$url'\n\n$contents");
                 }
 
                 $pl_header = $parser->getM3uInfo();
-                $detect = SwitchOnOff::to_bool(safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, SwitchOnOff::on));
+                $detect = safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, CONTROL_DETECT_ID) === CONTROL_DETECT_ID;
                 if ($detect) {
-                    $item[PARAM_PARAMS][PARAM_ID_MAPPER] = M3uParser::detectBestChannelId($db);
-                    hd_debug_print("detected id: " . $item[PARAM_PARAMS][PARAM_ID_MAPPER]);
+                    $detect_info = '';
+                    $item[PARAM_PARAMS][PARAM_ID_MAPPER] = $this->collect_detect_info($db, $detect_info);
                 }
             }
 
@@ -601,62 +594,57 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
             $item[PARAM_PL_TYPE] = $type;
             unlink($tmp_file);
-            hd_debug_print("Playlist: '$url' imported successfully");
-            $this->plugin->clear_playlist_cache($id);
-            $reload = ($this->plugin->get_active_playlist_key() === $id && !$this->plugin->reload_channels($plugin_cookies));
-            $this->plugin->set_playlist($id, $item);
-            if ($reload) {
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    null,
-                    Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                        null,
-                        HD::get_last_error($this->plugin->get_pl_error_name())
-                    )
-                );
-            }
-
-            $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-            return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
-                $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
-
+            hd_debug_print("Playlist: '$url' edit successfully");
+            $this->plugin->clear_playlist_cache($playlist_id);
+            $this->plugin->set_playlist($playlist_id, $item);
+            $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $playlist_id;
         } catch (Exception $ex) {
             hd_debug_print("Problem with download playlist");
             print_backtrace_exception($ex);
-            return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
+            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $post_action, $ex->getMessage());
         }
+
+        return $post_action;
     }
 
     /**
-     * @param string $playlist_type
-     * @param string $id
+     * @param string $playlist_id
+     * @param array $playlist
      * @return array|null
      */
-    protected function do_edit_m3u_type($playlist_type, $id)
+    protected function do_edit_m3u_type($playlist_id, $playlist)
     {
         hd_debug_print(null, true);
         $defs = array();
 
+        $id_mapper = safe_get_value($playlist[PARAM_PARAMS], PARAM_ID_MAPPER, CONTROL_DETECT_ID);
+        $playlist_type = safe_get_value($playlist, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
+        $name = basename($playlist[PARAM_URI]);
+        $uri = $playlist[PARAM_URI];
+        $param = empty($playlist_id) ? array(CONTROL_URL_PATH => $uri) : array(CONTROL_ACTION_EDIT => $playlist_id);
+
         Control_Factory::add_vgap($defs, 20);
+
+        Control_Factory::add_label($defs, '', TR::t('name'), -10);
+        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, '',
+            $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_label($defs, '', TR::t('playlist'), -10);
+        Control_Factory::add_label($defs, '', $uri, -10);
 
         $opts[CONTROL_PLAYLIST_IPTV] = TR::t('edit_list_playlist_iptv');
         $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
-
+        Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_type'), -10);
         Control_Factory::add_combobox($defs, $this, null, self::CONTROL_EDIT_TYPE,
-            TR::t('edit_list_playlist_type'), $playlist_type, $opts, self::DLG_CONTROLS_WIDTH);
+            '', $playlist_type, $opts, self::DLG_CONTROLS_WIDTH);
 
-        $item = $this->plugin->get_playlist($id);
-        $detect = SwitchOnOff::to_def(is_null($item) || !isset($item[PARAM_PARAMS][PARAM_ID_MAPPER]));
+        $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
+        Control_Factory::add_label($defs, '', TR::t('edit_list_playlist_detect_id'), -10);
         Control_Factory::add_combobox($defs, $this, null, self::CONTROL_EDIT_DETECT_ID,
-            TR::t('edit_list_playlist_detect_id'), $detect, SwitchOnOff::$translated, self::DLG_CONTROLS_WIDTH);
+            '', $id_mapper, $mapper_ops, self::DLG_CONTROLS_WIDTH, true);
 
         Control_Factory::add_vgap($defs, 50);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs,
-            $this,
-            array(CONTROL_ACTION_EDIT => CONTROL_EDIT_ITEM, CONTROL_EDIT_ITEM => $id),
-            ACTION_PL_TYPE_DLG_APPLY, TR::t('ok'), 300);
-
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, $param, ACTION_PL_TYPE_DLG_APPLY, TR::t('ok'), 300);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
 
@@ -665,69 +653,80 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
     /**
      * @param object $user_input
-     * @param object $plugin_cookies
      * @return array|null
      */
-    protected function apply_edit_m3u_type($user_input, $plugin_cookies)
+    protected function apply_edit_m3u_type($user_input)
     {
         hd_debug_print(null, true);
 
-        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        if (!isset($user_input->{CONTROL_ACTION_EDIT}, $user_input->{CONTROL_EDIT_ITEM})) {
-            return null;
-        }
+        $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE);
 
-        $item = $this->plugin->get_playlist($user_input->{CONTROL_EDIT_ITEM});
-        if (is_null($item)) {
-            return null;
-        }
-
-        $item[PARAM_PL_TYPE] = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
-        $parser = new M3uParser();
-        $parser->setPlaylist($item[PARAM_URI], true);
-        if ($item[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
-            $pl_header = $parser->parseHeader(false);
-        } else {
-            $db = new Sql_Wrapper(":memory:");
-            $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
-            if ($parser->parseIptvPlaylist($db)) {
-                $table_name = M3uParser::CHANNELS_TABLE;
-                $result = $db->query_value("SELECT COUNT(*) FROM $table_name;");
+        try {
+            if (isset($user_input->{CONTROL_ACTION_EDIT})) {
+                $playlist_id = $user_input->{CONTROL_ACTION_EDIT};
+                $playlist = $this->plugin->get_playlist($playlist_id);
+                hd_debug_print("Edit current playlist" . json_encode($playlist));
+            } else {
+                $playlist[PARAM_URI] = safe_get_member($user_input, CONTROL_URL_PATH);
+                if (empty($playlist[PARAM_URI])) {
+                    throw new Exception(TR::load('err_load_playlist'));
+                }
+                $playlist_id = Hashed_Array::hash($playlist[PARAM_URI]);
+                hd_debug_print("Edit new playlist" . json_encode($playlist));
             }
 
-            if (empty($result)) {
-                return Action_Factory::show_title_dialog(TR::t('err_empty_playlist'));
+            $playlist[PARAM_PL_TYPE] = safe_get_member($user_input, self::CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
+            $parser = new M3uParser();
+            $parser->setPlaylist($playlist[PARAM_URI], true);
+            if ($playlist[PARAM_PL_TYPE] === CONTROL_PLAYLIST_VOD) {
+                $pl_header = $parser->parseHeader(false);
+            } else {
+                $db = new Sql_Wrapper(":memory:");
+                $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
+                $entries_cnt = $parser->parseIptvPlaylist($db);
+                if (empty($entries_cnt)) {
+                    throw new Exception(TR::load('err_empty_playlist'));
+                }
+
+                $pl_header = $parser->getM3uInfo();
+                $detect_id = safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, CONTROL_DETECT_ID);
+                hd_debug_print("Detect playlist id: $detect_id");
+                if ($detect_id === CONTROL_DETECT_ID) {
+                    $detect_info = '';
+                    $detect_id = $this->collect_detect_info($db, $detect_info);
+                }
+                $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = $detect_id;
             }
 
-            $pl_header = $parser->getM3uInfo();
-            $detect = SwitchOnOff::to_bool(safe_get_member($user_input, self::CONTROL_EDIT_DETECT_ID, SwitchOnOff::on));
-            if ($detect) {
-                $item[PARAM_PARAMS][PARAM_ID_MAPPER] = M3uParser::detectBestChannelId($db);
-                hd_debug_print("detected id: " . $item[PARAM_PARAMS][PARAM_ID_MAPPER]);
+            $playlist[PARAM_NAME] = safe_get_member($user_input, CONTROL_EDIT_NAME);
+            if (empty($playlist[PARAM_NAME])) {
+                hd_debug_print("Playlist info: " . $pl_header);
+                $pl_tag = $pl_header->getEntryTag(TAG_PLAYLIST);
+                if ($pl_tag !== null) {
+                    $pl_name = $pl_tag->getTagValue();
+                    $playlist[PARAM_NAME] = empty($pl_name) ? $playlist[PARAM_NAME] : $pl_name;
+                }
             }
+
+            if (empty($playlist[PARAM_NAME])) {
+                $playlist[PARAM_NAME] = basename($playlist[PARAM_URI]);
+            }
+
+            $this->plugin->set_playlist($playlist_id, $playlist);
+
+            if (!empty($detect_info)) {
+                $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
+            }
+
+            $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $playlist_id;
+        } catch (Exception $ex) {
+            hd_debug_print("Problem with download playlist");
+            print_backtrace_exception($ex);
+            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $post_action, $ex->getMessage());
         }
 
-        hd_debug_print("Playlist info: " . $pl_header);
-        $pl_tag = $pl_header->getEntryTag(TAG_PLAYLIST);
-        if ($pl_tag !== null) {
-            $pl_name = $pl_tag->getTagValue();
-            $item[PARAM_NAME] = empty($pl_name) ? $item[PARAM_NAME] : $pl_name;
-        }
-        $this->plugin->set_playlist($user_input->{CONTROL_EDIT_ITEM}, $item);
 
-        if ($this->plugin->get_active_playlist_key() === $user_input->{CONTROL_EDIT_ITEM} && !$this->plugin->reload_channels($plugin_cookies)) {
-            return Action_Factory::invalidate_all_folders(
-                $plugin_cookies,
-                null,
-                Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                    null,
-                    HD::get_last_error($this->plugin->get_pl_error_name())
-                )
-            );
-        }
-
-        return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
-            $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx));
+        return $post_action;
     }
 
     protected function selected_text_file($user_input)
@@ -828,13 +827,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             return Action_Factory::show_title_dialog(TR::t('err_bad_m3u_file'));
         }
 
-        $playlist[PARAM_TYPE] = PARAM_FILE;
-        $playlist[PARAM_NAME] = basename($selected_media_url->filepath);
         $playlist[PARAM_URI] = $selected_media_url->filepath;
-        $playlist[PARAM_PL_TYPE] = CONTROL_PLAYLIST_IPTV;
-        $playlist[PARAM_PARAMS] = array();
-        $this->plugin->set_playlist($hash, $playlist);
-        return $this->do_edit_m3u_type(CONTROL_PLAYLIST_IPTV, $hash);
+        return $this->do_edit_m3u_type('', $playlist);
     }
 
     /**
@@ -886,31 +880,41 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         hd_debug_print("MediaUrl: " . $media_url, true);
 
         $sticker = Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2);
+        $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
 
         $items = array();
         foreach ($this->plugin->get_all_playlists() as $key => $playlist) {
-            $starred = ($key === $this->plugin->get_active_playlist_key());
+            $starred = ($key === $this->plugin->get_active_playlist_id());
             $title = safe_get_value($playlist, PARAM_NAME, '');
             if (empty($title)) {
                 $title = "Unnamed";
             }
 
-            $detailed_info = '';
             if ($playlist[PARAM_TYPE] === PARAM_PROVIDER) {
                 $provider = $this->plugin->create_provider_class($playlist[PARAM_PARAMS][PARAM_PROVIDER]);
                 if (is_null($provider)) continue;
 
-                $icon_file = $provider->getLogo();
                 if ($title !== $provider->getName()) {
                     $title .= " ({$provider->getName()})";
                 }
+                $icon_file = $provider->getLogo();
                 $detailed_info = $playlist[PARAM_NAME];
             } else {
                 if (isset($playlist[PARAM_URI])) {
-                    $detailed_info = "{$playlist[PARAM_NAME]} ({$playlist[PARAM_PL_TYPE]})||{$playlist[PARAM_URI]}";
+                    $id_map = safe_get_value($playlist[PARAM_PARAMS], PARAM_ID_MAPPER);
+                    if (empty($id_map) || $id_map === 'by_default') {
+                        $id_map = ATTR_CHANNEL_HASH;
+                    }
+                    $detailed_info = TR::t('setup_channels_info__4',
+                        $playlist[PARAM_NAME],
+                        $playlist[PARAM_URI],
+                        $playlist[PARAM_PL_TYPE],
+                        $mapper_ops[$id_map]
+                    );
+                } else {
+                    $detailed_info = $playlist[PARAM_NAME];
                 }
-                $icon = $playlist[PARAM_TYPE] === PARAM_LINK ? "link.png" : "m3u_file.png";
-                $icon_file = get_image_path($icon);
+                $icon_file = get_image_path($playlist[PARAM_TYPE] === PARAM_LINK ? "link.png" : "m3u_file.png");
             }
 
             $shortcut = safe_get_value($playlist, PARAM_SHORTCUT, '');
@@ -965,5 +969,36 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('list_3x11_no_info'),
         );
+    }
+
+    protected function collect_detect_info($db, &$detect_info)
+    {
+        $table_name = M3uParser::CHANNELS_TABLE;
+        $entries_cnt = $db->query_value("SELECT COUNT(*) FROM $table_name;");
+
+        $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
+        $stat = M3uParser::detectBestChannelId($db);
+
+        $detect_info = TR::load('channels__1', $entries_cnt) . PHP_EOL;
+        $max_dupes = $entries_cnt + 1;
+        foreach ($stat as $key => $value) {
+            if ($key === ATTR_PARSED_ID) continue;
+            if ($value === -1) {
+                $detect_info .= TR::load('duplicates__1', $mapper_ops[$key]) . PHP_EOL;
+                continue;
+            }
+
+            $detect_info .= TR::load('duplicates__2', $mapper_ops[$key], $value) . PHP_EOL;
+            if ($value < $max_dupes) {
+                $max_dupes = $value;
+                $minkey = $key;
+            }
+        }
+
+        $minkey = empty($minkey) ? ATTR_CHANNEL_HASH : $minkey;
+        hd_debug_print("Best ID: $minkey");
+        $detect_info .= PHP_EOL . TR::load('selected__1', $mapper_ops[$minkey]) . PHP_EOL;
+
+        return $minkey;
     }
 }

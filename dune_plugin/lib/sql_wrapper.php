@@ -35,6 +35,10 @@ class Sql_Wrapper
     }
 
     /**
+     * prepare data to create table from array
+     * array must contain follow data: column => column condition
+     * channel_id => TEXT PRIMARY KEY NOT NULL, name => TEXT
+     *
      * @param array $values
      * @return string
      */
@@ -49,86 +53,47 @@ class Sql_Wrapper
     }
 
     /**
-     * Make insert list (key1, key2, key3) VALUES ('array[key1]', 'array[key2]', 'array[key3]') from array
+     * Make INSERT list from array values (array[key1], array[key2], array[key3])
+     * (key1,key2,key3) VALUES ('array[key1]','array[key2]','array[key3]')
      *
      * @param array $arr
      * @return string
      */
-    public static function sql_make_list_from_values($arr)
-    {
-        return implode(', ', $arr);
-    }
-
-    /**
-     * Make list ('array[key1]', 'array[key2]', 'array[key3]') from array values (array[key1], array[key2], array[key3])
-     *
-     * @param array $arr
-     * @return string
-     */
-    public static function sql_make_insert_list($arr)
+    public static function sql_make_insert_list($arr, $quoted = true, $bind = false)
     {
         $columns = self::sql_make_list_from_keys($arr);
-        $values = self::sql_make_list_from_quoted_values($arr);
+        $values = self::sql_make_list_from_values($arr, $quoted, $bind ? ':' : '');
         return "($columns) VALUES ($values)";
     }
 
     /**
-     * Make quoted list from array values (array[key1], array[key2], array[key3] -> 'array[key1]', 'array[key2]', 'array[key3]')
+     * Make INSERT list from array values (array[key1], array[key2], array[key3])
+     * (array[key1],array[key2],array[key3]) VALUES ('array[key1]','array[key2]','array[key3]')
      *
      * @param array $arr
      * @return string
      */
-    public static function sql_make_list_from_quoted_values($arr)
+    public static function sql_make_insert_list_from_values($arr, $quoted = true, $bind = false)
     {
-        $quoted_array = array_map(function($var) {
-            return "'" . SQLite3::escapeString($var) . "'";
-        }, $arr);
-
-        return implode(',', $quoted_array);
+        $columns = self::sql_make_list_from_values($arr, false);
+        $values = self::sql_make_list_from_values($arr, $quoted, $bind ? ':' : '');
+        return "($columns) VALUES ($values)";
     }
 
     /**
-     * Make bind list from array values (array[key1], array[key2], array[key3] -> :array[key1], :array[key2], :array[key3])
+     * Make SET list "SET key1 = 'array[key1]', key2 = 'array[key2]', key4 = 'array[key3]'"
+     * from array values (array[key1], array[key2], array[key3])
      *
      * @param array $arr
      * @return string
      */
-    public static function sql_make_bind_list_from_values($arr)
+    public static function sql_make_set_list($arr)
     {
-        return ":" . implode(', :', $arr);
-    }
-
-    /**
-     * Make list from array keys (array[key1], array[key2], array[key3] -> (key1,key2,key3)
-     *
-     * @param array $arr
-     * @return string
-     */
-    public static function sql_make_list_from_keys($arr)
-    {
-        return self::sql_make_list_from_values(array_keys($arr));
-    }
-
-    /**
-     * Make bind list from array keys (array[key1], array[key2], array[key3] -> :key1, :key2, :key3)
-     *
-     * @param array $arr
-     * @return string
-     */
-    public static function sql_make_bind_list_from_keys($arr)
-    {
-        return self::sql_make_bind_list_from_values(array_keys($arr));
-    }
-
-    /**
-     * Make quotted list from array keys (array[key1], array[key2], array[key3] -> 'key1', 'key2', 'key3')
-     *
-     * @param array $arr
-     * @return string
-     */
-    public static function sql_make_list_from_quoted_keys($arr)
-    {
-        return self::sql_make_list_from_quoted_values(array_keys($arr));
+        $str = "SET ";
+        foreach ($arr as $col => $type) {
+            $str .= "$col = " . self::sql_quote($type) . ",";
+        }
+        return rtrim($str, ",");
     }
 
     /**
@@ -143,7 +108,7 @@ class Sql_Wrapper
     {
         if (is_array($values)) {
             $in = $not ? "NOT IN" : "IN";
-            $q_values = Sql_Wrapper::sql_make_list_from_quoted_values($values);
+            $q_values = Sql_Wrapper::sql_make_list_from_values($values);
             $where = "WHERE $column $in ($q_values)";
         } else {
             $eq = $not ? "!=" : "=";
@@ -151,6 +116,43 @@ class Sql_Wrapper
         }
 
         return $where;
+    }
+
+    /**
+     * Make insert list from array
+     * array(val1, val2, val3) => val1, val2, val3
+     * if quoted: array(val1, val2, val3) => 'val1', 'val2', 'val3'
+     * if prefix ':' : array(val1, val2, val3) => :val1, :val2, :val3
+     * if quoted prefix ':' : array(val1, val2, val3) => ':val1', ':val2', ':val3'
+     *
+     * @param array $arr
+     * @param bool $quoted
+     * @param string $prefix
+     * @return string
+     */
+    public static function sql_make_list_from_values($arr, $quoted = true, $prefix = '')
+    {
+        if ($quoted) {
+            $arr = array_map(function($var) {
+                return "'" . SQLite3::escapeString($var) . "'";
+            }, $arr);
+        }
+
+        return $prefix . implode(",$prefix", $arr);
+    }
+
+    /**
+     * Make list from array keys
+     * array(key1=>val1,key2=>val2,key3=>val3) -> key1,key2,key3
+     *
+     * @param array $arr
+     * @param bool $quoted
+     * @param string $prefix
+     * @return string
+     */
+    public static function sql_make_list_from_keys($arr, $quoted = false, $prefix = '')
+    {
+        return self::sql_make_list_from_values(array_keys($arr), $quoted, $prefix);
     }
 
     /**
@@ -189,7 +191,9 @@ class Sql_Wrapper
      */
     public function prepare_bind($action, $table, $columns)
     {
-        $query = "$action INTO $table (" . self::sql_make_list_from_values($columns) . ") VALUES (" . self::sql_make_bind_list_from_values($columns) . ");";
+        $insert = self::sql_make_insert_list_from_values($columns, false, true);
+        $query = "$action INTO $table $insert;";
+        hd_debug_print($query);
         $result = $this->db->prepare($query);
         if ($result === false) {
             hd_debug_print();
@@ -202,6 +206,7 @@ class Sql_Wrapper
     /**
      * query single value.
      * Typically for SELECT count(), SELECT channel_id, group_id etc
+     * if full_row - returns entire row instead of signgle column
      * query returns only one value!
      *
      * @param string $query
@@ -220,6 +225,7 @@ class Sql_Wrapper
 
     /**
      * Fetch array of values
+     * fetch returns array of rows['column'] it will convert to simple array() of values row['column']
      *
      * @param string $query
      * @param string $column

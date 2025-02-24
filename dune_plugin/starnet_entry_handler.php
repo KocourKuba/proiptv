@@ -97,10 +97,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_PLUGIN_SETTINGS:
                 $this->plugin->init_plugin();
-                $this->plugin->init_playlist_db();
                 return $this->plugin->show_protect_settings_dialog($this, ACTION_SETTINGS);
 
             case ACTION_SETTINGS:
+                $this->plugin->init_playlist_db($this->plugin->get_active_playlist_id());
                 return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
 
             case ACTION_PASSWORD_APPLY:
@@ -111,21 +111,29 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_PLAYLIST_SETTINGS:
                 $this->plugin->init_plugin();
-                $this->plugin->init_playlist_db();
-                $this->plugin->init_playlist_parser();
                 return $this->plugin->show_protect_settings_dialog($this, self::ACTION_PLAYLIST_SETTINGS);
 
             case self::ACTION_PLAYLIST_SETTINGS:
+                $playlist_id = $this->plugin->get_active_playlist_id();
+                if (empty($playlist_id)) {
+                    return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                        Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
+                }
+
+                $this->plugin->init_playlist_db($playlist_id);
+                $this->plugin->init_playlist_parser($playlist_id);
                 return $this->plugin->do_edit_list_screen(
                     Starnet_Tv_Groups_Screen::ID,
                     Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
 
             case self::ACTION_CALL_XMLTV_SOURCES_SETTINGS:
                 $this->plugin->init_plugin();
-                $this->plugin->init_playlist_parser();
                 return $this->plugin->show_protect_settings_dialog($this, self::ACTION_XMLTV_SOURCES_SETTINGS);
 
             case self::ACTION_XMLTV_SOURCES_SETTINGS:
+                $playlist_id = $this->plugin->get_active_playlist_id();
+                $this->plugin->init_playlist_db($playlist_id);
+                $this->plugin->init_playlist_parser($playlist_id);
                 return $this->plugin->do_edit_list_screen(
                     Starnet_Tv_Groups_Screen::ID,
                     Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST);
@@ -147,7 +155,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_CLEAR_EPG:
                 $this->plugin->init_plugin();
-                $this->plugin->init_playlist_db();
+                $this->plugin->init_playlist_db($this->plugin->get_active_playlist_id());
                 $this->plugin->init_epg_manager();
                 $this->plugin->safe_clear_selected_epg_cache();
                 $action = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
@@ -163,13 +171,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print_separator();
 
                 $this->plugin->init_plugin();
-                if ($this->plugin->get_all_playlists_count() === 0) {
+                if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db($this->plugin->get_active_playlist_id())) {
                     return $this->plugin->do_edit_list_screen(
                         Starnet_Tv_Groups_Screen::ID,
                         Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                 }
-
-                $this->plugin->init_playlist_db();
 
                 hd_debug_print("action: launch open", true);
                 return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
@@ -187,9 +193,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print("LANUCH PLUGIN");
 
                         $this->plugin->init_plugin();
-                        $this->plugin->init_playlist_db();
-
-                        if ($this->plugin->get_all_playlists_count() === 0) {
+                        if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db($this->plugin->get_active_playlist_id())) {
                             return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
                                 Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                         }
@@ -236,10 +240,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print_separator();
 
                         $this->plugin->init_plugin();
-                        $this->plugin->init_playlist_db();
-
-                        if ($this->plugin->get_all_playlists_count() === 0) {
-                            return User_Input_Handler_Registry::create_action($this, self::ACTION_CALL_PLUGIN_SETTINGS);
+                        if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db($this->plugin->get_active_playlist_id())) {
+                            return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                                Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 
                         if ($this->plugin->is_vod_enabled()
@@ -256,7 +259,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         hd_debug_print_separator();
 
                         $this->plugin->init_plugin();
-                        $this->plugin->init_playlist_db();
+                        if (!$this->plugin->init_playlist_db($this->plugin->get_active_playlist_id())) {
+                            return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                                Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
+                        }
 
                         if ((int)$user_input->mandatory_playback !== 1
                             || (isset($plugin_cookies->auto_resume) && SwitchOnOff::to_bool($plugin_cookies->auto_resume))) {
@@ -297,14 +303,13 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_UPDATE_EPFS:
                         $this->plugin->init_plugin();
-                        $this->plugin->init_playlist_db();
                         $this->plugin->load_channels($plugin_cookies);
                         return Starnet_Epfs_Handler::update_epfs_file($plugin_cookies,
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
                     case self::ACTION_UNINSTALL:
                         $this->plugin->init_plugin();
-                        $this->plugin->init_playlist_db();
+                        $this->plugin->init_playlist_db($this->plugin->get_active_playlist_id());
                         $this->plugin->init_epg_manager();
                         $this->plugin->safe_clear_selected_epg_cache();
                         Default_Archive::clear_cache();

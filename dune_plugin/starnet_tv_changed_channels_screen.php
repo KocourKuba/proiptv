@@ -109,7 +109,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
 
             case ACTION_ITEM_DELETE:
                 $this->force_parent_reload = true;
-                $this->plugin->set_changed_channel($channel_id, false);
+                $this->plugin->remove_changed_channel($channel_id);
 
                 if ($this->plugin->get_changed_channels_count() == 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -165,12 +165,12 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         }
 
         foreach ($this->plugin->get_changed_channels(PARAM_NEW) as $channel_row) {
-            $epg_ids = array($channel_row['epg_id'], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]);
+            $epg_ids = array($channel_row[M3uParser::COLUMN_EPG_ID], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]);
             $group = $channel_row[COLUMN_GROUP_ID];
             $detailed_info = TR::t('tv_screen_ch_channel_info__5',
                 $channel_row[COLUMN_TITLE],
                 str_replace('|', '¦', (is_null($group) ? "" : $group)),
-                $channel_row['archive'],
+                $channel_row[M3uParser::COLUMN_ARCHIVE],
                 $channel_row[COLUMN_CHANNEL_ID],
                 implode(", ", $epg_ids)
             );

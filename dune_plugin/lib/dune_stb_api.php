@@ -1717,9 +1717,7 @@ function get_local_storages_list($path)
 
 function is_newer_versions()
 {
-    $versions = get_parsed_firmware_ver();
-
-    return (isset($versions['rev_number']) && $versions['rev_number'] > 20);
+    return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 20;
 }
 
 function normalizePath($path) {

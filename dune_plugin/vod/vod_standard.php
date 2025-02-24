@@ -318,10 +318,10 @@ class vod_standard extends Abstract_Vod
             hd_debug_print("Movie not found");
             $movie = null;
         } else {
-            $logo = $entry['icon'];
-            $title = $entry['title'];
+            $logo = $entry[COLUMN_ICON];
+            $title = $entry[COLUMN_TITLE];
             $category = $entry[COLUMN_GROUP_ID];
-            $path = $entry['path'];
+            $path = $entry[M3uParser::COLUMN_PATH];
             $title_orig = '';
             $country = '';
             $year = '';
@@ -410,7 +410,7 @@ class vod_standard extends Abstract_Vod
     public function fetchVodCategories(&$category_list, &$category_index)
     {
         hd_debug_print(null, true);
-        if (!$this->plugin->init_vod_playlist()) {
+        if (!$this->plugin->init_vod_playlist($this->plugin->get_active_playlist_id())) {
             hd_debug_print("VOD not available");
             return false;
         }
@@ -769,7 +769,7 @@ class vod_standard extends Abstract_Vod
      */
     public function get_vod_cache_file()
     {
-        return get_temp_path($this->plugin->get_active_playlist_key() . "_playlist_vod.json");
+        return get_temp_path($this->plugin->get_active_playlist_id() . "_playlist_vod.json");
     }
 
     /**

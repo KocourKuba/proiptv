@@ -897,8 +897,8 @@ class api_default
 
         $this->savePlaylistInfo($id, $this->playlist_info);
 
-        if ($this->plugin->get_active_playlist_key() === $id) {
-            $this->plugin->set_active_playlist_key($id);
+        if ($this->plugin->get_active_playlist_id() === $id) {
+            $this->plugin->set_active_playlist_id($id);
         }
     }
 

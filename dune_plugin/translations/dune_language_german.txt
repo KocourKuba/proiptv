@@ -36,6 +36,7 @@ clear_changed = Klar Geändert
 no_category = Keine Kategorie
 category = Kategorie
 by_default = standartmäßig
+detect = Entdecken
 hash_url = Link-Hash
 channel_name = Kanal Name
 attribute_name__1 = M3U-Attribut „%s“
@@ -103,6 +104,10 @@ provider_info = Link zum IPTV-Anbieter
 auto = Automatisch
 required_firmware = Erforderliche Firmware:
 download_link = Download-Link:
+channels__1 = Kanäle: %s
+duplicates__1 = %s nicht gefunden
+duplicates__2 = Duplikate: %s - %s
+selected__1 = Ausgewählt: %s
 
 plugin_all_channels = Alle Kanäle
 plugin_favorites = Favoriten
@@ -192,8 +197,7 @@ setup_channels_user_agent = HTTP User-Agent
 setup_channels_disable_dune_params = Deaktivieren Sie dune_params
 setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Dune zwingen, den Stream zu erkennen
-edit_list_playlist_iptv = IPTV
-edit_list_playlist_vod = Video-on-Demand (VOD)
+setup_channels_info__4 = "Vorname:|%s||Verknüpfung:|%s||Typ:|%s||Kanal-ID:|%s"
 
 entry_send_log = Protokoll an den Entwickler senden
 entry_log_sent = Protokoll erfolgreich gesendet!\nBitte informieren Sie den Entwickler über den Grund für das Senden des Protokolls im Telegram-Kanal t.me/dunehd_iptv_chat\n oder in den Foren forum.hdtv.ru und forum.mydune.ru
@@ -231,6 +235,8 @@ edit_list_title_info__2 = %s|Heruntergeladen: %s
 edit_list_title_info_download__1 = %s|Nachlad...
 edit_list_title_cant_delete = Die XMLTV-Quelle der Wiedergabeliste kann nicht gelöscht werden!
 edit_list_playlist_type = Typ der Wiedergabeliste
+edit_list_playlist_iptv = IPTV
+edit_list_playlist_vod = Video-on-Demand (VOD)
 edit_list_playlist_detect_id = Kanal-ID-Quelle erkennen (IPTV)
 edit_list_cache_suport__1 = |Automatische Cache-Unterstützung:|%s
 

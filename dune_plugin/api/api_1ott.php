@@ -42,7 +42,7 @@ class api_1ott extends api_default
             return true;
         }
 
-        $rq_last_error_name = $this->plugin->get_active_playlist_key() . "_rq_last_error";
+        $rq_last_error_name = $this->plugin->get_active_playlist_id() . "_rq_last_error";
         $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
         if (isset($response->token)) {
             $this->plugin->set_cookie(PARAM_SESSION_ID, $response->token,time() + 86400);

@@ -36,6 +36,7 @@ clear_changed = Очистить Измененные
 no_category = Без категории
 category = Категория
 by_default = По умолчанию
+detect = Определить
 hash_url = Хэш ссылки
 channel_name = Название канала
 attribute_name__1 = M3U атрибут '%s'
@@ -103,6 +104,10 @@ provider_info = Ссылка на провайдера
 auto = Автоматически
 required_firmware = Требуемая прошивка:
 download_link = Ссылка на скачивание:
+channels__1 = Каналов: %s
+duplicates__1 = %s: не найден
+duplicates__2 = Дубликатов: %s - %s
+selected__1 = Выбран: %s
 
 plugin_all_channels = Все каналы
 plugin_favorites = Избранное
@@ -192,6 +197,7 @@ setup_channels_user_agent = HTTP User-Agent
 setup_channels_disable_dune_params = Отключить dune_params
 setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Force Dune to detect stream
+setup_channels_info__4 = Название:|%s||Ссылка:|%s||Тип:|%s||ID канала:|%s
 
 entry_send_log = Отправить лог разработчику
 entry_log_sent = Лог отправлен!\nПожалуйста сообщите разработчику причину отправки лога\nв Telegram канале t.me/dunehd_iptv_chat\n или на форумах forum.hdtv.ru и forum.mydune.ru

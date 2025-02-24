@@ -40,7 +40,6 @@ class M3uParser extends Json_Serializer
     const VOD_TABLE = 'vod.vod_entries';
 
     const COLUMN_PARSED_ID = 'parsed_id';
-    const COLUMN_HASH = 'hash';
     const COLUMN_CUID = 'cuid';
     const COLUMN_EPG_ID = 'epg_id';
     const COLUMN_TVG_NAME = 'tvg_name';
@@ -61,13 +60,15 @@ class M3uParser extends Json_Serializer
     * Map attributes to database columns
     */
     public static $id_to_column_mapper = array(
-        ATTR_PARSED_ID => self::COLUMN_PARSED_ID, // channel id found by regex parser
-        ATTR_CUID => self::COLUMN_CUID,      // attributes "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
-        ATTR_TVG_ID => self::COLUMN_EPG_ID,    // attribute tvg-id
-        ATTR_TVG_NAME => self::COLUMN_TVG_NAME,  // attribute tvg-name
-        ATTR_CHANNEL_NAME => COLUMN_TITLE,           // channel title
-        ATTR_CHANNEL_HASH => self::COLUMN_HASH,      // url hash
+        ATTR_PARSED_ID      => self::COLUMN_PARSED_ID, // channel id found by regex parser
+        ATTR_CUID           => self::COLUMN_CUID,      // attributes "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
+        ATTR_TVG_ID         => self::COLUMN_EPG_ID,    // attribute tvg-id
+        ATTR_TVG_NAME       => self::COLUMN_TVG_NAME,  // attribute tvg-name
+        ATTR_CHANNEL_NAME   => COLUMN_TITLE,           // channel title
+        ATTR_CHANNEL_HASH   => COLUMN_HASH,            // url hash
     );
+
+    public static $mapper_ops = array();
 
     /*
      * Attributes contains epg id
@@ -259,7 +260,7 @@ class M3uParser extends Json_Serializer
      * But may cause OutOfMemory for large files
      *
      * @param Sql_Wrapper $db
-     * @return bool
+     * @return int|false
      */
     public function parseIptvPlaylist($db)
     {
@@ -268,7 +269,7 @@ class M3uParser extends Json_Serializer
         $this->clear_data();
 
         $init_channels = array(
-            self::COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
+            COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
             COLUMN_TITLE => 'TEXT',
             self::COLUMN_PARSED_ID => 'TEXT',
             self::COLUMN_CUID => 'TEXT',
@@ -338,7 +339,7 @@ class M3uParser extends Json_Serializer
                         $adult_channel = $entry->getAdult();
                     }
 
-                    $stm_channels->bindValue(":" . self::COLUMN_HASH, $entry->getHash());
+                    $stm_channels->bindValue(":" . COLUMN_HASH, $entry->getHash());
                     $stm_channels->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
                     $stm_channels->bindValue(":" . self::COLUMN_PARSED_ID, $entry->getParsedId());
                     $stm_channels->bindValue(":" . self::COLUMN_CUID, $entry->getCUID());
@@ -392,7 +393,7 @@ class M3uParser extends Json_Serializer
         }
         $db->exec('COMMIT;');
 
-        return true;
+        return $db->query_value("SELECT COUNT(*) FROM $this->channels_table;");
     }
 
 
@@ -420,7 +421,7 @@ class M3uParser extends Json_Serializer
         }
 
         $init_vod = array(
-            self::COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
+            COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
             COLUMN_GROUP_ID => 'TEXT NOT NULL',
             COLUMN_TITLE => 'TEXT NOT NULL',
             COLUMN_ICON => 'TEXT',
@@ -449,7 +450,7 @@ class M3uParser extends Json_Serializer
             $res = $this->parseLineFast($line, $entry);
             switch ($res) {
                 case 1:
-                    $stm_index->bindValue(":" . self::COLUMN_HASH, $entry->getHash());
+                    $stm_index->bindValue(":" . COLUMN_HASH, $entry->getHash());
                     $stm_index->bindValue(":" . COLUMN_GROUP_ID, $entry->getGroupTitle());
                     $stm_index->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
                     $stm_index->bindValue(":" . COLUMN_ICON, $entry->getIcon());
@@ -565,46 +566,37 @@ class M3uParser extends Json_Serializer
 
     /**
      * @param Sql_Wrapper $db
-     * @return int|string
+     * @return array
      */
     static public function detectBestChannelId($db)
     {
         hd_debug_print(null, true);
 
+        $stat = array();
+
         $table = M3uParser::CHANNELS_TABLE;
         $cnt = $db->query_value("SELECT COUNT(*) FROM $table;");
         if (empty($cnt)) {
-            return ATTR_CHANNEL_HASH;
+            return $stat;
         }
 
-        hd_debug_print("Total collected entries: $cnt", true);
-
-        $stat = array();
         foreach (self::$id_to_column_mapper as $key => $value) {
             $query = "SELECT sum(cnt - 1) AS dupes
                 FROM (SELECT $value, COUNT($value) AS cnt
                       FROM $table GROUP BY $value HAVING cnt > 0 ORDER BY cnt DESC);";
             $res = $db->query_value($query);
 
-            if ($res === false || $res === null) continue;
+            if ($res === false || $res === null) {
+                $res = -1;
+            }
 
-            $res -= 1;
+            $res = ($res > 0) ? $res - 1 : $res;
             hd_debug_print("Key '$key' => '$value' dupes count: $res");
 
             $stat[$key] = $res;
         }
 
-        $max_dupes = $cnt + 1;
-        foreach ($stat as $key => $value) {
-            if ($value < $max_dupes) {
-                $max_dupes = $value;
-                $minkey = $key;
-            }
-        }
-
-        $minkey = empty($minkey) ? ATTR_CHANNEL_HASH : $minkey;
-        hd_debug_print("Best ID: $minkey");
-        return $minkey;
+        return $stat;
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////

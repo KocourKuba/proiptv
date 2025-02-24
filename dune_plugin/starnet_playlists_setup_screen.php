@@ -76,26 +76,6 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // ID detection settings
-        $playlist = $this->plugin->get_active_playlist();
-        if ($playlist !== null && $playlist[PARAM_TYPE] !== PARAM_PROVIDER) {
-            $mapper_ops = array(
-                ATTR_CHANNEL_HASH => TR::t('hash_url'),
-                ATTR_TVG_ID => TR::t('attribute_name__1', ATTR_TVG_ID),
-                ATTR_TVG_NAME => TR::t('attribute_name__1', ATTR_TVG_NAME),
-                ATTR_CHANNEL_NAME => TR::t('channel_name'));
-
-            if (!isset($playlist[PARAM_PARAMS][PARAM_ID_MAPPER])) {
-                $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
-            }
-
-            hd_debug_print("Mapper param: {$playlist[PARAM_PARAMS][PARAM_ID_MAPPER]}", true);
-
-            Control_Factory::add_combobox($defs, $this, null, PARAM_ID_MAPPER,
-                TR::t('setup_channels_id_mapper'), $playlist[PARAM_PARAMS][PARAM_ID_MAPPER], $mapper_ops, self::CONTROLS_WIDTH, true);
-        }
-
-        //////////////////////////////////////
         // catchup settings
 
         $catchup_ops[ATTR_CATCHUP_UNKNOWN] = TR::t('by_default');
@@ -148,23 +128,12 @@ class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->set_setting($user_input->control_id, $user_input->{$user_input->control_id});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
-            case PARAM_ID_MAPPER:
-                $id = $this->plugin->get_active_playlist_key();
-                $playlist = $this->plugin->get_playlist($id);
-                if ($playlist !== null && $playlist[PARAM_TYPE] !== PARAM_PROVIDER) {
-                    $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = $user_input->{$user_input->control_id};
-                    $this->plugin->set_playlist($id, $playlist);
-                    $this->plugin->set_active_playlist_key($id);
-                }
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-
             case self::CONTROL_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
 
             case self::ACTION_RESET_PLAYLIST_DLG_APPLY: // handle streaming settings dialog result
                 $this->plugin->safe_clear_current_epg_cache();
-                $this->plugin->remove_playlist_data($this->plugin->get_active_playlist_key());
+                $this->plugin->remove_playlist_data($this->plugin->get_active_playlist_id());
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case self::CONTROL_EXT_PARAMS_DLG:

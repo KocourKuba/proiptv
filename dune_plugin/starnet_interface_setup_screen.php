@@ -110,7 +110,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
         if ($this->plugin->is_background_image_default()) {
             $button = TR::t('by_default');
         } else {
-            $button = substr(basename($this->plugin->get_background_image()), strlen($this->plugin->get_active_playlist_key()) + 1);
+            $button = substr(basename($this->plugin->get_background_image()), strlen($this->plugin->get_active_playlist_id()) + 1);
         }
 
         Control_Factory::add_image_button($defs, $this, null,
@@ -188,7 +188,7 @@ class Starnet_Interface_Setup_Screen extends Abstract_Controls_Screen implements
                 if ($data->choose_file === ACTION_CHANGE_BACKGROUND) {
                     $old_image = $this->plugin->get_background_image();
                     $is_old_default = $this->plugin->is_background_image_default();
-                    $cached_image = get_cached_image_path("{$this->plugin->get_active_playlist_key()}_$data->caption");
+                    $cached_image = get_cached_image_path("{$this->plugin->get_active_playlist_id()}_$data->caption");
 
                     hd_print("copy from: $data->filepath to: $cached_image");
                     if (!copy($data->filepath, $cached_image)) {

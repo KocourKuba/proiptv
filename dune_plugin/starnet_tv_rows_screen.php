@@ -144,11 +144,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return null;
                 }
 
-                if ($media_url->group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
-                    $this->plugin->set_changed_channel($media_url->channel_id, false);
-                    break;
-                }
-
                 $is_in_favorites = $this->plugin->is_channel_in_order(TV_FAV_GROUP_ID, $media_url->channel_id);
                 $opt_type = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $media_url->channel_id);
@@ -725,7 +720,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if ($channel_ts > 0) {
                     $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
                     $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
-                    if ($channel_ts >= $now - $channel_row['archive'] * 86400 - 60) {
+                    if ($channel_ts >= $now - $channel_row[M3uParser::COLUMN_ARCHIVE] * 86400 - 60) {
                         $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
                     }
                 }
@@ -1365,7 +1360,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         } else {
             // popup menu for left side list
             hd_debug_print("in menu side", true);
-            $playlist = $this->plugin->get_active_playlist();
+            $playlist_id = $this->plugin->get_active_playlist_id();
+            $playlist = $this->plugin->get_playlist($playlist_id);
             if ($playlist !== null) {
                 $menu_items[] = $this->plugin->create_menu_item($this,
                     ACTION_RELOAD,

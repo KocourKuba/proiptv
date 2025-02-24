@@ -46,7 +46,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     public function get_day_epg_items($channel_row, $day_start_ts)
     {
         $epg_ids = array(
-            'epg_id' => $channel_row['epg_id'],
+            'epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID],
             'id' => $channel_row[COLUMN_CHANNEL_ID],
             ATTR_TVG_NAME => $channel_row[COLUMN_TITLE],
             'name' => $channel_row[COLUMN_TITLE]);

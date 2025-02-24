@@ -365,7 +365,7 @@ class Epg_Manager_Xmltv
         }
         $aliases = array_unique($aliases);
 
-        $placeHolders = Sql_Wrapper::sql_make_list_from_quoted_values($aliases);
+        $placeHolders = Sql_Wrapper::sql_make_list_from_values($aliases);
         if (empty($placeHolders)) {
             return '';
         }
@@ -718,7 +718,7 @@ class Epg_Manager_Xmltv
             }
 
             $channel_title = $channel_row[COLUMN_TITLE];
-            $epg_ids = array_unique(array($channel_row['epg_id'], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]));
+            $epg_ids = array_unique(array($channel_row[M3uParser::COLUMN_EPG_ID], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]));
             $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
             $stm = $db->prepare("SELECT DISTINCT channel_id FROM $table_channels WHERE alias IN ($placeHolders);");
             if ($stm !== false) {
@@ -781,7 +781,7 @@ class Epg_Manager_Xmltv
      */
     protected function getFakeEpg($channel_row, $day_start_ts, $day_epg)
     {
-        if (($this->flags & EPG_FAKE_EPG) && $channel_row['archive'] !== 0) {
+        if (($this->flags & EPG_FAKE_EPG) && $channel_row[M3uParser::COLUMN_ARCHIVE] !== 0) {
             hd_debug_print("Create fake data for non existing EPG data");
             for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
                 $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
