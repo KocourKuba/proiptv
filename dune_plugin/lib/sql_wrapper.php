@@ -193,7 +193,6 @@ class Sql_Wrapper
     {
         $insert = self::sql_make_insert_list_from_values($columns, false, true);
         $query = "$action INTO $table $insert;";
-        hd_debug_print($query);
         $result = $this->db->prepare($query);
         if ($result === false) {
             hd_debug_print();

@@ -276,15 +276,25 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
 
+            case CONTROL_CATEGORY_SCREEN:
+                return $this->plugin->show_protect_settings_dialog($this,
+                    ACTION_DO_SETTINGS,
+                    array(ACTION_SETUP_SCREEN => CONTROL_CATEGORY_SCREEN));
+
             case CONTROL_INTERFACE_NEWUI_SCREEN:
                 return $this->plugin->show_protect_settings_dialog($this,
                     ACTION_DO_SETTINGS,
                     array(ACTION_SETUP_SCREEN => CONTROL_INTERFACE_NEWUI_SCREEN));
 
             case ACTION_DO_SETTINGS:
+                if (isset($user_input->{ACTION_SETUP_SCREEN}) && $user_input->{ACTION_SETUP_SCREEN} === CONTROL_CATEGORY_SCREEN) {
+                    return Action_Factory::open_folder(Starnet_Setup_Category_Screen::get_media_url_str(), TR::t('setup_category_title'));
+                }
+
                 if (isset($user_input->{ACTION_SETUP_SCREEN}) && $user_input->{ACTION_SETUP_SCREEN} === CONTROL_INTERFACE_NEWUI_SCREEN) {
                     return Action_Factory::open_folder(Starnet_Setup_Interface_NewUI_Screen::get_media_url_str(), TR::t('setup_interface_newui_title'));
                 }
+
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
             case ACTION_ZOOM_APPLY:
@@ -932,10 +942,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $rows = array();
         $fav_group = $this->plugin->get_channels_order(TV_FAV_GROUP_ID);
-        $groups = $this->plugin->get_groups_order();
-        foreach ($groups as $group_id) {
+        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
+        $groups = $this->plugin->get_groups_by_order();
+        foreach ($groups as $group_row) {
+            if (!$show_adult && $group_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+
+            $group_id = $group_row[COLUMN_GROUP_ID];
             $items = array();
             foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
+                if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+
                 $items[] = Rows_Factory::add_regular_item(
                     json_encode(array('group_id' => $group_id, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),
                     $this->plugin->get_channel_picon($channel_row, $this->picons_source, $this->default_channel_icon),
@@ -946,7 +962,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             if (empty($items)) continue;
 
-            $new_rows = $this->create_rows($items, json_encode(array('group_id' => $group_id)), $group_id, $group_id, $action_enter );
+            $new_rows = $this->create_rows($items, json_encode(array('group_id' => $group_id)), $group_id, $group_id, $action_enter);
 
             foreach ($new_rows as $row) {
                 $rows[] = $row;

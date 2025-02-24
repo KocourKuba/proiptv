@@ -606,7 +606,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $disabled = $this->plugin->get_channels_count($group_id, PARAM_DISABLED);
                     $caption = TR::load(TV_ALL_CHANNELS_GROUP_CAPTION);
                     $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled, $disabled);
-                    $this->add_item($items, $group_row, DEF_LABEL_TEXT_COLOR_SKYBLUE, $detailed_info);
+                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_SKYBLUE, $detailed_info);
                     break;
 
                 case TV_FAV_GROUP_ID:
@@ -617,7 +617,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $caption = TR::load(TV_FAV_GROUP_CAPTION);
                     $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
-                    $this->add_item($items, $group_row, DEF_LABEL_TEXT_COLOR_GOLD, $detailed_info);
+                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_GOLD, $detailed_info);
                     break;
 
                 case TV_HISTORY_GROUP_ID:
@@ -628,7 +628,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     $caption = TR::load(TV_HISTORY_GROUP_CAPTION);
                     $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
-                    $this->add_item($items, $group_row, DEF_LABEL_TEXT_COLOR_TURQUOISE, $detailed_info);
+                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_TURQUOISE, $detailed_info);
                     break;
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
@@ -641,13 +641,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $removed = $this->plugin->get_changed_channels_count(PARAM_REMOVED);
                     $caption = TR::load(TV_CHANGED_CHANNELS_GROUP_CAPTION);
                     $detailed_info = TR::t('tv_screen_group_changed_info__3', $caption, $new, $removed);
-                    $this->add_item($items, $group_row, DEF_LABEL_TEXT_COLOR_RED, $detailed_info);
+                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_RED, $detailed_info);
                     break;
 
                 case VOD_GROUP_ID:
                     if (!$this->plugin->is_vod_enabled() || !$this->plugin->get_setting(PARAM_SHOW_VOD, true)) break;
 
-                    $this->add_item($items, $group_row, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, TR::t(VOD_GROUP_CAPTION));
+                    $caption = TR::t(VOD_GROUP_CAPTION);
+                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
                     break;
             }
         }
@@ -657,13 +658,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         foreach ($all_groups as $group_row) {
             if (!$show_adult && $group_row[M3uParser::COLUMN_ADULT] !== 0) continue;
 
+            $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
             $detailed_info = TR::t('tv_screen_group_info__3',
-                str_replace('|', '¦', $group_row[COLUMN_TITLE]),
+                $caption,
                 $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]),
                 $this->plugin->get_channels_count($group_row[COLUMN_GROUP_ID], PARAM_DISABLED)
             );
 
-            $this->add_item($items, $group_row, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
+            $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
         }
 
         return $items;
@@ -701,12 +703,14 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
+     * @param $items
      * @param array $group_row
+     * @param string $caption
      * @param string $color
      * @param string $item_detailed_info
      * @return void
      */
-    private function add_item(&$items, $group_row, $color, $item_detailed_info)
+    private function add_item(&$items, $group_row, $caption, $color, $item_detailed_info)
     {
         $icon = safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON);
         if (strpos($icon, "plugin_file://") === false && file_exists(get_cached_image_path($icon))) {
@@ -715,7 +719,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
         $items[] = array(
             PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row[COLUMN_GROUP_ID]),
-            PluginRegularFolderItem::caption => TR::load($group_row[COLUMN_TITLE]),
+            PluginRegularFolderItem::caption => $caption,
             PluginRegularFolderItem::view_item_params => array(
                 ViewItemParams::item_caption_color => $color,
                 ViewItemParams::icon_path => $icon,
