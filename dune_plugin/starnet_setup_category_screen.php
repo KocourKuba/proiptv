@@ -28,7 +28,7 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Category_Setup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements User_Input_Handler
 {
     const ID = 'category_setup';
 

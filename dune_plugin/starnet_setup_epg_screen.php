@@ -29,7 +29,7 @@ require_once 'lib/epg/epg_manager_json.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Epg_Setup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_Input_Handler
 {
     const ID = 'epg_setup';
 

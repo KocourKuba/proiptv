@@ -28,7 +28,7 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Ext_Setup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_Input_Handler
 {
     const ID = 'ext_setup';
 

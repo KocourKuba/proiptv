@@ -29,7 +29,7 @@ require_once 'lib/m3u/KnownCatchupSourceTags.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Playlists_Setup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements User_Input_Handler
 {
     const ID = 'playlist_setup';
 
