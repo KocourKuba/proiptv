@@ -87,12 +87,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
-        if (!isset($user_input->parent_media_url, $user_input->selected_media_url)) {
+        if (!isset($user_input->parent_media_url)) {
             return null;
         }
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $sel_media_url = MediaURL::decode($user_input->selected_media_url);
+        $sel_media_url = MediaURL::decode(safe_get_member($user_input, 'selected_media_url', ''));
         $sel_ndx = safe_get_member($user_input, 'sel_ndx', 0);
 
         switch ($user_input->control_id) {
@@ -328,23 +328,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     hd_debug_print("Selected engine: $user_input->control_id", true);
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action(
-                        $this,
-                        ACTION_RELOAD,
-                        null,
-                        array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
-                    );
-                }
-                break;
-
-            case PLAYLIST_PICONS:
-            case XMLTV_PICONS:
-            case COMBINED_PICONS:
-                if ($this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS) !== $user_input->control_id) {
-                    hd_debug_print("Selected icons source: $user_input->control_id", true);
-                    $this->plugin->set_setting(PARAM_USE_PICONS, $user_input->control_id);
-                    $this->plugin->init_epg_manager();
-                    $this->force_parent_reload = true;
                     return User_Input_Handler_Registry::create_action(
                         $this,
                         ACTION_RELOAD,

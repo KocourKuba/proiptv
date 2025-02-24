@@ -128,7 +128,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_USER_CATCHUP:
                 $this->plugin->set_setting($user_input->control_id, $user_input->{$user_input->control_id});
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                break;
 
             case self::CONTROL_RESET_PLAYLIST_DLG:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_RESET_PLAYLIST_DLG_APPLY);
@@ -179,8 +179,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 }
 
                 $this->plugin->set_dune_params($params_array);
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                break;
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
@@ -229,7 +228,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
             $dune_params_str = $provider->getConfigValue(PARAM_DUNE_PARAMS);
         }
 
-        $disable_params = $this->plugin->get_setting(PARAM_DISABLE_DUNE_PARAMS, 1);
+        $disable_params = $this->plugin->get_setting(PARAM_DISABLE_DUNE_PARAMS, SwitchOnOff::off);
         Control_Factory::add_combobox($defs, $this, null, PARAM_DISABLE_DUNE_PARAMS,
             TR::t('setup_channels_disable_dune_params'), $disable_params, SwitchOnOff::$translated, 60);
 

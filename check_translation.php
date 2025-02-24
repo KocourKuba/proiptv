@@ -1,4 +1,4 @@
-﻿<?php
+﻿<?php /** @noinspection ALL */
 
 /**
  * Search recusively for files in a base directory matching a glob pattern.
@@ -88,7 +88,7 @@ foreach($translations as $k => $t) {
     }
 }
 
-$regex_t = "/.*TR::(?:g|t|load_string)\(['\"]([_a-z0-9]+)['\"].*|.*['\">]%tr%([_a-z0-9]+)['\"<].*/U";
+$regex_t = "/.*TR::(?:g|t|load)\(['\"]([_a-z0-9]+)['\"].*|.*['\">]%tr%([_a-z0-9]+)['\"<].*/U";
 $files_to_check = glob_recursive($plugin_path, "*.php");
 $files_to_check = array_merge($files_to_check, glob_recursive($plugin_path, "*.xml"));
 foreach ($files_to_check as $php_file) {

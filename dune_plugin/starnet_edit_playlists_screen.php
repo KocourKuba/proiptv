@@ -626,11 +626,18 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         hd_debug_print(null, true);
         $defs = array();
 
-        $id_mapper = safe_get_value($playlist[PARAM_PARAMS], PARAM_ID_MAPPER, CONTROL_DETECT_ID);
-        $playlist_type = safe_get_value($playlist, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
-        $name = basename($playlist[PARAM_URI]);
         $uri = $playlist[PARAM_URI];
-        $param = empty($playlist_id) ? array(CONTROL_URL_PATH => $uri) : array(CONTROL_ACTION_EDIT => $playlist_id);
+
+        if (empty($playlist_id)) {
+            $param = array(CONTROL_URL_PATH => $uri);
+            $id_mapper = CONTROL_DETECT_ID;
+        } else {
+            $id_mapper = safe_get_value($playlist[PARAM_PARAMS], PARAM_ID_MAPPER, CONTROL_DETECT_ID);
+            $param = array(CONTROL_ACTION_EDIT => $playlist_id);
+        }
+
+        $playlist_type = safe_get_value($playlist, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
+        $name = basename($uri);
 
         Control_Factory::add_vgap($defs, 20);
 
@@ -720,6 +727,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
 
             $playlist[PARAM_NAME] = $name;
+            $playlist[PARAM_TYPE] = PARAM_FILE;
 
             $this->plugin->set_playlist($playlist_id, $playlist);
 

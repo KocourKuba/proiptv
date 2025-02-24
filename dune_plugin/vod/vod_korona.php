@@ -28,12 +28,6 @@ require_once 'vod_standard.php';
 
 class vod_korona extends vod_standard
 {
-    const API_ACTION_MOVIE = 'movie';
-    const API_ACTION_SERIAL = 'serial';
-    const API_ACTION_FILTERS = 'filters';
-    const API_ACTION_SEARCH = 'search';
-    const API_ACTION_FILTER = 'filter';
-
     /**
      * @inheritDoc
      */
@@ -198,7 +192,7 @@ class vod_korona extends vod_standard
         }
 
         $param_str = '';
-        $query_id = self::API_ACTION_MOVIE;
+        $query_id = API_ACTION_MOVIE;
         foreach ($filter_params as $key => $value) {
             if ($key === 'source') {
                 $query_id = $value;
@@ -219,7 +213,7 @@ class vod_korona extends vod_standard
             $param_str .= "$key-$value";
         }
 
-        $page_id = $query_id . "_" . self::API_ACTION_FILTER;
+        $page_id = $query_id . "_" . API_ACTION_FILTER;
         $page_idx = $this->get_next_page($page_id);
         if ($page_idx < 0) {
             return array();

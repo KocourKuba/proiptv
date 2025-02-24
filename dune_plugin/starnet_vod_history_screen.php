@@ -147,7 +147,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                         $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
                     } else if ($movie_info[COLUMN_DURATION] !== -1) {
                         $percent = (int)((float)$movie_info[COLUMN_POSITION] / (float)$movie_info[COLUMN_DURATION] * 100);
-                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp), $percent);
+                        $detailed_info = TR::t('vod_screen_last_viewed__3', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp), $percent);
                     } else {
                         $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
                     }
