@@ -441,9 +441,7 @@ class Epg_Manager_Xmltv
                 }
                 hd_debug_print_separator();
                 hd_debug_print("Read finished");
-                if (!LogSeverity::$is_debug) {
-                    unlink($index_log);
-                }
+                unlink($index_log);
             }
         }
 

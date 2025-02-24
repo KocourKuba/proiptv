@@ -89,7 +89,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 if (isset($user_input->action_origin)) {
                     return Action_Factory::close_and_run(
-                        Action_Factory::invalidate_all_folders($plugin_cookies, null, $tv_play_action)
+                        Action_Factory::invalidate_epfs_folders($plugin_cookies, $tv_play_action)
                     );
                 }
 
@@ -393,7 +393,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 break;
         }
 
-        return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+        return Action_Factory::invalidate_epfs_folders($plugin_cookies, $post_action);
     }
 
     /**

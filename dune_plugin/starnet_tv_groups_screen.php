@@ -87,7 +87,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
-        if (!isset($user_input->parent_media_url)) {
+        if (!isset($user_input->parent_media_url, $user_input->selected_media_url)) {
             return null;
         }
 
