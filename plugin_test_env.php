@@ -18,7 +18,7 @@ include 'dune_plugin_fw.php';
  */
 function __autoload($className)
 {
-    $debug_root = getenv('SHELL') ? '' : '/dune_plugin';
+    $debug_root = getenv('windir') ? '/dune_plugin' : '';
 
     $path = __DIR__ . "$debug_root/$className.php";
     if (file_exists($path)) {

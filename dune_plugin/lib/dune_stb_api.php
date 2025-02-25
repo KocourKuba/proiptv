@@ -488,7 +488,7 @@ function is_limited_apk()
  */
 function is_dune()
 {
-    return (bool)getenv('SHELL');
+    return !getenv('windir');
 }
 
 /**
