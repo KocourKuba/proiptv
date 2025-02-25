@@ -137,7 +137,8 @@ const CONTROL_EPG_SCREEN = 'epg_screen';
 const CONTROL_STREAMING_SCREEN = 'streaming_screen';
 const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
 const CONTROL_DETECT_ID = 'detect_id';
-
+const CONTROL_EDIT_TYPE = 'playlist_type';
+const CONTROL_EXT_PARAMS = 'ext_params';
 
 # Special groups ID
 const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';
@@ -184,6 +185,7 @@ const DEFAULT_CHANNEL_ICON_PATH_SQ = 'plugin_file://icons/default_channel_sq.png
 # Common parameters
 const PLUGIN_PARAMETERS = "parameters";
 const PLUGIN_SETTINGS = "settings";
+const PLAYLIST_PARAMETERS = "playlists_parameters";
 const PLUGIN_ORDERS = "orders";
 const PLUGIN_HISTORY = "history";
 const VOD_HISTORY = 'vod_history';
@@ -200,6 +202,9 @@ const COLUMN_TITLE = 'title';
 const COLUMN_NAME = 'name';
 const COLUMN_TYPE = 'type';
 const COLUMN_URI = 'uri';
+const COLUMN_USER_AGENT = 'user_agent';
+const COLUMN_DUNE_PARAMS = 'dune_params';
+const COLUMN_USE_DUNE_PARAMS = 'use_dune_params';
 const COLUMN_CACHE = 'cache';
 const COLUMN_PLAYLIST_TYPE = 'playlist_type';
 const COLUMN_PARAMS = 'params';
@@ -249,7 +254,7 @@ const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_CACHE_PATH = 'xmltv_cache_path';
 const PARAM_EXT_XMLTV_SOURCES = 'xmltv_sources';
 const PARAM_SELECTED_XMLTV_SOURCES = 'selected_xmltv_sources';
-const PARAM_DISABLE_DUNE_PARAMS = 'use_dune_params';
+const PARAM_USE_DUNE_PARAMS = 'use_dune_params';
 const PARAM_DUNE_PARAMS = 'dune_params';
 const PARAM_DUNE_FORCE_TS = 'dune_force_ts';
 const PARAM_EXT_VLC_OPTS = 'ext_vlc_opts';
@@ -273,8 +278,9 @@ const PARAM_STREAM_FORMAT = 'stream_format';
 const PARAM_CUSTOM_DELETE_STRING = 'custom_delete_string';
 const PARAM_CUSTOM_DELETE_REGEX = 'custom_delete_regex';
 const PARAM_PROVIDER = 'provider';
-const PARAM_TYPE = 'type';
 const PARAM_NAME = 'name';
+const PARAM_VALUE = 'value';
+const PARAM_TYPE = 'type';
 const PARAM_LINK = 'link';
 const PARAM_CONF = 'config';
 const PARAM_FILE = 'file';

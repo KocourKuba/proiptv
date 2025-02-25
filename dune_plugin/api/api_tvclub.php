@@ -176,10 +176,10 @@ class api_tvclub extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server, &$error_msg)
+    public function SetServer($server, &$params, &$error_msg)
     {
-        $old = $this->getParameter(MACRO_SERVER_ID);
-        $this->setParameter(MACRO_SERVER_ID, $server);
+        $old = $params[MACRO_SERVER_ID];
+        parent::SetServer($server, $params, $error_msg);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->settings->current->server->id)) {
@@ -188,7 +188,7 @@ class api_tvclub extends api_default
             return true;
         }
 
-        $this->setParameter(MACRO_SERVER_ID, $old);
+        parent::SetServer($old, $params, $error_msg);
         if (isset($response->error->msg)) {
             $error_msg = $response->error->msg;
         }

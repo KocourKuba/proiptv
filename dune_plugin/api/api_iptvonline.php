@@ -229,16 +229,16 @@ class api_iptvonline extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server, &$error_msg)
+    public function SetServer($server, &$params, &$error_msg)
     {
-        $params[CURLOPT_POST] = true;
-        $params[CURLOPT_POSTFIELDS] = array("server_location" => $server);
+        $curl_params[CURLOPT_POST] = true;
+        $curl_params[CURLOPT_POSTFIELDS] = array("server_location" => $server);
 
-        $response = $this->make_json_request(API_COMMAND_SET_DEVICE, $params);
+        $response = $this->make_json_request(API_COMMAND_SET_DEVICE, $curl_params);
         if (isset($response->status) && $response->status === 200) {
             $this->device = $response;
             $this->collect_servers($selected);
-            $this->setParameter(MACRO_SERVER_ID, $selected);
+            $params[MACRO_SERVER_ID] = $selected;
             $this->account_info = null;
             return true;
         }
@@ -298,23 +298,21 @@ class api_iptvonline extends api_default
     }
 
     /**
-     * set server
-     * @param string $id
-     * @return void
+     * @inheritDoc
      */
-    public function SetPlaylist($id)
+    public function SetPlaylist($id, &$params)
     {
         hd_debug_print(null, true);
         hd_debug_print("SetPlaylist: $id");
 
-        $params[CURLOPT_POST] = true;
-        $params[CURLOPT_POSTFIELDS] = array("user_playlists" => $id);
+        $curl_params[CURLOPT_POST] = true;
+        $curl_params[CURLOPT_POSTFIELDS] = array("user_playlists" => $id);
 
-        $response = $this->make_json_request(API_COMMAND_SET_DEVICE, $params);
+        $response = $this->make_json_request(API_COMMAND_SET_DEVICE, $curl_params);
         if (isset($response->status) && $response->status === 200) {
             $this->device = $response;
             $this->collect_playlists($selected);
-            parent::SetPlaylist($selected);
+            parent::SetPlaylist($selected, $params);
             $this->account_info = null;
         } else {
             hd_debug_print("Can't set playlist: " . json_encode($response));

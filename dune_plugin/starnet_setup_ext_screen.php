@@ -95,7 +95,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         $history_path = $this->plugin->get_history_path();
         hd_debug_print("history path: $history_path");
         $display_path = HD::string_ellipsis(get_slash_trailed_path($history_path));
-
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_HISTORY_CHANGE_FOLDER, TR::t('setup_history_folder_path'), $display_path, $folder_icon, self::CONTROLS_WIDTH);
 

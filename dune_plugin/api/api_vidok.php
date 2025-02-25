@@ -158,10 +158,10 @@ class api_vidok extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server, &$error_msg)
+    public function SetServer($server, &$params, &$error_msg)
     {
-        $old = $this->getParameter(MACRO_SERVER_ID);
-        $this->setParameter(MACRO_SERVER_ID, $server);
+        $old = $params[MACRO_SERVER_ID];
+        parent::SetServer($server, $params, $error_msg);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->settings->value)) {
@@ -170,9 +170,7 @@ class api_vidok extends api_default
             return true;
         }
 
-        $this->setParameter(MACRO_SERVER_ID, $old);
-
-        $error_msg = '';
+        parent::SetServer($old, $params, $error_msg);
         return false;
     }
 

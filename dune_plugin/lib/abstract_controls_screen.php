@@ -72,6 +72,15 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     }
 
     /**
+     * @param int $return_index
+     * @return void
+     */
+    public function set_return_index($return_index)
+    {
+        $this->return_index = $return_index;
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)

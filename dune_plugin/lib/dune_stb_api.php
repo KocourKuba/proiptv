@@ -188,6 +188,14 @@ class SwitchOnOff
     {
         return safe_get_value(self::$translated, $val, self::$translated[self::off]);
     }
+
+    public static function toggle($val)
+    {
+        if ($val === self::on) {
+            return self::off;
+        }
+        return self::on;
+    }
 }
 
 # Video zoom values for media_url string (|||dune_params|||zoom:value)

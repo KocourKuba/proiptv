@@ -193,7 +193,7 @@ setup_channels_square_icons = Verwenden Sie quadratische Symbole
 setup_channels_picons_source = Quelle der Kanalsymbole
 setup_channels_ext_params = Zusätzliche Parameter
 setup_channels_user_agent = HTTP User-Agent
-setup_channels_disable_dune_params = Deaktivieren Sie dune_params
+setup_channels_enable_dune_params = Aktivieren Sie dune_params
 setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Dune zwingen, den Stream zu erkennen
 setup_channels_info__4 = "Vorname:|%s||Verknüpfung:|%s||Typ:|%s||Kanal-ID:|%s"
@@ -266,7 +266,7 @@ folder_screen_password = Passwort für den SMB-Ordner
 
 tv_screen_search_channel = Geben Sie den Namen oder einen Teil des Namens für die Suche ein
 tv_screen_not_found = Nichts gefunden.
-tv_screen_playlists_setup = Einrichtung der Wiedergabelisten
+tv_screen_playlists_setup = Einstellungen für Wiedergabelisten
 tv_screen_hide_channel = Kanal ausblenden (CLEAR)
 tv_screen_hide_group_channels = Gruppenkanäle ausblenden
 tv_screen_hide_plus = „+“ ausblenden

@@ -357,7 +357,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 if ($provider->request_provider_token()) {
-                    return $this->plugin->do_edit_provider_ext_dlg($this);
+                    return $this->plugin->do_edit_provider_ext_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
                 }
 
                 hd_debug_print("Can't get provider token");

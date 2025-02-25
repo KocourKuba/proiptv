@@ -193,7 +193,7 @@ setup_channels_square_icons = Квадратные иконки
 setup_channels_picons_source = Источник иконок каналов
 setup_channels_ext_params = Дополнительные параметры
 setup_channels_user_agent = HTTP User-Agent
-setup_channels_disable_dune_params = Отключить dune_params
+setup_channels_enable_dune_params = Включить dune_params
 setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Force Dune to detect stream
 setup_channels_info__4 = Название:|%s||Ссылка:|%s||Тип:|%s||ID канала:|%s
@@ -266,7 +266,7 @@ folder_screen_password = Пароль SMB папки
 
 tv_screen_search_channel = Введите название или часть названия канала для поиска
 tv_screen_not_found = Ничего не найдено.
-tv_screen_playlists_setup = Настройки плейлистов
+tv_screen_playlists_setup = Настройки плейлиста
 tv_screen_hide_channel = Скрыть канал (CLEAR)
 tv_screen_hide_group_channels = Скрыть группу каналов
 tv_screen_hide_plus = Скрыть '+'

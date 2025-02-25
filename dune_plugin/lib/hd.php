@@ -276,7 +276,7 @@ class HD
                     $zip->addFile($rootPath . $name, $name);
                 }
             }
-            foreach ($plugin->get_all_playlists() as $key => $playlist) {
+            foreach ($plugin->get_all_playlists_ids() as $key) {
                 foreach (array(".settings", ".db") as $ext) {
                     $name = $key . $ext;
                     $path = $rootPath . $name;

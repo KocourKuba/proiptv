@@ -159,7 +159,7 @@ class api_sharaclub extends api_default
                     $this->servers[(int)$server->id] = $server->name;
                 }
 
-                $this->playlist_info[PARAM_PARAMS][MACRO_SERVER_ID] = (int)$response->current;
+                $this->plugin->set_playlist_parameter($this->playlist_id, MACRO_SERVER_ID, $response->current);
             }
         }
 
@@ -169,10 +169,9 @@ class api_sharaclub extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server, &$error_msg)
+    public function SetServer($server, &$params, &$error_msg)
     {
-        $old = $this->getParameter(MACRO_SERVER_ID);
-        $this->playlist_info[PARAM_PARAMS][MACRO_SERVER_ID] = $server;
+        $old = safe_get_value($params, MACRO_SERVER_ID);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->status) && (int)$response->status === 1) {
@@ -180,7 +179,7 @@ class api_sharaclub extends api_default
             return true;
         }
 
-        $this->playlist_info[PARAM_NAME][MACRO_SERVER_ID] = $old;
+        $params[MACRO_SERVER_ID] = $old;
         $error_msg = '';
         return false;
     }
@@ -192,9 +191,9 @@ class api_sharaclub extends api_default
     {
         $servers = $this->GetServers();
         if (!empty($servers)) {
-            $idx = $this->getParameter(MACRO_SERVER_ID);
+            $idx = $this->plugin->get_playlist_parameter($this->playlist_id, MACRO_SERVER_ID);
             if (empty($idx)) {
-                $this->playlist_info[PARAM_PARAMS][MACRO_SERVER_ID] = key($servers);
+                $this->plugin->set_playlist_parameter($this->playlist_id, MACRO_SERVER_ID, key($servers));
             }
         }
     }

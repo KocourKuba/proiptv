@@ -31,9 +31,9 @@ class api_edem extends api_default
     /**
      * @inheritDoc
      */
-    public function fill_default_provider_info($matches, &$hash)
+    public function fill_default_provider_info($matches, &$playlist_id)
     {
-        $info = parent::fill_default_provider_info($matches, $hash);
+        $info = parent::fill_default_provider_info($matches, $playlist_id);
 
         $ext_vars = explode('|', $matches[2]);
         if (empty($ext_vars)) {
@@ -51,13 +51,13 @@ class api_edem extends api_default
 
         if (isset($vars[1])) {
             hd_debug_print("set subdomain: $vars[0]", true);
-            $info[PARAM_PARAMS][MACRO_SUBDOMAIN] = $vars[0];
+            $info[MACRO_SUBDOMAIN] = $vars[0];
             hd_debug_print("set ottkey: $vars[1]", true);
-            $info[PARAM_PARAMS][MACRO_OTTKEY] = $vars[1];
+            $info[MACRO_OTTKEY] = $vars[1];
         } else {
-            $info[PARAM_PARAMS][MACRO_SUBDOMAIN] = 'junior.edmonst.net';
+            $info[MACRO_SUBDOMAIN] = 'junior.edmonst.net';
             hd_debug_print("set ottkey: $vars[0]", true);
-            $info[PARAM_PARAMS][MACRO_OTTKEY] = $vars[0];
+            $info[MACRO_OTTKEY] = $vars[0];
         }
 
         if (!empty($ext_vars[1])) {
@@ -65,10 +65,10 @@ class api_edem extends api_default
                 return false;
             }
 
-            $info[PARAM_PARAMS][MACRO_VPORTAL] = $ext_vars[1];
+            $info[MACRO_VPORTAL] = $ext_vars[1];
         }
 
-        $hash = $this->get_hash($info);
+        $playlist_id = $this->get_hash($info);
 
         return $info;
     }
@@ -79,14 +79,16 @@ class api_edem extends api_default
      */
     public function get_hash($info)
     {
-        $str = safe_get_value($info[PARAM_PARAMS], MACRO_SUBDOMAIN, '');
-        $str .= safe_get_value($info[PARAM_PARAMS], MACRO_OTTKEY, '');
-        $str .= safe_get_value($info[PARAM_PARAMS], MACRO_VPORTAL, '');
+        $str = safe_get_value($info, MACRO_SUBDOMAIN, '');
+        $str .= safe_get_value($info, MACRO_OTTKEY, '');
+        $str .= safe_get_value($info, MACRO_VPORTAL, '');
         if (empty($str)) {
             return '';
         }
 
-        return $this->getId() . "_" . Hashed_Array::hash($info[PARAM_TYPE] . $info[PARAM_NAME] . $str);
+        $type = safe_get_value($info, PARAM_TYPE, PARAM_PROVIDER);
+        $name = safe_get_value($info, PARAM_NAME);
+        return $this->getId() . "_" . Hashed_Array::hash($type . $name . $str);
     }
 
     /**
@@ -107,6 +109,7 @@ class api_edem extends api_default
                 CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $this->getParameter(MACRO_SUBDOMAIN),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
+
         Control_Factory::add_text_field($defs, $handler, null,
             CONTROL_OTT_KEY, TR::t('ottkey'), $this->getParameter(MACRO_OTTKEY),
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
@@ -133,26 +136,28 @@ class api_edem extends api_default
      */
     public function ApplySetupUI($user_input)
     {
-        $id = $user_input->{CONTROL_EDIT_ITEM};
+        $playlist_id = $user_input->{CONTROL_EDIT_ITEM};
 
-        if (is_null($this->playlist_info)) {
+        $params = $this->plugin->get_playlist_parameters($playlist_id);
+        if (empty($params)) {
             hd_debug_print("Create new provider info", true);
-            $this->playlist_info[PARAM_TYPE] = PARAM_PROVIDER;
-            $this->playlist_info[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
-            $this->setParameter(PARAM_PROVIDER, $user_input->{PARAM_PROVIDER});
+            $params[PARAM_TYPE] = PARAM_PROVIDER;
+            $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
+            $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         }
 
         $changed = false;
 
-        if ($this->playlist_info[PARAM_NAME] !== $user_input->{CONTROL_EDIT_NAME}) {
-            $this->playlist_info[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
+        if (safe_get_value($params, PARAM_NAME) !== $user_input->{CONTROL_EDIT_NAME}) {
+            $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
             $changed = true;
         }
 
         if (empty($user_input->{CONTROL_OTT_SUBDOMAIN})) {
-            $this->setParameter(MACRO_SUBDOMAIN, $this->getConfigValue(CONFIG_SUBDOMAIN));
+            $this->plugin->set_playlist_parameter($playlist_id, MACRO_SUBDOMAIN, $this->getConfigValue(CONFIG_SUBDOMAIN));
             $changed = true;
-        } else if ($this->checkAndSetParameter($user_input, CONTROL_OTT_SUBDOMAIN, MACRO_SUBDOMAIN)) {
+        } else if ($this->IsParameterChanged($user_input, CONTROL_OTT_SUBDOMAIN, MACRO_SUBDOMAIN)) {
+            $params[MACRO_SUBDOMAIN] = $user_input->{$param};
             $changed = true;
         }
 
@@ -160,7 +165,8 @@ class api_edem extends api_default
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
 
-        if ($this->checkAndSetParameter($user_input, CONTROL_OTT_KEY, MACRO_OTTKEY)) {
+        if ($this->IsParameterChanged($user_input, CONTROL_OTT_KEY, MACRO_OTTKEY)) {
+            $params[MACRO_OTTKEY] = $user_input->{$param};
             $changed = true;
         }
 
@@ -168,7 +174,8 @@ class api_edem extends api_default
             return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'));
         }
 
-        if ($this->checkAndSetParameter($user_input, CONTROL_VPORTAL, MACRO_VPORTAL)) {
+        if ($this->IsParameterChanged($user_input, CONTROL_VPORTAL, MACRO_VPORTAL)) {
+            $params[MACRO_VPORTAL] = $user_input->{$param};
             $changed = true;
         }
 
@@ -176,22 +183,22 @@ class api_edem extends api_default
             return null;
         }
 
-        $is_new = empty($id);
-        $id = $is_new ? $this->get_hash($this->playlist_info) : $id;
-        if (empty($id)) {
+        $is_new = empty($playlist_id);
+        $playlist_id = $is_new ? $this->get_hash($params) : $playlist_id;
+        if (empty($playlist_id)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
         }
 
-        hd_debug_print("ApplySetupUI compiled provider ($id) info: " . pretty_json_format($this->playlist_info), true);
+        hd_debug_print("ApplySetupUI compiled provider ($playlist_id) info: " . pretty_json_format($params), true);
 
         if ($is_new) {
-            hd_debug_print("Set default values for id: $id", true);
-            $this->set_default_settings($user_input, $id);
+            hd_debug_print("Set default values for id: $playlist_id", true);
+            $this->set_default_settings($user_input, $playlist_id);
         }
 
-        $this->savePlaylistInfo($id, $this->playlist_info);
-        $this->plugin->clear_playlist_cache($id);
+        $this->plugin->set_playlist_parameters($playlist_id, $params);
+        $this->plugin->clear_playlist_cache($playlist_id);
 
-        return $id;
+        return $playlist_id;
     }
 }

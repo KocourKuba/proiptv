@@ -73,14 +73,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     const DUNE_PARAMS_TABLE = 'dune_params';
     const COOKIES_TABLE = 'cookies';
 
-    const CREATE_PLAYLISTS_TABLE = "CREATE TABLE IF NOT EXISTS %s
-                                    (playlist_id TEXT PRIMARY KEY NOT NULL,
-                                     name TEXT NOT NULL,
-                                     type TEXT,
-                                     uri TEXT,
-                                     playlist_type TEXT DEFAULT 'iptv',
-                                     shortcut TEXT DEFAULT '',
-                                     params TEXT);";
+    const CREATE_PLAYLISTS_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT PRIMARY KEY NOT NULL, shortcut TEXT DEFAULT '');";
+    const CREATE_PARAMETERS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY, value TEXT);";
 
     // orders_xxxx, GROUPS_ORDER_TABLE, VOD_SEARCHES_TABLE, VOD_FILTERS_TABLE, FAV_MOVIE_GROUP_ID
     const CREATE_ORDERED_TABLE = "CREATE TABLE IF NOT EXISTS %s (%s TEXT PRIMARY KEY NOT NULL);";
@@ -104,12 +98,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                                          zoom TEXT,
                                          external_player INTEGER DEFAULT 0);";
 
-    const CREATE_PARAMETERS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY, value TEXT);";
     const CREATE_PLAYLIST_SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', type TEXT DEFAULT '');";
     const CREATE_XMLTV_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                     (hash TEXT PRIMARY KEY NOT NULL, type TEXT, name TEXT NOT NULL, uri TEXT NOT NULL, cache TEXT DEFAULT 'auto');";
     const CREATE_SELECTED_XMTLV_TABLE = "CREATE TABLE IF NOT EXISTS %s (hash TEXT PRIMARY KEY NOT NULL);";
-    const CREATE_DUNE_PARAMS_TABLE = "CREATE TABLE IF NOT EXISTS %s (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '');";
     const CREATE_COOKIES_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                     (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";
 
@@ -324,8 +316,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return null;
         }
 
-        $config = $this->providers->get($name);
-        return is_null($config) ? null : clone $config;
+        $api_class = $this->providers->get($name);
+        return is_null($api_class) ? null : clone $api_class;
     }
 
     /**
@@ -336,35 +328,47 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         hd_debug_print(null, true);
 
         if (is_null($this->active_provider)) {
-            $playlist_id = $this->get_active_playlist_id();
-            $playlist = $this->get_playlist($playlist_id);
-
-            if (empty($playlist) || $playlist[PARAM_TYPE] !== PARAM_PROVIDER) {
-                return null;
-            }
-
-            $this->active_provider = $this->create_provider_class($playlist[PARAM_PARAMS][PARAM_PROVIDER]);
-            if (is_null($this->active_provider)) {
-                hd_debug_print("unknown provider class: " . $playlist[PARAM_PARAMS][PARAM_PROVIDER]);
-                return null;
-            }
-
-            $provider_id = $this->active_provider->getId();
-            if (!$this->active_provider->getEnable()) {
-                hd_debug_print("provider $provider_id is disabled");
-            } else {
-                $this->active_provider->set_provider_playlist_info($playlist_id, $playlist);
-            }
-
-            $name = $this->active_provider->getName();
-            $provider_playlist_id = $this->active_provider->get_provider_playlist_id();
-            hd_debug_print("Using provider $provider_id ($name) playlist id: $provider_playlist_id");
-            if (!$this->active_provider->request_provider_token()) {
-                hd_debug_print("Can't get provider token");
-            }
+            $this->active_provider = $this->get_provider($this->get_active_playlist_id(), true);
         }
 
         return $this->active_provider;
+    }
+
+    /**
+     * @param string $playlist_id
+     * @param bool $request_token
+     * @return api_default|null
+     */
+    public function get_provider($playlist_id, $request_token = false)
+    {
+        hd_debug_print(null, true);
+
+        $params = $this->get_playlist_parameters($playlist_id);
+        if (safe_get_value($params, PARAM_TYPE) !== PARAM_PROVIDER) {
+            return null;
+        }
+
+        $provider_id = safe_get_value($params, PARAM_PROVIDER);
+        $provider = $this->create_provider_class($provider_id);
+        if (is_null($provider)) {
+            hd_debug_print("unknown provider class: $provider_id");
+            return null;
+        }
+
+        if ($provider->getEnable()) {
+            $provider->set_provider_playlist_id($playlist_id);
+            $name = $provider->getName();
+            hd_debug_print("Using provider $provider_id ($name) playlist id: $playlist_id");
+            if ($request_token && !$provider->request_provider_token()) {
+                hd_debug_print("Can't get provider token");
+            }
+        } else {
+            hd_debug_print("provider $provider_id is disabled");
+            $provider = null;
+        }
+
+
+        return $provider;
     }
 
     /**
@@ -373,8 +377,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_active_playlist_id()
     {
         $id = $this->get_parameter(PARAM_CUR_PLAYLIST_ID);
-        if (empty($id) || ($this->get_playlist($id) === null && $this->get_all_playlists_count())) {
-            $this->set_active_playlist_id($this->get_all_playlists()->key());
+        if (empty($id) || (!$this->is_playlist_exist($id) && $this->get_all_playlists_count())) {
+            $ids = $this->get_all_playlists_ids();
+            $this->set_active_playlist_id(reset($ids));
         }
 
         return $id;
@@ -393,19 +398,12 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
-     * @return Hashed_Array
+     * @return array
      */
-    public function get_all_playlists()
+    public function get_all_playlists_ids()
     {
         $table_name = self::PLAYLISTS_TABLE;
-        $rows = $this->sql_params->fetch_array("SELECT * FROM $table_name ORDER BY ROWID;");
-        $playlists = new Hashed_Array();
-        foreach ($rows as $row) {
-            $row[PARAM_PARAMS] = json_decode($row[PARAM_PARAMS], true);
-            $playlists->set($row[COLUMN_PLAYLIST_ID], $row);
-        }
-
-        return $playlists;
+        return $this->sql_params->fetch_single_array("SELECT playlist_id FROM $table_name ORDER BY ROWID;", 'playlist_id');
     }
 
     /**
@@ -419,46 +417,124 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
     /**
      * @param string $id
-     * @return array
+     * @return integer
      */
-    public function get_playlist($id)
+    public function is_playlist_exist($id)
     {
         $table_name = self::PLAYLISTS_TABLE;
         $q_key = Sql_Wrapper::sql_quote($id);
-        $row = $this->sql_params->query_value("SELECT * FROM $table_name WHERE playlist_id = $q_key LIMIT 1;", true);
-        if (empty($row)) {
-            return null;
-        }
-
-        $row[PARAM_PARAMS] = json_decode($row[PARAM_PARAMS], true);
-        return $row;
+        $query = "SELECT COUNT(*) FROM $table_name WHERE playlist_id = $q_key LIMIT 1;";
+        return $this->sql_params->query_value($query);
     }
 
     /**
-     * @param string $id
+     * @param string $playlist_id
      * @param array $stg
      * @return void
      */
-    public function set_playlist($id, $stg)
+    public function set_playlist_parameters($playlist_id, $stg)
     {
         hd_debug_print(null, true);
-        hd_debug_print("Setting playlist $id to " . json_encode($stg), true);
+        hd_debug_print("Setting playlist $playlist_id to " . json_encode($stg), true);
 
         $table_name = self::PLAYLISTS_TABLE;
-        $q_id = Sql_Wrapper::sql_quote($id);
-        $list = array(
-            COLUMN_PLAYLIST_ID => $id,
-            COLUMN_NAME => $stg[PARAM_NAME],
-            'type' => $stg[PARAM_TYPE],
-            'uri' => $stg[PARAM_URI],
-            'playlist_type' => $stg[PARAM_PL_TYPE],
-            'params' => json_encode($stg[PARAM_PARAMS]),);
 
-        $insert = Sql_Wrapper::sql_make_insert_list($list);
-        $query = "INSERT OR IGNORE INTO $table_name $insert;";
-        $set = Sql_wrapper::sql_make_set_list($list);
-        $query .= "UPDATE $table_name $set WHERE playlist_id = $q_id;";
+        // update playlist table
+        $q_id = Sql_Wrapper::sql_quote($playlist_id);
+        $query = "INSERT OR IGNORE INTO $table_name (playlist_id) VALUES ($q_id);";
+        $this->sql_params->exec($query);
 
+        // add params array to stg array as pair
+        if (isset($stg[PARAM_PARAMS])) {
+            foreach ($stg[PARAM_PARAMS] as $k => $v) {
+                $stg[$k] = $v;
+            }
+            unset($stg[PARAM_PARAMS]);
+        }
+
+        // create table for playlist parameters if not exist
+        $parameters_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $query = sprintf(self::CREATE_PARAMETERS_TABLE, $parameters_table);
+        // save parameter
+        foreach ($stg as $name => $value) {
+            $q_name = Sql_Wrapper::sql_quote($name);
+            $q_value = Sql_Wrapper::sql_quote($value);
+            $query .= "INSERT OR IGNORE INTO $parameters_table (name, value) VALUES ($q_name, $q_value);";
+            $query .= "UPDATE $parameters_table SET value = $q_value WHERE name = $q_name;";
+        }
+        $this->sql_params->exec_transaction($query);
+    }
+
+    /**
+     * @param string $playlist_id
+     * @return array
+     */
+    public function get_playlist_parameters($playlist_id)
+    {
+        $params_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $query = "SELECT * FROM $params_table;";
+        $rows = $this->sql_params->fetch_array($query);
+        if (empty($rows)) {
+            return array();
+        }
+        $params = array();
+        foreach ($rows as $row) {
+            $params[$row[PARAM_NAME]] = $row[PARAM_VALUE];
+        }
+        return $params;
+    }
+
+    /**
+     * @param string $playlist_id
+     * @param string $name
+     * @param string $value
+     * @return void
+     */
+    public function set_playlist_parameter($playlist_id, $name, $value)
+    {
+        hd_debug_print(null, true);
+        // create table for playlist parameters if not exist
+        $parameters_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $query = sprintf(self::CREATE_PARAMETERS_TABLE, $parameters_table);
+        // save parameter
+        $q_name = Sql_Wrapper::sql_quote($name);
+        $q_value = Sql_Wrapper::sql_quote($value);
+        $query .= "INSERT OR IGNORE INTO $parameters_table (name, value) VALUES ($q_name, $q_value);";
+        $query .= "UPDATE $parameters_table SET value = $q_value WHERE name = $q_name;";
+        $this->sql_params->exec_transaction($query);
+    }
+
+    /**
+     * @param string $playlist_id
+     * @param string $name
+     * @param string $default
+     * @return string
+     */
+    public function get_playlist_parameter($playlist_id, $name, $default = '')
+    {
+        if (empty($playlist_id)) {
+            return $default;
+        }
+
+        hd_debug_print(null, true);
+        $parameters_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $q_name = Sql_Wrapper::sql_quote($name);
+        $query = "SELECT value FROM $parameters_table WHERE name = $q_name;";
+        $value = $this->sql_params->query_value($query);
+        return empty($value) ? $default : $value;
+    }
+
+    /**
+     * @param string $playlist_id
+     * @param string $name
+     * @return void
+     */
+    public function remove_playlist_parameter($playlist_id, $name)
+    {
+        hd_debug_print(null, true);
+        $parameters_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $q_name = Sql_Wrapper::sql_quote($name);
+        $query = "DELETE FROM $parameters_table WHERE name = $q_name;";
         $this->sql_params->exec($query);
     }
 
@@ -479,6 +555,16 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $table_name = self::PLAYLISTS_TABLE;
         return $this->sql_params->fetch_array("SELECT playlist_id, shortcut FROM $table_name WHERE shortcut != '' ORDER BY shortcut;");
+    }
+
+    /**
+     * @param string $id
+     * @return string
+     */
+    public function get_playlist_shortcut($id)
+    {
+        $table_name = self::PLAYLISTS_TABLE;
+        return $this->sql_params->query_value("SELECT shortcut FROM $table_name WHERE playlist_id = '$id';");
     }
 
     /**
@@ -1089,10 +1175,27 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function generate_dune_params($channel_id, $ext_params)
     {
-        if (!$this->get_bool_setting(PARAM_DISABLE_DUNE_PARAMS, false)) {
-            $plugin_dune_params = $this->get_dune_params();
-            if (!empty($plugin_dune_params)) {
-                $plugin_dune_params = array_slice($plugin_dune_params, 0);
+        $params = $this->get_playlist_parameters($this->get_active_playlist_id());
+        if (safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on) === SwitchOnOff::on) {
+            $playlist_dune_params = array();
+            $dune_params_str = safe_get_value($params, PARAM_DUNE_PARAMS);
+            if (!empty($dune_params_str)) {
+                $dune_params = explode(',', $dune_params_str);
+                foreach ($dune_params as $param) {
+                    $param_pair = explode(':', $param);
+                    if (empty($param_pair) || count($param_pair) < 2) continue;
+
+                    $param_pair[0] = trim($param_pair[0]);
+                    if (strpos($param_pair[1], ",,") !== false) {
+                        $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
+                    } else {
+                        $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
+                    }
+
+                    $playlist_dune_params[$param_pair[0]] = $param_pair[1];
+                }
+
+                $playlist_dune_params = array_slice($playlist_dune_params, 0);
             }
 
             $provider = $this->get_active_provider();
@@ -1101,7 +1204,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 $provider_dune_params = dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS));
             }
 
-            $all_params = array_merge($provider_dune_params, $plugin_dune_params);
+            $all_params = array_merge($provider_dune_params, $playlist_dune_params);
             $dune_params = array_unique($all_params);
         }
 
@@ -1826,12 +1929,12 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function is_vod_playlist()
     {
-        $playlist = $this->get_playlist($this->get_active_playlist_id());
-        if ($playlist === null) {
+        $params = $this->get_playlist_parameters($this->get_active_playlist_id());
+        if (empty($params)) {
             return false;
         }
 
-        return safe_get_value($playlist, PARAM_PL_TYPE) === CONTROL_PLAYLIST_VOD;
+        return safe_get_value($params, PARAM_PL_TYPE) === CONTROL_PLAYLIST_VOD;
     }
 
     /**
@@ -1847,13 +1950,13 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         $tmp_file = '';
         try {
-            $playlist = $this->get_playlist($playlist_id);
-            if ($playlist === null) {
+            if (!$this->is_playlist_exist($playlist_id)) {
                 hd_debug_print("Tv playlist not defined");
                 throw new Exception("Tv playlist not defined");
             }
 
-            hd_debug_print("Using playlist " . json_encode($playlist));
+            $params = $this->get_playlist_parameters($playlist_id);
+            hd_debug_print("Using playlist " . json_encode($params));
 
             $this->perf->reset('start');
 
@@ -1865,46 +1968,50 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 $force = $this->is_playlist_cache_expired($tmp_file);
             }
 
+            $type = safe_get_value($params, PARAM_TYPE);
             if ($force !== false) {
-                hd_debug_print("m3u playlist: {$playlist[PARAM_NAME]} ($playlist_id)");
-                if ($playlist[PARAM_TYPE] === PARAM_PROVIDER) {
+                hd_debug_print("m3u playlist: {$params[PARAM_NAME]} ($playlist_id)");
+                if ($type === PARAM_PROVIDER) {
                     $provider = $this->get_active_provider();
                     if (is_null($provider)) {
-                        throw new Exception("Unable to init provider to download: " . json_encode($playlist));
+                        throw new Exception("Unable to init provider to download: " . json_encode($params));
                     }
 
                     if ($provider->get_provider_info($force) === false) {
-                        throw new Exception("Unable to get provider info to download: " . json_encode($playlist));
+                        throw new Exception("Unable to get provider info to download: " . json_encode($params));
                     }
 
                     hd_debug_print("Load provider playlist to: $tmp_file");
                     $res = $provider->load_playlist($tmp_file);
                     $logfile = $provider->getCurlWrapper()->get_raw_response_headers();
                 } else {
-                    if ($playlist[PARAM_TYPE] === PARAM_FILE) {
-                        hd_debug_print("m3u copy local file: {$playlist[PARAM_URI]} to $tmp_file");
-                        $res = copy($playlist[PARAM_URI], $tmp_file);
-                    } else if ($playlist[PARAM_TYPE] === PARAM_LINK || $playlist[PARAM_TYPE] === PARAM_CONF) {
-                        $playlist_url = $playlist[PARAM_URI];
-                        hd_debug_print("m3u download link: $playlist_url");
-                        if (!is_proto_http($playlist_url)) {
-                            throw new Exception("Incorrect playlist url: $playlist_url");
+                    $uri = safe_get_value($params, PARAM_URI);
+                    if ($type === PARAM_FILE) {
+                        if (empty($uri)) {
+                            throw new Exception("Empty url: $uri");
                         }
-                        list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file);
+                        hd_debug_print("m3u copy local file: $uri to $tmp_file");
+                        $res = copy($uri, $tmp_file);
+                    } else if ($type === PARAM_LINK || $type === PARAM_CONF) {
+                        hd_debug_print("m3u download link: $uri");
+                        if (!is_proto_http($uri)) {
+                            throw new Exception("Incorrect playlist url: $uri");
+                        }
+                        list($res, $logfile) = Curl_Wrapper::simple_download_file($uri, $tmp_file);
                     } else {
                         throw new Exception("Unknown playlist type");
                     }
 
-                    $id_map = safe_get_value($playlist[PARAM_PARAMS], PARAM_ID_MAPPER);
+                    $id_map = safe_get_value($params, PARAM_ID_MAPPER);
                     hd_debug_print("playlist id map: $id_map");
                     if (empty($id_map) || $id_map === 'by_default') {
-                        $playlist[PARAM_PARAMS][PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
+                        $params[PARAM_ID_MAPPER] = ATTR_CHANNEL_HASH;
                     }
                 }
 
                 if (!$res || !file_exists($tmp_file)) {
                     $exception_msg = TR::load('err_load_playlist');
-                    if ($playlist[PARAM_TYPE] !== PARAM_FILE && !empty($logfile)) {
+                    if ($type !== PARAM_FILE && !empty($logfile)) {
                         $exception_msg .= "\n\n$logfile";
                     }
                     throw new Exception($exception_msg);
@@ -1925,7 +2032,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             }
 
             $icon_replace_pattern = array();
-            if ($playlist[PARAM_TYPE] === PARAM_PROVIDER) {
+            if ($type === PARAM_PROVIDER) {
                 $provider = $this->get_active_provider();
                 if (is_null($provider)) {
                     throw new Exception("Unable to init provider");
@@ -1944,7 +2051,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 }
             } else {
                 $id_parser = '';
-                $id_map = safe_get_value($playlist[PARAM_PARAMS], PARAM_ID_MAPPER, '');
+                $id_map = safe_get_value($params, PARAM_ID_MAPPER, '');
                 hd_debug_print("ID mapper for playlist: $id_map", true);
             }
 
@@ -1977,7 +2084,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $err .= $ex->getMessage();
             HD::set_last_error($this->get_pl_error_name(), $err);
             print_backtrace_exception($ex);
-            if (isset($playlist[PARAM_TYPE]) && file_exists($tmp_file)) {
+            if (empty($type) && file_exists($tmp_file)) {
                 unlink($tmp_file);
             }
             return false;
@@ -2036,14 +2143,16 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         hd_debug_print(null, true);
 
-        $playlist = $this->get_playlist($playlist_id);
-        if ($playlist === null) {
+        if (!$this->is_playlist_exist($playlist_id)) {
             hd_debug_print("Playlist not defined");
             return false;
         }
 
-        $provider = null;
-        if ($playlist[PARAM_TYPE] === PARAM_PROVIDER) {
+        $params = $this->get_playlist_parameters($playlist_id);
+        $type = safe_get_value($params, PARAM_TYPE);
+        $pl_type = safe_get_value($params, PARAM_PL_TYPE);
+
+        if ($type === PARAM_PROVIDER) {
             $provider = $this->get_active_provider();
             if (is_null($provider)) {
                 hd_debug_print("Unknown provider");
@@ -2054,8 +2163,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 hd_debug_print("Failed to get VOD playlist from provider");
                 return false;
             }
-        } else if (!isset($playlist[PARAM_PL_TYPE]) || $playlist[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
-            hd_debug_print("Unknown playlist type or IPTV playlist");
+        } else if ($pl_type !== CONTROL_PLAYLIST_VOD) {
+            hd_debug_print("Playlist is not VOD type");
             return false;
         }
 
@@ -2065,7 +2174,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         try {
             if ($force !== false) {
-                if ($provider !== null) {
+                $uri = safe_get_value($params, PARAM_URI);
+                if ($type === PARAM_PROVIDER) {
                     hd_debug_print("download provider vod");
                     $res = $provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
                     if ($res === false) {
@@ -2073,18 +2183,24 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                         HD::set_last_error($this->get_vod_error_name(), $exception_msg);
                         throw new Exception($exception_msg);
                     }
-                } else if ($playlist[PARAM_TYPE] === PARAM_FILE) {
-                    hd_debug_print("m3u copy local file: {$playlist[PARAM_URI]} to $tmp_file");
-                    $res = copy($playlist[PARAM_URI], $tmp_file);
+                } else if ($type === PARAM_FILE) {
+                    hd_debug_print("m3u copy local file: $uri to $tmp_file");
+                    if (empty($uri)) {
+                        throw new Exception("Empty playlist path");
+                    }
+
+                    $res = copy($uri, $tmp_file);
                     if ($res === false) {
                         $exception_msg = TR::load('err_load_vod') . PHP_EOL . PHP_EOL .
-                            "m3u copy local file: {$playlist[PARAM_URI]} to $tmp_file";
+                            "m3u copy local file: $uri to $tmp_file";
                         throw new Exception($exception_msg);
                     }
-                } else if ($playlist[PARAM_TYPE] === PARAM_LINK || $playlist[PARAM_TYPE] === PARAM_CONF) {
-                    $playlist_url = $playlist[PARAM_URI];
-                    hd_debug_print("m3u download link: $playlist_url");
-                    list($res, $logfile) = Curl_Wrapper::simple_download_file($playlist_url, $tmp_file);
+                } else if ($type === PARAM_LINK || $type === PARAM_CONF) {
+                    hd_debug_print("m3u download link: $uri");
+                    if (empty($uri)) {
+                        throw new Exception("Empty playlist url");
+                    }
+                    list($res, $logfile) = Curl_Wrapper::simple_download_file($uri, $tmp_file);
                     if ($res === false) {
                         $exception_msg = TR::load('err_load_vod') . "\n\n$logfile";
                         throw new Exception($exception_msg);
@@ -2803,8 +2919,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 $params['extension'] = PLAYLIST_PATTERN;
                 $title = TR::t('setup_channels_src_edit_playlists');
                 $active_key = $this->get_active_playlist_id();
-                if (!empty($active_key) && $this->get_playlist($active_key) !== null) {
-                    $sel_id = $this->get_all_playlists()->get_idx($active_key);
+                if (!empty($active_key) && $this->is_playlist_exist($active_key)) {
+                    $sel_id = array_search($active_key, $this->get_all_playlists_ids());
                 }
                 break;
 
@@ -2839,32 +2955,21 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         hd_debug_print(null, true);
         hd_debug_print("Provider id: $provider_id, Playlist id: $playlist_id", true);
 
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
         if (empty($playlist_id)) {
             // add new provider
             $provider = $this->create_provider_class($provider_id);
-            hd_debug_print("new provider : $provider_id", true);
+            $provider->set_provider_playlist_id($playlist_id);
         } else {
-            // edit existing provider
-            $item = $this->get_playlist($playlist_id);
-            if (!is_null($item)) {
-                $name = $item[PARAM_NAME];
-                hd_debug_print("existing provider: $playlist_id", true);
-                hd_debug_print("provider info:" . pretty_json_format($item), true);
-                $provider = $this->create_provider_class($item[PARAM_PARAMS][PARAM_PROVIDER]);
-                if (!is_null($provider)) {
-                    $provider->set_provider_playlist_info($playlist_id, $item);
-                }
-            } else {
-                $provider = $this->create_provider_class($provider_id);
-            }
+            // Edit existing
+            $provider = $this->get_provider($playlist_id);
         }
 
         if (is_null($provider)) {
-            return $defs;
+            return null;
         }
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
 
         if (empty($name)) {
             $name = $provider->getName();
@@ -2880,15 +2985,25 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
     /**
      * @param User_Input_Handler $handler
+     * @param string $provider_id
+     * * @param string $playlist_id
      * @return array|null
      */
-    public function do_edit_provider_ext_dlg($handler)
+    public function do_edit_provider_ext_dlg($handler, $provider_id, $playlist_id)
     {
         hd_debug_print(null, true);
 
-        $provider = $this->get_active_provider();
+        if (empty($playlist_id)) {
+            // add new provider
+            $provider = $this->create_provider_class($provider_id);
+            $provider->set_provider_playlist_id($playlist_id);
+        } else {
+            // Edit existing
+            $provider = $this->get_provider($playlist_id);
+        }
+
         if (is_null($provider)) {
-            return array();
+            return null;
         }
 
         $defs = $provider->GetExtSetupUI($handler);
@@ -2896,10 +3011,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return null;
         }
 
-        $head = array();
-        Control_Factory::add_vgap($head, 20);
-
-        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", array_merge($head, $defs), true);
+        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
     }
 
     /**
@@ -2910,10 +3022,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         hd_debug_print(null, true);
 
+        // edit existing or new provider in starnet_edit_list_screen
         if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
             $provider = $this->get_active_provider();
         } else {
-            // edit existing or new provider in starnet_edit_list_screen
             $provider = $this->create_provider_class($user_input->{PARAM_PROVIDER});
         }
 
@@ -4366,6 +4478,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $db = '';
         switch ($id) {
+            case PLAYLIST_PARAMETERS:
+                $table_name = "parameters_";
+                break;
+
             case XMLTV_SOURCE_EXTERNAL:
             case XMLTV_SOURCE_PLAYLIST:
                 $table_name = self::XMLTV_TABLE;
@@ -4466,8 +4582,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
                 hd_debug_print("$key => '" . $param . "'");
                 if ($key === PARAM_PLAYLIST_STORAGE) {
-                    foreach ($param as $k => $stg) {
-                        if (empty($k)) continue;
+                    foreach ($param as $playlist_id => $stg) {
+                        if (empty($playlist_id)) continue;
 
                         if (($stg->type === PARAM_FILE || $stg->type === PARAM_LINK)
                             && !isset($stg->params[PARAM_PL_TYPE])) {
@@ -4486,13 +4602,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                         $values = array(
                             PARAM_TYPE => $stg->type,
                             PARAM_NAME => $stg->name,
-                            PARAM_URI => safe_get_value($stg->params, PARAM_URI),
-                            PARAM_PL_TYPE => safe_get_value($stg->params, PARAM_PL_TYPE),
                         );
-                        unset($stg->params[PARAM_URI]);
-                        unset($stg->params[PARAM_PL_TYPE]);
-                        $values[PARAM_PARAMS] = $stg->params;
-                        $this->set_playlist($k, $values);
+                        $values = array_merge($values, $stg->params);
+                        $this->set_playlist_parameters($playlist_id, $values);
                     }
                     unset($parameters[$key]);
                 } else if ($key === PARAM_EXT_XMLTV_SOURCES) {
@@ -4734,22 +4846,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
-     * Get dune_params
-     *
-     * @return array
-     */
-    public function get_dune_params()
-    {
-        $table_name = self::DUNE_PARAMS_TABLE;
-        $ret_array = array();
-        foreach ($this->sql_playlist->fetch_array("SELECT * FROM $table_name;") as $pair) {
-            $ret_array[$pair['param']] = $pair['value'];
-        }
-
-        return $ret_array;
-    }
-
-    /**
      * Get cookie
      *
      * @param string $name
@@ -4795,24 +4891,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $this->sql_playlist->exec("DELETE FROM $table_name WHERE param = '$name';");
     }
 
-    /**
-     * Set dune_params
-     *
-     * @param array $value
-     */
-    public function set_dune_params($value)
-    {
-        $table_name = self::DUNE_PARAMS_TABLE;
-        $query = "DROP TABLE IF EXISTS $table_name;";
-        $query .= sprintf(self::CREATE_DUNE_PARAMS_TABLE, $table_name);
-        foreach ($value as $k => $v) {
-            $q_k = Sql_Wrapper::sql_quote($k);
-            $q_v = Sql_Wrapper::sql_quote($v);
-            $query .= "INSERT INTO $table_name (param, value) VALUES ($q_k, $q_v);";
-        }
-        $this->sql_playlist->exec_transaction($query);
-    }
-
     ////////////////////////////////////////////////////////
     /// init database
 
@@ -4837,16 +4915,14 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return false;
         }
 
-        $playlist = $this->get_playlist($playlist_id);
-        hd_debug_print("Active playlist: " . json_encode($playlist), true);
-
         hd_debug_print_separator();
-        if (empty($playlist)) {
+        if (!$this->is_playlist_exist($playlist_id)) {
             hd_debug_print("Playlist info for ID: $playlist_id is not exist!");
             return false;
         }
 
-        hd_debug_print("Process playlist: {$playlist[PARAM_NAME]} ($playlist_id)");
+        $params = $this->get_playlist_parameters($playlist_id);
+        hd_debug_print("Process playlist: {$params[PARAM_NAME]} ($playlist_id)");
 
         $db_name = get_data_path("$playlist_id.db");
 
@@ -4865,14 +4941,12 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $playlist_xmltv = self::get_table_name(XMLTV_SOURCE_PLAYLIST);
         $selected_xmltv = self::SELECTED_XMLTV_TABLE;
         $settings_table = self::SETTINGS_TABLE;
-        $dune_params_table = self::DUNE_PARAMS_TABLE;
         $cookies_table = self::COOKIES_TABLE;
 
         // create settings table
         $query  = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $settings_table);
         $query .= sprintf(self::CREATE_XMLTV_TABLE, $playlist_xmltv);
         $query .= sprintf(self::CREATE_SELECTED_XMTLV_TABLE, $selected_xmltv);
-        $query .= sprintf(self::CREATE_DUNE_PARAMS_TABLE, $dune_params_table);
         $query .= sprintf(self::CREATE_COOKIES_TABLE, $cookies_table);
 
         // create tables for vod search, vod filters, vod favorites
@@ -4969,14 +5043,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                 } else if ($key === PARAM_CHANNELS_ZOOM || $key === PARAM_CHANNEL_PLAYER) {
                     unset($plugin_settings[$key]);
                 } else if ($key === PARAM_DUNE_PARAMS) {
-                    hd_debug_print("Convert 'dune_params' to 'dune_params' table");
-                    $query = '';
-                    foreach ($value as $k => $v) {
-                        $q_k = Sql_Wrapper::sql_quote($k);
-                        $q_v = Sql_Wrapper::sql_quote($v);
-                        $query .= "INSERT OR IGNORE INTO $dune_params_table (param, value) VALUES ($q_k, $q_v);";
-                    }
-                    $this->sql_playlist->exec_transaction($query);
+                    hd_debug_print("Move 'dune_params' to playlist parameter");
+                    $params[PARAM_DUNE_PARAMS] = json_encode($value);
+                    $this->set_playlist_parameters($playlist_id, $params);
                     unset($plugin_settings[PARAM_DUNE_PARAMS]);
                 }
             }
@@ -5015,13 +5084,13 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $provider_playlist_id = '';
         $provider = null;
         $plugin_orders_name = $playlist_id . '_' . PLUGIN_ORDERS;
-        $provider_class = safe_get_value($playlist[PARAM_PARAMS], PARAM_PROVIDER);
+        $provider_class = safe_get_value($params, PARAM_PROVIDER);
         if (empty($provider_class)) {
             hd_debug_print("Playlist is not a IPTV provider");
         } else {
             $provider = $this->create_provider_class($provider_class);
             if (is_null($provider)) {
-                hd_debug_print("Unknown provider class: " . $playlist[PARAM_PARAMS][PARAM_PROVIDER]);
+                hd_debug_print("Unknown provider class: " . $provider_class);
             } else {
                 $provider_id = $provider->getId();
                 if (!$provider->getEnable()) {
@@ -5029,11 +5098,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                     return  false;
                 }
 
-                $provider->set_provider_playlist_info($playlist_id, $playlist);
+                $provider->set_provider_playlist_id($playlist_id);
                 $name = $provider->getName();
                 hd_debug_print("Using provider $provider_id ($name) playlist id: $playlist_id");
 
-                $provider_playlist_id = $provider->getParameter(MACRO_PLAYLIST_ID);
+                $provider_playlist_id = $this->get_playlist_parameter($playlist_id, MACRO_PLAYLIST_ID);
                 $provider_id = empty($provider_playlist_id) ? '' : "_$provider_playlist_id";
                 $plugin_orders_name = $playlist_id . '_' . PLUGIN_ORDERS . $provider_id;
 
@@ -5383,5 +5452,36 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             ATTR_TVG_NAME => TR::load('attribute_name__1', ATTR_TVG_NAME),
             ATTR_CHANNEL_NAME => TR::load('channel_name')
         );
+    }
+
+    public function collect_detect_info($db, &$detect_info)
+    {
+        $table_name = M3uParser::CHANNELS_TABLE;
+        $entries_cnt = $db->query_value("SELECT COUNT(*) FROM $table_name;");
+
+        $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
+        $stat = M3uParser::detectBestChannelId($db);
+
+        $detect_info = TR::load('channels__1', $entries_cnt) . PHP_EOL;
+        $max_dupes = $entries_cnt + 1;
+        foreach ($stat as $key => $value) {
+            if ($key === ATTR_PARSED_ID) continue;
+            if ($value === -1) {
+                $detect_info .= TR::load('duplicates__1', $mapper_ops[$key]) . PHP_EOL;
+                continue;
+            }
+
+            $detect_info .= TR::load('duplicates__2', $mapper_ops[$key], $value) . PHP_EOL;
+            if ($value < $max_dupes) {
+                $max_dupes = $value;
+                $minkey = $key;
+            }
+        }
+
+        $minkey = empty($minkey) ? ATTR_CHANNEL_HASH : $minkey;
+        hd_debug_print("Best ID: $minkey");
+        $detect_info .= PHP_EOL . TR::load('selected__1', $mapper_ops[$minkey]) . PHP_EOL;
+
+        return $minkey;
     }
 }

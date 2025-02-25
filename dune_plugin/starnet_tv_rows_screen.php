@@ -329,15 +329,21 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_DO_EDIT_PROVIDER:
             case ACTION_DO_EDIT_PROVIDER_EXT:
+                $provider = $this->plugin->get_active_provider();
+                if (is_null($provider)) {
+                    return null;
+                }
+
                 if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
-                    $provider = $this->plugin->get_active_provider();
-                    if (is_null($provider)) {
-                        return null;
-                    }
                     return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
                 }
 
-                return $this->plugin->do_edit_provider_ext_dlg($this);
+                if ($provider->request_provider_token()) {
+                    return $this->plugin->do_edit_provider_ext_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
+                }
+
+                hd_debug_print("Can't get provider token");
+                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
             case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
@@ -1379,11 +1385,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             // popup menu for left side list
             hd_debug_print("in menu side", true);
             $playlist_id = $this->plugin->get_active_playlist_id();
-            $playlist = $this->plugin->get_playlist($playlist_id);
-            if ($playlist !== null) {
+            $params = $this->plugin->get_playlist_parameters($playlist_id);
+            if ($params !== null) {
                 $menu_items[] = $this->plugin->create_menu_item($this,
                     ACTION_RELOAD,
-                    TR::t('playlist_name_msg__1', $playlist[PARAM_NAME]),
+                    TR::t('playlist_name_msg__1', $params[PARAM_NAME]),
                     "refresh.png",
                     array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
                 );

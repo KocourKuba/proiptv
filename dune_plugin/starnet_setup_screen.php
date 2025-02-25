@@ -97,7 +97,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             TR::t('setup_category_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Channels settings 6
+        // Playlist settings 6
         Control_Factory::add_image_button($defs, $this, null, CONTROL_PLAYLISTS_SCREEN,
             TR::t('tv_screen_playlists_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
@@ -167,7 +167,10 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 return Action_Factory::open_folder(Starnet_Setup_Category_Screen::get_media_url_str(), TR::t('setup_category_title'));
 
             case CONTROL_PLAYLISTS_SCREEN: // show epg settings dialog
-                return Action_Factory::open_folder(Starnet_Setup_Playlists_Screen::get_media_url_str(), TR::t('tv_screen_playlists_setup'));
+                return Action_Factory::open_folder(
+                    Starnet_Setup_Playlists_Screen::get_media_url_string($this->plugin->get_active_playlist_id()),
+                    TR::t('tv_screen_playlists_setup')
+                );
 
             case CONTROL_EPG_SCREEN: // show epg settings dialog
                 return Action_Factory::open_folder(Starnet_Setup_Epg_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
