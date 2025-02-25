@@ -40,9 +40,9 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
      *
      * @return false|string
      */
-    public static function get_media_url_string($playlist_id)
+    public static function get_media_url_string($playlist_id, $ret_idx)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'playlist_id' => $playlist_id));
+        return MediaURL::encode(array('screen_id' => static::ID, 'playlist_id' => $playlist_id, 'return_index' => $ret_idx));
     }
 
     /**
@@ -129,7 +129,14 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run();
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(
+                        Starnet_Setup_Playlists_Screen::ID,
+                        RESET_CONTROLS_ACTION_ID,
+                        null,
+                        array('initial_sel_ndx' => $parent_media_url->return_index)
+                    )
+                );
 
             case PARAM_USER_CATCHUP:
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{$user_input->control_id});
@@ -166,6 +173,6 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
                 break;
         }
 
-        return Action_Factory::reset_controls($this->get_control_defs($user_input->parent_media_url, $plugin_cookies), $post_action);
+        return Action_Factory::reset_controls($this->get_control_defs(MediaURL::decode($user_input->parent_media_url), $plugin_cookies), $post_action);
     }
 }

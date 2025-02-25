@@ -36,6 +36,8 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
     const CONTROL_RESET_PLAYLIST_DLG = 'reset_playlist';
     const ACTION_RESET_PLAYLIST_DLG_APPLY = 'reset_playlist_apply';
 
+    private $ret_idx = 4;
+
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -97,6 +99,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
                     Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_EXT_DLG,
                         TR::t('edit_ext_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), self::CONTROLS_WIDTH);
+                    $this->ret_idx = 6;
                 }
             }
         } else {
@@ -156,11 +159,11 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
+        $sel_ndx = -1;
         $post_action = null;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $playlist_id = isset($parent_media_url->playlist_id) ? $parent_media_url->playlist_id : $this->plugin->get_active_playlist_id();
         $params = $this->plugin->get_playlist_parameters($playlist_id);
-
         $type = safe_get_value($params, PARAM_TYPE);
         $uri = safe_get_value($params, PARAM_URI);
         $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID);
@@ -183,7 +186,10 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 );
 
             case CONTROL_EXT_PARAMS:
-                return Action_Factory::open_folder(Starnet_Setup_Ext_Playlists_Screen::get_media_url_string($playlist_id), TR::t('setup_extended_setup'));
+                return Action_Factory::open_folder(
+                    Starnet_Setup_Ext_Playlists_Screen::get_media_url_string($playlist_id, $this->ret_idx),
+                    TR::t('setup_extended_setup')
+                );
 
             case CONTROL_URL_PATH:
                 if ($type === PARAM_FILE) {
@@ -317,8 +323,11 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->safe_clear_current_epg_cache();
                 $this->plugin->remove_playlist_data($this->plugin->get_active_playlist_id());
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
+            case RESET_CONTROLS_ACTION_ID:
+                $sel_ndx = safe_get_member($user_input, 'initial_sel_ndx', -1);
         }
 
-        return Action_Factory::reset_controls($this->get_control_defs($user_input->parent_media_url, $plugin_cookies), $post_action);
+        return Action_Factory::reset_controls($this->get_control_defs(MediaURL::decode($user_input->parent_media_url), $plugin_cookies), $post_action, $sel_ndx);
     }
 }

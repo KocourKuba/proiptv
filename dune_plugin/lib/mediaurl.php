@@ -64,6 +64,7 @@ require_once 'json_serializer.php';
  * @property string|null episode_id // Episode ID
  * @property string|null genre_id // Movie Genre ID
  * @property string|null name // search name
+ * @property string|null return_index // return index
  */
 class MediaURL extends Json_Serializer
 {
