@@ -118,6 +118,10 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 break;
 
             case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $this->force_parent_reload = true;
                 $this->plugin->clear_tv_history();
                 if ($this->plugin->get_tv_history_count() !== 0) break;

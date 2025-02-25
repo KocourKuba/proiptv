@@ -182,6 +182,10 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 break;
 
             case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $this->force_parent_reload = true;
                 $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null, $plugin_cookies);
                 if ($this->plugin->get_channels_order_count(TV_FAV_GROUP_ID) !== 0) break;

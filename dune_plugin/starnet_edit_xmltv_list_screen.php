@@ -32,7 +32,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     const SCREEN_EDIT_XMLTV_LIST = 'xmltv_list';
     const ACTION_FILE_TEXT_LIST = 'text_list_file';
 
-    const ACTION_CLEAR_APPLY = 'clear_apply';
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CHOOSE_FILE = 'choose_file';
@@ -192,9 +191,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-                    $this, self::ACTION_CONFIRM_CLEAR_DLG_APPLY);
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
-            case self::ACTION_CONFIRM_CLEAR_DLG_APPLY:
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($this->plugin->get_epg_manager() !== null) {
                     foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL) as $hash) {
                         $this->plugin->safe_clear_selected_epg_cache($hash);

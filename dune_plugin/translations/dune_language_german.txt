@@ -333,7 +333,7 @@ epg_not_ready_desc = EPG wird noch verarbeitet, bitte warten
 epg_no_sources = Kein XMLTV-EPG
 epg_no_sources_desc = Keine XMLTV-EPG-Quelle ausgewählt. EPG kann nicht angezeigt werden!
 fake_epg_program = Programm
-playlist_name_msg__1 = Aktuelle Playlist: %s
+playlist_name_msg__1 = Wiedergabeliste aktualisieren: %s
 
 warn_msg2__1 = Fehlende oder nicht vollständige Daten für die URL-Generierung.\nMöglicherweise wurden keine Kontodaten eingegeben oder der Kanal ist im aktuellen Abonnement nicht vorhanden.\n %s
 warn_msg3 = Abonnementdetails können nicht angezeigt werden.

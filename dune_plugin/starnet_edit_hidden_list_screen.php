@@ -32,9 +32,6 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
     const SCREEN_EDIT_HIDDEN_GROUPS = 'groups';
     const SCREEN_EDIT_HIDDEN_CHANNELS = 'channels';
 
-    const ACTION_CLEAR_APPLY = 'clear_apply';
-    const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -105,9 +102,9 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-                    $this, self::ACTION_CONFIRM_CLEAR_DLG_APPLY);
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
-            case self::ACTION_CONFIRM_CLEAR_DLG_APPLY:
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
                     $channels = $this->plugin->get_channels($parent_media_url->group_id, PARAM_DISABLED);
                     $this->plugin->set_channel_visible($channels, true);

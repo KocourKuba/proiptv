@@ -31,7 +31,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 {
     const ID = 'tv_groups';
 
-    const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
     const ACTION_DO_EPG_SETTINGS = 'do_epg_settings';
 
     ///////////////////////////////////////////////////////////////////////
@@ -99,7 +98,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
-                    return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, self::ACTION_CONFIRM_DLG_APPLY);
+                    return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_DLG_APPLY);
                 }
 
                 $this->force_parent_reload = false;
@@ -264,7 +263,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
 
-            case self::ACTION_CONFIRM_DLG_APPLY:
+            case ACTION_CONFIRM_DLG_APPLY:
                 $this->force_parent_reload = false;
                 return Action_Factory::invalidate_all_folders($plugin_cookies,null, Action_Factory::close_and_run());
 
@@ -287,8 +286,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         null, array(ACTION_RESET_TYPE => ACTION_SORT_ALL));
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 } else {
+                    $refresh_menu = $this->plugin->refresh_playlist_menu($this);
                     $group_id = safe_get_member($sel_media_url, COLUMN_GROUP_ID);
-                    $menu_items = $this->plugin->common_categories_menu($this, $group_id);
+                    $menu_items = array_merge($refresh_menu, $this->plugin->common_categories_menu($this, $group_id));
                 }
 
                 return empty($menu_items) ? null : Action_Factory::show_popup_menu($menu_items);
@@ -429,6 +429,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $group_id = safe_get_member($sel_media_url, COLUMN_GROUP_ID);
                 if ($group_id === TV_HISTORY_GROUP_ID) {
                     $this->plugin->clear_tv_history();

@@ -214,6 +214,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 break;
 
             case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 hd_debug_print($media_url, true);
                 if ($media_url->group_id === TV_HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
@@ -1384,23 +1388,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         } else {
             // popup menu for left side list
             hd_debug_print("in menu side", true);
-            $playlist_id = $this->plugin->get_active_playlist_id();
-            $params = $this->plugin->get_playlist_parameters($playlist_id);
-            if ($params !== null) {
-                $menu_items[] = $this->plugin->create_menu_item($this,
-                    ACTION_RELOAD,
-                    TR::t('playlist_name_msg__1', $params[PARAM_NAME]),
-                    "refresh.png",
-                    array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
-                );
-
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-            }
-
+            $refresh_menu = $this->plugin->refresh_playlist_menu($this);
             $media_url = MediaURL::decode($user_input->selected_row_id);
             $row_id = json_decode($media_url->row_id);
             $group_id = safe_get_member($row_id, COLUMN_GROUP_ID);
-            $menu_items = array_merge($menu_items, $this->plugin->common_categories_menu($this, $group_id, false));
+            $menu_items = array_merge($refresh_menu, $menu_items, $this->plugin->common_categories_menu($this, $group_id, false));
         }
 
         return $menu_items;
