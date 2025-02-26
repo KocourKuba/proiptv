@@ -102,6 +102,10 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 return Action_Factory::update_regular_folder($range, true, $sel_ndx);
 
             case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $this->plugin->get_history(HISTORY_MOVIES)->clear();
                 $this->set_changes();
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);

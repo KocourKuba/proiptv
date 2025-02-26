@@ -39,12 +39,10 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
     const ACTION_FILE_XMLTV = 'xmltv_file';
     const ACTION_FILE_TEXT_LIST = 'text_list_file';
 
-    const ACTION_CLEAR_APPLY = 'clear_apply';
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CHOOSE_FILE = 'choose_file';
     const ACTION_ADD_PROVIDER_POPUP = 'add_provider';
-    const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ACTION_SHOW_QR = 'show_qr';
     const ACTION_XMLTV_CACHE_POPUP = 'xmltv_cache_time';
     const ACTION_XMLTV_CACHE_SELECTED = 'xmltv_cache_selected';
@@ -405,9 +403,9 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
-                    $this, self::ACTION_CONFIRM_CLEAR_DLG_APPLY);
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
-            case self::ACTION_CONFIRM_CLEAR_DLG_APPLY:
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 switch ($edit_list) {
                     case self::SCREEN_EDIT_EPG_LIST:
                         $epg_manager = $this->plugin->get_epg_manager();

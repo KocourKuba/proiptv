@@ -1,4 +1,4 @@
-﻿<?php
+﻿<?php /** @noinspection ALL */
 
 /**
  * Search recusively for files in a base directory matching a glob pattern.

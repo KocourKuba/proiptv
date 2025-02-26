@@ -260,6 +260,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 hd_debug_print($media_url, true);
                 if ($media_url->group_id === HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
