@@ -301,21 +301,21 @@ class Starnet_Edit_List_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEM_TOP:
                 $order = $this->get_order($edit_list);
-                if (!$order->arrange_item($selected_id, Ordered_Array::DOWN)) {
+                if (!$order->arrange_item($selected_id, Ordered_Array::TOP)) {
                     return null;
                 }
 
-                $user_input->sel_ndx = $this->plugin->tv->get_special_groups_count();
+                $user_input->sel_ndx = 0;
                 $this->set_changes();
                 break;
 
             case ACTION_ITEM_BOTTOM:
                 $order = $this->get_order($edit_list);
-                if (!$order->arrange_item($selected_id, Ordered_Array::DOWN)) {
+                if (!$order->arrange_item($selected_id, Ordered_Array::BOTTOM)) {
                     return null;
                 }
 
-                $user_input->sel_ndx = $this->plugin->tv->get_groups_order()->size() + $this->plugin->tv->get_special_groups_count() - 1;
+                $user_input->sel_ndx = $order->size() - 1;
                 $this->set_changes();
                 break;
 

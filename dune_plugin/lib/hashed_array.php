@@ -33,11 +33,17 @@ require_once 'json_serializer.php';
  */
 class Hashed_Array extends Json_Serializer implements Iterator
 {
-    /** Direction to the begin */
+    /** Direction up to the begin */
     const UP = -1;
 
-    /** Direction to the end */
+    /** Direction down to the end */
     const DOWN = 1;
+
+    /** Direction to the top */
+    const TOP = PHP_INT_MIN;
+
+    /** Direction to the bottom */
+    const BOTTOM = PHP_INT_MAX;
 
     /**
      * @var array
@@ -352,16 +358,38 @@ class Hashed_Array extends Json_Serializer implements Iterator
         if ($k === false || $direction === 0)
             return false;
 
-        if ($direction < 0 && $k !== 0) {
-            $t = $this->seq[$k - 1];
-            $this->seq[$k - 1] = $this->seq[$k];
-            $this->seq[$k] = $t;
-        } else if ($direction > 0 && $k !== count($this->seq) - 1) {
-            $t = $this->seq[$k + 1];
-            $this->seq[$k + 1] = $this->seq[$k];
-            $this->seq[$k] = $t;
-        } else {
-            return false;
+        switch ($direction) {
+            case self::UP:
+                if ($k !== 0) {
+                    $t = $this->seq[$k - 1];
+                    $this->seq[$k - 1] = $this->seq[$k];
+                    $this->seq[$k] = $t;
+                }
+                break;
+            case self::DOWN:
+                if ($k !== count($this->seq) - 1) {
+                    $t = $this->seq[$k + 1];
+                    $this->seq[$k + 1] = $this->seq[$k];
+                    $this->seq[$k] = $t;
+                }
+                break;
+            case self::TOP:
+                if ($k !== 0) {
+                    $t = $this->seq[$k];
+                    array_splice($this->seq, $k, 1);
+                    array_unshift($this->seq, $t);
+                }
+                break;
+            case self::BOTTOM:
+                $last = count($this->seq) - 1;
+                if ($k !== $last) {
+                    $t = $this->seq[$k];
+                    array_splice($this->seq, $k, 1);
+                    $this->seq[$last] = $t;
+                }
+                break;
+            default:
+                return false;
         }
 
         return true;

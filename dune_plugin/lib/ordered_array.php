@@ -32,10 +32,16 @@ require_once 'json_serializer.php';
  */
 class Ordered_Array extends Json_Serializer implements Iterator
 {
+    /** Direction up to the begin */
     const UP = -1;
+
+    /** Direction down to the end */
     const DOWN = 1;
 
+    /** Direction to the top */
     const TOP = PHP_INT_MIN;
+
+    /** Direction to the bottom */
     const BOTTOM = PHP_INT_MAX;
 
     /**
