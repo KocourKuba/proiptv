@@ -920,7 +920,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         }
 
         $player_state = get_player_state_assoc();
-        if (isset($player_state['playback_state']) && $player_state['playback_state'] === PLAYBACK_PLAYING) {
+        if (safe_get_value($player_state, PLAYBACK_STATE) === PLAYBACK_PLAYING) {
             return Action_Factory::invalidate_folders(array(), null, true);
         }
 
@@ -1616,13 +1616,13 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $path = smb_tree::get_folder_info($this->get_parameter(PARAM_HISTORY_PATH));
         if (is_null($path)) {
-            $path = get_data_path('history');
+            $path = get_data_path(HISTORY_SUBDIR);
         } else {
             $path = get_slash_trailed_path($path);
-            if ($path === get_data_path() || $path === get_data_path('history/')) {
+            if ($path === get_data_path() || $path === get_slash_trailed_path(get_data_path(HISTORY_SUBDIR))) {
                 // reset old settings to new
                 $this->set_parameter(PARAM_HISTORY_PATH, '');
-                $path = get_data_path('history');
+                $path = get_data_path(HISTORY_SUBDIR);
             }
         }
 
@@ -1635,7 +1635,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function set_history_path($path = null)
     {
-        if (is_null($path) || $path === get_data_path('history')) {
+        if (is_null($path) || $path === get_data_path(HISTORY_SUBDIR)) {
             $this->set_parameter(PARAM_HISTORY_PATH, '');
             return;
         }
@@ -1687,11 +1687,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         if (isset($this->playback_points[$id])) {
             $player_state = get_player_state_assoc();
-            if (isset($player_state['playback_state'], $player_state['playback_position'])
-                && ($player_state['playback_state'] === PLAYBACK_PLAYING || $player_state['playback_state'] === PLAYBACK_STOPPED)) {
+            $state = safe_get_value($player_state, PLAYBACK_STATE);
+            if ($state === PLAYBACK_PLAYING || $state === PLAYBACK_STOPPED) {
 
                 // if channel does support archive do not update current point
-                $this->playback_points[$id] += ($this->playback_points[$id] !== 0) ? $player_state['playback_position'] : 0;
+                $this->playback_points[$id] += ($this->playback_points[$id] !== 0) ? safe_get_value($player_state, PLAYBACK_POSITION, 0) : 0;
                 hd_debug_print("channel_id $id at time mark: {$this->playback_points[$id]}", true);
             }
         }
@@ -1704,8 +1704,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function push_tv_history($channel_id, $archive_ts)
     {
         $player_state = get_player_state_assoc();
-        if (isset($player_state['player_state']) && $player_state['player_state'] !== 'navigator') {
-            if (!isset($player_state['last_playback_event']) || ($player_state['last_playback_event'] !== PLAYBACK_PCR_DISCONTINUITY)) {
+        if (isset($player_state[PLAYER_STATE]) && $player_state[PLAYER_STATE] !== PLAYER_STATE_NAVIGATOR) {
+            if (!isset($player_state[LAST_PLAYBACK_EVENT]) || ($player_state[LAST_PLAYBACK_EVENT] !== PLAYBACK_PCR_DISCONTINUITY)) {
                 $list = array(COLUMN_CHANNEL_ID => $channel_id, COLUMN_TIMESTAMP => $archive_ts);
                 $table_name = self::get_table_name(TV_HISTORY);
                 $this->current_playback_channel_id = $channel_id;

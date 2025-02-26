@@ -45,6 +45,9 @@ const VIDEO_ZOOM_FULL_SCREEN = 'full_enlarge';
 const VIDEO_ZOOM_STRETCH_TO_FULL_SCREEN = 'full_stretch';
 
 # Player states
+const PLAYER_STATE = 'player_state';
+const PLAYBACK_STATE = 'playback_state';
+const PLAYBACK_POSITION = 'playback_position';
 const PLAYER_STATE_STANDBY = 'standby';
 const PLAYER_STATE_BLACK_SCREEN = 'black_screen';
 const PLAYER_STATE_NAVIGATOR = 'navigator';
@@ -63,6 +66,7 @@ const PLAYBACK_FINISHED = 'finished';
 const PLAYBACK_DEINITIALIZING = 'deinitializing';
 const PLAYBACK_PCR_DISCONTINUITY = 'pcr_discontinuity';
 const PLAYBACK_MEDIA_OPEN_FAILED = 'media_open_failed';
+const LAST_PLAYBACK_EVENT = 'last_playback_event';
 
 const CACHED_IMAGE_SUBDIR = 'cached_img';
 

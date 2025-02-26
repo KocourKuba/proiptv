@@ -246,7 +246,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
             case self::CONTROL_COPY_TO_PLUGIN:
                 hd_debug_print("copy to: " . get_data_path());
                 try {
-                    HD::copy_data($this->plugin->get_history_path(), "/_" . PARAM_TV_HISTORY_ITEMS . "$/", get_data_path('history'));
+                    HD::copy_data($this->plugin->get_history_path(), "/_" . PARAM_TV_HISTORY_ITEMS . "$/", get_data_path(HISTORY_SUBDIR));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
