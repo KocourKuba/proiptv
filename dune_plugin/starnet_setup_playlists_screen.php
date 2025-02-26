@@ -166,16 +166,11 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
         $params = $this->plugin->get_playlist_parameters($playlist_id);
         $type = safe_get_value($params, PARAM_TYPE);
         $uri = safe_get_value($params, PARAM_URI);
-        $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID);
         $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if ($detect_id === CONTROL_DETECT_ID) {
-                    return User_Input_Handler_Registry::create_action($this, CONTROL_DETECT_ID);
-                }
-
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_action_screen(
                         Starnet_Setup_Screen::ID,
@@ -197,9 +192,9 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                         array(
                             'screen_id' => Starnet_Folder_Screen::ID,
                             'source_window_id' => static::ID,
-                            'allow_network' => !is_limited_apk(),
-                            'choose_file' => $uri,
-                            'extension' => $user_input->extension,
+                            'allow_network' => false,
+                            'choose_file' => ACTION_CHOOSE_FILE,
+                            'extension' => PLAYLIST_PATTERN,
                             'end_action' => ACTION_REFRESH_SCREEN,
                             'windowCounter' => 1,
                         )

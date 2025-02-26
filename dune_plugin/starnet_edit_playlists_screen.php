@@ -36,7 +36,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
-    const ACTION_CHOOSE_FILE = 'choose_file';
     const ACTION_ADD_PROVIDER = 'add_provider';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
     const ACTION_ASSIGN_SHORTCUT_POPUP = 'assign_shortcut';
@@ -204,13 +203,13 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             case ACTION_PL_TYPE_DLG_APPLY:
                 return $this->apply_edit_m3u_type($user_input);
 
-            case self::ACTION_CHOOSE_FILE:
+            case ACTION_CHOOSE_FILE:
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_file' => $user_input->selected_action,
-                        'extension' => $user_input->extension,
+                        'extension' => PLAYLIST_PATTERN,
                         'allow_network' => ($user_input->selected_action === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk(),
                         'read_only' => true,
                         'windowCounter' => 1,
@@ -344,7 +343,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         // Add File
         $menu_items[] = $this->plugin->create_menu_item($this,
-            self::ACTION_CHOOSE_FILE,
+            ACTION_CHOOSE_FILE,
             TR::t('select_file'),
             "m3u_file.png",
             array(
@@ -362,7 +361,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         // Add list file
         $menu_items[] = $this->plugin->create_menu_item($this,
-            self::ACTION_CHOOSE_FILE,
+            ACTION_CHOOSE_FILE,
             TR::t('edit_list_import_list'),
             "text_file.png",
             array(

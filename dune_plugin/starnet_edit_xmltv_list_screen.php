@@ -34,7 +34,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
-    const ACTION_CHOOSE_FILE = 'choose_file';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
 
     const CONTROL_CACHE_TIME = 'cache_time';
@@ -215,7 +214,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
 
-            case self::ACTION_CHOOSE_FILE:
+            case ACTION_CHOOSE_FILE:
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
@@ -258,7 +257,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         // Add list file
         $menu_items[] = $this->plugin->create_menu_item($this,
-            self::ACTION_CHOOSE_FILE,
+            ACTION_CHOOSE_FILE,
             TR::t('edit_list_import_list'),
             "text_file.png",
             array('selected_action' => self::ACTION_FILE_TEXT_LIST, 'extension' => 'txt|lst')
