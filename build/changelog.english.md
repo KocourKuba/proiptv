@@ -1,4 +1,4 @@
-﻿### Version 5.1.1010
+﻿### Version 5.1.1012
 - Added confirmations when clearing Favorites/History/Changed channels
 - Fixed bug getting ETag for xmltv cache in case of redirect to another link
 - Fixed a bug with removing a deleted channel from Favorites
