@@ -1,9 +1,10 @@
-﻿### Version 5.1.1012
+﻿### Version 5.1.1014
 - Added confirmations when clearing Favorites/History/Changed channels
 - Fixed bug getting ETag for xmltv cache in case of redirect to another link
 - Fixed a bug with removing a deleted channel from Favorites
 - Fixed a bug with moving the playlist to the end/beginning of the list
 - Stalled XMLTV indexing flags were not always removed
+- Fixed a bug with searching for icons in XMLTV sources if one of the sources was not indexed
 - Added HN Media provider (via configuration)
 
 ### Version 5.1.1000
