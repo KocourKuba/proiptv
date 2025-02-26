@@ -101,6 +101,8 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         if (file_exists($vod_cache)) {
             unlink($vod_cache);
         }
+
+        $this->plugin->detachDatabase('vod');
     }
 
     /**
@@ -111,7 +113,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        if (is_null($this->category_index) || is_null($this->category_list)) {
+        if (!isset($this->category_index, $this->category_list)) {
             if (!$this->plugin->vod->fetchVodCategories($this->category_list, $this->category_index)) {
                 hd_debug_print("Error: Fetch categories");
                 return array();

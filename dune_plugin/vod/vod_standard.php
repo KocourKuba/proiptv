@@ -415,9 +415,11 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        if ($this->plugin->get_vod_m3u_parser()->parseVodPlaylist($this->wrapper) === false) {
-            hd_debug_print("Parse VOD failed");
-            return false;
+        if (!$this->plugin->is_database_attached('vod')) {
+            if ($this->plugin->get_vod_m3u_parser()->parseVodPlaylist($this->wrapper) === false) {
+                hd_debug_print("Parse VOD failed");
+                return false;
+            }
         }
 
         $this->perf->reset('start');
