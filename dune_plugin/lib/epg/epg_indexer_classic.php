@@ -155,7 +155,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
         $picons_file = $this->get_index_name(self::INDEX_PICONS);
 
         if (!isset($this->xmltv_indexes[$url_hash][self::INDEX_CHANNELS], $this->xmltv_indexes[$url_hash][self::INDEX_PICONS])
-            && $this->is_all_indexes_valid(array(self::INDEX_CHANNELS, self::INDEX_PICONS))) {
+            && $this->is_all_indexes_valid(array(self::INDEX_CHANNELS, self::INDEX_PICONS), $url_hash)) {
             hd_debug_print("Load cache channels and picons index: $channels_file");
             $data = parse_json_file($channels_file);
             $success = true;
@@ -463,10 +463,13 @@ class Epg_Indexer_Classic extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    public function is_all_indexes_valid($names)
+    public function is_all_indexes_valid($names, $hash = null)
     {
+        if (empty($hash)) {
+            $hash = $this->xmltv_url_params[PARAM_HASH];
+        }
         foreach ($names as $name) {
-            $name = $this->get_index_name($name);
+            $name = $this->cache_dir . DIRECTORY_SEPARATOR . $hash . "_$name$this->index_ext";
             if (!file_exists($name) || filesize($name) === 0) {
                 return false;
             }

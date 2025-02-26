@@ -483,11 +483,15 @@ class Epg_Indexer_Sql extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    public function is_all_indexes_valid($names)
+    public function is_all_indexes_valid($names, $hash = null)
     {
         hd_debug_print(null, true);
 
-        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        if (empty($hash)) {
+            $hash = $this->xmltv_url_params[PARAM_HASH];
+        }
+
+        $db = $this->open_sqlite_db($hash);
         if ($db === false) {
             hd_debug_print("Indexing is in process now");
             return false;

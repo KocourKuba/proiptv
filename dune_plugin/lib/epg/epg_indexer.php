@@ -516,9 +516,10 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      * Check is all indexes is valid
      *
      * @param array $names
+     * @param string|null $hash
      * @return bool
      */
-    abstract public function is_all_indexes_valid($names);
+    abstract public function is_all_indexes_valid($names, $hash = null);
 
     /**
      * Clear memory index
