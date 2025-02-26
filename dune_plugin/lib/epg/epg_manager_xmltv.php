@@ -247,7 +247,7 @@ class Epg_Manager_Xmltv
      */
     public function get_day_epg_items($channel_row, $day_start_ts)
     {
-        $any_lock = $this->is_any_index_locked();
+        $any_lock = $this->is_active_index_locked();
         $day_epg = array();
 
         foreach ($this->xmltv_sources as $key => $params) {
@@ -398,13 +398,29 @@ class Epg_Manager_Xmltv
      *
      * @return bool|array
      */
-    public function is_any_index_locked()
+    public function is_active_index_locked()
     {
         $locks = array();
         $dirs = array();
         foreach ($this->xmltv_sources->get_keys() as $key) {
             $dirs = safe_merge_array($dirs, glob($this->cache_dir . $key . "_*.lock", GLOB_ONLYDIR));
         }
+
+        foreach ($dirs as $dir) {
+            $locks[] = basename($dir);
+        }
+        return empty($locks) ? false : $locks;
+    }
+
+    /**
+     * Check if any locks for all sources
+     *
+     * @return bool|array
+     */
+    public function is_any_index_locked()
+    {
+        $locks = array();
+        $dirs = glob($this->cache_dir . "*.lock", GLOB_ONLYDIR);
 
         foreach ($dirs as $dir) {
             $locks[] = basename($dir);
