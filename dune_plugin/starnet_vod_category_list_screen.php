@@ -109,7 +109,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("MediaUrl: " . $media_url, true);
+        hd_debug_print($media_url, true);
 
         if (is_null($this->category_index) || is_null($this->category_list)) {
             if (!$this->plugin->vod->fetchVodCategories($this->category_list, $this->category_index)) {
@@ -133,10 +133,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $category_list = $parent_category->get_sub_categories();
             } else {
                 foreach ($this->plugin->vod->get_special_groups() as $group) {
-                    if (empty($group)) continue;
-
-                    hd_debug_print("group: '{$group['title']}' disabled: " . var_export($group['disabled'], true), true);
-                    if ($group['disabled']) continue;
+                    if (empty($group) || $group['disabled']) continue;
 
                     switch ($group[COLUMN_GROUP_ID]) {
                         case VOD_FAV_GROUP_ID:

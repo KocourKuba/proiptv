@@ -251,9 +251,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
         }
 
-        // Possible need to add this to setup
-        // disabling end can help problem with overlapping end/start EPG
-
         hd_debug_print("json epg root: " . $parser_params[Epg_Params::EPG_ROOT], true);
         hd_debug_print("json start: " . $parser_params[Epg_Params::EPG_START], true);
         hd_debug_print("json title: " . $parser_params[Epg_Params::EPG_NAME], true);

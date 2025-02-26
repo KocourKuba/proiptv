@@ -833,7 +833,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("MediaUrl: " . $media_url, true);
+        hd_debug_print($media_url, true);
 
         $sticker = Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2);
         $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();

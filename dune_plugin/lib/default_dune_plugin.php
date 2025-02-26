@@ -223,7 +223,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
     public function set_plugin_cookies(&$plugin_cookies)
     {
-        hd_debug_print(null, true);
         $this->plugin_cookies = $plugin_cookies;
     }
 
@@ -325,8 +324,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_active_provider()
     {
-        hd_debug_print(null, true);
-
         if (is_null($this->active_provider)) {
             $this->active_provider = $this->get_provider($this->get_active_playlist_id(), true);
         }
@@ -453,7 +450,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         }
 
         // create table for playlist parameters if not exist
-        $parameters_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $parameters_table = self::get_playlist_parameters_table_name($playlist_id);
         $query = sprintf(self::CREATE_PARAMETERS_TABLE, $parameters_table);
         // save parameter
         foreach ($stg as $name => $value) {
@@ -471,8 +468,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_playlist_parameters($playlist_id)
     {
-        $params_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
-        $query = "SELECT * FROM $params_table;";
+        $parameters_table = self::get_playlist_parameters_table_name($playlist_id);
+        $query = "SELECT * FROM $parameters_table;";
         $rows = $this->sql_params->fetch_array($query);
         if (empty($rows)) {
             return array();
@@ -494,7 +491,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         hd_debug_print(null, true);
         // create table for playlist parameters if not exist
-        $parameters_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $parameters_table = self::get_playlist_parameters_table_name($playlist_id);
         $query = sprintf(self::CREATE_PARAMETERS_TABLE, $parameters_table);
         // save parameter
         $q_name = Sql_Wrapper::sql_quote($name);
@@ -516,8 +513,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return $default;
         }
 
-        hd_debug_print(null, true);
-        $parameters_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $parameters_table = self::get_playlist_parameters_table_name($playlist_id);
         $q_name = Sql_Wrapper::sql_quote($name);
         $query = "SELECT value FROM $parameters_table WHERE name = $q_name;";
         $value = $this->sql_params->query_value($query);
@@ -532,7 +528,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function remove_playlist_parameter($playlist_id, $name)
     {
         hd_debug_print(null, true);
-        $parameters_table = self::get_table_name(PLAYLIST_PARAMETERS) . $playlist_id;
+        $parameters_table = self::get_playlist_parameters_table_name($playlist_id);
         $q_name = Sql_Wrapper::sql_quote($name);
         $query = "DELETE FROM $parameters_table WHERE name = $q_name;";
         $this->sql_params->exec($query);
@@ -843,7 +839,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $items = $this->epg_manager->get_day_epg_items($channel_row, $day_start_tm_sec);
 
             foreach ($items as $time => $value) {
-                if (isset($value[Epg_Params::EPG_END], $value[Epg_Params::EPG_NAME], $value[Epg_Params::EPG_DESC])) {
+                if (!isset($value[Epg_Params::EPG_END], $value[Epg_Params::EPG_NAME], $value[Epg_Params::EPG_DESC])) {
+                    hd_debug_print("malformed epg data: " . pretty_json_format($value));
+                } else {
                     $tm_start = (int)$time + $time_shift;
                     $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
                     $day_epg[] = array(
@@ -858,8 +856,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                             . " - " . format_datetime("m-d H:i", $tm_end)
                             . " {$value[Epg_Params::EPG_NAME]}", true);
                     }
-                } else {
-                    hd_debug_print("malformed epg data: " . pretty_json_format($value));
                 }
             }
         } catch (Exception $ex) {
@@ -4472,10 +4468,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         $db = '';
         switch ($id) {
-            case PLAYLIST_PARAMETERS:
-                $table_name = "parameters_";
-                break;
-
             case XMLTV_SOURCE_EXTERNAL:
             case XMLTV_SOURCE_PLAYLIST:
                 $table_name = self::XMLTV_TABLE;
@@ -4536,6 +4528,17 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         return $only_table ? $table_name : ($db . $table_name);
     }
 
+    /**
+     * Returns table name for playlist
+     *
+     * @param string $playlist_id
+     * @return string
+     */
+    public static function get_playlist_parameters_table_name($playlist_id)
+    {
+        return str_replace('.', '_', "parameters_$playlist_id");
+    }
+
     ///////////////////////////////////////////////////////////////////////
     // Plugin parameters methods (global)
     //
@@ -4579,8 +4582,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                     foreach ($param as $playlist_id => $stg) {
                         if (empty($playlist_id)) continue;
 
-                        if (($stg->type === PARAM_FILE || $stg->type === PARAM_LINK)
-                            && !isset($stg->params[PARAM_PL_TYPE])) {
+                        if (($stg->type === PARAM_FILE || $stg->type === PARAM_LINK) && !isset($stg->params[PARAM_PL_TYPE])) {
                             $stg->params[PARAM_PL_TYPE] = CONTROL_PLAYLIST_IPTV;
                         }
 

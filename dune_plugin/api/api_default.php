@@ -241,7 +241,6 @@ class api_default
      */
     public function set_provider_playlist_id($playlist_id)
     {
-        hd_debug_print(null, true);
         $this->playlist_id = $playlist_id;
         $this->set_config_defaults();
     }
@@ -253,8 +252,6 @@ class api_default
      */
     public function set_config_defaults()
     {
-        hd_debug_print(null, true);
-
         static $config_items = array(
             CONFIG_STREAMS => MACRO_STREAM_ID,
             CONFIG_DOMAINS => MACRO_DOMAIN_ID,

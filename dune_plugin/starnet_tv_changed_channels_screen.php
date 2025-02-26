@@ -146,7 +146,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("MediaUrl: " . $media_url, true);
+        hd_debug_print($media_url, true);
 
         $items = array();
 

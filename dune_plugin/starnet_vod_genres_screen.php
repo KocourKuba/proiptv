@@ -74,7 +74,7 @@ class Starnet_Vod_Genres_Screen extends Abstract_Preloaded_Regular_Screen implem
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("MediaUrl: " . $media_url, true);
+        hd_debug_print($media_url, true);
 
         $this->plugin->vod->ensure_genres_loaded();
 

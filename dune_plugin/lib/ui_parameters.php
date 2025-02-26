@@ -193,8 +193,6 @@ class UI_Parameters
      */
     protected function get_screen_by_id($screen_id)
     {
-        hd_debug_print(null, true);
-
         if (isset($this->screens[$screen_id])) {
             hd_debug_print("'$screen_id'", true);
             return $this->screens[$screen_id];

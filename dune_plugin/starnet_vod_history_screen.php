@@ -127,7 +127,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("MediaUrl: " . $media_url, true);
+        hd_debug_print($media_url, true);
 
         $items = array();
         foreach ($this->plugin->get_all_vod_history() as $movie_info) {
