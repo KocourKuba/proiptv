@@ -458,6 +458,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $group_id = isset($sel_media_url->group_id) ? $sel_media_url->group_id : null;
                 if ($group_id === HISTORY_GROUP_ID) {
                     $this->plugin->get_playback_points()->clear_points();
