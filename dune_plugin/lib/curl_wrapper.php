@@ -460,6 +460,7 @@ class Curl_Wrapper
         $config_data[] = "--insecure";
         $config_data[] = "--silent";
         $config_data[] = "--show-error";
+        $config_data[] = "--fail";
         $config_data[] = "--dump-header " . $this->headers_path;
         $config_data[] = "--connect-timeout 60";
         $config_data[] = "--max-time 90";
@@ -471,6 +472,14 @@ class Curl_Wrapper
         $config_data[] = "--user-agent \"" . HD::get_dune_user_agent() . "\"";
         $config_data[] = "--url \"$this->url\"";
 
+        if ($use_cache) {
+            $etag = $this->get_cached_etag();
+            if (!empty($etag)) {
+                $header = "If-None-Match: " . str_replace('"', '\"', $etag);
+                $config_data[] = "--header \"$header\"";
+            }
+        }
+
         if (is_null($save_file)) {
             $config_data[] = "--output /dev/null";
         } else {
@@ -479,14 +488,6 @@ class Curl_Wrapper
 
         foreach ($this->send_headers as $header) {
             $config_data[] = "--header \"$header\"";
-        }
-
-        if ($use_cache) {
-            $etag = $this->get_cached_etag();
-            if (!empty($etag)) {
-                $header = "If-None-Match: " . str_replace('"', '\"', $etag);
-                $config_data[] = "--header \"$header\"";
-            }
         }
 
         if ($this->is_post) {
