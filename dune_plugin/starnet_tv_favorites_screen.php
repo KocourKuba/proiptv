@@ -212,7 +212,9 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         $items = array();
 
-        foreach ($this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order() as $channel_id) {
+        $all_channels = &$this->plugin->tv->get_special_group(FAVORITES_GROUP_ID)->get_items_order();
+        $unknown = array();
+        foreach ($all_channels as $channel_id) {
             if (!preg_match('/\S/', $channel_id)) {
                 continue;
             }
@@ -220,8 +222,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             $channel = $this->plugin->tv->get_channel($channel_id);
             if (is_null($channel)) {
                 hd_debug_print("Unknown channel $channel_id");
-                $this->set_changes();
-                $this->plugin->tv->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id);
+                $unknown[] = $channel_id;
                 continue;
             }
 
@@ -238,6 +239,10 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
             );
         }
 
+        if (!empty($unknown)) {
+            $this->set_changes();
+            $all_channels->remove_items($unknown);
+        }
         return $items;
     }
 
