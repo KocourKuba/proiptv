@@ -3755,6 +3755,22 @@ class Default_Dune_Plugin implements DunePlugin
 
     public function cleanup_active_xmltv_source()
     {
+        hd_debug_print(null, true);
+
+        $locks = $this->epg_manager->is_any_index_locked();
+        if ($locks !== false) {
+            foreach ($locks as $lock) {
+                hd_debug_print("Found lock: $lock");
+                $ar = explode('_', $lock);
+                $pid = (int)end($ar);
+
+                if ($pid !== 0 && !send_process_signal($pid, 0)) {
+                    hd_debug_print("Remove stalled lock: $lock");
+                    shell_exec("rmdir {$this->get_cache_dir()}" . DIRECTORY_SEPARATOR . $lock);
+                }
+            }
+        }
+
         $is_xml_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
         $use_playlist_picons = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
 
@@ -3777,23 +3793,6 @@ class Default_Dune_Plugin implements DunePlugin
 
         if ($changed) {
             $this->set_setting(PARAM_SELECTED_XMLTV_SOURCES, $cur_sources);
-        }
-
-        $this->epg_manager->set_active_sources($this->get_active_sources());
-
-        $locks = $this->epg_manager->is_any_index_locked();
-        if ($locks === false) {
-            return;
-        }
-
-        foreach ($locks as $lock) {
-            $ar = explode('_', $lock);
-            $pid = (int)end($ar);
-
-            if ($pid !== 0 && !send_process_signal($pid, 0)) {
-                hd_debug_print("Remove stalled lock: $lock");
-                shell_exec("rmdir {$this->get_cache_dir()}" . DIRECTORY_SEPARATOR . $lock);
-            }
         }
     }
 }
