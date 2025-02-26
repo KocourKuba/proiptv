@@ -789,7 +789,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $epg_manager = $this->plugin->get_epg_manager();
         $epg_indexer = $epg_manager->get_indexer();
-
+        $indexes_valid = false;
         $use_playlist_picons = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         if ($use_playlist_picons !== PLAYLIST_PICONS) {
             $all_sources = $this->plugin->get_active_sources();
@@ -802,6 +802,7 @@ class Starnet_Tv implements User_Input_Handler
                     $epg_indexer->set_url_params($params);
                     $epg_indexer->index_only_channels();
                 }
+                $indexes_valid = $epg_indexer->is_all_indexes_valid(array(Epg_Indexer::INDEX_CHANNELS, Epg_Indexer::INDEX_PICONS));
             }
         }
 
@@ -974,7 +975,7 @@ class Starnet_Tv implements User_Input_Handler
             }
 
             // if selected xmltv or combined mode looking into xmltv source
-            if ($use_playlist_picons !== PLAYLIST_PICONS && empty($icon_url)) {
+            if ($use_playlist_picons !== PLAYLIST_PICONS && empty($icon_url) && $indexes_valid) {
                 $aliases = array();
                 if (isset($epg_ids['tvg-id'])) {
                     $aliases[] = $epg_ids['tvg-id'];

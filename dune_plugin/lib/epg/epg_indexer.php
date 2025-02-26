@@ -513,6 +513,14 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
     abstract public function get_indexes_info($hash = null);
 
     /**
+     * Check is all indexes is valid
+     *
+     * @param array $names
+     * @return bool
+     */
+    abstract public function is_all_indexes_valid($names);
+
+    /**
      * Clear memory index
      *
      * @param string|null $id
@@ -525,14 +533,6 @@ abstract class Epg_Indexer implements Epg_Indexer_Interface
      * @return array
      */
     abstract protected function load_program_index($channel);
-
-    /**
-     * Check is all indexes is valid
-     *
-     * @param array $names
-     * @return bool
-     */
-    abstract protected function is_all_indexes_valid($names);
 
     ///////////////////////////////////////////////////////////////////////////////
     /// protected methods

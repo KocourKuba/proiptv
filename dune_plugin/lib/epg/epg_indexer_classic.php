@@ -463,7 +463,7 @@ class Epg_Indexer_Classic extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    protected function is_all_indexes_valid($names)
+    public function is_all_indexes_valid($names)
     {
         foreach ($names as $name) {
             $name = $this->get_index_name($name);

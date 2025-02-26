@@ -141,7 +141,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
                 hd_debug_print("No positions for channel $channel_id ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
             }
         } catch (Exception $ex) {
-            print_backtrace_exception($ex);
+            hd_debug_print($ex->getMessage());
         }
 
         hd_debug_print("Channel positions: " . pretty_json_format($channel_position), true);
@@ -483,7 +483,7 @@ class Epg_Indexer_Sql extends Epg_Indexer
      * @inheritDoc
      * @override
      */
-    protected function is_all_indexes_valid($names)
+    public function is_all_indexes_valid($names)
     {
         hd_debug_print(null, true);
 
