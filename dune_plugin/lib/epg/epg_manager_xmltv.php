@@ -708,84 +708,62 @@ class Epg_Manager_Xmltv
 
     /**
      * @param array $channel_row
-     * @return array
+     * @return array|null
      */
     protected function load_program_index($channel_row)
     {
-        $channel_position = array();
-        $table_pos = self::INDEX_ENTRIES;
-        $table_channels = self::INDEX_CHANNELS;
+        $channel_positions = array();
 
-        try {
-            $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
-            if ($db === false) {
-                hd_debug_print("Unable to load index because it locked");
-                return $channel_position;
-            }
-
-            if (is_null($db)) {
-                throw new Exception("Problem with open SQLite db! Possible url not set");
-            }
-
-            if (!$this->is_all_indexes_valid(array('epg_channels', $table_pos))) {
-                hd_debug_print("EPG for {$this->xmltv_url_params[PARAM_URI]} not indexed!");
-                return $channel_position;
-            }
-
-            $channel_title = $channel_row[COLUMN_TITLE];
-            $epg_ids = array_unique(array($channel_row[M3uParser::COLUMN_EPG_ID], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]));
-            $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
-            $stm = $db->prepare("SELECT DISTINCT channel_id FROM $table_channels WHERE alias IN ($placeHolders);");
-            if ($stm !== false) {
-                foreach ($epg_ids as $index => $val) {
-                    $stm->bindValue($index + 1, mb_convert_case(SQLite3::escapeString($val), MB_CASE_LOWER, "UTF-8"));
-                }
-
-                $res = $stm->execute();
-                if (!$res) {
-                    throw new Exception("Query failed for epg's: " . pretty_json_format($epg_ids) . " ($channel_title)");
-                }
-
-                while ($row = $res->fetchArray(SQLITE3_NUM)) {
-                    $epg_ids[] = (string)$row[0];
-                }
-            }
-
-            $epg_ids = array_unique($epg_ids);
-            hd_debug_print("Found epg_ids: " . pretty_json_format($epg_ids), true);
-            if (!empty($epg_ids)) {
-                hd_debug_print("Load position indexes for: {$channel_row[COLUMN_CHANNEL_ID]} ($channel_title)", true);
-                $placeHolders = implode(',', array_fill(0, count($epg_ids), '?'));
-                $stmt = $db->prepare("SELECT start, end FROM $table_pos WHERE channel_id IN ($placeHolders);");
-                if ($stmt !== false) {
-                    foreach ($epg_ids as $index => $val) {
-                        $stmt->bindValue($index + 1, SQLite3::escapeString($val));
-                    }
-
-                    $res = $stmt->execute();
-                    if (!$res) {
-                        throw new Exception("Query failed for epg's: " . pretty_json_format($epg_ids) . " ($channel_title)");
-                    }
-
-                    while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
-                        $data = array_map(function ($col) {
-                            return $col;
-                        }, $row);
-                        $channel_position[] = $data;
-                    }
-                }
-            }
-
-            if (empty($channel_position)) {
-                hd_debug_print("No positions for channel {$channel_row[COLUMN_CHANNEL_ID]} ($channel_title) and epg id's: " . pretty_json_format($epg_ids));
-            } else {
-                hd_debug_print("Channel positions: " . pretty_json_format($channel_position), true);
-            }
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        if (is_null($db)) {
+            hd_debug_print("Problem with open SQLite db! Possible url not set");
+            return $channel_positions;
         }
 
-        return $channel_position;
+        if ($db === false) {
+            hd_debug_print("Unable to load index because it locked");
+            return $channel_positions;
+        }
+
+        if (!$this->is_all_indexes_valid(array(self::INDEX_CHANNELS, self::INDEX_ENTRIES))) {
+            hd_debug_print("EPG for {$this->xmltv_url_params[PARAM_URI]} not indexed!");
+            return $channel_positions;
+        }
+
+        $channel_id = $channel_row[COLUMN_CHANNEL_ID];
+        $channel_title = $channel_row[COLUMN_TITLE];
+        $epg_ids = array_unique(array_filter(array(
+            $channel_row[M3uParser::COLUMN_EPG_ID],
+            $channel_id,
+            $channel_row[M3uParser::COLUMN_TVG_NAME],
+            $channel_title))
+        );
+
+        $aliases = Sql_Wrapper::sql_make_list_from_values(array_map(function($value) {
+            return mb_convert_case($value, MB_CASE_LOWER, "UTF-8");
+        }, $epg_ids));
+
+        hd_debug_print("Search for aliases: $aliases", true);
+
+        $table_channels = self::INDEX_CHANNELS;
+        $query = "SELECT DISTINCT channel_id FROM $table_channels WHERE alias IN ($aliases);";
+        $channel_ids = $db->fetch_single_array($query, 'channel_id');
+        if (empty($channel_ids)) {
+            hd_debug_print("No channel_id found for aliases: $aliases");
+        } else {
+            hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
+            $table_pos = self::INDEX_ENTRIES;
+            $placeHolders = Sql_Wrapper::sql_make_list_from_values($channel_ids);
+            $query = "SELECT start, end FROM $table_pos WHERE channel_id IN ($placeHolders);";
+            $channel_positions = $db->fetch_array($query);
+            if (empty($channel_positions)) {
+                hd_debug_print("No positions found for channel $channel_id ($channel_title) and channel id's: $placeHolders");
+            } else {
+                hd_debug_print("Channel positions: " . json_encode($channel_positions), true);
+            }
+        }
+
+        return $channel_positions;
     }
 
     /**
