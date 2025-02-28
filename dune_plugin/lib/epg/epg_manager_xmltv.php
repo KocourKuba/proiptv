@@ -30,8 +30,6 @@ require_once 'lib/curl_wrapper.php';
 require_once 'lib/sql_wrapper.php';
 require_once 'lib/perf_collector.php';
 
-require_once 'epg_params.php';
-
 class Epg_Manager_Xmltv
 {
     const INDEX_PICONS = 'epg_picons';
@@ -295,20 +293,23 @@ class Epg_Manager_Xmltv
                                 if ($program_start < $day_start_ts && $program_end < $day_start_ts) continue;
                                 if ($program_start >= $day_end_ts) break;
 
-                                $day_epg[$program_start][Epg_Params::EPG_END] = $program_end;
+                                $day_epg[$program_start][PluginTvEpgProgram::end_tm_sec] = $program_end;
+                                $day_epg[$program_start][PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
+                                $day_epg[$program_start][PluginTvEpgProgram::description] = self::get_node_value($tag, 'desc');
+                                $day_epg[$program_start][PluginTvEpgProgram::icon_url] = self::get_node_attribute($tag, 'icon', 'src');
 
-                                $day_epg[$program_start][Epg_Params::EPG_NAME] = '';
-                                foreach ($tag->getElementsByTagName('title') as $tag_title) {
-                                    $day_epg[$program_start][Epg_Params::EPG_NAME] = $tag_title->nodeValue;
-                                }
-
-                                $day_epg[$program_start][Epg_Params::EPG_DESC] = '';
-                                foreach ($tag->getElementsByTagName('desc') as $tag_desc) {
-                                    $day_epg[$program_start][Epg_Params::EPG_DESC] = trim($tag_desc->nodeValue);
-                                }
-
-                                foreach ($tag->getElementsByTagName('icon') as $tag_icon) {
-                                    $day_epg[$program_start][Epg_Params::EPG_ICON] = $tag_icon->getAttribute('src');
+                                $day_epg[$program_start][PluginTvExtEpgProgram::sub_title] = self::get_node_value($tag, 'sub-title');
+                                $day_epg[$program_start][PluginTvExtEpgProgram::main_category] = self::get_node_value($tag, 'category');
+                                $day_epg[$program_start][PluginTvExtEpgProgram::year] = self::get_node_value($tag, 'date');
+                                $day_epg[$program_start][PluginTvExtEpgProgram::country] = self::get_node_value($tag, 'country');
+                                foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
+                                    $day_epg[$program_start][PluginTvExtEpgProgram::director] = self::get_node_value($sub_tag, 'director');
+                                    $day_epg[$program_start][PluginTvExtEpgProgram::producer] = self::get_node_value($sub_tag, 'producer');
+                                    $day_epg[$program_start][PluginTvExtEpgProgram::actor] = self::get_node_value($sub_tag, 'actor');
+                                    $day_epg[$program_start][PluginTvExtEpgProgram::presenter] = self::get_node_value($sub_tag, 'presenter'); //Ведущий
+                                    $day_epg[$program_start][PluginTvExtEpgProgram::writer] = self::get_node_value($sub_tag, 'writer');
+                                    $day_epg[$program_start][PluginTvExtEpgProgram::editor] = self::get_node_value($sub_tag, 'editor');
+                                    $day_epg[$program_start][PluginTvExtEpgProgram::composer] = self::get_node_value($sub_tag, 'composer');
                                 }
                             }
                         }
@@ -326,18 +327,18 @@ class Epg_Manager_Xmltv
         if (empty($day_epg)) {
             if ($this->xmltv_sources->size() === 0) {
                 return array($day_start_ts => array(
-                    Epg_Params::EPG_END => $day_start_ts + 86400,
-                    Epg_Params::EPG_NAME => TR::load('epg_no_sources'),
-                    Epg_Params::EPG_DESC => TR::load('epg_no_sources_desc'),
+                    PluginTvEpgProgram::end_tm_sec => $day_start_ts + 86400,
+                    PluginTvEpgProgram::name => TR::load('epg_no_sources'),
+                    PluginTvEpgProgram::description => TR::load('epg_no_sources_desc'),
                 ));
             }
 
             if ($any_lock !== false) {
                 $this->delayed_epg = array_unique($this->delayed_epg);
                 return array($day_start_ts => array(
-                    Epg_Params::EPG_END => $day_start_ts + 86400,
-                    Epg_Params::EPG_NAME => TR::load('epg_not_ready'),
-                    Epg_Params::EPG_DESC => TR::load('epg_not_ready_desc'),
+                    PluginTvEpgProgram::end_tm_sec => $day_start_ts + 86400,
+                    PluginTvEpgProgram::name => TR::load('epg_not_ready'),
+                    PluginTvEpgProgram::description => TR::load('epg_not_ready_desc'),
                 ));
             }
             return $this->getFakeEpg($channel_row, $day_start_ts, $day_epg);
@@ -798,9 +799,9 @@ class Epg_Manager_Xmltv
         if (($this->flags & EPG_FAKE_EPG) && $channel_row[M3uParser::COLUMN_ARCHIVE] !== 0) {
             hd_debug_print("Create fake data for non existing EPG data");
             for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
-                $day_epg[$start][Epg_Params::EPG_END] = $start + 3600;
-                $day_epg[$start][Epg_Params::EPG_NAME] = TR::load('fake_epg_program') . " $n";
-                $day_epg[$start][Epg_Params::EPG_DESC] = '';
+                $day_epg[$start][PluginTvEpgProgram::end_tm_sec] = $start + 3600;
+                $day_epg[$start][PluginTvEpgProgram::name] = TR::load('fake_epg_program') . " $n";
+                $day_epg[$start][PluginTvEpgProgram::description] = '';
             }
         } else {
             hd_debug_print("No EPG for channel: {$channel_row[COLUMN_CHANNEL_ID]}");
@@ -1239,5 +1240,29 @@ class Epg_Manager_Xmltv
             hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
             throw new Exception(TR::load('err_unknown_file_type'));
         }
+    }
+
+    protected static function get_node_value($node, $name)
+    {
+        $value = '';
+        foreach ($node->getElementsByTagName($name) as $element) {
+            if (!empty($element->nodeValue)) {
+                $value = $element->nodeValue;
+                break;
+            }
+        }
+
+        return $value;
+    }
+
+    protected static function get_node_attribute($node, $name, $attribute)
+    {
+        $value = '';
+        foreach ($node->getElementsByTagName($name) as $element) {
+            $value = $element->getAttribute($attribute);
+            break;
+        }
+
+        return $value;
     }
 }

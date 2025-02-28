@@ -1,0 +1,13 @@
+#!/bin/sh
+thisdir=`dirname $0`
+plugin_root=`builtin cd "$thisdir/../.." && pwd`
+plugin_name=$(basename $plugin_root)
+
+CHANNELS="$FS_PREFIX/tmp/plugins/$plugin_name/channel_ids.txt"
+
+if [[ -f $CHANNELS ]]; then
+  echo -e "Content-Type: Content-Type: text/xml\n"
+  cat $CHANNELS
+else
+  echo -e "HTTP/1.1 404 Not found";
+fi

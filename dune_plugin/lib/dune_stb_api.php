@@ -1659,6 +1659,15 @@ function get_cached_image_path($image = '')
     return $cache_image_path . '/' . ltrim($image, "/");
 }
 
+function get_cached_image($image)
+{
+    if (strpos($image, "plugin_file://") === false && file_exists(get_cached_image_path($image))) {
+        $image = get_cached_image_path($image);
+    }
+
+    return $image;
+}
+
 function get_plugin_manifest_info()
 {
     $result = array();
@@ -1765,6 +1774,11 @@ function get_slash_trailed_path($path)
     }
 
     return $path;
+}
+
+function get_noslash_trailed_path($path)
+{
+    return rtrim($path, '/');
 }
 
 function get_filename($path)
@@ -2134,6 +2148,9 @@ function safe_merge_array($ar1, $ar2)
  */
 function safe_get_value($ar, $param, $default = null)
 {
+    if (is_null($param)) {
+        return $default;
+    }
     return isset($ar[$param]) ? $ar[$param] : $default;
 }
 

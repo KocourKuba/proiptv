@@ -34,10 +34,17 @@ class HD
      * @var bool
      */
     private static $with_rows_api;
+
+    /**
+     * @var bool
+     */
+    private static $ext_epg_support;
+
     /**
      * @var string
      */
     private static $default_user_agent;
+
     /**
      * @var string
      */
@@ -76,6 +83,17 @@ class HD
             self::$with_rows_api = class_exists("PluginRowsFolderView");
 
         return self::$with_rows_api;
+    }
+
+    /**
+     * @return bool
+     */
+    public static function ext_epg_support()
+    {
+        if (!isset(self::$ext_epg_support))
+            self::$ext_epg_support = defined('PluginTvInfo::ext_epg_enabled');
+
+        return self::$ext_epg_support;
     }
 
     /**
@@ -675,6 +693,10 @@ class HD
      */
     public static function unescape_entity_string($raw_string)
     {
+        if (empty($raw_string)) {
+            return $raw_string;
+        }
+
         $replace = array(
             "&nbsp;" => ' ',
             '&#39;' => "'",

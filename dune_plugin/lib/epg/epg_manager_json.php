@@ -27,6 +27,12 @@ require_once 'epg_manager_xmltv.php';
 
 class Epg_Manager_Json extends Epg_Manager_Xmltv
 {
+    const EPG_ROOT = 'epg_root';
+    const EPG_START = 'epg_start';
+    const EPG_NAME = 'epg_name';
+    const EPG_DESC = 'epg_desc';
+    const EPG_URL = 'epg_url';
+
     /**
      * contains current dune IP
      * @var string
@@ -45,11 +51,9 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      */
     public function get_day_epg_items($channel_row, $day_start_ts)
     {
-        $epg_ids = array(
-            'epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID],
-            'id' => $channel_row[COLUMN_CHANNEL_ID],
-            ATTR_TVG_NAME => $channel_row[COLUMN_TITLE],
-            'name' => $channel_row[COLUMN_TITLE]);
+        $epg_ids = Default_Dune_Plugin::make_epg_ids($channel_row);
+        $epg_ids[ATTR_TVG_NAME] = $channel_row[COLUMN_TITLE];
+        $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
 
         $day_epg = array();
         try {
@@ -92,7 +96,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             if (strpos($epg_url, MACRO_ID) !== false) {
                 hd_debug_print("using ID: {$channel_row[COLUMN_CHANNEL_ID]}", true);
                 $epg_url = str_replace(MACRO_ID, $channel_row[COLUMN_CHANNEL_ID], $epg_url);
-                $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
             }
 
             if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
@@ -180,7 +183,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         }
 
         foreach ($all_epg as $program_start => $entry) {
-            if ($program_start < $day_start_ts && $entry[Epg_Params::EPG_END] < $day_start_ts) continue;
+            if ($program_start < $day_start_ts && $entry[PluginTvEpgProgram::end_tm_sec] < $day_start_ts) continue;
             if ($program_start >= $day_end_ts) break;
 
             $day_epg[$program_start] = $entry;
@@ -244,56 +247,46 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             return $channel_epg;
         }
 
-        if (!empty($parser_params[Epg_Params::EPG_ROOT])) {
-            foreach (explode('|', $parser_params[Epg_Params::EPG_ROOT]) as $level) {
+        if (!empty($parser_params[self::EPG_ROOT])) {
+            foreach (explode('|', $parser_params[self::EPG_ROOT]) as $level) {
                 $epg_root = trim($level, "[]");
                 $ch_data = $ch_data[$epg_root];
             }
         }
 
-        hd_debug_print("json epg root: " . $parser_params[Epg_Params::EPG_ROOT], true);
-        hd_debug_print("json start: " . $parser_params[Epg_Params::EPG_START], true);
-        hd_debug_print("json title: " . $parser_params[Epg_Params::EPG_NAME], true);
-        hd_debug_print("json desc: " . $parser_params[Epg_Params::EPG_DESC], true);
-        if (isset($parser_params[Epg_Params::EPG_ICON])) {
-            hd_debug_print("json icon: " . $parser_params[Epg_Params::EPG_ICON], true);
+        hd_debug_print("json epg root: " . $parser_params[self::EPG_ROOT], true);
+        hd_debug_print("json start: " . $parser_params[self::EPG_START], true);
+        hd_debug_print("json title: " . $parser_params[self::EPG_NAME], true);
+        hd_debug_print("json desc: " . $parser_params[self::EPG_DESC], true);
+        if (isset($parser_params[self::EPG_URL])) {
+            hd_debug_print("json icon: " . $parser_params[self::EPG_URL], true);
         }
 
         // collect all program that starts after day start and before day end
         $prev_start = 0;
         foreach ($ch_data as $entry) {
-            if (!isset($entry[$parser_params[Epg_Params::EPG_START]])) continue;
+            if (!isset($entry[$parser_params[self::EPG_START]])) continue;
 
-            $program_start = $entry[$parser_params[Epg_Params::EPG_START]];
+            $program_start = $entry[$parser_params[self::EPG_START]];
 
             if ($prev_start !== 0) {
-                $channel_epg[$prev_start][Epg_Params::EPG_END] = $program_start;
+                $channel_epg[$prev_start][PluginTvEpgProgram::end_tm_sec] = $program_start;
             }
             $prev_start = $program_start;
 
-            if (isset($entry[$parser_params[Epg_Params::EPG_NAME]])) {
-                $channel_epg[$program_start][Epg_Params::EPG_NAME] = HD::unescape_entity_string($entry[$parser_params[Epg_Params::EPG_NAME]]);
-            } else {
-                $channel_epg[$program_start][Epg_Params::EPG_NAME] = '';
-            }
+            $channel_epg[$program_start][PluginTvEpgProgram::name] = HD::unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_NAME], ''));
 
-            if (isset($entry[$parser_params[Epg_Params::EPG_DESC]])) {
-                $desc = HD::unescape_entity_string($entry[$parser_params[Epg_Params::EPG_DESC]]);
+            $desc = HD::unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_DESC], ''));
+            if (!empty($desc)) {
                 $desc = str_replace('<br>', PHP_EOL, $desc);
-                $channel_epg[$program_start][Epg_Params::EPG_DESC] = $desc;
-            } else {
-                $channel_epg[$program_start][Epg_Params::EPG_DESC] = '';
             }
+            $channel_epg[$program_start][PluginTvEpgProgram::description] = $desc;
 
-            if (isset($parser_params[Epg_Params::EPG_ICON], $entry[$parser_params[Epg_Params::EPG_ICON]])) {
-                $channel_epg[$program_start][Epg_Params::EPG_ICON] = $entry[$parser_params[Epg_Params::EPG_ICON]];
-            } else {
-                $channel_epg[$program_start][Epg_Params::EPG_ICON] = '';
-            }
+            $channel_epg[$program_start][PluginTvEpgProgram::icon_url] = safe_get_value($entry, safe_get_value($parser_params, self::EPG_URL), '');
         }
 
         if ($prev_start !== 0) {
-            $channel_epg[$prev_start][Epg_Params::EPG_END] = $prev_start + 3600; // fake end
+            $channel_epg[$prev_start][PluginTvEpgProgram::end_tm_sec] = $prev_start + 3600; // fake end
         }
 
         ksort($channel_epg, SORT_NUMERIC);

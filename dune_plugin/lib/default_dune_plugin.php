@@ -828,6 +828,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                     . get_local_time_zone_offset());
             }
 
+            $playlist_id = $this->get_active_playlist_id();
+
             // correct day start to local timezone
             $day_start_tm_sec -= get_local_time_zone_offset();
 
@@ -839,24 +841,86 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $items = $this->epg_manager->get_day_epg_items($channel_row, $day_start_tm_sec);
 
             foreach ($items as $time => $value) {
-                if (!isset($value[Epg_Params::EPG_END], $value[Epg_Params::EPG_NAME], $value[Epg_Params::EPG_DESC])) {
+                if (!isset($value[PluginTvEpgProgram::end_tm_sec], $value[PluginTvEpgProgram::name], $value[PluginTvEpgProgram::description])) {
                     hd_debug_print("malformed epg data: " . pretty_json_format($value));
                 } else {
                     $tm_start = (int)$time + $time_shift;
-                    $tm_end = (int)$value[Epg_Params::EPG_END] + $time_shift;
+                    $tm_end = (int)$value[PluginTvEpgProgram::end_tm_sec] + $time_shift;
                     $day_epg[] = array(
                         PluginTvEpgProgram::start_tm_sec => $tm_start,
                         PluginTvEpgProgram::end_tm_sec => $tm_end,
-                        PluginTvEpgProgram::name => $value[Epg_Params::EPG_NAME],
-                        PluginTvEpgProgram::description => $value[Epg_Params::EPG_DESC],
+                        PluginTvEpgProgram::name => $value[PluginTvEpgProgram::name],
+                        PluginTvEpgProgram::description => $value[PluginTvEpgProgram::description],
                     );
 
                     if (LogSeverity::$is_debug) {
                         hd_debug_print(format_datetime("m-d H:i", $tm_start)
                             . " - " . format_datetime("m-d H:i", $tm_end)
-                            . " {$value[Epg_Params::EPG_NAME]}", true);
+                            . " {$value[PluginTvEpgProgram::name]}", true);
                     }
+
+                    $ext_epg[$time]["start_tm"] = $tm_start;
+                    $ext_epg[$time]["title"] = $value[PluginTvEpgProgram::name];
+                    $ext_epg[$time]["desc"] = $value[PluginTvEpgProgram::description];
+
+                    if (in_array($channel_id, $this->epg_manager->get_delayed_epg())) continue;
+
+                    if (!empty($value[PluginTvExtEpgProgram::main_category])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::main_category] = $value[PluginTvExtEpgProgram::main_category];
+                    }
+
+                    if (!empty($value[PluginTvEpgProgram::icon_url])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
+                    } else {
+                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
+                    }
+
+                    if (!empty($value[PluginTvExtEpgProgram::icon_urls])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::icon_urls] = $value[PluginTvExtEpgProgram::icon_urls];
+                    }
+
+                    if (!empty($value[PluginTvExtEpgProgram::year])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::year] = $value[PluginTvExtEpgProgram::year];
+                    }
+
+                    if (!empty($value[PluginTvExtEpgProgram::country])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::country] = $value[PluginTvExtEpgProgram::country];
+                    }
+
+                    if (!empty($time[PluginTvExtEpgProgram::director])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::director] = $value[PluginTvExtEpgProgram::director];
+                    }
+                    if (!empty($value[PluginTvExtEpgProgram::composer])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::composer] = $value[PluginTvExtEpgProgram::composer];
+                    }
+
+                    if (!empty($value[PluginTvExtEpgProgram::editor])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::editor] = $value[PluginTvExtEpgProgram::editor];
+                    }
+
+                    if (!empty($value[PluginTvExtEpgProgram::writer])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::writer] = $value[PluginTvExtEpgProgram::writer];
+                    }
+
+                    if (!empty($value[PluginTvExtEpgProgram::actor]))
+                        $ext_epg[$time][PluginTvExtEpgProgram::actor] = $value[PluginTvExtEpgProgram::actor];
+
+                    if (!empty($value[PluginTvExtEpgProgram::presenter]))
+                        $ext_epg[$time][PluginTvExtEpgProgram::presenter] = $value[PluginTvExtEpgProgram::presenter]; //Ведущий
+
+                    if (!empty($value[PluginTvExtEpgProgram::imdb_rating]))
+                        $ext_epg[$time][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::imdb_rating];
                 }
+            }
+
+            $filename = "$playlist_id-$channel_id-" . strftime('%Y-%m-%d', $day_start_tm_sec) . ".json";
+            $path = get_temp_path($filename);
+            if (!file_exists($path) && !empty($ext_epg)) {
+                file_put_contents($path, pretty_json_format($ext_epg));
+            }
+
+            if (file_exists($path) && is_dir(getenv('FS_PREFIX') . "/tmp/ext_epg")) {
+                copy($path, getenv('FS_PREFIX') . "/tmp/ext_epg/$filename");
             }
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
@@ -2553,7 +2617,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         // if selected xmltv or combined mode look into xmltv source
         // in combined mode search is not performed if already got picon from playlist
         if ($picons_source === XMLTV_PICONS || ($picons_source === COMBINED_PICONS && empty($icon_url))) {
-            $epg_ids = array('epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
+            $epg_ids = self::make_epg_ids($channel_row);
             $icon_url = $this->get_epg_manager()->get_picon($epg_ids);
             if (empty($icon_url)) {
                 hd_debug_print("no picon for " . pretty_json_format($epg_ids), true);
@@ -3053,13 +3117,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         $icon = $this->get_channel_picon($channel_row, $picons_source, $this->get_default_channel_icon($classic));
 
-        $epg_ids = array('epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID], 'id' => $channel_id, 'name' => $channel_row[COLUMN_TITLE]);
-
         $info = "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
         $info .= "Name: " . $channel_row[COLUMN_TITLE] . PHP_EOL;
         $info .= "Archive: " . $channel_row[M3uParser::COLUMN_ARCHIVE] . " days" . PHP_EOL;
         $info .= "Protected: " . TR::load(SwitchOnOff::to_def($channel_row[M3uParser::COLUMN_ADULT])) . PHP_EOL;
-        $info .= "EPG IDs: " . implode(', ', $epg_ids) . PHP_EOL;
+        $info .= "EPG IDs: " . implode(', ', self::make_epg_ids($channel_row)) . PHP_EOL;
         if ($channel_row[M3uParser::COLUMN_TIMESHIFT] != 0) {
             $info .= "Timeshift hours: {$channel_row[M3uParser::COLUMN_TIMESHIFT]}" . PHP_EOL;
         }
@@ -3387,6 +3449,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return true;
         }
 
+        $ext_epg_channels = get_temp_path("channel_ids.txt");
+        if (file_exists($ext_epg_channels)) {
+            unlink($ext_epg_channels);
+        }
+
         if ($playlist_loaded == 2) {
             $this->sql_playlist->exec("DETACH DATABASE iptv");
         }
@@ -3506,8 +3573,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         hd_debug_print("VOD enabled: " . SwitchOnOff::to_def($this->vod_enabled), true);
 
-        $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_group_visible(VOD_GROUP_ID, PARAM_GROUP_SPECIAL));
-
+        $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_parameter(PARAM_SHOW_VOD_ICON, SwitchOnOff::off));
         $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
         hd_debug_print("Show VOD icon: $enable_vod_icon", true);
 
@@ -3840,6 +3906,23 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
+     * @return int
+     */
+    public function get_channels_by_order_cnt($group_id)
+    {
+        $order_table = self::get_table_name($group_id);
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
+        $channels_info_table = self::get_table_name(CHANNELS_INFO);
+        $column = $this->get_id_column();
+        $query = "SELECT COUNT(ord.channel_id)
+                    FROM $iptv_channels AS pl
+                    JOIN $order_table AS ord ON pl.$column = ord.channel_id
+                    JOIN $channels_info_table as ch ON ch.channel_id = ord.channel_id AND ch.disabled = 0
+                    ORDER BY ord.ROWID;";
+        return $this->sql_playlist->query_value($query);
+    }
+
+    /**
      * enable/disable channel(s)
      *
      * @param string|array $channel_id
@@ -3987,11 +4070,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     }
 
     /**
-     * @param string $type // PARAM_NEW, PARAM_REMOVED, null or other value - total
+     * @param string $type // PARAM_NEW, PARAM_REMOVED, PARAM_ALL - total
      * @param string $channel_id
      * @return int
      */
-    public function get_changed_channels_count($type = null, $channel_id = null)
+    public function get_changed_channels_count($type = PARAM_ALL, $channel_id = null)
     {
         $val = "changed = $type";
         if ($type == PARAM_CHANGED) {
@@ -5485,5 +5568,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $detect_info .= PHP_EOL . TR::load('selected__1', $mapper_ops[$minkey]) . PHP_EOL;
 
         return $minkey;
+    }
+
+    public static function make_epg_ids($channel_row)
+    {
+        return array('epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
     }
 }

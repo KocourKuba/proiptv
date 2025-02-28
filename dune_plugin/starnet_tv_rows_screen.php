@@ -538,7 +538,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 case TV_CHANGED_CHANNELS_GROUP_ID:
                     if (!$this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, true)) break;
 
-                    $has_changes = $this->plugin->get_changed_channels_count(PARAM_ALL);
+                    $has_changes = $this->plugin->get_changed_channels_count();
                     if (!$has_changes) break;
 
                     $changed_rows = $this->get_changed_channels_rows();
@@ -1089,11 +1089,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 gmdate('H:i', $epg_data[PluginTvEpgProgram::start_tm_sec] + get_local_time_zone_offset()),
                 gmdate('H:i', $epg_data[PluginTvEpgProgram::end_tm_sec] + get_local_time_zone_offset())
             );
-            //$program->year = preg_match('/\s+\((\d{4,4})\)$/', $epg_data[Ext_Epg_Program::main_category], $matches) ? $matches[1] : '';
-            //$program->age = preg_match('/\s+\((\d{1,2}\+)\)$/', $epg_data[Ext_Epg_Program::main_category], $matches) ? $matches[1] : '';
 
             $title = $epg_data[PluginTvEpgProgram::name];
-            $desc = (!empty($epg_data[Ext_Epg_Program::sub_title]) ? $epg_data[Ext_Epg_Program::sub_title] . "\n" : '') . $epg_data[PluginTvEpgProgram::description];
+            $desc = (!empty($epg_data[PluginTvExtEpgProgram::sub_title]) ? $epg_data[PluginTvExtEpgProgram::sub_title] . "\n" : '') . $epg_data[PluginTvEpgProgram::description];
             if (isset($epg_data[PluginTvEpgProgram::icon_url])) {
                 $fanart_url = $epg_data[PluginTvEpgProgram::icon_url];
             }

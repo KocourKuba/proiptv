@@ -580,75 +580,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        $items = array();
         if (!$this->plugin->load_channels($plugin_cookies)) {
             hd_debug_print("Channels not loaded!");
-            return $items;
+            return array();
         }
 
-        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL) as $group_row) {
-            $group_id = $group_row[COLUMN_GROUP_ID];
-            if ($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) continue;
-
-            switch ($group_id) {
-                case TV_ALL_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_ALL, true)) break;
-
-                    $enabled = $this->plugin->get_channels_count($group_id, PARAM_ENABLED);
-                    $disabled = $this->plugin->get_channels_count($group_id, PARAM_DISABLED);
-                    $caption = TR::load(TV_ALL_CHANNELS_GROUP_CAPTION);
-                    $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled, $disabled);
-                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_SKYBLUE, $detailed_info);
-                    break;
-
-                case TV_FAV_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_FAVORITES, true)) break;
-
-                    $channels_cnt = $this->plugin->get_channels_order_count($group_id);
-                    if (!$channels_cnt) break;
-
-                    $caption = TR::load(TV_FAV_GROUP_CAPTION);
-                    $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
-                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_GOLD, $detailed_info);
-                    break;
-
-                case TV_HISTORY_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_HISTORY, true)) break;
-
-                    $channels_cnt = $this->plugin->get_tv_history_count();
-                    if (!$channels_cnt) break;
-
-                    $caption = TR::load(TV_HISTORY_GROUP_CAPTION);
-                    $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
-                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_TURQUOISE, $detailed_info);
-                    break;
-
-                case TV_CHANGED_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, true)) break;
-
-                    $has_changes = $this->plugin->get_changed_channels_count(PARAM_ALL);
-                    if (!$has_changes) break;
-
-                    $new = $this->plugin->get_changed_channels_count(PARAM_NEW);
-                    $removed = $this->plugin->get_changed_channels_count(PARAM_REMOVED);
-                    $caption = TR::load(TV_CHANGED_CHANNELS_GROUP_CAPTION);
-                    $detailed_info = TR::t('tv_screen_group_changed_info__3', $caption, $new, $removed);
-                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_RED, $detailed_info);
-                    break;
-
-                case VOD_GROUP_ID:
-                    if (!$this->plugin->is_vod_enabled() || !$this->plugin->get_setting(PARAM_SHOW_VOD, true)) break;
-
-                    $caption = TR::t(VOD_GROUP_CAPTION);
-                    $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
-                    break;
-            }
-        }
-
+        $ordinary_items = array();
         $all_groups = $this->plugin->get_groups_by_order();
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         foreach ($all_groups as $group_row) {
             if (!$show_adult && $group_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+            if ($this->plugin->get_channels_by_order_cnt($group_row[COLUMN_GROUP_ID]) === 0) continue;
 
             $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
             $detailed_info = TR::t('tv_screen_group_info__3',
@@ -657,10 +599,72 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->plugin->get_channels_count($group_row[COLUMN_GROUP_ID], PARAM_DISABLED)
             );
 
-            $this->add_item($items, $group_row, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
+            $ordinary_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
         }
 
-        return $items;
+        $no_channels = empty($ordinary_items);
+
+        $special_items = array();
+        foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL) as $group_row) {
+            $group_id = $group_row[COLUMN_GROUP_ID];
+            if ($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) continue;
+
+            switch ($group_id) {
+                case TV_ALL_CHANNELS_GROUP_ID:
+                    if (!$this->plugin->get_setting(PARAM_SHOW_ALL, true) || $no_channels) break;
+
+                    $enabled = $this->plugin->get_channels_count($group_id, PARAM_ENABLED);
+                    $disabled = $this->plugin->get_channels_count($group_id, PARAM_DISABLED);
+                    $caption = TR::load(TV_ALL_CHANNELS_GROUP_CAPTION);
+                    $detailed_info = TR::t('tv_screen_group_info__3', $caption, $enabled, $disabled);
+                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_SKYBLUE, $detailed_info);
+                    break;
+
+                case TV_FAV_GROUP_ID:
+                    if (!$this->plugin->get_setting(PARAM_SHOW_FAVORITES, true) || $no_channels) break;
+
+                    $channels_cnt = $this->plugin->get_channels_order_count($group_id);
+                    if (!$channels_cnt) break;
+
+                    $caption = TR::load(TV_FAV_GROUP_CAPTION);
+                    $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
+                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_GOLD, $detailed_info);
+                    break;
+
+                case TV_HISTORY_GROUP_ID:
+                    if (!$this->plugin->get_setting(PARAM_SHOW_HISTORY, true) || $no_channels) break;
+
+                    $channels_cnt = $this->plugin->get_tv_history_count();
+                    if (!$channels_cnt) break;
+
+                    $caption = TR::load(TV_HISTORY_GROUP_CAPTION);
+                    $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
+                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_TURQUOISE, $detailed_info);
+                    break;
+
+                case TV_CHANGED_CHANNELS_GROUP_ID:
+                    if (!$this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, true) || $no_channels) break;
+
+                    $has_changes = $this->plugin->get_changed_channels_count();
+                    if (!$has_changes) break;
+
+                    $new = $this->plugin->get_changed_channels_count(PARAM_NEW);
+                    $removed = $this->plugin->get_changed_channels_count(PARAM_REMOVED);
+                    $caption = TR::load(TV_CHANGED_CHANNELS_GROUP_CAPTION);
+                    $detailed_info = TR::t('tv_screen_group_changed_info__3', $caption, $new, $removed);
+                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_RED, $detailed_info);
+                    break;
+
+                case VOD_GROUP_ID:
+                    if (!$this->plugin->is_vod_enabled() || !$this->plugin->get_setting(PARAM_SHOW_VOD, true)) break;
+
+                    $caption = TR::t(VOD_GROUP_CAPTION);
+                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
+                    break;
+            }
+        }
+
+        return array_merge($special_items, $ordinary_items);
     }
 
     /**
@@ -695,21 +699,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     }
 
     /**
-     * @param $items
      * @param array $group_row
      * @param string $caption
      * @param string $color
      * @param string $item_detailed_info
-     * @return void
+     * @return array
      */
-    private function add_item(&$items, $group_row, $caption, $color, $item_detailed_info)
+    private function add_item($group_row, $caption, $color, $item_detailed_info)
     {
-        $icon = safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON);
-        if (strpos($icon, "plugin_file://") === false && file_exists(get_cached_image_path($icon))) {
-            $icon = get_cached_image_path($icon);
-        }
+        $icon = get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON));
 
-        $items[] = array(
+        return array(
             PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row[COLUMN_GROUP_ID]),
             PluginRegularFolderItem::caption => $caption,
             PluginRegularFolderItem::view_item_params => array(
@@ -755,7 +755,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
                     if ($this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, true)) {
-                        $has_changes = $this->plugin->get_changed_channels_count(PARAM_ALL);
+                        $has_changes = $this->plugin->get_changed_channels_count();
                         if ($has_changes) {
                             $visible++;
                         }

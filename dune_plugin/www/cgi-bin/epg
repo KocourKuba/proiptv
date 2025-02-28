@@ -1,0 +1,17 @@
+#!/bin/sh
+
+JSON="$FS_PREFIX/tmp/ext_epg/$(echo $PATH_INFO | sed 's/^.//;s/\//-/').json"
+WAIT=0
+while [[ ! -f $JSON ]]
+do
+	if [[ $WAIT -gt 120 ]]
+	then
+		break
+	fi
+
+	WAIT=$(( $WAIT + 1 ))
+	usleep 100000
+done
+
+echo -e "Content-Type: application/json; charset=utf-8\n"
+cat $JSON

@@ -150,14 +150,17 @@ class Starnet_Tv implements User_Input_Handler
         $groups_order = array_merge(empty($group_all) ? array() : array($group_all), $this->plugin->get_groups_by_order());
         $groups = array();
         foreach ($groups_order as $group_row) {
-            if (!empty($group_row)
-                && ($group_row[COLUMN_GROUP_ID] === TV_ALL_CHANNELS_GROUP_ID || $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]) !== 0)) {
-                $groups[] = array(
-                    PluginTvGroup::id => $group_row[COLUMN_GROUP_ID],
-                    PluginTvGroup::caption => $group_row[COLUMN_TITLE],
-                    PluginTvGroup::icon_url => safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON)
-                );
+            if (empty($group_row)
+                || ($group_row[COLUMN_GROUP_ID] !== TV_ALL_CHANNELS_GROUP_ID && $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]) === 0)) {
+                continue;
             }
+
+            $title = $group_row[COLUMN_GROUP_ID] !== TV_ALL_CHANNELS_GROUP_ID ? $group_row[COLUMN_TITLE] : TR::t(TV_ALL_CHANNELS_GROUP_CAPTION);
+            $groups[] = array(
+                PluginTvGroup::id => $group_row[COLUMN_GROUP_ID],
+                PluginTvGroup::caption => $title,
+                PluginTvGroup::icon_url => get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON))
+            );
         }
 
         $ch_num = 1;
@@ -194,6 +197,7 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::timeshift_hours => $channel_row[M3uParser::COLUMN_TIMESHIFT],
 
                     PluginTvChannel::playback_url_is_stream_url => $this->playback_url_is_stream_url,
+                    PluginTvChannel::ext_epg_enabled => true,
                 );
             }
         }
@@ -208,7 +212,7 @@ class Starnet_Tv implements User_Input_Handler
 
         $fav_group = $this->plugin->get_group(TV_FAV_GROUP_ID, PARAM_GROUP_SPECIAL);
 
-        return array(
+        $tv_info = array(
             PluginTvInfo::show_group_channels_only => true,
 
             PluginTvInfo::groups => $groups,
@@ -232,6 +236,20 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::actions => $this->get_action_map(),
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
+
+        $playlist_id = $this->plugin->get_active_playlist_id();
+        $content = '';
+        foreach ($all_channels as $k => $v) {
+            $content .= "$k=$playlist_id-$k" . PHP_EOL;
+        }
+
+        if (!empty($content) && file_put_contents(get_temp_path("channel_ids.txt"), $content) !== false) {
+            $tv_info[PluginTvInfo::ext_epg_enabled] = true;
+            $tv_info[PluginTvInfo::ext_epg_base_url] = get_noslash_trailed_path(get_plugin_cgi_url());
+            $tv_info[PluginTvInfo::ext_epg_channel_ids_url] = get_plugin_cgi_url("channels");
+        }
+
+        return $tv_info;
     }
 
     /**

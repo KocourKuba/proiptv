@@ -481,18 +481,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 foreach ($channels_rows as $channel_row) {
                     if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
 
-                    $epg_ids = array(
-                        'epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID],
-                        'id' => $channel_row[COLUMN_CHANNEL_ID],
-                        'name' => $channel_row[COLUMN_TITLE]
-                    );
                     $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
 
                     if (empty($icon_url)) {
                         $icon_url = DEFAULT_CHANNEL_ICON_PATH;
                     }
 
-                    $epg_str = HD::ArrayToStr(array_values($epg_ids));
+                    $epg_str = HD::ArrayToStr(array_values(Default_Dune_Plugin::make_epg_ids($channel_row)));
                     $zoom = safe_get_value($zoom_data, $channel_row[COLUMN_CHANNEL_ID], DuneVideoZoomPresets::not_set);
                     if ($zoom === DuneVideoZoomPresets::not_set) {
                         $detailed_info = TR::t('tv_screen_channel_info__4',
