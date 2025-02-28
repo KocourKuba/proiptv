@@ -278,31 +278,29 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     protected function do_edit_url_dlg($source, $id = '')
     {
         hd_debug_print(null, true);
+        hd_debug_print("ID: $id, Source: $source", true);
         $defs = array();
 
-        $name = '';
-        $url = 'http://';
-        $param[CONTROL_ACTION_SOURCE] = $source;
-
-        if (empty($id)) {
-            $window_title = TR::t('edit_list_add_url');
-            $cache_selected = XMLTV_CACHE_AUTO;
-        } else if ($source === XMLTV_SOURCE_EXTERNAL) {
-            $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_EXTERNAL, $id);
-            $window_title = TR::t('edit_list_edit_item');
-            $name = safe_get_value($item, PARAM_NAME);
-            $url = safe_get_value($item, PARAM_URI, '');
-            $cache_selected = safe_get_value($item, PARAM_CACHE, XMLTV_CACHE_AUTO);
-            $param[CONTROL_ACTION_EDIT] = CONTROL_EDIT_ITEM;
-        } else {
-            $window_title = TR::t('edit_list_edit_item');
-            $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_PLAYLIST, $id);
-            $cache_selected = safe_get_value($item, PARAM_CACHE, XMLTV_CACHE_AUTO);
-            $param[CONTROL_ACTION_EDIT] = CONTROL_EDIT_ITEM;
-        }
 
         Control_Factory::add_vgap($defs, 20);
+
+        $param[CONTROL_ACTION_SOURCE] = $source;
+        if (empty($id)) {
+            $window_title = TR::t('edit_list_add_url');
+            $item = array();
+            $cache_selected = XMLTV_CACHE_AUTO;
+            $url = 'http://';
+        } else {
+            $param[CONTROL_ACTION_EDIT] = CONTROL_EDIT_ITEM;
+            $window_title = TR::t('edit_list_edit_item');
+            $item = $this->plugin->get_xmltv_source($source, $id);
+            $cache_selected = safe_get_value($item, PARAM_CACHE, XMLTV_CACHE_AUTO);
+            $url = safe_get_value($item, PARAM_URI, '');
+        }
+
         if ($source === XMLTV_SOURCE_EXTERNAL) {
+            $name = safe_get_value($item, PARAM_NAME);
+
             Control_Factory::add_label($defs, '', TR::t('name'), -10);
             Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, '',
                 $name, false, false, false, true, self::DLG_CONTROLS_WIDTH);
@@ -338,39 +336,34 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
         $url = safe_get_member($user_input, CONTROL_URL_PATH, '');
-        if (!is_proto_http($url)) {
-            return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
-        }
 
         if (empty($name)) {
             $name = $url;
         }
 
-        $item = array(
-            PARAM_TYPE => PARAM_LINK,
-            PARAM_NAME => $name,
-            PARAM_URI => $url,
-            PARAM_CACHE => $user_input->{self::CONTROL_CACHE_TIME}
-        );
-
         $source = $user_input->{CONTROL_ACTION_SOURCE};
         if (isset($user_input->{CONTROL_ACTION_EDIT}, $user_input->selected_media_url)) {
             // edit existing url
             $id = MediaURL::decode($user_input->selected_media_url)->id;
-            if ($source === XMLTV_SOURCE_PLAYLIST) {
-                $item = $this->plugin->get_xmltv_source($source, $id);
-                $item[PARAM_CACHE] = $user_input->{self::CONTROL_CACHE_TIME};
-            } else {
-                $this->plugin->remove_xmltv_source(XMLTV_SOURCE_EXTERNAL, $id);
-                $this->plugin->safe_clear_selected_epg_cache($id);
-                $id = Hashed_Array::hash($url);
-            }
+            $item = $this->plugin->get_xmltv_source($source, $id);
         } else {
             $id = Hashed_Array::hash($url);
+            $item = array(
+                PARAM_TYPE => PARAM_LINK,
+                PARAM_NAME => $name,
+                PARAM_URI => $url,
+                PARAM_HASH => $id
+            );
         }
 
-        $item[PARAM_HASH] = $id;
+        $item[PARAM_CACHE] = $user_input->{self::CONTROL_CACHE_TIME};
+
+        if ($source === XMLTV_SOURCE_EXTERNAL && !is_proto_http($url)) {
+            return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
+        }
+
         $this->plugin->set_xmltv_source($source, $item);
+        $this->plugin->safe_clear_selected_epg_cache($id);
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,
