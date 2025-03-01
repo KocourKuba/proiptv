@@ -906,21 +906,17 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                         $ext_epg[$time][PluginTvExtEpgProgram::actor] = $value[PluginTvExtEpgProgram::actor];
 
                     if (!empty($value[PluginTvExtEpgProgram::presenter]))
-                        $ext_epg[$time][PluginTvExtEpgProgram::presenter] = $value[PluginTvExtEpgProgram::presenter]; //Ведущий
+                        $ext_epg[$time][PluginTvExtEpgProgram::presenter] = $value[PluginTvExtEpgProgram::presenter];
 
                     if (!empty($value[PluginTvExtEpgProgram::imdb_rating]))
                         $ext_epg[$time][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::imdb_rating];
                 }
             }
 
-            $filename = "$playlist_id-$channel_id-" . strftime('%Y-%m-%d', $day_start_tm_sec) . ".json";
-            $path = get_temp_path($filename);
-            if (!file_exists($path) && !empty($ext_epg)) {
-                file_put_contents($path, pretty_json_format($ext_epg));
-            }
-
-            if (file_exists($path) && is_dir(getenv('FS_PREFIX') . "/tmp/ext_epg")) {
-                copy($path, getenv('FS_PREFIX') . "/tmp/ext_epg/$filename");
+            $apk_subst = getenv('FS_PREFIX');
+            if (!empty($ext_epg) && is_dir("$apk_subst/tmp/ext_epg")) {
+                $filename = "$playlist_id-$channel_id-" . strftime('%Y-%m-%d', $day_start_tm_sec) . ".json";
+                file_put_contents("$apk_subst/tmp/ext_epg/$filename", pretty_json_format($ext_epg));
             }
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
@@ -2524,11 +2520,11 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         hd_debug_print("Config: " . json_encode($config), true);
         file_put_contents($config_file, pretty_json_format($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
-        $ext_php = get_platform_php();
-        $script_path = get_install_path('bin/index_epg.php');
         $log_path = get_temp_path('bg_indexing_error.log');
         export_DuneSystem();
 
+        $ext_php = get_platform_php();
+        $script_path = get_install_path('bin/index_epg.php');
         $cmd = "$ext_php -f $script_path $config_file >$log_path 2>&1 &";
         hd_debug_print("exec: $cmd", true);
         shell_exec($cmd);
@@ -3470,10 +3466,16 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
         $this->perf->reset('start');
 
-        // first check if playlist in cache
+        $this->perf->reset('start_load_playlist');
+        // first check if playlist in cache and load it
         if (false === $this->init_playlist_parser($playlist_id, $reload_playlist)) {
             return false;
         }
+        $this->perf->reset('end_load_playlist');
+        $report = $this->perf->getFullReport('start_load_playlist', 'end_load_playlist');
+
+        hd_debug_print("Load time:     {$report[Perf_Collector::TIME]} sec");
+        hd_debug_print_separator();
 
         $filename = $this->iptv_m3u_parser->get_filename();
 
