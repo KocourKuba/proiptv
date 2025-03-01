@@ -28,9 +28,9 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Streaming_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements User_Input_Handler
 {
-    const ID = 'stream_setup';
+    const ID = 'playback_setup';
 
     const CONTROL_AUTO_RESUME = 'auto_resume';
     const CONTROL_AUTO_PLAY = 'auto_play';
@@ -75,17 +75,24 @@ class Starnet_Setup_Streaming_Screen extends Abstract_Controls_Screen implements
 
         //////////////////////////////////////
         // auto play
-        $value = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
+        $ext_epg = $this->plugin->get_setting(PARAM_SHOW_EXT_EPG, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::$translated[$value],
-            get_image_path(SwitchOnOff::$image[$value]), self::CONTROLS_WIDTH);
+            PARAM_SHOW_EXT_EPG, TR::t('setup_ext_epg'), SwitchOnOff::$translated[$ext_epg],
+            get_image_path(SwitchOnOff::$image[$ext_epg]), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
+        // auto play
+        $auto_play = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
+        Control_Factory::add_image_button($defs, $this, null,
+            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::$translated[$auto_play],
+            get_image_path(SwitchOnOff::$image[$auto_play]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // auto resume
-        $value = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
+        $auto_resume = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::$translated[$value],
-            get_image_path(SwitchOnOff::$image[$value]), self::CONTROLS_WIDTH);
+            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::$translated[$auto_resume],
+            get_image_path(SwitchOnOff::$image[$auto_resume]), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Per channel zoom
@@ -189,6 +196,7 @@ class Starnet_Setup_Streaming_Screen extends Abstract_Controls_Screen implements
 
             case PARAM_DUNE_FORCE_TS:
             case PARAM_PER_CHANNELS_ZOOM:
+            case PARAM_SHOW_EXT_EPG:
                 $this->plugin->toggle_setting($control_id);
                 break;
         }

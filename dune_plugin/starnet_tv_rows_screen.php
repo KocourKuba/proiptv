@@ -1091,7 +1091,19 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             );
 
             $title = $epg_data[PluginTvEpgProgram::name];
-            $desc = (!empty($epg_data[PluginTvExtEpgProgram::sub_title]) ? $epg_data[PluginTvExtEpgProgram::sub_title] . "\n" : '') . $epg_data[PluginTvEpgProgram::description];
+            if (!empty($epg_data[PluginTvExtEpgProgram::sub_title])) {
+                $geom = GComp_Geom::place_top_left(PaneParams::info_width, -1, 0, $next_pos_y);
+                $defs[] = GComps_Factory::label($geom,
+                    null,
+                    $epg_data[PluginTvExtEpgProgram::sub_title],
+                    1,
+                    PaneParams::prog_title_font_color,
+                    PaneParams::prog_item_font_size,
+                    'prog_sub_title');
+                $next_pos_y += PaneParams::prog_item_height;
+            }
+
+            $desc = $epg_data[PluginTvEpgProgram::description];
             if (isset($epg_data[PluginTvEpgProgram::icon_url])) {
                 $fanart_url = $epg_data[PluginTvEpgProgram::icon_url];
             }

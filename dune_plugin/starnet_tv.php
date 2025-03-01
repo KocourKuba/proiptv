@@ -238,16 +238,18 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
 
-        $playlist_id = $this->plugin->get_active_playlist_id();
-        $content = '';
-        foreach ($all_channels as $k => $v) {
-            $content .= "$k=$playlist_id-$k" . PHP_EOL;
-        }
+        if ($this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG)) {
+            $playlist_id = $this->plugin->get_active_playlist_id();
+            $content = '';
+            foreach ($all_channels as $k => $v) {
+                $content .= "$k=$playlist_id-$k" . PHP_EOL;
+            }
 
-        if (!empty($content) && file_put_contents(get_temp_path("channel_ids.txt"), $content) !== false) {
-            $tv_info[PluginTvInfo::ext_epg_enabled] = true;
-            $tv_info[PluginTvInfo::ext_epg_base_url] = get_noslash_trailed_path(get_plugin_cgi_url());
-            $tv_info[PluginTvInfo::ext_epg_channel_ids_url] = get_plugin_cgi_url("channels");
+            if (!empty($content) && file_put_contents(get_temp_path("channel_ids.txt"), $content) !== false) {
+                $tv_info[PluginTvInfo::ext_epg_enabled] = true;
+                $tv_info[PluginTvInfo::ext_epg_base_url] = get_noslash_trailed_path(get_plugin_cgi_url());
+                $tv_info[PluginTvInfo::ext_epg_channel_ids_url] = get_plugin_cgi_url("channels");
+            }
         }
 
         return $tv_info;

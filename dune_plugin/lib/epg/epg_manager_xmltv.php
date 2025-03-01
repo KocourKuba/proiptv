@@ -247,6 +247,7 @@ class Epg_Manager_Xmltv
     {
         $any_lock = $this->is_active_index_locked();
         $day_epg = array();
+        $ext_epg = $this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
 
         foreach ($this->xmltv_sources as $key => $params) {
             $this->xmltv_url_params = $params;
@@ -297,6 +298,8 @@ class Epg_Manager_Xmltv
                                 $day_epg[$program_start][PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
                                 $day_epg[$program_start][PluginTvEpgProgram::description] = self::get_node_value($tag, 'desc');
                                 $day_epg[$program_start][PluginTvEpgProgram::icon_url] = self::get_node_attribute($tag, 'icon', 'src');
+
+                                if (!$ext_epg) continue;
 
                                 $day_epg[$program_start][PluginTvExtEpgProgram::sub_title] = self::get_node_value($tag, 'sub-title');
                                 $day_epg[$program_start][PluginTvExtEpgProgram::main_category] = self::get_node_value($tag, 'category');

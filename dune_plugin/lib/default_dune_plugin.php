@@ -838,6 +838,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             hd_debug_print("EPG time shift $time_shift", true);
             $day_start_tm_sec += $time_shift;
 
+            $show_ext_epg = $this->get_bool_setting(PARAM_SHOW_EXT_EPG);
+
             $items = $this->epg_manager->get_day_epg_items($channel_row, $day_start_tm_sec);
 
             foreach ($items as $time => $value) {
@@ -859,7 +861,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                             . " {$value[PluginTvEpgProgram::name]}", true);
                     }
 
-                    if (in_array($channel_id, $this->epg_manager->get_delayed_epg())) continue;
+                    if (!$show_ext_epg || in_array($channel_id, $this->epg_manager->get_delayed_epg())) continue;
 
                     $ext_epg[$time]["start_tm"] = $tm_start;
                     $ext_epg[$time]["title"] = $value[PluginTvEpgProgram::name];

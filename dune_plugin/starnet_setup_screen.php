@@ -108,8 +108,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
         //////////////////////////////////////
         // Streaming settings 10
-        Control_Factory::add_image_button($defs, $this, null, CONTROL_STREAMING_SCREEN,
-            TR::t('setup_streaming_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+        Control_Factory::add_image_button($defs, $this, null, CONTROL_PLAYBACK_SCREEN,
+            TR::t('setup_playback_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Extended settings 12
@@ -175,8 +175,8 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             case CONTROL_EPG_SCREEN: // show epg settings dialog
                 return Action_Factory::open_folder(Starnet_Setup_Epg_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
-            case CONTROL_STREAMING_SCREEN: // show streaming settings dialog
-                return Action_Factory::open_folder(Starnet_Setup_Streaming_Screen::get_media_url_str(), TR::t('setup_streaming_settings'));
+            case CONTROL_PLAYBACK_SCREEN: // show streaming settings dialog
+                return Action_Factory::open_folder(Starnet_Setup_Playback_Screen::get_media_url_str(), TR::t('setup_playback_settings'));
 
             case CONTROL_EXT_SETUP_SCREEN: // show additional settings dialog
                 return Action_Factory::open_folder(Starnet_Setup_Ext_Screen::get_media_url_str(), TR::t('setup_extended_setup'));
