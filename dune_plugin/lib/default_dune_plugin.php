@@ -2004,6 +2004,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         hd_debug_print(null, true);
 
+        $this->perf->setLabel('start_init_parser');
+
+        $ret = false;
         $tmp_file = '';
         try {
             if (!$this->is_playlist_exist($playlist_id)) {
@@ -2013,8 +2016,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
 
             $params = $this->get_playlist_parameters($playlist_id);
             hd_debug_print("Using playlist " . json_encode($params));
-
-            $this->perf->reset('start');
 
             $this->init_user_agent();
 
@@ -2132,6 +2133,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             $this->iptv_m3u_parser->setupParserParameters($parser_params);
             $this->iptv_m3u_parser->parseHeader();
             hd_debug_print("Init playlist done!");
+            $ret = true;
         } catch (Exception $ex) {
             $err = HD::get_last_error($this->get_pl_error_name());
             if (!empty($err)) {
@@ -2143,10 +2145,15 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             if (empty($type) && file_exists($tmp_file)) {
                 unlink($tmp_file);
             }
-            return false;
         }
 
-        return true;
+        $this->perf->setLabel('end_init_parser');
+        $report = $this->perf->getFullReport('start_init_parser', 'end_init_parser');
+
+        hd_debug_print("Init time:     {$report[Perf_Collector::TIME]} sec");
+        hd_debug_print_separator();
+
+        return $ret;
     }
 
     /**
@@ -3424,6 +3431,8 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     {
         hd_debug_print();
 
+        $this->perf->reset('start');
+
         HD::set_last_error($this->get_pl_error_name(), null);
 
         $plugin_cookies->toggle_move = false;
@@ -3464,18 +3473,10 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
             return true;
         }
 
-        $this->perf->reset('start');
-
-        $this->perf->reset('start_load_playlist');
         // first check if playlist in cache and load it
         if (false === $this->init_playlist_parser($playlist_id, $reload_playlist)) {
             return false;
         }
-        $this->perf->reset('end_load_playlist');
-        $report = $this->perf->getFullReport('start_load_playlist', 'end_load_playlist');
-
-        hd_debug_print("Load time:     {$report[Perf_Collector::TIME]} sec");
-        hd_debug_print_separator();
 
         $filename = $this->iptv_m3u_parser->get_filename();
 

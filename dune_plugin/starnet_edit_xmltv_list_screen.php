@@ -156,10 +156,18 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_INDEX_EPG:
                 $this->plugin->run_bg_epg_indexing($selected_id);
+                $selected_sources = $this->plugin->get_selected_xmltv_sources();
+                if (in_array($selected_id, $selected_sources)) {
+                    $this->force_parent_reload = true;
+                }
                 return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 500);
 
             case ACTION_CLEAR_CACHE:
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
+                $selected_sources = $this->plugin->get_selected_xmltv_sources();
+                if (in_array($selected_id, $selected_sources)) {
+                    $this->force_parent_reload = true;
+                }
                 break;
 
             case ACTION_ITEM_DELETE:
@@ -203,6 +211,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $this->plugin->safe_clear_selected_epg_cache($source);
                     $this->plugin->remove_xmltv_source(XMLTV_SOURCE_EXTERNAL, $source);
                 }
+
+                $this->force_parent_reload = true;
 
                 if ($this->plugin->get_xmltv_sources_count(XMLTV_SOURCE_EXTERNAL) !== 0) break;
 
