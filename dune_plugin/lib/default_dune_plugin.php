@@ -859,20 +859,20 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
                             . " {$value[PluginTvEpgProgram::name]}", true);
                     }
 
+                    if (in_array($channel_id, $this->epg_manager->get_delayed_epg())) continue;
+
                     $ext_epg[$time]["start_tm"] = $tm_start;
                     $ext_epg[$time]["title"] = $value[PluginTvEpgProgram::name];
                     $ext_epg[$time]["desc"] = $value[PluginTvEpgProgram::description];
 
-                    if (in_array($channel_id, $this->epg_manager->get_delayed_epg())) continue;
+                    if (empty($value[PluginTvEpgProgram::icon_url])) {
+                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
+                    } else {
+                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
+                    }
 
                     if (!empty($value[PluginTvExtEpgProgram::main_category])) {
                         $ext_epg[$time][PluginTvExtEpgProgram::main_category] = $value[PluginTvExtEpgProgram::main_category];
-                    }
-
-                    if (!empty($value[PluginTvEpgProgram::icon_url])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
-                    } else {
-                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
                     }
 
                     if (!empty($value[PluginTvExtEpgProgram::icon_urls])) {

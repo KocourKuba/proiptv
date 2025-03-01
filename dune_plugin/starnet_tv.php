@@ -95,14 +95,15 @@ class Starnet_Tv implements User_Input_Handler
                 }
                 hd_debug_print("delayed epg: " . json_encode($epg_manager->get_delayed_epg()));
 
-                foreach ($epg_manager->get_delayed_epg() as $channel_id) {
+                $delayed_queue = $epg_manager->get_delayed_epg();
+                $epg_manager->clear_delayed_epg();
+                foreach ($delayed_queue as $channel_id) {
                     hd_debug_print("Refresh EPG for channel ID: $channel_id");
                     $day_start_ts = strtotime(date("Y-m-d")) + get_local_time_zone_offset();
                     $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
                     $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
                 }
 
-                $epg_manager->clear_delayed_epg();
                 return $post_action;
 
             case GUI_EVENT_PLAYBACK_STOP:
