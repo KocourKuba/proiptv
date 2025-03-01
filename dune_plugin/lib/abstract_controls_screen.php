@@ -89,8 +89,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
 
         $defs = $this->get_control_defs($media_url, $plugin_cookies);
 
-        $folder_view = array
-        (
+        $folder_view = array(
             PluginControlsFolderView::defs => $defs,
             PluginControlsFolderView::initial_sel_ndx => -1,
             PluginControlsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
@@ -102,8 +101,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
             ),
         );
 
-        return array
-        (
+        return array(
             PluginFolderView::multiple_views_supported => false,
             PluginFolderView::archive => null,
             PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_CONTROLS,

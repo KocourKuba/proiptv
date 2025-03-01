@@ -36,8 +36,7 @@ class Control_Factory
      */
     public static function add_label(&$defs, $title, $text, $vgap_after = 4)
     {
-        $defs[] = array
-        (
+        $defs[] = array(
             GuiControlDef::name => '',
             GuiControlDef::title => $title,
             GuiControlDef::kind => GUI_CONTROL_LABEL,
