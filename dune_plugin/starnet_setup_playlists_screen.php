@@ -157,7 +157,6 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         $sel_ndx = -1;
         $post_action = null;

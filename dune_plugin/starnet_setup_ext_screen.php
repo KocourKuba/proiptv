@@ -32,8 +32,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
 {
     const ID = 'ext_setup';
 
-    const CONTROL_BACKUP = 'backup';
-    const CONTROL_RESTORE = 'restore';
     const CONTROL_HISTORY_CHANGE_FOLDER = 'change_history_folder';
     const CONTROL_COPY_TO_DATA = 'copy_to_data';
     const CONTROL_COPY_TO_PLUGIN = 'copy_to_plugin';
@@ -84,10 +82,10 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         // backup
 
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_BACKUP, TR::t('setup_backup_settings'), TR::t('select_folder'), $folder_icon, self::CONTROLS_WIDTH);
+            CONTROL_BACKUP, TR::t('setup_backup_settings'), TR::t('select_folder'), $folder_icon, self::CONTROLS_WIDTH);
 
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_RESTORE, TR::t('setup_restore_settings'), TR::t('select_file'), $folder_icon, self::CONTROLS_WIDTH);
+            CONTROL_RESTORE, TR::t('setup_restore_settings'), TR::t('select_file'), $folder_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // history
@@ -134,7 +132,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
@@ -157,7 +154,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                     )
                 );
 
-            case self::CONTROL_BACKUP:
+            case CONTROL_BACKUP:
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
@@ -170,7 +167,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 );
                 return Action_Factory::open_folder($media_url_str, TR::t('setup_backup_folder_path'));
 
-            case self::CONTROL_RESTORE:
+            case CONTROL_RESTORE:
                 $media_url_str = MediaURL::encode(
                     array(
                         'screen_id' => Starnet_Folder_Screen::ID,
@@ -207,7 +204,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                         $action_reload, $data->filepath, self::CONTROLS_WIDTH);
                 }
 
-                if ($data->choose_folder === self::CONTROL_BACKUP) {
+                if ($data->choose_folder === CONTROL_BACKUP) {
                     if (HD::do_backup_settings($this->plugin, $data->filepath) === false) {
                         return Action_Factory::show_title_dialog(TR::t('err_backup'));
                     }
@@ -220,7 +217,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file === self::CONTROL_RESTORE) {
+                if ($data->choose_file === CONTROL_RESTORE) {
                     return $this->do_restore_settings($data->caption, $data->filepath);
                 }
                 break;

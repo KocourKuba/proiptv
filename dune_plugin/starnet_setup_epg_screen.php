@@ -150,7 +150,6 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
         $control_id = $user_input->control_id;

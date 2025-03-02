@@ -232,7 +232,7 @@ class Action_Factory
      * Confirmation dialog
      * @return array
      */
-    public static function show_confirmation_dialog($title, $handler, $action, $multiline = null, $preferred_width = 0)
+    public static function show_confirmation_dialog($title, $handler, $action, $multiline = null, $preferred_width = 0, $add_params = null, $attrs = array())
     {
         $defs = array();
 
@@ -240,10 +240,10 @@ class Action_Factory
             Control_Factory::add_multiline_label($defs, '', $multiline, 15);
         }
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, null, $action, TR::t('yes'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, $add_params, $action, TR::t('yes'), 300);
         Control_Factory::add_close_dialog_button($defs, TR::t('no'), 300);
 
-        return self::show_dialog($title, $defs, false, $preferred_width);
+        return self::show_dialog($title, $defs, false, $preferred_width, $attrs);
     }
 
     /**

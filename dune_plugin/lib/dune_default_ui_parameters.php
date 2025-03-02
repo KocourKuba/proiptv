@@ -2,7 +2,7 @@
 require_once 'curl_wrapper.php';
 require_once 'user_input_handler_registry.php';
 
-class UI_Parameters
+class Dune_Default_UI_Parameters
 {
     const RESOURCE_URL = 'http://iptv.esalecrm.net/res/';
     const CHANGELOG_URL_PREFIX = 'https://raw.githubusercontent.com/KocourKuba/proiptv/master/build/';

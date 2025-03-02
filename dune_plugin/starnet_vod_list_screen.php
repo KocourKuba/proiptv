@@ -56,7 +56,6 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         if (!isset($user_input->selected_media_url)) {
             return null;

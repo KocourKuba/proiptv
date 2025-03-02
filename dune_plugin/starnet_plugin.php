@@ -58,6 +58,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
     {
         parent::__construct();
 
+        LogSeverity::$is_debug = true;
+
         User_Input_Handler_Registry::get_instance()->register_handler(new Starnet_Entry_Handler($this));
 
         $this->iptv = new Starnet_Tv($this);
@@ -71,10 +73,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Screen($this));
         $return_index = 2;
         $this->create_screen(new Starnet_Setup_Interface_Screen($this, $return_index));
-        if (HD::rows_api_support()) {
-            $return_index += 2;
-            $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this, $return_index));
-        }
+        $return_index += 2;
+        $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this, $return_index));
         $return_index += 2;
         $this->create_screen(new Starnet_Setup_Category_Screen($this, $return_index));
         $return_index += 2;
@@ -94,6 +94,9 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Edit_Hidden_List_Screen($this));
 
         Starnet_Epfs_Handler::init($this);
+
+        $this->init_providers_config();
+        $this->init_screen_view_parameters($this->plugin_info['app_background']);
 
         print_sysinfo();
 

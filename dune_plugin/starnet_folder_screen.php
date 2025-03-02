@@ -63,6 +63,142 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     /**
      * @inheritDoc
      */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
+
+        $actions = array();
+
+        $fs_action = User_Input_Handler_Registry::create_action($this, self::ACTION_FS);
+        $actions[GUI_EVENT_KEY_ENTER] = $fs_action;
+        $actions[GUI_EVENT_KEY_SETUP] = Action_Factory::replace_path($media_url->windowCounter);
+
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
+
+        if (empty($media_url->filepath)) {
+            $allow_network = safe_get_member($media_url, 'allow_network', false);
+            $allow_image_lib = safe_get_member($media_url, 'allow_image_lib', false);
+
+            if ($allow_network && !is_android()) {
+                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
+                    self::ACTION_SMB_SETUP, TR::t('folder_screen_smb_settings'));
+            }
+
+            if ($media_url->allow_reset) {
+                $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
+                    self::ACTION_RESET_FOLDER, TR::t('reset_default'));
+            }
+
+            if ($allow_image_lib) {
+                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
+                    self::ACTION_RELOAD_IMAGE_FOLDER, TR::t('refresh'));
+            }
+        } else if ($media_url->filepath !== self::STORAGE_PATH &&
+            $media_url->filepath !== self::NETWORK_PATH &&
+            $media_url->filepath !== self::SMB_PATH &&
+            $media_url->filepath !== self::SDCARD_PATH . "/DuneHD" &&
+            $media_url->filepath !== self::IMAGELIB_PATH) {
+
+            if ($media_url->choose_folder !== false) {
+                $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this,
+                    ACTION_OPEN_FOLDER, TR::t('folder_screen_open_folder'));
+
+                if (!isset($media_url->read_only)) {
+                    $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
+                        self::ACTION_GET_FOLDER_NAME_DLG, TR::t('folder_screen_create_folder'));
+                }
+
+                $select_folder = User_Input_Handler_Registry::create_action($this,
+                    self::ACTION_SELECT_FOLDER, TR::t('select_folder'));
+
+                $actions[GUI_EVENT_KEY_D_BLUE] = $select_folder;
+                $actions[GUI_EVENT_KEY_SELECT] = $select_folder;
+            }
+
+            $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        }
+
+        return $actions;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function handle_user_input(&$user_input, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+
+        switch ($user_input->control_id) {
+            case GUI_EVENT_TIMER:
+                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
+                if (isset($parent_media_url->filepath)
+                    && $parent_media_url->filepath !== self::SMB_PATH
+                    && $parent_media_url->filepath !== self::NETWORK_PATH) {
+                    $invalidate = Action_Factory::invalidate_all_folders($plugin_cookies, array($user_input->parent_media_url));
+                } else {
+                    $invalidate = null;
+                }
+
+                return Action_Factory::change_behaviour($actions, 1000, $invalidate);
+
+            case GUI_EVENT_KEY_TOP_MENU:
+            case GUI_EVENT_KEY_RETURN:
+                if (!isset($parent_media_url->end_action)) {
+                    return Action_Factory::close_and_run();
+                }
+
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_action_screen(
+                        $parent_media_url->source_window_id,
+                        $parent_media_url->end_action,
+                        null,
+                        array('action_id' => $parent_media_url->action_id)
+                    )
+                );
+
+            case self::ACTION_FS:
+                return $this->do_action_fs($user_input);
+
+            case self::ACTION_SELECT_FOLDER:
+                return $this->do_select_folder($user_input);
+
+            case self::ACTION_RESET_FOLDER:
+                return $this->do_reset_folder($user_input);
+
+            case self::ACTION_RELOAD_IMAGE_FOLDER:
+                return $this->do_reload_folder($user_input, $plugin_cookies);
+
+            case self::ACTION_GET_FOLDER_NAME_DLG:
+                return $this->do_get_folder_name_dlg();
+
+            case self::ACTION_CREATE_FOLDER:
+                return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, self::ACTION_DO_MKDIR));
+
+            case self::ACTION_DO_MKDIR:
+                return $this->do_mkdir($user_input, $plugin_cookies);
+
+            case ACTION_OPEN_FOLDER:
+                return $this->do_open_folder($user_input);
+
+            case self::ACTION_NEW_SMB_DATA:
+                return $this->do_new_smb_data($user_input);
+
+            case self::ACTION_SMB_SETUP:
+                return $this->do_smb_setup($plugin_cookies);
+
+            case self::ACTION_SAVE_SMB_SETUP:
+                return $this->do_save_smb_setup($user_input, $plugin_cookies);
+        }
+
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -88,6 +224,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         $password = safe_get_member($media_url, 'password', false);
         $choose_folder = safe_get_member($media_url, 'choose_folder', false);
         $choose_file = safe_get_member($media_url, 'choose_file', false);
+        $action_id = safe_get_member($media_url, 'action_id', false);
 
         $items = array();
         hd_debug_print("dir: " . json_encode($dir), true);
@@ -119,7 +256,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 } else if ($item_type === self::SELECTED_TYPE_NFS) {
                     $caption = $v['foldername'];
                     $filepath = $k;
-                    $icon_file = self::get_folder_icon('smb_folder');
+                    $icon_file = self::get_folder_icon('nfs_folder');
                     $info = TR::t('folder_screen_nfs__2', $caption, $v['ip']);
                     $type = self::SELECTED_TYPE_FOLDER;
                     $ip_path = $v['ip'];
@@ -210,6 +347,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                             'err' => $err,
                             'choose_folder' => $choose_folder,
                             'choose_file' => $choose_file,
+                            'action_id' => $action_id,
                             'extension' => $media_url->extension,
                             'windowCounter' => $windowCounter
                         )
@@ -230,8 +368,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 $info = TR::t('folder_screen_select__1', $media_url->caption);
             }
             $items[] = array(
-                PluginRegularFolderItem::caption => '',
                 PluginRegularFolderItem::media_url => '',
+                PluginRegularFolderItem::caption => '',
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => 'gui_skin://small_icons/info.aai',
                     ViewItemParams::item_detailed_icon_path => 'gui_skin://large_icons/info.aai',
@@ -240,7 +378,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             );
         }
 
-        //hd_debug_print("folder items: " . count($items));
         return array(
             PluginRegularFolderRange::total => count($items),
             PluginRegularFolderRange::more_items_available => false,
@@ -249,6 +386,22 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             PluginRegularFolderRange::items => $items
         );
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_folder_views()
+    {
+        return array(
+            $this->plugin->get_screen_view('list_1x11_small_info'),
+            $this->plugin->get_screen_view('list_2x11_small_info'),
+            $this->plugin->get_screen_view('icons_5x3_caption'),
+            $this->plugin->get_screen_view('icons_4x3_caption'),
+        );
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    /// protected methods
 
     /**
      * @param object $plugin_cookies
@@ -271,7 +424,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         $fileData['folder'] = array();
         $fileData['file'] = array();
         foreach ($dirs as $dir) {
-            hd_debug_print("get_file_list dir: $dir");
+            hd_debug_print("get_file_list dir: $dir", true);
             if ($dir === self::SMB_PATH) {
                 if (is_limited_apk()) {
                     $info = 1;
@@ -367,7 +520,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         } else if ($folder_type === 'internal') {
             $folder_icon = get_image_path('internal_storage.png');
         } else if ($folder_type === 'smb') {
-            $folder_icon = get_image_path('smb.png');
+            $folder_icon = get_image_path('smb_folder.png');
         } else if ($folder_type === 'smb_folder') {
             $folder_icon = get_image_path('smb_folder.png');
         } else if ($folder_type === 'network') {
@@ -413,132 +566,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         }
 
         return $file_icon;
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    /// protected methods
-
-    /**
-     * @inheritDoc
-     */
-    public function handle_user_input(&$user_input, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        dump_input_handler($user_input);
-
-        if (!isset($user_input->selected_media_url)) {
-            return null;
-        }
-
-        switch ($user_input->control_id) {
-            case GUI_EVENT_TIMER:
-                $parent_url = MediaURL::decode($user_input->parent_media_url);
-                $actions = $this->get_action_map($parent_url, $plugin_cookies);
-                if (isset($parent_url->filepath)
-                    && $parent_url->filepath !== self::SMB_PATH
-                    && $parent_url->filepath !== self::NETWORK_PATH) {
-                    $invalidate = Action_Factory::invalidate_all_folders($plugin_cookies, array($user_input->parent_media_url));
-                } else {
-                    $invalidate = null;
-                }
-
-                return Action_Factory::change_behaviour($actions, 1000, $invalidate);
-
-            case self::ACTION_FS:
-                return $this->do_action_fs($user_input);
-
-            case self::ACTION_SELECT_FOLDER:
-                return $this->do_select_folder($user_input);
-
-            case self::ACTION_RESET_FOLDER:
-                return $this->do_reset_folder($user_input);
-
-            case self::ACTION_RELOAD_IMAGE_FOLDER:
-                return $this->do_reload_folder($user_input, $plugin_cookies);
-
-            case self::ACTION_GET_FOLDER_NAME_DLG:
-                return $this->do_get_folder_name_dlg();
-
-            case self::ACTION_CREATE_FOLDER:
-                return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, self::ACTION_DO_MKDIR));
-
-            case self::ACTION_DO_MKDIR:
-                return $this->do_mkdir($user_input, $plugin_cookies);
-
-            case ACTION_OPEN_FOLDER:
-                return $this->do_open_folder($user_input);
-
-            case self::ACTION_NEW_SMB_DATA:
-                return $this->do_new_smb_data($user_input);
-
-            case self::ACTION_SMB_SETUP:
-                return $this->do_smb_setup($plugin_cookies);
-
-            case self::ACTION_SAVE_SMB_SETUP:
-                return $this->do_save_smb_setup($user_input, $plugin_cookies);
-        }
-
-        return null;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
-
-        $actions = array();
-
-        $fs_action = User_Input_Handler_Registry::create_action($this, self::ACTION_FS);
-        $actions[GUI_EVENT_KEY_ENTER] = $fs_action;
-        $actions[GUI_EVENT_KEY_SETUP] = Action_Factory::replace_path($media_url->windowCounter);
-
-        if (empty($media_url->filepath)) {
-            $allow_network = safe_get_member($media_url, 'allow_network', false);
-            $allow_image_lib = safe_get_member($media_url, 'allow_image_lib', false);
-
-            if ($allow_network && !is_android()) {
-                $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this,
-                    self::ACTION_SMB_SETUP, TR::t('folder_screen_smb_settings'));
-            }
-
-            if ($media_url->allow_reset) {
-                $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this,
-                    self::ACTION_RESET_FOLDER, TR::t('reset_default'));
-            }
-
-            if ($allow_image_lib) {
-                $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
-                    self::ACTION_RELOAD_IMAGE_FOLDER, TR::t('refresh'));
-            }
-        } else if ($media_url->filepath !== self::STORAGE_PATH &&
-            $media_url->filepath !== self::NETWORK_PATH &&
-            $media_url->filepath !== self::SMB_PATH &&
-            $media_url->filepath !== self::SDCARD_PATH . "/DuneHD" &&
-            $media_url->filepath !== self::IMAGELIB_PATH) {
-
-            if ($media_url->choose_folder !== false) {
-                $actions[GUI_EVENT_KEY_A_RED] = User_Input_Handler_Registry::create_action($this,
-                    ACTION_OPEN_FOLDER, TR::t('folder_screen_open_folder'));
-
-                if (!isset($media_url->read_only)) {
-                    $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this,
-                        self::ACTION_GET_FOLDER_NAME_DLG, TR::t('folder_screen_create_folder'));
-                }
-
-                $select_folder = User_Input_Handler_Registry::create_action($this,
-                    self::ACTION_SELECT_FOLDER, TR::t('select_folder'));
-
-                $actions[GUI_EVENT_KEY_D_BLUE] = $select_folder;
-                $actions[GUI_EVENT_KEY_SELECT] = $select_folder;
-            }
-
-            $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-        }
-
-        return $actions;
     }
 
     /**
@@ -877,20 +904,5 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         }
 
         return Action_Factory::show_title_dialog(TR::t('folder_screen_used__1', $smb_view_ops[$smb_view]));
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_folder_views()
-    {
-        hd_debug_print(null, true);
-
-        return array(
-            $this->plugin->get_screen_view('list_1x11_small_info'),
-            $this->plugin->get_screen_view('list_2x11_small_info'),
-            $this->plugin->get_screen_view('icons_5x3_caption'),
-            $this->plugin->get_screen_view('icons_4x3_caption'),
-        );
     }
 }

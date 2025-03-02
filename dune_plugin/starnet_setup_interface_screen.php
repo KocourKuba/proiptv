@@ -127,7 +127,6 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         $control_id = $user_input->control_id;
         if (isset($user_input->action_type, $user_input->{$control_id})
@@ -216,7 +215,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
             case ACTION_RESET_DEFAULT:
                 hd_debug_print("Background set to default");
                 $this->plugin->set_background_image(null);
-                $this->plugin->init_screen_view_parameters(null);
+                $this->plugin->init_screen_view_parameters($this->plugin->plugin_info['app_background']);
 
                 return Action_Factory::invalidate_all_folders(
                     $plugin_cookies,

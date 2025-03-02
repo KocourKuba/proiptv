@@ -33,12 +33,12 @@ require_once 'named_storage.php';
 require_once 'api/api_default.php';
 require_once 'm3u/M3uParser.php';
 require_once 'm3u/M3uTags.php';
-require_once 'lib/ui_parameters.php';
+require_once 'lib/dune_default_ui_parameters.php';
 require_once 'lib/epg/epg_manager_json.php';
 require_once 'lib/perf_collector.php';
 require_once 'lib/smb_tree.php';
 
-class Default_Dune_Plugin extends UI_parameters implements DunePlugin
+class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlugin
 {
     const AUTHOR_LOGO = "ProIPTV by sharky72  [ ´¯¤¤¯(ºº)¯¤¤¯` ]";
     const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
@@ -640,6 +640,7 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function get_folder_view($media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
 
         $decoded_media_url = MediaURL::decode($media_url);
         return $this->get_screen_by_url($decoded_media_url)->get_folder_view($decoded_media_url, $plugin_cookies);
@@ -1829,99 +1830,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $this->init_parameters();
         $this->update_log_level();
 
-        if ($this->providers->size() === 0) {
-            // 1. Check local debug version
-            // 2. Try to download from web release version
-            // 3. Check previously downloaded web release version
-            // 4. Check preinstalled version
-            // 5. Houston we have a problem
-            $tmp_file = get_install_path("providers_debug.json");
-            if (file_exists($tmp_file)) {
-                hd_debug_print("Load debug providers configuration: $tmp_file");
-                $jsonArray = parse_json_file($tmp_file);
-            } else {
-                $name = "providers_{$this->plugin_info['app_base_version']}.json";
-                $tmp_file = get_data_path($name);
-                $serial = get_serial_number();
-                if (empty($serial)) {
-                    hd_debug_print("Unable to get DUNE serial.");
-                    $serial = 'XXXX';
-                }
-                $ver = $this->plugin_info['app_version'];
-                $model = get_product_id();
-                $firmware = get_raw_firmware_version();
-                $jsonArray = HD::DownloadJson(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial");
-                if ($jsonArray === false || !isset($jsonArray['providers'])) {
-                    if (file_exists($tmp_file)) {
-                        hd_debug_print("Load actual providers configuration");
-                        $jsonArray = parse_json_file($tmp_file);
-                    } else if (file_exists($tmp_file = get_install_path($name))) {
-                        hd_debug_print("Load installed providers configuration");
-                        $jsonArray = parse_json_file($tmp_file);
-                    }
-                } else {
-                    store_to_json_file($tmp_file, $jsonArray);
-                }
-            }
-
-            foreach ($jsonArray['plugin_config']['image_libs'] as $key => $value) {
-                hd_debug_print("available image lib: $key");
-                $this->image_libs->set($key, $value);
-            }
-
-            foreach ($jsonArray['epg_presets'] as $key => $value) {
-                hd_debug_print("available epg preset: $key");
-                $this->epg_presets->set($key, $value);
-            }
-
-            if ($jsonArray === false || !isset($jsonArray['providers'])) {
-                hd_debug_print("Problem to get providers configuration");
-                return;
-            }
-
-            foreach ($jsonArray['providers'] as $item) {
-                if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
-
-                $api_class = "api_{$item['id']}";
-                if (!class_exists($api_class)) {
-                    $api_class = 'api_default';
-                }
-
-                //hd_debug_print("provider api: $api_class ({$item['name']})");
-                /** @var api_default $provider */
-                $provider = new $api_class($this);
-                foreach ($item as $key => $value) {
-                    $words = explode('_', $key);
-                    $setter = "set";
-                    foreach ($words as $word) {
-                        $setter .= ucwords($word);
-                    }
-                    if (method_exists($provider, $setter)) {
-                        $provider->{$setter}($value);
-                    } else {
-                        hd_debug_print("Unknown method $setter", true);
-                    }
-                }
-
-                // cache provider logo
-                $logo = $provider->getLogo();
-                $filename = basename($logo);
-                $local_file = get_install_path("logo/$filename");
-                if (file_exists($local_file)) {
-                    $provider->setLogo("plugin_file://logo/$filename");
-                } else {
-                    $cached_file = get_cached_image_path($filename);
-                    list($res,) = Curl_Wrapper::simple_download_file($logo, $cached_file);
-                    if ($res) {
-                        $provider->setLogo($cached_file);
-                    } else {
-                        hd_debug_print("failed to download provider logo: $logo");
-                    }
-                }
-                $this->providers->set($provider->getId(), $provider);
-            }
-        }
-
         hd_debug_print("Init plugin done!");
         hd_debug_print_separator();
 
@@ -1934,6 +1842,104 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
     public function update_log_level()
     {
         set_debug_log($this->get_bool_parameter(PARAM_ENABLE_DEBUG, false));
+    }
+
+    public function init_providers_config()
+    {
+        if ($this->providers->size() !== 0) {
+            return;
+        }
+
+        // 1. Check local debug version
+        // 2. Try to download from web release version
+        // 3. Check previously downloaded web release version
+        // 4. Check preinstalled version
+        // 5. Houston we have a problem
+        $tmp_file = get_install_path("providers_debug.json");
+        if (file_exists($tmp_file)) {
+            hd_debug_print("Load debug providers configuration: $tmp_file");
+            $jsonArray = parse_json_file($tmp_file);
+        } else {
+            $name = "providers_{$this->plugin_info['app_base_version']}.json";
+            $tmp_file = get_data_path($name);
+            $serial = get_serial_number();
+            if (empty($serial)) {
+                hd_debug_print("Unable to get DUNE serial.");
+                $serial = 'XXXX';
+            }
+            $ver = $this->plugin_info['app_version'];
+            $model = get_product_id();
+            $firmware = get_raw_firmware_version();
+            $jsonArray = HD::DownloadJson(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial");
+            if ($jsonArray === false || !isset($jsonArray['providers'])) {
+                if (file_exists($tmp_file)) {
+                    hd_debug_print("Load actual providers configuration");
+                    $jsonArray = parse_json_file($tmp_file);
+                } else if (file_exists($tmp_file = get_install_path($name))) {
+                    hd_debug_print("Load installed providers configuration");
+                    $jsonArray = parse_json_file($tmp_file);
+                }
+            } else {
+                store_to_json_file($tmp_file, $jsonArray);
+            }
+        }
+
+        foreach ($jsonArray['plugin_config']['image_libs'] as $key => $value) {
+            hd_debug_print("available image lib: $key");
+            $this->image_libs->set($key, $value);
+        }
+
+        foreach ($jsonArray['epg_presets'] as $key => $value) {
+            hd_debug_print("available epg preset: $key");
+            $this->epg_presets->set($key, $value);
+        }
+
+        if ($jsonArray === false || !isset($jsonArray['providers'])) {
+            hd_debug_print("Problem to get providers configuration");
+            return;
+        }
+
+        foreach ($jsonArray['providers'] as $item) {
+            if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
+
+            $api_class = "api_{$item['id']}";
+            if (!class_exists($api_class)) {
+                $api_class = 'api_default';
+            }
+
+            //hd_debug_print("provider api: $api_class ({$item['name']})");
+            /** @var api_default $provider */
+            $provider = new $api_class($this);
+            foreach ($item as $key => $value) {
+                $words = explode('_', $key);
+                $setter = "set";
+                foreach ($words as $word) {
+                    $setter .= ucwords($word);
+                }
+                if (method_exists($provider, $setter)) {
+                    $provider->{$setter}($value);
+                } else {
+                    hd_debug_print("Unknown method $setter", true);
+                }
+            }
+
+            // cache provider logo
+            $logo = $provider->getLogo();
+            $filename = basename($logo);
+            $local_file = get_install_path("logo/$filename");
+            if (file_exists($local_file)) {
+                $provider->setLogo("plugin_file://logo/$filename");
+            } else {
+                $cached_file = get_cached_image_path($filename);
+                list($res,) = Curl_Wrapper::simple_download_file($logo, $cached_file);
+                if ($res) {
+                    $provider->setLogo($cached_file);
+                } else {
+                    hd_debug_print("failed to download provider logo: $logo");
+                }
+            }
+            $this->providers->set($provider->getId(), $provider);
+        }
     }
 
     /**
@@ -2396,8 +2402,6 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function set_xmltv_source($type, $value)
     {
-        hd_debug_print(null, true);
-
         if ($type === XMLTV_SOURCE_PLAYLIST || $type === XMLTV_SOURCE_EXTERNAL) {
             $table_name = self::get_table_name($type);
             $wrapper = $type === XMLTV_SOURCE_PLAYLIST ? $this->sql_playlist : $this->sql_params;
@@ -4850,9 +4854,13 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
      */
     public function get_setting($name, $default)
     {
+        hd_debug_print(null);
         $table_name = self::SETTINGS_TABLE;
         $type = gettype($default);
-        $row = $this->sql_playlist->query_value("SELECT value, type FROM $table_name WHERE name = '$name';", true);
+        if ($this->sql_playlist !== null) {
+            $row = $this->sql_playlist->query_value("SELECT value, type FROM $table_name WHERE name = '$name';", true);
+        }
+
         if (empty($row)) {
             return $default;
         }
@@ -4875,7 +4883,9 @@ class Default_Dune_Plugin extends UI_parameters implements DunePlugin
         $table_name = self::SETTINGS_TABLE;
         $q_value = Sql_Wrapper::sql_quote($value);
         $type = gettype($value);
-        $this->sql_playlist->exec("INSERT OR REPLACE INTO $table_name (name, value, type) VALUES ('$name', $q_value, '$type');");
+        if ($this->sql_playlist) {
+            $this->sql_playlist->exec("INSERT OR REPLACE INTO $table_name (name, value, type) VALUES ('$name', $q_value, '$type');");
+        }
     }
 
     /**

@@ -73,7 +73,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         if (!isset($user_input->control_id)) {
             return null;
@@ -180,6 +179,41 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print("action: launch open", true);
                 return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
 
+            case ACTION_CONFIRM_BACKUP_DLG:
+                hd_debug_print("Call select backup folder");
+                $media_url_str = MediaURL::encode(
+                    array(
+                        'screen_id' => Starnet_Folder_Screen::ID,
+                        'source_window_id' => static::ID,
+                        'choose_folder' => CONTROL_BACKUP,
+                        'end_action' => self::ACTION_PLUGIN_ENTRY,
+                        'action_id' => $user_input->action_id,
+                        'extension' => 'zip',
+                        'allow_network' => !is_limited_apk(),
+                        'windowCounter' => 1,
+                    )
+                );
+                return Action_Factory::open_folder($media_url_str, TR::t('setup_backup_folder_path'));
+
+            case ACTION_FOLDER_SELECTED:
+                $data = MediaURL::decode($user_input->selected_data);
+                if ($data->choose_folder === CONTROL_BACKUP) {
+                    if (HD::do_backup_settings($this->plugin, $data->filepath) === false) {
+                        return Action_Factory::show_title_dialog(TR::t('err_backup'));
+                    }
+
+                    return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
+                        User_Input_Handler_Registry::create_action(
+                            $this,
+                            self::ACTION_PLUGIN_ENTRY,
+                            null,
+                            array('action_id' => $data->action_id)
+                        )
+                    );
+                }
+
+                break;
+
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {
                     break;
@@ -189,6 +223,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 switch ($user_input->action_id) {
                     case self::ACTION_LAUNCH:
+                        $action = $this->check_upgrade($user_input);
+                        if ($action !== null) {
+                            return $action;
+                        }
+
                         hd_debug_print_separator();
                         hd_debug_print("LANUCH PLUGIN");
 
@@ -235,6 +274,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
 
                     case self::ACTION_LAUNCH_VOD:
+                        $action = $this->check_upgrade($user_input);
+                        if ($action !== null) {
+                            return $action;
+                        }
+
                         hd_debug_print_separator();
                         hd_debug_print("LANUCH PLUGIN VOD");
                         hd_debug_print_separator();
@@ -254,6 +298,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         return Action_Factory::show_error(false, TR::t('err_vod_not_available'));
 
                     case self::ACTION_AUTO_RESUME:
+                        $action = $this->check_upgrade($user_input);
+                        if ($action !== null) {
+                            return $action;
+                        }
+
                         hd_debug_print_separator();
                         hd_debug_print("LANUCH PLUGIN AUTO RESUME MODE");
                         hd_debug_print_separator();
@@ -321,6 +370,37 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 break;
             default:
                 break;
+        }
+
+        return null;
+    }
+
+    private function check_upgrade($user_input)
+    {
+        $flag = get_data_path('upgrade.flag');
+        if (file_exists($flag)) {
+            unlink($flag);
+        } else if (!file_exists(get_data_path('common.db')) && file_exists(get_data_path('common.settings'))) {
+            file_put_contents($flag, '');
+            $defs = array();
+
+            Control_Factory::add_close_dialog_and_apply_button($defs,
+                $this,
+                array('action_id' => $user_input->action_id),
+                ACTION_CONFIRM_BACKUP_DLG,
+                TR::t('yes'),
+                300
+            );
+
+            Control_Factory::add_close_dialog_and_apply_button($defs,
+                $this,
+                array('action_id' => $user_input->action_id),
+                self::ACTION_PLUGIN_ENTRY,
+                TR::t('no'),
+                300
+            );
+
+            return Action_Factory::show_dialog(TR::t('yes_no_confirm_backup'), $defs);
         }
 
         return null;

@@ -62,10 +62,12 @@ const ACTION_RESTORE_CHANNELS = 'restore_chanels';
 const ACTION_RESET_DEFAULT = 'reset_default';
 const ACTION_SETTINGS = 'settings';
 const ACTION_DO_SETTINGS = 'do_edit_settings';
-const ACTION_UI_PARAMETERS = 'ui_parameters';
+const ACTION_UI_PARAMETERS = 'Dune_Default_UI_Parameters';
 const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
 const ACTION_CLEAR_APPLY = 'clear_apply';
 const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
+const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
+const ACTION_CONFIRM_BACKUP_DLG_APPLY = 'create_backup_apply_dlg';
 const ACTION_SETUP_SCREEN = 'setup_screen';
 const ACTION_ZOOM_POPUP_MENU = 'zoom_popup_menu';
 const ACTION_ZOOM_APPLY = 'zoom_apply';
@@ -143,6 +145,8 @@ const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
 const CONTROL_DETECT_ID = 'detect_id';
 const CONTROL_EDIT_TYPE = 'playlist_type';
 const CONTROL_EXT_PARAMS = 'ext_params';
+const CONTROL_BACKUP = 'backup';
+const CONTROL_RESTORE = 'restore';
 
 # Special groups ID
 const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';

@@ -64,7 +64,6 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $sel_ndx = $user_input->sel_ndx;

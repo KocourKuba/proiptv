@@ -74,7 +74,6 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         if (!isset($user_input->selected_media_url)) {
             return null;

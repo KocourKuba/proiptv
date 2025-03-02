@@ -289,25 +289,10 @@ class HD
             }
 
             $rootPath = get_data_path();
-            foreach (array("common.db", "common.settings") as $name) {
-                if (file_exists($rootPath . $name)) {
-                    $zip->addFile($rootPath . $name, $name);
-                }
-            }
-            foreach ($plugin->get_all_playlists_ids() as $key) {
-                foreach (array(".settings", ".db") as $ext) {
-                    $name = $key . $ext;
-                    $path = $rootPath . $name;
-                    if (file_exists($path)) {
-                        $zip->addFile($path, $name);
-                    }
-                }
-
-                foreach (array("_orders*\.db", "_orders*\.settings") as $ext) {
-                    foreach (glob_dir($rootPath, "/$key$ext/i") as $full_path) {
-                        if (file_exists($full_path)) {
-                            $zip->addFile($full_path, basename($full_path));
-                        }
+            foreach (array("\.settings", "\.db") as $ext) {
+                foreach (glob_dir($rootPath, "/$ext/i") as $full_path) {
+                    if (file_exists($full_path)) {
+                        $zip->addFile($full_path, basename($full_path));
                     }
                 }
             }

@@ -42,6 +42,7 @@ channel_name = Channel name
 attribute_name__1 = M3U attribute '%s'
 yes_no_confirm_msg = Are you sure?
 yes_no_confirm_clear_all_msg = Are you sure to clear the list?
+yes_no_confirm_backup = Create a backup before updating the settings?
 sort_popup_menu = Sorting options
 sort_groups = Sort categories by name
 sort_channels = Sort channels by name

@@ -47,7 +47,7 @@ echo %CREDS%
 	"cd update/current" ^
 	"put update_proiptv.tar.gz" ^
 	"put update_proiptv.xml" ^
-	"cd ../archive" ^
+	"cd ../../archive" ^
 	"put dune_plugin_proiptv.%VERSION%.%BUILD%.zip" ^
 	"cd ../../config" ^
 	"put providers_%VERSION%.json" ^

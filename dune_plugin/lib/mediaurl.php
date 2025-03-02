@@ -42,6 +42,7 @@ require_once 'json_serializer.php';
  * @property string|null $windowCounter // Index of current window, start from 1
  * @property string|null $end_action // action called for parent window
  * @property string|null $cancel_action // action called for parent window
+ * @property string|null $action_id // additional action id called for parent window
  * @property string|null $extension // pattern for show files with specified extension
  * @property string|null $caption // Caption of the selected media url
  * @property bool|null $allow_network // Allow to use network folders NFS/SMB for Starnet_Folder_Screen

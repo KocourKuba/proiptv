@@ -31,8 +31,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 {
     const ID = 'tv_groups';
 
-    const ACTION_DO_EPG_SETTINGS = 'do_epg_settings';
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -84,7 +82,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         if (!isset($user_input->parent_media_url)) {
             return null;
