@@ -495,7 +495,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return Action_Factory::close_and_run(
                     Action_Factory::open_folder(
                         self::ID,
-                        $this->plugin->create_plugin_title(),
+                        $this->plugin->get_plugin_title(),
                         null,
                         null,
                         Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies))
@@ -549,7 +549,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         null,
                         HD::get_last_error($this->plugin->get_pl_error_name()));
                     $post_action = Action_Factory::close_and_run(
-                        Action_Factory::open_folder(self::ID, $this->plugin->create_plugin_title(), null, null, $post_action));
+                        Action_Factory::open_folder(self::ID, $this->plugin->get_plugin_title(), null, null, $post_action));
 
                     return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
                 }

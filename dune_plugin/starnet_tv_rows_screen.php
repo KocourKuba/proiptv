@@ -389,7 +389,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $post_action = Action_Factory::close_and_run(
                     Action_Factory::open_folder(
                         self::ID,
-                        $this->plugin->create_plugin_title(),
+                        $this->plugin->get_plugin_title(),
                         null,
                         null,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'),

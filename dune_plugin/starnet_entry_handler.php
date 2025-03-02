@@ -177,7 +177,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 hd_debug_print("action: launch open", true);
-                return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
+                return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
 
             case ACTION_CONFIRM_BACKUP_DLG:
                 hd_debug_print("Call select backup folder");
@@ -258,7 +258,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             if (!$this->plugin->load_channels($plugin_cookies)) {
                                 return Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
-                                    $this->plugin->create_plugin_title(),
+                                    $this->plugin->get_plugin_title(),
                                     null,
                                     null,
                                     Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
@@ -271,7 +271,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         hd_debug_print("action: launch open", true);
-                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
+                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
 
                     case self::ACTION_LAUNCH_VOD:
                         $action = $this->check_upgrade($user_input);
@@ -337,7 +337,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                     HD::get_last_error($this->plugin->get_pl_error_name()));
                                 return Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
-                                    $this->plugin->create_plugin_title(),
+                                    $this->plugin->get_plugin_title(),
                                     null,
                                     null,
                                     $post_action
@@ -348,7 +348,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         hd_debug_print("auto resume channel not exist. action: launch open", true);
-                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->create_plugin_title());
+                        return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
 
                     case self::ACTION_UPDATE_EPFS:
                         $this->plugin->init_plugin();

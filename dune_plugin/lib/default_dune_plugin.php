@@ -2769,13 +2769,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     ///////////////////////////////////////////////////////////////////////
     // Dialogs and screens
 
-    public function create_plugin_title()
+    public function get_plugin_title()
     {
-        $name = empty($this->active_playlist) ? '' : $this->active_playlist[PARAM_NAME];
-        $plugin_name = $this->plugin_info['app_caption'];
-        $name = empty($name) ? $plugin_name : "$plugin_name ($name)";
-        hd_debug_print("plugin title: $name");
-        return $name;
+        return $this->plugin_info['app_caption'];
     }
 
     /**
