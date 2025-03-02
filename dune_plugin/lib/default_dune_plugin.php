@@ -1358,6 +1358,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->vod_enabled = $this->vod->init_vod(null);
             $this->vod->init_vod_screens();
 
+            $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
+            $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
+            hd_debug_print("Show VOD icon: $enable_vod_icon", true);
+
             return true;
         }
 
@@ -1464,7 +1468,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         hd_debug_print("VOD enabled: " . SwitchOnOff::to_def($this->vod_enabled), true);
 
-        $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_parameter(PARAM_SHOW_VOD_ICON, SwitchOnOff::off));
+        $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
         $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
         hd_debug_print("Show VOD icon: $enable_vod_icon", true);
 

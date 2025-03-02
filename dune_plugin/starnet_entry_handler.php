@@ -207,7 +207,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             $this,
                             self::ACTION_PLUGIN_ENTRY,
                             null,
-                            array('action_id' => $data->action_id)
+                            array('action_id' => $data->action_id, 'mandatory_playback' => 0)
                         )
                     );
                 }
@@ -237,7 +237,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 
-                        if ((int)$user_input->mandatory_playback === 1
+                        if ((isset($user_input->mandatory_playback) && (int)$user_input->mandatory_playback === 1)
                             || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SwitchOnOff::on)) {
                             hd_debug_print("launch auto play", true);
 
@@ -290,8 +290,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         if ($this->plugin->is_vod_enabled()
-                            && SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON})
-                            && $this->plugin->load_channels($plugin_cookies)) {
+                            && $this->plugin->load_channels($plugin_cookies)
+                            && SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
                             return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
                         }
 
@@ -384,7 +384,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             file_put_contents($flag, '');
             $defs = array();
 
-            $ret_action = array('action_id' => $user_input->action_id);
+            $ret_action = array('action_id' => $user_input->action_id, 'mandatory_playback' => 0);
             Control_Factory::add_button_close($defs, $this, $ret_action, ACTION_CONFIRM_BACKUP_DLG, null, TR::t('yes'), 300);
             Control_Factory::add_button_close($defs, $this, $ret_action, self::ACTION_PLUGIN_ENTRY, null, TR::t('no'), 300);
 
