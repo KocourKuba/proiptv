@@ -123,84 +123,101 @@ if (isset($url_params['query'])) {
 }
 
 $name = '';
-if (isset($params['ver'])) {
-    $request = getenv("REQUEST_URI");
-    $ver = explode('.', $params['ver']);
-
-    $name ="providers_$ver[0].$ver[1].json";
-    if (!file_exists($name)) {
-        $name = '';
-    }
-
-    $time = time();
-    $date = date("Y.m.d H:i:s");
-    $ip = get_ip();
-    $country = IP2Country($ip);
-    $version = $params['ver'];
-    $model =  $params['model'];
-    $serial = $params['serial'];
-
-    $firmware = '';
-    $revision = '';
-    if (isset($params['firmware'])) {
-        $firmware = $params['firmware'];
-    } else if (preg_match("/firmware_version:\s+([0-9_rb]+)/", $_SERVER['HTTP_USER_AGENT'], $m)) {
-        $firmware = $m[1];
-    }
-
-    if (!empty($firmware) && preg_match('/.+_(r\d{2})/', $firmware, $m)) {
-        $revision = $m[1];
-    }
-
-    $logbuf = "========================================" . PHP_EOL;
-    $logbuf .= "date       : $date" . PHP_EOL;
-    $logbuf .= "url        : $request" . PHP_EOL;
-    $logbuf .= "ip         : $ip ( $country )" . PHP_EOL;
-    $logbuf .= "version    : $version" . PHP_EOL;
-    $logbuf .= "model      : $model" . PHP_EOL;
-    $logbuf .= "firmware   : $firmware" . PHP_EOL;
-    $logbuf .= "serial     : $serial" . PHP_EOL;
-    $logbuf .= "user_agent : {$_SERVER['HTTP_USER_AGENT']}" . PHP_EOL;
-
-    write_to_log($logbuf, 'providers.log');
-
-	if (!empty($revision)) {
-	    $DB = new db_driver;
-	    $DB->obj['sql_database'] = IPTV_DATABASE;
-	    $DB->obj['sql_user'] = IPTV_USER;
-	    $DB->obj['sql_pass'] = IPTV_PASSWORD;
-
-	    if($DB->connect()) {
-	        $data['model'] = $model;
-	        $data['firmware'] = $firmware;
-	        $data['revision'] = $revision;
-	        $data['serial'] = $serial;
-	        $data['time'] = $time;
-	        $data['date'] = $date;
-	        $data['version'] = $version;
-	        $data['ip'] = $ip;
-	        $data['country'] = $country;
-	        if (!empty($serial)) {
-    	        $DB->insert_or_update_table($data, 'statistics');
-	            $error = $DB->error;
-    	        if (!empty($error)) {
-        	        write_to_log("database query error $error", 'error.log');
-	            }
-    	        $DB->close_db();
-	        } else {
-    	        write_to_log("bad url query $request", 'error.log');
-        	}
-	    } else {
-		    write_to_log("can't connect to database", 'error.log');
-		}
-	}
-}
-
-if (empty($name) || empty($revision)) {
+if (!isset($params['ver'])) {
     header("HTTP/1.1 404 Not found");
     echo '["error" : "This version is not supported"]';
-} else {
-    header("HTTP/1.1 200 OK");
-    header("Content-Type: application/json; charset=utf-8");
-    readfile($name);
+    die();
 }
+
+$request = getenv("REQUEST_URI");
+$ver = explode('.', $params['ver']);
+
+$name ="providers_$ver[0].$ver[1].json";
+if (!file_exists($name)) {
+    $name = "providers_disabled.json";
+}
+
+$time = time();
+$date = date("Y.m.d H:i:s");
+$ip = get_ip();
+$country = IP2Country($ip);
+$version = $params['ver'];
+$model =  $params['model'];
+$serial = $params['serial'];
+
+$firmware = '';
+$revision = '';
+$rev = 0;
+if (isset($params['firmware'])) {
+    $firmware = $params['firmware'];
+} else if (preg_match("/firmware_version:\s+([0-9_rb]+)/", $_SERVER['HTTP_USER_AGENT'], $m)) {
+    $firmware = $m[1];
+}
+
+if (!empty($firmware) && preg_match('/.+_(r\d{2})/', $firmware, $m)) {
+    $revision = $m[1];
+    $rev = substr($revision, 1);
+}
+
+$logbuf = "========================================" . PHP_EOL;
+$logbuf .= "date       : $date" . PHP_EOL;
+$logbuf .= "url        : $request" . PHP_EOL;
+$logbuf .= "ip         : $ip ( $country )" . PHP_EOL;
+$logbuf .= "version    : $version" . PHP_EOL;
+$logbuf .= "model      : $model" . PHP_EOL;
+$logbuf .= "firmware   : $firmware" . PHP_EOL;
+$logbuf .= "serial     : $serial" . PHP_EOL;
+$logbuf .= "user_agent : {$_SERVER['HTTP_USER_AGENT']}" . PHP_EOL;
+
+if (empty($revision)) {
+    $logbuf .= "Unknown version";
+    write_to_log($logbuf, 'error.log');
+    header("HTTP/1.1 403 Forbidden");
+    die();
+}
+
+if ($rev < 11) {
+    write_to_log($logbuf, 'unsupported.log');
+    header("HTTP/1.1 404 Not found");
+    echo '["error" : "This version is not supported"]';
+    die();
+}
+
+if ($rev < 21) {
+    write_to_log($logbuf, 'old.log');
+} else {
+    write_to_log($logbuf, 'providers.log');
+}
+
+$DB = new db_driver;
+$DB->obj['sql_database'] = IPTV_DATABASE;
+$DB->obj['sql_user'] = IPTV_USER;
+$DB->obj['sql_pass'] = IPTV_PASSWORD;
+
+if($DB->connect()) {
+    $data['model'] = $model;
+    $data['firmware'] = $firmware;
+    $data['revision'] = $revision;
+    $data['serial'] = $serial;
+    $data['time'] = $time;
+    $data['date'] = $date;
+    $data['version'] = $version;
+    $data['ip'] = $ip;
+    $data['country'] = $country;
+    if (!empty($serial)) {
+        $DB->insert_or_update_table($data, 'statistics');
+        $error = $DB->error;
+        if (!empty($error)) {
+            write_to_log("database query error $error", 'error.log');
+        }
+        $DB->close_db();
+    } else {
+        write_to_log("bad url query $request", 'error.log');
+    }
+} else {
+    write_to_log("can't connect to database", 'error.log');
+}
+
+header("HTTP/1.1 200 OK");
+header("Content-Type: application/json; charset=utf-8");
+readfile($name);

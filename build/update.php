@@ -157,15 +157,21 @@ if ($ext != 'xml' && $ext != 'gz') {
 	die();
 }
 
-$new_path = ($revision < 21 ? "./old/" : "./current/") . $info['basename'];
+if ($revision < 21) {
+    $log_name = "update_old.log";
+    $result_path = "./old/" . $info['basename'];
+} else {
+    $log_name = "update_new.log";
+    $result_path = "./current/" . $info['basename'];
+}
 $logbuf .= "url path   : " . $url_params['path'] . PHP_EOL;
-$logbuf .= "new path   : " . $new_path . PHP_EOL;
+$logbuf .= "new path   : " . $result_path . PHP_EOL;
 
 header("HTTP/1.1 200 OK");
 if ($ext == 'gz') {
-    write_to_log($logbuf, 'update.log');
+    write_to_log($logbuf, $log_name);
     header("Accept-Ranges: bytes");
-    header("Content-Length: " . filesize($new_path));
+    header("Content-Length: " . filesize($result_path));
     header("Content-Type: application/octet-stream");
 } else if ($ext == 'xml') {
     header("Content-Type: text/xml");
@@ -174,4 +180,4 @@ if ($ext == 'gz') {
 header("Pragma: no-cache");
 header("Expires: -1");
 
-readfile($new_path);
+readfile($result_path);
