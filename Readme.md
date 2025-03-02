@@ -1,9 +1,12 @@
 # ProIPTV
 
-Universal Dune HD plugin with M3U playlist support. Minimal firmware revision supported by plugin r11.
+Universal Dune HD plugin with M3U playlist support. Minimal firmware revision supported by plugin r21.
 Also, have presets for most popular IPTV providers.
+For old devices, the latest version is [5.1.1014](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1014)
 
-Универсальный плагин M3U плейлистов для плейеров Dune HD. Минимальная версия прошивки поддерживаемая плагином r11. Так же поддерживаются наиболее известные провайдеры IPTV в виде готовых шаблонов.
+Универсальный плагин M3U плейлистов для плейеров Dune HD. Минимальная версия прошивки поддерживаемая плагином r21.
+Так же поддерживаются наиболее известные провайдеры IPTV в виде готовых шаблонов.
+Для старых приставок последняя версия [5.1.1014](https://github.com/KocourKuba/proiptv/releases/tag/5.1.1014)
 
 <details>
 <summary><b>Supported IPTV providers</b></summary>
@@ -55,6 +58,7 @@ Also, have presets for most popular IPTV providers.
 45. [Korona](https://korona-tv.top/)
 46. [Pik TV](http://pa.piktv.top/)
 47. [Velestore](http://velestore.su/)
+48. [HN Media](https://hnmedia.pro/)
 </details>
 
 ## Donate
