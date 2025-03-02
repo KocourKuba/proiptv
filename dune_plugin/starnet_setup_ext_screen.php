@@ -411,7 +411,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
 
         Control_Factory::add_vgap($defs, 50);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, array("adult" => $adult), self::ACTION_ADULT_PASS_DLG_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_ADULT_PASS_DLG_APPLY, TR::t('ok'), 300, array("adult" => $adult));
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
 

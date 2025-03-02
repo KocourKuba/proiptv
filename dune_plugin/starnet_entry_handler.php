@@ -384,21 +384,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
             file_put_contents($flag, '');
             $defs = array();
 
-            Control_Factory::add_close_dialog_and_apply_button($defs,
-                $this,
-                array('action_id' => $user_input->action_id),
-                ACTION_CONFIRM_BACKUP_DLG,
-                TR::t('yes'),
-                300
-            );
-
-            Control_Factory::add_close_dialog_and_apply_button($defs,
-                $this,
-                array('action_id' => $user_input->action_id),
-                self::ACTION_PLUGIN_ENTRY,
-                TR::t('no'),
-                300
-            );
+            $ret_action = array('action_id' => $user_input->action_id);
+            Control_Factory::add_button_close($defs, $this, $ret_action, ACTION_CONFIRM_BACKUP_DLG, null, TR::t('yes'), 300);
+            Control_Factory::add_button_close($defs, $this, $ret_action, self::ACTION_PLUGIN_ENTRY, null, TR::t('no'), 300);
 
             return Action_Factory::show_dialog(TR::t('yes_no_confirm_backup'), $defs);
         }

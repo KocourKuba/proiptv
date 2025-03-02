@@ -646,7 +646,7 @@ class vod_standard extends Abstract_Vod
             return null;
         }
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $parent, array(ACTION_ITEMS_EDIT => $initial), ACTION_RUN_FILTER, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $parent, ACTION_RUN_FILTER, TR::t('ok'), 300, array(ACTION_ITEMS_EDIT => $initial));
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
         return Action_Factory::show_dialog(TR::t('filter'), $defs, true);

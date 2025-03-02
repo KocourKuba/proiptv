@@ -142,7 +142,7 @@ class Dune_Default_UI_Parameters
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, null, ACTION_DONATE_DLG, TR::t('setup_donate_title'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_DONATE_DLG, TR::t('setup_donate_title'), 300);
         Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
         Control_Factory::add_vgap($defs, 10);
 

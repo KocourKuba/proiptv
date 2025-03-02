@@ -3310,8 +3310,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $add_params = array('param_action' => $param_action);
         }
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, $add_params,
-            ACTION_PASSWORD_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PASSWORD_APPLY, TR::t('ok'), 300, $add_params);
 
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
@@ -4854,7 +4853,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function get_setting($name, $default)
     {
-        hd_debug_print(null);
         $table_name = self::SETTINGS_TABLE;
         $type = gettype($default);
         if ($this->sql_playlist !== null) {

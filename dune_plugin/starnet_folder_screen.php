@@ -640,8 +640,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         );
 
         Control_Factory::add_custom_close_dialog_and_apply_buffon($defs,
-            self::ACTION_NEW_SMB_DATA, TR::t('ok'), 300,
-            User_Input_Handler_Registry::create_action($this, self::ACTION_NEW_SMB_DATA)
+            self::ACTION_NEW_SMB_DATA,
+            TR::t('ok'),
+            User_Input_Handler_Registry::create_action($this, self::ACTION_NEW_SMB_DATA),
+            300
         );
 
         Control_Factory::add_close_dialog_button($defs, TR::t('apply'), 300);
@@ -877,9 +879,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         );
 
         $save_smb_setup = User_Input_Handler_Registry::create_action($this, self::ACTION_SAVE_SMB_SETUP);
-        Control_Factory::add_custom_close_dialog_and_apply_buffon($defs,
-            '_do_save_smb_setup', TR::t('apply'), 250, $save_smb_setup
-        );
+        Control_Factory::add_custom_close_dialog_and_apply_buffon($defs, '_do_save_smb_setup', TR::t('apply'), $save_smb_setup, 250);
 
         return Action_Factory::show_dialog(TR::t('folder_screen_search_smb_setup'), $defs, true, 1000, $attrs);
     }

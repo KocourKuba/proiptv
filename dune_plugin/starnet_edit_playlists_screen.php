@@ -464,7 +464,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             '', $mapper, $mapper_ops, self::DLG_CONTROLS_WIDTH, true);
 
         Control_Factory::add_vgap($defs, 50);
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, null, ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
 
@@ -601,7 +601,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         $param = array(CONTROL_URL_PATH => $uri);
         Control_Factory::add_vgap($defs, 50);
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, $param, ACTION_PL_TYPE_DLG_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_PL_TYPE_DLG_APPLY, TR::t('ok'), 300, $param);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
 

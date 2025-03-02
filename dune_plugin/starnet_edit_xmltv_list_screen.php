@@ -327,7 +327,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $cache_selected, $opts, self::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
-        Control_Factory::add_close_dialog_and_apply_button($defs, $this, $param,ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'), 300, $param);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
 

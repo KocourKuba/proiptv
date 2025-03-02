@@ -733,9 +733,11 @@ class api_default
         Control_Factory::add_vgap($defs, 50);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-            array(PARAM_PROVIDER => $this->getId(), CONTROL_EDIT_ITEM => $playlist_id),
             ACTION_EDIT_PROVIDER_DLG_APPLY,
-            TR::t('ok'), 300);
+            TR::t('ok'),
+            300,
+            array(PARAM_PROVIDER => $this->getId(), CONTROL_EDIT_ITEM => $playlist_id)
+        );
 
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
@@ -991,9 +993,11 @@ class api_default
             Control_Factory::add_vgap($defs, 50);
 
             Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-                array(PARAM_PROVIDER => $this->getId()),
                 ACTION_EDIT_PROVIDER_EXT_DLG_APPLY,
-                TR::t('ok'), 300);
+                TR::t('ok'),
+                300,
+                array(PARAM_PROVIDER => $this->getId())
+            );
 
             Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
             Control_Factory::add_vgap($defs, 10);

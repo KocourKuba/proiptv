@@ -335,8 +335,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     false, false, false, false, 800);
 
                 Control_Factory::add_vgap($defs, 100);
-                Control_Factory::add_close_dialog_and_apply_button($defs, $this, null,
-                    self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'), 300);
+                Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'), 300);
                 Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
                 Control_Factory::add_vgap($defs, 10);
 
@@ -433,8 +432,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $q_result = true;
                 hd_debug_print("found channel: $ch_title, idx: $idx", true);
                 $add_params['number'] = $idx;
-                Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, $add_params,
-                    ACTION_JUMP_TO_CHANNEL, '', $ch_title, 900);
+                Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, ACTION_JUMP_TO_CHANNEL,
+                    '', $ch_title, 900, $add_params);
             }
             ++$idx;
         }
@@ -442,8 +441,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         if ($q_result === false) {
             Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
             Control_Factory::add_vgap($defs, 20);
-            Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, null,
-                self::ACTION_CREATE_SEARCH, '', TR::t('new_search'), 300);
+            Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, self::ACTION_CREATE_SEARCH,
+                '', TR::t('new_search'), 300);
         }
 
         return Action_Factory::show_dialog(TR::t('search'), $defs, true);

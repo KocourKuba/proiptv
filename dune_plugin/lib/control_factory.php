@@ -109,8 +109,7 @@ class Control_Factory
         );
     }
 
-    public static function add_button_close(&$defs, $handler, $add_params,
-                                            $name, $title, $caption, $width)
+    public static function add_button_close(&$defs, $handler, $add_params, $name, $title, $caption, $width)
     {
         $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
         $push_action['params']['action_type'] = 'apply';
@@ -203,12 +202,12 @@ class Control_Factory
     /**
      * @param array &$defs
      * @param User_Input_Handler $handler
-     * @param array|null $add_params
      * @param string $name
      * @param string $caption
      * @param int $width
+     * @param array|null $add_params
      */
-    public static function add_close_dialog_and_apply_button(&$defs, $handler, $add_params, $name, $caption, $width)
+    public static function add_close_dialog_and_apply_button(&$defs, $handler, $name, $caption, $width, $add_params = null)
     {
         $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
         $push_action['params']['action_type'] = 'apply';
@@ -230,13 +229,13 @@ class Control_Factory
     /**
      * @param array &$defs
      * @param User_Input_Handler $handler
-     * @param array|null $add_params
      * @param string $name
      * @param string $title
      * @param string $caption
      * @param int $width
+     * @param array|null $add_params
      */
-    public static function add_close_dialog_and_apply_button_title(&$defs, $handler, $add_params, $name, $title, $caption, $width)
+    public static function add_close_dialog_and_apply_button_title(&$defs, $handler, $name, $title, $caption, $width, $add_params = null)
     {
         $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
         $push_action['params']['action_type'] = 'apply';
@@ -259,13 +258,12 @@ class Control_Factory
      * @param array &$defs
      * @param string $name
      * @param string $caption
+     * @param array $post_action
      * @param int $width
-     * @param array $action
      */
-    public static function add_custom_close_dialog_and_apply_buffon(&$defs, $name, $caption, $width, $action)
+    public static function add_custom_close_dialog_and_apply_buffon(&$defs, $name, $caption, $post_action, $width)
     {
-        $defs[] = array
-        (
+        $defs[] = array(
             GuiControlDef::name => $name,
             GuiControlDef::title => null,
             GuiControlDef::kind => GUI_CONTROL_BUTTON,
@@ -273,7 +271,7 @@ class Control_Factory
             (
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($action),
+                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($post_action),
             ),
         );
     }

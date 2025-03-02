@@ -187,7 +187,7 @@ class Action_Factory
         }
 
         Control_Factory::add_multiline_label($defs, '', $text, 15);
-        Control_Factory::add_custom_close_dialog_and_apply_buffon($defs, 'close_button', TR::t('ok'), 300, $post_action);
+        Control_Factory::add_custom_close_dialog_and_apply_buffon($defs, 'close_button', TR::t('ok'), $post_action, 300);
 
         return self::show_dialog($title, $defs, false, $preferred_width);
     }
@@ -240,7 +240,7 @@ class Action_Factory
             Control_Factory::add_multiline_label($defs, '', $multiline, 15);
         }
 
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, $add_params, $action, TR::t('yes'), 300);
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, $action, TR::t('yes'), 300, $add_params);
         Control_Factory::add_close_dialog_button($defs, TR::t('no'), 300);
 
         return self::show_dialog($title, $defs, false, $preferred_width, $attrs);
