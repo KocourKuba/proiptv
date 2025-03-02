@@ -51,6 +51,8 @@ require_once 'starnet_edit_hidden_list_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
 {
+    const CONFIG_URL = 'http://iptv.esalecrm.net/config/providers';
+
     /**
      * @throws Exception
      */
@@ -109,5 +111,103 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_debug_print_separator();
 
         hd_debug_print("Plugin loading complete.");
+    }
+
+    public function init_providers_config()
+    {
+        if ($this->providers->size() !== 0) {
+            return;
+        }
+
+        // 1. Check local debug version
+        // 2. Try to download from web release version
+        // 3. Check previously downloaded web release version
+        // 4. Check preinstalled version
+        // 5. Houston we have a problem
+        $tmp_file = get_install_path("providers_debug.json");
+        if (file_exists($tmp_file)) {
+            hd_debug_print("Load debug providers configuration: $tmp_file");
+            $jsonArray = parse_json_file($tmp_file);
+        } else {
+            $name = "providers_{$this->plugin_info['app_base_version']}.json";
+            $tmp_file = get_data_path($name);
+            $serial = get_serial_number();
+            if (empty($serial)) {
+                hd_debug_print("Unable to get DUNE serial.");
+                $serial = 'XXXX';
+            }
+            $ver = $this->plugin_info['app_version'];
+            $model = get_product_id();
+            $firmware = get_raw_firmware_version();
+            $jsonArray = HD::DownloadJson(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial");
+            if ($jsonArray === false || !isset($jsonArray['providers'])) {
+                if (file_exists($tmp_file)) {
+                    hd_debug_print("Load actual providers configuration");
+                    $jsonArray = parse_json_file($tmp_file);
+                } else if (file_exists($tmp_file = get_install_path($name))) {
+                    hd_debug_print("Load installed providers configuration");
+                    $jsonArray = parse_json_file($tmp_file);
+                }
+            } else {
+                store_to_json_file($tmp_file, $jsonArray);
+            }
+        }
+
+        foreach ($jsonArray['plugin_config']['image_libs'] as $key => $value) {
+            hd_debug_print("available image lib: $key");
+            $this->image_libs->set($key, $value);
+        }
+
+        foreach ($jsonArray['epg_presets'] as $key => $value) {
+            hd_debug_print("available epg preset: $key");
+            $this->epg_presets->set($key, $value);
+        }
+
+        if ($jsonArray === false || !isset($jsonArray['providers'])) {
+            hd_debug_print("Problem to get providers configuration");
+            return;
+        }
+
+        foreach ($jsonArray['providers'] as $item) {
+            if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
+
+            $api_class = "api_{$item['id']}";
+            if (!class_exists($api_class)) {
+                $api_class = 'api_default';
+            }
+
+            //hd_debug_print("provider api: $api_class ({$item['name']})");
+            /** @var api_default $provider */
+            $provider = new $api_class($this);
+            foreach ($item as $key => $value) {
+                $words = explode('_', $key);
+                $setter = "set";
+                foreach ($words as $word) {
+                    $setter .= ucwords($word);
+                }
+                if (method_exists($provider, $setter)) {
+                    $provider->{$setter}($value);
+                } else {
+                    hd_debug_print("Unknown method $setter", true);
+                }
+            }
+
+            // cache provider logo
+            $logo = $provider->getLogo();
+            $filename = basename($logo);
+            $local_file = get_install_path("logo/$filename");
+            if (file_exists($local_file)) {
+                $provider->setLogo("plugin_file://logo/$filename");
+            } else {
+                $cached_file = get_cached_image_path($filename);
+                list($res,) = Curl_Wrapper::simple_download_file($logo, $cached_file);
+                if ($res) {
+                    $provider->setLogo($cached_file);
+                } else {
+                    hd_debug_print("failed to download provider logo: $logo");
+                }
+            }
+            $this->providers->set($provider->getId(), $provider);
+        }
     }
 }

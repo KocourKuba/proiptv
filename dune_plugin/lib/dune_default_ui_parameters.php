@@ -1,9 +1,12 @@
 <?php
 require_once 'curl_wrapper.php';
 require_once 'user_input_handler_registry.php';
+require_once 'dune_default_sqlite_engine.php';
 
-class Dune_Default_UI_Parameters
+class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 {
+    const AUTHOR_LOGO = "ProIPTV by sharky72  [ ´¯¤¤¯(ºº)¯¤¤¯` ]";
+
     const RESOURCE_URL = 'http://iptv.esalecrm.net/res/';
     const CHANGELOG_URL_PREFIX = 'https://raw.githubusercontent.com/KocourKuba/proiptv/master/build/';
 
@@ -26,6 +29,11 @@ class Dune_Default_UI_Parameters
     const VOD_CHANNEL_ICON_HEIGHT = 290;
 
     /**
+     * @var array
+     */
+    public $plugin_info;
+
+    /**
      * @var Screen[]
      */
     private $screens;
@@ -34,6 +42,15 @@ class Dune_Default_UI_Parameters
      * @var array
      */
     private $screens_views;
+
+    public function __construct()
+    {
+        if (is_newer_versions()) {
+            ini_set('memory_limit', '384M');
+        }
+
+        $this->plugin_info = get_plugin_manifest_info();
+    }
 
     /**
      * @param object $object
@@ -93,6 +110,126 @@ class Dune_Default_UI_Parameters
     public function get_screen_view($name)
     {
         return safe_get_value($this->screens_views, $name, array());
+    }
+
+    /**
+     * @return bool
+     */
+    public function is_background_image_default()
+    {
+        return ($this->get_background_image() === $this->plugin_info['app_background']);
+    }
+
+    /**
+     * @param string|null $path
+     * @return void
+     */
+    public function set_background_image($path)
+    {
+        if (is_null($path) || $path === $this->plugin_info['app_background'] || !file_exists($path)) {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, '');
+        } else {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, $path);
+        }
+    }
+
+    /**
+     * @return string
+     */
+    public function get_background_image()
+    {
+        $background = $this->get_setting(PARAM_PLUGIN_BACKGROUND, '');
+        if ($background === $this->plugin_info['app_background']) {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, '');
+        } else if (strncmp($background, get_cached_image_path(), strlen(get_cached_image_path())) === 0) {
+            $this->set_setting(PARAM_PLUGIN_BACKGROUND, basename($background));
+        } else if (empty($background) || !file_exists(get_cached_image_path($background))) {
+            $background = $this->plugin_info['app_background'];
+        } else {
+            $background = get_cached_image_path($background);
+        }
+
+        return $background;
+    }
+
+    /**
+     * @param array $defs
+     */
+    public function create_setup_header(&$defs)
+    {
+        Control_Factory::add_vgap($defs, -10);
+        Control_Factory::add_label($defs, self::AUTHOR_LOGO,
+            " v.{$this->plugin_info['app_version']} [{$this->plugin_info['app_release_date']}]",
+            14);
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $param_action
+     * @param array|null $add_params
+     * @return array
+     */
+    public function show_protect_settings_dialog($handler, $param_action, $add_params = null)
+    {
+        $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
+        if (empty($pass_settings)) {
+            return User_Input_Handler_Registry::create_action($handler, $param_action, null, $add_params);
+        }
+
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        Control_Factory::add_text_field($defs, $handler, null, 'pass', TR::t('setup_pass'),
+            '', true, true, false, true, 500, true);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        if ($add_params !== null) {
+            $add_params['params_action'] = $param_action;
+        } else {
+            $add_params = array('param_action' => $param_action);
+        }
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PASSWORD_APPLY, TR::t('ok'), 300, $add_params);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
+    }
+
+    /**
+     * @param array $prog_info
+     * @return array|null
+     */
+    public function do_show_channel_epg($prog_info)
+    {
+        if (is_null($prog_info)) {
+            $title = TR::load('epg_not_exist');
+            $info = '';
+        } else {
+            // program epg available
+            $title = $prog_info[PluginTvEpgProgram::name];
+            $info = $prog_info[PluginTvEpgProgram::description];
+        }
+
+        Control_Factory::add_multiline_label($defs, null, $info, 18);
+        Control_Factory::add_vgap($defs, 10);
+
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            850,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load('scroll_page')
+        );
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($title, $defs, true, 1400);
     }
 
     /**

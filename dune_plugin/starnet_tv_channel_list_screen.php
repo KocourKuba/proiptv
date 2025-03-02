@@ -139,7 +139,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->plugin->do_show_channel_info($channel_id);
 
             case GUI_EVENT_KEY_SUBTITLE:
-                return $this->plugin->do_show_channel_epg($channel_id, $plugin_cookies);
+                $prog_info = $this->plugin->get_program_info($channel_id, -1, $plugin_cookies);
+                return $this->plugin->do_show_channel_epg($prog_info);
 
             case ACTION_PLAY_ITEM:
                 try {

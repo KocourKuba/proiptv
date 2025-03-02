@@ -72,7 +72,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         Control_Factory::add_vgap($defs, -10);
         Control_Factory::add_image_button($defs, $this, null,
             ACTION_PLUGIN_INFO,
-            Default_Dune_Plugin::AUTHOR_LOGO,
+            Dune_Default_UI_Parameters::AUTHOR_LOGO,
             " v.{$this->plugin->plugin_info['app_version']} [{$this->plugin->plugin_info['app_release_date']}]",
             get_image_path('info.png'),
             Abstract_Controls_Screen::CONTROLS_WIDTH);
