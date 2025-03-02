@@ -1,4 +1,31 @@
-﻿### Version 5.1.1000
+﻿### Version 6.0.1110
+- Support for set-top boxes with revisions less than r21 has been discontinued and this update is not available for them (Sigma r11 and new set-top boxes with r19 and r20 firmware). For new devices, I recommend updating the firmware to the current r22 or r21
+- Completely redesigned internal storage engine to reduce processing time and memory consumption. Everything is transferred to the sqlite database engine. Non-sqlite devices are not supported (mainly on Sigma processors)
+- All settings will be converted to the new format. When updating plugins versions earlier than 6.0, it is suggested to make a backup copy of the settings
+- Added support for Extended EPG, enable/disable settings in the Playback Settings setup screen
+- Added editing playlist parameters from Playlist screen
+- Added editing of link parameters from the XMLTV list screen
+- Expanded the list of supported XMLTV tags for use in Extended EPG
+- Redesigned popup menu on the category screen.
+- Icon selection options for a playlist have been moved to playlist settings
+- Added a point to select the best option for the Channel ID
+- Added setting to hide categories for adults
+- Added the ability to assign a shortcut to switch to a playlist (only for full-size remotes, keys 0-9)
+- Settings dune_params, UserAgent, etc. moved to a separate playlist settings screen
+- Playlist name is no longer shown in the header (the name of the current playlist can be viewed in the context menu)
+- Removed https -> http conversion as irrelevant for new devices
+- NewUI: Fixed icon for channels without icons if square icons aspect ratio mode is selected
+
+### Version 5.1.1014
+- Added confirmations when clearing Favorites/History/Changed channels
+- Fixed bug getting ETag for xmltv cache in case of redirect to another link
+- Fixed a bug with removing a deleted channel from Favorites
+- Fixed a bug with moving the playlist to the end/beginning of the list
+- Stalled XMLTV indexing flags were not always removed
+- Fixed a bug with searching for icons in XMLTV sources if one of the sources was not indexed
+- Added HN Media provider (via configuration)
+
+### Version 5.1.1000
 - Added display EPG on the SUB button or via the context menu in the channel list
 - Faster processing of deletion TV history
 - Minor improvements in channel ID detection when adding a playlist
