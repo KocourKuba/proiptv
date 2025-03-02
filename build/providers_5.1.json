@@ -1436,8 +1436,7 @@
       "provider_url": "https://uspeh.tv/",
       "api_url": "https://m3u.admuspeh.my",
       "api_commands": {
-        "get_playlist": "{API}/hls/token={PASSWORD}",
-        "get_vod": "{API}/movie/token={PASSWORD}"
+        "get_playlist": "{API}/hls/token={PASSWORD}"
       },
       "config": {
         "id_map": "tvg-id",
