@@ -1019,37 +1019,37 @@ class api_default
         $err_msg = '';
         $changed = false;
         if ($this->IsParameterChanged($user_input, CONTROL_SERVER, MACRO_SERVER_ID)) {
-            $this->SetServer($user_input->{MACRO_SERVER_ID}, $params, $err_msg);
+            $this->SetServer($user_input->{CONTROL_SERVER}, $params, $err_msg);
             $changed = true;
         }
 
         if ($this->IsParameterChanged($user_input, CONTROL_PLAYLIST, MACRO_PLAYLIST_ID)) {
-            $this->SetPlaylist($user_input->{MACRO_PLAYLIST_ID}, $params);
+            $this->SetPlaylist($user_input->{CONTROL_PLAYLIST}, $params);
             $changed = true;
         }
 
         if ($this->IsParameterChanged($user_input, CONTROL_DEVICE, MACRO_DEVICE_ID)) {
-            $this->SetDevice($user_input->{MACRO_DEVICE_ID}, $params);
+            $this->SetDevice($user_input->{CONTROL_DEVICE}, $params);
             $changed = true;
         }
 
         if ($this->IsParameterChanged($user_input, CONTROL_STREAM, MACRO_STREAM_ID)) {
-            $this->SetStream($user_input->{MACRO_STREAM_ID}, $params);
+            $this->SetStream($user_input->{CONTROL_STREAM}, $params);
             $changed = true;
         }
 
         if ($this->IsParameterChanged($user_input, CONTROL_DOMAIN, MACRO_DOMAIN_ID)) {
-            $params[MACRO_DOMAIN_ID] = $user_input->{$param};
+            $this->SetDomain($user_input->{CONTROL_DOMAIN}, $params);
             $changed = true;
         }
 
         if ($this->IsParameterChanged($user_input, CONTROL_QUALITY, MACRO_QUALITY_ID)) {
-            $params[MACRO_QUALITY_ID] = $user_input->{$param};
+            $this->SetQuality($user_input->{CONTROL_QUALITY}, $params);
             $changed = true;
         }
 
         if ($this->IsParameterChanged($user_input, CONTROL_REPLACE_ICONS, PARAM_REPLACE_ICON)) {
-            $params[PARAM_REPLACE_ICON] = $user_input->{$param};
+            $params[PARAM_REPLACE_ICON] = $user_input->{CONTROL_REPLACE_ICONS};
             $changed = true;
         }
 
@@ -1074,7 +1074,6 @@ class api_default
     public function SetServer($server, &$params, &$error_msg)
     {
         hd_debug_print(null, true);
-
         $params[MACRO_SERVER_ID] = $server;
         $error_msg = '';
 
@@ -1091,8 +1090,6 @@ class api_default
     public function SetPlaylist($id, &$params)
     {
         hd_debug_print(null, true);
-        hd_debug_print("SetPlaylist: $id");
-
         $params[MACRO_PLAYLIST_ID] = $id;
     }
 
@@ -1106,7 +1103,6 @@ class api_default
     public function SetDevice($device, &$params)
     {
         hd_debug_print(null, true);
-
         $params[MACRO_DEVICE_ID] = $device;
     }
 
@@ -1120,6 +1116,30 @@ class api_default
     {
         hd_debug_print(null, true);
         $params[MACRO_STREAM_ID] = $stream;
+    }
+
+    /**
+     * set domain
+     * @param string $domain
+     * @param array $params
+     * @return void
+     */
+    public function SetDomain($domain, &$params)
+    {
+        hd_debug_print(null, true);
+        $params[MACRO_DOMAIN_ID] = $domain;
+    }
+
+    /**
+     * set quality
+     * @param string $quality
+     * @param array $params
+     * @return void
+     */
+    public function SetQuality($quality, &$params)
+    {
+        hd_debug_print(null, true);
+        $params[MACRO_QUALITY_ID] = $quality;
     }
 
     /**
