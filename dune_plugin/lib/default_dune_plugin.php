@@ -251,7 +251,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 throw new Exception("Channels not loaded!");
             }
 
-            $pass_sex = $this->get_parameter(PARAM_ADULT_PASSWORD, '0000');
+            $pass_sex = $this->get_parameter(PARAM_ADULT_PASSWORD);
             $channel_row = $this->get_channel_info($channel_id, true);
             if (empty($channel_row)) {
                 throw new Exception("Unknown channel");

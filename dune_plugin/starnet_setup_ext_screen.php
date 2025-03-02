@@ -255,7 +255,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 return $this->do_get_pass_control_defs($user_input->adult);
 
             case self::ACTION_ADULT_PASS_DLG_APPLY: // handle pass dialog result
-                $need_reload = false;
                 $param = $user_input->adult ? PARAM_ADULT_PASSWORD : PARAM_SETTINGS_PASSWORD;
                 $pass = $this->plugin->get_parameter($param);
                 hd_debug_print("pass: $param ($pass == $user_input->pass1)", true);
@@ -264,17 +263,11 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 } else if (empty($user_input->pass2)) {
                     $this->plugin->set_parameter($param, '');
                     $msg = TR::t('setup_pass_disabled');
-                    $need_reload = $user_input->adult;
                 } else if ($user_input->pass1 !== $user_input->pass2) {
                     $this->plugin->set_parameter($param, $user_input->pass2);
                     $msg = TR::t('setup_pass_changed');
-                    $need_reload = $user_input->adult;
                 } else {
                     $msg = TR::t('setup_pass_not_changed');
-                }
-
-                if ($need_reload) {
-                    $this->plugin->reload_channels($plugin_cookies);
                 }
 
                 return Action_Factory::show_title_dialog($msg,

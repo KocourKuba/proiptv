@@ -146,6 +146,7 @@ class Starnet_Tv implements User_Input_Handler
         $buffering = $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000);
         $archive_delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
         $group_all = $this->plugin->get_group(TV_ALL_CHANNELS_GROUP_ID, PARAM_GROUP_SPECIAL);
+        $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
 
         $groups_order = array_merge(empty($group_all) ? array() : array($group_all), $this->plugin->get_groups_by_order());
         $groups = array();
@@ -184,7 +185,7 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::number => $ch_num++,
 
                     PluginTvChannel::have_archive => $archive > 0,
-                    PluginTvChannel::is_protected => $channel_row[M3uParser::COLUMN_ADULT],
+                    PluginTvChannel::is_protected => empty($pass_sex) ? 0 : $channel_row[M3uParser::COLUMN_ADULT],
 
                     PluginTvChannel::past_epg_days => $archive,
                     PluginTvChannel::future_epg_days => 7, // set default future epg range
