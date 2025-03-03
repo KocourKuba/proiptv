@@ -58,8 +58,6 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     const SDCARD_PATH = '/sdcard';
     const IMAGELIB_PATH = '/imagelib';
 
-    private $counter = 0;
-
     /**
      * @inheritDoc
      */
@@ -438,7 +436,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             }
 
             if ($dir === self::NETWORK_PATH) {
-                $s['nfs'] = $smb_shares::get_mount_nfs();
+                $s['nfs'] = smb_tree::get_mount_nfs();
                 hd_debug_print("nfs: " . json_encode($s));
                 return $s;
             }
@@ -795,11 +793,10 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $selected_url = MediaURL::decode($user_input->selected_media_url);
 
-        $smb_shares = new smb_tree();
         $new_ip_smb[$selected_url->ip_path]['foldername'] = $selected_url->caption;
         $new_ip_smb[$selected_url->ip_path]['user'] = $user_input->new_user;
         $new_ip_smb[$selected_url->ip_path]['password'] = $user_input->new_pass;
-        $q = $smb_shares::get_mount_smb($new_ip_smb);
+        $q = smb_tree::get_mount_smb($new_ip_smb);
         $key = 'err_' . $selected_url->caption;
         if (isset($q[$key])) {
             $defs = $this->do_get_mount_smb_err_defs($q[$key]['err'],

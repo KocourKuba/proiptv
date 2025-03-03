@@ -80,7 +80,7 @@ function get_ip()
 
     foreach($ip_array as $ip_s)
     {
-        if(!empty($ip_s) && !isIPInNetArray($ip_s, $ip_private_list))
+        if(!empty($ip_s) && !isIpInNetArray($ip_s, $ip_private_list))
         {
             $ip = $ip_s;
             break;

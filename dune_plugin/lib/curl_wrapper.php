@@ -74,11 +74,6 @@ class Curl_Wrapper
     private $post_data;
 
     /**
-     * @var array
-     */
-    private $cache_db = array();
-
-    /**
      * @var string
      */
     private $logfile;

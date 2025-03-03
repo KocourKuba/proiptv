@@ -36,7 +36,7 @@ class Json_Serializer
 
     public function _toStdClass()
     {
-        $object = new StdClass();
+        $object = new stdClass();
         $object->_class = get_class($this);
         $serialized = method_exists($this, '__sleep') ? $this->__sleep() : array();
 

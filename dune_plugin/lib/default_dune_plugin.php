@@ -979,7 +979,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
 
                     if (!empty($known_sources)) {
-                        $where = SQL_Wrapper::sql_make_where_clause($known_sources, 'hash', true);
+                        $where = Sql_Wrapper::sql_make_where_clause($known_sources, 'hash', true);
                         $query .= "DELETE FROM $playlist_xmltv $where AND type = $q_type;";
                     }
                     $this->sql_playlist->exec_transaction($query);

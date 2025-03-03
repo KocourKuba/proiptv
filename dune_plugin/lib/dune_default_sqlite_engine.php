@@ -27,7 +27,6 @@ class Dune_Default_Sqlite_Engine
     const SELECTED_XMLTV_TABLE = 'selected_xmltv';
 
     const SETTINGS_TABLE = 'settings';
-    const DUNE_PARAMS_TABLE = 'dune_params';
     const COOKIES_TABLE = 'cookies';
 
     const CREATE_PLAYLISTS_TABLE = "CREATE TABLE IF NOT EXISTS %s (playlist_id TEXT PRIMARY KEY NOT NULL, shortcut TEXT DEFAULT '');";
@@ -568,19 +567,6 @@ class Dune_Default_Sqlite_Engine
         $this->sql_playlist->exec_transaction($query);
     }
 
-    /**
-     * @param string $type
-     * @param string $hash
-     * @param string $cache
-     * @return void
-     */
-    public function update_xmltv_source_cache($type, $hash, $cache)
-    {
-        $table_name = self::get_table_name($type);
-        $wrapper = $type === XMLTV_SOURCE_EXTERNAL ? $this->sql_playlist : $this->sql_params;
-        $wrapper->exec("UPDATE $table_name SET cache = '$cache' WHERE hash = '$hash';");
-    }
-
     ///////////////////////////////////////////////////////////////////////
     // Plugin settings methods (per playlist configuration)
     //
@@ -604,7 +590,7 @@ class Dune_Default_Sqlite_Engine
                     $type = 'string';
                     $value = '';
                 }
-                $q_value = SQL_Wrapper::sql_quote($value);
+                $q_value = Sql_Wrapper::sql_quote($value);
                 $query .= "INSERT OR IGNORE INTO $table_name (name, value, type) VALUES ('$key', $q_value, '$type');";
             }
 
@@ -1163,15 +1149,6 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @return int
-     */
-    public function get_groups_order_count()
-    {
-        $groups_order_table = self::get_table_name(GROUPS_ORDER);
-        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $groups_order_table;");
-    }
-
-    /**
      * Arrange channels in group
      *
      * @param string $group_id
@@ -1666,8 +1643,8 @@ class Dune_Default_Sqlite_Engine
         $table_name = self::get_table_name(VOD_HISTORY);
         $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
         $q_series_id = Sql_Wrapper::sql_quote($series_id);
-        $q_params = SQL_Wrapper::sql_make_list_from_keys($values);
-        $q_values = SQL_Wrapper::sql_make_list_from_values($values);
+        $q_params = Sql_Wrapper::sql_make_list_from_keys($values);
+        $q_values = Sql_Wrapper::sql_make_list_from_values($values);
         $query = "INSERT OR REPLACE INTO $table_name (movie_id, series_id, $q_params)
                     VALUES ($q_movie_id, $q_series_id, $q_values);";
         $this->sql_playlist->exec($query);

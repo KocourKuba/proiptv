@@ -570,7 +570,7 @@ class M3uParser extends Json_Serializer
      * @param Sql_Wrapper $db
      * @return array
      */
-    static public function detectBestChannelId($db)
+    public static function detectBestChannelId($db)
     {
         hd_debug_print(null, true);
 

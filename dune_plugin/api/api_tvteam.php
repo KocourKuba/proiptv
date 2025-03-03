@@ -199,7 +199,7 @@ class api_tvteam extends api_default
             return true;
         }
 
-        parent::setServer($old, $params, $error_msg);
+        parent::SetServer($old, $params, $error_msg);
         if (isset($response->error)) {
             $error_msg = $response->error;
         }
