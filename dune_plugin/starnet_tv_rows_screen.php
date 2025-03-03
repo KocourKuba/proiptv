@@ -374,32 +374,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                $action_source = safe_get_member($user_input, ACTION_RELOAD_SOURCE);
-                if ($action_source === Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST) {
-                    $epg_manager = $this->plugin->get_epg_manager();
-                    if ($epg_manager === null) {
-                        return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
-                    }
-
-                    $epg_manager->clear_current_epg_cache();
+                if (!$this->plugin->reload_channels($plugin_cookies)) {
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
+                        null,
+                        HD::get_last_error($this->plugin->get_pl_error_name()));
                 }
 
-                if ($this->plugin->reload_channels($plugin_cookies)) break;
-
                 $post_action = Action_Factory::close_and_run(
-                    Action_Factory::open_folder(
-                        self::ID,
-                        $this->plugin->get_plugin_title(),
-                        null,
-                        null,
-                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                            null,
-                            HD::get_last_error($this->plugin->get_pl_error_name())
-                        )
-                    )
-                );
+                    Action_Factory::open_folder(self::ID, $this->plugin->get_plugin_title(), null, null, $post_action));
 
-                break;
+                return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
 
             case ACTION_REFRESH_SCREEN:
                 break;

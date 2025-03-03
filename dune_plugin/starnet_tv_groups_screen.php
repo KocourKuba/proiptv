@@ -304,11 +304,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 $epg_manager->clear_current_epg_cache();
                 $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
-                return User_Input_Handler_Registry::create_action(
-                    $this,
-                    ACTION_RELOAD,
-                    null,
-                    array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_EPG_CACHE_ENGINE:
                 hd_debug_print("Start event popup menu for epg source", true);
@@ -325,12 +321,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     hd_debug_print("Selected engine: $user_input->control_id", true);
                     $this->plugin->set_setting(PARAM_EPG_CACHE_ENGINE, $user_input->control_id);
                     $this->plugin->init_epg_manager();
-                    return User_Input_Handler_Registry::create_action(
-                        $this,
-                        ACTION_RELOAD,
-                        null,
-                        array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
-                    );
+                    return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                 }
                 break;
 
@@ -376,11 +367,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return $res;
                 }
 
-                return User_Input_Handler_Registry::create_action(
-                    $this,
-                    ACTION_RELOAD,
-                    null,
-                    array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
@@ -544,17 +531,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
+                $post_action = null;
                 if (!$this->plugin->reload_channels($plugin_cookies)) {
                     $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                         null,
                         HD::get_last_error($this->plugin->get_pl_error_name()));
-                    $post_action = Action_Factory::close_and_run(
-                        Action_Factory::open_folder(self::ID, $this->plugin->get_plugin_title(), null, null, $post_action));
-
-                    return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
                 }
 
-                break;
+                $post_action = Action_Factory::close_and_run(
+                    Action_Factory::open_folder(self::ID, $this->plugin->get_plugin_title(), null, null, $post_action));
+
+                return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
 
             case ACTION_INVALIDATE:
                 $this->force_parent_reload = true;

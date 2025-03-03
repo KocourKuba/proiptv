@@ -1937,7 +1937,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
         $this->active_provider = null;
-        $this->detachDatabase(M3uParser::IPTV_DB);
+        $this->reset_playlist_db();
     }
 
     /**
@@ -2810,7 +2810,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         switch ($action_edit) {
             case Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_CHANNELS:
                 $params['screen_id'] = Starnet_Edit_Hidden_List_Screen::ID;
-                $params['end_action'] = ACTION_INVALIDATE;
+                $params['end_action'] = ACTION_REFRESH_SCREEN;
                 $params['cancel_action'] = ACTION_EMPTY;
                 if (!is_null($media_url) && isset($media_url->group_id)) {
                     $params['group_id'] = $media_url->group_id;

@@ -109,6 +109,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     public function get_screen_view($name)
     {
+        hd_debug_print(null, true);
         return safe_get_value($this->screens_views, $name, array());
     }
 

@@ -94,6 +94,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 }
 
                 $this->force_parent_reload = false;
+                $this->plugin->load_channels($plugin_cookies);
                 return Action_Factory::invalidate_folders(
                     array($parent_media_url->source_media_url_str),
                     Action_Factory::close_and_run(
