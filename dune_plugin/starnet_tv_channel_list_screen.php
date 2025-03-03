@@ -420,22 +420,35 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
     {
         hd_debug_print($group_id, true);
 
-        $channels = $this->plugin->get_channels($group_id, PARAM_ENABLED);
+        if ($group_id === TV_ALL_CHANNELS_GROUP_ID) {
+            $groups_order = $this->plugin->get_groups_by_order();
+        } else {
+            $groups_order[] = $this->plugin->get_group($group_id);
+        }
+
+        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
         $defs = array();
         $q_result = false;
         $idx = 0;
-        foreach ($channels as $channel_row) {
-            $ch_title = $channel_row[COLUMN_TITLE];
-            $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
-            if ($s !== false) {
-                $q_result = true;
-                hd_debug_print("found channel: $ch_title, idx: $idx", true);
-                $add_params['number'] = $idx;
-                Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, ACTION_JUMP_TO_CHANNEL,
-                    '', $ch_title, 900, $add_params);
+        foreach ($groups_order as $group_row) {
+            if ($group_row[M3uParser::COLUMN_ADULT] && !$show_adult) continue;
+
+            $channels_rows = $this->plugin->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
+            foreach ($channels_rows as $channel_row) {
+                if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+
+                $ch_title = $channel_row[COLUMN_TITLE];
+                $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
+                if ($s !== false) {
+                    $q_result = true;
+                    hd_debug_print("found channel: $ch_title, idx: $idx", true);
+                    $add_params['number'] = $idx;
+                    Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, ACTION_JUMP_TO_CHANNEL,
+                        '', $ch_title, 900, $add_params);
+                }
+                ++$idx;
             }
-            ++$idx;
         }
 
         if ($q_result === false) {
@@ -464,18 +477,20 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
 
             if ($media_url->group_id === TV_ALL_CHANNELS_GROUP_ID) {
-                $groups_order = $this->plugin->get_groups_order();
+                $groups_order = $this->plugin->get_groups_by_order();
             } else {
-                $groups_order[] = $media_url->group_id;
+                $groups_order[] = $this->plugin->get_group($media_url->group_id);
             }
 
             $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             $fav_ids = $this->plugin->get_channels_order(TV_FAV_GROUP_ID);
             $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
-            foreach ($groups_order as $group_id) {
-                $channels_rows = $this->plugin->get_channels_by_order($group_id);
-                $zoom_data = $this->plugin->get_channels_zoom($group_id);
+            foreach ($groups_order as $group_row) {
+                if ($group_row[M3uParser::COLUMN_ADULT] && !$show_adult) continue;
+
+                $channels_rows = $this->plugin->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
+                $zoom_data = $this->plugin->get_channels_zoom($group_row[COLUMN_GROUP_ID]);
                 foreach ($channels_rows as $channel_row) {
                     if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
 
@@ -506,7 +521,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                     $items[] = array(
                         PluginRegularFolderItem::media_url => MediaURL::encode(
-                            array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => $group_id)),
+                            array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => $group_row[COLUMN_GROUP_ID])),
                         PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
                         PluginRegularFolderItem::starred => in_array($channel_row[COLUMN_CHANNEL_ID], $fav_ids),
                         PluginRegularFolderItem::view_item_params => array(
