@@ -1321,9 +1321,32 @@ class Dune_Default_Sqlite_Engine
             $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id $where;";
             return $this->sql_playlist->fetch_array($query);
         } else {
-            $query = "SELECT ch.channel_id FROM $table_name AS ch $where;";
-            return $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
+            $query = "SELECT * FROM $table_name AS ch $where;";
+            return $this->sql_playlist->fetch_array($query);
         }
+    }
+
+    /**
+     * @param string|null $group_id
+     * @param int $disabled_channels -1 - all, 0 - only enabled, 1 - only disabled
+     * @return array
+     */
+    public function get_channels_ids($group_id, $disabled_channels)
+    {
+        $groups_info_table = self::get_table_name(GROUPS_INFO);
+        if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
+            $where = "WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = 0)";
+        } else {
+            $where = "WHERE group_id = " . Sql_Wrapper::sql_quote($group_id);
+        }
+
+        if ($disabled_channels !== -1) {
+            $where = empty($where) ? "WHERE disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
+        }
+
+        $table_name = self::get_table_name(CHANNELS_INFO);
+        $query = "SELECT channel_id FROM $table_name $where;";
+        return $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
     }
 
     /**

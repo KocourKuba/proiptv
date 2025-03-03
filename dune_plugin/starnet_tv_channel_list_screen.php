@@ -425,9 +425,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $defs = array();
         $q_result = false;
         $idx = 0;
-        foreach ($channels as $channel) {
-            $ch_title = $channel->get_title();
-            hd_debug_print("Search in: $ch_title", true);
+        foreach ($channels as $channel_row) {
+            $ch_title = $channel_row[COLUMN_TITLE];
             $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
             if ($s !== false) {
                 $q_result = true;

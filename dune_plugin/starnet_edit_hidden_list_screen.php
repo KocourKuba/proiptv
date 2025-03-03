@@ -105,7 +105,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
-                    $channels = $this->plugin->get_channels($parent_media_url->group_id, PARAM_DISABLED);
+                    $channels = $this->plugin->get_channels_ids($parent_media_url->group_id, PARAM_DISABLED);
                     $this->plugin->set_channel_visible($channels, true);
                     $cnt = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED);
                 } else {
