@@ -98,6 +98,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->init_providers_config();
         $this->init_screen_view_parameters($this->plugin_info['app_background']);
 
+        $this->ext_epg_supported = is_ext_epg_supported();
         print_sysinfo();
 
         hd_debug_print_separator();
@@ -108,6 +109,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("TimeZone:            " . getTimeZone());
         hd_print("Daylight:            " . date('I'));
         hd_print("New UI support:      " . var_export(HD::rows_api_support(), true));
+        hd_print("Ext EPG support:     " . var_export($this->ext_epg_supported, true));
         hd_debug_print_separator();
 
         hd_debug_print("Plugin loading complete.");

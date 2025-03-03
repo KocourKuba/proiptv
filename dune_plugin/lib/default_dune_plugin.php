@@ -62,6 +62,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @var bool
      */
+    protected $ext_epg_supported = false;
+
+    /**
+     * @var bool
+     */
     protected $inited = false;
 
     /**
@@ -320,7 +325,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print("EPG time shift $time_shift", true);
             $day_start_tm_sec += $time_shift;
 
-            $show_ext_epg = $this->get_bool_setting(PARAM_SHOW_EXT_EPG);
+            $show_ext_epg = $this->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->ext_epg_supported;
 
             $items = $this->epg_manager->get_day_epg_items($channel_row, $day_start_tm_sec);
 
@@ -1830,6 +1835,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function is_vod_enabled()
     {
         return $this->vod_enabled;
+    }
+
+    public function is_ext_epg_exist()
+    {
+        return $this->ext_epg_supported;
     }
 
     public function get_default_channel_icon($classic = true)

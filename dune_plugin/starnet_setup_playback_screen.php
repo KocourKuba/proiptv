@@ -74,11 +74,13 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements 
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // auto play
-        $ext_epg = $this->plugin->get_setting(PARAM_SHOW_EXT_EPG, SwitchOnOff::on);
-        Control_Factory::add_image_button($defs, $this, null,
-            PARAM_SHOW_EXT_EPG, TR::t('setup_ext_epg'), SwitchOnOff::$translated[$ext_epg],
-            get_image_path(SwitchOnOff::$image[$ext_epg]), self::CONTROLS_WIDTH);
+        // ext epg
+        if ($this->plugin->is_ext_epg_exist()) {
+            $ext_epg = $this->plugin->get_setting(PARAM_SHOW_EXT_EPG, SwitchOnOff::on);
+            Control_Factory::add_image_button($defs, $this, null,
+                PARAM_SHOW_EXT_EPG, TR::t('setup_ext_epg'), SwitchOnOff::$translated[$ext_epg],
+                get_image_path(SwitchOnOff::$image[$ext_epg]), self::CONTROLS_WIDTH);
+        }
 
         //////////////////////////////////////
         // auto play

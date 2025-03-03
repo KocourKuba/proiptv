@@ -247,7 +247,7 @@ class Epg_Manager_Xmltv
     {
         $any_lock = $this->is_active_index_locked();
         $day_epg = array();
-        $ext_epg = $this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
+        $ext_epg = $this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->plugin->is_ext_epg_exist();
 
         foreach ($this->xmltv_sources as $key => $params) {
             $this->xmltv_url_params = $params;

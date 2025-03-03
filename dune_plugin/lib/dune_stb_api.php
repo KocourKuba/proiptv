@@ -1741,6 +1741,12 @@ function is_newer_versions()
     return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 20;
 }
 
+function is_ext_epg_supported()
+{
+    $apk_subst = getenv('FS_PREFIX');
+    return (defined('PluginTvInfo::ext_epg_channel_ids_url') && is_file( "$apk_subst/firmware_ext/plugins/ext_epg/dune_plugin.xml"));
+}
+
 function normalizePath($path) {
     return str_replace(array('\\', '/'), DIRECTORY_SEPARATOR, $path);
 }

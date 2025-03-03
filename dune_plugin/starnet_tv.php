@@ -238,7 +238,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
 
-        if ($this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG)) {
+        if ($this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->plugin->is_ext_epg_exist()) {
             $playlist_id = $this->plugin->get_active_playlist_id();
             $content = '';
             foreach ($all_channels as $k => $v) {
