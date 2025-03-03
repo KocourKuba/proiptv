@@ -774,19 +774,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $params = $this->get_playlist_parameters($playlist_id);
         hd_debug_print("Process playlist: {$params[PARAM_NAME]} ($playlist_id)");
 
-        $db_name = get_data_path("$playlist_id.db");
+        $db_file = get_data_path("$playlist_id.db");
 
         if ($this->sql_playlist) {
             // attach to playlist db. if db not exist it will be created
-            if ($this->is_database_attached('main', $playlist_id) === 1) {
+            if ($this->is_database_attached('main', $db_file) === 2) {
                 hd_debug_print("Database already inited!", true);
                 return true;
             }
             $this->reset_playlist_db();
         }
 
-        hd_debug_print("Load database: $db_name", true);
-        $this->sql_playlist = new Sql_Wrapper($db_name);
+        hd_debug_print("Load database: $db_file", true);
+        $this->sql_playlist = new Sql_Wrapper($db_file);
 
         $playlist_xmltv = self::get_table_name(XMLTV_SOURCE_PLAYLIST);
         $selected_xmltv = self::SELECTED_XMLTV_TABLE;
@@ -982,8 +982,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $db_name = get_data_path("$plugin_orders_name.db");
-        $this->sql_playlist->exec("ATTACH DATABASE '$db_name' AS " . self::PLAYLIST_ORDERS_DB);
+        $db_file = get_data_path("$plugin_orders_name.db");
+        if ($this->attachDatabase($db_file, self::PLAYLIST_ORDERS_DB) === 0) {
+            hd_debug_print("Can't attach to database: $db_file with name: " . self::PLAYLIST_ORDERS_DB);
+        }
 
         // create group table
         $groups_info_table = self::get_table_name(GROUPS_INFO);
@@ -1111,86 +1113,92 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // attach to tv_history db. if db not exist it will be created
         // tv history is per playlist or per provider playlist
         $history_path = get_slash_trailed_path($this->get_history_path());
-        $tv_history_db_name = $history_path . $this->make_name(TV_HISTORY, $provider_playlist_id);
-        $this->sql_playlist->exec("ATTACH DATABASE '$tv_history_db_name.db' AS " . self::TV_HISTORY_DB . ";");
-        // create tv history table
-        $tv_history_table = self::get_table_name(TV_HISTORY);
-        $query = sprintf(self::CREATE_TV_HISTORY_TABLE, $tv_history_table);
-        $this->sql_playlist->exec($query);
+        $tv_history_db = $history_path . $this->make_name(TV_HISTORY, $provider_playlist_id) . ".db";
+        if ($this->attachDatabase($tv_history_db,  self::TV_HISTORY_DB) === 0) {
+            hd_debug_print("Can't attach to database: $tv_history_db with name: " . self::TV_HISTORY_DB);
+        } else {
+            // create tv history table
+            $tv_history_table = self::get_table_name(TV_HISTORY);
+            $query = sprintf(self::CREATE_TV_HISTORY_TABLE, $tv_history_table);
+            $this->sql_playlist->exec($query);
 
-        $tv_history_name = $history_path . $this->make_name(PARAM_TV_HISTORY_ITEMS);
-        if (file_exists($tv_history_name)) {
-            $points = HD::get_items($tv_history_name);
-            hd_debug_print("Load (PLUGIN TV HISTORY) from: $tv_history_name", true);
-            $query = '';
-            foreach ($points as $key => $item) {
-                $q_key = Sql_Wrapper::sql_quote($key);
-                $item = (int)$item;
-                $query .= "INSERT OR IGNORE INTO $tv_history_table (channel_id, time_stamp) VALUES ($q_key, $item);";
+            $tv_history_name = $history_path . $this->make_name(PARAM_TV_HISTORY_ITEMS);
+            if (file_exists($tv_history_name)) {
+                $points = HD::get_items($tv_history_name);
+                hd_debug_print("Load (PLUGIN TV HISTORY) from: $tv_history_name", true);
+                $query = '';
+                foreach ($points as $key => $item) {
+                    $q_key = Sql_Wrapper::sql_quote($key);
+                    $item = (int)$item;
+                    $query .= "INSERT OR IGNORE INTO $tv_history_table (channel_id, time_stamp) VALUES ($q_key, $item);";
+                }
+                $query .= "DELETE FROM $tv_history_table WHERE rowid NOT IN (SELECT rowid FROM $tv_history_table ORDER BY time_stamp DESC LIMIT 7);";
+                $this->sql_playlist->exec_transaction($query);
+                hd_debug_print("Remove TV History: $tv_history_name");
+                HD::erase_items($tv_history_name);
             }
-            $query .= "DELETE FROM $tv_history_table WHERE rowid NOT IN (SELECT rowid FROM $tv_history_table ORDER BY time_stamp DESC LIMIT 7);";
-            $this->sql_playlist->exec_transaction($query);
-            hd_debug_print("Remove TV History: $tv_history_name");
-            HD::erase_items($tv_history_name);
         }
 
         // create vod history table
         if ($this->is_vod_playlist() || ($provider !== null && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
             // vod history is only one per playlist
-            $vod_history_name = $history_path . $this->make_name(VOD_HISTORY);
+            $vod_history_db = $history_path . $this->make_name(VOD_HISTORY) . ".db";
             $vod_history_table = self::get_table_name(VOD_HISTORY);
-            $this->sql_playlist->exec("ATTACH DATABASE '$vod_history_name.db' AS " . self::VOD_HISTORY_DB);
-            $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, $vod_history_table);
-            $this->sql_playlist->exec($query);
+            if ($this->attachDatabase($vod_history_db,  self::VOD_HISTORY_DB) === 0) {
+                hd_debug_print("Can't attach to database: $vod_history_db with name: " . self::VOD_HISTORY_DB);
+            } else {
+                $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, $vod_history_table);
+                $this->sql_playlist->exec($query);
 
-            $vod_history_filename = $history_path . $this->make_name(PLUGIN_HISTORY) . ".settings";
-            if (file_exists($vod_history_filename)) {
-                hd_debug_print("Load (PLUGIN VOD HISTORY): $vod_history_filename");
-                /** @var array $history */
-                $history = HD::get_items($vod_history_filename, true, false);
-                if (isset($history[VOD_HISTORY]) && $history[VOD_HISTORY]->size() !== 0) {
-                    hd_debug_print("Move '" . VOD_HISTORY . "' to 'vod_history' db table");
-                    $query = '';
-                    /** @var array $param */
-                    foreach ($history[VOD_HISTORY] as $movie_id => $param) {
-                        hd_debug_print("$movie_id => '" . (is_array($param) ? json_encode($param) : $param) . "'", true);
-                        $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
-                        /** @var History_Item $item */
-                        foreach ($param as $series_id => $item) {
-                            $q_series_id = Sql_Wrapper::sql_quote($series_id);
-                            $watched = (int)$item->watched;
-                            $query .= "INSERT OR IGNORE INTO $vod_history_table
-                                (movie_id, series_id, watched, position, duration, time_stamp)
-                                VALUES ($q_movie_id, $q_series_id, $watched, $item->position, $item->duration, $item->date);";
+                $vod_history_filename = $history_path . $this->make_name(PLUGIN_HISTORY) . ".settings";
+                if (file_exists($vod_history_filename)) {
+                    hd_debug_print("Load (PLUGIN VOD HISTORY): $vod_history_filename");
+                    /** @var array $history */
+                    $history = HD::get_items($vod_history_filename, true, false);
+                    if (isset($history[VOD_HISTORY]) && $history[VOD_HISTORY]->size() !== 0) {
+                        hd_debug_print("Move '" . VOD_HISTORY . "' to 'vod_history' db table");
+                        $query = '';
+                        /** @var array $param */
+                        foreach ($history[VOD_HISTORY] as $movie_id => $param) {
+                            hd_debug_print("$movie_id => '" . (is_array($param) ? json_encode($param) : $param) . "'", true);
+                            $q_movie_id = Sql_Wrapper::sql_quote($movie_id);
+                            /** @var History_Item $item */
+                            foreach ($param as $series_id => $item) {
+                                $q_series_id = Sql_Wrapper::sql_quote($series_id);
+                                $watched = (int)$item->watched;
+                                $query .= "INSERT OR IGNORE INTO $vod_history_table
+                                    (movie_id, series_id, watched, position, duration, time_stamp)
+                                    VALUES ($q_movie_id, $q_series_id, $watched, $item->position, $item->duration, $item->date);";
+                            }
                         }
+                        $this->sql_playlist->exec_transaction($query);
+                        unset($history[VOD_HISTORY]);
+                    }
+
+                    $query = '';
+                    foreach (array(VOD_FILTER_LIST, VOD_SEARCH_LIST) as $list) {
+                        if (!isset($history[$list]) || $history[$list]->size() === 0) continue;
+
+                        $table_name = self::get_table_name($list);
+                        hd_debug_print("Move '$list' to '$table_name' db table");
+
+                        foreach ($history[$list]->get_order() as $value) {
+                            $q_item = Sql_Wrapper::sql_quote($value);
+                            $query .= "INSERT OR IGNORE INTO $table_name (item) VALUES ($q_item);";
+                        }
+
+                        unset($history[$list]);
                     }
                     $this->sql_playlist->exec_transaction($query);
-                    unset($history[VOD_HISTORY]);
-                }
 
-                $query = '';
-                foreach (array(VOD_FILTER_LIST, VOD_SEARCH_LIST) as $list) {
-                    if (!isset($history[$list]) || $history[$list]->size() === 0) continue;
-
-                    $table_name = self::get_table_name($list);
-                    hd_debug_print("Move '$list' to '$table_name' db table");
-
-                    foreach ($history[$list]->get_order() as $value) {
-                        $q_item = Sql_Wrapper::sql_quote($value);
-                        $query .= "INSERT OR IGNORE INTO $table_name (item) VALUES ($q_item);";
-                    }
-
-                    unset($history[$list]);
-                }
-                $this->sql_playlist->exec_transaction($query);
-
-                if (empty($history)) {
-                    hd_debug_print("Remove VOD history: $vod_history_filename");
-                    unlink($vod_history_filename);
-                } else {
-                    HD::put_items($vod_history_filename, $history, false);
-                    foreach ($history as $type => $param) {
-                        hd_debug_print("!!!!! Vod history $type is not imported: " . (is_array($param) ? json_encode($param) : $param), true);
+                    if (empty($history)) {
+                        hd_debug_print("Remove VOD history: $vod_history_filename");
+                        unlink($vod_history_filename);
+                    } else {
+                        HD::put_items($vod_history_filename, $history, false);
+                        foreach ($history as $type => $param) {
+                            hd_debug_print("!!!!! Vod history $type is not imported: " . (is_array($param) ? json_encode($param) : $param), true);
+                        }
                     }
                 }
             }
@@ -1317,7 +1325,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function load_channels(&$plugin_cookies, $reload_playlist = false)
     {
-        hd_debug_print();
+        hd_debug_print(null, true);
+        hd_debug_print("Force reload: " . var_export($reload_playlist, true));
 
         $this->perf->reset('start');
 
@@ -1336,19 +1345,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        $playlist_loaded = $this->is_database_attached(M3uParser::IPTV_DB, basename($this->get_playlist_cache($playlist_id, true)));
+        $db_file = LogSeverity::$is_debug ? ($this->get_playlist_cache($playlist_id, true) . ".db") : ":memory:";
+        $database_attached = $this->attachDatabase($db_file, M3uParser::IPTV_DB);
+        if ($database_attached === 0) {
+            hd_debug_print("Can't attach to database: $db_file with name: " . M3uParser::IPTV_DB);
+        }
 
-        if (!$reload_playlist && $playlist_loaded === 1) {
+        if (!$reload_playlist && $database_attached === 2) {
             return true;
         }
 
         $ext_epg_channels = get_temp_path("channel_ids.txt");
         if (file_exists($ext_epg_channels)) {
             unlink($ext_epg_channels);
-        }
-
-        if ($playlist_loaded == 2) {
-            $this->sql_playlist->exec("DETACH DATABASE iptv");
         }
 
         if ($this->is_vod_playlist()) {
@@ -1378,9 +1387,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $mtime = filemtime($filename);
             $date_fmt = format_datetime("Y-m-d H:i", $mtime);
             hd_debug_print("Parse playlist $filename (timestamp: $mtime, $date_fmt)");
-
-            $db_name = LogSeverity::$is_debug ? "$filename.db" : ":memory:";
-            $this->sql_playlist->exec("ATTACH DATABASE '$db_name' AS " . M3uParser::IPTV_DB);
 
             $count = $this->iptv_m3u_parser->parseIptvPlaylist($this->sql_playlist);
             if (empty($count)) {
@@ -1921,6 +1927,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $this->set_parameter(PARAM_CUR_PLAYLIST_ID, $id);
         $this->active_provider = null;
+        $this->detachDatabase(M3uParser::IPTV_DB);
     }
 
     /**

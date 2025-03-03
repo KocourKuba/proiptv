@@ -1855,39 +1855,75 @@ class Dune_Default_Sqlite_Engine
     /// database methods
 
     /**
-     * Return 1 if database attached and filename of the database the same
-     * Return 2 if database attached and filename not set
-     * Return 0 if no database attached or filename not match
+     * Return 0 if no database attached
+     * Return 1 if database attached (filename to check not set)
+     * Return 2 if database attached and filename is match
+     * Return 3 if database attached and filename not match
      *
      * @param string $db_name
-     * @param string $db_filename
+     * @param string $db_filename Full path to database file
      * @return int
      */
     public function is_database_attached($db_name, $db_filename = null)
     {
         if ($this->sql_playlist) {
             foreach ($this->sql_playlist->fetch_array("PRAGMA database_list") as $database) {
-                if ($database['name'] == $db_name) {
-                    hd_debug_print("Database exist: {$database['name']}", true);
-                    if ($db_filename == null) {
-                        return 2;
-                    }
-                    if (basename($database['file']) === "$db_filename.db") {
-                        return 1;
-                    }
+                if ($database['name'] !== $db_name) continue;
+
+                hd_debug_print("Database exist: '{$database['name']}' - '{$database['file']}'");
+                if ($db_filename == null) {
+                    return 1;
                 }
+
+                if ($db_filename == ':memory:' && empty($database['file'])) {
+                    return 2;
+                }
+
+                $used_db_file = basename($database['file']);
+                $checked_db_file = basename($db_filename);
+                if ($used_db_file === $checked_db_file) {
+                    hd_debug_print("Database already attached as '{$database['name']}' '$used_db_file'");
+                    return 2;
+                }
+
+                return 3;
             }
-            hd_debug_print("Not exist: $db_name, with filename: $db_filename.db", true);
+            hd_debug_print("Not exist: $db_name, with filename: $db_filename");
         } else {
-            hd_debug_print("No sql wrapper", true);
+            hd_debug_print("No sql wrapper");
         }
         return 0;
     }
 
+    /**
+     * Returns 0 - if attach failed
+     * Returns 1 - if attach success
+     * Returns 2 - if database already attached
+     *
+     * @param $db_filename
+     * @param $name
+     * @return int
+     */
+    public function attachDatabase($db_filename, $name)
+    {
+        $result = $this->is_database_attached($name, $db_filename);
+        if ($result === 2) {
+            return $result;
+        }
+
+        if ($result !== 0) {
+            $this->sql_playlist->exec("DETACH DATABASE '$name';");
+        }
+
+        $this->sql_playlist->exec("ATTACH DATABASE '$db_filename' AS $name;");
+        $result = $this->is_database_attached($name, $db_filename);
+        return ($result === 1 || $result === 2) ? 1 : 0;
+    }
+
     public function detachDatabase($name)
     {
-        if ($this->is_database_attached('vod')) {
-            $this->sql_playlist->exec("DETACH DATABASE '$name'");
+        if ($this->is_database_attached($name) !== 0) {
+            $this->sql_playlist->exec("DETACH DATABASE '$name';");
         }
     }
 
