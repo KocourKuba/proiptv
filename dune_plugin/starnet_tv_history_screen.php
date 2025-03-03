@@ -158,6 +158,8 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
+        $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+
         $items = array();
         $now = time();
         foreach ($this->plugin->get_tv_history() as $channel_row) {
@@ -182,7 +184,12 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 }
             }
 
-            $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
+            $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
+
+            if (empty($icon_url)) {
+                $icon_url = DEFAULT_CHANNEL_ICON_PATH;
+            }
+
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array(
@@ -194,8 +201,8 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $icon,
-                    ViewItemParams::item_detailed_icon_path => $icon,
+                    ViewItemParams::icon_path => $icon_url,
+                    ViewItemParams::item_detailed_icon_path => $icon_url,
                     ViewItemParams::item_detailed_info => $description,
                 ),
             );

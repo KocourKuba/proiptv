@@ -209,10 +209,17 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
+        $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+
         $items = array();
 
         foreach ($this->plugin->get_channels_by_order(TV_FAV_GROUP_ID) as $channel_row) {
-            $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
+            $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
+
+            if (empty($icon_url)) {
+                $icon_url = DEFAULT_CHANNEL_ICON_PATH;
+            }
+
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => TV_FAV_GROUP_ID)
@@ -220,8 +227,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
                 PluginRegularFolderItem::starred => false,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::icon_path => $icon,
-                    ViewItemParams::item_detailed_icon_path => $icon,
+                    ViewItemParams::icon_path => $icon_url,
+                    ViewItemParams::item_detailed_icon_path => $icon_url,
                 ),
             );
         }

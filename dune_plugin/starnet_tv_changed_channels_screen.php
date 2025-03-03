@@ -151,6 +151,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
+        $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+
         $items = array();
 
         if (LogSeverity::$is_debug) {
@@ -178,7 +180,12 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 implode(", ", $epg_ids)
             );
 
-            $icon = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
+            $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
+
+            if (empty($icon_url)) {
+                $icon_url = DEFAULT_CHANNEL_ICON_PATH;
+            }
+
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(
                     array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => TV_CHANGED_CHANNELS_GROUP_ID)
@@ -187,8 +194,8 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_sticker => Control_Factory::create_sticker(get_image_path('add.png'), -63, 1),
-                    ViewItemParams::icon_path => $icon,
-                    ViewItemParams::item_detailed_icon_path => $icon,
+                    ViewItemParams::icon_path => $icon_url,
+                    ViewItemParams::item_detailed_icon_path => $icon_url,
                     ViewItemParams::item_detailed_info => $detailed_info,
                 ),
             );
