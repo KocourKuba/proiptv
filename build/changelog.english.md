@@ -1,4 +1,18 @@
-﻿### Version 6.0.1110
+﻿### Version 6.0.1130
+- Fixed a bug with adding the Edem provider
+- Fixed a bug with channel search
+- Fixed a bug with changing the settings for displaying special categories (Favorites/Watch history)
+- Fixed a bug adding a link to a playlist
+- Fixed a bug with updating the plugin background when changing the playlist
+- Setting up EPG emulation was not enabled
+- The history folder was not created during a clean plugin installation
+- Minor fixes in the M3U parser
+- Added a check for Extended EPG support for the current Dune HD firmware
+- Favorites/Browsing history/Changed always used playlist icons, regardless of icon source settings
+- XMLTV sources from the plugin configuration were not saved in the general list
+- Clearing Favorites and Browsing History has been removed from the context menu of the category screen
+
+### Version 6.0.1110
 - Support for set-top boxes with revisions less than r21 has been discontinued and this update is not available for them (Sigma r11 and new set-top boxes with r19 and r20 firmware). For new devices, I recommend updating the firmware to the current r22 or r21
 - Completely redesigned internal storage engine to reduce processing time and memory consumption. Everything is transferred to the sqlite database engine. Non-sqlite devices are not supported (mainly on Sigma processors)
 - All settings will be converted to the new format. When updating plugins versions earlier than 6.0, it is suggested to make a backup copy of the settings
