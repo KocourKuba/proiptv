@@ -223,7 +223,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                     $action_reload, $data->filepath, self::CONTROLS_WIDTH);
 
             case PARAM_FAKE_EPG:
-                $this->plugin->toggle_parameter($control_id, false);
+                $this->plugin->toggle_setting($control_id, false);
                 $this->plugin->init_epg_manager();
                 break;
 
