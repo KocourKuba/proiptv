@@ -1319,11 +1319,10 @@ class Dune_Default_Sqlite_Engine
         if ($full) {
             $column = $this->get_id_column();
             $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id $where;";
-            return $this->sql_playlist->fetch_array($query);
         } else {
             $query = "SELECT * FROM $table_name AS ch $where;";
-            return $this->sql_playlist->fetch_array($query);
         }
+        return $this->sql_playlist->fetch_array($query);
     }
 
     /**

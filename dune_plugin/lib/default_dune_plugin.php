@@ -1382,6 +1382,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // first check if playlist in cache and load it
         if (false === $this->init_playlist_parser($playlist_id, $reload_playlist)) {
+            $this->detachDatabase(M3uParser::IPTV_DB);
+            if ($db_file !== ':memory:' && file_exists($db_file)) {
+                unlink($db_file);
+            }
             return false;
         }
 
@@ -1414,7 +1418,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             hd_debug_print("saved playlist sources: " . json_encode($hashes), true);
 
-            $sources = new Hashed_Array();
             foreach ($this->iptv_m3u_parser->getXmltvSources() as $url) {
                 $item = array();
                 $hash = Hashed_Array::hash($url);
@@ -1430,11 +1433,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $item[PARAM_CACHE] = XMLTV_CACHE_AUTO;
                 }
 
-                $sources->set($hash, $item);
+                $saved_source->put($hash, $item);
                 hd_debug_print("playlist source: ($hash) $url", true);
             }
 
-            $this->set_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $sources);
+            $this->set_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $saved_source);
 
             $this->perf->setLabel('end_parse_playlist');
             $report = $this->perf->getFullReport('start_parse_playlist', 'end_parse_playlist');
