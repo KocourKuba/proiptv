@@ -597,7 +597,7 @@ class Dune_Default_Sqlite_Engine
         if (!empty($id)) {
             $db = new Sql_Wrapper(get_data_path("$id.db"));
             $table_name = self::SETTINGS_TABLE;
-            $query = '';
+            $query  = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $table_name);
             foreach ($data as $key => $value) {
                 $type = gettype($value);
                 if ($type === 'NULL') {
