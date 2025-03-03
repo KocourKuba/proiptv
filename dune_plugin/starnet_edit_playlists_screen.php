@@ -194,13 +194,13 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_URL_DLG:
-                return $this->do_edit_url_dlg();
+                return $this->do_add_url_dlg();
 
             case ACTION_URL_DLG_APPLY:
-                return $this->apply_edit_url_dlg($user_input);
+                return $this->apply_add_url_dlg($user_input);
 
             case ACTION_PL_TYPE_DLG_APPLY:
-                return $this->apply_edit_m3u_type($user_input);
+                return $this->apply_add_m3u_type($user_input);
 
             case ACTION_CHOOSE_FILE:
                 $media_url_str = MediaURL::encode(
@@ -306,6 +306,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 break;
 
             case ACTION_INVALIDATE:
+                if (isset($user_input->playlist_id)) {
+                    $sel_idx = array_search($user_input->playlist_id, $this->plugin->get_all_playlists_ids());
+                }
                 break;
         }
 
@@ -431,7 +434,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     /**
      * @return array|null
      */
-    protected function do_edit_url_dlg()
+    protected function do_add_url_dlg()
     {
         hd_debug_print(null, true);
         $defs = array();
@@ -475,11 +478,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
      * @param object $user_input
      * @return array|null
      */
-    protected function apply_edit_url_dlg($user_input)
+    protected function apply_add_url_dlg($user_input)
     {
         hd_debug_print(null, true);
-
-        $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE);
 
         $uri = safe_get_member($user_input, CONTROL_URL_PATH, '');
         if (!is_proto_http($uri)) {
@@ -556,6 +557,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $this->plugin->clear_playlist_cache($playlist_id);
             $this->plugin->set_playlist_parameters($playlist_id, $params);
 
+            $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array('playlist_id' => $playlist_id));
+
             if (!empty($detect_info)) {
                 $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
             }
@@ -564,7 +567,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         } catch (Exception $ex) {
             hd_debug_print("Problem with download playlist");
             print_backtrace_exception($ex);
-            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $post_action, $ex->getMessage());
+            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
         }
 
         if ($tmp_file !== $uri && file_exists($tmp_file)) {
@@ -578,7 +581,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
      * @param string $uri
      * @return array|null
      */
-    protected function do_edit_m3u_type($uri)
+    protected function do_add_m3u_type($uri)
     {
         hd_debug_print(null, true);
         $defs = array();
@@ -614,11 +617,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
      * @param object $user_input
      * @return array|null
      */
-    protected function apply_edit_m3u_type($user_input)
+    protected function apply_add_m3u_type($user_input)
     {
         hd_debug_print(null, true);
-
-        $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE);
 
         try {
             $uri = safe_get_member($user_input, CONTROL_URL_PATH);
@@ -671,6 +672,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $params[PARAM_ID_MAPPER] = $detect_id;
 
             $this->plugin->set_playlist_parameters($playlist_id, $params);
+            $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array('playlist_id' => $playlist_id));
 
             if (!empty($detect_info)) {
                 $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
@@ -680,7 +682,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         } catch (Exception $ex) {
             hd_debug_print("Problem with download playlist");
             print_backtrace_exception($ex);
-            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $post_action, $ex->getMessage());
+            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
         }
 
         return $post_action;
@@ -784,7 +786,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             return Action_Factory::show_title_dialog(TR::t('err_bad_m3u_file'));
         }
 
-        return $this->do_edit_m3u_type($selected_media_url->filepath);
+        return $this->do_add_m3u_type($selected_media_url->filepath);
     }
 
     /**

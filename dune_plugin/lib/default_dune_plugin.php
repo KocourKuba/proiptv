@@ -2637,15 +2637,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $menu_items[] = $this->create_menu_item($handler, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
-            if ($group_id === TV_FAV_GROUP_ID && $this->get_channels_order_count(TV_FAV_GROUP_ID) !== 0) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
-            } else if ($group_id === TV_HISTORY_GROUP_ID && $this->get_tv_history_count() !== 0) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
-            } else if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
-                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
-            } else if ($group_id !== VOD_GROUP_ID) {
-                $menu_items = $this->edit_hidden_menu($handler, $group_id);
+            if ($is_classic) {
+                if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
+                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
+                }
+            } else {
+                if ($group_id === TV_FAV_GROUP_ID && $this->get_channels_order_count(TV_FAV_GROUP_ID) !== 0) {
+                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
+                } else if ($group_id === TV_HISTORY_GROUP_ID && $this->get_tv_history_count() !== 0) {
+                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
+                } else if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
+                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
+                }
             }
+
+            $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         }
 
@@ -2708,6 +2714,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
         $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,TR::t('entry_setup'), "settings.png");
 
+        file_put_contents(get_temp_path('menu.json'), json_encode($menu_items));
         return $menu_items;
     }
 
@@ -2726,7 +2733,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ($groups) {
-            if ($group_id !== TV_ALL_CHANNELS_GROUP_ID) {
+            if (!self::is_special_group_id($group_id)) {
                 $menu_items[] = $this->create_menu_item($handler,
                     ACTION_ITEM_DELETE,
                     TR::t('tv_screen_hide_group'),
@@ -2782,7 +2789,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null)
     {
-        $sel_id = null;
+        $post_action = null;
         switch ($action_edit) {
             case Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_CHANNELS:
                 $params['screen_id'] = Starnet_Edit_Hidden_List_Screen::ID;
@@ -2810,7 +2817,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $title = TR::t('setup_channels_src_edit_playlists');
                 $active_key = $this->get_active_playlist_id();
                 if (!empty($active_key) && $this->is_playlist_exist($active_key)) {
-                    $sel_id = array_search($active_key, $this->get_all_playlists_ids());
+                    $handler = User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Edit_Playlists_Screen::ID);
+                    $post_action = User_Input_Handler_Registry::create_action($handler,ACTION_INVALIDATE, null, array('playlist_id' => $active_key));
                 }
                 break;
 
@@ -2830,8 +2838,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $params['edit_list'] = $action_edit;
         $params['windowCounter'] = 1;
 
-
-        return Action_Factory::open_folder(MediaURL::encode($params), $title, null, $sel_id);
+        return Action_Factory::open_folder(MediaURL::encode($params), $title, null, null, $post_action);
     }
 
     /**
@@ -3315,5 +3322,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public static function make_epg_ids($channel_row)
     {
         return array('epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
+    }
+
+    public static function is_special_group_id($group_id)
+    {
+        return ($group_id === TV_ALL_CHANNELS_GROUP_ID
+            || $group_id === TV_FAV_GROUP_ID
+            || $group_id === TV_HISTORY_GROUP_ID
+            || $group_id === TV_CHANGED_CHANNELS_GROUP_ID
+            || $group_id === VOD_GROUP_ID);
     }
 }
