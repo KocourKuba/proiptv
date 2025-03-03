@@ -509,7 +509,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
 
             $parser = new M3uParser();
-            $parser->setPlaylist(safe_get_value($params, PARAM_URI), true);
+            $parser->setPlaylist($tmp_file, true);
             $params[PARAM_PL_TYPE] = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
             if ($params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
                 $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
@@ -539,6 +539,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
                 if (empty($name)) {
                     if (($pos = strpos($uri, '?')) !== false) {
+                        $name = substr($uri, 0, $pos - 1);
+                    } else if (($pos = strrpos($uri, '/')) !== false) {
                         $name = substr($uri, 0, $pos);
                     } else {
                         $name = $uri;
