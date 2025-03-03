@@ -508,14 +508,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $group_id = $group_row[COLUMN_GROUP_ID];
             switch ($group_id) {
                 case TV_ALL_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_ALL, true)) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_ALL)) break;
 
                     $all_channels_rows = $this->get_all_channels_row();
                     hd_debug_print("added all channels: " . count($all_channels_rows) . " rows", true);
                     break;
 
                 case TV_FAV_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_FAVORITES, true)) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) break;
 
                     $channels_cnt = $this->plugin->get_channels_order_count($group_id);
                     if (!$channels_cnt) break;
@@ -525,7 +525,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     break;
 
                 case TV_HISTORY_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_HISTORY, true)) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_HISTORY)) break;
 
                     $channels_cnt = $this->plugin->get_tv_history_count();
                     if (!$channels_cnt) break;
@@ -535,7 +535,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     break;
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, true)) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS)) break;
 
                     $has_changes = $this->plugin->get_changed_channels_count();
                     if (!$has_changes) break;

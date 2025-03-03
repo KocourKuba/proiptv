@@ -93,7 +93,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show all channels category
-        $show_all = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_ALL));
+        $show_all = $this->plugin->get_setting(PARAM_SHOW_ALL, SwitchOnOff::on);
         hd_debug_print("All channels group: $show_all", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_ALL, TR::t('setup_show_all_channels'), SwitchOnOff::translate($show_all),
@@ -101,7 +101,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show favorites category
-        $show_fav = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES));
+        $show_fav = $this->plugin->get_setting(PARAM_SHOW_FAVORITES, SwitchOnOff::on);
         hd_debug_print("Favorites group: $show_fav", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_FAVORITES, TR::t('setup_show_favorites'), SwitchOnOff::translate($show_fav),
@@ -109,7 +109,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show history category
-        $show_history = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_HISTORY));
+        $show_history = $this->plugin->get_setting(PARAM_SHOW_HISTORY, SwitchOnOff::on);
         hd_debug_print("History group: $show_history", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_HISTORY, TR::t('setup_show_history'), SwitchOnOff::translate($show_history),
@@ -117,7 +117,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show changed channels category
-        $show_changed = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS));
+        $show_changed = $this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, SwitchOnOff::on);
         hd_debug_print("Changed group: $show_changed", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SwitchOnOff::translate($show_changed),
@@ -125,15 +125,15 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // show VOD
-        $show_mediateka = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_VOD));
+        $show_mediateka = $this->plugin->get_setting(PARAM_SHOW_VOD, SwitchOnOff::on);
         hd_debug_print("VOD group: $show_mediateka", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_VOD, TR::t('setup_show_vod'), SwitchOnOff::translate($show_mediateka),
             get_image_path(SwitchOnOff::to_image($show_mediateka)), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // show VOD
-        $show_adult = SwitchOnOff::to_def($this->plugin->get_bool_setting(PARAM_SHOW_ADULT));
+        // show adult
+        $show_adult = $this->plugin->get_setting(PARAM_SHOW_ADULT, SwitchOnOff::on);
         hd_debug_print("Adult group: $show_adult", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_ADULT, TR::t('setup_show_adult'), SwitchOnOff::translate($show_adult),

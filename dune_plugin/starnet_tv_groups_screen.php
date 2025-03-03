@@ -607,7 +607,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             switch ($group_id) {
                 case TV_ALL_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_ALL, true) || $no_channels) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_ALL) || $no_channels) break;
 
                     $enabled = $this->plugin->get_channels_count($group_id, PARAM_ENABLED);
                     $disabled = $this->plugin->get_channels_count($group_id, PARAM_DISABLED);
@@ -617,7 +617,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case TV_FAV_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_FAVORITES, true) || $no_channels) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES) || $no_channels) break;
 
                     $channels_cnt = $this->plugin->get_channels_order_count($group_id);
                     if (!$channels_cnt) break;
@@ -628,7 +628,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case TV_HISTORY_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_HISTORY, true) || $no_channels) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_HISTORY) || $no_channels) break;
 
                     $channels_cnt = $this->plugin->get_tv_history_count();
                     if (!$channels_cnt) break;
@@ -639,7 +639,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, true) || $no_channels) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS) || $no_channels) break;
 
                     $has_changes = $this->plugin->get_changed_channels_count();
                     if (!$has_changes) break;
@@ -652,7 +652,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case VOD_GROUP_ID:
-                    if (!$this->plugin->is_vod_enabled() || !$this->plugin->get_setting(PARAM_SHOW_VOD, true)) break;
+                    if (!$this->plugin->is_vod_enabled() || !$this->plugin->get_bool_setting(PARAM_SHOW_VOD)) break;
 
                     $caption = TR::t(VOD_GROUP_CAPTION);
                     $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
@@ -726,13 +726,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             switch ($group_id) {
                 case TV_ALL_CHANNELS_GROUP_ID:
-                    if ($this->plugin->get_setting(PARAM_SHOW_ALL, true)) {
+                    if ($this->plugin->get_bool_setting(PARAM_SHOW_ALL)) {
                         $visible++;
                     }
                     break;
 
                 case TV_FAV_GROUP_ID:
-                    if ($this->plugin->get_setting(PARAM_SHOW_FAVORITES, true)) {
+                    if ($this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) {
                         $channels_cnt = $this->plugin->get_channels_order_count($group_id);
                         if ($channels_cnt) {
                             $visible++;
@@ -741,7 +741,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case TV_HISTORY_GROUP_ID:
-                    if ($this->plugin->get_setting(PARAM_SHOW_HISTORY, true)) {
+                    if ($this->plugin->get_bool_setting(PARAM_SHOW_HISTORY)) {
                         $channels_cnt = $this->plugin->get_tv_history_count();
                         if ($channels_cnt) {
                             $visible++;
@@ -750,7 +750,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
-                    if ($this->plugin->get_setting(PARAM_SHOW_CHANGED_CHANNELS, true)) {
+                    if ($this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS)) {
                         $has_changes = $this->plugin->get_changed_channels_count();
                         if ($has_changes) {
                             $visible++;
@@ -759,7 +759,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case VOD_GROUP_ID:
-                    if ($this->plugin->is_vod_enabled() && $this->plugin->get_setting(PARAM_SHOW_VOD, true)) {
+                    if ($this->plugin->is_vod_enabled() && $this->plugin->get_bool_setting(PARAM_SHOW_VOD)) {
                         $visible++;
                     }
                     break;
