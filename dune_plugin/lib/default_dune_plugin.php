@@ -1118,6 +1118,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // attach to tv_history db. if db not exist it will be created
         // tv history is per playlist or per provider playlist
         $history_path = get_slash_trailed_path($this->get_history_path());
+        create_path($history_path);
         $tv_history_db = $history_path . $this->make_name(TV_HISTORY, $provider_playlist_id) . ".db";
         if ($this->attachDatabase($tv_history_db,  self::TV_HISTORY_DB) === 0) {
             hd_debug_print("Can't attach to database: $tv_history_db with name: " . self::TV_HISTORY_DB);
