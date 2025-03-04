@@ -528,7 +528,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         LogSeverity::$is_debug = true;
         $this->init_parameters();
-        set_debug_log($this->get_bool_parameter(PARAM_ENABLE_DEBUG, false));
 
         hd_debug_print("Init plugin done!");
         hd_debug_print_separator();

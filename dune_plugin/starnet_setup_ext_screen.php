@@ -58,14 +58,15 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        return $this->do_get_control_defs();
+        return $this->do_get_control_defs($plugin_cookies);
     }
 
     /**
      * defs for all controls on screen
+     * @param object $plugin_cookies
      * @return array
      */
-    public function do_get_control_defs()
+    public function do_get_control_defs($plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -118,7 +119,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // debugging
 
-        $debug_state = $this->plugin->get_parameter(PARAM_ENABLE_DEBUG, SwitchOnOff::off);
+        $debug_state = safe_get_member($plugin_cookies, PARAM_ENABLE_DEBUG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SwitchOnOff::translate($debug_state),
             get_image_path(SwitchOnOff::to_image($debug_state)), self::CONTROLS_WIDTH);
@@ -271,11 +272,10 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 }
 
                 return Action_Factory::show_title_dialog($msg,
-                    Action_Factory::reset_controls($this->do_get_control_defs()));
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
 
             case PARAM_ENABLE_DEBUG:
-                $this->plugin->toggle_parameter(PARAM_ENABLE_DEBUG, false);
-                $debug = $this->plugin->get_bool_parameter(PARAM_ENABLE_DEBUG);
+                $debug = SwitchOnOff::to_bool(self::toggle_cookie_param($plugin_cookies,PARAM_ENABLE_DEBUG));
                 set_debug_log($debug);
                 hd_debug_print("Debug logging: " . var_export($debug, true));
                 break;
@@ -285,7 +285,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 break;
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs());
+        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
     }
 
     /**

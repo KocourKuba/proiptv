@@ -112,6 +112,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("Ext EPG support:     " . var_export($this->ext_epg_supported, true));
         hd_print("Auto resume enabled: " . safe_get_member($plugin_cookies,'auto_resume'));
         hd_print("Auto play enabled:   " . safe_get_member($plugin_cookies,'auto_play'));
+        hd_print("Debug log enabled:   " . safe_get_member($plugin_cookies,PARAM_ENABLE_DEBUG));
         hd_debug_print_separator();
 
         hd_debug_print("Plugin loading complete.");
