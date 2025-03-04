@@ -1048,13 +1048,11 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         ///////////// Channel number /////////////////
 
-        $channel_num = $this->plugin->is_channel_in_order($group_id, $channel_id);
-
         $pos = PaneParams::$ch_num_pos[$this->plugin->get_setting(PARAM_NEWUI_CHANNEL_POSITION, 0)];
         $defs[] = GComps_Factory::label(
             GComp_Geom::place_top_left(130, 50, $pos['x'], $pos['y']),
             null,
-            $channel_num,
+            $channel_row[COLUMN_CH_NUMBER],
             1,
             PaneParams::ch_num_font_color,
             PaneParams::ch_num_font_size,

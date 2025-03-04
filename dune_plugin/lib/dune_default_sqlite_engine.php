@@ -918,12 +918,27 @@ class Dune_Default_Sqlite_Engine
      */
     public function clear_changed_channels()
     {
+        $id_column = $this->get_id_column();
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         $groups_info_table = self::get_table_name(self::GROUPS_INFO_TABLE);
+
         $q_changed = Sql_Wrapper::sql_quote(TV_CHANGED_CHANNELS_GROUP_ID);
         $query = "DELETE FROM $channels_info_table WHERE changed = -1;";
         $query .= "UPDATE $channels_info_table SET changed = 0 WHERE changed = 1;";
         $query .= "UPDATE $groups_info_table SET disabled = 1 WHERE group_id = $q_changed;";
+        $this->sql_playlist->exec_transaction($query);
+
+        $tmp_table = self::get_table_name(CHANNELS_INFO) . "tmp";
+        $channels_info_table_s = self::get_table_name(CHANNELS_INFO, true);
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
+        $query = sprintf(self::CREATE_CHANNELS_INFO_TABLE, $tmp_table);
+        $query .= "INSERT INTO $tmp_table
+                    SELECT ch.* FROM $channels_info_table as ch
+                    INNER JOIN $iptv_channels as pl
+                        ON ch.channel_id = pl.$id_column ORDER BY pl.ROWID;";
+
+        $query .= "DROP TABLE $channels_info_table;";
+        $query .= "ALTER TABLE $tmp_table RENAME TO $channels_info_table_s;";
         $this->sql_playlist->exec_transaction($query);
     }
 
@@ -1746,7 +1761,7 @@ class Dune_Default_Sqlite_Engine
         $iptv_channels = M3uParser::CHANNELS_TABLE;
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         $column = $this->get_id_column();
-        $query = "SELECT ord.channel_id, pl.*
+        $query = "SELECT ord.channel_id, pl.*, ch.ROWID as ch_number
                     FROM $iptv_channels AS pl
                     JOIN $order_table AS ord ON pl.$column = ord.channel_id
                     JOIN $channels_info_table as ch ON ch.channel_id = ord.channel_id AND ch.disabled = 0
@@ -1816,7 +1831,7 @@ class Dune_Default_Sqlite_Engine
         if ($full) {
             $iptv_channels = M3uParser::CHANNELS_TABLE;
             $column = $this->get_id_column();
-            $query = "SELECT ch.channel_id, tv.*
+            $query = "SELECT ch.channel_id, tv.*, ch.ROWID as ch_number
                         FROM $iptv_channels as tv
                             JOIN $table_name AS ch ON tv.$column = ch.channel_id
                         WHERE ch.channel_id = $channel_id AND ch.disabled = 0;";

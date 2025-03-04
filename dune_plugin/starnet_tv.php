@@ -187,7 +187,7 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::caption => $channel_row[COLUMN_TITLE],
                     PluginTvChannel::group_ids => array_keys($group_id_arr),
                     PluginTvChannel::icon_url => safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH),
-                    PluginTvChannel::number => $ch_num++,
+                    PluginTvChannel::number => $channel_row[COLUMN_CH_NUMBER],
 
                     PluginTvChannel::have_archive => $archive > 0,
                     PluginTvChannel::is_protected => empty($pass_sex) ? 0 : $channel_row[M3uParser::COLUMN_ADULT],

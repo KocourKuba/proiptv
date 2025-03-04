@@ -210,6 +210,7 @@ const COLUMN_TITLE = 'title';
 const COLUMN_NAME = 'name';
 const COLUMN_TYPE = 'type';
 const COLUMN_URI = 'uri';
+const COLUMN_CH_NUMBER = 'ch_number';
 const COLUMN_USER_AGENT = 'user_agent';
 const COLUMN_DUNE_PARAMS = 'dune_params';
 const COLUMN_USE_DUNE_PARAMS = 'use_dune_params';
