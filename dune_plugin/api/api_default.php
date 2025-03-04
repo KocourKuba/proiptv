@@ -412,19 +412,16 @@ class api_default
      */
     public function replace_macros($string)
     {
-        static $macroses = array(
-            MACRO_LOGIN,
-            MACRO_PASSWORD,
-            MACRO_STREAM_ID,
-            MACRO_SUBDOMAIN,
-            MACRO_OTTKEY,
-            MACRO_SESSION_ID,
-            MACRO_DOMAIN_ID,
-            MACRO_DEVICE_ID,
-            MACRO_SERVER_ID,
-            MACRO_QUALITY_ID,
-            MACRO_PLAYLIST_ID,
-            MACRO_VPORTAL,
+        $macroses = array(
+            MACRO_LOGIN => '',
+            MACRO_PASSWORD => '',
+            MACRO_STREAM_ID => '',
+            MACRO_SESSION_ID => '',
+            MACRO_DOMAIN_ID => '',
+            MACRO_DEVICE_ID => '',
+            MACRO_SERVER_ID => '',
+            MACRO_QUALITY_ID => '',
+            MACRO_PLAYLIST_ID => '',
         );
 
         hd_debug_print("template: $string", true);
@@ -433,9 +430,9 @@ class api_default
             array($this->getApiUrl(), $this->GetParameter(MACRO_PLAYLIST), $this->GetParameter(MACRO_EPG_DOMAIN)),
             $string);
 
-        foreach ($macroses as $macro) {
+        foreach ($macroses as $macro => $default) {
             if (strpos($string, $macro) !== false) {
-                $string = str_replace($macro, trim($this->GetParameter($macro)), $string);
+                $string = str_replace($macro, trim($this->GetParameter($macro, $default)), $string);
             }
         }
         hd_debug_print("result: $string", true);

@@ -74,6 +74,29 @@ class api_edem extends api_default
     }
 
     /**
+     * @param string $string
+     * @return string
+     */
+    public function replace_macros($string)
+    {
+        $string = parent::replace_macros($string);
+        $macroses = array(
+            MACRO_OTTKEY => '',
+            MACRO_VPORTAL => '',
+            MACRO_SUBDOMAIN => $this->getConfigValue(CONFIG_SUBDOMAIN),
+        );
+
+        foreach ($macroses as $macro => $default) {
+            if (strpos($string, $macro) !== false) {
+                $string = str_replace($macro, trim($this->GetParameter($macro, $default)), $string);
+            }
+        }
+        hd_debug_print("result: $string", true);
+
+        return $string;
+    }
+
+    /**
      * @param array $info
      * @return string
      */
