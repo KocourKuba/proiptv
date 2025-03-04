@@ -5,7 +5,7 @@ interface User_Input_Handler
     /**
      * @return string
      */
-    public static function get_handler_id();
+    public function get_handler_id();
 
     /**
      * @param object $user_input

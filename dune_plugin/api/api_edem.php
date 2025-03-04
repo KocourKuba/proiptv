@@ -103,19 +103,19 @@ class api_edem extends api_default
             CONTROL_EDIT_NAME, TR::t('name'), $name,
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
-        $subdomain = $this->getParameter(MACRO_SUBDOMAIN);
+        $subdomain = $this->GetParameter(MACRO_SUBDOMAIN);
         if (!empty($subdomain) && $subdomain !== $this->getConfigValue(CONFIG_SUBDOMAIN)) {
             Control_Factory::add_text_field($defs, $handler, null,
-                CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $this->getParameter(MACRO_SUBDOMAIN),
+                CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $this->GetParameter(MACRO_SUBDOMAIN),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_OTT_KEY, TR::t('ottkey'), $this->getParameter(MACRO_OTTKEY),
+            CONTROL_OTT_KEY, TR::t('ottkey'), $this->GetParameter(MACRO_OTTKEY),
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_VPORTAL, TR::t('vportal'), $this->getParameter(MACRO_VPORTAL),
+            CONTROL_VPORTAL, TR::t('vportal'), $this->GetParameter(MACRO_VPORTAL),
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
@@ -138,69 +138,71 @@ class api_edem extends api_default
      */
     public function ApplySetupUI($user_input)
     {
-        $playlist_id = safe_get_member($user_input, CONTROL_EDIT_ITEM);
-
-        if (empty($playlist_id)) {
+        if (empty($this->playlist_id)) {
+            $is_new = true;
             hd_debug_print("Create new provider info", true);
             $params[PARAM_TYPE] = PARAM_PROVIDER;
             $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
             $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         } else {
-            hd_debug_print("load info for existing playlist id: $playlist_id", true);
-            $params = $this->plugin->get_playlist_parameters($playlist_id);
+            $is_new = false;
+            hd_debug_print("load info for existing playlist id: $this->playlist_id", true);
+            $params = $this->plugin->get_playlist_parameters($this->playlist_id);
             hd_debug_print("provider info: " . pretty_json_format($params), true);
         }
 
-        $changed = false;
-
         if (safe_get_value($params, PARAM_NAME) !== $user_input->{CONTROL_EDIT_NAME}) {
             $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
-            $changed = true;
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_OTT_SUBDOMAIN, MACRO_SUBDOMAIN)) {
-            $params[MACRO_SUBDOMAIN] = $user_input->{$param};
-            $changed = true;
+        if (empty($user_input->CONTROL_OTT_SUBDOMAIN)) {
+            $params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
+        } else {
+            $params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_OTT_KEY, MACRO_OTTKEY)) {
-            $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
-            $changed = true;
-        }
-
-        if (empty($params[MACRO_OTTKEY])) {
+        if (empty($user_input->{CONTROL_OTT_KEY})) {
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
+
+        $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
 
         if (!empty($user_input->{CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
             return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'));
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_VPORTAL, MACRO_VPORTAL)) {
-            $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
-            $changed = true;
-        }
-
-        if (!$changed) {
-            return null;
-        }
-
-        $is_new = empty($playlist_id);
-        $playlist_id = $is_new ? $this->get_hash($params) : $playlist_id;
-        if (empty($playlist_id)) {
-            return Action_Factory::show_title_dialog(TR::t('err_incorrect_access_data'));
-        }
-
-        hd_debug_print("ApplySetupUI compiled provider ($playlist_id) info: " . pretty_json_format($params), true);
+        $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
 
         if ($is_new) {
-            hd_debug_print("Set default values for id: $playlist_id", true);
-            $this->set_default_settings($playlist_id);
+            $this->playlist_id = $this->get_hash($params);
+            if (empty($this->playlist_id)) {
+                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+            }
         }
 
-        $this->plugin->set_playlist_parameters($playlist_id, $params);
-        $this->plugin->clear_playlist_cache($playlist_id);
+        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . pretty_json_format($params), true);
+        $this->plugin->set_playlist_parameters($this->playlist_id, $params);
 
-        return $playlist_id;
+        // Set default playlist settings for new provider
+        hd_debug_print("Set default values for id: $this->playlist_id", true);
+        $values = $this->getConfigValue(CONFIG_PLAYLISTS);
+        if (!empty($values)) {
+            $idx = $this->GetParameter(MACRO_PLAYLIST_ID);
+            if (empty($idx)) {
+                $this->SetParameter(MACRO_PLAYLIST_ID, (string)key($values));
+            }
+        }
+
+        // set provider parameters if they not set in the playlist parameters
+        // parameters obtain from user account (edem does not have it but maybe in future it will be changed)
+        $this->set_provider_defaults();
+
+        if ($is_new) {
+            $this->apply_config_defaults();
+        }
+
+        $this->plugin->clear_playlist_cache($this->playlist_id);
+
+        return $this->playlist_id;
     }
 }

@@ -62,7 +62,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     /**
      * @inheritDoc
      */
-    public static function get_handler_id()
+    public function get_handler_id()
     {
         return static::ID . '_handler';
     }

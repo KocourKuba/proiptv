@@ -257,23 +257,60 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
             case ACTION_EDIT_PROVIDER_DLG:
                 $playlist_id = safe_get_member($user_input, COLUMN_PLAYLIST_ID, '');
-                return $this->plugin->do_edit_provider_dlg($this, $user_input->{PARAM_PROVIDER}, $playlist_id);
-
-            case ACTION_EDIT_PROVIDER_DLG_APPLY:
-                $id = $this->plugin->apply_edit_provider_dlg($user_input);
-                if ($id === false) {
-                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+                if (empty($playlist_id)) {
+                    // add new provider
+                    $provider = $this->plugin->create_provider_class($user_input->{PARAM_PROVIDER});
+                } else {
+                    // Edit existing
+                    $provider = $this->plugin->get_provider($playlist_id);
                 }
 
-                if ($id === null) {
+                if (is_null($provider)) {
                     return null;
                 }
 
-                if (is_array($id)) {
-                    return $id;
+                $defs = array();
+                Control_Factory::add_vgap($defs, 20);
+
+                if (empty($name)) {
+                    $name = $provider->getName();
                 }
 
-                $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $id;
+                $defs = $provider->GetSetupUI($name, $playlist_id, $this);
+                if (empty($defs)) {
+                    return null;
+                }
+
+                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+
+            case ACTION_EDIT_PROVIDER_DLG_APPLY:
+                hd_debug_print(null, true);
+
+                // edit existing or new provider in starnet_edit_list_screen
+                $playlist_id = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
+                if (empty($playlist_id)) {
+                    // create new provider
+                    $provider = $this->plugin->create_provider_class($user_input->{PARAM_PROVIDER});
+                } else {
+                    // edit existing
+                    $provider = $this->plugin->get_provider($playlist_id);
+                }
+
+                if (is_null($provider)) {
+                    return null;
+                }
+
+                $res = $provider->ApplySetupUI($user_input);
+
+                if ($res === null) {
+                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+                }
+
+                if (is_array($res)) {
+                    return $res;
+                }
+
+                $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $res;
                 if (!$this->plugin->reload_channels($plugin_cookies)) {
                     return Action_Factory::invalidate_all_folders(
                         $plugin_cookies,
@@ -285,7 +322,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                     );
                 }
 
-                $sel_idx = array_search($id, $this->plugin->get_all_playlists_ids());
+                $sel_idx = array_search($res, $this->plugin->get_all_playlists_ids());
                 break;
 
             case ACTION_FOLDER_SELECTED:
@@ -854,8 +891,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             if ($type === PARAM_PROVIDER) {
                 $provider = $this->plugin->create_provider_class(safe_get_value($params, PARAM_PROVIDER));
                 if (is_null($provider)) continue;
-
-                $provider->set_provider_playlist_id($playlist_id);
 
                 if ($title !== $provider->getName()) {
                     $title .= " ({$provider->getName()})";

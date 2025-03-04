@@ -331,37 +331,63 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                         : ACTION_DO_EDIT_PROVIDER_EXT);
 
             case ACTION_DO_EDIT_PROVIDER:
+                $provider = $this->plugin->get_active_provider();
+                if (is_null($provider)) {
+                    return null;
+                }
+
+                $defs = array();
+                Control_Factory::add_vgap($defs, 20);
+
+                if (empty($name)) {
+                    $name = $provider->getName();
+                }
+
+                $defs = $provider->GetSetupUI($name, $provider->get_provider_playlist_id(), $this);
+                if (empty($defs)) {
+                    return null;
+                }
+
+                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+
             case ACTION_DO_EDIT_PROVIDER_EXT:
                 $provider = $this->plugin->get_active_provider();
                 if (is_null($provider)) {
                     return null;
                 }
 
-                if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
-                    return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
+                if (!$provider->request_provider_token()) {
+                    hd_debug_print("Can't get provider token");
+                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
                 }
 
-                if ($provider->request_provider_token()) {
-                    return $this->plugin->do_edit_provider_ext_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
-                }
-
-                hd_debug_print("Can't get provider token");
-                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
-
-            case ACTION_EDIT_PROVIDER_DLG_APPLY:
-            case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
-                if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
-                    $id = $this->plugin->apply_edit_provider_dlg($user_input);
-                } else {
-                    $id = $this->plugin->apply_edit_provider_ext_dlg($user_input);
-                }
-
-                if ($id === false) {
+                $defs = $provider->GetExtSetupUI($this);
+                if (empty($defs)) {
                     return null;
                 }
 
-                if (is_array($id)) {
-                    return $id;
+                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+
+            case ACTION_EDIT_PROVIDER_DLG_APPLY:
+            case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
+                $provider = $this->plugin->get_active_provider();
+                if ($provider === null) {
+                    return null;
+                }
+
+                $err_msg = '';
+                if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
+                    $res = $provider->ApplySetupUI($user_input);
+                } else {
+                    $res = $provider->ApplyExtSetupUI($user_input, $err_msg);
+                }
+
+                if ($res === false || $res === null) {
+                    return null;
+                }
+
+                if (is_array($res)) {
+                    return $res;
                 }
 
                 return $reload_action;

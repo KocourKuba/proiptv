@@ -60,7 +60,7 @@ class Abstract_Screen implements Screen
      *
      * @return string
      */
-    public static function get_handler_id()
+    public function get_handler_id()
     {
         return static::get_id() . '_handler';
     }

@@ -333,30 +333,55 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         : ACTION_DO_EDIT_PROVIDER_EXT);
 
             case ACTION_DO_EDIT_PROVIDER:
+                $provider = $this->plugin->get_active_provider();
+                if (is_null($provider)) {
+                    return null;
+                }
+
+                $defs = array();
+                Control_Factory::add_vgap($defs, 20);
+
+                if (empty($name)) {
+                    $name = $provider->getName();
+                }
+
+                $defs = $provider->GetSetupUI($name, $provider->get_provider_playlist_id(), $this);
+                if (empty($defs)) {
+                    return null;
+                }
+
+                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+
             case ACTION_DO_EDIT_PROVIDER_EXT:
                 $provider = $this->plugin->get_active_provider();
                 if (is_null($provider)) {
                     return null;
                 }
 
-                if ($user_input->control_id === ACTION_DO_EDIT_PROVIDER) {
-                    hd_debug_print(pretty_json_format($provider));
-                    return $this->plugin->do_edit_provider_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
+                if (!$provider->request_provider_token()) {
+                    hd_debug_print("Can't get provider token");
+                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
                 }
 
-                if ($provider->request_provider_token()) {
-                    return $this->plugin->do_edit_provider_ext_dlg($this, $provider->getId(), $provider->get_provider_playlist_id());
+                $defs = $provider->GetExtSetupUI($this);
+                if (empty($defs)) {
+                    return null;
                 }
 
-                hd_debug_print("Can't get provider token");
-                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
+                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
 
             case ACTION_EDIT_PROVIDER_DLG_APPLY:
             case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
+                $provider = $this->plugin->get_active_provider();
+                if ($provider === null) {
+                    return null;
+                }
+
+                $err_msg = '';
                 if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
-                    $res = $this->plugin->apply_edit_provider_dlg($user_input);
+                    $res = $provider->ApplySetupUI($user_input);
                 } else {
-                    $res = $this->plugin->apply_edit_provider_ext_dlg($user_input);
+                    $res = $provider->ApplyExtSetupUI($user_input, $err_msg);
                 }
 
                 if ($res === false || $res === null) {
@@ -499,7 +524,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return null;
                 }
 
-                $url = $provider->getParameter(MACRO_CUSTOM_PLAYLIST);
+                $url = $provider->GetParameter(MACRO_CUSTOM_PLAYLIST);
 
                 Control_Factory::add_vgap($defs, 20);
                 Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
@@ -515,7 +540,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $provider = $this->plugin->get_active_provider();
                 if (!is_null($provider)) {
                     hd_debug_print("set custom playlist $user_input->url_path");
-                    $provider->setParameter(MACRO_CUSTOM_PLAYLIST, $user_input->url_path);
+                    $provider->SetParameter(MACRO_CUSTOM_PLAYLIST, $user_input->url_path);
                 }
                 return null;
 

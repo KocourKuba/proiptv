@@ -47,7 +47,7 @@ class vod_sharavoz extends vod_standard
     {
         parent::init_vod($provider);
 
-        $pass = $this->provider->getParameter(MACRO_PASSWORD);
+        $pass = $this->provider->GetParameter(MACRO_PASSWORD);
         $this->xtream->init($this->provider->getRawApiCommand(API_COMMAND_GET_VOD), $pass, $pass);
         $this->xtream->reset_cache();
 

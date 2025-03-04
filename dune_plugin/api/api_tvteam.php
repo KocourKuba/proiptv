@@ -38,7 +38,7 @@ class api_tvteam extends api_default
      */
     public function replace_macros($string)
     {
-        $hash_password = md5($this->getParameter(MACRO_PASSWORD));
+        $hash_password = md5($this->GetParameter(MACRO_PASSWORD));
         $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID);
         $token = $this->plugin->get_cookie(PARAM_TOKEN);
         $string = str_replace(
@@ -125,7 +125,7 @@ class api_tvteam extends api_default
             }
 
             if (isset($this->account_info->data->userData->groupId)) {
-                $this->setParameter(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
+                $this->SetParameter(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
             }
 
             if (isset($this->account_info->data->serversGroupsList)) {
@@ -186,10 +186,9 @@ class api_tvteam extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server, &$params, &$error_msg)
+    public function SetServer($server, &$error_msg)
     {
-        $old = $params[MACRO_SERVER_ID];
-        parent::SetServer($server, $params, $error_msg);
+        parent::SetServer($server, $error_msg);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         hd_debug_print("SetServer: " . pretty_json_format($response), true);
@@ -199,7 +198,6 @@ class api_tvteam extends api_default
             return true;
         }
 
-        parent::SetServer($old, $params, $error_msg);
         if (isset($response->error)) {
             $error_msg = $response->error;
         }

@@ -60,8 +60,8 @@ class api_korona extends api_default
             hd_debug_print("need to request token", true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
             $pairs['grant_type'] = 'password';
-            $pairs['username'] = $this->getParameter(MACRO_LOGIN);
-            $pairs['password'] = $this->getParameter(MACRO_PASSWORD);
+            $pairs['username'] = $this->GetParameter(MACRO_LOGIN);
+            $pairs['password'] = $this->GetParameter(MACRO_PASSWORD);
         }
 
         $curl_opt[CURLOPT_POST] = true;
@@ -162,9 +162,9 @@ class api_korona extends api_default
     {
         $servers = $this->GetServers();
         if (!empty($servers)) {
-            $idx = $this->getParameter(MACRO_SERVER_ID);
+            $idx = $this->GetParameter(MACRO_SERVER_ID);
             if (empty($idx)) {
-                $this->setParameter(MACRO_SERVER_ID, key($servers));
+                $this->SetParameter(MACRO_SERVER_ID, key($servers));
             }
         }
     }

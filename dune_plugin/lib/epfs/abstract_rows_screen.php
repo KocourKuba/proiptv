@@ -53,7 +53,7 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
      *
      * @return string
      */
-    public static function get_handler_id()
+    public function get_handler_id()
     {
         return static::get_id() . '_handler';
     }

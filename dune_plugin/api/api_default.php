@@ -242,7 +242,6 @@ class api_default
     public function set_provider_playlist_id($playlist_id)
     {
         $this->playlist_id = $playlist_id;
-        $this->set_config_defaults();
     }
 
     /**
@@ -250,25 +249,28 @@ class api_default
      *
      * @return void
      */
-    public function set_config_defaults()
+    public function apply_config_defaults()
     {
-        static $config_items = array(
-            CONFIG_STREAMS => MACRO_STREAM_ID,
-            CONFIG_DOMAINS => MACRO_DOMAIN_ID,
-            CONFIG_SERVERS => MACRO_SERVER_ID,
-            CONFIG_DEVICES => MACRO_DEVICE_ID,
-            CONFIG_QUALITIES => MACRO_QUALITY_ID,
-            CONFIG_PLAYLISTS => MACRO_PLAYLIST_ID,
-        );
+        // Set default playlist settings for new provider
+        $settings = array();
+        $xmltv_picons = $this->getConfigValue(XMLTV_PICONS);
+        if ($xmltv_picons) {
+            $settings[PARAM_USE_PICONS] = COMBINED_PICONS;
+        }
 
-        foreach ($config_items as $name => $param) {
-            $values = $this->getConfigValue($name);
-            if (!empty($values)) {
-                $idx = $this->getParameter($param);
-                if (empty($idx)) {
-                    $this->setParameter($param, (string)key($values));
-                }
-            }
+        $epg_preset = $this->getConfigValue(EPG_JSON_PRESETS);
+        if (!empty($epg_preset)) {
+            $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
+            $settings[PARAM_EPG_JSON_PRESET] = 0;
+        }
+
+        $detect_stream = $this->getConfigValue(PARAM_DUNE_FORCE_TS);
+        if ($detect_stream) {
+            $settings[PARAM_DUNE_FORCE_TS] = SwitchOnOff::to_def($detect_stream);
+        }
+
+        if (!empty($settings)) {
+            $this->plugin->put_settings($this->playlist_id, $settings);
         }
     }
 
@@ -428,12 +430,12 @@ class api_default
         hd_debug_print("template: $string", true);
         $string = str_replace(
             array(MACRO_API, MACRO_PLAYLIST, MACRO_EPG_DOMAIN),
-            array($this->getApiUrl(), $this->getParameter(MACRO_PLAYLIST), $this->getParameter(MACRO_EPG_DOMAIN)),
+            array($this->getApiUrl(), $this->GetParameter(MACRO_PLAYLIST), $this->GetParameter(MACRO_EPG_DOMAIN)),
             $string);
 
         foreach ($macroses as $macro) {
             if (strpos($string, $macro) !== false) {
-                $string = str_replace($macro, trim($this->getParameter($macro)), $string);
+                $string = str_replace($macro, trim($this->GetParameter($macro)), $string);
             }
         }
         hd_debug_print("result: $string", true);
@@ -671,7 +673,7 @@ class api_default
                 $playlist = $playlists[$idx]['url'];
             }
 
-            $this->setParameter(MACRO_PLAYLIST, $playlist);
+            $this->SetParameter(MACRO_PLAYLIST, $playlist);
         }
 
         return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
@@ -717,16 +719,16 @@ class api_default
 
         if ($type === PROVIDER_TYPE_PIN) {
             Control_Factory::add_text_field($defs, $handler, null,
-                CONTROL_PASSWORD, TR::t('token'), $this->getParameter(MACRO_PASSWORD),
+                CONTROL_PASSWORD, TR::t('token'), $this->GetParameter(MACRO_PASSWORD),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         if ($type === PROVIDER_TYPE_LOGIN) {
             Control_Factory::add_text_field($defs, $handler, null,
-                CONTROL_LOGIN, TR::t('login'), $this->getParameter(MACRO_LOGIN),
+                CONTROL_LOGIN, TR::t('login'), $this->GetParameter(MACRO_LOGIN),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
             Control_Factory::add_text_field($defs, $handler, null,
-                CONTROL_PASSWORD, TR::t('password'), $this->getParameter(MACRO_PASSWORD),
+                CONTROL_PASSWORD, TR::t('password'), $this->GetParameter(MACRO_PASSWORD),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -747,29 +749,26 @@ class api_default
 
     /**
      * @param object $user_input
-     * @return bool|array|string
+     * @return array|string
      */
     public function ApplySetupUI($user_input)
     {
         hd_debug_print(null, true);
 
-        $playlist_id = safe_get_member($user_input, CONTROL_EDIT_ITEM);
-
-        if (empty($playlist_id)) {
+        if (empty($this->playlist_id)) {
+            $is_new = true;
             hd_debug_print("Create new provider info", true);
             $params[PARAM_TYPE] = PARAM_PROVIDER;
             $params[PARAM_PROVIDER] = $user_input->{PARAM_PROVIDER};
         } else {
-            hd_debug_print("load info for existing playlist id: $playlist_id", true);
-            $params = $this->plugin->get_playlist_parameters($playlist_id);
+            $is_new = false;
+            hd_debug_print("load info for existing playlist id: $this->playlist_id", true);
+            $params = $this->plugin->get_playlist_parameters($this->playlist_id);
             hd_debug_print("provider info: " . pretty_json_format($params), true);
         }
 
-        $changed = false;
-
         if (safe_get_value($params, PARAM_NAME) !== $user_input->{CONTROL_EDIT_NAME}) {
             $params[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
-            $changed = true;
         }
 
         switch ($this->getType()) {
@@ -778,53 +777,62 @@ class api_default
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($this->IsParameterChanged($user_input, CONTROL_PASSWORD, MACRO_PASSWORD)) {
-                    $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                    $changed = true;
-                }
+                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 break;
 
             case PROVIDER_TYPE_LOGIN:
-                if (empty($user_input->{CONTROL_LOGIN})) {
+                if (empty($user_input->{CONTROL_LOGIN}) || empty($user_input->{CONTROL_PASSWORD})) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                if ($this->IsParameterChanged($user_input, CONTROL_LOGIN, MACRO_LOGIN)) {
-                    $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
-                    $changed = true;
-                }
-
-                if ($this->IsParameterChanged($user_input, CONTROL_PASSWORD, MACRO_PASSWORD)) {
-                    $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
-                    $changed = true;
-                }
+                $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
+                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
                 break;
 
             default:
                 return null;
         }
 
-        if (!$changed) {
-            return null;
+        if ($is_new) {
+            $this->playlist_id = $this->get_hash($params);
+            if (empty($this->playlist_id)) {
+                return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+            }
         }
 
-        $is_new = empty($playlist_id);
-        $playlist_id = $is_new ? $this->get_hash($params) : $playlist_id;
-        if (empty($playlist_id)) {
-            return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
+        hd_debug_print("ApplySetupUI compiled account info for '$this->playlist_id': " . pretty_json_format($params), true);
+        $this->plugin->set_playlist_parameters($this->playlist_id, $params);
+
+        // set config parameters if they not set in the playlist parameters
+        hd_debug_print("Set default values for id: '$this->playlist_id'", true);
+        static $config_items = array(
+            CONFIG_STREAMS => MACRO_STREAM_ID,
+            CONFIG_DOMAINS => MACRO_DOMAIN_ID,
+            CONFIG_SERVERS => MACRO_SERVER_ID,
+            CONFIG_DEVICES => MACRO_DEVICE_ID,
+            CONFIG_QUALITIES => MACRO_QUALITY_ID,
+            CONFIG_PLAYLISTS => MACRO_PLAYLIST_ID,
+        );
+
+        foreach ($config_items as $name => $param) {
+            $values = $this->getConfigValue($name);
+            if (!empty($values)) {
+                $idx = $this->GetParameter($param);
+                if (empty($idx)) {
+                    $this->SetParameter($param, (string)key($values));
+                }
+            }
         }
 
-        hd_debug_print("ApplySetupUI compiled provider ($playlist_id) info: " . pretty_json_format($params), true);
+        // set provider parameters if they not set in the playlist parameters
+        // parameters obtain from user account
+        $this->set_provider_defaults();
 
         if ($is_new) {
-            hd_debug_print("Set default values for id: $playlist_id", true);
-            $this->set_default_settings($playlist_id);
-            $this->set_config_defaults();
+            $this->apply_config_defaults();
         }
 
-        $this->set_provider_defaults();
-        $this->plugin->set_playlist_parameters($playlist_id, $params);
-        $this->plugin->clear_playlist_cache($playlist_id);
+        $this->plugin->clear_playlist_cache($this->playlist_id);
         $this->plugin->remove_cookie(PARAM_TOKEN);
         $this->plugin->remove_cookie(PARAM_REFRESH_TOKEN);
 
@@ -833,7 +841,7 @@ class api_default
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
         }
 
-        return $playlist_id;
+        return $this->playlist_id;
     }
 
     /**
@@ -845,9 +853,7 @@ class api_default
      */
     protected function IsParameterChanged($user_input, $param, $param_settings)
     {
-        return ((isset($user_input->{$param})
-            && (!isset($this->playlist_params[$param_settings])
-                || $this->playlist_params[$param_settings] !== $user_input->{$param})));
+        return isset($user_input->{$param}) && $user_input->{$param} != $this->GetParameter($param_settings);
     }
 
     /**
@@ -864,35 +870,6 @@ class api_default
         }
 
         return $this->getId() . "_" . Hashed_Array::hash($info[PARAM_TYPE] . $info[PARAM_NAME] . $str);
-    }
-
-    /**
-     * @param string $playlist_id
-     * @return void
-     */
-    protected function set_default_settings($playlist_id)
-    {
-        // new provider. Fill default values
-        $settings = array();
-        $xmltv_picons = $this->getConfigValue(XMLTV_PICONS);
-        if ($xmltv_picons) {
-            $settings[PARAM_USE_PICONS] = COMBINED_PICONS;
-        }
-
-        $epg_preset = $this->getConfigValue(EPG_JSON_PRESETS);
-        if (!empty($epg_preset)) {
-            $settings[PARAM_EPG_CACHE_ENGINE] = ENGINE_JSON;
-            $settings[PARAM_EPG_JSON_PRESET] = 0;
-        }
-
-        $detect_stream = $this->getConfigValue(PARAM_DUNE_FORCE_TS);
-        if ($detect_stream) {
-            $settings[PARAM_DUNE_FORCE_TS] = SwitchOnOff::to_def($detect_stream);
-        }
-
-        if (!empty($settings)) {
-            $this->plugin->put_settings($playlist_id, $settings);
-        }
     }
 
     /**
@@ -916,7 +893,7 @@ class api_default
 
         $streams = $this->GetStreams();
         if (!empty($streams) && count($streams) > 1) {
-            $idx = $this->getParameter(MACRO_STREAM_ID);
+            $idx = $this->GetParameter(MACRO_STREAM_ID);
             if (empty($idx)) {
                 $idx = key($streams);
             }
@@ -928,7 +905,7 @@ class api_default
 
         $domains = $this->GetDomains();
         if (!empty($domains) && count($domains) > 1) {
-            $idx = $this->getParameter(MACRO_DOMAIN_ID);
+            $idx = $this->GetParameter(MACRO_DOMAIN_ID);
             if (empty($idx)) {
                 $idx = key($domains);
             }
@@ -940,7 +917,7 @@ class api_default
 
         $servers = $this->GetServers();
         if (!empty($servers) && count($servers) > 1) {
-            $idx = $this->getParameter(MACRO_SERVER_ID);
+            $idx = $this->GetParameter(MACRO_SERVER_ID);
             if (empty($idx)) {
                 $idx = key($servers);
             }
@@ -952,7 +929,7 @@ class api_default
 
         $devices = $this->GetDevices();
         if (!empty($devices) && count($devices) > 1) {
-            $idx = $this->getParameter(MACRO_DEVICE_ID);
+            $idx = $this->GetParameter(MACRO_DEVICE_ID);
             if (empty($idx)) {
                 $idx = key($devices);
             }
@@ -964,7 +941,7 @@ class api_default
 
         $qualities = $this->GetQualities();
         if (!empty($qualities) && count($qualities) > 1) {
-            $idx = $this->getParameter(MACRO_QUALITY_ID);
+            $idx = $this->GetParameter(MACRO_QUALITY_ID);
             if (empty($idx)) {
                 $idx = key($qualities);
             }
@@ -977,10 +954,10 @@ class api_default
         $playlists = $this->GetPlaylists();
         if (!empty($playlists) && count($playlists) > 1) {
             $pl_names = array_map(function ($pl) { return $pl['name']; }, $playlists);
-            $idx = $this->getParameter(MACRO_PLAYLIST_ID);
+            $idx = $this->GetParameter(MACRO_PLAYLIST_ID);
             if (empty($idx)) {
                 $idx = key($pl_names);
-                $this->setParameter(MACRO_PLAYLIST_ID, $idx);
+                $this->SetParameter(MACRO_PLAYLIST_ID, $idx);
             }
 
             hd_debug_print("playlist ($idx): " . json_encode($playlists), true);
@@ -991,7 +968,7 @@ class api_default
 
         $icon_replacements = $this->getConfigValue(CONFIG_ICON_REPLACE);
         if (!empty($icon_replacements)) {
-            $val = $this->getParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
+            $val = $this->GetParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
             Control_Factory::add_combobox($defs, $handler, null, CONTROL_REPLACE_ICONS,
                 TR::t('setup_channels_square_icons'), $val, SwitchOnOff::$translated,
                 Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
@@ -1016,57 +993,42 @@ class api_default
 
     /**
      * @param object $user_input
+     * @param string $err_msg
      * @return bool
      */
-    public function ApplyExtSetupUI($user_input)
+    public function ApplyExtSetupUI($user_input, &$err_msg)
     {
         hd_debug_print(null, true);
 
-        $params = $this->plugin->get_playlist_parameters($this->playlist_id);
-
-        $err_msg = '';
-        $changed = false;
-        if ($this->IsParameterChanged($user_input, CONTROL_SERVER, MACRO_SERVER_ID)) {
-            $this->SetServer($user_input->{CONTROL_SERVER}, $params, $err_msg);
-            $changed = true;
+        if (isset($user_input->{CONTROL_SERVER})) {
+            $this->SetServer($user_input->{CONTROL_SERVER}, $err_msg);
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_PLAYLIST, MACRO_PLAYLIST_ID)) {
-            $this->SetPlaylist($user_input->{CONTROL_PLAYLIST}, $params);
-            $changed = true;
+        if (isset($user_input->{CONTROL_PLAYLIST})) {
+            $this->SetPlaylist($user_input->{CONTROL_PLAYLIST});
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_DEVICE, MACRO_DEVICE_ID)) {
-            $this->SetDevice($user_input->{CONTROL_DEVICE}, $params);
-            $changed = true;
+        if (isset($user_input->{CONTROL_DEVICE})) {
+            $this->SetDevice($user_input->{CONTROL_DEVICE});
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_STREAM, MACRO_STREAM_ID)) {
-            $this->SetStream($user_input->{CONTROL_STREAM}, $params);
-            $changed = true;
+        if (isset($user_input->{CONTROL_STREAM})) {
+            $this->SetStream($user_input->{CONTROL_STREAM});
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_DOMAIN, MACRO_DOMAIN_ID)) {
-            $this->SetDomain($user_input->{CONTROL_DOMAIN}, $params);
-            $changed = true;
+        if (isset($user_input->{CONTROL_DOMAIN})) {
+            $this->SetDomain($user_input->{CONTROL_DOMAIN});
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_QUALITY, MACRO_QUALITY_ID)) {
-            $this->SetQuality($user_input->{CONTROL_QUALITY}, $params);
-            $changed = true;
+        if (isset($user_input->{CONTROL_QUALITY})) {
+            $this->SetQuality($user_input->{CONTROL_QUALITY});
         }
 
-        if ($this->IsParameterChanged($user_input, CONTROL_REPLACE_ICONS, PARAM_REPLACE_ICON)) {
-            $params[PARAM_REPLACE_ICON] = $user_input->{CONTROL_REPLACE_ICONS};
-            $changed = true;
+        if (isset($user_input->{CONTROL_REPLACE_ICONS})) {
+            $this->SetParameter(PARAM_REPLACE_ICON, $user_input->{CONTROL_REPLACE_ICONS});
         }
 
-        hd_debug_print("ApplyExtSetupUI compiled provider info: " . pretty_json_format($params), true);
-
-        if ($changed) {
-            $this->plugin->set_playlist_parameters($this->playlist_id, $params);
-            $this->plugin->clear_playlist_cache($this->playlist_id);
-        }
+        $this->plugin->clear_playlist_cache($this->playlist_id);
 
         return true;
     }
@@ -1075,14 +1037,13 @@ class api_default
      * set server
      *
      * @param string $server
-     * @param array $params
      * @param string $error_msg
      * @return bool
      */
-    public function SetServer($server, &$params, &$error_msg)
+    public function SetServer($server, &$error_msg)
     {
         hd_debug_print(null, true);
-        $params[MACRO_SERVER_ID] = $server;
+        $this->SetParameter(MACRO_SERVER_ID, $server);
         $error_msg = '';
 
         return true;
@@ -1092,62 +1053,57 @@ class api_default
      * set playlist
      *
      * @param string $id
-     * @param array $params
      * @return void
      */
-    public function SetPlaylist($id, &$params)
+    public function SetPlaylist($id)
     {
         hd_debug_print(null, true);
-        $params[MACRO_PLAYLIST_ID] = $id;
+        $this->SetParameter(MACRO_PLAYLIST_ID, $id);
     }
 
     /**
      * set server
      *
      * @param string $device
-     * @param array $params
      * @return void
      */
-    public function SetDevice($device, &$params)
+    public function SetDevice($device)
     {
         hd_debug_print(null, true);
-        $params[MACRO_DEVICE_ID] = $device;
+        $this->SetParameter(MACRO_DEVICE_ID, $device);
     }
 
     /**
      * set stream
      * @param string $stream
-     * @param array $params
      * @return void
      */
-    public function SetStream($stream, &$params)
+    public function SetStream($stream)
     {
         hd_debug_print(null, true);
-        $params[MACRO_STREAM_ID] = $stream;
+        $this->SetParameter(MACRO_STREAM_ID, $stream);
     }
 
     /**
      * set domain
      * @param string $domain
-     * @param array $params
      * @return void
      */
-    public function SetDomain($domain, &$params)
+    public function SetDomain($domain)
     {
         hd_debug_print(null, true);
-        $params[MACRO_DOMAIN_ID] = $domain;
+        $this->SetParameter(MACRO_DOMAIN_ID, $domain);
     }
 
     /**
      * set quality
      * @param string $quality
-     * @param array $params
      * @return void
      */
-    public function SetQuality($quality, &$params)
+    public function SetQuality($quality)
     {
         hd_debug_print(null, true);
-        $params[MACRO_QUALITY_ID] = $quality;
+        $this->SetParameter(MACRO_QUALITY_ID, $quality);
     }
 
     /**
@@ -1155,7 +1111,7 @@ class api_default
      * @param array|string $value
      * @return void
      */
-    public function setParameter($name, $value)
+    public function SetParameter($name, $value)
     {
         if (!empty($this->playlist_id)) {
             $this->plugin->set_playlist_parameter($this->playlist_id, $name, $value);
@@ -1167,7 +1123,7 @@ class api_default
      * @param string $default
      * @return string
      */
-    public function getParameter($name, $default = '')
+    public function GetParameter($name, $default = '')
     {
         if (empty($this->playlist_id)) {
             return $default;

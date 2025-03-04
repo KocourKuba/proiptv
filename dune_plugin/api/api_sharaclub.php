@@ -59,11 +59,11 @@ class api_sharaclub extends api_default
         parent::get_provider_info($force);
 
         if (isset($this->account_info->data->listdomain)) {
-            $this->setParameter(MACRO_PLAYLIST, $this->account_info->data->listdomain);
+            $this->SetParameter(MACRO_PLAYLIST, $this->account_info->data->listdomain);
         }
 
         if (isset($this->account_info->data->jsonEpgDomain)) {
-            $this->setParameter(MACRO_EPG_DOMAIN, $this->account_info->data->jsonEpgDomain);
+            $this->SetParameter(MACRO_EPG_DOMAIN, $this->account_info->data->jsonEpgDomain);
         }
 
         return $this->account_info;
@@ -169,9 +169,9 @@ class api_sharaclub extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server, &$params, &$error_msg)
+    public function SetServer($server, &$error_msg)
     {
-        $old = safe_get_value($params, MACRO_SERVER_ID);
+        parent::SetServer($server, $error_msg);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->status) && (int)$response->status === 1) {
@@ -179,8 +179,6 @@ class api_sharaclub extends api_default
             return true;
         }
 
-        $params[MACRO_SERVER_ID] = $old;
-        $error_msg = '';
         return false;
     }
 

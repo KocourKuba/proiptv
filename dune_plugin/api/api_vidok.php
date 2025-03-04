@@ -77,7 +77,7 @@ class api_vidok extends api_default
      */
     public function replace_macros($string)
     {
-        $token = md5(strtolower($this->getParameter(MACRO_LOGIN)) . md5($this->getParameter(MACRO_PASSWORD)));
+        $token = md5(strtolower($this->GetParameter(MACRO_LOGIN)) . md5($this->GetParameter(MACRO_PASSWORD)));
         $string = str_replace(MACRO_SESSION_ID, $token, $string);
 
         return parent::replace_macros($string);
@@ -147,7 +147,7 @@ class api_vidok extends api_default
                 }
 
                 if (isset($this->account_info->account->settings->server_id)) {
-                    $this->setParameter(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
+                    $this->SetParameter(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
                 }
             }
         }
@@ -158,10 +158,9 @@ class api_vidok extends api_default
     /**
      * @inheritDoc
      */
-    public function SetServer($server, &$params, &$error_msg)
+    public function SetServer($server, &$error_msg)
     {
-        $old = $params[MACRO_SERVER_ID];
-        parent::SetServer($server, $params, $error_msg);
+        parent::SetServer($server, $error_msg);
 
         $response = $this->execApiCommand(API_COMMAND_SET_SERVER);
         if (isset($response->settings->value)) {
@@ -170,7 +169,6 @@ class api_vidok extends api_default
             return true;
         }
 
-        parent::SetServer($old, $params, $error_msg);
         return false;
     }
 
@@ -181,9 +179,9 @@ class api_vidok extends api_default
     {
         $servers = $this->GetServers();
         if (!empty($servers)) {
-            $idx = $this->getParameter(MACRO_SERVER_ID);
+            $idx = $this->GetParameter(MACRO_SERVER_ID);
             if (empty($idx)) {
-                $this->setParameter(MACRO_SERVER_ID, key($servers));
+                $this->SetParameter(MACRO_SERVER_ID, key($servers));
             }
         }
     }

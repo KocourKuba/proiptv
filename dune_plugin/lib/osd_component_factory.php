@@ -34,7 +34,6 @@ class OSD_Component_Factory
     protected $weather_glass_manifest;
 
     # Arrays of cut image manifest
-    private $dots;
     private $skin_path;
 
     ///////////////////////////////////////////////////////////////////////////

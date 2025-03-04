@@ -671,7 +671,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
                 $id_map = $provider->getConfigValue(CONFIG_ID_MAP);
 
-                $replace = SwitchOnOff::to_bool($provider->getParameter(PARAM_REPLACE_ICON, SwitchOnOff::on));
+                $replace = SwitchOnOff::to_bool($provider->GetParameter(PARAM_REPLACE_ICON, SwitchOnOff::on));
                 if (!$replace) {
                     $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
                 }
@@ -943,19 +943,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (empty($provider_class)) {
             hd_debug_print("Playlist is not a IPTV provider");
         } else {
-            $provider = $this->create_provider_class($provider_class);
-            if (is_null($provider)) {
-                hd_debug_print("Unknown provider class: " . $provider_class);
-            } else {
-                $provider_id = $provider->getId();
-                if (!$provider->getEnable()) {
-                    hd_debug_print("Provider $provider_id is disabled");
-                    return  false;
-                }
-
-                $provider->set_provider_playlist_id($playlist_id);
-                $name = $provider->getName();
-                hd_debug_print("Using provider $provider_id ($name) playlist id: $playlist_id");
+            $provider = $this->get_provider($playlist_id);
+            if ($provider !== null) {
+                hd_debug_print("Using provider {$provider->getId()} ({$provider->getName()}) playlist id: $playlist_id");
 
                 $provider_playlist_id = $this->get_playlist_parameter($playlist_id, MACRO_PLAYLIST_ID);
                 $provider_id = empty($provider_playlist_id) ? '' : "_$provider_playlist_id";
@@ -1889,6 +1879,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
+        if ($playlist_id === $this->get_active_playlist_id() && $this->active_provider !== null) {
+            return $this->get_active_provider();
+        }
+
         $params = $this->get_playlist_parameters($playlist_id);
         if (safe_get_value($params, PARAM_TYPE) !== PARAM_PROVIDER) {
             return null;
@@ -2054,7 +2048,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $force_detect = false;
         $provider = $this->get_active_provider();
         if (!is_null($provider)) {
-            if ($provider->getParameter(MACRO_PLAYLIST_ID) !== CUSTOM_PLAYLIST_ID) {
+            if ($provider->GetParameter(MACRO_PLAYLIST_ID) !== CUSTOM_PLAYLIST_ID) {
                 $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
                 if (!empty($url_subst)) {
                     $stream_url = preg_replace($url_subst['regex'], $url_subst['replace'], $stream_url);
@@ -2064,7 +2058,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $streams = $provider->GetStreams();
             if (!empty($streams)) {
-                $idx = $provider->getParameter(MACRO_STREAM_ID);
+                $idx = $provider->GetParameter(MACRO_STREAM_ID);
                 $force_detect = ($streams[$idx] === 'MPEG-TS');
             }
 
@@ -2075,7 +2069,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ((int)$archive_ts !== -1) {
-            $catchup = $this->get_iptv_m3u_parser()->getM3uInfo()->getCatchupType();
+            $m3u_info = $this->get_iptv_m3u_parser()->getM3uInfo();
+            if (!empty($m3u_info)) {
+                $catchup = $this->get_iptv_m3u_parser()->getM3uInfo()->getCatchupType();
+            }
 
             if (empty($catchup) && !is_null($provider)) {
                 $catchup = $provider->getConfigValue(CONFIG_PLAYLIST_CATCHUP);
@@ -2860,114 +2857,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $params['windowCounter'] = 1;
 
         return Action_Factory::open_folder(MediaURL::encode($params), $title, null, null, $post_action);
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $provider_id
-     * @param string $playlist_id
-     * @return array|null
-     */
-    public function do_edit_provider_dlg($handler, $provider_id, $playlist_id = '')
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("Provider id: $provider_id, Playlist id: $playlist_id", true);
-
-        if (empty($playlist_id)) {
-            // add new provider
-            $provider = $this->create_provider_class($provider_id);
-            $provider->set_provider_playlist_id($playlist_id);
-        } else {
-            // Edit existing
-            $provider = $this->get_provider($playlist_id);
-        }
-
-        if (is_null($provider)) {
-            return null;
-        }
-
-        $defs = array();
-        Control_Factory::add_vgap($defs, 20);
-
-        if (empty($name)) {
-            $name = $provider->getName();
-        }
-
-        $defs = $provider->GetSetupUI($name, $playlist_id, $handler);
-        if (empty($defs)) {
-            return null;
-        }
-
-        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $provider_id
-     * * @param string $playlist_id
-     * @return array|null
-     */
-    public function do_edit_provider_ext_dlg($handler, $provider_id, $playlist_id)
-    {
-        hd_debug_print(null, true);
-
-        if (empty($playlist_id)) {
-            // add new provider
-            $provider = $this->create_provider_class($provider_id);
-            $provider->set_provider_playlist_id($playlist_id);
-        } else {
-            // Edit existing
-            $provider = $this->get_provider($playlist_id);
-        }
-
-        if (is_null($provider)) {
-            return null;
-        }
-
-        $defs = $provider->GetExtSetupUI($handler);
-        if (empty($defs)) {
-            return null;
-        }
-
-        return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
-    }
-
-    /**
-     * @param object $user_input
-     * @return bool|array|string
-     */
-    public function apply_edit_provider_dlg($user_input)
-    {
-        hd_debug_print(null, true);
-
-        // edit existing or new provider in starnet_edit_list_screen
-        if ($user_input->parent_media_url === Starnet_Tv_Groups_Screen::ID) {
-            $provider = $this->get_active_provider();
-        } else {
-            $provider = $this->create_provider_class($user_input->{PARAM_PROVIDER});
-        }
-
-        if (is_null($provider)) {
-            return false;
-        }
-
-        return $provider->ApplySetupUI($user_input);
-    }
-
-    /**
-     * @param object $user_input
-     * @return bool
-     */
-    public function apply_edit_provider_ext_dlg($user_input)
-    {
-        hd_debug_print(null, true);
-
-        $provider = $this->get_active_provider();
-        if (is_null($provider)) {
-            return false;
-        }
-
-        return $provider->ApplyExtSetupUI($user_input);
     }
 
     /**
