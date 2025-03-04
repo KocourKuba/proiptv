@@ -367,7 +367,7 @@ class Epg_Manager_Xmltv
         if (isset($aliases[ATTR_CHANNEL_NAME])) {
             $aliases[ATTR_CHANNEL_NAME] = mb_convert_case($aliases[ATTR_CHANNEL_NAME], MB_CASE_LOWER, "UTF-8");
         }
-        $aliases = array_unique($aliases);
+        $aliases = array_unique(array_filter(array_values($aliases)));
 
         $placeHolders = Sql_Wrapper::sql_make_list_from_values($aliases);
         if (empty($placeHolders)) {

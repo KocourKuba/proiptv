@@ -287,7 +287,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 hd_debug_print(null, true);
 
                 // edit existing or new provider in starnet_edit_list_screen
-                $playlist_id = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
+                $playlist_id = safe_get_member($user_input, CONTROL_EDIT_ITEM, '');
                 if (empty($playlist_id)) {
                     // create new provider
                     $provider = $this->plugin->create_provider_class($user_input->{PARAM_PROVIDER});
