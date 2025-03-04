@@ -322,7 +322,11 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
             }
 
-            $unzip->extractTo($temp_folder);
+            if (!$unzip->extractTo($temp_folder)) {
+                $unzip->close();
+                throw new Exception(TR::t('err_unzip__2', basename($tmp_filename), $unzip->getStatusString()));
+            }
+
             for ($i = 0; $i < $unzip->numFiles; $i++) {
                 $stat_index = $unzip->statIndex($i);
                 touch("$temp_folder/{$stat_index['name']}", $stat_index['mtime']);
@@ -340,7 +344,8 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
 
         foreach (array(".settings", ".db") as $ext) {
             foreach (glob_dir(get_data_path(), "/$ext$/i") as $file) {
-                rename($file, "$file.$ext.prev");
+                hd_debug_print("Rename $file to $file.prev");
+                rename($file, "$file.prev");
             }
         }
 
@@ -369,9 +374,8 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         array_map('unlink', glob(get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*')));
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
-        $this->plugin->set_parameter(PARAM_CACHE_PATH, '');
-
         $this->plugin->init_plugin(true);
+        //$this->plugin->set_parameter(PARAM_CACHE_PATH, '');
 
         return Action_Factory::show_title_dialog(
             TR::t('setup_restore_done'),
