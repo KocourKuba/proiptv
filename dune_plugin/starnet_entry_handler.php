@@ -73,6 +73,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        dump_input_handler($user_input);
 
         if (!isset($user_input->control_id)) {
             return null;
@@ -237,8 +238,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 
-                        if ((isset($user_input->mandatory_playback) && (int)$user_input->mandatory_playback === 1)
-                            || (isset($plugin_cookies->auto_play) && $plugin_cookies->auto_play === SwitchOnOff::on)) {
+                        $mandatory_playback = safe_get_member($user_input,'mandatory_playback');
+                        $auto_play = safe_get_member($plugin_cookies,'auto_play');
+                        hd_debug_print("Play button used: $mandatory_playback");
+                        hd_debug_print("Auto play:        $auto_play");
+                        if ($mandatory_playback === 1 || SwitchOnOff::to_bool($auto_play)) {
                             hd_debug_print("launch auto play", true);
 
                             $media_url = null;
@@ -313,10 +317,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 
-                        if ((int)$user_input->mandatory_playback !== 1
-                            || (isset($plugin_cookies->auto_resume) && SwitchOnOff::to_bool($plugin_cookies->auto_resume))) {
-                            break;
-                        }
+                        $auto_resume = safe_get_member($plugin_cookies,'auto_resume');
+                        hd_debug_print("Auto resume:      $auto_resume");
+                        if (!SwitchOnOff::to_bool($auto_resume)) break;
 
                         $media_url = null;
                         if (file_exists('/config/resume_state.properties')) {
@@ -328,7 +331,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                 $media_url->group_id = $resume_state['plugin_tv_is_favorite'] ? Starnet_Tv_Favorites_Screen::ID : $resume_state['plugin_tv_group'];
                                 $media_url->channel_id = $resume_state['plugin_tv_channel'];
                                 $media_url->archive_tm = ((time() - $resume_state['plugin_tv_archive_tm']) < 259200) ? $resume_state['plugin_tv_archive_tm'] : -1;
-                                hd_debug_print("Auto resume: " . $media_url);
+                                hd_debug_print("Auto resume channel: " . $media_url);
                             }
 
                             if (!$this->plugin->load_channels($plugin_cookies)) {

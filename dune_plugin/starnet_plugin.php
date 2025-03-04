@@ -56,7 +56,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
     /**
      * @throws Exception
      */
-    public function __construct()
+    public function __construct($plugin_cookies)
     {
         parent::__construct();
 
@@ -110,6 +110,8 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("Daylight:            " . date('I'));
         hd_print("New UI support:      " . var_export(HD::rows_api_support(), true));
         hd_print("Ext EPG support:     " . var_export($this->ext_epg_supported, true));
+        hd_print("Auto resume enabled: " . safe_get_member($plugin_cookies,'auto_resume'));
+        hd_print("Auto play enabled:   " . safe_get_member($plugin_cookies,'auto_play'));
         hd_debug_print_separator();
 
         hd_debug_print("Plugin loading complete.");

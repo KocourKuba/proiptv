@@ -36,7 +36,7 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
         if (is_null($plugin)) {
             try {
                 hd_print("Instantiating plugin...");
-                $plugin = $this->create_plugin();
+                $plugin = $this->create_plugin($call_ctx->plugin_cookies);
                 hd_debug_print("Plugin instance created.");
             } catch (Exception $ex) {
                 hd_debug_print("Error: can not instantiate plugin");
@@ -110,11 +110,12 @@ class Default_Dune_Plugin_Fw extends DunePluginFw
     }
 
     /**
-     * @return mixed
+     * @param $plugin_cookies
+     * @return object
      */
-    public function create_plugin()
+    public function create_plugin($plugin_cookies)
     {
-        return new self::$plugin_class_name;
+        return new self::$plugin_class_name($plugin_cookies);
     }
 }
 
