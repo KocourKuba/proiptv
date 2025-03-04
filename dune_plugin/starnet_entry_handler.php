@@ -357,10 +357,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
                     case self::ACTION_UNINSTALL:
-                        $this->plugin->init_plugin();
-                        $this->plugin->init_playlist_db($this->plugin->get_active_playlist_id());
-                        $this->plugin->init_epg_manager();
-                        $this->plugin->safe_clear_selected_epg_cache();
                         Default_Archive::clear_cache();
                         break;
 
