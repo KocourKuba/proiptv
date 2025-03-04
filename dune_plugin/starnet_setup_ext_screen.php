@@ -298,6 +298,8 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         $this->plugin->safe_clear_selected_epg_cache();
         $this->plugin->clear_playlist_cache();
 
+        $this->plugin->reset_playlist_db();
+
         $temp_folder = get_temp_path("restore");
         delete_directory($temp_folder);
         $tmp_filename = get_temp_path($name);
@@ -337,7 +339,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         unlink($tmp_filename);
 
         foreach (array(".settings", ".db") as $ext) {
-            foreach (glob_dir(get_data_path(), "/\.$ext$/i") as $file) {
+            foreach (glob_dir(get_data_path(), "/$ext$/i") as $file) {
                 rename($file, "$file.$ext.prev");
             }
         }
