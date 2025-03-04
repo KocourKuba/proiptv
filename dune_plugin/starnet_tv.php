@@ -145,30 +145,35 @@ class Starnet_Tv implements User_Input_Handler
 
         $buffering = $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000);
         $archive_delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
-        $group_all = $this->plugin->get_group(TV_ALL_CHANNELS_GROUP_ID, PARAM_GROUP_SPECIAL);
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
+        $show_all = $this->plugin->get_bool_setting(PARAM_SHOW_ALL);
 
-        $groups_order = array_merge(empty($group_all) ? array() : array($group_all), $this->plugin->get_groups_by_order());
         $groups = array();
-        foreach ($groups_order as $group_row) {
-            if (empty($group_row)
-                || ($group_row[COLUMN_GROUP_ID] !== TV_ALL_CHANNELS_GROUP_ID && $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]) === 0)) {
-                continue;
-            }
 
-            $title = $group_row[COLUMN_GROUP_ID] !== TV_ALL_CHANNELS_GROUP_ID ? $group_row[COLUMN_TITLE] : TR::t(TV_ALL_CHANNELS_GROUP_CAPTION);
+        if ($show_all) {
             $groups[] = array(
-                PluginTvGroup::id => $group_row[COLUMN_GROUP_ID],
-                PluginTvGroup::caption => $title,
-                PluginTvGroup::icon_url => get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON))
+                PluginTvGroup::id => TV_ALL_CHANNELS_GROUP_ID,
+                PluginTvGroup::caption => TR::t(TV_ALL_CHANNELS_GROUP_CAPTION),
+                PluginTvGroup::icon_url => get_cached_image($this->plugin->get_group_icon(TV_ALL_CHANNELS_GROUP_ID))
             );
         }
 
         $ch_num = 1;
         $all_channels = array();
         foreach ($this->plugin->get_groups_order() as $group_id) {
+            $group_row = $this->plugin->get_group($group_id);
+            if ($this->plugin->get_channels_order_count($group_id) === 0) {
+                continue;
+            }
+
+            $groups[] = array(
+                PluginTvGroup::id => $group_row[COLUMN_GROUP_ID],
+                PluginTvGroup::caption => $group_row[COLUMN_TITLE],
+                PluginTvGroup::icon_url => get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON))
+            );
+
             $group_id_arr = array();
-            if (!empty($group_all)) {
+            if ($show_all) {
                 $group_id_arr[TV_ALL_CHANNELS_GROUP_ID] = '';
             }
 
@@ -211,16 +216,16 @@ class Starnet_Tv implements User_Input_Handler
             $initial_is_favorite = 0;
         }
 
-        $fav_group = $this->plugin->get_group(TV_FAV_GROUP_ID, PARAM_GROUP_SPECIAL);
-
+        $show_fav = $this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES);
+        $fav_icon = $this->plugin->get_group_icon(TV_FAV_GROUP_ID);
         $tv_info = array(
             PluginTvInfo::show_group_channels_only => true,
 
             PluginTvInfo::groups => $groups,
             PluginTvInfo::channels => array_values($all_channels),
 
-            PluginTvInfo::favorites_supported => true,
-            PluginTvInfo::favorites_icon_url => $fav_group[COLUMN_ICON],
+            PluginTvInfo::favorites_supported => $show_fav,
+            PluginTvInfo::favorites_icon_url => get_cached_image($fav_icon),
 
             PluginTvInfo::initial_channel_id => (string)$media_url->channel_id,
             PluginTvInfo::initial_group_id => $initial_group_id,
@@ -251,6 +256,8 @@ class Starnet_Tv implements User_Input_Handler
                 $tv_info[PluginTvInfo::ext_epg_channel_ids_url] = get_plugin_cgi_url("channels");
             }
         }
+
+        file_put_contents(get_temp_path("tv_info.json"), json_encode($tv_info));
 
         return $tv_info;
     }
