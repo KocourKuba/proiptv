@@ -6,6 +6,7 @@
 - When restoring a backup, the settings folder was not cleared
 - Fixed a bug when displaying channel information if the M3U playlist did not contain an infomation header
 - Unnecessary error message when uninstalling a plugin
+- Fixed a bug with adding/editing XMLTV sources
 - NewUI: The channel number has always been 0. The channel number now matches the order in the playlist
 
 ### Version 6.0.1130
