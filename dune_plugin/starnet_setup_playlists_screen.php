@@ -88,7 +88,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
 
         $name = safe_get_value($params, PARAM_NAME, basename($uri));
         Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, TR::t('name'),
-            $name, false, false, false, true, self::CONTROLS_WIDTH);
+            $name, false, false, false, true, self::CONTROLS_WIDTH, true);
 
         if ($type === PARAM_PROVIDER) {
             $provider = $this->plugin->get_provider($playlist_id);
@@ -112,7 +112,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                     TR::t('playlist'), $uri_str, get_image_path('folder.png'), self::CONTROLS_WIDTH);
             } else if ($type === PARAM_LINK) {
                 Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('playlist'),
-                    $uri, false, false, false, true, self::CONTROLS_WIDTH);
+                    $uri, false, false, false, true, self::CONTROLS_WIDTH, true);
             }
 
             //////////////////////////////////////

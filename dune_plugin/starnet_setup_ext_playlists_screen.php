@@ -89,7 +89,7 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
 
         $user_agent = safe_get_value($params, PARAM_USER_AGENT, '');
         Control_Factory::add_text_field($defs, $this, null, PARAM_USER_AGENT, TR::t('setup_channels_user_agent'),
-            $user_agent, false, false, false, true, self::CONTROLS_WIDTH);
+            $user_agent, false, false, false, true, self::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // enable/disable dune_params
@@ -109,7 +109,7 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
         }
 
         Control_Factory::add_text_field($defs, $this, null, PARAM_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
-            $dune_params_str, false, false, false, true, self::CONTROLS_WIDTH);
+            $dune_params_str, false, false, false, true, self::CONTROLS_WIDTH, true);
 
         return $defs;
     }
@@ -142,15 +142,15 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
                 break;
 
             case PARAM_USER_AGENT:
-                $user_agent = $user_input->control_id;
+                $user_agent = $user_input->{PARAM_USER_AGENT};
                 if (empty($user_agent)) {
+                    hd_debug_print("Clear user agent parameter");
                     $this->plugin->set_playlist_parameter($playlist_id, PARAM_USER_AGENT, $user_agent);
-                    HD::set_dune_user_agent(HD::get_default_user_agent());
                 } else if ($user_agent !== HD::get_default_user_agent()) {
-                    $this->plugin->set_setting(PARAM_USER_AGENT, $user_agent);
+                    hd_debug_print("Set user agent parameter: $user_agent");
                     $this->plugin->set_playlist_parameter($playlist_id, PARAM_USER_AGENT, $user_agent);
-                    HD::set_dune_user_agent($user_agent);
                 }
+                $this->plugin->init_user_agent($playlist_id);
                 break;
 
             case PARAM_USE_DUNE_PARAMS:

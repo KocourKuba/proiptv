@@ -585,7 +585,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $params = $this->get_playlist_parameters($playlist_id);
             hd_debug_print("Using playlist " . json_encode($params));
 
-            $this->init_user_agent();
+            $this->init_user_agent($playlist_id);
 
             $tmp_file = $this->get_playlist_cache($playlist_id, true);
 
@@ -1242,7 +1242,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        $this->init_user_agent();
+        $this->init_user_agent($playlist_id);
         $tmp_file = $this->get_playlist_cache($playlist_id, false);
         $force = $this->is_playlist_cache_expired($tmp_file);
 
@@ -1706,9 +1706,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @return void
      */
-    public function init_user_agent()
+    public function init_user_agent($playlist_id)
     {
-        $user_agent = $this->get_setting(PARAM_USER_AGENT, '');
+        $user_agent = $this->get_playlist_parameter($playlist_id, PARAM_USER_AGENT, '');
+        hd_debug_print("Init user agent: $user_agent");
         if (!empty($user_agent) && $user_agent !== HD::get_default_user_agent()) {
             HD::set_dune_user_agent($user_agent);
         }
