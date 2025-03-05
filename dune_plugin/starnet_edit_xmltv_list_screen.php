@@ -138,11 +138,11 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 /** @var Named_Storage $item */
                 hd_debug_print("item: " . $selected_id, true);
 
-                $source = XMLTV_SOURCE_EXTERNAL;
-                $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_EXTERNAL, $selected_id);
+                $source = XMLTV_SOURCE_PLAYLIST;
+                $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_PLAYLIST, $selected_id);
                 if (empty($item)) {
-                    $source = XMLTV_SOURCE_PLAYLIST;
-                    $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_PLAYLIST, $selected_id);
+                    $source = XMLTV_SOURCE_EXTERNAL;
+                    $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_EXTERNAL, $selected_id);
                 }
 
                 if (!empty($item)) {
@@ -356,23 +356,26 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $id = MediaURL::decode($user_input->selected_media_url)->id;
             $item = $this->plugin->get_xmltv_source($source, $id);
         } else {
-            $id = Hashed_Array::hash($url);
-            $item = array(
-                PARAM_TYPE => PARAM_LINK,
-                PARAM_NAME => $name,
-                PARAM_URI => $url,
-                PARAM_HASH => $id
-            );
+            $id = '';
+            $item[PARAM_TYPE] = PARAM_LINK;
         }
 
+        $new_id = Hashed_Array::hash($url);
+        $item[PARAM_HASH] = $new_id;
+        $item[PARAM_NAME] = $name;
+        $item[PARAM_URI] = $url;
         $item[PARAM_CACHE] = $user_input->{self::CONTROL_CACHE_TIME};
 
         if ($source === XMLTV_SOURCE_EXTERNAL && !is_proto_http($url)) {
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
         }
 
+        $this->plugin->safe_clear_selected_epg_cache(empty($id) ? $new_id : $id);
         $this->plugin->set_xmltv_source($source, $item);
-        $this->plugin->safe_clear_selected_epg_cache($id);
+        if (!empty($id) && $id !== $new_id && $source === XMLTV_SOURCE_EXTERNAL) {
+            $item[PARAM_HASH] = $id;
+            $this->plugin->remove_xmltv_source($source, $item);
+        }
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         return Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies), 0,

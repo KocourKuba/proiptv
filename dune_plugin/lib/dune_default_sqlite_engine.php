@@ -493,8 +493,11 @@ class Dune_Default_Sqlite_Engine
         if ($type === XMLTV_SOURCE_PLAYLIST || $type === XMLTV_SOURCE_EXTERNAL) {
             $table_name = self::get_table_name($type);
             $wrapper = $type === XMLTV_SOURCE_PLAYLIST ? $this->sql_playlist : $this->sql_params;
-            $q_list = Sql_Wrapper::sql_make_insert_list($value);
-            $query = "INSERT OR REPLACE INTO $table_name $q_list;";
+            $q_hash = Sql_Wrapper::sql_quote($value[COLUMN_HASH]);
+            $q_insert = Sql_Wrapper::sql_make_insert_list($value);
+            $q_update = Sql_Wrapper::sql_make_set_list($value);
+            $query = "INSERT OR IGNORE INTO $table_name $q_insert;";
+            $query .= "UPDATE $table_name $q_update WHERE hash = $q_hash;";
             $wrapper->exec($query);
         }
     }
