@@ -1,4 +1,4 @@
-﻿### Version 6.0.1142
+﻿### Version 6.0.1146
 - Fixed another bug when adding the Edem provider
 - Auto start and Auto play settings did not work
 - Non-standard Favorites icon was not shown in the OSD player
@@ -7,6 +7,7 @@
 - Fixed a bug when displaying channel information if the M3U playlist did not contain an infomation header
 - Unnecessary error message when uninstalling a plugin
 - Fixed a bug with adding/editing XMLTV sources
+- UserAgent configuration was not remembered
 - NewUI: The channel number has always been 0. The channel number now matches the order in the playlist
 
 ### Version 6.0.1130
