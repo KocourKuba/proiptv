@@ -218,7 +218,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_ADD_URL_DLG:
-                return $this->do_edit_url_dlg(XMLTV_SOURCE_EXTERNAL, $edit_list);
+                return $this->do_edit_url_dlg(XMLTV_SOURCE_EXTERNAL);
 
             case ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
@@ -300,7 +300,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $cache_selected = XMLTV_CACHE_AUTO;
             $url = 'http://';
         } else {
-            $param[CONTROL_ACTION_EDIT] = CONTROL_EDIT_ITEM;
+            $param[CONTROL_ACTION_EDIT] = $id;
             $window_title = TR::t('edit_list_edit_item');
             $item = $this->plugin->get_xmltv_source($source, $id);
             $cache_selected = safe_get_value($item, PARAM_CACHE, XMLTV_CACHE_AUTO);
@@ -351,9 +351,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         $source = $user_input->{CONTROL_ACTION_SOURCE};
-        if (isset($user_input->{CONTROL_ACTION_EDIT}, $user_input->selected_media_url)) {
+        if (isset($user_input->{CONTROL_ACTION_EDIT})) {
             // edit existing url
-            $id = MediaURL::decode($user_input->selected_media_url)->id;
+            $id = $user_input->{CONTROL_ACTION_EDIT};
             $item = $this->plugin->get_xmltv_source($source, $id);
         } else {
             $id = '';
@@ -373,8 +373,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $this->plugin->safe_clear_selected_epg_cache(empty($id) ? $new_id : $id);
         $this->plugin->set_xmltv_source($source, $item);
         if (!empty($id) && $id !== $new_id && $source === XMLTV_SOURCE_EXTERNAL) {
-            $item[PARAM_HASH] = $id;
-            $this->plugin->remove_xmltv_source($source, $item);
+            $this->plugin->remove_xmltv_source($source, $id);
         }
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);

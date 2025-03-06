@@ -1708,7 +1708,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function init_user_agent($playlist_id)
     {
-        $user_agent = $this->get_playlist_parameter($playlist_id, PARAM_USER_AGENT, '');
+        $user_agent = $this->get_playlist_parameter($playlist_id, PARAM_USER_AGENT);
         hd_debug_print("Init user agent: $user_agent");
         if (!empty($user_agent) && $user_agent !== HD::get_default_user_agent()) {
             HD::set_dune_user_agent($user_agent);
