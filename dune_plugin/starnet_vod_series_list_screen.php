@@ -276,13 +276,14 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         $movie = $this->plugin->vod->get_loaded_movie($media_url->movie_id);
         if (is_null($movie) || !$movie->has_series()) {
+            hd_debug_print("Movie not loaded: $media_url->movie_id");
             return array();
         }
 
-        hd_debug_print("Movie: " . pretty_json_format($movie), true);
+        hd_debug_print("Series movie: " . pretty_json_format($movie), true);
         $items = array();
         foreach ($movie->series_list as $series_id => $episode) {
-            if (isset($media_url->season_id) && $media_url->season_id !== $series_id) continue;
+            if (isset($media_url->season_id) && $media_url->season_id !== $episode->season_id) continue;
 
             $viewed_params = $this->plugin->get_vod_history_params($media_url->movie_id, $series_id);
             $color = 15;
