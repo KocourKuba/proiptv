@@ -64,15 +64,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
 
-        foreach ($this->plugin->get_playlists_shortcuts() as $row) {
-            $actions[$row[PARAM_SHORTCUT]] = User_Input_Handler_Registry::create_action($this,
-                ACTION_SHORTCUT,
-                null,
-                array(COLUMN_PLAYLIST_ID => $row[COLUMN_PLAYLIST_ID])
-            );
-        }
+        $this->plugin->add_shortcuts_handlers($this, $actions);
 
-        hd_debug_print(json_encode($actions));
         return $actions;
     }
 

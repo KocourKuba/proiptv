@@ -65,6 +65,8 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
             $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         }
 
+        $this->plugin->add_shortcuts_handlers($this, $actions);
+
         return $actions;
     }
 
@@ -145,6 +147,29 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
+
+            case ACTION_SHORTCUT:
+                if (!isset($user_input->{COLUMN_PLAYLIST_ID})) {
+                    return null;
+                }
+
+                if ($this->plugin->get_active_playlist_id() !== $user_input->{COLUMN_PLAYLIST_ID}) {
+                    $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
+                }
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
+            case ACTION_RELOAD:
+                hd_debug_print("Action reload", true);
+                $this->plugin->reload_channels($plugin_cookies);
+                return Action_Factory::invalidate_all_folders(
+                    $plugin_cookies,
+                    array(Starnet_Tv_Groups_Screen::ID),
+                    Action_Factory::close_and_run(
+                        Action_Factory::close_and_run(
+                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::get_media_url_str())
+                        )
+                    )
+                );
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->sel_ndx);

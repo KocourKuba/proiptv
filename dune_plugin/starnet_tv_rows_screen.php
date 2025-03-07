@@ -49,6 +49,34 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     /**
      * @inheritDoc
      */
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+
+        $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY);
+        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
+        if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
+        } else {
+            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+        }
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_ADD);
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
+        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
+        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
+
+        $this->plugin->add_shortcuts_handlers($this, $actions);
+
+        return $actions;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
@@ -398,6 +426,16 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
                 return null;
 
+            case ACTION_SHORTCUT:
+                if (!isset($user_input->{COLUMN_PLAYLIST_ID})) {
+                    return null;
+                }
+
+                if ($this->plugin->get_active_playlist_id() !== $user_input->{COLUMN_PLAYLIST_ID}) {
+                    $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
+                }
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
                 if (!$this->plugin->reload_channels($plugin_cookies)) {
@@ -431,32 +469,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         }
 
         return null;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_PLAY);
-        $actions[GUI_EVENT_KEY_ENTER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER);
-        if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
-        } else {
-            $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
-        }
-        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, PLUGIN_FAVORITES_OP_ADD);
-        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
-        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
-        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
-        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
-        $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
-
-        return $actions;
     }
 
     /**

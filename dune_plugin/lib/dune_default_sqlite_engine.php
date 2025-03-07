@@ -2019,6 +2019,22 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param User_Input_Handler $handler
+     * @param array $actions
+     * @return void
+     */
+    public function add_shortcuts_handlers($handler, &$actions)
+    {
+        foreach ($this->get_playlists_shortcuts() as $row) {
+            $actions[$row[PARAM_SHORTCUT]] = User_Input_Handler_Registry::create_action($handler,
+                ACTION_SHORTCUT,
+                null,
+                array(COLUMN_PLAYLIST_ID => $row[COLUMN_PLAYLIST_ID])
+            );
+        }
+    }
+
+    /**
      * Returns full table name
      *
      * @param string $id

@@ -88,6 +88,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
         }
 
+        $this->plugin->add_shortcuts_handlers($this, $actions);
+
         return $actions;
     }
 
@@ -386,14 +388,26 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $this->plugin->sort_channels_order($parent_group, true);
                 break;
 
+            case ACTION_SHORTCUT:
+                if (!isset($user_input->{COLUMN_PLAYLIST_ID})) {
+                    return null;
+                }
+
+                if ($this->plugin->get_active_playlist_id() !== $user_input->{COLUMN_PLAYLIST_ID}) {
+                    $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
+                }
+                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
             case ACTION_RELOAD:
-                hd_debug_print("reload");
+                hd_debug_print("Action reload", true);
                 $this->plugin->reload_channels($plugin_cookies);
                 return Action_Factory::invalidate_all_folders(
                     $plugin_cookies,
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::close_and_run(
-                        Action_Factory::open_folder($parent_media_url->get_media_url_str())
+                        Action_Factory::close_and_run(
+                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::get_media_url_str())
+                        )
                     )
                 );
 
