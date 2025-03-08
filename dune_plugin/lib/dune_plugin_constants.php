@@ -335,6 +335,9 @@ const GROUPS_INFO = 'groups_info';
 const GROUPS_ORDER = 'groups_order';
 const CHANNELS_INFO = 'channels_info';
 
+const INDEXING_CHANNELS = 1;
+const INDEXING_ENTRIES = 2;
+
 // macroses used to replace template in providers playlists
 const MACRO_API = '{API}';
 const MACRO_PROVIDER = '{PROVIDER}';
