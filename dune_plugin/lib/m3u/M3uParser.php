@@ -139,7 +139,7 @@ class M3uParser extends Json_Serializer
      * @param string $file_name
      * @param bool $force
      */
-    public function setPlaylist($file_name, $force = false)
+    public function setPlaylistFile($file_name, $force = false)
     {
         if ($this->file_name !== $file_name || $force) {
             $this->clear_data();
@@ -163,27 +163,24 @@ class M3uParser extends Json_Serializer
 
     /**
      * @param string $file_name
-     * @param bool $force
      */
-    public function setVodPlaylist($file_name, $force = false)
+    public function setVodPlaylist($file_name)
     {
-        if ($this->file_name !== $file_name || $force) {
-            $this->clear_data();
-            $this->file_name = null;
-            try {
-                if (empty($file_name)) {
-                    throw new Exception("File name cannot be empty");
-                }
-
-                if (!file_exists($file_name)) {
-                    throw new Exception("File not exists: $file_name");
-                }
-
-                $this->file_name = $file_name;
-            } catch (Exception $ex) {
-                hd_debug_print("Can't read file: $file_name");
-                print_backtrace_exception($ex);
+        $this->clear_data();
+        $this->file_name = null;
+        try {
+            if (empty($file_name)) {
+                throw new Exception("File name cannot be empty");
             }
+
+            if (!file_exists($file_name)) {
+                throw new Exception("File not exists: $file_name");
+            }
+
+            $this->file_name = $file_name;
+        } catch (Exception $ex) {
+            hd_debug_print("Can't read file: $file_name");
+            print_backtrace_exception($ex);
         }
     }
 
@@ -267,6 +264,9 @@ class M3uParser extends Json_Serializer
         hd_debug_print();
 
         $this->clear_data();
+        if (!$db || !$db->is_valid()) {
+            return false;
+        }
 
         $init_channels = array(
             COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
@@ -312,7 +312,6 @@ class M3uParser extends Json_Serializer
         }
 
         $stm_channels = $db->prepare_bind("INSERT OR IGNORE", $this->channels_table, array_keys($init_channels));
-
         hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 

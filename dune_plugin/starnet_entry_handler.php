@@ -121,7 +121,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 $this->plugin->init_playlist_db($playlist_id);
-                $this->plugin->init_playlist_parser($playlist_id);
                 return $this->plugin->do_edit_list_screen(
                     Starnet_Tv_Groups_Screen::ID,
                     Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
@@ -132,8 +131,23 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_XMLTV_SOURCES_SETTINGS:
                 $playlist_id = $this->plugin->get_active_playlist_id();
-                $this->plugin->init_playlist_db($playlist_id);
-                $this->plugin->init_playlist_parser($playlist_id);
+                if (!$this->plugin->init_playlist_db($playlist_id)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_init_database'));
+                }
+
+                $this->plugin->init_user_agent($playlist_id);
+
+                if (!$this->plugin->is_vod_playlist()) {
+                    if (!$this->plugin->init_playlist_parser($playlist_id)
+                        || ($this->plugin->is_playlist_cache_expired($playlist_id, true) && !$this->plugin->parse_m3u_playlist($playlist_id, true))) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
+                            null,
+                            HD::get_last_error($this->plugin->get_pl_error_name()));
+                    }
+                }
+
+                $this->plugin->init_epg_manager();
+
                 return $this->plugin->do_edit_list_screen(
                     Starnet_Tv_Groups_Screen::ID,
                     Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST);

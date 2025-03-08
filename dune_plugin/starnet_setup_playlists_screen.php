@@ -273,7 +273,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                     return $res;
                 }
 
-                $this->plugin->detachDatabase(M3uParser::IPTV_DB);
+                $this->plugin->get_sql_playlist()->detachDatabase(M3uParser::IPTV_DB);
                 return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
 
             case CONTROL_PLAYLIST_IPTV:
@@ -308,7 +308,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                     }
 
                     $parser = new M3uParser();
-                    $parser->setPlaylist(safe_get_value($params, PARAM_URI), true);
+                    $parser->setPlaylistFile(safe_get_value($params, PARAM_URI), true);
                     if ($pl_type === CONTROL_PLAYLIST_IPTV) {
                         $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
                         if ($detect_id === CONTROL_DETECT_ID) {

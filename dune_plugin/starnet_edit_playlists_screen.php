@@ -548,13 +548,21 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
 
             $parser = new M3uParser();
-            $parser->setPlaylist($tmp_file, true);
+            $parser->setPlaylistFile($tmp_file, true);
             $params[PARAM_PL_TYPE] = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
             if ($params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
                 $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
                 if ($detect_id === CONTROL_DETECT_ID) {
                     $db = new Sql_Wrapper(":memory:");
-                    $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
+                    if (!$db->is_valid()) {
+                        throw new Exception("Unable to create database");
+                    }
+
+                    $database_attached = $db->attachDatabase(':memory:', M3uParser::IPTV_DB);
+                    if ($database_attached === 0) {
+                        throw new Exception("Can't attach to database: " . M3uParser::IPTV_DB);
+                    }
+
                     $entries_cnt = $parser->parseIptvPlaylist($db);
                     if (empty($entries_cnt)) {
                         throw new Exception(TR::load('err_empty_playlist') . " '$uri'\n\n$contents");
@@ -669,7 +677,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             hd_debug_print("Edit new playlist: $uri");
 
             $parser = new M3uParser();
-            $parser->setPlaylist($uri, true);
+            $parser->setPlaylistFile($uri, true);
 
             $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
             $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
@@ -677,7 +685,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 hd_debug_print("Detect playlist id: $detect_id");
                 if ($detect_id === CONTROL_DETECT_ID) {
                     $db = new Sql_Wrapper(":memory:");
-                    $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
+                    $db->attachDatabase(':memory:', M3uParser::IPTV_DB);
                     $entries_cnt = $parser->parseIptvPlaylist($db);
                     if (empty($entries_cnt)) {
                         throw new Exception(TR::load('err_empty_playlist'));

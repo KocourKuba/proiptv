@@ -110,7 +110,13 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 $res = $epg_manager->import_indexing_log();
-                if ($res !== false) {
+                if ($res === 1) {
+                    hd_debug_print("Logs imported. Timer stopped");
+                    return Action_Factory::invalidate_all_folders($plugin_cookies);
+                }
+
+                if ($res === 2) {
+                    hd_debug_print("No imports. Timer stopped");
                     return null;
                 }
 
@@ -538,13 +544,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return null;
 
             case ACTION_SHORTCUT:
-                if (!isset($user_input->{COLUMN_PLAYLIST_ID})) {
+                if (!isset($user_input->{COLUMN_PLAYLIST_ID}) || $this->plugin->get_active_playlist_id() === $user_input->{COLUMN_PLAYLIST_ID}) {
                     return null;
                 }
 
-                if ($this->plugin->get_active_playlist_id() !== $user_input->{COLUMN_PLAYLIST_ID}) {
-                    $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
-                }
+                $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:

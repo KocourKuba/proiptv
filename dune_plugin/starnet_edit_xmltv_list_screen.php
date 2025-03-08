@@ -123,12 +123,18 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if (!isset($plugin_cookies->ticker)) {
                     $plugin_cookies->ticker = 0;
                 }
+
                 $res = $epg_manager->import_indexing_log($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL));
                 $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
 
-                if ($res !== false) {
-                    hd_debug_print("Return post action. Timer stopped");
-                    return $post_action;
+                if ($res === 1) {
+                    hd_debug_print("Logs imported. Timer stopped");
+                    return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+                }
+
+                if ($res === 2) {
+                    hd_debug_print("No imports. Timer stopped");
+                    return null;
                 }
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
@@ -154,7 +160,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return null;
 
             case ACTION_INDEX_EPG:
-                $this->plugin->run_bg_epg_indexing($selected_id);
+                $this->plugin->run_bg_epg_indexing($selected_id, true);
                 $selected_sources = $this->plugin->get_selected_xmltv_sources();
                 if (in_array($selected_id, $selected_sources)) {
                     $this->force_parent_reload = true;
@@ -206,9 +212,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     }
                 }
                 $this->plugin->set_selected_xmltv_sources(array());
-                foreach ($this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL) as $source) {
-                    $this->plugin->safe_clear_selected_epg_cache($source);
-                    $this->plugin->remove_xmltv_source(XMLTV_SOURCE_EXTERNAL, $source);
+                foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL) as $hash) {
+                    $this->plugin->safe_clear_selected_epg_cache($hash);
+                    $this->plugin->remove_xmltv_source(XMLTV_SOURCE_EXTERNAL, $hash);
                 }
 
                 $this->force_parent_reload = true;
@@ -454,6 +460,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $pl_sources = $this->plugin->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST);
         $all_sources->add_items($pl_sources);
         $all_sources->add_items($this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL));
+        hd_debug_print("All XMLTV sources: " . $all_sources, true);
 
         $selected_sources = $this->plugin->get_selected_xmltv_sources();
         foreach ($all_sources as $key => $item) {

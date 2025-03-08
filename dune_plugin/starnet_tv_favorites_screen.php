@@ -198,13 +198,11 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
 
             case ACTION_SHORTCUT:
-                if (!isset($user_input->{COLUMN_PLAYLIST_ID})) {
+                if (!isset($user_input->{COLUMN_PLAYLIST_ID}) || $this->plugin->get_active_playlist_id() === $user_input->{COLUMN_PLAYLIST_ID}) {
                     return null;
                 }
 
-                if ($this->plugin->get_active_playlist_id() !== $user_input->{COLUMN_PLAYLIST_ID}) {
-                    $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
-                }
+                $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
             case ACTION_RELOAD:
@@ -240,10 +238,6 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
         foreach ($this->plugin->get_channels_by_order(TV_FAV_GROUP_ID) as $channel_row) {
             $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
-
-            if (empty($icon_url)) {
-                $icon_url = DEFAULT_CHANNEL_ICON_PATH;
-            }
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(

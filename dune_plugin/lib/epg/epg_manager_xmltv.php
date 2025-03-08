@@ -214,7 +214,7 @@ class Epg_Manager_Xmltv
         hd_print("XMLTV param: " . json_encode($this->xmltv_url_params));
         hd_print("Process ID:  " . $this->pid);
 
-        $this->check_and_index_xmltv_source(true);
+        $this->check_and_index_xmltv_source($config[PARAM_INDEX_ALL]);
 
         return true;
     }
@@ -356,9 +356,10 @@ class Epg_Manager_Xmltv
      * Get picon for channel
      *
      * @param array $epg_ids
+     * @param $default_picon
      * @return string
      */
-    public function get_picon($epg_ids)
+    public function get_picon($epg_ids, $default_picon)
     {
         $aliases = $epg_ids;
         if (isset($aliases[ATTR_TVG_NAME])) {
@@ -381,11 +382,10 @@ class Epg_Manager_Xmltv
                     INNER JOIN $ch_table_name ON $picons_table_name.picon_hash=$ch_table_name.picon_hash
                     WHERE alias IN ($placeHolders);";
 
-        $res = '';
+        $res = $default_picon;
         foreach ($this->xmltv_sources as $key => $params) {
-            $db = $this->open_sqlite_db($key);
+            $db = $this->open_sqlite_db($key, SQLITE3_OPEN_READONLY);
             if (is_null($db) || $db === false) {
-                hd_debug_print("Can't connect to database $key");
                 continue;
             }
             $res = $db->query_value($query);
@@ -436,7 +436,7 @@ class Epg_Manager_Xmltv
      * Import indexing log to plugin logs
      *
      * @param array|null $sources_hash
-     * @return bool true if import successful and no other active locks, false if any active source is locked
+     * @return int 0 - if any active source is locked, 1 - if import successful and no other active locks, 2 - if no locks and no imports
      */
     public function import_indexing_log($sources_hash = null)
     {
@@ -445,6 +445,7 @@ class Epg_Manager_Xmltv
             $sources_hash = $this->xmltv_sources->get_keys();
         }
 
+        $has_imports = false;
         foreach ($sources_hash as $hash) {
             if ($this->is_index_locked($hash)) {
                 $has_locks = true;
@@ -462,10 +463,11 @@ class Epg_Manager_Xmltv
                 hd_debug_print_separator();
                 hd_debug_print("Read finished");
                 unlink($index_log);
+                $has_imports = true;
             }
         }
 
-        return !$has_locks;
+        return $has_locks ? 0 : ($has_imports ? 1 : 2);
     }
 
     /**
@@ -492,8 +494,11 @@ class Epg_Manager_Xmltv
 
         if (empty($this->xmltv_url_params[PARAM_URI]) || empty($this->xmltv_url_params[PARAM_HASH])) {
             $exception_msg = "XMTLV EPG url not set";
-            hd_debug_print($exception_msg);
             HD::set_last_error("xmltv_last_error", $exception_msg);
+            $index_log = get_temp_path("{$this->xmltv_url_params[PARAM_HASH]}_indexing.log");
+            if (file_exists($index_log)) {
+                unlink($index_log);
+            }
             return;
         }
 
@@ -505,9 +510,10 @@ class Epg_Manager_Xmltv
         HD::set_last_error("xmltv_last_error", null);
 
         $cached_file = $this->cache_dir . $hash . ".xmltv";
+        $cached_db = $this->cache_dir . $hash . ".db";
         hd_debug_print("Checking cached xmltv file: $cached_file", true);
         $expired = true;
-        if (!file_exists($cached_file)) {
+        if (!file_exists($cached_file) || !file_exists($cached_db)) {
             hd_debug_print("Cached xmltv file not exist");
         } else {
             $modify_time_file = filemtime($cached_file);
@@ -548,11 +554,13 @@ class Epg_Manager_Xmltv
 
         if (!$index_all && $indexed[self::INDEX_CHANNELS] !== -1) {
             hd_debug_print("Xmltv channels index is valid");
+            $this->clear_log($hash);
             return;
         }
 
         if ($indexed[self::INDEX_CHANNELS] !== -1 && $indexed[self::INDEX_ENTRIES] !== -1) {
             hd_debug_print("Xmltv channels and entries index are valid");
+            $this->clear_log($hash);
             return;
         }
 
@@ -658,14 +666,9 @@ class Epg_Manager_Xmltv
         $result = array(self::INDEX_CHANNELS => -1, self::INDEX_PICONS => -1, self::INDEX_ENTRIES => -1, 'epg_ids' => -1);
 
         $hash = is_null($hash) ? $this->xmltv_url_params[PARAM_HASH] : $hash;
-        $db = $this->open_sqlite_db($hash);
-        if ($db === false) {
-            hd_debug_print("Unable to drop table because current index is locked");
-            return $result;
-        }
-
-        if (is_null($db)) {
-            hd_debug_print("Problem with open SQLite db! Possible url not set");
+        $db = $this->open_sqlite_db($hash, SQLITE3_OPEN_READONLY);
+        if (empty($db)) {
+            hd_debug_print("Problem with open SQLite db for read! Possible database not exist");
             return $result;
         }
 
@@ -699,7 +702,7 @@ class Epg_Manager_Xmltv
      */
     public function remove_indexes($names)
     {
-        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH], SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
         if ($db === false) {
             hd_debug_print("Unable to drop table because current index is locked");
             return;
@@ -723,9 +726,9 @@ class Epg_Manager_Xmltv
     {
         $channel_positions = array();
 
-        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH], SQLITE3_OPEN_READONLY);
         if (is_null($db)) {
-            hd_debug_print("Problem with open SQLite db! Possible url not set");
+            hd_debug_print("Problem with open SQLite db! Possible database not exist");
             return $channel_positions;
         }
 
@@ -807,9 +810,9 @@ class Epg_Manager_Xmltv
     {
         hd_debug_print(null, true);
 
-        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH]);
+        $db = $this->open_sqlite_db($this->xmltv_url_params[PARAM_HASH], SQLITE3_OPEN_READONLY);
         if ($db === false) {
-            hd_debug_print("Indexing is in process now");
+            hd_debug_print("Database not exist");
             return false;
         }
 
@@ -832,12 +835,13 @@ class Epg_Manager_Xmltv
     /**
      * open sqlite database
      * @param string $db_name
+     * @param int $flags - default SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
      * @return Sql_Wrapper|false|null
      */
-    private function open_sqlite_db($db_name)
+    private function open_sqlite_db($db_name, $flags)
     {
         if (empty($db_name)) {
-            hd_debug_print("No handler for empty url!");
+            hd_debug_print("No database for empty url!");
             return null;
         }
 
@@ -846,8 +850,18 @@ class Epg_Manager_Xmltv
             return false;
         }
 
-        if (!isset($this->epg_db[$db_name])) {
-            $this->epg_db[$db_name] = new Sql_Wrapper("$this->cache_dir$db_name.db");
+        $db_file = $this->cache_dir . $db_name . ".db";
+        if (($flags & SQLITE3_OPEN_READONLY) && !file_exists($db_file)) {
+            hd_debug_print("Database file not found: $db_file");
+            return null;
+        }
+
+        if (!isset($this->epg_db[$db_name]) || $flags != $this->epg_db[$db_name]->get_open_mode()) {
+            $db = new Sql_Wrapper($db_file, $flags);
+            if (!$db->is_valid()) {
+                return null;
+            }
+            $this->epg_db[$db_name] = $db;
         }
 
         return $this->epg_db[$db_name];
@@ -878,7 +892,7 @@ class Epg_Manager_Xmltv
             return;
         }
 
-        $db = $this->open_sqlite_db($url_hash);
+        $db = $this->open_sqlite_db($url_hash, SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
         if ($db === false) {
             return;
         }
@@ -1258,5 +1272,13 @@ class Epg_Manager_Xmltv
         }
 
         return $value;
+    }
+
+    protected function clear_log($hash)
+    {
+        $index_log = get_temp_path("{$hash}_indexing.log");
+        if (file_exists($index_log)) {
+            unlink($index_log);
+        }
     }
 }

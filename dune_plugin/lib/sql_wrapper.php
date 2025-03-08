@@ -7,20 +7,128 @@ class Sql_Wrapper
     */
     protected $db = null;
 
-    public function __construct($db_name, $flags = 0)
-    {
-        if ($flags === 0) {
-            $flags = SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE;
-        }
+    /**
+     * @var int
+     */
+    protected $open_mode;
 
-        hd_debug_print("Open db: $db_name", true);
-        $this->db = new SQLite3($db_name, $flags, '');
-        $this->db->exec("PRAGMA journal_mode=MEMORY;");
+    // Default flags SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
+    public function __construct($db_name, $flags = 6)
+    {
+        hd_debug_print("Open db: $db_name with create mode: $flags", true);
+        try {
+            $this->db = new SQLite3($db_name, $flags, '');
+            $this->db->exec("PRAGMA journal_mode=MEMORY;");
+            $this->open_mode = $flags;
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+            $this->db = null;
+        }
     }
 
+    /**
+     * @return SQLite3|null
+     */
     public function get_db()
     {
         return $this->db;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_open_mode()
+    {
+        return $this->open_mode;
+    }
+
+    /**
+     * @return bool
+     */
+    public function is_valid()
+    {
+        return $this->db !== null;
+    }
+
+    /**
+     * Returns 0 - if attach failed
+     * Returns 1 - if attach success
+     * Returns 2 - if database already attached
+     *
+     * @param $db_filename
+     * @param $name
+     * @return int
+     */
+    public function attachDatabase($db_filename, $name)
+    {
+        hd_debug_print("Trying to attach: '$db_filename' as '$name'", true);
+        $result = $this->is_database_attached($name, $db_filename);
+        if ($result === 2) {
+            return $result;
+        }
+
+        if ($result !== 0) {
+            $this->exec("DETACH DATABASE '$name';");
+        }
+
+        $this->exec("ATTACH DATABASE '$db_filename' AS $name;");
+        return $this->is_database_attached($name, $db_filename);
+    }
+
+    /**
+     * Returns true - if detach success
+     * Returns false - if detach failed
+     *
+     * @param $name
+     * @return bool
+     */
+    public function detachDatabase($name)
+    {
+        if ($this->is_database_attached($name) !== 0) {
+            hd_debug_print("Trying to detach: '$name'", true);
+            $this->exec("DETACH DATABASE '$name';");
+            return $this->is_database_attached($name) === 0;
+        }
+        return true;
+    }
+
+    /**
+     * Return 0 if no database attached
+     * Return 1 if database attached (filename to check not set)
+     * Return 2 if database attached and filename is match
+     * Return 3 if database attached and filename not match
+     *
+     * @param string $db_name
+     * @param string $db_filename Full path to database file
+     * @return int
+     */
+    public function is_database_attached($db_name, $db_filename = null)
+    {
+        if ($this->is_valid()) {
+            foreach ($this->fetch_array("PRAGMA database_list") as $database) {
+                if ($database['name'] !== $db_name) continue;
+
+                if ($db_filename == null) {
+                    return 1;
+                }
+
+                if ($db_filename == ':memory:' && empty($database['file'])) {
+                    return 2;
+                }
+
+                $used_db_file = basename($database['file']);
+                $checked_db_file = basename($db_filename);
+                if ($used_db_file === $checked_db_file) {
+                    return 2;
+                }
+
+                return 3;
+            }
+            hd_debug_print("Not attached: '$db_name', with filename: '$db_filename'", true);
+        } else {
+            hd_debug_print("Sqlite wrapper id not inited!");
+        }
+        return 0;
     }
 
     /**

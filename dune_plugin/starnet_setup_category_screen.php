@@ -89,6 +89,15 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
             $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
                 TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, self::CONTROLS_WIDTH, true);
+
+            //////////////////////////////////////
+            // Delayed indexing
+            if ($picons_idx !== PLAYLIST_PICONS) {
+                $delay_load = $this->plugin->get_setting(PARAM_PICONS_DELAY_LOAD, SwitchOnOff::off);
+                Control_Factory::add_image_button($defs, $this, null,
+                    PARAM_PICONS_DELAY_LOAD, TR::t('setup_channels_delay_picons_load'), SwitchOnOff::translate($delay_load),
+                    get_image_path(SwitchOnOff::to_image($delay_load)), self::CONTROLS_WIDTH);
+            }
         }
 
         //////////////////////////////////////
@@ -173,6 +182,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
             case PARAM_SHOW_CHANGED_CHANNELS:
             case PARAM_SHOW_VOD:
             case PARAM_SHOW_ADULT:
+            case PARAM_PICONS_DELAY_LOAD:
                 $this->force_parent_reload = true;
                 $this->plugin->toggle_setting($control_id);
                 break;

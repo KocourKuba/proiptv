@@ -101,7 +101,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             unlink($vod_cache);
         }
 
-        $this->plugin->detachDatabase('vod');
+        $this->plugin->get_sql_playlist()->detachDatabase('vod');
     }
 
     /**

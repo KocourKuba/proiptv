@@ -258,6 +258,7 @@ const PARAM_EPG_PLAYLIST = 'epg_playlist';
 const PARAM_EPG_SHIFT = 'epg_shift';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_SOURCE = 'epg_source';
+const PARAM_PICONS_DELAY_LOAD = 'epg_delayed_index';
 const PARAM_NEWUI_CHANNEL_POSITION = 'channel_position';
 const PARAM_INTERNAL_EPG_IDX = 'epg_idx';
 const PARAM_CACHE_PATH = 'xmltv_cache_path';
@@ -307,6 +308,7 @@ const PARAMS_XMLTV = 'xmltv_params';
 const PARAM_TOKEN = 'token';
 const PARAM_REFRESH_TOKEN = 'refresh_token';
 const PARAM_SESSION_ID = 'session_id';
+const PARAM_INDEX_ALL = 'index_all';
 
 const PARAM_GROUP_ORDINARY = 0;
 const PARAM_GROUP_SPECIAL = 1;

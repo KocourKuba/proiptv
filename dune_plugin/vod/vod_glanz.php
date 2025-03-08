@@ -106,7 +106,8 @@ class vod_glanz extends vod_standard
      */
     public function fetchVodCategories(&$category_list, &$category_index)
     {
-        $this->perf->reset('start');
+        $perf = new Perf_Collector();
+        $perf->reset('start');
 
         if ($this->load_vod_json_full(true) === false) {
             return false;
@@ -165,8 +166,8 @@ class vod_glanz extends vod_standard
 
         $this->set_filters($filters);
 
-        $this->perf->setLabel('end');
-        $report = $this->perf->getFullReport();
+        $perf->setLabel('end');
+        $report = $perf->getFullReport();
 
         hd_debug_print("Categories read: " . count($category_list));
         hd_debug_print("Total items loaded: " . count($this->vod_items));

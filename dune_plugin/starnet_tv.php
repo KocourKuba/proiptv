@@ -89,9 +89,15 @@ class Starnet_Tv implements User_Input_Handler
 
                 clearstatcache();
                 $res = $epg_manager->import_indexing_log();
-                if ($res === false) {
+                if ($res === 0) {
                     return Action_Factory::change_behaviour($this->get_action_map(), 1000);
                 }
+
+                if ($res === 2) {
+                    hd_debug_print("No imports. Timer stopped");
+                    return null;
+                }
+
                 hd_debug_print("delayed epg: " . json_encode($epg_manager->get_delayed_epg()));
 
                 $delayed_queue = $epg_manager->get_delayed_epg();
@@ -103,7 +109,7 @@ class Starnet_Tv implements User_Input_Handler
                     $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
                 }
 
-                return $post_action;
+                return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id, true);

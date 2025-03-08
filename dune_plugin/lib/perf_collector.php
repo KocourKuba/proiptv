@@ -64,7 +64,7 @@ class Perf_Collector
     public function setLabel($label)
     {
         if (array_key_exists($label, $this->labels)) {
-            hd_debug_print("Tried to add a already exisiting label!");
+            hd_debug_print("Trying to add a already exisiting label '$label'!");
             return;
         }
 

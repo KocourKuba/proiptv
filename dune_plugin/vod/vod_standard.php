@@ -109,14 +109,14 @@ class vod_standard extends Abstract_Vod
     protected $vod_parser;
 
     /**
+     * @var M3uParser
+     */
+    protected $vod_m3u_parser;
+
+    /**
      * @var Sql_Wrapper
      */
     protected $wrapper = null;
-
-    /**
-     * @var Perf_Collector
-     */
-    protected $perf;
 
     /**
      * @param Default_Dune_Plugin $plugin
@@ -125,7 +125,7 @@ class vod_standard extends Abstract_Vod
     {
         $this->plugin = $plugin;
         $this->special_groups = new Hashed_Array();
-        $this->perf = new Perf_Collector();
+        $this->vod_m3u_parser = new M3uParser();
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -410,19 +410,20 @@ class vod_standard extends Abstract_Vod
     public function fetchVodCategories(&$category_list, &$category_index)
     {
         hd_debug_print(null, true);
-        if (!$this->plugin->init_vod_playlist($this->plugin->get_active_playlist_id())) {
+        if (!$this->init_vod_m3u_playlist($this->plugin->get_active_playlist_id())) {
             hd_debug_print("VOD not available");
             return false;
         }
 
-        if ($this->plugin->is_database_attached('vod') === 0) {
-            if ($this->plugin->get_vod_m3u_parser()->parseVodPlaylist($this->wrapper) === false) {
+        if ($this->plugin->get_sql_playlist()->is_database_attached('vod') === 0) {
+            if ($this->vod_m3u_parser->parseVodPlaylist($this->wrapper) === false) {
                 hd_debug_print("Parse VOD failed");
                 return false;
             }
         }
 
-        $this->perf->reset('start');
+        $perf = new Perf_Collector();
+        $perf->reset('start');
 
         $category_index = array();
 
@@ -446,8 +447,8 @@ class vod_standard extends Abstract_Vod
             $category_list[] = $cat;
         }
 
-        $this->perf->setLabel('end');
-        $report = $this->perf->getFullReport();
+        $perf->setLabel('end');
+        $report = $perf->getFullReport();
 
         hd_debug_print("Categories read: $category_count");
         hd_debug_print("Total movies: $all_count");
@@ -467,7 +468,8 @@ class vod_standard extends Abstract_Vod
         hd_debug_print(null, true);
         hd_debug_print($keyword);
 
-        $this->perf->reset('start');
+        $perf = new Perf_Collector();
+        $perf->reset('start');
 
         $movies = array();
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
@@ -488,8 +490,8 @@ class vod_standard extends Abstract_Vod
             $movies[] = new Short_Movie($entry['hash'], $title, $poster_url);
         }
 
-        $this->perf->setLabel('end');
-        $report = $this->perf->getFullReport();
+        $perf->setLabel('end');
+        $report = $perf->getFullReport();
 
         hd_debug_print("Movies found: " . count($movies));
         hd_debug_print("Search time: {$report[Perf_Collector::TIME]} secs");
@@ -852,5 +854,104 @@ class vod_standard extends Abstract_Vod
 
         $query = "SELECT * FROM " . M3uParser::VOD_TABLE . " WHERE hash = '$hash';";
         return $this->wrapper->query_value($query, true);
+    }
+
+    /**
+     * Initialize and parse selected playlist
+     *
+     * @param string $playlist_id
+     * @return bool
+     */
+    protected function init_vod_m3u_playlist($playlist_id)
+    {
+        hd_debug_print(null, true);
+
+        if (!$this->plugin->is_playlist_exist($playlist_id)) {
+            hd_debug_print("Playlist not defined");
+            return false;
+        }
+
+        $params = $this->plugin->get_playlist_parameters($playlist_id);
+        $type = safe_get_value($params, PARAM_TYPE);
+        $pl_type = safe_get_value($params, PARAM_PL_TYPE);
+
+        if ($type === PARAM_PROVIDER) {
+            $provider = $this->plugin->get_active_provider();
+            if (is_null($provider)) {
+                hd_debug_print("Unknown provider");
+                return false;
+            }
+
+            if (!$provider->hasApiCommand(API_COMMAND_GET_VOD)) {
+                hd_debug_print("Failed to get VOD playlist from provider");
+                return false;
+            }
+        } else if ($pl_type !== CONTROL_PLAYLIST_VOD) {
+            hd_debug_print("Playlist is not VOD type");
+            return false;
+        }
+
+        $m3u_file = $this->plugin->get_playlist_cache($playlist_id, false);
+
+        try {
+            $reload_playlist = $this->plugin->is_playlist_cache_expired($playlist_id, false);
+            if ($reload_playlist || $this->vod_m3u_parser->get_filename() !== $m3u_file) {
+                $uri = safe_get_value($params, PARAM_URI);
+                if ($type === PARAM_PROVIDER) {
+                    hd_debug_print("download provider vod");
+                    $res = $provider->execApiCommand(API_COMMAND_GET_VOD, $m3u_file);
+                    if ($res === false) {
+                        $exception_msg = TR::load('err_load_vod') . "\n\n" . $provider->getCurlWrapper()->get_raw_response_headers();
+                        HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
+                        throw new Exception($exception_msg);
+                    }
+                } else if ($type === PARAM_FILE) {
+                    hd_debug_print("m3u copy local file: $uri to $m3u_file");
+                    if (empty($uri)) {
+                        throw new Exception("Empty playlist path");
+                    }
+
+                    $res = copy($uri, $m3u_file);
+                    if ($res === false) {
+                        $exception_msg = TR::load('err_load_vod') . PHP_EOL . PHP_EOL .
+                            "m3u copy local file: $uri to $m3u_file";
+                        throw new Exception($exception_msg);
+                    }
+                } else if ($type === PARAM_LINK || $type === PARAM_CONF) {
+                    hd_debug_print("m3u download link: $uri");
+                    if (empty($uri)) {
+                        throw new Exception("Empty playlist url");
+                    }
+                    list($res, $logfile) = Curl_Wrapper::simple_download_file($uri, $m3u_file);
+                    if ($res === false) {
+                        $exception_msg = TR::load('err_load_vod') . "\n\n$logfile";
+                        throw new Exception($exception_msg);
+                    }
+                } else {
+                    throw new Exception("Unknown playlist type");
+                }
+
+                $playlist_file = file_get_contents($m3u_file);
+                if (strpos($playlist_file, TAG_EXTM3U) === false) {
+                    $exception_msg = TR::load('err_load_vod') . "\n\nPlaylist is not a M3U file\n\n$playlist_file";
+                    HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
+                    throw new Exception($exception_msg);
+                }
+
+                $mtime = filemtime($m3u_file);
+                hd_debug_print("Stored $m3u_file (timestamp: $mtime)");
+                $this->vod_m3u_parser->setVodPlaylist($m3u_file);
+            }
+        } catch (Exception $ex) {
+            hd_debug_print("Unable to load VOD playlist");
+            print_backtrace_exception($ex);
+            if (file_exists($m3u_file)) {
+                unlink($m3u_file);
+            }
+            return false;
+        }
+
+        hd_debug_print("Init VOD playlist done!");
+        return true;
     }
 }
