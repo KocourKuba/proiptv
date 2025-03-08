@@ -994,7 +994,7 @@ class Epg_Manager_Xmltv
         $ch_table_name = self::INDEX_CHANNELS;
         $picons_table_name = self::INDEX_PICONS;
         if ($indexing_flag & INDEXING_CHANNELS) {
-            $query = "DROP TABLE IF EXISTS $ch_table_name;";
+            $query  = "DROP TABLE IF EXISTS $ch_table_name;";
             $query .= "DROP TABLE IF EXISTS $picons_table_name;";
             $query .= "CREATE TABLE $ch_table_name (alias TEXT PRIMARY KEY not null, channel_id TEXT not null, picon_hash TEXT);";
             $query .= "CREATE TABLE $picons_table_name (picon_hash TEXT PRIMARY KEY not null, picon_url TEXT);";
@@ -1075,7 +1075,7 @@ class Epg_Manager_Xmltv
         hd_debug_print("Indexing positions for: $url", true);
         $this->perf->reset('reindex');
 
-        $query = "DROP TABLE IF EXISTS $ch_table_name;";
+        $query = "DROP TABLE IF EXISTS $pos_table_name;";
         $query .= "CREATE TABLE $pos_table_name (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);";
         $db->exec_transaction($query);
 
