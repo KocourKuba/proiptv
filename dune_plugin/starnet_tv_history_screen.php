@@ -181,8 +181,6 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-
         $items = array();
         $now = time();
         foreach ($this->plugin->get_tv_history() as $channel_row) {
@@ -207,7 +205,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 }
             }
 
-            $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
+            $icon_url = $this->plugin->get_channel_picon($channel_row, true);
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(

@@ -174,8 +174,6 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-
         $items = array();
 
         if (LogSeverity::$is_debug) {
@@ -203,7 +201,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 implode(", ", $epg_ids)
             );
 
-            $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
+            $icon_url = $this->plugin->get_channel_picon($channel_row, true);
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(

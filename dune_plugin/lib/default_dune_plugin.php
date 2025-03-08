@@ -70,6 +70,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     protected $inited = false;
 
     /**
+     * @var string
+     */
+    private $default_channel_icon_classic = DEFAULT_CHANNEL_ICON_PATH;
+
+    /**
+     * @var string
+     */
+    private $default_channel_icon_newui = DEFAULT_CHANNEL_ICON_PATH;
+
+    /**
+     * @var string
+     */
+    private $picons_source = PLAYLIST_PICONS;
+
+    /**
      * @var Epg_Manager_Xmltv|Epg_Manager_Json
      */
     protected $epg_manager;
@@ -1341,6 +1356,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
+        $this->update_ui_settings();
+
         // check is vod.
         $this->init_user_agent($playlist_id);
 
@@ -1421,8 +1438,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Show VOD icon: $enable_vod_icon", true);
 
         $bg_indexing_runs = false;
-        $picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-        if ($picons_source !== PLAYLIST_PICONS) {
+        if ($this->picons_source !== PLAYLIST_PICONS) {
             $all_sources = $this->get_active_sources();
             if ($all_sources->size() === 0) {
                 hd_debug_print("No active XMLTV sources found to collect playlist icons...");
@@ -1783,12 +1799,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $this->ext_epg_supported;
     }
 
-    public function get_default_channel_icon($classic = true)
+    public function get_default_channel_icon($is_classic = true)
     {
-        if ($classic) {
-            return DEFAULT_CHANNEL_ICON_PATH;
+        if ($is_classic) {
+            if (empty($this->default_channel_icon_classic)) {
+                $this->default_channel_icon_classic = DEFAULT_CHANNEL_ICON_PATH;
+            }
+            return $this->default_channel_icon_classic;
         }
-        return $this->get_bool_setting(PARAM_NEWUI_SQUARE_ICONS, false) ? DEFAULT_CHANNEL_ICON_PATH_SQ : DEFAULT_CHANNEL_ICON_PATH;
+
+        if (empty($this->default_channel_icon_newui)) {
+            $this->default_channel_icon_newui = $this->get_bool_setting(PARAM_NEWUI_SQUARE_ICONS, false)
+                ? DEFAULT_CHANNEL_ICON_PATH_SQ
+                : DEFAULT_CHANNEL_ICON_PATH;
+        }
+        return $this->default_channel_icon_newui;
     }
 
     /**
@@ -2391,6 +2416,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     ///////////////////////////////////////////////////////////////////////
     // Misc.
 
+    public function update_ui_settings()
+    {
+        $this->picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+        $this->default_channel_icon_classic = '';
+    }
+
     /**
      * @return Hashed_Array
      */
@@ -2417,25 +2448,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param array $channel_row
-     * @param string $picons_source
-     * @param string $default
+     * @param bool $is_classic
      * @return string
      */
-    public function get_channel_picon($channel_row, $picons_source, $default = DEFAULT_CHANNEL_ICON_PATH)
+    public function get_channel_picon($channel_row, $is_classic)
     {
-        if ($picons_source !== XMLTV_PICONS) {
+        $default_channel_icon = $this->get_default_channel_icon($is_classic);
+        if ($this->picons_source !== XMLTV_PICONS) {
             // playlist icons first in priority
             $icon_url = $channel_row[COLUMN_ICON];
         }
 
         // if selected xmltv or combined mode look into xmltv source
         // in combined mode search is not performed if already got picon from playlist
-        if ($picons_source === XMLTV_PICONS || ($picons_source === COMBINED_PICONS && empty($icon_url))) {
+        if ($this->picons_source === XMLTV_PICONS || ($this->picons_source === COMBINED_PICONS && empty($icon_url))) {
             $epg_ids = self::make_epg_ids($channel_row);
-            $icon_url = $this->get_epg_manager()->get_picon($epg_ids, $default);
+            $icon_url = $this->get_epg_manager()->get_picon($epg_ids, $default_channel_icon);
         }
 
-        return empty($icon_url) ? $default : $icon_url;
+        return empty($icon_url) ? $default_channel_icon : $icon_url;
     }
 
     public function get_image_archive()
@@ -2812,18 +2843,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param string $channel_id
-     * @param bool $classic
+     * @param bool $is_classic
      * @return array|null
      */
-    public function do_show_channel_info($channel_id, $classic)
+    public function do_show_channel_info($channel_id, $is_classic)
     {
         $channel_row = $this->get_channel_info($channel_id, true);
         if (empty($channel_row)) {
             return null;
         }
 
-        $picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-        $icon = $this->get_channel_picon($channel_row, $picons_source, $this->get_default_channel_icon($classic));
+        $icon = $this->get_channel_picon($channel_row, $is_classic);
 
         $info = "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
         $info .= "Name: " . $channel_row[COLUMN_TITLE] . PHP_EOL;

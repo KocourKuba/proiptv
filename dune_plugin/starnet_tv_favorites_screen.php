@@ -232,12 +232,10 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-
         $items = array();
 
         foreach ($this->plugin->get_channels_by_order(TV_FAV_GROUP_ID) as $channel_row) {
-            $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
+            $icon_url = $this->plugin->get_channel_picon($channel_row, true);
 
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(

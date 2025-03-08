@@ -153,7 +153,6 @@ class Starnet_Tv implements User_Input_Handler
         $archive_delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);
         $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
         $show_all = $this->plugin->get_bool_setting(PARAM_SHOW_ALL);
-        $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
 
         $groups = array();
 
@@ -192,7 +191,7 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::id => $channel_row[COLUMN_CHANNEL_ID],
                     PluginTvChannel::caption => $channel_row[COLUMN_TITLE],
                     PluginTvChannel::group_ids => array_keys($group_id_arr),
-                    PluginTvChannel::icon_url => $this->plugin->get_channel_picon($channel_row, $picons_source),
+                    PluginTvChannel::icon_url => $this->plugin->get_channel_picon($channel_row, true),
                     PluginTvChannel::number => $channel_row[COLUMN_CH_NUMBER],
 
                     PluginTvChannel::have_archive => $archive > 0,
@@ -262,8 +261,6 @@ class Starnet_Tv implements User_Input_Handler
                 $tv_info[PluginTvInfo::ext_epg_channel_ids_url] = get_plugin_cgi_url("channels");
             }
         }
-
-        file_put_contents(get_temp_path("tv_info.json"), json_encode($tv_info));
 
         return $tv_info;
     }

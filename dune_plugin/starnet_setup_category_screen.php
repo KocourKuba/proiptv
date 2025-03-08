@@ -185,11 +185,13 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
             case PARAM_PICONS_DELAY_LOAD:
                 $this->force_parent_reload = true;
                 $this->plugin->toggle_setting($control_id);
+                $this->plugin->update_ui_settings();
                 break;
 
             case PARAM_USE_PICONS:
                 $this->force_parent_reload = true;
                 $this->plugin->set_setting($user_input->control_id, $user_input->{$user_input->control_id});
+                $this->plugin->update_ui_settings();
                 break;
         }
 

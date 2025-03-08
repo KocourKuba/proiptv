@@ -500,7 +500,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $groups_order[] = $this->plugin->get_group($media_url->group_id);
             }
 
-            $picons_source = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             $fav_ids = $this->plugin->get_channels_order(TV_FAV_GROUP_ID);
             $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
@@ -512,7 +511,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 foreach ($channels_rows as $channel_row) {
                     if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
 
-                    $icon_url = $this->plugin->get_channel_picon($channel_row, $picons_source);
+                    $icon_url = $this->plugin->get_channel_picon($channel_row, true);
 
                     $epg_str = HD::ArrayToStr(array_values(Default_Dune_Plugin::make_epg_ids($channel_row)));
                     $zoom = safe_get_value($zoom_data, $channel_row[COLUMN_CHANNEL_ID], DuneVideoZoomPresets::not_set);
