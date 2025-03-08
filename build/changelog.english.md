@@ -1,9 +1,10 @@
-﻿### Version 6.0.1152
+﻿### Version 6.0.1154
 - Playlist shortcuts work on the Channels/Favorites/History and NewUI screen
 - Fixed a bug with replacing the selected XMLTV source when adding a new link
 - Fixed a bug with processing serials for VOD
 - The Use dune_params setting was not disabled
 - In some cases, XMLTV was processed twice when the plugin was loaded
+- Sometimes the EPG cache was not cleared correctly
 
 ### Version 6.0.1146
 - Fixed another bug when adding the Edem provider
