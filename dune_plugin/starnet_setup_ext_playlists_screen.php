@@ -154,7 +154,8 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
                 break;
 
             case PARAM_USE_DUNE_PARAMS:
-                $this->plugin->set_playlist_parameter($playlist_id, PARAM_USE_DUNE_PARAMS, SwitchOnOff::toggle($user_input->{$user_input->control_id}));
+                $old_value = $this->plugin->get_playlist_parameter($playlist_id, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on);
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_USE_DUNE_PARAMS, SwitchOnOff::toggle($old_value));
                 break;
 
             case PARAM_DUNE_PARAMS:
