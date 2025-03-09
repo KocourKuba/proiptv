@@ -823,7 +823,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 hd_debug_print("playlist source: ($hash) $url", true);
             }
 
-            $this->set_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $saved_source);
+            $this->set_playlist_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $saved_source);
 
             if ($only_headers) {
                 $info = "Total sources: " . $sources->size();

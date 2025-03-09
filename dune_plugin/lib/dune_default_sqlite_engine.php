@@ -161,7 +161,7 @@ class Dune_Default_Sqlite_Engine
                     unset($parameters[$key]);
                 } else if ($key === PARAM_EXT_XMLTV_SOURCES) {
                     foreach ($param as $hash => $stg) {
-                        if (!isset($stg->params[PARAM_URI]) || !is_proto_http($stg->params[PARAM_URI])) continue;
+                        if (empty($stg->params[PARAM_URI]) || !is_proto_http($stg->params[PARAM_URI])) continue;
 
                         $item = array(
                             PARAM_HASH => $hash,
@@ -194,6 +194,11 @@ class Dune_Default_Sqlite_Engine
                 hd_debug_print("!!!!! Parameter $key is not imported: " . $value);
             }
         }
+
+        // cleanup xmltv table from wrong values
+        $xmltv_table = self::XMLTV_TABLE;
+        $query = "DELETE FROM $xmltv_table WHERE hash == '' OR type == '' OR uri == '';";
+        $this->sql_params->exec($query);
     }
 
     /**
@@ -480,7 +485,7 @@ class Dune_Default_Sqlite_Engine
         if ($type === XMLTV_SOURCE_PLAYLIST || $type === XMLTV_SOURCE_EXTERNAL) {
             $table_name = self::get_table_name($type);
             $wrapper = $type === XMLTV_SOURCE_PLAYLIST ? $this->sql_playlist : $this->sql_params;
-            return $wrapper->query_value("SELECT * FROM $table_name WHERE hash = '$hash';", true);
+            return $wrapper->query_value("SELECT * FROM $table_name WHERE hash = '$hash' AND type != '';", true);
         }
         return null;
     }
@@ -511,7 +516,7 @@ class Dune_Default_Sqlite_Engine
      * @param string $type
      * @param Hashed_Array $values
      */
-    public function set_xmltv_sources($type, $values)
+    public function set_playlist_xmltv_sources($type, $values)
     {
         hd_debug_print(null, true);
 
@@ -520,11 +525,12 @@ class Dune_Default_Sqlite_Engine
             $query = "DROP TABLE IF EXISTS $table_name;";
             $query .= sprintf(self::CREATE_XMLTV_TABLE, $table_name);
             foreach ($values as $key => $params) {
-                $q_name = Sql_Wrapper::sql_quote(safe_get_value($params, PARAM_NAME));
-                $q_type = Sql_Wrapper::sql_quote(safe_get_value($params, PARAM_TYPE));
-                $q_uri = Sql_Wrapper::sql_quote(safe_get_value($params, PARAM_URI));
-                $q_cache = Sql_Wrapper::sql_quote(safe_get_value($params, PARAM_CACHE, XMLTV_CACHE_AUTO));
-                $query .= "INSERT INTO $table_name (hash, name, type, uri, cache) VALUES ('$key', $q_name, $q_type, $q_uri, $q_cache);";
+                $type = safe_get_value($params, PARAM_TYPE);
+                $uri = safe_get_value($params, PARAM_URI);
+                if (empty($type) || empty($uri)) continue;
+
+                $insert = Sql_Wrapper::sql_make_insert_list_from_values($params);
+                $query .= "INSERT OR REPLACE INTO $table_name $insert;";
             }
             $this->sql_playlist->exec_transaction($query);
         }

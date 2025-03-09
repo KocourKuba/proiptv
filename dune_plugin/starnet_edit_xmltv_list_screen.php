@@ -152,10 +152,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 if (!empty($item)) {
-                    hd_debug_print("source: $source - item: " . json_encode($item), true);
-                    if ($item[PARAM_TYPE] === PARAM_LINK && isset($item[PARAM_URI]) && is_proto_http($item[PARAM_URI])) {
-                        return $this->do_edit_url_dlg($source, $selected_id);
-                    }
+                    hd_debug_print("source: $source, item: " . json_encode($item), true);
+                    return $this->do_edit_url_dlg($source, $selected_id);
                 }
                 return null;
 
@@ -297,7 +295,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         hd_debug_print("ID: $id, Source: $source", true);
         $defs = array();
 
-
         Control_Factory::add_vgap($defs, 20);
 
         $param[CONTROL_ACTION_SOURCE] = $source;
@@ -350,13 +347,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     {
         hd_debug_print(null, true);
 
-        $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
-        $url = safe_get_member($user_input, CONTROL_URL_PATH, '');
-
-        if (empty($name)) {
-            $name = $url;
-        }
-
         $source = $user_input->{CONTROL_ACTION_SOURCE};
         if (isset($user_input->{CONTROL_ACTION_EDIT})) {
             // edit existing url
@@ -367,15 +357,27 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $item[PARAM_TYPE] = PARAM_LINK;
         }
 
-        $new_id = Hashed_Array::hash($url);
+        if (isset($user_input->{CONTROL_URL_PATH})) {
+            $item[PARAM_URI] = $user_input->{CONTROL_URL_PATH};
+            if ($source === XMLTV_SOURCE_EXTERNAL && !is_proto_http($item[PARAM_URI])) {
+                return Action_Factory::close_and_run(Action_Factory::show_title_dialog(TR::t('err_incorrect_url')));
+            }
+            $new_id = Hashed_Array::hash($item[PARAM_URI]);
+        } else {
+            $new_id = $id;
+        }
+
+        if (isset($user_input->{CONTROL_EDIT_NAME})) {
+            $item[PARAM_NAME] = $user_input->{CONTROL_EDIT_NAME};
+            if (empty($item[PARAM_NAME])) {
+                $item[PARAM_NAME] = $item[PARAM_URI];
+            }
+        }
+
         $item[PARAM_HASH] = $new_id;
-        $item[PARAM_NAME] = $name;
-        $item[PARAM_URI] = $url;
         $item[PARAM_CACHE] = $user_input->{self::CONTROL_CACHE_TIME};
 
-        if ($source === XMLTV_SOURCE_EXTERNAL && !is_proto_http($url)) {
-            return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
-        }
+        hd_debug_print("Save source ID: $new_id, old ID: $id, params: " . json_encode($item), true);
 
         $this->plugin->safe_clear_selected_epg_cache(empty($id) ? $new_id : $id);
         $this->plugin->set_xmltv_source($source, $item);
