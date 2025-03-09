@@ -115,12 +115,14 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_SETTINGS:
-                if (!$this->plugin->is_playlist_exist($selected_id)) {
-                    hd_debug_print("Unknown playlist: $selected_id", true);
-                    return null;
+                if ($this->plugin->is_playlist_exist($selected_id)) {
+                    return Action_Factory::open_folder(
+                        Starnet_Setup_Playlists_Screen::get_media_url_string($selected_id), TR::t('tv_screen_playlists_setup')
+                    );
                 }
 
-                return Action_Factory::open_folder(Starnet_Setup_Playlists_Screen::get_media_url_string($selected_id), TR::t('tv_screen_playlists_setup'));
+                hd_debug_print("Unknown playlist: $selected_id", true);
+                return null;
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;

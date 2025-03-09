@@ -332,6 +332,10 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_playlist_parameters($playlist_id)
     {
+        if (empty($playlist_id)) {
+            return array();
+        }
+
         $parameters_table = self::get_playlist_parameters_table_name($playlist_id);
         $query = "SELECT * FROM $parameters_table;";
         $rows = $this->sql_params->fetch_array($query);
@@ -524,12 +528,12 @@ class Dune_Default_Sqlite_Engine
             $table_name = self::get_table_name($type);
             $query = "DROP TABLE IF EXISTS $table_name;";
             $query .= sprintf(self::CREATE_XMLTV_TABLE, $table_name);
-            foreach ($values as $key => $params) {
+            foreach ($values as $params) {
                 $type = safe_get_value($params, PARAM_TYPE);
                 $uri = safe_get_value($params, PARAM_URI);
                 if (empty($type) || empty($uri)) continue;
 
-                $insert = Sql_Wrapper::sql_make_insert_list_from_values($params);
+                $insert = Sql_Wrapper::sql_make_insert_list($params);
                 $query .= "INSERT OR REPLACE INTO $table_name $insert;";
             }
             $this->sql_playlist->exec_transaction($query);
@@ -1411,6 +1415,10 @@ class Dune_Default_Sqlite_Engine
     public function get_all_playlists_count()
     {
         $table_name = self::PLAYLISTS_TABLE;
+        if (!$this->sql_params->is_table_exists($table_name)) {
+            return 0;
+        }
+
         return $this->sql_params->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
@@ -1420,7 +1428,15 @@ class Dune_Default_Sqlite_Engine
      */
     public function is_playlist_exist($id)
     {
+        if (empty($id)) {
+            return false;
+        }
+
         $table_name = self::PLAYLISTS_TABLE;
+        if (!$this->sql_params->is_table_exists($table_name)) {
+            return false;
+        }
+
         $q_key = Sql_Wrapper::sql_quote($id);
         $query = "SELECT COUNT(*) FROM $table_name WHERE playlist_id = $q_key LIMIT 1;";
         return $this->sql_params->query_value($query);

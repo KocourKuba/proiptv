@@ -150,7 +150,7 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
                     hd_debug_print("Set user agent parameter: $user_agent");
                     $this->plugin->set_playlist_parameter($playlist_id, PARAM_USER_AGENT, $user_agent);
                 }
-                $this->plugin->init_user_agent($playlist_id);
+                $this->plugin->init_user_agent();
                 break;
 
             case PARAM_USE_DUNE_PARAMS:

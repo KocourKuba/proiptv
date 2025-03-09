@@ -410,7 +410,7 @@ class vod_standard extends Abstract_Vod
     public function fetchVodCategories(&$category_list, &$category_index)
     {
         hd_debug_print(null, true);
-        if (!$this->init_vod_m3u_playlist($this->plugin->get_active_playlist_id())) {
+        if (!$this->init_vod_m3u_playlist()) {
             hd_debug_print("VOD not available");
             return false;
         }
@@ -859,13 +859,13 @@ class vod_standard extends Abstract_Vod
     /**
      * Initialize and parse selected playlist
      *
-     * @param string $playlist_id
      * @return bool
      */
-    protected function init_vod_m3u_playlist($playlist_id)
+    protected function init_vod_m3u_playlist()
     {
         hd_debug_print(null, true);
 
+        $playlist_id = $this->plugin->get_active_playlist_id();
         if (!$this->plugin->is_playlist_exist($playlist_id)) {
             hd_debug_print("Playlist not defined");
             return false;
@@ -891,10 +891,10 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        $m3u_file = $this->plugin->get_playlist_cache($playlist_id, false);
+        $m3u_file = $this->plugin->get_playlist_cache(false);
 
         try {
-            $reload_playlist = $this->plugin->is_playlist_cache_expired($playlist_id, false);
+            $reload_playlist = $this->plugin->is_playlist_cache_expired(false);
             if ($reload_playlist || $this->vod_m3u_parser->get_filename() !== $m3u_file) {
                 $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_PROVIDER) {

@@ -114,6 +114,8 @@ class Curl_Wrapper
      */
     public function set_url($url)
     {
+        hd_debug_print(null, true);
+        hd_debug_print("set url = $url", true);
         $this->url = $url;
         $this->url_hash = hash('crc32', $url);
         $this->config_file = get_temp_path(sprintf(self::CURL_CONFIG, $this->url_hash, ''));
