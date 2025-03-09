@@ -526,7 +526,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     {
         hd_debug_print(null, true);
 
-        if (!$this->plugin->load_channels($plugin_cookies)) {
+        if (!$this->plugin->is_channels_loaded() && !$this->plugin->load_channels($plugin_cookies)) {
             hd_debug_print("Channels not loaded!");
         }
 

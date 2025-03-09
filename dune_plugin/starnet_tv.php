@@ -98,7 +98,7 @@ class Starnet_Tv implements User_Input_Handler
                     return null;
                 }
 
-                hd_debug_print("delayed epg: " . json_encode($epg_manager->get_delayed_epg()));
+                $post_action = Action_Factory::update_tv_info($post_action);
 
                 $delayed_queue = $epg_manager->get_delayed_epg();
                 $epg_manager->clear_delayed_epg();
@@ -109,7 +109,8 @@ class Starnet_Tv implements User_Input_Handler
                     $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
                 }
 
-                return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+                return $post_action;
+                //return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id, true);
@@ -129,10 +130,13 @@ class Starnet_Tv implements User_Input_Handler
     {
         hd_debug_print(null, true);
 
-        return array(
-            GUI_EVENT_PLAYBACK_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP),
-            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
-        );
+        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        $actions[GUI_EVENT_PLAYBACK_USER_ACTION] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_USER_ACTION);
+        $actions[GUI_EVENT_MENU_PLAYBACK_OSD_GOING_TO_OPEN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_MENU_PLAYBACK_OSD_GOING_TO_OPEN);
+        $actions[PLUGIN_OP_GET_TV_INFO] = User_Input_Handler_Registry::create_action($this, PLUGIN_OP_GET_TV_INFO);
+
+        return $actions;
     }
 
     /**
@@ -142,7 +146,7 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function get_tv_info(MediaURL $media_url, &$plugin_cookies)
     {
-        if (!$this->plugin->load_channels($plugin_cookies)) {
+        if (!$this->plugin->is_channels_loaded() && !$this->plugin->load_channels($plugin_cookies)) {
             hd_debug_print("Channels not loaded!");
             return array();
         }

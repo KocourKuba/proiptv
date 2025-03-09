@@ -37,9 +37,9 @@ class Sql_Wrapper
     /**
      * @return int
      */
-    public function get_open_mode()
+    public function is_readonly()
     {
-        return $this->open_mode;
+        return $this->open_mode & SQLITE3_OPEN_READONLY;
     }
 
     /**
@@ -129,6 +129,15 @@ class Sql_Wrapper
             hd_debug_print("Sqlite wrapper id not inited!");
         }
         return 0;
+    }
+
+    /**
+     * @param string $table_name
+     * @return bool
+     */
+    public function is_table_exists($table_name)
+    {
+        return (int)$this->query_value("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='$table_name';") !== 0;
     }
 
     /**

@@ -553,7 +553,7 @@ class Dune_Default_Sqlite_Engine
     /**
      * @return array
      */
-    public function get_selected_xmltv_sources()
+    public function get_selected_xmltv_ids()
     {
         $table_name = self::SELECTED_XMLTV_TABLE;
         return $this->sql_playlist->fetch_single_array("SELECT hash FROM $table_name;", PARAM_HASH);

@@ -88,11 +88,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 if ($this->plugin->get_bool_parameter(PARAM_ASK_EXIT)) {
-                    return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_DLG_APPLY);
+                    return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_msg'), $this, ACTION_CONFIRM_EXIT_DLG_APPLY);
                 }
 
                 $this->force_parent_reload = false;
-                return Action_Factory::invalidate_epfs_folders($plugin_cookies, Action_Factory::close_and_run());
+                return User_Input_Handler_Registry::create_action($this, ACTION_CONFIRM_EXIT_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
                 $error_msg = trim(HD::get_last_error($this->plugin->get_pl_error_name()));
@@ -259,9 +259,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
 
-            case ACTION_CONFIRM_DLG_APPLY:
+            case ACTION_CONFIRM_EXIT_DLG_APPLY:
                 $this->force_parent_reload = false;
-                return Action_Factory::invalidate_all_folders($plugin_cookies,null, Action_Factory::close_and_run());
+                return Action_Factory::invalidate_epfs_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case ACTION_PLUGIN_INFO:
                 return $this->plugin->get_plugin_info_dlg($this);
@@ -585,7 +585,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        if (!$this->plugin->load_channels($plugin_cookies)) {
+        if (!$this->plugin->is_channels_loaded() && !$this->plugin->load_channels($plugin_cookies)) {
             hd_debug_print("Channels not loaded!");
             return array();
         }

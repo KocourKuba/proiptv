@@ -63,7 +63,7 @@ const ACTION_RESET_DEFAULT = 'reset_default';
 const ACTION_SETTINGS = 'settings';
 const ACTION_DO_SETTINGS = 'do_edit_settings';
 const ACTION_UI_PARAMETERS = 'Dune_Default_UI_Parameters';
-const ACTION_CONFIRM_DLG_APPLY = 'apply_dlg';
+const ACTION_CONFIRM_EXIT_DLG_APPLY = 'apply_dlg';
 const ACTION_CLEAR_APPLY = 'clear_apply';
 const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
 const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
@@ -114,6 +114,7 @@ const ACTION_PL_TYPE_DLG_APPLY = 'pl_type_dlg_apply';
 const ACTION_CLEAR_CACHE = 'clear_cache';
 const ACTION_INDEX_EPG = 'index_epg';
 const ACTION_CHOOSE_FILE = 'choose_file';
+const ACTION_CLEANUP = 'clean_up';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
@@ -308,7 +309,7 @@ const PARAMS_XMLTV = 'xmltv_params';
 const PARAM_TOKEN = 'token';
 const PARAM_REFRESH_TOKEN = 'refresh_token';
 const PARAM_SESSION_ID = 'session_id';
-const PARAM_INDEX_ALL = 'index_all';
+const PARAM_INDEXING_FLAG = 'index_all';
 
 const PARAM_GROUP_ORDINARY = 0;
 const PARAM_GROUP_SPECIAL = 1;
@@ -337,8 +338,10 @@ const GROUPS_INFO = 'groups_info';
 const GROUPS_ORDER = 'groups_order';
 const CHANNELS_INFO = 'channels_info';
 
-const INDEXING_CHANNELS = 1;
-const INDEXING_ENTRIES = 2;
+const INDEXING_DOWNLOAD = 1;
+const INDEXING_CHANNELS = 2;
+const INDEXING_ENTRIES = 4;
+const INDEXING_ALL = 7;
 
 // macroses used to replace template in providers playlists
 const MACRO_API = '{API}';

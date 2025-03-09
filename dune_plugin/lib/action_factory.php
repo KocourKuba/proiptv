@@ -533,6 +533,18 @@ class Action_Factory
     }
 
     /**
+     * @param array $post_action
+     * @return array
+     */
+    public static function update_tv_info($post_action = null)
+    {
+        return array(
+            GuiAction::handler_string_id => UPDATE_TV_INFO_ACTION_ID,
+            GuiAction::data => array(UpdateTvInfoActionData::post_action => $post_action)
+        );
+    }
+
+    /**
      * @param array &$comps
      * @param string $image_url
      * @param int $x

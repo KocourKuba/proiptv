@@ -73,7 +73,6 @@ class Starnet_Entry_Handler implements User_Input_Handler
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        dump_input_handler($user_input);
 
         if (!isset($user_input->control_id)) {
             return null;
@@ -139,7 +138,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 if (!$this->plugin->is_vod_playlist()) {
                     if (!$this->plugin->init_playlist_parser($playlist_id)
-                        || ($this->plugin->is_playlist_cache_expired($playlist_id, true) && !$this->plugin->parse_m3u_playlist($playlist_id, true))) {
+                        || ($this->plugin->is_playlist_cache_expired($playlist_id, true)
+                            && !$this->plugin->parse_m3u_playlist($playlist_id, true))) {
                         return Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                             null,
                             HD::get_last_error($this->plugin->get_pl_error_name()));
@@ -169,14 +169,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_CLEAR_EPG:
                 $this->plugin->init_plugin();
-                $this->plugin->init_playlist_db($this->plugin->get_active_playlist_id());
+                if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db($this->plugin->get_active_playlist_id())) break;
+
                 $this->plugin->init_epg_manager();
                 $this->plugin->safe_clear_selected_epg_cache();
+                $this->plugin->reset_channels_loaded();
                 $action = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
                 if (HD::rows_api_support()) {
                     $action = Action_Factory::clear_rows_info_cache($action);
                 }
-
                 return $action;
 
             case self::ACTION_FORCE_OPEN:

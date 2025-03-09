@@ -70,6 +70,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     protected $inited = false;
 
     /**
+     * @var bool
+     */
+    protected $channels_loaded = false;
+
+    /**
      * @var string
      */
     private $default_channel_icon_classic = DEFAULT_CHANNEL_ICON_PATH;
@@ -511,6 +516,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     ////////////////////////////////////////////////////////////////////////////
     /// Main methods
+
+    public function is_channels_loaded()
+    {
+        return $this->channels_loaded;
+    }
+
+    public function reset_channels_loaded()
+    {
+        return $this->channels_loaded = false;
+    }
 
     /**
      * @return void
@@ -1337,9 +1352,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
         hd_debug_print("Force reload: " . var_export($reload_playlist, true));
 
-        $perf = new Perf_Collector();
-        $perf->reset('start');
-
         HD::set_last_error($this->get_pl_error_name(), null);
 
         $plugin_cookies->toggle_move = false;
@@ -1356,30 +1368,54 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
+        if ($this->channels_loaded && !$reload_playlist) {
+            hd_debug_print("Channels already loaded", true);
+            return true;
+        }
+
+        $perf = new Perf_Collector();
+        $perf->reset('start');
+
         $this->update_ui_settings();
 
         // check is vod.
         $this->init_user_agent($playlist_id);
 
-        if ($this->is_vod_playlist()) {
-            hd_debug_print("Using standard VOD implementation");
-            $vod_class = 'vod_standard';
-            $this->vod = new $vod_class($this);
-            $this->vod_enabled = $this->vod->init_vod(null);
-            $this->vod->init_vod_screens();
+        if ($this->vod === null) {
+            $provider = $this->get_active_provider();
+            $this->vod_enabled = false;
+            $vod_class = null;
+            if (!is_null($provider)) {
+                $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
+                $vod_class = $provider->get_vod_class();
+            } else if ($this->is_vod_playlist()) {
+                hd_debug_print("Using standard VOD implementation");
+                $vod_class = 'vod_standard';
+            }
 
-            $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
-            $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
-            hd_debug_print("Show VOD icon: $enable_vod_icon", true);
-
-            return true;
+            if (!empty($vod_class)) {
+                hd_debug_print("Using VOD: $vod_class");
+                $this->vod = new $vod_class($this);
+                $this->vod_enabled = $this->vod->init_vod($provider);
+                $this->vod->init_vod_screens();
+                hd_debug_print("VOD enabled: " . SwitchOnOff::to_def($this->vod_enabled), true);
+                if ($this->is_vod_playlist()) {
+                    return true;
+                }
+            }
         }
+
+        $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
+        $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
+        hd_debug_print("Show VOD icon: $enable_vod_icon", true);
 
         // init playlist parser
         if (false === $this->init_playlist_parser($playlist_id, $reload_playlist)) {
             $this->sql_playlist->detachDatabase(M3uParser::IPTV_DB);
             return false;
         }
+
+        $this->init_epg_manager();
 
         if (!$reload_playlist) {
             $reload_playlist = $this->is_playlist_cache_expired($playlist_id, true);
@@ -1409,33 +1445,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return false;
             }
             if ($database_attached === 2) {
-                return true;
+                $this->channels_loaded = true;
             }
         }
-
-        $this->init_epg_manager();
-        $this->cleanup_active_xmltv_source();
-
-        $provider = $this->get_active_provider();
-        $this->vod = null;
-        $this->vod_enabled = false;
-        if (!is_null($provider)) {
-            $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
-
-            $vod_class = $provider->get_vod_class();
-            if (!empty($vod_class)) {
-                hd_debug_print("Using VOD: $vod_class");
-                $this->vod = new $vod_class($this);
-                $this->vod_enabled = $this->vod->init_vod($provider);
-                $this->vod->init_vod_screens();
-            }
-        }
-
-        hd_debug_print("VOD enabled: " . SwitchOnOff::to_def($this->vod_enabled), true);
-
-        $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
-        $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
-        hd_debug_print("Show VOD icon: $enable_vod_icon", true);
 
         $bg_indexing_runs = false;
         if ($this->picons_source !== PLAYLIST_PICONS) {
@@ -1443,18 +1455,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if ($all_sources->size() === 0) {
                 hd_debug_print("No active XMLTV sources found to collect playlist icons...");
             } else if ($this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)) {
-                foreach ($this->get_selected_xmltv_sources() as $source) {
-                    $this->run_bg_epg_indexing($source);
-                    $bg_indexing_runs = true;
-                }
+                $this->run_bg_epg_indexing($this->get_selected_xmltv_ids(), INDEXING_CHANNELS);
+                $bg_indexing_runs = true;
             } else {
-                $epg_manager = $this->get_epg_manager();
                 foreach ($all_sources as $params) {
-                    $epg_manager->set_url_params($params);
-                    $epg_manager->check_and_index_xmltv_source(false);
+                    $this->epg_manager->set_url_params($params);
+                    $this->epg_manager->check_and_index_xmltv_source(INDEXING_CHANNELS);
                 }
             }
         }
+
+        if ($this->channels_loaded) {
+            hd_debug_print("Channels already loaded");
+            if (!$bg_indexing_runs) {
+                $this->run_bg_epg_indexing($this->get_selected_xmltv_ids(), INDEXING_ENTRIES);
+            }
+            return true;
+        }
+
+        $this->cleanup_active_xmltv_source();
 
         hd_debug_print_separator();
         hd_debug_print("Build categories and channels...");
@@ -1647,10 +1666,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print_separator();
 
         if (!$bg_indexing_runs) {
-            foreach ($this->get_selected_xmltv_sources() as $source) {
-                $this->run_bg_epg_indexing($source);
-            }
+            $this->run_bg_epg_indexing($this->get_selected_xmltv_ids(), INDEXING_ENTRIES);
         }
+
+        $this->channels_loaded = true;
 
         return true;
     }
@@ -1663,6 +1682,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
         $this->reset_playlist_db();
+        $this->channels_loaded = false;
+        $this->vod = null;
         return $this->load_channels($plugin_cookies, true);
     }
 
@@ -1679,51 +1700,59 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param string|$source
+     * @param array|string $sources
+     * @param int $indexing_flag
      * @param bool $force
      * @return void
      */
-    public function run_bg_epg_indexing($source, $force = false)
+    public function run_bg_epg_indexing($sources, $indexing_flag, $force = false)
     {
         hd_debug_print(null, true);
 
-        $delay_index = $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
-        $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-        if (!$force && !$delay_index && !$is_xmltv_engine) {
+        $allow_index = false;
+        $allow_index |= $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
+        $allow_index |= $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+        if (!$force && !$allow_index) {
             return;
         }
 
-        $item = $this->get_xmltv_sources(XMLTV_SOURCE_ALL)->get($source);
-        if ($item === null) {
-            hd_debug_print("XMLTV source $source not found");
-            return;
+        if (!is_array($sources)) {
+            $sources = array($sources);
         }
 
-        if (!isset($item[PARAM_HASH])) {
-            $item[PARAM_HASH] = Hashed_Array::hash($item[PARAM_URI]);
+        foreach ($sources as $source) {
+            $item = $this->get_xmltv_sources(XMLTV_SOURCE_ALL)->get($source);
+            if ($item === null) {
+                hd_debug_print("XMLTV source $source not found");
+                continue;
+            }
+
+            if (!isset($item[PARAM_HASH])) {
+                $item[PARAM_HASH] = Hashed_Array::hash($item[PARAM_URI]);
+            }
+
+            // background indexing performed only for one url!
+            hd_debug_print("Run background indexing for: ($source) {$item[PARAM_URI]}");
+            $config = array(
+                PARAM_ENABLE_DEBUG => LogSeverity::$is_debug,
+                PARAM_CACHE_DIR => $this->get_cache_dir(),
+                PARAMS_XMLTV => $item,
+                PARAM_INDEXING_FLAG => $indexing_flag
+            );
+
+            $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source));
+            hd_debug_print("Config: " . json_encode($config), true);
+            file_put_contents($config_file, pretty_json_format($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+            $log_path = get_temp_path("{$source}_bg_error.log");
+            export_DuneSystem();
+
+            $ext_php = get_platform_php();
+            $script_path = get_install_path('bin/index_epg.php');
+            $cmd = "$ext_php -f $script_path $config_file >$log_path 2>&1 &";
+            hd_debug_print("exec: $cmd", true);
+            shell_exec($cmd);
         }
-
-        // background indexing performed only for one url!
-        hd_debug_print("Run background indexing for: ($source) {$item[PARAM_URI]}");
-        $config = array(
-            PARAM_ENABLE_DEBUG => LogSeverity::$is_debug,
-            PARAM_CACHE_DIR => $this->get_cache_dir(),
-            PARAMS_XMLTV => $item,
-            PARAM_INDEX_ALL => $is_xmltv_engine
-        );
-
-        $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source));
-        hd_debug_print("Config: " . json_encode($config), true);
-        file_put_contents($config_file, pretty_json_format($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-
-        $log_path = get_temp_path('bg_indexing_error.log');
-        export_DuneSystem();
-
-        $ext_php = get_platform_php();
-        $script_path = get_install_path('bin/index_epg.php');
-        $cmd = "$ext_php -f $script_path $config_file >$log_path 2>&1 &";
-        hd_debug_print("exec: $cmd", true);
-        shell_exec($cmd);
     }
 
     public function get_plugin_cookies()
@@ -2461,10 +2490,32 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // if selected xmltv or combined mode look into xmltv source
         // in combined mode search is not performed if already got picon from playlist
-        if ($this->picons_source === XMLTV_PICONS || ($this->picons_source === COMBINED_PICONS && empty($icon_url))) {
+        do {
+            if ($this->picons_source !== XMLTV_PICONS && ($this->picons_source !== COMBINED_PICONS || !empty($icon_url))) break;
+
             $epg_ids = self::make_epg_ids($channel_row);
-            $icon_url = $this->get_epg_manager()->get_picon($epg_ids, $default_channel_icon);
-        }
+            if (empty($this->epg_manager)) break;
+
+            if (isset($aliases[ATTR_TVG_NAME])) {
+                $epg_ids[ATTR_TVG_NAME] = mb_convert_case($epg_ids[ATTR_TVG_NAME], MB_CASE_LOWER, "UTF-8");
+            }
+
+            if (isset($epg_ids[ATTR_CHANNEL_NAME])) {
+                $epg_ids[ATTR_CHANNEL_NAME] = mb_convert_case($epg_ids[ATTR_CHANNEL_NAME], MB_CASE_LOWER, "UTF-8");
+            }
+
+            $epg_ids = array_unique(array_filter(array_values($epg_ids)));
+
+            if (empty($epg_ids)) break;
+
+            $placeHolders = Sql_Wrapper::sql_make_list_from_values($epg_ids);
+            foreach ($this->epg_manager->get_sources() as $key => $params) {
+                if ($this->epg_manager->is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) continue;
+
+                $icon_url = $this->epg_manager->get_picon($key, $placeHolders);
+                if (!empty($icon_url)) break;
+            }
+        }while (false);
 
         return empty($icon_url) ? $default_channel_icon : $icon_url;
     }
@@ -2710,7 +2761,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
         $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,TR::t('entry_setup'), "settings.png");
 
-        file_put_contents(get_temp_path('menu.json'), json_encode($menu_items));
         return $menu_items;
     }
 
@@ -2978,7 +3028,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         $all_sources = $this->get_xmltv_sources(XMLTV_SOURCE_ALL);
-        $selected_sources = $this->get_selected_xmltv_sources();
+        $selected_sources = $this->get_selected_xmltv_ids();
         $active_sources = new Hashed_Array();
         foreach ($selected_sources as $key) {
             $item = $all_sources->get($key);
@@ -2994,7 +3044,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function cleanup_active_xmltv_source()
     {
         hd_debug_print(null, true);
-        $locks = $this->epg_manager->is_any_index_locked();
+        $locks = $this->epg_manager->get_any_index_locked();
         if ($locks === false) {
             return;
         }
@@ -3024,7 +3074,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $all_sources = array_unique(array_merge($playlist_sources, $ext_sources));
         hd_debug_print("Load All XMLTV sources keys: " . json_encode($all_sources));
 
-        $cur_sources = $this->get_selected_xmltv_sources();
+        $cur_sources = $this->get_selected_xmltv_ids();
         hd_debug_print("Load selected XMLTV sources keys: " . json_encode($cur_sources));
 
         // remove non-existing values from active sources
