@@ -770,7 +770,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $contents = file_get_contents($m3u_file);
             if (strpos($contents, TAG_EXTM3U) === false) {
-                $exception_msg = TR::load('err_load_playlist') . "\n\n$contents";
+                $exception_msg = TR::load('err_bad_m3u_file') . "\n\n$contents";
                 throw new Exception($exception_msg);
             }
 

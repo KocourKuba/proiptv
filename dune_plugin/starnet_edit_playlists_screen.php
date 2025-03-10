@@ -544,7 +544,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $contents = file_get_contents($tmp_file, false, null, 0, 512);
             if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
                 unlink($tmp_file);
-                throw new Exception(TR::load('err_empty_playlist') . " '$uri'\n\n$contents");
+                throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
             }
 
             $parser = new M3uParser();
@@ -765,7 +765,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                         $contents = file_get_contents($tmp_file, false, null, 0, 512);
                         if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
                             unlink($tmp_file);
-                            throw new Exception("Bad M3U file: $line");
+                            throw new Exception(TR::load('err_bad_m3u_file') . "Bad M3U file: $line");
                         }
                         $params[PARAM_TYPE] = PARAM_LINK;
                         $params[PARAM_NAME] = basename($m[2]);

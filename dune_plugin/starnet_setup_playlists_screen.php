@@ -304,7 +304,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
 
                     $contents = file_get_contents($tmp_file, false, null, 0, 512);
                     if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
-                        throw new Exception(TR::load('err_load_playlist') . " '$uri'\n\n$contents");
+                        throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n" . substr($contents, 0, 512));
                     }
 
                     $parser = new M3uParser();
