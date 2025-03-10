@@ -422,10 +422,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
 
-        if (!is_limited_apk()) {
-            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-            $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
-        }
+        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+        $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
 
         return Action_Factory::show_popup_menu($menu_items);
     }
