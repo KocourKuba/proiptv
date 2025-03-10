@@ -98,6 +98,15 @@ class Perf_Collector
     }
 
     /**
+     * Get the labels count
+     * @return int
+     */
+    public function getLabelsCount()
+    {
+        return count($this->labels);
+    }
+
+    /**
      * Obtain a memory limit set in php.ini
      */
     public static function getMemoryLimit()
@@ -135,7 +144,7 @@ class Perf_Collector
         $memoryPeak = memory_get_peak_usage();
 
         // Prepare report.
-        $report[self::TIME] = $time;
+        $report[self::TIME] = round($time, 2);
         $report[self::MEMORY_LIMIT] = self::getMemoryLimit();
         $report[self::MEMORY_USAGE_KB] = round($this->labels[$endLabel][self::STAT_MEMORY] / 1024);
         $report[self::MEMORY_USAGE_MB] = round($this->labels[$endLabel][self::STAT_MEMORY] / 1024 / 1024, 2);

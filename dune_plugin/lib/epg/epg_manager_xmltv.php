@@ -36,6 +36,8 @@ class Epg_Manager_Xmltv
     const TABLE_CHANNELS = 'epg_channels';
     const TABLE_ENTRIES = 'epg_entries';
 
+    protected static $index_flags = array(INDEXING_DOWNLOAD, INDEXING_CHANNELS, INDEXING_ENTRIES);
+
     /**
      * @var Default_Dune_Plugin
      */
@@ -60,7 +62,7 @@ class Epg_Manager_Xmltv
      * path where cache is stored
      * @var string
      */
-    protected $cache_dir;
+    protected static $cache_dir;
 
     /**
      * url params to download XMLTV EPG
@@ -69,19 +71,9 @@ class Epg_Manager_Xmltv
     protected $xmltv_url_params;
 
     /**
-     * @var Curl_Wrapper
-     */
-    protected $curl_wrapper;
-
-    /**
      * @var int
      */
     protected $pid = 0;
-
-    /**
-     * @var Perf_Collector
-     */
-    protected $perf;
 
     /**
      * @var Sql_Wrapper[]
@@ -93,12 +85,6 @@ class Epg_Manager_Xmltv
      */
     protected $picons_db = array();
 
-    public function __construct()
-    {
-        $this->curl_wrapper = new Curl_Wrapper();
-        $this->perf = new Perf_Collector();
-    }
-
     /**
      * Set and create cache dir
      *
@@ -106,12 +92,12 @@ class Epg_Manager_Xmltv
      */
     public function set_cache_dir($cache_dir)
     {
-        $this->cache_dir = get_slash_trailed_path($cache_dir);
-        create_path($this->cache_dir);
+        self::$cache_dir = get_slash_trailed_path($cache_dir);
+        create_path(self::$cache_dir);
 
         hd_debug_print("Indexer engine: " . get_class($this));
-        hd_debug_print("Cache dir: $this->cache_dir");
-        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+        hd_debug_print("Cache dir:      " . self::$cache_dir);
+        hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
     }
 
     /**
@@ -139,16 +125,6 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * get curl wrapper
-     *
-     * @return Curl_Wrapper
-     */
-    public function get_curl_wrapper()
-    {
-        return $this->curl_wrapper;
-    }
-
-    /**
      * returns list of requested epg when indexing in process
      *
      * @return array
@@ -169,7 +145,7 @@ class Epg_Manager_Xmltv
     /**
      * @param Default_Dune_Plugin $plugin
      */
-    public function init_by_plugin($plugin)
+    public function init($plugin)
     {
         $this->plugin = $plugin;
         $this->xmltv_sources = $this->plugin->get_active_sources();
@@ -215,19 +191,15 @@ class Epg_Manager_Xmltv
 
         set_debug_log($config[PARAM_ENABLE_DEBUG]);
 
-        $this->pid = getmypid();
-        $this->xmltv_sources = new Hashed_Array();
-        $this->xmltv_url_params = $config[PARAMS_XMLTV];
         $this->set_cache_dir($config[PARAM_CACHE_DIR]);
 
         hd_print("Script config");
         hd_print("Log:         " . $LOG_FILE);
-        hd_print("Cache dir:   " . $this->cache_dir);
-        hd_print("XMLTV param: " . json_encode($this->xmltv_url_params));
-        hd_print("Process ID:  " . $this->pid);
+        hd_print("Cache dir:   " . self::$cache_dir);
         hd_print("Index flag:  " . $config[PARAM_INDEXING_FLAG]);
+        hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
 
-        $this->check_and_index_xmltv_source($config[PARAM_INDEXING_FLAG]);
+        $this->reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
 
         return true;
     }
@@ -285,9 +257,9 @@ class Epg_Manager_Xmltv
             try {
                 $positions = $this->load_program_index($channel_row);
                 if (!empty($positions)) {
-                    $cached_file = $this->cache_dir . $params[PARAM_HASH] . ".xmltv";
+                    $cached_file = self::$cache_dir . $params[PARAM_HASH] . ".xmltv";
                     if (!file_exists($cached_file)) {
-                        throw new Exception("cache file $cached_file not exist");
+                        throw new Exception("get_day_epg_items: cache file $cached_file not exist");
                     }
 
                     $handle = fopen($cached_file, 'rb');
@@ -404,7 +376,7 @@ class Epg_Manager_Xmltv
      * @param array|null $sources_hash
      * @return int 0 - if any active source is locked, 1 - if import successful and no other active locks, 2 - if no locks and no imports
      */
-    public function import_indexing_log($sources_hash = null)
+    public function import_indexing_log($sources_hash)
     {
         $has_locks = false;
         if (is_null($sources_hash)) {
@@ -437,46 +409,35 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * clear memory cache and cache for current xmltv source
+     * check xmltv source and return required flags for indexing
      *
-     * @return void
-     */
-    public function clear_current_epg_cache()
-    {
-        hd_debug_print(null, true);
-        $this->clear_epg_files($this->xmltv_url_params[PARAM_HASH]);
-    }
-
-    /**
-     * indexing xmltv file to make channel to display-name map and collect picons for channels
-     * or index all if $full is true
-     *
+     * @param array $params
      * @param int $index_flag
-     * @return void
+     * @return int
      */
-    public function check_and_index_xmltv_source($index_flag)
+    public function check_xmltv_source($params, $index_flag)
     {
         hd_debug_print(null, true);
 
-        if (empty($this->xmltv_url_params[PARAM_URI]) || empty($this->xmltv_url_params[PARAM_HASH])) {
+        if (empty($params[PARAM_URI]) || empty($params[PARAM_HASH])) {
             $exception_msg = "XMTLV EPG url not set";
             HD::set_last_error("xmltv_last_error", $exception_msg);
-            $index_log = get_temp_path("{$this->xmltv_url_params[PARAM_HASH]}_indexing.log");
+            $index_log = get_temp_path("{$params[PARAM_HASH]}_indexing.log");
             if (file_exists($index_log)) {
                 unlink($index_log);
             }
-            return;
+            return 0;
         }
 
-        $url = $this->xmltv_url_params[PARAM_URI];
-        $hash = $this->xmltv_url_params[PARAM_HASH];
+        $url = $params[PARAM_URI];
+        $hash = $params[PARAM_HASH];
 
-        $cache_ttl = !isset($this->xmltv_url_params[PARAM_CACHE]) ? XMLTV_CACHE_AUTO : $this->xmltv_url_params[PARAM_CACHE];
+        $cache_ttl = !isset($params[PARAM_CACHE]) ? XMLTV_CACHE_AUTO : $params[PARAM_CACHE];
 
         HD::set_last_error("xmltv_last_error", null);
 
-        $cached_file = $this->cache_dir . $hash . ".xmltv";
-        $cached_db = $this->cache_dir . $hash . ".db";
+        $cached_file = self::$cache_dir . $hash . ".xmltv";
+        $cached_db = self::$cache_dir . $hash . ".db";
         hd_debug_print("Checking cached xmltv file: $cached_file", true);
         $expired = true;
         if (!file_exists($cached_file) || !file_exists($cached_db)) {
@@ -486,11 +447,13 @@ class Epg_Manager_Xmltv
             hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $modify_time_file), true);
 
             if ($cache_ttl === XMLTV_CACHE_AUTO) {
-                $this->curl_wrapper->set_url($url);
-                if (!$this->curl_wrapper->check_is_expired()) {
+                $curl_wrapper = new Curl_Wrapper();
+                $curl_wrapper->init($url);
+                $hash = Curl_Wrapper::get_url_hash($url);
+                if (!$curl_wrapper->check_is_expired($url)) {
                     $expired = false;
-                } else if ($this->curl_wrapper->is_cached_etag()) {
-                    $this->curl_wrapper->clear_cached_etag();
+                } else if (Curl_Wrapper::is_cached_etag($hash)) {
+                    Curl_Wrapper::clear_cached_etag($hash);
                 }
             } else if (filesize($cached_file) !== 0) {
                 $max_cache_time = 3600 * 24 * $cache_ttl;
@@ -503,33 +466,45 @@ class Epg_Manager_Xmltv
         }
 
         if ($expired) {
-            hd_debug_print("Xmltv cache expired.");
-            $this->reindex_xmltv(true, $index_flag);
-            return;
+            $index_flag |= INDEXING_DOWNLOAD;
+            hd_debug_print("Xmltv cache expired. Indexing flags: " . $index_flag, true);
+            return $index_flag;
         }
 
         hd_debug_print("Cached file: $cached_file is not expired");
-        $indexed = $this->get_indexes_info();
+        $indexed = $this->get_indexes_info($params[PARAM_HASH]);
 
         // index for picons has not verified because it always exist if channels index is present
         $channels_valid = ($indexed[self::TABLE_CHANNELS] !== -1);
         $entries_valid = ($indexed[self::TABLE_ENTRIES] !== -1);
 
-        if ($channels_valid && ($index_flag & INDEXING_ENTRIES) === 0) {
-            hd_debug_print("Xmltv channels index is valid");
-            $this->clear_log($hash);
-            return;
+        if ($channels_valid) {
+            if (($index_flag & INDEXING_ENTRIES) === 0) {
+                hd_debug_print("Xmltv channels index is valid");
+                self::clear_log($hash);
+                return 0;
+            }
+
+            if ($entries_valid) {
+                hd_debug_print("Xmltv channels and entries index are valid");
+                self::clear_log($hash);
+                return 0;
+            }
         }
 
-        if ($channels_valid && $entries_valid) {
-            hd_debug_print("Xmltv channels and entries index are valid");
-            $this->clear_log($hash);
-            return;
+        if (!$channels_valid) {
+            hd_debug_print("Xmltv channels not valid");
+            $index_flag |= INDEXING_CHANNELS;
+        }
+
+        if (!$entries_valid && ($index_flag & INDEXING_ENTRIES) !== 0) {
+            hd_debug_print("Xmltv entries not valid");
+            $index_flag |= INDEXING_ENTRIES;
         }
 
         // downloaded xmltv file exists, not expired but indexes for channels, picons and positions not exists
         hd_debug_print("Index flag: $index_flag");
-        $this->reindex_xmltv(false, $index_flag);
+        return $index_flag;
     }
 
     /**
@@ -542,20 +517,13 @@ class Epg_Manager_Xmltv
     public function is_index_locked($hash, $index_flag)
     {
         $locked = false;
-        if ($index_flag & INDEXING_DOWNLOAD) {
-            $dirs = (glob($this->cache_dir . $hash . "_*.lockd", GLOB_ONLYDIR));
-            $locked |= !empty($dirs);
+        foreach (self::$index_flags as $flag) {
+            if ($index_flag & $flag) {
+                $dirs = glob(self::get_lock_name($hash, $flag, '*'), GLOB_ONLYDIR);
+                $locked |= !empty($dirs);
+            }
         }
 
-        if ($index_flag & INDEXING_CHANNELS) {
-            $dirs = (glob($this->cache_dir . $hash . "_*.lockc", GLOB_ONLYDIR));
-            $locked |= !empty($dirs);
-        }
-
-        if ($index_flag & INDEXING_ENTRIES) {
-            $dirs = (glob($this->cache_dir . $hash . "_*.locke", GLOB_ONLYDIR));
-            $locked |= !empty($dirs);
-        }
         return $locked;
     }
 
@@ -566,7 +534,7 @@ class Epg_Manager_Xmltv
      */
     public function get_any_index_locked()
     {
-        $dirs = glob($this->cache_dir . "*.lock?", GLOB_ONLYDIR);
+        $dirs = glob(self::get_lock_name('', 0), GLOB_ONLYDIR);
 
         foreach ($dirs as $dir) {
             $locks[] = basename($dir);
@@ -581,16 +549,10 @@ class Epg_Manager_Xmltv
      */
     public function lock_index($hash, $index_flag)
     {
-        if ($index_flag & INDEXING_DOWNLOAD) {
-            $this->set_lock($this->cache_dir . $hash . "_$this->pid.lockd", true);
-        }
-
-        if ($index_flag & INDEXING_CHANNELS) {
-            $this->set_lock($this->cache_dir . $hash . "_$this->pid.lockc", true);
-        }
-
-        if ($index_flag & INDEXING_ENTRIES) {
-            $this->set_lock($this->cache_dir . $hash . "_$this->pid.locke", true);
+        foreach (self::$index_flags as $flag) {
+            if ($index_flag & $flag) {
+                $this->set_lock(self::get_lock_name($hash, $flag), true);
+            }
         }
     }
 
@@ -600,16 +562,10 @@ class Epg_Manager_Xmltv
      */
     public function unlock_index($hash, $index_flag)
     {
-        if ($index_flag & INDEXING_DOWNLOAD) {
-            $this->set_lock($this->cache_dir . $hash . "_$this->pid.lockd", false);
-        }
-
-        if ($index_flag & INDEXING_CHANNELS) {
-            $this->set_lock($this->cache_dir . $hash . "_$this->pid.lockc", false);
-        }
-
-        if ($index_flag & INDEXING_ENTRIES) {
-            $this->set_lock($this->cache_dir . $hash . "_$this->pid.locke", false);
+        foreach (self::$index_flags as $flag) {
+            if ($index_flag & $flag) {
+                $this->set_lock(self::get_lock_name($hash, $flag), false);
+            }
         }
     }
 
@@ -619,14 +575,16 @@ class Epg_Manager_Xmltv
      * @param string|null $hash
      * @return void
      */
-    public function clear_epg_files($hash = null)
+    public function clear_epg_files($hash = '')
     {
         hd_debug_print(null, true);
-        if (empty($hash)) {
-            $this->curl_wrapper->clear_all_etag_cache();
-        } else {
-            $this->curl_wrapper->clear_cached_etag();
+
+        if (empty(self::$cache_dir)) {
+            hd_debug_print("Cache directory not set");
+            return;
         }
+
+        Curl_Wrapper::clear_cached_etag($hash);
 
         if (empty($hash)) {
             $this->epg_db = array();
@@ -634,12 +592,7 @@ class Epg_Manager_Xmltv
             unset($this->epg_db[$hash]);
         }
 
-        if (empty($this->cache_dir)) {
-            return;
-        }
-
-        $mask = empty($hash) ? "*" : $hash;
-        $dirs = glob($this->cache_dir . $mask . "_*.lock?", GLOB_ONLYDIR);
+        $dirs = glob(self::get_lock_name($hash, 0, '*'), GLOB_ONLYDIR);
         $locks = array();
         foreach ($dirs as $dir) {
             hd_debug_print("Found locks: $dir");
@@ -660,12 +613,11 @@ class Epg_Manager_Xmltv
             }
         }
 
-        $mask = empty($hash) ? "" : $hash;
-        $files = $this->cache_dir . $mask . "*";
+        $files = self::$cache_dir . $hash . "*";
         hd_debug_print("clear epg files: $files");
         array_map('unlink', glob($files));
         clearstatcache();
-        hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
+        hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
     }
 
     /**
@@ -702,6 +654,316 @@ class Epg_Manager_Xmltv
 
         hd_debug_print("Found indexes: " . json_encode($result));
         return $result;
+    }
+
+    /**
+     * Download and index xmltv source
+     *
+     * @param array $params
+     * @param int $indexing_flag
+     * @return void
+     */
+    public function reindex_xmltv($params, $indexing_flag)
+    {
+        hd_debug_print("Indexing xmltv");
+
+        $url = $params[PARAM_URI];
+        $url_hash = $params[PARAM_HASH];
+
+        if (empty($url) || empty($url_hash)) {
+            hd_debug_print("Url not set, skipped");
+            return;
+        }
+
+        $perf = new Perf_Collector();
+        $perf->reset('start');
+
+        $cached_file = self::$cache_dir . $url_hash . ".xmltv";
+
+        /// download source
+        if ($indexing_flag & INDEXING_DOWNLOAD) {
+            hd_debug_print("Download xmltv");
+            // download xmtv is denied if download or any indexing in process
+            if ($this->is_index_locked($url_hash, INDEXING_ALL)) {
+                hd_debug_print("File is indexing or downloading, skipped");
+                return;
+            }
+
+            HD::set_last_error("xmltv_last_error", null);
+
+            $this->lock_index($url_hash, INDEXING_DOWNLOAD);
+            $success = false;
+
+            try {
+                $tmp_filename = $cached_file . ".tmp";
+                if (file_exists($tmp_filename)) {
+                    unlink($tmp_filename);
+                }
+
+                if (preg_match("/jtv.?\.zip$/", basename(urldecode($url)))) {
+                    hd_debug_print("Unsupported EPG format (JTV)");
+                    throw new Exception("Unsupported EPG format (JTV)");
+                }
+
+                $perf->setLabel('start_download');
+                $this->download_xmltv($url, $tmp_filename);
+                $perf->setLabel('start_unpack');
+                $this->unpack_xmltv($tmp_filename, $cached_file);
+                $success = true;
+            } catch (Exception $ex) {
+                print_backtrace_exception($ex);
+                if (!empty($tmp_filename) && file_exists($tmp_filename)) {
+                    unlink($tmp_filename);
+                }
+
+                if (file_exists($cached_file)) {
+                    unlink($cached_file);
+                }
+            }
+
+            $this->unlock_index($url_hash, INDEXING_DOWNLOAD);
+
+            if (!$success) {
+                return;
+            }
+        }
+
+        /// Reindex channels and picons
+        if ($indexing_flag & INDEXING_CHANNELS) {
+            hd_debug_print("Start index channels and picons...");
+            $this->lock_index($url_hash, INDEXING_CHANNELS);
+
+            $success = false;
+            $file = false;
+            try {
+                if (!file_exists($cached_file)) {
+                    throw new Exception("reindex_xmltv_channels: Cache file $cached_file not exist");
+                }
+
+                $file = fopen($cached_file, 'rb');
+                if (!$file) {
+                    throw new Exception("reindex_xmltv_channels: Can't open file: $cached_file");
+                }
+
+                $db = $this->open_sqlite_db($url_hash, self::TABLE_CHANNELS, false);
+                if ($db === false) {
+                    throw new Exception("reindex_xmltv_channels: Can't open db: $url_hash");
+                }
+
+                $perf->setLabel('start_channels');
+
+                $ch_table_name = self::TABLE_CHANNELS;
+                $picons_table_name = self::TABLE_PICONS;
+
+                $query = "DROP TABLE IF EXISTS $ch_table_name;";
+                $query .= "DROP TABLE IF EXISTS $picons_table_name;";
+                $query .= "CREATE TABLE $ch_table_name (alias TEXT PRIMARY KEY not null, channel_id TEXT not null, picon_hash TEXT);";
+                $query .= "CREATE TABLE $picons_table_name (picon_hash TEXT PRIMARY KEY not null, picon_url TEXT);";
+                $res = $db->exec_transaction($query);
+                if (!$res) {
+                    throw new Exception("Error transaction: $query");
+                }
+
+                $query = '';
+                while (!feof($file)) {
+                    $line = stream_get_line($file, 0, "<channel ");
+                    if (empty($line)) continue;
+
+                    fseek($file, -9, SEEK_CUR);
+                    $str = fread($file, 9);
+                    if ($str !== "<channel ") continue;
+
+                    $line = stream_get_line($file, 0, "</channel>");
+                    if (empty($line)) continue;
+
+                    $line = "<channel " . $line . "</channel>";
+
+                    $xml_node = new DOMDocument();
+                    $xml_node->loadXML($line);
+                    foreach ($xml_node->getElementsByTagName('channel') as $tag) {
+                        $channel_id = $tag->getAttribute('id');
+                    }
+
+                    if (empty($channel_id)) continue;
+
+                    $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+                    $picon_hash = '';
+                    foreach ($xml_node->getElementsByTagName('icon') as $tag) {
+                        if (is_proto_http($tag->getAttribute('src'))) {
+                            $picon_url = $tag->getAttribute('src');
+                            if (!empty($picon_url)) {
+                                $picon_hash = md5($picon_url);
+                                $q_url = Sql_Wrapper::sql_quote($picon_url);
+                                $query .= "INSERT OR REPLACE INTO $picons_table_name (picon_hash, picon_url) VALUES('$picon_hash', $q_url);";
+                                break;
+                            }
+                        }
+                    }
+
+                    $query .= "INSERT OR REPLACE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_channel_id, $q_channel_id, '$picon_hash');";
+
+                    foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
+                        $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8"));
+                        $query .= "INSERT OR REPLACE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_alias, $q_channel_id, '$picon_hash');";
+                    }
+                }
+                $db->exec_transaction($query);
+
+                $res = $db->query_value("SELECT count(DISTINCT channel_id) FROM $ch_table_name;");
+                $channels = empty($res) ? 0 : (int)$res;
+
+                $res = $db->query_value("SELECT COUNT(*) FROM $picons_table_name;");
+                $picons = empty($res) ? 0 : (int)$res;
+
+                $perf->setLabel('end_channels');
+                $report = $perf->getFullReport('start_channels', 'end_channels');
+
+                hd_debug_print("Total channels id's: $channels");
+                hd_debug_print("Total known picons:  $picons");
+                hd_debug_print("Reindexing channels: {$report[Perf_Collector::TIME]} secs");
+                hd_debug_print("Memory usage:        {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+                hd_debug_print("Storage space:       " . HD::get_storage_size(self::$cache_dir));
+                hd_debug_print_separator();
+                $success = true;
+            } catch (Exception $ex) {
+                hd_debug_print($ex->getMessage());
+            }
+
+            if ($file) {
+                fclose($file);
+            }
+
+            $this->unlock_index($url_hash, INDEXING_CHANNELS);
+            if (!$success) {
+                return;
+            }
+        }
+
+        /// Reindex positions
+        if ($indexing_flag & INDEXING_ENTRIES) {
+            hd_debug_print("Start indexing entries...");
+            $this->lock_index($url_hash, INDEXING_ENTRIES);
+
+            $file = false;
+            try {
+                if (!file_exists($cached_file)) {
+                    throw new Exception("reindex_xmltv_entries: Cache file $cached_file not exist");
+                }
+
+                $file = fopen($cached_file, 'rb');
+                if (!$file) {
+                    throw new Exception("reindex_xmltv_entries: Can't open file: $cached_file");
+                }
+
+                $db = $this->open_sqlite_db($url_hash, self::TABLE_ENTRIES, false);
+                if ($db === false) {
+                    throw new Exception("reindex_xmltv_entries: Can't open db: $url_hash");
+                }
+
+                hd_debug_print("Indexing positions for: $url", true);
+                $perf->setLabel('start_reindex_entries');
+
+                $pos_table_name = self::TABLE_ENTRIES;
+                $query = "DROP TABLE IF EXISTS $pos_table_name;";
+                $query .= "CREATE TABLE $pos_table_name (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);";
+                $res = $db->exec_transaction($query);
+                if (!$res) {
+                    throw new Exception("Error transaction: $query");
+                }
+
+                hd_debug_print("Begin transactions...", true);
+                $db->exec('BEGIN;');
+
+                $stm = $db->prepare("INSERT INTO $pos_table_name (channel_id, start, end) VALUES(:channel_id, :start, :end);");
+                $stm->bindParam(":channel_id", $prev_channel);
+                $stm->bindParam(":start", $start_program_block);
+                $stm->bindParam(":end", $tag_end_pos);
+
+                $start_program_block = 0;
+                $prev_channel = null;
+                fseek($file, 0);
+                while (!feof($file)) {
+                    $tag_start_pos = ftell($file);
+                    $line = stream_get_line($file, 0, "</programme>");
+                    if ($line === false) break;
+
+                    $offset = strpos($line, '<programme');
+                    if ($offset === false) {
+                        // check if end
+                        $end_tv = strpos($line, "</tv>");
+                        if ($end_tv !== false) {
+                            $tag_end_pos = $end_tv + $tag_start_pos;
+                            $stm->execute();
+                            break;
+                        }
+
+                        // if open tag not found - skip chunk
+                        continue;
+                    }
+
+                    // end position include closing tag!
+                    $tag_end_pos = ftell($file);
+                    // append position of open tag to file position of chunk
+                    $tag_start_pos += $offset;
+                    // calculate channel id
+                    $ch_start = strpos($line, 'channel="', $offset);
+                    if ($ch_start === false) {
+                        continue;
+                    }
+
+                    $ch_start += 9;
+                    $ch_end = strpos($line, '"', $ch_start);
+                    if ($ch_end === false) {
+                        continue;
+                    }
+
+                    $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
+                    if (empty($channel_id)) continue;
+
+                    if ($prev_channel === null) {
+                        $prev_channel = $channel_id;
+                        $start_program_block = $tag_start_pos;
+                    } else if ($prev_channel !== $channel_id) {
+                        $tag_end_pos = $tag_start_pos;
+                        $stm->execute();
+                        $prev_channel = $channel_id;
+                        $start_program_block = $tag_start_pos;
+                    }
+                }
+
+                hd_debug_print("End transactions...", true);
+                $db->exec('COMMIT;');
+
+                $res = $db->query_value("SELECT count(DISTINCT channel_id) FROM $pos_table_name;");
+                $total_epg = empty($res) ? 0 : (int)$res;
+
+                $res = $db->query_value("SELECT COUNT(*) FROM $pos_table_name;");
+                $total_blocks = empty($res) ? 0 : (int)$res;
+
+                $perf->setLabel('end_reindex_entries');
+                $report = $perf->getFullReport('start_reindex_entries', 'end_reindex_entries');
+
+                hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
+                hd_debug_print("Reindexing entries: {$report[Perf_Collector::TIME]} secs");
+                hd_debug_print("Memory usage:       {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+                hd_debug_print("Storage space:      " . HD::get_storage_size(self::$cache_dir));
+                hd_debug_print_separator();
+            } catch (Exception $ex) {
+                hd_debug_print($ex->getMessage());
+            }
+
+            if ($file) {
+                fclose($file);
+            }
+
+            $this->unlock_index($url_hash, INDEXING_ENTRIES);
+        }
+
+        if ($perf->getLabelsCount() > 1) {
+            $report = $perf->getFullReport();
+            hd_debug_print("Reindexing XMLTV source done: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print_separator();
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -816,6 +1078,68 @@ class Epg_Manager_Xmltv
     }
 
     ///////////////////////////////////////////////////////////////////////////////
+    /// static methods
+
+    protected static function get_node_value($node, $name)
+    {
+        $value = '';
+        foreach ($node->getElementsByTagName($name) as $element) {
+            if (!empty($element->nodeValue)) {
+                $value = $element->nodeValue;
+                break;
+            }
+        }
+
+        return $value;
+    }
+
+    protected static function get_node_attribute($node, $name, $attribute)
+    {
+        $value = '';
+        foreach ($node->getElementsByTagName($name) as $element) {
+            $value = $element->getAttribute($attribute);
+            break;
+        }
+
+        return $value;
+    }
+
+    /**
+     * If $hash is empty return glob mask for all locks in cache dir *.?lock
+     * If $index_flag == 0 return glob mask for any lock for $hash and $pid .?lock
+     * @param string $hash
+     * @param int $index_flag
+     * @param string $pid
+     * @return string
+     */
+    protected static function get_lock_name($hash, $index_flag, $pid = '')
+    {
+        $pid = empty($pid) ? getmypid() : $pid;
+
+        if ($index_flag === INDEXING_DOWNLOAD) {
+            $ext = self::$cache_dir . $hash . "_$pid.dlock";
+        } else if ($index_flag === INDEXING_CHANNELS) {
+            $ext = self::$cache_dir . $hash . "_$pid.clock";
+        } else if ($index_flag === INDEXING_ENTRIES) {
+            $ext = self::$cache_dir . $hash . "_$pid.elock";
+        } else if (empty($hash)) {
+            $ext = self::$cache_dir . "*.?lock";
+        } else {
+            $ext = self::$cache_dir . $hash . "_$pid.?lock";
+        }
+
+        return $ext;
+    }
+
+    protected static function clear_log($hash)
+    {
+        $index_log = get_temp_path("{$hash}_indexing.log");
+        if (file_exists($index_log)) {
+            unlink($index_log);
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////
     /// private methods
 
     private function set_lock($name, $lock)
@@ -846,7 +1170,7 @@ class Epg_Manager_Xmltv
             $db_name = $db_name . "_entries";
         }
 
-        $db_file = $this->cache_dir . $db_name . ".db";
+        $db_file = self::$cache_dir . $db_name . ".db";
         // in read-only database can't be created
         if ($readonly && !file_exists($db_file)) {
             hd_debug_print("File '$db_file' not found");
@@ -867,344 +1191,50 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * Download and index xmltv source
-     *
-     * @param bool $download
-     * @param int $indexing_flag
-     * @return void
+     * @param string $url
+     * @param string $filename
+     * @throws Exception
      */
-    private function reindex_xmltv($download, $indexing_flag)
+    private function download_xmltv($url, $filename)
     {
-        hd_debug_print("Indexing xmltv");
+        hd_debug_print("Download xmltv source: $url");
+        hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
 
-        $url = $this->xmltv_url_params[PARAM_URI];
-        $url_hash = $this->xmltv_url_params[PARAM_HASH];
-        $cached_file = $this->cache_dir . $url_hash . ".xmltv";
+        $perf = new Perf_Collector();
 
-        if (empty($url) || empty($url_hash)) {
-            hd_debug_print("Url not set, skipped");
-            return;
+        $perf->reset('start_download');
+
+        hd_debug_print("Download: $url");
+        $curl_wrapper = new Curl_Wrapper();
+        Curl_Wrapper::clear_cached_etag(hash('crc32', $url));
+
+        $curl_wrapper->init($url);
+        if (!$curl_wrapper->download_file($url, $filename, true)) {
+            throw new Exception("Can't exec curl");
         }
 
-        if ($download) {
-            // download xmtv is denied if download or any indexing in process
-            if ($this->is_index_locked($url_hash, INDEXING_ALL)) {
-                hd_debug_print("File is indexing or downloading, skipped");
-                return;
-            }
-
-            $this->lock_index($url_hash, INDEXING_DOWNLOAD);
-            $success = false;
-            try {
-                HD::set_last_error("xmltv_last_error", null);
-
-                if (preg_match("/jtv.?\.zip$/", basename(urldecode($url)))) {
-                    hd_debug_print("Unsupported EPG format (JTV)");
-                    throw new Exception("Unsupported EPG format (JTV)");
-                }
-
-                hd_debug_print("Download xmltv source: $url");
-                hd_debug_print_separator();
-
-
-                hd_debug_print("Storage space in cache dir: " . HD::get_storage_size($this->cache_dir));
-                $tmp_filename = $cached_file . ".tmp";
-                if (file_exists($tmp_filename)) {
-                    unlink($tmp_filename);
-                }
-
-                $this->perf->reset('download');
-
-                hd_debug_print("Download: $url");
-                $this->curl_wrapper->set_url($url);
-                $this->curl_wrapper->clear_cached_etag();
-                if (!$this->curl_wrapper->download_file($tmp_filename, true)) {
-                    throw new Exception("Can't exec curl");
-                }
-
-                $http_code = $this->curl_wrapper->get_response_code();
-                if ($http_code !== 200) {
-                    throw new Exception("Download error ($http_code) $url" . PHP_EOL . PHP_EOL
-                        . $this->curl_wrapper->get_raw_response_headers());
-                }
-
-                $this->perf->setLabel('end_download');
-                $file_time = filemtime($tmp_filename);
-                $dl_time = $this->perf->getReportItem(Perf_Collector::TIME, 'download');
-                $file_size = filesize($tmp_filename);
-                $bps = $file_size / $dl_time;
-                $si_prefix = array('B/s', 'KB/s', 'MB/s');
-                $base = 1024;
-                $class = min((int)log($bps, $base), count($si_prefix) - 1);
-                $speed = sprintf('%1.2f', $bps / pow($base, $class)) . ' ' . $si_prefix[$class];
-
-                hd_debug_print("ETag value: " . $this->curl_wrapper->get_cached_etag());
-                hd_debug_print("Modify time:    " . date("Y-m-d H:i", $file_time));
-                hd_debug_print("Download size:  $file_size bytes");
-                hd_debug_print("Download time:  $dl_time secs");
-                hd_debug_print("Download speed: $speed");
-                hd_debug_print_separator();
-
-                $this->perf->setLabel('unpack');
-                $this->unpack_xmltv($tmp_filename, $cached_file);
-                $this->perf->setLabel('end_unpack');
-                $time = $this->perf->getReportItem(Perf_Collector::TIME, 'unpack');
-                hd_debug_print("Unpack to:   $cached_file");
-                hd_debug_print("Unpack time: $time secs");
-                hd_debug_print_separator();
-
-                $success = true;
-            } catch (Exception $ex) {
-                print_backtrace_exception($ex);
-                if (!empty($tmp_filename) && file_exists($tmp_filename)) {
-                    unlink($tmp_filename);
-                }
-
-                if (file_exists($cached_file)) {
-                    unlink($cached_file);
-                }
-            }
-
-            $this->unlock_index($url_hash, INDEXING_DOWNLOAD);
-
-            if (!$success) {
-                return;
-            }
+        $http_code = $curl_wrapper->get_response_code();
+        if ($http_code !== 200) {
+            throw new Exception("Download error ($http_code) $url" . PHP_EOL . PHP_EOL . $curl_wrapper->get_raw_response_headers());
         }
 
-        /////////////////////////////////////////////////////////////////
-        /// Reindex channels and picons
+        $perf->setLabel('end_download');
+        $file_time = filemtime($filename);
+        $dl_time = $perf->getReportItem(Perf_Collector::TIME, 'start_download', 'end_download');
+        $file_size = filesize($filename);
+        $bps = $file_size / $dl_time;
+        $si_prefix = array('B/s', 'KB/s', 'MB/s');
+        $base = 1024;
+        $class = min((int)log($bps, $base), count($si_prefix) - 1);
+        $speed = sprintf('%1.2f', $bps / pow($base, $class)) . ' ' . $si_prefix[$class];
 
-        if ($indexing_flag & INDEXING_CHANNELS) {
-            hd_debug_print("Start reindex channels and picons...");
-            $this->lock_index($url_hash, INDEXING_CHANNELS);
-
-            $success = false;
-            $file = false;
-            try {
-                if (!file_exists($cached_file)) {
-                    throw new Exception("Cache file $cached_file not exist");
-                }
-
-                $file = fopen($cached_file, 'rb');
-                if (!$file) {
-                    throw new Exception("Can't open file: $cached_file");
-                }
-
-                $db = $this->open_sqlite_db($url_hash, self::TABLE_CHANNELS, false);
-                if ($db === false) {
-                    throw new Exception("Can't open db: $url_hash");
-                }
-
-                $this->perf->reset('start_reindex_channels');
-
-                $ch_table_name = self::TABLE_CHANNELS;
-                $picons_table_name = self::TABLE_PICONS;
-
-                $query = "DROP TABLE IF EXISTS $ch_table_name;";
-                $query .= "DROP TABLE IF EXISTS $picons_table_name;";
-                $query .= "CREATE TABLE $ch_table_name (alias TEXT PRIMARY KEY not null, channel_id TEXT not null, picon_hash TEXT);";
-                $query .= "CREATE TABLE $picons_table_name (picon_hash TEXT PRIMARY KEY not null, picon_url TEXT);";
-                $res = $db->exec_transaction($query);
-                if (!$res) {
-                    throw new Exception("Error transaction: $query");
-                }
-
-                $query = '';
-                while (!feof($file)) {
-                    $line = stream_get_line($file, 0, "<channel ");
-                    if (empty($line)) continue;
-
-                    fseek($file, -9, SEEK_CUR);
-                    $str = fread($file, 9);
-                    if ($str !== "<channel ") continue;
-
-                    $line = stream_get_line($file, 0, "</channel>");
-                    if (empty($line)) continue;
-
-                    $line = "<channel " . $line . "</channel>";
-
-                    $xml_node = new DOMDocument();
-                    $xml_node->loadXML($line);
-                    foreach ($xml_node->getElementsByTagName('channel') as $tag) {
-                        $channel_id = $tag->getAttribute('id');
-                    }
-
-                    if (empty($channel_id)) continue;
-
-                    $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
-                    $picon_hash = '';
-                    foreach ($xml_node->getElementsByTagName('icon') as $tag) {
-                        if (is_proto_http($tag->getAttribute('src'))) {
-                            $picon_url = $tag->getAttribute('src');
-                            if (!empty($picon_url)) {
-                                $picon_hash = md5($picon_url);
-                                $q_url = Sql_Wrapper::sql_quote($picon_url);
-                                $query .= "INSERT OR REPLACE INTO $picons_table_name (picon_hash, picon_url) VALUES('$picon_hash', $q_url);";
-                                break;
-                            }
-                        }
-                    }
-
-                    $query .= "INSERT OR REPLACE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_channel_id, $q_channel_id, '$picon_hash');";
-
-                    foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
-                        $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8"));
-                        $query .= "INSERT OR REPLACE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_alias, $q_channel_id, '$picon_hash');";
-                    }
-                }
-                $db->exec_transaction($query);
-
-                $res = $db->query_value("SELECT count(DISTINCT channel_id) FROM $ch_table_name;");
-                $channels = empty($res) ? 0 : (int)$res;
-
-                $res = $db->query_value("SELECT COUNT(*) FROM $picons_table_name;");
-                $picons = empty($res) ? 0 : (int)$res;
-
-                $this->perf->setLabel('end_reindex_channels');
-                $report = $this->perf->getFullReport('start_reindex_channels');
-
-                hd_debug_print("Total channels id's: $channels");
-                hd_debug_print("Total known picons: $picons");
-                hd_debug_print("Reindexing EPG channels done: {$report[Perf_Collector::TIME]} secs");
-                hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
-                hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-                hd_debug_print_separator();
-                $success = true;
-            } catch (Exception $ex) {
-                hd_debug_print($ex->getMessage());
-            }
-
-            if ($file) {
-                fclose($file);
-            }
-
-            $this->unlock_index($url_hash, INDEXING_CHANNELS);
-            if (!$success) {
-                return;
-            }
-        }
-
-        /////////////////////////////////////////////////////////////////
-        /// Reindex positions
-
-        if ($indexing_flag & INDEXING_ENTRIES) {
-            $this->lock_index($url_hash, INDEXING_ENTRIES);
-
-            $file = false;
-            try {
-                if (!file_exists($cached_file)) {
-                    throw new Exception("Cache file $cached_file not exist");
-                }
-
-                $file = fopen($cached_file, 'rb');
-                if (!$file) {
-                    throw new Exception("Can't open file: $cached_file");
-                }
-
-                $db = $this->open_sqlite_db($url_hash, self::TABLE_ENTRIES, false);
-                if ($db === false) {
-                    throw new Exception("Can't open db: $url_hash");
-                }
-
-                hd_debug_print("Indexing positions for: $url", true);
-                $this->perf->reset('start_reindex_entries');
-
-                $pos_table_name = self::TABLE_ENTRIES;
-                $query = "DROP TABLE IF EXISTS $pos_table_name;";
-                $query .= "CREATE TABLE $pos_table_name (channel_id STRING not null, start INTEGER, end INTEGER, UNIQUE (channel_id, start) ON CONFLICT REPLACE);";
-                $res = $db->exec_transaction($query);
-                if (!$res) {
-                    throw new Exception("Error transaction: $query");
-                }
-
-                hd_debug_print("Begin transactions...");
-                $db->exec('BEGIN;');
-
-                $stm = $db->prepare("INSERT INTO $pos_table_name (channel_id, start, end) VALUES(:channel_id, :start, :end);");
-                $stm->bindParam(":channel_id", $prev_channel);
-                $stm->bindParam(":start", $start_program_block);
-                $stm->bindParam(":end", $tag_end_pos);
-
-                $start_program_block = 0;
-                $prev_channel = null;
-                fseek($file, 0);
-                while (!feof($file)) {
-                    $tag_start_pos = ftell($file);
-                    $line = stream_get_line($file, 0, "</programme>");
-                    if ($line === false) break;
-
-                    $offset = strpos($line, '<programme');
-                    if ($offset === false) {
-                        // check if end
-                        $end_tv = strpos($line, "</tv>");
-                        if ($end_tv !== false) {
-                            $tag_end_pos = $end_tv + $tag_start_pos;
-                            $stm->execute();
-                            break;
-                        }
-
-                        // if open tag not found - skip chunk
-                        continue;
-                    }
-
-                    // end position include closing tag!
-                    $tag_end_pos = ftell($file);
-                    // append position of open tag to file position of chunk
-                    $tag_start_pos += $offset;
-                    // calculate channel id
-                    $ch_start = strpos($line, 'channel="', $offset);
-                    if ($ch_start === false) {
-                        continue;
-                    }
-
-                    $ch_start += 9;
-                    $ch_end = strpos($line, '"', $ch_start);
-                    if ($ch_end === false) {
-                        continue;
-                    }
-
-                    $channel_id = substr($line, $ch_start, $ch_end - $ch_start);
-                    if (empty($channel_id)) continue;
-
-                    if ($prev_channel === null) {
-                        $prev_channel = $channel_id;
-                        $start_program_block = $tag_start_pos;
-                    } else if ($prev_channel !== $channel_id) {
-                        $tag_end_pos = $tag_start_pos;
-                        $stm->execute();
-                        $prev_channel = $channel_id;
-                        $start_program_block = $tag_start_pos;
-                    }
-                }
-
-                hd_debug_print("End transactions...");
-                $db->exec('COMMIT;');
-
-                $res = $db->query_value("SELECT count(DISTINCT channel_id) FROM $pos_table_name;");
-                $total_epg = empty($res) ? 0 : (int)$res;
-
-                $res = $db->query_value("SELECT COUNT(*) FROM $pos_table_name;");
-                $total_blocks = empty($res) ? 0 : (int)$res;
-
-                $this->perf->setLabel('end_reindex_entries');
-                $report = $this->perf->getFullReport('start_reindex_entries');
-
-                hd_debug_print("Total unique epg id's indexed: $total_epg, total blocks: $total_blocks");
-                hd_debug_print("Reindexing EPG positions done: {$report[Perf_Collector::TIME]} secs");
-                hd_debug_print("Storage space in cache dir after reindexing: " . HD::get_storage_size($this->cache_dir));
-                hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-                hd_debug_print_separator();
-            } catch (Exception $ex) {
-                hd_debug_print($ex->getMessage());
-            }
-
-            if ($file) {
-                fclose($file);
-            }
-
-            $this->unlock_index($url_hash, INDEXING_ENTRIES);
-        }
+        hd_debug_print("ETag value:     " . trim(Curl_Wrapper::get_cached_etag($url), '"'));
+        hd_debug_print("Modify time:    " . date("Y-m-d H:i", $file_time));
+        hd_debug_print("Download size:  $file_size bytes");
+        hd_debug_print("Download time:  $dl_time secs");
+        hd_debug_print("Download speed: $speed");
+        hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
+        hd_debug_print_separator();
     }
 
     /**
@@ -1219,16 +1249,18 @@ class Epg_Manager_Xmltv
             unlink($cached_file);
         }
 
+        $perf = new Perf_Collector();
+        $perf->reset('start_unpack');
+
         $file_time = filemtime($tmp_filename);
         $handle = fopen($tmp_filename, "rb");
         $hdr = fread($handle, 8);
         fclose($handle);
 
         if (0 === mb_strpos($hdr, "\x1f\x8b\x08")) {
-            hd_debug_print("GZ signature: " . bin2hex(substr($hdr, 0, 3)), true);
+            hd_debug_print("GZ signature:  " . bin2hex(substr($hdr, 0, 3)), true);
             rename($tmp_filename, $cached_file . '.gz');
             $tmp_filename = $cached_file . '.gz';
-            hd_debug_print("ungzip $tmp_filename to $cached_file");
             $cmd = "gzip -d $tmp_filename 2>&1";
             system($cmd, $ret);
             if ($ret !== 0) {
@@ -1237,11 +1269,9 @@ class Epg_Manager_Xmltv
             clearstatcache();
             $size = filesize($cached_file);
             touch($cached_file, $file_time);
-            hd_debug_print("$size bytes ungzipped to $cached_file in "
-                . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+            $action = 'UnGZip:';
         } else if (0 === mb_strpos($hdr, "\x50\x4b\x03\x04")) {
             hd_debug_print("ZIP signature: " . bin2hex(substr($hdr, 0, 4)), true);
-            hd_debug_print("unzip $tmp_filename to $cached_file");
             $filename = trim(shell_exec("unzip -lq '$tmp_filename'|grep -E '[\d:]+'"));
             if (empty($filename)) {
                 throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
@@ -1252,7 +1282,7 @@ class Epg_Manager_Xmltv
             }
 
             hd_debug_print("zip list: $filename");
-            $cmd = "unzip -oq $tmp_filename -d $this->cache_dir 2>&1";
+            $cmd = "unzip -oq $tmp_filename -d " . self::$cache_dir . " 2>&1";
             system($cmd, $ret);
             unlink($tmp_filename);
             if ($ret !== 0) {
@@ -1263,63 +1293,23 @@ class Epg_Manager_Xmltv
             rename($filename, $cached_file);
             $size = filesize($cached_file);
             touch($cached_file, $file_time);
-            hd_debug_print("$size bytes unzipped to $cached_file in "
-                . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+            $action = 'UnZip: ';
         } else if (false !== mb_strpos($hdr, "<?xml")) {
             hd_debug_print("XML signature: " . substr($hdr, 0, 5), true);
-            hd_debug_print("rename $tmp_filename to $cached_file");
             rename($tmp_filename, $cached_file);
             $size = filesize($cached_file);
             touch($cached_file, $file_time);
-            hd_debug_print("$size bytes stored to $cached_file in "
-                . $this->perf->getReportItemCurrent(Perf_Collector::TIME, 'unpack') . " secs");
+            $action = 'Copy:  ';
         } else {
             hd_debug_print("Unknown signature: " . bin2hex($hdr), true);
             throw new Exception(TR::load('err_unknown_file_type'));
         }
-    }
 
-    protected static function get_node_value($node, $name)
-    {
-        $value = '';
-        foreach ($node->getElementsByTagName($name) as $element) {
-            if (!empty($element->nodeValue)) {
-                $value = $element->nodeValue;
-                break;
-            }
-        }
-
-        return $value;
-    }
-
-    protected static function get_node_attribute($node, $name, $attribute)
-    {
-        $value = '';
-        foreach ($node->getElementsByTagName($name) as $element) {
-            $value = $element->getAttribute($attribute);
-            break;
-        }
-
-        return $value;
-    }
-
-    protected function lock_type($index_flag)
-    {
-        if ($index_flag & INDEXING_CHANNELS) {
-            $ext = ".lockc";
-        } else if ($index_flag & INDEXING_ENTRIES) {
-            $ext = ".locke";
-        } else {
-            $ext = ".lock";
-        }
-        return $ext;
-    }
-
-    protected function clear_log($hash)
-    {
-        $index_log = get_temp_path("{$hash}_indexing.log");
-        if (file_exists($index_log)) {
-            unlink($index_log);
-        }
+        $unpack_time = $perf->getReportItemCurrent(Perf_Collector::TIME);
+        hd_debug_print("Cached file:   $cached_file");
+        hd_debug_print("$action        $size bytes");
+        hd_debug_print("Time:          $unpack_time secs");
+        hd_debug_print("Storage space: " . HD::get_storage_size(self::$cache_dir));
+        hd_debug_print_separator();
     }
 }

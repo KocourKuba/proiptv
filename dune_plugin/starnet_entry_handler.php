@@ -169,7 +169,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) break;
 
                 $this->plugin->init_epg_manager();
-                $this->plugin->safe_clear_selected_epg_cache();
+                $this->plugin->safe_clear_selected_epg_cache(null);
                 $this->plugin->reset_channels_loaded();
                 $action = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
                 if (HD::rows_api_support()) {

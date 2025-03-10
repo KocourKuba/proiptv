@@ -109,7 +109,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 clearstatcache();
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                $res = $epg_manager->import_indexing_log();
+                $res = $epg_manager->import_indexing_log($this->plugin->get_active_xmltv_ids());
                 if ($res === 1) {
                     hd_debug_print("Logs imported. Timer stopped");
                     return Action_Factory::invalidate_all_folders($plugin_cookies);
@@ -296,12 +296,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_EPG_SOURCE_SELECTED:
                 if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== ENGINE_JSON) break;
 
-                $epg_manager = $this->plugin->get_epg_manager();
-
-                if ($epg_manager === null) {
-                    return Action_Factory::show_title_dialog(TR::t('err_epg_manager'));
+                foreach ($this->plugin->get_active_xmltv_ids() as $id) {
+                    $this->plugin->safe_clear_selected_epg_cache($id);
                 }
-                $epg_manager->clear_current_epg_cache();
                 $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 

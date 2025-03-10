@@ -88,7 +88,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 clearstatcache();
-                $res = $epg_manager->import_indexing_log();
+                $res = $epg_manager->import_indexing_log($this->plugin->get_active_xmltv_ids());
                 if ($res === 0) {
                     return Action_Factory::change_behaviour($this->get_action_map(), 1000);
                 }
@@ -110,7 +110,6 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 return $post_action;
-                //return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id, true);

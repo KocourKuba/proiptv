@@ -575,7 +575,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->epg_manager = new Epg_Manager_Xmltv();
         }
 
-        $this->epg_manager->init_by_plugin($this);
+        $this->epg_manager->init($this);
     }
 
     /**
@@ -1437,31 +1437,30 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
+        $this->cleanup_active_xmltv_source();
+
+        $delay_load = $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
         $bg_indexing_runs = false;
         if ($this->picons_source !== PLAYLIST_PICONS) {
             $all_sources = $this->get_active_sources();
             if ($all_sources->size() === 0) {
                 hd_debug_print("No active XMLTV sources found to collect playlist icons...");
-            } else if ($this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)) {
-                $this->run_bg_epg_indexing($this->get_selected_xmltv_ids(), INDEXING_CHANNELS);
-                $bg_indexing_runs = true;
+            } else if ($delay_load) {
+                $bg_indexing_runs = $this->check_and_run_bg_indexing($all_sources, INDEXING_CHANNELS | INDEXING_ENTRIES);
             } else {
                 foreach ($all_sources as $params) {
-                    $this->epg_manager->set_url_params($params);
-                    $this->epg_manager->check_and_index_xmltv_source(INDEXING_CHANNELS);
+                    $flag = $this->epg_manager->check_xmltv_source($params, INDEXING_CHANNELS);
+                    if ($flag !== 0) {
+                        $this->epg_manager->reindex_xmltv($params, $flag);
+                    }
                 }
             }
         }
 
-        if ($this->channels_loaded) {
-            hd_debug_print("Channels already loaded");
-            if (!$bg_indexing_runs) {
-                $this->run_bg_epg_indexing($this->get_selected_xmltv_ids(), INDEXING_ENTRIES);
-            }
+        if ($this->channels_loaded && !$delay_load) {
+            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES);
             return true;
         }
-
-        $this->cleanup_active_xmltv_source();
 
         hd_debug_print_separator();
         hd_debug_print("Build categories and channels...");
@@ -1654,7 +1653,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print_separator();
 
         if (!$bg_indexing_runs) {
-            $this->run_bg_epg_indexing($this->get_selected_xmltv_ids(), INDEXING_ENTRIES);
+            $this->check_and_run_bg_indexing($this->get_active_sources(), INDEXING_ENTRIES);
         }
 
         $this->channels_loaded = true;
@@ -1688,59 +1687,76 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param array|string $sources
+     * @param Hashed_Array $sources
      * @param int $indexing_flag
-     * @param bool $force
+     * @return bool
+     */
+    public function check_and_run_bg_indexing($sources, $indexing_flag)
+    {
+        $indexing_run = false;
+        $to_index = array();
+        foreach ($sources as $source_id => $params) {
+            $indexing_flag = $this->epg_manager->check_xmltv_source($params, $indexing_flag);
+            if ($indexing_flag !== 0) {
+                $to_index[$source_id] = array('flag' => $indexing_flag, 'params' => $params);
+            }
+        }
+
+        foreach ($to_index as $source_id => $value) {
+            $this->run_bg_epg_indexing($source_id, $value['flag']);
+            $indexing_run = true;
+        }
+
+        return $indexing_run;
+    }
+
+    /**
+     * @param string $source_id
+     * @param int $indexing_flag
      * @return void
      */
-    public function run_bg_epg_indexing($sources, $indexing_flag, $force = false)
+    public function run_bg_epg_indexing($source_id, $indexing_flag)
     {
         hd_debug_print(null, true);
 
         $allow_index = false;
         $allow_index |= $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
         $allow_index |= $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-        if (!$force && !$allow_index) {
+        if (!$allow_index) {
             return;
         }
 
-        if (!is_array($sources)) {
-            $sources = array($sources);
+        $item = $this->get_xmltv_sources(XMLTV_SOURCE_ALL)->get($source_id);
+        if ($item === null) {
+            hd_debug_print("XMLTV source '$source_id' not found");
+            return;
         }
 
-        foreach ($sources as $source) {
-            $item = $this->get_xmltv_sources(XMLTV_SOURCE_ALL)->get($source);
-            if ($item === null) {
-                hd_debug_print("XMLTV source $source not found");
-                continue;
-            }
-
-            if (!isset($item[PARAM_HASH])) {
-                $item[PARAM_HASH] = Hashed_Array::hash($item[PARAM_URI]);
-            }
-
-            // background indexing performed only for one url!
-            hd_debug_print("Run background indexing for: ($source) {$item[PARAM_URI]}");
-            $config = array(
-                PARAM_ENABLE_DEBUG => LogSeverity::$is_debug,
-                PARAM_CACHE_DIR => $this->get_cache_dir(),
-                PARAMS_XMLTV => $item,
-                PARAM_INDEXING_FLAG => $indexing_flag
-            );
-
-            $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source));
-            hd_debug_print("Config: " . json_encode($config), true);
-            file_put_contents($config_file, pretty_json_format($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-
-            $log_path = get_temp_path("{$source}_bg_error.log");
-            export_DuneSystem();
-
-            $ext_php = get_platform_php();
-            $script_path = get_install_path('bin/index_epg.php');
-            $cmd = "$ext_php -f $script_path $config_file >$log_path 2>&1 &";
-            hd_debug_print("exec: $cmd", true);
-            shell_exec($cmd);
+        if (!isset($item[PARAM_HASH])) {
+            $item[PARAM_HASH] = Hashed_Array::hash($item[PARAM_URI]);
         }
+
+        // background indexing performed only for one url!
+        hd_debug_print("Run background indexing for: '$source_id': {$item[PARAM_URI]}");
+        $config = array(
+            PARAM_ENABLE_DEBUG => LogSeverity::$is_debug,
+            PARAM_CACHE_DIR => $this->get_cache_dir(),
+            PARAMS_XMLTV => $item,
+            PARAM_INDEXING_FLAG => $indexing_flag
+        );
+
+        $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source_id));
+        hd_debug_print("Config: " . json_encode($config), true);
+        file_put_contents($config_file, pretty_json_format($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        export_DuneSystem();
+
+        $ext_php = get_platform_php();
+        $script_path = get_install_path('bin/index_epg.php');
+        $log_path = get_temp_path("{$source_id}_bg_error.log");
+        $cmd = "$ext_php -f $script_path $config_file >$log_path 2>&1 &";
+        hd_debug_print("exec: $cmd", true);
+        shell_exec($cmd);
     }
 
     public function get_plugin_cookies()
@@ -1952,27 +1968,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * clear memory cache and entire cache folder for selected hash
      * if hash is empty clear all cache
      *
-     * @param string|null $hash
+     * @param string $hash
      * @return void
      */
-    public function safe_clear_selected_epg_cache($hash = null)
+    public function safe_clear_selected_epg_cache($hash)
     {
         hd_debug_print(null, true);
         if (isset($this->epg_manager)) {
             $this->epg_manager->clear_epg_files($hash);
-        }
-    }
-
-    /**
-     * clear cache for JSON epg manager
-     *
-     * @return void
-     */
-    public function safe_clear_current_epg_cache()
-    {
-        hd_debug_print(null, true);
-        if (isset($this->epg_manager)) {
-            $this->epg_manager->clear_current_epg_cache();
         }
     }
 
@@ -2469,15 +2472,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function get_channel_picon($channel_row, $is_classic)
     {
-        $default_channel_icon = $this->get_default_channel_icon($is_classic);
-        if ($this->picons_source !== XMLTV_PICONS) {
-            // playlist icons first in priority
-            $icon_url = $channel_row[COLUMN_ICON];
-        }
-
         // if selected xmltv or combined mode look into xmltv source
         // in combined mode search is not performed if already got picon from playlist
         do {
+            $default_channel_icon = $this->get_default_channel_icon($is_classic);
+            if ($this->picons_source !== XMLTV_PICONS) {
+                // playlist icons first in priority
+                $icon_url = $channel_row[COLUMN_ICON];
+            }
+
             if ($this->picons_source !== XMLTV_PICONS && ($this->picons_source !== COMBINED_PICONS || !empty($icon_url))) break;
 
             $epg_ids = self::make_epg_ids($channel_row);
@@ -3015,7 +3018,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
 
         $all_sources = $this->get_xmltv_sources(XMLTV_SOURCE_ALL);
-        $selected_sources = $this->get_selected_xmltv_ids();
+        $selected_sources = $this->get_active_xmltv_ids();
         $active_sources = new Hashed_Array();
         foreach ($selected_sources as $key) {
             $item = $all_sources->get($key);
@@ -3061,7 +3064,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $all_sources = array_unique(array_merge($playlist_sources, $ext_sources));
         hd_debug_print("Load All XMLTV sources keys: " . json_encode($all_sources));
 
-        $cur_sources = $this->get_selected_xmltv_ids();
+        $cur_sources = $this->get_active_xmltv_ids();
         hd_debug_print("Load selected XMLTV sources keys: " . json_encode($cur_sources));
 
         // remove non-existing values from active sources

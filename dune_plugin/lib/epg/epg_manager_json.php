@@ -132,7 +132,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             $epg_id = str_replace(' ', '%20', $epg_id);
             $epg_url = str_replace(array(MACRO_EPG_ID, '#'), array($epg_id, '%23'), $epg_url);
-            $epg_cache_file = get_temp_path(Hashed_Array::hash($epg_url) . ".cache");
+            $epg_cache_file = get_temp_path($provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache");
 
             hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row[COLUMN_CHANNEL_ID]}' ({$channel_row[COLUMN_TITLE]})");
             hd_debug_print("EPG url: $epg_url");
@@ -195,20 +195,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         }
 
         return $day_epg;
-    }
-
-    /**
-     * @inheritDoc
-     * @override
-     */
-    public function clear_current_epg_cache()
-    {
-        hd_debug_print(null, true);
-        $this->epg_cache = array();
-        $files = get_temp_path('*.cache');
-        hd_debug_print("clear cache files: $files");
-        array_map('unlink', glob($files));
-        clearstatcache();
     }
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -291,5 +277,24 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         ksort($channel_epg, SORT_NUMERIC);
         return $channel_epg;
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function clear_epg_files($hash = null)
+    {
+        hd_debug_print(null, true);
+        $this->epg_cache = array();
+        if (empty($hash)) {
+            $mask = "*";
+        } else {
+            $mask = "$hash*";
+        }
+        $files = get_temp_path("$mask.cache");
+        hd_debug_print("clear cache files: $files");
+        array_map('unlink', glob($files));
+        clearstatcache();
     }
 }

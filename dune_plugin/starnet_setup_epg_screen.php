@@ -196,13 +196,17 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
-                $this->plugin->safe_clear_selected_epg_cache();
+                foreach ($this->plugin->get_active_xmltv_ids() as $id) {
+                    $this->plugin->safe_clear_selected_epg_cache($id);
+                }
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs()));
 
             case ACTION_RESET_DEFAULT:
                 hd_debug_print(ACTION_RESET_DEFAULT);
-                $this->plugin->safe_clear_selected_epg_cache();
+                foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL) as $id) {
+                    $this->plugin->safe_clear_selected_epg_cache($id);
+                }
                 $this->plugin->set_parameter(PARAM_CACHE_PATH, '');
                 $this->plugin->init_epg_manager();
 
@@ -215,7 +219,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 hd_debug_print(ACTION_FOLDER_SELECTED . ": $data->filepath");
                 if ($this->plugin->get_cache_dir() === $data->filepath) break;
 
-                $this->plugin->safe_clear_selected_epg_cache();
+                $this->plugin->safe_clear_selected_epg_cache(null);
                 $this->plugin->set_parameter(PARAM_CACHE_PATH, str_replace("//", "/", $data->filepath));
                 $this->plugin->init_epg_manager();
 

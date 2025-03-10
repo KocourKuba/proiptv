@@ -343,9 +343,6 @@ class api_default
             unset($curl_opt[CURLOPT_CUSTOMREQUEST]);
         }
 
-        hd_debug_print("ApiCommandUrl: $command_url", true);
-        $this->curl_wrapper->set_url($command_url);
-
         $add_headers = $this->get_additional_headers($command);
 
         if (empty($curl_opt[CURLOPT_HTTPHEADER]) && !empty($add_headers)) {
@@ -368,10 +365,13 @@ class api_default
             $this->curl_wrapper->set_post_data($curl_opt[CURLOPT_POSTFIELDS]);
         }
 
+        hd_debug_print("ApiCommandUrl: $command_url", true);
+        $this->curl_wrapper->init($command_url);
+
         if (is_null($file)) {
-            $response = $this->curl_wrapper->download_content();
+            $response = $this->curl_wrapper->download_content($command_url);
         } else {
-            $response = $this->curl_wrapper->download_file($file);
+            $response = $this->curl_wrapper->download_file($command_url, $file, false);
         }
 
         if ($response === false) {
