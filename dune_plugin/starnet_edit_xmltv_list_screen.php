@@ -36,6 +36,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
 
+    const CONTROL_ACTION_SOURCE = 'source';
     const CONTROL_CACHE_TIME = 'cache_time';
 
     ///////////////////////////////////////////////////////////////////////
@@ -298,7 +299,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         Control_Factory::add_vgap($defs, 20);
 
-        $param[CONTROL_ACTION_SOURCE] = $source;
+        $param[self::CONTROL_ACTION_SOURCE] = $source;
         if (empty($id)) {
             $window_title = TR::t('edit_list_add_url');
             $item = array();
@@ -348,7 +349,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     {
         hd_debug_print(null, true);
 
-        $source = $user_input->{CONTROL_ACTION_SOURCE};
+        $source = $user_input->{self::CONTROL_ACTION_SOURCE};
         if (isset($user_input->{CONTROL_ACTION_EDIT})) {
             // edit existing url
             $id = $user_input->{CONTROL_ACTION_EDIT};

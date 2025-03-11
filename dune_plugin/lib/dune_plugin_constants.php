@@ -57,17 +57,11 @@ const ACTION_PLAY_ITEM = 'play_item';
 const ACTION_REFRESH_SCREEN = 'refresh_screen';
 const ACTION_RELOAD = 'reload';
 const ACTION_RELOAD_SOURCE = 'reload_action_source';
-const ACTION_RESTORE_GROUPS = 'restore_groups';
-const ACTION_RESTORE_CHANNELS = 'restore_chanels';
 const ACTION_RESET_DEFAULT = 'reset_default';
 const ACTION_SETTINGS = 'settings';
 const ACTION_DO_SETTINGS = 'do_edit_settings';
-const ACTION_UI_PARAMETERS = 'Dune_Default_UI_Parameters';
 const ACTION_CONFIRM_EXIT_DLG_APPLY = 'apply_dlg';
-const ACTION_CLEAR_APPLY = 'clear_apply';
 const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
-const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
-const ACTION_CONFIRM_BACKUP_DLG_APPLY = 'create_backup_apply_dlg';
 const ACTION_SETUP_SCREEN = 'setup_screen';
 const ACTION_ZOOM_POPUP_MENU = 'zoom_popup_menu';
 const ACTION_ZOOM_APPLY = 'zoom_apply';
@@ -79,11 +73,9 @@ const ACTION_PLUGIN_INFO = 'plugin_info';
 const ACTION_DONATE_DLG = 'donate_dlg';
 const ACTION_CHANGE_GROUP_ICON = 'change_group_icon';
 const ACTION_CHANGE_BACKGROUND = 'change_background';
-const ACTION_CHANNEL_INFO = 'channel_info';
 const ACTION_CHANGE_EPG_SOURCE = 'change_epg_source';
 const ACTION_EPG_CACHE_ENGINE = 'cache_engine';
 const ACTION_EPG_SOURCE_SELECTED = 'epg_source_selected';
-const ACTION_SHOW_INDEX_PROGRESS = 'show_index_progress';
 const ACTION_FILTER = 'action_filter';
 const ACTION_CREATE_FILTER = 'create_filter';
 const ACTION_RUN_FILTER = 'run_filter';
@@ -94,9 +86,6 @@ const ACTION_RUN_SEARCH = 'run_search';
 const ACTION_WATCHED = 'watched';
 const ACTION_QUALITY = 'quality';
 const ACTION_AUDIO = 'audio';
-const ACTION_NEED_CONFIGURE = 'configure';
-const ACTION_BALANCE = 'balance';
-const ACTION_INFO = 'info';
 const ACTION_SORT_TYPE = 'sort_type';
 const ACTION_RESET_TYPE = 'reset_type';
 const ACTION_SORT_CHANNELS = 'channels';
@@ -109,40 +98,20 @@ const ACTION_JUMP_TO_CHANNEL = 'jump_to_channel';
 const ACTION_JUMP_TO_CHANNEL_IN_GROUP = 'jump_to_channel_in_group';
 const ACTION_ADD_URL_DLG = 'add_url_dialog';
 const ACTION_URL_DLG_APPLY = 'url_dlg_apply';
-const ACTION_EDIT_PL_TYPE_DLG = 'edit_pl_type_dlg';
 const ACTION_PL_TYPE_DLG_APPLY = 'pl_type_dlg_apply';
 const ACTION_CLEAR_CACHE = 'clear_cache';
 const ACTION_INDEX_EPG = 'index_epg';
 const ACTION_CHOOSE_FILE = 'choose_file';
-const ACTION_CLEANUP = 'clean_up';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
 const CONTROL_EDIT_ITEM = 'edit_item';
 const CONTROL_URL_PATH = 'url_path';
-const CONTROL_LOGIN = 'login';
-const CONTROL_PASSWORD = 'password';
-const CONTROL_OTT_SUBDOMAIN = 'subdomain';
-const CONTROL_OTT_KEY = 'ottkey';
-const CONTROL_VPORTAL = 'vportal';
-const CONTROL_DEVICE = 'device';
-const CONTROL_SERVER = 'server';
-const CONTROL_DOMAIN = 'domain';
-const CONTROL_QUALITY = 'quality';
-const CONTROL_STREAM = 'stream';
 const CONTROL_PLAYLIST = 'playlist';
-const CONTROL_REPLACE_ICONS = 'replace_icons';
 const CONTROL_PLAYLIST_IPTV = 'iptv';
 const CONTROL_PLAYLIST_VOD = 'vod';
-const CONTROL_ACTION_SOURCE = 'source';
-const CONTROL_GROUP_ID = 'group_id';
-const CONTROL_INTERFACE_SCREEN = 'interface_screen';
 const CONTROL_INTERFACE_NEWUI_SCREEN = 'interface_newui_screen';
 const CONTROL_CATEGORY_SCREEN = 'category_screen';
-const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
-const CONTROL_EPG_SCREEN = 'epg_screen';
-const CONTROL_PLAYBACK_SCREEN = 'playback_screen';
-const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
 const CONTROL_DETECT_ID = 'detect_id';
 const CONTROL_EDIT_TYPE = 'playlist_type';
 const CONTROL_EXT_PARAMS = 'ext_params';
@@ -150,8 +119,6 @@ const CONTROL_BACKUP = 'backup';
 const CONTROL_RESTORE = 'restore';
 
 # Special groups ID
-const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';
-
 const TV_ALL_CHANNELS_GROUP_ID = '##all_channels##';
 const TV_ALL_CHANNELS_GROUP_CAPTION = 'plugin_all_channels';
 const TV_ALL_CHANNELS_GROUP_ICON = 'plugin_file://icons/all_folder.png';
@@ -188,15 +155,12 @@ const VOD_FILTER_GROUP_ID = '##filter_movie##';
 const VOD_FILTER_GROUP_CAPTION = 'filters';
 const VOD_FILTER_GROUP_ICON = 'plugin_file://icons/filter_movie_folder.png';
 
+const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';
 const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 const DEFAULT_CHANNEL_ICON_PATH_SQ = 'plugin_file://icons/default_channel_sq.png';
 
 # Common parameters
-const PLUGIN_PARAMETERS = 'parameters';
-const PLUGIN_SETTINGS = 'settings';
-const PLAYLIST_PARAMETERS = 'playlists_parameters';
 const PLUGIN_ORDERS = 'orders';
-const PLUGIN_HISTORY = 'history';
 const VOD_HISTORY = 'vod_history';
 const VOD_SEARCH_LIST = 'vod_search';
 const VOD_FILTER_LIST = 'vod_filter_items';
@@ -212,12 +176,7 @@ const COLUMN_NAME = 'name';
 const COLUMN_TYPE = 'type';
 const COLUMN_URI = 'uri';
 const COLUMN_CH_NUMBER = 'ch_number';
-const COLUMN_USER_AGENT = 'user_agent';
-const COLUMN_DUNE_PARAMS = 'dune_params';
-const COLUMN_USE_DUNE_PARAMS = 'use_dune_params';
 const COLUMN_CACHE = 'cache';
-const COLUMN_PLAYLIST_TYPE = 'playlist_type';
-const COLUMN_PARAMS = 'params';
 const COLUMN_WATCHED = 'watched';
 const COLUMN_POSITION = 'position';
 const COLUMN_DURATION = 'duration';
@@ -314,8 +273,6 @@ const PARAM_INDEXING_FLAG = 'index_all';
 const PARAM_GROUP_ORDINARY = 0;
 const PARAM_GROUP_SPECIAL = 1;
 
-const PARAM_NOT_VISIBLE = 0;
-const PARAM_VISIBLE = 1;
 const PARAM_DISABLED = 1;
 const PARAM_ENABLED = 0;
 const PARAM_ALL = -1;
@@ -341,7 +298,7 @@ const CHANNELS_INFO = 'channels_info';
 const INDEXING_DOWNLOAD = 1;
 const INDEXING_CHANNELS = 2;
 const INDEXING_ENTRIES = 4;
-const INDEXING_ALL = 7;
+const INDEXING_ALL = 7; // INDEXING_DOWNLOAD | INDEXING_CHANNELS | INDEXING_ENTRIES
 
 // macroses used to replace template in providers playlists
 const MACRO_API = '{API}';
@@ -386,7 +343,7 @@ const XMLTV_CACHE_AUTO = 'auto';
 const XMLTV_CACHE_MANUAL = 'manual';
 const EPG_CACHE_SUBDIR = 'epg_cache';
 const HISTORY_SUBDIR = 'history';
-const EPG_FAKE_EPG = 2;
+const EPG_FAKE_EPG = 1;
 const EPG_JSON_PRESETS = 'epg_presets';
 const EPG_JSON_SOURCE = 'json_source';
 const EPG_JSON_PARSER = 'parser';
@@ -395,10 +352,6 @@ const EPG_JSON_PRESET_ALIAS = 'alias';
 const EPG_JSON_AUTH = 'json_auth';
 const EPG_JSON_EPG_MAP = 'epg_map';
 const CUSTOM_PLAYLIST_ID = 'custom';
-
-# HTTP params
-const USER_AGENT = 'User-Agent';
-const REFERER = 'Referer';
 
 # Media types patterns
 const AUDIO_PATTERN = 'mp3|ac3|wma|ogg|ogm|m4a|aif|iff|mid|mpa|ra|wav|flac|ape|vorbis|aac|a52';
@@ -412,10 +365,7 @@ const TS_REPL_PATTERN = '/^(https?:\/\/)(.+)$/';
 const PROVIDER_PATTERN = '/^([^@]+)@(.+)$/';
 const VPORTAL_PATTERN = '/^portal::\[key:([^]]+)](.+)$/';
 
-# Mounted storages path
-const DUNE_MOUNTED_STORAGES_PATH = '/tmp/mnt/storage';
-const DUNE_APK_STORAGE_PATH = '/sdcard/DuneHD/Dune_backup';
-
+# Configuration parameters
 const CONFIG_PLAYLIST_CATCHUP = 'playlist_catchup';
 const CONFIG_ID_PARSER = 'id_parser';
 const CONFIG_ID_MAP = 'id_map';

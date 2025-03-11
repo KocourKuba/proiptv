@@ -28,6 +28,10 @@ require_once 'api_default.php';
 
 class api_edem extends api_default
 {
+    const CONTROL_OTT_SUBDOMAIN = 'subdomain';
+    const CONTROL_OTT_KEY = 'ottkey';
+    const CONTROL_VPORTAL = 'vportal';
+
     /**
      * @inheritDoc
      */
@@ -129,16 +133,16 @@ class api_edem extends api_default
         $subdomain = $this->GetParameter(MACRO_SUBDOMAIN);
         if (!empty($subdomain) && $subdomain !== $this->getConfigValue(CONFIG_SUBDOMAIN)) {
             Control_Factory::add_text_field($defs, $handler, null,
-                CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $this->GetParameter(MACRO_SUBDOMAIN),
+                self::CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $this->GetParameter(MACRO_SUBDOMAIN),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_OTT_KEY, TR::t('ottkey'), $this->GetParameter(MACRO_OTTKEY),
+            self::CONTROL_OTT_KEY, TR::t('ottkey'), $this->GetParameter(MACRO_OTTKEY),
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_text_field($defs, $handler, null,
-            CONTROL_VPORTAL, TR::t('vportal'), $this->GetParameter(MACRO_VPORTAL),
+            self::CONTROL_VPORTAL, TR::t('vportal'), $this->GetParameter(MACRO_VPORTAL),
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
@@ -181,20 +185,20 @@ class api_edem extends api_default
         if (empty($user_input->CONTROL_OTT_SUBDOMAIN)) {
             $params[MACRO_SUBDOMAIN] = $this->getConfigValue(CONFIG_SUBDOMAIN);
         } else {
-            $params[MACRO_SUBDOMAIN] = $user_input->{CONTROL_OTT_SUBDOMAIN};
+            $params[MACRO_SUBDOMAIN] = $user_input->{self::CONTROL_OTT_SUBDOMAIN};
         }
 
-        if (empty($user_input->{CONTROL_OTT_KEY})) {
+        if (empty($user_input->{self::CONTROL_OTT_KEY})) {
             return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
         }
 
-        $params[MACRO_OTTKEY] = $user_input->{CONTROL_OTT_KEY};
+        $params[MACRO_OTTKEY] = $user_input->{self::CONTROL_OTT_KEY};
 
-        if (!empty($user_input->{CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{CONTROL_VPORTAL})) {
+        if (!empty($user_input->{self::CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{self::CONTROL_VPORTAL})) {
             return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'));
         }
 
-        $params[MACRO_VPORTAL] = $user_input->{CONTROL_VPORTAL};
+        $params[MACRO_VPORTAL] = $user_input->{self::CONTROL_VPORTAL};
 
         if ($is_new) {
             $this->playlist_id = $this->get_hash($params);

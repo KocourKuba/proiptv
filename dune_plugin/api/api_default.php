@@ -52,6 +52,15 @@ require_once "lib/curl_wrapper.php";
 
 class api_default
 {
+    const CONTROL_LOGIN = 'login';
+    const CONTROL_PASSWORD = 'password';
+    const CONTROL_DEVICE = 'device';
+    const CONTROL_SERVER = 'server';
+    const CONTROL_DOMAIN = 'domain';
+    const CONTROL_QUALITY = 'quality';
+    const CONTROL_STREAM = 'stream';
+    const CONTROL_REPLACE_ICONS = 'replace_icons';
+
     /**
      * @var string
      */
@@ -716,16 +725,16 @@ class api_default
 
         if ($type === PROVIDER_TYPE_PIN) {
             Control_Factory::add_text_field($defs, $handler, null,
-                CONTROL_PASSWORD, TR::t('token'), $this->GetParameter(MACRO_PASSWORD),
+                self::CONTROL_PASSWORD, TR::t('token'), $this->GetParameter(MACRO_PASSWORD),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         if ($type === PROVIDER_TYPE_LOGIN) {
             Control_Factory::add_text_field($defs, $handler, null,
-                CONTROL_LOGIN, TR::t('login'), $this->GetParameter(MACRO_LOGIN),
+                self::CONTROL_LOGIN, TR::t('login'), $this->GetParameter(MACRO_LOGIN),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
             Control_Factory::add_text_field($defs, $handler, null,
-                CONTROL_PASSWORD, TR::t('password'), $this->GetParameter(MACRO_PASSWORD),
+                self::CONTROL_PASSWORD, TR::t('password'), $this->GetParameter(MACRO_PASSWORD),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -770,20 +779,20 @@ class api_default
 
         switch ($this->getType()) {
             case PROVIDER_TYPE_PIN:
-                if (empty($user_input->{CONTROL_PASSWORD})) {
+                if (empty($user_input->{self::CONTROL_PASSWORD})) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                $params[MACRO_PASSWORD] = $user_input->{self::CONTROL_PASSWORD};
                 break;
 
             case PROVIDER_TYPE_LOGIN:
-                if (empty($user_input->{CONTROL_LOGIN}) || empty($user_input->{CONTROL_PASSWORD})) {
+                if (empty($user_input->{self::CONTROL_LOGIN}) || empty($user_input->{self::CONTROL_PASSWORD})) {
                     return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'));
                 }
 
-                $params[MACRO_LOGIN] = $user_input->{CONTROL_LOGIN};
-                $params[MACRO_PASSWORD] = $user_input->{CONTROL_PASSWORD};
+                $params[MACRO_LOGIN] = $user_input->{self::CONTROL_LOGIN};
+                $params[MACRO_PASSWORD] = $user_input->{self::CONTROL_PASSWORD};
                 break;
 
             default:
@@ -896,7 +905,7 @@ class api_default
             }
             hd_debug_print("streams ($idx): " . json_encode($streams), true);
 
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_STREAM,
+            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_STREAM,
                 TR::t('stream'), $idx, $streams, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -908,7 +917,7 @@ class api_default
             }
             hd_debug_print("domains ($idx): " . json_encode($domains), true);
 
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_DOMAIN,
+            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_DOMAIN,
                 TR::t('domain'), $idx, $domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -920,7 +929,7 @@ class api_default
             }
             hd_debug_print("servers ($idx): " . json_encode($servers), true);
 
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_SERVER,
+            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_SERVER,
                 TR::t('server'), $idx, $servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -932,7 +941,7 @@ class api_default
             }
             hd_debug_print("devices ($idx): " . json_encode($devices), true);
 
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_DEVICE,
+            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_DEVICE,
                 TR::t('device'), $idx, $devices, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -944,7 +953,7 @@ class api_default
             }
             hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
 
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_QUALITY,
+            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_QUALITY,
                 TR::t('quality'), $idx, $qualities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -966,7 +975,7 @@ class api_default
         $icon_replacements = $this->getConfigValue(CONFIG_ICON_REPLACE);
         if (!empty($icon_replacements)) {
             $val = $this->GetParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_REPLACE_ICONS,
+            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_REPLACE_ICONS,
                 TR::t('setup_channels_square_icons'), $val, SwitchOnOff::$translated,
                 Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
@@ -997,32 +1006,32 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        if (isset($user_input->{CONTROL_SERVER})) {
-            $this->SetServer($user_input->{CONTROL_SERVER}, $err_msg);
+        if (isset($user_input->{self::CONTROL_SERVER})) {
+            $this->SetServer($user_input->{self::CONTROL_SERVER}, $err_msg);
         }
 
         if (isset($user_input->{CONTROL_PLAYLIST})) {
             $this->SetPlaylist($user_input->{CONTROL_PLAYLIST});
         }
 
-        if (isset($user_input->{CONTROL_DEVICE})) {
-            $this->SetDevice($user_input->{CONTROL_DEVICE});
+        if (isset($user_input->{self::CONTROL_DEVICE})) {
+            $this->SetDevice($user_input->{self::CONTROL_DEVICE});
         }
 
-        if (isset($user_input->{CONTROL_STREAM})) {
-            $this->SetStream($user_input->{CONTROL_STREAM});
+        if (isset($user_input->{self::CONTROL_STREAM})) {
+            $this->SetStream($user_input->{self::CONTROL_STREAM});
         }
 
-        if (isset($user_input->{CONTROL_DOMAIN})) {
-            $this->SetDomain($user_input->{CONTROL_DOMAIN});
+        if (isset($user_input->{self::CONTROL_DOMAIN})) {
+            $this->SetDomain($user_input->{self::CONTROL_DOMAIN});
         }
 
-        if (isset($user_input->{CONTROL_QUALITY})) {
-            $this->SetQuality($user_input->{CONTROL_QUALITY});
+        if (isset($user_input->{self::CONTROL_QUALITY})) {
+            $this->SetQuality($user_input->{self::CONTROL_QUALITY});
         }
 
-        if (isset($user_input->{CONTROL_REPLACE_ICONS})) {
-            $this->SetParameter(PARAM_REPLACE_ICON, $user_input->{CONTROL_REPLACE_ICONS});
+        if (isset($user_input->{self::CONTROL_REPLACE_ICONS})) {
+            $this->SetParameter(PARAM_REPLACE_ICON, $user_input->{self::CONTROL_REPLACE_ICONS});
         }
 
         $this->plugin->clear_playlist_cache($this->playlist_id);

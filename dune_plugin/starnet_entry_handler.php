@@ -47,6 +47,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_SEND_LOG = 'call_send_log';
     const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
     const ACTION_FORCE_OPEN = 'force_open';
+    const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
     const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0di9yZWxlYXNlcy9kb3dubG9hZC81LjEuOTYyL2R1bmVfcGx1Z2luX3Byb2lwdHYuNS4xLjk2Mi56aXA=";
 
     private $plugin;
@@ -192,7 +193,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 hd_debug_print("action: launch open", true);
                 return Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title());
 
-            case ACTION_CONFIRM_BACKUP_DLG:
+            case self::ACTION_CONFIRM_BACKUP_DLG:
                 hd_debug_print("Call select backup folder");
                 $media_url_str = MediaURL::encode(
                     array(
@@ -396,7 +397,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             $defs = array();
 
             $ret_action = array('action_id' => $user_input->action_id, 'mandatory_playback' => 0);
-            Control_Factory::add_button_close($defs, $this, $ret_action, ACTION_CONFIRM_BACKUP_DLG, null, TR::t('yes'), 300);
+            Control_Factory::add_button_close($defs, $this, $ret_action, self::ACTION_CONFIRM_BACKUP_DLG, null, TR::t('yes'), 300);
             Control_Factory::add_button_close($defs, $this, $ret_action, self::ACTION_PLUGIN_ENTRY, null, TR::t('no'), 300);
 
             return Action_Factory::show_dialog(TR::t('yes_no_confirm_backup'), $defs);

@@ -1032,7 +1032,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     unset($plugin_settings[PARAM_SELECTED_XMLTV_SOURCES]);
                 } else if ($key === PARAM_CHANNELS_ZOOM || $key === PARAM_CHANNEL_PLAYER) {
                     unset($plugin_settings[$key]);
-                } else if ($key === PARAM_DUNE_PARAMS) {
+                } else if ($key === PARAM_DUNE_PARAMS && !empty($value)) {
                     hd_debug_print("Move 'dune_params' to playlist parameter");
                     $params[PARAM_DUNE_PARAMS] = json_encode($value);
                     $this->set_playlist_parameters($playlist_id, $params);
@@ -1282,7 +1282,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, $vod_history_table);
                 $this->sql_playlist->exec($query);
 
-                $vod_history_filename = $history_path . $this->make_name(PLUGIN_HISTORY) . ".settings";
+                $vod_history_filename = $history_path . $this->make_name('history') . ".settings";
                 if (file_exists($vod_history_filename)) {
                     hd_debug_print("Load (PLUGIN VOD HISTORY): $vod_history_filename");
                     /** @var array $history */
