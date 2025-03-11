@@ -703,28 +703,6 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
-     * @param string $url
-     * @return string
-     */
-    public function UpdateDuneParams($url)
-    {
-        $dune_params = $this->plugin->get_setting(PARAM_DUNE_PARAMS, array());
-        $dune_params_str = '';
-        foreach ($dune_params as $key => $param) {
-            if (!empty($dune_params_str)) {
-                $dune_params_str .= ',';
-            }
-            $dune_params_str .= "$key:$param";
-        }
-
-        if (!empty($dune_params_str)) {
-            $url .= HD::DUNE_PARAMS_MAGIC . $dune_params_str;
-        }
-
-        return $url;
-    }
-
-    /**
      * @return bool
      */
     protected function load_vod_json_full($assoc = false)

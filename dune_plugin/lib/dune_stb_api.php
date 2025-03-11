@@ -2431,6 +2431,10 @@ function register_all_known_events($handler, &$actions)
 
 function dune_params_to_array($str)
 {
+    if (empty($str)) {
+        return array();
+    }
+
     $params_array = array();
     $dune_params = explode(',', $str);
     foreach ($dune_params as $param) {
@@ -2447,6 +2451,20 @@ function dune_params_to_array($str)
         $params_array[$param_pair[0]] = $param_pair[1];
     }
     return $params_array;
+}
+
+function dune_params_array_to_string($value)
+{
+    $dune_params_str = '';
+    if (is_array($value)) {
+        foreach ($value as $name => $param) {
+            if (!empty($dune_params_str)) {
+                $dune_params_str .= ',';
+            }
+            $dune_params_str .= "$name:$param";
+        }
+    }
+    return $dune_params_str;
 }
 
 function send_process_signal($pid, $sig_num) {

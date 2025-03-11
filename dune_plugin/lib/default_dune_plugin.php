@@ -1032,10 +1032,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     unset($plugin_settings[PARAM_SELECTED_XMLTV_SOURCES]);
                 } else if ($key === PARAM_CHANNELS_ZOOM || $key === PARAM_CHANNEL_PLAYER) {
                     unset($plugin_settings[$key]);
-                } else if ($key === PARAM_DUNE_PARAMS && !empty($value)) {
+                } else if ($key === PARAM_DUNE_PARAMS) {
                     hd_debug_print("Move 'dune_params' to playlist parameter");
-                    $params[PARAM_DUNE_PARAMS] = json_encode($value);
-                    $this->set_playlist_parameters($playlist_id, $params);
+                    $dune_params_str = dune_params_array_to_string($value);
+                    if (!empty($dune_params_str)) {
+                        $params[PARAM_DUNE_PARAMS] = $dune_params_str;
+                        $this->set_playlist_parameters($playlist_id, $params);
+                    }
                     unset($plugin_settings[PARAM_DUNE_PARAMS]);
                 }
             }
@@ -2196,7 +2199,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 json_decode(safe_get_value($channel_row, M3uParser::COLUMN_EXT_PARAMS), true));
 
             if (!empty($dune_params_str)) {
-                $stream_url .= $dune_params_str;
+                $stream_url .= HD::DUNE_PARAMS_MAGIC . $dune_params_str;
             }
 
             $detect_ts = $this->get_bool_setting(PARAM_DUNE_FORCE_TS, false) || $force_detect;
@@ -2207,16 +2210,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param string $channel_id
-     * @param array $ext_params
-     * @return string
+     * @return array
      */
-    public function generate_dune_params($channel_id, $ext_params)
+    public function collect_dune_params()
     {
+        $dune_params = array();
         $params = $this->get_playlist_parameters($this->get_active_playlist_id());
         if (safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on) === SwitchOnOff::on) {
-            $playlist_dune_params = array();
-            $dune_params_str = safe_get_value($params, PARAM_DUNE_PARAMS);
+            $playlist_dune_params = dune_params_to_array(safe_get_value($params, PARAM_DUNE_PARAMS));
             if (!empty($dune_params_str)) {
                 $dune_params = explode(',', $dune_params_str);
                 foreach ($dune_params as $param) {
@@ -2242,9 +2243,34 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $provider_dune_params = dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS));
             }
 
-            $all_params = array_merge($provider_dune_params, $playlist_dune_params);
-            $dune_params = array_unique($all_params);
+            $dune_params = array_unique(array_merge($provider_dune_params, $playlist_dune_params));
+
+            if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
+                $user_agent = "User-Agent: " . HD::get_dune_user_agent();
+                if (!empty($user_agent)) {
+                    if (!isset($dune_params['http_headers'])) {
+                        $dune_params['http_headers'] = $user_agent;
+                    } else {
+                        $pos = strpos($dune_params['http_headers'], "UserAgent:");
+                        if ($pos === false) {
+                            $dune_params['http_headers'] .= "," . $user_agent;
+                        }
+                    }
+                }
+            }
         }
+
+        return $dune_params;
+    }
+
+    /**
+     * @param string $channel_id
+     * @param array $ext_params
+     * @return string
+     */
+    public function generate_dune_params($channel_id, $ext_params)
+    {
+        $dune_params = $this->collect_dune_params();
 
         if (!empty($ext_params[PARAM_EXT_VLC_OPTS])) {
             $ext_vlc_opts = array();
@@ -2298,20 +2324,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
-            $user_agent = "User-Agent: " . HD::get_dune_user_agent();
-            if (!empty($user_agent)) {
-                if (!isset($dune_params['http_headers'])) {
-                    $dune_params['http_headers'] = $user_agent;
-                } else {
-                    $pos = strpos($dune_params['http_headers'], "UserAgent:");
-                    if ($pos === false) {
-                        $dune_params['http_headers'] .= "," . $user_agent;
-                    }
-                }
-            }
-        }
-
         if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
             $zoom_data = $this->get_channel_zoom($channel_id);
             if (!empty($zoom_data)) {
@@ -2323,10 +2335,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return "";
         }
 
-        $params = HD::DUNE_PARAMS_MAGIC . str_replace('=', ':', http_build_query($dune_params, null, ','));
-        hd_debug_print("dune_params: $params");
+        $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
+        hd_debug_print("dune_params: $magic");
 
-        return $params;
+        return $magic;
     }
 
     /**
@@ -2938,10 +2950,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $dune_params = $this->generate_dune_params($channel_id,
-            json_decode(safe_get_value($channel_row, M3uParser::COLUMN_EXT_PARAMS), true));
+        $ext_params = safe_get_value($channel_row, M3uParser::COLUMN_EXT_PARAMS);
+        $dune_params = $this->generate_dune_params($channel_id, json_decode($ext_params, true));
         if (!empty($dune_params)) {
-            $info .= "dune_params: " . substr($dune_params, strlen(HD::DUNE_PARAMS_MAGIC)) . PHP_EOL;
+            $info .= "dune_params: $dune_params" . PHP_EOL;
         }
 
         if (!empty($live_url) && !is_limited_apk()) {

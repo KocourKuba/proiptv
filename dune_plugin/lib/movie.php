@@ -426,7 +426,13 @@ class Movie implements User_Input_Handler
             }
             $initial_start_array[$counter] = $pos * 1000;
             $playback_url = HD::make_ts($playback_url);
-            $playback_url = $this->plugin->vod->UpdateDuneParams($playback_url);
+            $dune_params = $this->plugin->collect_dune_params();
+            if (!empty($dune_params)) {
+                $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
+                hd_debug_print("dune_params: $magic");
+                $playback_url .= HD::DUNE_PARAMS_MAGIC . $magic;
+            }
+
             hd_debug_print("Playback movie: $media_url->movie_id, episode: $episode->id ($variant)", true);
             hd_debug_print("Url: $playback_url from $initial_start_array[$counter]", true);
             $series_array[] = array(
