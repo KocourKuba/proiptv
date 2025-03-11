@@ -170,7 +170,7 @@ const TV_CHANGED_CHANNELS_GROUP_ICON = 'plugin_file://icons/changed_channels.png
 
 const VOD_GROUP_ID = '##mediateka##';
 const VOD_GROUP_CAPTION = 'plugin_vod';
-const VOD_GROUP_ICON = "plugin_file://icons/vod_folder.png";
+const VOD_GROUP_ICON = 'plugin_file://icons/vod_folder.png';
 
 const VOD_FAV_GROUP_ID = '##movie_favorites##';
 const VOD_FAV_GROUP_CAPTION = 'plugin_favorites';
@@ -192,11 +192,11 @@ const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
 const DEFAULT_CHANNEL_ICON_PATH_SQ = 'plugin_file://icons/default_channel_sq.png';
 
 # Common parameters
-const PLUGIN_PARAMETERS = "parameters";
-const PLUGIN_SETTINGS = "settings";
-const PLAYLIST_PARAMETERS = "playlists_parameters";
-const PLUGIN_ORDERS = "orders";
-const PLUGIN_HISTORY = "history";
+const PLUGIN_PARAMETERS = 'parameters';
+const PLUGIN_SETTINGS = 'settings';
+const PLAYLIST_PARAMETERS = 'playlists_parameters';
+const PLUGIN_ORDERS = 'orders';
+const PLUGIN_HISTORY = 'history';
 const VOD_HISTORY = 'vod_history';
 const VOD_SEARCH_LIST = 'vod_search';
 const VOD_FILTER_LIST = 'vod_filter_items';

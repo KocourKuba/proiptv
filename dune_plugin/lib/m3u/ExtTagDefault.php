@@ -136,14 +136,14 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
         if (empty($line) || $line[0] !== '#')
             return null;
 
-        if (preg_match("/^(#[^: ]+)[:\s]?(.*)/", $line, $m)) {
+        if (preg_match('/^(#[^: ]+)[:\s]?(.*)/', $line, $m)) {
             $this->setTagName($m[1]);
             if ($this->isTag(TAG_EXTINF)) {
                 $pos = strrpos($m[2], ',');
                 if ($pos !== false) {
                     $name = trim(substr($m[2], $pos + 1));
                 } else {
-                    $name = "noname";
+                    $name = 'noname';
                 }
                 $this->setTagValue($name);
             } else if (!$this->isTag(TAG_EXTM3U)){

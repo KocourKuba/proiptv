@@ -2,7 +2,7 @@
 require_once("../shared_scripts/crm_settings.php");
 require_once("../shared_scripts/MySQL.php");
 
-$DB = new db_driver;
+$DB = new db_driver();
 $DB->obj['sql_database'] = IPTV_DATABASE;
 $DB->obj['sql_user'] = IPTV_USER;
 $DB->obj['sql_pass'] = IPTV_PASSWORD;

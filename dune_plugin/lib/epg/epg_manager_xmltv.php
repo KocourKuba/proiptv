@@ -71,11 +71,6 @@ class Epg_Manager_Xmltv
     protected $xmltv_url_params;
 
     /**
-     * @var int
-     */
-    protected $pid = 0;
-
-    /**
      * @var Sql_Wrapper[]
      */
     protected $epg_db = array();

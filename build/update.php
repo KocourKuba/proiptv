@@ -96,7 +96,7 @@ function IP2Country($ip)
     $iplong = ip2long($ip);
     $query = "SELECT c2code FROM ip2country WHERE ip_from <= $iplong AND ip_to >= $iplong";
 
-    $DB = new db_driver;
+    $DB = new db_driver();
     $DB->obj['sql_database'] = CRM_DATABASE;
     $DB->obj['sql_user'] = IPTV_USER;
     $DB->obj['sql_pass'] = IPTV_PASSWORD;

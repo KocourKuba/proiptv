@@ -2224,7 +2224,7 @@ function store_to_json_file($path, $content)
 
 /**
  * @param string $path
- * @param boolean $assoc
+ * @param bool $assoc
  */
 function parse_json_file($path, $assoc = true)
 {

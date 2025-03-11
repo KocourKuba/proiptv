@@ -266,7 +266,7 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @param mixed $key
-     * @return integer
+     * @return int
      */
     public function get_movie_counter($key)
     {

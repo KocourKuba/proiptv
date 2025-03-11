@@ -158,7 +158,7 @@ class Entry extends Json_Serializer
     protected $catchup_source;
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function isM3U_Header()
     {
@@ -510,7 +510,7 @@ class Entry extends Json_Serializer
         $used_tag = '';
         $parent_code = $this->getAnyEntryAttribute(self::$adult_attrs, TAG_EXTINF, $used_tag);
         if ($used_tag === ATTR_ADULT && (int)$parent_code !== 1) {
-            $parent_code = "0000";
+            $parent_code = '0000';
         }
 
         if (!empty($parent_code)) {

@@ -50,7 +50,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     protected $map = array();
 
     /**
-     * @var integer
+     * @var int
      */
     private $pos = 0;
 
@@ -81,7 +81,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     }
 
     /**
-     * @return integer
+     * @return int
      */
     public function size()
     {
@@ -91,7 +91,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
     /**
      * Get value by index
      *
-     * @param integer $ndx
+     * @param int $ndx
      * @return TValue|null
      */
     public function get_by_idx($ndx)
@@ -136,7 +136,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * Return index by key
      *
      * @param string $key
-     * @return integer|false
+     * @return int|false
      */
     public function get_idx($key)
     {
@@ -158,7 +158,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public static function hash($item)
     {
-        return (empty($item) ? "" : hash('crc32', $item));
+        return (empty($item) ? '' : hash('crc32', $item));
     }
 
     /**
@@ -365,7 +365,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      */
     public function value_sort()
     {
-        uasort($this->map, array(__CLASS__, "sort_array_cb"));
+        uasort($this->map, array(__CLASS__, 'sort_array_cb'));
         $this->seq = array_keys($this->map);
     }
 

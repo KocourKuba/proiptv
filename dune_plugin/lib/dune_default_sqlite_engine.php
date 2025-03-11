@@ -1424,7 +1424,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $id
-     * @return integer
+     * @return bool
      */
     public function is_playlist_exist($id)
     {
@@ -1596,7 +1596,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string $channel_id
-     * @param integer $archive_ts
+     * @param int $archive_ts
      */
     public function push_tv_history($channel_id, $archive_ts)
     {

@@ -47,7 +47,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
      */
     protected $saved_pos = 0;
     /**
-     * @var integer
+     * @var int
      */
     private $pos = 0;
 
@@ -341,7 +341,7 @@ class Ordered_Array extends Json_Serializer implements Iterator
     public function sort_order()
     {
         $selected_item = $this->get_selected_item();
-        usort($this->order, array(__CLASS__, "sort_array_cb"));
+        usort($this->order, array(__CLASS__, 'sort_array_cb'));
         $this->update_saved_pos($selected_item);
     }
 
