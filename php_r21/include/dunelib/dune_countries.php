@@ -1,4 +1,5 @@
 <?php
+
 class DuneCountries
 {
     public static function get_code_by_name($name)
