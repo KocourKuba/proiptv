@@ -49,6 +49,12 @@ class Epg_Manager_Xmltv
     protected $delayed_epg = array();
 
     /**
+     * contains memory epg cache
+     * @var array
+     */
+    protected $epg_cache = array();
+
+    /**
      * @var int
      */
     protected $flags = 0;
@@ -101,22 +107,6 @@ class Epg_Manager_Xmltv
     public function get_sources()
     {
         return $this->xmltv_sources;
-    }
-    /**
-     * Set url parameters: url, cache, hash
-     *
-     * @param array $url_param
-     * @return void
-     */
-    public function set_url_params($url_param)
-    {
-        hd_debug_print(null, true);
-        $this->xmltv_url_params = $url_param;
-        if (preg_match("/jtv.?\.zip$/", basename(urldecode($this->xmltv_url_params[PARAM_URI])))) {
-            hd_debug_print("Unsupported EPG format (JTV)");
-            $this->xmltv_url_params[PARAM_URI] = '';
-            $this->xmltv_url_params[PARAM_HASH] = '';
-        }
     }
 
     /**
@@ -221,13 +211,26 @@ class Epg_Manager_Xmltv
      *
      * @param array $channel_row
      * @param int $day_start_ts
+     * @param bool $cached
      * @return array
      */
-    public function get_day_epg_items($channel_row, $day_start_ts)
+    public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
     {
         $any_lock = false;
         foreach ($this->xmltv_sources->get_keys() as $key) {
             $any_lock |= $this->is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES);
+        }
+
+        $channel_id = safe_get_value($channel_row, COLUMN_CHANNEL_ID);
+        if (empty($channel_id)) {
+            return array();
+        }
+
+        $cached = false;
+        if (isset($this->epg_cache[$channel_id][$day_start_ts])) {
+            hd_debug_print("Load day EPG ID $channel_id ($day_start_ts) from memory cache ");
+            $cached = true;
+            return $this->epg_cache[$channel_id][$day_start_ts];
         }
 
         $day_epg = array();
@@ -236,8 +239,8 @@ class Epg_Manager_Xmltv
         foreach ($this->xmltv_sources as $key => $params) {
             $this->xmltv_url_params = $params;
             if ($this->is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES)) {
-                hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: {$channel_row[COLUMN_CHANNEL_ID]}");
-                $this->delayed_epg[] = $channel_row[COLUMN_CHANNEL_ID];
+                hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: $channel_id");
+                $this->delayed_epg[] = $channel_id;
                 continue;
             }
 
@@ -329,6 +332,9 @@ class Epg_Manager_Xmltv
                 ));
             }
             return $this->getFakeEpg($channel_row, $day_start_ts, $day_epg);
+        } else {
+            hd_debug_print("Store day epg to memory cache");
+            $this->epg_cache[$channel_id][$day_start_ts] = $day_epg;
         }
 
         ksort($day_epg);
@@ -461,6 +467,7 @@ class Epg_Manager_Xmltv
         }
 
         if ($expired) {
+            $this->clear_epg_files($hash);
             $index_flag |= INDEXING_DOWNLOAD;
             hd_debug_print("Xmltv cache expired. Indexing flags: " . $index_flag, true);
             return $index_flag;
@@ -573,6 +580,8 @@ class Epg_Manager_Xmltv
     public function clear_epg_files($hash = '')
     {
         hd_debug_print(null, true);
+
+        $this->epg_cache = array();
 
         if (empty(self::$cache_dir)) {
             hd_debug_print("Cache directory not set");

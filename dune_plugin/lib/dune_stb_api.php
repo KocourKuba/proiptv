@@ -2380,16 +2380,13 @@ function register_all_known_events($handler, &$actions)
         GUI_EVENT_KEY_FIP_NEXT,
         GUI_EVENT_KEY_FIP_PREV,
         GUI_EVENT_KEY_SETUP,
-        GUI_EVENT_KEY_RETURN,
         GUI_EVENT_KEY_SELECT,
         GUI_EVENT_KEY_CLEAR,
         GUI_EVENT_KEY_PAUSE,
         GUI_EVENT_KEY_FWD,
         GUI_EVENT_KEY_REW,
         GUI_EVENT_KEY_SLOW,
-        GUI_EVENT_KEY_STOP,
         GUI_EVENT_KEY_TOP_MENU,
-        GUI_EVENT_KEY_POWER,
         GUI_EVENT_KEY_EJECT,
         GUI_EVENT_KEY_MODE,
         GUI_EVENT_KEY_VENDOR,
@@ -2422,7 +2419,6 @@ function register_all_known_events($handler, &$actions)
         GUI_EVENT_TOPMENU_POPUP_MENU,
         GUI_EVENT_GOING_TO_RELOAD_ALL_FOLDERS,
         GUI_EVENT_FAVORITES_UPDATED,
-        GUI_EVENT_SHUTDOWN,
     );
 
     foreach ($all_events as $action) {

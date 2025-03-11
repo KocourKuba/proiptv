@@ -294,7 +294,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
 
             case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== ENGINE_JSON) break;
+                if (!isset($user_input->{LIST_IDX}) || $this->plugin->is_use_xmltv()) break;
 
                 foreach ($this->plugin->get_active_xmltv_ids() as $id) {
                     $this->plugin->safe_clear_selected_epg_cache($id);

@@ -40,21 +40,16 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     protected $dune_ip;
 
     /**
-     * contains memory epg cache
-     * @var array
-     */
-    protected $epg_cache = array();
-
-    /**
      * @inheritDoc
      * @override
      */
-    public function get_day_epg_items($channel_row, $day_start_ts)
+    public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
     {
         $epg_ids = Default_Dune_Plugin::make_epg_ids($channel_row);
         $epg_ids[ATTR_TVG_NAME] = $channel_row[COLUMN_TITLE];
         $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
 
+        $cached = false;
         $day_epg = array();
         try {
             $provider = $this->plugin->get_active_provider();
@@ -117,6 +112,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
                 hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache ");
+                $cached = true;
                 return $this->epg_cache[$epg_id][$day_start_ts];
             }
 

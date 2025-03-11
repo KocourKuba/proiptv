@@ -307,7 +307,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_CHANGE_EPG_SOURCE => true));
 
             case ACTION_EPG_SOURCE_SELECTED:
-                if (!isset($user_input->{LIST_IDX}) || $this->plugin->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) !== ENGINE_JSON) break;
+                if (!isset($user_input->{LIST_IDX}) || $this->plugin->is_use_xmltv()) break;
 
                 foreach ($this->plugin->get_active_xmltv_ids() as $id) {
                     $this->plugin->safe_clear_selected_epg_cache($id);
@@ -542,7 +542,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return null;
         }
 
-        $dummy_rows = $this->create_rows(array(), json_encode(array('group_id' => '__dummy__row__')), '', '', null );
+        $dummy_rows = $this->create_row(array(), json_encode(array('group_id' => '__dummy__row__')), '', '', null );
 
         $all_channels_rows = array();
         $favorites_rows = array();
@@ -699,7 +699,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      * @param string|null $color
      * @return array
      */
-    private function create_rows($items, $row_id, $title, $caption, $action, $color = null)
+    private function create_row($items, $row_id, $title, $caption, $action, $color = null)
     {
         $rows = array();
         $rows[] = Rows_Factory::title_row(
@@ -844,7 +844,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         // create view history group
         if (!empty($items)) {
-            $new_rows = $this->create_rows($items,
+            $new_rows = $this->create_row($items,
                 json_encode(array('group_id' => TV_HISTORY_GROUP_ID)),
                 TR::t('tv_screen_continue'),
                 TR::t('tv_screen_continue_view'),
@@ -879,7 +879,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return array();
         }
 
-        return $this->create_rows($items,
+        return $this->create_row($items,
             json_encode(array('group_id' => TV_FAV_GROUP_ID)),
             TR::t(TV_FAV_GROUP_CAPTION),
             TR::t(TV_FAV_GROUP_CAPTION),
@@ -943,7 +943,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return array();
         }
 
-        return $this->create_rows($items,
+        return $this->create_row($items,
             json_encode(array('group_id' => TV_CHANGED_CHANNELS_GROUP_ID)),
             TR::t(TV_CHANGED_CHANNELS_GROUP_CAPTION),
             TR::t(TV_CHANGED_CHANNELS_GROUP_CAPTION),
@@ -977,7 +977,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return array();
         }
 
-        return $this->create_rows($items,
+        return $this->create_row($items,
             json_encode(array('group_id' => TV_ALL_CHANNELS_GROUP_ID)),
             TR::t(TV_ALL_CHANNELS_GROUP_CAPTION),
             TR::t(TV_ALL_CHANNELS_GROUP_CAPTION),
@@ -1018,7 +1018,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             if (empty($items)) continue;
 
-            $new_rows = $this->create_rows($items, json_encode(array('group_id' => $group_id)), $group_id, $group_id, $action_enter);
+            $new_rows = $this->create_row($items, json_encode(array('group_id' => $group_id)), $group_id, $group_id, $action_enter);
 
             foreach ($new_rows as $row) {
                 $rows[] = $row;

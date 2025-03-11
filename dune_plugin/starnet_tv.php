@@ -69,6 +69,16 @@ class Starnet_Tv implements User_Input_Handler
         return static::ID . '_handler';
     }
 
+    public function get_action_map()
+    {
+        hd_debug_print(null, true);
+
+        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+
+        return $actions;
+    }
+
     /**
      * @inheritDoc
      */
@@ -98,8 +108,9 @@ class Starnet_Tv implements User_Input_Handler
                     return null;
                 }
 
-                $post_action = Action_Factory::update_tv_info($post_action);
-
+                if ($this->plugin->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)) {
+                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+                }
                 $delayed_queue = $epg_manager->get_delayed_epg();
                 $epg_manager->clear_delayed_epg();
                 foreach ($delayed_queue as $channel_id) {
@@ -120,22 +131,10 @@ class Starnet_Tv implements User_Input_Handler
                 if (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed)) {
                     return Action_Factory::invalidate_folders(array(Starnet_Tv_Groups_Screen::ID));
                 }
+                break;
         }
 
         return null;
-    }
-
-    public function get_action_map()
-    {
-        hd_debug_print(null, true);
-
-        $actions[GUI_EVENT_PLAYBACK_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_STOP);
-        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
-        $actions[GUI_EVENT_PLAYBACK_USER_ACTION] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLAYBACK_USER_ACTION);
-        $actions[GUI_EVENT_MENU_PLAYBACK_OSD_GOING_TO_OPEN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_MENU_PLAYBACK_OSD_GOING_TO_OPEN);
-        $actions[PLUGIN_OP_GET_TV_INFO] = User_Input_Handler_Registry::create_action($this, PLUGIN_OP_GET_TV_INFO);
-
-        return $actions;
     }
 
     /**

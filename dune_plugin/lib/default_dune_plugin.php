@@ -90,6 +90,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     private $picons_source = PLAYLIST_PICONS;
 
     /**
+     * @var string
+     */
+    private $use_xmltv = false;
+
+    /**
      * @var Epg_Manager_Xmltv|Epg_Manager_Json
      */
     protected $epg_manager;
@@ -333,7 +338,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $show_ext_epg = $this->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->ext_epg_supported;
 
-            $items = $this->epg_manager->get_day_epg_items($channel_row, $day_start_tm_sec);
+            $cached = false;
+            $items = $this->epg_manager->get_day_epg_items($channel_row, $day_start_tm_sec, $cached);
 
             foreach ($items as $time => $value) {
                 if (!isset($value[PluginTvEpgProgram::end_tm_sec], $value[PluginTvEpgProgram::name], $value[PluginTvEpgProgram::description])) {
@@ -348,7 +354,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         PluginTvEpgProgram::description => $value[PluginTvEpgProgram::description],
                     );
 
-                    if (LogSeverity::$is_debug) {
+                    if (LogSeverity::$is_debug && !$cached) {
                         hd_debug_print(format_datetime("m-d H:i", $tm_start)
                             . " - " . format_datetime("m-d H:i", $tm_end)
                             . " {$value[PluginTvEpgProgram::name]}", true);
@@ -361,7 +367,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $ext_epg[$time]["desc"] = $value[PluginTvEpgProgram::description];
 
                     if (empty($value[PluginTvEpgProgram::icon_url])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = safe_get_value($channel_row, COLUMN_ICON, DEFAULT_CHANNEL_ICON_PATH);
+                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $this->get_channel_picon($channel_row, true);
                     } else {
                         $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
                     }
@@ -526,6 +532,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $this->channels_loaded = false;
     }
 
+    public function is_use_xmltv()
+    {
+        return $this->use_xmltv;
+    }
+
     /**
      * @return void
      */
@@ -567,12 +578,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if (!empty($preset)) {
                 hd_debug_print("Using 'Epg_Manager_Json' cache engine");
                 $this->epg_manager = new Epg_Manager_Json();
+                $this->use_xmltv = false;
             }
         }
 
         if (is_null($this->epg_manager)) {
             hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
             $this->epg_manager = new Epg_Manager_Xmltv();
+            $this->use_xmltv = true;
         }
 
         $this->epg_manager->init($this);
@@ -1437,11 +1450,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $this->cleanup_active_xmltv_source();
+        if ($this->use_xmltv || $this->picons_source !== PLAYLIST_PICONS) {
+            $this->cleanup_active_xmltv_source();
+            $this->epg_manager->set_xmltv_sources($this->get_active_sources());
+        }
 
-        $delay_load = $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
+        $delay_load = false;
         $bg_indexing_runs = false;
         if ($this->picons_source !== PLAYLIST_PICONS) {
+            $delay_load = $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
             $all_sources = $this->get_active_sources();
             if ($all_sources->size() === 0) {
                 hd_debug_print("No active XMLTV sources found to collect playlist icons...");
@@ -1721,7 +1738,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $allow_index = false;
         $allow_index |= $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
-        $allow_index |= $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
+        $allow_index |= $this->use_xmltv;
         if (!$allow_index) {
             return;
         }
@@ -2439,6 +2456,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         $this->picons_source = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
         $this->default_channel_icon_classic = '';
+        $this->default_channel_icon_newui = '';
     }
 
     /**
@@ -2475,7 +2493,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // if selected xmltv or combined mode look into xmltv source
         // in combined mode search is not performed if already got picon from playlist
         do {
-            $default_channel_icon = $this->get_default_channel_icon($is_classic);
             if ($this->picons_source !== XMLTV_PICONS) {
                 // playlist icons first in priority
                 $icon_url = $channel_row[COLUMN_ICON];
@@ -2507,7 +2524,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }while (false);
 
-        return empty($icon_url) ? $default_channel_icon : $icon_url;
+        return empty($icon_url) ? $this->get_default_channel_icon($is_classic) : $icon_url;
     }
 
     public function get_image_archive()
@@ -2596,7 +2613,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $menu_items = array();
 
         $provider = $this->get_active_provider();
-        if (!is_null($provider) && $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
+        if (!is_null($provider) && !$this->use_xmltv) {
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
             if (!empty($epg_presets)) {
                 $current = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
@@ -2621,10 +2638,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function epg_engine_menu($handler)
     {
-        $engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV);
-
-        $menu_items[] = $this->create_menu_item($handler, ENGINE_XMLTV, TR::t('setup_epg_cache_xmltv'),
-            ($engine === ENGINE_XMLTV) ? "check.png" : null
+        $menu_items[] = $this->create_menu_item($handler,
+            ENGINE_XMLTV, TR::t('setup_epg_cache_xmltv'),
+            $this->use_xmltv ? "check.png" : null
         );
 
         $provider = $this->get_active_provider();
@@ -2635,7 +2651,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $menu_items[] = $this->create_menu_item($handler,
                 ENGINE_JSON,
                 TR::t('setup_epg_cache_json__1', $name),
-                ($engine === ENGINE_JSON) ? "check.png" : null
+                $this->use_xmltv ? null : "check.png"
             );
         }
         return $menu_items;
@@ -2712,8 +2728,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
             $preset_cnt = count($epg_presets);
             if ($preset_cnt) {
-                $is_xmltv_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_XMLTV;
-                $engine = TR::load(($is_xmltv_engine ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
+                $engine = TR::load(($this->use_xmltv ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
                 $menu_items[] = $this->create_menu_item($handler,
                     ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
 
@@ -3051,14 +3066,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $is_json_engine = $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON;
-        $use_playlist_picons = $this->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-
-        if ($is_json_engine && $use_playlist_picons === PLAYLIST_PICONS) {
-            hd_debug_print("No need to cleanup");
-            return;
-        }
-
         $playlist_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_PLAYLIST);
         $ext_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL);
         $all_sources = array_unique(array_merge($playlist_sources, $ext_sources));
@@ -3085,8 +3092,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print("Save selected XMLTV sources keys: " . json_encode($cur_sources));
             $this->set_selected_xmltv_sources($cur_sources);
         }
-
-        $this->epg_manager->set_xmltv_sources($this->get_active_sources());
     }
 
     /**
