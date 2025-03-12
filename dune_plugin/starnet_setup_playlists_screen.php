@@ -179,6 +179,10 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                     )
                 );
 
+            case CONTROL_EDIT_NAME:
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_NAME, $user_input->{CONTROL_EDIT_NAME});
+                break;
+
             case CONTROL_EXT_PARAMS:
                 return Action_Factory::open_folder(
                     Starnet_Setup_Ext_Playlists_Screen::get_media_url_string($playlist_id, $this->ret_idx),
@@ -201,7 +205,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                     return Action_Factory::open_folder($media_url_str, TR::t('setup_epg_xmltv_cache_caption'));
                 }
 
-                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{$user_input->control_id});
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{CONTROL_URL_PATH});
                 break;
 
 

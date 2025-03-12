@@ -138,7 +138,7 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
                 );
 
             case PARAM_USER_CATCHUP:
-                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{$user_input->control_id});
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{PARAM_USER_CATCHUP});
                 break;
 
             case PARAM_USER_AGENT:
