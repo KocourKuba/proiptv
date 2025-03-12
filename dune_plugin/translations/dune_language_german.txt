@@ -375,3 +375,4 @@ err_load_vod = Fehler beim Laden des VOD!
 err_decoding_vod = Fehler beim Dekodieren von VOD-Daten!
 err_auth_no_spam = Vorherige Autorisierungsanforderung fehlgeschlagen|um zu vermeiden, dass die Anfrage blockiert wird.|Ändern Sie die Zugangsdaten oder laden Sie die Wiedergabeliste neu.
 err_error_no_data = Keine Daten
+err_error_file_not_found = Datei nicht gefunden!

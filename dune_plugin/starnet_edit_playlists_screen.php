@@ -108,6 +108,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 );
 
             case GUI_EVENT_KEY_ENTER:
+                $type = $this->plugin->get_playlist_parameter($selected_id, PARAM_TYPE);
+                $uri = $this->plugin->get_playlist_parameter($selected_id, PARAM_URI);
+                if ($type === PARAM_FILE && !file_exists($uri)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_error_file_not_found'));
+                }
+
                 if ($this->plugin->get_active_playlist_id() !== $selected_id) {
                     $this->plugin->set_active_playlist_id($selected_id);
                     $this->force_parent_reload = true;
@@ -885,7 +891,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
 
-        $sticker = Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2);
+        $sel_sticker = Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2);
+        $del_sticker = Control_Factory::create_sticker(get_image_path('del.png'), -55, -2);
         $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
 
         $items = array();
@@ -897,6 +904,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 $title = "Unnamed";
             }
 
+            $missed = false;
             $type = safe_get_value($params, PARAM_TYPE);
             if ($type === PARAM_PROVIDER) {
                 $provider = $this->plugin->create_provider_class(safe_get_value($params, PARAM_PROVIDER));
@@ -920,6 +928,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                         safe_get_value($params, PARAM_PL_TYPE),
                         $mapper_ops[$id_map]
                     );
+                    $missed = ($type === PARAM_FILE && !file_exists($uri));
                 } else {
                     $detailed_info = $title;
                 }
@@ -935,7 +944,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $playlist_id)),
                 PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::view_item_params => array(
-                    ViewItemParams::item_sticker => ($starred ? $sticker : null),
+                    ViewItemParams::item_sticker => ($starred ? $sel_sticker : ($missed ? $del_sticker : null)),
                     ViewItemParams::icon_path => $icon_file,
                     ViewItemParams::item_detailed_info => $detailed_info,
                     ViewItemParams::item_detailed_icon_path => $icon_file,

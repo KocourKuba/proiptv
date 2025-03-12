@@ -639,12 +639,7 @@ class Epg_Manager_Xmltv
             if ($key === 'epg_ids') continue;
 
             $db = $this->open_sqlite_db($db_name, $key, true);
-            if (empty($db)) {
-                hd_debug_print("Problem with open SQLite db '$db_name' for read! Possible database not exist");
-                continue;
-            }
-
-            if (!$db->is_table_exists($key)) continue;
+            if (empty($db) || !$db->is_table_exists($key)) continue;
 
             if ($key === self::TABLE_CHANNELS) {
                 $result[$key] = $db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
@@ -656,7 +651,7 @@ class Epg_Manager_Xmltv
             }
         }
 
-        hd_debug_print("Found indexes: " . json_encode($result));
+        hd_debug_print("Indexes info: " . json_encode($result));
         return $result;
     }
 
@@ -1177,7 +1172,7 @@ class Epg_Manager_Xmltv
         $db_file = self::$cache_dir . $db_name . ".db";
         // in read-only database can't be created
         if ($readonly && !file_exists($db_file)) {
-            hd_debug_print("File '$db_file' not found");
+            hd_debug_print("File '$db_file' for '$db_name' not found");
             return false;
         }
 

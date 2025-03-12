@@ -375,3 +375,4 @@ err_load_vod = Error loading VOD!
 err_decoding_vod = Error decoding VOD data!
 err_auth_no_spam = Previous authorization request failed,|to avoid blocking request not performed.|Change access data or reload playlist.
 err_error_no_data = No data
+err_error_file_not_found = File not found!
