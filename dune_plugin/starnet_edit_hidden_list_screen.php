@@ -71,14 +71,8 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                 }
 
                 $this->force_parent_reload = false;
-                return Action_Factory::close_and_run(
-                        User_Input_Handler_Registry::create_action_screen(
-                            $parent_media_url->source_window_id,
-                            $parent_media_url->end_action,
-                            null,
-                            array(ACTION_RELOAD_SOURCE => $parent_media_url->edit_list)
-                        )
-                    );
+                $target_action = User_Input_Handler_Registry::create_action_screen($parent_media_url->source_window_id, $parent_media_url->end_action);
+                return Action_Factory::close_and_run($target_action);
             case ACTION_ITEM_DELETE:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
                     $this->plugin->set_channel_visible($selected_id, true);

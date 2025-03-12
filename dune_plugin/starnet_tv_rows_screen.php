@@ -102,11 +102,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
         }
 
-        $reload_action = User_Input_Handler_Registry::create_action($this,
-            ACTION_RELOAD,
-            null,
-            array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST)
-        );
+        $reload_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
         $control_id = $user_input->control_id;
         $post_action = null;

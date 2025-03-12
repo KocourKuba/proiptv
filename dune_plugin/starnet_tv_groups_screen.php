@@ -499,17 +499,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             case ACTION_ADD_MONEY_DLG:
                 return $this->plugin->do_show_add_money();
 
-            case ACTION_REFRESH_SCREEN:
-                return Action_Factory::close_and_run(
-                    Action_Factory::open_folder(
-                        self::ID,
-                        $this->plugin->get_plugin_title(),
-                        null,
-                        null,
-                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies))
-                    )
-                );
-
             case CONTROL_PLAYLIST:
                 if ($user_input->action_type !== 'confirm' || $user_input->{CONTROL_PLAYLIST} !== CUSTOM_PLAYLIST_ID) {
                     return null;
@@ -548,6 +537,17 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $this->plugin->set_active_playlist_id($user_input->{COLUMN_PLAYLIST_ID});
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
 
+            case ACTION_REFRESH_SCREEN:
+                return Action_Factory::close_and_run(
+                    Action_Factory::open_folder(
+                        self::ID,
+                        $this->plugin->get_plugin_title(),
+                        null,
+                        null,
+                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies))
+                    )
+                );
+
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
                 $post_action = null;
@@ -557,9 +557,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         HD::get_last_error($this->plugin->get_pl_error_name()));
                 }
 
-                $post_action = Action_Factory::close_and_run(
-                    Action_Factory::open_folder(self::ID, $this->plugin->get_plugin_title(), null, null, $post_action));
-
+                $post_action = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN, $post_action);
                 return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
 
             case ACTION_INVALIDATE:

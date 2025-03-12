@@ -56,7 +56,6 @@ const ACTION_PLAY_FOLDER = 'play_folder';
 const ACTION_PLAY_ITEM = 'play_item';
 const ACTION_REFRESH_SCREEN = 'refresh_screen';
 const ACTION_RELOAD = 'reload';
-const ACTION_RELOAD_SOURCE = 'reload_action_source';
 const ACTION_RESET_DEFAULT = 'reset_default';
 const ACTION_SETTINGS = 'settings';
 const ACTION_DO_SETTINGS = 'do_edit_settings';

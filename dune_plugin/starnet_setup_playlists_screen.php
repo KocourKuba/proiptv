@@ -310,28 +310,10 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                         throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n" . substr($contents, 0, 512));
                     }
 
-                    $parser = new M3uParser();
-                    $parser->setPlaylistFile($tmp_file, true);
+                    $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
                     if ($pl_type === CONTROL_PLAYLIST_IPTV) {
-                        $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
                         if ($detect_id === CONTROL_DETECT_ID) {
-                            $db = new Sql_Wrapper(':memory:');
-                            if (!$db->is_valid()) {
-                                throw new Exception("Unable to create database");
-                            }
-
-                            $database_attached = $db->attachDatabase(':memory:', M3uParser::IPTV_DB);
-                            if ($database_attached === 0) {
-                                throw new Exception("Can't attach to database: " . M3uParser::IPTV_DB);
-                            }
-
-                            $entries_cnt = $parser->parseIptvPlaylist($db);
-                            if (empty($entries_cnt)) {
-                                throw new Exception(TR::load('err_load_playlist') . " '$uri'\n\n$contents");
-                            }
-
-                            $detect_info = '';
-                            $detect_id = $this->plugin->collect_detect_info($db, $detect_info);
+                            list($detect_id, $detect_info) = $this->plugin->collect_detect_info($tmp_file);
                             $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
                         }
                         $this->plugin->set_playlist_parameter($playlist_id, PARAM_ID_MAPPER, $detect_id);

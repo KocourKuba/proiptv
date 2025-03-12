@@ -2676,8 +2676,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function refresh_playlist_menu($handler)
     {
         $title = TR::t('playlist_name_msg__1', $this->get_playlist_parameter($this->get_active_playlist_id(), PARAM_NAME));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, $title, "refresh.png",
-            array(ACTION_RELOAD_SOURCE => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, $title, "refresh.png");
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         return $menu_items;
     }
@@ -2874,7 +2873,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             case Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST:
                 $params['screen_id'] = Starnet_Edit_Playlists_Screen::ID;
                 $params['allow_order'] = true;
-                $params['end_action'] = ACTION_INVALIDATE;
+                $params['end_action'] = ACTION_RELOAD;
                 $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
                 $params['extension'] = PLAYLIST_PATTERN;
                 $title = TR::t('setup_channels_src_edit_playlists');
@@ -3241,8 +3240,31 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         );
     }
 
-    public function collect_detect_info($db, &$detect_info)
+    /**
+     * @param string $filename
+     * @return array
+     * @throws Exception
+     */
+    public function collect_detect_info($filename)
     {
+        $parser = new M3uParser();
+        $parser->setPlaylistFile($filename, true);
+
+        $db = new Sql_Wrapper(':memory:');
+        if (!$db->is_valid()) {
+            throw new Exception("Unable to create database");
+        }
+
+        $database_attached = $db->attachDatabase(':memory:', M3uParser::IPTV_DB);
+        if ($database_attached === 0) {
+            throw new Exception("Can't attach to database: " . M3uParser::IPTV_DB);
+        }
+
+        $entries_cnt = $parser->parseIptvPlaylist($db);
+        if (empty($entries_cnt)) {
+            throw new Exception(TR::load('err_load_playlist'));
+        }
+
         $table_name = M3uParser::CHANNELS_TABLE;
         $entries_cnt = $db->query_value("SELECT COUNT(*) FROM $table_name;");
 
@@ -3265,11 +3287,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $minkey = empty($minkey) ? ATTR_CHANNEL_HASH : $minkey;
+        $minkey =  empty($minkey) ? ATTR_CHANNEL_HASH : $minkey;
         hd_debug_print("Best ID: $minkey");
         $detect_info .= PHP_EOL . TR::load('selected__1', $mapper_ops[$minkey]) . PHP_EOL;
 
-        return $minkey;
+        return array($minkey, $detect_info);
     }
 
     public static function make_epg_ids($channel_row)
