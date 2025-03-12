@@ -295,8 +295,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                     }
 
                     if ($type === PARAM_LINK) {
-                        $tmp_file = get_temp_path(Hashed_Array::hash($playlist_id));
-                        if (!is_proto_http($params[PARAM_URI])) {
+                        if (!is_proto_http($uri)) {
                             throw new Exception(TR::load('err_incorrect_url') . " '$uri'");
                         }
 
@@ -312,12 +311,20 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                     }
 
                     $parser = new M3uParser();
-                    $parser->setPlaylistFile(safe_get_value($params, PARAM_URI), true);
+                    $parser->setPlaylistFile($tmp_file, true);
                     if ($pl_type === CONTROL_PLAYLIST_IPTV) {
                         $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
                         if ($detect_id === CONTROL_DETECT_ID) {
-                            $db = new Sql_Wrapper(":memory:");
-                            $db->exec("ATTACH DATABASE ':memory:' AS " . M3uParser::IPTV_DB);
+                            $db = new Sql_Wrapper(':memory:');
+                            if (!$db->is_valid()) {
+                                throw new Exception("Unable to create database");
+                            }
+
+                            $database_attached = $db->attachDatabase(':memory:', M3uParser::IPTV_DB);
+                            if ($database_attached === 0) {
+                                throw new Exception("Can't attach to database: " . M3uParser::IPTV_DB);
+                            }
+
                             $entries_cnt = $parser->parseIptvPlaylist($db);
                             if (empty($entries_cnt)) {
                                 throw new Exception(TR::load('err_load_playlist') . " '$uri'\n\n$contents");

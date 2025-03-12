@@ -561,7 +561,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             if ($params[PARAM_PL_TYPE] === CONTROL_PLAYLIST_IPTV) {
                 $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
                 if ($detect_id === CONTROL_DETECT_ID) {
-                    $db = new Sql_Wrapper(":memory:");
+                    $db = new Sql_Wrapper(':memory:');
                     if (!$db->is_valid()) {
                         throw new Exception("Unable to create database");
                     }
@@ -692,8 +692,17 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             if ($pl_type === CONTROL_PLAYLIST_IPTV) {
                 hd_debug_print("Detect playlist id: $detect_id");
                 if ($detect_id === CONTROL_DETECT_ID) {
-                    $db = new Sql_Wrapper(":memory:");
-                    $db->attachDatabase(':memory:', M3uParser::IPTV_DB);
+                    $db = new Sql_Wrapper(':memory:');
+                    if (!$db->is_valid()) {
+                        throw new Exception("Unable to create database");
+                    }
+
+                    $tmp_file = get_temp_path("$playlist_id");
+                    $database_attached = $db->attachDatabase("$tmp_file.db", M3uParser::IPTV_DB);
+                    if ($database_attached === 0) {
+                        throw new Exception("Can't attach to database: " . M3uParser::IPTV_DB);
+                    }
+
                     $entries_cnt = $parser->parseIptvPlaylist($db);
                     if (empty($entries_cnt)) {
                         throw new Exception(TR::load('err_empty_playlist'));

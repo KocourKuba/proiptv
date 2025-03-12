@@ -3233,11 +3233,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         return array(
             CONTROL_DETECT_ID => TR::load('detect'),
-            ATTR_CHANNEL_HASH => TR::load('hash_url'),
             ATTR_CUID => TR::load('attribute_name__1', ATTR_CHANNEL_ID),
             ATTR_TVG_ID => TR::load('attribute_name__1', ATTR_TVG_ID),
             ATTR_TVG_NAME => TR::load('attribute_name__1', ATTR_TVG_NAME),
-            ATTR_CHANNEL_NAME => TR::load('channel_name')
+            ATTR_CHANNEL_NAME => TR::load('channel_name'),
+            ATTR_CHANNEL_HASH => TR::load('hash_url')
         );
     }
 
@@ -3251,16 +3251,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $detect_info = TR::load('channels__1', $entries_cnt) . PHP_EOL;
         $max_dupes = $entries_cnt + 1;
-        foreach ($stat as $key => $value) {
-            if ($key === ATTR_PARSED_ID) continue;
-            if ($value === -1) {
-                $detect_info .= TR::load('duplicates__1', $mapper_ops[$key]) . PHP_EOL;
+        foreach ($mapper_ops as $key => $value) {
+            if ($key === CONTROL_DETECT_ID) continue;
+            if (!isset($stat[$key])) {
+                $detect_info .= TR::load('duplicates__1', $value) . PHP_EOL;
                 continue;
             }
 
-            $detect_info .= TR::load('duplicates__2', $mapper_ops[$key], $value) . PHP_EOL;
-            if ($value < $max_dupes) {
-                $max_dupes = $value;
+            $detect_info .= TR::load('duplicates__2', $value, $stat[$key]) . PHP_EOL;
+            if ($stat[$key] < $max_dupes) {
+                $max_dupes = $stat[$key];
                 $minkey = $key;
             }
         }

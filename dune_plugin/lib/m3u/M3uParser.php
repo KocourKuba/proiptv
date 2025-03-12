@@ -576,25 +576,18 @@ class M3uParser extends Json_Serializer
         $stat = array();
 
         $table = M3uParser::CHANNELS_TABLE;
-        $cnt = $db->query_value("SELECT COUNT(*) FROM $table;");
-        if (empty($cnt)) {
-            return $stat;
-        }
-
         foreach (self::$id_to_column_mapper as $key => $value) {
+            $res = $db->query_value("SELECT COUNT($value) FROM $table");
+            if (empty($res)) continue;
+
             $query = "SELECT sum(cnt - 1) AS dupes
-                FROM (SELECT $value, COUNT($value) AS cnt
+                FROM (SELECT $value, COUNT(*) AS cnt
                       FROM $table GROUP BY $value HAVING cnt > 0 ORDER BY cnt DESC);";
             $res = $db->query_value($query);
-
-            if ($res === false || $res === null) {
-                $res = -1;
+            if ($res !== false && $res !== null) {
+                $stat[$key] = ($res > 0) ? $res - 1 : $res;
+                hd_debug_print("Key '$key' => '$value' dupes count: {$stat[$key]}");
             }
-
-            $res = ($res > 0) ? $res - 1 : $res;
-            hd_debug_print("Key '$key' => '$value' dupes count: $res");
-
-            $stat[$key] = $res;
         }
 
         return $stat;
