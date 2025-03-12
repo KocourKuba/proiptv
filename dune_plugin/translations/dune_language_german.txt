@@ -12,6 +12,7 @@ left = Links
 right = Rechts
 add = Hinzufügen
 delete = Entfernen
+delete2 = Entfernen (CLEAR)
 refresh = Aktualisieren
 edit = Bearbeiten
 filter = Filter

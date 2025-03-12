@@ -12,6 +12,7 @@ left = To left
 right = To right
 add = Add
 delete = Delete
+delete2 = Delete (CLEAR)
 refresh = Refresh
 edit = Edit
 filter = Filter

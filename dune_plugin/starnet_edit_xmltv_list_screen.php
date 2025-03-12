@@ -60,6 +60,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
         $actions[GUI_EVENT_KEY_ENTER] = $action_select;
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
         return $actions;
@@ -75,7 +76,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $selected_id = isset($user_input->selected_media_url) ? MediaURL::decode($user_input->selected_media_url)->id : 0;
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $edit_list = $parent_media_url->edit_list;
         $sel_idx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
@@ -85,16 +85,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $this->force_parent_reload = false;
+                $target_action = User_Input_Handler_Registry::create_action_screen($parent_media_url->source_window_id, $parent_media_url->end_action);
                 return Action_Factory::invalidate_folders(
                     array($parent_media_url->source_media_url_str),
-                    Action_Factory::close_and_run(
-                        User_Input_Handler_Registry::create_action_screen(
-                            $parent_media_url->source_window_id,
-                            $parent_media_url->end_action,
-                            null,
-                            array(ACTION_RELOAD_SOURCE => $edit_list)
-                        )
-                    )
+                    Action_Factory::close_and_run($target_action)
                 );
 
             case GUI_EVENT_KEY_ENTER:
@@ -280,7 +274,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         );
 
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete'), "remove.png");
+        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete2'), "remove.png");
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
 
         return Action_Factory::show_popup_menu($menu_items);

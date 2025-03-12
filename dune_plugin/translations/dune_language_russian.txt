@@ -12,6 +12,7 @@ left = Влево
 right = Вправо
 add = Добавить
 delete = Удалить
+delete2 = Удалить (CLEAR)
 refresh = Обновить
 edit = Редактировать
 search = Поиск
