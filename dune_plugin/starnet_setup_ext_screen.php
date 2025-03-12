@@ -58,16 +58,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        return $this->do_get_control_defs($plugin_cookies);
-    }
-
-    /**
-     * defs for all controls on screen
-     * @param object $plugin_cookies
-     * @return array
-     */
-    public function do_get_control_defs($plugin_cookies)
-    {
         hd_debug_print(null, true);
 
         $defs = array();
@@ -134,14 +124,14 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
     {
         hd_debug_print(null, true);
 
-        $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-
         $control_id = $user_input->control_id;
         if (isset($user_input->action_type, $user_input->{$control_id})
             && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
             $new_value = $user_input->{$control_id};
             hd_debug_print("Setup: changing $control_id value to $new_value", true);
         }
+
+        $post_action = null;
 
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -201,17 +191,18 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                     hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
                     $this->plugin->set_history_path($data->filepath);
 
-                    return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
-                        $action_reload, $data->filepath, self::CONTROLS_WIDTH);
+                    $post_action = Action_Factory::show_title_dialog(
+                        TR::t('folder_screen_selected_folder__1', $data->caption),
+                        null,
+                        $data->filepath,
+                        self::CONTROLS_WIDTH
+                    );
+                    break;
                 }
 
                 if ($data->choose_folder === CONTROL_BACKUP) {
-                    if (HD::do_backup_settings($this->plugin, $data->filepath) === false) {
-                        return Action_Factory::show_title_dialog(TR::t('err_backup'));
-                    }
-
-                    return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
-                        User_Input_Handler_Registry::create_action($this, ACTION_RELOAD));
+                    $msg = HD::do_backup_settings($this->plugin, $data->filepath) ? TR::t('setup_copy_done') : TR::t('err_backup');
+                    $post_action = Action_Factory::show_title_dialog($msg);
                 }
 
                 break;
@@ -227,65 +218,72 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 $data = MediaURL::make(array('filepath' => get_data_path()));
                 hd_debug_print("do set history folder to default: $data->filepath");
                 $this->plugin->set_history_path();
-                return $action_reload;
+                break;
 
             case self::CONTROL_COPY_TO_DATA:
                 $history_path = $this->plugin->get_history_path();
                 hd_debug_print("copy to: $history_path");
                 try {
                     HD::copy_data(get_data_path('history'), "/_" . PARAM_TV_HISTORY_ITEMS . "$/", $history_path);
+                    $post_action = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
                 }
 
-                return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
+                break;
 
             case self::CONTROL_COPY_TO_PLUGIN:
                 hd_debug_print("copy to: " . get_data_path());
                 try {
                     HD::copy_data($this->plugin->get_history_path(), "/_" . PARAM_TV_HISTORY_ITEMS . "$/", get_data_path(HISTORY_SUBDIR));
+                    $post_action = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
                 }
-
-                return Action_Factory::show_title_dialog(TR::t('setup_copy_done'), $action_reload);
+                break;
 
             case self::CONTROL_ADULT_PASS_DLG: // show pass dialog
                 return $this->do_get_pass_control_defs($user_input->adult);
 
             case self::ACTION_ADULT_PASS_DLG_APPLY: // handle pass dialog result
                 $param = $user_input->adult ? PARAM_ADULT_PASSWORD : PARAM_SETTINGS_PASSWORD;
-                $pass = $this->plugin->get_parameter($param);
-                hd_debug_print("pass: $param ($pass == $user_input->pass1)", true);
-                if ($user_input->pass1 !== $pass) {
+                $old_pass = $this->plugin->get_parameter($param);
+                if (empty($old_pass)) {
+                    if (!empty($user_input->pass2)) {
+                        $msg = TR::t('setup_pass_changed');
+                        $this->plugin->set_parameter($param, $user_input->pass2);
+                    } else {
+                        $msg = TR::t('setup_pass_not_changed');
+                    }
+                } else if ($user_input->pass1 !== $old_pass) {
                     $msg = TR::t('err_wrong_old_password');
                 } else if (empty($user_input->pass2)) {
-                    $this->plugin->set_parameter($param, '');
                     $msg = TR::t('setup_pass_disabled');
+                    $this->plugin->set_parameter($param, '');
                 } else if ($user_input->pass1 !== $user_input->pass2) {
-                    $this->plugin->set_parameter($param, $user_input->pass2);
                     $msg = TR::t('setup_pass_changed');
+                    $this->plugin->set_parameter($param, $user_input->pass2);
                 } else {
                     $msg = TR::t('setup_pass_not_changed');
                 }
+                hd_debug_print("pass: $param, old pass: $old_pass, new pass: $user_input->pass2", true);
 
-                return Action_Factory::show_title_dialog($msg,
-                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies)));
+                $post_action = Action_Factory::show_title_dialog($msg);
+                break;
 
             case PARAM_ENABLE_DEBUG:
                 $debug = SwitchOnOff::to_bool(self::toggle_cookie_param($plugin_cookies,PARAM_ENABLE_DEBUG));
                 set_debug_log($debug);
                 hd_debug_print("Debug logging: " . var_export($debug, true));
                 break;
-
-            case ACTION_RELOAD:
-                hd_debug_print("reload");
-                break;
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
+        return Action_Factory::reset_controls(
+            $this->get_control_defs(MediaURL::decode($user_input->parent_media_url), $plugin_cookies),
+            $post_action
+        );
     }
 
     /**
@@ -295,9 +293,8 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
      */
     protected function do_restore_settings($name, $filename)
     {
-        $this->plugin->safe_clear_selected_epg_cache(null);
+        $this->plugin->safe_clear_selected_epg_cache('');
         $this->plugin->clear_playlist_cache();
-
         $this->plugin->reset_playlist_db();
 
         $temp_folder = get_temp_path("restore");
@@ -375,14 +372,11 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
 
         $this->plugin->init_plugin(true);
-        //$this->plugin->set_parameter(PARAM_CACHE_PATH, '');
 
         return Action_Factory::show_title_dialog(
             TR::t('setup_restore_done'),
-            Action_Factory::close_and_run(
-                Action_Factory::close_and_run(
+            Action_Factory::replace_path(2, null,
                     User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD)
-                )
             )
         );
     }
@@ -392,21 +386,21 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
      * @param bool $adult
      * @return array
      */
-    public function do_get_pass_control_defs($adult)
+    protected function do_get_pass_control_defs($adult)
     {
         hd_debug_print(null, true);
 
         $defs = array();
-
-        $pass1 = '';
-        $pass2 = '';
-
         Control_Factory::add_vgap($defs, 20);
 
-        Control_Factory::add_text_field($defs, $this, null, 'pass1', TR::t('setup_old_pass'),
-            $pass1, true, true, false, true, 500);
+        $old_pass = $this->plugin->get_parameter($adult ? PARAM_ADULT_PASSWORD : PARAM_SETTINGS_PASSWORD);
+        if (!empty($old_pass)) {
+            Control_Factory::add_text_field($defs, $this, null, 'pass1', TR::t('setup_old_pass'),
+                '', true, true, false, true, 500);
+        }
+
         Control_Factory::add_text_field($defs, $this, null, 'pass2', TR::t('setup_new_pass'),
-            $pass2, true, true, false, true, 500);
+            '', true, true, false, true, 500);
 
         Control_Factory::add_vgap($defs, 50);
 
