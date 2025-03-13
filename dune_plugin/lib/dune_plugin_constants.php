@@ -286,9 +286,9 @@ const PLAYLIST_PICONS = 'playlist_picons';
 const XMLTV_PICONS = 'xmltv_picons';
 const COMBINED_PICONS = 'combined_picons';
 
-const XMLTV_SOURCE_PLAYLIST = 'playlist_xmltv';
-const XMLTV_SOURCE_EXTERNAL = 'external_xmltv';
-const XMLTV_SOURCE_ALL = 'all_xmltv';
+const XMLTV_SOURCE_PLAYLIST = 1;
+const XMLTV_SOURCE_EXTERNAL = 2;
+const XMLTV_SOURCE_ALL = 3;
 
 const GROUPS_INFO = 'groups_info';
 const GROUPS_ORDER = 'groups_order';

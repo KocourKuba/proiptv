@@ -196,7 +196,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
-                foreach ($this->plugin->get_active_xmltv_ids() as $id) {
+                foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
                     $this->plugin->safe_clear_selected_epg_cache($id);
                 }
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
@@ -204,7 +204,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_RESET_DEFAULT:
                 hd_debug_print(ACTION_RESET_DEFAULT);
-                foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL) as $id) {
+                foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id()) as $id) {
                     $this->plugin->safe_clear_selected_epg_cache($id);
                 }
                 $this->plugin->set_parameter(PARAM_CACHE_PATH, '');

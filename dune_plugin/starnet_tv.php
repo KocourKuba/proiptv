@@ -98,7 +98,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 clearstatcache();
-                $res = $epg_manager->import_indexing_log($this->plugin->get_active_xmltv_ids());
+                $res = $epg_manager->import_indexing_log($this->plugin->get_selected_xmltv_ids());
                 if ($res === 0) {
                     return Action_Factory::change_behaviour($this->get_action_map(), 1000);
                 }

@@ -586,7 +586,7 @@ class M3uParser extends Json_Serializer
             $res = $db->query_value($query);
             if ($res !== false && $res !== null) {
                 $stat[$key] = ($res > 0) ? $res - 1 : $res;
-                hd_debug_print("Key '$key' => '$value' dupes count: {$stat[$key]}");
+                hd_debug_print("Key '$key' => '$value' dupes count: $stat[$key]");
             }
         }
 

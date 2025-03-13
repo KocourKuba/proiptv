@@ -92,19 +92,20 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 );
 
             case GUI_EVENT_KEY_ENTER:
-                $selected_sources = $this->plugin->get_active_xmltv_ids();
+                $selected_sources = $this->plugin->get_selected_xmltv_ids();
                 $offset = array_search($selected_id, $selected_sources);
+                $playlist_id = $this->plugin->get_active_playlist_id();
                 if ($offset !== false) {
                     hd_debug_print("Removed Source: $selected_id", true);
                     array_splice($selected_sources, $offset, 1);
-                } else if ($this->plugin->get_xmltv_sources(XMLTV_SOURCE_ALL)->has($selected_id)) {
+                } else if ($this->plugin->get_xmltv_sources(XMLTV_SOURCE_ALL, $playlist_id)->has($selected_id)) {
                     hd_debug_print("Added Source: $selected_id", true);
                     $selected_sources[] = $selected_id;
                 }
                 hd_debug_print("Updated Selected Sources: " . json_encode($selected_sources), true);
 
                 $this->force_parent_reload = true;
-                $this->plugin->set_selected_xmltv_sources($selected_sources);
+                $this->plugin->set_selected_xmltv_sources($playlist_id, $selected_sources);
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies);
 
             case GUI_EVENT_TIMER:
@@ -119,7 +120,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $plugin_cookies->ticker = 0;
                 }
 
-                $res = $epg_manager->import_indexing_log($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL));
+                $playlist_id = $this->plugin->get_active_playlist_id();
+                $res = $epg_manager->import_indexing_log($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $playlist_id));
                 $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
 
                 if ($res === 1) {
@@ -140,10 +142,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 hd_debug_print("item: " . $selected_id, true);
 
                 $source = XMLTV_SOURCE_PLAYLIST;
-                $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_PLAYLIST, $selected_id);
+                $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
                 if (empty($item)) {
                     $source = XMLTV_SOURCE_EXTERNAL;
-                    $item = $this->plugin->get_xmltv_source(XMLTV_SOURCE_EXTERNAL, $selected_id);
+                    $item = $this->plugin->get_xmltv_source(null, $selected_id);
                 }
 
                 if (!empty($item)) {
@@ -155,7 +157,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_INDEX_EPG:
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
                 $this->plugin->run_bg_epg_indexing($selected_id, INDEXING_ALL);
-                $selected_sources = $this->plugin->get_active_xmltv_ids();
+                $selected_sources = $this->plugin->get_selected_xmltv_ids();
                 if (in_array($selected_id, $selected_sources)) {
                     $this->force_parent_reload = true;
                 }
@@ -163,7 +165,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_CLEAR_CACHE:
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
-                $selected_sources = $this->plugin->get_active_xmltv_ids();
+                $selected_sources = $this->plugin->get_selected_xmltv_ids();
                 if (in_array($selected_id, $selected_sources)) {
                     $this->force_parent_reload = true;
                     $this->plugin->reset_channels_loaded();
@@ -177,20 +179,20 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 hd_debug_print(null, true);
 
                 hd_debug_print("edit_list: $parent_media_url->edit_list", true);
-                if ($this->plugin->get_xmltv_source(XMLTV_SOURCE_EXTERNAL, $selected_id) === null) {
+                if ($this->plugin->get_xmltv_source(null, $selected_id) === null) {
                     hd_debug_print("remove xmltv source: $selected_id", true);
                     return Action_Factory::show_error(false, TR::t('edit_list_title_cant_delete'));
                 }
 
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
-                $selected_sources = $this->plugin->get_active_xmltv_ids();
+                $selected_sources = $this->plugin->get_selected_xmltv_ids();
                 $offset = array_search($selected_id, $selected_sources);
                 if ($offset !== false) {
                     $selected_sources = array_splice($selected_sources, $offset, 1);
-                    $this->plugin->set_selected_xmltv_sources($selected_sources);
+                    $this->plugin->set_selected_xmltv_sources($this->plugin->get_active_playlist_id(), $selected_sources);
                     $this->force_parent_reload = true;
                 }
-                $this->plugin->remove_xmltv_source(XMLTV_SOURCE_EXTERNAL, $selected_id);
+                $this->plugin->remove_external_xmltv_source($selected_id);
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
@@ -202,19 +204,19 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($this->plugin->get_epg_manager() !== null) {
-                    foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL) as $hash) {
+                    foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL, null) as $hash) {
                         $this->plugin->safe_clear_selected_epg_cache($hash);
                     }
                 }
-                $this->plugin->set_selected_xmltv_sources(array());
-                foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL) as $hash) {
+                $this->plugin->set_selected_xmltv_sources($this->plugin->get_active_playlist_id(), array());
+                foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL, null) as $hash) {
                     $this->plugin->safe_clear_selected_epg_cache($hash);
-                    $this->plugin->remove_xmltv_source(XMLTV_SOURCE_EXTERNAL, $hash);
+                    $this->plugin->remove_external_xmltv_source($hash);
                 }
 
                 $this->force_parent_reload = true;
 
-                if ($this->plugin->get_xmltv_sources_count(XMLTV_SOURCE_EXTERNAL) !== 0) break;
+                if ($this->plugin->get_xmltv_sources_count(null) !== 0) break;
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
@@ -302,12 +304,13 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         } else {
             $param[CONTROL_ACTION_EDIT] = $id;
             $window_title = TR::t('edit_list_edit_item');
-            $item = $this->plugin->get_xmltv_source($source, $id);
+            $playlist_id = ($source & XMLTV_SOURCE_PLAYLIST) ? $this->plugin->get_active_playlist_id() : null;
+            $item = $this->plugin->get_xmltv_source($playlist_id, $id);
             $cache_selected = safe_get_value($item, PARAM_CACHE, XMLTV_CACHE_AUTO);
             $url = safe_get_value($item, PARAM_URI, '');
         }
 
-        if ($source === XMLTV_SOURCE_EXTERNAL) {
+        if ($source & XMLTV_SOURCE_EXTERNAL) {
             $name = safe_get_value($item, PARAM_NAME);
 
             Control_Factory::add_label($defs, '', TR::t('name'), -10);
@@ -347,7 +350,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         if (isset($user_input->{CONTROL_ACTION_EDIT})) {
             // edit existing url
             $id = $user_input->{CONTROL_ACTION_EDIT};
-            $item = $this->plugin->get_xmltv_source($source, $id);
+            $playlist_id = ($source & XMLTV_SOURCE_PLAYLIST) ? $this->plugin->get_active_playlist_id() : null;
+            $item = $this->plugin->get_xmltv_source($playlist_id, $id);
         } else {
             $id = '';
             $item[PARAM_TYPE] = PARAM_LINK;
@@ -355,7 +359,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         if (isset($user_input->{CONTROL_URL_PATH})) {
             $item[PARAM_URI] = $user_input->{CONTROL_URL_PATH};
-            if ($source === XMLTV_SOURCE_EXTERNAL && !is_proto_http($item[PARAM_URI])) {
+            if (($source & XMLTV_SOURCE_EXTERNAL) && !is_proto_http($item[PARAM_URI])) {
                 return Action_Factory::close_and_run(Action_Factory::show_title_dialog(TR::t('err_incorrect_url')));
             }
             $new_id = Hashed_Array::hash($item[PARAM_URI]);
@@ -376,9 +380,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         hd_debug_print("Save source ID: $new_id, old ID: $id, params: " . json_encode($item), true);
 
         $this->plugin->safe_clear_selected_epg_cache(empty($id) ? $new_id : $id);
-        $this->plugin->set_xmltv_source($source, $item);
-        if (!empty($id) && $id !== $new_id && $source === XMLTV_SOURCE_EXTERNAL) {
-            $this->plugin->remove_xmltv_source($source, $id);
+        $playlist_id = ($source & XMLTV_SOURCE_PLAYLIST) ? $this->plugin->get_active_playlist_id() : null;
+        $this->plugin->update_xmltv_source($playlist_id, $item);
+        if (!empty($id) && $id !== $new_id && ($source & XMLTV_SOURCE_EXTERNAL)) {
+            $this->plugin->remove_external_xmltv_source($id);
         }
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
@@ -397,7 +402,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
         }
 
-        $old_count = $this->plugin->get_xmltv_sources_count(XMLTV_SOURCE_EXTERNAL);
+        $old_count = $this->plugin->get_xmltv_sources_count(null);
 
         $new_count = $old_count;
         $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
@@ -406,7 +411,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             hd_debug_print("Load string: '$line'", true);
             $hash = Hashed_Array::hash($line);
             if (preg_match(HTTP_PATTERN, $line, $m)) {
-                if ($this->plugin->get_xmltv_source(XMLTV_SOURCE_EXTERNAL, $hash) !== null) {
+                if ($this->plugin->get_xmltv_source(null, $hash) !== null) {
                     hd_debug_print("already exist: $hash", true);
                 } else {
                     $new_count++;
@@ -417,7 +422,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         PARAM_URI => $line,
                         PARAM_CACHE => XMLTV_CACHE_AUTO
                     );
-                    $this->plugin->set_xmltv_source(XMLTV_SOURCE_EXTERNAL, $item);
+                    $this->plugin->update_xmltv_source(null, $item);
                     hd_debug_print("import link: '$line'");
                 }
             } else {
@@ -456,12 +461,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         $sticker = Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2);
         $all_sources = new Hashed_Array();
-        $pl_sources = $this->plugin->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST);
+        $pl_sources = $this->plugin->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $this->plugin->get_active_playlist_id());
         $all_sources->add_items($pl_sources);
-        $all_sources->add_items($this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL));
+        $all_sources->add_items($this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL, null));
         hd_debug_print("All XMLTV sources: " . $all_sources, true);
 
-        $selected_sources = $this->plugin->get_active_xmltv_ids();
+        $selected_sources = $this->plugin->get_selected_xmltv_ids();
         foreach ($all_sources as $key => $item) {
             $detailed_info = '';
             $order_key = false;
@@ -554,7 +559,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
         $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = null;
-        if ($this->plugin->get_xmltv_sources_count(XMLTV_SOURCE_EXTERNAL) === 0) {
+        if ($this->plugin->get_xmltv_sources_count(null) === 0) {
             $msg = is_limited_apk()
                 ? TR::t('edit_list_add_prompt_apk__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW)
                 : TR::t('edit_list_add_prompt__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW);

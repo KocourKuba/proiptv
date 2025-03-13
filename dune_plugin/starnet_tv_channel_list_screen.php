@@ -129,7 +129,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 clearstatcache();
 
-                $res = $epg_manager->import_indexing_log($this->plugin->get_active_xmltv_ids());
+                $res = $epg_manager->import_indexing_log($this->plugin->get_selected_xmltv_ids());
                 if ($res === 1) {
                     hd_debug_print("Logs imported. Timer stopped");
                     return Action_Factory::invalidate_all_folders($plugin_cookies);

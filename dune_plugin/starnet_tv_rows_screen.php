@@ -119,7 +119,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 clearstatcache();
 
-                $res = $epg_manager->import_indexing_log($this->plugin->get_active_xmltv_ids());
+                $res = $epg_manager->import_indexing_log($this->plugin->get_selected_xmltv_ids());
                 if ($res === 1) {
                     hd_debug_print("Logs imported. Timer stopped");
                     return Action_Factory::invalidate_all_folders($plugin_cookies);
@@ -305,7 +305,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_EPG_SOURCE_SELECTED:
                 if (!isset($user_input->{LIST_IDX}) || $this->plugin->is_use_xmltv()) break;
 
-                foreach ($this->plugin->get_active_xmltv_ids() as $id) {
+                foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
                     $this->plugin->safe_clear_selected_epg_cache($id);
                 }
                 $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});

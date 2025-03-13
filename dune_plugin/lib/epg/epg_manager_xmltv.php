@@ -470,15 +470,16 @@ class Epg_Manager_Xmltv
             $this->clear_epg_files($hash);
             $index_flag |= INDEXING_DOWNLOAD;
             hd_debug_print("Xmltv cache expired. Indexing flags: " . $index_flag, true);
-            return $index_flag;
+            $channels_valid = false;
+            $entries_valid = false;
+        } else {
+            hd_debug_print("Cached file: $cached_file is not expired");
+            $indexed = $this->get_indexes_info($params[PARAM_HASH]);
+            // index for picons has not verified because it always exist if channels index is present
+            $channels_valid = ($indexed[self::TABLE_CHANNELS] !== -1);
+            $entries_valid = ($indexed[self::TABLE_ENTRIES] !== -1);
         }
 
-        hd_debug_print("Cached file: $cached_file is not expired");
-        $indexed = $this->get_indexes_info($params[PARAM_HASH]);
-
-        // index for picons has not verified because it always exist if channels index is present
-        $channels_valid = ($indexed[self::TABLE_CHANNELS] !== -1);
-        $entries_valid = ($indexed[self::TABLE_ENTRIES] !== -1);
 
         if ($channels_valid) {
             if (($index_flag & INDEXING_ENTRIES) === 0) {
@@ -1004,7 +1005,7 @@ class Epg_Manager_Xmltv
 
         $table_channels = self::TABLE_CHANNELS;
         $query = "SELECT DISTINCT channel_id FROM $table_channels WHERE alias IN ($aliases);";
-        $channel_ids = $db_channels->fetch_single_array($query, 'channel_id');
+        $channel_ids = $db_channels->fetch_single_array($query, COLUMN_CHANNEL_ID);
         if (empty($channel_ids)) {
             hd_debug_print("No channel_id found for aliases: $aliases");
         } else {

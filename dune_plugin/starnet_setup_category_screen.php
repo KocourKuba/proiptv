@@ -81,7 +81,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         //////////////////////////////////////
         // picon settings
 
-        $active_sources = $this->plugin->get_active_xmltv_ids();
+        $active_sources = $this->plugin->get_selected_xmltv_ids();
         if (count($active_sources)) {
             $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
             $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
