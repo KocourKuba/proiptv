@@ -2938,8 +2938,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ($remove_playlist) {
-            $table_name = self::PLAYLISTS_TABLE;
-            $this->sql_params->exec("DELETE FROM $table_name WHERE playlist_id = '$playlist_id'");
+            $tables = array(self::PLAYLISTS_TABLE, self::PLAYLIST_PARAMETERS_TABLE, self::PLAYLIST_XMLTV_TABLE, self::SELECTED_XMLTV_TABLE);
+            $query = '';
+            foreach ($tables as $table) {
+                $query .= "DELETE FROM $table WHERE playlist_id = '$playlist_id';";
+            }
+            $this->sql_params->exec($query);
         }
 
         // remove settings

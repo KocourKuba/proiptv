@@ -134,6 +134,14 @@ class Dune_Default_Sqlite_Engine
         }
         $this->sql_params->exec_transaction($query);
 
+        $query = '';
+        foreach ($this->sql_params->get_master_table_list() as $table) {
+            if (strpos($table, 'parameters_') === 0) {
+                $query .= "DROP TABLE $table;";
+            }
+        }
+        $this->sql_params->exec_transaction($query);
+
         $parameters = HD::get_data_items('common.settings', true, false);
         if (!empty($parameters)) {
             hd_debug_print("Move 'common.settings' to common.db");

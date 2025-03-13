@@ -141,6 +141,14 @@ class Sql_Wrapper
     }
 
     /**
+     * @return array
+     */
+    public function get_master_table_list()
+    {
+        return $this->fetch_single_array("SELECT name FROM sqlite_master WHERE type='table';", 'name');
+    }
+
+    /**
      * quote value (val1 -> 'val1')
      * *
      * @param string $var
