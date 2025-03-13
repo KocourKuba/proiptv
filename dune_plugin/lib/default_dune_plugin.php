@@ -367,7 +367,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $ext_epg[$time]["desc"] = $value[PluginTvEpgProgram::description];
 
                     if (empty($value[PluginTvEpgProgram::icon_url])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $this->get_channel_picon($channel_row, true);
+                        $channel_picon = $this->get_channel_picon($channel_row, true);
+                        if ($channel_picon !== $this->get_default_channel_icon()) {
+                            $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $this->get_channel_picon($channel_row, true);
+                        }
                     } else {
                         $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
                     }
