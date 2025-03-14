@@ -524,100 +524,16 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
         }
 
-        $playlist_id = Hashed_Array::hash($uri);
-        $order = $this->plugin->get_all_playlists_ids();
-        while (in_array($playlist_id, $order)) {
-            $playlist_id = Hashed_Array::hash("$playlist_id.$uri");
-        }
-
-        $tmp_file = get_temp_path(Hashed_Array::hash($playlist_id));
         try {
-            list($res, $log) = Curl_Wrapper::simple_download_file($uri, $tmp_file);
-            if (!$res) {
-                throw new Exception(TR::load('err_load_playlist') . " '$uri'\n\n" . $log);
-            }
-
-            $contents = file_get_contents($tmp_file, false, null, 0, 512);
-            if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
-                unlink($tmp_file);
-                throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
-            }
-
-            $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array('playlist_id' => $playlist_id));
-
+            $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
             $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
             $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
-            if ($pl_type === CONTROL_PLAYLIST_IPTV) {
-                if ($detect_id === CONTROL_DETECT_ID) {
-                    list($detect_id, $detect_info) = $this->plugin->collect_detect_info($tmp_file);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
-                }
-            }
 
-            $name = safe_get_member($user_input, CONTROL_EDIT_NAME, '');
-            $parser = new M3uParser();
-            $parser->setPlaylistFile($tmp_file, true);
-            $pl_header = $parser->parseHeader(false);
-            unlink($tmp_file);
-            hd_debug_print("Playlist info: " . $pl_header);
-
-            $saved_source = new Hashed_Array();
-            foreach ($pl_header->getEpgSources() as $url) {
-                $item = array();
-                $hash = Hashed_Array::hash($url);
-                hd_debug_print("playlist source: ($hash) $url", true);
-
-                $item[PARAM_HASH] = $hash;
-                $item[PARAM_TYPE] = PARAM_LINK;
-                $item[PARAM_NAME] = basename($url);
-                $item[PARAM_URI] = $url;
-                $item[PARAM_CACHE] = XMLTV_CACHE_AUTO;
-                $saved_source->put($hash, $item);
-            }
-
-            if (empty($name)) {
-                $pl_tag = $pl_header->getEntryTag(TAG_PLAYLIST);
-                if ($pl_tag !== null) {
-                    $pl_name = $pl_tag->getTagValue();
-                    $name = empty($pl_name) ? $name : $pl_name;
-                }
-
-                if (empty($name)) {
-                    if (($pos = strpos($uri, '?')) !== false) {
-                        $name = substr($uri, 0, $pos - 1);
-                    } else if (($pos = strrpos($uri, '/')) !== false) {
-                        $name = substr($uri, 0, $pos);
-                    } else {
-                        $name = $uri;
-                    }
-                    $name = basename($name);
-                }
-            }
-
-            $params[PARAM_TYPE] = PARAM_LINK;
-            $params[PARAM_NAME] = $name;
-            $params[PARAM_URI] = $uri;
-            $params[PARAM_PL_TYPE] = $pl_type;
-            $params[PARAM_ID_MAPPER] = $detect_id;
-
-            hd_debug_print("Playlist: '$uri' edit successfully");
-
-            $this->plugin->clear_playlist_cache($playlist_id);
-            $this->plugin->set_playlist_parameters($playlist_id, $params);
-            if ($saved_source->size() !== 0) {
-                $this->plugin->set_playlist_xmltv_sources($playlist_id, $saved_source);
-                $this->plugin->set_selected_xmltv_sources($playlist_id, $saved_source->get_ordered_keys());
-            }
-
-            $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $playlist_id;
+            $post_action = $this->add_playlist($uri, PARAM_LINK, $name, $detect_id, $pl_type);
         } catch (Exception $ex) {
             hd_debug_print("Problem with download playlist");
             print_backtrace_exception($ex);
             $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
-        }
-
-        if ($tmp_file !== $uri && file_exists($tmp_file)) {
-            unlink($tmp_file);
         }
 
         return $post_action;
@@ -668,67 +584,16 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         hd_debug_print(null, true);
 
         try {
-            $uri = safe_get_member($user_input, CONTROL_URL_PATH);
-            if (empty($uri)) {
-                throw new Exception(TR::load('err_load_playlist'));
+            $file_path = safe_get_member($user_input, CONTROL_URL_PATH);
+            if (empty($file_path)) {
+                return null;
             }
-            $playlist_id = Hashed_Array::hash($uri);
-            $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array('playlist_id' => $playlist_id));
-
-            hd_debug_print("Edit new playlist: $uri");
 
             $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
             $detect_id = safe_get_member($user_input, CONTROL_DETECT_ID, CONTROL_DETECT_ID);
-            hd_debug_print("Detect playlist id: $detect_id");
-            if ($pl_type === CONTROL_PLAYLIST_IPTV && $detect_id === CONTROL_DETECT_ID) {
-                list($detect_id, $detect_info) = $this->plugin->collect_detect_info($uri);
-                $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
-            }
-
             $name = safe_get_member($user_input, CONTROL_EDIT_NAME);
-            $parser = new M3uParser();
-            $parser->setPlaylistFile($uri, true);
-            $pl_header = $parser->parseHeader(false);
-            hd_debug_print("Playlist info: " . $pl_header);
 
-            $saved_source = new Hashed_Array();
-            foreach ($pl_header->getEpgSources() as $url) {
-                $item = array();
-                $hash = Hashed_Array::hash($url);
-                hd_debug_print("playlist source: ($hash) $url", true);
-
-                $item[PARAM_HASH] = $hash;
-                $item[PARAM_TYPE] = PARAM_LINK;
-                $item[PARAM_NAME] = basename($url);
-                $item[PARAM_URI] = $url;
-                $item[PARAM_CACHE] = XMLTV_CACHE_AUTO;
-                $saved_source->put($hash, $item);
-            }
-
-            if (empty($name)) {
-                $pl_tag = $pl_header->getEntryTag(TAG_PLAYLIST);
-                if ($pl_tag !== null) {
-                    $pl_name = $pl_tag->getTagValue();
-                    $name = empty($pl_name) ? $name : $pl_name;
-                }
-
-                if (empty($name)) {
-                    $name = basename($uri);
-                }
-            }
-
-            $params[PARAM_TYPE] = PARAM_FILE;
-            $params[PARAM_NAME] = $name;
-            $params[PARAM_URI] = $uri;
-            $params[PARAM_PL_TYPE] = $pl_type;
-            $params[PARAM_ID_MAPPER] = $detect_id;
-
-            $this->plugin->set_playlist_parameters($playlist_id, $params);
-            if ($saved_source->size() !== 0) {
-                $this->plugin->set_playlist_xmltv_sources($playlist_id, $saved_source);
-                $this->plugin->set_selected_xmltv_sources($playlist_id, $saved_source->get_ordered_keys());
-            }
-            $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $playlist_id;
+            $post_action = $this->add_playlist($file_path, PARAM_FILE, $name, $detect_id, $pl_type);
         } catch (Exception $ex) {
             hd_debug_print("Problem with download playlist");
             print_backtrace_exception($ex);
@@ -752,60 +617,47 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         $old_count = $this->plugin->get_all_playlists_count();
         $new_count = $old_count;
         $lines[0] = trim($lines[0], "\x0B\xEF\xBB\xBF");
-        foreach ($lines as $line) {
-            $line = trim($line);
-            hd_debug_print("Load string: '$line'", true);
-            $playlist_id = Hashed_Array::hash($line);
-            if (preg_match(HTTP_PATTERN, $line, $m)) {
-                hd_debug_print("import link: '$line'", true);
+        foreach ($lines as $uri) {
+            $uri = trim($uri);
+            hd_debug_print("Load string: '$uri'", true);
+
+            if (preg_match(HTTP_PATTERN, $uri, $m)) {
+                hd_debug_print("import link: '$uri'", true);
                 try {
-                    $tmp_file = get_temp_path(Hashed_Array::hash($line));
-                    list($res, $log) = Curl_Wrapper::simple_download_file($line, $tmp_file);
-                    if (!$res) {
-                        throw new Exception("Ошибка скачивания : $line\n\n" . $log);
-                    }
-
-                    if (file_exists($tmp_file)) {
-                        $contents = file_get_contents($tmp_file, false, null, 0, 512);
-                        if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
-                            unlink($tmp_file);
-                            throw new Exception(TR::load('err_bad_m3u_file') . "Bad M3U file: $line");
-                        }
-                        $params[PARAM_TYPE] = PARAM_LINK;
-                        $params[PARAM_NAME] = basename($m[2]);
-                        $params[PARAM_URI] = $line;
-                        $params[PARAM_PL_TYPE] = CONTROL_PLAYLIST_IPTV;
-                        unlink($tmp_file);
-                    } else {
-                        throw new Exception("Can't download file: $line");
-                    }
+                    $this->add_playlist($uri, PARAM_LINK, '', CONTROL_DETECT_ID, CONTROL_PLAYLIST_IPTV);
                 } catch (Exception $ex) {
-                    HD::set_last_error($this->plugin->get_pl_error_name(), null);
-                    print_backtrace_exception($ex);
-                    continue;
+                    hd_debug_print("Problem importing '$uri' " . $ex->getMessage());
                 }
-            } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {
-                hd_debug_print("import provider $m[1]:", true);
-                $provider = $this->plugin->create_provider_class($m[1]);
-                if (is_null($provider)) {
-                    hd_debug_print("Unknown provider ID: $m[1]");
-                    continue;
-                }
-
-                $params = $provider->fill_default_provider_info($m, $playlist_id);
-                if ($params === false) continue;
-            } else {
-                hd_debug_print("can't recognize: $line");
                 continue;
             }
 
+            if (!preg_match(PROVIDER_PATTERN, $uri, $m)) {
+                hd_debug_print("can't recognize: $uri");
+                continue;
+            }
+
+            hd_debug_print("import provider $m[1]:", true);
+            $provider = $this->plugin->create_provider_class($m[1]);
+            if (is_null($provider)) {
+                hd_debug_print("Unknown provider ID: $m[1]");
+                continue;
+            }
+
+            $params = $provider->fill_default_provider_info($m, $playlist_id);
+            if ($params === false) {
+                hd_debug_print("Incorrect provider parameters: $m[2]");
+                continue;
+            }
+
+            $playlist_id = Hashed_Array::hash($uri);
             if ($this->plugin->is_playlist_exist($playlist_id)) {
                 hd_debug_print("already exist: $playlist_id", true);
-            } else {
-                $new_count++;
-                hd_debug_print("imported playlist: " . $params, true);
-                $this->plugin->set_playlist_parameters($playlist_id, $params);
+                continue;
             }
+
+            $new_count++;
+            hd_debug_print("imported playlist: " . $params, true);
+            $this->plugin->set_playlist_parameters($playlist_id, $params);
         }
 
         if ($old_count === $new_count) {
@@ -824,16 +676,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     protected function selected_m3u_file($user_input)
     {
         $selected_media_url = MediaURL::decode($user_input->selected_data);
-        $order = $this->plugin->get_all_playlists_ids();
-        $hash = Hashed_Array::hash($selected_media_url->filepath);
-        if (in_array($hash, $order)) {
-            return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
-        }
 
-        $contents = file_get_contents($selected_media_url->filepath, false, null, 0, 512);
-        if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
-            hd_debug_print("Problem with import playlist: $selected_media_url->filepath");
-            return Action_Factory::show_title_dialog(TR::t('err_bad_m3u_file'));
+        $hash = Hashed_Array::hash($selected_media_url->filepath);
+        if ($this->plugin->is_playlist_exist($hash)) {
+            return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
         }
 
         return $this->do_add_m3u_type($selected_media_url->filepath);
@@ -854,29 +700,105 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             return Action_Factory::show_title_dialog(TR::t('edit_list_no_files'));
         }
 
-        $order = $this->plugin->get_all_playlists_ids();
-        $old_count = count($order);
+        $old_count = $this->plugin->get_all_playlists_count();
         foreach ($files as $file) {
-            $hash = Hashed_Array::hash($file);
-            if (in_array($hash, $order)) continue;
-
-            $contents = file_get_contents($file);
-            if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
-                hd_debug_print("Problem with import playlist: $file");
-                continue;
+            if ($this->plugin->is_playlist_exist(Hashed_Array::hash($file))) continue;
+            try {
+                $this->add_playlist($file, PARAM_FILE, '', CONTROL_DETECT_ID, CONTROL_PLAYLIST_IPTV);
+            } catch (Exception $ex) {
+                hd_debug_print("Problem importing '$file' " . $ex->getMessage());
             }
-
-            $playlist[PARAM_TYPE] = PARAM_FILE;
-            $playlist[PARAM_NAME] = basename($file);
-            $playlist[PARAM_URI] = $file;
-            $playlist[PARAM_PL_TYPE] = CONTROL_PLAYLIST_IPTV;
-            $this->plugin->set_playlist_parameters($hash, $playlist);
         }
-
-        return Action_Factory::show_title_dialog(TR::t('edit_list_added__1', count($order) - $old_count),
+        return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $this->plugin->get_all_playlists_count() - $old_count, count($files)),
             Action_Factory::close_and_run(
                 Action_Factory::open_folder($parent_media_url->get_media_url_str(), TR::t('setup_channels_src_edit_playlists')))
         );
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function add_playlist($uri, $type, $name, $detect_id, $pl_type)
+    {
+        $playlist_id = Hashed_Array::hash($uri);
+        if ($this->plugin->is_playlist_exist($playlist_id)) {
+            hd_debug_print("already exist: $playlist_id", true);
+            throw new Exception(TR::load('err_file_exist'));
+        }
+
+        hd_debug_print("Adding new playlist: $uri");
+
+        $params[PARAM_TYPE] = $type;
+        $params[PARAM_URI] = $uri;
+        $params[PARAM_PL_TYPE] = $pl_type;
+
+        $tmp_file = get_temp_path($playlist_id);
+        if ($type === PARAM_FILE) {
+            copy($uri, $tmp_file);
+        } else {
+            list($res, $log) = Curl_Wrapper::simple_download_file($uri, $tmp_file);
+            if (!$res) {
+                throw new Exception(TR::load('err_load_playlist') . " '$uri'\n\n" . $log);
+            }
+
+            $contents = file_get_contents($uri, false, null, 0, 512);
+            if ($contents === false || strpos($contents, TAG_EXTM3U) === false) {
+                unlink($tmp_file);
+                throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
+            }
+        }
+
+        $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array('playlist_id' => $playlist_id));
+        if ($pl_type === CONTROL_PLAYLIST_IPTV  && $detect_id === CONTROL_DETECT_ID) {
+            hd_debug_print("Detect playlist id: $detect_id");
+            list($detect_id, $detect_info) = $this->plugin->collect_detect_info($tmp_file);
+            $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
+        }
+        $params[PARAM_ID_MAPPER] = $detect_id;
+
+        $parser = new M3uParser();
+        $parser->setPlaylistFile($tmp_file, true);
+        $pl_header = $parser->parseHeader(false);
+        hd_debug_print("Playlist info: " . $pl_header);
+        unset($tmp_file);
+
+        $saved_source = new Hashed_Array();
+        foreach ($pl_header->getEpgSources() as $url) {
+            $item = array();
+            $hash = Hashed_Array::hash($url);
+            hd_debug_print("playlist source: ($hash) $url", true);
+
+            $item[PARAM_HASH] = $hash;
+            $item[PARAM_TYPE] = PARAM_LINK;
+            $item[PARAM_NAME] = basename($url);
+            $item[PARAM_URI] = $url;
+            $item[PARAM_CACHE] = XMLTV_CACHE_AUTO;
+            $saved_source->put($hash, $item);
+        }
+
+        if (empty($name)) {
+            $pl_tag = $pl_header->getEntryTag(TAG_PLAYLIST);
+            if ($pl_tag !== null) {
+                $pl_name = $pl_tag->getTagValue();
+                $name = empty($pl_name) ? $name : $pl_name;
+            }
+
+            if (empty($name)) {
+                if (($pos = strpos($uri, '?')) !== false) {
+                    $uri = substr($uri, 0, $pos - 1);
+                }
+                $name = basename($uri);
+            }
+        }
+        $params[PARAM_NAME] = $name;
+
+        $this->plugin->set_playlist_parameters($playlist_id, $params);
+        if ($saved_source->size() !== 0) {
+            $this->plugin->set_playlist_xmltv_sources($playlist_id, $saved_source);
+            $this->plugin->set_selected_xmltv_ids($playlist_id, $saved_source->key());
+        }
+
+        return $post_action;
     }
 
     /**

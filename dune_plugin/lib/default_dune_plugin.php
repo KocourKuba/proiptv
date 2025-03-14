@@ -933,7 +933,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // create settings table
         $settings_table = self::SETTINGS_TABLE;
-        $query  = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $settings_table);
+        $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $settings_table);
         $query .= sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
 
         // create tables for vod search, vod filters, vod favorites
@@ -951,14 +951,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // create group table
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         $query = sprintf(self::CREATE_GROUPS_INFO_TABLE, $groups_info_table);
-        // create channels table
+        // create table
         $query .= sprintf(self::CREATE_CHANNELS_INFO_TABLE, self::get_table_name(CHANNELS_INFO));
         // create order_groups table
         $query .= sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(GROUPS_ORDER), COLUMN_GROUP_ID);
-        // create tables for favorites
+        // create table for favorites
         $query .= sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_GROUP_ID), COLUMN_CHANNEL_ID);
-
         $this->sql_playlist->exec_transaction($query);
+
+        // create table for playlist xmltv in common database
+        $query = sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, self::PLAYLIST_XMLTV_TABLE);
+        // create table for selected xmltv sources in common database
+        $query .= sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
+        $this->sql_params->exec_transaction($query);
 
         // add special groups to the table if the not exists
         $special_group = array(
@@ -982,7 +987,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $provider_playlist_id = $this->get_playlist_parameter($playlist_id, MACRO_PLAYLIST_ID);
         $tv_history_db = $history_path . $this->make_name(TV_HISTORY, $provider_playlist_id) . ".db";
         // attach to tv_history db. if db not exist it will be created
-        if ($this->sql_playlist->attachDatabase($tv_history_db,  self::TV_HISTORY_DB) === 0) {
+        if ($this->sql_playlist->attachDatabase($tv_history_db, self::TV_HISTORY_DB) === 0) {
             hd_debug_print("Can't attach to database: $tv_history_db with name: " . self::TV_HISTORY_DB);
         } else {
             // create tv history table
@@ -991,11 +996,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->exec($query);
         }
 
-        // Move xmltv playlist table to parameters database
-        $query  = sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, self::PLAYLIST_XMLTV_TABLE);
-        $query .= sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
-        $this->sql_params->exec_transaction($query);
-
+        // move playlist xmltv sources to new database table
         if ($this->sql_playlist->is_table_exists(self::XMLTV_TABLE)) {
             $old_table = self::XMLTV_TABLE;
             $rows = $this->sql_playlist->fetch_array("SELECT * FROM $old_table;");
@@ -1011,6 +1012,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->exec("DROP TABLE $old_table;");
         }
 
+        // move selected xmltv sources to new database table
         if ($this->sql_playlist->is_table_exists(self::SELECTED_XMLTV_TABLE)) {
             $table_name = self::SELECTED_XMLTV_TABLE;
             $rows = $this->sql_playlist->fetch_single_array("SELECT hash FROM $table_name;", COLUMN_HASH);
@@ -1054,6 +1056,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
+        // remove unused settings from db
+        $unused_settings = array('cur_xmltv_source', 'cur_xmltv_key');
+        $list = Sql_Wrapper::sql_make_list_from_values($unused_settings);
+        $this->sql_playlist->exec("DELETE FROM $settings_table WHERE name IN ($list);");
+
         //////////////////////////////////////////////////////
         /// Upgrade settings to database
         $group_icons = $this->upgrade_settings($playlist_id);
@@ -1065,7 +1072,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // create vod history table
         if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
             $vod_history_db = $this->get_history_path() . $this->make_name(VOD_HISTORY) . ".db";
-            if ($this->sql_playlist->attachDatabase($vod_history_db,  self::VOD_HISTORY_DB) === 0) {
+            if ($this->sql_playlist->attachDatabase($vod_history_db, self::VOD_HISTORY_DB) === 0) {
                 hd_debug_print("Can't attach to database: $vod_history_db with name: " . self::VOD_HISTORY_DB);
             } else {
                 $query = sprintf(self::CREATE_VOD_HISTORY_TABLE, self::get_table_name(VOD_HISTORY));
@@ -1157,6 +1164,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $this->init_epg_manager();
+        $this->cleanup_stalled_locks();
 
         if (!$reload_playlist) {
             $reload_playlist = $this->is_playlist_cache_expired(true);
@@ -1190,8 +1198,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
+        $this->cleanup_active_xmltv_source();
+
         if ($this->use_xmltv || $this->picons_source !== PLAYLIST_PICONS) {
-            $this->cleanup_active_xmltv_source();
             $this->epg_manager->set_xmltv_sources($this->get_active_sources());
         }
 
@@ -1285,7 +1294,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $query_new_groups = "SELECT * FROM $iptv_groups WHERE group_id NOT IN (SELECT DISTINCT group_id FROM $groups_info_table);";
         $new_groups = $this->sql_playlist->fetch_array($query_new_groups);
         if (!empty($new_groups)) {
-            $new_groups_ids = array_map(function($value) {
+            $new_groups_ids = array_map(function ($value) {
                 return $value[COLUMN_GROUP_ID];
             }, $new_groups);
 
@@ -1517,13 +1526,71 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @param string $hash
+     */
+    public function add_selected_xmltv_id($hash)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("Add to selected: $hash", true);
+
+        $playlist_id = $this->get_active_playlist_id();
+        $table_name = self::SELECTED_XMLTV_TABLE;
+        $this->sql_params->exec("INSERT OR IGNORE INTO $table_name (playlist_id, hash) VALUES ('$playlist_id', '$hash');");
+    }
+
+    /**
+     * @param string $hash
+     */
+    public function remove_selected_xmltv_id($hash)
+    {
+        hd_debug_print(null, true);
+        hd_debug_print("Removed from selected: $hash", true);
+
+        $playlist_id = $this->get_active_playlist_id();
+        $table_name = self::SELECTED_XMLTV_TABLE;
+        $this->sql_params->exec("DELETE FROM $table_name WHERE playlist_id = '$playlist_id' AND hash = '$hash';");
+    }
+
+    /**
      * @return array
      */
     public function get_selected_xmltv_ids()
     {
         $playlist_id = $this->get_active_playlist_id();
-        $table_name = self::PLAYLIST_XMLTV_TABLE;
-        return $this->sql_params->fetch_single_array("SELECT hash FROM $table_name WHERE playlist_id = '$playlist_id';", PARAM_HASH);
+        $table_name = self::SELECTED_XMLTV_TABLE;
+        return $this->sql_params->fetch_single_array("SELECT hash FROM $table_name WHERE playlist_id = '$playlist_id' ORDER BY ROWID;", PARAM_HASH);
+    }
+
+    /**
+     * @return int
+     */
+    public function is_selected_xmltv_id($hash)
+    {
+        $playlist_id = $this->get_active_playlist_id();
+        $table_name = self::SELECTED_XMLTV_TABLE;
+        return $this->sql_params->query_value("SELECT count(*) FROM $table_name WHERE playlist_id = '$playlist_id' AND hash = '$hash';");
+    }
+
+    /**
+     * @param string $playlist_id
+     * @param array|string $values
+     */
+    public function set_selected_xmltv_ids($playlist_id, $values)
+    {
+        hd_debug_print(null, true);
+
+        if (!is_array($values)) {
+            $values = array($values);
+        }
+        hd_debug_print("Set selected: " . json_encode($values), true);
+
+        $table_name = self::SELECTED_XMLTV_TABLE;
+        $query = '';
+        foreach ($values as $hash) {
+            $query .= "INSERT INTO $table_name (playlist_id, hash) VALUES ('$playlist_id', '$hash');";
+        }
+
+        $this->sql_params->exec_transaction($query);
     }
 
     public function get_plugin_cookies()
@@ -2289,7 +2356,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $icon_url = $this->epg_manager->get_picon($key, $placeHolders);
                 if (!empty($icon_url)) break;
             }
-        }while (false);
+        } while (false);
 
         return empty($icon_url) ? $this->get_default_channel_icon($is_classic) : $icon_url;
     }
@@ -2530,7 +2597,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 TR::t('setup_interface_newui_title'),
                 "settings.png");
         }
-        $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS,TR::t('entry_setup'), "settings.png");
+        $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS, TR::t('entry_setup'), "settings.png");
 
         return $menu_items;
     }
@@ -2812,7 +2879,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $active_sources;
     }
 
-    public function cleanup_active_xmltv_source()
+    public function cleanup_stalled_locks()
     {
         hd_debug_print(null, true);
         $locks = $this->epg_manager->get_any_index_locked();
@@ -2831,33 +2898,26 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 shell_exec("rmdir {$this->get_cache_dir()}" . '/' . $lock);
             }
         }
+    }
 
+    public function cleanup_active_xmltv_source()
+    {
         $playlist_id = $this->get_active_playlist_id();
         $playlist_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_PLAYLIST, $playlist_id);
         $ext_sources = $this->get_xmltv_sources_hash(XMLTV_SOURCE_EXTERNAL, null);
         $all_sources = array_unique(array_merge($playlist_sources, $ext_sources));
-        hd_debug_print("Load All XMLTV sources keys: " . json_encode($all_sources));
+        hd_debug_print("Load All XMLTV sources keys: " . json_encode($all_sources), true);
 
         $cur_sources = $this->get_selected_xmltv_ids();
-        hd_debug_print("Load selected XMLTV sources keys: " . json_encode($cur_sources));
+        hd_debug_print("Load selected XMLTV sources keys: " . json_encode($cur_sources), true);
 
-        // remove non-existing values from active sources
-        $changed = false;
-        $filtered_source = array_intersect($cur_sources, $all_sources);
-        if (count($cur_sources) !== count($filtered_source)) {
-            $cur_sources = $filtered_source;
-            hd_debug_print("Filtered source: " . json_encode($cur_sources));
-            $changed = true;
-        }
-
-        if (empty($cur_sources) && !empty($playlist_sources)) {
-            $cur_sources[] = reset($playlist_sources);
-            $changed = true;
-        }
-
-        if ($changed) {
-            hd_debug_print("Save selected XMLTV sources keys: " . json_encode($cur_sources));
-            $this->set_selected_xmltv_sources($playlist_id, $cur_sources);
+        // remove non-existing values from selected sources
+        $removed_source = array_diff($cur_sources, $all_sources);
+        if (!empty($removed_source)) {
+            hd_debug_print("Removed source: " . json_encode($removed_source));
+            foreach ($removed_source as $source) {
+                $this->remove_selected_xmltv_id($source);
+            }
         }
     }
 
@@ -3113,6 +3173,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print("convert active sources from hashed array: " . $active_sources, true);
             $active_sources = $active_sources->get_keys();
             $plugin_settings[PARAM_SELECTED_XMLTV_SOURCES] = $active_sources;
+            unset($plugin_settings['cur_xmltv_sources']);
+        }
+
+        if (array_key_exists('cur_xmltv_key', $plugin_settings)) {
+            $plugin_settings[PARAM_SELECTED_XMLTV_SOURCES][] = $plugin_settings['cur_xmltv_key'];
+            unset($plugin_settings['cur_xmltv_key']);
         }
 
         // Move old parameters show groups to settings
@@ -3124,7 +3190,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         // remove obsolete settings
-        $removed_settings = array('cur_xmltv_sources', 'epg_cache_ttl', 'epg_cache_ttl', 'force_http', 'epg_cache_type');
+        $removed_settings = array('epg_cache_ttl', 'epg_cache_ttl', 'force_http', 'epg_cache_type', 'cur_xmltv_source');
         foreach ($removed_settings as $parameter) {
             if (array_key_exists($parameter, $plugin_settings)) {
                 unset($plugin_settings[$parameter]);

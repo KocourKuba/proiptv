@@ -142,17 +142,22 @@ class Dune_Default_Sqlite_Engine
         }
         $this->sql_params->exec_transaction($query);
 
+        // remove unused parameters
+        $parameters_table = self::PARAMETERS_TABLE;
+        $unused_parameters = array(PARAM_ENABLE_DEBUG, 'xmltv_source_names');
+        $list = Sql_Wrapper::sql_make_list_from_values($unused_parameters);
+        $this->sql_params->exec("DELETE FROM $parameters_table WHERE name IN ($list);");
+
         $parameters = HD::get_data_items('common.settings', true, false);
         if (!empty($parameters)) {
             hd_debug_print("Move 'common.settings' to common.db");
             $removed_parameters = array(
-                'config_version', 'cur_xmltv_source', 'cur_xmltv_key', 'fuzzy_search_epg', 'force_http',
-                PARAM_EPG_JSON_PRESET, PARAM_BUFFERING_TIME, PARAM_NEWUI_ICONS_IN_ROW, PARAM_NEWUI_CHANNEL_POSITION,
+                'config_version', 'cur_xmltv_source', 'cur_xmltv_key', 'fuzzy_search_epg', 'force_http', 'xmltv_source_names',
+                PARAM_ENABLE_DEBUG, PARAM_EPG_JSON_PRESET, PARAM_BUFFERING_TIME, PARAM_NEWUI_ICONS_IN_ROW, PARAM_NEWUI_CHANNEL_POSITION,
                 PARAM_EPG_CACHE_ENGINE, PARAM_PER_CHANNELS_ZOOM, PARAM_SHOW_FAVORITES, PARAM_SHOW_HISTORY, PARAM_SHOW_ALL,
                 PARAM_SHOW_CHANGED_CHANNELS, PARAM_FAKE_EPG, PARAM_SHOW_VOD, TV_ALL_CHANNELS_GROUP_ID,
             );
 
-            $parameters_table = self::PARAMETERS_TABLE;
             $query = '';
             /** @var Named_Storage|string $param */
             foreach ($parameters as $key => $param) {
@@ -198,7 +203,7 @@ class Dune_Default_Sqlite_Engine
                             PARAM_URI => $stg->params[PARAM_URI],
                             PARAM_CACHE => safe_get_value($stg->params, PARAM_CACHE, XMLTV_CACHE_AUTO)
                         );
-                        $this->update_xmltv_source(null, $item);
+                        $this->set_xmltv_source(null, $item);
                     }
                     unset($parameters[$key]);
                 } else {
@@ -498,10 +503,10 @@ class Dune_Default_Sqlite_Engine
 
         if ($playlist_id === null) {
             $table_name = self::XMLTV_TABLE;
-            $query = 'SELECT COUNT(*) FROM ' . $table_name;
+            $query = "SELECT COUNT(*) FROM $table_name;";
         } else {
             $table_name = self::PLAYLIST_XMLTV_TABLE;
-            $query = 'SELECT COUNT(*) FROM ' . $table_name . ' WHERE playlist_id = ' . $playlist_id;
+            $query = "SELECT COUNT(*) FROM $table_name WHERE playlist_id = $playlist_id;";
         }
 
         return $this->sql_params->query_value($query);
@@ -528,7 +533,29 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * insert/update xmltv source
+     * update xmltv source
+     *
+     * @param string $playlist_id
+     * @param array $value
+     * @return void
+     */
+    public function set_xmltv_source($playlist_id, $value)
+    {
+        hd_debug_print(null, true);
+
+        if ($playlist_id === null) {
+            $table_name = self::XMLTV_TABLE;
+        } else {
+            $table_name = self::PLAYLIST_XMLTV_TABLE;
+            $value[COLUMN_PLAYLIST_ID] = $playlist_id;
+        }
+
+        $q_insert = Sql_Wrapper::sql_make_insert_list($value);
+        $this->sql_params->exec("INSERT OR IGNORE INTO $table_name $q_insert;");
+    }
+
+    /**
+     * update xmltv source
      *
      * @param string $playlist_id
      * @param array $value
@@ -542,14 +569,11 @@ class Dune_Default_Sqlite_Engine
             $table_name = self::XMLTV_TABLE;
         } else {
             $table_name = self::PLAYLIST_XMLTV_TABLE;
-            $value[COLUMN_PLAYLIST_ID] = $playlist_id;
         }
+
         $q_hash = Sql_Wrapper::sql_quote($value[COLUMN_HASH]);
-        $q_insert = Sql_Wrapper::sql_make_insert_list($value);
         $q_update = Sql_Wrapper::sql_make_set_list($value);
-        $query = "INSERT OR IGNORE INTO $table_name $q_insert;";
-        $query .= "UPDATE $table_name $q_update WHERE hash = $q_hash;";
-        $this->sql_params->exec($query);
+        $this->sql_params->exec("UPDATE $table_name $q_update WHERE hash = $q_hash;");
     }
 
     /**
@@ -562,8 +586,7 @@ class Dune_Default_Sqlite_Engine
         hd_debug_print(null, true);
 
         $table_name = self::PLAYLIST_XMLTV_TABLE;
-        $query = "DROP TABLE IF EXISTS $table_name;";
-        $query .= sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, $table_name);
+        $query = '';
         foreach ($values as $params) {
             $type = safe_get_value($params, PARAM_TYPE);
             $uri = safe_get_value($params, PARAM_URI);
@@ -573,25 +596,6 @@ class Dune_Default_Sqlite_Engine
             $insert = Sql_Wrapper::sql_make_insert_list($params);
             $query .= "INSERT OR REPLACE INTO $table_name $insert;";
         }
-        $this->sql_params->exec_transaction($query);
-    }
-
-    /**
-     * @param string $playlist_id
-     * @param array $values
-     */
-    public function set_selected_xmltv_sources($playlist_id, $values)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("Selected: " . json_encode($values), true);
-
-        $table_name = self::SELECTED_XMLTV_TABLE;
-        $query = "DROP TABLE IF EXISTS $table_name;";
-        $query .= sprintf(self::CREATE_SELECTED_XMTLV_TABLE, $table_name);
-        foreach ($values as $hash) {
-            $query .= "INSERT INTO $table_name ($playlist_id, hash) VALUES ('$playlist_id', '$hash');";
-        }
-
         $this->sql_params->exec_transaction($query);
     }
 
