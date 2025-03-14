@@ -2204,7 +2204,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             create_path($path);
         }
 
-        return rtrim($path, '/');
+        return $path;
     }
 
     /**
