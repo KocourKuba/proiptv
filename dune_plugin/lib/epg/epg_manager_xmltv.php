@@ -449,12 +449,11 @@ class Epg_Manager_Xmltv
 
             if ($cache_ttl === XMLTV_CACHE_AUTO) {
                 $curl_wrapper = new Curl_Wrapper();
-                $curl_wrapper->init($url);
-                $hash = Curl_Wrapper::get_url_hash($url);
+                $curl_wrapper->init();
                 if (!$curl_wrapper->check_is_expired($url)) {
                     $expired = false;
-                } else if (Curl_Wrapper::is_cached_etag($hash)) {
-                    Curl_Wrapper::clear_cached_etag($hash);
+                } else if (Curl_Wrapper::is_cached_etag($url)) {
+                    Curl_Wrapper::clear_cached_etag($url);
                 }
             } else if (filesize($cached_file) !== 0) {
                 $max_cache_time = 3600 * 24 * $cache_ttl;
@@ -589,7 +588,7 @@ class Epg_Manager_Xmltv
             return;
         }
 
-        Curl_Wrapper::clear_cached_etag($hash);
+        Curl_Wrapper::clear_cached_etag_by_hash($hash);
 
         if (empty($hash)) {
             $this->epg_db = array();
@@ -1206,9 +1205,9 @@ class Epg_Manager_Xmltv
 
         hd_debug_print("Download: $url");
         $curl_wrapper = new Curl_Wrapper();
-        Curl_Wrapper::clear_cached_etag(hash('crc32', $url));
+        Curl_Wrapper::clear_cached_etag($url);
 
-        $curl_wrapper->init($url);
+        $curl_wrapper->init();
         if (!$curl_wrapper->download_file($url, $filename, true)) {
             throw new Exception("Can't exec curl");
         }

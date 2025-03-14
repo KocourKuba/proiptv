@@ -78,18 +78,9 @@ class Curl_Wrapper
      */
     private $is_post = false;
 
-    /**
-     * @param string $url
-     */
-    public function init($url)
+    public function init()
     {
         hd_debug_print(null, true);
-        hd_debug_print("Init by '$url'", true);
-
-        $url_hash = self::get_url_hash($url);
-        $this->config_file = get_temp_path(sprintf(self::CURL_CONFIG, $url_hash, ''));
-        $this->headers_path = get_temp_path(sprintf(self::HTTP_HEADERS_LOG, $url_hash, ''));
-        $this->logfile = get_temp_path(sprintf(self::HTTP_LOG, $url_hash, ''));
         $this->send_headers = array();
         $this->response_headers = array();
         $this->is_post = false;
@@ -108,6 +99,9 @@ class Curl_Wrapper
     public function download_file($url, $save_file, $use_cache)
     {
         hd_debug_print(null, true);
+
+        $url_hash = self::get_url_hash($url);
+        $this->logfile = get_temp_path(sprintf(self::HTTP_LOG, $url_hash, ''));
 
         $this->create_curl_config($url, $save_file, $use_cache);
         if (!$this->exec_curl()) {
@@ -134,11 +128,14 @@ class Curl_Wrapper
     {
         hd_debug_print(null, true);
 
+        $url_hash = self::get_url_hash($url);
+        $this->logfile = get_temp_path(sprintf(self::HTTP_LOG, $url_hash, ''));
+
         if (file_exists($this->logfile)) {
             unlink($this->logfile);
         }
 
-        $save_file = get_temp_path(self::get_url_hash($url));
+        $save_file = get_temp_path($url_hash);
         $this->create_curl_config($url, $save_file);
         if ($this->exec_curl()) {
             if (!file_exists($save_file)) {
@@ -322,6 +319,8 @@ class Curl_Wrapper
     }
 
     /**
+     * @param string $url
+     * @param string $etag
      * @return void
      */
     public static function set_cached_etag($url, $etag)
@@ -333,24 +332,37 @@ class Curl_Wrapper
     }
 
     /**
+     * @param string $url
      * @return bool
      */
-    public static function is_cached_etag($hash)
+    public static function is_cached_etag($url)
     {
-        $etag = self::get_cached_etag($hash);
+        $etag = self::get_cached_etag(self::get_url_hash($url));
         return !empty($etag);
     }
 
     /**
+     * @param string $url
      * @return void
      */
-    public static function clear_cached_etag($url_hash)
+    public static function clear_cached_etag($url)
     {
-        if (empty($url_hash)) {
+        $cache_db = self::load_cached_etags();
+        unset($cache_db[self::get_url_hash($url)]);
+        self::save_cached_etag($cache_db);
+    }
+
+    /**
+     * @param string $hash
+     * @return void
+     */
+    public static function clear_cached_etag_by_hash($hash)
+    {
+        if (empty($hash)) {
             $cache_db = array();
         } else {
             $cache_db = self::load_cached_etags();
-            unset($cache_db[$url_hash]);
+            unset($cache_db[$hash]);
         }
         self::save_cached_etag($cache_db);
     }
@@ -456,6 +468,9 @@ class Curl_Wrapper
      */
     private function create_curl_config($url, $save_file, $use_cache = false)
     {
+        $url_hash = self::get_url_hash($url);
+        $this->headers_path = get_temp_path(sprintf(self::HTTP_HEADERS_LOG, $url_hash, ''));
+
         $config_data[] = "--insecure";
         $config_data[] = "--silent";
         $config_data[] = "--show-error";
@@ -506,6 +521,7 @@ class Curl_Wrapper
             }
         }
 
+        $this->config_file = get_temp_path(sprintf(self::CURL_CONFIG, $url_hash, ''));
         file_put_contents($this->config_file, implode(PHP_EOL, $config_data));
     }
 }
