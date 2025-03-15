@@ -2431,6 +2431,10 @@ function register_all_known_events($handler, &$actions)
 
 function dune_params_to_array($str)
 {
+    if ($str === '[]') {
+        $str = '';
+    }
+
     if (empty($str)) {
         return array();
     }

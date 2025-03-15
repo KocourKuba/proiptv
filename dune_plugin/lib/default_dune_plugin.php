@@ -2028,47 +2028,27 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function collect_dune_params()
     {
-        $dune_params = array();
         $params = $this->get_playlist_parameters($this->get_active_playlist_id());
-        if (safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on) === SwitchOnOff::on) {
-            $playlist_dune_params = dune_params_to_array(safe_get_value($params, PARAM_DUNE_PARAMS));
-            if (!empty($dune_params_str)) {
-                $dune_params = explode(',', $dune_params_str);
-                foreach ($dune_params as $param) {
-                    $param_pair = explode(':', $param);
-                    if (empty($param_pair) || count($param_pair) < 2) continue;
+        if (safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on) === SwitchOnOff::off) {
+            return array();
+        }
 
-                    $param_pair[0] = trim($param_pair[0]);
-                    if (strpos($param_pair[1], ",,") !== false) {
-                        $param_pair[1] = str_replace(array(",,", ",", "%2C%2C"), array("%2C%2C", ",,", ",,"), $param_pair[1]);
-                    } else {
-                        $param_pair[1] = str_replace(",", ",,", $param_pair[1]);
-                    }
+        $dune_params = dune_params_to_array(safe_get_value($params, PARAM_DUNE_PARAMS));
 
-                    $playlist_dune_params[$param_pair[0]] = $param_pair[1];
-                }
+        $provider = $this->get_active_provider();
+        if (!is_null($provider)) {
+            $dune_params = array_unique(array_merge($dune_params, dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS))));
+        }
 
-                $playlist_dune_params = array_slice($playlist_dune_params, 0);
-            }
-
-            $provider = $this->get_active_provider();
-            $provider_dune_params = array();
-            if (!is_null($provider)) {
-                $provider_dune_params = dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS));
-            }
-
-            $dune_params = array_unique(array_merge($provider_dune_params, $playlist_dune_params));
-
-            if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
-                $user_agent = "User-Agent: " . HD::get_dune_user_agent();
-                if (!empty($user_agent)) {
-                    if (!isset($dune_params['http_headers'])) {
-                        $dune_params['http_headers'] = $user_agent;
-                    } else {
-                        $pos = strpos($dune_params['http_headers'], "UserAgent:");
-                        if ($pos === false) {
-                            $dune_params['http_headers'] .= "," . $user_agent;
-                        }
+        if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
+            $user_agent = "User-Agent: " . HD::get_dune_user_agent();
+            if (!empty($user_agent)) {
+                if (!isset($dune_params['http_headers'])) {
+                    $dune_params['http_headers'] = $user_agent;
+                } else {
+                    $pos = strpos($dune_params['http_headers'], "UserAgent:");
+                    if ($pos === false) {
+                        $dune_params['http_headers'] .= "," . $user_agent;
                     }
                 }
             }

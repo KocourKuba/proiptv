@@ -103,8 +103,11 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
         // dune_params
 
         $dune_params_str = safe_get_value($params, PARAM_DUNE_PARAMS, '');
+        if ($dune_params_str === '[]') {
+            $dune_params_str = '';
+        }
         $provider = $this->plugin->get_active_provider();
-        if (safe_get_value($params, PARAM_TYPE) === PARAM_PROVIDER && empty($dune_params_str)) {
+        if (empty($dune_params_str) && safe_get_value($params, PARAM_TYPE) === PARAM_PROVIDER) {
             $dune_params_str = $provider->getConfigValue(PARAM_DUNE_PARAMS);
         }
 
