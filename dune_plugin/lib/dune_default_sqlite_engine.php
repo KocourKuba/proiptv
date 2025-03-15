@@ -1358,9 +1358,12 @@ class Dune_Default_Sqlite_Engine
             $where = empty($where) ? "WHERE disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
         }
 
-        $iptv_channels = M3uParser::CHANNELS_TABLE;
         $table_name = self::get_table_name(CHANNELS_INFO);
         if ($full) {
+            $iptv_channels = M3uParser::CHANNELS_TABLE;
+            if (!$this->sql_playlist->is_table_exists($iptv_channels)) {
+                return array();
+            }
             $column = $this->get_id_column();
             $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id $where;";
         } else {
@@ -1820,8 +1823,12 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_by_order($group_id)
     {
-        $order_table = self::get_table_name($group_id);
+        if (!$this->sql_playlist->is_database_attached(M3uParser::IPTV_DB)) {
+            return array();
+        }
+
         $iptv_channels = M3uParser::CHANNELS_TABLE;
+        $order_table = self::get_table_name($group_id);
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         $column = $this->get_id_column();
         $query = "SELECT ord.channel_id, pl.*, ch.ROWID as ch_number
@@ -1837,8 +1844,12 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_channels_by_order_cnt($group_id)
     {
-        $order_table = self::get_table_name($group_id);
+        if (!$this->sql_playlist->is_database_attached(M3uParser::IPTV_DB)) {
+            return 0;
+        }
+
         $iptv_channels = M3uParser::CHANNELS_TABLE;
+        $order_table = self::get_table_name($group_id);
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         $column = $this->get_id_column();
         $query = "SELECT COUNT(ord.channel_id)

@@ -550,14 +550,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                $post_action = null;
-                if (!$this->plugin->reload_channels($plugin_cookies)) {
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                        null,
-                        HD::get_last_error($this->plugin->get_pl_error_name()));
-                }
 
-                $post_action = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN, $post_action);
+                $this->plugin->reload_channels($plugin_cookies);
+
+                $post_action = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
 
             case ACTION_INVALIDATE:

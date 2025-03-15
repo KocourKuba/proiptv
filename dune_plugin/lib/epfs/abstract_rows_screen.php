@@ -35,10 +35,6 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
      */
     protected $plugin;
 
-    /**
-     * @var string|null
-     */
-    protected $cur_sel_state;
     public function __construct(Default_Dune_Plugin $plugin)
     {
         $this->plugin = $plugin;
@@ -94,62 +90,19 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
     public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
-
-        return $this->get_folder_view_v2($media_url, null, $plugin_cookies);
-    }
-
-    /**
-     * @param MediaURL $media_url
-     * @param string $sel_state
-     * @param object $plugin_cookies
-     * @return array
-     */
-    public function get_folder_view_v2(MediaURL $media_url, $sel_state, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-
-        $this->set_cur_sel_state_str($sel_state);
 
         return array(
-            PluginFolderView::folder_type => $this->get_folder_type(),
+            PluginFolderView::folder_type => null,
             PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_ROWS,
             PluginFolderView::multiple_views_supported => false,
             PluginFolderView::archive => null,
             PluginFolderView::data => array(
                 PluginRowsFolderView::pane => $this->get_rows_pane($media_url, $plugin_cookies),
-                PluginRowsFolderView::sel_state => $this->get_cur_sel_state_str(),
+                PluginRowsFolderView::sel_state => null,
                 PluginRowsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
                 PluginRowsFolderView::timer => $this->get_timer($media_url, $plugin_cookies),
             )
         );
-    }
-
-    /**
-     * @param string|null $sel_state_str
-     * @return void
-     */
-    public function set_cur_sel_state_str($sel_state_str)
-    {
-        $this->cur_sel_state = $sel_state_str;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function get_folder_type()
-    {
-        return null;
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @return string|null
-     */
-    public function get_cur_sel_state_str()
-    {
-        return $this->cur_sel_state;
     }
 
     /**

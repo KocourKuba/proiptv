@@ -114,13 +114,9 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return $this->plugin->show_protect_settings_dialog($this, self::ACTION_PLAYLIST_SETTINGS);
 
             case self::ACTION_PLAYLIST_SETTINGS:
-                if (!$this->plugin->init_playlist_db()) {
-                    return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
-                        Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
-                }
-
+                $this->plugin->init_playlist_db();
                 return $this->plugin->do_edit_list_screen(
-                    Starnet_Tv_Groups_Screen::ID,
+                    ACTION_MAIN_SCREEEN_ID,
                     Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
 
             case self::ACTION_CALL_XMLTV_SOURCES_SETTINGS:
@@ -147,7 +143,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $this->plugin->init_epg_manager();
 
                 return $this->plugin->do_edit_list_screen(
-                    Starnet_Tv_Groups_Screen::ID,
+                    ACTION_MAIN_SCREEEN_ID,
                     Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST);
 
             case self::ACTION_CALL_SEND_LOG:

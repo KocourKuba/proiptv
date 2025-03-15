@@ -66,7 +66,7 @@ class Starnet_Epfs_Handler
     /**
      * @var Dummy_Epfs_Screen
      */
-    protected static $dummy_epf_screen;
+    protected static $dummy_epfs_screen;
 
     /**
      * @var bool
@@ -93,8 +93,8 @@ class Starnet_Epfs_Handler
 
         $plugin->create_screen(self::$tv_rows_screen);
 
-        self::$dummy_epf_screen = new Dummy_Epfs_Screen($plugin);
-        $plugin->create_screen(self::$dummy_epf_screen);
+        self::$dummy_epfs_screen = new Dummy_Epfs_Screen($plugin);
+        $plugin->create_screen(self::$dummy_epfs_screen);
     }
 
     /**
@@ -139,7 +139,7 @@ class Starnet_Epfs_Handler
             return;
 
         if ($first_run || !is_file(self::get_epfs_path(self::$no_internet_epfs))) {
-            self::write_epfs_view(self::$no_internet_epfs, self::$dummy_epf_screen->get_folder_view_for_epf(true, $plugin_cookies));
+            self::write_epfs_view(self::$no_internet_epfs, self::$dummy_epfs_screen->get_folder_view_for_epf(true, $plugin_cookies));
         }
 
         self::$no_internet_epfs_created = true;

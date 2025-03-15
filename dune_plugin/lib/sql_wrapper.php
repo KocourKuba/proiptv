@@ -339,6 +339,10 @@ class Sql_Wrapper
      */
     public function query_value($query, $full_row = false)
     {
+        if (empty($query)) {
+            return false;
+        }
+
         $result = $this->db->querySingle($query, $full_row);
         if ($result === false) {
             hd_debug_print();
@@ -358,6 +362,10 @@ class Sql_Wrapper
     public function fetch_single_array($query, $column)
     {
         $rows = array();
+        if (empty($query)) {
+            return $rows;
+        }
+
         $result = $this->db->query($query);
         if ($result) {
             while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
@@ -380,6 +388,11 @@ class Sql_Wrapper
     public function fetch_array($query)
     {
         $rows = array();
+
+        if (empty($query)) {
+            return $rows;
+        }
+
         $result = $this->db->query($query);
         if ($result) {
             while ($row = $result->fetchArray(SQLITE3_ASSOC)) {

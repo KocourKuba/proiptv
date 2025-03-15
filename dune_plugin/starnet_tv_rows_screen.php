@@ -32,7 +32,7 @@ require_once 'lib/epfs/gcomp_geom.php';
 
 class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_Handler
 {
-    const ID = 'rows_epf';
+    const ID = 'rows_epfs';
 
     ///////////////////////////////////////////////////////////////////////////
     private $removed_playback_point;
@@ -89,17 +89,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         hd_debug_print(null, true);
 
         if (isset($user_input->item_id)) {
-            $media_url_str = $user_input->item_id;
-            $media_url = MediaURL::decode($media_url_str);
-        } else if ($user_input->control_id === ACTION_REFRESH_SCREEN) {
-            $media_url = '';
-            $media_url_str = '';
+            $media_url = MediaURL::decode($user_input->item_id);
         } else {
             $media_url = $this->get_parent_media_url($user_input->parent_sel_state);
-            $media_url_str = '';
-            if (is_null($media_url)) {
-                return null;
-            }
         }
 
         $reload_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
@@ -111,6 +103,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case GUI_EVENT_TIMER:
                 // rising after playback end + 100 ms
                 $this->plugin->update_tv_history(null);
+
+                $error_msg = trim(HD::get_last_error($this->plugin->get_pl_error_name()));
+                if (!empty($error_msg)) {
+                    hd_debug_print("Playlist loading error: $error_msg");
+                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
+                }
 
                 $epg_manager = $this->plugin->get_epg_manager();
                 if ($epg_manager === null) {
@@ -154,7 +152,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     return null;
                 }
 
-                $info_children = $this->do_get_info_children(MediaURL::decode($media_url_str), $plugin_cookies);
+                $info_children = $this->do_get_info_children($media_url, $plugin_cookies);
 
                 return Action_Factory::update_rows_info(
                     $user_input->folder_key,
@@ -456,19 +454,20 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                if (!$this->plugin->reload_channels($plugin_cookies)) {
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                        null,
-                        HD::get_last_error($this->plugin->get_pl_error_name()));
-                }
-
-                $post_action = Action_Factory::close_and_run(
-                    Action_Factory::open_folder(self::ID, $this->plugin->get_plugin_title(), null, null, $post_action));
-
-                return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
+                $this->plugin->reload_channels($plugin_cookies);
+                $post_action = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
+                return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
 
             case ACTION_REFRESH_SCREEN:
-                break;
+                return Action_Factory::close_and_run(
+                    Action_Factory::open_folder(
+                        self::ID,
+                        $this->plugin->get_plugin_title(),
+                        null,
+                        null,
+                        Action_Factory::change_behaviour($this->get_action_map($media_url, $plugin_cookies))
+                    )
+                );
         }
 
         return Action_Factory::invalidate_epfs_folders($plugin_cookies, $post_action);
@@ -486,7 +485,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
         }
 
-        return null;
+        return MediaURL::decode('');
     }
 
     /**
@@ -529,17 +528,32 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     }
 
     /**
+     * @return array
+     */
+    public function get_empty_rows_pane()
+    {
+        hd_debug_print(null, true);
+
+        $defs[] = GComps_Factory::label_v2(GComp_Geom::place_center(), null, TR::t('err_empty_playlist'), 1, "#AFAFA0FF", 60);
+
+        $rows[] = Rows_Factory::vgap_row(50);
+        $rows[] = Rows_Factory::gcomps_row("single_row", $defs, null, 1920, 500);
+
+        return Rows_Factory::pane($rows);
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_rows_pane(MediaURL $media_url, $plugin_cookies)
     {
         hd_debug_print(null, true);
+
         if ($this->plugin->is_vod_playlist()) {
-            return null;
+            return $this->get_empty_rows_pane();
         }
 
         $dummy_rows = $this->create_row(array(), json_encode(array('group_id' => '__dummy__row__')), '', '', null );
-
         $all_channels_rows = array();
         $favorites_rows = array();
         $history_rows = array();
@@ -584,18 +598,28 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     hd_debug_print("added changed channels: " . count($changed_rows) . " rows", true);
                     break;
             }
+
+            $category_rows = $this->get_regular_rows();
+            if (!empty($category_rows)) {
+                hd_debug_print("added group channels: " . count($category_rows) . " rows", true);
+                $all_rows = array_merge($dummy_rows, $history_rows, $favorites_rows, $changed_rows, $all_channels_rows, $category_rows);
+            }
         }
 
-        $category_rows = $this->get_regular_rows();
-        if (is_null($category_rows)) {
+        if (empty($all_rows)) {
             hd_debug_print("no category rows");
-            return null;
+            return $this->get_empty_rows_pane();
         }
 
-        hd_debug_print("added group channels: " . count($category_rows) . " rows", true);
+        return $this->create_row_pane($all_rows);
+    }
 
-        $rows = array_merge($dummy_rows, $history_rows, $favorites_rows, $changed_rows, $all_channels_rows, $category_rows);
-
+    /**
+     * @param array $rows
+     * @return array
+     */
+    private function create_row_pane($rows)
+    {
         $pane = Rows_Factory::pane(
             $rows,
             Rows_Factory::focus(GCOMP_FOCUS_DEFAULT_CUT_IMAGE, GCOMP_FOCUS_DEFAULT_RECT),
@@ -1417,6 +1441,13 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), "info.png");
             }
+
+            $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+            $menu_items[] = $this->plugin->create_menu_item($this,
+                ACTION_ITEMS_EDIT,
+                TR::t('setup_channels_src_edit_playlists'),
+                "m3u_file.png",
+                array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
 
             if (is_limited_apk()) {
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);

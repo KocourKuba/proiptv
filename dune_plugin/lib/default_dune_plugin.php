@@ -1159,7 +1159,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // init playlist parser
         if (false === $this->init_playlist_parser($reload_playlist)) {
-            $this->sql_playlist->detachDatabase(M3uParser::IPTV_DB);
             return false;
         }
 
@@ -2046,7 +2045,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 if (!isset($dune_params['http_headers'])) {
                     $dune_params['http_headers'] = $user_agent;
                 } else {
-                    $pos = strpos($dune_params['http_headers'], "UserAgent:");
+                    $pos = strpos($dune_params['http_headers'], "User-Agent:");
                     if ($pos === false) {
                         $dune_params['http_headers'] .= "," . $user_agent;
                     }
