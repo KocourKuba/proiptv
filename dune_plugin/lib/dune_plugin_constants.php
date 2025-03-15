@@ -180,6 +180,8 @@ const COLUMN_WATCHED = 'watched';
 const COLUMN_POSITION = 'position';
 const COLUMN_DURATION = 'duration';
 const COLUMN_TIMESTAMP = 'time_stamp';
+const COLUMN_MOVIE_ID = 'movie_id';
+const COLUMN_SERIES_ID = 'series_id';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';

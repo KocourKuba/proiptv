@@ -1724,8 +1724,7 @@ class Dune_Default_Sqlite_Engine
         $q_series_id = Sql_Wrapper::sql_quote($series_id);
         $q_params = Sql_Wrapper::sql_make_list_from_keys($values);
         $q_values = Sql_Wrapper::sql_make_list_from_values($values);
-        $query = "INSERT OR REPLACE INTO $table_name (movie_id, series_id, $q_params)
-                    VALUES ($q_movie_id, $q_series_id, $q_values);";
+        $query = "INSERT OR REPLACE INTO $table_name (movie_id, series_id, $q_params) VALUES ($q_movie_id, $q_series_id, $q_values);";
         $this->sql_playlist->exec($query);
     }
 
