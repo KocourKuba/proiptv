@@ -173,8 +173,15 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 $poster_url = $short_movie->poster_url;
             }
 
+            $movie = $this->plugin->vod->get_loaded_movie($movie_id);
+            if ($movie->has_seasons()) {
+                $screen_media_url = Starnet_Vod_Seasons_List_Screen::get_media_url_string($movie->id);
+            } else {
+                $screen_media_url = Starnet_Vod_Series_List_Screen::get_media_url_string($movie->id);
+            }
+
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie_id),
+                PluginRegularFolderItem::media_url => $screen_media_url,
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $poster_url,
