@@ -34,11 +34,6 @@ class Curl_Wrapper
     const CACHE_TAG_FILE = "etag_cache.dat";
 
     /**
-     * @var string
-     */
-    private $headers_path;
-
-    /**
      * @var int
      */
     private $response_code;
@@ -47,11 +42,6 @@ class Curl_Wrapper
      * @var array
      */
     private $send_headers;
-
-    /**
-     * @var array
-     */
-    private $response_headers;
 
     /**
      * @var string
@@ -64,25 +54,19 @@ class Curl_Wrapper
     private $post_data;
 
     /**
-     * @var string
-     */
-    private $logfile;
-
-    /**
-     * @var string
-     */
-    private $config_file;
-
-    /**
      * @var bool
      */
     private $is_post = false;
+
+    public function __construct()
+    {
+        $this->init();
+    }
 
     public function init()
     {
         hd_debug_print(null, true);
         $this->send_headers = array();
-        $this->response_headers = array();
         $this->is_post = false;
         $this->post_data = null;
         $this->response_code = 0;
@@ -100,11 +84,7 @@ class Curl_Wrapper
     {
         hd_debug_print(null, true);
 
-        $url_hash = self::get_url_hash($url);
-        $this->logfile = get_temp_path(sprintf(self::HTTP_LOG, $url_hash, ''));
-
-        $this->create_curl_config($url, $save_file, $use_cache);
-        if (!$this->exec_curl()) {
+        if (!$this->exec_curl($url, $save_file, $use_cache)) {
             hd_debug_print("Can't download to $save_file");
             return false;
         }
@@ -128,16 +108,8 @@ class Curl_Wrapper
     {
         hd_debug_print(null, true);
 
-        $url_hash = self::get_url_hash($url);
-        $this->logfile = get_temp_path(sprintf(self::HTTP_LOG, $url_hash, ''));
-
-        if (file_exists($this->logfile)) {
-            unlink($this->logfile);
-        }
-
-        $save_file = get_temp_path($url_hash);
-        $this->create_curl_config($url, $save_file);
-        if ($this->exec_curl()) {
+        $save_file = get_temp_path(self::get_url_hash($url));
+        if ($this->exec_curl($url, $save_file)) {
             if (!file_exists($save_file)) {
                 hd_debug_print("Can't download to $save_file");
                 return false;
@@ -164,7 +136,7 @@ class Curl_Wrapper
      */
     public function get_response_header($header)
     {
-        return safe_get_value($this->response_headers, $header, '');
+        return safe_get_value($this->get_response_headers(), $header, '');
     }
 
     /**
@@ -196,7 +168,18 @@ class Curl_Wrapper
      */
     public function get_response_headers()
     {
-        return $this->response_headers;
+        $headers = explode("\r\n", $this->raw_response_headers);
+        $response_headers = array();
+        foreach ($headers as $line) {
+            if (empty($line)) continue;
+
+            hd_debug_print($line, true);
+            if (preg_match("/^(.*):(.*)$/", $line, $m)) {
+                $response_headers[strtolower($m[1])] = trim($m[2]);
+            }
+        }
+
+        return $response_headers;
     }
 
     /**
@@ -221,8 +204,7 @@ class Curl_Wrapper
         if (empty($etag)) {
             hd_debug_print("No ETag value");
         } else {
-            $this->create_curl_config($url, null, true);
-            if ($this->exec_curl()) {
+            if ($this->exec_curl($url, null, true)) {
                 $code = $this->get_response_code();
                 hd_debug_print("http code: $code", true);
                 return !($code === 304 || ($code === 200 && $this->get_etag_header() === $etag));
@@ -275,8 +257,8 @@ class Curl_Wrapper
     public static function simple_download_content($url)
     {
         hd_debug_print(null, true);
+
         $wrapper = new self();
-        $wrapper->init($url);
         return $wrapper->download_content($url);
     }
 
@@ -394,88 +376,24 @@ class Curl_Wrapper
     /////////////////////////////////////////////////////////////
     /// private functions
 
-    private function exec_curl()
-    {
-        $this->response_code = 0;
-
-        if (file_exists($this->logfile)) {
-            unlink($this->logfile);
-        }
-
-        $cmd = get_platform_curl() . " --config $this->config_file >>$this->logfile";
-        hd_debug_print("Exec: $cmd", true);
-        $result = shell_exec($cmd);
-        if ($result === false) {
-            hd_debug_print("Problem with exec curl");
-            return false;
-        }
-
-        if (file_exists($this->logfile)) {
-            $log_content = file_get_contents($this->logfile);
-            $pos = strrpos($log_content, "RESPONSE_CODE:");
-            if ($pos !== false) {
-                $this->response_code = (int)trim(substr($log_content, $pos + strlen("RESPONSE_CODE:")));
-                hd_debug_print("Response code: $this->response_code from $this->logfile", true);
-            }
-            if (!LogSeverity::$is_debug) {
-                unlink($this->logfile);
-            }
-        } else {
-            $log_content = "No http_proxy log! Exec result code: $result";
-            hd_debug_print($log_content);
-        }
-
-        if (!LogSeverity::$is_debug) {
-            unlink($this->config_file);
-        }
-
-        if (file_exists($this->headers_path)) {
-            $this->raw_response_headers = file_get_contents($this->headers_path);
-            if (!empty($this->raw_response_headers)) {
-                if (LogSeverity::$is_debug) {
-                    hd_debug_print("---------  Read response headers ---------");
-                }
-
-                $headers = explode("\r\n", $this->raw_response_headers);
-                $this->response_headers = array();
-                foreach ($headers as $line) {
-                    if (empty($line)) continue;
-
-                    hd_debug_print($line, true);
-                    if (preg_match("/^(.*):(.*)$/", $line, $m)) {
-                        $this->response_headers[strtolower($m[1])] = trim($m[2]);
-                    }
-                }
-
-                if (LogSeverity::$is_debug) {
-                    hd_debug_print("---------     Read finished    ---------");
-                }
-            }
-            if (!LogSeverity::$is_debug) {
-                unlink($this->headers_path);
-            }
-        }
-
-        return true;
-    }
-
     /**
-     * Create curl config
-     *
      * @param string $url
      * @param string $save_file
      * @param bool $use_cache
+     * @return bool
      */
-    private function create_curl_config($url, $save_file, $use_cache = false)
+    private function exec_curl($url, $save_file, $use_cache = false)
     {
+        $this->response_code = 0;
+
         $url_hash = self::get_url_hash($url);
-        $this->headers_path = get_temp_path(sprintf(self::HTTP_HEADERS_LOG, $url_hash, ''));
+        $headers_path = get_temp_path(sprintf(self::HTTP_HEADERS_LOG, $url_hash, ''));
 
         $config_data[] = "--insecure";
         $config_data[] = "--silent";
         $config_data[] = "--show-error";
         $config_data[] = "--fail";
-        $config_data[] = "--dump-header " . $this->headers_path;
+        $config_data[] = "--dump-header " . $headers_path;
         $config_data[] = "--connect-timeout 60";
         $config_data[] = "--max-time 90";
         $config_data[] = "--location";
@@ -521,7 +439,58 @@ class Curl_Wrapper
             }
         }
 
-        $this->config_file = get_temp_path(sprintf(self::CURL_CONFIG, $url_hash, ''));
-        file_put_contents($this->config_file, implode(PHP_EOL, $config_data));
+        $config_file = get_temp_path(sprintf(self::CURL_CONFIG, $url_hash, ''));
+        file_put_contents($config_file, implode(PHP_EOL, $config_data));
+
+        $url_hash = self::get_url_hash($url);
+        $log_file = get_temp_path(sprintf(self::HTTP_LOG, $url_hash, ''));
+
+        if (file_exists($log_file)) {
+            unlink($log_file);
+        }
+
+        $cmd = get_platform_curl() . " --config $config_file >>$log_file";
+        hd_debug_print("Exec: $cmd", true);
+        $result = shell_exec($cmd);
+        if ($result === false) {
+            hd_debug_print("Problem with exec curl");
+            return false;
+        }
+
+        if (file_exists($log_file)) {
+            $log_content = file_get_contents($log_file);
+            $pos = strrpos($log_content, "RESPONSE_CODE:");
+            if ($pos !== false) {
+                $this->response_code = (int)trim(substr($log_content, $pos + strlen("RESPONSE_CODE:")));
+                hd_debug_print("Response code: $this->response_code from $log_file", true);
+            }
+            if (!LogSeverity::$is_debug) {
+                unlink($log_file);
+            }
+        } else {
+            $log_content = "No http_proxy log! Exec result code: $result";
+            hd_debug_print($log_content);
+        }
+
+        if (!LogSeverity::$is_debug) {
+            unlink($config_file);
+        }
+
+        if (file_exists($headers_path)) {
+            $this->raw_response_headers = file_get_contents($headers_path);
+            if (!empty($this->raw_response_headers)) {
+                if (LogSeverity::$is_debug) {
+                    hd_debug_print("---------  Read response headers ---------");
+                }
+                if (LogSeverity::$is_debug) {
+                    hd_debug_print("---------     Read finished    ---------");
+                }
+            }
+            if (!LogSeverity::$is_debug) {
+                unlink($headers_path);
+            }
+        }
+
+        return true;
     }
 }

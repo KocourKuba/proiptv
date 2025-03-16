@@ -1900,6 +1900,7 @@ function get_dune_model()
         'tv288b' => 'Pro One 8K Plus',
         'tv292a' => 'Pro 4K',
         'tv292b' => 'Pro 4K',
+        'tv388a' => 'Solo 8K',
         'tv393a' => 'Pro 4K Plus',
         'tv494b' => 'Real Vision 4K Duo',
         'tv788a' => 'Max 8K',

@@ -485,7 +485,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             }
         }
 
-        return MediaURL::decode('');
+        return MediaURL::decode();
     }
 
     /**
