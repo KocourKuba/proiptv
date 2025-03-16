@@ -112,7 +112,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 $this->force_parent_reload = true;
                 $this->plugin->remove_changed_channel($channel_id);
 
-                if ($this->plugin->get_changed_channels_count() == 0) {
+                if ($this->plugin->get_changed_channels_count(PARAM_CHANGED) == 0) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
                 break;
@@ -124,7 +124,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $this->force_parent_reload = true;
                 $this->plugin->clear_changed_channels();
-                if ($this->plugin->get_changed_channels_count() !== 0) break;
+                if ($this->plugin->get_changed_channels_count(PARAM_CHANGED) !== 0) break;
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
@@ -172,7 +172,6 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
 
         $items = array();
 

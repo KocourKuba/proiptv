@@ -234,10 +234,10 @@ class Sql_Wrapper
         if (is_array($values)) {
             $in = $not ? "NOT IN" : "IN";
             $q_values = Sql_Wrapper::sql_make_list_from_values($values);
-            $where = "WHERE $column $in ($q_values)";
+            $where = "$column $in ($q_values)";
         } else {
             $eq = $not ? "!=" : "=";
-            $where = "WHERE $column $eq" . Sql_Wrapper::sql_quote($values);
+            $where = "$column $eq" . Sql_Wrapper::sql_quote($values);
         }
 
         return $where;

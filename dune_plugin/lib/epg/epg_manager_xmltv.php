@@ -1016,11 +1016,12 @@ class Epg_Manager_Xmltv
             }
 
             $table_pos = self::TABLE_ENTRIES;
-            $placeHolders = Sql_Wrapper::sql_make_list_from_values($channel_ids);
-            $query = "SELECT start, end FROM $table_pos WHERE channel_id IN ($placeHolders);";
+            $where = Sql_Wrapper::sql_make_where_clause($channel_ids, COLUMN_CHANNEL_ID);
+            $query = "SELECT start, end FROM $table_pos WHERE $where;";
             $channel_positions = $db_entries->fetch_array($query);
             if (empty($channel_positions)) {
-                hd_debug_print("No positions found for channel $channel_id ($channel_title) and channel id's: $placeHolders");
+                $ids = Sql_Wrapper::sql_make_list_from_values($channel_ids);
+                hd_debug_print("No positions found for channel $channel_id ($channel_title) and channel id's: $ids");
             } else {
                 hd_debug_print("Channel positions: " . json_encode($channel_positions), true);
             }

@@ -481,7 +481,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                             break;
 
                         default:
-                            $icon = DEFAULT_GROUP_ICON;
+                            $icon = '';
                     }
 
                     $this->plugin->set_group_icon($sel_media_url->group_id, $icon);
@@ -574,7 +574,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
 
         if (!$this->plugin->is_channels_loaded() && !$this->plugin->load_channels($plugin_cookies)) {
             hd_debug_print("Channels not loaded!");
@@ -641,7 +640,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 case TV_CHANGED_CHANNELS_GROUP_ID:
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS) || $no_channels) break;
 
-                    $has_changes = $this->plugin->get_changed_channels_count();
+                    $has_changes = $this->plugin->get_changed_channels_count(PARAM_CHANGED);
                     if (!$has_changes) break;
 
                     $new = $this->plugin->get_changed_channels_count(PARAM_NEW);
@@ -751,7 +750,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
                     if ($this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS)) {
-                        $has_changes = $this->plugin->get_changed_channels_count();
+                        $has_changes = $this->plugin->get_changed_channels_count(PARAM_CHANGED);
                         if ($has_changes) {
                             $visible++;
                         }

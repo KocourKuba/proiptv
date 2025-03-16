@@ -591,7 +591,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 case TV_CHANGED_CHANNELS_GROUP_ID:
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS)) break;
 
-                    $has_changes = $this->plugin->get_changed_channels_count();
+                    $has_changes = $this->plugin->get_changed_channels_count(PARAM_CHANGED);
                     if (!$has_changes) break;
 
                     $changed_rows = $this->get_changed_channels_rows();
@@ -915,7 +915,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     {
         hd_debug_print(null, true);
 
-        if ($this->plugin->get_changed_channels_count() === 0) {
+        if ($this->plugin->get_changed_channels_count(PARAM_CHANGED) === 0) {
             return array();
         }
 

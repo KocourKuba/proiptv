@@ -144,9 +144,8 @@ class Dune_Default_Sqlite_Engine
 
         // remove unused parameters
         $parameters_table = self::PARAMETERS_TABLE;
-        $unused_parameters = array(PARAM_ENABLE_DEBUG, 'xmltv_source_names');
-        $list = Sql_Wrapper::sql_make_list_from_values($unused_parameters);
-        $this->sql_params->exec("DELETE FROM $parameters_table WHERE name IN ($list);");
+        $where = Sql_Wrapper::sql_make_where_clause(array(PARAM_ENABLE_DEBUG, 'xmltv_source_names'), COLUMN_NAME);
+        $this->sql_params->exec("DELETE FROM $parameters_table WHERE $where;");
 
         $parameters = HD::get_data_items('common.settings', true, false);
         if (!empty($parameters)) {
@@ -610,8 +609,8 @@ class Dune_Default_Sqlite_Engine
         hd_debug_print(null, true);
 
         $table_name = self::XMLTV_TABLE;
-        $where = Sql_Wrapper::sql_make_where_clause($hash, 'hash');
-        $query = "DELETE FROM $table_name $where;";
+        $where = Sql_Wrapper::sql_make_where_clause($hash, COLUMN_HASH);
+        $query = "DELETE FROM $table_name WHERE $where;";
         $this->sql_params->exec($query);
     }
 
@@ -899,8 +898,10 @@ class Dune_Default_Sqlite_Engine
     public function remove_changed_channel($channel_id)
     {
         $table_name = self::get_table_name(CHANNELS_INFO);
-        $id = Sql_Wrapper::sql_quote($channel_id);
-        $this->sql_playlist->exec("UPDATE $table_name SET changed = 0 WHERE channel_id = $id");
+        $q_id = Sql_Wrapper::sql_quote($channel_id);
+        $query = "UPDATE $table_name SET changed = 0 WHERE channel_id = $q_id AND changed = 1;";
+        $query .= "DELETE FROM $table_name WHERE channel_id = $q_id AND changed = -1;";
+        $this->sql_playlist->exec_transaction($query);
     }
 
     /**
@@ -947,11 +948,11 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @param string $type // PARAM_NEW, PARAM_REMOVED, PARAM_ALL - total
+     * @param string $type // PARAM_CHANGED, PARAM_NEW, PARAM_REMOVED - total
      * @param string $channel_id
      * @return int
      */
-    public function get_changed_channels_count($type = PARAM_ALL, $channel_id = null)
+    public function get_changed_channels_count($type, $channel_id = null)
     {
         $val = "changed = $type";
         if ($type == PARAM_CHANGED) {
@@ -1077,7 +1078,7 @@ class Dune_Default_Sqlite_Engine
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         $disabled = (int)!$show;
 
-        $where = Sql_Wrapper::sql_make_where_clause($group_ids, 'group_id');
+        $where = Sql_Wrapper::sql_make_where_clause($group_ids, COLUMN_GROUP_ID);
 
         if (is_array($group_ids)) {
             $to_alter = $group_ids;
@@ -1087,9 +1088,9 @@ class Dune_Default_Sqlite_Engine
 
         if ($special) {
             $groups_info_table = self::get_table_name(GROUPS_INFO);
-            $query = "UPDATE $groups_info_table SET disabled = $disabled $where AND special = 1;";
+            $query = "UPDATE $groups_info_table SET disabled = $disabled WHERE $where AND special = 1;";
         } else {
-            $query = "UPDATE $groups_info_table SET disabled = $disabled $where AND special = 0;";
+            $query = "UPDATE $groups_info_table SET disabled = $disabled WHERE $where AND special = 0;";
             foreach ($to_alter as $group_id) {
                 $q_group_id = Sql_Wrapper::sql_quote($group_id);
                 $table_name = self::get_table_name($group_id);
@@ -1124,8 +1125,8 @@ class Dune_Default_Sqlite_Engine
             $show = $this->get_group_visible($group_ids, $type);
             $this->set_groups_visible($group_ids, !$show);
         } else {
-            $where = Sql_Wrapper::sql_make_where_clause($group_ids, 'group_id');
-            $query = "UPDATE $groups_info_table SET disabled = CASE WHEN disabled = 0 THEN 1 ELSE 0 END $where AND special = $type;";
+            $where = Sql_Wrapper::sql_make_where_clause($group_ids, COLUMN_GROUP_ID);
+            $query = "UPDATE $groups_info_table SET disabled = CASE WHEN disabled = 0 THEN 1 ELSE 0 END WHERE $where AND special = $type;";
             $this->sql_playlist->exec($query);
         }
     }
@@ -1148,12 +1149,20 @@ class Dune_Default_Sqlite_Engine
      */
     public function set_group_icon($group_id, $icon)
     {
+        $q_group_id = Sql_Wrapper::sql_quote($group_id);
+        if (empty($icon)) {
+            $iptv_groups = M3uParser::GROUPS_TABLE;
+            $icon = $this->sql_playlist->query_value("SELECT icon FROM $iptv_groups WHERE group_id = $q_group_id;");
+            if (empty($icon)) {
+                $icon = DEFAULT_GROUP_ICON;
+            }
+        }
+
         $groups_info_table = self::get_table_name(GROUPS_INFO);
-        $group_id = Sql_Wrapper::sql_quote($group_id);
         $q_icon = Sql_Wrapper::sql_quote($icon);
         $old_cached_image = $this->get_group_icon($group_id);
         hd_debug_print("Assign icon: $icon to group: $group_id");
-        $this->sql_playlist->exec("UPDATE $groups_info_table SET icon = $q_icon WHERE group_id = $group_id;");
+        $this->sql_playlist->exec("UPDATE $groups_info_table SET icon = $q_icon WHERE group_id = $q_group_id;");
 
         if (!empty($old_cached_image)
             && strpos($old_cached_image, 'plugin_file://') !== false
@@ -1845,6 +1854,7 @@ class Dune_Default_Sqlite_Engine
     public function get_channels_by_order_cnt($group_id)
     {
         if (!$this->sql_playlist->is_database_attached(M3uParser::IPTV_DB)) {
+            hd_debug_print("Database iptv not attached");
             return 0;
         }
 
@@ -1875,20 +1885,20 @@ class Dune_Default_Sqlite_Engine
         $disable = (int)!$show;
         $table_name = self::get_table_name(CHANNELS_INFO);
         $distinct = is_array($channel_id) ? 'DISTINCT' : '';
-        $where = Sql_Wrapper::sql_make_where_clause($channel_id, 'channel_id');
-        $groups_select = "SELECT $distinct group_id FROM $table_name $where;";
+        $where = Sql_Wrapper::sql_make_where_clause($channel_id, COLUMN_CHANNEL_ID);
+        $groups_select = "SELECT $distinct group_id FROM $table_name WHERE $where;";
 
         $query = '';
         foreach ($this->sql_playlist->fetch_array($groups_select) as $group) {
             $q_table = self::get_table_name($group[COLUMN_GROUP_ID]);
             if ($show) {
                 $q_group = Sql_Wrapper::sql_quote($group[COLUMN_GROUP_ID]);
-                $query .= "INSERT OR IGNORE INTO $q_table (channel_id) SELECT channel_id FROM $table_name $where AND group_id = $q_group ORDER BY ROWID;";
+                $query .= "INSERT OR IGNORE INTO $q_table (channel_id) SELECT channel_id FROM $table_name WHERE $where AND group_id = $q_group ORDER BY ROWID;";
             } else {
-                $query .= "DELETE FROM $q_table $where;";
+                $query .= "DELETE FROM $q_table WHERE $where;";
             }
         }
-        $query .= "UPDATE $table_name SET disabled = $disable $where;";
+        $query .= "UPDATE $table_name SET disabled = $disable WHERE $where;";
 
         $this->sql_playlist->exec($query);
     }

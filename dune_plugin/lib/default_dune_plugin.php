@@ -1048,8 +1048,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
 
                     if (!empty($known_sources)) {
-                        $where = Sql_Wrapper::sql_make_where_clause($known_sources, 'hash', true);
-                        $query .= "DELETE FROM $playlist_xmltv $where AND type = $q_type;";
+                        $where = Sql_Wrapper::sql_make_where_clause($known_sources, COLUMN_HASH, true);
+                        $query .= "DELETE FROM $playlist_xmltv WHERE $where AND type = $q_type;";
                     }
                     $this->sql_params->exec_transaction($query);
                 }
@@ -1057,9 +1057,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         // remove unused settings from db
-        $unused_settings = array('cur_xmltv_source', 'cur_xmltv_key');
-        $list = Sql_Wrapper::sql_make_list_from_values($unused_settings);
-        $this->sql_playlist->exec("DELETE FROM $settings_table WHERE name IN ($list);");
+        $where = Sql_Wrapper::sql_make_where_clause(array('cur_xmltv_source', 'cur_xmltv_key'), COLUMN_NAME);
+        $this->sql_playlist->exec("DELETE FROM $settings_table WHERE $where;");
 
         //////////////////////////////////////////////////////
         /// Upgrade settings to database
@@ -1236,6 +1235,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Playlist groups:     $playlist_groups");
 
         $groups_info_table = self::get_table_name(GROUPS_INFO);
+        $channel_info_table = self::get_table_name(CHANNELS_INFO);
+        $groups_order_table = self::get_table_name(GROUPS_ORDER);
+        $iptv_channels = M3uParser::CHANNELS_TABLE;
 
         // add provider ignored groups to known_groups
         if (!empty($ignore_groups)) {
@@ -1247,129 +1249,150 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->exec_transaction($query);
         }
 
+        // store existing groups before updateing
+        $existing_groups = $this->get_groups_order();
+
         ////////////////////////////////////////////////////////////////////////////////////
         /// update tables with removed and added groups and channels
 
-        $channel_info_table = self::get_table_name(CHANNELS_INFO);
-        $query = "SELECT count(channel_id) FROM $channel_info_table;";
+        $query = "SELECT COUNT(channel_id) FROM $channel_info_table;";
         $is_new = $this->sql_playlist->query_value($query) === 0;
+        hd_debug_print("Is new playlist:     " . var_export($is_new, true));
 
         // get name of the column for channel ID
         $id_column = $this->get_id_column();
         hd_debug_print("ID column:           $id_column");
 
         // update existing database for empty group_id (converted from known_channels.settings)
-        hd_debug_print("Update groups name", true);
-        $iptv_channels = M3uParser::CHANNELS_TABLE;
-        $query = "UPDATE $channel_info_table
-                    SET group_id = (
-                        SELECT group_id
-                        FROM $iptv_channels
-                        WHERE $channel_info_table.channel_id = $iptv_channels.$id_column
-                        LIMIT 1
-                    )
-                    WHERE group_id = ''
-                    AND EXISTS (
-                        SELECT 1
-                        FROM $iptv_channels
-                        WHERE $channel_info_table.channel_id = $iptv_channels.$id_column
-                          AND $channel_info_table.group_id != $iptv_channels.group_id
-                    );";
-        $this->sql_playlist->exec($query);
-
-        $iptv_groups = M3uParser::GROUPS_TABLE;
-
-        // select existing groups
-        $existing_groups = $this->get_groups_order();
-
-        // mark as removed channels that not present iptv.iptv_channels db
-        hd_debug_print("Remove non-existing channels", true);
-        $query = "UPDATE $channel_info_table SET changed = -1 WHERE channel_id NOT IN
-                    (SELECT $id_column AS channel_id FROM $iptv_channels WHERE channel_id NOT NULL);";
-        $this->sql_playlist->exec($query);
+        $query = "SELECT COUNT(*) FROM $channel_info_table WHERE group_id = '';";
+        if ($this->sql_playlist->query_value($query) !== 0) {
+            hd_debug_print("Update groups name for converted settings", true);
+            $query = "UPDATE $channel_info_table
+                        SET group_id = (
+                            SELECT group_id
+                            FROM $iptv_channels
+                            WHERE channel_id = $iptv_channels.$id_column
+                            LIMIT 1)
+                        WHERE group_id = ''
+                        AND EXISTS (
+                            SELECT 1
+                            FROM $iptv_channels
+                            WHERE channel_id = $iptv_channels.$id_column AND group_id != $iptv_channels.group_id);";
+            $this->sql_playlist->exec($query);
+        }
 
         // select new groups that not present in groups table but exist in iptv_groups
-        $groups_order_table = self::get_table_name(GROUPS_ORDER);
+        $iptv_groups = M3uParser::GROUPS_TABLE;
         $query_new_groups = "SELECT * FROM $iptv_groups WHERE group_id NOT IN (SELECT DISTINCT group_id FROM $groups_info_table);";
         $new_groups = $this->sql_playlist->fetch_array($query_new_groups);
         if (!empty($new_groups)) {
-            $new_groups_ids = array_map(function ($value) {
-                return $value[COLUMN_GROUP_ID];
-            }, $new_groups);
-
-            $list_new_groups = Sql_Wrapper::sql_make_list_from_values($new_groups_ids);
-            hd_debug_print("New groups:          $list_new_groups");
-
-            hd_debug_print("Create group orders table for new groups", true);
-            $query = '';
-            foreach ($new_groups_ids as $group_id) {
-                $order_table_name = self::get_table_name($group_id);
-                hd_debug_print("New groups order $group_id ($order_table_name)", true);
-                $query .= sprintf(self::CREATE_ORDERED_TABLE, $order_table_name, COLUMN_CHANNEL_ID);
-            }
-            $this->sql_playlist->exec_transaction($query);
-
-            hd_debug_print("Add new groups", true);
             $query = '';
             foreach ($new_groups as $group_row) {
-                $q_group_id = Sql_Wrapper::sql_quote($group_row[COLUMN_GROUP_ID]);
+                $group_id = $group_row[COLUMN_GROUP_ID];
+                $q_group_id = Sql_Wrapper::sql_quote($group_id);
                 $q_group_icon = Sql_Wrapper::sql_quote(empty($group_row[COLUMN_ICON]) ? DEFAULT_GROUP_ICON : $group_row[COLUMN_ICON]);
                 $q_adult = Sql_Wrapper::sql_quote($group_row[M3uParser::COLUMN_ADULT]);
-
                 $query .= "INSERT OR IGNORE INTO $groups_info_table (group_id, title, icon, adult) VALUES ($q_group_id, $q_group_id, $q_group_icon, $q_adult);";
                 $query .= "INSERT OR IGNORE INTO $groups_order_table (group_id) VALUES ($q_group_id);";
+
+                $group_channels_order_table = self::get_table_name($group_id);
+                hd_debug_print("New groups order: $group_id ($group_channels_order_table)", true);
+                $query .= sprintf(self::CREATE_ORDERED_TABLE, $group_channels_order_table, COLUMN_CHANNEL_ID);
             }
             $this->sql_playlist->exec_transaction($query);
         }
 
-        // add new channels
-        hd_debug_print("Adding new channels", true);
-        $query = "INSERT OR IGNORE INTO $channel_info_table (channel_id, title, group_id, adult)
-                    SELECT $id_column AS channel_id, title, group_id, adult
-                    FROM $iptv_channels
-                    WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0)
-                      AND channel_id NOT IN (SELECT channel_id FROM $channel_info_table)
-                      AND channel_id IS NOT NULL
-                    GROUP BY channel_id ORDER BY ROWID ASC;";
+        // cleanup if group removed from playlist
+        $query = "SELECT group_id FROM $groups_info_table WHERE group_id NOT IN (SELECT group_id FROM $iptv_groups) AND special = 0;";
+        $removed_groups = $this->sql_playlist->fetch_single_array($query, COLUMN_GROUP_ID);
+        if (!empty($removed_groups)) {
+            $groups_order_table = self::get_table_name(GROUPS_ORDER);
+            $where = Sql_Wrapper::sql_make_where_clause($removed_groups, COLUMN_GROUP_ID);
+            $query = "DELETE FROM $groups_order_table WHERE $where;";
+            $query .= "DELETE FROM $groups_info_table WHERE $where;";
+            foreach ($removed_groups as $group_id) {
+                $group_channels_order_table = self::get_table_name($group_id);
+                $query .= "DROP TABLE $group_channels_order_table;";
+                hd_debug_print("Removed group channels order: $group_id ($group_channels_order_table)", true);
+            }
+            $this->sql_playlist->exec_transaction($query);
+        }
+
+        // mark as removed channels that not present iptv.iptv_channels db
+        $query = "SELECT channel_id FROM $channel_info_table WHERE channel_id NOT IN
+                    (SELECT $id_column AS channel_id FROM $iptv_channels WHERE channel_id NOT NULL AND channel_id != '');";
+        $removed_channels = $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
+
+        $query = "SELECT $id_column AS channel_id FROM $iptv_channels
+                    WHERE channel_id NOT IN (SELECT channel_id FROM $channel_info_table WHERE changed != -1);";
+        $new_channels = $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
+
+        if (!empty($removed_channels)) {
+            hd_debug_print("Remove non-existing channels", true);
+            $remove_where = Sql_Wrapper::sql_make_where_clause($removed_channels, COLUMN_CHANNEL_ID);
+            $query = "UPDATE $channel_info_table SET changed = -1 WHERE $remove_where;";
+            $this->sql_playlist->exec($query);
+        }
+
+        if (!empty($new_channels)) {
+            // add new channels
+            hd_debug_print("Adding new channels", true);
+            $add_where = Sql_Wrapper::sql_make_where_clause($new_channels, COLUMN_CHANNEL_ID);
+            $query = "INSERT OR REPLACE INTO $channel_info_table (channel_id, title, group_id, adult)
+                        SELECT $id_column AS channel_id, title, group_id, adult
+                        FROM $iptv_channels WHERE $add_where
+                        GROUP BY channel_id ORDER BY ROWID ASC;";
+            $this->sql_playlist->exec($query);
+        }
+
+        // update group_id title and adult if changed for channels
+        hd_debug_print("Update channels info", true);
+        $from = "$iptv_channels WHERE channel_id = $iptv_channels.$id_column";
+        $query = "UPDATE $channel_info_table SET
+                    title = (SELECT title FROM $from),
+                    group_id = (SELECT group_id FROM $from),
+                    adult = (SELECT adult FROM $from)
+                  WHERE changed = 0";
         $this->sql_playlist->exec($query);
 
         $query = '';
-        hd_debug_print("Adding channels to new groups orders", true);
-        foreach ($new_groups as $group_row) {
-            $order_table_name = self::get_table_name($group_row[COLUMN_GROUP_ID]);
-            $q_group_id = Sql_Wrapper::sql_quote($group_row[COLUMN_GROUP_ID]);
+        if (!empty($new_groups)) {
+            hd_debug_print("Update new group channels orders", true);
+            foreach ($new_groups as $group_row) {
+                $group_channels_order_table = self::get_table_name($group_row[COLUMN_GROUP_ID]);
+                $q_group_id = Sql_Wrapper::sql_quote($group_row[COLUMN_GROUP_ID]);
 
-            // Add channels to orders from iptv_channels for selected group that not disabled in known_channels
-            $query .= "INSERT OR IGNORE INTO $order_table_name (channel_id)
-                        SELECT channel_id FROM $channel_info_table
-                        WHERE group_id = $q_group_id
-                        AND changed = 1 AND disabled == 0 
-                        ORDER BY ROWID ASC;";
+                // Add channels to orders from iptv_channels for selected group that not disabled in known_channels
+                $query .= "INSERT OR IGNORE INTO $group_channels_order_table (channel_id)
+                            SELECT channel_id FROM $channel_info_table
+                            WHERE group_id = $q_group_id
+                            AND changed = 1 AND disabled == 0 
+                            ORDER BY ROWID ASC;";
+            }
+            $this->sql_playlist->exec_transaction($query);
         }
-        $this->sql_playlist->exec_transaction($query);
 
-        hd_debug_print("Adding new channels to existing orders", true);
+        hd_debug_print("Update channels in orders", true);
         $query = '';
         foreach ($existing_groups as $group_id) {
-            $order_table_name = self::get_table_name($group_id);
+            $group_channels_order_table = self::get_table_name($group_id);
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
             // add new channels to group order
-            $query .= "INSERT OR IGNORE INTO $order_table_name (channel_id)
-                        SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND changed = 1 ORDER BY ROWID ASC;";
-            // remove not existing channels from group order
-            $query .= "DELETE FROM $order_table_name
+            $query .= "INSERT OR IGNORE INTO $group_channels_order_table (channel_id)
+                        SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND disabled = 0 AND changed != -1 ORDER BY ROWID ASC;";
+
+            // delete removed channels from group channels order
+            $query .= "DELETE FROM $group_channels_order_table
                         WHERE channel_id IN (SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND changed = -1);";
+
+            // delete not existing channels from group channels order
+            $query .= "DELETE FROM $group_channels_order_table
+                        WHERE channel_id NOT IN (SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id);";
+
         }
         $this->sql_playlist->exec_transaction($query);
 
-        // reset changed flag for channels present in channels_info table and iptv_channels table
-        hd_debug_print("Reset changes for existing channels", true);
-        $query = "UPDATE $channel_info_table SET changed = 0
-                    WHERE channel_id IN (SELECT $id_column AS channel_id FROM $iptv_channels);";
-        $this->sql_playlist->exec($query);
-
         // reset changed flag for channels in disabled groups
-        hd_debug_print("Reset changed for disabled channels", true);
         $query = "UPDATE $channel_info_table SET changed = 0, disabled = 1
                     WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE disabled = 1 AND special = 0);";
         $this->sql_playlist->exec($query);
@@ -1377,18 +1400,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($is_new) {
             // if it first run for this playlist remove changed status for all channels
             $this->clear_changed_channels();
-        }
-
-        // cleanup order if group removed from playlist
-        hd_debug_print("Cleanup removed groups orders", true);
-        $query = "SELECT group_id FROM $groups_info_table WHERE group_id NOT IN (SELECT group_id FROM $iptv_groups) AND special = 0;";
-        $removed_groups = $this->sql_playlist->fetch_single_array($query, COLUMN_GROUP_ID);
-        if (!empty($rows)) {
-            hd_debug_print("Removed groups:      " . implode(', ', $removed_groups), true);
-            $where = Sql_Wrapper::sql_make_where_clause($removed_groups, 'group_id');
-            $query = "DELETE FROM $groups_order_table $where;";
-            $query .= "DELETE FROM $groups_info_table $where;";
-            $this->sql_playlist->exec_transaction($query);
         }
 
         $known_cnt = $this->get_channels_count(TV_ALL_CHANNELS_GROUP_ID, PARAM_ALL, PARAM_ALL);
@@ -1413,6 +1424,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Removed channels:    $removed_channels_cnt");
         hd_debug_print("Visible groups:      $visible_groups_cnt");
         hd_debug_print("Hidden groups:       $hidden_groups_cnt");
+        hd_debug_print("New groups:          " . count($new_groups));
+        hd_debug_print("Removed groups:      " . count($removed_groups));
         hd_debug_print("Load time:           {$report[Perf_Collector::TIME]} secs");
         hd_debug_print("Memory usage:        {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
         hd_debug_print_separator();
@@ -3355,8 +3368,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (isset($plugin_orders[PARAM_DISABLED_CHANNELS]) && $plugin_orders[PARAM_DISABLED_CHANNELS]->size() !== 0) {
             hd_debug_print("Move 'disabled_channels' to 'channels' db table");
-            $where = Sql_Wrapper::sql_make_where_clause($plugin_orders[PARAM_DISABLED_CHANNELS]->get_order(), 'channel_id');
-            $query = "UPDATE $channels_info_table SET disabled = 1 $where;";
+            $where = Sql_Wrapper::sql_make_where_clause($plugin_orders[PARAM_DISABLED_CHANNELS]->get_order(), COLUMN_CHANNEL_ID);
+            $query = "UPDATE $channels_info_table SET disabled = 1 WHERE $where;";
             $this->sql_playlist->exec($query);
             unset($plugin_orders[PARAM_DISABLED_CHANNELS]);
         }
