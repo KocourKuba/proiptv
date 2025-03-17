@@ -1415,17 +1415,20 @@ class Dune_Default_Sqlite_Engine
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
             $and = ($disabled_groups !== -1) ? "AND disabled = $disabled_groups" : "";
-            $where = "WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 $and)";
+            $where = "group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 $and)";
         } else {
-            $where = "WHERE group_id = " . Sql_Wrapper::sql_quote($group_id);
+            $q_group_id = Sql_Wrapper::sql_quote($group_id);
+            $where = "group_id = $q_group_id";
         }
 
+        $where = "$where AND changed != -1";
+
         if ($disabled_channels !== -1) {
-            $where = empty($where) ? "WHERE disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
+            $where = "$where AND disabled = $disabled_channels";
         }
 
         $table_name = self::get_table_name(CHANNELS_INFO);
-        $query = "SELECT count(channel_id) FROM $table_name $where;";
+        $query = "SELECT count(channel_id) FROM $table_name WHERE $where;";
         return $this->sql_playlist->query_value($query);
     }
 

@@ -450,11 +450,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $q_result = false;
         $idx = 0;
         foreach ($groups_order as $group_row) {
-            if ($group_row[M3uParser::COLUMN_ADULT] && !$show_adult) continue;
+            if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
 
             $channels_rows = $this->plugin->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
             foreach ($channels_rows as $channel_row) {
-                if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+                if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
 
                 $ch_title = $channel_row[COLUMN_TITLE];
                 $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
@@ -504,12 +504,12 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
             foreach ($groups_order as $group_row) {
-                if ($group_row[M3uParser::COLUMN_ADULT] && !$show_adult) continue;
+                if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
 
                 $channels_rows = $this->plugin->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
                 $zoom_data = $this->plugin->get_channels_zoom($group_row[COLUMN_GROUP_ID]);
                 foreach ($channels_rows as $channel_row) {
-                    if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+                    if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
 
                     $icon_url = $this->plugin->get_channel_picon($channel_row, true);
 

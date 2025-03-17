@@ -168,11 +168,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $this->plugin->init_epg_manager();
                 $this->plugin->safe_clear_selected_epg_cache(null);
                 $this->plugin->reset_channels_loaded();
-                $action = Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'));
-                if (HD::rows_api_support()) {
-                    $action = Action_Factory::clear_rows_info_cache($action);
-                }
-                return $action;
+                return Action_Factory::clear_rows_info_cache(Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared')));
 
             case self::ACTION_FORCE_OPEN:
                 hd_debug_print_separator();
@@ -182,7 +178,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $this->plugin->init_plugin();
                 if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
                     return $this->plugin->do_edit_list_screen(
-                        Starnet_Tv_Groups_Screen::ID,
+                        ACTION_MAIN_SCREEEN_ID,
                         Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                 }
 
@@ -221,8 +217,13 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         )
                     );
                 }
-
                 break;
+
+            case ACTION_RELOAD:
+                $this->plugin->init_plugin();
+                $this->plugin->reload_channels($plugin_cookies);
+                return Starnet_Epfs_Handler::update_epfs_file($plugin_cookies,
+                    isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {
@@ -243,7 +244,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin();
                         if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
-                            return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                            return $this->plugin->do_edit_list_screen(
+                                ACTION_MAIN_SCREEEN_ID,
                                 Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 
@@ -298,7 +300,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin();
                         if ($this->plugin->get_all_playlists_count() === 0 || !$this->plugin->init_playlist_db()) {
-                            return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                            return $this->plugin->do_edit_list_screen(
+                                ACTION_MAIN_SCREEEN_ID,
                                 Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 
@@ -322,7 +325,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                         $this->plugin->init_plugin();
                         if (!$this->plugin->init_playlist_db()) {
-                            return $this->plugin->do_edit_list_screen(Starnet_Tv_Groups_Screen::ID,
+                            return $this->plugin->do_edit_list_screen(
+                                ACTION_MAIN_SCREEEN_ID,
                                 Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST);
                         }
 

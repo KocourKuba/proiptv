@@ -584,7 +584,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $all_groups = $this->plugin->get_groups_by_order();
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         foreach ($all_groups as $group_row) {
-            if (!$show_adult && $group_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+            if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
             if ($this->plugin->get_channels_by_order_cnt($group_row[COLUMN_GROUP_ID]) === 0) continue;
 
             $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);

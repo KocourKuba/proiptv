@@ -48,7 +48,6 @@ class M3uParser extends Json_Serializer
     const COLUMN_CATCHUP = 'catchup';
     const COLUMN_CATCHUP_SOURCE = 'catchup_source';
     const COLUMN_PATH = 'path';
-    const COLUMN_ADULT = 'adult';
     const COLUMN_PARENT_CODE = 'parent_code';
     const COLUMN_EXT_PARAMS = 'ext_params';
 
@@ -281,7 +280,7 @@ class M3uParser extends Json_Serializer
             self::COLUMN_CATCHUP_SOURCE => 'TEXT',
             COLUMN_ICON => 'TEXT',
             self::COLUMN_PATH => 'TEXT',
-            self::COLUMN_ADULT => 'INTEGER DEFAULT 0',
+            COLUMN_ADULT => 'INTEGER DEFAULT 0',
             self::COLUMN_PARENT_CODE => 'TEXT',
             self::COLUMN_EXT_PARAMS => 'TEXT',
             COLUMN_GROUP_ID => 'TEXT NOT NULL',
@@ -290,7 +289,7 @@ class M3uParser extends Json_Serializer
         $init_groups = array(
             COLUMN_GROUP_ID => 'TEXT PRIMARY KEY NOT NULL',
             COLUMN_ICON => 'TEXT',
-            self::COLUMN_ADULT => 'INTEGER DEFAULT 0',
+            COLUMN_ADULT => 'INTEGER DEFAULT 0',
         );
 
         $channels_columns = Sql_Wrapper::make_table_columns($init_channels);
@@ -353,7 +352,7 @@ class M3uParser extends Json_Serializer
                     $stm_channels->bindValue(":" . self::COLUMN_CATCHUP_SOURCE, $entry->getCatchupSource());
                     $stm_channels->bindValue(":" . COLUMN_ICON, $entry->getIcon());
                     $stm_channels->bindValue(":" . self::COLUMN_PATH, $entry->getPath());
-                    $stm_channels->bindValue(":" . self::COLUMN_ADULT, $adult_channel);
+                    $stm_channels->bindValue(":" . COLUMN_ADULT, $adult_channel);
                     $stm_channels->bindValue(":" . self::COLUMN_PARENT_CODE, $entry->getParentCode());
                     $stm_channels->bindValue(":" . self::COLUMN_EXT_PARAMS, empty($ext_params) ? null : json_encode($ext_params));
                     $stm_channels->bindValue(":" . COLUMN_GROUP_ID, $group_title);
@@ -390,7 +389,7 @@ class M3uParser extends Json_Serializer
         foreach ($groups_cache as $group_title => $group) {
             $stm_groups->bindValue(":" . COLUMN_GROUP_ID, $group_title);
             $stm_groups->bindValue(":" . COLUMN_ICON, $group[COLUMN_ICON]);
-            $stm_groups->bindValue(":" . self::COLUMN_ADULT, $group[self::COLUMN_ADULT]);
+            $stm_groups->bindValue(":" . COLUMN_ADULT, $group[COLUMN_ADULT]);
             $stm_groups->execute();
         }
         $db->exec('COMMIT;');

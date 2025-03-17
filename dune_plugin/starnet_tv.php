@@ -124,7 +124,7 @@ class Starnet_Tv implements User_Input_Handler
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id, true);
-                if (safe_get_value($channel, M3uParser::COLUMN_ADULT, 0) != 0) break;
+                if (safe_get_value($channel, COLUMN_ADULT, 0) != 0) break;
 
                 $this->plugin->update_tv_history($user_input->plugin_tv_channel_id);
 
@@ -197,7 +197,7 @@ class Starnet_Tv implements User_Input_Handler
                     PluginTvChannel::number => $channel_row[COLUMN_CH_NUMBER],
 
                     PluginTvChannel::have_archive => $archive > 0,
-                    PluginTvChannel::is_protected => empty($pass_sex) ? 0 : $channel_row[M3uParser::COLUMN_ADULT],
+                    PluginTvChannel::is_protected => empty($pass_sex) ? 0 : $channel_row[COLUMN_ADULT],
 
                     PluginTvChannel::past_epg_days => $archive,
                     PluginTvChannel::future_epg_days => 7, // set default future epg range

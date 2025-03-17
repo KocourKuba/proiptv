@@ -275,7 +275,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 throw new Exception("Unknown channel");
             }
 
-            if ($channel_row[M3uParser::COLUMN_ADULT] && !empty($pass_sex)) {
+            if ($channel_row[COLUMN_ADULT] && !empty($pass_sex)) {
                 if ($protect_code !== $pass_sex) {
                     throw new Exception("Wrong adult password: $protect_code");
                 }
@@ -1230,9 +1230,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Build categories and channels...");
 
         $playlist_entries = $this->get_playlist_entries_count();
-        hd_debug_print("Playlist channels:   $playlist_entries");
         $playlist_groups = $this->get_playlist_group_count();
-        hd_debug_print("Playlist groups:     $playlist_groups");
 
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         $channel_info_table = self::get_table_name(CHANNELS_INFO);
@@ -1249,19 +1247,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->exec_transaction($query);
         }
 
-        // store existing groups before updateing
-        $existing_groups = $this->get_groups_order();
-
         ////////////////////////////////////////////////////////////////////////////////////
         /// update tables with removed and added groups and channels
 
         $query = "SELECT COUNT(channel_id) FROM $channel_info_table;";
         $is_new = $this->sql_playlist->query_value($query) === 0;
-        hd_debug_print("Is new playlist:     " . var_export($is_new, true));
 
         // get name of the column for channel ID
         $id_column = $this->get_id_column();
-        hd_debug_print("ID column:           $id_column");
 
         // update existing database for empty group_id (converted from known_channels.settings)
         $query = "SELECT COUNT(*) FROM $channel_info_table WHERE group_id = '';";
@@ -1291,13 +1284,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $group_id = $group_row[COLUMN_GROUP_ID];
                 $q_group_id = Sql_Wrapper::sql_quote($group_id);
                 $q_group_icon = Sql_Wrapper::sql_quote(empty($group_row[COLUMN_ICON]) ? DEFAULT_GROUP_ICON : $group_row[COLUMN_ICON]);
-                $q_adult = Sql_Wrapper::sql_quote($group_row[M3uParser::COLUMN_ADULT]);
+                $q_adult = Sql_Wrapper::sql_quote($group_row[COLUMN_ADULT]);
                 $query .= "INSERT OR IGNORE INTO $groups_info_table (group_id, title, icon, adult) VALUES ($q_group_id, $q_group_id, $q_group_icon, $q_adult);";
                 $query .= "INSERT OR IGNORE INTO $groups_order_table (group_id) VALUES ($q_group_id);";
 
                 $group_channels_order_table = self::get_table_name($group_id);
-                hd_debug_print("New groups order: $group_id ($group_channels_order_table)", true);
                 $query .= sprintf(self::CREATE_ORDERED_TABLE, $group_channels_order_table, COLUMN_CHANNEL_ID);
+                hd_debug_print("Added new group channels order: $group_id ($group_channels_order_table)", true);
             }
             $this->sql_playlist->exec_transaction($query);
         }
@@ -1313,7 +1306,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             foreach ($removed_groups as $group_id) {
                 $group_channels_order_table = self::get_table_name($group_id);
                 $query .= "DROP TABLE $group_channels_order_table;";
-                hd_debug_print("Removed group channels order: $group_id ($group_channels_order_table)", true);
+                hd_debug_print("Removing group channels order: $group_id ($group_channels_order_table)", true);
             }
             $this->sql_playlist->exec_transaction($query);
         }
@@ -1328,36 +1321,50 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $new_channels = $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
 
         if (!empty($removed_channels)) {
-            hd_debug_print("Remove non-existing channels", true);
             $remove_where = Sql_Wrapper::sql_make_where_clause($removed_channels, COLUMN_CHANNEL_ID);
             $query = "UPDATE $channel_info_table SET changed = -1 WHERE $remove_where;";
             $this->sql_playlist->exec($query);
+            hd_debug_print("Removing not exist channels: $remove_where", true);
         }
 
         if (!empty($new_channels)) {
             // add new channels
-            hd_debug_print("Adding new channels", true);
             $add_where = Sql_Wrapper::sql_make_where_clause($new_channels, COLUMN_CHANNEL_ID);
             $query = "INSERT OR REPLACE INTO $channel_info_table (channel_id, title, group_id, adult)
                         SELECT $id_column AS channel_id, title, group_id, adult
                         FROM $iptv_channels WHERE $add_where
                         GROUP BY channel_id ORDER BY ROWID ASC;";
             $this->sql_playlist->exec($query);
+            hd_debug_print("Adding new channels: $add_where", true);
         }
 
         // update group_id title and adult if changed for channels
-        hd_debug_print("Update channels info", true);
-        $from = "$iptv_channels WHERE channel_id = $iptv_channels.$id_column";
-        $query = "UPDATE $channel_info_table SET
-                    title = (SELECT title FROM $from),
-                    group_id = (SELECT group_id FROM $from),
-                    adult = (SELECT adult FROM $from)
-                  WHERE changed = 0";
-        $this->sql_playlist->exec($query);
+        $query = "SELECT ch.channel_id, pl.title, pl.group_id, pl.adult
+                    FROM $channel_info_table AS ch
+                    INNER JOIN $iptv_channels as pl
+                        ON channel_id = pl.$id_column
+                    WHERE changed = 0
+                      AND (ch.title != pl.title OR ch.title IS NULL OR
+                           ch.group_id != pl.group_id OR ch.group_id OR
+                           ch.adult != pl.adult OR ch.adult);";
+        $changed_channels = $this->sql_playlist->fetch_array($query);
+
+        if (!empty($changed_channels)) {
+            hd_debug_print("Update changed info for channels", true);
+            $query = '';
+            foreach ($changed_channels as $changed_channel) {
+                $q_channel_id = Sql_Wrapper::sql_quote($changed_channel[COLUMN_CHANNEL_ID]);
+                $q_title = Sql_Wrapper::sql_quote($changed_channel[COLUMN_TITLE]);
+                $q_group_id = Sql_Wrapper::sql_quote($changed_channel[COLUMN_GROUP_ID]);
+                $q_adult = Sql_Wrapper::sql_quote($changed_channel[COLUMN_ADULT]);
+                $query .= "UPDATE $channel_info_table SET title = $q_title, group_id = $q_group_id, adult = $q_adult WHERE channel_id = $q_channel_id;";
+            }
+            $this->sql_playlist->exec_transaction($query);
+        }
 
         $query = '';
         if (!empty($new_groups)) {
-            hd_debug_print("Update new group channels orders", true);
+            hd_debug_print("Fill new group channels orders", true);
             foreach ($new_groups as $group_row) {
                 $group_channels_order_table = self::get_table_name($group_row[COLUMN_GROUP_ID]);
                 $q_group_id = Sql_Wrapper::sql_quote($group_row[COLUMN_GROUP_ID]);
@@ -1372,33 +1379,51 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->exec_transaction($query);
         }
 
-        hd_debug_print("Update channels in orders", true);
+        $existing_groups = $this->get_groups_order();
+
+        hd_debug_print("Adding new channels in group channels order", true);
         $query = '';
         foreach ($existing_groups as $group_id) {
+            if (empty($group_id)) continue;
+
             $group_channels_order_table = self::get_table_name($group_id);
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
-            // add new channels to group order
             $query .= "INSERT OR IGNORE INTO $group_channels_order_table (channel_id)
                         SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND disabled = 0 AND changed != -1 ORDER BY ROWID ASC;";
-
-            // delete removed channels from group channels order
-            $query .= "DELETE FROM $group_channels_order_table
-                        WHERE channel_id IN (SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND changed = -1);";
-
-            // delete not existing channels from group channels order
-            $query .= "DELETE FROM $group_channels_order_table
-                        WHERE channel_id NOT IN (SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id);";
-
         }
         $this->sql_playlist->exec_transaction($query);
 
-        // reset changed flag for channels in disabled groups
+        hd_debug_print("Deleting removed channels from orders", true);
+        $query = '';
+        foreach ($existing_groups as $group_id) {
+            if (empty($group_id)) continue;
+
+            $group_channels_order_table = self::get_table_name($group_id);
+            $q_group_id = Sql_Wrapper::sql_quote($group_id);
+            $query .= "DELETE FROM $group_channels_order_table
+                        WHERE channel_id IN (SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND changed = -1);";
+        }
+        $this->sql_playlist->exec_transaction($query);
+
+        hd_debug_print("Deleting not existing channels from group channels order", true);
+        $query = '';
+        foreach ($existing_groups as $group_id) {
+            if (empty($group_id)) continue;
+
+            $group_channels_order_table = self::get_table_name($group_id);
+            $q_group_id = Sql_Wrapper::sql_quote($group_id);
+            $query .= "DELETE FROM $group_channels_order_table
+                        WHERE channel_id NOT IN (SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id);";
+        }
+        $this->sql_playlist->exec_transaction($query);
+
+        hd_debug_print("Reset changed flag for channels in disabled groups", true);
         $query = "UPDATE $channel_info_table SET changed = 0, disabled = 1
                     WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE disabled = 1 AND special = 0);";
         $this->sql_playlist->exec($query);
 
         if ($is_new) {
-            // if it first run for this playlist remove changed status for all channels
+            hd_debug_print("Clear changed flag for new playlist", true);
             $this->clear_changed_channels();
         }
 
@@ -1416,6 +1441,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $perf->setLabel('end');
         $report = $perf->getFullReport();
 
+        hd_debug_print("Is new playlist:     " . var_export($is_new, true));
+        hd_debug_print("ID column:           $id_column");
+        hd_debug_print("Playlist channels:   $playlist_entries");
+        hd_debug_print("Playlist groups:     $playlist_groups");
         hd_debug_print("Known channels:      $known_cnt");
         hd_debug_print("Visible channels:    $visible_channels_cnt");
         hd_debug_print("Hidden channels:     $hidden_channels_cnt");
@@ -2733,7 +2762,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $info = "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
         $info .= "Name: " . $channel_row[COLUMN_TITLE] . PHP_EOL;
         $info .= "Archive: " . $channel_row[M3uParser::COLUMN_ARCHIVE] . " days" . PHP_EOL;
-        $info .= "Protected: " . TR::load(SwitchOnOff::to_def($channel_row[M3uParser::COLUMN_ADULT])) . PHP_EOL;
+        $info .= "Protected: " . TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT])) . PHP_EOL;
         $info .= "EPG IDs: " . implode(', ', self::make_epg_ids($channel_row)) . PHP_EOL;
         if ($channel_row[M3uParser::COLUMN_TIMESHIFT] != 0) {
             $info .= "Timeshift hours: {$channel_row[M3uParser::COLUMN_TIMESHIFT]}" . PHP_EOL;

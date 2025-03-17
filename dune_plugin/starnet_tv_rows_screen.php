@@ -1021,12 +1021,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $groups = $this->plugin->get_groups_by_order();
         foreach ($groups as $group_row) {
-            if (!$show_adult && $group_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+            if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
 
             $group_id = $group_row[COLUMN_GROUP_ID];
             $items = array();
             foreach ($this->plugin->get_channels_by_order($group_id) as $channel_row) {
-                if (!$show_adult && $channel_row[M3uParser::COLUMN_ADULT] !== 0) continue;
+                if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
 
                 $items[] = Rows_Factory::add_regular_item(
                     json_encode(array('group_id' => $group_id, 'channel_id' => $channel_row[COLUMN_CHANNEL_ID])),

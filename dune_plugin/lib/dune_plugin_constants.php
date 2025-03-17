@@ -173,6 +173,7 @@ const COLUMN_GROUP_ID = 'group_id';
 const COLUMN_ICON = 'icon';
 const COLUMN_TITLE = 'title';
 const COLUMN_NAME = 'name';
+const COLUMN_ADULT = 'adult';
 const COLUMN_TYPE = 'type';
 const COLUMN_URI = 'uri';
 const COLUMN_CH_NUMBER = 'ch_number';

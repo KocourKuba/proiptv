@@ -96,7 +96,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
                 $this->force_parent_reload = false;
                 if ($parent_media_url->source_window_id === ACTION_MAIN_SCREEEN_ID) {
-                    $target_action = Action_Factory::invalidate_all_folders($plugin_cookies);
+                    $handler = User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Entry_Handler::ID);
+                    $target_action = User_Input_Handler_Registry::create_action($handler, $parent_media_url->end_action);
                 } else {
                     $target_action = User_Input_Handler_Registry::create_action_screen($parent_media_url->source_window_id, $parent_media_url->end_action);
                 }
