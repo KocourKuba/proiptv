@@ -290,7 +290,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $url = '';
         }
 
-        hd_debug_print($url);
+        hd_debug_print("Playback URL: $url", true);
         return $url;
     }
 
@@ -2086,7 +2086,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             if (isset($ext_vlc_opts['http-user-agent'])) {
-                $dune_params['http_headers'] = "User-Agent: " . rawurlencode($ext_vlc_opts['http-user-agent']);
+                $dune_params['http_headers'] = "User-Agent: " . $ext_vlc_opts['http-user-agent'];
             }
 
             if (isset($ext_vlc_opts['dune-params'])) {
@@ -2112,7 +2112,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             if (isset($ext_params[TAG_EXTHTTP]['user-agent'])) {
-                $ch_useragent = "User-Agent: " . $ext_params[TAG_EXTHTTP]['user-agent'];
+                $ch_useragent = $ext_params[TAG_EXTHTTP]['user-agent'];
 
                 // escape commas for dune_params
                 if (strpos($ch_useragent, ",,") !== false) {
@@ -2121,12 +2121,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $ch_useragent = str_replace(",", ",,", $ch_useragent);
                 }
 
-                $ch_useragent = rawurlencode("User-Agent: " . $ch_useragent);
-                if (isset($dune_params['http_headers'])) {
-                    $dune_params['http_headers'] .= $ch_useragent;
-                } else {
-                    $dune_params['http_headers'] = $ch_useragent;
-                }
+                $dune_params['http_headers'] .= rawurlencode("User-Agent: " . $ch_useragent);
             }
         }
 
@@ -2141,8 +2136,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return "";
         }
 
-        $magic = str_replace('=', ':', http_build_query($dune_params, null, ','));
-        hd_debug_print("dune_params: $magic");
+        $magic = str_replace(array('=', '+'), array(':', '%20'), http_build_query($dune_params, null, ','));
+        hd_debug_print("dune_params: $magic", true);
 
         return $magic;
     }
