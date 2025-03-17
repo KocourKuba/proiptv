@@ -283,6 +283,7 @@ class M3uParser extends Json_Serializer
             self::COLUMN_PATH => 'TEXT',
             self::COLUMN_ADULT => 'INTEGER DEFAULT 0',
             self::COLUMN_PARENT_CODE => 'TEXT',
+            self::COLUMN_EXT_PARAMS => 'TEXT',
             COLUMN_GROUP_ID => 'TEXT NOT NULL',
         );
 
