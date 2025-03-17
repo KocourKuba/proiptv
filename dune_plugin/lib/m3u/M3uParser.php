@@ -630,7 +630,7 @@ class M3uParser extends Json_Serializer
         $entry->updateTitle();
         $entry->updateParsedId($this->id_parser);
         $entry->updateCUID();
-        $entry->updateArchive(TAG_EXTINF, $this->m3u_info->getArchive());
+        $entry->updateArchive(TAG_EXTINF, is_null($this->m3u_info) ? 0 : $this->m3u_info->getArchive());
         $entry->updateCatchupType(TAG_EXTINF);
         $entry->updateCatchupSource(TAG_EXTINF);
         $entry->updateTimeshift();
