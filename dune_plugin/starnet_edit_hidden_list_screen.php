@@ -99,12 +99,12 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
-                    $channels = $this->plugin->get_channels_ids($parent_media_url->group_id, PARAM_DISABLED);
-                    $this->plugin->set_channel_visible($channels, true);
+                    $channels_ids = $this->plugin->get_channels_ids($parent_media_url->group_id, PARAM_DISABLED);
+                    $this->plugin->set_channel_visible($channels_ids, true);
                     $cnt = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED);
                 } else {
-                    $groups = $this->plugin->get_groups(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
-                    $this->plugin->set_groups_visible($groups, true);
+                    $groups_ids = $this->plugin->get_groups(PARAM_GROUP_ORDINARY, PARAM_DISABLED, COLUMN_GROUP_ID);
+                    $this->plugin->set_groups_visible($groups_ids, true);
                     $cnt = $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
                 }
 
@@ -123,7 +123,6 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
 
         $items = array();
         if ($media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {

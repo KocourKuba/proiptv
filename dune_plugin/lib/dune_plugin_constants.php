@@ -170,6 +170,7 @@ const COLUMN_PLAYLIST_ID = 'playlist_id';
 const COLUMN_HASH = 'hash';
 const COLUMN_CHANNEL_ID = 'channel_id';
 const COLUMN_GROUP_ID = 'group_id';
+const COLUMN_GROUP_ORDER = 'group_order';
 const COLUMN_ICON = 'icon';
 const COLUMN_TITLE = 'title';
 const COLUMN_NAME = 'name';

@@ -129,7 +129,7 @@ class Dune_Default_Sqlite_Engine
             $old_parameters_table = str_replace('.', '_', "parameters_$playlist_id");
             if ($this->sql_params->is_table_exists($old_parameters_table)) {
                 $query .= "INSERT INTO $playlist_parameters (playlist_id, name, value) SELECT '$playlist_id', name, value FROM $old_parameters_table;";
-                $query .= "DROP TABLE $old_parameters_table;";
+                $query .= "DROP TABLE IF EXISTS $old_parameters_table;";
             }
         }
         $this->sql_params->exec_transaction($query);
@@ -137,7 +137,7 @@ class Dune_Default_Sqlite_Engine
         $query = '';
         foreach ($this->sql_params->get_master_table_list() as $table) {
             if (strpos($table, 'parameters_') === 0) {
-                $query .= "DROP TABLE $table;";
+                $query .= "DROP TABLE IF EXISTS $table;";
             }
         }
         $this->sql_params->exec_transaction($query);
@@ -209,7 +209,7 @@ class Dune_Default_Sqlite_Engine
                     $type = gettype($param);
                     if ($type === 'NULL' ) {
                         $param = '';
-                    } else if ($type == 'boolean') {
+                    } else if ($type === 'boolean') {
                         $param = SwitchOnOff::to_def($param);
                     }
                     $q_key = Sql_Wrapper::sql_quote($key);
@@ -922,10 +922,10 @@ class Dune_Default_Sqlite_Engine
             $query = "SELECT ROWID, channel_id, title FROM $table_name WHERE changed = -1 ORDER BY ROWID;";
         } else {
             $query = "SELECT ch.ROWID, ch.channel_id, pl.*, ch.title
-                    FROM $table_name AS ch
-                        LEFT JOIN $iptv_channels AS pl ON pl.$column = ch.channel_id
-                    WHERE changed != 0
-                    ORDER BY ch.ROWID;";
+                        FROM $table_name AS ch
+                            LEFT JOIN $iptv_channels AS pl ON pl.$column = ch.channel_id
+                        WHERE changed != 0
+                        ORDER BY ch.ROWID;";
         }
 
         return $this->sql_playlist->fetch_array($query);
@@ -990,7 +990,7 @@ class Dune_Default_Sqlite_Engine
                     INNER JOIN $iptv_channels as pl
                         ON ch.channel_id = pl.$id_column ORDER BY pl.ROWID;";
 
-        $query .= "DROP TABLE $channels_info_table;";
+        $query .= "DROP TABLE IF EXISTS $channels_info_table;";
         $query .= "ALTER TABLE $tmp_table RENAME TO $channels_info_table_s;";
         $this->sql_playlist->exec_transaction($query);
     }
@@ -1002,32 +1002,22 @@ class Dune_Default_Sqlite_Engine
      *
      * @param int $type PARAM_GROUP_ORDINARY - regular groups, PARAM_GROUP_SPECIAL - special groups, PARAM_ALL - all groups
      * @param int $disabled PARAM_DISABLED - disabled, PARAM_ENABLED - enabled, PARAM_ALL - all groups
+     * @param string|null $column
      * @return array
      */
-    public function get_groups($type, $disabled)
+    public function get_groups($type, $disabled, $column = null)
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
-        $where = ($disabled === -1) ? "" : "WHERE disabled = $disabled";
-        $and = empty($where) ? "WHERE" : "AND";
-        $where = $type === -1 ? "" : "$where $and special = $type";
-        $query = "SELECT * FROM $groups_info_table $where ORDER by ROWID;";
-        return $this->sql_playlist->fetch_array($query);
-    }
+        $where = ($disabled === PARAM_ALL) ? "" : "disabled = $disabled";
+        $and = empty($where) ? "" : "AND";
+        $where = $type === PARAM_ALL ? "" : "$where $and special = $type";
+        $query = "SELECT * FROM $groups_info_table WHERE $where ORDER by ROWID;";
+        $rows = $this->sql_playlist->fetch_array($query);
+        if ($column !== null) {
+            $rows = extract_column($rows, COLUMN_GROUP_ID);
+        }
 
-    /**
-     * returns group with selected id
-     * @param int $type PARAM_GROUP_ORDINARY - only regular groups, PARAM_GROUP_SPECIAL - special groups, PARAM_ALL - all groups
-     *
-     * @param string $group_id
-     * @return array
-     */
-    public function get_group($group_id, $type = PARAM_GROUP_ORDINARY)
-    {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
-        $q_group_id = Sql_Wrapper::sql_quote($group_id);
-        $and = $type === -1 ? "" : "AND special = $type";
-        $query = "SELECT * FROM $groups_info_table WHERE group_id = $q_group_id AND disabled = 0 $and ORDER by ROWID;";
-        return $this->sql_playlist->query_value($query, true);
+        return $rows;
     }
 
     /**
@@ -1040,27 +1030,27 @@ class Dune_Default_Sqlite_Engine
     public function get_groups_count($type, $disabled)
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
-        $where = ($disabled === -1) ? "" : "WHERE disabled = $disabled";
-        $and = empty($where) ? "WHERE" : "AND";
-        $where = $type === -1 ? "" : "$where $and special = $type";
+        $where = ($disabled === PARAM_ALL) ? "" : "disabled = $disabled";
+        $and = empty($where) ? "" : "AND";
+        $where = $type === PARAM_ALL ? "" : "WHERE $where $and special = $type";
         $query = "SELECT COUNT(*) FROM $groups_info_table $where ORDER by ROWID;";
         return $this->sql_playlist->query_value($query);
     }
 
     /**
-     * Get visibility for group
+     * returns group with selected id
+     * @param int $type PARAM_GROUP_ORDINARY - only regular groups, PARAM_GROUP_SPECIAL - special groups, PARAM_ALL - all groups
      *
      * @param string $group_id
-     * @param int $type PARAM_GROUP_ORDINARY - regular groups, PARAM_GROUP_SPECIAL - special groups
-     * @return bool true if group is visible and false otherwise
+     * @return array
      */
-    public function get_group_visible($group_id, $type)
+    public function get_group($group_id, $type)
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
-        $q_group = Sql_Wrapper::sql_quote($group_id);
-        $query = "SELECT disabled FROM $groups_info_table WHERE special = $type AND group_id = $q_group;";
-        $value = $this->sql_playlist->query_value($query);
-        return empty($value);
+        $q_group_id = Sql_Wrapper::sql_quote($group_id);
+        $and = $type === PARAM_ALL ? "" : "AND special = $type";
+        $query = "SELECT * FROM $groups_info_table WHERE group_id = $q_group_id AND disabled = 0 $and ORDER by ROWID;";
+        return $this->sql_playlist->query_value($query, true);
     }
 
     /**
@@ -1080,17 +1070,17 @@ class Dune_Default_Sqlite_Engine
 
         $where = Sql_Wrapper::sql_make_where_clause($group_ids, COLUMN_GROUP_ID);
 
-        if (is_array($group_ids)) {
-            $to_alter = $group_ids;
-        } else {
-            $to_alter[] = $group_ids;
-        }
-
         if ($special) {
-            $groups_info_table = self::get_table_name(GROUPS_INFO);
             $query = "UPDATE $groups_info_table SET disabled = $disabled WHERE $where AND special = 1;";
         } else {
             $query = "UPDATE $groups_info_table SET disabled = $disabled WHERE $where AND special = 0;";
+
+            if (is_array($group_ids)) {
+                $to_alter = $group_ids;
+            } else {
+                $to_alter[] = $group_ids;
+            }
+
             foreach ($to_alter as $group_id) {
                 $q_group_id = Sql_Wrapper::sql_quote($group_id);
                 $table_name = self::get_table_name($group_id);
@@ -1102,33 +1092,14 @@ class Dune_Default_Sqlite_Engine
                 } else {
                     $query .= sprintf(self::CREATE_ORDERED_TABLE, $table_name, COLUMN_CHANNEL_ID);
                     $query .= "INSERT OR IGNORE INTO $groups_order_table (group_id) VALUES ($q_group_id);";
-                    $query .= "INSERT OR IGNORE INTO $table_name (channel_id )
-                            SELECT channel_id FROM $channels_info_table WHERE group_id = $q_group_id AND disabled = 0;";
+                    $query .= "INSERT OR IGNORE INTO $table_name (channel_id)
+                                SELECT channel_id FROM $channels_info_table WHERE group_id = $q_group_id;";
                     $query .= "UPDATE $channels_info_table SET disabled = 0 WHERE group_id = $q_group_id;";
                 }
             }
         }
 
         $this->sql_playlist->exec_transaction($query);
-    }
-
-    /**
-     * Toggle visibility for special group
-     *
-     * @param string $group_ids
-     * @param int $type PARAM_GROUP_ORDINARY - regular groups, PARAM_GROUP_SPECIAL - special groups
-     */
-    public function toggle_groups_visible($group_ids, $type = PARAM_GROUP_ORDINARY)
-    {
-        $groups_info_table = self::get_table_name(GROUPS_INFO);
-        if ($type === PARAM_GROUP_ORDINARY) {
-            $show = $this->get_group_visible($group_ids, $type);
-            $this->set_groups_visible($group_ids, !$show);
-        } else {
-            $where = Sql_Wrapper::sql_make_where_clause($group_ids, COLUMN_GROUP_ID);
-            $query = "UPDATE $groups_info_table SET disabled = CASE WHEN disabled = 0 THEN 1 ELSE 0 END WHERE $where AND special = $type;";
-            $this->sql_playlist->exec($query);
-        }
     }
 
     /**
@@ -1177,15 +1148,6 @@ class Dune_Default_Sqlite_Engine
     /**
      * @return array
      */
-    public function get_groups_order()
-    {
-        $groups_order_table = self::get_table_name(GROUPS_ORDER);
-        return $this->sql_playlist->fetch_single_array("SELECT group_id FROM $groups_order_table;", COLUMN_GROUP_ID);
-    }
-
-    /**
-     * @return array
-     */
     public function get_groups_by_order()
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
@@ -1212,13 +1174,13 @@ class Dune_Default_Sqlite_Engine
             $iptv_groups = M3uParser::GROUPS_TABLE;
             $query .= "INSERT INTO $tmp_table (group_id)
                         SELECT group_id FROM $iptv_groups
-                        WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE disabled == 0)
+                        WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE disabled = 0)
                         ORDER BY ROWID;";
         } else {
             $query .= "INSERT INTO $tmp_table (group_id)
                        SELECT group_id FROM $groups_info_table WHERE disabled = 0 AND special = 0 ORDER BY group_id;";
         }
-        $query .= "DROP TABLE $groups_order_table;";
+        $query .= "DROP TABLE IF EXISTS $groups_order_table;";
         $query .= "ALTER TABLE $tmp_table RENAME TO $groups_order_table_s;";
 
         $this->sql_playlist->exec_transaction($query);
@@ -1324,15 +1286,15 @@ class Dune_Default_Sqlite_Engine
             $column = $this->get_id_column();
             $query .= "INSERT INTO $tmp_table (channel_id)
                         SELECT $column FROM $iptv_channels
-                        WHERE group_id == $q_group_id AND $column IN
-                        (SELECT channel_id FROM $channels_info_table WHERE disabled == 0);";
+                        WHERE group_id = $q_group_id AND $column IN
+                        (SELECT channel_id FROM $channels_info_table WHERE disabled = 0);";
         } else {
             $query .= "INSERT INTO $tmp_table (channel_id)
                         SELECT channel_id FROM $channels_info_table
-                        WHERE group_id == $q_group_id AND channel_id IN (SELECT channel_id FROM $group_table)
+                        WHERE group_id = $q_group_id AND channel_id IN (SELECT channel_id FROM $group_table)
                         ORDER BY title;";
         }
-        $query .= "DROP TABLE $group_table;";
+        $query .= "DROP TABLE IF EXISTS $group_table;";
         $query .= "ALTER TABLE $tmp_table RENAME TO $alter_table_name;";
 
         $this->sql_playlist->exec_transaction($query);
@@ -1358,26 +1320,25 @@ class Dune_Default_Sqlite_Engine
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $where = "WHERE ch.group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = 0)";
+            $where = "ch.group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = 0)";
         } else {
-            $where = "WHERE ch.group_id = " . Sql_Wrapper::sql_quote($group_id);
+            $q_group_id = Sql_Wrapper::sql_quote($group_id);
+            $where = "ch.group_id = $q_group_id";
         }
 
         if ($disabled_channels !== -1) {
-            $where = empty($where) ? "WHERE disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
+            $where = "$where AND disabled = $disabled_channels";
         }
 
         $table_name = self::get_table_name(CHANNELS_INFO);
         if ($full) {
             $iptv_channels = M3uParser::CHANNELS_TABLE;
-            if (!$this->sql_playlist->is_table_exists($iptv_channels)) {
-                return array();
-            }
             $column = $this->get_id_column();
-            $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id $where;";
+            $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id WHERE $where;";
         } else {
-            $query = "SELECT * FROM $table_name AS ch $where;";
+            $query = "SELECT * FROM $table_name AS ch WHERE $where;";
         }
+
         return $this->sql_playlist->fetch_array($query);
     }
 
@@ -1390,17 +1351,17 @@ class Dune_Default_Sqlite_Engine
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $where = "WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = 0)";
+            $where = "group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = 0)";
         } else {
-            $where = "WHERE group_id = " . Sql_Wrapper::sql_quote($group_id);
+            $where = "group_id = " . Sql_Wrapper::sql_quote($group_id);
         }
 
         if ($disabled_channels !== -1) {
-            $where = empty($where) ? "WHERE disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
+            $where = empty($where) ? "disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
         }
 
         $table_name = self::get_table_name(CHANNELS_INFO);
-        $query = "SELECT channel_id FROM $table_name $where;";
+        $query = "SELECT channel_id FROM $table_name WHERE $where;";
         return $this->sql_playlist->fetch_single_array($query, COLUMN_CHANNEL_ID);
     }
 
@@ -2007,7 +1968,7 @@ class Dune_Default_Sqlite_Engine
             $query = sprintf($script, $tmp_table, $column);
             $query .= "UPDATE $table_name SET ROWID = $new WHERE ROWID = $cur;";
             $query .= "INSERT INTO $tmp_table SELECT * FROM $table_name ORDER BY ROWID;";
-            $query .= "DROP TABLE $table_name;";
+            $query .= "DROP TABLE IF EXISTS $table_name;";
             $query .= "ALTER TABLE $tmp_table RENAME TO $table_name_short;";
             return $sql_wrapper->exec_transaction($query);
         }

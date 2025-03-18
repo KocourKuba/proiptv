@@ -2174,6 +2174,11 @@ function safe_get_member($obj, $param, $default = null)
     return isset($obj->{$param}) ? $obj->{$param} : $default;
 }
 
+function extract_column($rows, $column)
+{
+    return array_map(function ($row) use ($column) { return $row[$column]; }, $rows);
+}
+
 /**
  * @param string $doc
  * @return SimpleXMLElement

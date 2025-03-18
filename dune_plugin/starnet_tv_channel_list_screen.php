@@ -441,7 +441,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         if ($group_id === TV_ALL_CHANNELS_GROUP_ID) {
             $groups_order = $this->plugin->get_groups_by_order();
         } else {
-            $groups_order[] = $this->plugin->get_group($group_id);
+            $groups_order[] = $this->plugin->get_group($group_id, PARAM_GROUP_ORDINARY);
         }
 
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
@@ -497,7 +497,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             if ($media_url->group_id === TV_ALL_CHANNELS_GROUP_ID) {
                 $groups_order = $this->plugin->get_groups_by_order();
             } else {
-                $groups_order[] = $this->plugin->get_group($media_url->group_id);
+                $groups_order[] = $this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY);
             }
 
             $fav_ids = $this->plugin->get_channels_order(TV_FAV_GROUP_ID);

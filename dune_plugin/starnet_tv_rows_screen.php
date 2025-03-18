@@ -227,7 +227,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 break;
 
             case ACTION_ITEMS_SORT:
-                $group = $this->plugin->get_group($media_url->group_id);
+                $group = $this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY);
                 if (is_null($group) || !isset($user_input->{ACTION_SORT_TYPE})) {
                     return null;
                 }
@@ -1384,7 +1384,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $media_url = MediaURL::decode($user_input->selected_row_id);
             if (isset($media_url->row_id)) {
                 $row_id = json_decode($media_url->row_id);
-                if ($this->plugin->get_group($row_id->group_id) !== null) {
+                if ($this->plugin->get_group($row_id->group_id, PARAM_GROUP_ORDINARY) !== null) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'),
                         null, array(ACTION_SORT_TYPE => ACTION_SORT_CHANNELS));
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_groups'),
