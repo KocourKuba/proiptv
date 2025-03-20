@@ -163,7 +163,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_action_screen(
+                    User_Input_Handler_Registry::create_screen_action(
                         Starnet_Setup_Screen::ID,
                         RESET_CONTROLS_ACTION_ID,
                         null,

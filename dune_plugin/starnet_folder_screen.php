@@ -149,7 +149,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 }
 
                 return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_action_screen(
+                    User_Input_Handler_Registry::create_screen_action(
                         $parent_media_url->source_window_id,
                         $parent_media_url->end_action,
                         null,
@@ -607,7 +607,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
         }
 
         if ($selected_url->choose_file !== false && $selected_url->extension === $selected_url->type) {
-            $post_action = User_Input_Handler_Registry::create_action_screen($selected_url->source_window_id, ACTION_FILE_SELECTED,
+            $post_action = User_Input_Handler_Registry::create_screen_action($selected_url->source_window_id, ACTION_FILE_SELECTED,
                 '', array('selected_data' => $selected_url->get_media_url_str()));
 
             return Action_Factory::replace_path(MediaURL::decode($user_input->parent_media_url)->windowCounter, null, $post_action);
@@ -668,7 +668,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $post_action = null;
         if ($url->choose_folder !== false) {
-            $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id,
+            $post_action = User_Input_Handler_Registry::create_screen_action($url->source_window_id,
                 ACTION_FOLDER_SELECTED,
                 '',
                 array('selected_data' => $url->get_media_url_str()));
@@ -690,7 +690,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
 
         $url = isset($selected_url->filepath) ? $selected_url : $parent_url;
 
-        $post_action = User_Input_Handler_Registry::create_action_screen($url->source_window_id,
+        $post_action = User_Input_Handler_Registry::create_screen_action($url->source_window_id,
             ACTION_RESET_DEFAULT,
             '',
             array('selected_data' => $url->get_media_url_str()));

@@ -49,7 +49,7 @@ class User_Input_Handler_Registry
      * @param array|null $add_params
      * @return array
      */
-    public static function create_action_screen($screen_id, $name, $caption = null, $add_params = null)
+    public static function create_screen_action($screen_id, $name, $caption = null, $add_params = null)
     {
         $handler = self::get_instance()->get_registered_handler($screen_id);
         if (is_null($handler)) {
@@ -58,9 +58,7 @@ class User_Input_Handler_Registry
             return null;
         }
 
-        $params = array(
-            'handler_id' => $handler->get_handler_id(),
-            'control_id' => $name);
+        $params = array('handler_id' => $handler->get_handler_id(), 'control_id' => $name);
         if (isset($add_params)) {
             $params = array_merge($params, $add_params);
         }
@@ -121,9 +119,7 @@ class User_Input_Handler_Registry
      */
     public static function create_action(User_Input_Handler $handler, $name, $caption = null, $add_params = null)
     {
-        $params = array(
-            'handler_id' => $handler->get_handler_id(),
-            'control_id' => $name);
+        $params = array('handler_id' => $handler->get_handler_id(), 'control_id' => $name);
         if (isset($add_params)) {
             $params = array_merge($params, $add_params);
         }
@@ -163,8 +159,7 @@ class User_Input_Handler_Registry
      */
     public function register_handler(User_Input_Handler $handler)
     {
-        $handler_id = $handler->get_handler_id();
-        $this->handlers[$handler_id] = $handler;
+        $this->handlers[$handler->get_handler_id()] = $handler;
     }
 
     /**

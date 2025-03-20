@@ -286,7 +286,7 @@ class Starnet_Tv implements User_Input_Handler
                 $group_id,
                 null,
                 null,
-                User_Input_Handler_Registry::create_action_screen(
+                User_Input_Handler_Registry::create_screen_action(
                     Starnet_Tv_Channel_List_Screen::ID,
                     ACTION_JUMP_TO_CHANNEL,
                     null,

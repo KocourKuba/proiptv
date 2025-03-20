@@ -103,7 +103,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
 
             $this->force_parent_reload = false;
             return Action_Factory::close_and_run(
-                User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
+                User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case GUI_EVENT_KEY_SUBTITLE:
                 $prog_info = $this->plugin->get_program_info($selected_media_url->channel_id, -1, $plugin_cookies);

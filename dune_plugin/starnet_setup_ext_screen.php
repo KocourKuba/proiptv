@@ -137,7 +137,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_action_screen(
+                    User_Input_Handler_Registry::create_screen_action(
                         Starnet_Setup_Screen::ID,
                         RESET_CONTROLS_ACTION_ID,
                         null,
@@ -376,7 +376,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         return Action_Factory::show_title_dialog(
             TR::t('setup_restore_done'),
             Action_Factory::replace_path(2, null,
-                    User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD)
+                    User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD)
             )
         );
     }

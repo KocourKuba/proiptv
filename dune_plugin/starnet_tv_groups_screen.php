@@ -237,7 +237,19 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_ITEMS_EDIT:
-                return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $sel_media_url);
+                $post_action = null;
+                if ($user_input->{ACTION_ITEMS_EDIT} === Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST) {
+                    $active_key = $this->plugin->get_active_playlist_id();
+                    if ($this->plugin->is_playlist_exist($active_key)) {
+                        $post_action = User_Input_Handler_Registry::create_screen_action(Starnet_Edit_Playlists_Screen::ID,
+                            ACTION_INVALIDATE,
+                            null,
+                            array('playlist_id' => $active_key)
+                        );
+                    }
+                }
+
+                return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $sel_media_url, $post_action);
 
             case ACTION_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);

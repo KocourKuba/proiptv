@@ -85,10 +85,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $this->force_parent_reload = false;
-                if ($parent_media_url->source_window_id === ACTION_MAIN_SCREEEN_ID) {
+                if ($parent_media_url->source_window_id === Starnet_Entry_Handler::ID) {
                     $target_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 } else {
-                    $target_action = User_Input_Handler_Registry::create_action_screen($parent_media_url->source_window_id, $parent_media_url->end_action);
+                    $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->source_window_id, $parent_media_url->end_action);
                 }
 
                 return Action_Factory::close_and_run($target_action);

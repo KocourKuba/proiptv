@@ -2685,11 +2685,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param string $source_screen_id
      * @param string $action_edit
      * @param MediaURL|null $media_url
+     * @param array|null $post_action
      * @return array|null
      */
-    public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null)
+    public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null, $post_action = null)
     {
-        $post_action = null;
         switch ($action_edit) {
             case Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_CHANNELS:
                 $params['screen_id'] = Starnet_Edit_Hidden_List_Screen::ID;
@@ -2715,15 +2715,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
                 $params['extension'] = PLAYLIST_PATTERN;
                 $title = TR::t('setup_channels_src_edit_playlists');
-                $active_key = $this->get_active_playlist_id();
-                if ($this->is_playlist_exist($active_key)) {
-                    $handler = User_Input_Handler_Registry::get_instance()->get_registered_handler(Starnet_Edit_Playlists_Screen::ID);
-                    $post_action = User_Input_Handler_Registry::create_action($handler,
-                        ACTION_INVALIDATE,
-                        null,
-                        array('playlist_id' => $active_key)
-                    );
-                }
                 break;
 
             case Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST:

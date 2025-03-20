@@ -119,7 +119,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             $this->force_parent_reload = false;
             return Action_Factory::close_and_run(
-                User_Input_Handler_Registry::create_action_screen(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
+                User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case GUI_EVENT_TIMER:
                 $epg_manager = $this->plugin->get_epg_manager();

@@ -56,6 +56,7 @@ const ACTION_PLAY_FOLDER = 'play_folder';
 const ACTION_PLAY_ITEM = 'play_item';
 const ACTION_REFRESH_SCREEN = 'refresh_screen';
 const ACTION_RELOAD = 'reload';
+const ACTION_FORCE_OPEN = 'force_open';
 const ACTION_RESET_DEFAULT = 'reset_default';
 const ACTION_SETTINGS = 'settings';
 const ACTION_DO_SETTINGS = 'do_edit_settings';
@@ -101,7 +102,6 @@ const ACTION_PL_TYPE_DLG_APPLY = 'pl_type_dlg_apply';
 const ACTION_CLEAR_CACHE = 'clear_cache';
 const ACTION_INDEX_EPG = 'index_epg';
 const ACTION_CHOOSE_FILE = 'choose_file';
-const ACTION_MAIN_SCREEEN_ID = 'main_screen';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';

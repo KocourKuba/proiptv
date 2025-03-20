@@ -67,7 +67,7 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_action_screen(
+                    User_Input_Handler_Registry::create_screen_action(
                         $parent_media_url->source_window_id,
                         $parent_media_url->cancel_action
                     )
@@ -75,7 +75,7 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
 
             case GUI_EVENT_KEY_ENTER:
                 return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_action_screen(
+                    User_Input_Handler_Registry::create_screen_action(
                         $parent_media_url->source_window_id,
                         $parent_media_url->end_action,
                         null,

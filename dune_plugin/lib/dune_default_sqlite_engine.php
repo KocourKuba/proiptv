@@ -786,8 +786,10 @@ class Dune_Default_Sqlite_Engine
      */
     public function remove_cookie($name)
     {
-        $table_name = self::COOKIES_TABLE;
-        $this->sql_playlist->exec("DELETE FROM $table_name WHERE param = '$name';");
+        if ($this->sql_playlist) {
+            $table_name = self::COOKIES_TABLE;
+            $this->sql_playlist->exec("DELETE FROM $table_name WHERE param = '$name';");
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////
