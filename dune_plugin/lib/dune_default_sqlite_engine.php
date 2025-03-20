@@ -1173,9 +1173,9 @@ class Dune_Default_Sqlite_Engine
         if ($reset) {
             $iptv_groups = M3uParser::GROUPS_TABLE;
             $query .= "INSERT INTO $tmp_table (group_id)
-                        SELECT group_id FROM $iptv_groups
+                        SELECT group_id FROM $iptv_groups AS pl
                         WHERE group_id IN (SELECT group_id FROM $groups_info_table WHERE disabled = 0)
-                        ORDER BY ROWID;";
+                        ORDER BY pl.ROWID;";
         } else {
             $query .= "INSERT INTO $tmp_table (group_id)
                        SELECT group_id FROM $groups_info_table WHERE disabled = 0 AND special = 0 ORDER BY group_id;";
@@ -1285,9 +1285,10 @@ class Dune_Default_Sqlite_Engine
         if ($reset) {
             $column = $this->get_id_column();
             $query .= "INSERT INTO $tmp_table (channel_id)
-                        SELECT $column FROM $iptv_channels
+                        SELECT $column FROM $iptv_channels AS pl
                         WHERE group_id = $q_group_id AND $column IN
-                        (SELECT channel_id FROM $channels_info_table WHERE disabled = 0);";
+                        (SELECT channel_id FROM $channels_info_table WHERE disabled = 0)
+                        ORDER by pl.ROWID;";
         } else {
             $query .= "INSERT INTO $tmp_table (channel_id)
                         SELECT channel_id FROM $channels_info_table
@@ -1334,7 +1335,8 @@ class Dune_Default_Sqlite_Engine
         if ($full) {
             $iptv_channels = M3uParser::CHANNELS_TABLE;
             $column = $this->get_id_column();
-            $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl JOIN $table_name AS ch ON pl.$column = ch.channel_id WHERE $where;";
+            $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl
+                        JOIN $table_name AS ch ON pl.$column = ch.channel_id WHERE $where;";
         } else {
             $query = "SELECT * FROM $table_name AS ch WHERE $where;";
         }
@@ -1804,7 +1806,7 @@ class Dune_Default_Sqlite_Engine
         $order_table = self::get_table_name($group_id);
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
         $column = $this->get_id_column();
-        $query = "SELECT ord.channel_id, pl.*, ch.ROWID as ch_number
+        $query = "SELECT ord.channel_id, pl.*, pl.ROWID as ch_number
                     FROM $iptv_channels AS pl
                     JOIN $order_table AS ord ON pl.$column = ord.channel_id
                     JOIN $channels_info_table as ch ON ch.channel_id = ord.channel_id AND ch.disabled = 0
@@ -1879,9 +1881,9 @@ class Dune_Default_Sqlite_Engine
         if ($full) {
             $iptv_channels = M3uParser::CHANNELS_TABLE;
             $column = $this->get_id_column();
-            $query = "SELECT ch.channel_id, tv.*, ch.ROWID as ch_number
-                        FROM $iptv_channels as tv
-                            JOIN $table_name AS ch ON tv.$column = ch.channel_id
+            $query = "SELECT ch.channel_id, pl.*, pl.ROWID AS ch_number
+                        FROM $iptv_channels as pl
+                            JOIN $table_name AS ch ON pl.$column = ch.channel_id
                         WHERE ch.channel_id = $channel_id AND ch.disabled = 0;";
         } else {
             $query = "SELECT * FROM $table_name WHERE channel_id = $channel_id AND disabled = 0;";

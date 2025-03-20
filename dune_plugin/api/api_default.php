@@ -959,7 +959,7 @@ class api_default
 
         $playlists = $this->GetPlaylists();
         if (!empty($playlists) && count($playlists) > 1) {
-            $pl_names = array_map(function ($pl) { return $pl['name']; }, $playlists);
+            $pl_names = extract_column($playlists, COLUMN_NAME);
             $idx = $this->GetParameter(MACRO_PLAYLIST_ID);
             if (empty($idx)) {
                 $idx = key($pl_names);
