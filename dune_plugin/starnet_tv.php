@@ -254,7 +254,7 @@ class Starnet_Tv implements User_Input_Handler
             $playlist_id = $this->plugin->get_active_playlist_id();
             $content = '';
             foreach ($all_channels as $k => $v) {
-                $content .= "$k=$playlist_id-$k" . PHP_EOL;
+                $content .= sprintf("%s=%s-%s", $k, $playlist_id, Hashed_Array::hash($k)) . PHP_EOL;
             }
 
             if (!empty($content) && file_put_contents(get_temp_path("channel_ids.txt"), $content) !== false) {

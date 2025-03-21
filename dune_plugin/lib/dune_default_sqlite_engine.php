@@ -532,6 +532,26 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param string $hash
+     * @return array|null
+     */
+    public function find_xmltv_source($hash)
+    {
+        hd_debug_print(null, true);
+
+        $q_columns = Sql_Wrapper::sql_make_list_from_values(array('hash', 'type', 'name', 'uri', 'cache'), false);
+        $common_name = self::XMLTV_TABLE;
+        $playlist_name = self::PLAYLIST_XMLTV_TABLE;
+        $query = "SELECT * FROM
+             (SELECT $q_columns FROM $common_name
+               UNION
+               SELECT $q_columns FROM $playlist_name)
+              WHERE hash = '$hash';";
+
+        return $this->sql_params->query_value($query, true);
+    }
+
+    /**
      * update xmltv source
      *
      * @param string $playlist_id

@@ -58,20 +58,18 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
         $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
 
-        $actions = array(
-            GUI_EVENT_KEY_ENTER => $action_play,
-            GUI_EVENT_KEY_PLAY => $action_play,
-            GUI_EVENT_KEY_SEARCH => $search_action,
-            GUI_EVENT_KEY_RETURN => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN),
-            GUI_EVENT_KEY_TOP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU),
-            GUI_EVENT_KEY_POPUP_MENU => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU),
-            GUI_EVENT_KEY_SETUP => User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS),
-            GUI_EVENT_KEY_INFO => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO),
-            GUI_EVENT_KEY_CLEAR => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE),
-            GUI_EVENT_KEY_SELECT => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE),
-            GUI_EVENT_KEY_SUBTITLE => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE),
-            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
-        );
+        $actions[GUI_EVENT_KEY_ENTER] = $action_play;
+        $actions[GUI_EVENT_KEY_PLAY] = $action_play;
+        $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS);
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
+        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
+        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
+        $actions[GUI_EVENT_KEY_SUBTITLE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
         if ((string)$media_url->group_id === TV_ALL_CHANNELS_GROUP_ID) {
             $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;

@@ -238,7 +238,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ITEMS_EDIT:
                 $post_action = null;
-                if ($user_input->{ACTION_ITEMS_EDIT} === Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST) {
+                if (isset($user_input->{ACTION_ITEMS_EDIT}) && $user_input->{ACTION_ITEMS_EDIT} === Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST) {
                     $active_key = $this->plugin->get_active_playlist_id();
                     if ($this->plugin->is_playlist_exist($active_key)) {
                         $post_action = User_Input_Handler_Registry::create_screen_action(Starnet_Edit_Playlists_Screen::ID,

@@ -62,6 +62,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
 
         return $actions;
     }
@@ -132,6 +133,9 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
                 return Action_Factory::change_behaviour($actions, 1000, $post_action);
 
+            case GUI_EVENT_KEY_INFO:
+                return $this->do_show_xmltv_info($selected_id);
+
             case ACTION_SETTINGS:
                 /** @var Named_Storage $item */
                 hd_debug_print("item: " . $selected_id, true);
@@ -151,7 +155,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_INDEX_EPG:
                 $this->plugin->safe_clear_selected_epg_cache($selected_id);
-                $this->plugin->run_bg_epg_indexing($selected_id, INDEXING_ALL);
+                $this->plugin->run_bg_epg_indexing($selected_id, INDEXING_ALL, true);
                 $selected_sources = $this->plugin->get_selected_xmltv_ids();
                 if (in_array($selected_id, $selected_sources)) {
                     $this->force_parent_reload = true;
@@ -246,6 +250,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         hd_debug_print(null, true);
 
         $menu_items = array();
+        $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('xmltv_info_dlg'), "info.png");
+        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_INDEX_EPG, TR::t('entry_index_epg'), 'settings.png');
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_CLEAR_CACHE, TR::t('entry_epg_cache_clear'), 'brush.png');
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
@@ -475,30 +481,23 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             if ($locked) {
                 $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
             } else if (file_exists($cached_xmltv_file)) {
-                $size = HD::get_file_size($cached_xmltv_file);
                 $check_time_file = filemtime($cached_xmltv_file);
-                $dl_date = date("d.m H:i", $check_time_file);
+                $dl_date = date("Y-m-d H:i", $check_time_file);
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
-                $info = '';
-                foreach ($epg_manager->get_indexes_info($key) as $index => $cnt) {
-                    $cnt = ($cnt !== -1) ? $cnt : TR::load('err_error_no_data');
-                    $info .= "$index: $cnt|";
-                }
 
                 $etag = Curl_Wrapper::get_cached_etag($item[PARAM_URI]);
-                $info .= TR::load('edit_list_cache_suport__1',
+                $info = TR::load('edit_list_cache_suport__1',
                     empty($etag) ? TR::load('no') : TR::load('yes'));
 
                 if ($item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
                     $expired = TR::load('setup_epg_cache_type_auto');
                 } else {
                     $max_cache_time = $check_time_file + 3600 * 24 * $item[PARAM_CACHE];
-                    $expired = date("d.m H:i", $max_cache_time);
+                    $expired = date("m d H:i", $max_cache_time);
                 }
 
-                $detailed_info = TR::load('edit_list_detail_info__5',
+                $detailed_info = TR::load('edit_list_detail_info__4',
                     $item[PARAM_URI],
-                    $size,
                     $dl_date,
                     $expired,
                     $info
@@ -581,5 +580,72 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $this->plugin->get_screen_view('list_2x11_small_info'),
             $this->plugin->get_screen_view('list_3x11_no_info'),
         );
+    }
+
+    /**
+     * @param string $id
+     * @return array|null
+     */
+    public function do_show_xmltv_info($id)
+    {
+        $epg_manager = $this->plugin->get_epg_manager();
+        if ($epg_manager === null) {
+            return null;
+        }
+
+        $cached_xmltv_file = $this->plugin->get_cache_dir() . '/' . "$id.xmltv";
+        $locked = $epg_manager->is_index_locked($id, INDEXING_ALL);
+        if ($locked || !file_exists($cached_xmltv_file)) {
+            return Action_Factory::show_error(false, TR::t('edit_list_xmltv_not_ready'));
+        }
+
+        $params = $this->plugin->find_xmltv_source($id);
+        if ($params[COLUMN_CACHE] === 'auto') {
+            $cache =  TR::load('auto');
+        } else {
+            $cache =  $params[COLUMN_CACHE] . ' ' . TR::load('days');
+        }
+
+        $info  = TR::load('name')  . "   {$params[COLUMN_NAME]}" . PHP_EOL;
+        $info .= TR::load('url')   . "   {$params[COLUMN_URI]}" . PHP_EOL;
+        $info .= TR::load('cache') . "   $cache" . PHP_EOL;
+        $info .= TR::load('size')  . '   ' . HD::get_file_size($cached_xmltv_file) . PHP_EOL;
+        $info .= TR::load('download_date') . ' ' . date('Y-m-d H:i', filemtime($cached_xmltv_file)) . PHP_EOL;
+        $info .= PHP_EOL;
+
+        $stat = Epg_Manager_Xmltv::get_stat($cached_xmltv_file);
+        if (!empty($stat)) {
+            $sec = TR::load('sec');
+            $info .= TR::load('download_time')       . "   {$stat['download']} $sec" . PHP_EOL;
+            $info .= TR::load('unpack_time')         . "   {$stat['unpack']} $sec" . PHP_EOL;
+            $info .= TR::load('index_channels_time') . "   {$stat['channels']} $sec" . PHP_EOL;
+            $info .= TR::load('index_entries_time')  . "   {$stat['entries']} $sec" . PHP_EOL;
+            $info .= PHP_EOL;
+        }
+
+        $indexes = $epg_manager->get_indexes_info($params);
+        foreach ($indexes as $index => $cnt) {
+            $cnt = ($cnt !== -1) ? $cnt : TR::load('err_error_no_data');
+            $info .= "$index:   $cnt" . PHP_EOL;
+        }
+        $info .= PHP_EOL;
+
+        Control_Factory::add_multiline_label($defs, null, $info, 18);
+        Control_Factory::add_vgap($defs, 10);
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            1200,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load('scroll_page')
+        );
+
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('xmltv_info_dlg'), $defs, true, 1000);
     }
 }

@@ -420,7 +420,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $apk_subst = getenv('FS_PREFIX');
             $playlist_id = $this->get_active_playlist_id();
             if (!empty($playlist_id) && !empty($ext_epg) && is_dir("$apk_subst/tmp/ext_epg")) {
-                $filename = "$playlist_id-$channel_id-" . strftime('%Y-%m-%d', $day_start_tm_sec) . ".json";
+                $filename = sprintf("%s-%s-%s.json", $playlist_id, Hashed_Array::hash($channel_id), strftime('%Y-%m-%d', $day_start_tm_sec));
                 file_put_contents("$apk_subst/tmp/ext_epg/$filename", pretty_json_format($ext_epg));
             }
         } catch (Exception $ex) {
@@ -1520,13 +1520,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @param string $source_id
      * @param int $indexing_flag
+     * @param bool $allow_index
      * @return void
      */
-    public function run_bg_epg_indexing($source_id, $indexing_flag)
+    public function run_bg_epg_indexing($source_id, $indexing_flag, $allow_index = false)
     {
         hd_debug_print(null, true);
 
-        $allow_index = false;
         $allow_index |= $this->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false);
         $allow_index |= $this->use_xmltv;
         if (!$allow_index) {
@@ -2751,21 +2751,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $icon = $this->get_channel_picon($channel_row, $is_classic);
 
         $info = "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
-        $info .= "Name: " . $channel_row[COLUMN_TITLE] . PHP_EOL;
-        $info .= "Number: " . $channel_row[COLUMN_CH_NUMBER] . PHP_EOL;
-        $info .= "Archive: " . $channel_row[M3uParser::COLUMN_ARCHIVE] . " days" . PHP_EOL;
-        $info .= "Protected: " . TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT])) . PHP_EOL;
-        $info .= "EPG IDs: " . implode(', ', self::make_epg_ids($channel_row)) . PHP_EOL;
+        $info .= TR::load('name') . ' ' . $channel_row[COLUMN_TITLE] . PHP_EOL;
+        $info .= TR::load('number') . ' ' . $channel_row[COLUMN_CH_NUMBER] . PHP_EOL;
+        $info .= TR::load('archive') . ' ' . $channel_row[M3uParser::COLUMN_ARCHIVE] . ' ' . TR::load('days') . PHP_EOL;
+        $info .= TR::load('adult') . ' ' . TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT])) . PHP_EOL;
+        $info .= "EPG ID: " . implode(', ', self::make_epg_ids($channel_row)) . PHP_EOL;
         if ($channel_row[M3uParser::COLUMN_TIMESHIFT] != 0) {
-            $info .= "Timeshift hours: {$channel_row[M3uParser::COLUMN_TIMESHIFT]}" . PHP_EOL;
+            $info .= TR::load('time_shift') . ' ' . $channel_row[M3uParser::COLUMN_TIMESHIFT] . PHP_EOL;
         }
-        $info .= "Category: {$channel_row[COLUMN_GROUP_ID]}" . PHP_EOL;
-        $info .= "Icon: " . wrap_string_to_lines($icon, 70) . PHP_EOL;
+        $info .= TR::load('category') . ": {$channel_row[COLUMN_GROUP_ID]}" . PHP_EOL;
+        $info .= TR::load('icon') . ' ' . wrap_string_to_lines($icon, 70) . PHP_EOL;
         $info .= PHP_EOL;
 
         try {
             $live_url = $this->generate_stream_url($channel_row, -1, true);
-            $info .= "Live URL: " . wrap_string_to_lines($live_url, 70) . PHP_EOL;
+            $info .= TR::load('live_url') . ' ' . wrap_string_to_lines($live_url, 70) . PHP_EOL;
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }
@@ -2773,7 +2773,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($channel_row[M3uParser::COLUMN_ARCHIVE] > 0) {
             try {
                 $archive_url = $this->generate_stream_url($channel_row, time() - 3600, true);
-                $info .= "Archive URL: " . wrap_string_to_lines($archive_url, 70) . PHP_EOL;
+                $info .= TR::load('archive_url') . ' ' . wrap_string_to_lines($archive_url, 70) . PHP_EOL;
             } catch (Exception $ex) {
                 print_backtrace_exception($ex);
             }
