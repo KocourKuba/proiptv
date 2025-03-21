@@ -1,4 +1,30 @@
-﻿### Version 6.0.1154
+﻿### Version 6.1.1200
+- Toggle shortcuts are available for premier/homatics/boxy boxes with a full-size remote
+- Slightly reworked XMLTV handling to reduce the number of locks during indexing
+- Reduced the frequency of data search queries in an XMLTV file to get an EPG channel
+- Allowed editing caching parameters for XMLTV sources specified in the configuration
+- Sources with incorrect parameters (error updating old settings) are deleted automatically
+- If the playlist file does not exist (it is a file, not a link), then it is marked in the playlist list
+- Improved batch processing of adding playlists
+- The old password for adult channels or settings protection is no longer asked if it has been disabled
+- Deleting a playlist or XMLTV source is bound to the CLEAR button
+- Added display of all information about the XMLTV source by the INFO button or through the popup menu, some of the information has been removed from the right column in this dialog
+- Implemented return to the list of categories when calling the list of playlists on the plugin icon and selecting a new playlist
+- When starting VOD from Watch History, the movie info window is no longer shown. Go directly to the list of episodes or episodes
+- Optimized some playlist database queries for faster execution
+- Updated translation for strings that have not been translated (Channel Information)
+- Fixed VOD playback from the last viewed position
+- Returned correct handling of the Play key on the plugin when Autoplay is disabled
+- Clarifications to determine the Channel ID. Empty values were not taken into account when counting duplicates and, as a result, choosing the wrong method
+- Fixed some error messages when downloading a playlist
+- Fixed some bugs updating old settings dune_params
+- Can't change playlist name
+- New channels from the playlist were simply added and not listed in the Modified category
+- Channel name, category and adult status are updated if they change in the playlist
+- Incorrectly reset sorts and channel numbering
+- Information for extended EPG (ext_epg) could not be written correctly if the channel name with Cyrillic or other non-Latin letters was used as the channel ID.
+
+### Version 6.0.1154
 - Playlist shortcuts work on the Channels/Favorites/History and NewUI screen
 - Fixed a bug with replacing the selected XMLTV source when adding a new link
 - Fixed a bug with processing serials for VOD
