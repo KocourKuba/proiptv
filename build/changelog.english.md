@@ -1,4 +1,7 @@
-﻿### Version 6.1.1200
+﻿### Версия 6.1.1202
+- The API method of determining a full-size remote control for Google like devices did not work. Added an item in the advanced settings to enable the capabilities of the full-size remote control
+
+### Version 6.1.1200
 - Toggle shortcuts are available for premier/homatics/boxy boxes with a full-size remote
 - Slightly reworked XMLTV handling to reduce the number of locks during indexing
 - Reduced the frequency of data search queries in an XMLTV file to get an EPG channel
