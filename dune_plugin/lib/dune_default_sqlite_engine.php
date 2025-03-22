@@ -1422,8 +1422,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_playlist_entries_count()
     {
-        $query = "SELECT name FROM " . M3uParser::IPTV_DB . ".sqlite_master WHERE type = 'table' AND name = '" . M3uParser::S_CHANNELS_TABLE . "';";
-        if ($this->sql_playlist->query_value($query)) {
+        if ($this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
             $iptv_channels = M3uParser::CHANNELS_TABLE;
             return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_channels;");
         }
@@ -1806,8 +1805,7 @@ class Dune_Default_Sqlite_Engine
      */
     public function get_playlist_group_count()
     {
-        $query = "SELECT name FROM " . M3uParser::IPTV_DB . ".sqlite_master WHERE type = 'table' AND name = '" . M3uParser::S_GROUPS_TABLE . "';";
-        if ($this->sql_playlist->query_value($query)) {
+        if ($this->sql_playlist->is_table_exists(M3uParser::S_GROUPS_TABLE, M3uParser::IPTV_DB)) {
             $iptv_groups = M3uParser::GROUPS_TABLE;
             return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_groups;");
         }

@@ -516,14 +516,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     if ($zoom === DuneVideoZoomPresets::not_set) {
                         $detailed_info = TR::t('tv_screen_channel_info__4',
                             $channel_row[COLUMN_TITLE],
-                            $channel_row[M3uParser::COLUMN_ARCHIVE],
+                            $channel_row[COLUMN_ARCHIVE],
                             $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str
                         );
                     } else {
                         $detailed_info = TR::t('tv_screen_channel_info__5',
                             $channel_row[COLUMN_TITLE],
-                            $channel_row[M3uParser::COLUMN_ARCHIVE],
+                            $channel_row[COLUMN_ARCHIVE],
                             $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str,
                             TR::load(DuneVideoZoomPresets::$zoom_ops_translated[$zoom])

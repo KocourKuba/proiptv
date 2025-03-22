@@ -280,7 +280,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     throw new Exception("Wrong adult password: $protect_code");
                 }
             } else {
-                $now = $channel_row[M3uParser::COLUMN_ARCHIVE] > 0 ? time() : 0;
+                $now = $channel_row[COLUMN_ARCHIVE] > 0 ? time() : 0;
                 $this->push_tv_history($channel_id, ($archive_tm_sec !== -1 ? $archive_tm_sec : $now));
             }
 
@@ -332,7 +332,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $day_start_tm_sec -= get_local_time_zone_offset();
 
             // get personal time shift for channel
-            $time_shift = 3600 * ($channel_row[M3uParser::COLUMN_TIMESHIFT] + $this->get_setting(PARAM_EPG_SHIFT, 0));
+            $time_shift = 3600 * ($channel_row[COLUMN_TIMESHIFT] + $this->get_setting(PARAM_EPG_SHIFT, 0));
             hd_debug_print("EPG time shift $time_shift", true);
             $day_start_tm_sec += $time_shift;
 
@@ -1907,7 +1907,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Generate stream url for channel id: {$channel_row[COLUMN_CHANNEL_ID]} '{$channel_row[COLUMN_TITLE]}'");
 
         // replace all macros
-        $stream_url = $channel_row[M3uParser::COLUMN_PATH];
+        $stream_url = $channel_row[COLUMN_PATH];
         if (empty($stream_url)) {
             throw new Exception("Empty url!");
         }
@@ -1957,7 +1957,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 hd_debug_print("force set user catchup: $catchup");
             }
 
-            $channel_catchup = $channel_row[M3uParser::COLUMN_CATCHUP];
+            $channel_catchup = $channel_row[COLUMN_CATCHUP];
             if (!empty($channel_catchup)) {
                 // channel catchup override playlist, user and config settings
                 $catchup = $channel_catchup;
@@ -1965,7 +1965,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $catchup = ATTR_CATCHUP_SHIFT;
             }
 
-            $archive_url = $channel_row[M3uParser::COLUMN_CATCHUP_SOURCE];
+            $archive_url = $channel_row[COLUMN_CATCHUP_SOURCE];
             hd_debug_print("using catchup params: $catchup", true);
             if (empty($archive_url)) {
                 if (KnownCatchupSourceTags::is_tag(ATTR_CATCHUP_SHIFT, $catchup)) {
@@ -2051,7 +2051,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if (!$clean) {
             $dune_params_str = $this->generate_dune_params($channel_row[COLUMN_CHANNEL_ID],
-                json_decode(safe_get_value($channel_row, M3uParser::COLUMN_EXT_PARAMS), true));
+                json_decode(safe_get_value($channel_row, COLUMN_EXT_PARAMS), true));
 
             if (!empty($dune_params_str)) {
                 $stream_url .= HD::DUNE_PARAMS_MAGIC . $dune_params_str;
@@ -2753,11 +2753,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $info = "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
         $info .= TR::load('name') . ' ' . $channel_row[COLUMN_TITLE] . PHP_EOL;
         $info .= TR::load('number') . ' ' . $channel_row[COLUMN_CH_NUMBER] . PHP_EOL;
-        $info .= TR::load('archive') . ' ' . $channel_row[M3uParser::COLUMN_ARCHIVE] . ' ' . TR::load('days') . PHP_EOL;
+        $info .= TR::load('archive') . ' ' . $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days') . PHP_EOL;
         $info .= TR::load('adult') . ' ' . TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT])) . PHP_EOL;
         $info .= "EPG ID: " . implode(', ', self::make_epg_ids($channel_row)) . PHP_EOL;
-        if ($channel_row[M3uParser::COLUMN_TIMESHIFT] != 0) {
-            $info .= TR::load('time_shift') . ' ' . $channel_row[M3uParser::COLUMN_TIMESHIFT] . PHP_EOL;
+        if ($channel_row[COLUMN_TIMESHIFT] != 0) {
+            $info .= TR::load('time_shift') . ' ' . $channel_row[COLUMN_TIMESHIFT] . PHP_EOL;
         }
         $info .= TR::load('category') . ": {$channel_row[COLUMN_GROUP_ID]}" . PHP_EOL;
         $info .= TR::load('icon') . ' ' . wrap_string_to_lines($icon, 70) . PHP_EOL;
@@ -2770,7 +2770,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             print_backtrace_exception($ex);
         }
 
-        if ($channel_row[M3uParser::COLUMN_ARCHIVE] > 0) {
+        if ($channel_row[COLUMN_ARCHIVE] > 0) {
             try {
                 $archive_url = $this->generate_stream_url($channel_row, time() - 3600, true);
                 $info .= TR::load('archive_url') . ' ' . wrap_string_to_lines($archive_url, 70) . PHP_EOL;
@@ -2779,7 +2779,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
-        $ext_params = safe_get_value($channel_row, M3uParser::COLUMN_EXT_PARAMS);
+        $ext_params = safe_get_value($channel_row, COLUMN_EXT_PARAMS);
         $dune_params = $this->generate_dune_params($channel_id, json_decode($ext_params, true));
         if (!empty($dune_params)) {
             $info .= "dune_params: $dune_params" . PHP_EOL;
@@ -3053,6 +3053,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $this->get_active_playlist_id() . "_$source";
     }
 
+    public function is_full_size_remote()
+    {
+        return !is_limited_apk() || $this->get_bool_parameter(PARAM_FULL_SIZE_REMOTE, false);
+    }
+
     /**
      * @return array
      */
@@ -3124,7 +3129,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     public static function make_epg_ids($channel_row)
     {
-        return array('epg_id' => $channel_row[M3uParser::COLUMN_EPG_ID], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
+        return array('epg_id' => $channel_row[COLUMN_EPG_ID], 'id' => $channel_row[COLUMN_CHANNEL_ID], 'name' => $channel_row[COLUMN_TITLE]);
     }
 
     public static function is_special_group_id($group_id)
@@ -3135,7 +3140,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             || $group_id === TV_CHANGED_CHANNELS_GROUP_ID
             || $group_id === VOD_GROUP_ID);
     }
-
 
     //////////////////////////////////////////////////////////////////
     /// protected methods

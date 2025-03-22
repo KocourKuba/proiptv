@@ -146,6 +146,7 @@ setup_playback_settings = Настройки проигрывания
 setup_adult_title = Пароль для взрослых каналов
 setup_adult_change = Изменить пароль
 setup_settings_protection_title = Пароль для защиты настроек
+setup_settings_full_remote = Полноразмерный пульт
 setup_show_in_main = Показывать в главном меню
 setup_show_all_channels = Показывать "Все каналы"
 setup_show_history = Показывать "История просмотра"

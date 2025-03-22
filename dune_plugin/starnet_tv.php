@@ -188,7 +188,7 @@ class Starnet_Tv implements User_Input_Handler
                 if (empty($channel_row)) continue;
 
                 $group_id_arr[$group_id] = '';
-                $archive = $channel_row[M3uParser::COLUMN_ARCHIVE];
+                $archive = $channel_row[COLUMN_ARCHIVE];
                 $all_channels[$channel_row[COLUMN_CHANNEL_ID]] = array(
                     PluginTvChannel::id => $channel_row[COLUMN_CHANNEL_ID],
                     PluginTvChannel::caption => $channel_row[COLUMN_TITLE],
@@ -207,7 +207,7 @@ class Starnet_Tv implements User_Input_Handler
 
                     // Buffering time
                     PluginTvChannel::buffering_ms => $buffering,
-                    PluginTvChannel::timeshift_hours => $channel_row[M3uParser::COLUMN_TIMESHIFT],
+                    PluginTvChannel::timeshift_hours => $channel_row[COLUMN_TIMESHIFT],
 
                     PluginTvChannel::playback_url_is_stream_url => $this->playback_url_is_stream_url,
                     PluginTvChannel::ext_epg_enabled => true,

@@ -981,9 +981,9 @@ class Epg_Manager_Xmltv
         $channel_id = $channel_row[COLUMN_CHANNEL_ID];
         $channel_title = $channel_row[COLUMN_TITLE];
         $epg_ids = array_unique(array_filter(array(
-            $channel_row[M3uParser::COLUMN_EPG_ID],
+            $channel_row[COLUMN_EPG_ID],
             $channel_id,
-            $channel_row[M3uParser::COLUMN_TVG_NAME],
+            $channel_row[COLUMN_TVG_NAME],
             $channel_title))
         );
 
@@ -1036,7 +1036,7 @@ class Epg_Manager_Xmltv
      */
     protected function getFakeEpg($channel_row, $day_start_ts, $day_epg)
     {
-        if (($this->flags & EPG_FAKE_EPG) && $channel_row[M3uParser::COLUMN_ARCHIVE] !== 0) {
+        if (($this->flags & EPG_FAKE_EPG) && $channel_row[COLUMN_ARCHIVE] !== 0) {
             hd_debug_print("Create fake data for non existing EPG data");
             for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
                 $day_epg[$start][PluginTvEpgProgram::end_tm_sec] = $start + 3600;

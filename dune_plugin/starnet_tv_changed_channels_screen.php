@@ -190,12 +190,12 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
         }
 
         foreach ($this->plugin->get_changed_channels(PARAM_NEW) as $channel_row) {
-            $epg_ids = array($channel_row[M3uParser::COLUMN_EPG_ID], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]);
+            $epg_ids = array($channel_row[COLUMN_EPG_ID], $channel_row[COLUMN_CHANNEL_ID], $channel_row[COLUMN_TITLE]);
             $group = $channel_row[COLUMN_GROUP_ID];
             $detailed_info = TR::t('tv_screen_ch_channel_info__5',
                 $channel_row[COLUMN_TITLE],
                 str_replace('|', '¦', (is_null($group) ? "" : $group)),
-                $channel_row[M3uParser::COLUMN_ARCHIVE],
+                $channel_row[COLUMN_ARCHIVE],
                 $channel_row[COLUMN_CHANNEL_ID],
                 implode(", ", $epg_ids)
             );

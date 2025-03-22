@@ -146,6 +146,7 @@ setup_playback_settings = Playback settings
 setup_adult_title = Password for adult channels
 setup_adult_change = Change password
 setup_settings_protection_title = Settings protection password
+setup_settings_full_remote = Full size remote
 setup_show_in_main = Show on main screen
 setup_show_all_channels = Show "All channels"
 setup_show_history = Show "History"

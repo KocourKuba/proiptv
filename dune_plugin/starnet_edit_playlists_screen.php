@@ -419,7 +419,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete2'), "remove.png");
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear'), "brush.png");
 
-        if (!is_limited_apk() || (function_exists('dune_config_with_color_buttons') && dune_config_with_color_buttons())) {
+        if ($this->plugin->is_full_size_remote()) {
             $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
             $menu_items[] = $this->plugin->create_menu_item($this, self::ACTION_ASSIGN_SHORTCUT_POPUP, TR::t('tv_screen_assign_shortcut'));
         }

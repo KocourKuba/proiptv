@@ -107,6 +107,15 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
             TR::t('setup_settings_protection_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
+        // Settings full size remote
+        if (is_limited_apk()) {
+            $remote = $this->plugin->get_parameter(PARAM_FULL_SIZE_REMOTE, SwitchOnOff::off);
+            Control_Factory::add_image_button($defs, $this, null,
+                PARAM_FULL_SIZE_REMOTE, TR::t('setup_settings_full_remote'), SwitchOnOff::translate($remote),
+                get_image_path(SwitchOnOff::to_image($remote)), self::CONTROLS_WIDTH);
+        }
+
+        //////////////////////////////////////
         // debugging
 
         $debug_state = safe_get_member($plugin_cookies, PARAM_ENABLE_DEBUG, SwitchOnOff::off);
@@ -271,6 +280,10 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 hd_debug_print("pass: $param, old pass: $old_pass, new pass: $user_input->pass2", true);
 
                 $post_action = Action_Factory::show_title_dialog($msg);
+                break;
+
+            case PARAM_FULL_SIZE_REMOTE:
+                $this->plugin->toggle_parameter(PARAM_FULL_SIZE_REMOTE);
                 break;
 
             case PARAM_ENABLE_DEBUG:

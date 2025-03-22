@@ -321,7 +321,7 @@ class vod_standard extends Abstract_Vod
             $logo = $entry[COLUMN_ICON];
             $title = $entry[COLUMN_TITLE];
             $category = $entry[COLUMN_GROUP_ID];
-            $path = $entry[M3uParser::COLUMN_PATH];
+            $path = $entry[COLUMN_PATH];
             $title_orig = '';
             $country = '';
             $year = '';
@@ -416,10 +416,21 @@ class vod_standard extends Abstract_Vod
         }
 
         if ($this->plugin->get_sql_playlist()->is_database_attached('vod') === 0) {
+            $perf = new Perf_Collector();
+            $perf->reset('start');
+
             if ($this->vod_m3u_parser->parseVodPlaylist($this->wrapper) === false) {
                 hd_debug_print("Parse VOD failed");
                 return false;
             }
+
+            $perf->setLabel('end');
+            $report = $perf->getFullReport();
+
+            hd_debug_print_separator();
+            hd_debug_print("IndexFile: {$report[Perf_Collector::TIME]} secs");
+            hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
+            hd_debug_print_separator();
         }
 
         $perf = new Perf_Collector();

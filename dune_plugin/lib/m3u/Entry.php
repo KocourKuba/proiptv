@@ -407,11 +407,11 @@ class Entry extends Json_Serializer
     }
 
     /**
-     * @return array
+     * @return array|string|null
      */
-    public function getExtParams()
+    public function getExtParams($encoded = false)
     {
-        return $this->ext_params;
+        return $encoded ? (empty($this->ext_params) ? null : json_encode($this->ext_params)) : $this->ext_params;
     }
 
     /**

@@ -805,7 +805,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if ($channel_ts > 0) {
                     $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
                     $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
-                    if ($channel_ts >= $now - $channel_row[M3uParser::COLUMN_ARCHIVE] * 86400 - 60) {
+                    if ($channel_ts >= $now - $channel_row[COLUMN_ARCHIVE] * 86400 - 60) {
                         $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
                     }
                 }
@@ -1407,7 +1407,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             if ($media_url->group_id === TV_HISTORY_GROUP_ID) {
                 hd_debug_print("in history rows", true);
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_REMOVE, TR::t('delete'), "remove.png");
-            } else if ($media_url->group_id === TV_FAV_GROUP_ID && !is_limited_apk()) {
+            } else if ($media_url->group_id === TV_FAV_GROUP_ID && $this->plugin->is_full_size_remote()) {
                 hd_debug_print("in favorites rows", true);
                 $menu_items[] = $this->plugin->create_menu_item($this, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), "star.png");
             } else {
@@ -1449,7 +1449,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 "m3u_file.png",
                 array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
 
-            if (is_limited_apk()) {
+            if (!$this->plugin->is_full_size_remote()) {
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 if ($media_url->group_id === TV_FAV_GROUP_ID) {
                     $menu_items[] = $this->plugin->create_menu_item($this,

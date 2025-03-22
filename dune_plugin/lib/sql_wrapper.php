@@ -126,26 +126,30 @@ class Sql_Wrapper
             }
             hd_debug_print("Not attached: '$db_name', with filename: '$db_filename'", true);
         } else {
-            hd_debug_print("Sqlite wrapper id not inited!");
+            hd_debug_print("Sqlite wrapper db not inited!");
         }
         return 0;
     }
 
     /**
      * @param string $table_name
+     * @param string|null $db_name
      * @return bool
      */
-    public function is_table_exists($table_name)
+    public function is_table_exists($table_name, $db_name = null)
     {
-        return (int)$this->query_value("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='$table_name';") !== 0;
+        $db_name = is_null($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
+        return (int)$this->query_value("SELECT count(name) FROM $db_name WHERE type='table' AND name='$table_name';") !== 0;
     }
 
     /**
+     * @param string|null $db_name
      * @return array
      */
-    public function get_master_table_list()
+    public function get_master_table_list($db_name = null)
     {
-        return $this->fetch_single_array("SELECT name FROM sqlite_master WHERE type='table';", 'name');
+        $db_name = is_null($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
+        return $this->fetch_single_array("SELECT name FROM $db_name WHERE type='table';", 'name');
     }
 
     /**

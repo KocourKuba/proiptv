@@ -24,7 +24,6 @@
  */
 
 require_once 'Entry.php';
-require_once 'lib/perf_collector.php';
 require_once 'lib/sql_wrapper.php';
 require_once 'lib/ordered_array.php';
 
@@ -39,18 +38,6 @@ class M3uParser extends Json_Serializer
     const GROUPS_TABLE = 'iptv.iptv_groups';
     const VOD_TABLE = 'vod.vod_entries';
 
-    const COLUMN_PARSED_ID = 'parsed_id';
-    const COLUMN_CUID = 'cuid';
-    const COLUMN_EPG_ID = 'epg_id';
-    const COLUMN_TVG_NAME = 'tvg_name';
-    const COLUMN_ARCHIVE = 'archive';
-    const COLUMN_TIMESHIFT = 'timeshift';
-    const COLUMN_CATCHUP = 'catchup';
-    const COLUMN_CATCHUP_SOURCE = 'catchup_source';
-    const COLUMN_PATH = 'path';
-    const COLUMN_PARENT_CODE = 'parent_code';
-    const COLUMN_EXT_PARAMS = 'ext_params';
-
     private $channels_table = self::CHANNELS_TABLE;
     private $groups_table = self::GROUPS_TABLE;
     private $vod_table = self::VOD_TABLE;
@@ -59,10 +46,10 @@ class M3uParser extends Json_Serializer
     * Map attributes to database columns
     */
     public static $id_to_column_mapper = array(
-        ATTR_PARSED_ID      => self::COLUMN_PARSED_ID, // channel id found by regex parser
-        ATTR_CUID           => self::COLUMN_CUID,      // attributes "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
-        ATTR_TVG_ID         => self::COLUMN_EPG_ID,    // attribute tvg-id
-        ATTR_TVG_NAME       => self::COLUMN_TVG_NAME,  // attribute tvg-name
+        ATTR_PARSED_ID      => COLUMN_PARSED_ID, // channel id found by regex parser
+        ATTR_CUID           => COLUMN_CUID,      // attributes "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
+        ATTR_TVG_ID         => COLUMN_EPG_ID,    // attribute tvg-id
+        ATTR_TVG_NAME       => COLUMN_TVG_NAME,  // attribute tvg-name
         ATTR_CHANNEL_NAME   => COLUMN_TITLE,           // channel title
         ATTR_CHANNEL_HASH   => COLUMN_HASH,            // url hash
     );
@@ -104,16 +91,6 @@ class M3uParser extends Json_Serializer
      * @var array
      */
     public $icon_replace_pattern = array();
-
-    /**
-     * @var Perf_Collector
-     */
-    private $perf;
-
-    public function __construct()
-    {
-        $this->perf = new Perf_Collector();
-    }
 
     public function get_icon_base_url()
     {
@@ -270,19 +247,19 @@ class M3uParser extends Json_Serializer
         $init_channels = array(
             COLUMN_HASH => 'TEXT PRIMARY KEY NOT NULL',
             COLUMN_TITLE => 'TEXT',
-            self::COLUMN_PARSED_ID => 'TEXT',
-            self::COLUMN_CUID => 'TEXT',
-            self::COLUMN_TVG_NAME => 'TEXT',
-            self::COLUMN_EPG_ID => 'TEXT',
-            self::COLUMN_ARCHIVE => 'INTEGER DEFAULT 0',
-            self::COLUMN_TIMESHIFT => 'INTEGER DEFAULT 0',
-            self::COLUMN_CATCHUP => 'TEXT',
-            self::COLUMN_CATCHUP_SOURCE => 'TEXT',
+            COLUMN_PARSED_ID => 'TEXT',
+            COLUMN_CUID => 'TEXT',
+            COLUMN_TVG_NAME => 'TEXT',
+            COLUMN_EPG_ID => 'TEXT',
+            COLUMN_ARCHIVE => 'INTEGER DEFAULT 0',
+            COLUMN_TIMESHIFT => 'INTEGER DEFAULT 0',
+            COLUMN_CATCHUP => 'TEXT',
+            COLUMN_CATCHUP_SOURCE => 'TEXT',
             COLUMN_ICON => 'TEXT',
-            self::COLUMN_PATH => 'TEXT',
+            COLUMN_PATH => 'TEXT',
             COLUMN_ADULT => 'INTEGER DEFAULT 0',
-            self::COLUMN_PARENT_CODE => 'TEXT',
-            self::COLUMN_EXT_PARAMS => 'TEXT',
+            COLUMN_PARENT_CODE => 'TEXT',
+            COLUMN_EXT_PARAMS => 'TEXT',
             COLUMN_GROUP_ID => 'TEXT NOT NULL',
         );
 
@@ -338,23 +315,21 @@ class M3uParser extends Json_Serializer
                         $adult_channel = $entry->getAdult();
                     }
 
-                    $ext_params = $entry->getExtParams();
-
                     $stm_channels->bindValue(":" . COLUMN_HASH, $entry->getHash());
                     $stm_channels->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
-                    $stm_channels->bindValue(":" . self::COLUMN_PARSED_ID, $entry->getParsedId());
-                    $stm_channels->bindValue(":" . self::COLUMN_CUID, $entry->getCUID());
-                    $stm_channels->bindValue(":" . self::COLUMN_TVG_NAME, $entry->getEntryAttribute(ATTR_TVG_NAME, TAG_EXTINF));
-                    $stm_channels->bindValue(":" . self::COLUMN_EPG_ID, $entry->getAnyEntryAttribute(self::$epg_id_attrs, TAG_EXTINF));
-                    $stm_channels->bindValue(":" . self::COLUMN_ARCHIVE, $entry->getArchive(), SQLITE3_INTEGER);
-                    $stm_channels->bindValue(":" . self::COLUMN_TIMESHIFT, $entry->getTimeshift(), SQLITE3_INTEGER);
-                    $stm_channels->bindValue(":" . self::COLUMN_CATCHUP, $entry->getCatchupType());
-                    $stm_channels->bindValue(":" . self::COLUMN_CATCHUP_SOURCE, $entry->getCatchupSource());
+                    $stm_channels->bindValue(":" . COLUMN_PARSED_ID, $entry->getParsedId());
+                    $stm_channels->bindValue(":" . COLUMN_CUID, $entry->getCUID());
+                    $stm_channels->bindValue(":" . COLUMN_TVG_NAME, $entry->getEntryAttribute(ATTR_TVG_NAME, TAG_EXTINF));
+                    $stm_channels->bindValue(":" . COLUMN_EPG_ID, $entry->getAnyEntryAttribute(self::$epg_id_attrs, TAG_EXTINF));
+                    $stm_channels->bindValue(":" . COLUMN_ARCHIVE, $entry->getArchive(), SQLITE3_INTEGER);
+                    $stm_channels->bindValue(":" . COLUMN_TIMESHIFT, $entry->getTimeshift(), SQLITE3_INTEGER);
+                    $stm_channels->bindValue(":" . COLUMN_CATCHUP, $entry->getCatchupType());
+                    $stm_channels->bindValue(":" . COLUMN_CATCHUP_SOURCE, $entry->getCatchupSource());
                     $stm_channels->bindValue(":" . COLUMN_ICON, $entry->getIcon());
-                    $stm_channels->bindValue(":" . self::COLUMN_PATH, $entry->getPath());
-                    $stm_channels->bindValue(":" . COLUMN_ADULT, $adult_channel);
-                    $stm_channels->bindValue(":" . self::COLUMN_PARENT_CODE, $entry->getParentCode());
-                    $stm_channels->bindValue(":" . self::COLUMN_EXT_PARAMS, empty($ext_params) ? null : json_encode($ext_params));
+                    $stm_channels->bindValue(":" . COLUMN_PATH, $entry->getPath());
+                    $stm_channels->bindValue(":" . COLUMN_ADULT, $adult_channel, SQLITE3_INTEGER);
+                    $stm_channels->bindValue(":" . COLUMN_PARENT_CODE, $entry->getParentCode());
+                    $stm_channels->bindValue(":" . COLUMN_EXT_PARAMS, $entry->getExtParams(true));
                     $stm_channels->bindValue(":" . COLUMN_GROUP_ID, $group_title);
                     $stm_channels->execute();
 
@@ -426,11 +401,9 @@ class M3uParser extends Json_Serializer
             COLUMN_GROUP_ID => 'TEXT NOT NULL',
             COLUMN_TITLE => 'TEXT NOT NULL',
             COLUMN_ICON => 'TEXT',
-            self::COLUMN_PATH => 'TEXT NOT NULL',
+            COLUMN_PATH => 'TEXT NOT NULL',
         );
         $vod_columns = Sql_Wrapper::make_table_columns($init_vod);
-
-        $this->perf->reset('start');
 
         $db_name = LogSeverity::$is_debug ? "$this->file_name.db" : ":memory:";
         $db->exec("ATTACH DATABASE '$db_name' AS " . self::VOD_DB);
@@ -455,7 +428,7 @@ class M3uParser extends Json_Serializer
                     $stm_index->bindValue(":" . COLUMN_GROUP_ID, $entry->getGroupTitle());
                     $stm_index->bindValue(":" . COLUMN_TITLE, $entry->getTitle());
                     $stm_index->bindValue(":" . COLUMN_ICON, $entry->getIcon());
-                    $stm_index->bindValue(":" . self::COLUMN_PATH, $entry->getPath());
+                    $stm_index->bindValue(":" . COLUMN_PATH, $entry->getPath());
                     $stm_index->execute();
                     $entry = new Entry();
                     break;
@@ -472,14 +445,6 @@ class M3uParser extends Json_Serializer
 
         $db->exec('COMMIT;');
         $lines = null;
-
-        $this->perf->setLabel('end');
-        $report = $this->perf->getFullReport();
-
-        hd_debug_print_separator();
-        hd_debug_print("IndexFile: {$report[Perf_Collector::TIME]} secs");
-        hd_debug_print("Memory usage: {$report[Perf_Collector::MEMORY_USAGE_KB]} kb");
-        hd_debug_print_separator();
 
         return true;
     }
