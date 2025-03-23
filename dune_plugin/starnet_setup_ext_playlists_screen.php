@@ -40,9 +40,9 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
      *
      * @return false|string
      */
-    public static function get_media_url_string($playlist_id, $ret_idx)
+    public static function get_media_url_string($playlist_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'playlist_id' => $playlist_id, 'return_index' => $ret_idx));
+        return MediaURL::encode(array('screen_id' => static::ID, 'playlist_id' => $playlist_id));
     }
 
     /**

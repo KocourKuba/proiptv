@@ -34,13 +34,6 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
 
     ///////////////////////////////////////////////////////////////////////
 
-    public function __construct(Default_Dune_Plugin $plugin, $return_index = 0)
-    {
-        parent::__construct($plugin);
-
-        $this->return_index = $return_index;
-    }
-
     /**
      * @param object $plugin_cookies
      * @param string $param
@@ -49,8 +42,9 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
      */
     protected static function get_cookie_bool_param($plugin_cookies, $param, $default = true)
     {
-        if (!isset($plugin_cookies->{$param}))
+        if (!isset($plugin_cookies->{$param})) {
             $plugin_cookies->{$param} = SwitchOnOff::to_def($default);
+        }
 
         return $plugin_cookies->{$param};
     }

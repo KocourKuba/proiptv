@@ -71,21 +71,14 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Tv_Changed_Channels_Screen($this));
 
         $this->create_screen(new Starnet_Setup_Screen($this));
-        $return_index = 2;
-        $this->create_screen(new Starnet_Setup_Interface_Screen($this, $return_index));
-        $return_index += 2;
-        $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this, $return_index));
-        $return_index += 2;
-        $this->create_screen(new Starnet_Setup_Category_Screen($this, $return_index));
-        $return_index += 2;
-        $this->create_screen(new Starnet_Setup_Playlists_Screen($this, $return_index));
-        $return_index += 2;
-        $this->create_screen(new Starnet_Setup_Epg_Screen($this, $return_index));
-        $return_index += 2;
-        $this->create_screen(new Starnet_Setup_Playback_Screen($this, $return_index));
-        $return_index += 2;
-        $this->create_screen(new Starnet_Setup_Ext_Screen($this, $return_index));
-        $this->create_screen(new Starnet_Setup_Ext_Playlists_Screen($this, 6));
+        $this->create_screen(new Starnet_Setup_Interface_Screen($this));
+        $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this));
+        $this->create_screen(new Starnet_Setup_Category_Screen($this));
+        $this->create_screen(new Starnet_Setup_Playlists_Screen($this));
+        $this->create_screen(new Starnet_Setup_Epg_Screen($this));
+        $this->create_screen(new Starnet_Setup_Playback_Screen($this));
+        $this->create_screen(new Starnet_Setup_Ext_Screen($this));
+        $this->create_screen(new Starnet_Setup_Ext_Playlists_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_Playlists_Screen($this));

@@ -165,27 +165,32 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 return $this->plugin->do_donate_dialog();
 
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
+                $this->plugin->set_return_index(Starnet_Setup_Interface_Screen::ID, 2);
                 return Action_Factory::open_folder(Starnet_Setup_Interface_Screen::get_media_url_str(), TR::t('setup_interface_title'));
 
             case CONTROL_INTERFACE_NEWUI_SCREEN: // show interface NewUI settings dialog
+                $this->plugin->set_return_index(Starnet_Setup_Interface_NewUI_Screen::ID, 4);
                 return Action_Factory::open_folder(Starnet_Setup_Interface_NewUI_Screen::get_media_url_str(), TR::t('setup_interface_newui_title'));
 
             case CONTROL_CATEGORY_SCREEN: // show category settings dialog
+                $this->plugin->set_return_index(Starnet_Setup_Category_Screen::ID, 6);
                 return Action_Factory::open_folder(Starnet_Setup_Category_Screen::get_media_url_str(), TR::t('setup_category_title'));
 
-            case self::CONTROL_PLAYLISTS_SCREEN: // show epg settings dialog
-                return Action_Factory::open_folder(
-                    Starnet_Setup_Playlists_Screen::get_media_url_string($this->plugin->get_active_playlist_id()),
-                    TR::t('tv_screen_playlists_setup')
-                );
+            case self::CONTROL_PLAYLISTS_SCREEN: // show playlist settings dialog
+                $id = $this->plugin->get_active_playlist_id();
+                $this->plugin->set_return_index(Starnet_Setup_Playlists_Screen::ID, 8);
+                return Action_Factory::open_folder(Starnet_Setup_Playlists_Screen::get_media_url_string($id), TR::t('tv_screen_playlists_setup'));
 
             case self::CONTROL_EPG_SCREEN: // show epg settings dialog
+                $this->plugin->set_return_index(Starnet_Setup_Epg_Screen::ID, 10);
                 return Action_Factory::open_folder(Starnet_Setup_Epg_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
             case self::CONTROL_PLAYBACK_SCREEN: // show streaming settings dialog
+                $this->plugin->set_return_index(Starnet_Setup_Playback_Screen::ID, 12);
                 return Action_Factory::open_folder(Starnet_Setup_Playback_Screen::get_media_url_str(), TR::t('setup_playback_settings'));
 
             case self::CONTROL_EXT_SETUP_SCREEN: // show additional settings dialog
+                $this->plugin->set_return_index(Starnet_Setup_Ext_Screen::ID, 14);
                 return Action_Factory::open_folder(Starnet_Setup_Ext_Screen::get_media_url_str(), TR::t('setup_extended_setup'));
 
             case RESET_CONTROLS_ACTION_ID:

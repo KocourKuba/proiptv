@@ -2,6 +2,7 @@
 require_once 'curl_wrapper.php';
 require_once 'user_input_handler_registry.php';
 require_once 'dune_default_sqlite_engine.php';
+require_once 'abstract_controls_screen.php';
 
 class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 {
@@ -83,6 +84,19 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 User_Input_Handler_Registry::get_instance()->unregister_handler($this->screens[$id]->get_handler_id());
             }
             unset($this->screens[$id]);
+        }
+    }
+
+    /**
+     * @param string $id
+     * @param int $idx
+     * @return void
+     */
+    public function set_return_index($id, $idx)
+    {
+        $object = $this->screens[$id];
+        if ($object instanceof Abstract_Controls_Screen) {
+            $object->set_return_index($idx);
         }
     }
 

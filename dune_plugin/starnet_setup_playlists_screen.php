@@ -36,8 +36,6 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
     const CONTROL_RESET_PLAYLIST_DLG = 'reset_playlist';
     const ACTION_RESET_PLAYLIST_DLG_APPLY = 'reset_playlist_apply';
 
-    private $ret_idx = 4;
-
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -99,7 +97,6 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
                     Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_EXT_DLG,
                         TR::t('edit_ext_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), self::CONTROLS_WIDTH);
-                    $this->ret_idx = 6;
                 }
             }
         } else {
@@ -184,8 +181,9 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 break;
 
             case CONTROL_EXT_PARAMS:
+                $this->plugin->set_return_index(Starnet_Setup_Ext_Playlists_Screen::ID, 6);
                 return Action_Factory::open_folder(
-                    Starnet_Setup_Ext_Playlists_Screen::get_media_url_string($playlist_id, $this->ret_idx),
+                    Starnet_Setup_Ext_Playlists_Screen::get_media_url_string($playlist_id),
                     TR::t('setup_extended_setup')
                 );
 
