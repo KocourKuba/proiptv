@@ -997,9 +997,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return array();
         }
 
+        $title = TR::load(TV_ALL_CHANNELS_GROUP_CAPTION);
+        if ($this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false)) {
+            $title .= " (" . count($items) . ")";
+        }
+
         return $this->create_row($items,
             json_encode(array('group_id' => TV_ALL_CHANNELS_GROUP_ID)),
-            TR::t(TV_ALL_CHANNELS_GROUP_CAPTION),
+            $title,
             TR::t(TV_ALL_CHANNELS_GROUP_CAPTION),
             User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER)
         );
@@ -1020,6 +1025,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $fav_group = $this->plugin->get_channels_order(TV_FAV_GROUP_ID);
         $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
         $groups = $this->plugin->get_groups_by_order();
+        $show_count = $this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false);
+
         foreach ($groups as $group_row) {
             if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
 
@@ -1038,7 +1045,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             if (empty($items)) continue;
 
-            $new_rows = $this->create_row($items, json_encode(array('group_id' => $group_id)), $group_id, $group_id, $action_enter);
+            $title = $group_id;
+            if ($show_count) {
+                $title .= " (" . count($items) . ")";
+            }
+
+            $new_rows = $this->create_row($items, json_encode(array('group_id' => $group_id)), $title, $group_id, $action_enter);
 
             foreach ($new_rows as $row) {
                 $rows[] = $row;

@@ -165,6 +165,7 @@ setup_channel_top_right = Oben recht
 setup_channel_bottom_right = Unten rechts
 setup_icons_in_row = Symbole in Reihe
 setup_show_caption = Kanalbeschriftung anzeigen
+setup_show_channel_count = Kanalanzahl anzeigen
 setup_epg_cache_engine = EPG-Engine
 setup_epg_cache_engine__1 = EPG-Engine ändern (%s)
 setup_epg_cache_type_auto = Automatisch

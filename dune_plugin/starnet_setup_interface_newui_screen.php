@@ -103,6 +103,13 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
             PARAM_NEWUI_SHOW_CHANNEL_CAPTION, TR::t('setup_show_caption'), SwitchOnOff::translate($show_caption),
             get_image_path(SwitchOnOff::to_image($show_caption)), self::CONTROLS_WIDTH);
 
+        //////////////////////////////////////
+        // Show channel count
+        $show_count = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_NEWUI_SHOW_CHANNEL_COUNT, TR::t('setup_show_channel_count'), SwitchOnOff::translate($show_count),
+            get_image_path(SwitchOnOff::to_image($show_count)), self::CONTROLS_WIDTH);
+
         return $defs;
     }
 
@@ -141,6 +148,7 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
 
             case PARAM_NEWUI_SQUARE_ICONS:
             case PARAM_NEWUI_SHOW_CHANNEL_CAPTION:
+            case PARAM_NEWUI_SHOW_CHANNEL_COUNT:
                 $this->plugin->toggle_setting($control_id, false);
                 $post_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 break;

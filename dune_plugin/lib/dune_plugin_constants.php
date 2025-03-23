@@ -219,6 +219,7 @@ const PARAM_DISABLED_CHANNELS = 'disabled_channels';
 const PARAM_NEWUI_SQUARE_ICONS = 'square_icons';
 const PARAM_NEWUI_ICONS_IN_ROW = 'icons_in_row';
 const PARAM_NEWUI_SHOW_CHANNEL_CAPTION = 'show_channel_caption';
+const PARAM_NEWUI_SHOW_CHANNEL_COUNT = 'show_channel_count';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
 const PARAM_HISTORY_PATH = 'history_path';
 const PARAM_FULL_SIZE_REMOTE = 'use_full_size_remote';
