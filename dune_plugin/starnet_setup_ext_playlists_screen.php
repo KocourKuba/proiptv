@@ -136,7 +136,7 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
                         Starnet_Setup_Playlists_Screen::ID,
                         RESET_CONTROLS_ACTION_ID,
                         null,
-                        array('initial_sel_ndx' => $parent_media_url->return_index)
+                        array('initial_sel_ndx' => $this->return_index)
                     )
                 );
 

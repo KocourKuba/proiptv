@@ -90,35 +90,33 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_INTERFACE_SCREEN,
             TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
-        if (HD::rows_api_support()) {
-            //////////////////////////////////////
-            // Interface NewUI settings 4
-            Control_Factory::add_image_button($defs, $this, null, CONTROL_INTERFACE_NEWUI_SCREEN,
-                TR::t('setup_interface_newui_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
-        }
+        //////////////////////////////////////
+        // Interface NewUI settings 4
+        Control_Factory::add_image_button($defs, $this, null, CONTROL_INTERFACE_NEWUI_SCREEN,
+            TR::t('setup_interface_newui_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Category settings 4
+        // Category settings 6
         Control_Factory::add_image_button($defs, $this, null, CONTROL_CATEGORY_SCREEN,
             TR::t('setup_category_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Playlist settings 6
+        // Playlist settings 8
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_PLAYLISTS_SCREEN,
             TR::t('tv_screen_playlists_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // EPG settings 8
+        // EPG settings 10
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_EPG_SCREEN,
             TR::t('setup_epg_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Streaming settings 10
+        // Streaming settings 12
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_PLAYBACK_SCREEN,
             TR::t('setup_playback_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Extended settings 12
+        // Extended settings 14
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_EXT_SETUP_SCREEN,
             TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);

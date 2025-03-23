@@ -85,7 +85,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Playback_Screen($this, $return_index));
         $return_index += 2;
         $this->create_screen(new Starnet_Setup_Ext_Screen($this, $return_index));
-        $this->create_screen(new Starnet_Setup_Ext_Playlists_Screen($this, 0));
+        $this->create_screen(new Starnet_Setup_Ext_Playlists_Screen($this, 6));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_Playlists_Screen($this));
