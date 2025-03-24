@@ -98,6 +98,15 @@
         "epg_start": "time"
       }
     },
+    "shurik": {
+      "json_source": "http://json.is-a-player.com/epg-server/epg_enigma?id={EPG_ID}",
+      "parser": {
+        "epg_root": "data",
+        "epg_name": "title",
+        "epg_desc": "description",
+        "epg_start": "begin"
+      }
+    },
     "tvclub": {
       "json_source": "http://api.iptv.so/0.9/json/epg?token={SESSION_ID}&channels={EPG_ID}&time={TIMESTAMP}&period=24",
       "parser": {
@@ -634,23 +643,29 @@
       }
     },
     {
-      "enable": false,
-      "id": "iptv360",
-      "name": "IPTV 360",
+      "enable": true,
+      "id": "iptvplay",
+      "name": "IPTV Play",
       "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_iptv360.png",
-      "provider_url": "https://iptv360.ru/",
+      "logo": "http://iptv.esalecrm.net/res/logo_iptvplay.png",
+      "provider_url": "https://iptv-play.ru/",
       "api_commands": {
-        "get_playlist": "https://iptv360.ru/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+        "get_playlist": "https://iptv-play.ru/billing/?m3u8&token={PASSWORD}"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
-        "ext_params": true,
-        "streams": {
-          "hls": "HLS",
-          "hls2": "HLS2",
-          "siptv": "MPEG-TS"
-        },
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play.only4",
+            "alias": "only4"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play.iptvx.one",
+            "alias": "iptvx.one"
+          }
+        ],
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
     },
@@ -1264,6 +1279,31 @@
         "servers": {
           "0": "Server 1",
           "1": "Server 2"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "shurik",
+      "name": "ShurikTV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_shuriktv.png",
+      "provider_url": "https://schuriktv.nethouse.ru/",
+      "api_commands": {
+        "get_playlist": "https://srv4you.net/pl/m3u8/{PASSWORD}/pl.{STREAM_ID}"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
+        "epg_presets": [
+          {
+            "name": "shurik"
+          }
+        ],
+        "ext_params": true,
+        "streams": {
+          "m3u8": "HLS",
+          "m3u": "MPEG-TS"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

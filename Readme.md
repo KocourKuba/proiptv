@@ -58,7 +58,9 @@ For old devices, the latest version is [5.1.1014](https://github.com/KocourKuba/
 45. [Korona](https://korona-tv.top/)
 46. [Pik TV](http://pa.piktv.top/)
 47. [Velestore](http://velestore.su/)
-48. [HN Media](https://hnmedia.pro/)
+48. [IPTV Play](http://iptv-play.ru/)
+49. [HN Media](https://hnmedia.pro/)
+50. [Shurik TV](https://schuriktv.nethouse.ru/)
 </details>
 
 ## Donate
