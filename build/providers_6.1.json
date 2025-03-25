@@ -1288,8 +1288,10 @@
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_shuriktv.png",
       "provider_url": "https://schuriktv.nethouse.ru/",
+      "api_url": "https://srv4you.net/api/v1",
       "api_commands": {
-        "get_playlist": "https://srv4you.net/pl/m3u8/{PASSWORD}/pl.{STREAM_ID}"
+        "get_playlist": "https://srv4you.net/pl/m3u8/{PASSWORD}/pl.{STREAM_ID}",
+        "account_info": "{API}/customers/expired_packet/{PASSWORD}/"
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",

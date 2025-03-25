@@ -35,28 +35,28 @@ function __autoload($className)
 {
     $path = __DIR__ . "/$className.php";
     if (file_exists($path)) {
-        hd_debug_print("include $path", true);
+        hd_debug_print("include $path");
         include($path);
         return;
     }
 
     $path = __DIR__ . "/lib/$className.php";
     if (file_exists($path)) {
-        hd_debug_print("include $path", true);
+        hd_debug_print("include lib $path");
         include($path);
         return;
     }
 
     $path = __DIR__ . "/vod/$className.php";
     if (file_exists($path)) {
-        hd_debug_print("include $path", true);
+        hd_debug_print("include vod $path");
         include($path);
         return;
     }
 
     $path = __DIR__ . "/api/$className.php";
     if (file_exists($path)) {
-        hd_debug_print("include $path", true);
+        hd_debug_print("include api $path");
         include($path);
     }
 }

@@ -352,6 +352,7 @@ class api_default
             unset($curl_opt[CURLOPT_CUSTOMREQUEST]);
         }
 
+        $command_url = $this->replace_macros($command_url);
         hd_debug_print("ApiCommandUrl: $command_url", true);
         $this->curl_wrapper->init();
 
