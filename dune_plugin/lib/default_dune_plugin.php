@@ -1295,6 +1295,23 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->exec_transaction($query);
         }
 
+        // Update group icons
+        $query = "SELECT group_id, icon from $iptv_groups WHERE icon <> '';";
+        $groups_rows = $this->sql_playlist->fetch_array($query);
+        if (!empty($groups_rows)) {
+            hd_debug_print("Update changed group id icons", true);
+            $query = '';
+            foreach ($groups_rows as $row) {
+                $q_group_id = Sql_Wrapper::sql_quote($row[COLUMN_GROUP_ID]);
+                $q_group_icon = Sql_Wrapper::sql_quote($row[COLUMN_ICON]);
+                $query .= "UPDATE $groups_info_table SET icon = $q_group_icon
+                             WHERE group_id = $q_group_id
+                               AND icon != $q_group_icon 
+                               AND (icon = '' OR icon = 'plugin_file://icons/default_group.png');";
+            }
+            $this->sql_playlist->exec_transaction($query);
+        }
+
         // cleanup if group removed from playlist
         $query = "SELECT group_id FROM $groups_info_table WHERE group_id NOT IN (SELECT group_id FROM $iptv_groups) AND special = 0;";
         $removed_groups = $this->sql_playlist->fetch_single_array($query, COLUMN_GROUP_ID);
