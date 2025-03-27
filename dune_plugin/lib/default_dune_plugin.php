@@ -369,7 +369,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     if (empty($value[PluginTvEpgProgram::icon_url])) {
                         $channel_picon = $this->get_channel_picon($channel_row, true);
                         if ($channel_picon !== $this->get_default_channel_icon()) {
-                            $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $this->get_channel_picon($channel_row, true);
+                            $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $channel_picon;
                         }
                     } else {
                         $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
@@ -419,9 +419,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $apk_subst = getenv('FS_PREFIX');
             $playlist_id = $this->get_active_playlist_id();
-            if (!empty($playlist_id) && !empty($ext_epg) && is_dir("$apk_subst/tmp/ext_epg")) {
+            $dir = "$apk_subst/tmp/ext_epg";
+            if (!empty($playlist_id) && !empty($ext_epg) && is_dir($dir)) {
                 $filename = sprintf("%s-%s-%s.json", $playlist_id, Hashed_Array::hash($channel_id), strftime('%Y-%m-%d', $day_start_tm_sec));
-                file_put_contents("$apk_subst/tmp/ext_epg/$filename", pretty_json_format($ext_epg));
+                file_put_contents("$dir/$filename", pretty_json_format($ext_epg));
             }
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
@@ -1113,7 +1114,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-
         if ($this->channels_loaded && !$reload_playlist) {
             hd_debug_print("Channels already loaded", true);
             return true;
@@ -1276,9 +1276,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // select new groups that not present in groups table but exist in iptv_groups
         $iptv_groups = M3uParser::GROUPS_TABLE;
-        $query_new_groups = "SELECT * FROM $iptv_groups WHERE group_id NOT IN (SELECT DISTINCT group_id FROM $groups_info_table);";
+        $query_new_groups = "SELECT * FROM $iptv_groups WHERE group_id NOT IN (SELECT group_id FROM $groups_info_table);";
         $new_groups = $this->sql_playlist->fetch_array($query_new_groups);
         if (!empty($new_groups)) {
+            hd_debug_print("Adding new groups: " . json_encode(extract_column($new_groups, COLUMN_GROUP_ID)), true);
             $query = '';
             foreach ($new_groups as $group_row) {
                 $group_id = $group_row[COLUMN_GROUP_ID];
@@ -1352,7 +1353,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                         FROM $iptv_channels WHERE $add_where
                         GROUP BY channel_id ORDER BY ROWID ASC;";
             $this->sql_playlist->exec($query);
-            hd_debug_print("Adding new channels: $add_where", true);
+            hd_debug_print("Adding new channels: " . json_encode($new_channels), true);
         }
 
         // update group_id title and adult if changed for channels
@@ -3112,7 +3113,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $entries_cnt = $parser->parseIptvPlaylist($db);
         if (empty($entries_cnt)) {
-            throw new Exception(TR::load('err_load_playlist'));
+            throw new Exception(TR::load('err_empty_playlist'));
         }
 
         $table_name = M3uParser::CHANNELS_TABLE;

@@ -36,6 +36,16 @@ class Curl_Wrapper
     /**
      * @var int
      */
+    private $connect_timeout = 60;
+
+    /**
+     * @var int
+     */
+    private $download_timeout = 90;
+
+    /**
+     * @var int
+     */
     private $response_code;
 
     /**
@@ -188,6 +198,22 @@ class Curl_Wrapper
     public function get_raw_response_headers()
     {
         return $this->raw_response_headers;
+    }
+
+    /**
+     * @param  int $timeout
+     */
+    public function set_connection_timeout($timeout)
+    {
+        $this->connect_timeout = $timeout;
+    }
+
+    /**
+     * @param int $timeout
+     */
+    public function set_download_timeout($timeout)
+    {
+        $this->download_timeout = $timeout;
     }
 
     /**
@@ -394,8 +420,8 @@ class Curl_Wrapper
         $config_data[] = "--show-error";
         $config_data[] = "--fail";
         $config_data[] = "--dump-header " . $headers_path;
-        $config_data[] = "--connect-timeout 60";
-        $config_data[] = "--max-time 90";
+        $config_data[] = "--connect-timeout $this->connect_timeout";
+        $config_data[] = "--max-time $this->download_timeout";
         $config_data[] = "--location";
         $config_data[] = "--max-redirs 5";
         $config_data[] = "--compressed";

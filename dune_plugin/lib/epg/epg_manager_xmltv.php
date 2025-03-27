@@ -757,17 +757,15 @@ class Epg_Manager_Xmltv
 
                 $query = '';
                 while (!feof($file)) {
-                    $line = stream_get_line($file, 0, "<channel ");
-                    if (empty($line)) continue;
-
-                    fseek($file, -9, SEEK_CUR);
-                    $str = fread($file, 9);
-                    if ($str !== "<channel ") continue;
-
                     $line = stream_get_line($file, 0, "</channel>");
                     if (empty($line)) continue;
+                    $pos = strpos($line, "<channel ");
+                    if ($pos === false) continue;
+                    if ($pos !== 0) {
+                        $line = substr($line, $pos);
+                    }
 
-                    $line = "<channel " . $line . "</channel>";
+                    $line = $line . "</channel>";
 
                     $xml_node = new DOMDocument();
                     $xml_node->loadXML($line);
@@ -791,11 +789,13 @@ class Epg_Manager_Xmltv
                         }
                     }
 
-                    $query .= "INSERT OR REPLACE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_channel_id, $q_channel_id, '$picon_hash');";
+                    $q_picon_hash = Sql_Wrapper::sql_quote($picon_hash);
+                    $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($channel_id, MB_CASE_LOWER, "UTF-8"));
+                    $query .= "INSERT OR IGNORE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_alias, $q_channel_id, $q_picon_hash);";
 
                     foreach ($xml_node->getElementsByTagName('display-name') as $tag) {
                         $q_alias = Sql_Wrapper::sql_quote(mb_convert_case($tag->nodeValue, MB_CASE_LOWER, "UTF-8"));
-                        $query .= "INSERT OR REPLACE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_alias, $q_channel_id, '$picon_hash');";
+                        $query .= "INSERT OR IGNORE INTO $ch_table_name (alias, channel_id, picon_hash) VALUES($q_alias, $q_channel_id, $q_picon_hash);";
                     }
                 }
                 $db->exec_transaction($query);
@@ -1214,6 +1214,7 @@ class Epg_Manager_Xmltv
         Curl_Wrapper::clear_cached_etag($url);
 
         $curl_wrapper->init();
+        $curl_wrapper->set_download_timeout(120);
         if (!$curl_wrapper->download_file($url, $tmp_filename, true)) {
             throw new Exception("Can't exec curl");
         }
