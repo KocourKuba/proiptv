@@ -69,6 +69,16 @@ class api_default
     /**
      * @var string
      */
+    protected $class = '';
+
+    /**
+     * @var string
+     */
+    protected $vod = '';
+
+    /**
+     * @var string
+     */
     protected $name = '';
 
     /**
@@ -632,8 +642,8 @@ class api_default
     public function get_vod_class()
     {
         if ($this->hasApiCommand(API_COMMAND_GET_VOD)) {
-            $vod_class = "vod_" . $this->getId();
-            if (class_exists($vod_class)) {
+            $vod_class = "vod_" . $this->getVod();
+            if ($vod_class !== 'vod_' && class_exists($vod_class)) {
                 hd_debug_print("Used VOD class: $vod_class");
                 return $vod_class;
             }
@@ -659,6 +669,38 @@ class api_default
     public function setId($id)
     {
         $this->id = $id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClass()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param string $class
+     */
+    public function setClass($class)
+    {
+        $this->class = $class;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVod()
+    {
+        return $this->vod;
+    }
+
+    /**
+     * @param string $vod
+     */
+    public function setVod($vod)
+    {
+        $this->vod = $vod;
     }
 
     /**

@@ -24,8 +24,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'api_cbilling.php';
-
 class api_1ott extends api_default
 {
     /**

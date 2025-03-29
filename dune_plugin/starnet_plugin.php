@@ -169,12 +169,11 @@ class Starnet_Plugin extends Default_Dune_Plugin
         foreach ($jsonArray['providers'] as $item) {
             if (!isset($item['id'], $item['enable']) || $item['enable'] === false) continue;
 
-            $api_class = "api_{$item['id']}";
-            if (!class_exists($api_class)) {
-                $api_class = 'api_default';
+            $api_class = 'api_default';
+            if (isset($item['class']) && class_exists("api_" . $item['class'])) {
+                $api_class = "api_" . $item['class'];
             }
 
-            //hd_debug_print("provider api: $api_class ({$item['name']})");
             /** @var api_default $provider */
             $provider = new $api_class($this);
             foreach ($item as $key => $value) {

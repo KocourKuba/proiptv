@@ -188,6 +188,7 @@
     {
       "enable": true,
       "id": "1ott",
+      "class": "1ott",
       "name": "1ott",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_1ott.png",
@@ -258,6 +259,8 @@
     {
       "enable": true,
       "id": "antifriz",
+      "class": "cbilling",
+      "vod": "cbilling",
       "name": "Antifriz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_antifriz.png",
@@ -350,6 +353,8 @@
     {
       "enable": true,
       "id": "cbilling",
+      "class": "cbilling",
+      "vod": "cbilling",
       "name": "Cbilling",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_cbilling.png",
@@ -399,6 +404,8 @@
     {
       "enable": true,
       "id": "edem",
+      "class": "edem",
+      "vod": "edem",
       "name": "iEdem/iLook",
       "type": "edem",
       "logo": "http://iptv.esalecrm.net/res/logo_edem.png",
@@ -510,6 +517,7 @@
     {
       "enable": true,
       "id": "glanz",
+      "vod": "glanz",
       "name": "Glanz",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
@@ -577,6 +585,7 @@
     {
       "enable": true,
       "id": "ipstream",
+      "vod": "ipstream",
       "name": "IPStream/iShara",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_ipstream.png",
@@ -672,6 +681,8 @@
     {
       "enable": true,
       "id": "iptvonline",
+      "class": "iptvonline",
+      "vod": "iptvonline",
       "name": "IPTV Online",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_iptvonline.png",
@@ -707,6 +718,7 @@
     {
       "enable": true,
       "id": "itvlive",
+      "class": "itvlive",
       "name": "ITV Live",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_itv.png",
@@ -767,6 +779,8 @@
     {
       "enable": true,
       "id": "korona",
+      "class": "korona",
+      "vod": "korona",
       "name": "Korona TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_korona.png",
@@ -1024,6 +1038,8 @@
     {
       "enable": true,
       "id": "piktv",
+      "class": "korona",
+      "vod": "korona",
       "name": "Pik TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_piktv.png",
@@ -1179,6 +1195,8 @@
     {
       "enable": true,
       "id": "sharaclub",
+      "class": "sharaclub",
+      "vod": "sharaclub",
       "name": "SharaClub",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_sharaclub.png",
@@ -1210,6 +1228,7 @@
     {
       "enable": true,
       "id": "sharavoz",
+      "vod": "sharavoz",
       "name": "Sharavoz",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_sharavoz.png",
@@ -1284,6 +1303,7 @@
     {
       "enable": true,
       "id": "shurik",
+      "class": "shurik",
       "name": "ShurikTV",
       "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_shuriktv.png",
@@ -1357,6 +1377,7 @@
     {
       "enable": true,
       "id": "tvclub",
+      "class": "tvclub",
       "name": "TV Club",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvclub.png",
@@ -1385,6 +1406,7 @@
     {
       "enable": true,
       "id": "tvteam",
+      "class": "tvteam",
       "name": "TV Team",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvteam.png",
@@ -1436,6 +1458,8 @@
     {
       "enable": true,
       "id": "tvizi",
+      "class": "iptvonline",
+      "vod": "iptvonline",
       "name": "TVIZI Net",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
@@ -1503,6 +1527,7 @@
     {
       "enable": true,
       "id": "vidok",
+      "class": "vidok",
       "name": "Vidok TV",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_vidok.png",
