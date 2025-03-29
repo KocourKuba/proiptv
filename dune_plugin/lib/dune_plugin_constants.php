@@ -157,8 +157,8 @@ const VOD_FILTER_GROUP_CAPTION = 'filters';
 const VOD_FILTER_GROUP_ICON = 'plugin_file://icons/filter_movie_folder.png';
 
 const DEFAULT_GROUP_ICON = 'plugin_file://icons/default_group.png';
-const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://icons/default_channel.png';
-const DEFAULT_CHANNEL_ICON_PATH_SQ = 'plugin_file://icons/default_channel_sq.png';
+const DEFAULT_CHANNEL_ICON_PATH = 'plugin_file://%proiptv%/icons/default_channel.png';
+const DEFAULT_CHANNEL_ICON_PATH_SQ = 'plugin_file://%proiptv%/icons/default_channel_sq.png';
 
 # Common parameters
 const PLUGIN_ORDERS = 'orders';

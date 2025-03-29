@@ -318,7 +318,7 @@ class Epg_Manager_Xmltv
                 );
             }
 
-            if (!empty($this->delayed_epg)) {
+            if (!empty($this->delayed_epg) && $this->get_any_index_locked() !== false) {
                 hd_debug_print("Delayed epg: " . json_encode($this->delayed_epg));
                 return array($day_start_ts => array(
                     PluginTvEpgProgram::end_tm_sec => $day_start_ts + 86400,
