@@ -241,6 +241,7 @@ edit_list_bad_vportal = Falsche Daten für VPortal!
 edit_list_bad_vportal_fmt = Das richtige Format muss sein:\nportal::[key:xxxxx-xxxxx]http://xxxx.xxxx.xxx/api/v1/
 edit_list_no_files = Keine Dateien!!!
 edit_list_add_url = URL zur Liste hinzufügen
+edit_list_add_to_external_source = Zu externen Quellen hinzufügen
 edit_list_folder_path = Ordner mit Dateien auswählen
 edit_list_import_list = Datei mit URL-Liste importieren
 edit_list_src_folder = Ordner mit Dateien

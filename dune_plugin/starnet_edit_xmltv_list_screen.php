@@ -190,7 +190,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                return $this->create_popup_menu();
+                return $this->create_popup_menu($selected_id);
 
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
@@ -212,6 +212,14 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ADD_URL_DLG:
                 return $this->do_edit_url_dlg(XMLTV_SOURCE_EXTERNAL);
+
+            case ACTION_ADD_TO_EXTERNAL_SOURCE:
+                $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
+                if (!empty($item)) {
+                    unset($item[COLUMN_PLAYLIST_ID]);
+                    $this->plugin->set_xmltv_source(null, $item);
+                }
+                break;
 
             case ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
@@ -245,7 +253,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     /**
      * @return array|null
      */
-    protected function create_popup_menu()
+    protected function create_popup_menu($selected_id)
     {
         hd_debug_print(null, true);
 
@@ -266,6 +274,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             "text_file.png",
             array('selected_action' => self::ACTION_FILE_TEXT_LIST, 'extension' => 'txt|lst')
         );
+
+        // Copy to external
+        $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
+        if (!empty($item)) {
+            $menu_items[] = $this->plugin->create_menu_item($this,ACTION_ADD_TO_EXTERNAL_SOURCE, TR::t('edit_list_add_to_external_source'), "copy.png");
+        }
 
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete2'), "remove.png");
@@ -460,7 +474,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $all_sources = new Hashed_Array();
         $pl_sources = $this->plugin->get_xmltv_sources(XMLTV_SOURCE_PLAYLIST, $this->plugin->get_active_playlist_id());
         $all_sources->add_items($pl_sources);
-        $all_sources->add_items($this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL, null));
+        $ext_sources = $this->plugin->get_xmltv_sources(XMLTV_SOURCE_EXTERNAL, null);
+        $all_sources->add_items($ext_sources);
         hd_debug_print("All XMLTV sources: " . $all_sources, true);
 
         $selected_sources = $this->plugin->get_selected_xmltv_ids();
@@ -519,7 +534,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 if (safe_get_value($item, PARAM_TYPE) === PARAM_CONF) {
                     $icon_file = get_image_path("config.png");
                 } else {
-                    $icon_file = get_image_path("m3u_file.png");
+                    $icon_file = get_image_path($ext_sources->has($key) ? "both_file.png" : "m3u_file.png");
                 }
             } else {
                 $icon_file = get_image_path("link.png");
