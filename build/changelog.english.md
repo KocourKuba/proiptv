@@ -1,4 +1,14 @@
-﻿### Версия 6.1.1202
+﻿### Version 6.1.1214
+- Another update to XMLTV indexing for "too smart" contributors
+- Added the ability to copy an XMLTV source from a playlist to the list of external sources
+- If the XMLTV source is present in the playlist and it is shown as a separate icon in the external list
+- NewUI: added the ability to show the number of channels in the category name
+- Configuration: New domain for Glanz
+- Configuration: Support for IPTV provider Shurik TV (https://schuriktv.nethouse.ru/)
+- Added display of subscription information for Shurik TV
+- Category icons are updated if they have changed in the playlist and are not manually set by the user
+
+### Версия 6.1.1202
 - The API method of determining a full-size remote control for Google like devices did not work. Added an item in the advanced settings to enable the capabilities of the full-size remote control
 
 ### Version 6.1.1200
