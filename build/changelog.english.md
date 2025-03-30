@@ -1,4 +1,7 @@
-﻿### Version 6.1.1214
+﻿### Version 6.1.1216
+- Correct time zone and daylight conversions for ext_epg
+
+### Version 6.1.1214
 - Another update to XMLTV indexing for "too smart" contributors
 - Added the ability to copy an XMLTV source from a playlist to the list of external sources
 - If the XMLTV source is present in the playlist and it is shown as a separate icon in the external list
