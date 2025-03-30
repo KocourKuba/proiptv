@@ -329,17 +329,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             // correct day start to local timezone
-            $day_start_tm_sec -= get_local_time_zone_offset();
+            $local_day_start_tm_sec = $day_start_tm_sec - get_local_time_zone_offset();
 
             // get personal time shift for channel
             $time_shift = 3600 * ($channel_row[COLUMN_TIMESHIFT] + $this->get_setting(PARAM_EPG_SHIFT, 0));
             hd_debug_print("EPG time shift $time_shift", true);
-            $day_start_tm_sec += $time_shift;
+            $local_day_start_tm_sec += $time_shift;
 
             $show_ext_epg = $this->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->ext_epg_supported;
 
             $cached = false;
-            $items = $this->epg_manager->get_day_epg_items($channel_row, $day_start_tm_sec, $cached);
+            $items = $this->epg_manager->get_day_epg_items($channel_row, $local_day_start_tm_sec, $cached);
 
             foreach ($items as $time => $value) {
                 if (!isset($value[PluginTvEpgProgram::end_tm_sec], $value[PluginTvEpgProgram::name], $value[PluginTvEpgProgram::description])) {
@@ -420,8 +420,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $apk_subst = getenv('FS_PREFIX');
             $playlist_id = $this->get_active_playlist_id();
             $dir = "$apk_subst/tmp/ext_epg";
-            if (!empty($playlist_id) && !empty($ext_epg) && is_dir($dir)) {
+            if (!empty($playlist_id) && !empty($ext_epg) && create_path($dir)) {
                 $filename = sprintf("%s-%s-%s.json", $playlist_id, Hashed_Array::hash($channel_id), strftime('%Y-%m-%d', $day_start_tm_sec));
+                hd_debug_print("save ext_epg to: $filename");
                 file_put_contents("$dir/$filename", pretty_json_format($ext_epg));
             }
         } catch (Exception $ex) {
