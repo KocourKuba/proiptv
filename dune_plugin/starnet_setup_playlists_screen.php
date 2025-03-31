@@ -297,6 +297,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                             throw new Exception(TR::load('err_incorrect_url') . " '$uri'");
                         }
 
+                        $tmp_file = get_temp_path(Hashed_Array::hash($uri));
                         list($res, $log) = Curl_Wrapper::simple_download_file($uri, $tmp_file);
                         if (!$res) {
                             throw new Exception(TR::load('err_load_playlist') . " '$uri'\n\n" . $log);
