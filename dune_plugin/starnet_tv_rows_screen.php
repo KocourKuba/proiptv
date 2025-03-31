@@ -1159,8 +1159,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         } else {
             $program = (object)array();
             $program->time = sprintf("%s - %s",
-                gmdate('H:i', $epg_data[PluginTvEpgProgram::start_tm_sec] + get_local_time_zone_offset()),
-                gmdate('H:i', $epg_data[PluginTvEpgProgram::end_tm_sec] + get_local_time_zone_offset())
+                gmdate('H:i', to_local_time_zone_offset($epg_data[PluginTvEpgProgram::start_tm_sec])),
+                gmdate('H:i', to_local_time_zone_offset($epg_data[PluginTvEpgProgram::end_tm_sec]))
             );
 
             $title = $epg_data[PluginTvEpgProgram::name];

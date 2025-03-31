@@ -329,7 +329,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             // correct day start to local timezone
-            $local_day_start_tm_sec = $day_start_tm_sec - get_local_time_zone_offset();
+            $local_day_start_tm_sec = to_local_time_zone_offset($day_start_tm_sec);
 
             // get personal time shift for channel
             $time_shift = 3600 * ($channel_row[COLUMN_TIMESHIFT] + $this->get_setting(PARAM_EPG_SHIFT, 0));
@@ -705,7 +705,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $program_ts = ($program_ts > 0 ? $program_ts : time());
         hd_debug_print("channel ID: $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), true);
         $day_epg = $this->get_day_epg($channel_id,
-            strtotime(date("Y-m-d", $program_ts)) + get_local_time_zone_offset(),
+            to_local_time_zone_offset(strtotime(date("Y-m-d", $program_ts))),
             $plugin_cookies);
 
         foreach ($day_epg as $item) {
