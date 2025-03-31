@@ -496,7 +496,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             if ($locked) {
                 $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
             } else if (file_exists($cached_xmltv_file)) {
-                $check_time_file = filemtime($cached_xmltv_file);
+                $check_time_file = filemtime($cached_xmltv_file) - (is_need_daylight_fix() ? 3600 : 0);
                 $dl_date = date("Y-m-d H:i", $check_time_file);
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
 

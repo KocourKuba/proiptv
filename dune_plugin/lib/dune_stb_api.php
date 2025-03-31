@@ -915,14 +915,28 @@ function format_duration_seconds($secs)
 }
 
 /**
- * @throws Exception
+ * @return bool
  */
 function is_need_daylight_fix()
 {
-    $utc = new DateTimeZone('Europe/Moscow');
-    $date = new DateTime('now', new DateTimeZone('UTC'));
-    $diff = $utc->getOffset($date);
-    return (date('I') === '1' && $diff !== 10800);
+    static $tz_map = array();
+    if (empty($tz_map)) {
+        $path = getenv('FS_PREFIX') . '/firmware/time_zones/map.txt';
+        $map = @file_get_contents($path);
+        foreach (explode("\n", $map) as $line) {
+            if (empty($line)) continue;
+
+            $vars = explode(' ', $line);
+            $tz_map[$vars[0]] = (int)$vars[2];
+        }
+    }
+
+    $tz = date('e');
+    $use_daylight = 1;
+    if (isset($tz_map[$tz])) {
+        $use_daylight = $tz_map[$tz];
+    }
+    return (date('I') === '1' && $use_daylight === 0);
 }
 
 /**
