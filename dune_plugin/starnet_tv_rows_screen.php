@@ -270,19 +270,14 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if ($media_url->group_id === TV_HISTORY_GROUP_ID) {
                     $this->clear_playback_points = true;
                     $this->plugin->clear_tv_history();
-                    break;
-                }
-
-                if ($media_url->group_id === TV_FAV_GROUP_ID) {
+                } else if ($media_url->group_id === TV_FAV_GROUP_ID) {
                     $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null, $plugin_cookies);
-                    break;
-                }
-
-                if ($media_url->group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
+                } else if ($media_url->group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
                     $this->plugin->clear_changed_channels();
-                    break;
+                } else {
+                    return null;
                 }
-                return null;
+                return Action_Factory::invalidate_all_folders($plugin_cookies);
 
             case ACTION_ITEM_DELETE:
                 if (isset($user_input->selected_item_id)) {
