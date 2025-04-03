@@ -227,6 +227,6 @@
     <operation_timeout>
         <default>300</default>
         <get_epg_day>30</get_epg_day>
-		<handle_user_input>180</handle_user_input>
+		<handle_user_input>300</handle_user_input>
     </operation_timeout>
 </dune_plugin>

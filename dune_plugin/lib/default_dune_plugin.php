@@ -1400,7 +1400,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $existing_group_ids = $this->get_groups(PARAM_GROUP_ORDINARY, PARAM_ENABLED, COLUMN_GROUP_ID);
 
-        hd_debug_print("Adding new channels in group channels order", true);
+        hd_debug_print("Update group channels orders", true);
         $query = '';
         foreach ($existing_group_ids as $group_id) {
             if (empty($group_id)) continue;
@@ -1409,30 +1409,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
             $query .= "INSERT OR IGNORE INTO $group_channels_order_table (channel_id)
                         SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND disabled = 0 AND changed != -1 ORDER BY ROWID ASC;";
-        }
-        $this->sql_playlist->exec_transaction($query);
 
-        hd_debug_print("Deleting removed channels from orders", true);
-        $query = '';
-        foreach ($existing_group_ids as $group_id) {
-            if (empty($group_id)) continue;
-
-            $group_channels_order_table = self::get_table_name($group_id);
-            $q_group_id = Sql_Wrapper::sql_quote($group_id);
-            $query .= "DELETE FROM $group_channels_order_table
-                        WHERE channel_id IN (SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND changed = -1);";
-        }
-        $this->sql_playlist->exec_transaction($query);
-
-        hd_debug_print("Deleting not existing channels from group channels order", true);
-        $query = '';
-        foreach ($existing_group_ids as $group_id) {
-            if (empty($group_id)) continue;
-
-            $group_channels_order_table = self::get_table_name($group_id);
-            $q_group_id = Sql_Wrapper::sql_quote($group_id);
-            $query .= "DELETE FROM $group_channels_order_table
-                        WHERE channel_id NOT IN (SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id);";
+            $query .= "DELETE FROM $group_channels_order_table WHERE channel_id IN
+                        (SELECT channel_id FROM $group_channels_order_table
+                        EXCEPT
+                        SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND changed != -1);";
         }
         $this->sql_playlist->exec_transaction($query);
 
