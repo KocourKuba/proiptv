@@ -114,7 +114,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             case ACTION_SETTINGS:
                 if ($this->plugin->is_playlist_exist($selected_id)) {
                     return Action_Factory::open_folder(
-                        Starnet_Setup_Playlists_Screen::get_media_url_string($selected_id), TR::t('tv_screen_playlists_setup')
+                        Starnet_Setup_Playlists_Screen::get_media_url_string($selected_id, self::ID), TR::t('tv_screen_playlists_setup')
                     );
                 }
 

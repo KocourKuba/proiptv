@@ -43,9 +43,9 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
      *
      * @return false|string
      */
-    public static function get_media_url_string($playlist_id)
+    public static function get_media_url_string($playlist_id, $parent_id = null)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'playlist_id' => $playlist_id));
+        return MediaURL::encode(array('screen_id' => static::ID, 'source_window_id' => $parent_id,'playlist_id' => $playlist_id));
     }
 
     /**
@@ -167,14 +167,16 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
+                if (isset($parent_media_url->source_window_id)) {
+                    $target_action = User_Input_Handler_Registry::create_screen_action(Starnet_Edit_Playlists_Screen::ID, ACTION_INVALIDATE);
+                } else {
+                    $target_action = User_Input_Handler_Registry::create_screen_action(
                         Starnet_Setup_Screen::ID,
                         RESET_CONTROLS_ACTION_ID,
                         null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                        array('initial_sel_ndx' => $this->return_index));
+                }
+                return Action_Factory::close_and_run($target_action);
 
             case CONTROL_EDIT_NAME:
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_NAME, $user_input->{CONTROL_EDIT_NAME});
