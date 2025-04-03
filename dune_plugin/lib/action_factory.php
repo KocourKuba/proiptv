@@ -368,6 +368,94 @@ class Action_Factory
         );
     }
 
+    public static function edit_list_config($config_id, $title, $all_items, $checked_ids = null, $groups = null,
+                                            $options = null, $close_item_params = null, $sel_id = null, $post_action = null)
+    {
+        if (!defined('EditListConfigActionData::config_id')) {
+            return null;
+        }
+
+        $arr = array(
+            EditListConfigActionData::config_id => $config_id,
+            EditListConfigActionData::title => $title,
+            EditListConfigActionData::all_items => $all_items,
+            EditListConfigActionData::post_action => $post_action,
+        );
+
+        if (!is_null($checked_ids)) {
+            $arr[EditListConfigActionData::checked_ids] = $checked_ids;
+        }
+
+        if (!is_null($groups)) {
+            $arr[EditListConfigActionData::groups] = $groups;
+        }
+
+        if (!is_null($options)) {
+            $arr[EditListConfigActionData::options] = $options;
+        }
+
+        if (!is_null($sel_id)) {
+            $arr[EditListConfigActionData::sel_id] = $sel_id;
+        }
+
+        if (defined('EditListConfigActionData::close_item_params') && !is_null($close_item_params)) {
+            // r24?
+            $arr[EditListConfigActionData::close_item_params] = $close_item_params;
+        }
+
+        return array(GuiAction::handler_string_id => EDIT_LIST_CONFIG_ACTION_ID, GuiAction::data => $arr);
+    }
+
+    public static function change_list_config($config_id, $set_default = null, $def_id = null, $ids_to_check = null,
+                                              $ids_to_uncheck = null, $ids_to_def = null, $order = null, $post_action = null)
+    {
+        if (!defined('ChangeListConfigActionData::config_id')) {
+            return null;
+        }
+
+        $arr = array(
+            ChangeListConfigActionData::config_id => $config_id,
+            ChangeListConfigActionData::post_action => $post_action,
+        );
+
+        if (!is_null($set_default)) {
+            $arr[ChangeListConfigActionData::set_default] = $set_default;
+        }
+
+        if (!is_null($def_id)) {
+            $arr[ChangeListConfigActionData::def_id] = $def_id;
+        }
+
+        if (!is_null($ids_to_check)) {
+            $arr[ChangeListConfigActionData::ids_to_check] = $ids_to_check;
+        }
+
+        if (!is_null($ids_to_uncheck)) {
+            $arr[ChangeListConfigActionData::ids_to_uncheck] = $ids_to_uncheck;
+        }
+
+        if (!is_null($ids_to_def)) {
+            $arr[ChangeListConfigActionData::ids_to_def] = $ids_to_def;
+        }
+
+        if (defined('ChangeListConfigActionData::order') && !is_null($order)) {
+            // r24?
+            $arr[ChangeListConfigActionData::order] = $order;
+        }
+
+        return array(GuiAction::handler_string_id => CHANGE_LIST_CONFIG_ACTION_ID, GuiAction::data => $arr,);
+    }
+
+    public static function change_list_config_reset_to_default($config_id, $post_action)
+    {
+        return self::change_list_config($config_id, true, null, null, null, null, null, $post_action);
+    }
+
+    public static function change_list_config_replace_order($config_id, $order, $post_action)
+    {
+        return self::change_list_config($config_id, false, null, null, null, null, $order, $post_action);
+    }
+
     /**
      * @param int $delay_ms
      * @return array
@@ -630,25 +718,13 @@ class Action_Factory
             exec('reboot');
         }
 
-        if (defined('CHANGE_SETTINGS_ACTION_ID')) {
-            return array(
-                GuiAction::handler_string_id => CHANGE_SETTINGS_ACTION_ID,
-                GuiAction::data => array(
-                    ChangeSettingsActionData::restart_gui => true,
-                    ChangeSettingsActionData::post_action => null
-                )
-            );
-        }
-
-        if (defined('RESTART_ACTION_ID')) {
-            return array(
-                GuiAction::handler_string_id => RESTART_ACTION_ID,
-                GuiAction::data => array(RestartActionData::reboot => false)
-            );
-        }
-
-        exec('killall shell');
-        return array();
+        return array(
+            GuiAction::handler_string_id => CHANGE_SETTINGS_ACTION_ID,
+            GuiAction::data => array(
+                ChangeSettingsActionData::restart_gui => true,
+                ChangeSettingsActionData::post_action => null
+            )
+        );
     }
 
     public static function clear_rows_info_cache($post_action = null)

@@ -30,10 +30,21 @@ require_once 'dune_plugin_constants.php';
 class HD
 {
     const DUNE_PARAMS_MAGIC = "|||dune_params|||";
+
+    /**
+     * @var array
+     */
+    private static $ff_set;
+
     /**
      * @var bool
      */
     private static $with_rows_api;
+
+    /**
+     * @var bool
+     */
+    private static $with_list_config;
 
     /**
      * @var bool
@@ -74,6 +85,22 @@ class HD
         return "$size_num $size_suf";
     }
 
+    public static function load_firmware_features()
+    {
+        $path = getenv('FS_PREFIX') . '/tmp/firmware_features.txt';
+
+        if (!isset(self::$with_rows_api)) {
+            self::$ff_set = array();
+            if (is_file($path)) {
+                foreach(file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $ff) {
+                    self::$ff_set[$ff] = true;
+                }
+            }
+        }
+
+        return self::$ff_set;
+    }
+
     /**
      * @return bool
      */
@@ -83,6 +110,20 @@ class HD
             self::$with_rows_api = class_exists("PluginRowsFolderView");
 
         return self::$with_rows_api;
+    }
+
+    public static function list_config_support()
+    {
+        if (!isset(self::$with_list_config))
+        {
+            self::$with_list_config = class_exists("EditListConfigActionData") && defined("EDIT_LIST_CONFIG_OPT_REMOVE_UNCHECKED");
+        }
+        return self::$with_list_config;
+    }
+
+    public static function with_lcfg_v2()
+    {
+        return self::list_config_support() && isset(self::$ff_set['lcfg_v2']);
     }
 
     /**

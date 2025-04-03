@@ -48,9 +48,11 @@ class Rows_Factory
                                 $initial_focus_item_id = null, $initial_focus_row_id = null,
                                 $hfactor = 1.0, $vfactor = 1.0, $vgravity = 0.0, $vend_min_offset = 0)
     {
-        if (!$focus)
+        if (!$focus) {
             $focus = self::focus();
-        $arr = array(
+        }
+
+        return array(
             PluginRowsPane::rows => $rows,
             PluginRowsPane::focus => $focus,
             PluginRowsPane::bg => $bg,
@@ -62,11 +64,8 @@ class Rows_Factory
             PluginRowsPane::vertical_focus_freedom_factor => $vfactor,
             PluginRowsPane::vertical_focus_gravity => $vgravity,
             PluginRowsPane::vertical_focus_end_min_offset => $vend_min_offset,
+            PluginRowsPane::single_list_navigation => $single_list_navigation
         );
-        if (defined('PluginRowsPane::single_list_navigation'))
-            $arr[PluginRowsPane::single_list_navigation] = $single_list_navigation;
-
-        return $arr;
     }
 
     /**
@@ -192,12 +191,9 @@ class Rows_Factory
                 PluginTitleRow::lite_fade_color => GComps_Factory::rgba_to_argb($lite_fade_color),
             ));
 
-        if (defined('PluginTitleRow::fade_enabled'))
-            $arr[PluginTitleRow::fade_enabled] = $fade_enabled;
-        if (defined('PluginTitleRow::fade_color'))
-            $arr[PluginTitleRow::fade_color] = GComps_Factory::rgba_to_argb($fade_color);
-        if (defined('PluginTitleRow::lite_fade_color'))
-            $arr[PluginTitleRow::lite_fade_color] = GComps_Factory::rgba_to_argb($lite_fade_color);
+        $arr[PluginTitleRow::fade_enabled] = $fade_enabled;
+        $arr[PluginTitleRow::fade_color] = GComps_Factory::rgba_to_argb($fade_color);
+        $arr[PluginTitleRow::lite_fade_color] = GComps_Factory::rgba_to_argb($lite_fade_color);
 
         return $arr;
     }
