@@ -44,35 +44,6 @@ class User_Input_Handler_Registry
 
     /**
      * @param string $screen_id
-     * @param string $name
-     * @param string|null $caption
-     * @param array|null $add_params
-     * @return array
-     */
-    public static function create_screen_action($screen_id, $name, $caption = null, $add_params = null)
-    {
-        $handler = self::get_instance()->get_registered_handler($screen_id);
-        if (is_null($handler)) {
-            hd_debug_print(null, true);
-            hd_debug_print("No handler registered for {$screen_id}_handler");
-            return null;
-        }
-
-        $params = array('handler_id' => $handler->get_handler_id(), 'control_id' => $name);
-        if (isset($add_params)) {
-            $params = array_merge($params, $add_params);
-        }
-
-        return array(
-            GuiAction::handler_string_id => PLUGIN_HANDLE_USER_INPUT_ACTION_ID,
-            GuiAction::caption => $caption,
-            GuiAction::data => null,
-            GuiAction::params => $params,
-        );
-    }
-
-    /**
-     * @param string $screen_id
      * @return User_Input_Handler|null
      */
     public function get_registered_handler($screen_id)
@@ -103,11 +74,12 @@ class User_Input_Handler_Registry
      */
     public static function create_popup_item(User_Input_Handler $handler, $name, $caption, $icon = null, $add_params = null)
     {
-        return array(
-            GuiMenuItemDef::caption => $caption,
-            GuiMenuItemDef::action => self::create_action($handler, $name, $caption, $add_params),
-            GuiMenuItemDef::icon_url => $icon,
-        );
+        $arr[GuiMenuItemDef::caption] = $caption;
+        $arr[GuiMenuItemDef::action] = self::create_action($handler, $name, $caption, $add_params);
+        if ($icon)
+            $arr[GuiMenuItemDef::icon_url] = $icon;
+
+        return $arr;
     }
 
     /**
@@ -124,12 +96,32 @@ class User_Input_Handler_Registry
             $params = array_merge($params, $add_params);
         }
 
-        return array(
-            GuiAction::handler_string_id => PLUGIN_HANDLE_USER_INPUT_ACTION_ID,
-            GuiAction::caption => $caption,
-            GuiAction::data => null,
-            GuiAction::params => $params,
-        );
+        $arr[GuiAction::handler_string_id] = PLUGIN_HANDLE_USER_INPUT_ACTION_ID;
+        if ($caption)
+            $arr[GuiAction::caption] = $caption;
+
+        $arr[GuiAction::params] = $params;
+
+        return $arr;
+    }
+
+    /**
+     * @param string $screen_id
+     * @param string $name
+     * @param string|null $caption
+     * @param array|null $add_params
+     * @return array
+     */
+    public static function create_screen_action($screen_id, $name, $caption = null, $add_params = null)
+    {
+        $handler = self::get_instance()->get_registered_handler($screen_id);
+        if (is_null($handler)) {
+            hd_debug_print(null, true);
+            hd_debug_print("No handler registered for {$screen_id}_handler");
+            return null;
+        }
+
+        return self::create_action($handler, $name, $caption, $add_params);
     }
 
     /**
@@ -142,16 +134,11 @@ class User_Input_Handler_Registry
         hd_debug_print(null, true);
         dump_input_handler($user_input);
 
-        if (!isset($user_input->handler_id)) {
-            return null;
+        if (isset($user_input->handler_id, $this->handlers[$user_input->handler_id])) {
+            return $this->handlers[$user_input->handler_id]->handle_user_input($user_input, $plugin_cookies);
         }
 
-        $handler_id = $user_input->handler_id;
-        if (!isset($this->handlers[$handler_id])) {
-            return null;
-        }
-
-        return $this->handlers[$handler_id]->handle_user_input($user_input, $plugin_cookies);
+        return null;
     }
 
     /**

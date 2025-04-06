@@ -129,7 +129,7 @@ class Starnet_Tv implements User_Input_Handler
                 $this->plugin->update_tv_history($user_input->plugin_tv_channel_id);
 
                 if (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed)) {
-                    return Action_Factory::invalidate_folders(array(Starnet_Tv_Groups_Screen::ID));
+                    return Action_Factory::invalidate_all_folders($plugin_cookies);
                 }
                 break;
         }

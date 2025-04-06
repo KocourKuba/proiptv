@@ -1335,7 +1335,7 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string|null $group_id
-     * @param int $disabled_channels -1 - all, 0 - only enabled, 1 - only disabled
+     * @param int $disabled_channels PARAM_ALL - all, PARAM_ENABLED - only enabled, PARAM_DISABLED - only disabled
      * @param bool $full true - full information, false only channel_id, title and statuses
      * @return array
      */
@@ -1343,13 +1343,13 @@ class Dune_Default_Sqlite_Engine
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $where = "ch.group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = 0)";
+            $where = "ch.group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = " . PARAM_ENABLED .")";
         } else {
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
             $where = "ch.group_id = $q_group_id";
         }
 
-        if ($disabled_channels !== -1) {
+        if ($disabled_channels !== PARAM_ALL) {
             $where = "$where AND disabled = $disabled_channels";
         }
 
@@ -1368,19 +1368,19 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string|null $group_id
-     * @param int $disabled_channels -1 - all, 0 - only enabled, 1 - only disabled
+     * @param int $disabled_channels PARAM_ALL - all, PARAM_ENABLED - only enabled, PARAM_DISABLED - only disabled
      * @return array
      */
     public function get_channels_ids($group_id, $disabled_channels)
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $where = "group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = 0)";
+            $where = "group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = " . PARAM_ENABLED .")";
         } else {
             $where = "group_id = " . Sql_Wrapper::sql_quote($group_id);
         }
 
-        if ($disabled_channels !== -1) {
+        if ($disabled_channels !== PARAM_ALL) {
             $where = empty($where) ? "disabled = $disabled_channels" : "$where AND disabled = $disabled_channels";
         }
 
@@ -1391,24 +1391,24 @@ class Dune_Default_Sqlite_Engine
 
     /**
      * @param string|null $group_id
-     * @param int $disabled_channels -1 - all, 0 - only enabled, 1 - only disabled
-     * @param int $disabled_groups -1 - all, 0 - only enabled, 1 - only disabled
+     * @param int $disabled_channels PARAM_ALL - all, PARAM_ENABLED - only enabled, PARAM_DISABLED - only disabled
+     * @param int $disabled_groups PARAM_ALL - all, PARAM_ENABLED - only enabled, PARAM_DISABLED - only disabled
      * @return int
      */
     public function get_channels_count($group_id, $disabled_channels, $disabled_groups = 0)
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $and = ($disabled_groups !== -1) ? "AND disabled = $disabled_groups" : "";
+            $and = ($disabled_groups !== PARAM_ALL) ? "AND disabled = $disabled_groups" : "";
             $where = "group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 $and)";
         } else {
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
             $where = "group_id = $q_group_id";
         }
 
-        $where = "$where AND changed != -1";
+        $where = "$where AND changed != " . PARAM_ALL;
 
-        if ($disabled_channels !== -1) {
+        if ($disabled_channels !== PARAM_ALL) {
             $where = "$where AND disabled = $disabled_channels";
         }
 

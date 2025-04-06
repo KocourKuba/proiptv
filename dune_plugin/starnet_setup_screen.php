@@ -170,7 +170,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
             case CONTROL_INTERFACE_NEWUI_SCREEN: // show interface NewUI settings dialog
                 $this->plugin->set_return_index(Starnet_Setup_Interface_NewUI_Screen::ID, 4);
-                return Action_Factory::open_folder(Starnet_Setup_Interface_NewUI_Screen::get_media_url_str(), TR::t('setup_interface_newui_title'));
+                return Action_Factory::open_folder(Starnet_Setup_Interface_NewUI_Screen::get_media_url_string(), TR::t('setup_interface_newui_title'));
 
             case CONTROL_CATEGORY_SCREEN: // show category settings dialog
                 $this->plugin->set_return_index(Starnet_Setup_Category_Screen::ID, 6);

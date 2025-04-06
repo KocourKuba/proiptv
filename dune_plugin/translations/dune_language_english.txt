@@ -166,6 +166,7 @@ setup_channel_bottom_right = Bottom right
 setup_icons_in_row = Icons in row
 setup_show_caption = Show channel caption
 setup_show_channel_count = Show channel count
+setup_show_continues = Continuous channel feed
 setup_epg_cache_engine = EPG engine
 setup_epg_cache_engine__1 = Change EPG engine (%s)
 setup_epg_cache_type_auto = Automatic

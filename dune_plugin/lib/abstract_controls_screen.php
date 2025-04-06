@@ -31,6 +31,7 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     const CONTROLS_WIDTH = 850;
 
     protected $return_index = 0;
+    protected $force_parent_reload = false;
 
     ///////////////////////////////////////////////////////////////////////
 

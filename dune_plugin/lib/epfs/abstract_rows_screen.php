@@ -92,15 +92,15 @@ abstract class Abstract_Rows_Screen implements Rows_Screen
         hd_debug_print(null, true);
 
         return array(
-            PluginFolderView::folder_type => null,
             PluginFolderView::view_kind => PLUGIN_FOLDER_VIEW_ROWS,
             PluginFolderView::multiple_views_supported => false,
+            PluginFolderView::folder_type => null,
             PluginFolderView::archive => null,
             PluginFolderView::data => array(
                 PluginRowsFolderView::pane => $this->get_rows_pane($media_url, $plugin_cookies),
-                PluginRowsFolderView::sel_state => null,
                 PluginRowsFolderView::actions => $this->get_action_map($media_url, $plugin_cookies),
                 PluginRowsFolderView::timer => $this->get_timer($media_url, $plugin_cookies),
+                PluginRowsFolderView::sel_state => null,
             )
         );
     }

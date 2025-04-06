@@ -35,6 +35,16 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * Get MediaURL string representation (json encoded)
+     *
+     * @return false|string
+     */
+    public static function get_media_url_string($parent_id = null)
+    {
+        return MediaURL::encode(array('screen_id' => static::ID, 'source_window_id' => $parent_id));
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -110,6 +120,13 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
             PARAM_NEWUI_SHOW_CHANNEL_COUNT, TR::t('setup_show_channel_count'), SwitchOnOff::translate($show_count),
             get_image_path(SwitchOnOff::to_image($show_count)), self::CONTROLS_WIDTH);
 
+        //////////////////////////////////////
+        // Clusters
+        $continues = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CONTINUES, SwitchOnOff::on);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_NEWUI_SHOW_CONTINUES, TR::t('setup_show_continues'), SwitchOnOff::translate($continues),
+            get_image_path(SwitchOnOff::to_image($continues)), self::CONTROLS_WIDTH);
+
         return $defs;
     }
 
@@ -131,26 +148,34 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
+                if (isset($parent_media_url->source_window_id)) {
+                    $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->source_window_id, ACTION_REFRESH_SCREEN);
+                } else {
+                    $target_action = User_Input_Handler_Registry::create_screen_action(
                         Starnet_Setup_Screen::ID,
                         RESET_CONTROLS_ACTION_ID,
                         null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                        array('initial_sel_ndx' => $this->return_index));
+                }
+
+                if ($this->force_parent_reload) {
+                    $target_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $target_action);
+                    $this->force_parent_reload = false;
+                }
+                return Action_Factory::close_and_run($target_action);
 
             case PARAM_NEWUI_CHANNEL_POSITION:
             case PARAM_NEWUI_ICONS_IN_ROW:
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
-                $post_action = Action_Factory::invalidate_all_folders($plugin_cookies);
+                $this->force_parent_reload = true;
                 break;
 
             case PARAM_NEWUI_SQUARE_ICONS:
             case PARAM_NEWUI_SHOW_CHANNEL_CAPTION:
             case PARAM_NEWUI_SHOW_CHANNEL_COUNT:
+            case PARAM_NEWUI_SHOW_CONTINUES:
                 $this->plugin->toggle_setting($control_id, false);
-                $post_action = Action_Factory::invalidate_all_folders($plugin_cookies);
+                $this->force_parent_reload = true;
                 break;
         }
 

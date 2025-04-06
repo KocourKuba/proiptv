@@ -423,7 +423,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if (!empty($playlist_id) && !empty($ext_epg) && create_path($dir)) {
                 $filename = sprintf("%s-%s-%s.json", $playlist_id, Hashed_Array::hash($channel_id), strftime('%Y-%m-%d', $day_start_tm_sec));
                 hd_debug_print("save ext_epg to: $filename");
-                file_put_contents("$dir/$filename", pretty_json_format($ext_epg));
+                if (file_put_contents(get_temp_path($filename), pretty_json_format($ext_epg))) {
+                    rename(get_temp_path($filename), "$dir/$filename");
+                }
             }
         } catch (Exception $ex) {
             print_backtrace_exception($ex);

@@ -42,30 +42,41 @@ class Rows_Factory
      * @return array
      */
     public static function pane($rows,
-                                $focus = null, $bg = null,
-                                $header_enabled = false, $single_list_navigation = false,
+                                $headers = null,
+                                $focus = null,
+                                $bg = null,
+                                $header_enabled = false,
+                                $single_list_navigation = false,
                                 $initial_focus_header = -1,
-                                $initial_focus_item_id = null, $initial_focus_row_id = null,
+                                $initial_focus_item_id = null,
+                                $initial_focus_row_id = null,
                                 $hfactor = 1.0, $vfactor = 1.0, $vgravity = 0.0, $vend_min_offset = 0)
     {
         if (!$focus) {
             $focus = self::focus();
         }
 
-        return array(
-            PluginRowsPane::rows => $rows,
-            PluginRowsPane::focus => $focus,
-            PluginRowsPane::bg => $bg,
-            PluginRowsPane::header_enabled => $header_enabled,
-            PluginRowsPane::initial_focus_header => $initial_focus_header,
-            PluginRowsPane::initial_focus_item_id => $initial_focus_item_id,
-            PluginRowsPane::initial_focus_row_id => $initial_focus_row_id,
-            PluginRowsPane::horizontal_focus_freedom_factor => $hfactor,
-            PluginRowsPane::vertical_focus_freedom_factor => $vfactor,
-            PluginRowsPane::vertical_focus_gravity => $vgravity,
-            PluginRowsPane::vertical_focus_end_min_offset => $vend_min_offset,
-            PluginRowsPane::single_list_navigation => $single_list_navigation
-        );
+        $arr[PluginRowsPane::rows] = $rows;
+        $arr[PluginRowsPane::focus] = $focus;
+        $arr[PluginRowsPane::header_enabled] = $header_enabled;
+        $arr[PluginRowsPane::initial_focus_header] = $initial_focus_header;
+        $arr[PluginRowsPane::horizontal_focus_freedom_factor] = $hfactor;
+        $arr[PluginRowsPane::vertical_focus_freedom_factor] = $vfactor;
+        $arr[PluginRowsPane::vertical_focus_gravity] = $vgravity;
+        $arr[PluginRowsPane::vertical_focus_end_min_offset] = $vend_min_offset;
+        $arr[PluginRowsPane::single_list_navigation] = $single_list_navigation;
+        if ($bg)
+            $arr[PluginRowsPane::bg] = $bg;
+        //if ($initial_focus_item_id)
+            $arr[PluginRowsPane::initial_focus_item_id] = $initial_focus_item_id;
+        //if ($initial_focus_row_id)
+            $arr[PluginRowsPane::initial_focus_row_id] = $initial_focus_row_id;
+
+        if (!empty($headers)) {
+            $arr[PluginRowsPane::headers] = $headers;
+        }
+
+        return $arr;
     }
 
     /**
@@ -109,6 +120,17 @@ class Rows_Factory
         $pane[PluginRowsPane::vod_r] = array('w' => $vod_w, 'h' => $vod_h, 'x' => $w - $vod_w, 'y' => 0);
     }
 
+    public static function add_header(&$headers, $id, $title, $first_in_cluster = false)
+    {
+        $arr[PluginRowsHeader::id] = $id;
+        $arr[PluginRowsHeader::title] = $title;
+        if ($first_in_cluster) {
+            $arr[PluginRowsHeader::first_in_cluster] = true;
+        }
+
+        $headers[] = $arr;
+    }
+
     /**
      * @param int $height
      * @param int $inactive_height
@@ -134,7 +156,7 @@ class Rows_Factory
      * @return array
      */
     public static function gcomps_row($id, $gcomp_defs,
-                                      $title = null, $width = -1, $height = -1,
+                                      $title = '', $width = -1, $height = -1,
                                       $inactive_height = -1, $ui_state = null)
     {
         return array(
@@ -145,9 +167,10 @@ class Rows_Factory
             PluginRow::inactive_height => $inactive_height,
             PluginRow::data => array(
                 PluginGCompsRow::defs => $gcomp_defs,
-                PluginGCompsRow::ui_state => $ui_state,
                 PluginGCompsRow::width => $width,
-            ));
+                PluginGCompsRow::ui_state => $ui_state,
+            )
+        );
     }
 
     /**
@@ -167,33 +190,40 @@ class Rows_Factory
      * @return array
      */
     public static function title_row($id, $caption,
-                                     $group_id = null, $width = null, $height = null,
-                                     $color = null, $font_size = null,
-                                     $left = null, $dy = null, $active_dy = null,
-                                     $fade_enabled = false, $fade_color = null, $lite_fade_color = null)
+                                     $group_id = '',
+                                     $color = null,
+                                     $options = null,
+                                     $width = TitleRowsParams::width,
+                                     $height = TitleRowsParams::height,
+                                     $font_size = TitleRowsParams::font_size,
+                                     $left = TitleRowsParams::left_padding,
+                                     $dy = 0,
+                                     $active_dy = 0,
+                                     $fade_enabled = true,
+                                     $fade_color = TitleRowsParams::fade_color,
+                                     $lite_fade_color = TitleRowsParams::lite_fade_color)
     {
-        $arr = array(
-            PluginRow::type => PLUGIN_ROW_TYPE_TITLE,
-            PluginRow::id => $id,
-            PluginRow::group_id => $group_id,
-            PluginRow::height => $height,
-            PluginRow::inactive_height => 0,
-            PluginRow::data => array(
-                PluginTitleRow::caption => $caption,
-                PluginTitleRow::color => GComps_Factory::rgba_to_argb($color),
-                PluginTitleRow::font_size => $font_size,
-                PluginTitleRow::left => $left,
-                PluginTitleRow::dy => $dy,
-                PluginTitleRow::active_dy => $active_dy,
-                PluginTitleRow::width => $width,
-                PluginTitleRow::fade_enabled => $fade_enabled,
-                PluginTitleRow::fade_color => GComps_Factory::rgba_to_argb($fade_color),
-                PluginTitleRow::lite_fade_color => GComps_Factory::rgba_to_argb($lite_fade_color),
-            ));
+        $data[PluginTitleRow::caption] = $caption;
+        $data[PluginTitleRow::color] = GComps_Factory::rgba_to_argb(is_null($color) ? TitleRowsParams::def_caption_color : $color);
+        $data[PluginTitleRow::font_size] = $font_size;
+        $data[PluginTitleRow::left] = $left;
+        $data[PluginTitleRow::dy] = $dy;
+        $data[PluginTitleRow::active_dy] = $active_dy;
+        $data[PluginTitleRow::width] = $width;
+        $data[PluginTitleRow::fade_enabled] = $fade_enabled;
+        $data[PluginTitleRow::fade_color] = GComps_Factory::rgba_to_argb($fade_color);
+        $data[PluginTitleRow::lite_fade_color] = GComps_Factory::rgba_to_argb($lite_fade_color);
 
-        $arr[PluginTitleRow::fade_enabled] = $fade_enabled;
-        $arr[PluginTitleRow::fade_color] = GComps_Factory::rgba_to_argb($fade_color);
-        $arr[PluginTitleRow::lite_fade_color] = GComps_Factory::rgba_to_argb($lite_fade_color);
+        $arr[PluginRow::type] = PLUGIN_ROW_TYPE_TITLE;
+        $arr[PluginRow::id] = $id;
+        $arr[PluginRow::group_id] = $group_id;
+        $arr[PluginRow::height] = $height;
+        $arr[PluginRow::inactive_height] = 0;
+
+        if ($options !== null)
+            $arr[PluginRow::options] = $options;
+
+        $arr[PluginRow::data] = $data;
 
         return $arr;
     }
@@ -209,22 +239,41 @@ class Rows_Factory
         $pane[PluginRowsPane::regular_item_params_templates][$id] = $params;
     }
 
-    public static function regular_row($id, $items,
-                                       $params_template_id = null, $params = null, $title = null,
-                                       $group_id = null, $width = null, $height = null, $inactive_height = null,
-                                       $left_padding = null, $inactive_left_padding = null, $right_padding = null,
-                                       $hide_captions = null, $hide_icons = null,
-                                       $fade_enabled = null, $focusable = null,
+    public static function regular_row($id, $items, $params_template_id, $title, $group_id, $header_id,
                                        $show_all_action = null,
-                                       $fade_icon_mix_color = null,
-                                       $fade_icon_mix_alpha = null,
-                                       $lite_fade_icon_mix_alpha = null,
-                                       $fade_caption_color = null)
+                                       $height = 0,
+                                       $inactive_height = 0,
+                                       $width = RowsParams::full_width,
+                                       $left_padding = RowsParams::left_padding,
+                                       $inactive_left_padding = RowsParams::inactive_left_padding,
+                                       $right_padding = RowsParams::right_padding,
+                                       $hide_captions = false,
+                                       $hide_icons = false,
+                                       $fade_enabled = true,
+                                       $focusable = null,
+                                       $fade_icon_mix_color = RowsParams::fade_icon_mix_color,
+                                       $fade_icon_mix_alpha = RowsParams::fade_icon_mix_alpha,
+                                       $lite_fade_icon_mix_alpha = RowsParams::lite_fade_icon_mix_alpha,
+                                       $fade_caption_color = RowsParams::fade_caption_color,
+                                       $params = null)
     {
-        $data = array(PluginRegularRow::items => $items);
+        $arr[PluginRow::type] = PLUGIN_ROW_TYPE_REGULAR;
+        $arr[PluginRow::id] = $id;
+        $arr[PluginRow::title] = $title;
+        if ($header_id) {
+            $arr[PluginRow::header_id] = $header_id;
+        }
+        $arr[PluginRow::group_id] = $group_id;
+        $arr[PluginRow::height] = $height;
+        $arr[PluginRow::inactive_height] = $inactive_height;
+        if ($focusable) {
+            $arr[PluginRow::focusable] = $focusable;
+        }
+        if ($show_all_action) {
+            $arr[PluginRow::show_all_action] = $show_all_action;
+        }
 
         $data[PluginRegularRow::item_params_template_id] = $params_template_id;
-        $data[PluginRegularRow::item_params] = $params;
         $data[PluginRegularRow::width] = $width;
         $data[PluginRegularRow::left_padding] = $left_padding;
         $data[PluginRegularRow::inactive_left_padding] = $inactive_left_padding;
@@ -236,19 +285,13 @@ class Rows_Factory
         $data[PluginRegularRow::fade_icon_mix_alpha] = $fade_icon_mix_alpha;
         $data[PluginRegularRow::lite_fade_icon_mix_alpha] = $lite_fade_icon_mix_alpha;
         $data[PluginRegularRow::fade_caption_color] = GComps_Factory::rgba_to_argb($fade_caption_color);
+        $data[PluginRegularRow::items] = $items;
 
-        $arr = array(
-            PluginRow::type => PLUGIN_ROW_TYPE_REGULAR,
-            PluginRow::id => $id,
-            PluginRow::data => $data
-        );
+        if ($params) {
+            $data[PluginRegularRow::item_params] = $params;
+        }
 
-        $arr[PluginRow::title] = $title;
-        $arr[PluginRow::group_id] = $group_id;
-        $arr[PluginRow::height] = $height;
-        $arr[PluginRow::inactive_height] = $inactive_height;
-        $arr[PluginRow::focusable] = $focusable;
-        $arr[PluginRow::show_all_action] = $show_all_action;
+        $arr[PluginRow::data] = $data;
 
         return $arr;
     }
@@ -262,10 +305,8 @@ class Rows_Factory
      */
     public static function add_regular_item($id, $icon_url, $caption = null, $stickers = null)
     {
-        $arr = array(
-            PluginRegularItem::id => $id,
-            PluginRegularItem::icon_url => $icon_url
-        );
+        $arr[PluginRegularItem::id] = $id;
+        $arr[PluginRegularItem::icon_url] = $icon_url;
 
         if (isset($caption))
             $arr[PluginRegularItem::caption] = $caption;
@@ -295,10 +336,8 @@ class Rows_Factory
                                            $caption_dy = null, $caption_color = null, $caption_font_size = null,
                                            $sticker_width = null, $sticker_height = null)
     {
-        $arr = array(
-            PluginRegularItemVariableParams::width => $width,
-            PluginRegularItemVariableParams::height => $height
-        );
+        $arr[PluginRegularItemVariableParams::width] = $width;
+        $arr[PluginRegularItemVariableParams::height] = $height;
 
         if (isset($dx))
             $arr[PluginRegularItemVariableParams::dx] = $dx;
@@ -355,7 +394,7 @@ class Rows_Factory
                                        $caption_max_num_lines = null, $caption_line_spacing = null,
                                        $sel_margins = null)
     {
-        $arr = array(PluginRegularItemParams::def => $def);
+        $arr[PluginRegularItemParams::def] = $def;
 
         if (isset($sel))
             $arr[PluginRegularItemParams::sel] = $sel;

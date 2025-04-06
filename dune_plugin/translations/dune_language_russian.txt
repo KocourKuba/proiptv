@@ -166,6 +166,7 @@ setup_channel_bottom_right = Внизу справа
 setup_icons_in_row = Количество иконок в ряду
 setup_show_caption = Показывать название канала
 setup_show_channel_count = Показывать количество каналов
+setup_show_continues = Непрерывная лента каналов
 setup_epg_cache_engine = Движок EPG
 setup_epg_cache_engine__1 = Изменить движок EPG (%s)
 setup_epg_cache_type_auto = Автоматически

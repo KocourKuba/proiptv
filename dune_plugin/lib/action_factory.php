@@ -739,7 +739,7 @@ class Action_Factory
     }
 
     public static function update_rows_info($folder_key, $item_id, $info_defs,
-                                            $bg_url = null, $nl_bg_url = null, $mask_url = null, $playback_urls = null, $post_action = null)
+                                            $bg_url = null, $nl_bg_url = null, $mask_url = null, $playback_urls = array(), $post_action = null)
     {
         $info = array(
             PluginRowsInfo::folder_key => $folder_key,

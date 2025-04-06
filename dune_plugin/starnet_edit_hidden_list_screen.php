@@ -77,7 +77,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                 if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
                     $this->plugin->set_channel_visible($selected_id, true);
                     $this->plugin->change_channels_order($parent_media_url->group_id, $selected_id, false);
-                    $force_return = $this->plugin->get_channels_order_count($parent_media_url->group_id) === 0;
+                    $force_return = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED) === 0;
                     hd_debug_print("restore channel: " . $selected_id, true);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
                     $this->plugin->set_groups_visible($selected_id, true);

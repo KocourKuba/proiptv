@@ -168,7 +168,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 if (isset($parent_media_url->source_window_id)) {
-                    $target_action = User_Input_Handler_Registry::create_screen_action(Starnet_Edit_Playlists_Screen::ID, ACTION_INVALIDATE);
+                    $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->source_window_id, ACTION_INVALIDATE);
                 } else {
                     $target_action = User_Input_Handler_Registry::create_screen_action(
                         Starnet_Setup_Screen::ID,
