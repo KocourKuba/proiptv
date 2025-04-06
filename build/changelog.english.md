@@ -1,4 +1,16 @@
-﻿### Version 6.1.1216
+﻿### Version 6.1.1226
+- NewUI: Added the ability to disable the continuous channel flow mode. In this case, NewUI slows down a little less
+- NewUI: Optimizing data generation for NewUI. Now it's a little faster
+- NewUI: For adult channels, the preview does not ask for a password, but simply does not show the picture. Unless the password is disabled.
+- NewUI: After clearing History/Favorites/Changed channels, the screen did not update
+- Fixed a bug if the channel ID detection was selected in the playlist properties
+- Handling situations when there was a comma in the channel name in the m3u file, which is forbidden by the standard, but who care?
+- Added DST handling to correctly display XMLTV download time (hi there to the ancient PHP used by Dune API)
+- Optimize SQL queries for faster synchronization of playlist changes. Now on VERY large playlists, the plugin does not fall with the operation time exceeding
+- The data in the information on the playlist screen did not update after editing it
+- Secure file generation for ext_epg, sometimes ext_epg blocked data from being written by the plugin
+
+### Version 6.1.1216
 - Correct time zone and daylight conversions for ext_epg
 
 ### Version 6.1.1214
