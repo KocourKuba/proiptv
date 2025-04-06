@@ -1781,7 +1781,7 @@ function get_local_storages_list($path)
 
 function is_newer_versions()
 {
-    return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 20;
+    return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 21;
 }
 
 function is_ext_epg_supported()
