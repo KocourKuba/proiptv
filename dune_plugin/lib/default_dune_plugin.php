@@ -707,7 +707,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $program_ts = ($program_ts > 0 ? $program_ts : time());
         hd_debug_print("channel ID: $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), true);
         $day_epg = $this->get_day_epg($channel_id,
-            to_local_time_zone_offset(strtotime(date("Y-m-d", $program_ts))),
+            strtotime(date("Y-m-d", $program_ts)) + get_local_time_zone_offset(),
             $plugin_cookies);
 
         foreach ($day_epg as $item) {
