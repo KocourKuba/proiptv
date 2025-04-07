@@ -167,14 +167,14 @@ class Starnet_Tv implements User_Input_Handler
         }
 
         $all_channels = array();
-        foreach ($this->plugin->get_groups(PARAM_GROUP_ORDINARY, PARAM_ENABLED, COLUMN_GROUP_ID) as $group_id) {
-            $group_row = $this->plugin->get_group($group_id, PARAM_GROUP_ORDINARY);
+        foreach ($this->plugin->get_groups_by_order() as $group_row) {
+            $group_id = $group_row[COLUMN_GROUP_ID];
             if ($this->plugin->get_channels_order_count($group_id) === 0) {
                 continue;
             }
 
             $groups[] = array(
-                PluginTvGroup::id => $group_row[COLUMN_GROUP_ID],
+                PluginTvGroup::id => $group_id,
                 PluginTvGroup::caption => $group_row[COLUMN_TITLE],
                 PluginTvGroup::icon_url => get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON))
             );
