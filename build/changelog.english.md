@@ -1,4 +1,8 @@
-﻿### Version 6.1.1226
+﻿### Версия 6.1.1230
+- Clarifications for calculating the time zone for NewUI (for Classic, it is calculated differently)
+- The sorting order of categories in the OSD player did not coincide with the real sorting of categories.
+
+### Version 6.1.1226
 - NewUI: Added the ability to disable the continuous channel flow mode. In this case, NewUI slows down a little less
 - NewUI: Optimizing data generation for NewUI. Now it's a little faster
 - NewUI: For adult channels, the preview does not ask for a password, but simply does not show the picture. Unless the password is disabled.
