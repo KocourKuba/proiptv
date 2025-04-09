@@ -671,6 +671,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             }
         }
 
+        if ($this->plugin->is_vod_playlist()) {
+            return $special_items;
+        }
+
         return array_merge($special_items, $ordinary_items);
     }
 
