@@ -316,7 +316,9 @@ class api_default
             return null;
         }
 
-        if ((empty($this->account_info) || $force) && $this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+        if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+            $this->account_info = array();
+        } else if (empty($this->account_info) || $force) {
             $account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
             if ($account_info === false || isset($account_info->error)) {
                 hd_debug_print("Failed to get provider info", true);

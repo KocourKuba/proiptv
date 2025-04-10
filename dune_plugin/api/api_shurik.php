@@ -37,7 +37,9 @@ class api_shurik extends api_default
         hd_debug_print(null, true);
         hd_debug_print("force get_provider_info: " . var_export($force, true), true);
 
-        if ((empty($this->account_info) || $force)) {
+        if (!$this->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
+            $this->account_info = array();
+        } else if (empty($this->account_info) || $force) {
             $this->account_info = $this->execApiCommand(API_COMMAND_ACCOUNT_INFO);
             hd_debug_print("get_provider_info: " . pretty_json_format($this->account_info), true);
         }

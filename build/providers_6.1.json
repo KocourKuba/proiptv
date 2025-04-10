@@ -267,7 +267,6 @@
       "provider_url": "https://antifriz.tv/",
       "api_url": "http://protected-api.com",
       "api_commands": {
-        "account_info": "{API}/auth/info",
         "get_playlist": "https://af-play.com/playlist/{PASSWORD}.m3u8",
         "get_vod": "{API}",
         "get_servers": "{API}/servers"
@@ -361,7 +360,6 @@
       "provider_url": "https://cbilling.eu/",
       "api_url": "http://protected-api.com",
       "api_commands": {
-        "account_info": "{API}/auth/info",
         "get_playlist": "http://248on.com/playlist/{PASSWORD}_otp_dev{DEVICE_ID}.m3u8",
         "get_vod": "{API}",
         "get_servers": "{API}/servers"

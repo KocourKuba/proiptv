@@ -754,7 +754,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     throw new Exception("Unable to init provider to download: " . json_encode($params));
                 }
 
-                if ($provider->get_provider_info(true) === false) {
+                if ($provider->get_provider_info() === false) {
                     throw new Exception("Unable to get provider info to download: " . json_encode($params));
                 }
 
