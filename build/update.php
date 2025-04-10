@@ -53,6 +53,7 @@ if (!$is_debug) {
     $update->plugin_version_descriptor->size = filesize($update_file);
     $update->saveXML($update_info);
 
+	@mkdir("archive");
     $folder_path = "archive/{$full_version}_" . date('d-m_H-i-s');
     if (!file_exists($folder_path) && !@mkdir($folder_path) && !is_dir($folder_path)) {
         echo "Directory '$folder_path' was not created";
