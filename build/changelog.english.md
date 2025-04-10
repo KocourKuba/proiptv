@@ -1,4 +1,8 @@
-﻿### Версия 6.1.1230
+﻿### Version 6.1.1234
+- Due to problems on the provider side has disabled additional settings for Cbilling/Antfriz
+- Fixed a bug with showing categories for M3U-based VODs
+
+### Версия 6.1.1230
 - Clarifications for calculating the time zone for NewUI (for Classic, it is calculated differently)
 - The sorting order of categories in the OSD player did not coincide with the real sorting of categories.
 
