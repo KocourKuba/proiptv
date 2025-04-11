@@ -1,5 +1,9 @@
-﻿### Version 6.1.1234
-- Due to problems on the provider side has disabled additional settings for Cbilling/Antfriz
+﻿### Version 6.1.1238
+- Fixed incorrect line ending (CRLF instead of LF) in scripts for ext_epg
+- Configuration: Additional settings for Cbilling/Antifriz have been reverted back
+
+### Version 6.1.1234
+- Due to problems on the provider side has disabled additional settings for Cbilling/Antifriz
 - Fixed a bug with showing categories for M3U-based VODs
 
 ### Версия 6.1.1230
