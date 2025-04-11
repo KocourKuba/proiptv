@@ -3,6 +3,8 @@
 
 *.md            text diff=markdown
 *.sh			text eol=lf
+channels		text eol=lf
+epg				text eol=lf
 
 *.{cmd,[cC][mM][dD]} text eol=crlf
 *.{bat,[bB][aA][tT]} text eol=crlf
