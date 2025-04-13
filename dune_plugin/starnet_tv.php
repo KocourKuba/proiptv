@@ -282,7 +282,7 @@ class Starnet_Tv implements User_Input_Handler
         $pos = array_search($channel_id, $this->plugin->get_channels_order($group_id));
         return Action_Factory::close_and_run(
             Action_Factory::open_folder(
-                Starnet_Tv_Channel_List_Screen::get_media_url_string($group_id),
+                Default_Dune_Plugin::get_group_mediaurl_str($group_id),
                 $group_id,
                 null,
                 null,

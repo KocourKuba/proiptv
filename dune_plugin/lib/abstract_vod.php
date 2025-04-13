@@ -135,6 +135,8 @@ abstract class Abstract_Vod
     public function get_vod_info(MediaURL $media_url)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
+
         $movie = $this->get_loaded_movie($media_url->movie_id);
         if ($movie === null) {
             return null;
@@ -176,11 +178,11 @@ abstract class Abstract_Vod
 
         $movie = $this->get_cached_movie($movie_id);
         if ($movie === null) {
-            hd_debug_print("Movie $movie_id not in cache. Load info.");
+            hd_debug_print("Movie $movie_id not in cache. Load info...", true);
             $this->try_load_movie($movie_id);
-            hd_debug_print("Movie $movie_id loaded");
+            hd_debug_print("Movie $movie_id loaded", true);
         } else {
-            hd_debug_print("Movie $movie_id is in cache.");
+            hd_debug_print("Movie $movie_id is in cache.", true);
         }
     }
 

@@ -81,6 +81,12 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 if (empty($error)) break;
 
                 return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error);
+
+            case ACTION_INVALIDATE:
+                $media_url = MediaURL::decode($user_input->parent_media_url);
+                $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
+                return Action_Factory::update_regular_folder($range, true, -1);
+
             default:
                 break;
         }
@@ -160,16 +166,21 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             $item_detailed_info = TR::load(VOD_SEARCH_GROUP_CAPTION);
                             break;
 
+                        case VOD_LIST_GROUP_ID:
+                            $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
+                            $item_detailed_info = TR::load(VOD_LIST_GROUP_CAPTION);
+                            break;
+
                         default:
                             $color = DEF_LABEL_TEXT_COLOR_WHITE;
                             $item_detailed_info = $group['title'];
                             break;
                     }
 
-                    hd_debug_print("special group: " . Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]), true);
+                    hd_debug_print("special group: " . Default_Dune_Plugin::get_group_mediaurl_str($group[COLUMN_GROUP_ID]), true);
 
                     $items[] = array(
-                        PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]),
+                        PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_mediaurl_str($group[COLUMN_GROUP_ID]),
                         PluginRegularFolderItem::caption => TR::t($group['title']),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::item_caption_color => $color,
@@ -195,11 +206,11 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 || $category_id === Vod_Category::FLAG_SEARCH
                 || $category_id === Vod_Category::FLAG_FILTER) {
                 // special category id's
-                $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category_id, null);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::get_media_url_string($category_id, null);
             } else if ($category->get_parent() !== null) {
-                $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category->get_parent()->get_id(), $category_id);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::get_media_url_string($category->get_parent()->get_id(), $category_id);
             } else {
-                $media_url_str = Starnet_Vod_List_Screen::get_media_url_string($category_id, null);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::get_media_url_string($category_id, null);
             }
 
             $items[] = array(

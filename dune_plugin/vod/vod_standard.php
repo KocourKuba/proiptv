@@ -39,6 +39,7 @@ require_once 'starnet_vod_seasons_list_screen.php';
 require_once 'starnet_vod_series_list_screen.php';
 require_once 'starnet_vod_favorites_screen.php';
 require_once 'starnet_vod_history_screen.php';
+require_once 'starnet_vod_movie_list_screen.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -157,6 +158,7 @@ class vod_standard extends Abstract_Vod
         $this->plugin->destroy_screen(Starnet_Vod_Favorites_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_History_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Category_List_Screen::ID);
+        $this->plugin->destroy_screen(Starnet_Vod_Movie_List_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_List_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Movie_Screen::ID);
         $this->plugin->destroy_screen(Starnet_Vod_Seasons_List_Screen::ID);
@@ -170,6 +172,7 @@ class vod_standard extends Abstract_Vod
             $this->plugin->create_screen(new Starnet_Vod_Favorites_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_History_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Category_List_Screen($this->plugin));
+            $this->plugin->create_screen(new Starnet_Vod_Movie_List_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_List_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Movie_Screen($this->plugin));
             $this->plugin->create_screen(new Starnet_Vod_Seasons_List_Screen($this->plugin));
@@ -195,6 +198,16 @@ class vod_standard extends Abstract_Vod
                 'disabled' => false,
             );
             $this->special_groups->set(VOD_HISTORY_GROUP_ID, $special_group);
+
+            // List VOD
+            $special_group = array(
+                'group_id' => VOD_LIST_GROUP_ID,
+                'title' => VOD_LIST_GROUP_CAPTION,
+                'icon' => VOD_LIST_GROUP_ICON,
+                'order_support' => true,
+                'disabled' => !$this->plugin->get_channels_order_count(VOD_LIST_GROUP_ID)
+            );
+            $this->special_groups->set(VOD_LIST_GROUP_ID, $special_group);
 
             // Search category
             $special_group = array(
@@ -227,11 +240,24 @@ class vod_standard extends Abstract_Vod
     }
 
     /**
+     * @param string $id
      * @return array
      */
     public function get_special_group($id)
     {
         return $this->special_groups->get($id);
+    }
+
+    /**
+     * @param string $id
+     * @param bool $disable
+     * @return void
+     */
+    public function toggle_special_group($id, $disable)
+    {
+        $group = $this->special_groups->get($id);
+        $group['disabled'] = $disable;
+        $this->special_groups->set($id, $group);
     }
 
     /**
@@ -312,6 +338,30 @@ class vod_standard extends Abstract_Vod
     {
         hd_debug_print(null, true);
         hd_debug_print($movie_id);
+
+        if ($movie_id === VOD_LIST_GROUP_ID) {
+            $movie = new Movie($movie_id, $this->plugin);
+            $title = TR::load(VOD_LIST_GROUP_CAPTION);
+            $movie->set_data(
+                $title,            // caption,
+                '',    // caption_original,
+                '',      // description,
+                VOD_LIST_GROUP_ICON,             // poster_url,
+                '',      // length,
+                '',             // year,
+                '',     // director,
+                '',     // scenario,
+                '',       // actors,
+                '',         // genres,
+                '',       // rate_imdb,
+                '',    // rate_kinopoisk,
+                '',       // rate_mpaa,
+                ''           // country,
+            );
+
+            $movie->add_series_data($movie_id, $title, '', '');
+            return $movie;
+        }
 
         $entry = $this->getVod($movie_id);
         if (empty($entry)) {
@@ -554,7 +604,7 @@ class vod_standard extends Abstract_Vod
                 $title = safe_get_value($match, 'title', $title);
             }
 
-            $movies[] = new Short_Movie($entry['hash'], trim($title), $entry['icon']);
+            $movies[] = new Short_Movie($entry[COLUMN_HASH], trim($title), $entry[COLUMN_ICON], $title);
         }
 
         $this->get_next_page($query_id, $pos - $page_idx);

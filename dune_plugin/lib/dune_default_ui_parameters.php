@@ -912,7 +912,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewItemParams::item_paint_icon => true,
                     ViewItemParams::icon_sel_scale_factor => 1.2,
                     ViewItemParams::icon_path => self::VOD_ICON_PATH,
-                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
                     ViewItemParams::icon_dx => 10,
                     ViewItemParams::icon_dy => -5,
@@ -920,7 +920,58 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewItemParams::icon_height => self::VOD_CHANNEL_ICON_HEIGHT,
                     ViewItemParams::icon_sel_margin_top => 0,
                     ViewItemParams::item_paint_caption => false,
-                    ViewItemParams::item_caption_width => 1100
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => array(
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
+            ),
+
+            'icons_5x2_movie_caption' => array(
+                PluginRegularFolderView::async_icon_loading => true,
+
+                PluginRegularFolderView::view_params => array(
+                    ViewParams::num_cols => 5,
+                    ViewParams::num_rows => 2,
+                    ViewParams::paint_details => true,
+                    ViewParams::paint_item_info_in_details => true,
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 'before_all',
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+
+                    ViewParams::item_detailed_info_auto_line_break => true,
+                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
+                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
+
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::sandwich_width => self::VOD_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => self::VOD_SANDWICH_HEIGHT,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array(
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_sel_scale_factor => 1.2,
+                    ViewItemParams::icon_path => self::VOD_ICON_PATH,
+                    ViewItemParams::item_layout => HALIGN_CENTER,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_dx => 10,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => self::VOD_CHANNEL_ICON_WIDTH,
+                    ViewItemParams::icon_height => self::VOD_CHANNEL_ICON_HEIGHT,
+                    ViewItemParams::icon_sel_margin_top => 0,
+                    ViewItemParams::item_caption_font_size => FONT_SIZE_SMALL,
+                    ViewItemParams::item_paint_caption => true,
+                    ViewItemParams::item_caption_sel_dy => 25,
                 ),
 
                 PluginRegularFolderView::not_loaded_view_item_params => array(
@@ -941,6 +992,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewParams::background_order => 'before_all',
                     ViewParams::background_height => 1080,
                     ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
 
                     ViewParams::item_detailed_info_auto_line_break => true,
                     ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
@@ -986,14 +1038,30 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewParams::num_cols => 1,
                     ViewParams::num_rows => 12,
                     ViewParams::paint_details => true,
+                    ViewParams::paint_item_info_in_details => true,
                     ViewParams::background_path => $background,
                     ViewParams::background_order => 'before_all',
                     ViewParams::background_height => 1080,
                     ViewParams::background_width => 1920,
                     ViewParams::optimize_full_screen_background => true,
+
+                    ViewParams::item_detailed_info_auto_line_break => true,
+                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
+                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
+
+                    ViewParams::paint_sandwich => false,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::sandwich_width => self::VOD_SANDWICH_WIDTH,
+                    ViewParams::sandwich_height => self::VOD_SANDWICH_HEIGHT,
+                    ViewParams::sandwich_icon_upscale_enabled => true,
+                    ViewParams::sandwich_icon_keep_aspect_ratio => true,
                 ),
                 PluginRegularFolderView::base_view_item_params => array(
                     ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => self::VOD_ICON_PATH,
                     ViewItemParams::item_layout => HALIGN_LEFT,
                     ViewItemParams::icon_valign => VALIGN_CENTER,
                     ViewItemParams::icon_dx => 20,
@@ -1003,7 +1071,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
                     ViewItemParams::item_caption_width => 1100
                 ),
-                PluginRegularFolderView::not_loaded_view_item_params => array(),
+                PluginRegularFolderView::not_loaded_view_item_params => array(
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
+                    ViewItemParams::item_detailed_icon_path => 'missing://',
+                ),
             ),
         );
     }

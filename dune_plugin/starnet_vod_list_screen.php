@@ -24,13 +24,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-require_once 'lib/abstract_regular_screen.php';
-require_once 'lib/short_movie_range.php';
-require_once 'starnet_vod_search_screen.php';
+require_once 'lib/abstract_preloaded_regular_screen.php';
 
-class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_Input_Handler
+class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implements User_Input_Handler
 {
     const ID = 'vod_list';
+
+    ///////////////////////////////////////////////////////////////////////
 
     /**
      * @param MediaURL $media_url
@@ -39,15 +39,17 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        $add_action = User_Input_Handler_Registry::create_action($this, ACTION_CREATE_SEARCH, TR::t('search'));
+        $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
 
-        return array(
-            GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
-            GUI_EVENT_KEY_SEARCH => $add_action,
-            GUI_EVENT_KEY_C_YELLOW => $add_action,
-            GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite')),
-            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
-        );
+        $actions[GUI_EVENT_KEY_ENTER] = $action_play;
+        $actions[GUI_EVENT_KEY_PLAY] = $action_play;
+        $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up'));
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down'));
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete'));
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+
+        return $actions;
     }
 
     /**
@@ -61,168 +63,140 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
             return null;
         }
 
-        $media_url = MediaURL::decode($user_input->selected_media_url);
-        $movie_id = $media_url->movie_id;
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $sel_ndx = $user_input->sel_ndx;
 
         switch ($user_input->control_id) {
-            case ACTION_CREATE_SEARCH:
-                $defs = array();
-                Control_Factory::add_text_field($defs,
-                    $this, null, ACTION_NEW_SEARCH, '',
-                    $media_url->name, false, false, true, true, 1300, false, true);
-                Control_Factory::add_vgap($defs, 500);
-                return Action_Factory::show_dialog(TR::t('search'), $defs, true);
+            case GUI_EVENT_KEY_RETURN:
+                if (!$this->force_parent_reload) {
+                    return Action_Factory::close_and_run();
+                }
 
-            case ACTION_NEW_SEARCH:
-                return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, ACTION_RUN_SEARCH));
-
-            case ACTION_RUN_SEARCH:
-                $search_string = $user_input->{ACTION_NEW_SEARCH};
-                $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $search_string, Ordered_Array::TOP);
-                return Action_Factory::invalidate_folders(
-                    array(Starnet_Vod_Search_Screen::get_media_url_string(VOD_SEARCH_GROUP_ID)),
-                    Action_Factory::open_folder(
-                        static::get_media_url_string(Vod_Category::FLAG_SEARCH, $search_string),
-                        TR::t('search') . ": $search_string"));
-
-            case ACTION_ADD_FAV:
-                $is_in_favorites = $this->plugin->is_channel_in_order(VOD_FAV_GROUP_ID, $movie_id);
-                $opt_type = $is_in_favorites ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
-                $this->plugin->change_vod_favorites($opt_type, $movie_id);
-                return Action_Factory::invalidate_folders(
-                    array(
-                        $user_input->parent_media_url,
-                        Starnet_Vod_Favorites_Screen::get_media_url_string(VOD_FAV_GROUP_ID),
-                        Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID),
-                        Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
+                $this->force_parent_reload = false;
+                return Action_Factory::close_and_run(
+                    User_Input_Handler_Registry::create_screen_action(
+                        Starnet_Vod_Category_List_Screen::ID,
+                        ACTION_INVALIDATE
                     )
                 );
+
+            case ACTION_PLAY_ITEM:
+                try {
+                    $this->update_series_list();
+                    $vod_info = $this->plugin->vod->get_vod_info($selected_media_url);
+                    $post_action = $this->plugin->vod->vod_player_exec($vod_info, isset($user_input->external));
+                } catch (Exception $ex) {
+                    hd_debug_print("Movie can't played");
+                    print_backtrace_exception($ex);
+                    return Action_Factory::show_title_dialog(
+                        TR::t('err_channel_cant_start'),
+                        null,
+                        TR::t('warn_msg2__1', $ex->getMessage())
+                    );
+                }
+
+                return $post_action;
+
+            case ACTION_ITEM_UP:
+                $sel_ndx--;
+                if ($sel_ndx < 0) {
+                    return null;
+                }
+                $this->force_parent_reload = true;
+                $this->plugin->arrange_channels_order_rows(VOD_LIST_GROUP_ID, $selected_media_url->episode_id, Ordered_Array::UP);
+                break;
+
+            case ACTION_ITEM_DOWN:
+                $cnt = $this->plugin->get_channels_order_count(VOD_LIST_GROUP_ID) - 1;
+                $sel_ndx++;
+                hd_debug_print("Cnt: $cnt, sel_ndx: $sel_ndx");
+                if ($sel_ndx > $cnt) {
+                    return null;
+                }
+                $this->force_parent_reload = true;
+                $this->plugin->arrange_channels_order_rows(VOD_LIST_GROUP_ID, $selected_media_url->episode_id, Ordered_Array::DOWN);
+                break;
+
+            case ACTION_ITEM_DELETE:
+                $this->force_parent_reload = true;
+                $this->plugin->change_channels_order(VOD_LIST_GROUP_ID, $selected_media_url->episode_id, true);
+                if ($this->plugin->get_channels_order_count(VOD_LIST_GROUP_ID) != 0) break;
+
+                $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, true);
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+
+            case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
+                $this->force_parent_reload = true;
+                $this->plugin->remove_channels_order(VOD_LIST_GROUP_ID);
+
+                $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, true);
+                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+
+            case GUI_EVENT_KEY_POPUP_MENU:
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
+                return Action_Factory::show_popup_menu($menu_items);
         }
 
-        return null;
+        return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
     }
 
     /**
-     * Get MediaURL string representation (json encoded)
-     * *
-     * @param string $category_id
-     * @param string $genre_id
+     * @param string|null $movie_id
      * @return false|string
      */
-    public static function get_media_url_string($category_id, $genre_id)
+    public static function get_media_url_string($movie_id)
     {
-        return MediaURL::encode(array('screen_id' => self::ID, 'category_id' => $category_id, 'genre_id' => $genre_id));
+        return MediaURL::encode(array('screen_id' => static::ID, 'movie_id' => VOD_LIST_GROUP_ID, 'episode_id' => $movie_id));
     }
 
+    ///////////////////////////////////////////////////////////////////////
+
     /**
-     * @param MediaURL $media_url
-     * @param int $from_ndx
-     * @param object $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
-    public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
+    public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("from_ndx: $from_ndx, MediaURL: " . $media_url->get_media_url_str(true), true);
 
-        $this->plugin->vod->try_reset_pages();
-        if (empty($media_url->genre_id)
-            || $media_url->category_id === Vod_Category::FLAG_ALL_MOVIES
-            || $media_url->category_id === Vod_Category::FLAG_ALL_SERIALS) {
-            $key = $media_url->category_id;
-        } else {
-            $key = $media_url->category_id . "_" . $media_url->genre_id;
-        }
-
-        $movies = array();
-
-        if ($media_url->category_id === Vod_Category::FLAG_SEARCH) {
-            if ($from_ndx === 0) {
-                $movies = $this->plugin->vod->getSearchList($media_url->genre_id);
-            }
-        } else if ($media_url->category_id === Vod_Category::FLAG_FILTER) {
-            $movies = $this->plugin->vod->getFilterList($media_url->genre_id);
-        } else {
-            $movies = $this->plugin->vod->getMovieList($key);
-        }
-
-        $count = count($movies);
-        if ($count) {
-            $this->plugin->vod->add_movie_counter($key, $count);
-            $movie_range = new Short_Movie_Range($from_ndx, $this->plugin->vod->get_movie_counter($key), $movies);
-        } else {
-            $movie_range = new Short_Movie_Range(0, 0);
-        }
-
-        $total = $movie_range->total;
-        if ($total <= 0) {
-            return $this->create_regular_folder_range(array());
-        }
-
-        $fav_ids = $this->plugin->get_channels_order(VOD_FAV_GROUP_ID);
         $items = array();
-        if (isset($movie_range->short_movies)) {
-            foreach ($movie_range->short_movies as $movie) {
-                $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::get_media_url_string($movie->id, $movie->name, $movie->poster_url, $movie->info),
-                    PluginRegularFolderItem::caption => $movie->name,
-                    PluginRegularFolderItem::starred => in_array($movie->id, $fav_ids),
-                    PluginRegularFolderItem::view_item_params => array(
-                        ViewItemParams::icon_path => $movie->poster_url,
-                        ViewItemParams::item_detailed_info => $movie->info,
-                        ViewItemParams::item_detailed_icon_path => empty($movie->big_poster_url) ? $movie->poster_url : $movie->big_poster_url,
-                        ViewItemParams::item_caption_color => DEF_LABEL_TEXT_COLOR_WHITE,
-                    ),
-                );
+        foreach ($this->plugin->get_channels_order(VOD_LIST_GROUP_ID) as $movie_id) {
+            $movie = $this->plugin->vod->get_loaded_movie($movie_id);
+            if (is_null($movie)) continue;
 
-                $this->plugin->vod->set_cached_short_movie(new Short_Movie($movie->id, $movie->name, $movie->poster_url, $movie->info));
+            $movie_history = $this->plugin->get_vod_history($movie_id);
+            $detailed_info = '';
+            $caption = $movie->movie_info[PluginMovie::name];
+            $color = DEF_LABEL_TEXT_COLOR_WHITE;
+            foreach ($movie_history as $movie_info) {
+                $view_date = format_datetime("d.m.Y H:i", $movie_info[COLUMN_TIMESTAMP]);
+                if ($movie_info[COLUMN_WATCHED] || $movie_info[COLUMN_DURATION] === -1) {
+                    $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
+                    $color = DEF_LABEL_TEXT_COLOR_BLUE;
+                } else {
+                    $percent = (int)((float)$movie_info[COLUMN_POSITION] / (float)$movie_info[COLUMN_DURATION] * 100);
+                    $detailed_info = TR::t('vod_screen_last_viewed__3', $caption, $view_date, $percent);
+                    $color = DEF_LABEL_TEXT_COLOR_LIMEGREEN;
+                }
+                break;
             }
+
+            $items[] = array(
+                PluginRegularFolderItem::media_url => self::get_media_url_string($movie_id),
+                PluginRegularFolderItem::caption => $caption,
+                PluginRegularFolderItem::view_item_params => array(
+                    ViewItemParams::icon_path => $movie->movie_info[PluginMovie::poster_url],
+                    ViewItemParams::item_detailed_info => $detailed_info,
+                    ViewItemParams::item_caption_color => $color,
+                )
+            );
         }
 
-        return $this->create_regular_folder_range($items, $movie_range->from_ndx, $total, true);
-    }
-
-    /**
-     * @param array $items
-     * @param int $from_ndx
-     * @param int $total
-     * @param bool $more_items_available
-     * @return array
-     */
-    public function create_regular_folder_range($items, $from_ndx = 0, $total = -1, $more_items_available = false)
-    {
-        if ($total === -1) {
-            $total = $from_ndx + count($items);
-        }
-
-        if ($from_ndx >= $total) {
-            $from_ndx = $total;
-            $items = array();
-        } else if ($from_ndx + count($items) > $total) {
-            array_splice($items, $total - $from_ndx);
-        }
-
-        return array
-        (
-            PluginRegularFolderRange::total => (int)$total,
-            PluginRegularFolderRange::more_items_available => $more_items_available,
-            PluginRegularFolderRange::from_ndx => (int)$from_ndx,
-            PluginRegularFolderRange::count => count($items),
-            PluginRegularFolderRange::items => $items
-        );
-    }
-
-    /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
-     * @return array|null
-     */
-    public function get_folder_view(MediaURL $media_url, &$plugin_cookies)
-    {
-        $this->plugin->vod->reset_movie_counter();
-        $this->plugin->vod->clear_movie_cache();
-
-        return parent::get_folder_view($media_url, $plugin_cookies);
+        return $items;
     }
 
     /**
@@ -233,8 +207,36 @@ class Starnet_Vod_List_Screen extends Abstract_Regular_Screen implements User_In
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
+            $this->plugin->get_screen_view('list_1x12_vod_info_normal'),
             $this->plugin->get_screen_view('list_1x10_movie_info_normal'),
+            $this->plugin->get_screen_view('icons_5x2_movie_caption'),
+            $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
         );
+    }
+
+    /**
+     * @return void
+     * @throws Exception
+     */
+    private function update_series_list()
+    {
+        $list_movie = $this->plugin->vod->get_loaded_movie(VOD_LIST_GROUP_ID);
+        if (empty($list_movie)) {
+            hd_debug_print("vod list movie not found");
+            return;
+        }
+
+        $list_movie->series_list = array();
+        foreach ($this->plugin->get_channels_order(VOD_LIST_GROUP_ID) as $movie_id) {
+            $movie = $this->plugin->vod->get_loaded_movie($movie_id);
+            if (is_null($movie)) continue;
+
+            $series = new Movie_Series($movie_id);
+            $series->name = $movie->movie_info[PluginMovie::name];
+            $series->playback_url = $movie->series_list[$movie_id]->playback_url;
+            $series->playback_url_is_stream_url = $movie->series_list[$movie_id]->playback_url_is_stream_url;
+            $list_movie->series_list[] = $series;
+        }
+        $this->plugin->vod->set_cached_movie($list_movie);
     }
 }

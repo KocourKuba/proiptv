@@ -897,6 +897,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $ret;
     }
 
+    public function is_m3u_vod()
+    {
+        return get_class($this->vod) === 'vod_standard';
+    }
+
     ////////////////////////////////////////////////////////
     /// init database
 
@@ -939,7 +944,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $query .= sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
 
         // create tables for vod search, vod filters, vod favorites
-        foreach (array(VOD_FILTER_LIST => 'item', VOD_SEARCH_LIST => 'item', VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID) as $list => $column) {
+        $tables = array(VOD_FILTER_LIST => 'item', VOD_SEARCH_LIST => 'item', VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID);
+        if ($this->get_vod_class() === 'vod_standard') {
+            $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
+        }
+
+        foreach ($tables as $list => $column) {
             $table_name = self::get_table_name($list);
             $query .= sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
         }
@@ -1115,11 +1125,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        if ($this->channels_loaded && !$reload_playlist) {
-            hd_debug_print("Channels already loaded", true);
-            return true;
-        }
-
         $playlist_id = $this->get_active_playlist_id();
         $perf = new Perf_Collector();
         $perf->reset('start');
@@ -1130,27 +1135,30 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->init_user_agent();
 
         if ($this->vod === null) {
-            $provider = $this->get_active_provider();
             $this->vod_enabled = false;
-            $vod_class = null;
-            if (!is_null($provider)) {
-                $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
-                $vod_class = $provider->get_vod_class();
-            } else if ($this->is_vod_playlist()) {
-                hd_debug_print("Using standard VOD implementation");
-                $vod_class = 'vod_standard';
-            }
-
+            $vod_class = $this->get_vod_class();
             if (!empty($vod_class)) {
                 hd_debug_print("Using VOD: $vod_class");
                 $this->vod = new $vod_class($this);
+                $provider = $this->get_active_provider();
+                if (!is_null($provider)) {
+                    $ignore_groups = $provider->getConfigValue(CONFIG_IGNORE_GROUPS);
+                }
+
                 $this->vod_enabled = $this->vod->init_vod($provider);
                 $this->vod->init_vod_screens();
                 hd_debug_print("VOD enabled: " . SwitchOnOff::to_def($this->vod_enabled), true);
-                if ($this->is_vod_playlist()) {
-                    return true;
-                }
             }
+        }
+
+        if ($this->is_vod_playlist()) {
+            hd_debug_print("VOD playlist inited", true);
+            return true;
+        }
+
+        if ($this->channels_loaded && !$reload_playlist) {
+            hd_debug_print("Channels already loaded", true);
+            return true;
         }
 
         $enable_vod_icon = SwitchOnOff::to_def($this->vod_enabled && $this->get_bool_parameter(PARAM_SHOW_VOD_ICON, false));
@@ -2394,7 +2402,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @param string $id
      */
-    public static function get_group_media_url_str($id)
+    public static function get_group_mediaurl_str($id)
     {
         switch ($id) {
             case TV_FAV_GROUP_ID:
@@ -2420,6 +2428,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             case VOD_FILTER_GROUP_ID:
                 return Starnet_Vod_Filter_Screen::get_media_url_string();
+
+            case VOD_LIST_GROUP_ID:
+                return Starnet_Vod_List_Screen::get_media_url_string(VOD_LIST_GROUP_ID);
         }
 
         return Starnet_Tv_Channel_List_Screen::get_media_url_string($id);
@@ -3500,5 +3511,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 hd_debug_print("!!!!! Vod history $type is not imported: " . (is_array($param) ? json_encode($param) : $param), true);
             }
         }
+    }
+
+    protected function get_vod_class()
+    {
+        $provider = $this->get_active_provider();
+        if (!is_null($provider)) {
+            return $provider->get_vod_class();
+        }
+
+        if ($this->is_vod_playlist()) {
+            return 'vod_standard';
+        }
+
+        return null;
     }
 }

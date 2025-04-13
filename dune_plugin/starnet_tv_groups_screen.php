@@ -593,20 +593,22 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         }
 
         $ordinary_items = array();
-        $all_groups = $this->plugin->get_groups_by_order();
-        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
-        foreach ($all_groups as $group_row) {
-            if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
-            if ($this->plugin->get_channels_by_order_cnt($group_row[COLUMN_GROUP_ID]) === 0) continue;
+        if (!$this->plugin->is_vod_playlist()) {
+            $all_groups = $this->plugin->get_groups_by_order();
+            $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
+            foreach ($all_groups as $group_row) {
+                if (!$show_adult && $group_row[COLUMN_ADULT] !== 0) continue;
+                if ($this->plugin->get_channels_by_order_cnt($group_row[COLUMN_GROUP_ID]) === 0) continue;
 
-            $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
-            $detailed_info = TR::t('tv_screen_group_info__3',
-                $caption,
-                $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]),
-                $this->plugin->get_channels_count($group_row[COLUMN_GROUP_ID], PARAM_DISABLED)
-            );
+                $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
+                $detailed_info = TR::t('tv_screen_group_info__3',
+                    $caption,
+                    $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]),
+                    $this->plugin->get_channels_count($group_row[COLUMN_GROUP_ID], PARAM_DISABLED)
+                );
 
-            $ordinary_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
+                $ordinary_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_WHITE, $detailed_info);
+            }
         }
 
         $no_channels = empty($ordinary_items);
@@ -614,11 +616,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $special_items = array();
         foreach ($this->plugin->get_groups(PARAM_GROUP_SPECIAL, PARAM_ALL) as $group_row) {
             $group_id = $group_row[COLUMN_GROUP_ID];
-            if ($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) continue;
+            if (($this->plugin->is_vod_playlist() && $group_id !== VOD_GROUP_ID) || ($group_id !== VOD_GROUP_ID && $no_channels)) continue;
 
             switch ($group_id) {
                 case TV_ALL_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_ALL) || $no_channels) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_ALL)) break;
 
                     $enabled = $this->plugin->get_channels_count($group_id, PARAM_ENABLED);
                     $disabled = $this->plugin->get_channels_count($group_id, PARAM_DISABLED);
@@ -628,7 +630,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case TV_FAV_GROUP_ID:
-                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES) || $no_channels) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) break;
 
                     $channels_cnt = $this->plugin->get_channels_order_count($group_id);
                     if (!$channels_cnt) break;
@@ -639,7 +641,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case TV_HISTORY_GROUP_ID:
-                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_HISTORY) || $no_channels) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_HISTORY)) break;
 
                     $channels_cnt = $this->plugin->get_tv_history_count();
                     if (!$channels_cnt) break;
@@ -650,10 +652,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
-                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS) || $no_channels) break;
-
-                    $has_changes = $this->plugin->get_changed_channels_count(PARAM_CHANGED);
-                    if (!$has_changes) break;
+                    if (!$this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS)
+                        || !$this->plugin->get_changed_channels_count(PARAM_CHANGED)) break;
 
                     $new = $this->plugin->get_changed_channels_count(PARAM_NEW);
                     $removed = $this->plugin->get_changed_channels_count(PARAM_REMOVED);
@@ -663,10 +663,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     break;
 
                 case VOD_GROUP_ID:
-                    if (!$this->plugin->is_vod_enabled() || !$this->plugin->get_bool_setting(PARAM_SHOW_VOD)) break;
-
-                    $caption = TR::t(VOD_GROUP_CAPTION);
-                    $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
+                    if ($this->plugin->is_vod_enabled() && $this->plugin->get_bool_setting(PARAM_SHOW_VOD)) {
+                        $caption = TR::load(VOD_GROUP_CAPTION);
+                        $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_LIGHTGREEN, $caption);
+                    }
                     break;
             }
         }
@@ -721,7 +721,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $icon = get_cached_image(safe_get_value($group_row, COLUMN_ICON, DEFAULT_GROUP_ICON));
 
         return array(
-            PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group_row[COLUMN_GROUP_ID]),
+            PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_mediaurl_str($group_row[COLUMN_GROUP_ID]),
             PluginRegularFolderItem::caption => $caption,
             PluginRegularFolderItem::view_item_params => array(
                 ViewItemParams::item_caption_color => $color,

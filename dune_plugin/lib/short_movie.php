@@ -47,7 +47,7 @@ class Short_Movie
     public $big_poster_url;
 
     /**
-     * @var
+     * @var string
      */
     public $info;
 

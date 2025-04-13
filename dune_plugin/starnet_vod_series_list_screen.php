@@ -175,7 +175,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 return Action_Factory::invalidate_folders(array(
                         $user_input->parent_media_url,
-                        Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID)
+                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID)
                     )
                 );
 
@@ -251,11 +251,11 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
     public static function get_media_url_string($movie_id, $season_id = null, $episode_id = null)
     {
         $arr = array('screen_id' => self::ID, 'movie_id' => $movie_id);
-        if ($season_id !== null) {
+        if (!empty($season_id)) {
             $arr['season_id'] = $season_id;
         }
 
-        if ($episode_id !== null) {
+        if (!empty($episode_id)) {
             $arr['episode_id'] = $episode_id;
         }
 

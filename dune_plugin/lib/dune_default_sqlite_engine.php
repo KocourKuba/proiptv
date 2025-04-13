@@ -27,6 +27,7 @@ class Dune_Default_Sqlite_Engine
     const XMLTV_TABLE = 'xmltv_sources';
     const PLAYLIST_XMLTV_TABLE = 'playlist_xmltv_sources';
     const SELECTED_XMLTV_TABLE = 'selected_xmltv';
+    const VOD_LIST_TABLE = 'vod_list_orders';
 
     const SETTINGS_TABLE = 'settings';
     const COOKIES_TABLE = 'cookies';
@@ -825,7 +826,7 @@ class Dune_Default_Sqlite_Engine
     public function get_all_table_values($table)
     {
         $table_name = self::get_table_name($table);
-        return $this->sql_playlist->fetch_array("SELECT * FROM $table_name ORDER BY ROWID ASC");
+        return $this->sql_playlist->fetch_array("SELECT * FROM $table_name ORDER BY ROWID;");
     }
 
     /**
@@ -837,7 +838,7 @@ class Dune_Default_Sqlite_Engine
     public function get_all_table_values_count($table)
     {
         $table_name = self::get_table_name($table);
-        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name");
+        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
     /**
@@ -2056,6 +2057,10 @@ class Dune_Default_Sqlite_Engine
             case VOD_HISTORY:
                 $db = self::VOD_HISTORY_DB;
                 $table_name = self::VOD_HISTORY_TABLE;
+                break;
+
+            case VOD_LIST_GROUP_ID:
+                $table_name = self::VOD_LIST_TABLE;
                 break;
 
             case VOD_FILTER_LIST:

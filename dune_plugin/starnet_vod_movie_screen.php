@@ -158,8 +158,8 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
                 Action_Factory::invalidate_folders(
                     array(
                         self::get_media_url_string(VOD_FAV_GROUP_ID),
-                        Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID),
-                        Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
+                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID),
+                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID)
                     ),
                     Action_Factory::close_and_run()
                 )

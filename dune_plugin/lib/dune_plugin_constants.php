@@ -26,6 +26,7 @@
 
 # Common actions
 const ACTION_ADD_FAV = 'add_favorite';
+const ACTION_ADD_TO_LIST = 'add_to_list';
 const ACTION_EXTERNAL_PLAYER = 'use_external_player';
 const ACTION_INTERNAL_PLAYER = 'use_internal_player';
 const ACTION_FOLDER_SELECTED = 'folder_selected';
@@ -144,6 +145,10 @@ const VOD_FAV_GROUP_ID = '##movie_favorites##';
 const VOD_FAV_GROUP_CAPTION = 'plugin_favorites';
 const VOD_FAV_GROUP_ICON = 'plugin_file://icons/favorite_vod_folder.png';
 
+const VOD_LIST_GROUP_ID = '##movie_list##';
+const VOD_LIST_GROUP_CAPTION = 'movie_list';
+const VOD_LIST_GROUP_ICON = 'plugin_file://icons/vod_list_folder.png';
+
 const VOD_HISTORY_GROUP_ID = '##playback_history_vod_group##';
 const VOD_HISTORY_GROUP_CAPTION = 'plugin_history';
 const VOD_HISTORY_GROUP_ICON = 'plugin_file://icons/history_vod_folder.png';
@@ -195,8 +200,6 @@ const COLUMN_WATCHED = 'watched';
 const COLUMN_POSITION = 'position';
 const COLUMN_DURATION = 'duration';
 const COLUMN_TIMESTAMP = 'time_stamp';
-const COLUMN_MOVIE_ID = 'movie_id';
-const COLUMN_SERIES_ID = 'series_id';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';

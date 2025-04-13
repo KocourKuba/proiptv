@@ -102,6 +102,7 @@ class Movie implements User_Input_Handler
         }
 
         $series_list = array_values($this->series_list);
+        hd_debug_print("Series list: " . json_encode($series_list), true);
         $episode = $series_list[$user_input->plugin_vod_series_ndx];
 
         $watched = (isset($user_input->playback_end_of_stream) && (int)$user_input->playback_end_of_stream !== 0)
@@ -110,8 +111,19 @@ class Movie implements User_Input_Handler
         $series_idx = empty($episode->id) ? $user_input->plugin_vod_series_ndx : $episode->id;
         hd_debug_print("add movie to history: id: $user_input->plugin_vod_id, series: $series_idx", true);
 
+        $invalidate[] = Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID);
+        $invalidate[] = Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID);
+
+        if ($user_input->plugin_vod_id === VOD_LIST_GROUP_ID) {
+            $movie_id = $episode->id;
+            $invalidate[] = Default_Dune_Plugin::get_group_mediaurl_str(VOD_LIST_GROUP_ID);
+        } else {
+            $movie_id = $user_input->plugin_vod_id;
+            $invalidate[] = Starnet_Vod_Series_List_Screen::get_media_url_string($user_input->plugin_vod_id, $episode->season_id);
+        }
+
         $this->plugin->set_vod_history(
-            $user_input->plugin_vod_id,
+            $movie_id,
             $series_idx,
             array(
                 COLUMN_WATCHED => (int)$watched,
@@ -121,18 +133,7 @@ class Movie implements User_Input_Handler
             )
         );
 
-        if (empty($episode->season_id)) {
-            $series_media_url_str = Starnet_Vod_Series_List_Screen::get_media_url_string($user_input->plugin_vod_id);
-        } else {
-            $series_media_url_str = Starnet_Vod_Series_List_Screen::get_media_url_string($user_input->plugin_vod_id, $episode->season_id);
-        }
-        return Action_Factory::invalidate_folders(
-            array(
-                $series_media_url_str,
-                Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID),
-                Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID)
-            )
-        );
+        return Action_Factory::invalidate_folders($invalidate);
     }
 
     /**
@@ -341,6 +342,7 @@ class Movie implements User_Input_Handler
     public function get_movie_play_info(MediaURL $media_url)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
 
         if (!isset($media_url->screen_id)) {
             hd_debug_print("get_movie_play_info: List screen in media url not set: " . $media_url->get_raw_string());
@@ -357,6 +359,7 @@ class Movie implements User_Input_Handler
                 }
                 $list = $this->series_list;
                 break;
+
             case Starnet_Vod_Series_List_Screen::ID:
             case Starnet_Vod_Movie_Screen::ID:
                 if (!$this->has_series()) {
@@ -366,6 +369,16 @@ class Movie implements User_Input_Handler
                 }
                 $list = $this->series_list;
                 break;
+
+            case Starnet_Vod_List_Screen::ID:
+                if (empty($this->series_list)) {
+                    hd_debug_print("get_movie_play_info: Invalid movie playlist: list is empty");
+                    print_backtrace();
+                    return array();
+                }
+                $list = $this->series_list;
+                break;
+
             default:
                 hd_debug_print("get_movie_play_info: Unknown list screen: $media_url->screen_id");
                 print_backtrace();
@@ -448,7 +461,7 @@ class Movie implements User_Input_Handler
         }
         hd_debug_print("starting vod index $initial_series_ndx at position $initial_start", true);
 
-        return array(
+        $info = array(
             PluginVodInfo::id => $this->id,
             PluginVodInfo::name => $this->movie_info[PluginMovie::name],
             PluginVodInfo::description => $this->movie_info[PluginMovie::description],
@@ -459,6 +472,9 @@ class Movie implements User_Input_Handler
             PluginVodInfo::actions => $this->get_action_map(),
             PluginVodInfo::initial_position_ms => $initial_start,
         );
+
+        hd_debug_print("info: " . json_encode($info), true);
+        return $info;
     }
 
     public function get_action_map()

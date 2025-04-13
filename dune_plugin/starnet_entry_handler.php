@@ -303,7 +303,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         if ($this->plugin->is_vod_enabled()
                             && $this->plugin->load_channels($plugin_cookies)
                             && SwitchOnOff::to_bool($plugin_cookies->{PARAM_SHOW_VOD_ICON})) {
-                            return Action_Factory::open_folder(Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID));
+                            return Action_Factory::open_folder(Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID));
                         }
 
                         return Action_Factory::show_error(false, TR::t('err_vod_not_available'));

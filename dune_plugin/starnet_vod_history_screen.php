@@ -74,8 +74,8 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 return Action_Factory::invalidate_folders(
                     array(
                         self::get_media_url_string(VOD_HISTORY_GROUP_ID),
-                        Starnet_Vod_Favorites_Screen::get_media_url_string(VOD_FAV_GROUP_ID),
-                        Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID)
+                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_FAV_GROUP_ID),
+                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID)
                     ),
                     Action_Factory::close_and_run()
                 );
@@ -134,8 +134,9 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
 
             hd_debug_print("history info: " . json_encode($movie_info), true);
             $movie_id = $movie_info['movie_id'];
-            $timestamp = $movie_info[COLUMN_TIMESTAMP];
-            $this->plugin->vod->ensure_movie_loaded($movie_id);
+            $movie = $this->plugin->vod->get_loaded_movie($movie_id);
+            if (is_null($movie)) continue;
+
             $short_movie = $this->plugin->vod->get_cached_short_movie($movie_id);
 
             if (is_null($short_movie)) {
@@ -146,6 +147,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 $history_cnt = $this->plugin->get_vod_history_count($movie_id);
                 $caption = $short_movie->name;
                 if ($history_cnt === 1) {
+                    $timestamp = $movie_info[COLUMN_TIMESTAMP];
                     if ($movie_info[COLUMN_WATCHED]) {
                         $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
                     } else if ($movie_info[COLUMN_DURATION] !== -1) {
@@ -173,7 +175,6 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 $poster_url = $short_movie->poster_url;
             }
 
-            $movie = $this->plugin->vod->get_loaded_movie($movie_id);
             if ($movie->has_seasons()) {
                 $screen_media_url = Starnet_Vod_Seasons_List_Screen::get_media_url_string($movie->id);
             } else {
@@ -201,8 +202,10 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('list_1x11_small_info'),
-            $this->plugin->get_screen_view('list_1x11_info'),
+            $this->plugin->get_screen_view('list_1x12_vod_info_normal'),
+            $this->plugin->get_screen_view('list_1x10_movie_info_normal'),
+            $this->plugin->get_screen_view('icons_5x2_movie_caption'),
+            $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
         );
     }
 }
