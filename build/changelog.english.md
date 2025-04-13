@@ -1,4 +1,7 @@
-﻿### Version 6.1.1238
+﻿### Version 6.1.1240
+- NewUI: TV program time was calculated incorrectly for the current time zone
+
+### Version 6.1.1238
 - Fixed incorrect line ending (CRLF instead of LF) in scripts for ext_epg
 - Configuration: Additional settings for Cbilling/Antifriz have been reverted back
 
