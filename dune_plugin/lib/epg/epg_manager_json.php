@@ -116,7 +116,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return $this->epg_cache[$epg_id][$day_start_ts];
             }
 
-            $cur_time = to_local_time_zone_offset($day_start_ts);
+            $cur_time = from_local_time_zone_offset($day_start_ts);
             $epg_date = gmdate('Y', $cur_time);
             $epg_url = str_replace(MACRO_YEAR, $epg_date, $epg_url);
 

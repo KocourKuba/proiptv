@@ -297,7 +297,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @override DunePlugin
      * @param string $channel_id
-     * @param int $day_start_tm_sec
+     * @param int $day_start_tm_sec timestamp in local TZ
      * @param object $plugin_cookies
      * @return array
      */
@@ -329,17 +329,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             // correct day start to local timezone
-            $local_day_start_tm_sec = to_local_time_zone_offset($day_start_tm_sec);
+            $utc_day_start_tm_sec = from_local_time_zone_offset($day_start_tm_sec);
 
             // get personal time shift for channel
             $time_shift = 3600 * ($channel_row[COLUMN_TIMESHIFT] + $this->get_setting(PARAM_EPG_SHIFT, 0));
             hd_debug_print("EPG time shift $time_shift", true);
-            $local_day_start_tm_sec += $time_shift;
+            $utc_day_start_tm_sec += $time_shift;
 
             $show_ext_epg = $this->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->ext_epg_supported;
 
             $cached = false;
-            $items = $this->epg_manager->get_day_epg_items($channel_row, $local_day_start_tm_sec, $cached);
+            $items = $this->epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $cached);
 
             foreach ($items as $time => $value) {
                 if (!isset($value[PluginTvEpgProgram::end_tm_sec], $value[PluginTvEpgProgram::name], $value[PluginTvEpgProgram::description])) {
@@ -706,9 +706,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $program_ts = ($program_ts > 0 ? $program_ts : time());
         hd_debug_print("channel ID: $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), true);
-        $day_epg = $this->get_day_epg($channel_id,
-            strtotime(date("Y-m-d", $program_ts)) + get_local_time_zone_offset(),
-            $plugin_cookies);
+        $day_epg = $this->get_day_epg($channel_id, to_local_time_zone_offset(strtotime(date("Y-m-d", $program_ts))), $plugin_cookies);
 
         foreach ($day_epg as $item) {
             if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
@@ -1354,7 +1352,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $query = "INSERT OR REPLACE INTO $channel_info_table (channel_id, title, group_id, adult)
                         SELECT $id_column AS channel_id, title, group_id, adult
                         FROM $iptv_channels WHERE $add_where
-                        GROUP BY channel_id ORDER BY ROWID ASC;";
+                        GROUP BY channel_id ORDER BY ROWID;";
             $this->sql_playlist->exec($query);
             hd_debug_print("Adding new channels: " . json_encode($new_channels), true);
         }
@@ -1395,7 +1393,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                             SELECT channel_id FROM $channel_info_table
                             WHERE group_id = $q_group_id
                             AND changed = 1 AND disabled == 0 
-                            ORDER BY ROWID ASC;";
+                            ORDER BY ROWID;";
             }
             $this->sql_playlist->exec_transaction($query);
         }
@@ -1410,7 +1408,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $group_channels_order_table = self::get_table_name($group_id);
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
             $query .= "INSERT OR IGNORE INTO $group_channels_order_table (channel_id)
-                        SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND disabled = 0 AND changed != -1 ORDER BY ROWID ASC;";
+                        SELECT channel_id FROM $channel_info_table WHERE group_id = $q_group_id AND disabled = 0 AND changed != -1 ORDER BY ROWID;";
 
             $query .= "DELETE FROM $group_channels_order_table WHERE channel_id IN
                         (SELECT channel_id FROM $group_channels_order_table
@@ -2812,7 +2810,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     if (empty($line)) continue;
                     if (strpos($line, "Output") !== false) break;
                     if (strpos($line, "Stream") !== false) {
-                        $info .= preg_replace("/ \([\[].*\)| \[.*\]|, [0-9k\.]+ tb[rcn]|, q=[0-9\-]+/", "", $line) . PHP_EOL;
+                        $info .= preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line) . PHP_EOL;
                     }
                 }
             }

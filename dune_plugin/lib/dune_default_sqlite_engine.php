@@ -1254,7 +1254,7 @@ class Dune_Default_Sqlite_Engine
     {
         $table_name = self::get_table_name($group_id);
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
-        $query = "SELECT channel_id FROM $table_name WHERE channel_id = $q_channel_id;";
+        $query = "SELECT COUNT(*) FROM $table_name WHERE channel_id = $q_channel_id;";
         return (int)$this->sql_playlist->query_value($query);
     }
 
@@ -1283,7 +1283,7 @@ class Dune_Default_Sqlite_Engine
         if ($remove) {
             $qry = "DELETE FROM $table_name WHERE channel_id = $q_channel_id;";
         } else {
-            $qry = "INSERT INTO $table_name (channel_id) VALUES ($q_channel_id);";
+            $qry = "INSERT OR IGNORE INTO $table_name (channel_id) VALUES ($q_channel_id);";
         }
         return $this->sql_playlist->exec($qry);
     }

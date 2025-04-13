@@ -754,31 +754,25 @@ function get_local_time_zone_offset()
 }
 
 /**
+ * Adjust timestamp from local time TZ to UTC
+ *
+ * @param int $time
+ * @return int
+ */
+function from_local_time_zone_offset($time)
+{
+    return $time - get_local_time_zone_offset();
+}
+
+/**
+ * Adjust timestamp from UTC to local time TZ
+ *
  * @param int $time
  * @return int
  */
 function to_local_time_zone_offset($time)
 {
-    // return integer of offset in seconds
-    $local_tz = get_local_tz();
-
-    if ($local_tz !== '') {
-        $sign_ch = $local_tz[0];
-        if ($sign_ch === '-') {
-            $sign = -1;
-        } else if ($sign_ch === '+') {
-            $sign = +1;
-        } else {
-            return $time;
-        }
-
-        $tz_hh = (int)substr($local_tz, 1, 2);
-        $tz_mm = (int)substr($local_tz, 3, 2);
-
-        return $time - $sign * ($tz_hh * 60 + $tz_mm) * 60;
-    }
-
-    return $time;
+    return $time + get_local_time_zone_offset();
 }
 
 
@@ -854,7 +848,7 @@ function format_datetime($fmt, $ts)
 {
     $tz_str = date_default_timezone_get();
     if ($tz_str === 'UTC') {
-        $ts = to_local_time_zone_offset($ts);
+        $ts = from_local_time_zone_offset($ts);
     }
 
     return date($fmt, $ts);
