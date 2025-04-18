@@ -248,7 +248,7 @@ class Control_Factory
      * @param array $post_action
      * @param int $width
      */
-    public static function add_custom_close_dialog_and_apply_buffon(&$defs, $name, $caption, $post_action, $width)
+    public static function add_custom_close_dialog_and_apply_button(&$defs, $name, $caption, $post_action, $width)
     {
         $defs[] = array(
             GuiControlDef::name => $name,

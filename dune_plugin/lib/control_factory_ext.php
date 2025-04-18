@@ -344,4 +344,9 @@ class Control_Factory_Ext extends Control_Factory
 
         return $def;
     }
+
+    public static function add_button_centered(&$defs, $button_defs, $viewport_width)
+    {
+        $defs[] = self::get_centered_button($button_defs, $viewport_width);
+    }
 }

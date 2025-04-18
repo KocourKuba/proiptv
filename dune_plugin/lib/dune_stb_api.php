@@ -1017,16 +1017,26 @@ function set_standby_mode($mode)
 }
 
 /**
- * @param string $setting
- * @return string|null
+ * @return array
  */
-function get_shell_settings($setting)
+function get_shell_settings()
 {
-    $settings = array();
     if (file_exists('/config/settings.properties')) {
         $settings = parse_ini_file('/config/settings.properties', 0, INI_SCANNER_RAW);
+        if ($settings !== false) {
+            return $settings;
+        }
     }
+    return array();
+}
 
+/**
+ * @param string $setting
+ * @return string
+ */
+function get_shell_setting($setting)
+{
+    $settings = get_shell_settings();
     return isset($settings[$setting]) ? $settings[$setting] : '';
 }
 
@@ -1788,19 +1798,39 @@ function normalizePath($path) {
     return str_replace(array('\\', '/'), DIRECTORY_SEPARATOR, $path);
 }
 
+/**
+ * Returns the path to the directory of the active skin (no trailing slash)
+ *
+ * @return string
+ */
 function get_active_skin_path()
 {
-    # Returns the path to the directory of the active skin (no trailing slash)
 
-    if (file_exists(getenv('FS_PREFIX') . '/tmp/dune_skin_dir.txt')) {
-        return rtrim(trim(preg_replace('/^.*=/', '', file_get_contents('/tmp/dune_skin_dir.txt'))), '/');
+    $skin_path = getenv('FS_PREFIX') . '/tmp/dune_skin_dir.txt';
+    if (file_exists($skin_path)) {
+        return rtrim(trim(preg_replace('/^.*=/', '', file_get_contents($skin_path))), '/');
     }
 
     hd_debug_print("Error in class " . __METHOD__ . " ! Can not determine the path to the active skin.");
     return '';
 }
 
-# Returns the specified path (no trailing slash), creating directories along the way
+/**
+ * Returns the path to the skin configuration
+ *
+ * @return string
+ */
+function get_skin_config_path()
+{
+    return getenv('FS_PREFIX') . "/flashdata/dune_skin/dune_skin_config.xml";
+}
+
+/**
+ * Returns the specified path (no trailing slash), creating directories along the way
+ * @param string $path
+ * @param int $dir_mode in octal
+ * @return string
+ */
 function get_paved_path($path, $dir_mode = 0777)
 {
     if (!create_path($path, $dir_mode)) {
