@@ -75,7 +75,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
             $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
-        } else if ($this->plugin->get_channels_order_count($media_url->group_id) !== 0) {
+        } else if ($this->plugin->get_order_count($media_url->group_id) !== 0) {
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
             if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
@@ -217,7 +217,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEM_DOWN:
-                $cnt = $this->plugin->get_channels_order_count($parent_group) - 1;
+                $cnt = $this->plugin->get_order_count($parent_group) - 1;
                 $sel_ndx++;
                 if ($sel_ndx > $cnt) {
                     return null;
@@ -236,7 +236,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEM_BOTTOM:
-                $max_sel = $this->plugin->get_channels_order_count(TV_FAV_GROUP_ID) - 1;
+                $max_sel = $this->plugin->get_order_count(TV_FAV_GROUP_ID) - 1;
                 if ($sel_ndx === $max_sel) {
                     return null;
                 }

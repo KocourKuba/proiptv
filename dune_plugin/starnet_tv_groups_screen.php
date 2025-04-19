@@ -603,7 +603,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $caption = str_replace('|', '¦', $group_row[COLUMN_TITLE]);
                 $detailed_info = TR::t('tv_screen_group_info__3',
                     $caption,
-                    $this->plugin->get_channels_order_count($group_row[COLUMN_GROUP_ID]),
+                    $this->plugin->get_order_count($group_row[COLUMN_GROUP_ID]),
                     $this->plugin->get_channels_count($group_row[COLUMN_GROUP_ID], PARAM_DISABLED)
                 );
 
@@ -632,7 +632,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 case TV_FAV_GROUP_ID:
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) break;
 
-                    $channels_cnt = $this->plugin->get_channels_order_count($group_id);
+                    $channels_cnt = $this->plugin->get_order_count($group_id);
                     if (!$channels_cnt) break;
 
                     $caption = TR::load(TV_FAV_GROUP_CAPTION);
@@ -748,7 +748,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 case TV_FAV_GROUP_ID:
                     if ($this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) {
-                        $channels_cnt = $this->plugin->get_channels_order_count($group_id);
+                        $channels_cnt = $this->plugin->get_order_count($group_id);
                         if ($channels_cnt) {
                             $visible++;
                         }

@@ -108,7 +108,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
                 break;
 
             case ACTION_ITEM_DOWN:
-                $cnt = $this->plugin->get_channels_order_count(VOD_LIST_GROUP_ID) - 1;
+                $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID) - 1;
                 $sel_ndx++;
                 hd_debug_print("Cnt: $cnt, sel_ndx: $sel_ndx");
                 if ($sel_ndx > $cnt) {
@@ -121,7 +121,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
             case ACTION_ITEM_DELETE:
                 $this->force_parent_reload = true;
                 $this->plugin->change_channels_order(VOD_LIST_GROUP_ID, $selected_media_url->episode_id, true);
-                if ($this->plugin->get_channels_order_count(VOD_LIST_GROUP_ID) != 0) break;
+                if ($this->plugin->get_order_count(VOD_LIST_GROUP_ID) != 0) break;
 
                 $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
@@ -151,7 +151,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
      */
     public static function get_media_url_string($movie_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'movie_id' => VOD_LIST_GROUP_ID, 'episode_id' => $movie_id));
+        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => VOD_LIST_GROUP_ID, 'movie_id' => VOD_LIST_GROUP_ID, 'episode_id' => $movie_id));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -162,6 +162,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
 
         $items = array();
         foreach ($this->plugin->get_channels_order(VOD_LIST_GROUP_ID) as $movie_id) {
@@ -178,8 +179,12 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
                     $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
                     $color = DEF_LABEL_TEXT_COLOR_BLUE;
                 } else {
-                    $percent = (int)((float)$movie_info[COLUMN_POSITION] / (float)$movie_info[COLUMN_DURATION] * 100);
-                    $detailed_info = TR::t('vod_screen_last_viewed__3', $caption, $view_date, $percent);
+                    $detailed_info = TR::t('vod_screen_last_viewed__4',
+                        $caption,
+                        $view_date,
+                        (int)((float)$movie_info[COLUMN_POSITION] / (float)$movie_info[COLUMN_DURATION] * 100),
+                        format_duration_seconds($movie_info[COLUMN_POSITION])
+                    );
                     $color = DEF_LABEL_TEXT_COLOR_LIMEGREEN;
                 }
                 break;

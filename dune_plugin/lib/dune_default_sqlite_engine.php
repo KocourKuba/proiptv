@@ -823,22 +823,10 @@ class Dune_Default_Sqlite_Engine
      * @param string $table
      * @return array
      */
-    public function get_all_table_values($table)
+    public function get_table_values($table)
     {
         $table_name = self::get_table_name($table);
         return $this->sql_playlist->fetch_array("SELECT * FROM $table_name ORDER BY ROWID;");
-    }
-
-    /**
-     * count values
-     *
-     * @param string $table
-     * @return array
-     */
-    public function get_all_table_values_count($table)
-    {
-        $table_name = self::get_table_name($table);
-        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
     /**
@@ -1328,7 +1316,7 @@ class Dune_Default_Sqlite_Engine
      * @param string $group_id
      * @return int
      */
-    public function get_channels_order_count($group_id)
+    public function get_order_count($group_id)
     {
         $table_name = self::get_table_name($group_id);
         return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");

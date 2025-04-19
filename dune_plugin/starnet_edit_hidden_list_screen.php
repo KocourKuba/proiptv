@@ -123,6 +123,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
 
         $items = array();
         if ($media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {

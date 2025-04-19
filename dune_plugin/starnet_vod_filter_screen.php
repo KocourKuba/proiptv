@@ -125,7 +125,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                         break;
 
                     case ACTION_ITEM_DOWN:
-                        $max_sel = $this->plugin->get_all_table_values_count(VOD_FILTER_LIST) + 1;
+                        $max_sel = $this->plugin->get_order_count(VOD_FILTER_LIST) + 1;
                         $sel_ndx++;
                         if ($sel_ndx > $max_sel) {
                             return null;
@@ -175,7 +175,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
             ),
         );
 
-        foreach ($this->plugin->get_all_table_values(VOD_FILTER_LIST) as $item_row) {
+        foreach ($this->plugin->get_table_values(VOD_FILTER_LIST) as $item_row) {
             if (empty($item_row)) continue;
 
             $items[] = array(

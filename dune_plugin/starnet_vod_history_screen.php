@@ -147,14 +147,16 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 $history_cnt = $this->plugin->get_vod_history_count($movie_id);
                 $caption = $short_movie->name;
                 if ($history_cnt === 1) {
-                    $timestamp = $movie_info[COLUMN_TIMESTAMP];
-                    if ($movie_info[COLUMN_WATCHED]) {
-                        $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
-                    } else if ($movie_info[COLUMN_DURATION] !== -1) {
-                        $percent = (int)((float)$movie_info[COLUMN_POSITION] / (float)$movie_info[COLUMN_DURATION] * 100);
-                        $detailed_info = TR::t('vod_screen_last_viewed__3', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp), $percent);
+                    $view_date = format_datetime("d.m.Y H:i", $movie_info[COLUMN_TIMESTAMP]);
+                    if ($movie_info[COLUMN_WATCHED] || $movie_info[COLUMN_DURATION] === -1) {
+                        $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
                     } else {
-                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $timestamp));
+                        $detailed_info = TR::t('vod_screen_last_viewed__4',
+                            $caption,
+                            $view_date,
+                            (int)((float)$movie_info[COLUMN_POSITION] / (float)$movie_info[COLUMN_DURATION] * 100),
+                            format_duration_seconds($movie_info[COLUMN_POSITION])
+                        );
                     }
                 } else {
                     $all_watched = true;
@@ -165,10 +167,12 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                             $recent_timestamp = $history_item[COLUMN_TIMESTAMP];
                         }
                     }
+
+                    $view_date = format_datetime("d.m.Y H:i", $recent_timestamp);
                     if ($all_watched) {
-                        $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $recent_timestamp));
+                        $detailed_info = TR::t('vod_screen_all_viewed__2', $short_movie->name, $view_date);
                     } else {
-                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, format_datetime("d.m.Y H:i", $recent_timestamp));
+                        $detailed_info = TR::t('vod_screen_last_viewed__2', $short_movie->name, $view_date);
                     }
                 }
 
@@ -187,6 +191,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $poster_url,
                     ViewItemParams::item_detailed_info => $detailed_info,
+                    ViewItemParams::item_caption_color => DEF_LABEL_TEXT_COLOR_WHITE,
                 )
             );
         }

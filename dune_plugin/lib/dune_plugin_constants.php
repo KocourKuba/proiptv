@@ -104,6 +104,8 @@ const ACTION_CLEAR_CACHE = 'clear_cache';
 const ACTION_INDEX_EPG = 'index_epg';
 const ACTION_CHOOSE_FILE = 'choose_file';
 const ACTION_ADD_TO_EXTERNAL_SOURCE = 'add_external_source';
+const ACTION_DISABLED = 'disabled';
+const ACTION_ORDER_SUPPORT = 'order_support';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';

@@ -169,7 +169,7 @@ class Starnet_Tv implements User_Input_Handler
         $all_channels = array();
         foreach ($this->plugin->get_groups_by_order() as $group_row) {
             $group_id = $group_row[COLUMN_GROUP_ID];
-            if ($this->plugin->get_channels_order_count($group_id) === 0) {
+            if ($this->plugin->get_order_count($group_id) === 0) {
                 continue;
             }
 

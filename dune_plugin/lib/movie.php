@@ -421,7 +421,11 @@ class Movie implements User_Input_Handler
             $name = $series->name;
             $ids = explode(':', $media_url->movie_id);
             $movie_id = $ids[0];
-            $viewed_params = $this->plugin->get_vod_history_params($movie_id, $series->id);
+            if ($media_url->screen_id === Starnet_Vod_List_Screen::ID) {
+                $viewed_params = $this->plugin->get_vod_history_params($series->id, $series->id);
+            } else {
+                $viewed_params = $this->plugin->get_vod_history_params($movie_id, $series->id);
+            }
             if (!empty($viewed_params) && $viewed_params[COLUMN_WATCHED] == 0 && $viewed_params[COLUMN_DURATION] != -1) {
                 $name .= " [" . format_duration($viewed_params[COLUMN_POSITION]) . "]";
 
@@ -444,8 +448,8 @@ class Movie implements User_Input_Handler
                 $playback_url .= HD::DUNE_PARAMS_MAGIC . $magic;
             }
 
+            hd_debug_print("Url: $playback_url", true);
             hd_debug_print("Playback movie: $media_url->movie_id, episode: $series->id ($variant)", true);
-            hd_debug_print("Url: $playback_url from $initial_start_array[$counter]", true);
             $series_array[] = array(
                 PluginVodSeriesInfo::name => $name,
                 PluginVodSeriesInfo::playback_url => $playback_url,

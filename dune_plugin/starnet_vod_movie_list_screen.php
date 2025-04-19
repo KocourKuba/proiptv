@@ -30,7 +30,7 @@ require_once 'starnet_vod_search_screen.php';
 
 class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements User_Input_Handler
 {
-    const ID = 'vod_movie_list';
+    const ID = 'vod_movies_list';
 
     /**
      * @param MediaURL $media_url
@@ -105,7 +105,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
             case ACTION_ADD_TO_LIST:
                 $is_in_list = $this->plugin->is_channel_in_order(VOD_LIST_GROUP_ID, $movie_id);
                 $this->plugin->change_channels_order(VOD_LIST_GROUP_ID, $movie_id, $is_in_list);
-                $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, !$this->plugin->get_channels_order_count(VOD_LIST_GROUP_ID));
+                $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, !$this->plugin->get_order_count(VOD_LIST_GROUP_ID));
                 hd_debug_print("Movie id: $movie_id added to list: $is_in_list");
                 return Action_Factory::invalidate_folders(
                     array(

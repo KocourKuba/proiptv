@@ -49,12 +49,13 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        return array(
-            GUI_EVENT_KEY_ENTER => Action_Factory::open_folder(),
-            GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_RELOAD, TR::t('vod_screen_reload_playlist')),
-            GUI_EVENT_KEY_STOP => User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP),
-            GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER),
-        );
+        $actions[GUI_EVENT_KEY_ENTER] = Action_Factory::open_folder();
+        $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
+        $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
+        $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
+        $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
+
+        return $actions;
     }
 
     /**
@@ -68,12 +69,15 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             return null;
         }
 
+        $parent_media_url = MediaURL::decode(safe_get_member($user_input, 'parent_media_url', ''));
+        $sel_media_url = MediaURL::decode(safe_get_member($user_input, 'selected_media_url', ''));
+        $group_id = safe_get_member($sel_media_url, COLUMN_GROUP_ID);
+
         switch ($user_input->control_id) {
             case ACTION_RELOAD:
                 hd_debug_print("reload categories");
                 $this->clear_vod();
-                $media_url = MediaURL::decode($user_input->parent_media_url);
-                $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
+                $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
                 return Action_Factory::update_regular_folder($range, true, -1);
 
             case GUI_EVENT_TIMER:
@@ -83,9 +87,44 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error);
 
             case ACTION_INVALIDATE:
-                $media_url = MediaURL::decode($user_input->parent_media_url);
-                $range = $this->get_folder_range($media_url, 0, $plugin_cookies);
+                $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);
                 return Action_Factory::update_regular_folder($range, true, -1);
+
+            case GUI_EVENT_KEY_POPUP_MENU:
+                $title = TR::t('playlist_name_msg__1', TR::load(VOD_GROUP_CAPTION));
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, $title, "refresh.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                if ($group_id === VOD_FAV_GROUP_ID && $this->plugin->get_order_count(VOD_FAV_GROUP_ID) !== 0) {
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
+                } else if ($group_id === VOD_HISTORY_GROUP_ID && $this->plugin->get_all_vod_history_count() !== 0) {
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
+                } else if ($group_id === VOD_LIST_GROUP_ID && $this->plugin->get_order_count(VOD_LIST_GROUP_CAPTION) !== 0) {
+                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
+                }
+                return Action_Factory::show_popup_menu($menu_items);
+
+            case ACTION_ITEMS_CLEAR:
+                return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
+                    $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
+
+            case ACTION_CONFIRM_CLEAR_DLG_APPLY:
+                if ($group_id === VOD_HISTORY_GROUP_ID) {
+                    $this->plugin->clear_all_vod_history();
+                    return User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE);
+                }
+
+                if ($group_id === VOD_FAV_GROUP_ID) {
+                    $this->plugin->change_vod_favorites(ACTION_ITEMS_CLEAR, null);
+                    return User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE);
+                }
+
+                if ($group_id === VOD_LIST_GROUP_ID) {
+                    $this->plugin->remove_channels_order(VOD_LIST_GROUP_ID);
+                    $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, true);
+                    return User_Input_Handler_Registry::create_action($this, ACTION_INVALIDATE);
+                }
+                break;
+
 
             default:
                 break;
@@ -116,6 +155,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
     public function get_all_folder_items(MediaURL $media_url, &$plugin_cookies)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
 
         if (!isset($this->category_index, $this->category_list)) {
             if (!$this->plugin->vod->fetchVodCategories($this->category_list, $this->category_index)) {
@@ -139,21 +179,43 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $category_list = $parent_category->get_sub_categories();
             } else {
                 foreach ($this->plugin->vod->get_special_groups() as $group) {
-                    if (empty($group) || $group['disabled']) continue;
+                    if (empty($group) || $group[ACTION_DISABLED]) continue;
+
+                    $skip = false;
+                    $color = DEF_LABEL_TEXT_COLOR_WHITE;
+                    $item_detailed_info = $group[COLUMN_TITLE];
 
                     switch ($group[COLUMN_GROUP_ID]) {
                         case VOD_FAV_GROUP_ID:
+                            $cnt = $this->plugin->get_order_count(VOD_FAV_GROUP_ID);
+                            if ($cnt === 0) {
+                                $skip = true;
+                                break;
+                            }
+
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2',
-                                TR::load(VOD_FAV_GROUP_CAPTION),
-                                $this->plugin->get_all_table_values_count(VOD_FAV_GROUP_ID));
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::load(VOD_FAV_GROUP_CAPTION), $cnt);
                             break;
 
                         case VOD_HISTORY_GROUP_ID:
+                            $cnt = $this->plugin->get_all_vod_history_count();
+                            if ($cnt === 0) {
+                                $skip = true;
+                                break;
+                            }
+
                             $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2',
-                                TR::load(VOD_HISTORY_GROUP_CAPTION),
-                                $this->plugin->get_all_vod_history_count());
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::load(VOD_HISTORY_GROUP_CAPTION), $cnt);
+                            break;
+
+                        case VOD_LIST_GROUP_ID:
+                            $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID);
+                            if ($cnt === 0) {
+                                $skip = true;
+                                break;
+                            }
+                            $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::load(VOD_LIST_GROUP_CAPTION), $cnt);
                             break;
 
                         case VOD_FILTER_GROUP_ID:
@@ -166,22 +228,17 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             $item_detailed_info = TR::load(VOD_SEARCH_GROUP_CAPTION);
                             break;
 
-                        case VOD_LIST_GROUP_ID:
-                            $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
-                            $item_detailed_info = TR::load(VOD_LIST_GROUP_CAPTION);
-                            break;
-
                         default:
-                            $color = DEF_LABEL_TEXT_COLOR_WHITE;
-                            $item_detailed_info = $group['title'];
                             break;
                     }
+
+                    if ($skip) continue;
 
                     hd_debug_print("special group: " . Default_Dune_Plugin::get_group_mediaurl_str($group[COLUMN_GROUP_ID]), true);
 
                     $items[] = array(
                         PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_mediaurl_str($group[COLUMN_GROUP_ID]),
-                        PluginRegularFolderItem::caption => TR::t($group['title']),
+                        PluginRegularFolderItem::caption => TR::t($group[COLUMN_TITLE]),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::item_caption_color => $color,
                             ViewItemParams::icon_path => $group[COLUMN_ICON],

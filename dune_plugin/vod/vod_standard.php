@@ -45,9 +45,6 @@ require_once 'starnet_vod_movie_list_screen.php';
 
 class vod_standard extends Abstract_Vod
 {
-    const VOD_FAVORITES_LIST = 'vod_favorite_items';
-    const VOD_HISTORY_ITEMS = 'vod_history_items';
-
     /**
      * @var Default_Dune_Plugin
      */
@@ -182,50 +179,51 @@ class vod_standard extends Abstract_Vod
 
             // Favorites category
             $special_group = array(
-                'group_id' => VOD_FAV_GROUP_ID,
-                'title' => VOD_FAV_GROUP_CAPTION,
-                'icon' => VOD_FAV_GROUP_ICON,
-                'disabled' => false
+                COLUMN_GROUP_ID => VOD_FAV_GROUP_ID,
+                COLUMN_TITLE => VOD_FAV_GROUP_CAPTION,
+                COLUMN_ICON => VOD_FAV_GROUP_ICON,
+                ACTION_ORDER_SUPPORT => true,
+                ACTION_DISABLED => false
             );
             $this->special_groups->set(VOD_FAV_GROUP_ID, $special_group);
 
             // History channels category
             $special_group = array(
-                'group_id' => VOD_HISTORY_GROUP_ID,
-                'title' => VOD_HISTORY_GROUP_CAPTION,
-                'icon' => VOD_HISTORY_GROUP_ICON,
-                'order_support' => false,
-                'disabled' => false,
+                COLUMN_GROUP_ID => VOD_HISTORY_GROUP_ID,
+                COLUMN_TITLE => VOD_HISTORY_GROUP_CAPTION,
+                COLUMN_ICON => VOD_HISTORY_GROUP_ICON,
+                ACTION_ORDER_SUPPORT => false,
+                ACTION_DISABLED => false,
             );
             $this->special_groups->set(VOD_HISTORY_GROUP_ID, $special_group);
 
             // List VOD
             $special_group = array(
-                'group_id' => VOD_LIST_GROUP_ID,
-                'title' => VOD_LIST_GROUP_CAPTION,
-                'icon' => VOD_LIST_GROUP_ICON,
-                'order_support' => true,
-                'disabled' => !$this->plugin->get_channels_order_count(VOD_LIST_GROUP_ID)
+                COLUMN_GROUP_ID => VOD_LIST_GROUP_ID,
+                COLUMN_TITLE => VOD_LIST_GROUP_CAPTION,
+                COLUMN_ICON => VOD_LIST_GROUP_ICON,
+                ACTION_ORDER_SUPPORT => true,
+                ACTION_DISABLED => false,
             );
             $this->special_groups->set(VOD_LIST_GROUP_ID, $special_group);
 
             // Search category
             $special_group = array(
-                'group_id' => VOD_SEARCH_GROUP_ID,
-                'title' => VOD_SEARCH_GROUP_CAPTION,
-                'icon' => VOD_SEARCH_GROUP_ICON,
-                'order_support' => true,
-                'disabled' => false,
+                COLUMN_GROUP_ID => VOD_SEARCH_GROUP_ID,
+                COLUMN_TITLE => VOD_SEARCH_GROUP_CAPTION,
+                COLUMN_ICON => VOD_SEARCH_GROUP_ICON,
+                ACTION_ORDER_SUPPORT => true,
+                ACTION_DISABLED => false,
             );
             $this->special_groups->set(VOD_SEARCH_GROUP_ID, $special_group);
 
             // Filter category
             $special_group = array(
-                'group_id' => VOD_FILTER_GROUP_ID,
-                'title' => VOD_FILTER_GROUP_CAPTION,
-                'icon' => VOD_FILTER_GROUP_ICON,
-                'order_support' => true,
-                'disabled' => empty($this->vod_filters),
+                COLUMN_GROUP_ID => VOD_FILTER_GROUP_ID,
+                COLUMN_TITLE => VOD_FILTER_GROUP_CAPTION,
+                COLUMN_ICON => VOD_FILTER_GROUP_ICON,
+                ACTION_ORDER_SUPPORT => true,
+                ACTION_DISABLED => empty($this->vod_filters),
             );
             $this->special_groups->set(VOD_FILTER_GROUP_ID, $special_group);
         }
@@ -256,7 +254,7 @@ class vod_standard extends Abstract_Vod
     public function toggle_special_group($id, $disable)
     {
         $group = $this->special_groups->get($id);
-        $group['disabled'] = $disable;
+        $group[ACTION_DISABLED] = $disable;
         $this->special_groups->set($id, $group);
     }
 
@@ -536,19 +534,19 @@ class vod_standard extends Abstract_Vod
         $keyword = utf8_encode(mb_strtolower($keyword, 'UTF-8'));
 
         foreach ($this->getVodEntries('') as $entry) {
-            $title = $entry['title'];
+            $title = $entry[COLUMN_TITLE];
             if (empty($title)) continue;
 
             $search_in = utf8_encode(mb_strtolower($title, 'UTF-8'));
             if (strpos($search_in, $keyword) === false) continue;
 
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = safe_get_value($match, 'title', $title);
+                $title = safe_get_value($match, COLUMN_TITLE, $title);
             }
 
-            $poster_url = $entry['icon'];
+            $poster_url = $entry[COLUMN_ICON];
             hd_debug_print("Found movie '$title', poster url: '$poster_url'", true);
-            $movies[] = new Short_Movie($entry['hash'], $title, $poster_url);
+            $movies[] = new Short_Movie($entry[COLUMN_HASH], $title, $poster_url);
         }
 
         $perf->setLabel('end');
@@ -599,9 +597,9 @@ class vod_standard extends Abstract_Vod
         foreach ($entries as $entry) {
             $pos++;
 
-            $title = $entry['title'];
+            $title = $entry[COLUMN_TITLE];
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = safe_get_value($match, 'title', $title);
+                $title = safe_get_value($match, COLUMN_TITLE, $title);
             }
 
             $movies[] = new Short_Movie($entry[COLUMN_HASH], trim($title), $entry[COLUMN_ICON], $title);

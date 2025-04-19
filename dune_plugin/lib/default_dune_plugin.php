@@ -2552,7 +2552,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
                 }
             } else {
-                if ($group_id === TV_FAV_GROUP_ID && $this->get_channels_order_count(TV_FAV_GROUP_ID) !== 0) {
+                if ($group_id === TV_FAV_GROUP_ID && $this->get_order_count(TV_FAV_GROUP_ID) !== 0) {
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 } else if ($group_id === TV_HISTORY_GROUP_ID && $this->get_tv_history_count() !== 0) {
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
