@@ -34,6 +34,7 @@ require_once 'starnet_setup_interface_screen.php';
 require_once 'starnet_setup_interface_newui_screen.php';
 require_once 'starnet_setup_category_screen.php';
 require_once 'starnet_setup_epg_screen.php';
+require_once 'starnet_setup_history_screen.php';
 require_once 'starnet_setup_playback_screen.php';
 require_once 'starnet_setup_ext_screen.php';
 require_once 'starnet_setup_ext_playlists_screen.php';
@@ -77,6 +78,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Category_Screen($this));
         $this->create_screen(new Starnet_Setup_Playlists_Screen($this));
         $this->create_screen(new Starnet_Setup_Epg_Screen($this));
+        $this->create_screen(new Starnet_Setup_History_Screen($this));
         $this->create_screen(new Starnet_Setup_Playback_Screen($this));
         $this->create_screen(new Starnet_Setup_Ext_Screen($this));
         $this->create_screen(new Starnet_Setup_Ext_Playlists_Screen($this));

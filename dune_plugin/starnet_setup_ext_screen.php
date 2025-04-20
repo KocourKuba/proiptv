@@ -32,9 +32,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
 {
     const ID = 'ext_setup';
 
-    const CONTROL_HISTORY_CHANGE_FOLDER = 'change_history_folder';
-    const CONTROL_COPY_TO_DATA = 'copy_to_data';
-    const CONTROL_COPY_TO_PLUGIN = 'copy_to_plugin';
     const CONTROL_ADULT_PASS_DLG = 'adult_pass_dialog';
     const ACTION_ADULT_PASS_DLG_APPLY = 'adult_pass_apply';
     const ACTION_SETTINGS_PASS_DLG_APPLY = 'settings_pass_apply';
@@ -68,24 +65,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // Plugin name
         $this->plugin->create_setup_header($defs);
-
-        //////////////////////////////////////
-        // history
-
-        $history_path = $this->plugin->get_history_path();
-        hd_debug_print("history path: $history_path");
-        $display_path = HD::string_ellipsis($history_path);
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_HISTORY_CHANGE_FOLDER, TR::t('setup_history_folder_path'), $display_path, $folder_icon, self::CONTROLS_WIDTH);
-
-        $path = $this->plugin->get_parameter(PARAM_HISTORY_PATH);
-        if (!is_null($path)) {
-            Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_COPY_TO_DATA, TR::t('setup_copy_to_data'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
-
-            Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_COPY_TO_PLUGIN, TR::t('setup_copy_to_plugin'), TR::t('apply'), $refresh_icon, self::CONTROLS_WIDTH);
-        }
 
         //////////////////////////////////////
         // adult channel password
@@ -151,66 +130,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                         array('initial_sel_ndx' => $this->return_index)
                     )
                 );
-
-            case self::CONTROL_HISTORY_CHANGE_FOLDER:
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_folder' => $user_input->control_id,
-                        'allow_reset' => true,
-                        'allow_network' => !is_limited_apk(),
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_history_folder_path'));
-
-            case ACTION_FOLDER_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_folder === self::CONTROL_HISTORY_CHANGE_FOLDER) {
-                    hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
-                    $this->plugin->set_history_path($data->filepath);
-
-                    $post_action = Action_Factory::show_title_dialog(
-                        TR::t('folder_screen_selected_folder__1', $data->caption),
-                        null,
-                        $data->filepath,
-                        self::CONTROLS_WIDTH
-                    );
-                    break;
-                }
-
-                break;
-
-            case ACTION_RESET_DEFAULT:
-                $data = MediaURL::make(array('filepath' => get_data_path()));
-                hd_debug_print("do set history folder to default: $data->filepath");
-                $this->plugin->set_history_path();
-                break;
-
-            case self::CONTROL_COPY_TO_DATA:
-                $history_path = $this->plugin->get_history_path();
-                hd_debug_print("copy to: $history_path");
-                try {
-                    HD::copy_data(get_data_path('history'), "/_" . PARAM_TV_HISTORY_ITEMS . "$/", $history_path);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
-                } catch (Exception $ex) {
-                    print_backtrace_exception($ex);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
-                }
-
-                break;
-
-            case self::CONTROL_COPY_TO_PLUGIN:
-                hd_debug_print("copy to: " . get_data_path());
-                try {
-                    HD::copy_data($this->plugin->get_history_path(), '_' . PARAM_TV_HISTORY_ITEMS . '$/', get_data_path(HISTORY_SUBDIR));
-                    $post_action = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
-                } catch (Exception $ex) {
-                    print_backtrace_exception($ex);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
-                }
-                break;
 
             case self::CONTROL_ADULT_PASS_DLG: // show pass dialog
                 return $this->do_get_pass_control_defs($user_input->adult);

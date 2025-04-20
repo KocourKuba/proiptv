@@ -145,6 +145,7 @@ setup_interface_newui_title = NewUI interface settings
 setup_category_title = Icon and category settings
 setup_change_settings = Change settings
 setup_epg_settings = EPG settings
+setup_history_settings = History settings
 setup_playback_settings = Playback settings
 setup_adult_title = Password for adult channels
 setup_adult_change = Change password

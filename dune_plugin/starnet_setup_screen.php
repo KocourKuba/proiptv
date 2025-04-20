@@ -36,6 +36,7 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
     const CONTROL_EPG_SCREEN = 'epg_screen';
+    const CONTROL_HISTORY_SCREEN = 'history_screen';
     const CONTROL_PLAYBACK_SCREEN = 'playback_screen';
     const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
 
@@ -111,12 +112,17 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
             TR::t('setup_epg_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Streaming settings 12
+        // History settings 12
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_HISTORY_SCREEN,
+            TR::t('setup_history_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
+        // Streaming settings 14
         Control_Factory::add_image_button($defs, $this, null, self::CONTROL_PLAYBACK_SCREEN,
             TR::t('setup_playback_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
-        // Extended settings 14
+        // Extended settings 16
         Control_Factory::add_image_button($defs, $this, null,
             self::CONTROL_EXT_SETUP_SCREEN,
             TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
@@ -185,12 +191,16 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
                 $this->plugin->set_return_index(Starnet_Setup_Epg_Screen::ID, 10);
                 return Action_Factory::open_folder(Starnet_Setup_Epg_Screen::get_media_url_str(), TR::t('setup_epg_settings'));
 
+            case self::CONTROL_HISTORY_SCREEN: // show epg settings dialog
+                $this->plugin->set_return_index(Starnet_Setup_History_Screen::ID, 12);
+                return Action_Factory::open_folder(Starnet_Setup_History_Screen::get_media_url_str(), TR::t('setup_history_settings'));
+
             case self::CONTROL_PLAYBACK_SCREEN: // show streaming settings dialog
-                $this->plugin->set_return_index(Starnet_Setup_Playback_Screen::ID, 12);
+                $this->plugin->set_return_index(Starnet_Setup_Playback_Screen::ID, 14);
                 return Action_Factory::open_folder(Starnet_Setup_Playback_Screen::get_media_url_str(), TR::t('setup_playback_settings'));
 
             case self::CONTROL_EXT_SETUP_SCREEN: // show additional settings dialog
-                $this->plugin->set_return_index(Starnet_Setup_Ext_Screen::ID, 14);
+                $this->plugin->set_return_index(Starnet_Setup_Ext_Screen::ID, 16);
                 return Action_Factory::open_folder(Starnet_Setup_Ext_Screen::get_media_url_str(), TR::t('setup_extended_setup'));
 
             case RESET_CONTROLS_ACTION_ID:
