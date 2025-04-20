@@ -461,7 +461,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     hd_debug_print("found channel: $ch_title, idx: $idx", true);
                     $add_params['number'] = $idx;
                     Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, ACTION_JUMP_TO_CHANNEL,
-                        '', $ch_title, 900, $add_params);
+                        $ch_title, 900, $add_params);
                 }
                 ++$idx;
             }

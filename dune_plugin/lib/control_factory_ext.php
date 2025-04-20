@@ -283,15 +283,6 @@ class Control_Factory_Ext extends Control_Factory
         }
     }
 
-    # Возвращает отцентрованную по горизонтали кнопку.
-    # Входные данные:
-    #	$button_defs - массив описаний кнопки
-    # 	$viewport_width - ширина вьюпорта (или диалогового окна)
-    #
-    # Example:
-    #	Control_Factory::add_button($button_defs, ...);
-    #	$defs[] = get_centered_button($button_defs, 1000);
-
     /**
      * @throws Exception
      */
@@ -335,18 +326,5 @@ class Control_Factory_Ext extends Control_Factory
         self::add_vgap($defs, $slider_height - 69);
         self::add_smart_label($defs, null, '<gap width=' . $gap . '/><icon>' . self::scrollbar_inner_bottom . '</icon>');
         self::add_vgap($defs, abs($vgap_inner) - $slider_height - 69 - $padding_bottom + self::$instance->scrollbar_inner_manifest['bottom']);
-    }
-
-    public static function get_centered_button($button_defs, $viewport_width)
-    {
-        $def = end($button_defs);
-        $def[GuiControlDef::title] = str_repeat(' ', ($viewport_width - $def[GuiControlDef::specific_def][GuiButtonDef::width]) / (15 * 2));
-
-        return $def;
-    }
-
-    public static function add_button_centered(&$defs, $button_defs, $viewport_width)
-    {
-        $defs[] = self::get_centered_button($button_defs, $viewport_width);
     }
 }

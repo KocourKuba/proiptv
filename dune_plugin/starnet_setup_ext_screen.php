@@ -116,6 +116,13 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         }
 
         //////////////////////////////////////
+        // Patch palette
+        $fix_palette = $this->plugin->get_parameter(PARAM_FIX_PALETTE, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_FIX_PALETTE, TR::t('setup_settings_patch_palette'), SwitchOnOff::translate($fix_palette),
+            get_image_path(SwitchOnOff::to_image($fix_palette)), self::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
         // debugging
 
         $debug_state = safe_get_member($plugin_cookies, PARAM_ENABLE_DEBUG, SwitchOnOff::off);
@@ -283,7 +290,32 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case PARAM_FULL_SIZE_REMOTE:
-                $this->plugin->toggle_parameter(PARAM_FULL_SIZE_REMOTE);
+                $this->plugin->toggle_parameter(PARAM_FULL_SIZE_REMOTE, false);
+                break;
+
+            case PARAM_FIX_PALETTE:
+                $new = $this->plugin->toggle_parameter(PARAM_FIX_PALETTE, false);
+                if ($new) {
+                    if (color_palette_check()) {
+                        $error_msg = TR::t('err_no_need_patch');
+                    } else {
+                        $error_msg = '';
+                        $action = color_palette_patch($error_msg);
+                        if ($action !== false) {
+                            return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), $action, TR::t('setup_patch_success'));
+                        }
+                    }
+                    $this->plugin->set_bool_parameter(PARAM_FIX_PALETTE, false);
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_patch'), null, $error_msg);
+                } else if (color_palette_check()) {
+                    $action = color_palette_restore();
+                    if ($action !== null) {
+                        return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), $action, TR::t('setup_patch_success'));
+                    }
+
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_patch'), null, TR::t('err_restore_patch'));
+                }
+
                 break;
 
             case PARAM_ENABLE_DEBUG:

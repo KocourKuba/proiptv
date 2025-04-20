@@ -187,7 +187,7 @@ class Action_Factory
         }
 
         Control_Factory::add_multiline_label($defs, '', $text, 15);
-        Control_Factory::add_custom_close_dialog_and_apply_button($defs, 'close_button', TR::t('ok'), $post_action, 300);
+        Control_Factory::add_custom_close_dialog_and_apply_button($defs, 'close_button', TR::t('ok'), 300, $post_action);
 
         return self::show_dialog($title, $defs, false, $preferred_width);
     }
@@ -714,13 +714,10 @@ class Action_Factory
      */
     public static function restart($reboot = false)
     {
-        if ($reboot !== false) {
-            exec('reboot');
-        }
-
         return array(
             GuiAction::handler_string_id => CHANGE_SETTINGS_ACTION_ID,
             GuiAction::data => array(
+                ChangeSettingsActionData::reboot => $reboot,
                 ChangeSettingsActionData::restart_gui => true,
                 ChangeSettingsActionData::post_action => null
             )

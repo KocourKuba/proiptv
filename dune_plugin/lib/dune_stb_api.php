@@ -119,34 +119,61 @@ if (!defined('JSON_PRETTY_PRINT')) define('JSON_PRETTY_PRINT', 128);
 if (!defined('JSON_UNESCAPED_UNICODE')) define('JSON_UNESCAPED_UNICODE', 256);
 
 # Dune colors const's.
-# Common:                               idx     default palette                 Silver palette (new)
-const DEF_LABEL_TEXT_COLOR_BLACK        = 0;  # '#000000'	Black				'#000000'	    IPTV plugin playback time and number of EPG item
-const DEF_LABEL_TEXT_COLOR_BLUE         = 1;  # '#0000a0'	Blue				'#0000a0'	    unknown
-const DEF_LABEL_TEXT_COLOR_PALEGREEN    = 2;  # '#c0e0c0'	Light light green  	'#797979'	    unknown
-const DEF_LABEL_TEXT_COLOR_LIGHTBLUE    = 3;  # '#a0c0ff'	Light blue			'#797979'	    unknown
-const DEF_LABEL_TEXT_COLOR_RED          = 4;  # '#ff4040'	Red					'#8b0000'	    Symbol R Recorded Channel Kartina TV
-const DEF_LABEL_TEXT_COLOR_LIMEGREEN    = 5;  # '#c0ff40'	Light green			'#797979'	    unknown
-const DEF_LABEL_TEXT_COLOR_GOLD         = 6;  # '#ffe040'	Gold (Light yellow)	'#797979'	    unknown
-const DEF_LABEL_TEXT_COLOR_SILVER       = 7;  # '#c0c0c0'	Silver  			'#bfbfbf'	    File browser (right sub description)
-const DEF_LABEL_TEXT_COLOR_GRAY         = 8;  # '#808080'	Grey				'#797979'	    IPTV plugin playback, categories
-const DEF_LABEL_TEXT_COLOR_VIOLET       = 9;  # '#4040c0'	Violet				'#797979'	    unknown
-const DEF_LABEL_TEXT_COLOR_GREEN        = 10; # '#40ff40'	Green				'#797979'	    VOD description rating(IMDB..)
-const DEF_LABEL_TEXT_COLOR_TURQUOISE    = 11; # '#40ffff'	Turquoise (Cyan)	'#797979'	    unknown
-const DEF_LABEL_TEXT_COLOR_ORANGE       = 12; # '#ff8040'	Orange				'#797979'	    unknown
-const DEF_LABEL_TEXT_COLOR_MAGENTA      = 13; # '#ff40ff'	Purple				'#797979'	    unknown
-const DEF_LABEL_TEXT_COLOR_LIGHTYELLOW  = 14; # '#ffff40'	Light yellow		'#fffdf3'	    Widget(time, temp), path (last item), messages, IPTV playback (channels number)
-const DEF_LABEL_TEXT_COLOR_WHITE        = 15; # '#ffffe0'	White				'#a9a9a9'	    Main color, widget, combobox etc
+# Common:                               idx     default palette                 Silver      (new)
+const DEF_LABEL_TEXT_COLOR_BLACK        = 0;  # '000000'	Black				'000000'	IPTV plugin playback time and number of EPG item
+const DEF_LABEL_TEXT_COLOR_BLUE         = 1;  # '0000a0'	Blue				'0000a0'	unknown
+const DEF_LABEL_TEXT_COLOR_PALEGREEN    = 2;  # 'c0e0c0'	Light light green  	'797979'	unknown
+const DEF_LABEL_TEXT_COLOR_LIGHTBLUE    = 3;  # 'a0c0ff'	Light blue			'797979'	unknown
+const DEF_LABEL_TEXT_COLOR_RED          = 4;  # 'ff4040'	Red					'8b0000'	Symbol R Recorded Channel Kartina TV
+const DEF_LABEL_TEXT_COLOR_LIMEGREEN    = 5;  # 'c0ff40'	Light green			'797979'	unknown
+const DEF_LABEL_TEXT_COLOR_GOLD         = 6;  # 'ffe040'	Gold (Light yellow)	'797979'	unknown
+const DEF_LABEL_TEXT_COLOR_SILVER       = 7;  # 'c0c0c0'	Silver  			'bfbfbf'	File browser (right sub description)
+const DEF_LABEL_TEXT_COLOR_GRAY         = 8;  # '808080'	Grey				'797979'	IPTV plugin playback, categories
+const DEF_LABEL_TEXT_COLOR_VIOLET       = 9;  # '4040c0'	Violet				'797979'	unknown
+const DEF_LABEL_TEXT_COLOR_GREEN        = 10; # '40ff40'	Green				'797979'	VOD description rating(IMDB..)
+const DEF_LABEL_TEXT_COLOR_TURQUOISE    = 11; # '40ffff'	Turquoise (Cyan)	'797979'	unknown
+const DEF_LABEL_TEXT_COLOR_ORANGE       = 12; # 'ff8040'	Orange				'797979'	unknown
+const DEF_LABEL_TEXT_COLOR_MAGENTA      = 13; # 'ff40ff'	Purple				'797979'	unknown
+const DEF_LABEL_TEXT_COLOR_LIGHTYELLOW  = 14; # 'ffff40'	Light yellow		'fffdf3'	Widget(time, temp), path, messages, IPTV playback (channels number)
+const DEF_LABEL_TEXT_COLOR_WHITE        = 15; # 'ffffe0'	White				'a9a9a9'	Main color, widget, combobox etc
 # Extra:
-const DEF_LABEL_TEXT_COLOR_DARKGRAY     = 16; # '#404040'	Dark grey			'#797979'	    Color buttons,
-const DEF_LABEL_TEXT_COLOR_DIMGRAY      = 17; # '#aaaaa0'	Grey				'#797979'	    Some VOD description text
-const DEF_LABEL_TEXT_COLOR_YELLOW       = 18; # '#ffff00'	Yellow				'#797979'	    VOD descr
-const DEF_LABEL_TEXT_COLOR_LIGHTGREEN   = 19; # '#50ff50'	Green				'#797979'	    VOD descr
-const DEF_LABEL_TEXT_COLOR_SKYBLUE      = 20; # '#5080ff'	Blue				'#797979'	    VOD descr
-const DEF_LABEL_TEXT_COLOR_CORAL        = 21; # '#ff5030'	Coral (Light red)	'#797979'	    VOD descr
-const DEF_LABEL_TEXT_COLOR_DARKGRAY2    = 22; # '#404040'	Dark grey 2			'#797979'	    VOD descr
-const DEF_LABEL_TEXT_COLOR_GAINSBORO    = 23; # '#e0e0e0'	Light light grey	'#797979'	    P+ P-
+const DEF_LABEL_TEXT_COLOR_DARKGRAY     = 16; # '404040'	Dark grey			'797979'	Color buttons,
+const DEF_LABEL_TEXT_COLOR_DIMGRAY      = 17; # 'aaaaa0'	Grey				'797979'	Some VOD description text
+const DEF_LABEL_TEXT_COLOR_YELLOW       = 18; # 'ffff00'	Yellow				'797979'	VOD descr
+const DEF_LABEL_TEXT_COLOR_LIGHTGREEN   = 19; # '50ff50'	Green				'797979'	VOD descr
+const DEF_LABEL_TEXT_COLOR_SKYBLUE      = 20; # '5080ff'	Blue				'797979'	VOD descr
+const DEF_LABEL_TEXT_COLOR_CORAL        = 21; # 'ff5030'	Coral (Light red)	'797979'	VOD descr
+const DEF_LABEL_TEXT_COLOR_DARKGRAY2    = 22; # '404040'	Dark grey 2			'797979'	VOD descr
+const DEF_LABEL_TEXT_COLOR_GAINSBORO    = 23; # 'e0e0e0'	Light light grey	'797979'	P+ P-
 
 const CMD_STATUS_GREP = '" /firmware/ext_command/cgi-bin/do | grep "command_status" | sed -n "s|^<param name=\"command_status\" value=\"(.*)\"/>|\1|p"';
+
+static $dune_default_colors_values = array(
+//  DEF_LABEL_TEXT_COLOR_BLACK 			=> '000000',
+//  DEF_LABEL_TEXT_COLOR_BLUE 			=> '0000a0',
+    DEF_LABEL_TEXT_COLOR_PALEGREEN 		=> 'c0e0c0',
+    DEF_LABEL_TEXT_COLOR_LIGHTBLUE 		=> 'a0c0ff',
+//  DEF_LABEL_TEXT_COLOR_RED            => 'c0c0c0',
+    DEF_LABEL_TEXT_COLOR_LIMEGREEN 		=> 'c0ff40',
+    DEF_LABEL_TEXT_COLOR_GOLD 			=> 'ffe040',
+//  DEF_LABEL_TEXT_COLOR_SILVER         => 'c0c0c0',
+    DEF_LABEL_TEXT_COLOR_GRAY           => '808080',
+    DEF_LABEL_TEXT_COLOR_VIOLET 		=> '4040c0',
+    DEF_LABEL_TEXT_COLOR_GREEN   		=> '40ff40',
+    DEF_LABEL_TEXT_COLOR_TURQUOISE 		=> '40ffff',
+    DEF_LABEL_TEXT_COLOR_ORANGE 		=> 'ff8040',
+    DEF_LABEL_TEXT_COLOR_MAGENTA 		=> 'ff40ff',
+//  DEF_LABEL_TEXT_COLOR_LIGHTYELLOW
+    DEF_LABEL_TEXT_COLOR_WHITE			=> 'ffffe0',
+    DEF_LABEL_TEXT_COLOR_DARKGRAY       => '404040',
+    DEF_LABEL_TEXT_COLOR_DIMGRAY        => 'aaaaa0',
+    DEF_LABEL_TEXT_COLOR_YELLOW 		=> 'ffff00',
+    DEF_LABEL_TEXT_COLOR_LIGHTGREEN 	=> '50ff50',
+    DEF_LABEL_TEXT_COLOR_SKYBLUE 		=> '5080ff',
+    DEF_LABEL_TEXT_COLOR_CORAL 			=> 'ff5030',
+    DEF_LABEL_TEXT_COLOR_DARKGRAY2 		=> '404040',
+    DEF_LABEL_TEXT_COLOR_GAINSBORO 		=> 'e0e0e0',
+);
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -650,7 +677,8 @@ function get_serial_number()
 {
     static $result = null;
 
-    if (is_null($result) && preg_match("/^serial_number:(.*)/m", file_get_contents(getenv('FS_PREFIX') . "/tmp/sysinfo.txt"), $m) > 0) {
+    if (is_null($result)
+        && preg_match("/^serial_number:(.*)/m", file_get_contents(getenv('FS_PREFIX') . "/tmp/sysinfo.txt"), $m) > 0) {
         $result = trim($m[1]);
     }
 
@@ -980,7 +1008,8 @@ function send_ir_code_return_status($key)
  */
 function get_player_state()
 {
-    # return string (PLAYER_STATE_STANDBY | PLAYER_STATE_BLACK_SCREEN | PLAYER_STATE_NAVIGATOR | PLAYER_STATE_FILE_PLAYBACK | PLAYER_STATE_DVD_PLAYBACK | PLAYER_STATE_BLURAY_PLAYBACK)
+    # return string (PLAYER_STATE_STANDBY | PLAYER_STATE_BLACK_SCREEN | PLAYER_STATE_NAVIGATOR
+    # | PLAYER_STATE_FILE_PLAYBACK | PLAYER_STATE_DVD_PLAYBACK | PLAYER_STATE_BLURAY_PLAYBACK)
 
     $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "player_state" | sed -n "s/^.*player_state = /\1/p"';
     return get_shell_exec($cmd);
@@ -1014,7 +1043,8 @@ function set_standby_mode($mode)
     # return string (command execution status)
     # argument values (STANDBY_MODE_OFF | STANDBY_MODE_ON)
 
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=ir_code&ir_code=' . (($mode === STANDBY_MODE_OFF) ? GUI_EVENT_DISCRETE_POWER_ON : GUI_EVENT_DISCRETE_POWER_OFF) . CMD_STATUS_GREP;
+    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=ir_code&ir_code='
+        . (($mode === STANDBY_MODE_OFF) ? GUI_EVENT_DISCRETE_POWER_ON : GUI_EVENT_DISCRETE_POWER_OFF) . CMD_STATUS_GREP;
     return get_shell_exec($cmd);
 }
 
@@ -1051,7 +1081,8 @@ function get_shell_setting($setting)
  */
 function get_playback_state()
 {
-    # return string (PLAYBACK_STOPPED | PLAYBACK_INITIALIZING | PLAYBACK_PLAYING | PLAYBACK_PAUSED | PLAYBACK_SEEKING | PLAYBACK_BUFFERING | PLAYBACK_FINISHED | PLAYBACK_DEINITIALIZING)
+    # return string (PLAYBACK_STOPPED | PLAYBACK_INITIALIZING | PLAYBACK_PLAYING | PLAYBACK_PAUSED
+    # | PLAYBACK_SEEKING | PLAYBACK_BUFFERING | PLAYBACK_FINISHED | PLAYBACK_DEINITIALIZING)
 
     $cmd = 'cat $FS_PREFIX/tmp/run/ext_command.state | grep -w "playback_state" | sed -n "s/^.*playback_state = /\1/p"';
     return get_shell_exec($cmd);
@@ -1159,7 +1190,7 @@ function get_position_seconds()
 function set_position_seconds($seconds)
 {
     # return string (command execution status)
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=' . (empty($seconds) ? 'status' : 'set_playback_state&position=' . $seconds) . CMD_STATUS_GREP;
+    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=' . (empty($seconds) ? 'status' : "set_playback_state&position=$seconds") . CMD_STATUS_GREP;
     return get_shell_exec($cmd);
 }
 
@@ -1172,7 +1203,9 @@ function set_speed_and_position_seconds($speed, $seconds)
 {
     # return string (command execution status)
 
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=' . ((empty($speed) || empty($seconds)) ? 'status' : 'set_playback_state&speed=' . $speed . '&position=' . $seconds) . CMD_STATUS_GREP;
+    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd='
+        . ((empty($speed) || empty($seconds)) ? 'status' : "set_playback_state&speed=$speed&position=$seconds")
+        . CMD_STATUS_GREP;
     return get_shell_exec($cmd);
 }
 
@@ -1493,7 +1526,9 @@ function set_window_rect($x, $y, $width, $height)
 {
     # Return: command execution status
 
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&window_fullscreen=0&window_rect_x=' . $x . '&window_rect_y=' . $y . '&window_rect_width=' . $width . '&window_rect_height=' . $height . CMD_STATUS_GREP;
+    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd='
+        . "set_playback_state&window_fullscreen=0&window_rect_x=$x&window_rect_y=$y&window_rect_width=$width&window_rect_height=$height"
+        . CMD_STATUS_GREP;
     return get_shell_exec($cmd);
 }
 
@@ -1533,7 +1568,9 @@ function set_clip_rect($x, $y, $width, $height)
 {
     # Return: command execution status
 
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&clip_rect_x=' . $x . '&clip_rect_y=' . $y . '&clip_rect_width=' . $width . '&clip_rect_height=' . $height . CMD_STATUS_GREP;
+    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd='
+        . "set_playback_state&clip_rect_x=$x&clip_rect_y=$y&clip_rect_width=$width&clip_rect_height=$height"
+        . CMD_STATUS_GREP;
     return get_shell_exec($cmd);
 }
 
@@ -1590,7 +1627,9 @@ function set_video_source_rect($x, $y, $width, $height)
     # original video so programmer should take care to avoid such situations.
     # Return: command execution status
 
-    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd=set_playback_state&video_source_rect_x=' . $x . '&video_source_rect_y=' . $y . '&video_source_rect_width=' . $width . '&video_source_rect_height=' . $height . CMD_STATUS_GREP;
+    $cmd = 'env REQUEST_METHOD="GET" QUERY_STRING="cmd='
+        . "set_playback_state&video_source_rect_x=$x&video_source_rect_y=$y&video_source_rect_width=$width&video_source_rect_height=$height"
+        . CMD_STATUS_GREP;
     return get_shell_exec($cmd);
 }
 
@@ -1807,13 +1846,12 @@ function normalizePath($path) {
  */
 function get_active_skin_path()
 {
-
     $skin_path = getenv('FS_PREFIX') . '/tmp/dune_skin_dir.txt';
     if (file_exists($skin_path)) {
-        return rtrim(trim(preg_replace('/^.*=/', '', file_get_contents($skin_path))), '/');
+        return getenv('FS_PREFIX') . rtrim(trim(preg_replace('/^.*=/', '', file_get_contents($skin_path))), '/');
     }
 
-    hd_debug_print("Error in class " . __METHOD__ . " ! Can not determine the path to the active skin.");
+    hd_debug_print("Error in class " . __METHOD__ . " ! Can not determine the path to the active skin. $skin_path");
     return '';
 }
 
@@ -2039,7 +2077,9 @@ function get_system_language_string_value($string_key)
     # Returns a string constant in the system language by key
 
     if ($sys_settings = parse_ini_file('/config/settings.properties', false, INI_SCANNER_RAW)) {
-        $sys_lang = file_exists('/firmware/translations/dune_language_' . $sys_settings['interface_language'] . '.txt') ? $sys_settings['interface_language'] : 'english';
+        $sys_lang = file_exists("/firmware/translations/dune_language_{$sys_settings['interface_language']}.txt")
+            ? $sys_settings['interface_language']
+            : 'english';
         if (($lang_txt = file_get_contents("/firmware/translations/dune_language_$sys_lang.txt")) &&
             preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
             return trim($m[1]);
@@ -2552,4 +2592,177 @@ function send_process_signal($pid, $sig_num) {
     }
     exec("kill -s $sig_num $pid 2>&1", $junk, $return_code);
     return !$return_code;
+}
+
+/**
+ * Return true if palette is not changed or not exist
+ *
+ * @return true
+ */
+function color_palette_check()
+{
+    global $dune_default_colors_values;
+
+    $skin_path = get_active_skin_path();
+    $skin_config = "$skin_path/dune_skin_config.xml";
+
+    if (!file_exists($skin_config)) {
+        hd_debug_print("'$skin_config' does not exist");
+        return true;
+    }
+
+    $result = 1;
+    $dom = new DomDocument();
+    $dom->load($skin_config);
+    $color = $dom->getElementsByTagName('color');
+    /** @var DOMElement $item */
+    foreach ($color as $item) {
+        $color_index = $item->getAttribute('index');
+        $color_value = $item->getAttribute('value');
+        if ($color_index !== '' && $color_value !== '' && isset($dune_default_colors_values[$color_index])) {
+            $result &= ($color_value === $dune_default_colors_values[$color_index]);
+        }
+    }
+
+    return (bool)$result;
+}
+
+/**
+ * Patch system or custom palette for default system color
+ *
+ * @param string $error
+ * @return array|false
+ */
+function color_palette_patch(&$error)
+{
+    global $dune_default_colors_values;
+
+    $error = '';
+    clearstatcache();
+
+    $skin_path = get_active_skin_path();
+    $skin_config = "$skin_path/dune_skin_config.xml";
+    if (!file_exists($skin_config)) {
+        $error = "'$skin_config' does not exist";
+        return false;
+    }
+
+    $origin_skin_config = file_get_contents($skin_config);
+
+    $dom = new DomDocument();
+    $dom->load($skin_config);
+    $color = $dom->getElementsByTagName('color');
+
+    foreach ($color as $item) {
+        $color_index = null;
+        $color_value = null;
+        foreach ($item->attributes as $attrName => $attrNode) {
+            if ($attrName == 'index') {
+                $color_index = $attrNode->value;
+            }
+            else if ($attrName == 'value') {
+                $color_value = $attrNode->value;
+            }
+
+            if (is_null($color_index) || is_null($color_value)) continue;
+
+            if (isset($dune_default_colors_values[$color_index])) {
+                $attrNode->ownerElement->setAttribute('value', $dune_default_colors_values[$color_index]);
+            }
+        }
+    }
+
+    $reboot_action = Action_Factory::restart(true);
+    $xml = $dom->saveXML();
+    // cut <?xml> tag
+    $patched_skin_config = substr($xml, strpos($xml, '?>') + 2);
+
+    if (preg_match('/\/*firmware/', $skin_path)) {
+        // copy system skin to custom skin
+        $custom_skin_path = preg_replace('/(.*\/(flashdata|persistfs)).*$/', "$1", get_data_path()) . '/dune_skin';
+        hd_debug_print("New custom skin path: $custom_skin_path");
+
+        // clear existing custom skin
+        delete_directory($custom_skin_path);
+        if (!create_path($custom_skin_path)) {
+            $error = 'The directory for the custom skin in the system store is not available!';
+            hd_debug_print("$error Process was terminated");
+            return false;
+        }
+
+        foreach (glob("$skin_path/*") as $file) {
+            $file = realpath($file);
+            $basename = basename($file);
+
+            if (is_dir($file)) {
+                recursive_copy($file, "$custom_skin_path/$basename");
+            } else if ($basename == 'dune_skin_config.xml') {
+                if (!file_put_contents("$custom_skin_path/$basename", $patched_skin_config)) {
+                    $error = "An unexpected error occurred when saving to save the 'dune_skin_config.xml'!";
+                    hd_debug_print("$error The process was terminated");
+                    return false;
+                }
+            } else if (!copy($file, "$custom_skin_path/$basename")) {
+                $error = 'In the process of copying a skin file error occurred';
+                hd_debug_print("$error The process was terminated");
+                return false;
+            }
+        }
+
+        $system_settings = get_shell_settings();
+        if (!empty($system_settings)) {
+            $system_settings['gui_skin'] = 'custom';
+            $system_settings['appearance'] = 'custom';
+            $reboot_action = Action_Factory::change_settings($system_settings, true, false);
+        }
+    } else if (!file_put_contents($skin_config, $patched_skin_config)) {
+        $error = "An unexpected error occurred when saving to save the '$skin_config'";
+        hd_debug_print("$error The process was terminated");
+        return false;
+    }
+
+    create_path(get_data_path('skin_backup'));
+    @file_put_contents(get_data_path('skin_backup/') . md5($patched_skin_config), $origin_skin_config);
+    return $reboot_action;
+}
+
+function color_palette_restore()
+{
+    $skin_config = get_active_skin_path() . '/dune_skin_config.xml';
+    $hash = md5(file_get_contents($skin_config));
+    $backup_storage_path = get_data_path('skin_backup');
+
+    if (!file_exists($skin_config) || !file_exists($backup_storage_path)) {
+        return null;
+    }
+
+    foreach (glob($backup_storage_path . '/*') as $file) {
+        if (basename($file) !== $hash) continue;
+
+        if (copy($file, $skin_config)) {
+            unlink($file);
+        }
+
+        hd_print('Skin colors restored succesfull!');
+        break;
+    }
+
+    return Action_Factory::restart(true);
+}
+
+function recursive_copy($source, $target)
+{
+    if (!is_dir($source)) {
+        copy($source, $target);
+    } else {
+        @mkdir($target);
+        $dir = dir($source);
+        while (($entry = $dir->read()) !== false) {
+            if ($entry == '.' || $entry == '..') continue;
+
+            recursive_copy("$source/$entry", "$target/$entry");
+        }
+
+        $dir->close();
+    }
 }

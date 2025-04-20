@@ -124,6 +124,19 @@ class Control_Factory
     }
 
     /**
+     * @param $defs
+     * @param $button_defs
+     * @param $viewport_width
+     * @return void
+     */
+    public static function add_button_centered(&$defs, $button_defs, $viewport_width)
+    {
+        $def = end($button_defs);
+        $def[GuiControlDef::title] = str_repeat(' ', ($viewport_width - $def[GuiControlDef::specific_def][GuiButtonDef::width]) / (15 * 2));
+        $defs[] = $def;
+    }
+
+    /**
      * @param array &$defs
      * @param User_Input_Handler $handler
      * @param array|null $add_params
@@ -219,19 +232,18 @@ class Control_Factory
      * @param array &$defs
      * @param User_Input_Handler $handler
      * @param string $name
-     * @param string $title
      * @param string $caption
      * @param int $width
      * @param array|null $add_params
      */
-    public static function add_close_dialog_and_apply_button_title(&$defs, $handler, $name, $title, $caption, $width, $add_params = null)
+    public static function add_close_dialog_and_apply_button_title(&$defs, $handler, $name, $caption, $width, $add_params = null)
     {
         $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
         $push_action['params']['action_type'] = 'apply';
 
         $defs[] = array(
             GuiControlDef::name => $name,
-            GuiControlDef::title => $title,
+            GuiControlDef::title => null,
             GuiControlDef::kind => GUI_CONTROL_BUTTON,
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => $caption,
@@ -245,10 +257,10 @@ class Control_Factory
      * @param array &$defs
      * @param string $name
      * @param string $caption
-     * @param array $post_action
      * @param int $width
+     * @param array $post_action
      */
-    public static function add_custom_close_dialog_and_apply_button(&$defs, $name, $caption, $post_action, $width)
+    public static function add_custom_close_dialog_and_apply_button(&$defs, $name, $caption, $width, $post_action)
     {
         $defs[] = array(
             GuiControlDef::name => $name,

@@ -433,8 +433,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
      */
     protected function create_shortcuts_popup($user_input)
     {
-        hd_debug_print(null, true);
-
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
 
         $selected = '';
