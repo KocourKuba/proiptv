@@ -177,7 +177,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
                 $view_date = format_datetime("d.m.Y H:i", $movie_info[COLUMN_TIMESTAMP]);
                 if ($movie_info[COLUMN_WATCHED] || $movie_info[COLUMN_DURATION] === -1) {
                     $detailed_info = TR::t('vod_screen_all_viewed__2', $caption, $view_date);
-                    $color = DEF_LABEL_TEXT_COLOR_BLUE;
+                    $color = DEF_LABEL_TEXT_COLOR_SKYBLUE;
                 } else {
                     $detailed_info = TR::t('vod_screen_last_viewed__4',
                         $caption,
@@ -185,7 +185,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
                         (int)((float)$movie_info[COLUMN_POSITION] / (float)$movie_info[COLUMN_DURATION] * 100),
                         format_duration_seconds($movie_info[COLUMN_POSITION])
                     );
-                    $color = DEF_LABEL_TEXT_COLOR_LIMEGREEN;
+                    $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
                 }
                 break;
             }

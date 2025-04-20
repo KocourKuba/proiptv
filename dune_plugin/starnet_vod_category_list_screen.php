@@ -214,7 +214,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                                 $skip = true;
                                 break;
                             }
-                            $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
+                            $color = DEF_LABEL_TEXT_COLOR_VIOLET;
                             $item_detailed_info = TR::t('vod_screen_group_info__2', TR::load(VOD_LIST_GROUP_CAPTION), $cnt);
                             break;
 
