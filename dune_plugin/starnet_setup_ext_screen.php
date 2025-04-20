@@ -182,13 +182,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
 
                 break;
 
-            case ACTION_FILE_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file === CONTROL_RESTORE) {
-                    return $this->do_restore_settings($data->caption, $data->filepath);
-                }
-                break;
-
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::make(array('filepath' => get_data_path()));
                 hd_debug_print("do set history folder to default: $data->filepath");
