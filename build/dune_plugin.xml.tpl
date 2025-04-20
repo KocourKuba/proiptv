@@ -100,6 +100,17 @@
                         </action>
                     </menu_item>
                     <menu_item>
+                        <caption>%tr%entry_backup</caption>
+                        <icon_url>gui_skin://small_icons/hdd.aai</icon_url>
+                        <action>
+                            <type>plugin_handle_user_input</type>
+                            <params>
+                                <handler_id>entry_handler</handler_id>
+                                <control_id>call_backup</control_id>
+                            </params>
+                        </action>
+                    </menu_item>
+                    <menu_item>
                         <caption>%tr%setup_channels_src_edit_playlists</caption>
                         <icon_url>gui_skin://small_icons/playlist_file.aai</icon_url>
                         <action>
@@ -134,7 +145,7 @@
                     </menu_item>
                     <menu_item>
                         <caption>%tr%entry_reboot</caption>
-                        <icon_url>gui_skin://small_icons/service_file.aai</icon_url>
+                        <icon_url>gui_skin://small_icons/power.aai</icon_url>
                         <action>
                             <type>plugin_handle_user_input</type>
                             <params>

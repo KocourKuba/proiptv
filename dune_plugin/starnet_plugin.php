@@ -48,6 +48,7 @@ require_once 'starnet_edit_playlists_screen.php';
 require_once 'starnet_edit_xmltv_list_screen.php';
 require_once 'starnet_edit_providers_list_screen.php';
 require_once 'starnet_edit_hidden_list_screen.php';
+require_once 'starnet_setup_backup_screen.php';
 
 class Starnet_Plugin extends Default_Dune_Plugin
 {
@@ -79,6 +80,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Playback_Screen($this));
         $this->create_screen(new Starnet_Setup_Ext_Screen($this));
         $this->create_screen(new Starnet_Setup_Ext_Playlists_Screen($this));
+        $this->create_screen(new Starnet_Setup_Backup_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
         $this->create_screen(new Starnet_Edit_Playlists_Screen($this));

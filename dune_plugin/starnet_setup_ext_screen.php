@@ -70,15 +70,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // backup
-
-        Control_Factory::add_image_button($defs, $this, null,
-            CONTROL_BACKUP, TR::t('setup_backup_settings'), TR::t('select_folder'), $folder_icon, self::CONTROLS_WIDTH);
-
-        Control_Factory::add_image_button($defs, $this, null,
-            CONTROL_RESTORE, TR::t('setup_restore_settings'), TR::t('select_file'), $folder_icon, self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
         // history
 
         $history_path = $this->plugin->get_history_path();
@@ -161,33 +152,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                     )
                 );
 
-            case CONTROL_BACKUP:
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_folder' => $user_input->control_id,
-                        'extension' => 'zip',
-                        'allow_network' => !is_limited_apk(),
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_backup_folder_path'));
-
-            case CONTROL_RESTORE:
-                $media_url_str = MediaURL::encode(
-                    array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_file' => $user_input->control_id,
-                        'extension' => 'zip',
-                        'allow_network' => !is_limited_apk(),
-                        'read_only' => true,
-                        'windowCounter' => 1,
-                    )
-                );
-                return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
-
             case self::CONTROL_HISTORY_CHANGE_FOLDER:
                 $media_url_str = MediaURL::encode(
                     array(
@@ -214,11 +178,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                         self::CONTROLS_WIDTH
                     );
                     break;
-                }
-
-                if ($data->choose_folder === CONTROL_BACKUP) {
-                    $msg = HD::do_backup_settings($this->plugin, $data->filepath) ? TR::t('setup_copy_done') : TR::t('err_backup');
-                    $post_action = Action_Factory::show_title_dialog($msg);
                 }
 
                 break;
@@ -328,101 +287,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         return Action_Factory::reset_controls(
             $this->get_control_defs(MediaURL::decode($user_input->parent_media_url), $plugin_cookies),
             $post_action
-        );
-    }
-
-    /**
-     * @param string $name
-     * @param string $filename
-     * @return array
-     */
-    protected function do_restore_settings($name, $filename)
-    {
-        $this->plugin->safe_clear_selected_epg_cache('');
-        $this->plugin->clear_playlist_cache();
-        $this->plugin->reset_playlist_db();
-
-        $temp_folder = get_temp_path("restore");
-        delete_directory($temp_folder);
-        $tmp_filename = get_temp_path($name);
-        try {
-            hd_debug_print("Copy $filename to $tmp_filename");
-            if (!copy($filename, $tmp_filename)) {
-                throw new Exception(error_get_last());
-            }
-
-            $unzip = new ZipArchive();
-            $out = $unzip->open($tmp_filename);
-            if ($out !== true) {
-                throw new Exception(TR::t('err_unzip__2', $tmp_filename, $out));
-            }
-
-            // Check if zip is empty
-            $first_file = $unzip->getNameIndex(0);
-            if (empty($first_file)) {
-                $unzip->close();
-                throw new Exception(TR::t('err_empty_zip__1', $tmp_filename));
-            }
-
-            if (!$unzip->extractTo($temp_folder)) {
-                $unzip->close();
-                throw new Exception(TR::t('err_unzip__2', basename($tmp_filename), $unzip->getStatusString()));
-            }
-
-            for ($i = 0; $i < $unzip->numFiles; $i++) {
-                $stat_index = $unzip->statIndex($i);
-                touch("$temp_folder/{$stat_index['name']}", $stat_index['mtime']);
-            }
-            $unzip->close();
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
-            if (file_exists($tmp_filename)) {
-                unlink($tmp_filename);
-            }
-            return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
-        }
-
-        unlink($tmp_filename);
-
-        foreach (array(".settings", ".db") as $ext) {
-            foreach (glob_dir(get_data_path(), "/$ext$/i") as $file) {
-                hd_debug_print("Rename $file to $file.prev");
-                rename($file, "$file.prev");
-            }
-        }
-
-        rename(get_data_path(CACHED_IMAGE_SUBDIR), get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
-
-        /** @var SplFileInfo[] $files */
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($temp_folder, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST);
-
-        foreach ($files as $src) {
-            /** @noinspection PhpUndefinedMethodInspection */
-            $dest = get_data_path($files->getSubPathname());
-            if ($src->isDir()) {
-                create_path($dest);
-            } else {
-                $mtime = filemtime($src);
-                rename($src, $dest);
-                touch($dest, $mtime);
-            }
-        }
-
-        clearstatcache();
-
-        array_map('unlink', glob(get_data_path('*.prev')));
-        array_map('unlink', glob(get_data_path(CACHED_IMAGE_SUBDIR . '_prev/*')));
-        rmdir(get_data_path(CACHED_IMAGE_SUBDIR . '_prev'));
-
-        $this->plugin->init_plugin(true);
-
-        return Action_Factory::show_title_dialog(
-            TR::t('setup_restore_done'),
-            Action_Factory::replace_path(2, null,
-                    User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD)
-            )
         );
     }
 

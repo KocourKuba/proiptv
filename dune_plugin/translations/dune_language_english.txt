@@ -239,6 +239,7 @@ entry_reboot = Reboot Dune
 entry_setup = Plugin setting
 entry_index_epg = Run processing EPG
 entry_force_open = Show categories
+entry_backup = Backup/Restore settings
 
 edit_list_added__2 = Added %s files from %s
 edit_list_empty_file = Empty file!!!

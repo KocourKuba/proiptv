@@ -239,6 +239,7 @@ entry_reboot = Starten Sie Dune neu
 entry_setup = Plugin-Einstellung
 entry_index_epg = Verarbeitungs-EPG ausführen
 entry_force_open = Kategorien anzeigen
+entry_backup = BackupRestore-Einstellungen
 
 edit_list_added__2 = %s Dateien von %s hinzugefügt
 edit_list_empty_file = Leere Akte!!!

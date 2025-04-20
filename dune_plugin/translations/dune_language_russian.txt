@@ -239,6 +239,7 @@ entry_reboot = Перезагрузить плеер
 entry_setup = Настройки плагина
 entry_index_epg = Запустить обработку EPG
 entry_force_open = Открыть окно категорий
+entry_backup = Сохранение/Восстановление настроек
 
 edit_list_added__2 = Добавлено файлов: %s из: %s
 edit_list_empty_file = Пустой файл!!!
