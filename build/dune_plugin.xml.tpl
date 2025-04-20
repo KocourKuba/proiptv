@@ -111,6 +111,17 @@
                         </action>
                     </menu_item>
                     <menu_item>
+                        <caption>%tr%entry_force_open</caption>
+                        <icon_url>gui_skin://small_icons/iptv.aai</icon_url>
+                        <action>
+                            <type>plugin_handle_user_input</type>
+                            <params>
+                                <handler_id>entry_handler</handler_id>
+                                <control_id>force_open</control_id>
+                            </params>
+                        </action>
+                    </menu_item>
+                    <menu_item>
                         <caption>%tr%setup_channels_src_edit_playlists</caption>
                         <icon_url>gui_skin://small_icons/playlist_file.aai</icon_url>
                         <action>
@@ -144,17 +155,6 @@
                         </action>
                     </menu_item>
                     <menu_item>
-                        <caption>%tr%entry_reboot</caption>
-                        <icon_url>gui_skin://small_icons/power.aai</icon_url>
-                        <action>
-                            <type>plugin_handle_user_input</type>
-                            <params>
-                                <handler_id>entry_handler</handler_id>
-                                <control_id>call_reboot</control_id>
-                            </params>
-                        </action>
-                    </menu_item>
-                    <menu_item>
                         <caption>%tr%entry_send_log</caption>
                         <icon_url>gui_skin://small_icons/web_browser.aai</icon_url>
                         <action>
@@ -166,13 +166,13 @@
                         </action>
                     </menu_item>
                     <menu_item>
-                        <caption>%tr%entry_force_open</caption>
-                        <icon_url>gui_skin://small_icons/iptv.aai</icon_url>
+                        <caption>%tr%entry_reboot</caption>
+                        <icon_url>gui_skin://small_icons/power.aai</icon_url>
                         <action>
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>force_open</control_id>
+                                <control_id>call_reboot</control_id>
                             </params>
                         </action>
                     </menu_item>
