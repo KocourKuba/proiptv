@@ -137,7 +137,31 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
                 $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
+            case ACTION_WATCHED:
+                $movie = $this->plugin->vod->get_loaded_movie($selected_media_url->episode_id);
+                if (is_null($movie)) break;
+
+                $value = $this->plugin->get_vod_history_params($selected_media_url->episode_id, $selected_media_url->episode_id, COLUMN_WATCHED);
+
+                if ($value) {
+                    $this->plugin->remove_vod_history_part($selected_media_url->episode_id, $selected_media_url->episode_id);
+                } else {
+                    $this->plugin->set_vod_history(
+                        $selected_media_url->episode_id,
+                        $selected_media_url->episode_id,
+                        array(COLUMN_WATCHED => 1, COLUMN_TIMESTAMP => time())
+                    );
+                }
+
+                return Action_Factory::invalidate_folders(array(
+                        $user_input->parent_media_url,
+                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID)
+                    )
+                );
+
             case GUI_EVENT_KEY_POPUP_MENU:
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_WATCHED, TR::t('vod_screen_viewed_not_viewed'), "hide.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
                 return Action_Factory::show_popup_menu($menu_items);
         }
