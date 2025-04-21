@@ -701,6 +701,7 @@ class Epg_Manager_Xmltv
                 $this->unpack_xmltv($cached_file);
                 $success = true;
             } catch (Exception $ex) {
+                HD::set_last_error("xmltv_last_error", $ex->getMessage());
                 print_backtrace_exception($ex);
                 $tmp_filename = $cached_file . ".tmp";
                 if (!empty($tmp_filename) && file_exists($tmp_filename)) {
