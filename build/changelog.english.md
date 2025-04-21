@@ -1,4 +1,10 @@
-﻿### Version 6.1.1240
+﻿### Version 6.2.1260
+- Added ability to create internal playlists for M3U-based VOD (e.g. for watching TV shows)
+- Backup/Restore moved to the plugin context menu, removed from the settings
+- The History setting has been moved to a separate settings screen
+- Added an additional setting to fix the text color palette (Air and Silver skins or skins based on these skins mess up the default palette for unused colors).
+
+### Version 6.1.1240
 - NewUI: TV program time was calculated incorrectly for the current time zone
 
 ### Version 6.1.1238
