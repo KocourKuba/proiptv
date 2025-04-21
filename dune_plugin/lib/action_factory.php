@@ -756,4 +756,14 @@ class Action_Factory
             )
         );
     }
+
+    public static function refresh_entry_points($post_action = null)
+    {
+        return array(
+            GuiAction::handler_string_id => PLUGIN_REFRESH_ENTRY_POINTS_ACTION_ID,
+            GuiAction::data => array(
+                PluginRefreshEntryPointsActionData::post_action => $post_action
+            ),
+        );
+    }
 }

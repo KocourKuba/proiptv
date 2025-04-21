@@ -59,9 +59,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
 
         $defs = array();
 
-        $folder_icon = get_image_path('folder.png');
-        $refresh_icon = get_image_path('refresh.png');
-
         //////////////////////////////////////
         // Plugin name
         $this->plugin->create_setup_header($defs);

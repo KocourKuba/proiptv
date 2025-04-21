@@ -433,7 +433,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $group = $this->plugin->get_group($sel_media_url->group_id, PARAM_ALL);
                     if (is_null($group)) break;
 
-                    $cached_image_name = "{$this->plugin->get_active_playlist_id()}_$data->caption";
+                    $cached_image_name = $this->plugin->get_active_playlist_id() . "_$data->caption";
                     $cached_image_path = get_cached_image_path($cached_image_name);
                     hd_print("copy from: $data->filepath to: $cached_image_path");
                     if (!copy($data->filepath, $cached_image_path)) {
@@ -442,6 +442,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                     hd_debug_print("Assign icon: $cached_image_name to group: $sel_media_url->group_id");
                     $this->plugin->set_group_icon($sel_media_url->group_id, $cached_image_name);
+                    return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
                 }
                 break;
 
@@ -551,12 +552,16 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_REFRESH_SCREEN:
                 return Action_Factory::close_and_run(
-                    Action_Factory::open_folder(
-                        self::ID,
-                        $this->plugin->get_plugin_title(),
-                        null,
-                        null,
-                        Action_Factory::change_behaviour($this->get_action_map($parent_media_url, $plugin_cookies))
+                    Action_Factory::refresh_entry_points(
+                        Action_Factory::open_folder(
+                            self::ID,
+                            $this->plugin->get_plugin_title(),
+                            null,
+                            null,
+                            Action_Factory::change_behaviour(
+                                $this->get_action_map($parent_media_url, $plugin_cookies)
+                            )
+                        )
                     )
                 );
 

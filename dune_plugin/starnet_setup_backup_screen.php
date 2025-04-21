@@ -90,14 +90,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements Us
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                return Action_Factory::close_and_run();
 
             case CONTROL_BACKUP:
                 $media_url_str = MediaURL::encode(
@@ -238,8 +231,10 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements Us
 
         return Action_Factory::show_title_dialog(
             TR::t('setup_restore_done'),
-            Action_Factory::replace_path(2, null,
-                    User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID, ACTION_RELOAD)
+            Action_Factory::close_and_run(
+                Action_Factory::refresh_entry_points(
+                    User_Input_Handler_Registry::create_screen_action(Starnet_Entry_Handler::ID, ACTION_RELOAD)
+                )
             )
         );
     }
