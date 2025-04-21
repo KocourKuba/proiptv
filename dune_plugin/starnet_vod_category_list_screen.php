@@ -188,7 +188,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                     switch ($group[COLUMN_GROUP_ID]) {
                         case VOD_FAV_GROUP_ID:
                             $cnt = $this->plugin->get_order_count(VOD_FAV_GROUP_ID);
-                            if ($cnt === 0) {
+                            if (empty($cnt)) {
                                 $skip = true;
                                 break;
                             }
@@ -210,7 +210,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                         case VOD_LIST_GROUP_ID:
                             $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID);
-                            if ($cnt === 0) {
+                            if (empty($cnt) || !$this->plugin->is_m3u_vod()) {
                                 $skip = true;
                                 break;
                             }
