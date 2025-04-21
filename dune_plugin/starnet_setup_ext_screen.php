@@ -85,6 +85,10 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // Patch palette
         $fix_palette = $this->plugin->get_parameter(PARAM_FIX_PALETTE, SwitchOnOff::off);
+        if (!color_palette_check() && $fix_palette === SwitchOnOff::on) {
+            $fix_palette = SwitchOnOff::off;
+            $this->plugin->set_parameter(PARAM_FIX_PALETTE, $fix_palette);
+        }
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FIX_PALETTE, TR::t('setup_settings_patch_palette'), SwitchOnOff::translate($fix_palette),
             get_image_path(SwitchOnOff::to_image($fix_palette)), self::CONTROLS_WIDTH);

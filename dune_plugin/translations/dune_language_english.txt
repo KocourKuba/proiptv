@@ -213,6 +213,7 @@ setup_debug = Enable debug logging
 setup_per_channel_zoom = Enable per-channel zoom
 setup_backup_folder_path = Backup folder
 setup_patch_success = Operation done!\nFor apply changed palette need to reboot Dune HD
+setup_restore_patch = System palette was changed!\nRestore palette to default values?
 
 setup_channels_src_reset_playlist = Reset playlist settings
 setup_channels_src_edit_playlists = Select or Edit Playlists

@@ -37,6 +37,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_UPDATE_EPFS = 'update_epfs';
     const ACTION_INSTALL = 'install';
     const ACTION_UNINSTALL = 'uninstall';
+    const ACTION_CONTINUE_UNINSTALL = 'continue_uninstall';
     const ACTION_UPDATE = 'update';
     const ACTION_CALL_PLUGIN_SETTINGS = 'call_setup';
     const ACTION_CALL_PLAYLIST_SETTINGS = 'call_playlist_setup';
@@ -229,6 +230,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return Starnet_Epfs_Handler::update_epfs_file($plugin_cookies,
                     isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep));
 
+            case self::ACTION_CONTINUE_UNINSTALL:
+                $action = color_palette_restore();
+                if ($action !== null) {
+                    hd_debug_print("Palette restored");
+                    return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), null, TR::t('setup_patch_success'));
+                }
+                break;
+
             case self::ACTION_PLUGIN_ENTRY:
                 if (!isset($user_input->action_id)) {
                     break;
@@ -372,6 +381,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                     case self::ACTION_UNINSTALL:
                         Default_Archive::clear_cache();
+                        if (color_palette_check()) {
+                            return Action_Factory::show_confirmation_dialog(
+                                TR::t('setup_settings_patch_palette'),
+                                $this,
+                                self::ACTION_CONTINUE_UNINSTALL,
+                                TR::t('setup_restore_patch')
+                            );
+                        }
                         break;
 
                     default:

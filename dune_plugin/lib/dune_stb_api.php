@@ -2595,7 +2595,7 @@ function send_process_signal($pid, $sig_num) {
 }
 
 /**
- * Return true if palette is not changed or not exist
+ * Return true if palette is patched or not exist
  *
  * @return true
  */
@@ -2732,7 +2732,13 @@ function color_palette_restore()
     $hash = md5(file_get_contents($skin_config));
     $backup_storage_path = get_data_path('skin_backup');
 
-    if (!file_exists($skin_config) || !file_exists($backup_storage_path)) {
+    if (!file_exists($skin_config)) {
+        hd_debug_print("Skin config file does not exist!");
+        return null;
+    }
+
+    if (!file_exists($backup_storage_path)) {
+        hd_debug_print("Backup storage path does not exist!");
         return null;
     }
 

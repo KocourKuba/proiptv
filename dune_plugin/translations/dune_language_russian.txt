@@ -213,6 +213,7 @@ setup_debug = Расширенное логирование
 setup_per_channel_zoom = Масштабирование по каналам
 setup_backup_folder_path = Папка резервных копий
 setup_patch_success = Операция выполнена успешно!\nДля применения внесенных изменений необходимо перезагрузить Dune HD
+setup_restore_patch = Системная палитра была изменена!\nВернуть значения по умолчанию?
 
 setup_channels_src_reset_playlist = Сбросить настройки плейлиста
 setup_channels_src_edit_playlists = Выбрать или Редактировать плейлисты
