@@ -893,7 +893,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     {
         hd_debug_print(null, true);
 
-        if (!$this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS) || $this->plugin->get_changed_channels_count(PARAM_CHANGED) === 0) {
+        if (!$this->plugin->get_bool_setting(PARAM_SHOW_CHANGED_CHANNELS) || !$this->plugin->get_changed_channels_count(PARAM_CHANGED)) {
             return;
         }
 

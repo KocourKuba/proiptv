@@ -853,7 +853,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 hd_debug_print("Database attached: $database_attached");
                 $count = $this->iptv_m3u_parser->parseIptvPlaylist($this->sql_playlist);
-                if (empty($count)) {
+                if (!$count) {
                     $contents = @file_get_contents($m3u_file);
                     $exception_msg = TR::load('err_load_playlist') . " Empty playlist!\n\n$contents";
                     $this->clear_playlist_cache();
@@ -1267,7 +1267,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // update existing database for empty group_id (converted from known_channels.settings)
         $query = "SELECT COUNT(*) FROM $channel_info_table WHERE group_id = '';";
-        if ($this->sql_playlist->query_value($query) !== 0) {
+        if ($this->sql_playlist->query_value($query)) {
             hd_debug_print("Update groups name for converted settings", true);
             $query = "UPDATE $channel_info_table
                         SET group_id = (
@@ -1611,13 +1611,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @return int
+     * @return bool
      */
     public function is_selected_xmltv_id($hash)
     {
         $playlist_id = $this->get_active_playlist_id();
         $table_name = self::SELECTED_XMLTV_TABLE;
-        return $this->sql_params->query_value("SELECT count(*) FROM $table_name WHERE playlist_id = '$playlist_id' AND hash = '$hash';");
+        return (bool)$this->sql_params->query_value("SELECT count(*) FROM $table_name WHERE playlist_id = '$playlist_id' AND hash = '$hash';");
     }
 
     /**
@@ -2552,7 +2552,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
                 }
             } else {
-                if ($group_id === TV_FAV_GROUP_ID && $this->get_order_count(TV_FAV_GROUP_ID) !== 0) {
+                if ($group_id === TV_FAV_GROUP_ID && $this->get_order_count(TV_FAV_GROUP_ID)) {
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 } else if ($group_id === TV_HISTORY_GROUP_ID && $this->get_tv_history_count() !== 0) {
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
@@ -2653,7 +2653,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $cnt = $this->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
             hd_debug_print("Disabled groups: $cnt", true);
-            if ($cnt !== 0) {
+            if ($cnt) {
                 $menu_items[] = $this->create_menu_item($handler,
                     ACTION_ITEMS_EDIT,
                     TR::t('tv_screen_edit_hidden_group'),
@@ -3105,12 +3105,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $entries_cnt = $parser->parseIptvPlaylist($db);
-        if (empty($entries_cnt)) {
+        if (!$entries_cnt) {
             throw new Exception(TR::load('err_empty_playlist'));
         }
 
         $table_name = M3uParser::CHANNELS_TABLE;
-        $entries_cnt = $db->query_value("SELECT COUNT(*) FROM $table_name;");
+        $entries_cnt = (int)$db->query_value("SELECT COUNT(*) FROM $table_name;");
 
         $mapper_ops = Default_Dune_Plugin::get_id_detect_mapper();
         $stat = M3uParser::detectBestChannelId($db);

@@ -112,7 +112,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 $this->force_parent_reload = true;
                 $this->plugin->remove_changed_channel($channel_id);
 
-                if ($this->plugin->get_changed_channels_count(PARAM_CHANGED) == 0) {
+                if (!$this->plugin->get_changed_channels_count(PARAM_CHANGED)) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
                 break;
@@ -124,7 +124,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $this->force_parent_reload = true;
                 $this->plugin->clear_changed_channels();
-                if ($this->plugin->get_changed_channels_count(PARAM_CHANGED) !== 0) break;
+                if ($this->plugin->get_changed_channels_count(PARAM_CHANGED)) break;
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
@@ -132,7 +132,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 return $this->plugin->iptv->jump_to_channel($channel_id);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                if ($this->plugin->get_changed_channels_count(PARAM_NEW, $channel_id) !== 0) {
+                if ($this->plugin->get_changed_channels_count(PARAM_NEW, $channel_id)) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
                     return Action_Factory::show_popup_menu($menu_items);
                 }

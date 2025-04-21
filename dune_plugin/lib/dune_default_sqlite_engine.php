@@ -509,7 +509,7 @@ class Dune_Default_Sqlite_Engine
             $query = "SELECT COUNT(*) FROM $table_name WHERE playlist_id = $playlist_id;";
         }
 
-        return $this->sql_params->query_value($query);
+        return (int)$this->sql_params->query_value($query);
     }
 
     /**
@@ -974,7 +974,7 @@ class Dune_Default_Sqlite_Engine
         $cond = is_null($channel_id) ? "" : ("AND channel_id = " . Sql_Wrapper::sql_quote($channel_id));
         $query = "SELECT COUNT(*) FROM $table_name WHERE $val $cond;";
 
-        return $this->sql_playlist->query_value($query);
+        return (int)$this->sql_playlist->query_value($query);
     }
 
     /**
@@ -1045,7 +1045,7 @@ class Dune_Default_Sqlite_Engine
         $and = empty($where) ? "" : "AND";
         $where = $type === PARAM_ALL ? "" : "WHERE $where $and special = $type";
         $query = "SELECT COUNT(*) FROM $groups_info_table $where ORDER by ROWID;";
-        return $this->sql_playlist->query_value($query);
+        return (int)$this->sql_playlist->query_value($query);
     }
 
     /**
@@ -1148,7 +1148,7 @@ class Dune_Default_Sqlite_Engine
 
         if (!empty($old_cached_image)
             && strpos($old_cached_image, 'plugin_file://') !== false
-            && $this->sql_playlist->query_value("SELECT COUNT(*) FROM $groups_info_table WHERE icon = $q_icon;") == 0) {
+            && !$this->sql_playlist->query_value("SELECT COUNT(*) FROM $groups_info_table WHERE icon = $q_icon;")) {
             $old_cached_image_path = get_cached_image_path($old_cached_image);
             if (file_exists($old_cached_image_path)) {
                 unlink($old_cached_image_path);
@@ -1319,7 +1319,7 @@ class Dune_Default_Sqlite_Engine
     public function get_order_count($group_id)
     {
         $table_name = self::get_table_name($group_id);
-        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
+        return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
     /**
@@ -1413,7 +1413,7 @@ class Dune_Default_Sqlite_Engine
     {
         if ($this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
             $iptv_channels = M3uParser::CHANNELS_TABLE;
-            return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_channels;");
+            return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_channels;");
         }
 
         return 0;
@@ -1438,7 +1438,7 @@ class Dune_Default_Sqlite_Engine
             return 0;
         }
 
-        return $this->sql_params->query_value("SELECT COUNT(*) FROM $table_name;");
+        return (int)$this->sql_params->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
     /**
@@ -1458,7 +1458,7 @@ class Dune_Default_Sqlite_Engine
 
         $q_key = Sql_Wrapper::sql_quote($id);
         $query = "SELECT COUNT(*) FROM $table_name WHERE playlist_id = $q_key LIMIT 1;";
-        return $this->sql_params->query_value($query);
+        return (bool)$this->sql_params->query_value($query);
     }
 
     /**
@@ -1587,7 +1587,7 @@ class Dune_Default_Sqlite_Engine
     public function get_tv_history_count()
     {
         $table_name = self::get_table_name(TV_HISTORY);
-        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
+        return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
     }
 
     /**
@@ -1726,7 +1726,7 @@ class Dune_Default_Sqlite_Engine
     {
         $table_name = self::get_table_name(VOD_HISTORY);
         $q_id = Sql_Wrapper::sql_quote($movie_id);
-        return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name WHERE movie_id = $q_id;");
+        return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name WHERE movie_id = $q_id;");
     }
 
     /**
@@ -1796,7 +1796,7 @@ class Dune_Default_Sqlite_Engine
     {
         if ($this->sql_playlist->is_table_exists(M3uParser::S_GROUPS_TABLE, M3uParser::IPTV_DB)) {
             $iptv_groups = M3uParser::GROUPS_TABLE;
-            return $this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_groups;");
+            return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $iptv_groups;");
         }
 
         return 0;

@@ -206,7 +206,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $this->plugin->cleanup_active_xmltv_source();
                 $this->force_parent_reload = true;
 
-                if ($this->plugin->get_xmltv_sources_count(null) !== 0) break;
+                if ($this->plugin->get_xmltv_sources_count(null)) break;
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
@@ -565,7 +565,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $folder_view = parent::get_folder_view($media_url, $plugin_cookies);
 
         $folder_view[PluginFolderView::data][PluginRegularFolderView::view_params][ViewParams::extra_content_objects] = null;
-        if ($this->plugin->get_xmltv_sources_count(null) === 0) {
+        if (!$this->plugin->get_xmltv_sources_count(null)) {
             $msg = is_limited_apk()
                 ? TR::t('edit_list_add_prompt_apk__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW)
                 : TR::t('edit_list_add_prompt__3', 100, 300, DEF_LABEL_TEXT_COLOR_YELLOW);

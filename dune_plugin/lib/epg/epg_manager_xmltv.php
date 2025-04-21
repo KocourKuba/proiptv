@@ -638,12 +638,12 @@ class Epg_Manager_Xmltv
             if (empty($db) || !$db->is_table_exists($key)) continue;
 
             if ($key === self::TABLE_CHANNELS) {
-                $result[$key] = $db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
+                $result[$key] = (int)$db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
             } else if ($key === self::TABLE_PICONS) {
-                $result[$key] = $db->query_value("SELECT COUNT(*) FROM $key;");
+                $result[$key] = (int)$db->query_value("SELECT COUNT(*) FROM $key;");
             } else if ($key === self::TABLE_ENTRIES) {
-                $result[$key] = $db->query_value("SELECT COUNT(*) FROM $key;");
-                $result['epg_ids'] = $db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
+                $result[$key] = (int)$db->query_value("SELECT COUNT(*) FROM $key;");
+                $result['epg_ids'] = (int)$db->query_value("SELECT COUNT(DISTINCT channel_id) FROM $key;");
             }
         }
 
@@ -801,11 +801,8 @@ class Epg_Manager_Xmltv
                 }
                 $db->exec_transaction($query);
 
-                $res = $db->query_value("SELECT count(DISTINCT channel_id) FROM $ch_table_name;");
-                $channels = empty($res) ? 0 : (int)$res;
-
-                $res = $db->query_value("SELECT COUNT(*) FROM $picons_table_name;");
-                $picons = empty($res) ? 0 : (int)$res;
+                $channels = (int)$db->query_value("SELECT count(DISTINCT channel_id) FROM $ch_table_name;");
+                $picons = (int)$db->query_value("SELECT COUNT(*) FROM $picons_table_name;");
 
                 $perf->setLabel('end_channels');
                 $report = $perf->getFullReport('start_channels', 'end_channels');
@@ -928,11 +925,8 @@ class Epg_Manager_Xmltv
                 hd_debug_print("End transactions...", true);
                 $db->exec('COMMIT;');
 
-                $res = $db->query_value("SELECT count(DISTINCT channel_id) FROM $pos_table_name;");
-                $total_epg = empty($res) ? 0 : (int)$res;
-
-                $res = $db->query_value("SELECT COUNT(*) FROM $pos_table_name;");
-                $total_blocks = empty($res) ? 0 : (int)$res;
+                $total_epg = (int)$db->query_value("SELECT count(DISTINCT channel_id) FROM $pos_table_name;");
+                $total_blocks = (int)$db->query_value("SELECT COUNT(*) FROM $pos_table_name;");
 
                 $perf->setLabel('end_reindex_entries');
                 $report = $perf->getFullReport('start_reindex_entries', 'end_reindex_entries');

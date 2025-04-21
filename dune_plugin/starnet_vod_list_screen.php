@@ -121,7 +121,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
             case ACTION_ITEM_DELETE:
                 $this->force_parent_reload = true;
                 $this->plugin->change_channels_order(VOD_LIST_GROUP_ID, $selected_media_url->episode_id, true);
-                if ($this->plugin->get_order_count(VOD_LIST_GROUP_ID) != 0) break;
+                if ($this->plugin->get_order_count(VOD_LIST_GROUP_ID)) break;
 
                 $this->plugin->vod->toggle_special_group(VOD_LIST_GROUP_ID, true);
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);

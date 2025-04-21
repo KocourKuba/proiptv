@@ -81,7 +81,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                     hd_debug_print("restore channel: " . $selected_id, true);
                 } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
                     $this->plugin->set_groups_visible($selected_id, true);
-                    $force_return = $this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED) === 0;
+                    $force_return = !$this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
                     hd_debug_print("restore group: " . $selected_id, true);
                 } else {
                     hd_debug_print("unknown edit list");
@@ -109,7 +109,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                 }
 
                 $this->force_parent_reload = true;
-                if ($cnt !== 0) break;
+                if ($cnt) break;
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         }

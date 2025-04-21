@@ -94,11 +94,11 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $title = TR::t('playlist_name_msg__1', TR::load(VOD_GROUP_CAPTION));
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, $title, "refresh.png");
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                if ($group_id === VOD_FAV_GROUP_ID && $this->plugin->get_order_count(VOD_FAV_GROUP_ID) !== 0) {
+                if ($group_id === VOD_FAV_GROUP_ID && $this->plugin->get_order_count(VOD_FAV_GROUP_ID)) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 } else if ($group_id === VOD_HISTORY_GROUP_ID && $this->plugin->get_all_vod_history_count() !== 0) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
-                } else if ($group_id === VOD_LIST_GROUP_ID && $this->plugin->get_order_count(VOD_LIST_GROUP_CAPTION) !== 0) {
+                } else if ($group_id === VOD_LIST_GROUP_ID && $this->plugin->get_order_count(VOD_LIST_GROUP_CAPTION)) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_CLEAR, TR::t('clear_list'), "brush.png");
                 }
                 return Action_Factory::show_popup_menu($menu_items);
@@ -188,7 +188,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                     switch ($group[COLUMN_GROUP_ID]) {
                         case VOD_FAV_GROUP_ID:
                             $cnt = $this->plugin->get_order_count(VOD_FAV_GROUP_ID);
-                            if (empty($cnt)) {
+                            if (!$cnt) {
                                 $skip = true;
                                 break;
                             }
@@ -210,7 +210,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                         case VOD_LIST_GROUP_ID:
                             $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID);
-                            if (empty($cnt) || !$this->plugin->is_m3u_vod()) {
+                            if (!$cnt || !$this->plugin->is_m3u_vod()) {
                                 $skip = true;
                                 break;
                             }

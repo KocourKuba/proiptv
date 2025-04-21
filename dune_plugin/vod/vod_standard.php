@@ -832,8 +832,7 @@ class vod_standard extends Abstract_Vod
         }
 
         $query = "SELECT COUNT(*) FROM " . M3uParser::VOD_TABLE . " $where;";
-        $result = $this->wrapper->query_value($query);
-        return empty($result) ? 0 : (int)$result;
+        return (int)$this->wrapper->query_value($query);
     }
 
     /**

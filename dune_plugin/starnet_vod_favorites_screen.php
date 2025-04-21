@@ -106,7 +106,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
             case ACTION_ITEM_DELETE:
                 $this->force_parent_reload = true;
                 $this->plugin->change_vod_favorites(PLUGIN_FAVORITES_OP_REMOVE, $movie_id);
-                if ($this->plugin->get_order_count(VOD_FAV_GROUP_ID) != 0) break;
+                if ($this->plugin->get_order_count(VOD_FAV_GROUP_ID)) break;
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
@@ -117,7 +117,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
                 $this->force_parent_reload = true;
                 $this->plugin->change_vod_favorites(ACTION_ITEMS_CLEAR, null);
-                if ($this->plugin->get_order_count(VOD_FAV_GROUP_ID) != 0) break;
+                if ($this->plugin->get_order_count(VOD_FAV_GROUP_ID)) break;
 
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
