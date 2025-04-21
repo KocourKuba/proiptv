@@ -851,14 +851,12 @@ class vod_standard extends Abstract_Vod
         $where = '';
         if (!empty($group_id)) {
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
-            $where = "WHERE group_id = $q_group_id";
+            $where = " WHERE group_id = $q_group_id";
         }
 
-        if ($limit > 0) {
-            $limit = "LIMIT $from, $limit";
-        }
+        $limit_str = $limit > 0 ? "LIMIT $from, $limit" : '';
 
-        $query = "SELECT * FROM " . M3uParser::VOD_TABLE . " $where $limit;";
+        $query = "SELECT * FROM " . M3uParser::VOD_TABLE . "$where $limit_str;";
         return $this->wrapper->fetch_array($query);
     }
 

@@ -54,7 +54,6 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements Us
         $defs = array();
 
         $folder_icon = get_image_path('folder.png');
-        $refresh_icon = get_image_path('refresh.png');
 
         //////////////////////////////////////
         // Plugin name
