@@ -155,6 +155,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
 
                 return Action_Factory::invalidate_folders(array(
                         $user_input->parent_media_url,
+                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID),
                         Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID)
                     )
                 );
