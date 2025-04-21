@@ -339,7 +339,7 @@ class HD
             }
 
             if ($complete) {
-                $added_folders = array($rootPath . CACHED_IMAGE_SUBDIR);
+                $added_folders = array($rootPath . CACHED_IMAGE_SUBDIR, $rootPath . 'skin_backup');
                 /** @var SplFileInfo[] $files */
                 $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath),
                     RecursiveIteratorIterator::SELF_FIRST);
