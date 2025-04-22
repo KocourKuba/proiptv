@@ -1,4 +1,10 @@
-﻿### Version 6.2.1260
+﻿### Version 6.2.1264
+- Time zone is taken from Android settings, old PHP code "compatible" with Sigma set-top boxes removed
+- Added program time information when calling the current EPG for a channel in Classic
+- When patching/restoring the palette, a full reboot of the console is no longer needed. Dune Shell reboot only.
+- Fixed a bug that did not allow you to select a file with a list of playlist links
+
+### Version 6.2.1260
 - Added ability to create internal playlists for M3U-based VOD (e.g. for watching TV shows)
 - Backup/Restore moved to the plugin context menu, removed from the settings
 - The History setting has been moved to a separate settings screen
