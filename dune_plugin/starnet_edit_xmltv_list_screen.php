@@ -272,7 +272,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             ACTION_CHOOSE_FILE,
             TR::t('edit_list_import_list'),
             "text_file.png",
-            array('selected_action' => self::ACTION_FILE_TEXT_LIST, 'extension' => 'txt|lst')
+            array('selected_action' => self::ACTION_FILE_TEXT_LIST, 'extension' => TEXT_FILE_PATTERN)
         );
 
         // Copy to external

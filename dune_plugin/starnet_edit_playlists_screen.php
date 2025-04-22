@@ -208,7 +208,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                         'screen_id' => Starnet_Folder_Screen::ID,
                         'source_window_id' => static::ID,
                         'choose_file' => $user_input->selected_action,
-                        'extension' => PLAYLIST_PATTERN,
+                        'extension' => $user_input->extension,
                         'allow_network' => ($user_input->selected_action === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk(),
                         'read_only' => true,
                         'windowCounter' => 1,
@@ -387,7 +387,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             "m3u_file.png",
             array(
                 'selected_action' => self::ACTION_FILE_PLAYLIST,
-                'extension' => $parent_media_url->extension
+                'extension' => PLAYLIST_PATTERN
             )
         );
 
@@ -405,7 +405,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             "text_file.png",
             array(
                 'selected_action' => self::ACTION_FILE_TEXT_LIST,
-                'extension' => 'txt|lst'
+                'extension' => TEXT_FILE_PATTERN
             )
         );
 

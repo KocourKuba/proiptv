@@ -384,6 +384,7 @@ const VIDEO_PATTERN = 'avi|mp4|mpg|mpeg|divx|m4v|3gp|asf|wmv|mkv|mov|ogv|vob|flv
 const IMAGE_PREVIEW_PATTERN = 'png|jpg|jpeg|bmp|gif|aai';
 const IMAGE_PATTERN = '|psd|pspimage|thm|tif|yuf|svg|ico|djpg|dbmp|dpng';
 const PLAYLIST_PATTERN = 'm3u|m3u8';
+const TEXT_FILE_PATTERN = 'txt|lst';
 const EPG_PATTERN = 'xml|xmltv|gz';
 const HTTP_PATTERN = '/^(https?):\/\/([^\?]+)\??/';
 const TS_REPL_PATTERN = '/^(https?:\/\/)(.+)$/';
