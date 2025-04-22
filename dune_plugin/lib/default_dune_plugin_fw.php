@@ -128,6 +128,5 @@ function plugin_error_handler($error_type, $message, $file, $line)
     hd_error_handler($error_type, $message, $file, $line);
 }
 
-$old_error_handler = set_error_handler('plugin_error_handler');
-hd_print("Old handler: $old_error_handler");
+set_error_handler('plugin_error_handler');
 DunePluginFw::$instance = new Default_Dune_Plugin_Fw();

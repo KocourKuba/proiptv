@@ -743,44 +743,44 @@ function get_mac_address()
 }
 
 /**
- * get timezone string from /etc/TZ, for example GMT-01
+ * get timezone string system date, for example +0200
  * @return string
  */
 function get_local_tz()
 {
-    if (!file_exists('/etc/TZ')) {
-        return date("O");
-    }
-
-    exec('TZ=`cat /etc/TZ` date +%z', $tz, $rc);
+    $cmd = file_exists('/etc/TZ') ? 'TZ=`cat /etc/TZ` date +%z' : 'date +%z';
+    exec($cmd, $tz, $rc);
     return (($rc !== 0) || (count($tz) !== 1) || !is_numeric($tz[0])) ? '' : $tz[0];
 }
 
 /**
- * @return int|string
+ * Return integer of offset in seconds
+ * @return int
  */
 function get_local_time_zone_offset()
 {
-    // return integer of offset in seconds
-    $local_tz = get_local_tz();
+    static $offset = null;
 
-    if ($local_tz !== '') {
-        $sign_ch = $local_tz[0];
-        if ($sign_ch === '-') {
-            $sign = -1;
-        } else if ($sign_ch === '+') {
-            $sign = +1;
+    if (is_null($offset)) {
+        $local_tz = get_local_tz();
+        if ($local_tz === '') {
+            $offset = 0;
         } else {
-            return '';
+            $sign_ch = $local_tz[0];
+            if ($sign_ch === '-') {
+                $sign = -1;
+            } else {
+                $sign = 1;
+            }
+
+            $tz_hh = (int)substr($local_tz, 1, 2);
+            $tz_mm = (int)substr($local_tz, 3, 2);
+
+            $offset = $sign * ($tz_hh * 60 + $tz_mm) * 60;
         }
-
-        $tz_hh = (int)substr($local_tz, 1, 2);
-        $tz_mm = (int)substr($local_tz, 3, 2);
-
-        return $sign * ($tz_hh * 60 + $tz_mm) * 60;
     }
 
-    return 0;
+    return $offset;
 }
 
 /**
@@ -805,7 +805,6 @@ function to_local_time_zone_offset($time)
     return $time + get_local_time_zone_offset();
 }
 
-
 /**
  * Get timezone or UTC +???? offset name
  * @return string
@@ -813,19 +812,20 @@ function to_local_time_zone_offset($time)
 function getTimeZone()
 {
     $local_tz = get_local_tz();
-
-    $tz = date('e');
-    if ($tz !== 'UTC') {
-        return "$tz (UTC$local_tz)";
+    if ($local_tz === '') {
+        $local_tz = "Unknown";
     }
 
-    if ($local_tz !== '') {
-        $sign_ch = $local_tz[0];
-        $tz_hh = substr($local_tz, 1, 2);
-        $tz_mm = substr($local_tz, 3, 2);
-        return "UTC $sign_ch$tz_hh$tz_mm";
+    if (is_android()) {
+        exec('getprop persist.sys.timezone', $tz, $rc);
+        $tz_name = (($rc !== 0) || (count($tz) !== 1)) ? '' : $tz[0];
     }
-    return "UTC";
+
+    if (empty($tz_name)) {
+        $tz_name = date('e');
+    }
+
+    return "$tz_name ($local_tz)";
 }
 
 /**
@@ -837,51 +837,15 @@ function is_android()
 }
 
 /**
- * @param string $format
- * @return string
- * @throws Exception
- */
-function getAndroidTime($format)
-{
-    $airDate = exec('date');
-    $date = new DateTime($airDate);
-    if ($format === 'timestamp') {
-        return strtotime($date->format('Y-m-d H:i:s'));
-    }
-
-    return $date->format($format);
-}
-
-/**
- * format timestamp
- * @param int $ts
- * @param string|null $fmt
- * @return string
- * @throws Exception
- */
-function format_timestamp($ts, $fmt = 'Y:m:d H:i:s')
-{
-    // NOTE: for some reason, explicit timezone is required for PHP
-    // on Dune (no builtin timezone info?).
-
-    $dt = new DateTime('@' . $ts);
-    return $dt->format($fmt);
-}
-
-/**
  * Format time using current timezone offset
+ *
  * @param string $fmt
  * @param int $ts
  * @return string
  */
 function format_datetime($fmt, $ts)
 {
-    $tz_str = date_default_timezone_get();
-    if ($tz_str === 'UTC') {
-        $ts = from_local_time_zone_offset($ts);
-    }
-
-    return date($fmt, $ts);
+    return gmdate($fmt, to_local_time_zone_offset($ts));
 }
 
 /**
@@ -936,31 +900,6 @@ function format_duration_seconds($secs)
     }
 
     return sprintf("%02d:%02d", $minutes, $seconds);
-}
-
-/**
- * @return bool
- */
-function is_need_daylight_fix()
-{
-    static $tz_map = array();
-    if (empty($tz_map)) {
-        $path = getenv('FS_PREFIX') . '/firmware/time_zones/map.txt';
-        $map = @file_get_contents($path);
-        foreach (explode("\n", $map) as $line) {
-            if (empty($line)) continue;
-
-            $vars = explode(' ', $line);
-            $tz_map[$vars[0]] = (int)$vars[2];
-        }
-    }
-
-    $tz = date('e');
-    $use_daylight = 1;
-    if (isset($tz_map[$tz])) {
-        $use_daylight = $tz_map[$tz];
-    }
-    return (date('I') === '1' && $use_daylight === 0);
 }
 
 /**
@@ -2111,14 +2050,16 @@ function debug_print(/*mixed $var1, $var2...*/)
 
 /**
  * @param object $user_input
+ * @param bool $force
  * @return void
  */
-function dump_input_handler($user_input)
+function dump_input_handler($user_input, $force = false)
 {
-    if (!LogSeverity::$is_debug)
+    if (!LogSeverity::$is_debug && !$force) {
         return;
+    }
 
-    hd_debug_print(null, true);
+    hd_debug_print();
 
     foreach ($user_input as $key => $value) {
         $decoded_value = html_entity_decode(preg_replace("/(\\\u([0-9A-Fa-f]{4}))/", "&#x\\2;", $value), ENT_NOQUOTES, 'UTF-8');
@@ -2672,7 +2613,7 @@ function color_palette_patch(&$error)
         }
     }
 
-    $reboot_action = Action_Factory::restart(true);
+    $reboot_action = Action_Factory::restart();
     $xml = $dom->saveXML();
     // cut <?xml> tag
     $patched_skin_config = substr($xml, strpos($xml, '?>') + 2);
@@ -2713,7 +2654,7 @@ function color_palette_patch(&$error)
         if (!empty($system_settings)) {
             $system_settings['gui_skin'] = 'custom';
             $system_settings['appearance'] = 'custom';
-            $reboot_action = Action_Factory::change_settings($system_settings, true, false);
+            $reboot_action = Action_Factory::change_settings($system_settings, false, true);
         }
     } else if (!file_put_contents($skin_config, $patched_skin_config)) {
         $error = "An unexpected error occurred when saving to save the '$skin_config'";
@@ -2723,7 +2664,7 @@ function color_palette_patch(&$error)
 
     create_path(get_data_path('skin_backup'));
     @file_put_contents(get_data_path('skin_backup/') . md5($patched_skin_config), $origin_skin_config);
-    return $reboot_action;
+    return Action_Factory::show_main_screen($reboot_action);
 }
 
 function color_palette_restore()
@@ -2753,7 +2694,7 @@ function color_palette_restore()
         break;
     }
 
-    return Action_Factory::restart(true);
+    return Action_Factory::show_main_screen(Action_Factory::restart());
 }
 
 function recursive_copy($source, $target)

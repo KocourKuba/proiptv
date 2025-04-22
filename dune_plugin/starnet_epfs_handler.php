@@ -149,7 +149,7 @@ class Starnet_Epfs_Handler
      * @param string $epf_id
      * @return string
      */
-    protected static function get_epfs_path($epf_id)
+    public static function get_epfs_path($epf_id)
     {
         return self::$dir_path . "/$epf_id.json";
     }
@@ -171,8 +171,6 @@ class Starnet_Epfs_Handler
 
         $path = self::get_epfs_path($epfs_id);
         $tmp_path = "$path.tmp";
-
-        hd_debug_print("write epf path: $path", true);
 
         $new_json = json_encode($folder_view);
         $md5 = md5($new_json);
@@ -196,6 +194,8 @@ class Starnet_Epfs_Handler
             hd_debug_print("Failed to rename $tmp_path to $path");
             unlink($tmp_path);
         }
+
+        hd_debug_print("written epf path: $path", true);
     }
 
     public static function warmed_up_path()

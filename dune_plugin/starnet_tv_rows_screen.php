@@ -72,7 +72,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $actions[GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
-        $this->plugin->add_shortcuts_handlers($this, $actions);
+        if ($this->plugin->is_plugin_inited()) {
+            $this->plugin->init_plugin();
+            $this->plugin->add_shortcuts_handlers($this, $actions);
+        }
 
         return $actions;
     }
@@ -129,6 +132,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         switch ($control_id) {
             case GUI_EVENT_TIMER:
+                if (!$this->plugin->is_plugin_inited()) {
+                    return User_Input_Handler_Registry::create_screen_action(Starnet_Entry_Handler::ID, ACTION_RELOAD);
+                }
+
                 // rising after playback end + 100 ms
                 $this->plugin->update_tv_history(null);
 
@@ -485,6 +492,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
                 $this->plugin->reload_channels($plugin_cookies);
+                unlink(Starnet_Epfs_Handler::get_epfs_path(Starnet_Epfs_Handler::$epf_id));
                 return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
 
             case ACTION_REFRESH_SCREEN:
@@ -1163,8 +1171,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         } else {
             $program = (object)array();
             $program->time = sprintf("%s - %s",
-                gmdate('H:i', to_local_time_zone_offset($epg_data[PluginTvEpgProgram::start_tm_sec])),
-                gmdate('H:i', to_local_time_zone_offset($epg_data[PluginTvEpgProgram::end_tm_sec]))
+                format_datetime('H:i', $epg_data[PluginTvEpgProgram::start_tm_sec]),
+                format_datetime('H:i', $epg_data[PluginTvEpgProgram::end_tm_sec])
             );
 
             $title = $epg_data[PluginTvEpgProgram::name];

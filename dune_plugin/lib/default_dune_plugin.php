@@ -571,6 +571,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * @return bool
+     */
+    public function is_plugin_inited()
+    {
+        return $this->inited;
+    }
+
+    /**
      * @return void
      */
     public function init_epg_manager()
@@ -1115,15 +1123,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
         hd_debug_print("Force reload: " . var_export($reload_playlist, true));
 
-        HD::set_last_error($this->get_pl_error_name(), null);
-
         $plugin_cookies->toggle_move = false;
+
+        $this->init_plugin();
 
         // Init playlist db
         if (!$this->init_playlist_db()) {
             hd_debug_print("Init playlist db failed");
             return false;
         }
+
+        HD::set_last_error($this->get_pl_error_name(), null);
 
         $playlist_id = $this->get_active_playlist_id();
         $perf = new Perf_Collector();

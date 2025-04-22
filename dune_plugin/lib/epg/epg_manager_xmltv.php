@@ -204,7 +204,7 @@ class Epg_Manager_Xmltv
      * Try to load epg from cached file
      *
      * @param array $channel_row
-     * @param int $day_start_ts
+     * @param int $day_start_ts timestamp for day start in local time
      * @param bool $cached
      * @return array
      */
