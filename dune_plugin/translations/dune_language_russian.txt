@@ -25,6 +25,7 @@ search__1 = Поиск: %s
 new_search = Новый поиск
 loading = Загрузка...
 select = Выбрать
+time = Время:
 
 add_to_favorite = Добавить в Избранное
 delete_from_favorite = Удалить из Избранного

@@ -25,6 +25,7 @@ search__1 = Search: %s
 new_search = Neue Suche
 loading = Laden...
 select = Auswählen
+time = Zeit:
 
 add_to_favorite = Zu Favortien hinzufügen
 delete_from_favorite = Von Favoriten entfernen

@@ -220,15 +220,22 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     public function do_show_channel_epg($prog_info)
     {
+        $time = '';
+        $info = '';
         if (is_null($prog_info)) {
             $title = TR::load('epg_not_exist');
-            $info = '';
         } else {
             // program epg available
             $title = $prog_info[PluginTvEpgProgram::name];
+            $time = sprintf("%s - %s",
+                format_datetime('H:i', $prog_info[PluginTvEpgProgram::start_tm_sec]),
+                format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec])
+            );
             $info = $prog_info[PluginTvEpgProgram::description];
         }
 
+        $text = sprintf("<gap width = 0/><text color=%s size=normal>%s %s</text>", DEF_LABEL_TEXT_COLOR_GOLD, TR::load('time'), $time);
+        Control_Factory::add_smart_label($defs, null, $text);
         Control_Factory::add_multiline_label($defs, null, $info, 18);
         Control_Factory::add_vgap($defs, 10);
 
