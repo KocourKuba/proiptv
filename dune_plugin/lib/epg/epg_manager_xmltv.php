@@ -272,7 +272,7 @@ class Epg_Manager_Xmltv
 
                                 $day_epg[$program_start][PluginTvEpgProgram::end_tm_sec] = $program_end;
                                 $day_epg[$program_start][PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
-                                $day_epg[$program_start][PluginTvEpgProgram::description] = self::get_node_value($tag, 'desc');
+                                $day_epg[$program_start][PluginTvEpgProgram::description] = HD::unescape_entity_string(self::get_node_value($tag, 'desc'));
                                 $day_epg[$program_start][PluginTvEpgProgram::icon_url] = self::get_node_attribute($tag, 'icon', 'src');
 
                                 if (!$ext_epg) continue;
