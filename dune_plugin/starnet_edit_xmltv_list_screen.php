@@ -508,7 +508,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $expired = TR::load('setup_epg_cache_type_auto');
                 } else {
                     $max_cache_time = $check_time_file + 3600 * 24 * $item[PARAM_CACHE];
-                    $expired = date("m d H:i", $max_cache_time);
+                    $expired = format_datetime('Y-m-d H:i', $max_cache_time);
                 }
 
                 $detailed_info = TR::load('edit_list_detail_info__4',
