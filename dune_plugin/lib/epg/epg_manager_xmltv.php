@@ -226,6 +226,7 @@ class Epg_Manager_Xmltv
         $ext_epg = $this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->plugin->is_ext_epg_exist();
 
         foreach ($this->xmltv_sources as $key => $params) {
+            hd_debug_print("Looking in XMLTV source: {$params[PARAM_URI]}");
             if ($this->is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES)) {
                 hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: $channel_id");
                 $this->delayed_epg[] = $channel_id;
