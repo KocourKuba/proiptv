@@ -370,6 +370,13 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     public function init_screen_view_parameters($background) {
         hd_debug_print(null, true);
         hd_debug_print("Selected background: $background", true);
+
+        $not_loaded_vod = array(
+            ViewItemParams::item_paint_icon => true,
+            ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
+            ViewItemParams::item_detailed_icon_path => 'missing://',
+        );
+
         $this->screens_views = array(
             // 1x10 title list view with right side icon
             'list_1x11_small_info' => array(
@@ -413,10 +420,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewItemParams::icon_keep_aspect_ratio => true,
                 ),
 
-                PluginRegularFolderView::not_loaded_view_item_params => array(
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
+                PluginRegularFolderView::not_loaded_view_item_params => array(),
             ),
 
             'list_1x11_info' => array(
@@ -929,11 +933,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewItemParams::item_paint_caption => false,
                 ),
 
-                PluginRegularFolderView::not_loaded_view_item_params => array(
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
+                PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
 
             'icons_5x2_movie_caption' => array(
@@ -981,14 +981,54 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewItemParams::item_caption_sel_dy => 25,
                 ),
 
-                PluginRegularFolderView::not_loaded_view_item_params => array(
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
+                PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
 
-            'list_1x10_movie_info_normal' => array(
+            'icons_5x3_movie_no_caption' => array(
+                PluginRegularFolderView::async_icon_loading => true,
+                PluginRegularFolderView::view_params => array(
+                    ViewParams::num_cols => 5,
+                    ViewParams::num_rows => 3,
+                    ViewParams::paint_details => true,
+                    ViewParams::paint_path_box => false,
+                    ViewParams::zoom_detailed_icon => true,
+                    ViewParams::paint_sandwich => true,
+                    ViewParams::sandwich_base => self::SANDWICH_BASE,
+                    ViewParams::sandwich_mask => self::SANDWICH_MASK,
+                    ViewParams::sandwich_cover => self::SANDWICH_COVER,
+                    ViewParams::paint_item_info_in_details => true,
+
+                    ViewParams::item_detailed_info_auto_line_break => true,
+                    ViewParams::item_detailed_info_title_color => DEF_LABEL_TEXT_COLOR_GREEN,
+                    ViewParams::item_detailed_info_text_color => DEF_LABEL_TEXT_COLOR_WHITE,
+                    ViewParams::item_detailed_info_font_size => FONT_SIZE_SMALL,
+
+                    ViewParams::background_path => $background,
+                    ViewParams::background_order => 0,
+                    ViewParams::background_height => 1080,
+                    ViewParams::background_width => 1920,
+                    ViewParams::optimize_full_screen_background => true,
+                ),
+
+                PluginRegularFolderView::base_view_item_params => array(
+                    ViewItemParams::item_paint_icon => true,
+                    ViewItemParams::icon_sel_scale_factor => 1.1,
+                    ViewItemParams::icon_path => self::VOD_ICON_PATH,
+                    ViewItemParams::item_layout => HALIGN_LEFT,
+                    ViewItemParams::icon_valign => VALIGN_CENTER,
+                    ViewItemParams::icon_dx => 10,
+                    ViewItemParams::icon_dy => -5,
+                    ViewItemParams::icon_width => 167,
+                    ViewItemParams::icon_height => 250,
+                    ViewItemParams::icon_sel_margin_top => 0,
+                    ViewItemParams::item_paint_caption => false,
+                    ViewItemParams::item_caption_width => 1100
+                ),
+
+                PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
+            ),
+
+            'list_1x10_vod_info_normal' => array(
                 PluginRegularFolderView::async_icon_loading => true,
                 PluginRegularFolderView::view_params => array(
                     ViewParams::num_cols => 1,
@@ -1032,11 +1072,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
                 ),
 
-                PluginRegularFolderView::not_loaded_view_item_params => array(
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
+                PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
 
             'list_1x12_vod_info_normal' => array(
@@ -1078,11 +1114,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                     ViewItemParams::item_caption_font_size => FONT_SIZE_NORMAL,
                     ViewItemParams::item_caption_width => 1100
                 ),
-                PluginRegularFolderView::not_loaded_view_item_params => array(
-                    ViewItemParams::item_paint_icon => true,
-                    ViewItemParams::icon_path => self::DEFAULT_MOV_ICON_PATH,
-                    ViewItemParams::item_detailed_icon_path => 'missing://',
-                ),
+                PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
         );
     }

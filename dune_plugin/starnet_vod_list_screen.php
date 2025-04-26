@@ -238,7 +238,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
 
         return array(
             $this->plugin->get_screen_view('list_1x12_vod_info_normal'),
-            $this->plugin->get_screen_view('list_1x10_movie_info_normal'),
+            $this->plugin->get_screen_view('list_1x10_vod_info_normal'),
             $this->plugin->get_screen_view('icons_5x2_movie_caption'),
             $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
         );
