@@ -373,12 +373,14 @@ class vod_standard extends Abstract_Vod
             $title_orig = '';
             $country = '';
             $year = '';
+            $rating = '';
 
             if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
                 $title = safe_get_value($match, 'title', $title);
-                $title_orig = safe_get_value($match, 'title_orig', $title_orig);
-                $country = safe_get_value($match, 'country', $country);
-                $year = safe_get_value($match, 'year', $year);
+                $title_orig = safe_get_value($match, 'title_orig', '');
+                $country = safe_get_value($match, 'country', '');
+                $year = safe_get_value($match, 'year', '');
+                $rating = safe_get_value($match, 'rating', '');
             }
 
             $movie = new Movie($movie_id, $this->plugin);
@@ -393,7 +395,7 @@ class vod_standard extends Abstract_Vod
                 '',     // scenario,
                 '',       // actors,
                 $category,         // genres,
-                '',       // rate_imdb,
+                $rating,           // rate_imdb,
                 '',    // rate_kinopoisk,
                 '',       // rate_mpaa,
                 $country           // country,
