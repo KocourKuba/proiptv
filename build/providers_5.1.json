@@ -257,6 +257,40 @@
     },
     {
       "enable": true,
+      "id": "2tv",
+      "name": "2tv",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_2tv.png",
+      "provider_url": "http://2tv.biz/",
+      "api_url": "https://pptt.fun",
+      "api_commands": {
+        "get_playlist": "{API}/pl/{PASSWORD}/playlist.m3u8",
+        "get_vod": "{API}/mk/{PASSWORD}/playlist.m3u8"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/play\\/(?<id>.+)\\/.+\\/.*$/",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "alias": "iptv.online",
+            "title": "epg.drm-play"
+          }
+        ],
+        "ext_params": true,
+        "servers": {
+          "ca.seetv.cc": "Canada",
+          "de.seetv.cc": "Germany",
+          "gr.seetv.cc": "Greece",
+          "pl.online24.pm": "Poland",
+          "ru.seetv.cc": "Russia",
+          "ua.online24.pm": "Ukraine"
+        },
+        "vod_parser": "/^(?<title>[^|]+)\\s\\|(?<year>\\d+)\\|\\s?IMDB\\:(?<rating>.+)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "antifriz",
       "name": "Antifriz",
       "type": "pin",

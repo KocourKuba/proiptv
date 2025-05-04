@@ -61,6 +61,7 @@ For old devices, the latest version is [5.1.1014](https://github.com/KocourKuba/
 48. [IPTV Play](http://iptv-play.ru/)
 49. [HN Media](https://hnmedia.pro/)
 50. [Shurik TV](https://schuriktv.nethouse.ru/)
+51. [2TV](https://2tv.biz/)
 </details>
 
 ## Donate
