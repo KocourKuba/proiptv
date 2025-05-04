@@ -1277,6 +1277,11 @@
         "epg_presets": [
           {
             "name": "sharavoz"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "sharavoz"
           }
         ],
         "ext_params": true,
