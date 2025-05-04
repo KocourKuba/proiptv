@@ -219,7 +219,8 @@ class Entry extends Json_Serializer
                 $attributes = safe_merge_array($attributes, $item->getAttributes());
             }
         } else if ($this->hasTag($tag)) {
-            $attributes = $this->getEntryTag($tag);
+            $entry_tag = $this->getEntryTag($tag);
+            $attributes = empty($entry_tag) ? array() : $entry_tag->getAttributes();
         }
 
         return $attributes;
