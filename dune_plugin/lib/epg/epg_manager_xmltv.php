@@ -917,7 +917,10 @@ class Epg_Manager_Xmltv
                         $start_program_block = $tag_start_pos;
                     } else if ($prev_channel !== $channel_id) {
                         $tag_end_pos = $tag_start_pos;
-                        $stm->execute();
+                        $res = $stm->execute();
+                        if ($res === false) {
+                            hd_debug_print("Error inserting position start: $start_program_block end: $tag_end_pos for channel: $prev_channel");
+                        }
                         $prev_channel = $channel_id;
                         $start_program_block = $tag_start_pos;
                     }
