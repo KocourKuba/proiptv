@@ -209,11 +209,16 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             break;
 
                         case VOD_LIST_GROUP_ID:
-                            $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID);
-                            if (!$cnt || !$this->plugin->is_m3u_vod()) {
+                            if (!$this->plugin->is_m3u_vod()) {
                                 $skip = true;
                                 break;
                             }
+                            $cnt = $this->plugin->get_order_count(VOD_LIST_GROUP_ID);
+                            if (!$cnt) {
+                                $skip = true;
+                                break;
+                            }
+
                             $color = DEF_LABEL_TEXT_COLOR_VIOLET;
                             $item_detailed_info = TR::t('vod_screen_group_info__2', TR::load(VOD_LIST_GROUP_CAPTION), $cnt);
                             break;
