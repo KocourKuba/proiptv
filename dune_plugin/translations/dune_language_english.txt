@@ -229,7 +229,7 @@ setup_channels_dune_force_ts = Force Dune to detect stream
 setup_channels_info__4 = "Name:|%s||Link:|%s||Type:|%s||Channel ID:|%s"
 
 entry_send_log = Send log to the developer
-entry_log_sent = Log sent successfully!\nPlease inform the developer of the reason for sending the log in the Telegram channel t.me/dunehd_iptv_chat\n or on the forums forum.hdtv.ru and forum.mydune.ru
+entry_log_sent__3 = Log sent successfully!\nPlease inform the developer of the reason for sending the log in the Telegram channel t.me/dunehd_iptv_chat\n or on the forums forum.hdtv.ru and forum.mydune.ru\nType of Dune HD: %s (%s) and time when it sent: %s
 entry_log_not_sent = Sent log failed!
 entry_log_not_sent_too_old = Dune HD with old firmware!\nFirmware less than b11 is not supported!\nLog sending has been cancelled.
 entry_log_not_enabled = Debug logging was not enabled.\nThe logs may not contain useful information!\nLog sending has been cancelled.\n\n1. Enable debug logging mode in extended setup settings.\n2. Try to repeat the error or crash.\n3. Send the log from the plugin (context menu on the plugin icon and the item 'Send log to developer')\n4. Disable debug logging mode.

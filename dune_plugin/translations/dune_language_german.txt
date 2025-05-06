@@ -229,7 +229,7 @@ setup_channels_dune_force_ts = Dune zwingen, den Stream zu erkennen
 setup_channels_info__4 = "Vorname:|%s||Verknüpfung:|%s||Typ:|%s||Kanal-ID:|%s"
 
 entry_send_log = Protokoll an den Entwickler senden
-entry_log_sent = Protokoll erfolgreich gesendet!\nBitte informieren Sie den Entwickler über den Grund für das Senden des Protokolls im Telegram-Kanal t.me/dunehd_iptv_chat\n oder in den Foren forum.hdtv.ru und forum.mydune.ru
+entry_log_sent__3 = Protokoll erfolgreich gesendet!\nBitte informieren Sie den Entwickler über den Grund für das Senden des Protokolls im Telegram-Kanal t.me/dunehd_iptv_chat\n oder in den Foren forum.hdtv.ru und forum.mydune.ru\nTyp der Dune HD: %s (%s) und Uhrzeit des Versands: %s
 entry_log_not_sent = Das gesendete Protokoll ist fehlgeschlagen!
 entry_log_not_sent_too_old = Dune HD mit alter Firmware!\nFirmware weniger als b11 wird nicht unterstützt!\nProtokolls wurde abgebrochen.
 entry_log_not_enabled = Die erweiterte Protokollierung wurde nicht aktiviert.\nDie Protokolle enthalten möglicherweise keine nützlichen Informationen!\nDas Senden des Protokolls wurde abgebrochen.\n\n1. Debug-Logging-Modus aktivieren.\n2. Versuchen Sie, den Fehler oder Absturz zu wiederholen.\n3. Senden Sie das Protokoll vom Plugin (Kontextmenü auf dem Plugin-Symbol und den Punkt „Protokoll an Entwickler senden“)\n4. Debug-Logging-Modus deaktivieren.
