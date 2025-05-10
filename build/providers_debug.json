@@ -367,25 +367,6 @@
     },
     {
       "enable": true,
-      "id": "blinktv",
-      "name": "BlinkTV",
-      "type": "login",
-      "logo": "http://iptv.esalecrm.net/res/logo_blinktv.png",
-      "provider_url": "https://blinktv.cc/",
-      "api_commands": {
-        "get_playlist": "https://blinktv.cc/{LOGIN}/{PASSWORD}/{STREAM_ID}/playlist.m3u8"
-      },
-      "config": {
-        "id_parser" : "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
-        "streams": {
-          "hls": "HLS",
-          "ts": "MPEG-TS"
-        }
-      }
-    },
-    {
-      "enable": true,
       "id": "cbilling",
       "class": "cbilling",
       "vod": "cbilling",
@@ -1134,6 +1115,26 @@
         ],
         "vod_parser": "/^(?<title>[^\\/]+)\\/(?<title_orig>.+)\\s(?<year>\\d+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
+      "id": "reflextv",
+      "name": "ReflexTV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_reflextv.png",
+      "provider_url": "https://reflextv.ru/",
+      "api_commands": {
+        "get_playlist": "https://reflextv.ru/playlist/{STREAM_ID}/{PASSWORD}.m3u"
+      },
+      "config": {
+        "id_parser" : "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
+        "ext_params": true,
+        "streams": {
+          "hls": "HLS",
+          "siptv": "MPEG-TS"
+        }
       }
     },
     {
