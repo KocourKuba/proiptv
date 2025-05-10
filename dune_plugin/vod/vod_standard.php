@@ -958,9 +958,9 @@ class vod_standard extends Abstract_Vod
                     if (empty($uri)) {
                         throw new Exception("Empty playlist url");
                     }
-                    list($res, $logfile) = Curl_Wrapper::simple_download_file($uri, $m3u_file);
+                    $res = Curl_Wrapper::simple_download_file($uri, $m3u_file);
                     if ($res === false) {
-                        $exception_msg = TR::load('err_load_vod') . "\n\n$logfile";
+                        $exception_msg = TR::load('err_load_vod');
                         throw new Exception($exception_msg);
                     }
                 } else {

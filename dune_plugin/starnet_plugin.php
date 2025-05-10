@@ -200,7 +200,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
                 $provider->setLogo("plugin_file://logo/$filename");
             } else {
                 $cached_file = get_cached_image_path($filename);
-                list($res,) = Curl_Wrapper::simple_download_file($logo, $cached_file);
+                $res = Curl_Wrapper::simple_download_file($logo, $cached_file);
                 if ($res) {
                     $provider->setLogo($cached_file);
                 } else {

@@ -734,9 +734,9 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         if ($type === PARAM_FILE) {
             copy($uri, $tmp_file);
         } else {
-            list($res, $log) = Curl_Wrapper::simple_download_file($uri, $tmp_file);
+            $res = Curl_Wrapper::simple_download_file($uri, $tmp_file);
             if (!$res) {
-                throw new Exception(TR::load('err_load_playlist') . " '$uri'\n\n" . $log);
+                throw new Exception(TR::load('err_load_playlist') . " '$uri'");
             }
 
             $contents = file_get_contents($uri, false, null, 0, 512);

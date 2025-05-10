@@ -282,7 +282,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         $qr_code = get_temp_path('tg.jpg');
         if (!file_exists($qr_code)) {
             $url = "https://api.qrserver.com/v1/create-qr-code/?size=100x100&format=jpg&data=https%3A%2F%2Ft.me%2Fdunehd_iptv";
-            list($res,) = Curl_Wrapper::simple_download_file($url, $qr_code);
+            $res = Curl_Wrapper::simple_download_file($url, $qr_code);
             if ($res) {
                 Control_Factory::add_smart_label($defs, "", "<gap width=1400/><icon dy=-10 width=100 height=100>$qr_code</icon>");
                 Control_Factory::add_vgap($defs, 15);

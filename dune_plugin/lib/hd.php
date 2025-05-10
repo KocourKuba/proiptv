@@ -428,20 +428,18 @@ class HD
     /**
      * @param string $url
      * @param array $opts
-     * @param array $info
      * @return bool|string
-     * @throws Exception
      */
-    public static function http_get_document($url, $opts = null, &$info = array())
+    public static function http_get_document($url, $opts = null)
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 90);
         curl_setopt($ch, CURLOPT_FILETIME, true);
         curl_setopt($ch, CURLOPT_USERAGENT, self::get_dune_user_agent());
         curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
@@ -462,13 +460,13 @@ class HD
         if ($content === false) {
             $err_msg = "Fetch $url failed. HTTP error: $http_code (" . curl_error($ch) . ')';
             hd_debug_print($err_msg);
-            throw new Exception($err_msg);
+            return false;
         }
 
         if ($http_code >= 400) {
             $err_msg = "Fetch $url failed. HTTP request failed ($http_code): " . self::http_status_code_to_string($http_code);
             hd_debug_print($err_msg);
-            throw new Exception($err_msg);
+            return false;
         }
 
         if ($http_code >= 300) {

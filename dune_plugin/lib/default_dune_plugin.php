@@ -780,7 +780,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     if (!is_proto_http($uri)) {
                         throw new Exception("Incorrect playlist url: $uri");
                     }
-                    list($res, $logfile) = Curl_Wrapper::simple_download_file($uri, $m3u_file);
+                    $res = Curl_Wrapper::simple_download_file($uri, $m3u_file);
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
@@ -788,9 +788,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             if (!$res || !file_exists($m3u_file)) {
                 $exception_msg = TR::load('err_load_playlist');
-                if ($type !== PARAM_FILE && !empty($logfile)) {
-                    $exception_msg .= "\n\n$logfile";
-                }
                 throw new Exception($exception_msg);
             }
 

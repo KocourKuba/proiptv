@@ -264,14 +264,19 @@ class Curl_Wrapper
      *
      * @param string $url url
      * @param string $save_file path to file
-     * @param bool $use_cache use ETag caching
-     * @return array result of operation (first bool, second string)
+     * @return bool
      */
-    public static function simple_download_file($url, $save_file, $use_cache = false)
+    public static function simple_download_file($url, $save_file)
     {
         hd_debug_print(null, true);
-        $wrapper = new self();
-        return array($wrapper->download_file($url, $save_file, $use_cache), $wrapper->get_raw_response_headers());
+
+        $content = self::simple_download_content($url);
+        if ($content === false) {
+            hd_debug_print("Can't download $url");
+            return false;
+        }
+
+        return file_put_contents($save_file, $content);
     }
 
     /**
@@ -285,7 +290,14 @@ class Curl_Wrapper
         hd_debug_print(null, true);
 
         $wrapper = new self();
-        return $wrapper->download_content($url);
+        $opt = array(CURLOPT_CONNECTTIMEOUT => $wrapper->connect_timeout);
+        $content = HD::http_get_document($url, $opt);
+        if ($content === false) {
+            hd_debug_print("Can't download $url");
+            return false;
+        }
+
+        return $content;
     }
 
     /**
