@@ -1,4 +1,17 @@
-﻿### Version 6.2.1264
+﻿### Version 6.2.1280
+- Converting html tags into XMLTV, which are sometimes found in the text
+- Additional view of icons in VOD (5x3)
+- The 'Select or Edit Playlists' item in the context menu has been moved to the top of the list.
+- Correct indication of the name of the playlist (if different from the name of the provider)
+- In the message about sending the log, the model of device is indicated. For information to the user
+- Fixed a bug with getting some attributes in the M3U parser
+- Fixed a bug with launching the plugin from a separate VOD icon
+- Configuration: BlinkTV replaced by ReflexTV (renamed)
+- Configuration: 2tv Provider Support (https://2tv.biz/)
+- Configuration: Additional Internet EPG source for Sharavoz
+- Configuration: Additional domain for Sharavoz
+
+### Version 6.2.1264
 - Time zone is taken from Android settings, old PHP code "compatible" with Sigma set-top boxes removed
 - Added program time information when calling the current EPG for a channel in Classic
 - When patching/restoring the palette, a full reboot of the console is no longer needed. Dune Shell reboot only.
