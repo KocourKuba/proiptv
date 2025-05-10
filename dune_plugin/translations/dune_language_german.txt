@@ -178,7 +178,6 @@ setup_epg_cache_engine__1 = EPG-Engine ändern (%s)
 setup_epg_cache_type_auto = Automatisch
 setup_epg_cache_xmltv = XMLTV
 setup_epg_cache_json = Internet-EPG-Server
-setup_epg_cache_json__1 = Internet-EPG-Server (%s)
 setup_edit_xmltv_list = XMLTV-Quellen auswählen oder bearbeiten
 setup_storage_info__1 = Cache-Ordner: %s
 setup_epg_font = EPG-Schriftgröße

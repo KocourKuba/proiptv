@@ -2511,14 +2511,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->use_xmltv ? "check.png" : null
         );
 
-        $provider = $this->get_active_provider();
-        if ($provider !== null) {
-            $epg_preset = $provider->getConfigValue(EPG_JSON_PRESETS);
-            $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
-            $name = safe_get_value($epg_preset[$preset], 'title', $epg_preset[$preset]['name']);
+        if ($this->get_active_provider() !== null) {
             $menu_items[] = $this->create_menu_item($handler,
-                ENGINE_JSON,
-                TR::t('setup_epg_cache_json__1', $name),
+                ENGINE_JSON, TR::t('setup_epg_cache_json'),
                 $this->use_xmltv ? null : "check.png"
             );
         }
@@ -2531,8 +2526,26 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function refresh_playlist_menu($handler)
     {
-        $title = TR::t('playlist_name_msg__1', $this->get_playlist_parameter($this->get_active_playlist_id(), PARAM_NAME));
-        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, $title, "refresh.png");
+        $icon_file = "refresh.png";
+        $params = $this->get_playlist_parameters($this->get_active_playlist_id());
+        $title = safe_get_value($params, PARAM_NAME);
+        if (safe_get_value($params, PARAM_TYPE) === PARAM_PROVIDER) {
+            $provider = $this->create_provider_class(safe_get_value($params, PARAM_PROVIDER));
+            if (!is_null($provider)) {
+                if ($title !== $provider->getName()) {
+                    $title .= " ({$provider->getName()})";
+                }
+                $icon_file = $provider->getLogo();
+            }
+        }
+
+        $title = TR::t('playlist_name_msg__1', $title);
+        $menu_items[] = $this->create_menu_item($handler, ACTION_RELOAD, $title, $icon_file);
+        $menu_items[] = $this->create_menu_item($handler,
+            ACTION_ITEMS_EDIT,
+            TR::t('setup_channels_src_edit_playlists'),
+            "m3u_file.png",
+            array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         return $menu_items;
     }
@@ -2577,12 +2590,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
         $menu_items[] = $this->create_menu_item($handler, CONTROL_CATEGORY_SCREEN, TR::t('setup_category_title'), "settings.png");
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-
-        $menu_items[] = $this->create_menu_item($handler,
-            ACTION_ITEMS_EDIT,
-            TR::t('setup_channels_src_edit_playlists'),
-            "m3u_file.png",
-            array(CONTROL_ACTION_EDIT => Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST));
 
         $menu_items[] = $this->create_menu_item($handler,
             ACTION_ITEMS_EDIT,
