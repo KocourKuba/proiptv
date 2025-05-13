@@ -536,7 +536,7 @@
       "name": "Glanz",
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_glanz.png",
-      "provider_url": "http://ottg.cc/",
+      "provider_url": "http://ottg.tv/",
       "api_commands": {
         "get_playlist": "{PLAYLIST}",
         "get_vod": "http://api.{DOMAIN_ID}/playlist/vod?login={LOGIN}&password={PASSWORD}"
@@ -556,12 +556,8 @@
           "ts": "MPEG-TS"
         },
         "domains": {
-          "ottg.cc": "ottg.cc",
-          "ottg.in": "ottg.in",
-          "ottg.tv": "ottg.tv",
-          "ottg.space": "ottg.space",
-          "ottg.eu": "ottg.eu",
-          "ottg.app": "ottg.app"
+          "ottg.app": "ottg.app",
+          "ottg.cc": "ottg.cc"
         },
         "playlists": {
           "standard": {

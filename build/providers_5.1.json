@@ -548,12 +548,8 @@
           "ts": "MPEG-TS"
         },
         "domains": {
-          "ottg.cc": "ottg.cc",
-          "ottg.in": "ottg.in",
-          "ottg.tv": "ottg.tv",
-          "ottg.space": "ottg.space",
-          "ottg.eu": "ottg.eu",
-          "ottg.app": "ottg.app"
+          "ottg.app": "ottg.app",
+          "ottg.cc": "ottg.cc"
         },
         "playlists": {
           "standard": {
