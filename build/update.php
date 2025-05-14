@@ -80,7 +80,7 @@ function get_ip()
 
     foreach($ip_array as $ip_s)
     {
-        if(!empty($ip_s) && !isIPInNetArray($ip_s, $ip_private_list))
+        if(!empty($ip_s) && !isIpInNetArray($ip_s, $ip_private_list))
         {
             $ip = $ip_s;
             break;
@@ -96,7 +96,7 @@ function IP2Country($ip)
     $iplong = ip2long($ip);
     $query = "SELECT c2code FROM ip2country WHERE ip_from <= $iplong AND ip_to >= $iplong";
 
-    $DB = new db_driver;
+    $DB = new db_driver();
     $DB->obj['sql_database'] = CRM_DATABASE;
     $DB->obj['sql_user'] = IPTV_USER;
     $DB->obj['sql_pass'] = IPTV_PASSWORD;
@@ -157,12 +157,15 @@ if ($ext != 'xml' && $ext != 'gz') {
 	die();
 }
 
-if ($revision < 22) {
-    $log_name = "update_old.log";
-    $result_path = "./old/" . $info['basename'];
-} else {
+if ($revision > 21) {
     $log_name = "update_new.log";
     $result_path = "./current/" . $info['basename'];
+} else if ($revision > 20) {
+    $log_name = "update_mid.log";
+    $result_path = "./mid/" . $info['basename'];
+} else {
+    $log_name = "update_old.log";
+    $result_path = "./old/" . $info['basename'];
 }
 $logbuf .= "url path   : " . $url_params['path'] . PHP_EOL;
 $logbuf .= "new path   : " . $result_path . PHP_EOL;
