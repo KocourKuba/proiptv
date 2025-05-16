@@ -276,7 +276,11 @@ class M3uParser extends Json_Serializer
         $query .= "CREATE TABLE IF NOT EXISTS $this->channels_table ($channels_columns);";
         $query .= "DROP TABLE IF EXISTS $this->groups_table;";
         $query .= "CREATE TABLE IF NOT EXISTS $this->groups_table ($channels_groups);";
-        $db->exec_transaction($query);
+        $res = $db->exec_transaction($query);
+        if (!$res) {
+            hd_debug_print("Can't create table: $this->channels_table");
+            return false;
+        }
 
         if (empty($this->file_name)) {
             hd_debug_print("Empty playlist file name");
@@ -289,6 +293,11 @@ class M3uParser extends Json_Serializer
         }
 
         $stm_channels = $db->prepare_bind("INSERT OR IGNORE", $this->channels_table, array_keys($init_channels));
+        if ($stm_channels === false) {
+            hd_debug_print("Can't prepare bind statement");
+            return false;
+        }
+
         hd_debug_print("Open: $this->file_name");
         $lines = file($this->file_name, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 

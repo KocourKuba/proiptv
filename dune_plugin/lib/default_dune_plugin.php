@@ -754,6 +754,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $type = safe_get_value($params, PARAM_TYPE);
 
             hd_debug_print("m3u playlist: {$params[PARAM_NAME]} ($playlist_id)");
+            $logfile = '';
             if ($type === PARAM_PROVIDER) {
                 $provider = $this->get_active_provider();
                 if (is_null($provider)) {
@@ -788,6 +789,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             if (!$res || !file_exists($m3u_file)) {
                 $exception_msg = TR::load('err_load_playlist');
+                if (!empty($logfile)) {
+                    $exception_msg .= "\n\n$logfile";
+                }
                 throw new Exception($exception_msg);
             }
 
@@ -797,12 +801,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 throw new Exception($exception_msg);
             }
 
+            $contents = trim($contents, "\x0B\xEF\xBB\xBF");
             $encoding = HD::detect_encoding($contents);
             if ($encoding !== 'utf-8') {
                 hd_debug_print("Fixing playlist encoding: $encoding");
                 $contents = iconv($encoding, 'utf-8', $contents);
-                file_put_contents($m3u_file, $contents);
             }
+            file_put_contents($m3u_file, $contents);
             $perf->setLabel('end_download_playlist');
 
             $perf->setLabel('start_parse_playlist');
