@@ -1617,9 +1617,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function get_selected_xmltv_ids()
     {
-        $playlist_id = $this->get_active_playlist_id();
-        $table_name = self::SELECTED_XMLTV_TABLE;
-        return $this->sql_params->fetch_single_array("SELECT hash FROM $table_name WHERE playlist_id = '$playlist_id' ORDER BY ROWID;", PARAM_HASH);
+        if ($this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
+            $playlist_id = $this->get_active_playlist_id();
+            $table_name = self::SELECTED_XMLTV_TABLE;
+            return $this->sql_params->fetch_single_array("SELECT hash FROM $table_name WHERE playlist_id = '$playlist_id' ORDER BY ROWID;", PARAM_HASH);
+        }
+
+        return array();
     }
 
     /**
@@ -1627,6 +1631,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function is_selected_xmltv_id($hash)
     {
+        if (!$this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
+            return false;
+        }
+
         $playlist_id = $this->get_active_playlist_id();
         $table_name = self::SELECTED_XMLTV_TABLE;
         return (bool)$this->sql_params->query_value("SELECT count(*) FROM $table_name WHERE playlist_id = '$playlist_id' AND hash = '$hash';");
