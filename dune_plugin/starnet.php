@@ -28,35 +28,20 @@ require 'starnet_plugin.php';
 
 Default_Dune_Plugin_Fw::$plugin_class_name = 'Starnet_Plugin';
 
-/**
- * @throws Exception
- */
-function __autoload($className)
-{
-    $path = __DIR__ . "/$className.php";
-    if (file_exists($path)) {
-        hd_debug_print("include $path");
-        include($path);
-        return;
-    }
+spl_autoload_register(function ($className) {
+    $directories = array(
+        __DIR__,
+        __DIR__ . '/lib',
+        __DIR__ . '/vod',
+        __DIR__ . '/api',
+    );
 
-    $path = __DIR__ . "/lib/$className.php";
-    if (file_exists($path)) {
-        hd_debug_print("include lib $path");
-        include($path);
-        return;
+    foreach ($directories as $dir) {
+        $path = $dir . '/' . $className . '.php';
+        if (file_exists($path)) {
+            hd_debug_print("include $path");
+            include $path;
+            return;
+        }
     }
-
-    $path = __DIR__ . "/vod/$className.php";
-    if (file_exists($path)) {
-        hd_debug_print("include vod $path");
-        include($path);
-        return;
-    }
-
-    $path = __DIR__ . "/api/$className.php";
-    if (file_exists($path)) {
-        hd_debug_print("include api $path");
-        include($path);
-    }
-}
+});

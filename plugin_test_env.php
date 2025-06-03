@@ -13,40 +13,24 @@ include 'bootstrap.php';
 include 'dune_api.php';
 include 'dune_plugin.php';
 include 'dune_plugin_fw.php';
-/**
- * @throws Exception
- */
-function __autoload($className)
-{
-    $debug_root = getenv('windir') ? '/dune_plugin' : '';
 
-    $path = __DIR__ . "$debug_root/$className.php";
-    if (file_exists($path)) {
-        hd_debug_print("include $path", true);
-        include($path);
-        return;
-    }
+spl_autoload_register(function ($className) {
+    $directories = array(
+        __DIR__,
+        __DIR__ . '/lib',
+        __DIR__ . '/vod',
+        __DIR__ . '/api',
+    );
 
-    $path = __DIR__ . "$debug_root/lib/$className.php";
-    if (file_exists($path)) {
-        hd_debug_print("include $path", true);
-        include($path);
-        return;
+    foreach ($directories as $dir) {
+        $path = $dir . '/' . $className . '.php';
+        if (file_exists($path)) {
+            hd_debug_print("include $path");
+            include $path;
+            return;
+        }
     }
-
-    $path = __DIR__ . "$debug_root/vod/$className.php";
-    if (file_exists($path)) {
-        hd_debug_print("include $path", true);
-        include($path);
-        return;
-    }
-
-    $path = __DIR__ . "$debug_root/api/$className.php";
-    if (file_exists($path)) {
-        hd_debug_print("include $path", true);
-        include($path);
-    }
-}
+});
 
 require_once 'lib/default_dune_plugin_fw.php';
 
