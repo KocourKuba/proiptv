@@ -1451,7 +1451,7 @@
       "api_url": "http://{DOMAIN_ID}/api",
       "api_commands": {
         "account_info": "{API}/?apiAction=getUserData,getServersGroups,getUserPackages&sessionId={SESSION_ID}",
-        "get_playlist": "http://troya.one/pl/11/{TOKEN}/playlist.m3u8",
+        "get_playlist": "http://team.ga/pl/11/{TOKEN}/playlist.m3u8",
         "get_servers": "{API}/?apiAction=getServersGroups&sessionId={SESSION_ID}",
         "set_server": "{API}/?apiAction=updateUserData&groupId={SERVER_ID}&sessionId={SESSION_ID}",
         "get_packages": "{API}/?apiAction=getUserPackages&sessionId={SESSION_ID}",
