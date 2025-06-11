@@ -104,9 +104,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         $epg_date = gmdate('d', $cur_time);
         $epg_url = str_replace(MACRO_DAY, $epg_date, $epg_url);
 
-        hd_debug_print("epg_id: $epg_id");
         $epg = str_replace(array('%28', '%29'), array('(', ')'), rawurlencode($epg_id));
-        hd_debug_print("epg: $epg");
         return str_replace(array(MACRO_EPG_ID, '#'), array($epg, '%23'), $epg_url);
     }
 

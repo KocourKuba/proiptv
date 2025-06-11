@@ -1,4 +1,8 @@
-﻿### Version 6.2.1280
+﻿### Version 6.2.1290
+- Due to some changes, drm-play has updated the algorithm for generating links to requests to the EPG server
+- Added a current link to the EPG Internet source to the channel information
+
+### Version 6.2.1280
 - Converting html tags into XMLTV, which are sometimes found in the text
 - Additional view of icons in VOD (5x3)
 - The 'Select or Edit Playlists' item in the context menu has been moved to the top of the list.
