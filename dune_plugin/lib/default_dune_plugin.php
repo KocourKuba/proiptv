@@ -2626,7 +2626,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $menu_items[] = $this->create_menu_item($handler,
                     ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
 
-                if ($preset_cnt > 1) {
+                if (!$this->use_xmltv && $preset_cnt > 1) {
                     $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
                     $name = safe_get_value($epg_presets[$preset], 'title', $epg_presets[$preset]['name']);
                     $menu_items[] = $this->create_menu_item($handler,
@@ -2808,6 +2808,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $info .= TR::load('icon') . ' ' . wrap_string_to_lines($icon, 70) . PHP_EOL;
         $info .= PHP_EOL;
 
+        $provider = $this->get_active_provider();
+        if (!is_null($provider)) {
+            $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
+            $epg_url = $this->get_epg_manager()->get_epg_url($provider, $channel_row, $day_start_ts, $epg_id, $preset);
+            if (!is_null($epg_url)) {
+                $info .= TR::load('epg_url') . ' ' . wrap_string_to_lines($epg_url, 70) . PHP_EOL;
+                $info .= PHP_EOL;
+            }
+        }
+
         try {
             $live_url = $this->generate_stream_url($channel_row, -1, true);
             $info .= TR::load('live_url') . ' ' . wrap_string_to_lines($live_url, 70) . PHP_EOL;
@@ -2827,6 +2837,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $ext_params = safe_get_value($channel_row, COLUMN_EXT_PARAMS);
         $dune_params = $this->generate_dune_params($channel_id, json_decode($ext_params, true));
         if (!empty($dune_params)) {
+            $info .= PHP_EOL;
             $info .= "dune_params: $dune_params" . PHP_EOL;
         }
 

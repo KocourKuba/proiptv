@@ -83,6 +83,7 @@ number = №:
 archive = Aрхив:
 adult = Для взрослых:
 icon = Иконка:
+epg_url = EPG URL:
 live_url = Прямой эфир:
 archive_url = Архив:
 time_shift = Часовой сдвиг:

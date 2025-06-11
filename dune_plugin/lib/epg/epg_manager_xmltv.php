@@ -201,6 +201,19 @@ class Epg_Manager_Xmltv
     }
 
     /**
+     * @param object $provider
+     * @param array $channel_row
+     * @param int $day_start_ts
+     * @param string $epg_id
+     * @param array $preset
+     * @return string|null
+     */
+    public function get_epg_url($provider, $channel_row, $day_start_ts, &$epg_id, &$preset)
+    {
+        return null;
+    }
+
+    /**
      * Try to load epg from cached file
      *
      * @param array $channel_row

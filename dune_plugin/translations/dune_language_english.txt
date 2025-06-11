@@ -83,6 +83,7 @@ number = Number:
 archive = Archive:
 adult = Adult:
 icon = Icon:
+epg_url = EPG URL:
 live_url = Live URL:
 archive_url = Archive URL:
 time_shift = Timeshift hours:

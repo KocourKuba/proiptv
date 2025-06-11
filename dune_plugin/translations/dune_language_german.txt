@@ -83,6 +83,7 @@ number = Zahl:
 archive = Archiv:
 adult = Erwachsene:
 icon = Ikone:
+epg_url = EPG-URL:
 live_url = Live-URL:
 archive_url = URL des Archivs:
 time_shift = Timeshift-Stunden:

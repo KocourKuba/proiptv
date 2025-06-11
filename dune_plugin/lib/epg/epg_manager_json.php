@@ -41,14 +41,81 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
     /**
      * @inheritDoc
-     * @override
      */
-    public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
+    public function get_epg_url($provider, $channel_row, $day_start_ts, &$epg_id, &$preset)
     {
+        $all_presets = $this->plugin->get_epg_presets();
+        $presets = $provider->getConfigValue(EPG_JSON_PRESETS);
+        if (empty($presets)) {
+            hd_debug_print("No preset for selected provider");
+            return null;
+        }
+
+        $preset_idx = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
+        if (!isset($presets[$preset_idx])) {
+            hd_debug_print("Index $preset_idx not exist in provider preset list");
+            return null;
+        }
+        $selected_preset = $presets[$preset_idx];
+        hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}", true);
+        $preset = $all_presets->get($selected_preset[EPG_JSON_PRESET_NAME]);
+        if (empty($preset)) {
+            hd_debug_print("{$selected_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
+            return null;
+        }
+
+        hd_debug_print("Preset json url: {$preset[EPG_JSON_SOURCE]}", true);
+        $alias = empty($selected_preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $selected_preset[EPG_JSON_PRESET_ALIAS];
+        $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $preset[EPG_JSON_SOURCE]);
+        $epg_url = $provider->replace_macros($epg_url);
+
+        $epg_url = str_replace(MACRO_TIMESTAMP, $day_start_ts, $epg_url);
+
+        if (strpos($epg_url, MACRO_ID) !== false) {
+            hd_debug_print("using ID: {$channel_row[COLUMN_CHANNEL_ID]}", true);
+            $epg_url = str_replace(MACRO_ID, $channel_row[COLUMN_CHANNEL_ID], $epg_url);
+        }
+
         $epg_ids = Default_Dune_Plugin::make_epg_ids($channel_row);
         $epg_ids[ATTR_TVG_NAME] = $channel_row[COLUMN_TITLE];
         $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
 
+        if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
+            hd_debug_print("EPG ID map: {$selected_preset[EPG_JSON_EPG_MAP]}", true);
+            $epg_id = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
+        } else {
+            hd_debug_print("Search epg id", true);
+            $epg_id = '';
+            foreach (array('epg_id', ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id') as $key) {
+                if (!empty($epg_ids[$key])) {
+                    $epg_id = $epg_ids[$key];
+                    break;
+                }
+            }
+        }
+
+        $cur_time = from_local_time_zone_offset($day_start_ts);
+        $epg_date = gmdate('Y', $cur_time);
+        $epg_url = str_replace(MACRO_YEAR, $epg_date, $epg_url);
+
+        $epg_date = gmdate('m', $cur_time);
+        $epg_url = str_replace(MACRO_MONTH, $epg_date, $epg_url);
+
+        $epg_date = gmdate('d', $cur_time);
+        $epg_url = str_replace(MACRO_DAY, $epg_date, $epg_url);
+
+        hd_debug_print("epg_id: $epg_id");
+        $epg = str_replace(array('%28', '%29'), array('(', ')'), rawurlencode($epg_id));
+        hd_debug_print("epg: $epg");
+        return str_replace(array(MACRO_EPG_ID, '#'), array($epg, '%23'), $epg_url);
+    }
+
+    /**
+     * @inheritDoc
+     * @override
+     */
+    public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
+    {
         $cached = false;
         $day_epg = array();
         try {
@@ -57,57 +124,14 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return null;
             }
 
-            $all_presets = $this->plugin->get_epg_presets();
-            $presets = $provider->getConfigValue(EPG_JSON_PRESETS);
-            if (empty($presets)) {
-                hd_debug_print("No preset for selected provider");
-                return null;
-            }
-
-            $preset_idx = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
-            if (!isset($presets[$preset_idx])) {
-                hd_debug_print("Index $preset_idx not exist in provider preset list");
-                return null;
-            }
-            $selected_preset = $presets[$preset_idx];
-            hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}", true);
-            $preset = $all_presets->get($selected_preset[EPG_JSON_PRESET_NAME]);
-            if (empty($preset)) {
-                hd_debug_print("{$selected_preset[EPG_JSON_PRESET_NAME]} not exist in plugin configuration");
-                return null;
-            }
-
-            hd_debug_print("Preset json url: {$preset[EPG_JSON_SOURCE]}", true);
-            $alias = empty($selected_preset[EPG_JSON_PRESET_ALIAS]) ? $provider->getId() : $selected_preset[EPG_JSON_PRESET_ALIAS];
-            $epg_url = str_replace(array(MACRO_API, MACRO_PROVIDER), array($provider->getApiUrl(), $alias), $preset[EPG_JSON_SOURCE]);
-            $epg_url = $provider->replace_macros($epg_url);
-
-            $epg_url = str_replace(MACRO_TIMESTAMP, $day_start_ts, $epg_url);
-
-            if (empty($epg_url)) {
-                throw new Exception("No EPG url defined for current provider");
-            }
-
-            if (strpos($epg_url, MACRO_ID) !== false) {
-                hd_debug_print("using ID: {$channel_row[COLUMN_CHANNEL_ID]}", true);
-                $epg_url = str_replace(MACRO_ID, $channel_row[COLUMN_CHANNEL_ID], $epg_url);
-            }
-
-            if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
-                hd_debug_print("EPG ID map: {$selected_preset[EPG_JSON_EPG_MAP]}", true);
-                $epg_id = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
-            } else {
-                $epg_id = '';
-                foreach (array('epg_id', ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id') as $key) {
-                    if (!empty($epg_ids[$key])) {
-                        $epg_id = $epg_ids[$key];
-                        break;
-                    }
-                }
-            }
-
+            $epg_id = '';
+            $epg_url = $this->get_epg_url($provider, $channel_row, $day_start_ts, $epg_id, $preset);
             if (empty($epg_id)) {
                 throw new Exception("No EPG ID defined");
+            }
+
+            if (empty($epg_url)) {
+                throw new Exception('EPG url is not generated');
             }
 
             if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
@@ -116,18 +140,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 return $this->epg_cache[$epg_id][$day_start_ts];
             }
 
-            $cur_time = from_local_time_zone_offset($day_start_ts);
-            $epg_date = gmdate('Y', $cur_time);
-            $epg_url = str_replace(MACRO_YEAR, $epg_date, $epg_url);
-
-            $epg_date = gmdate('m', $cur_time);
-            $epg_url = str_replace(MACRO_MONTH, $epg_date, $epg_url);
-
-            $epg_date = gmdate('d', $cur_time);
-            $epg_url = str_replace(MACRO_DAY, $epg_date, $epg_url);
-
-            $epg_id = str_replace(array('%28', '%29'), array('(', ')'), rawurlencode($epg_id));
-            $epg_url = str_replace(array(MACRO_EPG_ID, '#'), array($epg_id, '%23'), $epg_url);
             $epg_cache_file = get_temp_path($provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache");
 
             hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row[COLUMN_CHANNEL_ID]}' ({$channel_row[COLUMN_TITLE]})");
