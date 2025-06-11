@@ -2524,11 +2524,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->use_xmltv ? "check.png" : null
         );
 
-        if ($this->get_active_provider() !== null) {
-            $menu_items[] = $this->create_menu_item($handler,
-                ENGINE_JSON, TR::t('setup_epg_cache_json'),
-                $this->use_xmltv ? null : "check.png"
-            );
+        $provider = $this->get_active_provider();
+        if ($provider !== null) {
+            $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
+            if (count($epg_presets) != 1) {
+                $engine = TR::t('setup_epg_cache_json');
+            } else {
+                $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
+                $name = safe_get_value($epg_presets[$preset], 'title', $epg_presets[$preset]['name']);
+                $engine = TR::t('setup_epg_cache_json__1', $name);
+            }
+
+            $menu_items[] = $this->create_menu_item($handler, ENGINE_JSON, $engine, $this->use_xmltv ? null : "check.png");
         }
         return $menu_items;
     }

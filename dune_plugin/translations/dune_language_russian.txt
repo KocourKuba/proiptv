@@ -178,6 +178,7 @@ setup_epg_cache_engine__1 = Изменить движок EPG (%s)
 setup_epg_cache_type_auto = Автоматически
 setup_epg_cache_xmltv = XMLTV
 setup_epg_cache_json = Интернет сервер EPG
+setup_epg_cache_json__1 = Интернет сервер EPG (%s)
 setup_edit_xmltv_list = Выбрать или Редактировать XMLTV источники
 setup_storage_info__1 = Папка кэша: %s
 setup_epg_font = Шрифт EPG
