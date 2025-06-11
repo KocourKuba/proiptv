@@ -126,7 +126,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $epg_date = gmdate('d', $cur_time);
             $epg_url = str_replace(MACRO_DAY, $epg_date, $epg_url);
 
-            $epg_id = str_replace(' ', '%20', $epg_id);
+            $epg_id = str_replace(array('%28', '%29'), array('(', ')'), rawurlencode($epg_id));
             $epg_url = str_replace(array(MACRO_EPG_ID, '#'), array($epg_id, '%23'), $epg_url);
             $epg_cache_file = get_temp_path($provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache");
 
