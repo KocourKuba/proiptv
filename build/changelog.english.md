@@ -1,4 +1,8 @@
-﻿### Version 6.2.1290
+﻿### Version 6.2.1294
+- Minor changes in working with the database
+- Fixed a bug adding a link to a playlist
+
+### Version 6.2.1290
 - Due to some changes, drm-play has updated the algorithm for generating links to requests to the EPG server
 - Added a current link to the EPG Internet source to the channel information
 
