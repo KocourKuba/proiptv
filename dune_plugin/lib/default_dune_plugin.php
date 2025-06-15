@@ -804,8 +804,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $contents = trim($contents, "\x0B\xEF\xBB\xBF");
             $encoding = HD::detect_encoding($contents);
             if ($encoding !== 'utf-8') {
-                hd_debug_print("Fixing playlist encoding: $encoding");
-                $contents = iconv($encoding, 'utf-8', $contents);
+                hd_debug_print("Playlist encoding: $encoding");
+                //$contents = iconv($encoding, 'utf-8', $contents);
             }
             file_put_contents($m3u_file, $contents);
             $perf->setLabel('end_download_playlist');
