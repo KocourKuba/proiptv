@@ -1332,6 +1332,9 @@ class Dune_Default_Sqlite_Engine
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         if (is_null($group_id) || $group_id === TV_ALL_CHANNELS_GROUP_ID) {
+            if (!$this->sql_playlist->is_table_exists(self::get_table_name(GROUPS_INFO, true), self::get_db_name(GROUPS_INFO))) {
+                return array();
+            }
             $where = "ch.group_id IN (SELECT group_id FROM $groups_info_table WHERE special = 0 AND disabled = " . PARAM_ENABLED .")";
         } else {
             $q_group_id = Sql_Wrapper::sql_quote($group_id);
@@ -1342,8 +1345,16 @@ class Dune_Default_Sqlite_Engine
             $where = "$where AND disabled = $disabled_channels";
         }
 
+        if (!$this->sql_playlist->is_table_exists(self::get_table_name(CHANNELS_INFO, true), self::get_db_name(CHANNELS_INFO))) {
+            return array();
+        }
+
         $table_name = self::get_table_name(CHANNELS_INFO);
         if ($full) {
+            if (!$this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
+                return array();
+            }
+
             $iptv_channels = M3uParser::CHANNELS_TABLE;
             $column = $this->get_id_column();
             $query = "SELECT ch.channel_id, pl.* FROM $iptv_channels AS pl
@@ -1569,6 +1580,13 @@ class Dune_Default_Sqlite_Engine
     public function get_tv_history()
     {
         hd_debug_print(null, true);
+
+        if (!$this->sql_playlist->is_table_exists(self::get_table_name(TV_HISTORY, true), self::get_db_name(TV_HISTORY))
+            || !$this->sql_playlist->is_table_exists(self::get_table_name(CHANNELS_INFO, true), self::get_db_name(CHANNELS_INFO))
+            || !$this->sql_playlist->is_table_exists(M3uParser::S_CHANNELS_TABLE, M3uParser::IPTV_DB)) {
+            return array();
+        }
+
         $tv_history = self::get_table_name(TV_HISTORY);
         $channels_info = self::get_table_name(CHANNELS_INFO);
         $iptv_channels = M3uParser::CHANNELS_TABLE;
@@ -2026,24 +2044,20 @@ class Dune_Default_Sqlite_Engine
      */
     public static function get_table_name($id, $only_table = false)
     {
-        $db = '';
         switch ($id) {
             case VOD_FAV_GROUP_ID:
                 $table_name = self::FAV_VOD_ORDERS_TABLE;
                 break;
 
             case TV_FAV_GROUP_ID:
-                $db = self::PLAYLIST_ORDERS_DB;
                 $table_name = self::FAV_TV_ORDERS_TABLE;
                 break;
 
             case TV_HISTORY:
-                $db = self::TV_HISTORY_DB;
                 $table_name = self::TV_HISTORY_TABLE;
                 break;
 
             case VOD_HISTORY:
-                $db = self::VOD_HISTORY_DB;
                 $table_name = self::VOD_HISTORY_TABLE;
                 break;
 
@@ -2060,30 +2074,61 @@ class Dune_Default_Sqlite_Engine
                 break;
 
             case GROUPS_ORDER:
-                $db = self::PLAYLIST_ORDERS_DB;
                 $table_name = self::GROUPS_ORDER_TABLE;
                 break;
 
             case GROUPS_INFO:
-                $db = self::PLAYLIST_ORDERS_DB;
                 $table_name = self::GROUPS_INFO_TABLE;
                 break;
 
             case CHANNELS_INFO:
-                $db = self::PLAYLIST_ORDERS_DB;
                 $table_name = self::CHANNELS_INFO_TABLE;
                 break;
 
             default:
-                $db = self::PLAYLIST_ORDERS_DB;
                 $table_name = "orders_" . Hashed_Array::hash($id);
                 break;
         }
 
-        if (!$only_table && !empty($db)) {
+        if ($only_table) {
+            return $table_name;
+        }
+
+        $db = self::get_db_name($id);
+        if (!empty($db)) {
             $db .= ".";
         }
 
-        return $only_table ? $table_name : ($db . $table_name);
+        return $db . $table_name;
+    }
+
+    public static function get_db_name($id)
+    {
+        switch ($id) {
+            case TV_HISTORY:
+                $db = self::TV_HISTORY_DB;
+                break;
+
+            case VOD_HISTORY:
+                $db = self::VOD_HISTORY_DB;
+                break;
+
+            case VOD_FAV_GROUP_ID:
+            case VOD_LIST_GROUP_ID:
+            case VOD_FILTER_LIST:
+            case VOD_SEARCH_LIST:
+                $db = '';
+                break;
+
+            case GROUPS_INFO:
+            case CHANNELS_INFO:
+            case GROUPS_ORDER:
+            case TV_FAV_GROUP_ID:
+            default:
+                $db = self::PLAYLIST_ORDERS_DB;
+                break;
+        }
+
+        return $db;
     }
 }

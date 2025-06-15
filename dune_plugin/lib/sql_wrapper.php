@@ -132,12 +132,30 @@ class Sql_Wrapper
     }
 
     /**
+     * @param string|null $db_name
+     * @return bool
+     */
+    public function is_db_exists($db_name)
+    {
+        if (is_null($db_name)) {
+            return true;
+        }
+
+        return self::is_database_attached($db_name);
+    }
+
+    /**
      * @param string $table_name
      * @param string|null $db_name
      * @return bool
      */
     public function is_table_exists($table_name, $db_name = null)
     {
+        if (!self::is_db_exists($db_name)) {
+            hd_debug_print("Database '$db_name' not attached!");
+            return false;
+        }
+
         $db_name = is_null($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
         return (int)$this->query_value("SELECT count(name) FROM $db_name WHERE type='table' AND name='$table_name';") !== 0;
     }
@@ -148,6 +166,11 @@ class Sql_Wrapper
      */
     public function get_master_table_list($db_name = null)
     {
+        if (!self::is_db_exists($db_name)) {
+            hd_debug_print("Database '$db_name' not attached!");
+            return array();
+        }
+
         $db_name = is_null($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
         return $this->fetch_single_array("SELECT name FROM $db_name WHERE type='table';", 'name');
     }
