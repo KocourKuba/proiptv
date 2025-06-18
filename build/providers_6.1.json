@@ -1332,6 +1332,38 @@
     },
     {
       "enable": true,
+      "id": "skaztv",
+      "name": "Skaz TV",
+      "type": "pin",
+      "logo": "http://iptv.esalecrm.net/res/logo_skaztv.png",
+      "provider_url": "http://skaz.tv/",
+      "api_commands": {
+        "get_playlist": "https://{DOMAIN_ID}/play/{PASSWORD}"
+      },
+      "config": {
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/(?<id>.+)\\/.+\\/.+\\.m3u8$/",
+        "epg_presets": [
+          {
+            "name": "tvteam",
+            "epg_map": "id"
+          },
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "tvteam",
+            "epg_map": "name"
+          }
+        ],
+        "ext_params": true,
+        "domains": {
+          "skaz.tv": "skaz.tv",
+          "skaztv.online": "skaztv.online"
+        },
+        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
+      }
+    },
+    {
+      "enable": true,
       "id": "smile",
       "name": "Smile",
       "type": "login",
