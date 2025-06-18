@@ -129,14 +129,6 @@ if (!isset($params['ver'])) {
     die();
 }
 
-$request = getenv("REQUEST_URI");
-$ver = explode('.', $params['ver']);
-
-$name ="providers_$ver[0].$ver[1].json";
-if (!file_exists($name)) {
-    $name = "providers_disabled.json";
-}
-
 $time = time();
 $date = date("Y.m.d H:i:s");
 $ip = get_ip();
@@ -158,6 +150,8 @@ if (!empty($firmware) && preg_match('/.+_(r\d{2})/', $firmware, $m)) {
     $revision = $m[1];
     $rev = substr($revision, 1);
 }
+
+$request = getenv("REQUEST_URI");
 
 $logbuf = "========================================" . PHP_EOL;
 $logbuf .= "date       : $date" . PHP_EOL;
@@ -181,12 +175,6 @@ if ($rev < 11) {
     header("HTTP/1.1 404 Not found");
     echo '["error" : "This version is not supported"]';
     die();
-}
-
-if ($rev < 21) {
-    write_to_log($logbuf, 'old.log');
-} else {
-    write_to_log($logbuf, 'providers.log');
 }
 
 $DB = new db_driver();
@@ -216,6 +204,21 @@ if($DB->connect()) {
     }
 } else {
     write_to_log("can't connect to database", 'error.log');
+}
+
+$ver = explode('.', $version);
+$name ="providers_$ver[0].$ver[1].json";
+if (!file_exists($name) || ($rev >= 21 && $rev <= 22 && $ver[0] == 5)) {
+    $logbuf .= "disabled   : yes" . PHP_EOL;
+    $name = "providers_disabled.json";
+}
+
+if ($rev < 21) {
+    write_to_log($logbuf, 'old.log');
+} else if ($rev < 22) {
+    write_to_log($logbuf, 'mid.log');
+} else {
+    write_to_log($logbuf, 'providers.log');
 }
 
 header("HTTP/1.1 200 OK");
