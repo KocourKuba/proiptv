@@ -1126,6 +1126,7 @@
       "config": {
         "id_parser" : "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
+        "ext_params": true,
         "streams": {
           "hls": "HLS",
           "siptv": "MPEG-TS"

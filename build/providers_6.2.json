@@ -1126,6 +1126,7 @@
       "config": {
         "id_parser" : "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=(?<token>.+)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0",
+        "ext_params": true,
         "streams": {
           "hls": "HLS",
           "siptv": "MPEG-TS"
@@ -1375,10 +1376,11 @@
         "get_playlist": "https://{DOMAIN_ID}/play/{PASSWORD}"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/(?<id>.+)\\/.+\\.m3u8$/",
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/(?<id>.+)\\/.+\\/.+\\.m3u8$/",
         "epg_presets": [
           {
-            "name": "tvteam"
+            "name": "tvteam",
+            "epg_map": "id"
           },
           {
             "name": "drm",
@@ -1388,9 +1390,9 @@
           }
         ],
         "ext_params": true,
-        "servers": {
-          "skaz.tv": "Server 1",
-          "skaztv.online": "Server 2"
+        "domains": {
+          "skaz.tv": "skaz.tv",
+          "skaztv.online": "skaztv.online"
         },
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }
