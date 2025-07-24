@@ -53,8 +53,13 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         $preset_idx = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
         if (!isset($presets[$preset_idx])) {
-            hd_debug_print("Index $preset_idx not exist in provider preset list");
-            return null;
+            hd_debug_print("Index $preset_idx not exist in provider preset list. Reset to default");
+            $preset_idx = 0;
+            if (!isset($presets[$preset_idx])) {
+                hd_debug_print("Index $preset_idx not exist in provider preset list");
+                return null;
+            }
+            $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $preset_idx);
         }
         $selected_preset = $presets[$preset_idx];
         hd_debug_print("selected preset: {$selected_preset[EPG_JSON_PRESET_NAME]}", true);
