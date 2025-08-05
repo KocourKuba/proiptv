@@ -161,6 +161,23 @@ class Sql_Wrapper
     }
 
     /**
+     * @param string $table_name
+     * @param string $column_name
+     * @param string|null $db_name
+     * @return bool
+     */
+    public function is_column_exists($table_name, $column_name, $db_name = null)
+    {
+        if (!self::is_db_exists($db_name)) {
+            hd_debug_print("Database '$db_name' not attached!");
+            return false;
+        }
+
+        $db_name = is_null($db_name) ? 'sqlite_master' : "$db_name.sqlite_master";
+        return (int)$this->query_value("SELECT count(*) FROM $db_name WHERE type='table' AND name='$table_name' AND sql like '%$column_name%';") !== 0;
+    }
+
+    /**
      * @param string|null $db_name
      * @return array
      */

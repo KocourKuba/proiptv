@@ -108,6 +108,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $channel_id = $selected_media_url->channel_id;
         $sel_ndx = $user_input->sel_ndx;
 
+        $control_id = $user_input->control_id;
+        if (isset($user_input->action_type, $user_input->{$control_id})
+            && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
+            $new_value = $user_input->{$control_id};
+            hd_debug_print("changing $control_id value to $new_value", true);
+        }
+
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
@@ -145,8 +152,15 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->plugin->do_show_channel_info($channel_id, true);
 
             case GUI_EVENT_KEY_SUBTITLE:
-                $prog_info = $this->plugin->get_program_info($channel_id, -1, $plugin_cookies);
-                return $this->plugin->do_show_channel_epg($prog_info);
+                return $this->plugin->do_show_channel_epg($this, $channel_id, $plugin_cookies);
+
+            case ACTION_APPLY_EPG_SHIFT:
+                hd_debug_print("Applying epg shift: " . $user_input->{PARAM_EPG_SHIFT}, true);
+                $this->plugin->set_channel_epg_shift($channel_id, (int)$user_input->{PARAM_EPG_SHIFT});
+                if (isset($user_input->{ACTION_RELOAD})) {
+                    return $this->plugin->do_show_channel_epg($this, $channel_id, $plugin_cookies);
+                }
+                break;
 
             case ACTION_PLAY_ITEM:
                 try {
@@ -460,7 +474,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $q_result = true;
                     hd_debug_print("found channel: $ch_title, idx: $idx", true);
                     $add_params['number'] = $idx;
-                    Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, ACTION_JUMP_TO_CHANNEL,
+                    Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_JUMP_TO_CHANNEL,
                         $ch_title, 900, $add_params);
                 }
                 ++$idx;
@@ -470,7 +484,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         if ($q_result === false) {
             Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
             Control_Factory::add_vgap($defs, 20);
-            Control_Factory::add_close_dialog_and_apply_button_title($defs, $this, self::ACTION_CREATE_SEARCH,
+            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CREATE_SEARCH,
                 '', TR::t('new_search'), 300);
         }
 
@@ -506,6 +520,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $channels_rows = $this->plugin->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
                 $zoom_data = $this->plugin->get_channels_zoom($group_row[COLUMN_GROUP_ID]);
+                $epg_shift_data = $this->plugin->get_channels_epg_shift($group_row[COLUMN_GROUP_ID]);
                 foreach ($channels_rows as $channel_row) {
                     if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
 
@@ -513,19 +528,22 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                     $epg_str = HD::ArrayToStr(array_values(Default_Dune_Plugin::make_epg_ids($channel_row)));
                     $zoom = safe_get_value($zoom_data, $channel_row[COLUMN_CHANNEL_ID], DuneVideoZoomPresets::not_set);
+                    $epg_shift = safe_get_value($epg_shift_data, $channel_row[COLUMN_CHANNEL_ID], 0);
                     if ($zoom === DuneVideoZoomPresets::not_set) {
-                        $detailed_info = TR::t('tv_screen_channel_info__4',
-                            $channel_row[COLUMN_TITLE],
-                            $channel_row[COLUMN_ARCHIVE],
-                            $channel_row[COLUMN_CHANNEL_ID],
-                            $epg_str
-                        );
-                    } else {
                         $detailed_info = TR::t('tv_screen_channel_info__5',
                             $channel_row[COLUMN_TITLE],
                             $channel_row[COLUMN_ARCHIVE],
                             $channel_row[COLUMN_CHANNEL_ID],
                             $epg_str,
+                            sprintf("%+03d", $epg_shift)
+                        );
+                    } else {
+                        $detailed_info = TR::t('tv_screen_channel_info__6',
+                            $channel_row[COLUMN_TITLE],
+                            $channel_row[COLUMN_ARCHIVE],
+                            $channel_row[COLUMN_CHANNEL_ID],
+                            $epg_str,
+                            sprintf("%+03d", $epg_shift),
                             TR::load(DuneVideoZoomPresets::$zoom_ops_translated[$zoom])
                         );
                     }

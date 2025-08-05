@@ -106,6 +106,7 @@ const ACTION_CHOOSE_FILE = 'choose_file';
 const ACTION_ADD_TO_EXTERNAL_SOURCE = 'add_external_source';
 const ACTION_DISABLED = 'disabled';
 const ACTION_ORDER_SUPPORT = 'order_support';
+const ACTION_APPLY_EPG_SHIFT = 'apply_epg_shift';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
@@ -202,6 +203,8 @@ const COLUMN_WATCHED = 'watched';
 const COLUMN_POSITION = 'position';
 const COLUMN_DURATION = 'duration';
 const COLUMN_TIMESTAMP = 'time_stamp';
+const COLUMN_ZOOM = 'zoom';
+const COLUMN_EPG_SHIFT = 'epg_shift';
 
 const PARAM_ADULT_PASSWORD = 'adult_password';
 const PARAM_SETTINGS_PASSWORD = 'settings_password';

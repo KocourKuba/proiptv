@@ -332,8 +332,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $utc_day_start_tm_sec = from_local_time_zone_offset($day_start_tm_sec);
 
             // get personal time shift for channel
-            $time_shift = 3600 * ($channel_row[COLUMN_TIMESHIFT] + $this->get_setting(PARAM_EPG_SHIFT, 0));
-            hd_debug_print("EPG time shift $time_shift", true);
+            $time_shift = $channel_row[COLUMN_TIMESHIFT] + $channel_row[COLUMN_EPG_SHIFT];
+            hd_debug_print("EPG time shift $time_shift hour(s)", true);
+            $time_shift *=3600;
             $utc_day_start_tm_sec += $time_shift;
 
             $show_ext_epg = $this->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->ext_epg_supported;
@@ -973,19 +974,27 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // create group table
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         $query = sprintf(self::CREATE_GROUPS_INFO_TABLE, $groups_info_table);
+        $this->sql_playlist->exec($query);
         // create table
-        $query .= sprintf(self::CREATE_CHANNELS_INFO_TABLE, self::get_table_name(CHANNELS_INFO));
+        $query = sprintf(self::CREATE_CHANNELS_INFO_TABLE, self::get_table_name(CHANNELS_INFO));
+        $this->sql_playlist->exec($query);
+        if (!$this->sql_playlist->is_column_exists(CHANNELS_INFO, COLUMN_EPG_SHIFT)) {
+            $query = sprintf("ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;", self::get_table_name(CHANNELS_INFO), COLUMN_EPG_SHIFT);
+            $this->sql_playlist->exec($query);
+        }
         // create order_groups table
-        $query .= sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(GROUPS_ORDER), COLUMN_GROUP_ID);
+        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(GROUPS_ORDER), COLUMN_GROUP_ID);
+        $this->sql_playlist->exec($query);
         // create table for favorites
-        $query .= sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_GROUP_ID), COLUMN_CHANNEL_ID);
-        $this->sql_playlist->exec_transaction($query);
+        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_GROUP_ID), COLUMN_CHANNEL_ID);
+        $this->sql_playlist->exec($query);
 
         // create table for playlist xmltv in common database
         $query = sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, self::PLAYLIST_XMLTV_TABLE);
+        $this->sql_playlist->exec($query);
         // create table for selected xmltv sources in common database
-        $query .= sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
-        $this->sql_params->exec_transaction($query);
+        $query = sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
+        $this->sql_playlist->exec($query);
 
         // add special groups to the table if the not exists
         $special_group = array(
@@ -2185,7 +2194,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
             $zoom_data = $this->get_channel_zoom($channel_id);
             if (!empty($zoom_data)) {
-                $dune_params['zoom'] = $zoom_data;
+                $dune_params[COLUMN_ZOOM] = $zoom_data;
             }
         }
 
@@ -2889,6 +2898,67 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1750);
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $channel_id
+     * @param object $plugin_cookies
+     * @return array|null
+     */
+    public function do_show_channel_epg($handler, $channel_id, $plugin_cookies)
+    {
+        $prog_info = $this->get_program_info($channel_id, -1, $plugin_cookies);
+
+        if (is_null($prog_info)) {
+            $info = '';
+            $time = '';
+            $title = TR::load('epg_not_exist');
+        } else {
+            // program epg available
+            $title = $prog_info[PluginTvEpgProgram::name];
+            $time = sprintf("%s - %s",
+                format_datetime('H:i', $prog_info[PluginTvEpgProgram::start_tm_sec]),
+                format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec])
+            );
+            $info = $prog_info[PluginTvEpgProgram::description];
+        }
+
+        $text = sprintf("<gap width = 0/><text color=%s size=normal>%s %s</text>", DEF_LABEL_TEXT_COLOR_GOLD, TR::load('time'), $time);
+        Control_Factory::add_smart_label($defs, null, $text);
+        Control_Factory::add_multiline_label($defs, null, $info, 18);
+        Control_Factory::add_vgap($defs, 10);
+
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            750,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load('scroll_page')
+        );
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        $shift_ops = array();
+        for ($i = -12; $i <= 12; $i++) {
+            $shift_ops[$i] = TR::t('setup_epg_shift__1', sprintf("%+03d", $i));
+        }
+        $shift_ops[0] = TR::t('setup_epg_shift__1', sprintf(" %02d", 0));
+
+        Control_Factory::add_combobox($defs, $handler, null, PARAM_EPG_SHIFT,
+            TR::t('setup_epg_shift'), $this->get_channel_epg_shift($channel_id), $shift_ops, 250);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
+            ACTION_APPLY_EPG_SHIFT,
+            TR::t('apply'),
+            250,
+            array(ACTION_RELOAD => SwitchOnOff::on)
+        );
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_APPLY_EPG_SHIFT, TR::t('ok'), 250);
+
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($title, $defs, true, 1500);
     }
 
     /**

@@ -125,22 +125,6 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
             PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SwitchOnOff::translate($fake_epg),
             get_image_path(SwitchOnOff::to_image($fake_epg)), self::CONTROLS_WIDTH);
 
-        //////////////////////////////////////
-        // epg time shift
-        /*
-        $show_epg_shift_ops = array();
-        for ($i = -11; $i < 12; $i++) {
-            $show_epg_shift_ops[$i] = TR::t('setup_epg_shift__1', sprintf("%+03d", $i));
-        }
-        $show_epg_shift_ops[0] = TR::t('setup_epg_shift_default__1', "00");
-
-        if (!isset($plugin_cookies->{PARAM_EPG_SHIFT})) {
-            $plugin_cookies->{PARAM_EPG_SHIFT} = 0;
-        }
-        Control_Factory::add_combobox($defs, $this, null,
-            PARAM_EPG_SHIFT, TR::t('setup_epg_shift'),
-            $plugin_cookies->{PARAM_EPG_SHIFT}, $show_epg_shift_ops, self::CONTROLS_WIDTH);
-        */
         return $defs;
     }
 
@@ -190,10 +174,6 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-
-            case PARAM_EPG_SHIFT:
-                $this->plugin->set_setting($control_id, $user_input->{$control_id});
-                break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 foreach ($this->plugin->get_selected_xmltv_ids() as $id) {

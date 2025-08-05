@@ -56,6 +56,7 @@ class Dune_Default_Sqlite_Engine
                                          adult INTEGER DEFAULT 0,
                                          changed INTEGER DEFAULT 1,
                                          zoom TEXT,
+                                         epg_shift INTEGER DEFAULT 0,
                                          external_player INTEGER DEFAULT 0);";
 
     const CREATE_PLAYLIST_SETTINGS_TABLE = "CREATE TABLE IF NOT EXISTS %s (name TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', type TEXT DEFAULT '');";
@@ -1529,6 +1530,7 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param string $group_id
      * @return array
      */
     public function get_channels_zoom($group_id)
@@ -1539,7 +1541,49 @@ class Dune_Default_Sqlite_Engine
                     JOIN $order_table AS ord ON ch.channel_id = ord.channel_id;";
         $result = array();
         foreach ($this->sql_playlist->fetch_array($query) as $value) {
-            $result[$value[COLUMN_CHANNEL_ID]] = $value['zoom'];
+            $result[$value[COLUMN_CHANNEL_ID]] = $value[COLUMN_ZOOM];
+        }
+        return $result;
+    }
+
+    /**
+     * @param string $channel_id
+     * @return string|null
+     */
+    public function get_channel_epg_shift($channel_id)
+    {
+        $table_name = self::get_table_name(CHANNELS_INFO);
+        $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+        $query = "SELECT epg_shift FROM $table_name WHERE channel_id = $q_channel_id";
+        return $this->sql_playlist->query_value($query);
+    }
+
+    /**
+     * @param string $channel_id
+     * @param int|null $shift
+     * @return void
+     */
+    public function set_channel_epg_shift($channel_id, $shift)
+    {
+        $table_name = self::get_table_name(CHANNELS_INFO);
+        $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+        $query = "UPDATE $table_name SET epg_shift = '$shift' WHERE channel_id = $q_channel_id;";
+        $this->sql_playlist->exec_transaction($query);
+    }
+
+    /**
+     * @param string $group_id
+     * @return array
+     */
+    public function get_channels_epg_shift($group_id)
+    {
+        $table_name = self::get_table_name(CHANNELS_INFO);
+        $order_table = self::get_table_name($group_id);
+        $query = "SELECT ch.channel_id, ch.epg_shift FROM $table_name AS ch
+                    JOIN $order_table AS ord ON ch.channel_id = ord.channel_id;";
+        $result = array();
+        foreach ($this->sql_playlist->fetch_array($query) as $value) {
+            $result[$value[COLUMN_CHANNEL_ID]] = $value[COLUMN_EPG_SHIFT];
         }
         return $result;
     }
@@ -1908,7 +1952,7 @@ class Dune_Default_Sqlite_Engine
         if ($full) {
             $iptv_channels = M3uParser::CHANNELS_TABLE;
             $column = $this->get_id_column();
-            $query = "SELECT ch.channel_id, pl.*, pl.ROWID AS ch_number
+            $query = "SELECT ch.channel_id, ch.epg_shift, pl.*, pl.ROWID AS ch_number
                         FROM $iptv_channels as pl
                             JOIN $table_name AS ch ON pl.$column = ch.channel_id
                         WHERE ch.channel_id = $channel_id AND ch.disabled = 0;";

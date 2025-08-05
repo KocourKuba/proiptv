@@ -106,8 +106,12 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case GUI_EVENT_KEY_SUBTITLE:
-                $prog_info = $this->plugin->get_program_info($selected_media_url->channel_id, -1, $plugin_cookies);
-                return $this->plugin->do_show_channel_epg($prog_info);
+                return $this->plugin->do_show_channel_epg($this, $selected_media_url->channel_id, $plugin_cookies);
+
+            case ACTION_APPLY_EPG_SHIFT:
+                hd_debug_print("Applying epg shift: " . $user_input->{PARAM_EPG_SHIFT}, true);
+                $this->plugin->set_channel_epg_shift($selected_media_url->channel_id, $user_input->{PARAM_EPG_SHIFT});
+                return $this->plugin->do_show_channel_epg($this, $selected_media_url->channel_id, $plugin_cookies);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");

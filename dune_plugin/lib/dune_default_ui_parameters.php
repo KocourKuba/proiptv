@@ -215,47 +215,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @param array $prog_info
-     * @return array|null
-     */
-    public function do_show_channel_epg($prog_info)
-    {
-        $time = '';
-        $info = '';
-        if (is_null($prog_info)) {
-            $title = TR::load('epg_not_exist');
-        } else {
-            // program epg available
-            $title = $prog_info[PluginTvEpgProgram::name];
-            $time = sprintf("%s - %s",
-                format_datetime('H:i', $prog_info[PluginTvEpgProgram::start_tm_sec]),
-                format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec])
-            );
-            $info = $prog_info[PluginTvEpgProgram::description];
-        }
-
-        $text = sprintf("<gap width = 0/><text color=%s size=normal>%s %s</text>", DEF_LABEL_TEXT_COLOR_GOLD, TR::load('time'), $time);
-        Control_Factory::add_smart_label($defs, null, $text);
-        Control_Factory::add_multiline_label($defs, null, $info, 18);
-        Control_Factory::add_vgap($defs, 10);
-
-        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            850,
-            get_image_path('page_plus_btn.png'),
-            get_image_path('page_minus_btn.png'),
-            DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load('scroll_page')
-        );
-        Control_Factory::add_smart_label($defs, '', $text);
-        Control_Factory::add_vgap($defs, -80);
-
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog($title, $defs, true, 1400);
-    }
-
-    /**
      * @param User_Input_Handler $handler
      * @return array
      */

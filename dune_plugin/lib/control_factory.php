@@ -213,8 +213,8 @@ class Control_Factory
      */
     public static function add_close_dialog_and_apply_button(&$defs, $handler, $name, $caption, $width, $add_params = null)
     {
-        $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-        $push_action['params']['action_type'] = 'apply';
+        $post_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
+        $post_action['params']['action_type'] = 'apply';
 
         $defs[] = array(
             GuiControlDef::name => $name,
@@ -223,7 +223,7 @@ class Control_Factory
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($push_action),
+                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($post_action),
             ),
         );
     }
@@ -232,23 +232,24 @@ class Control_Factory
      * @param array &$defs
      * @param User_Input_Handler $handler
      * @param string $name
+     * @param string $title
      * @param string $caption
      * @param int $width
      * @param array|null $add_params
      */
-    public static function add_close_dialog_and_apply_button_title(&$defs, $handler, $name, $caption, $width, $add_params = null)
+    public static function add_close_dialog_and_apply_button_title(&$defs, $handler, $name, $title, $caption, $width, $add_params = null)
     {
-        $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-        $push_action['params']['action_type'] = 'apply';
+        $post_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
+        $post_action['params']['action_type'] = 'apply';
 
         $defs[] = array(
             GuiControlDef::name => $name,
-            GuiControlDef::title => null,
+            GuiControlDef::title => $title,
             GuiControlDef::kind => GUI_CONTROL_BUTTON,
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($push_action),
+                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($post_action),
             ),
         );
     }
