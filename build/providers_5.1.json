@@ -1025,8 +1025,7 @@
         "epg_presets": [
           {
             "name": "drm",
-            "title": "epg.drm-play",
-            "alias": "yosso"
+            "title": "epg.drm-play"
           }
         ],
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/balancer\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
