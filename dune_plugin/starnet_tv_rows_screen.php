@@ -204,26 +204,17 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 );
 
             case ACTION_SORT_POPUP:
-                hd_debug_print("Start event popup menu for playlist");
-                return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU, null, array(ACTION_SORT_POPUP => true));
+                hd_debug_print("Start event popup menu for playlist", true);
+                return User_Input_Handler_Registry::create_action(
+                    $this,
+                    GUI_EVENT_KEY_POPUP_MENU,
+                    null,
+                    array(ACTION_SORT_POPUP => true)
+                );
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 hd_debug_print("Start event popup menu");
                 return Action_Factory::show_popup_menu($this->do_popup_menu($user_input));
-
-            case ACTION_ZOOM_POPUP_MENU:
-                $menu_items = array();
-                $zoom_data = $this->plugin->get_channel_zoom($media_url->channel_id);
-                foreach (DuneVideoZoomPresets::$zoom_ops_translated as $idx => $zoom_item) {
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_ZOOM_APPLY,
-                        TR::load($zoom_item),
-                        (empty($zoom_data) || strcmp($idx, $zoom_data) !== 0 ? null : "check.png"),
-                        array(ACTION_ZOOM_SELECT => (string)$idx)
-                    );
-                }
-
-                return Action_Factory::show_popup_menu($menu_items);
 
             case PLUGIN_FAVORITES_OP_ADD:
             case PLUGIN_FAVORITES_OP_REMOVE:
@@ -386,18 +377,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
                 return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
 
-            case ACTION_ZOOM_APPLY:
-                $channel_id = $media_url->channel_id;
-                if (isset($user_input->{ACTION_ZOOM_SELECT})) {
-                    $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
-                    $this->plugin->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
-                }
-                return null;
+            case ACTION_EDIT_CHANNEL_DLG:
+                return $this->plugin->do_edit_channel($this, $media_url->channel_id);
 
-            case ACTION_EXTERNAL_PLAYER:
-            case ACTION_INTERNAL_PLAYER:
-                $this->plugin->set_channel_ext_player($media_url->channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
-                return null;
+            case ACTION_EDIT_CHANNEL_APPLY:
+                $this->plugin->do_edit_channel_apply($user_input, $media_url->channel_id);
+                break;
 
             case ACTION_INFO_DLG:
                 return $this->plugin->do_show_subscription($this);
@@ -1402,10 +1387,10 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         } else if (isset($user_input->{ACTION_EPG_CACHE_ENGINE})) {
             $menu_items = $this->plugin->epg_engine_menu($this);
         } else if (isset($user_input->{ACTION_SORT_POPUP})) {
-            hd_debug_print("sort menu", true);
-            if (isset($media_url->row_id)) {
-                $row_id = json_decode($media_url->row_id);
-                if ($this->plugin->get_group($row_id->group_id, PARAM_GROUP_ORDINARY) !== null) {
+            hd_debug_print("create sort menu", true);
+            if (isset($media_url->group_id)) {
+                hd_debug_print("sort group: $media_url->group_id", true);
+                if ($this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY) !== null) {
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'),
                         null, array(ACTION_SORT_TYPE => ACTION_SORT_CHANNELS));
                     $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_groups'),
@@ -1431,33 +1416,12 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $menu_items[] = $this->plugin->create_menu_item($this, PLUGIN_FAVORITES_OP_REMOVE, TR::t('delete_from_favorite'), "star.png");
             } else {
                 hd_debug_print("Selected channel in row: $media_url->channel_id", true);
-                $channel_id = $media_url->channel_id;
-
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('tv_screen_hide_channel'), "remove.png");
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
 
-                if (!is_limited_apk()) {
-                    $is_external = $this->plugin->get_channel_ext_player($channel_id);
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_EXTERNAL_PLAYER,
-                        TR::t('tv_screen_external_player'),
-                        ($is_external ? "play.png" : null)
-                    );
-
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_INTERNAL_PLAYER,
-                        TR::t('tv_screen_internal_player'),
-                        ($is_external ? null : "play.png")
-                    );
-
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                }
-
-                if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ZOOM_POPUP_MENU, TR::t('video_aspect_ratio'), "aspect.png");
-                }
-
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_EDIT_CHANNEL_DLG, TR::t('tv_screen_edit_channel'), "check.png");
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+
                 $menu_items[] = $this->plugin->create_menu_item($this, GUI_EVENT_KEY_INFO, TR::t('channel_info_dlg'), "info.png");
             }
 

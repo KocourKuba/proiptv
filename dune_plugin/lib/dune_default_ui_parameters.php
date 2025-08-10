@@ -29,6 +29,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     const VOD_CHANNEL_ICON_WIDTH = 190;
     const VOD_CHANNEL_ICON_HEIGHT = 290;
 
+    const CONTROL_ZOOM = 'zoom_select';
+    const CONTROL_EXTERNAL_PLAYER = 'use_external_player';
+
     /**
      * @var array
      */
@@ -214,6 +217,14 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
     }
 
+    public function apply_protect_settings_dialog($handler, $user_input)
+    {
+        if ($this->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
+            return null;
+        }
+        return User_Input_Handler_Registry::create_action($handler, $user_input->param_action);
+    }
+
     /**
      * @param User_Input_Handler $handler
      * @return array
@@ -291,6 +302,55 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         return Action_Factory::status(0);
     }
 
+    public function do_edit_channel($handler, $channel_id)
+    {
+        hd_debug_print("Do Edit channel: $channel_id", true);
+
+        $defs = array();
+
+        if (!is_limited_apk()) {
+            $pl_opts_idx = SwitchOnOff::to_def($this->get_channel_ext_player($channel_id));
+            $pl_opts[SwitchOnOff::on] = TR::t('tv_screen_external_player');
+            $pl_opts[SwitchOnOff::off] = TR::t('tv_screen_internal_player');
+            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_EXTERNAL_PLAYER,
+                TR::t('setup_playback_settings'), $pl_opts_idx, $pl_opts, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        }
+
+        if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
+            $zoom_opts_idx = $this->get_channel_zoom($channel_id);
+            $zoom_opts = array_map(function ($zoom_item) {
+                return TR::load($zoom_item);
+            }, DuneVideoZoomPresets::$zoom_ops_translated);
+
+            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_ZOOM,
+                TR::t('tv_screen_channel_zoom'), $zoom_opts_idx, $zoom_opts, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        }
+
+        $shift_ops = array();
+        for ($i = -12; $i <= 12; $i++) {
+            $shift_ops[$i] = TR::t('setup_epg_shift__1', sprintf("%+03d", $i));
+        }
+        $shift_ops[0] = TR::t('setup_epg_shift__1', sprintf(" %02d", 0));
+
+        Control_Factory::add_combobox($defs, $handler, null, PARAM_EPG_SHIFT,
+            TR::t('setup_epg_shift'), $this->get_channel_epg_shift($channel_id), $shift_ops, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_CHANNEL_APPLY, TR::t('ok'), 300);
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+
+        return Action_Factory::show_dialog(TR::t('tv_screen_edit_channel'), $defs, true);
+    }
+
+    public function do_edit_channel_apply($user_input, $channel_id)
+    {
+        if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
+            $this->set_channel_zoom($channel_id, $user_input->{self::CONTROL_ZOOM});
+        }
+        if (!is_limited_apk()) {
+            $this->set_channel_ext_player($channel_id, SwitchOnOff::to_bool($user_input->{self::CONTROL_EXTERNAL_PLAYER}));
+        }
+        $this->set_channel_epg_shift($channel_id, (int)$user_input->{PARAM_EPG_SHIFT});
+    }
     ///////////////////////////////////////////////////////////////////////
 
     /**

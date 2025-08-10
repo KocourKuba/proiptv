@@ -105,10 +105,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
 
             case ACTION_PASSWORD_APPLY:
-                if ($this->plugin->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
-                    return null;
-                }
-                return User_Input_Handler_Registry::create_action($this, $user_input->param_action);
+                return $this->plugin->apply_protect_settings_dialog($this, $user_input);
 
             case self::ACTION_CALL_PLAYLIST_SETTINGS:
                 $this->plugin->init_plugin();

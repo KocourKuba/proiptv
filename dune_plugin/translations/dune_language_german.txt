@@ -334,6 +334,8 @@ tv_screen_channel_info__6 = Name:%s||Archiv:|%s Tage||Kanäle ID:|%s||EPG ID:|%s
 tv_screen_external_player = externer Spieler
 tv_screen_internal_player = internen Spieler
 tv_screen_toggle_icons_aspect = Symbole für quadratische Kanäle
+tv_screen_edit_channel = Bearbeiten von Kanalparametern
+tv_screen_channel_zoom = Zoom
 
 vod_screen_new_filter = [Neuer Filter]
 vod_screen_no_film_info = Filminformationen nicht verfügbar

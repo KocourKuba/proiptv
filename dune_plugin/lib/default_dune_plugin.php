@@ -3392,7 +3392,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 }
                 $this->sql_params->exec_transaction($query);
                 unset($plugin_settings[PARAM_SELECTED_XMLTV_SOURCES]);
-            } else if ($key === PARAM_CHANNELS_ZOOM || $key === PARAM_CHANNEL_PLAYER) {
+            } else if ($key === 'channels_zoom' || $key === 'channel_player') {
+                // obsolete
                 unset($plugin_settings[$key]);
             } else if ($key === PARAM_DUNE_PARAMS) {
                 hd_debug_print("Move 'dune_params' to playlist parameter");

@@ -286,36 +286,16 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                         $menu_items = array_merge($menu_items, $this->plugin->edit_hidden_menu($this, $parent_group, false));
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
+                        $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEMS_SORT, TR::t('sort_channels'));
                         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RESET_ITEMS_SORT, TR::t('reset_channels_sort'));
                     }
                 }
 
-                if (!is_limited_apk()) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $is_external = $this->plugin->get_channel_ext_player($channel_id);
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_EXTERNAL_PLAYER,
-                        TR::t('tv_screen_external_player'),
-                        ($is_external ? "play.png" : null)
-                    );
-
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_INTERNAL_PLAYER,
-                        TR::t('tv_screen_internal_player'),
-                        ($is_external ? null : "play.png")
-                    );
-                }
-
-                if ($this->plugin->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
-                    $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_ZOOM_POPUP_MENU,
-                        TR::t('video_aspect_ratio'),
-                        "aspect.png");
-                }
-
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_EDIT_CHANNEL_DLG, TR::t('tv_screen_edit_channel'), "check.png");
+                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
+
                 $menu_items[] = $this->plugin->create_menu_item($this,
                     GUI_EVENT_KEY_SUBTITLE,
                     TR::t('channel_epg_dlg'),
@@ -370,32 +350,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
                 break;
 
-            case ACTION_ZOOM_POPUP_MENU:
-                $menu_items = array();
-                $zoom_data = $this->plugin->get_channel_zoom($selected_media_url->channel_id);
-                foreach (DuneVideoZoomPresets::$zoom_ops_translated as $idx => $zoom_item) {
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        ACTION_ZOOM_APPLY,
-                        TR::load($zoom_item),
-                        (empty($zoom_data) || strcmp($idx, $zoom_data) !== 0 ? null : "check.png"),
-                        array(ACTION_ZOOM_SELECT => (string)$idx)
-                    );
-                }
-
-                return Action_Factory::show_popup_menu($menu_items);
-
-            case ACTION_ZOOM_APPLY:
-                if (isset($user_input->{ACTION_ZOOM_SELECT})) {
-                    $zoom_select = $user_input->{ACTION_ZOOM_SELECT};
-                    $this->plugin->set_channel_zoom($channel_id, ($zoom_select !== DuneVideoZoomPresets::not_set) ? $zoom_select : null);
-                }
-                break;
-
-            case ACTION_EXTERNAL_PLAYER:
-            case ACTION_INTERNAL_PLAYER:
-                $this->plugin->set_channel_ext_player($channel_id, $user_input->control_id === ACTION_EXTERNAL_PLAYER);
-                break;
-
             case ACTION_ITEMS_SORT:
                 $this->force_parent_reload = true;
                 $this->plugin->sort_channels_order($parent_group);
@@ -404,6 +358,13 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_RESET_ITEMS_SORT:
                 $this->force_parent_reload = true;
                 $this->plugin->sort_channels_order($parent_group, true);
+                break;
+
+            case ACTION_EDIT_CHANNEL_DLG:
+                return $this->plugin->do_edit_channel($this, $channel_id);
+
+            case ACTION_EDIT_CHANNEL_APPLY:
+                $this->plugin->do_edit_channel_apply($user_input, $channel_id);
                 break;
 
             case ACTION_SHORTCUT:
@@ -448,7 +409,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     protected function do_search($group_id, $find_text)
     {
-        hd_debug_print($group_id, true);
+        hd_debug_print("Do search in group: $group_id", true);
 
         if ($group_id === TV_ALL_CHANNELS_GROUP_ID) {
             $groups_order = $this->plugin->get_groups_by_order();
