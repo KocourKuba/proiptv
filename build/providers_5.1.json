@@ -818,14 +818,14 @@
       "enable": true,
       "id": "klimedia",
       "name": "KLI Media",
-      "type": "login",
+      "type": "pin",
       "logo": "http://iptv.esalecrm.net/res/logo_klimedia.png",
       "provider_url": "https://klimedia.space/",
       "api_commands": {
-        "get_playlist": "https://klimedia.space/{STREAM_ID}/{LOGIN}/{PASSWORD}/playlist.m3u8"
+        "get_playlist": "https://klimedia.space/playlist/{STREAM_ID}/{PASSWORD}.m3u"
       },
       "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/lb\\/(?<id>.+)\\/.+$/",
+        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+$/",
         "ext_params": true,
         "streams": {
           "hls": "HLS",
