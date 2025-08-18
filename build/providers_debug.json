@@ -1157,7 +1157,7 @@
       "logo": "http://iptv.esalecrm.net/res/logo_russkoetv.png",
       "provider_url": "https://russkoetv.shop/",
       "api_commands": {
-        "get_playlist": "https://russkoetv.shop/play/{PASSWORD}.m3u8"
+        "get_playlist": "http://ru-list.com/play/{PASSWORD}.m3u8"
       },
       "config": {
         "id_map": "tvg-id",
