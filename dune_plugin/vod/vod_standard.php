@@ -239,7 +239,7 @@ class vod_standard extends Abstract_Vod
 
     /**
      * @param string $id
-     * @return array
+     * @return array|null
      */
     public function get_special_group($id)
     {
@@ -357,7 +357,7 @@ class vod_standard extends Abstract_Vod
                 ''           // country,
             );
 
-            $movie->add_series_data($movie_id, $title, '', '');
+            $movie->add_series_data(new Movie_Series($movie_id, $title, ''));
             return $movie;
         }
 
@@ -369,18 +369,19 @@ class vod_standard extends Abstract_Vod
             $logo = $entry[COLUMN_ICON];
             $title = $entry[COLUMN_TITLE];
             $category = $entry[COLUMN_GROUP_ID];
-            $path = $entry[COLUMN_PATH];
+            $url = $entry[COLUMN_PATH];
             $title_orig = '';
             $country = '';
             $year = '';
             $rating = '';
 
-            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = safe_get_value($match, 'title', $title);
-                $title_orig = safe_get_value($match, 'title_orig', '');
-                $country = safe_get_value($match, 'country', '');
-                $year = safe_get_value($match, 'year', '');
-                $rating = safe_get_value($match, 'rating', '');
+            /** @var array $m */
+            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
+                $title = safe_get_value($m, 'title', $title);
+                $title_orig = safe_get_value($m, 'title_orig', '');
+                $country = safe_get_value($m, 'country', '');
+                $year = safe_get_value($m, 'year', '');
+                $rating = safe_get_value($m, 'rating', '');
             }
 
             $movie = new Movie($movie_id, $this->plugin);
@@ -401,7 +402,7 @@ class vod_standard extends Abstract_Vod
                 $country           // country,
             );
 
-            $movie->add_series_data($movie_id, $title, '', $path);
+            $movie->add_series_data(new Movie_Series($movie_id, $title, $url));
         }
 
         return $movie;
@@ -447,6 +448,7 @@ class vod_standard extends Abstract_Vod
         $url = $param_pos !== false ? substr($url, 0, $param_pos) : $url;
         $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
         hd_debug_print("play movie in the external player: $cmd");
+        /** @var array $output */
         exec($cmd, $output);
         hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
         return null;
@@ -542,8 +544,9 @@ class vod_standard extends Abstract_Vod
             $search_in = utf8_encode(mb_strtolower($title, 'UTF-8'));
             if (strpos($search_in, $keyword) === false) continue;
 
-            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = safe_get_value($match, COLUMN_TITLE, $title);
+            /** @var array $m */
+            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
+                $title = safe_get_value($m, COLUMN_TITLE, $title);
             }
 
             $poster_url = $entry[COLUMN_ICON];
@@ -600,8 +603,9 @@ class vod_standard extends Abstract_Vod
             $pos++;
 
             $title = $entry[COLUMN_TITLE];
-            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $match)) {
-                $title = safe_get_value($match, COLUMN_TITLE, $title);
+            /** @var array $m */
+            if (!empty($this->vod_parser) && preg_match($this->vod_parser, $title, $m)) {
+                $title = safe_get_value($m, COLUMN_TITLE, $title);
             }
 
             $movies[] = new Short_Movie($entry[COLUMN_HASH], trim($title), $entry[COLUMN_ICON], $title);
@@ -677,6 +681,7 @@ class vod_standard extends Abstract_Vod
             if (!empty($user_filter)) {
                 $pairs = explode(",", $user_filter);
                 foreach ($pairs as $pair) {
+                    /** @var array $m */
                     if (strpos($pair, $name . ":") !== false && preg_match("/^$name:(.+)/", $pair, $m)) {
                         $user_value = $m[1];
                         break;

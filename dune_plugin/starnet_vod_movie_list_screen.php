@@ -256,7 +256,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
             $this->plugin->get_screen_view('icons_5x2_movie_caption'),
             $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
             $this->plugin->get_screen_view('icons_5x3_movie_no_caption'),
-            $this->plugin->get_screen_view('list_1x12_vod_info_normal'),
+            $this->plugin->get_screen_view('list_1x12_vod_info_small'),
             $this->plugin->get_screen_view('list_1x10_vod_info_normal'),
         );
     }

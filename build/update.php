@@ -122,6 +122,7 @@ $logbuf .= "date       : " . date("Y.m.d H:i:s") . PHP_EOL;
 $logbuf .= "ip         : $ip ( $country )" . PHP_EOL;
 $logbuf .= "user_agent : " . $_SERVER['HTTP_USER_AGENT'] . PHP_EOL;
 
+/** @var array $m */
 if (preg_match("/firmware_version:\s+([0-9_rb]+)/", $_SERVER['HTTP_USER_AGENT'], $m)) {
     $firmware = $m[1];
 }
@@ -132,6 +133,7 @@ if (!empty($firmware) && preg_match('/.+_[rb](\d{2})/', $firmware, $m)) {
 
 $url_params = parse_url(getenv("REQUEST_URI"));
 if (isset($url_params['query'])) {
+    /** @noinspection PhpUndefinedVariableInspection */
     parse_str($url_params['query'], $params);
     if (isset($params['dune_auth'])) {
         $values = explode(' ', $params['dune_auth']);

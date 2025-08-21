@@ -237,7 +237,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
         hd_debug_print(null, true);
 
         return array(
-            $this->plugin->get_screen_view('list_1x12_vod_info_normal'),
+            $this->plugin->get_screen_view('list_1x12_vod_info_small'),
             $this->plugin->get_screen_view('list_1x10_vod_info_normal'),
             $this->plugin->get_screen_view('icons_5x2_movie_caption'),
             $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
@@ -261,9 +261,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
             $movie = $this->plugin->vod->get_loaded_movie($movie_id);
             if (is_null($movie)) continue;
 
-            $series = new Movie_Series($movie_id);
-            $series->name = $movie->movie_info[PluginMovie::name];
-            $series->playback_url = $movie->series_list[$movie_id]->playback_url;
+            $series = new Movie_Series($movie_id, $movie->movie_info[PluginMovie::name], $movie->series_list[$movie_id]->playback_url);
             $series->playback_url_is_stream_url = $movie->series_list[$movie_id]->playback_url_is_stream_url;
             $list_movie->series_list[] = $series;
         }

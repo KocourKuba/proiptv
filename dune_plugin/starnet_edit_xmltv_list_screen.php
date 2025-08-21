@@ -422,6 +422,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             $line = trim($line);
             hd_debug_print("Load string: '$line'", true);
             $hash = Hashed_Array::hash($line);
+            /** @var array $m */
             if (preg_match(HTTP_PATTERN, $line, $m)) {
                 if ($this->plugin->get_xmltv_source(null, $hash) !== null) {
                     hd_debug_print("already exist: $hash", true);

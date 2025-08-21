@@ -28,7 +28,7 @@ require_once 'json_serializer.php';
 
 /**
  * @template string
- * @template TValue
+ * @template-covariant TValue
  * @implements Iterator<string, TValue>
  */
 class Hashed_Array extends Json_Serializer implements Iterator
@@ -103,7 +103,7 @@ class Hashed_Array extends Json_Serializer implements Iterator
      * return value associated with key
      *
      * @param string $key
-     * @return TValue|null
+     * @return TValue|mixed
      */
     public function get($key)
     {

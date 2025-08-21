@@ -63,28 +63,23 @@ class vod_korona extends vod_standard
         if (isset($movieData->seasons)) {
             // collect series
             foreach ($movieData->seasons as $season) {
-                $movie->add_season_data($season->id,
-                    empty($season->name)
-                        ? TR::t('vod_screen_season__1', $season->number)
-                        : $season->name,
-                    '');
+                $movie_season = new Movie_Season($season->id, $season->number);
+                if (!empty($season->name)) {
+                    $movie_season->description = $season->name;
+                }
+                $movie->add_season_data($movie_season);
 
                 foreach ($season->series as $episode) {
                     hd_debug_print("movie playback_url: {$episode->files['url']}");
-
-                    $movie->add_series_with_variants_data(
-                        $episode->id,
-                        TR::t('vod_screen_series__1', $episode->number),
-                        $episode->name,
-                        array(),
-                        array(),
-                        $episode->files[0]->url,
-                        $season->id);
+                    $movie_serie = new Movie_Series($episode->id, TR::t('vod_screen_series__1', $episode->number), $episode->files[0]->url, $season->id);
+                    $movie_serie->description = $episode->name;
+                    $movie->add_series_data($movie_serie);
                 }
             }
         } else {
             hd_debug_print("movie playback_url: {$movieData->files[0]->url}");
-            $movie->add_series_data($movie_id, $movieData->name, '', $movieData->files[0]->url);
+            $movie_serie = new Movie_Series($movie_id, $movieData->name, $movieData->files[0]->url);
+            $movie->add_series_data($movie_serie);
         }
 
         $movie->set_data(
@@ -172,6 +167,7 @@ class vod_korona extends vod_standard
             // country:USA
             // genre:action
             // year:2024
+            /** @var array $m */
             if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
 
             $filter = $this->get_filter($m[1]);

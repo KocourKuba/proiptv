@@ -318,8 +318,8 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 PluginRegularFolderItem::caption => $info,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => 'gui_skin://small_icons/movie.aai',
-                    ViewItemParams::item_detailed_info => empty($episode->series_desc) ? $episode->name : $episode->series_desc,
-                    ViewItemParams::item_detailed_icon_path => empty($episode->movie_image) ? 'gui_skin://large_icons/movie.aai' : $episode->movie_image,
+                    ViewItemParams::item_detailed_info => empty($episode->description) ? $episode->name : $episode->description,
+                    ViewItemParams::item_detailed_icon_path => empty($episode->poster) ? 'gui_skin://large_icons/movie.aai' : $episode->poster,
                     ViewItemParams::item_caption_color => $color,
                 ),
             );

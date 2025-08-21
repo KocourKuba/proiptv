@@ -76,6 +76,7 @@ class TR
             return '';
         }
 
+        /** @var array $m */
         if (($lang_txt = file_get_contents($lang_file)) && preg_match("/^$string_key\\s*=(.*)$/m", $lang_txt, $m)) {
             $args = func_get_args();
             array_shift($args);

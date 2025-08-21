@@ -619,6 +619,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             $uri = trim($uri);
             hd_debug_print("Load string: '$uri'", true);
 
+            /** @var array $m */
             if (preg_match(HTTP_PATTERN, $uri, $m)) {
                 hd_debug_print("import link: '$uri'", true);
                 try {

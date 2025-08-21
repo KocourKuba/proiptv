@@ -104,23 +104,34 @@ class vod_cbilling extends vod_standard
 
         if (isset($movieData->seasons)) {
             foreach ($movieData->seasons as $season) {
-                $movie->add_season_data($season->number, !empty($season->name) ? $season->name : TR::t('vod_screen_season__1', $season->number), '');
-                foreach ($season->series as $episode) {
-                    $name = TR::t('vod_screen_series__2', $episode->number, (empty($episode->name) ? "" : $episode->name));
-                    $movie->add_series_data($episode->id,
-                        $name,
-                        '',
-                        "$this->server{$episode->files[0]->url}?token=$this->token",
+                $movie_season = new Movie_Season($season->number);
+                if (!empty($season->name)) {
+                    $movie_season->description = $season->name;
+                }
+                if (!empty($season->original_name)) {
+                    $movie_season->description .= empty($season->name) ? $season->original_name : " ($season->original_name)";
+                }
+                $movie->add_season_data($movie_season);
+
+                foreach ($season->series as $serie) {
+                    $movie_serie = new Movie_Series($serie->id,
+                        TR::t('vod_screen_series__1', $serie->number),
+                        "$this->server{$serie->files[0]->url}?token=$this->token",
                         $season->number
                     );
+
+                    if (!empty($serie->name)) {
+                        $movie_serie->description = $serie->name;
+                    }
+                    if (!empty($movie_serie->original_name)) {
+                        $movie_serie->description .= empty($serie->name) ? $serie->original_name : " ($serie->original_name)";
+                    }
+
+                    $movie->add_series_data($movie_serie);
                 }
             }
         } else {
-            $movie->add_series_data($movie_id,
-                $movieData->name,
-                '',
-                "$this->server{$movieData->files[0]->url}?token=$this->token"
-            );
+            $movie->add_series_data(new Movie_Series($movie_id, $movieData->name, "$this->server{$movieData->files[0]->url}?token=$this->token"));
         }
 
         return $movie;

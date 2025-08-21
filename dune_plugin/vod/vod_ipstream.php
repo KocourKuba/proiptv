@@ -96,21 +96,24 @@ class vod_ipstream extends vod_standard
             // case for serials
             if (isset($item->seasons)) {
                 foreach ($item->seasons as $season) {
-                    $movie->add_season_data($season->season,
-                        empty($season->info->plot)
-                            ? TR::t('vod_screen_season__1', $season->season)
-                            : $season->info->plot
-                        , '');
+                    $movie_season = new Movie_Season($season->season);
+                    if (!empty($season->info->plot)) {
+                        $movie_season->description = $season->info->plot;
+                    }
+                    $movie->add_season_data($movie_season);
 
                     foreach ($season->episodes as $episode) {
                         hd_debug_print("movie playback_url: $episode->video");
-                        $movie->add_series_data("$season->season:$episode->episode",
-                            TR::t('vod_screen_series__1', $episode->episode), '', $episode->video, $season->season);
+                        $movie_serie = new Movie_Series("$season->season:$episode->episode",
+                            TR::t('vod_screen_series__1', $episode->episode), $episode->video,
+                            $season->season
+                        );
+                        $movie->add_series_data($movie_serie);
                     }
                 }
             } else {
                 hd_debug_print("movie playback_url: $item->video");
-                $movie->add_series_data($movie_id, $item->name, '', $item->video);
+                $movie->add_series_data(new Movie_Series($movie_id, $item->name, $item->video));
             }
 
             break;
@@ -226,8 +229,8 @@ class vod_ipstream extends vod_standard
 
         return new Short_Movie(
             $id,
-            (string)$movie_obj->name,
-            (string)$movie_obj->info->poster,
+            $movie_obj->name,
+            $movie_obj->info->poster,
             TR::t('vod_screen_movie_info__5', $movie_obj->name, $movie_obj->info->year, $country, $genres, $movie_obj->info->rating)
         );
     }
@@ -287,6 +290,7 @@ class vod_ipstream extends vod_standard
         $pairs = explode(",", $params);
         $post_params = array();
         foreach ($pairs as $pair) {
+            /** @var array $m */
             if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
                 $filter = $this->get_filter($m[1]);
                 if ($filter !== null && !empty($filter['values'])) {

@@ -354,12 +354,12 @@ vod_screen_all_serials = All TV Series
 vod_screen_all_movies__1 = All movies %s
 vod_screen_season__1 = Season %s
 vod_screen_series__1 = Episode %s
-vod_screen_series__2 = Episode %s %s
 vod_screen_movie_info__2 = %s|Rating: %s
 vod_screen_movie_info__3 = %s|Year: %s|Rating: %s
 vod_screen_movie_info__4 = %s|Year: %s|Country: %s|Genre: %s
 vod_screen_movie_info__5 = %s|Year: %s|Country: %s|Genre: %s|Rating: %s
 vod_screen_group_info__2 = %s|Movies: %s
+vod_screen_air_date__2 = %s||Air date: %s
 
 epg_not_exist = EPG not exist
 epg_not_ready = EPG not ready

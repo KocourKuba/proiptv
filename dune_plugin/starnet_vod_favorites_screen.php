@@ -173,7 +173,8 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
 
         return array(
             $this->plugin->get_screen_view('icons_5x2_movie_no_caption'),
-            $this->plugin->get_screen_view('list_1x12_vod_info_normal'),
+            $this->plugin->get_screen_view('list_1x12_vod_info_small'),
+            $this->plugin->get_screen_view('list_1x10_vod_info_normal'),
         );
     }
 }

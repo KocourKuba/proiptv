@@ -1094,7 +1094,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 PluginRegularFolderView::not_loaded_view_item_params => $not_loaded_vod
             ),
 
-            'list_1x12_vod_info_normal' => array(
+            'list_1x12_vod_info_small' => array(
                 PluginRegularFolderView::async_icon_loading => false,
                 PluginRegularFolderView::view_params => array(
                     ViewParams::num_cols => 1,

@@ -880,6 +880,9 @@ class Epg_Manager_Xmltv
                 $db->exec('BEGIN;');
 
                 $stm = $db->prepare("INSERT INTO $pos_table_name (channel_id, start, end) VALUES(:channel_id, :start, :end);");
+                /** @var string $prev_channel */
+                /** @var int $start_program_block */
+                /** @var int $tag_end_pos */
                 $stm->bindParam(":channel_id", $prev_channel);
                 $stm->bindParam(":start", $start_program_block);
                 $stm->bindParam(":end", $tag_end_pos);
@@ -897,6 +900,7 @@ class Epg_Manager_Xmltv
                         // check if end
                         $end_tv = strpos($line, "</tv>");
                         if ($end_tv !== false) {
+                            /** @noinspection PhpUnusedLocalVariableInspection */
                             $tag_end_pos = $end_tv + $tag_start_pos;
                             $stm->execute();
                             break;
@@ -907,7 +911,7 @@ class Epg_Manager_Xmltv
                     }
 
                     // end position include closing tag!
-                    $tag_end_pos = ftell($file);
+                    // $tag_end_pos = ftell($file);
                     // append position of open tag to file position of chunk
                     $tag_start_pos += $offset;
                     // calculate channel id
@@ -1281,6 +1285,7 @@ class Epg_Manager_Xmltv
             rename($tmp_filename, $cached_file . '.gz');
             $tmp_filename = $cached_file . '.gz';
             $cmd = "gzip -d $tmp_filename 2>&1";
+            /** @var int $ret */
             system($cmd, $ret);
             if ($ret !== 0) {
                 throw new Exception("Failed to ungzip $tmp_filename (error code: $ret)");
@@ -1302,6 +1307,7 @@ class Epg_Manager_Xmltv
 
             hd_debug_print("zip list: $filename");
             $cmd = "unzip -oq $tmp_filename -d " . self::$cache_dir . " 2>&1";
+            /** @var int $ret */
             system($cmd, $ret);
             unlink($tmp_filename);
             if ($ret !== 0) {

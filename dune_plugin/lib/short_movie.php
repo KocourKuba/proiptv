@@ -64,9 +64,9 @@ class Short_Movie
             return;
         }
 
-        $this->id = $id;
-        $this->name = $name;
-        $this->poster_url = $poster_url;
+        $this->id = (string)$id;
+        $this->name = (string)$name;
+        $this->poster_url = (string)$poster_url;
         $this->info = $info;
     }
 }

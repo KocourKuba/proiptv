@@ -94,7 +94,7 @@ class vod_glanz extends vod_standard
             );
 
             hd_debug_print("movie playback_url: $item->url");
-            $movie->add_series_data($movie_id, $item->name, '', $item->url);
+            $movie->add_series_data(new Movie_Series($movie_id, $item->name, $item->url));
             break;
         }
 
@@ -226,8 +226,8 @@ class vod_glanz extends vod_standard
 
         return new Short_Movie(
             $id,
-            (string)$movie_obj->name,
-            (string)$movie_obj->cover,
+            $movie_obj->name,
+            $movie_obj->cover,
             TR::t('vod_screen_movie_info__4', $movie_obj->name, $movie_obj->year, $movie_obj->country, $genres_str)
         );
     }
@@ -289,6 +289,7 @@ class vod_glanz extends vod_standard
         $pairs = explode(",", $params);
         $post_params = array();
         foreach ($pairs as $pair) {
+            /** @var array $m */
             if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
                 $filter = $this->get_filter($m[1]);
                 if ($filter !== null && !empty($filter['values'])) {

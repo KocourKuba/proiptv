@@ -184,6 +184,7 @@ class Curl_Wrapper
             if (empty($line)) continue;
 
             hd_debug_print($line, true);
+            /** @var array $m */
             if (preg_match("/^(.*):(.*)$/", $line, $m)) {
                 $response_headers[strtolower($m[1])] = trim($m[2]);
             }

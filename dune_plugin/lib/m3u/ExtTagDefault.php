@@ -136,6 +136,8 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
         if (empty($line) || $line[0] !== '#')
             return null;
 
+        /** @var array $m */
+        /** @var array $nm */
         if (preg_match('/^(#[^: ]+)[:\s]?(.*)/', $line, $m)) {
             $this->setTagName($m[1]);
             if ($this->isTag(TAG_EXTINF)) {
@@ -177,9 +179,10 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
      */
     public function parseTagAttributes($data)
     {
-        preg_match_all('/([a-z0-9\-]+?)=("[^"]*"|[\S]+)/i', $data, $matches, PREG_SET_ORDER);
+        /** @var array $m */
+        preg_match_all('/([a-z0-9\-]+?)=("[^"]*"|[\S]+)/i', $data, $m, PREG_SET_ORDER);
 
-        foreach ($matches as $match) {
+        foreach ($m as $match) {
             $this->attributes[$match[1]] = trim($match[2], " \"");
         }
     }

@@ -66,20 +66,21 @@ class vod_iptvonline extends vod_standard
         $movie = new Movie($movie_id, $this->plugin);
         $movieData = $json->data;
         if ($arr[0] === API_ACTION_MOVIE) {
-            $audios = array();
+            $movie_serie = new Movie_Series($arr[1], $movieData->medias->title, $movieData->medias->url);
             foreach ($movieData->medias->audios as $item) {
                 $key = $item->translate;
-                $audios[$key] = new Movie_Variant($key, $key, $item->url);
+                $movie_serie->audios[$key] = new Movie_Variant($key, $key, $item->url);
             }
-            $movie->add_series_with_variants_data($arr[1], $movieData->medias->title, '', array(), $audios, $movieData->medias->url);
+            $movie->add_series_data($movie_serie);
         } else if ($arr[0] === API_ACTION_SERIAL) {
             // collect series
             foreach ($movieData->seasons as $season) {
-                $movie->add_season_data($season->season,
-                    empty($season->info->plot)
-                        ? TR::t('vod_screen_season__1', $season->season)
-                        : $season->title,
-                    '');
+                $movie_season = new Movie_Season($season->season);
+                if (!empty($season->title)) {
+                    $movie_season->description = $season->title;
+                }
+
+                $movie->add_season_data($movie_season);
 
                 foreach ($season->episodes as $episode) {
                     hd_debug_print("movie playback_url: $episode->url");
@@ -90,13 +91,14 @@ class vod_iptvonline extends vod_standard
                         $audios[$key] = new Movie_Variant($key, $key, $item->url);
                     }
 
-                    $movie->add_series_with_variants_data("$season->season:$episode->episode",
+                    $movie_serie = new Movie_Series("$season->season:$episode->episode",
                         TR::t('vod_screen_series__1', $episode->episode),
-                        $episode->title,
-                        array(),
-                        $audios,
                         $episode->url,
-                        $season->season);
+                        $season->season
+                    );
+                    $movie_serie->description = $episode->title;
+                    $movie_serie->audios = $audios;
+                    $movie->add_series_data($movie_serie);
                 }
             }
         }
@@ -265,6 +267,7 @@ class vod_iptvonline extends vod_standard
             // country:USA
             // genre:action
             // year:2024
+            /** @var array $m */
             if (!preg_match("/^(.+):(.+)$/", $pair, $m)) continue;
 
             $filter = $this->get_filter($m[1]);

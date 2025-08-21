@@ -15,7 +15,7 @@ class Movie_Series
     /**
      * @var string
      */
-    public $series_desc = '';
+    public $description = '';
 
     /**
      * @var string
@@ -30,7 +30,7 @@ class Movie_Series
     /**
      * @var string
      */
-    public $movie_image = '';
+    public $poster = '';
 
     /**
      * @var array
@@ -49,9 +49,12 @@ class Movie_Series
 
     /**
      * @param string $id
+     * @param string $name
+     * @param string $playback_url
+     * @param string $season_id
      * @throws Exception
      */
-    public function __construct($id)
+    public function __construct($id, $name, $playback_url, $season_id = '')
     {
         if (is_null($id)) {
             print_backtrace();
@@ -59,5 +62,8 @@ class Movie_Series
         }
 
         $this->id = (string)$id;
+        $this->name = $name;
+        $this->playback_url = (string)$playback_url;
+        $this->season_id = (string)$season_id;
     }
 }

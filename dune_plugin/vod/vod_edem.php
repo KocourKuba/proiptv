@@ -43,6 +43,7 @@ class vod_edem extends vod_standard
         $this->vod_filters = array("years", "genre");
         $this->vod_quality = true;
         $vportal = $this->provider->GetParameter(MACRO_VPORTAL);
+        /** @var array $matches */
         if (empty($vportal) || !preg_match(VPORTAL_PATTERN, $vportal, $matches)) {
             hd_debug_print("Incorrect or empty VPortal data: $vportal");
             $show = false;
@@ -77,47 +78,42 @@ class vod_edem extends vod_standard
             foreach ($movieData->items as $item) {
                 $episodeData = $this->make_json_request(array('cmd' => "flick", 'fid' => (int)$item->fid, 'offset' => 0, 'limit' => 0));
 
-                if (!isset($episodeData->variants)) {
-                    $movie->add_series_data($item->fid, $item->title, '', $item->url);
-                } else if (count((array)$episodeData->variants) === 1) {
-                    $key = key($episodeData->variants);
-                    $movie->add_series_data($item->fid, $item->title, $key, $item->url);
+                $movie_serie = new Movie_Series($item->fid, $item->title, $item->url);
+                if (isset($episodeData->variants) && count((array)$episodeData->variants) === 1) {
+                    $movie_serie->description = $movie->to_string(key($episodeData->variants));
                 } else {
                     $variants_data = (array)$episodeData->variants;
-                    $qualities = array();
                     $qualities_str = '';
                     foreach ($variants_data as $key => $url) {
-                        $qualities[(string)$key] = new Movie_Variant($item->fid . "_" . $key, $key, $url);
+                        $movie_serie->qualities[(string)$key] = new Movie_Variant($item->fid . "_" . $key, $key, $url);
                         if (!empty($qualities_str)) {
                             $qualities_str .= ",";
                         }
                         $qualities_str .= ($key === 'auto' ? '' : $key);
                     }
 
-                    $qualities_str = rtrim($qualities_str, ' ,\0');
-                    $series_desc = TR::load('vod_screen_quality') . "|$qualities_str";
-                    $movie->add_series_with_variants_data($item->fid, $item->title, $series_desc, $qualities, array(), $item->url);
+                    $movie_serie->description = TR::load('vod_screen_quality') . "|" . rtrim($qualities_str, ' ,\0');
                 }
+                $movie->add_series_data($movie_serie);
             }
-        } else if (!isset($movieData->variants)) {
-            $movie->add_series_data($movie_id, $movieData->title, '', $movieData->url);
-        } else if (count((array)$movieData->variants) === 1) {
-            $key = key($movieData->variants);
-            $movie->add_series_data($movie_id, $movieData->title, $key, $movieData->url);
         } else {
-            $variants_data = (array)$movieData->variants;
-            $qualities = array();
-            foreach ($variants_data as $key => $url) {
-                $qualities[$key] = new Movie_Variant($movie_id . "_" . $key, $key, $url);
-                if (!empty($qualities_str)) {
-                    $qualities_str .= ",";
+            $movie_serie = new Movie_Series($movie_id, $movieData->title, $movieData->url);
+            if (isset($movieData->variants) && count((array)$movieData->variants) === 1) {
+                $movie_serie->description = $movie->to_string(key($movieData->variants));
+            } else {
+                $variants_data = (array)$movieData->variants;
+                foreach ($variants_data as $key => $url) {
+                    $movie_serie->qualities[$key] = new Movie_Variant($movie_id . "_" . $key, $key, $url);
+                    if (!empty($qualities_str)) {
+                        $qualities_str .= ",";
+                    }
+                    $qualities_str .= ($key === 'auto' ? '' : $key);
                 }
-                $qualities_str .= ($key === 'auto' ? '' : $key);
-            }
 
-            $qualities_str = rtrim($qualities_str, ' ,\0');
-            $series_desc = TR::load('vod_screen_quality') . "|$qualities_str";
-            $movie->add_series_with_variants_data($movie_id, $movieData->title, $series_desc, $qualities, array(), $movieData->url);
+                $qualities_str = rtrim($qualities_str, ' ,\0');
+                $movie_serie->description = TR::load('vod_screen_quality') . "|$qualities_str";
+            }
+            $movie->add_series_data($movie_serie);
         }
 
         $age = !empty($movieData->agelimit) ? "$movieData->agelimit+" : '';
@@ -267,6 +263,7 @@ class vod_edem extends vod_standard
         $pairs = explode(",", $params);
         $post_params = array();
         foreach ($pairs as $pair) {
+            /** @var array $m */
             if (preg_match("/^(.+):(.+)$/", $pair, $m)) {
                 $filter = $this->get_filter($m[1]);
                 if ($filter !== null && !empty($filter['values'])) {

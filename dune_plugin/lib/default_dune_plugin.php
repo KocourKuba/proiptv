@@ -2005,6 +2005,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $archive_url = $channel_row[COLUMN_CATCHUP_SOURCE];
             hd_debug_print("using catchup params: $catchup", true);
             if (empty($archive_url)) {
+                /** @var array $m */
                 if (KnownCatchupSourceTags::is_tag(ATTR_CATCHUP_SHIFT, $catchup)) {
                     $archive_url = $stream_url
                         . ((strpos($stream_url, '?') !== false) ? '&' : '?')
@@ -2227,6 +2228,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $url = $this->generate_stream_url($channel_row, $archive_ts, true);
         $cmd = 'am start -d "' . $url . '" -t "video/*" -a android.intent.action.VIEW 2>&1';
         hd_debug_print("play movie in the external player: $cmd");
+        /** @var array $output */
         exec($cmd, $output);
         hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
         return null;
@@ -2858,6 +2860,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             );
 
             hd_debug_print("Get media info for: $live_url");
+            /** @var array $pipes */
             $process = proc_open(
                 get_install_path("bin/media_check.sh $live_url"),
                 $descriptors,

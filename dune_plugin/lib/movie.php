@@ -22,7 +22,7 @@ class Movie implements User_Input_Handler
     /**
      * @var array|Movie_Season[]
      */
-    public $season_list;
+    public $seasons_list;
 
     /**
      * @var array|Movie_Series[]
@@ -37,7 +37,7 @@ class Movie implements User_Input_Handler
     /**
      * @var array|string[]
      */
-    public $audio_list;
+    public $audios_list;
 
     /**
      * @var Default_Dune_Plugin
@@ -199,7 +199,7 @@ class Movie implements User_Input_Handler
      * @param string|null $v
      * @return string
      */
-    private function to_string($v)
+    public function to_string($v)
     {
         return $v === null ? '' : (string)$v;
     }
@@ -220,75 +220,27 @@ class Movie implements User_Input_Handler
     }
 
     /**
-     * @param string $id
-     * @param string $name
-     * @param string $season_url
+     * @param Movie_Season $movie_season
      * @throws Exception
      */
-    public function add_season_data($id, $name, $season_url)
+    public function add_season_data($movie_season)
     {
-        $season = new Movie_Season($id);
-        $season->name = $this->to_string($name);
-        $season->season_url = $this->to_string($season_url);
-        $this->season_list[] = $season;
+        $this->seasons_list[] = $movie_season;
     }
 
     /**
-     * @param string $id
-     * @param string $name
-     * @param string $description
-     * @param string $playback_url
-     * @param string $season_id
-     * @param string $movie_image
-     * @param bool $playback_url_is_stream_url
+     * @param Movie_Series $movie_series
      * @throws Exception
      */
-    public function add_series_data($id, $name, $description, $playback_url, $season_id = '', $movie_image = '', $playback_url_is_stream_url = true)
+    public function add_series_data($movie_series)
     {
-        $series = new Movie_Series($id);
-        $series->name = $this->to_string($name);
-        $series->series_desc = $this->to_string($description);
-        $series->season_id = $this->to_string($season_id);
-        $series->playback_url = $this->to_string($playback_url);
-        $series->movie_image = $this->to_string($movie_image);
-        $series->playback_url_is_stream_url = $playback_url_is_stream_url;
-
-        $this->series_list[$id] = $series;
-    }
-
-    /**
-     * @param string $id
-     * @param string $name
-     * @param string $description
-     * @param string $playback_url
-     * @param array $qualities
-     * @param array $audios
-     * @param string $season_id
-     * @param bool $playback_url_is_stream_url
-     * @throws Exception
-     */
-    public function add_series_with_variants_data($id,
-                                                  $name,
-                                                  $description,
-                                                  $qualities,
-                                                  $audios,
-                                                  $playback_url = '',
-                                                  $season_id = '',
-                                                  $playback_url_is_stream_url = true)
-    {
-        $series = new Movie_Series($id);
-        $series->name = $this->to_string($name);
-        $series->series_desc = $this->to_string($description);
-        $series->season_id = $this->to_string($season_id);
-        $series->playback_url = $this->to_string($playback_url);
-        $series->playback_url_is_stream_url = $playback_url_is_stream_url;
-        $series->qualities = $qualities;
-        $series->audios = $audios;
-
-        $this->qualities_list = array_keys($qualities);
-        $this->audio_list = array_keys($audios);
-
-        $this->series_list[$id] = $series;
+        $this->series_list[$movie_series->id] = $movie_series;
+        if (!empty($series->qualities)) {
+            $this->qualities_list = array_keys($series->qualities);
+        }
+        if (!empty($series->audios)) {
+            $this->audios_list = array_keys($series->audios);
+        }
     }
 
     /**
@@ -296,7 +248,7 @@ class Movie implements User_Input_Handler
      */
     public function has_seasons()
     {
-        return (is_array($this->season_list) && !empty($this->season_list));
+        return (is_array($this->seasons_list) && !empty($this->seasons_list));
     }
 
     /**

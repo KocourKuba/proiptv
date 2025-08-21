@@ -354,12 +354,12 @@ vod_screen_all_serials = Alle Fernsehserie
 vod_screen_all_movies__1 = Alle Filme %s
 vod_screen_season__1 = Staffel %s
 vod_screen_series__1 = Episode %s
-vod_screen_series__2 = Episode %s %s
 vod_screen_movie_info__2 = %s|Bewertung: %s
 vod_screen_movie_info__3 = %s|Jahr: %s|Bewertung: %s
 vod_screen_movie_info__4 = %s|Jahr: %s|Land: %s|Genre: %s
 vod_screen_movie_info__5 = %s|Jahr: %s|Land: %s|Genre: %s|Bewertung: %s
-vod_screen_group_info__2 = %s|Movies: %s
+vod_screen_group_info__2 = %s|Filme: %s
+vod_screen_air_date__2 = %s||Ausstrahlungsdatum: %s
 
 epg_not_exist = EPG existiert nicht
 epg_not_ready = EPG nicht bereit

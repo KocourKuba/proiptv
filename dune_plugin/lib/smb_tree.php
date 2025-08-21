@@ -180,9 +180,10 @@ class smb_tree
     {
         $df_smb = array();
         $out_mount = file_get_contents("/proc/mounts");
-        if (preg_match_all('|(.+)/tmp/mnt/smb/(.+?) |', $out_mount, $match)) {
-            foreach ($match[2] as $k => $v) {
-                $df_smb[str_replace(array('/', '\134'), '', $match[1][$k])] = $v;
+        /** @var array $m */
+        if (preg_match_all('|(.+)/tmp/mnt/smb/(.+?) |', $out_mount, $m)) {
+            foreach ($m[2] as $k => $v) {
+                $df_smb[str_replace(array('/', '\134'), '', $m[1][$k])] = $v;
             }
         }
         return $df_smb;
@@ -322,8 +323,9 @@ class smb_tree
         if (file_exists(self::NETWORK_CONFIG)) {
             $network = parse_ini_file(self::NETWORK_CONFIG, true);
             foreach ($network as $k => $v) {
-                if (preg_match("/(.*)\.(.*)/", $k, $match)) {
-                    $network_folder[$match[2]][$match[1]] = $v;
+                /** @var array $m */
+                if (preg_match("/(.*)\.(.*)/", $k, $m)) {
+                    $network_folder[$m[2]][$m[1]] = $v;
                 }
             }
         }
@@ -334,9 +336,10 @@ class smb_tree
     {
         $df_nfs = array();
         $out_mount = file_get_contents("/proc/mounts");
-        if (preg_match_all('|(.+) /tmp/mnt/network/(.+?) |', $out_mount, $match)) {
-            foreach ($match[2] as $k => $v) {
-                $df_nfs[$match[1][$k]] = $v;
+        /** @var array $m */
+        if (preg_match_all('|(.+) /tmp/mnt/network/(.+?) |', $out_mount, $m)) {
+            foreach ($m[2] as $k => $v) {
+                $df_nfs[$m[1][$k]] = $v;
             }
         }
         return $df_nfs;
@@ -371,9 +374,10 @@ class smb_tree
         foreach ($network_folder_smb as $k => $v) {
             if (!preg_match('/((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)/', $k)) {
                 $out = shell_exec(self::get_nmblookup_path() . ' "' . $k . '" -S');
-                if (preg_match('/(.*) (.*)<00>/', $out, $matches)) {
-                    $ip = '//' . $matches[1] . '/';
-                    if ($matches[2] === (string)$k) {
+                /** @var array $m */
+                if (preg_match('/(.*) (.*)<00>/', $out, $m)) {
+                    $ip = '//' . $m[1] . '/';
+                    if ($m[2] === (string)$k) {
                         foreach ($v as $key => $vel) {
                             $d[$ip . $key] = $vel;
                         }
@@ -436,13 +440,14 @@ class smb_tree
         foreach ($server_shares_smb as $k => $v) {
             //hd_debug_print("server shares: $k");
             $out = shell_exec(self::get_nmblookup_path() . ' "' . $k . '" -R');
-            if (preg_match('/(.*) (.*)<00>/', $out, $matches)) {
-                if ($my_ip === $matches[1]) {
+            /** @var array $m */
+            if (preg_match('/(.*) (.*)<00>/', $out, $m)) {
+                if ($my_ip === $m[1]) {
                     continue;
                 }
 
-                $ip = '//' . $matches[1] . '/';
-                if ($matches[2] === (string)$k) {
+                $ip = '//' . $m[1] . '/';
+                if ($m[2] === (string)$k) {
                     foreach ($v as $key => $vel) {
                         $vel['foldername'] = $key . ' in ' . $k;
                         $d[$ip . $key] = $vel;
@@ -476,6 +481,7 @@ class smb_tree
         $cmd = '$FS_PREFIX' . "/firmware/bin/smbtree {$this->get_auth_options()} {$this->get_debug_level()} $args";
         hd_debug_print("smbtree exec: $cmd", true);
         $env = array('LD_LIBRARY_PATH' => '$FS_PREFIX/firmware/lib');
+        /** @var array $pipes */
         $process = proc_open($cmd, $this->descriptor_spec, $pipes, '/tmp', $env);
 
         if (is_resource($process)) {

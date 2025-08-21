@@ -326,8 +326,9 @@ class Entry extends Json_Serializer
     public function updateParsedId($id_parser)
     {
         // set channel id, first use id url parser
-        if (!empty($id_parser) && preg_match($id_parser, $this->path, $matches) && isset($matches['id'])) {
-            $this->parsed_id = $matches['id'];
+        /** @var array $m */
+        if (!empty($id_parser) && preg_match($id_parser, $this->path, $m) && isset($m['id'])) {
+            $this->parsed_id = $m['id'];
         }
     }
 

@@ -39,7 +39,12 @@ class Movie_Season
     /**
      * @var string
      */
-    public $season_url = '';
+    public $description = '';
+
+    /**
+     * @var array
+     */
+    public $poster = '';
 
     /**
      * @var array
@@ -48,14 +53,16 @@ class Movie_Season
 
     /**
      * @param string $id
+     * @param int $number
      * @throws Exception
      */
-    public function __construct($id)
+    public function __construct($id, $number = -1)
     {
         if (is_null($id)) {
             print_backtrace();
             throw new Exception("Movie_Season::id is not set");
         }
         $this->id = (string)$id;
+        $this->name = TR::t('vod_screen_season__1', $number === -1 ? $id : $number);
     }
 }

@@ -119,6 +119,7 @@ function IP2Country($ip)
 
 $url_params = parse_url(getenv("REQUEST_URI"));
 if (isset($url_params['query'])) {
+    /** @noinspection PhpUndefinedVariableInspection */
     parse_str($url_params['query'], $params);
 }
 
@@ -140,6 +141,7 @@ $serial = $params['serial'];
 $firmware = '';
 $revision = '';
 $rev = 0;
+/** @var array $m */
 if (isset($params['firmware'])) {
     $firmware = $params['firmware'];
 } else if (preg_match("/firmware_version:\s+([0-9_rb]+)/", $_SERVER['HTTP_USER_AGENT'], $m)) {

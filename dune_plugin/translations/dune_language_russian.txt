@@ -354,12 +354,12 @@ vod_screen_all_serials = Все сериалы
 vod_screen_all_movies__1 = Все фильмы %s
 vod_screen_season__1 = Сезон %s
 vod_screen_series__1 = Эпизод %s
-vod_screen_series__2 = Эпизод %s %s
 vod_screen_movie_info__2 = %s|Рейтинг: %s
 vod_screen_movie_info__3 = %s|Год: %s|Рейтинг: %s
 vod_screen_movie_info__4 = %s|Год: %s|Страна: %s|Жанр: %s
 vod_screen_movie_info__5 = %s|Год: %s|Страна: %s|Жанр: %s|Рейтинг: %s
 vod_screen_group_info__2 = %s|Фильмов: %s
+vod_screen_air_date__2 = %s||Дата выхода: %s
 
 epg_not_exist = Программа передач отсутствует
 epg_not_ready = Программа передач еще не готова

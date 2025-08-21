@@ -478,6 +478,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                         }
 
                         $cmd = "unzip -oq '$package_name' -d '$dir' 2>&1";
+                        /** @var int $ret */
                         system($cmd, $ret);
                         if ($ret !== 0) {
                             hd_debug_print("Failed to unpack $package_name (error code: $ret)");

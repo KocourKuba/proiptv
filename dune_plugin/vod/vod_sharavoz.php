@@ -164,27 +164,30 @@ class vod_sharavoz extends vod_standard
         );
 
         if ($stream_type === xtream_codes_api::VOD) {
-            $id = $stream_id;
-            /*
-            if (!empty($item->info->container_extension)) {
-                $id .= ".{$item->info->container_extension}";
-            }
-            */
-            $url = $this->xtream->get_stream_url($id);
-            hd_debug_print("movie playback_url: $url");
-            $movie->add_series_data($movie_id, $item->info->name, '', $url);
+            $url = $this->xtream->get_stream_url($stream_id);
+            hd_debug_print("movie playback_url: $url", true);
+            $movie->add_series_data(new Movie_Series($movie_id, $item->info->name, $url));
         } else if ($stream_type === xtream_codes_api::SERIES) {
             foreach ($item->episodes as $season_id => $season) {
-                $movie->add_season_data($season_id, !empty($season->name) ? $season->name : TR::t('vod_screen_season__1', $season_id), '');
+                $movie_season = new Movie_Season($season_id);
+                if (!empty($season->name)) {
+                    $movie_season->description = $season->name;
+                }
+                $movie->add_season_data($movie_season);
+
                 foreach ($season as $episode) {
-                    $name = TR::t('vod_screen_series__2', $episode->episode_num, (empty($episode->title) ? "" : $episode->title));
                     $id = $episode->id;
                     if (!empty($episode->container_extension)) {
                         $id .= ".$episode->container_extension";
                     }
                     $url = $this->xtream->get_stream_url($id);
-                    hd_debug_print("episode playback_url: $url");
-                    $movie->add_series_data($episode->id, $name, '', $url, $season_id, $episode->movie_image);
+                    hd_debug_print("episode playback_url: $url", true);
+                    $movie_serie = new Movie_Series($episode->id, TR::t('vod_screen_series__1', $episode->episode_num), $url, $season_id);
+                    $movie_serie->poster = $episode->movie_image;
+                    if (!empty($episode->title)) {
+                        $movie_serie->description = $episode->title;
+                    }
+                    $movie->add_series_data($movie_serie);
                 }
             }
         }
@@ -323,7 +326,7 @@ class vod_sharavoz extends vod_standard
 
         return new Short_Movie(
             $id,
-            (string)$movie_obj->name,
+            $movie_obj->name,
             $icon,
             TR::t('vod_screen_movie_info__2', $movie_obj->name, $movie_obj->rating)
         );

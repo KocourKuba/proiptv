@@ -60,6 +60,7 @@ class dune_config
         hd_debug_print("Reading configuration from '$conf_file_path'...");
 
         foreach ($lines as $i => $iValue) {
+            /** @var array $matches */
             if (preg_match('/^ *(\S+) *= *(\S+)$/', $iValue, $matches) !== 1) {
                 hd_debug_print(
                     "Warning: line " . ($i + 1) . ": unknown format. " .
