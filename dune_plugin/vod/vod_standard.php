@@ -973,7 +973,7 @@ class vod_standard extends Abstract_Vod
                 }
 
                 $playlist_file = file_get_contents($m3u_file);
-                if (strpos($playlist_file, TAG_EXTM3U) === false) {
+                if (strpos($playlist_file, TAG_EXTM3U) === false && strpos($playlist_file, TAG_EXTINF) === false) {
                     $exception_msg = TR::load('err_load_vod') . "\n\nPlaylist is not a M3U file\n\n$playlist_file";
                     HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
                     throw new Exception($exception_msg);
