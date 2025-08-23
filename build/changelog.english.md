@@ -1,4 +1,19 @@
-﻿### Version 6.2.1294
+﻿### Version 6.2.1310
+- Added the ability to configure the EPG shift for each channel individually
+- External player playback, zoom and EPG shift settings are placed in a separate dialog
+- The media library shows additional information and a poster for the season (if any)
+- Added a 'fix' for playlist "compilers" who don't know that the playlist should have a tag #EXTM3U
+- Display an error message when manually starting XMLTV processing
+- When adding an IPTV provider, additional information (ID and type of access parameters) is shown according to the template. This information is useful when adding through a playlist list
+- Configuration: Added Skaz TV provider (http://skaz.tv/)
+- Configuration: Added additional domains for Sharavoz
+- Configuration: Changed KLI Media settings
+- Configuration: Changed playlist link for RusskoeTV
+- Configuration: Changed Internet source for PeakTV
+- Configuration: Added the ability to change the stream type (HLS/MPEG-TS) for ReflexTV
+- Fixed a bug that did not allow you to change the Internet EPG source if it was removed from the configuration
+
+### Version 6.2.1294
 - Minor changes in working with the database
 - Fixed a bug adding a link to a playlist
 
