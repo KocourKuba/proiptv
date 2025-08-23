@@ -189,7 +189,6 @@ setup_buffer_sec__1 = %s сек.
 setup_buffer_sec_default__1 = %s сек. (По умолчанию)
 setup_buffer_time = Время буферизации
 setup_epg_shift = Сдвиг EPG
-setup_epg_shift_default__1 = %s (По умолчанию)
 setup_epg_shift__1 = %s ч.
 setup_delay_time = Мин. задержка для архива
 setup_pass = Пароль

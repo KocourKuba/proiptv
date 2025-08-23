@@ -79,7 +79,6 @@ class vod_iptvonline extends vod_standard
                 if (!empty($season->title)) {
                     $movie_season->description = $season->title;
                 }
-
                 $movie->add_season_data($movie_season);
 
                 foreach ($season->episodes as $episode) {

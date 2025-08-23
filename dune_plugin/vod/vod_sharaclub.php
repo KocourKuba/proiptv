@@ -117,7 +117,6 @@ class vod_sharaclub extends vod_standard
                         $movie_season->description = TR::t('vod_screen_air_date__2', $title, $season->info->air_date);
                     }
 
-
                     if (!empty($season->info->poster)) {
                         $movie_season->poster = $season->info->poster;
                     }

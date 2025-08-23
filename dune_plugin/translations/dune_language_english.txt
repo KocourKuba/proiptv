@@ -189,7 +189,6 @@ setup_buffer_sec__1 = %s s
 setup_buffer_sec_default__1 = %s s (By default)
 setup_buffer_time = Buffering time
 setup_epg_shift = EPG shift time
-setup_epg_shift_default__1 = %s hour (By default)
 setup_epg_shift__1 = %sh
 setup_delay_time = Minimum archive delay time
 setup_pass = Password
