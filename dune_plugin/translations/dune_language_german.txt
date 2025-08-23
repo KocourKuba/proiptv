@@ -411,3 +411,4 @@ err_error_file_not_found = Datei nicht gefunden!
 err_patch = Paletten-Patch fehlgeschlagen!
 err_restore_patch = Die Wiederherstellung der Palette ist fehlgeschlagen!\nDie Palettendatei wurde nicht geändert oder es gibt keine Sicherung.
 err_no_need_patch = Keine Palettenfixierung erforderlich!
+err_load_xmltv_source = XMLTV-Quelle kann nicht geladen werden!

@@ -127,6 +127,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 if ($res === 2) {
                     hd_debug_print("No imports. Timer stopped");
+                    $last_error = HD::get_last_error($this->plugin->get_xmltv_error_name());
+                    if (!empty($last_error)) {
+                        return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'), null, $last_error);
+                    }
                     return null;
                 }
 

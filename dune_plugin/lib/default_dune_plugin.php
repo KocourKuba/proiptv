@@ -3167,6 +3167,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return $this->get_custom_error_name("pl_last_error");
     }
 
+    public function get_xmltv_error_name()
+    {
+        return "xmltv_last_error";
+    }
+
     public function get_vod_error_name()
     {
         return $this->get_custom_error_name("vod_last_error");
