@@ -196,7 +196,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->selected_data);
-                hd_debug_print(ACTION_FOLDER_SELECTED . ": $data->filepath");
+                hd_debug_print(ACTION_FOLDER_SELECTED . ": $data->filepath", true);
                 if ($this->plugin->get_cache_dir() === $data->filepath) break;
 
                 $this->plugin->safe_clear_selected_epg_cache(null);

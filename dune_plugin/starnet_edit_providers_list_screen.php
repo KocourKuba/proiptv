@@ -115,14 +115,15 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
         $items = array();
         /** @var api_default $provider */
         foreach ($this->plugin->get_providers() as $provider) {
+            $info = TR::t('setup_provider_info__3', $provider->getProviderUrl(), $provider->getId(), $provider->getType());
             $items[] = array(
                 PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $provider->getId())),
                 PluginRegularFolderItem::caption => $provider->getName(),
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_sticker => null,
                     ViewItemParams::icon_path => $provider->getLogo(),
-                    ViewItemParams::item_detailed_info => $provider->getProviderUrl(),
                     ViewItemParams::item_detailed_icon_path => $provider->getLogo(),
+                    ViewItemParams::item_detailed_info => $info,
                 ),
             );
         }
