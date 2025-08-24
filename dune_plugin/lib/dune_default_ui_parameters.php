@@ -318,8 +318,12 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         if ($this->get_bool_setting(PARAM_PER_CHANNELS_ZOOM)) {
             $zoom_opts_idx = $this->get_channel_zoom($channel_id);
+            if (empty($zoom_opts_idx)) {
+                $zoom_opts_idx = DuneVideoZoomPresets::not_set;
+            }
+
             $zoom_opts = array_map(function ($zoom_item) {
-                return TR::load($zoom_item);
+                return TR::t($zoom_item);
             }, DuneVideoZoomPresets::$zoom_ops_translated);
 
             Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_ZOOM,
