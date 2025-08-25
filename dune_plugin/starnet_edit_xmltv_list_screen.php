@@ -35,11 +35,27 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
     const ACTION_CHOOSE_FOLDER = 'choose_folder';
     const ACTION_CONFIRM_CLEAR_DLG_APPLY = 'clear_apply_dlg';
+    const ACTION_EXPORT_FOLDER_SELECTED = 'selected_export_folder';
 
     const CONTROL_ACTION_SOURCE = 'source';
     const CONTROL_CACHE_TIME = 'cache_time';
 
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $source_id
+     * @param array $add_params
+     * @return MediaURL
+     */
+    public static function make_media_url($source_id, $add_params = array())
+    {
+        return MediaURL::make(array_merge(
+            array(PARAM_SCREEN_ID => self::ID,
+                PARAM_SOURCE_WINDOW_ID => $source_id,
+                PARAM_SOURCE_MEDIA_URL_STR => $source_id,
+                PARAM_WINDOW_COUNTER => 1),
+            $add_params));
+    }
 
     /**
      * @inheritDoc
@@ -86,10 +102,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $this->force_parent_reload = false;
-                if ($parent_media_url->source_window_id === Starnet_Entry_Handler::ID) {
+                if ($parent_media_url->{PARAM_SOURCE_WINDOW_ID} === Starnet_Entry_Handler::ID) {
                     $target_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 } else {
-                    $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->source_window_id, $parent_media_url->end_action);
+                    $target_action = User_Input_Handler_Registry::create_screen_action(
+                        $parent_media_url->{PARAM_SOURCE_WINDOW_ID},
+                        $parent_media_url->{PARAM_END_ACTION});
                 }
 
                 return Action_Factory::close_and_run($target_action);
@@ -180,8 +198,6 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case self::ACTION_REMOVE_ITEM_DLG_APPLY:
                 hd_debug_print(null, true);
-
-                hd_debug_print("edit_list: $parent_media_url->edit_list", true);
                 if ($this->plugin->get_xmltv_source(null, $selected_id) === null) {
                     hd_debug_print("remove xmltv source: $selected_id", true);
                     return Action_Factory::show_error(false, TR::t('edit_list_title_cant_delete'));
@@ -228,20 +244,33 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             case ACTION_URL_DLG_APPLY: // handle streaming settings dialog result
                 return $this->apply_edit_url_dlg($user_input, $plugin_cookies);
 
-            case ACTION_CHOOSE_FILE:
-                $media_url_str = MediaURL::encode(
+            case ACTION_EXPORT:
+                return $this->plugin->show_export_dialog($this, 'xmltv_sources_list.txt');
+
+            case ACTION_EXPORT_APPLY_DLG:
+                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
                     array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_file' => $user_input->selected_action,
-                        'extension' => $user_input->extension,
-                        'allow_network' => ($user_input->selected_action === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk(),
-                        'read_only' => true,
-                        'windowCounter' => 1,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_ADD_PARAMS => $user_input->{CONTROL_EDIT_NAME},
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                    )
+                );
+                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_folder'));
+
+            case ACTION_FOLDER_SELECTED:
+                return $this->do_export_xmltv_sources($user_input);
+
+            case ACTION_CHOOSE_FILE:
+                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                    array(
+                        PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => ($user_input->{PARAM_SELECTED_ACTION} === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk(),
+                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
 
-                return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
+                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
                 hd_debug_print(null, true);
@@ -276,14 +305,17 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             ACTION_CHOOSE_FILE,
             TR::t('edit_list_import_list'),
             "text_file.png",
-            array('selected_action' => self::ACTION_FILE_TEXT_LIST, 'extension' => TEXT_FILE_PATTERN)
+            array(PARAM_SELECTED_ACTION => self::ACTION_FILE_TEXT_LIST, PARAM_EXTENSION => TEXT_FILE_PATTERN)
         );
+
+        $menu_items[] = $this->plugin->create_menu_item($this, ACTION_EXPORT, TR::t('export_list'));
 
         // Copy to external
         $item = $this->plugin->get_xmltv_source($this->plugin->get_active_playlist_id(), $selected_id);
         if (!empty($item)) {
             $menu_items[] = $this->plugin->create_menu_item($this,ACTION_ADD_TO_EXTERNAL_SOURCE, TR::t('edit_list_add_to_external_source'), "copy.png");
         }
+
 
         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
         $menu_items[] = $this->plugin->create_menu_item($this, ACTION_ITEM_DELETE, TR::t('delete2'), "remove.png");
@@ -410,10 +442,10 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     protected function selected_text_file($user_input)
     {
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $selected_media_url = MediaURL::decode($user_input->selected_data);
+        $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
 
-        hd_debug_print("Choosed file: $selected_media_url->filepath", true);
-        $lines = file($selected_media_url->filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        hd_debug_print("Choosed file: " . $selected_media_url->{PARAM_FILEPATH}, true);
+        $lines = file($selected_media_url->{PARAM_FILEPATH}, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
             return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
         }
@@ -425,26 +457,38 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         foreach ($lines as $line) {
             $line = trim($line);
             hd_debug_print("Load string: '$line'", true);
-            $hash = Hashed_Array::hash($line);
             /** @var array $m */
             if (preg_match(HTTP_PATTERN, $line, $m)) {
-                if ($this->plugin->get_xmltv_source(null, $hash) !== null) {
-                    hd_debug_print("already exist: $hash", true);
-                } else {
-                    $new_count++;
-                    $item = array(
-                        PARAM_HASH => $hash,
-                        PARAM_TYPE => PARAM_LINK,
-                        PARAM_NAME => $m[2],
-                        PARAM_URI => $line,
-                        PARAM_CACHE => XMLTV_CACHE_AUTO
-                    );
-                    $this->plugin->set_xmltv_source(null, $item);
-                    hd_debug_print("import link: '$line'");
-                }
-            } else {
-                hd_debug_print("line skipped: '$line'");
+                $hash = Hashed_Array::hash($line);
+                $name = $m[2];
+                $link = $line;
+            } else if (preg_match(PROVIDER_PATTERN, $line, $m)) {
+                $hash = Hashed_Array::hash($m[2]);
+                $name = $m[1];
+                $link = $m[2];
             }
+
+            if (empty($name) || empty($link) || empty($hash)) {
+                hd_debug_print("line skipped: '$line'");
+                continue;
+            }
+
+            if ($this->plugin->get_xmltv_source(null, $hash) !== null) {
+                hd_debug_print("already exist: $hash", true);
+                continue;
+            }
+
+            $new_count++;
+            $item = array(
+                PARAM_HASH => $hash,
+                PARAM_TYPE => PARAM_LINK,
+                PARAM_NAME => $name,
+                PARAM_URI => $link,
+                PARAM_CACHE => XMLTV_CACHE_AUTO
+            );
+
+            $this->plugin->set_xmltv_source(null, $item);
+            hd_debug_print("import link: '$link' with name '$name'");
         }
 
         if ($old_count === $new_count) {
@@ -456,6 +500,30 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 Action_Factory::open_folder($parent_media_url->get_media_url_str(), TR::t('setup_edit_xmltv_list'))
             )
         );
+    }
+
+    /**
+     * @param object $user_input
+     * @return array
+     */
+    protected function do_export_xmltv_sources($user_input)
+    {
+        $list_sources = '';
+        $sources = $this->plugin->get_external_xmltv_sources();
+        foreach ($sources as $source) {
+            $name = safe_get_value($source, PARAM_NAME);
+            $link = safe_get_value($source, PARAM_URI);
+            $list_sources .= "$name@$link" . PHP_EOL;
+        }
+
+        if (empty($list_sources)) {
+            return Action_Factory::show_title_dialog(TR::t('err_error'));
+        }
+
+        $folder_screen = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+        $path = $folder_screen->{PARAM_FILEPATH} . '/' . $folder_screen->{Starnet_Folder_Screen::PARAM_ADD_PARAMS};
+        file_put_contents($path, $list_sources);
+        return null;
     }
 
     /**

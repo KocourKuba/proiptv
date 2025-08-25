@@ -26,6 +26,8 @@ new_search = Neue Suche
 loading = Laden...
 select = Auswählen
 time = Zeit:
+export_list = Liste exportieren
+enter_name = Name eingeben
 
 add_to_favorite = Zu Favortien hinzufügen
 delete_from_favorite = Von Favoriten entfernen

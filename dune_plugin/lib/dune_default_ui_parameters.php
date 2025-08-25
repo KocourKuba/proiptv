@@ -227,6 +227,29 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     /**
      * @param User_Input_Handler $handler
+     * @param string $initial_value
+     * @return array
+     */
+    public function show_export_dialog($handler, $initial_value)
+    {
+        $defs = array();
+        Control_Factory::add_vgap($defs, 20);
+
+        Control_Factory::add_text_field($defs, $handler, null, CONTROL_EDIT_NAME, '',
+            $initial_value, false, false, false, true, 800, true);
+
+        Control_Factory::add_vgap($defs, 50);
+
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EXPORT_APPLY_DLG, TR::t('ok'), 300);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog(TR::t('enter_name'), $defs, true);
+    }
+
+    /**
+     * @param User_Input_Handler $handler
      * @return array
      */
     public function get_plugin_info_dlg($handler)

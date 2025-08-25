@@ -68,16 +68,16 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
-                        $parent_media_url->source_window_id,
-                        $parent_media_url->cancel_action
+                        $parent_media_url->{PARAM_SOURCE_WINDOW_ID},
+                        $parent_media_url->{PARAM_CANCEL_ACTION}
                     )
                 );
 
             case GUI_EVENT_KEY_ENTER:
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
-                        $parent_media_url->source_window_id,
-                        $parent_media_url->end_action,
+                        $parent_media_url->{PARAM_SOURCE_WINDOW_ID},
+                        $parent_media_url->{PARAM_END_ACTION},
                         null,
                         array(PARAM_PROVIDER => $selected_id)
                     )

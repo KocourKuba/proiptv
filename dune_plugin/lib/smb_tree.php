@@ -28,7 +28,22 @@ require_once 'hd.php';
 
 class smb_tree
 {
+    const PARAM_FOLDERNAME = 'foldername';
+    const PARAM_USER = 'user';
+    const PARAM_PASSWORD = 'password';
+    const PARAM_IP = 'ip';
+    const PARAM_ID = 'id';
+    const PARAM_SERVER = 'server';
+    const PARAM_DIRECTORY = 'directory';
+    const PARAM_IP_PATH = 'ip_path';
+    const PARAM_NFS_PROTOCOL = 'nfs_protocol';
+    const PARAM_ERR = 'err';
+    const PARAM_PROTOCOL = 'protocol';
+
+    const PROTOCOL_TCP = 'tcp';
+    const PROTOCOL_UDP = 'udp';
     const NETWORK_CONFIG = '/config/network_folders.properties';
+
     private $descriptor_spec;
     private $smb_tree_output = '';
     private $return_value = 0;
@@ -51,14 +66,16 @@ class smb_tree
      */
     public static function set_folder_info(&$selected_url)
     {
-        if (!isset($selected_url->ip_path) || $selected_url->ip_path === false) {
-            $save_folder['filepath'] = $selected_url->filepath;
-        } else if ($selected_url->nfs_protocol !== false) {
-            $save_folder[$selected_url->ip_path]['foldername'] = preg_replace("|^/tmp/mnt/network/\d*|", '', $selected_url->filepath);
+        if (!isset($selected_url->{self::PARAM_IP_PATH}) || $selected_url->{self::PARAM_IP_PATH} === false) {
+            $save_folder[PARAM_FILEPATH] = $selected_url->{PARAM_FILEPATH};
+        } else if ($selected_url->{self::PARAM_NFS_PROTOCOL} !== false) {
+            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_FOLDERNAME] = preg_replace(
+                "|^/tmp/mnt/network/\d*|", '', $selected_url->{PARAM_FILEPATH});
         } else {
-            $save_folder[$selected_url->ip_path]['foldername'] = preg_replace("|^/tmp/mnt/smb/\d*|", '', $selected_url->filepath);
-            $save_folder[$selected_url->ip_path]['user'] = safe_get_member($selected_url, 'user',  false);
-            $save_folder[$selected_url->ip_path]['password'] = safe_get_member($selected_url, 'password', false);
+            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_FOLDERNAME] = preg_replace(
+                "|^/tmp/mnt/smb/\d*|", '', $selected_url->{PARAM_FILEPATH});
+            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_USER] = safe_get_member($selected_url, self::PARAM_USER,  false);
+            $save_folder[$selected_url->{self::PARAM_IP_PATH}][self::PARAM_PASSWORD] = safe_get_member($selected_url, self::PARAM_PASSWORD, false);
         }
 
         return json_encode($save_folder);
@@ -78,14 +95,14 @@ class smb_tree
         $settings = @json_decode($encoded_data, true);
         if ($settings === null) {
             $select_folder = $encoded_data;
-        } else if (isset($settings['filepath'])) {
-            $select_folder = $settings['filepath'];
+        } else if (isset($settings[PARAM_FILEPATH])) {
+            $select_folder = $settings[PARAM_FILEPATH];
         } else {
             $select_folder = '';
             foreach ($settings as $item) {
-                if (isset($item['foldername'])) {
-                    $q = isset($item['user']) ? self::get_mount_smb($settings) : self::get_mount_nfs();
-                    $select_folder = key($q) . $item['foldername'];
+                if (isset($item[self::PARAM_FOLDERNAME])) {
+                    $q = isset($item[self::PARAM_USER]) ? self::get_mount_smb($settings) : self::get_mount_nfs();
+                    $select_folder = key($q) . $item[self::PARAM_FOLDERNAME];
                     break;
                 }
             }
@@ -100,26 +117,26 @@ class smb_tree
         foreach ($ip_smb as $k => $vel) {
             $df_smb = self::get_df_smb();
             if (isset($df_smb[str_replace(array('/', '\134'), '', $k)])) {
-                $mounts['/tmp/mnt/smb/' . $df_smb[str_replace(array('/', '\134'), '', $k)]]['foldername'] = $vel['foldername'];
-                $mounts['/tmp/mnt/smb/' . $df_smb[str_replace(array('/', '\134'), '', $k)]]['ip'] = $k;
-                if (!empty($vel['user'])) {
-                    $mounts['/tmp/mnt/smb/' . $df_smb[str_replace(array('/', '\134'), '', $k)]]['user'] = $vel['user'];
+                $mounts['/tmp/mnt/smb/' . $df_smb[str_replace(array('/', '\134'), '', $k)]][self::PARAM_FOLDERNAME] = $vel[self::PARAM_FOLDERNAME];
+                $mounts['/tmp/mnt/smb/' . $df_smb[str_replace(array('/', '\134'), '', $k)]][self::PARAM_IP] = $k;
+                if (!empty($vel[self::PARAM_USER])) {
+                    $mounts['/tmp/mnt/smb/' . $df_smb[str_replace(array('/', '\134'), '', $k)]][self::PARAM_USER] = $vel[self::PARAM_USER];
                 }
 
-                if (!empty($vel['password'])) {
-                    $mounts['/tmp/mnt/smb/' . $df_smb[str_replace(array('/', '\134'), '', $k)]]['password'] = $vel['password'];
+                if (!empty($vel[self::PARAM_PASSWORD])) {
+                    $mounts['/tmp/mnt/smb/' . $df_smb[str_replace(array('/', '\134'), '', $k)]][self::PARAM_PASSWORD] = $vel[self::PARAM_PASSWORD];
                 }
             } else {
                 $ret_code = false;
                 $n = count($df_smb);
                 $username = 'guest';
                 $password = '';
-                if (!empty($vel['user'])) {
-                    $username = $vel['user'];
+                if (!empty($vel[self::PARAM_USER])) {
+                    $username = $vel[self::PARAM_USER];
                 }
 
-                if (!empty($vel['password'])) {
-                    $password = $vel['password'];
+                if (!empty($vel[self::PARAM_PASSWORD])) {
+                    $password = $vel[self::PARAM_PASSWORD];
                 }
 
                 $path_parts = pathinfo($k);
@@ -146,25 +163,25 @@ class smb_tree
                 }
 
                 if ($ret_code !== false) {
-                    $mounts['err_' . $vel['foldername']]['foldername'] = $vel['foldername'];
-                    $mounts['err_' . $vel['foldername']]['ip'] = $k;
-                    $mounts['err_' . $vel['foldername']]['err'] = trim($ret_code);
+                    $mounts['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_FOLDERNAME] = $vel[self::PARAM_FOLDERNAME];
+                    $mounts['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_IP] = $k;
+                    $mounts['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_ERR] = trim($ret_code);
 
-                    if (!empty($vel['user'])) {
-                        $mounts['err_' . $vel['foldername']]['user'] = $vel['user'];
+                    if (!empty($vel[self::PARAM_USER])) {
+                        $mounts['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_USER] = $vel[self::PARAM_USER];
                     }
 
-                    if (!empty($vel['password'])) {
-                        $mounts['err_' . $vel['foldername']]['password'] = $vel['password'];
+                    if (!empty($vel[self::PARAM_PASSWORD])) {
+                        $mounts['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_PASSWORD] = $vel[self::PARAM_PASSWORD];
                     }
                 } else {
-                    $mounts[$fn]['foldername'] = $vel['foldername'];
-                    $mounts[$fn]['ip'] = $k;
-                    if (!empty($vel['user'])) {
-                        $mounts[$fn]['user'] = $vel['user'];
+                    $mounts[$fn][self::PARAM_FOLDERNAME] = $vel[self::PARAM_FOLDERNAME];
+                    $mounts[$fn][self::PARAM_IP] = $k;
+                    if (!empty($vel[self::PARAM_USER])) {
+                        $mounts[$fn][self::PARAM_USER] = $vel[self::PARAM_USER];
                     }
-                    if (!empty($vel['password'])) {
-                        $mounts[$fn]['password'] = $vel['password'];
+                    if (!empty($vel[self::PARAM_PASSWORD])) {
+                        $mounts[$fn][self::PARAM_PASSWORD] = $vel[self::PARAM_PASSWORD];
                     }
                 }
             }
@@ -241,9 +258,9 @@ class smb_tree
                 continue;
             }
 
-            $id = (int)$elt["id"];
-            $path = (string)$elt["path"];
-            $type = (string)$elt["type"];
+            $id = (int)$elt['id'];
+            $path = (string)$elt['path'];
+            $type = (string)$elt['type'];
             if (($id === (int)$res['id']) && ($type === $params['type'])) {
                 return $path;
             }
@@ -259,18 +276,18 @@ class smb_tree
         $df_nfs = self::get_df_nfs();
         foreach ($ip_nfs as $k => $vel) {
             if (isset($df_nfs[$k])) {
-                $d['/tmp/mnt/network/' . $df_nfs[$k]]['foldername'] = $vel['foldername'];
-                $d['/tmp/mnt/network/' . $df_nfs[$k]]['ip'] = $k;
-                $d['/tmp/mnt/network/' . $df_nfs[$k]]['protocol'] = $vel['protocol'];
+                $d['/tmp/mnt/network/' . $df_nfs[$k]][self::PARAM_FOLDERNAME] = $vel[self::PARAM_FOLDERNAME];
+                $d['/tmp/mnt/network/' . $df_nfs[$k]][self::PARAM_IP] = $k;
+                $d['/tmp/mnt/network/' . $df_nfs[$k]][self::PARAM_PROTOCOL] = $vel[self::PARAM_PROTOCOL];
             } else {
                 $q = false;
                 $n = count($df_nfs) + 100;
                 $wr = self::write_request('network_manager', 'mount', $n,
                     array(
                         'type' => 'nfs',
-                        'server' => $vel['server'],
-                        'dir' => $vel['directory'],
-                        'proto' => $vel['protocol'],
+                        'server' => $vel[self::PARAM_SERVER],
+                        'dir' => $vel[self::PARAM_DIRECTORY],
+                        'proto' => $vel[self::PARAM_PROTOCOL],
                     ));
 
                 if ($wr === false) {
@@ -278,20 +295,20 @@ class smb_tree
                     if (!create_path($fn)) {
                         hd_debug_print("Directory '$fn' was not created");
                     }
-                    $q = shell_exec("mount -t nfs -o " . $vel['protocol'] . " $k $fn 2>&1");
+                    $q = shell_exec("mount -t nfs -o " . $vel[self::PARAM_PROTOCOL] . " $k $fn 2>&1");
                 } else {
                     $fn = $wr;
                 }
 
                 if ($q !== false) {
-                    $d['err_' . $vel['foldername']]['foldername'] = $vel['foldername'];
-                    $d['err_' . $vel['foldername']]['ip'] = $k;
-                    $d['err_' . $vel['foldername']]['protocol'] = $vel['protocol'];
-                    $d['err_' . $vel['foldername']]['err'] = trim($q);
+                    $d['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_FOLDERNAME] = $vel[self::PARAM_FOLDERNAME];
+                    $d['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_IP] = $k;
+                    $d['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_PROTOCOL] = $vel[self::PARAM_PROTOCOL];
+                    $d['err_' . $vel[self::PARAM_FOLDERNAME]][self::PARAM_ERR] = trim($q);
                 } else {
-                    $d[$fn]['foldername'] = $vel['foldername'];
-                    $d[$fn]['ip'] = $k;
-                    $d[$fn]['protocol'] = $vel['protocol'];
+                    $d[$fn][self::PARAM_FOLDERNAME] = $vel[self::PARAM_FOLDERNAME];
+                    $d[$fn][self::PARAM_PROTOCOL] = $vel[self::PARAM_PROTOCOL];
+                    $d[$fn][self::PARAM_IP] = $k;
                 }
             }
         }
@@ -304,13 +321,13 @@ class smb_tree
         $network_folder = self::parse_network_config();
         if (count($network_folder) > 0) {
             foreach ($network_folder as $v) {
-                if ((int)$v['type'] !== 1) continue;
+                if ((int)$v[PARAM_TYPE] !== 1) continue;
 
-                $p = ((int)$v['protocol'] === 1) ? 'tcp' : 'udp';
-                $nfs[$v['server'] . ':' . $v['directory']]['foldername'] = $v['name'];
-                $nfs[$v['server'] . ':' . $v['directory']]['protocol'] = $p;
-                $nfs[$v['server'] . ':' . $v['directory']]['server'] = $v['server'];
-                $nfs[$v['server'] . ':' . $v['directory']]['directory'] = $v['directory'];
+                $p = ((int)$v[self::PARAM_PROTOCOL] === 1) ? self::PROTOCOL_TCP : self::PROTOCOL_UDP;
+                $nfs[$v[self::PARAM_SERVER] . ':' . $v[self::PARAM_DIRECTORY]][self::PARAM_PROTOCOL] = $p;
+                $nfs[$v[self::PARAM_SERVER] . ':' . $v[self::PARAM_DIRECTORY]][self::PARAM_FOLDERNAME] = $v[PARAM_NAME];
+                $nfs[$v[self::PARAM_SERVER] . ':' . $v[self::PARAM_DIRECTORY]][self::PARAM_SERVER] = $v[self::PARAM_SERVER];
+                $nfs[$v[self::PARAM_SERVER] . ':' . $v[self::PARAM_DIRECTORY]][self::PARAM_DIRECTORY] = $v[self::PARAM_DIRECTORY];
             }
         }
 
@@ -449,7 +466,7 @@ class smb_tree
                 $ip = '//' . $m[1] . '/';
                 if ($m[2] === (string)$k) {
                     foreach ($v as $key => $vel) {
-                        $vel['foldername'] = $key . ' in ' . $k;
+                        $vel[self::PARAM_FOLDERNAME] = $key . ' in ' . $k;
                         $d[$ip . $key] = $vel;
                     }
                 }

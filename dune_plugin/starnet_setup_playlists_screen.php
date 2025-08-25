@@ -191,18 +191,14 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
 
             case CONTROL_URL_PATH:
                 if ($type === PARAM_FILE) {
-                    $media_url_str = MediaURL::encode(
+                    $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
                         array(
-                            'screen_id' => Starnet_Folder_Screen::ID,
-                            'source_window_id' => static::ID,
-                            'allow_network' => false,
-                            'choose_file' => ACTION_CHOOSE_FILE,
-                            'extension' => PLAYLIST_PATTERN,
-                            'end_action' => ACTION_REFRESH_SCREEN,
-                            'windowCounter' => 1,
+                            PARAM_END_ACTION => ACTION_REFRESH_SCREEN,
+                            PARAM_EXTENSION => PLAYLIST_PATTERN,
+                            Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
                         )
                     );
-                    return Action_Factory::open_folder($media_url_str, TR::t('setup_epg_xmltv_cache_caption'));
+                    return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_epg_xmltv_cache_caption'));
                 }
 
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{CONTROL_URL_PATH});
@@ -210,8 +206,8 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
 
 
             case ACTION_FILE_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $data->filepath);
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $data->{PARAM_FILEPATH});
                 break;
 
             case ACTION_EDIT_PROVIDER_DLG:

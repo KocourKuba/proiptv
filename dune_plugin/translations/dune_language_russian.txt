@@ -26,6 +26,8 @@ new_search = Новый поиск
 loading = Загрузка...
 select = Выбрать
 time = Время:
+export_list = Экспорт списка
+enter_name = Введите имя
 
 add_to_favorite = Добавить в Избранное
 delete_from_favorite = Удалить из Избранного

@@ -2703,7 +2703,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     ACTION_ITEMS_EDIT,
                     TR::t('tv_screen_edit_hidden_group'),
                     "edit.png",
-                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_GROUPS));
+                    array(CONTROL_ACTION_EDIT => Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_GROUPS));
             }
         } else {
             $menu_items[] = $this->create_menu_item($handler,
@@ -2723,7 +2723,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 ACTION_ITEMS_EDIT,
                 TR::t('tv_screen_edit_hidden_channels'),
                 "edit.png",
-                array(CONTROL_ACTION_EDIT => Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_CHANNELS));
+                array(CONTROL_ACTION_EDIT => Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS));
         }
 
         return $menu_items;
@@ -2747,36 +2747,47 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function do_edit_list_screen($source_screen_id, $action_edit, $media_url = null, $post_action = null)
     {
         switch ($action_edit) {
-            case Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_CHANNELS:
-                $params['screen_id'] = Starnet_Edit_Hidden_List_Screen::ID;
-                $params['end_action'] = ACTION_REFRESH_SCREEN;
-                $params['cancel_action'] = ACTION_EMPTY;
+            case Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS:
+                $new_media_url = Starnet_Edit_Hidden_List_Screen::make_media_url($source_screen_id,
+                    array(
+                        PARAM_END_ACTION => ACTION_REFRESH_SCREEN,
+                        PARAM_CANCEL_ACTION => ACTION_EMPTY,
+                        Starnet_Edit_Hidden_List_Screen::PARAM_EDIT_LIST => $action_edit
+                    )
+                );
                 if (!is_null($media_url) && isset($media_url->group_id)) {
-                    $params['group_id'] = $media_url->group_id;
+                    $new_media_url->group_id = $media_url->group_id;
                 }
                 $title = TR::t('tv_screen_edit_hidden_channels');
                 break;
 
-            case Starnet_Edit_Hidden_List_Screen::SCREEN_EDIT_HIDDEN_GROUPS:
-                $params['screen_id'] = Starnet_Edit_Hidden_List_Screen::ID;
-                $params['end_action'] = ACTION_INVALIDATE;
-                $params['cancel_action'] = ACTION_EMPTY;
+            case Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_GROUPS:
+                $new_media_url = Starnet_Edit_Hidden_List_Screen::make_media_url($source_screen_id,
+                    array(
+                        PARAM_END_ACTION => ACTION_INVALIDATE,
+                        PARAM_CANCEL_ACTION => ACTION_EMPTY)
+                );
                 $title = TR::t('tv_screen_edit_hidden_group');
                 break;
 
             case Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST:
-                $params['screen_id'] = Starnet_Edit_Playlists_Screen::ID;
-                $params['allow_order'] = true;
-                $params['end_action'] = ACTION_RELOAD;
-                $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
-                $params['extension'] = PLAYLIST_PATTERN;
+                $new_media_url = Starnet_Edit_Playlists_Screen::make_media_url($source_screen_id,
+                    array(
+                        PARAM_END_ACTION => ACTION_RELOAD,
+                        PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
+                        PARAM_EXTENSION => PLAYLIST_PATTERN
+                    )
+                );
                 $title = TR::t('setup_channels_src_edit_playlists');
                 break;
 
             case Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST:
-                $params['screen_id'] = Starnet_Edit_Xmltv_List_Screen::ID;
-                $params['end_action'] = ACTION_RELOAD;
-                $params['cancel_action'] = RESET_CONTROLS_ACTION_ID;
+                $new_media_url = Starnet_Edit_Xmltv_List_Screen::make_media_url($source_screen_id,
+                    array(
+                        PARAM_END_ACTION => ACTION_RELOAD,
+                        PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
+                    )
+                );
                 $title = TR::t('setup_edit_xmltv_list');
                 break;
 
@@ -2784,12 +2795,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return null;
         }
 
-        $params['source_window_id'] = $source_screen_id;
-        $params['source_media_url_str'] = $source_screen_id;
-        $params['edit_list'] = $action_edit;
-        $params['windowCounter'] = 1;
-
-        return Action_Factory::open_folder(MediaURL::encode($params), $title, null, null, $post_action);
+        return Action_Factory::open_folder($new_media_url->get_media_url_str(), $title, null, null, $post_action);
     }
 
     /**

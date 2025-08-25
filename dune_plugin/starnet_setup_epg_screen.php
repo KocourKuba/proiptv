@@ -156,18 +156,15 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 );
 
             case self::CONTROL_CHANGE_CACHE_PATH:
-                $media_url_str = MediaURL::encode(
+                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
                     array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'allow_network' => !is_limited_apk(),
-                        'choose_folder' => $user_input->control_id,
-                        'allow_reset' => true,
-                        'end_action' => ACTION_RELOAD,
-                        'windowCounter' => 1,
+                        PARAM_END_ACTION => ACTION_RELOAD,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_epg_xmltv_cache_caption'));
+                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_epg_xmltv_cache_caption'));
 
             case PARAM_EPG_CACHE_ENGINE:
             case PARAM_EPG_JSON_PRESET:
@@ -195,16 +192,16 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                     $action_reload, $default_path, self::CONTROLS_WIDTH);
 
             case ACTION_FOLDER_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                hd_debug_print(ACTION_FOLDER_SELECTED . ": $data->filepath", true);
-                if ($this->plugin->get_cache_dir() === $data->filepath) break;
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                hd_debug_print(ACTION_FOLDER_SELECTED . ": " . $data->{PARAM_FILEPATH}, true);
+                if ($this->plugin->get_cache_dir() === $data->{PARAM_FILEPATH}) break;
 
                 $this->plugin->safe_clear_selected_epg_cache(null);
-                $this->plugin->set_parameter(PARAM_CACHE_PATH, str_replace("//", "/", $data->filepath));
+                $this->plugin->set_parameter(PARAM_CACHE_PATH, str_replace("//", "/", $data->{PARAM_FILEPATH}));
                 $this->plugin->init_epg_manager();
 
-                return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->caption),
-                    $action_reload, $data->filepath, self::CONTROLS_WIDTH);
+                return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->{Starnet_Folder_Screen::PARAM_CAPTION}),
+                    $action_reload, $data->{PARAM_FILEPATH}, self::CONTROLS_WIDTH);
 
             case PARAM_FAKE_EPG:
                 $this->plugin->toggle_setting($control_id, false);

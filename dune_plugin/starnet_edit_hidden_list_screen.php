@@ -29,10 +29,26 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
 {
     const ID = 'edit_hidden_list';
 
-    const SCREEN_EDIT_HIDDEN_GROUPS = 'groups';
-    const SCREEN_EDIT_HIDDEN_CHANNELS = 'channels';
+    const PARAM_EDIT_LIST = 'edit_list';
+    const PARAM_HIDDEN_GROUPS = 'groups';
+    const PARAM_HIDDEN_CHANNELS = 'channels';
 
     ///////////////////////////////////////////////////////////////////////
+
+    /**
+     * @param string $source_id
+     * @param array $add_params
+     * @return MediaURL
+     */
+    public static function make_media_url($source_id, $add_params = array())
+    {
+        return MediaURL::make(array_merge(
+            array(PARAM_SCREEN_ID => self::ID,
+                PARAM_SOURCE_WINDOW_ID => $source_id,
+                PARAM_SOURCE_MEDIA_URL_STR => $source_id,
+                PARAM_WINDOW_COUNTER => 1),
+            $add_params));
+    }
 
     /**
      * @inheritDoc
@@ -71,15 +87,15 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                 }
 
                 $this->force_parent_reload = false;
-                $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->source_window_id, $parent_media_url->end_action);
+                $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION});
                 return Action_Factory::close_and_run($target_action);
             case ACTION_ITEM_DELETE:
-                if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
+                if ($parent_media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_CHANNELS) {
                     $this->plugin->set_channel_visible($selected_id, true);
                     $this->plugin->change_channels_order($parent_media_url->group_id, $selected_id, false);
                     $force_return = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED) === 0;
                     hd_debug_print("restore channel: " . $selected_id, true);
-                } else if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
+                } else if ($parent_media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_GROUPS) {
                     $this->plugin->set_groups_visible($selected_id, true);
                     $force_return = !$this->plugin->get_groups_count(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
                     hd_debug_print("restore group: " . $selected_id, true);
@@ -98,7 +114,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
                     $this, ACTION_CONFIRM_CLEAR_DLG_APPLY);
 
             case ACTION_CONFIRM_CLEAR_DLG_APPLY:
-                if ($parent_media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
+                if ($parent_media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_CHANNELS) {
                     $channels_ids = $this->plugin->get_channels_ids($parent_media_url->group_id, PARAM_DISABLED);
                     $this->plugin->set_channel_visible($channels_ids, true);
                     $cnt = $this->plugin->get_channels_count($parent_media_url->group_id, PARAM_DISABLED);
@@ -126,7 +142,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
         hd_debug_print($media_url, true);
 
         $items = array();
-        if ($media_url->edit_list === self::SCREEN_EDIT_HIDDEN_CHANNELS) {
+        if ($media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_CHANNELS) {
             $channels_rows = $this->plugin->get_channels($media_url->group_id, PARAM_DISABLED, true);
             foreach ($channels_rows as $channel_row) {
                 if (empty($channel_row)) continue;
@@ -141,7 +157,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
             }
         }
 
-        if ($media_url->edit_list === self::SCREEN_EDIT_HIDDEN_GROUPS) {
+        if ($media_url->{self::PARAM_EDIT_LIST} === self::PARAM_HIDDEN_GROUPS) {
             $groups_rows = $this->plugin->get_groups(PARAM_GROUP_ORDINARY, PARAM_DISABLED);
             foreach ($groups_rows as $group_row) {
                 if (empty($group_row)) continue;

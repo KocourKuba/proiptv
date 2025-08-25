@@ -469,6 +469,23 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * get xmltv sources
+     *
+     * @return Hashed_Array
+     */
+    public function get_external_xmltv_sources()
+    {
+        $common_table_name = self::XMLTV_TABLE;
+        $sources = new Hashed_Array();
+        $rows = $this->sql_params->fetch_array("SELECT * FROM $common_table_name;");
+        foreach ($rows as $row) {
+            $sources->set($row[PARAM_HASH], $row);
+        }
+
+        return $sources;
+    }
+
+    /**
      * get xmltv sources hashes
      *
      * @param string $type

@@ -113,38 +113,31 @@ class Starnet_Setup_History_Screen extends Abstract_Controls_Screen implements U
                 );
 
             case self::CONTROL_HISTORY_CHANGE_FOLDER:
-                $media_url_str = MediaURL::encode(
+                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
                     array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_folder' => $user_input->control_id,
-                        'allow_reset' => true,
-                        'allow_network' => !is_limited_apk(),
-                        'windowCounter' => 1,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_history_folder_path'));
+                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_history_folder_path'));
 
             case ACTION_FOLDER_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_folder === self::CONTROL_HISTORY_CHANGE_FOLDER) {
-                    hd_debug_print(ACTION_FOLDER_SELECTED . " $data->filepath");
-                    $this->plugin->set_history_path($data->filepath);
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                hd_debug_print(ACTION_FOLDER_SELECTED . ' ' . $data->{PARAM_FILEPATH});
+                $this->plugin->set_history_path($data->{PARAM_FILEPATH});
 
-                    $post_action = Action_Factory::show_title_dialog(
-                        TR::t('folder_screen_selected_folder__1', $data->caption),
-                        null,
-                        $data->filepath,
-                        self::CONTROLS_WIDTH
-                    );
-                    break;
-                }
-
+                $post_action = Action_Factory::show_title_dialog(
+                    TR::t('folder_screen_selected_folder__1', $data->{Starnet_Folder_Screen::PARAM_CAPTION}),
+                    null,
+                    $data->{PARAM_FILEPATH},
+                    self::CONTROLS_WIDTH
+                );
                 break;
 
             case ACTION_RESET_DEFAULT:
                 $data = MediaURL::make(array('filepath' => get_data_path()));
-                hd_debug_print("do set history folder to default: $data->filepath");
+                hd_debug_print("do set history folder to default: $data->{PARAM_FILEPATH}");
                 $this->plugin->set_history_path();
                 break;
 

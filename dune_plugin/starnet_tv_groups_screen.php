@@ -412,39 +412,33 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
 
             case ACTION_CHANGE_GROUP_ICON:
-                $media_url_str = MediaURL::encode(
+                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
                     array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_file' => $user_input->control_id,
-                        'extension' => IMAGE_PREVIEW_PATTERN,
-                        'allow_network' => !is_limited_apk(),
-                        'allow_image_lib' => true,
-                        'allow_reset' => true,
-                        'read_only' => true,
-                        'windowCounter' => 1,
+                        PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                        Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
+                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
+                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file === ACTION_CHANGE_GROUP_ICON) {
-                    $group = $this->plugin->get_group($sel_media_url->group_id, PARAM_ALL);
-                    if (is_null($group)) break;
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $group = $this->plugin->get_group($sel_media_url->group_id, PARAM_ALL);
+                if (is_null($group)) break;
 
-                    $cached_image_name = $this->plugin->get_active_playlist_id() . "_$data->caption";
-                    $cached_image_path = get_cached_image_path($cached_image_name);
-                    hd_print("copy from: $data->filepath to: $cached_image_path");
-                    if (!copy($data->filepath, $cached_image_path)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_copy'));
-                    }
-
-                    hd_debug_print("Assign icon: $cached_image_name to group: $sel_media_url->group_id");
-                    $this->plugin->set_group_icon($sel_media_url->group_id, $cached_image_name);
-                    return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
+                $cached_image_name = $this->plugin->get_active_playlist_id() . '_' . $data->{Starnet_Folder_Screen::PARAM_CAPTION};
+                $cached_image_path = get_cached_image_path($cached_image_name);
+                hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image_path");
+                if (!copy($data->{PARAM_FILEPATH}, $cached_image_path)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
-                break;
+
+                hd_debug_print("Assign icon: $cached_image_name to group: $sel_media_url->group_id");
+                $this->plugin->set_group_icon($sel_media_url->group_id, $cached_image_name);
+                return Action_Factory::refresh_entry_points($this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx));
 
             case ACTION_ITEMS_CLEAR:
                 return Action_Factory::show_confirmation_dialog(TR::t('yes_no_confirm_clear_all_msg'),
@@ -469,36 +463,33 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 break;
 
             case ACTION_RESET_DEFAULT:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file === ACTION_CHANGE_GROUP_ICON) {
-                    hd_debug_print("Reset icon for group: $sel_media_url->group_id to default");
-                    switch ($sel_media_url->group_id) {
-                        case TV_ALL_CHANNELS_GROUP_ID:
-                            $icon = TV_ALL_CHANNELS_GROUP_ICON;
-                            break;
+                hd_debug_print("Reset icon for group: $sel_media_url->group_id to default");
+                switch ($sel_media_url->group_id) {
+                    case TV_ALL_CHANNELS_GROUP_ID:
+                        $icon = TV_ALL_CHANNELS_GROUP_ICON;
+                        break;
 
-                        case TV_FAV_GROUP_ID:
-                            $icon = TV_FAV_GROUP_ICON;
-                            break;
+                    case TV_FAV_GROUP_ID:
+                        $icon = TV_FAV_GROUP_ICON;
+                        break;
 
-                        case TV_HISTORY_GROUP_ID:
-                            $icon = TV_HISTORY_GROUP_ICON;
-                            break;
+                    case TV_HISTORY_GROUP_ID:
+                        $icon = TV_HISTORY_GROUP_ICON;
+                        break;
 
-                        case TV_CHANGED_CHANNELS_GROUP_ID:
-                            $icon = TV_CHANGED_CHANNELS_GROUP_ICON;
-                            break;
+                    case TV_CHANGED_CHANNELS_GROUP_ID:
+                        $icon = TV_CHANGED_CHANNELS_GROUP_ICON;
+                        break;
 
-                        case VOD_GROUP_ID:
-                            $icon = VOD_GROUP_ICON;
-                            break;
+                    case VOD_GROUP_ID:
+                        $icon = VOD_GROUP_ICON;
+                        break;
 
-                        default:
-                            $icon = '';
-                    }
-
-                    $this->plugin->set_group_icon($sel_media_url->group_id, $icon);
+                    default:
+                        $icon = '';
                 }
+
+                $this->plugin->set_group_icon($sel_media_url->group_id, $icon);
                 break;
 
             case ACTION_INFO_DLG:

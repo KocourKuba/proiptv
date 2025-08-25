@@ -93,47 +93,35 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements Us
                 return Action_Factory::close_and_run();
 
             case CONTROL_BACKUP:
-                $media_url_str = MediaURL::encode(
+                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
                     array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_folder' => $user_input->control_id,
-                        'extension' => 'zip',
-                        'allow_network' => !is_limited_apk(),
-                        'windowCounter' => 1,
+                        PARAM_EXTENSION => 'zip',
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('setup_backup_folder_path'));
+                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_backup_folder_path'));
 
             case CONTROL_RESTORE:
-                $media_url_str = MediaURL::encode(
+                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
                     array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_file' => $user_input->control_id,
-                        'extension' => 'zip',
-                        'allow_network' => !is_limited_apk(),
-                        'read_only' => true,
-                        'windowCounter' => 1,
+                        PARAM_EXTENSION => 'zip',
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
+                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_file'));
 
             case ACTION_FOLDER_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_folder === CONTROL_BACKUP) {
-                    $msg = HD::do_backup_settings($this->plugin, $data->filepath) ? TR::t('setup_copy_done') : TR::t('err_backup');
-                    $post_action = Action_Factory::show_title_dialog($msg);
-                }
-
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $msg = HD::do_backup_settings($this->plugin, $data->{PARAM_FILEPATH}) ? TR::t('setup_copy_done') : TR::t('err_backup');
+                $post_action = Action_Factory::show_title_dialog($msg);
                 break;
 
             case ACTION_FILE_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file === CONTROL_RESTORE) {
-                    return $this->do_restore_settings($data->caption, $data->filepath);
-                }
-                break;
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                return $this->do_restore_settings($data->{Starnet_Folder_Screen::PARAM_CAPTION}, $data->{PARAM_FILEPATH});
         }
 
         return Action_Factory::reset_controls(

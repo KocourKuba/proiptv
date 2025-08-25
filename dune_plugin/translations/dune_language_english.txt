@@ -26,6 +26,8 @@ new_search = New search
 loading = Loading...
 select = Select
 time = Time:
+export_list = Export list
+enter_name = Enter name
 
 add_to_favorite = Add to Favorites
 delete_from_favorite = Remove from Favorites

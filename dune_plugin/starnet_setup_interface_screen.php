@@ -172,48 +172,42 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
                 break;
 
             case ACTION_CHANGE_BACKGROUND:
-                $media_url_str = MediaURL::encode(
+                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
                     array(
-                        'screen_id' => Starnet_Folder_Screen::ID,
-                        'source_window_id' => static::ID,
-                        'choose_file' => ACTION_CHANGE_BACKGROUND,
-                        'extension' => 'png|jpg|jpeg',
-                        'allow_network' => !is_limited_apk(),
-                        'allow_image_lib' => true,
-                        'allow_reset' => true,
-                        'read_only' => true,
-                        'windowCounter' => 1,
+                        PARAM_EXTENSION => 'png|jpg|jpeg',
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
+                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                        Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
+                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
-                return Action_Factory::open_folder($media_url_str, TR::t('select_file'));
+                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
-                $data = MediaURL::decode($user_input->selected_data);
-                if ($data->choose_file === ACTION_CHANGE_BACKGROUND) {
-                    $old_image = $this->plugin->get_background_image();
-                    $is_old_default = $this->plugin->is_background_image_default();
-                    $cached_image = get_cached_image_path("{$this->plugin->get_active_playlist_id()}_$data->caption");
+                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $old_image = $this->plugin->get_background_image();
+                $is_old_default = $this->plugin->is_background_image_default();
+                $cached_image = get_cached_image_path($this->plugin->get_active_playlist_id() . '_' . $data->{Starnet_Folder_Screen::PARAM_CAPTION});
 
-                    hd_print("copy from: $data->filepath to: $cached_image");
-                    if (!copy($data->filepath, $cached_image)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_copy'));
-                    }
-
-                    if (!$is_old_default && $old_image !== $cached_image) {
-                        unlink($old_image);
-                    }
-
-                    hd_debug_print("Set image $cached_image as background");
-                    $this->plugin->set_background_image($cached_image);
-                    $this->plugin->init_screen_view_parameters($cached_image);
-
-                    return Action_Factory::invalidate_all_folders(
-                        $plugin_cookies,
-                        null,
-                        Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
-                    );
+                hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image");
+                if (!copy($data->{PARAM_FILEPATH}, $cached_image)) {
+                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
                 }
-                break;
+
+                if (!$is_old_default && $old_image !== $cached_image) {
+                    unlink($old_image);
+                }
+
+                hd_debug_print("Set image $cached_image as background");
+                $this->plugin->set_background_image($cached_image);
+                $this->plugin->init_screen_view_parameters($cached_image);
+
+                return Action_Factory::invalidate_all_folders(
+                    $plugin_cookies,
+                    null,
+                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
+                );
 
             case ACTION_RESET_DEFAULT:
                 hd_debug_print("Background set to default");
