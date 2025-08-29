@@ -325,7 +325,71 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         return Action_Factory::status(0);
     }
 
-    public function do_edit_channel($handler, $channel_id)
+    /**
+     * @param User_Input_Handler $handler
+     * @param array $prog_info
+     * @param array|null $attrs
+     * @return array|null
+     */
+    public function do_show_channel_epg($handler, $prog_info, $attrs = null)
+    {
+        hd_debug_print(null, true);
+
+        if (!isset($prog_info[PluginTvEpgProgram::ext_id])) {
+            hd_debug_print("Unknown channel ID", true);
+            return null;
+        }
+
+        hd_debug_print("Entry: " . json_encode($prog_info));
+
+        if (!isset($prog_info[PluginTvEpgProgram::name])) {
+            $info = '';
+            $program_time = '';
+            $duration = '';
+            $title = TR::load('epg_not_exist');
+        } else {
+            // program epg available
+            $now = time();
+            $title = $prog_info[PluginTvEpgProgram::name];
+            $diff = $now - $prog_info[PluginTvEpgProgram::start_tm_sec];
+            $percent = 100 * $diff / ($prog_info[PluginTvEpgProgram::end_tm_sec] - $prog_info[PluginTvEpgProgram::start_tm_sec]);
+            $program_time = sprintf("%s %s - %s",
+                TR::load('time'),
+                format_datetime('H:i', $prog_info[PluginTvEpgProgram::start_tm_sec]),
+                format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec])
+            );
+            $duration = sprintf("%s %s - %d%%", TR::load('live'), format_duration_seconds($diff), (int)$percent);
+            $info = $prog_info[PluginTvEpgProgram::description];
+        }
+
+        $text = sprintf("<gap width = 0/><text color=%s size=normal>%s</text><text color=%s size=normal> (%s)</text>",
+            DEF_LABEL_TEXT_COLOR_GOLD, $program_time,
+            DEF_LABEL_TEXT_COLOR_TURQUOISE, $duration
+        );
+        Control_Factory::add_smart_label($defs, null, $text);
+        Control_Factory::add_multiline_label($defs, null, $info, 18);
+        Control_Factory::add_vgap($defs, 30);
+
+        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+            550,
+            get_image_path('page_plus_btn.png'),
+            get_image_path('page_minus_btn.png'),
+            DEF_LABEL_TEXT_COLOR_SILVER,
+            TR::load('scroll_page')
+        );
+        Control_Factory::add_smart_label($defs, '', $text);
+        Control_Factory::add_vgap($defs, -80);
+
+        self::add_epg_shift_defs($defs, $handler, $this->get_channel_epg_shift($prog_info[PluginTvEpgProgram::ext_id]), true);
+
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250);
+
+        Control_Factory::add_vgap($defs, 10);
+
+        return Action_Factory::show_dialog($title, $defs, true, 1500, $attrs);
+    }
+
+    public function do_edit_channel_parameters($handler, $channel_id)
     {
         hd_debug_print("Do Edit channel: $channel_id", true);
 
@@ -353,14 +417,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 TR::t('tv_screen_channel_zoom'), $zoom_opts_idx, $zoom_opts, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
-        $shift_ops = array();
-        for ($i = -12; $i <= 12; $i++) {
-            $shift_ops[$i] = TR::t('setup_epg_shift__1', sprintf("%+03d", $i));
-        }
-        $shift_ops[0] = TR::t('setup_epg_shift__1', sprintf(" %02d", 0));
-
-        Control_Factory::add_combobox($defs, $handler, null, PARAM_EPG_SHIFT,
-            TR::t('setup_epg_shift'), $this->get_channel_epg_shift($channel_id), $shift_ops, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        self::add_epg_shift_defs($defs, $handler, $this->get_channel_epg_shift($channel_id), false);
 
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_EDIT_CHANNEL_APPLY, TR::t('ok'), 300);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
@@ -376,9 +433,29 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         if (!is_limited_apk()) {
             $this->set_channel_ext_player($channel_id, SwitchOnOff::to_bool($user_input->{self::CONTROL_EXTERNAL_PLAYER}));
         }
-        $this->set_channel_epg_shift($channel_id, (int)$user_input->{PARAM_EPG_SHIFT});
+        $this->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
     }
     ///////////////////////////////////////////////////////////////////////
+
+    protected static function add_epg_shift_defs(&$defs, $handler, $initial_epg_shift, $apply)
+    {
+        $shift_ops_hours = array();
+        for ($i = -24; $i < 25; $i++) {
+            $shift_ops_hours[$i] = TR::t('setup_epg_shift_hours__1', sprintf("%+03d", $i));
+        }
+        $shift_ops_hours[0] = TR::t('setup_epg_shift_hours__1', sprintf(" %02d", 0));
+
+        Control_Factory::add_combobox($defs, $handler, null, PARAM_EPG_SHIFT_HOURS,
+            TR::t('setup_epg_shift_hours'), (int)($initial_epg_shift / 3600), $shift_ops_hours, 250, false, $apply);
+
+        $shift_ops_mins = array();
+        for ($i = 0; $i < 60; $i += 10) {
+            $shift_ops_mins[$i] = TR::t('setup_epg_shift_mins__1', sprintf("%02d", $i));
+        }
+
+        Control_Factory::add_combobox($defs, $handler, null, PARAM_EPG_SHIFT_MINS,
+            TR::t('setup_epg_shift_min'), (int)(abs($initial_epg_shift % 3600) / 60), $shift_ops_mins, 250, false, $apply);
+    }
 
     /**
      * @param MediaURL $media_url

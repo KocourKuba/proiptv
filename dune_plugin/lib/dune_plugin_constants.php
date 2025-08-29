@@ -103,7 +103,6 @@ const ACTION_CHOOSE_FILE = 'choose_file';
 const ACTION_ADD_TO_EXTERNAL_SOURCE = 'add_external_source';
 const ACTION_DISABLED = 'disabled';
 const ACTION_ORDER_SUPPORT = 'order_support';
-const ACTION_APPLY_EPG_SHIFT = 'apply_epg_shift';
 const ACTION_EXPORT = 'export';
 const ACTION_EXPORT_APPLY_DLG = 'apply_export';
 
@@ -252,7 +251,8 @@ const PARAM_CHANNELS_DIRECT_URL = 'channels_direct_url';
 const PARAM_EPG_CACHE_ENGINE = 'epg_cache_engine';
 const PARAM_EPG_JSON_PRESET = 'epg_json_preset';
 const PARAM_EPG_PLAYLIST = 'epg_playlist';
-const PARAM_EPG_SHIFT = 'epg_shift';
+const PARAM_EPG_SHIFT_HOURS = 'epg_shift_hours';
+const PARAM_EPG_SHIFT_MINS = 'epg_shift_mins';
 const PARAM_EPG_FONT_SIZE = 'epg_font_size';
 const PARAM_EPG_SOURCE = 'epg_source';
 const PARAM_PICONS_DELAY_LOAD = 'epg_delayed_index';

@@ -322,32 +322,33 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 throw new Exception('Unknown channel');
             }
 
-            if (LogSeverity::$is_debug) {
-                hd_debug_print("day_start timestamp: $day_start_tm_sec ("
-                    . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ") TZ offset: "
-                    . get_local_time_zone_offset());
-            }
-
+            $time_shift =  $channel_row[COLUMN_TIMESHIFT] * 3600 + $channel_row[COLUMN_EPG_SHIFT];
+            // Calculate day start based on playlist and channel time shift
             // correct day start to local timezone
-            $utc_day_start_tm_sec = from_local_time_zone_offset($day_start_tm_sec);
+            $utc_day_start_tm_sec = from_local_time_zone_offset($day_start_tm_sec + $time_shift);
 
-            // get personal time shift for channel
-            $time_shift = $channel_row[COLUMN_TIMESHIFT] + $channel_row[COLUMN_EPG_SHIFT];
-            hd_debug_print("EPG time shift $time_shift hour(s)", true);
-            $time_shift *=3600;
-            $utc_day_start_tm_sec += $time_shift;
+            if (LogSeverity::$is_debug) {
+                hd_debug_print("day_start: $day_start_tm_sec ("
+                    . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ") TZ offset: "
+                    . get_local_time_zone_offset() / 3600);
+
+                hd_debug_print("shifted day_start: $utc_day_start_tm_sec ("
+                    . format_datetime("Y-m-d H:i", $utc_day_start_tm_sec) . ") TZ offset: "
+                    . get_local_time_zone_offset() / 3600);
+            }
 
             $show_ext_epg = $this->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->ext_epg_supported;
 
             $cached = false;
             $items = $this->epg_manager->get_day_epg_items($channel_row, $utc_day_start_tm_sec, $cached);
 
-            foreach ($items as $time => $value) {
+            foreach ($items as $start => $value) {
                 if (!isset($value[PluginTvEpgProgram::end_tm_sec], $value[PluginTvEpgProgram::name], $value[PluginTvEpgProgram::description])) {
                     hd_debug_print("malformed epg data: " . pretty_json_format($value));
                 } else {
-                    $tm_start = (int)$time + $time_shift;
-                    $tm_end = (int)$value[PluginTvEpgProgram::end_tm_sec] + $time_shift;
+                    // calculate program start and end based on total time shift
+                    $tm_start = (int)$start - $time_shift;
+                    $tm_end = (int)$value[PluginTvEpgProgram::end_tm_sec] - $time_shift;
                     $day_epg[] = array(
                         PluginTvEpgProgram::start_tm_sec => $tm_start,
                         PluginTvEpgProgram::end_tm_sec => $tm_end,
@@ -357,64 +358,64 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                     if (LogSeverity::$is_debug && !$cached) {
                         hd_debug_print(format_datetime("m-d H:i", $tm_start)
-                            . " - " . format_datetime("m-d H:i", $tm_end)
-                            . " {$value[PluginTvEpgProgram::name]}", true);
+                            . " ($tm_start) - " . format_datetime("m-d H:i", $tm_end)
+                            . " ($tm_end) {$value[PluginTvEpgProgram::name]}", true);
                     }
 
                     if (!$show_ext_epg || in_array($channel_id, $this->epg_manager->get_delayed_epg())) continue;
 
-                    $ext_epg[$time]["start_tm"] = $tm_start;
-                    $ext_epg[$time]["title"] = $value[PluginTvEpgProgram::name];
-                    $ext_epg[$time]["desc"] = $value[PluginTvEpgProgram::description];
+                    $ext_epg[$start]["start_tm"] = $tm_start;
+                    $ext_epg[$start]["title"] = $value[PluginTvEpgProgram::name];
+                    $ext_epg[$start]["desc"] = $value[PluginTvEpgProgram::description];
 
                     if (empty($value[PluginTvEpgProgram::icon_url])) {
                         $channel_picon = $this->get_channel_picon($channel_row, true);
                         if ($channel_picon !== $this->get_default_channel_icon()) {
-                            $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $channel_picon;
+                            $ext_epg[$start][PluginTvExtEpgProgram::main_icon] = $channel_picon;
                         }
                     } else {
-                        $ext_epg[$time][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
+                        $ext_epg[$start][PluginTvExtEpgProgram::main_icon] = $value[PluginTvEpgProgram::icon_url];
                     }
 
                     if (!empty($value[PluginTvExtEpgProgram::main_category])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::main_category] = $value[PluginTvExtEpgProgram::main_category];
+                        $ext_epg[$start][PluginTvExtEpgProgram::main_category] = $value[PluginTvExtEpgProgram::main_category];
                     }
 
                     if (!empty($value[PluginTvExtEpgProgram::icon_urls])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::icon_urls] = $value[PluginTvExtEpgProgram::icon_urls];
+                        $ext_epg[$start][PluginTvExtEpgProgram::icon_urls] = $value[PluginTvExtEpgProgram::icon_urls];
                     }
 
                     if (!empty($value[PluginTvExtEpgProgram::year])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::year] = $value[PluginTvExtEpgProgram::year];
+                        $ext_epg[$start][PluginTvExtEpgProgram::year] = $value[PluginTvExtEpgProgram::year];
                     }
 
                     if (!empty($value[PluginTvExtEpgProgram::country])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::country] = $value[PluginTvExtEpgProgram::country];
+                        $ext_epg[$start][PluginTvExtEpgProgram::country] = $value[PluginTvExtEpgProgram::country];
                     }
 
-                    if (!empty($time[PluginTvExtEpgProgram::director])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::director] = $value[PluginTvExtEpgProgram::director];
+                    if (!empty($start[PluginTvExtEpgProgram::director])) {
+                        $ext_epg[$start][PluginTvExtEpgProgram::director] = $value[PluginTvExtEpgProgram::director];
                     }
                     if (!empty($value[PluginTvExtEpgProgram::composer])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::composer] = $value[PluginTvExtEpgProgram::composer];
+                        $ext_epg[$start][PluginTvExtEpgProgram::composer] = $value[PluginTvExtEpgProgram::composer];
                     }
 
                     if (!empty($value[PluginTvExtEpgProgram::editor])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::editor] = $value[PluginTvExtEpgProgram::editor];
+                        $ext_epg[$start][PluginTvExtEpgProgram::editor] = $value[PluginTvExtEpgProgram::editor];
                     }
 
                     if (!empty($value[PluginTvExtEpgProgram::writer])) {
-                        $ext_epg[$time][PluginTvExtEpgProgram::writer] = $value[PluginTvExtEpgProgram::writer];
+                        $ext_epg[$start][PluginTvExtEpgProgram::writer] = $value[PluginTvExtEpgProgram::writer];
                     }
 
                     if (!empty($value[PluginTvExtEpgProgram::actor]))
-                        $ext_epg[$time][PluginTvExtEpgProgram::actor] = $value[PluginTvExtEpgProgram::actor];
+                        $ext_epg[$start][PluginTvExtEpgProgram::actor] = $value[PluginTvExtEpgProgram::actor];
 
                     if (!empty($value[PluginTvExtEpgProgram::presenter]))
-                        $ext_epg[$time][PluginTvExtEpgProgram::presenter] = $value[PluginTvExtEpgProgram::presenter];
+                        $ext_epg[$start][PluginTvExtEpgProgram::presenter] = $value[PluginTvExtEpgProgram::presenter];
 
                     if (!empty($value[PluginTvExtEpgProgram::imdb_rating]))
-                        $ext_epg[$time][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::imdb_rating];
+                        $ext_epg[$start][PluginTvExtEpgProgram::imdb_rating] = $value[PluginTvExtEpgProgram::imdb_rating];
                 }
             }
 
@@ -705,26 +706,33 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param object $plugin_cookies
      * @return mixed|null
      */
-    public function get_program_info($channel_id, $program_ts, $plugin_cookies)
+    public function get_epg_info($channel_id, $program_ts, $plugin_cookies)
     {
         hd_debug_print(null, true);
-        $channel = $this->get_channel_info($channel_id);
-        if (is_null($channel)) {
-            return null;
-        }
 
         $program_ts = ($program_ts > 0 ? $program_ts : time());
-        hd_debug_print("channel ID: $channel_id at time $program_ts " . format_datetime("Y-m-d H:i", $program_ts), true);
-        $day_epg = $this->get_day_epg($channel_id, to_local_time_zone_offset(strtotime(date("Y-m-d", $program_ts))), $plugin_cookies);
+        $day_start_ts = strtotime(format_datetime("Y-m-d", $program_ts) . " UTC");
+        $program_ts_str = format_datetime("Y-m-d H:i", $day_start_ts);
+        hd_debug_print("channel ID: $channel_id at time $program_ts_str ($day_start_ts)", true);
+        $day_epg = $this->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+        if (empty($day_epg)) {
+            hd_debug_print("No entries found for channel $channel_id");
+        } else {
+            $not_found = true;
+            foreach ($day_epg as $item) {
+                if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
+                    $not_found = false;
+                    break;
+                }
+            }
 
-        foreach ($day_epg as $item) {
-            if ($program_ts >= $item[PluginTvEpgProgram::start_tm_sec] && $program_ts < $item[PluginTvEpgProgram::end_tm_sec]) {
-                return $item;
+            if ($not_found) {
+                hd_debug_print("No entries in range for selected time in " . count($day_epg) . " entries");
             }
         }
 
-        hd_debug_print("No entries found for time $program_ts");
-        return null;
+        $item[PluginTvEpgProgram::ext_id] = $channel_id;
+        return $item;
     }
 
     /**
@@ -987,13 +995,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->sql_playlist->exec($query);
         // create table for favorites
         $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_GROUP_ID), COLUMN_CHANNEL_ID);
-        $this->sql_playlist->exec($query);
-
-        // create table for playlist xmltv in common database
-        $query = sprintf(self::CREATE_PLAYLIST_XMLTV_TABLE, self::PLAYLIST_XMLTV_TABLE);
-        $this->sql_playlist->exec($query);
-        // create table for selected xmltv sources in common database
-        $query = sprintf(self::CREATE_SELECTED_XMTLV_TABLE, self::SELECTED_XMLTV_TABLE);
         $this->sql_playlist->exec($query);
 
         // add special groups to the table if the not exists
@@ -2907,67 +2908,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Control_Factory::add_vgap($defs, 10);
 
         return Action_Factory::show_dialog(TR::t('channel_info_dlg'), $defs, true, 1750);
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @param string $channel_id
-     * @param object $plugin_cookies
-     * @return array|null
-     */
-    public function do_show_channel_epg($handler, $channel_id, $plugin_cookies)
-    {
-        $prog_info = $this->get_program_info($channel_id, -1, $plugin_cookies);
-
-        if (is_null($prog_info)) {
-            $info = '';
-            $time = '';
-            $title = TR::load('epg_not_exist');
-        } else {
-            // program epg available
-            $title = $prog_info[PluginTvEpgProgram::name];
-            $time = sprintf("%s - %s",
-                format_datetime('H:i', $prog_info[PluginTvEpgProgram::start_tm_sec]),
-                format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec])
-            );
-            $info = $prog_info[PluginTvEpgProgram::description];
-        }
-
-        $text = sprintf("<gap width = 0/><text color=%s size=normal>%s %s</text>", DEF_LABEL_TEXT_COLOR_GOLD, TR::load('time'), $time);
-        Control_Factory::add_smart_label($defs, null, $text);
-        Control_Factory::add_multiline_label($defs, null, $info, 18);
-        Control_Factory::add_vgap($defs, 10);
-
-        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            750,
-            get_image_path('page_plus_btn.png'),
-            get_image_path('page_minus_btn.png'),
-            DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load('scroll_page')
-        );
-        Control_Factory::add_smart_label($defs, '', $text);
-        Control_Factory::add_vgap($defs, -80);
-
-        $shift_ops = array();
-        for ($i = -12; $i <= 12; $i++) {
-            $shift_ops[$i] = TR::t('setup_epg_shift__1', sprintf("%+03d", $i));
-        }
-        $shift_ops[0] = TR::t('setup_epg_shift__1', sprintf(" %02d", 0));
-
-        Control_Factory::add_combobox($defs, $handler, null, PARAM_EPG_SHIFT,
-            TR::t('setup_epg_shift'), $this->get_channel_epg_shift($channel_id), $shift_ops, 250);
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-            ACTION_APPLY_EPG_SHIFT,
-            TR::t('apply'),
-            250,
-            array(ACTION_RELOAD => SwitchOnOff::on)
-        );
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_APPLY_EPG_SHIFT, TR::t('ok'), 250);
-
-        Control_Factory::add_vgap($defs, 10);
-
-        return Action_Factory::show_dialog($title, $defs, true, 1500);
     }
 
     /**

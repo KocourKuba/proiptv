@@ -97,9 +97,9 @@ class User_Input_Handler_Registry
         }
 
         $arr[GuiAction::handler_string_id] = PLUGIN_HANDLE_USER_INPUT_ACTION_ID;
-        if ($caption)
+        if ($caption) {
             $arr[GuiAction::caption] = $caption;
-
+        }
         $arr[GuiAction::params] = $params;
 
         return $arr;

@@ -152,13 +152,20 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->plugin->do_show_channel_info($channel_id, true);
 
             case GUI_EVENT_KEY_SUBTITLE:
-                return $this->plugin->do_show_channel_epg($this, $channel_id, $plugin_cookies);
+                return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1, $plugin_cookies));
 
-            case ACTION_APPLY_EPG_SHIFT:
-                hd_debug_print("Applying epg shift: " . $user_input->{PARAM_EPG_SHIFT}, true);
-                $this->plugin->set_channel_epg_shift($channel_id, (int)$user_input->{PARAM_EPG_SHIFT});
-                if (isset($user_input->{ACTION_RELOAD})) {
-                    return $this->plugin->do_show_channel_epg($this, $channel_id, $plugin_cookies);
+            case PARAM_EPG_SHIFT_HOURS:
+            case PARAM_EPG_SHIFT_MINS:
+                hd_debug_print("Applying epg shift hours: " . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
+                hd_debug_print("Applying epg shift mins: " . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
+                $this->plugin->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
+                if (isset($new_value)) {
+                    $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
+                    return Action_Factory::close_dialog_and_run(
+                        Action_Factory::invalidate_folders(array($user_input->parent_media_url),
+                            $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1, $plugin_cookies), $attrs)
+                        )
+                    );
                 }
                 break;
 
@@ -213,7 +220,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
+                return $this->plugin->iptv->jump_to_channel($channel_id);
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
@@ -361,7 +368,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_EDIT_CHANNEL_DLG:
-                return $this->plugin->do_edit_channel($this, $channel_id);
+                return $this->plugin->do_edit_channel_parameters($this, $channel_id);
 
             case ACTION_EDIT_CHANNEL_APPLY:
                 $this->plugin->do_edit_channel_apply($user_input, $channel_id);
@@ -479,41 +486,30 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             foreach ($groups_order as $group_row) {
                 if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
 
-                $channels_rows = $this->plugin->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
-                $zoom_data = $this->plugin->get_channels_zoom($group_row[COLUMN_GROUP_ID]);
-                $epg_shift_data = $this->plugin->get_channels_epg_shift($group_row[COLUMN_GROUP_ID]);
+                $group_id = $group_row[COLUMN_GROUP_ID];
+                $channels_rows = $this->plugin->get_channels_by_order($group_id);
+                hd_debug_print("channels: " . json_encode($channels_rows), true);
                 foreach ($channels_rows as $channel_row) {
                     if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
 
+                    $channel_id = $channel_row[COLUMN_CHANNEL_ID];
                     $icon_url = $this->plugin->get_channel_picon($channel_row, true);
+                    $title = $channel_row[COLUMN_TITLE];
+                    $archive = $channel_row[COLUMN_ARCHIVE];
+                    $zoom = safe_get_value($channel_row, COLUMN_ZOOM, DuneVideoZoomPresets::not_set);
+                    $epg_shift = format_duration_minutes((int)safe_get_value($channel_row, COLUMN_EPG_SHIFT, 0));
 
                     $epg_str = HD::ArrayToStr(array_values(Default_Dune_Plugin::make_epg_ids($channel_row)));
-                    $zoom = safe_get_value($zoom_data, $channel_row[COLUMN_CHANNEL_ID], DuneVideoZoomPresets::not_set);
-                    $epg_shift = safe_get_value($epg_shift_data, $channel_row[COLUMN_CHANNEL_ID], 0);
-                    if ($zoom === DuneVideoZoomPresets::not_set) {
-                        $detailed_info = TR::t('tv_screen_channel_info__5',
-                            $channel_row[COLUMN_TITLE],
-                            $channel_row[COLUMN_ARCHIVE],
-                            $channel_row[COLUMN_CHANNEL_ID],
-                            $epg_str,
-                            sprintf("%+03d", $epg_shift)
-                        );
+                    if ($zoom === DuneVideoZoomPresets::not_set || $zoom === null) {
+                        $detailed_info = TR::t('tv_screen_channel_info__5', $title, $archive, $channel_id, $epg_str, $epg_shift);
                     } else {
-                        $detailed_info = TR::t('tv_screen_channel_info__6',
-                            $channel_row[COLUMN_TITLE],
-                            $channel_row[COLUMN_ARCHIVE],
-                            $channel_row[COLUMN_CHANNEL_ID],
-                            $epg_str,
-                            sprintf("%+03d", $epg_shift),
-                            TR::load(DuneVideoZoomPresets::$zoom_ops_translated[$zoom])
-                        );
+                        $detailed_info = TR::t('tv_screen_channel_info__6', $title, $archive, $channel_id, $epg_str, $zoom, $epg_shift);
                     }
 
                     $items[] = array(
-                        PluginRegularFolderItem::media_url => MediaURL::encode(
-                            array('channel_id' => $channel_row[COLUMN_CHANNEL_ID], 'group_id' => $group_row[COLUMN_GROUP_ID])),
-                        PluginRegularFolderItem::caption => $channel_row[COLUMN_TITLE],
-                        PluginRegularFolderItem::starred => in_array($channel_row[COLUMN_CHANNEL_ID], $fav_ids),
+                        PluginRegularFolderItem::media_url => MediaURL::encode(array('channel_id' => $channel_id, 'group_id' => $group_id)),
+                        PluginRegularFolderItem::caption => $title,
+                        PluginRegularFolderItem::starred => in_array($channel_id, $fav_ids),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::icon_path => $icon_url,
                             ViewItemParams::item_detailed_icon_path => $icon_url,

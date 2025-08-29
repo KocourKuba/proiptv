@@ -219,7 +219,7 @@ class Epg_Manager_Xmltv
      * @param array $channel_row
      * @param int $day_start_ts timestamp for day start in local time
      * @param bool $cached
-     * @return array
+     * @return array of entries started from day start for entire day
      */
     public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
     {
@@ -230,7 +230,7 @@ class Epg_Manager_Xmltv
 
         $cached = false;
         if (isset($this->epg_cache[$channel_id][$day_start_ts])) {
-            hd_debug_print("Load day EPG ID $channel_id ($day_start_ts) from memory cache ");
+            hd_debug_print("Load day Channel ID $channel_id from day start: ($day_start_ts) " . format_datetime("Y-m-d H:i", $day_start_ts) . " from memory cache ");
             $cached = true;
             return $this->epg_cache[$channel_id][$day_start_ts];
         }

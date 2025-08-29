@@ -138,7 +138,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
 
             if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
-                hd_debug_print("Load day EPG ID $epg_id ($day_start_ts) from memory cache ");
+                hd_debug_print("Load day EPG ID $epg_id from day start: ($day_start_ts) " . format_datetime("Y-m-d H:i", $day_start_ts) . " from memory cache ");
                 $cached = true;
                 return $this->epg_cache[$epg_id][$day_start_ts];
             }
@@ -275,7 +275,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
             $desc = HD::unescape_entity_string(safe_get_value($entry, $parser_params[self::EPG_DESC], ''));
             if (!empty($desc)) {
-                $desc = str_replace('<br>', PHP_EOL, $desc);
+                $desc = str_replace(array('<br>', "<'>br>"), PHP_EOL, $desc);
             }
             $channel_epg[$program_start][PluginTvEpgProgram::description] = $desc;
 

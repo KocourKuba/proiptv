@@ -93,6 +93,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $sel_ndx = $user_input->sel_ndx;
+        $channel_id = $selected_media_url->channel_id;
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -106,12 +107,22 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case GUI_EVENT_KEY_SUBTITLE:
-                return $this->plugin->do_show_channel_epg($this, $selected_media_url->channel_id, $plugin_cookies);
+                return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1, $plugin_cookies));
 
-            case ACTION_APPLY_EPG_SHIFT:
-                hd_debug_print("Applying epg shift: " . $user_input->{PARAM_EPG_SHIFT}, true);
-                $this->plugin->set_channel_epg_shift($selected_media_url->channel_id, $user_input->{PARAM_EPG_SHIFT});
-                return $this->plugin->do_show_channel_epg($this, $selected_media_url->channel_id, $plugin_cookies);
+            case PARAM_EPG_SHIFT_HOURS:
+            case PARAM_EPG_SHIFT_MINS:
+                hd_debug_print("Applying epg shift hours: " . $user_input->{PARAM_EPG_SHIFT_HOURS}, true);
+                hd_debug_print("Applying epg shift mins: " . $user_input->{PARAM_EPG_SHIFT_MINS}, true);
+                $this->plugin->set_channel_epg_shift($channel_id, $user_input->{PARAM_EPG_SHIFT_HOURS}, $user_input->{PARAM_EPG_SHIFT_MINS});
+                if (isset($new_value)) {
+                    $attrs['initial_sel_ndx'] = $user_input->control_id === PARAM_EPG_SHIFT_HOURS ? 0 : 1;
+                    return Action_Factory::close_dialog_and_run(
+                        Action_Factory::invalidate_folders(array($user_input->parent_media_url),
+                            $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1, $plugin_cookies), $attrs)
+                        )
+                    );
+                }
+                break;
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_JUMP_TO_CHANNEL_IN_GROUP, TR::t('jump_to_channel'), "goto.png");
@@ -147,7 +158,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 }
 
                 $this->force_parent_reload = true;
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $selected_media_url->channel_id);
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_UP, $channel_id);
                 break;
 
             case ACTION_ITEM_DOWN:
@@ -157,7 +168,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                     return null;
                 }
                 $this->force_parent_reload = true;
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $selected_media_url->channel_id);
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_MOVE_DOWN, $channel_id);
                 break;
 
             case ACTION_ITEM_TOP:
@@ -166,7 +177,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 }
                 $sel_ndx = 0;
                 $this->force_parent_reload = true;
-                $this->plugin->change_tv_favorites(ACTION_ITEM_TOP, $selected_media_url->channel_id);
+                $this->plugin->change_tv_favorites(ACTION_ITEM_TOP, $channel_id);
                 break;
 
             case ACTION_ITEM_BOTTOM:
@@ -176,12 +187,12 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 }
                 $this->force_parent_reload = true;
                 $sel_ndx = $max_sel;
-                $this->plugin->change_tv_favorites(ACTION_ITEM_BOTTOM, $selected_media_url->channel_id);
+                $this->plugin->change_tv_favorites(ACTION_ITEM_BOTTOM, $channel_id);
                 break;
 
             case ACTION_ITEM_DELETE:
                 $this->force_parent_reload = true;
-                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $selected_media_url->channel_id);
+                $this->plugin->change_tv_favorites(PLUGIN_FAVORITES_OP_REMOVE, $channel_id);
                 if (!$this->plugin->get_order_count(TV_FAV_GROUP_ID)) {
                     return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
                 }
@@ -199,7 +210,7 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);
+                return $this->plugin->iptv->jump_to_channel($channel_id);
 
             case ACTION_SHORTCUT:
                 if (!isset($user_input->{COLUMN_PLAYLIST_ID}) || $this->plugin->get_active_playlist_id() === $user_input->{COLUMN_PLAYLIST_ID}) {

@@ -939,6 +939,30 @@ function format_duration_seconds($secs)
 }
 
 /**
+ * @param string $secs
+ * @param bool $show_sign
+ * @return string
+ */
+function format_duration_minutes($secs, $show_sign = true)
+{
+    if ($show_sign) {
+        $n = (int)$secs;
+    } else {
+        $n = (int)abs($secs);
+    }
+
+    if (!$show_sign && ($n <= 0 || strlen($secs) <= 0)) {
+        return "00:00";
+    }
+
+    $hours = $n / 3600;
+    $remainder = $n % 3600;
+    $minutes = abs($remainder / 60);
+
+    return sprintf(($show_sign ? "%+d:%02d" : "%d:%02d"), $hours, $minutes);
+}
+
+/**
  * @param string $cmd
  * @return string
  */

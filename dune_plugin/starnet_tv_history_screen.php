@@ -187,9 +187,9 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
             hd_debug_print("Channel: " . json_encode($channel_row));
             $channel_id = $channel_row[COLUMN_CHANNEL_ID];
             $channel_ts = $channel_row[COLUMN_TIMESTAMP];
-            $prog_info = $this->plugin->get_program_info($channel_id, $channel_ts, $plugin_cookies);
+            $prog_info = $this->plugin->get_epg_info($channel_id, $channel_ts, $plugin_cookies);
             $description = '';
-            if (empty($prog_info)) {
+            if (!isset($prog_info[PluginTvEpgProgram::start_tm_sec])) {
                 $title = $channel_row[COLUMN_TITLE];
             } else {
                 // program epg available

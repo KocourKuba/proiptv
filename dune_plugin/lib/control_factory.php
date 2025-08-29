@@ -28,6 +28,26 @@ require_once 'action_factory.php';
 
 class Control_Factory
 {
+    public static function apply_action($handler, $name, $add_params)
+    {
+        $params = array('action_type' => 'apply');
+        if (isset($add_params)) {
+            $params = array_merge($params, $add_params);
+        }
+
+        return User_Input_Handler_Registry::create_action($handler, $name, null, $params);
+    }
+
+    public static function confirm_action($handler, $name, $add_params)
+    {
+        $params = array('action_type' => 'confirm');
+        if (isset($add_params)) {
+            $params = array_merge($params, $add_params);
+        }
+
+        return User_Input_Handler_Registry::create_action($handler, $name, null, $params);
+    }
+
     /**
      * @param array &$defs
      * @param string $title
@@ -90,9 +110,6 @@ class Control_Factory
     public static function add_button(&$defs, $handler, $add_params,
                                       $name, $title, $caption, $width, $caption_centered = false)
     {
-        $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-        $push_action['params']['action_type'] = 'apply';
-
         $defs[] = array(
             GuiControlDef::name => $name,
             GuiControlDef::title => $title,
@@ -101,16 +118,13 @@ class Control_Factory
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => $push_action,
+                GuiButtonDef::push_action => self::apply_action($handler, $name, $add_params)
             ),
         );
     }
 
     public static function add_button_close(&$defs, $handler, $add_params, $name, $title, $caption, $width)
     {
-        $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-        $push_action['params']['action_type'] = 'apply';
-
         $defs[] = array(
             GuiControlDef::name => $name,
             GuiControlDef::title => $title,
@@ -118,7 +132,7 @@ class Control_Factory
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($push_action),
+                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run(self::apply_action($handler, $name, $add_params)),
             ),
         );
     }
@@ -148,9 +162,6 @@ class Control_Factory
      */
     public static function add_image_button(&$defs, $handler, $add_params, $name, $title, $caption, $image, $width = 0)
     {
-        $push_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-        $push_action['params']['action_type'] = 'apply';
-
         $defs[] = array(
             GuiControlDef::name => $name,
             GuiControlDef::title => $title,
@@ -158,7 +169,7 @@ class Control_Factory
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => '',
                 GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => $push_action,
+                GuiButtonDef::push_action => self::apply_action($handler, $name, $add_params),
             ),
         );
 
@@ -213,9 +224,6 @@ class Control_Factory
      */
     public static function add_close_dialog_and_apply_button(&$defs, $handler, $name, $caption, $width, $add_params = null)
     {
-        $post_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-        $post_action['params']['action_type'] = 'apply';
-
         $defs[] = array(
             GuiControlDef::name => $name,
             GuiControlDef::title => null,
@@ -223,7 +231,7 @@ class Control_Factory
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($post_action),
+                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run(self::apply_action($handler, $name, $add_params)),
             ),
         );
     }
@@ -239,9 +247,6 @@ class Control_Factory
      */
     public static function add_close_dialog_and_apply_button_title(&$defs, $handler, $name, $title, $caption, $width, $add_params = null)
     {
-        $post_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-        $post_action['params']['action_type'] = 'apply';
-
         $defs[] = array(
             GuiControlDef::name => $name,
             GuiControlDef::title => $title,
@@ -249,7 +254,7 @@ class Control_Factory
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run($post_action),
+                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run(self::apply_action($handler, $name, $add_params)),
             ),
         );
     }
@@ -298,14 +303,12 @@ class Control_Factory
     {
         $apply_action = null;
         if ($need_apply) {
-            $apply_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-            $apply_action['params']['action_type'] = 'apply';
+            $apply_action = self::apply_action($handler, $name, $add_params);
         }
 
         $confirm_action = null;
         if ($need_confirm) {
-            $confirm_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-            $confirm_action['params']['action_type'] = 'confirm';
+            $confirm_action = self::confirm_action($handler, $name, $add_params);
         }
 
         $defs[] = array(
@@ -344,14 +347,12 @@ class Control_Factory
     {
         $apply_action = null;
         if ($need_apply) {
-            $apply_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-            $apply_action['params']['action_type'] = 'apply';
+            $apply_action = self::apply_action($handler, $name, $add_params);
         }
 
         $confirm_action = null;
         if ($need_confirm) {
-            $confirm_action = User_Input_Handler_Registry::create_action($handler, $name, null, $add_params);
-            $confirm_action['params']['action_type'] = 'confirm';
+            $confirm_action = self::confirm_action($handler, $name, $add_params);
         }
 
         $defs[] = array(
