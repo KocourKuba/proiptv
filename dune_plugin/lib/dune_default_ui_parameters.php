@@ -449,7 +449,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             TR::t('setup_epg_shift_hours'), (int)($initial_epg_shift / 3600), $shift_ops_hours, 250, false, $apply);
 
         $shift_ops_mins = array();
-        for ($i = 0; $i < 60; $i += 10) {
+        for ($i = 0; $i < 60; $i += 5) {
             $shift_ops_mins[$i] = TR::t('setup_epg_shift_mins__1', sprintf("%02d", $i));
         }
 

@@ -2,6 +2,7 @@ yes = Ja
 no = Nein
 cancel = Abbrechen
 ok = OK
+close = Schließen
 apply = Anwenden
 clear = Klären
 up = Hoch

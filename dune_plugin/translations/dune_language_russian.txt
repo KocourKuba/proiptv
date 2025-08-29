@@ -2,6 +2,7 @@ yes = Да
 no = Нет
 cancel = Отмена
 ok = OK
+close = Закрыть
 apply = Применить
 clear = Очистить
 up = Вверх

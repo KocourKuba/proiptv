@@ -2,6 +2,7 @@ yes = Yes
 no = No
 cancel = Cancel
 ok = OK
+close = Close
 apply = Apply
 clear = Clear
 up = Up
