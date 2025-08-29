@@ -152,7 +152,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->plugin->do_show_channel_info($channel_id, true);
 
             case GUI_EVENT_KEY_SUBTITLE:
-                return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1, $plugin_cookies));
+                $attrs['initial_sel_ndx'] = 2;
+                return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1, $plugin_cookies), $attrs);
 
             case PARAM_EPG_SHIFT_HOURS:
             case PARAM_EPG_SHIFT_MINS:

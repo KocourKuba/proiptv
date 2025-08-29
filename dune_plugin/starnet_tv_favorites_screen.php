@@ -107,7 +107,8 @@ class Starnet_Tv_Favorites_Screen extends Abstract_Preloaded_Regular_Screen impl
                 User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case GUI_EVENT_KEY_SUBTITLE:
-                return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1, $plugin_cookies));
+                $attrs['initial_sel_ndx'] = 2;
+                return $this->plugin->do_show_channel_epg($this, $this->plugin->get_epg_info($channel_id, -1, $plugin_cookies), $attrs);
 
             case PARAM_EPG_SHIFT_HOURS:
             case PARAM_EPG_SHIFT_MINS:
