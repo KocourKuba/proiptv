@@ -199,7 +199,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 // hide group
                 $this->force_parent_reload = true;
                 $group_id = safe_get_member($sel_media_url, COLUMN_GROUP_ID);
-                if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
+                if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID || $group_id === TV_HISTORY_GROUP_ID) {
                     return User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
                 }
 

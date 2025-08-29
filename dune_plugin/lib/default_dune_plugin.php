@@ -2599,18 +2599,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $menu_items[] = $this->create_menu_item($handler, ACTION_SORT_POPUP, TR::t('sort_popup_menu'), "sort.png");
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
-            if ($is_classic) {
-                if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
-                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
-                }
-            } else {
+            if (!$is_classic) {
                 if ($group_id === TV_FAV_GROUP_ID && $this->get_order_count(TV_FAV_GROUP_ID)) {
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
-                } else if ($group_id === TV_HISTORY_GROUP_ID && $this->get_tv_history_count() !== 0) {
-                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
-                } else if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
-                    $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
                 }
+            }
+            if ($group_id === TV_HISTORY_GROUP_ID && $this->get_tv_history_count() !== 0) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_history'), "brush.png");
+            } else if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
+                $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_changed'), "brush.png");
             }
 
             $menu_items = array_merge($menu_items, $this->edit_hidden_menu($handler, $group_id));
