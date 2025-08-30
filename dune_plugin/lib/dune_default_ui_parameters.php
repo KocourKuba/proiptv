@@ -32,6 +32,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     const CONTROL_ZOOM = 'zoom_select';
     const CONTROL_EXTERNAL_PLAYER = 'use_external_player';
 
+    const EPG_DIALOG_WIDTH = 1600;
+    const EPG_PROGRESS_WIDTH = 750;
+
     /**
      * @var array
      */
@@ -343,50 +346,63 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         hd_debug_print("Entry: " . json_encode($prog_info));
 
         if (!isset($prog_info[PluginTvEpgProgram::name])) {
-            $info = '';
-            $program_time = '';
-            $duration = '';
             $title = TR::load('epg_not_exist');
         } else {
             // program epg available
-            $now = time();
             $title = $prog_info[PluginTvEpgProgram::name];
-            $diff = $now - $prog_info[PluginTvEpgProgram::start_tm_sec];
-            $percent = 100 * $diff / ($prog_info[PluginTvEpgProgram::end_tm_sec] - $prog_info[PluginTvEpgProgram::start_tm_sec]);
-            $program_time = sprintf("%s %s - %s",
+            $diff = time() - $prog_info[PluginTvEpgProgram::start_tm_sec];
+
+            // begin and end of program
+            $elapsed_text = sprintf("<gap width=0/><text color=%s size=normal>%s %s - %s</text><gap width=50/><text color=%s size=normal>%s %s</text>",
+                DEF_LABEL_TEXT_COLOR_GOLD,
                 TR::load('time'),
                 format_datetime('H:i', $prog_info[PluginTvEpgProgram::start_tm_sec]),
-                format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec])
+                format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec]),
+                DEF_LABEL_TEXT_COLOR_TURQUOISE,
+                TR::load('live'),
+                format_duration_seconds($diff)
             );
-            $duration = sprintf("%s %s - %d%%", TR::load('live'), format_duration_seconds($diff), (int)$percent);
-            $info = $prog_info[PluginTvEpgProgram::description];
+            Control_Factory::add_smart_label($defs, null, $elapsed_text);
+
+            // Elapsed time
+            // Progress bar placed after elapsed time on the same line
+            Control_Factory::add_vgap($defs, -64);
+            $pos_percent = round(100 * $diff / ($prog_info[PluginTvEpgProgram::end_tm_sec] - $prog_info[PluginTvEpgProgram::start_tm_sec]));
+            Control_Factory_Ext::add_progressbar($defs,
+                self::EPG_DIALOG_WIDTH - self::EPG_PROGRESS_WIDTH - 150,
+                self::EPG_PROGRESS_WIDTH, $pos_percent);
+
+            // Elapsed percent placed after elapsed time on the same line
+            $percent_text = sprintf("<gap width=%s/><text color=%s size=normal>%s%%</text>",
+                self::EPG_DIALOG_WIDTH - 100,
+                DEF_LABEL_TEXT_COLOR_TURQUOISE,
+                $pos_percent);
+            Control_Factory::add_vgap($defs, -74);
+            Control_Factory::add_smart_label($defs, null, $percent_text);
+
+            // EPG description
+            Control_Factory::add_multiline_label($defs, null, $prog_info[PluginTvEpgProgram::description], 18);
+            Control_Factory::add_vgap($defs, 30);
+
+            // help line if description more than dialog height
+            $help_text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
+                self::EPG_DIALOG_WIDTH - 1050,
+                get_image_path('page_plus_btn.png'),
+                get_image_path('page_minus_btn.png'),
+                DEF_LABEL_TEXT_COLOR_SILVER,
+                TR::load('scroll_page')
+            );
+            Control_Factory::add_smart_label($defs, '', $help_text);
+            Control_Factory::add_vgap($defs, -80);
         }
-
-        $text = sprintf("<gap width = 0/><text color=%s size=normal>%s</text><text color=%s size=normal> (%s)</text>",
-            DEF_LABEL_TEXT_COLOR_GOLD, $program_time,
-            DEF_LABEL_TEXT_COLOR_TURQUOISE, $duration
-        );
-        Control_Factory::add_smart_label($defs, null, $text);
-        Control_Factory::add_multiline_label($defs, null, $info, 18);
-        Control_Factory::add_vgap($defs, 30);
-
-        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            550,
-            get_image_path('page_plus_btn.png'),
-            get_image_path('page_minus_btn.png'),
-            DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load('scroll_page')
-        );
-        Control_Factory::add_smart_label($defs, '', $text);
-        Control_Factory::add_vgap($defs, -80);
 
         self::add_epg_shift_defs($defs, $handler, $this->get_channel_epg_shift($prog_info[PluginTvEpgProgram::ext_id]), true);
 
-        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250);
+        Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
 
         Control_Factory::add_vgap($defs, 10);
 
-        return Action_Factory::show_dialog($title, $defs, true, 1500, $attrs);
+        return Action_Factory::show_dialog($title, $defs, true, self::EPG_DIALOG_WIDTH, $attrs);
     }
 
     public function do_edit_channel_parameters($handler, $channel_id)
