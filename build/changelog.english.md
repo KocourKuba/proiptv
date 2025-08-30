@@ -1,4 +1,11 @@
-﻿### Version 6.2.1310
+﻿### Version 6.2.1320
+- Added the ability to export playlists and external XMLTV sources to a text file for quick import later
+- Returned the ability to clear the browsing history with the 'clear' key or through the popup menu from the category screen
+- Expanded the ability to adjust the EPG shift for each channel individually with an accuracy of 5 minutes and a range of +/- 23 hours
+- The dialog for showing the current EPG on the channel screen is supplemented with an indication of the elapsed time since the start of the program
+- Fixed a crash when calling up advanced channel settings
+
+### Version 6.2.1310
 - Added the ability to configure the EPG shift for each channel individually
 - External player playback, zoom and EPG shift settings are placed in a separate dialog
 - The media library shows additional information and a poster for the season (if any)
