@@ -343,8 +343,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             return null;
         }
 
-        hd_debug_print("Entry: " . json_encode($prog_info));
-
         if (!isset($prog_info[PluginTvEpgProgram::name])) {
             $title = TR::load('epg_not_exist');
         } else {
@@ -352,7 +350,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             $title = $prog_info[PluginTvEpgProgram::name];
             $diff = time() - $prog_info[PluginTvEpgProgram::start_tm_sec];
 
-            // begin and end of program
+            // begin and end of program, elapsed time
             $elapsed_text = sprintf("<gap width=0/><text color=%s size=normal>%s %s - %s</text><gap width=50/><text color=%s size=normal>%s %s</text>",
                 DEF_LABEL_TEXT_COLOR_GOLD,
                 TR::load('time'),
@@ -364,7 +362,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             );
             Control_Factory::add_smart_label($defs, null, $elapsed_text);
 
-            // Elapsed time
             // Progress bar placed after elapsed time on the same line
             Control_Factory::add_vgap($defs, -64);
             $pos_percent = round(100 * $diff / ($prog_info[PluginTvEpgProgram::end_tm_sec] - $prog_info[PluginTvEpgProgram::start_tm_sec]));
