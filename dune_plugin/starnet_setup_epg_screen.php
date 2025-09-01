@@ -121,11 +121,11 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 }
 
                 foreach (array(1, 2, 3, 6, 12) as $hour) {
-                    $caching_range[$hour] = TR::t('setup_epg_cache_json_time__1', $hour);
+                    $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
                 }
                 $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
                 Control_Factory::add_combobox($defs, $this, null,
-                    PARAM_EPG_CACHE_TIME, TR::t('setup_epg_cache_json_time'),
+                    PARAM_EPG_CACHE_TIME, TR::t('setup_cache_time'),
                     $cache_time, $caching_range, self::CONTROLS_WIDTH, true);
             }
         }

@@ -130,6 +130,17 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 TR::t('edit_list_playlist_detect_id'), $id_mapper, $mapper_ops, self::CONTROLS_WIDTH, true);
         }
 
+        foreach (array(1, 6, 12) as $hour) {
+            $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
+        }
+        foreach (array(24, 48, 96, 168) as $hour) {
+            $caching_range[$hour] = TR::t('setup_cache_time_d__1', $hour / 24);
+        }
+        $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME, 1);
+        Control_Factory::add_combobox($defs, $this, null,
+            PARAM_PLAYLIST_CACHE_TIME, TR::t('setup_cache_time'),
+            $cache_time, $caching_range, self::CONTROLS_WIDTH, true);
+
         //////////////////////////////////////
         // Ext playlist settings
 
@@ -157,6 +168,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
 
         $sel_ndx = -1;
         $post_action = null;
+        $control_id = $user_input->control_id;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $playlist_id = isset($parent_media_url->playlist_id) ? $parent_media_url->playlist_id : $this->plugin->get_active_playlist_id();
         $params = $this->plugin->get_playlist_parameters($playlist_id);
@@ -164,7 +176,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
         $uri = safe_get_value($params, PARAM_URI);
         $pl_type = safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV);
 
-        switch ($user_input->control_id) {
+        switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 if (isset($parent_media_url->source_window_id)) {
@@ -204,6 +216,9 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{CONTROL_URL_PATH});
                 break;
 
+            case PARAM_PLAYLIST_CACHE_TIME:
+                $this->plugin->set_setting($control_id, $user_input->{$control_id});
+                break;
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
@@ -213,7 +228,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
             case ACTION_EDIT_PROVIDER_DLG:
             case ACTION_EDIT_PROVIDER_EXT_DLG:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
+                    ($control_id === ACTION_EDIT_PROVIDER_DLG)
                         ? ACTION_DO_EDIT_PROVIDER
                         : ACTION_DO_EDIT_PROVIDER_EXT);
 
@@ -263,7 +278,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 }
 
                 $err_msg = '';
-                if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
+                if ($control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
                     $res = $provider->ApplySetupUI($user_input);
                 } else {
                     $res = $provider->ApplyExtSetupUI($user_input, $err_msg);

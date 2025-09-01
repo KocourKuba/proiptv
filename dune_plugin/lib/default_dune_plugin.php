@@ -3018,13 +3018,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return true;
         }
 
+        $now = time();
         $mtime = filemtime($filename);
-        $diff = time() - $mtime;
-        if ($diff <= 3600) {
+        $cache_expired = $mtime + $this->get_setting(PARAM_PLAYLIST_CACHE_TIME, 1) * 3600;
+        if ($cache_expired > $now) {
             return false;
         }
 
-        hd_debug_print("Playlist cache $filename expired " . ($diff - 3600) . " sec ago. Timestamp $mtime. Forcing reload");
+        hd_debug_print("Playlist cache $filename expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Forcing reload");
         return true;
     }
 

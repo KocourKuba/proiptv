@@ -240,6 +240,7 @@ const PARAM_NEWUI_SHOW_CHANNEL_CAPTION = 'show_channel_caption';
 const PARAM_NEWUI_SHOW_CHANNEL_COUNT = 'show_channel_count';
 const PARAM_NEWUI_SHOW_CONTINUES = 'show_continues';
 const PARAM_PLAYLIST_FOLDER = 'playlist_folder';
+const PARAM_PLAYLIST_CACHE_TIME = 'playlist_cache_time';
 const PARAM_HISTORY_PATH = 'history_path';
 const PARAM_FULL_SIZE_REMOTE = 'use_full_size_remote';
 const PARAM_CHANNELS_LIST_PATH = 'channels_list_path';

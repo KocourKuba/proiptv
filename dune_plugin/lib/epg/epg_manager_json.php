@@ -152,13 +152,14 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $all_epg = array();
             if (file_exists($epg_cache_file)) {
                 $now = time();
-                $cache_expired = filemtime($epg_cache_file) + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 60;
+                $mtime = filemtime($epg_cache_file);
+                $cache_expired = $mtime + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 3600;
                 if ($cache_expired > time()) {
                     $all_epg = parse_json_file($epg_cache_file);
                     $from_cache = true;
                     hd_debug_print("Loading all entries for EPG ID: '$epg_id' from file cache: $epg_cache_file");
                 } else {
-                    hd_debug_print("Cache expired at $cache_expired now $now");
+                    hd_debug_print("EPG cache $epg_cache_file expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Remove cache file");
                     unlink($epg_cache_file);
                 }
             }
