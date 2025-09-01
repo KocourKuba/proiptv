@@ -107,15 +107,27 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
             Control_Factory::add_image_button($defs, $this, null,
                 self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear_all'), TR::t('clear'),
                 get_image_path('brush.png'), self::CONTROLS_WIDTH);
-        } else if (isset($epg_presets) && count($epg_presets) > 1) {
-            $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
-            $presets = array();
-            foreach ($epg_presets as $epg_preset) {
-                $presets[] = safe_get_value($epg_preset, 'title', $epg_preset['name']);
+        } else {
+            if (isset($epg_presets)) {
+                if (count($epg_presets) > 1) {
+                    $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
+                    $presets = array();
+                    foreach ($epg_presets as $epg_preset) {
+                        $presets[] = safe_get_value($epg_preset, 'title', $epg_preset['name']);
+                    }
+                    Control_Factory::add_combobox($defs, $this, null,
+                        PARAM_EPG_JSON_PRESET, TR::t('setup_epg_cache_json'),
+                        $preset, $presets, self::CONTROLS_WIDTH, true);
+                }
+
+                foreach (array(1, 2, 3, 6, 12) as $hour) {
+                    $caching_range[$hour] = TR::t('setup_epg_cache_json_time__1', $hour);
+                }
+                $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
+                Control_Factory::add_combobox($defs, $this, null,
+                    PARAM_EPG_CACHE_TIME, TR::t('setup_epg_cache_json_time'),
+                    $cache_time, $caching_range, self::CONTROLS_WIDTH, true);
             }
-            Control_Factory::add_combobox($defs, $this, null,
-                PARAM_EPG_JSON_PRESET, TR::t('setup_epg_cache_json'),
-                $preset, $presets, self::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -171,6 +183,10 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();
                 return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+
+            case PARAM_EPG_CACHE_TIME:
+                $this->plugin->set_setting($control_id, $user_input->{$control_id});
+                break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 foreach ($this->plugin->get_selected_xmltv_ids() as $id) {

@@ -259,8 +259,8 @@ class Dune_Default_Sqlite_Engine
      * Parameters does not depend on playlists and used globally
      *
      * @param string $name
-     * @param string $default
-     * @return string
+     * @param mixed $default
+     * @return mixed
      */
     public function get_parameter($name, $default = '')
     {

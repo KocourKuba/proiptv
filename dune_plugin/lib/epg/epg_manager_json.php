@@ -152,8 +152,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $all_epg = array();
             if (file_exists($epg_cache_file)) {
                 $now = time();
-                $max_check_time = 3600;
-                $cache_expired = filemtime($epg_cache_file) + $max_check_time;
+                $cache_expired = filemtime($epg_cache_file) + $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1) * 60;
                 if ($cache_expired > time()) {
                     $all_epg = parse_json_file($epg_cache_file);
                     $from_cache = true;

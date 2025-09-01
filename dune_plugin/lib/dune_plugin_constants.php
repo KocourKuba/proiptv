@@ -249,6 +249,7 @@ const PARAM_CHANNELS_SOURCE = 'channels_source';
 const PARAM_CHANNELS_URL = 'channels_url';
 const PARAM_CHANNELS_DIRECT_URL = 'channels_direct_url';
 const PARAM_EPG_CACHE_ENGINE = 'epg_cache_engine';
+const PARAM_EPG_CACHE_TIME = 'epg_cache_time';
 const PARAM_EPG_JSON_PRESET = 'epg_json_preset';
 const PARAM_EPG_PLAYLIST = 'epg_playlist';
 const PARAM_EPG_SHIFT_HOURS = 'epg_shift_hours';
