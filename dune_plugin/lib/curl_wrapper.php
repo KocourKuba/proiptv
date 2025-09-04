@@ -36,7 +36,7 @@ class Curl_Wrapper
     /**
      * @var int
      */
-    private $connect_timeout = 60;
+    private $connect_timeout = 30;
 
     /**
      * @var int
