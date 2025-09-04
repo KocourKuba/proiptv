@@ -1138,7 +1138,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         ///////////// start_time, end_time, genre, country, person /////////////////
 
         $epg_data = $this->plugin->get_epg_info($channel_id, $archive_tm, $plugin_cookies);
-        if (!isset($epg_data[$item[PluginTvEpgProgram::start_tm_sec]])) {
+        if (!isset($epg_data[PluginTvEpgProgram::start_tm_sec])) {
             hd_debug_print("no epg data");
             $channel_desc = $epg_data[PluginTvEpgProgram::description];
             if (!empty($channel_desc)) {
