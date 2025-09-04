@@ -292,9 +292,14 @@ class Curl_Wrapper
 
         $wrapper = new self();
         $opt = array(CURLOPT_CONNECTTIMEOUT => $wrapper->connect_timeout);
-        $content = HD::http_get_document($url, $opt);
-        if ($content === false) {
-            hd_debug_print("Can't download $url");
+        try {
+            $content = HD::http_get_document($url, $opt);
+            if ($content === false) {
+                hd_debug_print("Can't download $url");
+                return false;
+            }
+        } catch (DuneCurlException $ex) {
+            print_backtrace_exception($ex);
             return false;
         }
 
