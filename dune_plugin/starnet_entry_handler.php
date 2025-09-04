@@ -43,7 +43,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_CALL_PLAYLIST_SETTINGS = 'call_playlist_setup';
     const ACTION_CALL_BACKUP_SETTINGS = 'call_backup';
     const ACTION_CALL_XMLTV_SOURCES_SETTINGS = 'call_xmltv_setup';
-    const ACTION_PLAYLIST_SETTINGS = 'channels_settings';
+    const ACTION_PLAYLIST_SETTINGS = 'playlist_settings';
     const ACTION_XMLTV_SOURCES_SETTINGS = 'xmltv_settings';
     const ACTION_CALL_REBOOT = 'call_reboot';
     const ACTION_CALL_SEND_LOG = 'call_send_log';
@@ -116,7 +116,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return Action_Factory::open_folder(Starnet_Setup_Backup_Screen::ID, TR::t('entry_backup'));
 
             case self::ACTION_PLAYLIST_SETTINGS:
-                $this->plugin->init_playlist_db();
+                $this->plugin->init_plugin();
                 return $this->open_playlist_screen();
 
             case self::ACTION_CALL_XMLTV_SOURCES_SETTINGS:
