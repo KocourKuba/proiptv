@@ -1,4 +1,12 @@
-﻿### Version 6.2.1320
+﻿### Version 6.2.1334
+- Added the ability to configure the playlist caching time. From 1 hour to 7 days. Look into Playlist settings
+- Added the ability to configure the caching time of the Internet EPG source (for provider templates). From 1 to 12 hours. Look into EPG Settings
+- Configuration: Added additional domains for Sharavoz
+- Configuration: Removed EPG source from Sharavoz. It looks like dead. Only epg.drm-play remains
+- Fixed a bug with showing the name of the program in NewUI
+- Fixed a bug that could not restore hidden categories
+
+### Version 6.2.1320
 - Added the ability to export playlists and external XMLTV sources to a text file for quick import later
 - Returned the ability to clear the browsing history with the 'clear' key or through the popup menu from the category screen
 - Expanded the ability to adjust the EPG shift for each channel individually with an accuracy of 5 minutes and a range of +/- 23 hours
