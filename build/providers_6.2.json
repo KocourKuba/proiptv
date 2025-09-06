@@ -1271,9 +1271,6 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?.+$/",
         "epg_presets": [
           {
-            "name": "sharavoz"
-          },
-          {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "sharavoz"
