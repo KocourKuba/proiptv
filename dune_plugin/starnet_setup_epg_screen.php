@@ -149,12 +149,6 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
 
         $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
         $control_id = $user_input->control_id;
-        if (isset($user_input->action_type, $user_input->{$control_id})
-            && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
-            $new_value = $user_input->{$control_id};
-            hd_debug_print("Changing $control_id value to $new_value", true);
-        }
-
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:

@@ -403,8 +403,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
             $defs = array();
 
             $ret_action = array(PARAM_ACTION_ID => $user_input->action_id, 'mandatory_playback' => 0);
-            Control_Factory::add_button_close($defs, $this, $ret_action, self::ACTION_CONFIRM_BACKUP_DLG, null, TR::t('yes'), 300);
-            Control_Factory::add_button_close($defs, $this, $ret_action, self::ACTION_PLUGIN_ENTRY, null, TR::t('no'), 300);
+            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CONFIRM_BACKUP_DLG, TR::t('yes'), 300, $ret_action);
+            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_PLUGIN_ENTRY, TR::t('no'), 300, $ret_action);
 
             return Action_Factory::show_dialog(TR::t('yes_no_confirm_backup'), $defs);
         }

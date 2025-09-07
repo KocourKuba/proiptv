@@ -108,13 +108,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $channel_id = $selected_media_url->channel_id;
         $sel_ndx = $user_input->sel_ndx;
 
-        $control_id = $user_input->control_id;
-        if (isset($user_input->action_type, $user_input->{$control_id})
-            && ($user_input->action_type === 'confirm' || $user_input->action_type === 'apply')) {
-            $new_value = $user_input->{$control_id};
-            hd_debug_print("changing $control_id value to $new_value", true);
-        }
-
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
