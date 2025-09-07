@@ -95,7 +95,6 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->init_providers_config();
         $this->init_screen_view_parameters($this->plugin_info['app_background']);
 
-        $this->ext_epg_supported = is_ext_epg_supported();
         print_sysinfo();
 
         hd_debug_print_separator();
@@ -105,7 +104,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         hd_print("LocalTime:           " . format_datetime('Y-m-d H:i', time()));
         hd_print("TimeZone:            " . getTimeZone());
         hd_print("New UI support:      " . var_export(HD::rows_api_support(), true));
-        hd_print("Ext EPG support:     " . var_export($this->ext_epg_supported, true));
+        hd_print("Ext EPG support:     " . var_export(is_ext_epg_supported(), true));
         hd_print("Auto resume enabled: " . safe_get_member($plugin_cookies,'auto_resume'));
         hd_print("Auto play enabled:   " . safe_get_member($plugin_cookies,'auto_play'));
         hd_print("Debug log enabled:   " . safe_get_member($plugin_cookies,PARAM_ENABLE_DEBUG));

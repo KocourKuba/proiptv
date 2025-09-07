@@ -54,7 +54,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     {
         HD::load_firmware_features();
 
-        if (is_newer_versions()) {
+        if (is_r22_or_higher()) {
             ini_set('memory_limit', '384M');
         }
 
@@ -410,8 +410,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         if (!is_limited_apk()) {
             $pl_opts_idx = SwitchOnOff::to_def($this->get_channel_ext_player($channel_id));
-            $pl_opts[SwitchOnOff::on] = TR::t('tv_screen_external_player');
-            $pl_opts[SwitchOnOff::off] = TR::t('tv_screen_internal_player');
+            $pl_opts = array(SwitchOnOff::on => TR::t('tv_screen_external_player'), SwitchOnOff::off => TR::t('tv_screen_internal_player'));
             Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_EXTERNAL_PLAYER,
                 TR::t('setup_playback_settings'), $pl_opts_idx, $pl_opts, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }

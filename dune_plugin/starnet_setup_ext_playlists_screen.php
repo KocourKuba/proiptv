@@ -97,7 +97,7 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
         $enable_dune_params = safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_USE_DUNE_PARAMS, TR::t('setup_channels_enable_dune_params'), SwitchOnOff::translate($enable_dune_params),
-            get_image_path(SwitchOnOff::to_image($enable_dune_params)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($enable_dune_params), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // dune_params

@@ -117,7 +117,7 @@ class Starnet_Tv implements User_Input_Handler
                     hd_debug_print("Refresh EPG for channel ID: $channel_id");
                     $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
                     $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
-                    $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action);
+                    $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg, $post_action, $this->plugin->is_ext_epg_enabled());
                 }
 
                 return $post_action;
@@ -250,7 +250,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::timer => Action_Factory::timer(1000),
         );
 
-        if ($this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->plugin->is_ext_epg_exist()) {
+        if ($this->plugin->is_ext_epg_enabled()) {
             $playlist_id = $this->plugin->get_active_playlist_id();
             $content = '';
             foreach ($all_channels as $k => $v) {

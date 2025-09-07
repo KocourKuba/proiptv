@@ -82,7 +82,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         hd_debug_print("user input control: $user_input->control_id", true);
 
-        if (!is_newer_versions()) {
+        if (!is_r22_or_higher()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
             return $this->show_old_player(TR::load('err_too_old_player'));
         }
@@ -145,7 +145,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 return $this->open_xmltv_screen();
 
             case self::ACTION_CALL_SEND_LOG:
-                if (!is_newer_versions()) {
+                if (!is_r22_or_higher()) {
                     return Action_Factory::show_title_dialog(TR::t('entry_send_log'), null, TR::t('entry_log_not_sent_too_old'));
                 }
 

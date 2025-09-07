@@ -135,7 +135,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
         $fake_epg = $this->plugin->get_setting(PARAM_FAKE_EPG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FAKE_EPG, TR::t('entry_epg_fake'), SwitchOnOff::translate($fake_epg),
-            get_image_path(SwitchOnOff::to_image($fake_epg)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($fake_epg), self::CONTROLS_WIDTH);
 
         return $defs;
     }

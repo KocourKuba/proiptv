@@ -606,9 +606,9 @@ class Action_Factory
      * @param array $post_action
      * @return array
      */
-    public static function update_epg($channel_id, $clear, $day_start_tm_sec = 0, $programs = null, $post_action = null)
+    public static function update_epg($channel_id, $clear, $day_start_tm_sec = 0, $programs = null, $post_action = null, $ext_epg_enabled = true)
     {
-        return array(
+        $defs = array(
             GuiAction::handler_string_id => PLUGIN_UPDATE_EPG_ACTION_ID,
             GuiAction::data => array(
                 PluginUpdateEpgActionData::channel_id => $channel_id,
@@ -618,6 +618,11 @@ class Action_Factory
                 PluginUpdateEpgActionData::post_action => $post_action
             )
         );
+
+        if (defined('PluginUpdateEpgActionData::ext_epg_enabled')) {
+            $defs[GuiAction::data]['PluginUpdateEpgActionData::ext_epg_enabled'] = $ext_epg_enabled;
+        }
+        return $defs;
     }
 
     /**

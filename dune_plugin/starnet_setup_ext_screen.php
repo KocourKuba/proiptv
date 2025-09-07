@@ -79,7 +79,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
             $remote = $this->plugin->get_parameter(PARAM_FULL_SIZE_REMOTE, SwitchOnOff::off);
             Control_Factory::add_image_button($defs, $this, null,
                 PARAM_FULL_SIZE_REMOTE, TR::t('setup_settings_full_remote'), SwitchOnOff::translate($remote),
-                get_image_path(SwitchOnOff::to_image($remote)), self::CONTROLS_WIDTH);
+                SwitchOnOff::to_image($remote), self::CONTROLS_WIDTH);
         }
 
         //////////////////////////////////////
@@ -91,7 +91,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         }
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FIX_PALETTE, TR::t('setup_settings_patch_palette'), SwitchOnOff::translate($fix_palette),
-            get_image_path(SwitchOnOff::to_image($fix_palette)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($fix_palette), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // debugging
@@ -99,7 +99,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         $debug_state = safe_get_member($plugin_cookies, PARAM_ENABLE_DEBUG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SwitchOnOff::translate($debug_state),
-            get_image_path(SwitchOnOff::to_image($debug_state)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($debug_state), self::CONTROLS_WIDTH);
 
         return $defs;
     }

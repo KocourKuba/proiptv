@@ -75,40 +75,40 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements 
 
         //////////////////////////////////////
         // ext epg
-        if ($this->plugin->is_ext_epg_exist()) {
+        if (is_ext_epg_supported()) {
             $ext_epg = $this->plugin->get_setting(PARAM_SHOW_EXT_EPG, SwitchOnOff::on);
             Control_Factory::add_image_button($defs, $this, null,
-                PARAM_SHOW_EXT_EPG, TR::t('setup_ext_epg'), SwitchOnOff::$translated[$ext_epg],
-                get_image_path(SwitchOnOff::$image[$ext_epg]), self::CONTROLS_WIDTH);
+                PARAM_SHOW_EXT_EPG, TR::t('setup_ext_epg'), SwitchOnOff::translate($ext_epg),
+                SwitchOnOff::to_image($ext_epg), self::CONTROLS_WIDTH);
         }
 
         //////////////////////////////////////
         // auto play
         $auto_play = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::$translated[$auto_play],
-            get_image_path(SwitchOnOff::$image[$auto_play]), self::CONTROLS_WIDTH);
+            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::translate($auto_play),
+            SwitchOnOff::to_image($auto_play), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // auto resume
         $auto_resume = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
         Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::$translated[$auto_resume],
-            get_image_path(SwitchOnOff::$image[$auto_resume]), self::CONTROLS_WIDTH);
+            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::translate($auto_resume),
+            SwitchOnOff::to_image($auto_resume), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Per channel zoom
         $per_channel_zoom = $this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_PER_CHANNELS_ZOOM, TR::t('setup_per_channel_zoom'), SwitchOnOff::translate($per_channel_zoom),
-            get_image_path(SwitchOnOff::to_image($per_channel_zoom)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($per_channel_zoom), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Force detection stream
         $force_detection = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_DUNE_FORCE_TS, TR::t('setup_channels_dune_force_ts'), SwitchOnOff::translate($force_detection),
-            get_image_path(SwitchOnOff::to_image($force_detection)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($force_detection), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // buffering time

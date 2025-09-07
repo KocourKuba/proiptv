@@ -236,7 +236,7 @@ class Epg_Manager_Xmltv
         }
 
         $day_epg = array();
-        $ext_epg = $this->plugin->get_bool_setting(PARAM_SHOW_EXT_EPG) && $this->plugin->is_ext_epg_exist();
+        $ext_epg = $this->plugin->is_ext_epg_enabled();
 
         foreach ($this->xmltv_sources as $key => $params) {
             hd_debug_print("Looking in XMLTV source: {$params[PARAM_URI]}");

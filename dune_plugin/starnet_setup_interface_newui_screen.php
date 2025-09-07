@@ -83,7 +83,7 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
         $square_icon = $this->plugin->get_setting(PARAM_NEWUI_SQUARE_ICONS, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_NEWUI_SQUARE_ICONS, TR::t('tv_screen_toggle_icons_aspect'), SwitchOnOff::translate($square_icon),
-            get_image_path(SwitchOnOff::to_image($square_icon)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($square_icon), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Channel position in NewUI
@@ -111,21 +111,21 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
         $show_caption = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CHANNEL_CAPTION, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_NEWUI_SHOW_CHANNEL_CAPTION, TR::t('setup_show_caption'), SwitchOnOff::translate($show_caption),
-            get_image_path(SwitchOnOff::to_image($show_caption)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_caption), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Show channel count
         $show_count = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_NEWUI_SHOW_CHANNEL_COUNT, TR::t('setup_show_channel_count'), SwitchOnOff::translate($show_count),
-            get_image_path(SwitchOnOff::to_image($show_count)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_count), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Clusters
         $continues = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CONTINUES, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_NEWUI_SHOW_CONTINUES, TR::t('setup_show_continues'), SwitchOnOff::translate($continues),
-            get_image_path(SwitchOnOff::to_image($continues)), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($continues), self::CONTROLS_WIDTH);
 
         return $defs;
     }

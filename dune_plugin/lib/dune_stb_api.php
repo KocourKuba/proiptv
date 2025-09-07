@@ -239,12 +239,17 @@ class SwitchOnOff
 
     public static function to_image($val)
     {
-        return safe_get_value(self::$image, $val, self::$image[self::off]);
+        return get_image_path(safe_get_value(self::$image, $val, self::$image[self::off]));
     }
 
     public static function translate($val)
     {
         return safe_get_value(self::$translated, $val, self::$translated[self::off]);
+    }
+
+    public static function translate_from($translated, $val)
+    {
+        return safe_get_value($translated, $val, $translated[self::off]);
     }
 
     public static function toggle($val)
@@ -1825,9 +1830,14 @@ function get_local_storages_list($path)
 # Miscellaneous
 ###############################################################################
 
-function is_newer_versions()
+function is_r22_or_higher()
 {
     return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 21;
+}
+
+function is_r24_or_higher()
+{
+    return safe_get_value(get_parsed_firmware_ver(), 'rev_number', 0) > 22;
 }
 
 function is_ext_epg_supported()
