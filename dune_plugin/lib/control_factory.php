@@ -50,6 +50,18 @@ class Control_Factory
 
     /**
      * @param array &$defs
+     * @param int $vgap
+     */
+    public static function add_vgap(&$defs, $vgap)
+    {
+        $defs[] = array(
+            GuiControlDef::kind => GUI_CONTROL_VGAP,
+            GuiControlDef::specific_def => array(GuiVGapDef::vgap => $vgap),
+        );
+    }
+
+    /**
+     * @param array &$defs
      * @param string $title
      * @param string $text
      * @param bool $vgap_after
@@ -70,13 +82,18 @@ class Control_Factory
 
     /**
      * @param array &$defs
-     * @param int $vgap
+     * @param string $title
+     * @param string $text
+     * @param int $max_lines
      */
-    public static function add_vgap(&$defs, $vgap)
+    public static function add_multiline_label(&$defs, $title, $text, $max_lines = 2)
     {
         $defs[] = array(
-            GuiControlDef::kind => GUI_CONTROL_VGAP,
-            GuiControlDef::specific_def => array(GuiVGapDef::vgap => $vgap),
+            GuiControlDef::name => '',
+            GuiControlDef::title => $title,
+            GuiControlDef::kind => GUI_CONTROL_LABEL,
+            GuiControlDef::specific_def => array(GuiLabelDef::caption => $text,),
+            GuiControlDef::params => array('smart' => false, 'max_lines' => $max_lines),
         );
     }
 
@@ -84,17 +101,20 @@ class Control_Factory
      * @param array &$defs
      * @param string $title
      * @param string $text
-     * @param int $num_lines
+     * @param int $vgap_after
      */
-    public static function add_multiline_label(&$defs, $title, $text, $num_lines = 2)
+    public static function add_smart_label(&$defs, $title, $text, $vgap_after = false)
     {
         $defs[] = array(
             GuiControlDef::name => '',
             GuiControlDef::title => $title,
             GuiControlDef::kind => GUI_CONTROL_LABEL,
-            GuiControlDef::specific_def => array(GuiLabelDef::caption => $text,),
-            GuiControlDef::params => array('smart' => false, 'max_lines' => $num_lines),
+            GuiControlDef::specific_def => array(GuiLabelDef::caption => $text),
+            GuiControlDef::params => array('smart' => true),
         );
+        if ($vgap_after !== false) {
+            self::add_vgap($defs, $vgap_after);
+        }
     }
 
     /**
@@ -119,20 +139,6 @@ class Control_Factory
                 GuiButtonDef::caption => $caption,
                 GuiButtonDef::width => $width,
                 GuiButtonDef::push_action => self::apply_action($handler, $name, $add_params)
-            ),
-        );
-    }
-
-    public static function add_button_close(&$defs, $handler, $add_params, $name, $title, $caption, $width)
-    {
-        $defs[] = array(
-            GuiControlDef::name => $name,
-            GuiControlDef::title => $title,
-            GuiControlDef::kind => GUI_CONTROL_BUTTON,
-            GuiControlDef::specific_def => array(
-                GuiButtonDef::caption => $caption,
-                GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run(self::apply_action($handler, $name, $add_params)),
             ),
         );
     }
@@ -179,22 +185,6 @@ class Control_Factory
 
     /**
      * @param array &$defs
-     * @param string $title
-     * @param string $text
-     */
-    public static function add_smart_label(&$defs, $title, $text)
-    {
-        $defs[] = array(
-            GuiControlDef::name => '',
-            GuiControlDef::title => $title,
-            GuiControlDef::kind => GUI_CONTROL_LABEL,
-            GuiControlDef::specific_def => array(GuiLabelDef::caption => $text),
-            GuiControlDef::params => array('smart' => true),
-        );
-    }
-
-    /**
-     * @param array &$defs
      * @param string $caption
      * @param int $width
      * @param bool $caption_centered
@@ -227,29 +217,6 @@ class Control_Factory
         $defs[] = array(
             GuiControlDef::name => $name,
             GuiControlDef::title => null,
-            GuiControlDef::kind => GUI_CONTROL_BUTTON,
-            GuiControlDef::specific_def => array(
-                GuiButtonDef::caption => $caption,
-                GuiButtonDef::width => $width,
-                GuiButtonDef::push_action => Action_Factory::close_dialog_and_run(self::apply_action($handler, $name, $add_params)),
-            ),
-        );
-    }
-
-    /**
-     * @param array &$defs
-     * @param User_Input_Handler $handler
-     * @param string $name
-     * @param string $title
-     * @param string $caption
-     * @param int $width
-     * @param array|null $add_params
-     */
-    public static function add_close_dialog_and_apply_button_title(&$defs, $handler, $name, $title, $caption, $width, $add_params = null)
-    {
-        $defs[] = array(
-            GuiControlDef::name => $name,
-            GuiControlDef::title => $title,
             GuiControlDef::kind => GUI_CONTROL_BUTTON,
             GuiControlDef::specific_def => array(
                 GuiButtonDef::caption => $caption,
@@ -369,6 +336,20 @@ class Control_Factory
         );
 
         self::add_vgap($defs, 4);
+    }
+
+    public static function add_progress_bar(&$defs, $title = null, $width = 0, $progress = 0, $gui_params = null)
+    {
+        $defs[] = array(
+            GuiControlDef::name => '',
+            GuiControlDef::title => $title,
+            GuiControlDef::kind => GUI_CONTROL_PROGRESS_BAR,
+            GuiControlDef::specific_def => array(
+                GuiProgressBarDef::width => $width,
+                GuiProgressBarDef::progress => $progress,
+                ),
+            GuiControlDef::params => $gui_params,
+        );
     }
 
     /**

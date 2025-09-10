@@ -339,22 +339,22 @@ class vod_standard extends Abstract_Vod
 
         if ($movie_id === VOD_LIST_GROUP_ID) {
             $movie = new Movie($movie_id, $this->plugin);
-            $title = TR::load(VOD_LIST_GROUP_CAPTION);
+            $title = TR::t('movie_list');
             $movie->set_data(
-                $title,            // caption,
-                '',    // caption_original,
-                '',      // description,
-                VOD_LIST_GROUP_ICON,             // poster_url,
-                '',      // length,
-                '',             // year,
-                '',     // director,
-                '',     // scenario,
-                '',       // actors,
+                $title,     // caption,
+                '',         // caption_original,
+                '',         // description,
+                VOD_LIST_GROUP_ICON, // poster_url,
+                '',         // length,
+                '',         // year,
+                '',         // director,
+                '',         // scenario,
+                '',         // actors,
                 '',         // genres,
-                '',       // rate_imdb,
-                '',    // rate_kinopoisk,
-                '',       // rate_mpaa,
-                ''           // country,
+                '',         // rate_imdb,
+                '',         // rate_kinopoisk,
+                '',         // rate_mpaa,
+                ''          // country,
             );
 
             $movie->add_series_data(new Movie_Series($movie_id, $title, ''));
@@ -386,20 +386,20 @@ class vod_standard extends Abstract_Vod
 
             $movie = new Movie($movie_id, $this->plugin);
             $movie->set_data(
-                $title,            // caption,
-                $title_orig,       // caption_original,
-                '',      // description,
-                $logo,             // poster_url,
-                '',      // length,
-                $year,             // year,
-                '',     // director,
-                '',     // scenario,
-                '',       // actors,
-                $category,         // genres,
-                $rating,           // rate_imdb,
-                '',    // rate_kinopoisk,
-                '',       // rate_mpaa,
-                $country           // country,
+                $title,         // caption,
+                $title_orig,    // caption_original,
+                '',             // description,
+                $logo,          // poster_url,
+                '',             // length,
+                $year,          // year,
+                '',             // director,
+                '',             // scenario,
+                '',             // actors,
+                $category,      // genres,
+                $rating,        // rate_imdb,
+                '',             // rate_kinopoisk,
+                '',             // rate_mpaa,
+                $country        // country,
             );
 
             $movie->add_series_data(new Movie_Series($movie_id, $title, $url));

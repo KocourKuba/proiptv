@@ -91,7 +91,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::update_regular_folder($range, true, -1);
 
             case GUI_EVENT_KEY_POPUP_MENU:
-                $title = TR::t('playlist_name_msg__1', TR::load(VOD_GROUP_CAPTION));
+                $title = TR::t('playlist_name_msg__1', TR::t(VOD_GROUP_CAPTION));
                 $menu_items[] = $this->plugin->create_menu_item($this, ACTION_RELOAD, $title, "refresh.png");
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 if ($group_id === VOD_FAV_GROUP_ID && $this->plugin->get_order_count(VOD_FAV_GROUP_ID)) {
@@ -194,7 +194,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             }
 
                             $color = DEF_LABEL_TEXT_COLOR_GOLD;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::load(VOD_FAV_GROUP_CAPTION), $cnt);
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::t(VOD_FAV_GROUP_CAPTION), $cnt);
                             break;
 
                         case VOD_HISTORY_GROUP_ID:
@@ -205,7 +205,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             }
 
                             $color = DEF_LABEL_TEXT_COLOR_TURQUOISE;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::load(VOD_HISTORY_GROUP_CAPTION), $cnt);
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::t(VOD_HISTORY_GROUP_CAPTION), $cnt);
                             break;
 
                         case VOD_LIST_GROUP_ID:
@@ -220,17 +220,17 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                             }
 
                             $color = DEF_LABEL_TEXT_COLOR_VIOLET;
-                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::load(VOD_LIST_GROUP_CAPTION), $cnt);
+                            $item_detailed_info = TR::t('vod_screen_group_info__2', TR::t('movie_list'), $cnt);
                             break;
 
                         case VOD_FILTER_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
-                            $item_detailed_info = TR::load(VOD_FILTER_GROUP_CAPTION);
+                            $item_detailed_info = TR::t('filters');
                             break;
 
                         case VOD_SEARCH_GROUP_ID:
                             $color = DEF_LABEL_TEXT_COLOR_LIGHTGREEN;
-                            $item_detailed_info = TR::load(VOD_SEARCH_GROUP_CAPTION);
+                            $item_detailed_info = TR::t(VOD_SEARCH_GROUP_CAPTION);
                             break;
 
                         default:

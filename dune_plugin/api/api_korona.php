@@ -124,9 +124,9 @@ class api_korona extends api_default
         } else if (isset($account_info->balance, $account_info->tariff)) {
             Control_Factory::add_label($defs, TR::t('balance'), "$account_info->balance {$account_info->tariff->currency}", -15);
             $packages = $account_info->tariff->name . PHP_EOL;
-            $packages .= TR::load('end_date') . " $account_info->expiry_date" . PHP_EOL;
-            $packages .= TR::load('package_timed') . " {$account_info->tariff->period}" . PHP_EOL;
-            $packages .= TR::load('money_need') . " {$account_info->tariff->full_price} {$account_info->tariff->currency}" . PHP_EOL;
+            $packages .= TR::load('end_date__1', $account_info->expiry_date) . PHP_EOL;
+            $packages .= TR::load('package_timed__1', $account_info->tariff->period) . PHP_EOL;
+            $packages .= TR::load('money_need__1', "{$account_info->tariff->full_price} {$account_info->tariff->currency}") . PHP_EOL;
             Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
         }
 

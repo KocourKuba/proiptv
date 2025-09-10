@@ -102,7 +102,7 @@ class api_cbilling extends api_default
                 Control_Factory::add_label($defs, TR::t('disable_adult'), $data->disable_adult ? TR::t('yes') : TR::t('no'), -15);
             }
             if (isset($data->vod)) {
-                Control_Factory::add_label($defs, TR::load('plugin_vod') . ":", $data->vod ? TR::t('yes') : TR::t('no'), -15);
+                Control_Factory::add_label($defs, TR::t('plugin_vod__1', ':'), $data->vod ? TR::t('yes') : TR::t('no'), -15);
             }
         }
 

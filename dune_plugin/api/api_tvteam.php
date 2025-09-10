@@ -88,10 +88,10 @@ class api_tvteam extends api_default
             if (isset($account_info->data->userPackagesList)) {
                 $packages = '';
                 foreach ($account_info->data->userPackagesList as $package) {
-                    $packages .= TR::load('package') . " " . $package->packageName . PHP_EOL;
-                    $packages .= TR::load('start_date') . " " . $package->fromDate . PHP_EOL;
-                    $packages .= TR::load('end_date') . " " . $package->toDate . PHP_EOL;
-                    $packages .= TR::load('money_need') . " " . "$package->salePrice$" . PHP_EOL;
+                    $packages .= TR::load('package__1', $package->packageName) . PHP_EOL;
+                    $packages .= TR::load('start_date__1', $package->fromDate) . PHP_EOL;
+                    $packages .= TR::load('end_date__1', $package->toDate) . PHP_EOL;
+                    $packages .= TR::load('money_need__1', "$package->salePrice$") . PHP_EOL;
                 }
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }

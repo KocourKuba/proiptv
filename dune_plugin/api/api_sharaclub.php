@@ -98,7 +98,7 @@ class api_sharaclub extends api_default
                 Control_Factory::add_label($defs, TR::t('balance'), $data->money . " " . $data->currency, -15);
             }
             if (isset($data->money_need, $data->currency)) {
-                Control_Factory::add_label($defs, TR::t('money_need'), $data->money_need . " " . $data->currency, -15);
+                Control_Factory::add_label($defs, TR::t('money_need__1', "$data->money_need $data->currency"), -15);
             }
 
             if (isset($data->abon)) {
@@ -132,7 +132,7 @@ class api_sharaclub extends api_default
                 Control_Factory::add_smart_label($defs, "", "<gap width=25/><icon width=450 height=450>$img</icon>");
                 Control_Factory::add_vgap($defs, 450);
             } else {
-                Control_Factory::add_smart_label($defs, "", "<text>" . TR::load('err_incorrect_access_data') . "</text>");
+                Control_Factory::add_smart_label($defs, "", "<text>" . TR::t('err_incorrect_access_data') . "</text>");
                 Control_Factory::add_vgap($defs, 50);
             }
 

@@ -293,7 +293,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             get_image_path('page_plus_btn.png'),
             get_image_path('page_minus_btn.png'),
             DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load('scroll_page')
+            TR::t('scroll_page')
         );
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);
@@ -344,7 +344,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         }
 
         if (!isset($prog_info[PluginTvEpgProgram::name])) {
-            $title = TR::load('epg_not_exist');
+            $title = TR::t('epg_not_exist');
         } else {
             // program epg available
             $title = $prog_info[PluginTvEpgProgram::name];
@@ -353,11 +353,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             // begin and end of program, elapsed time
             $elapsed_text = sprintf("<gap width=0/><text color=%s size=normal>%s %s - %s</text><gap width=50/><text color=%s size=normal>%s %s</text>",
                 DEF_LABEL_TEXT_COLOR_GOLD,
-                TR::load('time'),
+                TR::t('time'),
                 format_datetime('H:i', $prog_info[PluginTvEpgProgram::start_tm_sec]),
                 format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec]),
                 DEF_LABEL_TEXT_COLOR_TURQUOISE,
-                TR::load('live'),
+                TR::t('live'),
                 format_duration_seconds($diff)
             );
             Control_Factory::add_smart_label($defs, null, $elapsed_text);
@@ -365,7 +365,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             // Progress bar placed after elapsed time on the same line
             Control_Factory::add_vgap($defs, -64);
             $pos_percent = round(100 * $diff / ($prog_info[PluginTvEpgProgram::end_tm_sec] - $prog_info[PluginTvEpgProgram::start_tm_sec]));
-            Control_Factory_Ext::add_progressbar($defs,
+            Control_Factory_Ext::add_progress_bar_ext($defs,
                 self::EPG_DIALOG_WIDTH - self::EPG_PROGRESS_WIDTH - 150,
                 self::EPG_PROGRESS_WIDTH, $pos_percent);
 
@@ -387,7 +387,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 get_image_path('page_plus_btn.png'),
                 get_image_path('page_minus_btn.png'),
                 DEF_LABEL_TEXT_COLOR_SILVER,
-                TR::load('scroll_page')
+                TR::t('scroll_page')
             );
             Control_Factory::add_smart_label($defs, '', $help_text);
             Control_Factory::add_vgap($defs, -80);
@@ -421,12 +421,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 $zoom_opts_idx = DuneVideoZoomPresets::not_set;
             }
 
-            $zoom_opts = array_map(function ($zoom_item) {
-                return TR::t($zoom_item);
-            }, DuneVideoZoomPresets::$zoom_ops_translated);
-
             Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_ZOOM,
-                TR::t('tv_screen_channel_zoom'), $zoom_opts_idx, $zoom_opts, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+                TR::t('tv_screen_channel_zoom'), $zoom_opts_idx, $this->get_zoom_opts_translated(), Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         self::add_epg_shift_defs($defs, $handler, $this->get_channel_epg_shift($channel_id), false);
@@ -469,6 +465,27 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             TR::t('setup_epg_shift_min'), (int)(abs($initial_epg_shift % 3600) / 60), $shift_ops_mins, 250, false, $apply);
     }
 
+    protected function get_zoom_opts_translated()
+    {
+        static $zoom_ops_translated;
+
+        if (empty($zoom_ops_translated)) {
+            $zoom_ops_translated = array(
+                DuneVideoZoomPresets::not_set => TR::t('tv_screen_zoom_not_set'),
+                DuneVideoZoomPresets::normal => TR::t('tv_screen_zoom_normal'),
+                DuneVideoZoomPresets::enlarge => TR::t('tv_screen_zoom_enlarge'),
+                DuneVideoZoomPresets::make_wider => TR::t('tv_screen_zoom_make_wider'),
+                DuneVideoZoomPresets::fill_screen => TR::t('tv_screen_zoom_fill_screen'),
+                DuneVideoZoomPresets::full_fill_screen => TR::t('tv_screen_zoom_full_fill_screen'),
+                DuneVideoZoomPresets::make_taller => TR::t('tv_screen_zoom_make_taller'),
+                DuneVideoZoomPresets::cut_edges => TR::t('tv_screen_zoom_cut_edges'),
+                DuneVideoZoomPresets::full_enlarge => TR::t('tv_screen_zoom_full_enlarge'),
+                DuneVideoZoomPresets::full_stretch => TR::t('tv_screen_zoom_full_stretch'),
+            );
+        }
+
+        return $zoom_ops_translated;
+    }
     /**
      * @param MediaURL $media_url
      * @return Screen

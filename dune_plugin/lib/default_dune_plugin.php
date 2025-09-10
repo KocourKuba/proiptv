@@ -2627,9 +2627,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $epg_presets = $provider->getConfigValue(EPG_JSON_PRESETS);
             $preset_cnt = count($epg_presets);
             if ($preset_cnt) {
-                $engine = TR::load(($this->use_xmltv ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json'));
                 $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1', $engine), "engine.png");
+                    ACTION_EPG_CACHE_ENGINE, TR::t('setup_epg_cache_engine__1',
+                        TR::t($this->use_xmltv ? 'setup_epg_cache_xmltv' : 'setup_epg_cache_json')),
+                    "engine.png");
 
                 if (!$this->use_xmltv && $preset_cnt > 1) {
                     $preset = $this->get_setting(PARAM_EPG_JSON_PRESET, 0);
@@ -2809,15 +2810,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $icon = $this->get_channel_picon($channel_row, $is_classic);
 
         $info = "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
-        $info .= TR::load('name') . ' ' . $channel_row[COLUMN_TITLE] . PHP_EOL;
-        $info .= TR::load('number') . ' ' . $channel_row[COLUMN_CH_NUMBER] . PHP_EOL;
-        $info .= TR::load('archive') . ' ' . $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days') . PHP_EOL;
-        $info .= TR::load('adult') . ' ' . TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT])) . PHP_EOL;
+        $info .= TR::load('name__1', $channel_row[COLUMN_TITLE]) . PHP_EOL;
+        $info .= TR::load('number__1', $channel_row[COLUMN_CH_NUMBER]) . PHP_EOL;
+        $info .= TR::load('archive__2', $channel_row[COLUMN_ARCHIVE], TR::load('days')) . PHP_EOL;
+        $info .= TR::load('adult__1', TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT]))) . PHP_EOL;
         $info .= "EPG ID: " . implode(', ', self::make_epg_ids($channel_row)) . PHP_EOL;
         if ($channel_row[COLUMN_TIMESHIFT] != 0) {
-            $info .= TR::load('time_shift') . ' ' . $channel_row[COLUMN_TIMESHIFT] . PHP_EOL;
+            $info .= TR::load('time_shift__1', $channel_row[COLUMN_TIMESHIFT]) . PHP_EOL;
         }
-        $info .= TR::load('category') . ": {$channel_row[COLUMN_GROUP_ID]}" . PHP_EOL;
+        $info .= TR::load('category__1', $channel_row[COLUMN_GROUP_ID]) . PHP_EOL;
         $info .= TR::load('icon') . ' ' . wrap_string_to_lines($icon, 70) . PHP_EOL;
         $info .= PHP_EOL;
 
@@ -2894,7 +2895,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             get_image_path('page_plus_btn.png'),
             get_image_path('page_minus_btn.png'),
             DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load('scroll_page')
+            TR::l('scroll_page')
         );
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);
@@ -3140,12 +3141,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public static function get_id_detect_mapper()
     {
         return array(
-            CONTROL_DETECT_ID => TR::load('detect'),
-            ATTR_CUID => TR::load('attribute_name__1', ATTR_CHANNEL_ID),
-            ATTR_TVG_ID => TR::load('attribute_name__1', ATTR_TVG_ID),
-            ATTR_TVG_NAME => TR::load('attribute_name__1', ATTR_TVG_NAME),
-            ATTR_CHANNEL_NAME => TR::load('channel_name'),
-            ATTR_CHANNEL_HASH => TR::load('hash_url')
+            CONTROL_DETECT_ID => TR::t('detect'),
+            ATTR_CUID => TR::t('attribute_name__1', ATTR_CHANNEL_ID),
+            ATTR_TVG_ID => TR::t('attribute_name__1', ATTR_TVG_ID),
+            ATTR_TVG_NAME => TR::t('attribute_name__1', ATTR_TVG_NAME),
+            ATTR_CHANNEL_NAME => TR::t('channel_name'),
+            ATTR_CHANNEL_HASH => TR::t('hash_url')
         );
     }
 

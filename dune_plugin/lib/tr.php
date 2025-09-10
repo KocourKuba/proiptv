@@ -32,7 +32,7 @@ class TR
         if ($num_args > 1) {
             $params = '';
             for ($i = 1; $i < $num_args; $i++) {
-                $params .= "<p>$arg_list[$i]</p>";
+                $params .= "<p>" . self::strip_param($arg_list[$i]) . "</p>";
             }
             $str = "%ext%<key_local>$arg_list[0]$params</key_local>";
         } else if ($num_args === 1) {
@@ -53,7 +53,7 @@ class TR
         if ($num_args > 1) {
             $params = '';
             for ($i = 1; $i < $num_args; $i++) {
-                $params .= "<p>$arg_list[$i]</p>";
+                $params .= "<p>" . self::strip_param($arg_list[$i]) . "</p>";
             }
             $str = "%ext%<key_global>$arg_list[0]$params</key_global>";
             hd_debug_print($str);
@@ -112,5 +112,17 @@ class TR
         }
 
         return $lang;
+    }
+
+    private static function strip_param($v)
+    {
+        if (0 === strpos($v, '%tr%')) {
+            return "<key_local>" . substr($v, 4) . "</key_local>";
+        }
+        if (0 === strpos($v, '%ext%')) {
+            return substr($v, 5);
+        }
+
+        return $v;
     }
 }

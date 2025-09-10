@@ -84,12 +84,12 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
         if (!is_r22_or_higher()) {
             hd_debug_print("Too old Dune HD firmware! " . get_raw_firmware_version());
-            return $this->show_old_player(TR::load('err_too_old_player'));
+            return $this->show_old_player(TR::t('err_too_old_player'));
         }
 
         if (!class_exists('SQLite3')) {
             hd_debug_print("No SQLite3 support! " . get_raw_firmware_version());
-            return $this->show_old_player(TR::load('err_no_sqlite'));
+            return $this->show_old_player(TR::t('err_no_sqlite'));
         }
 
         switch ($user_input->control_id) {
@@ -418,7 +418,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
         Curl_Wrapper::simple_download_file($url, $qr_code);
 
         $defs = array();
-        Control_Factory::add_label($defs, TR::t('required_firmware'), TR::load('err_required_firmware'));
+        Control_Factory::add_label($defs, TR::t('required_firmware'), TR::t('err_required_firmware'));
         Control_Factory::add_label($defs, "Dune Product ID:",  get_product_id());
         Control_Factory::add_label($defs, "Dune Firmware:", get_raw_firmware_version());
         Control_Factory::add_label($defs, TR::t('download_link'), "");

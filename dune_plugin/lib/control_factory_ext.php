@@ -282,14 +282,14 @@ class Control_Factory_Ext extends Control_Factory
     /**
      * Show progress bar
      */
-    public static function add_progressbar(&$defs, $dx, $width, $pos_percent, $max_percent = 100)
+    public static function add_progress_bar_ext(&$defs, $dx, $width, $pos_percent, $max_percent = 100)
     {
         if (is_null(self::$instance)) {
             try
             {
                 self::init();
             } catch (Exception $e) {
-                hd_debug_print("Failed to add progressbar: " . $e->getMessage());
+                hd_debug_print("Failed to add progressbar_ext: " . $e->getMessage());
                 return;
             }
         }

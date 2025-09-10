@@ -161,7 +161,7 @@ class Starnet_Tv implements User_Input_Handler
         if ($show_all) {
             $groups[] = array(
                 PluginTvGroup::id => TV_ALL_CHANNELS_GROUP_ID,
-                PluginTvGroup::caption => TR::t(TV_ALL_CHANNELS_GROUP_CAPTION),
+                PluginTvGroup::caption => TR::t('plugin_all_channels'),
                 PluginTvGroup::icon_url => get_cached_image($this->plugin->get_group_icon(TV_ALL_CHANNELS_GROUP_ID))
             );
         }

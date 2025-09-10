@@ -286,19 +286,6 @@ class DuneVideoZoomPresets
         DuneVideoZoomPresets::full_enlarge => VIDEO_ZOOM_FULL_SCREEN,
         DuneVideoZoomPresets::full_stretch => VIDEO_ZOOM_STRETCH_TO_FULL_SCREEN
     );
-
-    public static $zoom_ops_translated = array(
-        DuneVideoZoomPresets::not_set => 'tv_screen_zoom_not_set',
-        DuneVideoZoomPresets::normal => 'tv_screen_zoom_normal',
-        DuneVideoZoomPresets::enlarge => 'tv_screen_zoom_enlarge',
-        DuneVideoZoomPresets::make_wider => 'tv_screen_zoom_make_wider',
-        DuneVideoZoomPresets::fill_screen => 'tv_screen_zoom_fill_screen',
-        DuneVideoZoomPresets::full_fill_screen => 'tv_screen_zoom_full_fill_screen',
-        DuneVideoZoomPresets::make_taller => 'tv_screen_zoom_make_taller',
-        DuneVideoZoomPresets::cut_edges => 'tv_screen_zoom_cut_edges',
-        DuneVideoZoomPresets::full_enlarge => 'tv_screen_zoom_full_enlarge',
-        DuneVideoZoomPresets::full_stretch => 'tv_screen_zoom_full_stretch'
-    );
 }
 
 // Deinterlacing modes for media_url string (|||dune_params|||deint:value)

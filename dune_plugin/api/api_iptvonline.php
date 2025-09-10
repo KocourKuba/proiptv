@@ -167,9 +167,8 @@ class api_iptvonline extends api_default
                 $packages = '';
                 foreach ($data->subscriptions as $subscription) {
                     $packages .= $subscription->name . PHP_EOL;
-                    $packages .= TR::load('end_date') . " " . $subscription->end_date . PHP_EOL;
-                    $packages .= TR::load('recurring') . " " .
-                        ($subscription->auto_prolong ? TR::load('yes') : TR::load('no')) . PHP_EOL;
+                    $packages .= TR::load('end_date__1', $subscription->end_date) . PHP_EOL;
+                    $packages .= TR::load('recurring__1', TR::load($subscription->auto_prolong ? 'yes' : 'no')) . PHP_EOL;
                 }
                 Control_Factory::add_multiline_label($defs, TR::t('packages'), $packages, 10);
             }

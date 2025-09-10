@@ -867,8 +867,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $rows = $this->create_row($items, $headers,
             TV_FAV_GROUP_ID,
-            TR::t(TV_FAV_GROUP_CAPTION),
-            TR::t(TV_FAV_GROUP_CAPTION),
+            TR::t('plugin_favorites'),
+            TR::t('plugin_favorites'),
             User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
             TitleRowsParams::fav_caption_color
         );
@@ -940,8 +940,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         $rows = $this->create_row($items, $headers,
             TV_CHANGED_CHANNELS_GROUP_ID,
-            TR::t(TV_CHANGED_CHANNELS_GROUP_CAPTION),
-            TR::t(TV_CHANGED_CHANNELS_GROUP_CAPTION),
+            TR::t('plugin_changed'),
+            TR::t('plugin_changed'),
             User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER),
             TitleRowsParams::fav_caption_color
         );
@@ -981,16 +981,17 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             );
         }
 
-        $title = TR::load(TV_ALL_CHANNELS_GROUP_CAPTION);
         if ($this->plugin->get_bool_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, false)) {
-            $title .= " (" . count($items) . ")";
+            $title = TR::t('plugin_all_channels__1', count($items));
+        } else {
+            $title = TR::t('plugin_all_channels');
         }
 
         $rows = $this->create_row($items,
             $headers,
             TV_ALL_CHANNELS_GROUP_ID,
             $title,
-            TR::t(TV_ALL_CHANNELS_GROUP_CAPTION),
+            TR::t('plugin_all_channels'),
             User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_ENTER)
         );
 
@@ -1260,7 +1261,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             $dx += 55;
             if ($group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
-                $btn_label = TR::load('clear_changed');
+                $btn_label = TR::t('clear_changed');
             } else {
                 $btn_label = $in_fav ? TR::t('delete') : TR::t('add');
             }
