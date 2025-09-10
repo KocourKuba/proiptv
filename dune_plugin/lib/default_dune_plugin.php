@@ -2895,7 +2895,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             get_image_path('page_plus_btn.png'),
             get_image_path('page_minus_btn.png'),
             DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::l('scroll_page')
+            TR::t('scroll_page')
         );
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);

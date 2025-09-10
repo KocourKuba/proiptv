@@ -75,6 +75,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $actions[GUI_EVENT_KEY_RETURN] = $action_return;
         $actions[GUI_EVENT_KEY_TOP_MENU] = $action_return;
         $actions[GUI_EVENT_KEY_ENTER] = $action_select;
+        $actions[GUI_EVENT_KEY_PLAY] = User_Input_Handler_Registry::create_action($this, ACTION_INDEX_EPG);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
@@ -574,8 +575,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $title = TR::t('edit_list_title_info__2', $title, $dl_date);
 
                 $etag = Curl_Wrapper::get_cached_etag($item[PARAM_URI]);
-                $info = TR::load('edit_list_cache_suport__1',
-                    empty($etag) ? TR::load('no') : TR::load('yes'));
+                $info = TR::load('edit_list_cache_suport__1', TR::load(empty($etag) ? 'no' : 'yes'));
 
                 if ($item[PARAM_CACHE] === XMLTV_CACHE_AUTO) {
                     $expired = TR::load('setup_epg_cache_type_auto');
@@ -689,48 +689,85 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
         $params = $this->plugin->find_xmltv_source($id);
         if ($params[COLUMN_CACHE] === 'auto') {
-            $cache =  TR::load('auto');
+            $cache =  TR::t('auto');
         } else {
-            $cache =  $params[COLUMN_CACHE] . ' ' . TR::load('days');
+            $cache =  TR::t('days__1', $params[COLUMN_CACHE]);
         }
 
-        $info  = TR::load('name')  . "   {$params[COLUMN_NAME]}" . PHP_EOL;
-        $info .= TR::load('url')   . "   {$params[COLUMN_URI]}" . PHP_EOL;
-        $info .= TR::load('cache') . "   $cache" . PHP_EOL;
-        $info .= TR::load('size')  . '   ' . HD::get_file_size($cached_xmltv_file) . PHP_EOL;
-        $info .= TR::load('download_date') . ' ' . date('Y-m-d H:i', filemtime($cached_xmltv_file)) . PHP_EOL;
-        $info .= PHP_EOL;
+        Control_Factory::add_smart_label($defs, null,
+            sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
+                DEF_LABEL_TEXT_COLOR_GOLD, TR::t('name'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $params[COLUMN_NAME]),
+            -30
+        );
+        Control_Factory::add_smart_label($defs, null,
+            sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
+                DEF_LABEL_TEXT_COLOR_GOLD, TR::t('url'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $params[COLUMN_URI]),
+            -30
+        );
+        Control_Factory::add_smart_label($defs, null,
+            sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
+                DEF_LABEL_TEXT_COLOR_GOLD, TR::t('cache'),
+                DEF_LABEL_TEXT_COLOR_WHITE, $cache),
+            -30
+        );
+        Control_Factory::add_smart_label($defs, null,
+            sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
+                DEF_LABEL_TEXT_COLOR_GOLD, TR::t('size'),
+                DEF_LABEL_TEXT_COLOR_WHITE, HD::get_file_size($cached_xmltv_file)),
+            -30
+        );
+        Control_Factory::add_smart_label($defs, null,
+            sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
+                DEF_LABEL_TEXT_COLOR_GOLD, TR::t('download_date'),
+                DEF_LABEL_TEXT_COLOR_WHITE, date('Y-m-d H:i', filemtime($cached_xmltv_file))),
+            -30
+        );
+
+        Control_Factory::add_vgap($defs, 30);
 
         $stat = Epg_Manager_Xmltv::get_stat($cached_xmltv_file);
         if (!empty($stat)) {
             $sec = TR::load('sec');
-            $info .= TR::load('download_time')       . "   {$stat['download']} $sec" . PHP_EOL;
-            $info .= TR::load('unpack_time')         . "   {$stat['unpack']} $sec" . PHP_EOL;
-            $info .= TR::load('index_channels_time') . "   {$stat['channels']} $sec" . PHP_EOL;
-            $info .= TR::load('index_entries_time')  . "   {$stat['entries']} $sec" . PHP_EOL;
-            $info .= PHP_EOL;
+            Control_Factory::add_smart_label($defs, null,
+                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
+                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('download_time'),
+                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['download']),
+                -30
+            );
+            Control_Factory::add_smart_label($defs, null,
+                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
+                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('unpack_time'),
+                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['unpack']),
+                -30
+            );
+            Control_Factory::add_smart_label($defs, null,
+                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
+                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('index_channels_time'),
+                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['channels']),
+                -30
+            );
+            Control_Factory::add_smart_label($defs, null,
+                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
+                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('index_entries_time'),
+                    DEF_LABEL_TEXT_COLOR_WHITE, $stat['entries']),
+                -30
+            );
+            Control_Factory::add_vgap($defs, 30);
         }
 
         $indexes = $epg_manager->get_indexes_info($params);
         foreach ($indexes as $index => $cnt) {
-            $cnt = ($cnt !== -1) ? $cnt : TR::load('err_error_no_data');
-            $info .= "$index:   $cnt" . PHP_EOL;
+            $cnt = ($cnt !== -1) ? $cnt : TR::t('err_error_no_data');
+            Control_Factory::add_smart_label($defs, null,
+                sprintf("<gap width=0/><text color=%s size=small>$index:</text><gap width=20/><text color=%s size=small>$cnt</text>",
+                    DEF_LABEL_TEXT_COLOR_GOLD, DEF_LABEL_TEXT_COLOR_WHITE),
+                -30
+            );
         }
-        $info .= PHP_EOL;
 
-        Control_Factory::add_multiline_label($defs, null, $info, 18);
-        Control_Factory::add_vgap($defs, 10);
-        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            1200,
-            get_image_path('page_plus_btn.png'),
-            get_image_path('page_minus_btn.png'),
-            DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load('scroll_page')
-        );
-
-        Control_Factory::add_smart_label($defs, '', $text);
-        Control_Factory::add_vgap($defs, -80);
-
+        Control_Factory::add_vgap($defs, 30);
         Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
         Control_Factory::add_vgap($defs, 10);
 
