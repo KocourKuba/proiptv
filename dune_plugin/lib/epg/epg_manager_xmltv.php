@@ -458,6 +458,8 @@ class Epg_Manager_Xmltv
             if ($cache_ttl === XMLTV_CACHE_AUTO) {
                 $curl_wrapper = new Curl_Wrapper();
                 $curl_wrapper->init();
+                $curl_wrapper->set_connection_timeout($this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
+                $curl_wrapper->set_download_timeout($this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
                 if (!$curl_wrapper->check_is_expired($url)) {
                     $expired = false;
                 } else if (Curl_Wrapper::is_cached_etag($url)) {
@@ -1230,7 +1232,8 @@ class Epg_Manager_Xmltv
         Curl_Wrapper::clear_cached_etag($url);
 
         $curl_wrapper->init();
-        $curl_wrapper->set_download_timeout(120);
+        $curl_wrapper->set_connection_timeout($this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
+        $curl_wrapper->set_download_timeout($this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
         if (!$curl_wrapper->download_file($url, $tmp_filename, true)) {
             throw new Exception("Can't exec curl");
         }

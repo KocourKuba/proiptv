@@ -307,6 +307,8 @@ const PARAM_REFRESH_TOKEN = 'refresh_token';
 const PARAM_SESSION_ID = 'session_id';
 const PARAM_INDEXING_FLAG = 'index_all';
 const PARAM_FIX_PALETTE = 'fix_palette';
+const PARAM_CURL_CONNECT_TIMEOUT = 'curl_connect_timeout';
+const PARAM_CURL_DOWNLOAD_TIMEOUT = 'curl_download_timeout';
 
 const PARAM_GROUP_ORDINARY = 0;
 const PARAM_GROUP_SPECIAL = 1;

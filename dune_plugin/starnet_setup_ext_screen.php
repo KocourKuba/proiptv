@@ -74,6 +74,19 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
             TR::t('setup_settings_protection_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
 
         //////////////////////////////////////
+        // Curl connect timeout
+        foreach (array(30, 60, 90, 120, 180, 240, 300) as $sec) {
+            $range[$sec] = $sec;
+        }
+        Control_Factory::add_combobox($defs, $this, null, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'),
+            $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30), $range, self::CONTROLS_WIDTH, true);
+
+        //////////////////////////////////////
+        // Curl download timeout
+        Control_Factory::add_combobox($defs, $this, null, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'),
+            $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120), $range, self::CONTROLS_WIDTH, true);
+
+        //////////////////////////////////////
         // Settings full size remote
         if (is_limited_apk()) {
             $remote = $this->plugin->get_parameter(PARAM_FULL_SIZE_REMOTE, SwitchOnOff::off);
@@ -152,6 +165,11 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 hd_debug_print("pass: $param, old pass: $old_pass, new pass: $user_input->pass2", true);
 
                 $post_action = Action_Factory::show_title_dialog($msg);
+                break;
+
+            case PARAM_CURL_CONNECT_TIMEOUT:
+            case PARAM_CURL_DOWNLOAD_TIMEOUT:
+                $this->plugin->set_parameter($control_id, $user_input->{$control_id});
                 break;
 
             case PARAM_FULL_SIZE_REMOTE:

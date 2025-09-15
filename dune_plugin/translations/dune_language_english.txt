@@ -230,6 +230,8 @@ setup_provider_info__3 = Link: %s||ID: %s||Access: %s
 setup_cache_time = Cache time
 setup_cache_time_h__1 = %s hour(s)
 setup_cache_time_d__1 = %s day(s)
+setup_connect_timeout = Connect timeout (sec)
+setup_download_timeout = Download timeout (sec)
 
 setup_channels_src_reset_playlist = Reset playlist settings
 setup_channels_src_edit_playlists = Select or Edit Playlists

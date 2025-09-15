@@ -39,7 +39,7 @@ spl_autoload_register(function ($className) {
     foreach ($directories as $dir) {
         $path = $dir . '/' . $className . '.php';
         if (file_exists($path)) {
-            hd_debug_print("include $path");
+            hd_print("include $path");
             include $path;
             return;
         }

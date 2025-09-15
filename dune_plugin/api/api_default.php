@@ -368,6 +368,9 @@ class api_default
         hd_debug_print("ApiCommandUrl: $command_url", true);
         $this->curl_wrapper->init();
 
+        $this->curl_wrapper->set_connection_timeout($this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
+        $this->curl_wrapper->set_download_timeout($this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
+
         $add_headers = $this->get_additional_headers($command);
 
         if (empty($curl_opt[CURLOPT_HTTPHEADER]) && !empty($add_headers)) {

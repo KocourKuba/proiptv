@@ -230,6 +230,8 @@ setup_provider_info__3 = Verknüpfung: %s||ID: %s||Zugriff: %s
 setup_cache_time = Cache-Zeit
 setup_cache_time_h__1 = %s Stunde(n)
 setup_cache_time_d__1 = %s Tag(e)
+setup_connect_timeout = Zeitlimit für die Verbindung (sec)
+setup_download_timeout = Download-Zeitüberschreitung (sec)
 
 setup_channels_src_reset_playlist = Playlist-Einstellungen zurücksetzen
 setup_channels_src_edit_playlists = Wiedergabelisten auswählen oder bearbeiten
