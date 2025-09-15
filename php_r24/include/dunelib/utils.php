@@ -337,7 +337,7 @@ class HD
     {
         if ($params && isset($params->eh))
         {
-            hd_print('DEBUG reusing curl handle');
+            hd_print("DEBUG reusing curl handle");
             $ch = $params->eh;
             $ch_occupied = false;
         }

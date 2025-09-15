@@ -295,6 +295,7 @@ define ('CLOSE_DIALOG_AND_RUN_ACTION_ID',                'close_dialog_and_run')
 define ('COMPOSITE_ACTION_ID',                           'composite');
 define ('CONFIRM_LOCATION_ACTION_ID',                    'confirm_location');
 define ('CREATE_NETWORK_FOLDER_ACTION_ID',               'create_network_folder');
+define ('CUSTOM_IGNORE_UPDATE_ACTION_ID',                'custom_ignore_update');
 define ('DETECT_SERIES_ACTION_ID',                       'detect_series');
 define ('DOWNLOAD_AND_INSTALL_APK_ACTION_ID',            'download_and_install_apk');
 define ('DVB_COMMAND_ACTION_ID',                         'dvb_command');
@@ -521,6 +522,14 @@ class CreateNetworkFolderActionData
 {
     const /* (char *)                         */ name                             = 'name';
     const /* (char *)                         */ url                              = 'url';
+    const /* (GuiAction *)                    */ post_action                      = 'post_action';
+}
+
+class CustomIgnoreUpdateActionData
+{
+    const /* bool                             */ add                              = 'add';
+    const /* bool                             */ is_dir                           = 'is_dir';
+    const /* (MY_StringArray *)               */ quids                            = 'quids';
     const /* (GuiAction *)                    */ post_action                      = 'post_action';
 }
 
