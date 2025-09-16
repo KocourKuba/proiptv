@@ -137,13 +137,13 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 throw new Exception('EPG url is not generated');
             }
 
-            if (isset($this->epg_cache[$epg_id][$day_start_ts])) {
+            if (isset(static::$epg_cache[$epg_id][$day_start_ts])) {
                 hd_debug_print("Load day EPG ID $epg_id from day start: ($day_start_ts) " . format_datetime("Y-m-d H:i", $day_start_ts) . " from memory cache ");
                 $cached = true;
-                return $this->epg_cache[$epg_id][$day_start_ts];
+                return static::$epg_cache[$epg_id][$day_start_ts];
             }
 
-            $epg_cache_file = get_temp_path($provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache");
+            $epg_cache_file = self::$cache_dir . $provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache";
 
             hd_debug_print("Try to load EPG ID: '$epg_id' for channel '{$channel_row[COLUMN_CHANNEL_ID]}' ({$channel_row[COLUMN_TITLE]})");
             hd_debug_print("EPG url: $epg_url");
@@ -202,7 +202,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
 
         if (!empty($day_epg)) {
             hd_debug_print("Store day epg to memory cache");
-            $this->epg_cache[$epg_id][$day_start_ts] = $day_epg;
+            self::$epg_cache[$epg_id][$day_start_ts] = $day_epg;
         }
 
         return $day_epg;
@@ -294,16 +294,12 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      * @inheritDoc
      * @override
      */
-    public function clear_epg_files($hash = null)
+    public static function clear_epg_files($hash = null)
     {
         hd_debug_print(null, true);
-        $this->epg_cache = array();
-        if (empty($hash)) {
-            $mask = "*";
-        } else {
-            $mask = "$hash*";
-        }
-        $files = get_temp_path("$mask.cache");
+
+        self::clear_epg_memory_cache();
+        $files = self::$cache_dir . (empty($hash) ? '*.cache' : "$hash*.cache");
         hd_debug_print("clear cache files: $files");
         array_map('unlink', glob($files));
         clearstatcache();

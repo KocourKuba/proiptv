@@ -331,7 +331,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 if (!isset($user_input->{LIST_IDX}) || $this->plugin->is_use_xmltv()) break;
 
                 foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
-                    $this->plugin->safe_clear_selected_epg_cache($id);
+                    Epg_Manager_Xmltv::clear_epg_files($id);
                 }
                 $this->plugin->set_setting(PARAM_EPG_JSON_PRESET, $user_input->{LIST_IDX});
                 return $reload_action;

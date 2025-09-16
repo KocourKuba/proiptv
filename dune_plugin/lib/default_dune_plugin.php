@@ -1242,6 +1242,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 foreach ($all_sources as $params) {
                     $flag = $this->epg_manager->check_xmltv_source($params, INDEXING_CHANNELS);
                     if ($flag !== 0) {
+                        $params[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
+                        $params[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
                         $this->epg_manager->reindex_xmltv($params, $flag);
                     }
                 }
@@ -1571,11 +1573,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // background indexing performed only for one url!
         hd_debug_print("Run background indexing for: '$source_id': {$item[PARAM_URI]}");
+        $item[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
+        $item[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
+
         $config = array(
             PARAM_ENABLE_DEBUG => LogSeverity::$is_debug,
             PARAM_CACHE_DIR => $this->get_cache_dir(),
             PARAMS_XMLTV => $item,
-            PARAM_INDEXING_FLAG => $indexing_flag
+            PARAM_INDEXING_FLAG => $indexing_flag,
         );
 
         $config_file = get_temp_path(sprintf(self::PARSE_CONFIG, $source_id));
@@ -1874,17 +1879,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * clear memory cache and entire cache folder for selected hash
-     * if hash is empty clear all cache
+     * clear EPG cache for active playlist
      *
-     * @param string $hash
      * @return void
      */
-    public function safe_clear_selected_epg_cache($hash)
+    public function clear_playlist_epg_cache()
     {
         hd_debug_print(null, true);
-        if (isset($this->epg_manager)) {
-            $this->epg_manager->clear_epg_files($hash);
+        $playlist_id = $this->get_active_playlist_id();
+        Epg_Manager_Json::clear_epg_files($playlist_id);
+        foreach ($this->get_selected_xmltv_ids() as $id) {
+            Epg_Manager_Xmltv::clear_epg_files($id);
         }
     }
 
@@ -2385,23 +2390,27 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             if ($this->picons_source !== XMLTV_PICONS && ($this->picons_source !== COMBINED_PICONS || !empty($icon_url))) break;
-
-            $epg_ids = self::make_epg_ids($channel_row);
             if (empty($this->epg_manager)) break;
 
-            if (isset($aliases[ATTR_TVG_NAME])) {
-                $epg_ids[ATTR_TVG_NAME] = mb_convert_case($epg_ids[ATTR_TVG_NAME], MB_CASE_LOWER, "UTF-8");
+            if (!empty($channel_row[COLUMN_TITLE])) {
+                $picon_ids[] = mb_convert_case($channel_row[COLUMN_TITLE], MB_CASE_LOWER, "UTF-8");
             }
 
-            if (isset($epg_ids[ATTR_CHANNEL_NAME])) {
-                $epg_ids[ATTR_CHANNEL_NAME] = mb_convert_case($epg_ids[ATTR_CHANNEL_NAME], MB_CASE_LOWER, "UTF-8");
+            if (!empty($aliases[ATTR_TVG_NAME])) {
+                $picon_ids[] = mb_convert_case($aliases[ATTR_TVG_NAME], MB_CASE_LOWER, "UTF-8");
             }
 
-            $epg_ids = array_unique(array_filter(array_values($epg_ids)));
+            if (!empty($channel_row[COLUMN_EPG_ID])) {
+                $picon_ids[] = $channel_row[COLUMN_EPG_ID];
+            }
 
-            if (empty($epg_ids)) break;
+            if (!empty($channel_row[COLUMN_CHANNEL_ID])) {
+                $picon_ids[] = $channel_row[COLUMN_CHANNEL_ID];
+            }
 
-            $placeHolders = Sql_Wrapper::sql_make_list_from_values($epg_ids);
+            if (empty($picon_ids)) break;
+
+            $placeHolders = Sql_Wrapper::sql_make_list_from_values(array_unique($picon_ids));
             foreach ($this->epg_manager->get_sources() as $key => $params) {
                 if ($this->epg_manager->is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) continue;
 
@@ -2814,7 +2823,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $info .= TR::load('number__1', $channel_row[COLUMN_CH_NUMBER]) . PHP_EOL;
         $info .= TR::load('archive__2', $channel_row[COLUMN_ARCHIVE], TR::load('days')) . PHP_EOL;
         $info .= TR::load('adult__1', TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT]))) . PHP_EOL;
-        $info .= "EPG ID: " . implode(', ', self::make_epg_ids($channel_row)) . PHP_EOL;
+        $info .= "EPG ID: " . implode(', ', array_unique(array_filter(self::make_epg_ids($channel_row)))) . PHP_EOL;
         if ($channel_row[COLUMN_TIMESHIFT] != 0) {
             $info .= TR::load('time_shift__1', $channel_row[COLUMN_TIMESHIFT]) . PHP_EOL;
         }
@@ -2895,7 +2904,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             get_image_path('page_plus_btn.png'),
             get_image_path('page_minus_btn.png'),
             DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::t('scroll_page')
+            TR::load('scroll_page')
         );
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);

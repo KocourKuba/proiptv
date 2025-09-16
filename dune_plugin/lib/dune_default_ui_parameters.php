@@ -293,7 +293,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             get_image_path('page_plus_btn.png'),
             get_image_path('page_minus_btn.png'),
             DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::t('scroll_page')
+            TR::load('scroll_page')
         );
         Control_Factory::add_smart_label($defs, '', $text);
         Control_Factory::add_vgap($defs, -80);
@@ -387,7 +387,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
                 get_image_path('page_plus_btn.png'),
                 get_image_path('page_minus_btn.png'),
                 DEF_LABEL_TEXT_COLOR_SILVER,
-                TR::t('scroll_page')
+                TR::load('scroll_page')
             );
             Control_Factory::add_smart_label($defs, '', $help_text);
             Control_Factory::add_vgap($defs, -80);

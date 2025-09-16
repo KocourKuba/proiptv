@@ -39,6 +39,18 @@ class Epg_Manager_Xmltv
     protected static $index_flags = array(INDEXING_DOWNLOAD, INDEXING_CHANNELS, INDEXING_ENTRIES);
 
     /**
+     * path where cache is stored
+     * @var string
+     */
+    protected static $cache_dir;
+
+    /**
+     * contains memory epg cache
+     * @var array
+     */
+    protected static $epg_cache = array();
+
+    /**
      * @var Default_Dune_Plugin
      */
     protected $plugin;
@@ -47,12 +59,6 @@ class Epg_Manager_Xmltv
      * @var array
      */
     protected $delayed_epg = array();
-
-    /**
-     * contains memory epg cache
-     * @var array
-     */
-    protected $epg_cache = array();
 
     /**
      * @var int
@@ -65,15 +71,9 @@ class Epg_Manager_Xmltv
     protected $xmltv_sources;
 
     /**
-     * path where cache is stored
-     * @var string
-     */
-    protected static $cache_dir;
-
-    /**
      * @var Sql_Wrapper[]
      */
-    protected $epg_db = array();
+    protected static $epg_db = array();
 
     /**
      * @var Sql_Wrapper[]
@@ -130,6 +130,7 @@ class Epg_Manager_Xmltv
         $this->xmltv_sources = $this->plugin->get_active_sources();
         $this->flags = $this->plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
         $this->set_cache_dir($this->plugin->get_cache_dir());
+        self::clear_epg_memory_cache();
     }
 
     /**
@@ -229,10 +230,10 @@ class Epg_Manager_Xmltv
         }
 
         $cached = false;
-        if (isset($this->epg_cache[$channel_id][$day_start_ts])) {
+        if (isset(static::$epg_cache[$channel_id][$day_start_ts])) {
             hd_debug_print("Load day Channel ID $channel_id from day start: ($day_start_ts) " . format_datetime("Y-m-d H:i", $day_start_ts) . " from memory cache ");
             $cached = true;
-            return $this->epg_cache[$channel_id][$day_start_ts];
+            return static::$epg_cache[$channel_id][$day_start_ts];
         }
 
         $day_epg = array();
@@ -344,7 +345,7 @@ class Epg_Manager_Xmltv
         }
 
         hd_debug_print("Store day epg to memory cache");
-        $this->epg_cache[$channel_id][$day_start_ts] = $day_epg;
+        self::$epg_cache[$channel_id][$day_start_ts] = $day_epg;
         ksort($day_epg);
 
         return $day_epg;
@@ -476,7 +477,7 @@ class Epg_Manager_Xmltv
         }
 
         if ($expired) {
-            $this->clear_epg_files($hash);
+            self::clear_epg_files($hash);
             $index_flag |= INDEXING_DOWNLOAD;
             hd_debug_print("Xmltv cache expired. Indexing flags: " . $index_flag, true);
             $channels_valid = false;
@@ -581,30 +582,35 @@ class Epg_Manager_Xmltv
         }
     }
 
+    public static function clear_epg_memory_cache()
+    {
+        self::$epg_cache = array();
+    }
+
     /**
-     * clear memory cache and cache for selected filename (hash) mask
+     * clear cache for selected filename (hash) mask
      *
      * @param string|null $hash
      * @return void
      */
-    public function clear_epg_files($hash = '')
+    public static function clear_epg_files($hash = '')
     {
         hd_debug_print(null, true);
 
-        $this->epg_cache = array();
+        self::clear_epg_memory_cache();
 
         if (empty(self::$cache_dir)) {
             hd_debug_print("Cache directory not set");
             return;
         }
 
-        Curl_Wrapper::clear_cached_etag_by_hash($hash);
-
         if (empty($hash)) {
-            $this->epg_db = array();
-        } else if (isset($this->epg_db[$hash])) {
-            unset($this->epg_db[$hash]);
+            self::$epg_db = array();
+        } else if (isset(self::$epg_db[$hash])) {
+            unset(self::$epg_db[$hash]);
         }
+
+        Curl_Wrapper::clear_cached_etag_by_hash($hash);
 
         $dirs = glob(self::get_lock_name($hash, 0, '*'), GLOB_ONLYDIR);
         $locks = array();
@@ -690,6 +696,7 @@ class Epg_Manager_Xmltv
         $perf->reset('start');
 
         $cached_file = self::$cache_dir . $url_hash . ".xmltv";
+        $params[PARAM_CACHE_PATH] = $cached_file;
 
         /// download source
         if ($indexing_flag & INDEXING_DOWNLOAD) {
@@ -712,9 +719,9 @@ class Epg_Manager_Xmltv
                 }
 
                 $perf->setLabel('start_download');
-                $this->download_xmltv($url, $cached_file);
+                $this->download_xmltv($params);
                 $perf->setLabel('start_unpack');
-                $this->unpack_xmltv($cached_file);
+                $this->unpack_xmltv($params);
                 $success = true;
             } catch (Exception $ex) {
                 HD::set_last_error("xmltv_last_error", $ex->getMessage());
@@ -1195,25 +1202,27 @@ class Epg_Manager_Xmltv
         }
 
         // if database not exist or requested mode is read-write create new database
-        if (!isset($this->epg_db[$db_name]) || (!$readonly && $this->epg_db[$db_name]->is_readonly())) {
+        if (!isset(self::$epg_db[$db_name]) || (!$readonly && self::$epg_db[$db_name]->is_readonly())) {
             $flags = $readonly ? SQLITE3_OPEN_READONLY : (SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
             $db = new Sql_Wrapper($db_file, $flags);
             if (!$db->is_valid()) {
                 return false;
             }
-            $this->epg_db[$db_name] = $db;
+            self::$epg_db[$db_name] = $db;
         }
 
-        return $this->epg_db[$db_name];
+        return self::$epg_db[$db_name];
     }
 
     /**
-     * @param string $url
-     * @param string $cached_file
+     * @param array $params
      * @throws Exception
      */
-    private function download_xmltv($url, $cached_file)
+    private function download_xmltv($params)
     {
+        $url = $params[PARAM_URI];
+        $cached_file = $params[PARAM_CACHE_PATH];
+
         hd_debug_print("Download xmltv source: $url");
         hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
 
@@ -1232,8 +1241,8 @@ class Epg_Manager_Xmltv
         Curl_Wrapper::clear_cached_etag($url);
 
         $curl_wrapper->init();
-        $curl_wrapper->set_connection_timeout($this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
-        $curl_wrapper->set_download_timeout($this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
+        $curl_wrapper->set_connection_timeout($params[PARAM_CURL_CONNECT_TIMEOUT]);
+        $curl_wrapper->set_download_timeout($params[PARAM_CURL_DOWNLOAD_TIMEOUT]);
         if (!$curl_wrapper->download_file($url, $tmp_filename, true)) {
             throw new Exception("Can't exec curl");
         }
@@ -1264,11 +1273,12 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @param string $cached_file
+     * @param array $params
      * @throws Exception
      */
-    private function unpack_xmltv($cached_file)
+    private function unpack_xmltv($params)
     {
+        $cached_file = $params[PARAM_CACHE_PATH];
         if (file_exists($cached_file)) {
             hd_debug_print("Remove cached file: $cached_file");
             unlink($cached_file);

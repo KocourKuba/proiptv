@@ -91,8 +91,8 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
                 TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, self::CONTROLS_WIDTH, true);
 /*
             //////////////////////////////////////
-            // Delayed indexing
-            if ($picons_idx !== PLAYLIST_PICONS) {
+            // Delayed picons indexing
+            if (defined('PluginUpdateEpgActionData::ext_epg_enabled') && $picons_idx !== PLAYLIST_PICONS) {
                 $delay_load = $this->plugin->get_setting(PARAM_PICONS_DELAY_LOAD, SwitchOnOff::off);
                 Control_Factory::add_image_button($defs, $this, null,
                     PARAM_PICONS_DELAY_LOAD, TR::t('setup_channels_delay_picons_load'), SwitchOnOff::translate($delay_load),

@@ -93,41 +93,39 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 TR::t('setup_epg_cache_engine'), reset($engine_variants), self::CONTROLS_WIDTH);
         }
 
-        if ($engine === ENGINE_XMLTV) {
-            //////////////////////////////////////
-            // EPG cache dir
-            $cache_dir = $this->plugin->get_cache_dir();
-            $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
-            $cache_dir = HD::string_ellipsis($cache_dir . '/');
-            Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
-                $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
+        //////////////////////////////////////
+        // EPG cache dir
+        $cache_dir = $this->plugin->get_cache_dir();
+        $free_size = TR::t('setup_storage_info__1', HD::get_storage_size($cache_dir));
+        $cache_dir = HD::string_ellipsis($cache_dir . '/');
+        Control_Factory::add_image_button($defs, $this, null, self::CONTROL_CHANGE_CACHE_PATH,
+            $free_size, $cache_dir, get_image_path('folder.png'), self::CONTROLS_WIDTH);
 
-            //////////////////////////////////////
-            // clear epg cache
-            Control_Factory::add_image_button($defs, $this, null,
-                self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear_all'), TR::t('clear'),
-                get_image_path('brush.png'), self::CONTROLS_WIDTH);
-        } else {
-            if (isset($epg_presets)) {
-                if (count($epg_presets) > 1) {
-                    $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
-                    $presets = array();
-                    foreach ($epg_presets as $epg_preset) {
-                        $presets[] = safe_get_value($epg_preset, 'title', $epg_preset['name']);
-                    }
-                    Control_Factory::add_combobox($defs, $this, null,
-                        PARAM_EPG_JSON_PRESET, TR::t('setup_epg_cache_json'),
-                        $preset, $presets, self::CONTROLS_WIDTH, true);
-                }
+        //////////////////////////////////////
+        // clear epg cache
+        Control_Factory::add_image_button($defs, $this, null,
+            self::CONTROL_ITEMS_CLEAR_EPG_CACHE, TR::t('entry_epg_cache_clear_all'), TR::t('clear'),
+            get_image_path('brush.png'), self::CONTROLS_WIDTH);
 
-                foreach (array(1, 2, 3, 6, 12) as $hour) {
-                    $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
+        if ($engine === ENGINE_JSON && isset($epg_presets)) {
+            if (count($epg_presets) > 1) {
+                $preset = $this->plugin->get_setting(PARAM_EPG_JSON_PRESET, 0);
+                $presets = array();
+                foreach ($epg_presets as $epg_preset) {
+                    $presets[] = safe_get_value($epg_preset, 'title', $epg_preset['name']);
                 }
-                $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
                 Control_Factory::add_combobox($defs, $this, null,
-                    PARAM_EPG_CACHE_TIME, TR::t('setup_cache_time'),
-                    $cache_time, $caching_range, self::CONTROLS_WIDTH, true);
+                    PARAM_EPG_JSON_PRESET, TR::t('setup_epg_cache_json'),
+                    $preset, $presets, self::CONTROLS_WIDTH, true);
             }
+
+            foreach (array(1, 2, 3, 6, 12) as $hour) {
+                $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
+            }
+            $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_EPG_CACHE_TIME, TR::t('setup_cache_time'),
+                $cache_time, $caching_range, self::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -183,16 +181,14 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 break;
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
-                foreach ($this->plugin->get_selected_xmltv_ids() as $id) {
-                    $this->plugin->safe_clear_selected_epg_cache($id);
-                }
+                $this->plugin->clear_playlist_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
                     Action_Factory::reset_controls($this->do_get_control_defs()));
 
             case ACTION_RESET_DEFAULT:
                 hd_debug_print(ACTION_RESET_DEFAULT);
                 foreach ($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id()) as $id) {
-                    $this->plugin->safe_clear_selected_epg_cache($id);
+                    Epg_Manager_Xmltv::clear_epg_files($id);
                 }
                 $this->plugin->set_parameter(PARAM_CACHE_PATH, '');
                 $this->plugin->init_epg_manager();
@@ -206,7 +202,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                 hd_debug_print(ACTION_FOLDER_SELECTED . ": " . $data->{PARAM_FILEPATH}, true);
                 if ($this->plugin->get_cache_dir() === $data->{PARAM_FILEPATH}) break;
 
-                $this->plugin->safe_clear_selected_epg_cache(null);
+                Epg_Manager_Xmltv::clear_epg_files(null);
                 $this->plugin->set_parameter(PARAM_CACHE_PATH, str_replace("//", "/", $data->{PARAM_FILEPATH}));
                 $this->plugin->init_epg_manager();
 
