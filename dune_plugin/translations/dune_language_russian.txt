@@ -80,6 +80,7 @@ download_time = Скачивание:
 unpack_time = Распаковка:
 index_channels_time = Обработка каналов:
 index_entries_time = Обработка EPG:
+total_time = Общее время:
 days = дней
 days__1 = %s дней
 sec = сек.

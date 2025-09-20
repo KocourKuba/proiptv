@@ -71,6 +71,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 }
 
                 $this->force_parent_reload = false;
+                hd_debug_print("Force parent reload", true);
                 return Action_Factory::invalidate_folders(
                     array(
                         self::get_media_url_string(VOD_HISTORY_GROUP_ID),

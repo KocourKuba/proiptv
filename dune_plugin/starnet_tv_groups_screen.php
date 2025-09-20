@@ -95,6 +95,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
 
                 $this->force_parent_reload = false;
+                hd_debug_print("Force parent reload", true);
                 return User_Input_Handler_Registry::create_action($this, ACTION_CONFIRM_EXIT_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
@@ -112,7 +113,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 clearstatcache();
 
                 $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                $res = $epg_manager->import_indexing_log($this->plugin->get_selected_xmltv_ids());
+                $selected_xmltv_ids = $this->plugin->get_selected_xmltv_ids();
+                $res = $epg_manager->import_indexing_log($selected_xmltv_ids);
                 if ($res === 1) {
                     hd_debug_print("Logs imported. Timer stopped");
                     return Action_Factory::invalidate_all_folders($plugin_cookies);
@@ -273,6 +275,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_CONFIRM_EXIT_DLG_APPLY:
                 $this->force_parent_reload = false;
+                hd_debug_print("Force parent reload", true);
                 return Action_Factory::invalidate_epfs_folders($plugin_cookies, Action_Factory::close_and_run());
 
             case ACTION_PLUGIN_INFO:
@@ -561,6 +564,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 $this->plugin->reload_channels($plugin_cookies);
 
+                $this->force_parent_reload = true;
                 $post_action = User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 return Action_Factory::invalidate_all_folders($plugin_cookies,null, $post_action);
 

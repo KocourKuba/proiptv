@@ -80,6 +80,7 @@ download_time = Download time:
 unpack_time = Unpack time:
 index_channels_time = Indexing channels:
 index_entries_time = Indexing EPG:
+total_time = Total time:
 days = day's
 days__1 = %s day's
 sec = sec.

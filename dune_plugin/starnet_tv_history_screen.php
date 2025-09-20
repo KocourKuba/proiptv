@@ -92,6 +92,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 }
 
                 $this->force_parent_reload = false;
+                hd_debug_print("Force parent reload", true);
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
                         Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));

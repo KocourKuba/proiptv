@@ -353,11 +353,11 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             // begin and end of program, elapsed time
             $elapsed_text = sprintf("<gap width=0/><text color=%s size=normal>%s %s - %s</text><gap width=50/><text color=%s size=normal>%s %s</text>",
                 DEF_LABEL_TEXT_COLOR_GOLD,
-                TR::t('time'),
+                TR::load('time'),
                 format_datetime('H:i', $prog_info[PluginTvEpgProgram::start_tm_sec]),
                 format_datetime('H:i', $prog_info[PluginTvEpgProgram::end_tm_sec]),
                 DEF_LABEL_TEXT_COLOR_TURQUOISE,
-                TR::t('live'),
+                TR::load('live'),
                 format_duration_seconds($diff)
             );
             Control_Factory::add_smart_label($defs, null, $elapsed_text);

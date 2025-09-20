@@ -74,6 +74,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
                 }
 
                 $this->force_parent_reload = false;
+                hd_debug_print("Force parent reload", true);
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
                         Starnet_Vod_Category_List_Screen::ID,

@@ -153,8 +153,9 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
                 }
 
                 if ($this->force_parent_reload) {
-                    $target_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $target_action);
                     $this->force_parent_reload = false;
+                    hd_debug_print("Force parent reload", true);
+                    $target_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $target_action);
                 }
                 return Action_Factory::close_and_run($target_action);
 

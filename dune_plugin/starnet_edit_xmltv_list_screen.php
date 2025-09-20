@@ -103,9 +103,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $this->force_parent_reload = false;
+                hd_debug_print("Force parent reload", true);
                 if ($parent_media_url->{PARAM_SOURCE_WINDOW_ID} === Starnet_Entry_Handler::ID) {
                     $target_action = Action_Factory::invalidate_all_folders($plugin_cookies);
                 } else {
+                    hd_debug_print("Call parent: " .
+                        $parent_media_url->{PARAM_SOURCE_WINDOW_ID} . " action: ". $parent_media_url->{PARAM_END_ACTION}, true);
                     $target_action = User_Input_Handler_Registry::create_screen_action(
                         $parent_media_url->{PARAM_SOURCE_WINDOW_ID},
                         $parent_media_url->{PARAM_END_ACTION});
@@ -752,6 +755,12 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
                     DEF_LABEL_TEXT_COLOR_GOLD, TR::t('index_entries_time'),
                     DEF_LABEL_TEXT_COLOR_WHITE, $stat['entries']),
+                -30
+            );
+            Control_Factory::add_smart_label($defs, null,
+                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s $sec</text>",
+                    DEF_LABEL_TEXT_COLOR_GOLD, TR::t('total_time'),
+                    DEF_LABEL_TEXT_COLOR_WHITE, array_sum($stat)),
                 -30
             );
             Control_Factory::add_vgap($defs, 30);

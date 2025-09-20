@@ -2754,7 +2754,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             case Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS:
                 $new_media_url = Starnet_Edit_Hidden_List_Screen::make_media_url($source_screen_id,
                     array(
-                        PARAM_END_ACTION => ACTION_REFRESH_SCREEN,
+                        PARAM_END_ACTION => ACTION_INVALIDATE,
                         PARAM_CANCEL_ACTION => ACTION_EMPTY,
                         Starnet_Edit_Hidden_List_Screen::PARAM_EDIT_LIST => $action_edit
                     )

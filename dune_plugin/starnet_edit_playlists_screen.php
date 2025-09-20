@@ -113,6 +113,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 }
 
                 $this->force_parent_reload = false;
+                hd_debug_print("Force parent reload: " .
+                    $parent_media_url->{PARAM_SOURCE_WINDOW_ID} . " action: ". $parent_media_url->{PARAM_END_ACTION}, true);
                 $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->{PARAM_SOURCE_WINDOW_ID}, $parent_media_url->{PARAM_END_ACTION});
                 return Action_Factory::close_and_run($target_action);
 
@@ -455,6 +457,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
      */
     protected function create_shortcuts_popup($user_input)
     {
+        if (!isset($user_input->selected_media_url)) {
+            return null;
+        }
+
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
 
         $selected = '';

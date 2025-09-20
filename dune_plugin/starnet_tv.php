@@ -39,11 +39,6 @@ class Starnet_Tv implements User_Input_Handler
     protected $plugin;
 
     /**
-     * @var int
-     */
-    protected $playback_runtime;
-
-    /**
      * @var string
      */
     protected $playback_url_is_stream_url;
@@ -98,19 +93,21 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 clearstatcache();
-                $res = $epg_manager->import_indexing_log($this->plugin->get_selected_xmltv_ids());
-                if ($res === 0) {
-                    return Action_Factory::change_behaviour($this->get_action_map(), 1000);
-                }
-
+                $selected_xmltv_ids = $this->plugin->get_selected_xmltv_ids();
+                $res = $epg_manager->import_indexing_log($selected_xmltv_ids);
                 if ($res === 2) {
                     hd_debug_print("No imports. Timer stopped");
                     return null;
                 }
 
+                if ($res === 0) {
+                    return Action_Factory::change_behaviour($this->get_action_map(), 1000);
+                }
+
                 if ($this->plugin->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)) {
                     $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
                 }
+
                 $delayed_queue = $epg_manager->get_delayed_epg();
                 $epg_manager->clear_delayed_epg();
                 foreach ($delayed_queue as $channel_id) {
@@ -149,8 +146,6 @@ class Starnet_Tv implements User_Input_Handler
             hd_debug_print("Channels not loaded!");
             return array();
         }
-
-        $this->playback_runtime = PHP_INT_MAX;
 
         $buffering = $this->plugin->get_setting(PARAM_BUFFERING_TIME, 1000);
         $archive_delay = $this->plugin->get_setting(PARAM_ARCHIVE_DELAY_TIME, 60);

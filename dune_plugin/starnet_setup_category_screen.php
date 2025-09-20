@@ -165,6 +165,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
             case GUI_EVENT_KEY_RETURN:
                 $reload = $this->force_parent_reload;
                 $this->force_parent_reload = false;
+                hd_debug_print("Force parent reload", true);
                 $post_action = Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
                         Starnet_Setup_Screen::ID,

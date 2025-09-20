@@ -182,6 +182,8 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     return Action_Factory::close_and_run();
                 }
 
+                hd_debug_print("Call parent: " .
+                $parent_media_url->{PARAM_SOURCE_WINDOW_ID} . " action: ". $parent_media_url->{PARAM_END_ACTION}, true);
                 return Action_Factory::close_and_run(
                     User_Input_Handler_Registry::create_screen_action(
                         $parent_media_url->{PARAM_SOURCE_WINDOW_ID},

@@ -383,14 +383,14 @@ class Epg_Manager_Xmltv
     /**
      * Import indexing log to plugin logs
      *
-     * @param array|null $sources_hash
+     * @param array $sources_hash
      * @return int 0 - if any active source is locked, 1 - if import successful and no other active locks, 2 - if no locks and no imports
      */
     public function import_indexing_log($sources_hash)
     {
         $has_locks = false;
-        if (is_null($sources_hash)) {
-            $sources_hash = $this->xmltv_sources->get_keys();
+        if (empty($sources_hash)) {
+            return 2;
         }
 
         $has_imports = false;
@@ -909,7 +909,6 @@ class Epg_Manager_Xmltv
                         // check if end
                         $end_tv = strpos($line, "</tv>");
                         if ($end_tv !== false) {
-                            /** @noinspection PhpUnusedLocalVariableInspection */
                             $tag_end_pos = $end_tv + $tag_start_pos;
                             $stm->execute();
                             break;
