@@ -1,0 +1,18 @@
+#!/bin/sh
+thisdir=`dirname $0`
+plugin_root=`builtin cd "$thisdir/../.." && pwd`
+plugin_name=$(basename $plugin_root)
+
+CHANNELS="$FS_PREFIX/tmp/plugins/$plugin_name/delay_cache.json"
+ICON="$plugin_root/icons/delay_channel.png"
+LOG=$FS_PREFIX/tmp/plugins/$plugin_name/delay.log
+
+echo -e "Requested: $QUERY_STRING" >>$LOG
+
+if [[ -f $ICON ]]; then
+  size=$(find $ICON -printf "%s")
+  echo -e "Accept-Ranges: bytes\Content-Type: image/png\nContent-Length: $size\n"
+  cat $ICON
+else
+  echo -e "HTTP/1.1 404 Not found"
+fi
