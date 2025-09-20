@@ -3076,6 +3076,49 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
+     * disable channels if HD vairant is present
+     *
+     * @param string $group_id
+     * @return int
+     */
+    public function hide_sd_channels($group_id)
+    {
+        $disabled_ids = array();
+        $groups = array();
+        $rows = $this->get_channels($group_id, PARAM_ENABLED);
+        usort($rows, function ($a, $b) {
+            if ($a[COLUMN_TITLE] == $b[COLUMN_TITLE]) {
+                return 0;
+            }
+            return ($a[COLUMN_TITLE] < $b[COLUMN_TITLE]) ? -1 : 1;
+        });
+        $cnt = count($rows);
+        for($i = 0; $i < $cnt; $i++) {
+            if (preg_match("#\sHD|\sFHD#", $rows[$i][COLUMN_TITLE])) continue;
+
+            for ($j = $i + 1; $j < $cnt; $j++) {
+                $len = strlen($rows[$i][COLUMN_TITLE]);
+                if (strncasecmp($rows[$i][COLUMN_TITLE], $rows[$j][COLUMN_TITLE], $len) !== 0) break;
+
+                $add = preg_match("#^\sHD|\sFHD#", substr($rows[$j][COLUMN_TITLE], $len));
+                if ($add) {
+                    $disabled_ids[] = $rows[$i][COLUMN_CHANNEL_ID];
+                    $i = $j;
+                    break;
+                }
+            }
+        }
+
+        $cnt = count($disabled_ids);
+        if ($cnt !== 0) {
+            $this->set_channel_visible($disabled_ids, false);
+            hd_debug_print("Total channels hidden: $cnt from groups: " . Sql_Wrapper::sql_make_list_from_keys($groups));
+        }
+
+        return $cnt;
+    }
+
+    /**
      * Remove all data for selected playlist
      * @param string $playlist_id
      * @param bool $remove_playlist

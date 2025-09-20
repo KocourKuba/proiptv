@@ -320,6 +320,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     TR::t('tv_screen_hide_orig') => "[Oo]rig|[Uu]ncomp",
                     TR::t('tv_screen_hide_50') => "\s50|\sFHD",
                     TR::t('tv_screen_hide_uhd') => "UHD|\s4[KkКк]|\s8[KkКк]",
+                    TR::t('tv_screen_hide_sd') => "hide_sd",
                     TR::t('tv_screen_hide_string') => "custom_string"
                 );
                 foreach ($items as $key => $val) {
@@ -328,22 +329,24 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return Action_Factory::show_popup_menu($menu_items);
 
             case ACTION_ITEM_DELETE_BY_STRING:
-                if ($user_input->hide !== 'custom_string') {
+                if ($user_input->hide === 'hide_sd') {
+                    $this->force_parent_reload = $this->plugin->hide_sd_channels($parent_group) !== 0;
+                } else if ($user_input->hide !== 'custom_string') {
                     $this->force_parent_reload = $this->plugin->hide_channels_by_mask($user_input->hide, $parent_group) !== 0;
-                    break;
+                } else {
+                    $defs = array();
+                    Control_Factory::add_text_field($defs, $this, null, self::ACTION_CUSTOM_DELETE, '',
+                        $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING),
+                        false, false, false, false, 800);
+
+                    Control_Factory::add_vgap($defs, 100);
+                    Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'), 300);
+                    Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
+                    Control_Factory::add_vgap($defs, 10);
+
+                    return Action_Factory::show_dialog(TR::t('tv_screen_hide_string'), $defs, true, 1300);
                 }
-
-                $defs = array();
-                Control_Factory::add_text_field($defs, $this, null, self::ACTION_CUSTOM_DELETE, '',
-                    $this->plugin->get_parameter(PARAM_CUSTOM_DELETE_STRING),
-                    false, false, false, false, 800);
-
-                Control_Factory::add_vgap($defs, 100);
-                Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CUSTOM_STRING_DLG_APPLY, TR::t('ok'), 300);
-                Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-                Control_Factory::add_vgap($defs, 10);
-
-                return Action_Factory::show_dialog(TR::t('tv_screen_hide_string'), $defs, true, 1300);
+                break;
 
             case self::ACTION_CUSTOM_STRING_DLG_APPLY:
                 $custom_string = $user_input->{self::ACTION_CUSTOM_DELETE};

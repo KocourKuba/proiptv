@@ -324,6 +324,7 @@ tv_screen_hide_orig = Hide 'orig|Uncomp'
 tv_screen_hide_50 = Hide '50|FHD'
 tv_screen_hide_uhd = Hide 'UHD|4K|8K'
 tv_screen_hide_string = Hide by a substring
+tv_screen_hide_sd = Hide SD channels if HD is present
 tv_screen_hide_group = Hide category (CLEAR)
 tv_screen_toggle_move = Toggle move (SELECT)
 tv_screen_assign_shortcut = Assign shortcut button (0-9)

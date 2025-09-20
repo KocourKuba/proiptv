@@ -324,6 +324,7 @@ tv_screen_hide_orig = Скрыть 'orig|Uncomp'
 tv_screen_hide_50 = Скрыть '50|FHD'
 tv_screen_hide_uhd = Скрыть 'UHD|4K|8K'
 tv_screen_hide_string = Скрыть по подстроке
+tv_screen_hide_sd = Скрыть SD каналы, если есть HD
 tv_screen_hide_group = Скрыть категорию (CLEAR)
 tv_screen_toggle_move = Режим перемещения (SELECT)
 tv_screen_assign_shortcut = Присвоить быструю клавишу (0-9)
