@@ -185,6 +185,7 @@ class vod_iptvonline extends vod_standard
     {
         hd_debug_print("getSearchList $keyword");
 
+        // Using method GET! but send parameters via POST fields
         $params[CURLOPT_POSTFIELDS] = array("search" => $keyword);
 
         $movies = array();
@@ -195,7 +196,6 @@ class vod_iptvonline extends vod_standard
 
         $params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, API_ACTION_MOVIE);
         $searchRes = $this->make_json_request($params);
-
         $movies = ($searchRes === false) ? array() : $this->CollectSearchResult(API_ACTION_MOVIE, $searchRes, API_ACTION_SEARCH);
 
         $page_id = API_ACTION_SERIAL . "_" . API_ACTION_SEARCH;
@@ -316,6 +316,7 @@ class vod_iptvonline extends vod_standard
 
         hd_debug_print("filter page_idx:  $page_idx");
 
+        // Using method GET! but send parameters via POST fields
         $post_params[CURLOPT_CUSTOMREQUEST] = sprintf(self::REQUEST_TEMPLATE, $page_idx, $query_id);
         $post_params[CURLOPT_POSTFIELDS]['features_hash'] = $param_str;
         $json = $this->make_json_request($post_params);
@@ -373,19 +374,19 @@ class vod_iptvonline extends vod_standard
      */
     protected function make_json_request($params = null)
     {
-        if (!$this->provider->request_provider_token()) {
-            return false;
-        }
-
         $curl_opt = array();
 
         if (isset($params[CURLOPT_CUSTOMREQUEST])) {
             $curl_opt[CURLOPT_CUSTOMREQUEST] = $params[CURLOPT_CUSTOMREQUEST];
         }
 
+        if (isset($params[CURLOPT_POST])) {
+            $curl_opt[CURLOPT_POST] = $params[CURLOPT_POST];
+        }
+
         if (isset($params[CURLOPT_POSTFIELDS])) {
-            $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
-            $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);
+            $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
+            $curl_opt[CURLOPT_POSTFIELDS] = json_encode($params[CURLOPT_POSTFIELDS]);
         }
 
         $data = $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);

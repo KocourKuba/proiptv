@@ -64,8 +64,6 @@ class api_korona extends api_default
             $pairs['password'] = $this->GetParameter(MACRO_PASSWORD);
         }
 
-        $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/x-www-form-urlencoded";
         $data = '';
         foreach($pairs as $key => $value) {
             if (!empty($data)) {
@@ -73,6 +71,9 @@ class api_korona extends api_default
             }
             $data .= $key . "=" . urlencode($value);
         }
+
+        $curl_opt[CURLOPT_POST] = true;
+        $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_WWW_FORM_URLENCODED;
         $curl_opt[CURLOPT_POSTFIELDS] = $data;
 
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);

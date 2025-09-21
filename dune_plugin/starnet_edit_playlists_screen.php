@@ -825,18 +825,24 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         $tmp_file = get_temp_path($playlist_id);
         if ($type === PARAM_FILE) {
-            copy($uri, $tmp_file);
+            $res = copy($uri, $tmp_file);
+            $errors = error_get_last();
+            $logfile = "Copy error: " . $errors['type'] . "\n" .$errors['message'];
         } else {
-            $res = Curl_Wrapper::simple_download_file($uri, $tmp_file);
-            if (!$res) {
-                throw new Exception(TR::load('err_load_playlist') . " '$uri'");
-            }
+            $curl_wrapper = Curl_Wrapper::getInstance();
+            $this->plugin->set_curl_timeouts($curl_wrapper);
+            $res = $curl_wrapper->download_file($uri, $tmp_file, true);
+            $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
+        }
 
-            $contents = file_get_contents($tmp_file, false, null, 0, 512);
-            if ($contents === false || (strpos($contents, TAG_EXTM3U) === false && strpos($contents, TAG_EXTINF) === false)) {
-                unlink($tmp_file);
-                throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
-            }
+        if (!$res) {
+            throw new Exception(TR::load('err_load_playlist') . " '$uri'\n$logfile");
+        }
+
+        $contents = file_get_contents($tmp_file, false, null, 0, 512);
+        if ($contents === false || (strpos($contents, TAG_EXTM3U) === false && strpos($contents, TAG_EXTINF) === false)) {
+            unlink($tmp_file);
+            throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
         }
 
         $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array('playlist_id' => $playlist_id));

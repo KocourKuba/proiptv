@@ -144,7 +144,7 @@ class api_default
     public function __construct(DunePlugin $plugin)
     {
         $this->plugin = $plugin;
-        $this->curl_wrapper = new Curl_Wrapper();
+        $this->curl_wrapper = Curl_Wrapper::getInstance();
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -366,17 +366,17 @@ class api_default
 
         $command_url = $this->replace_macros($command_url);
         hd_debug_print("ApiCommandUrl: $command_url", true);
-        $this->curl_wrapper->init();
-
-        $this->curl_wrapper->set_connection_timeout($this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
-        $this->curl_wrapper->set_download_timeout($this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
+        $this->curl_wrapper->reset();
+        $this->plugin->set_curl_timeouts($this->curl_wrapper);
 
         $add_headers = $this->get_additional_headers($command);
 
-        if (empty($curl_opt[CURLOPT_HTTPHEADER]) && !empty($add_headers)) {
-            $curl_opt[CURLOPT_HTTPHEADER] = $add_headers;
-        } else if (!empty($curl_opt[CURLOPT_HTTPHEADER]) && !empty($add_headers)) {
-            $curl_opt[CURLOPT_HTTPHEADER] = array_merge($curl_opt[CURLOPT_HTTPHEADER], $add_headers);
+        if (!empty($add_headers)) {
+            if (empty($curl_opt[CURLOPT_HTTPHEADER])) {
+                $curl_opt[CURLOPT_HTTPHEADER] = $add_headers;
+            } else {
+                $curl_opt[CURLOPT_HTTPHEADER] = array_merge($curl_opt[CURLOPT_HTTPHEADER], $add_headers);
+            }
         }
 
         if (!empty($curl_opt[CURLOPT_HTTPHEADER])) {
@@ -384,12 +384,10 @@ class api_default
         }
 
         if (isset($curl_opt[CURLOPT_POST])) {
-            hd_debug_print("CURLOPT_POST: " . var_export($curl_opt[CURLOPT_POST], true), true);
             $this->curl_wrapper->set_post($curl_opt[CURLOPT_POST]);
         }
 
         if (isset($curl_opt[CURLOPT_POSTFIELDS])) {
-            hd_debug_print("CURLOPT_POSTFIELDS: {$curl_opt[CURLOPT_POSTFIELDS]}", true);
             $this->curl_wrapper->set_post_data($curl_opt[CURLOPT_POSTFIELDS]);
         }
 

@@ -942,7 +942,8 @@ class vod_standard extends Abstract_Vod
                     hd_debug_print("download provider vod");
                     $res = $provider->execApiCommand(API_COMMAND_GET_VOD, $m3u_file);
                     if ($res === false) {
-                        $exception_msg = TR::load('err_load_vod') . "\n\n" . $provider->getCurlWrapper()->get_raw_response_headers();
+                        $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
+                        $exception_msg = TR::load('err_load_vod') . "\n$logfile";
                         HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
                         throw new Exception($exception_msg);
                     }
@@ -954,8 +955,10 @@ class vod_standard extends Abstract_Vod
 
                     $res = copy($uri, $m3u_file);
                     if ($res === false) {
+                        $errors = error_get_last();
+                        $logfile = "Copy error: " . $errors['type'] . "\n" .$errors['message'];
                         $exception_msg = TR::load('err_load_vod') . PHP_EOL . PHP_EOL .
-                            "m3u copy local file: $uri to $m3u_file";
+                            "m3u copy local file: $uri to $m3u_file\n$logfile";
                         throw new Exception($exception_msg);
                     }
                 } else if ($type === PARAM_LINK || $type === PARAM_CONF) {
@@ -963,9 +966,12 @@ class vod_standard extends Abstract_Vod
                     if (empty($uri)) {
                         throw new Exception("Empty playlist url");
                     }
-                    $res = Curl_Wrapper::simple_download_file($uri, $m3u_file);
+                    $curl_wrapper = Curl_Wrapper::getInstance();
+                    $this->plugin->set_curl_timeouts($curl_wrapper);
+                    $res = $curl_wrapper->download_file($uri, $m3u_file, true);
                     if ($res === false) {
-                        $exception_msg = TR::load('err_load_vod');
+                        $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
+                        $exception_msg = TR::load('err_load_vod') . "\n$logfile";
                         throw new Exception($exception_msg);
                     }
                 } else {

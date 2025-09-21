@@ -78,7 +78,14 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements Us
     {
         hd_debug_print(null, true);
 
-        $control_id = $user_input->control_id;
+        if (isset($user_input->control_id)) {
+            $control_id = $user_input->control_id;
+        } else if (isset($user_input->selected_control_id)) {
+            $control_id = $user_input->selected_control_id;
+        } else {
+            return null;
+        }
+
         $post_action = null;
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:

@@ -457,10 +457,8 @@ class Epg_Manager_Xmltv
             hd_debug_print("Xmltv cache ($cache_ttl) last modified: " . date("Y-m-d H:i", $modify_time_file), true);
 
             if ($cache_ttl === XMLTV_CACHE_AUTO) {
-                $curl_wrapper = new Curl_Wrapper();
-                $curl_wrapper->init();
-                $curl_wrapper->set_connection_timeout($this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
-                $curl_wrapper->set_download_timeout($this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
+                $curl_wrapper = Curl_Wrapper::getInstance();
+                $this->plugin->set_curl_timeouts($curl_wrapper);
                 if (!$curl_wrapper->check_is_expired($url)) {
                     $expired = false;
                 } else if (Curl_Wrapper::is_cached_etag($url)) {
@@ -1236,17 +1234,16 @@ class Epg_Manager_Xmltv
         }
 
         hd_debug_print("Download: $url");
-        $curl_wrapper = new Curl_Wrapper();
         Curl_Wrapper::clear_cached_etag($url);
 
-        $curl_wrapper->init();
+        $curl_wrapper = Curl_Wrapper::getInstance();
         $curl_wrapper->set_connection_timeout($params[PARAM_CURL_CONNECT_TIMEOUT]);
         $curl_wrapper->set_download_timeout($params[PARAM_CURL_DOWNLOAD_TIMEOUT]);
         if (!$curl_wrapper->download_file($url, $tmp_filename, true)) {
             throw new Exception("Can't exec curl");
         }
 
-        $http_code = $curl_wrapper->get_response_code();
+        $http_code = $curl_wrapper->get_http_code();
         if ($http_code !== 200) {
             throw new Exception("Download error ($http_code) $url" . PHP_EOL . PHP_EOL . $curl_wrapper->get_raw_response_headers());
         }

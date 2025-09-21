@@ -54,10 +54,21 @@ class api_iptvonline extends api_default
         $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
-        if (!$force && !$expired) {
-            hd_debug_print("request not required", true);
-            return true;
+        $rq_last_error_name = $this->plugin->get_active_playlist_id() . "_rq_last_error";
+        if (!$force) {
+            if (!$expired) {
+                hd_debug_print("request not required", true);
+                return true;
+            }
+
+            $error = HD::check_last_error($rq_last_error_name);
+            if (!empty($error)) {
+                hd_debug_print("Previous token request failed!");
+                return false;
+            }
         }
+
+        HD::set_last_error($rq_last_error_name, null);
 
         $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
         $can_refresh = $expired && !empty($refresh_token);
@@ -78,8 +89,8 @@ class api_iptvonline extends api_default
         $pairs['device_id'] = get_serial_number();
 
         $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
-        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($pairs);
+        $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
+        $curl_opt[CURLOPT_POSTFIELDS] = json_encode($pairs);
 
         $data = $this->execApiCommand($cmd, null, true, $curl_opt);
         if (isset($data->access_token)) {
@@ -96,9 +107,8 @@ class api_iptvonline extends api_default
             return $this->request_provider_token(true);
         }
 
-        $rq_last_error_name = $this->plugin->get_active_playlist_id() . "_rq_last_error";
         hd_debug_print("token not received: " . pretty_json_format($data), true);
-        HD::set_last_error($rq_last_error_name, TR::load('err_cant_get_token') . "\n\n" . pretty_json_format($data));
+        HD::set_last_error($rq_last_error_name, TR::load('err_cant_get_token') . "\n" . pretty_json_format($data));
         return false;
     }
 
@@ -112,7 +122,9 @@ class api_iptvonline extends api_default
         $response = $this->make_json_request(API_COMMAND_GET_PLAYLIST);
 
         if (isset($response->success, $response->data)) {
-            return Curl_Wrapper::simple_download_file($response->data, $tmp_file);
+            $curl_wrapper = Curl_Wrapper::getInstance();
+            $this->plugin->set_curl_timeouts($curl_wrapper);
+            return $curl_wrapper->download_file($response->data, $tmp_file, true);
         }
 
         return array(false, '');
@@ -347,10 +359,6 @@ class api_iptvonline extends api_default
      */
     protected function make_json_request($cmd, $params = null)
     {
-        if (!$this->request_provider_token()) {
-            return false;
-        }
-
         $curl_opt = array();
 
         if (isset($params[CURLOPT_CUSTOMREQUEST])) {
@@ -358,8 +366,8 @@ class api_iptvonline extends api_default
         }
 
         if (isset($params[CURLOPT_POSTFIELDS])) {
-            $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
-            $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($params[CURLOPT_POSTFIELDS]);
+            $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
+            $curl_opt[CURLOPT_POSTFIELDS] = json_encode($params[CURLOPT_POSTFIELDS]);
         }
 
         return $this->execApiCommand($cmd, null, true, $curl_opt);
@@ -370,7 +378,8 @@ class api_iptvonline extends api_default
      */
     protected function get_additional_headers($command)
     {
-        if ($command !== API_COMMAND_REQUEST_TOKEN && $command !== API_COMMAND_REFRESH_TOKEN) {
+        $token = $this->plugin->get_cookie(PARAM_TOKEN);
+        if (!empty($token) && $command !== API_COMMAND_REQUEST_TOKEN && $command !== API_COMMAND_REFRESH_TOKEN) {
             return array($this->replace_macros("Authorization: Bearer {TOKEN}"));
         }
 

@@ -759,7 +759,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $type = safe_get_value($params, PARAM_TYPE);
 
             hd_debug_print("m3u playlist: {$params[PARAM_NAME]} ($playlist_id)");
-            $logfile = '';
             if ($type === PARAM_PROVIDER) {
                 $provider = $this->get_active_provider();
                 if (is_null($provider)) {
@@ -772,7 +771,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                 hd_debug_print("Load provider playlist to: $m3u_file");
                 $res = $provider->load_playlist($m3u_file);
-                $logfile = $provider->getCurlWrapper()->get_raw_response_headers();
+                $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
             } else {
                 $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_FILE) {
@@ -781,12 +780,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     }
                     hd_debug_print("m3u copy local file: $uri to $m3u_file");
                     $res = copy($uri, $m3u_file);
+                    $errors = error_get_last();
+                    $logfile = "Copy error: " . $errors['type'] . "\n" .$errors['message'];
                 } else if ($type === PARAM_LINK || $type === PARAM_CONF) {
                     hd_debug_print("m3u download link: $uri");
                     if (!is_proto_http($uri)) {
                         throw new Exception("Incorrect playlist url: $uri");
                     }
-                    $res = Curl_Wrapper::simple_download_file($uri, $m3u_file);
+
+                    $curl_wrapper = Curl_Wrapper::getInstance();
+                    $this->set_curl_timeouts($curl_wrapper);
+                    $res = $curl_wrapper->download_file($uri, $m3u_file, true);
+                    $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
                 } else {
                     throw new Exception("Unknown playlist type");
                 }
@@ -1519,6 +1524,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (!empty($user_agent) && $user_agent !== HD::get_default_user_agent()) {
             HD::set_dune_user_agent($user_agent);
         }
+    }
+
+    /**
+     * @param Curl_Wrapper $curl_wrapper
+     * @return void
+     */
+    public function set_curl_timeouts(&$curl_wrapper)
+    {
+        $curl_wrapper->set_connection_timeout($this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30));
+        $curl_wrapper->set_download_timeout($this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120));
     }
 
     /**

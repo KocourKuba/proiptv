@@ -159,8 +159,8 @@ class vod_edem extends vod_standard
         $pairs['app'] = "ProIPTV_dune_plugin";
 
         $curl_opt[CURLOPT_POST] = true;
-        $curl_opt[CURLOPT_HTTPHEADER][] = "Content-Type: application/json; charset=utf-8";
-        $curl_opt[CURLOPT_POSTFIELDS] = escaped_raw_json_encode($pairs);
+        $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
+        $curl_opt[CURLOPT_POSTFIELDS] = json_encode($pairs);
 
         return $this->provider->execApiCommand(API_COMMAND_GET_VOD, null, true, $curl_opt);
     }
@@ -175,6 +175,10 @@ class vod_edem extends vod_standard
             return false;
         }
 
+        hd_debug_print("doc: " . pretty_json_format($doc, true), true);
+        if (isset($doc->type) && $doc->type === 'error') {
+            hd_debug_print($doc->description, true);
+        }
         $category_list = array();
         $category_index = array();
 
@@ -187,13 +191,15 @@ class vod_edem extends vod_standard
         }
 
         $exist_filters = array();
-        foreach ($doc->controls->filters as $filter) {
-            $first = reset($filter->items);
-            $key = key(array_diff_key((array)$first->request, array('filter' => 'on')));
-            $exist_filters[$key] = array('title' => $filter->title, 'values' => array(-1 => TR::t('no')));
-            foreach ($filter->items as $item) {
-                $val = $item->request->{$key};
-                $exist_filters[$key]['values'][$val] = $item->title;
+        if (isset($doc->controls->filters)) {
+            foreach ($doc->controls->filters as $filter) {
+                $first = reset($filter->items);
+                $key = key(array_diff_key((array)$first->request, array('filter' => 'on')));
+                $exist_filters[$key] = array('title' => $filter->title, 'values' => array(-1 => TR::t('no')));
+                foreach ($filter->items as $item) {
+                    $val = $item->request->{$key};
+                    $exist_filters[$key]['values'][$val] = $item->title;
+                }
             }
         }
 

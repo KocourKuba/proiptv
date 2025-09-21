@@ -413,7 +413,7 @@ class HD
      */
     public static function http_put_document($url, $in_file, $in_file_size)
     {
-        return self::http_get_document($url,
+        return self::get_http_document($url,
             array(
                 CURLOPT_PUT => true,
                 CURLOPT_CUSTOMREQUEST => "PUT",
@@ -430,7 +430,7 @@ class HD
      * @param array $opts
      * @return bool|string
      */
-    public static function http_get_document($url, $opts = null)
+    public static function get_http_document($url, $opts = null)
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
@@ -899,7 +899,7 @@ class HD
     public static function DownloadJson($url, $to_array = true, $opts = null)
     {
         try {
-            $doc = self::http_get_document($url, $opts);
+            $doc = self::get_http_document($url, $opts);
             $contents = json_decode($doc, $to_array);
             if ($contents === null || $contents === false) {
                 hd_debug_print("failed to decode json");

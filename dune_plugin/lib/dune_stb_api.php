@@ -70,6 +70,9 @@ const LAST_PLAYBACK_EVENT = 'last_playback_event';
 
 const CACHED_IMAGE_SUBDIR = 'cached_img';
 
+const CONTENT_TYPE_JSON = 'Content-Type: application/json; charset=utf-8';
+const CONTENT_TYPE_WWW_FORM_URLENCODED = 'Content-Type: application/x-www-form-urlencoded';
+
 # Hard-coded constants.
 if (!defined('FONT_SIZE_LARGE')) define('FONT_SIZE_LARGE', 4);
 if (!defined('ORIENTATION_VERTICAL')) define('ORIENTATION_VERTICAL', 0);
