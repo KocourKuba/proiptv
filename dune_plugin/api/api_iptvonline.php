@@ -54,7 +54,7 @@ class api_iptvonline extends api_default
         $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
-        $rq_last_error_name = $this->plugin->get_active_playlist_id() . "_rq_last_error";
+        $rq_last_error_name = $this->plugin->get_request_error_name();
         if (!$force) {
             if (!$expired) {
                 hd_debug_print("request not required", true);

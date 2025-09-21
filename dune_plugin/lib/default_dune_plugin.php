@@ -960,6 +960,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
+        HD::set_last_error($this->get_pl_error_name(), null);
+        HD::set_last_error($this->get_request_error_name(), null);
+
         // create settings table
         $settings_table = self::SETTINGS_TABLE;
         $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $settings_table);
