@@ -1935,11 +1935,6 @@ function print_sysinfo()
     $platform = get_platform_info();
     $dns = get_dns_address();
     $values = curl_version();
-    if (is_dune()) {
-        $ext_curl = trim(shell_exec(get_platform_curl() . ' --version|grep curl'));
-    } else {
-        $ext_curl = trim(shell_exec(get_platform_curl() . ' --version|find "curl"'));
-    }
 
     $table = array(
         'Dune Product' => get_product_id(),
@@ -1952,8 +1947,7 @@ function print_sysinfo()
         'Dune DNS servers' => $dns,
         'PHP Version' => PHP_VERSION,
         'Plugin Memory' => ini_get('memory_limit'),
-        'libCURL Version' => "{$values['version']} ({$values['ssl_version']})",
-        'CURL Version' => $ext_curl,
+        'libCURL Version' => "{$values['version']} ({$values['host']}) {$values['ssl_version']} zlib/{$values['libz_version']})",
     );
 
     if (class_exists("SQLite3")) {
