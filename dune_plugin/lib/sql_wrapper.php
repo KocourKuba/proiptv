@@ -61,9 +61,10 @@ class Sql_Wrapper
      */
     public function attachDatabase($db_filename, $name)
     {
-        hd_debug_print("Trying to attach: '$db_filename' as '$name'", true);
+        hd_debug_print("Trying to attach: as '$name' db: '$db_filename'", true);
         $result = $this->is_database_attached($name, $db_filename);
         if ($result === 2) {
+            hd_debug_print("Already attached", true);
             return $result;
         }
 
@@ -104,7 +105,9 @@ class Sql_Wrapper
      */
     public function is_database_attached($db_name, $db_filename = null)
     {
-        if ($this->is_valid()) {
+        if (!$this->is_valid()) {
+            hd_debug_print("Sqlite wrapper db not inited!");
+        } else {
             foreach ($this->fetch_array("PRAGMA database_list") as $database) {
                 if ($database['name'] !== $db_name) continue;
 
@@ -124,24 +127,11 @@ class Sql_Wrapper
 
                 return 3;
             }
+
+            hd_debug_print(null, true);
             hd_debug_print("Not attached: '$db_name', with filename: '$db_filename'", true);
-        } else {
-            hd_debug_print("Sqlite wrapper db not inited!");
         }
         return 0;
-    }
-
-    /**
-     * @param string|null $db_name
-     * @return bool
-     */
-    public function is_db_exists($db_name)
-    {
-        if (is_null($db_name)) {
-            return true;
-        }
-
-        return self::is_database_attached($db_name);
     }
 
     /**
@@ -151,7 +141,7 @@ class Sql_Wrapper
      */
     public function is_table_exists($table_name, $db_name = null)
     {
-        if (!self::is_db_exists($db_name)) {
+        if (!is_null($db_name) && !$this->is_database_attached($db_name)) {
             hd_debug_print("Database '$db_name' not attached!");
             return false;
         }
@@ -168,7 +158,7 @@ class Sql_Wrapper
      */
     public function is_column_exists($table_name, $column_name, $db_name = null)
     {
-        if (!self::is_db_exists($db_name)) {
+        if (!is_null($db_name) && !$this->is_database_attached($db_name)) {
             hd_debug_print("Database '$db_name' not attached!");
             return false;
         }
@@ -183,7 +173,7 @@ class Sql_Wrapper
      */
     public function get_master_table_list($db_name = null)
     {
-        if (!self::is_db_exists($db_name)) {
+        if (!is_null($db_name) && !$this->is_database_attached($db_name)) {
             hd_debug_print("Database '$db_name' not attached!");
             return array();
         }

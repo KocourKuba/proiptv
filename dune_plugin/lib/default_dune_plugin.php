@@ -737,10 +737,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function parse_m3u_playlist($only_headers)
     {
-        create_path(get_data_path('playlist_cache'));
-
-        $m3u_file = $this->get_playlist_cache(true);
-        $db_file = $m3u_file . ".db";
+        $m3u_file = $this->get_playlist_cache();
+        $db_file = $m3u_file . '.db';
         try {
             // clear playlist
             if (file_exists($m3u_file)) {
@@ -878,7 +876,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 if (!$count) {
                     $contents = @file_get_contents($m3u_file);
                     $exception_msg = TR::load('err_load_playlist') . " Empty playlist!\n\n$contents";
-                    $this->clear_playlist_cache();
                     throw new Exception($exception_msg);
                 }
                 $info = "Total entries: $count";
@@ -906,11 +903,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $err .= $ex->getMessage();
             HD::set_last_error($this->get_pl_error_name(), $err);
             print_backtrace_exception($ex);
-            if (isset($playlist[PARAM_TYPE]) && file_exists($m3u_file)) {
+            if (file_exists($m3u_file)) {
+                hd_debug_print("Clear playlist: $m3u_file");
                 unlink($m3u_file);
             }
             $this->sql_playlist->detachDatabase(M3uParser::IPTV_DB);
             if (file_exists($db_file)) {
+                hd_debug_print("Clear db: $db_file");
                 unlink($db_file);
             }
             hd_debug_print_separator();
@@ -943,7 +942,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $params = $this->get_playlist_parameters($playlist_id);
         hd_debug_print("Process playlist: {$params[PARAM_NAME]} ($playlist_id)");
 
-        $db_file = get_data_path("$playlist_id.db");
+        $db_file = self::get_playlist_cache() . '.db';
 
         if ($this->sql_playlist) {
             // attach to playlist db. if db not exist it will be created
@@ -1198,9 +1197,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        $this->init_epg_manager();
-        $this->cleanup_stalled_locks();
-
         if (!$reload_playlist) {
             $reload_playlist = $this->is_playlist_cache_expired(true);
         }
@@ -1222,7 +1218,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return false;
             }
         } else {
-            $db_file = $this->get_playlist_cache(true) . ".db";
+            $db_file = $this->get_playlist_cache() . ".db";
             $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
             if ($database_attached === 0) {
                 hd_debug_print("Can't attach to database: $db_file with name: " . M3uParser::IPTV_DB);
@@ -1233,6 +1229,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
         }
 
+        $this->init_epg_manager();
+        $this->cleanup_stalled_locks();
         $this->cleanup_active_xmltv_source();
 
         if ($this->use_xmltv || $this->picons_source !== PLAYLIST_PICONS) {
@@ -2333,27 +2331,45 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     }
 
     /**
-     * @param bool $is_tv
      * @return string
      */
-    public function get_playlist_cache($is_tv)
+    public static function get_playlist_cache_path()
     {
-        return get_data_path('playlist_cache/' . $this->get_active_playlist_id() . ($is_tv ? "_playlist.m3u8" : "_vod_playlist.m3u8"));
+        $path = get_slash_trailed_path(get_data_path('playlist_cache'));
+        create_path($path);
+        return $path;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_playlist_cache()
+    {
+        return self::get_playlist_cache_path() . $this->get_active_playlist_id() . '_playlist.m3u8';
+    }
+
+    /**
+     * @return string
+     */
+    public function get_vod_playlist_cache()
+    {
+        return self::get_playlist_cache_path() . $this->get_active_playlist_id() . '_vod_playlist.m3u8';
     }
 
     /**
      * Clear downloaded playlist
-     * @param string $playlist_id
+     * @param string|null $playlist_id
      * @return void
      */
-    public function clear_playlist_cache($playlist_id = null)
+    public function clear_playlist_cache($playlist_id)
     {
         if ($playlist_id === null) {
-            $playlist_id = $this->get_active_playlist_id();
+            delete_directory(self::get_playlist_cache_path());
+            return;
         }
 
         $this->iptv_m3u_parser->clear_data();
-        $tmp_file = get_data_path("playlist_cache/$playlist_id" . "_playlist.m3u8");
+        $tmp_file = self::get_playlist_cache_path() . "{$playlist_id}_playlist.m3u8";
         if (file_exists($tmp_file)) {
             hd_debug_print("clear_playlist_cache: remove $tmp_file");
             unlink($tmp_file);
@@ -3035,7 +3051,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function is_playlist_cache_expired($is_tv)
     {
-        $filename = $this->get_playlist_cache($is_tv);
+        if ($is_tv) {
+            $filename = $this->get_playlist_cache();
+        } else {
+            $filename = $this->get_vod_playlist_cache();
+        }
         if (!file_exists($filename)) {
             hd_debug_print("Playlist cache '$filename' for current is not exist");
             return true;

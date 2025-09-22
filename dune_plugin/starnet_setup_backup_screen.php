@@ -139,8 +139,8 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements Us
     {
         Epg_Manager_Json::clear_epg_files();
         Epg_Manager_Xmltv::clear_epg_files();
-        $this->plugin->clear_playlist_cache();
         $this->plugin->reset_playlist_db();
+        $this->plugin->clear_playlist_cache(null);
 
         $temp_folder = get_temp_path("restore");
         delete_directory($temp_folder);

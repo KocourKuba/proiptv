@@ -472,7 +472,9 @@ class Curl_Wrapper
         $opts[CURLOPT_ENCODING] = 1;
 
         $fp = null;
-        if (!is_null($save_file)) {
+        if (is_null($save_file)) {
+            $opts[CURLOPT_NOBODY] = 1;
+        } else {
             $fp = fopen($save_file, "w+");
             $opts[CURLOPT_FILE] = $fp;
         }
