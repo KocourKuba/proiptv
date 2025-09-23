@@ -614,9 +614,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
-        $perf = new Perf_Collector();
-        $perf->setLabel('start_init_parser');
-
         $ret = false;
         $tmp_file = '';
         try {
@@ -671,7 +668,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $parser_params = array('id_parser' => $id_parser, 'icon_replace_pattern' => $icon_replace_pattern);
             $this->iptv_m3u_parser->setupParserParameters($parser_params);
-            hd_debug_print("Init playlist done!");
+            hd_debug_print("Init playlist parser done!");
             $ret = true;
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
@@ -686,12 +683,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 unlink($tmp_file);
             }
         }
-
-        $perf->setLabel('end_init_parser');
-        $report = $perf->getFullReport('start_init_parser', 'end_init_parser');
-
-        hd_debug_print("Init time:     {$report[Perf_Collector::TIME]} sec");
-        hd_debug_print_separator();
 
         return $ret;
     }
@@ -2854,9 +2845,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $icon = $this->get_channel_picon($channel_row, $is_classic);
 
-        $info = "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
+        $info = TR::load('number__1', $channel_row[COLUMN_CH_NUMBER]) . PHP_EOL;
+        $info .= "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
         $info .= TR::load('name__1', $channel_row[COLUMN_TITLE]) . PHP_EOL;
-        $info .= TR::load('number__1', $channel_row[COLUMN_CH_NUMBER]) . PHP_EOL;
         $info .= TR::load('archive__2', $channel_row[COLUMN_ARCHIVE], TR::load('days')) . PHP_EOL;
         $info .= TR::load('adult__1', TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT]))) . PHP_EOL;
         $info .= "EPG ID: " . implode(', ', array_unique(array_filter(self::make_epg_ids($channel_row)))) . PHP_EOL;
