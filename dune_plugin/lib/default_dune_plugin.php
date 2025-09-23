@@ -933,7 +933,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $params = $this->get_playlist_parameters($playlist_id);
         hd_debug_print("Process playlist: {$params[PARAM_NAME]} ($playlist_id)");
 
-        $db_file = self::get_playlist_cache() . '.db';
+        $db_file = get_data_path("$playlist_id.db");
 
         if ($this->sql_playlist) {
             // attach to playlist db. if db not exist it will be created
@@ -944,7 +944,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->reset_playlist_db();
         }
 
-        hd_debug_print("Load database: $db_file", true);
+        hd_debug_print("Load playlist settings database: $db_file", true);
         $this->sql_playlist = new Sql_Wrapper($db_file);
         if (!$this->sql_playlist->is_valid()) {
             return false;
@@ -954,9 +954,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         HD::set_last_error($this->get_request_error_name(), null);
 
         // create settings table
-        $settings_table = self::SETTINGS_TABLE;
-        $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, $settings_table);
-        $query .= sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
+        $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, self::SETTINGS_TABLE);
+        $this->sql_playlist->exec($query);
+
+        $query = sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
+        $this->sql_playlist->exec($query);
 
         // create tables for vod search, vod filters, vod favorites
         $tables = array(VOD_FILTER_LIST => 'item', VOD_SEARCH_LIST => 'item', VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID);
@@ -966,9 +968,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         foreach ($tables as $list => $column) {
             $table_name = self::get_table_name($list);
-            $query .= sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
+            $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
+            $this->sql_playlist->exec($query);
         }
-        $this->sql_playlist->exec_transaction($query);
 
         $db_file = get_data_path($this->get_playlist_order_id($playlist_id) . '.db');
         if ($this->sql_playlist->attachDatabase($db_file, self::PLAYLIST_ORDERS_DB) === 0) {
@@ -1057,7 +1059,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if (!empty($provider_class)) {
             $provider = $this->get_provider($playlist_id);
             if ($provider !== null) {
-                hd_debug_print("Using provider {$provider->getId()} ({$provider->getName()}) playlist id: $playlist_id");
                 $config_sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
                 if (!empty($config_sources)) {
                     $playlist_xmltv = self::PLAYLIST_XMLTV_TABLE;
@@ -1086,7 +1087,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // remove unused settings from db
         $where = Sql_Wrapper::sql_make_where_clause(array('cur_xmltv_source', 'cur_xmltv_key'), COLUMN_NAME);
-        $this->sql_playlist->exec("DELETE FROM $settings_table WHERE $where;");
+        $this->sql_playlist->exec(sprintf("DELETE FROM %s WHERE $where;", self::SETTINGS_TABLE));
 
         //////////////////////////////////////////////////////
         /// Upgrade settings to database
@@ -2843,34 +2844,43 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return null;
         }
 
+        $defs = array();
         $icon = $this->get_channel_picon($channel_row, $is_classic);
 
-        $info = TR::load('number__1', $channel_row[COLUMN_CH_NUMBER]) . PHP_EOL;
-        $info .= "ID: " . $channel_row[COLUMN_CHANNEL_ID] . PHP_EOL;
-        $info .= TR::load('name__1', $channel_row[COLUMN_TITLE]) . PHP_EOL;
-        $info .= TR::load('archive__2', $channel_row[COLUMN_ARCHIVE], TR::load('days')) . PHP_EOL;
-        $info .= TR::load('adult__1', TR::load(SwitchOnOff::to_def($channel_row[COLUMN_ADULT]))) . PHP_EOL;
-        $info .= "EPG ID: " . implode(', ', array_unique(array_filter(self::make_epg_ids($channel_row)))) . PHP_EOL;
+        Control_Factory::add_vgap($defs, -20);
+        self::format_smart_label($defs, TR::load('number'), $channel_row[COLUMN_CH_NUMBER]);
+        self::format_smart_label($defs, "ID:", $channel_row[COLUMN_CHANNEL_ID]);
+        self::format_smart_label($defs, TR::load('name'), $channel_row[COLUMN_TITLE]);
+        self::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID]);
+        self::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
+        self::format_smart_label($defs, TR::load('adult'), $channel_row[COLUMN_ADULT] ? TR::load('yes') : TR::load('no'));
+        self::format_smart_label($defs, "EPG ID:", implode(', ', array_unique(array_filter(self::make_epg_ids($channel_row)))));
+
         if ($channel_row[COLUMN_TIMESHIFT] != 0) {
-            $info .= TR::load('time_shift__1', $channel_row[COLUMN_TIMESHIFT]) . PHP_EOL;
+            self::format_smart_label($defs, TR::load('time_shift'), $channel_row[COLUMN_TIMESHIFT] . ' ' . TR::load('hours'));
         }
-        $info .= TR::load('category__1', $channel_row[COLUMN_GROUP_ID]) . PHP_EOL;
-        $info .= TR::load('icon') . ' ' . wrap_string_to_lines($icon, 70) . PHP_EOL;
-        $info .= PHP_EOL;
+        if ($channel_row[COLUMN_EPG_SHIFT] != 0) {
+            $epg_shift = format_duration_minutes((int)$channel_row[COLUMN_EPG_SHIFT]);
+            self::format_smart_label($defs, TR::load('setup_epg_shift'), $epg_shift . ' ' . TR::load('hours'));
+        }
+        Control_Factory::add_vgap($defs, 30);
+
+        self::format_smart_label($defs, TR::load('icon'), wrap_string_to_lines($icon, 120, "<br/>"));
 
         $provider = $this->get_active_provider();
         if (!is_null($provider)) {
             $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
             $epg_url = $this->get_epg_manager()->get_epg_url($provider, $channel_row, $day_start_ts, $epg_id, $preset);
             if (!is_null($epg_url)) {
-                $info .= TR::load('epg_url') . ' ' . wrap_string_to_lines($epg_url, 70) . PHP_EOL;
-                $info .= PHP_EOL;
+                $epg_url = wrap_string_to_lines($epg_url, 120, "<br/>");
+                self::format_smart_label($defs, TR::load('epg_url'), $epg_url);
             }
         }
 
         try {
             $live_url = $this->generate_stream_url($channel_row, -1, true);
-            $info .= TR::load('live_url') . ' ' . wrap_string_to_lines($live_url, 70) . PHP_EOL;
+            $live_url = wrap_string_to_lines(htmlspecialchars($live_url), 120, "<br/>");
+            self::format_smart_label($defs, TR::load('live_url'), $live_url);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
         }
@@ -2878,7 +2888,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($channel_row[COLUMN_ARCHIVE] > 0) {
             try {
                 $archive_url = $this->generate_stream_url($channel_row, time() - 3600, true);
-                $info .= TR::load('archive_url') . ' ' . wrap_string_to_lines($archive_url, 70) . PHP_EOL;
+                $archive_url = wrap_string_to_lines(htmlspecialchars($archive_url), 120, "<br/>");
+                self::format_smart_label($defs, TR::load('archive_url'), $archive_url);
             } catch (Exception $ex) {
                 print_backtrace_exception($ex);
             }
@@ -2887,8 +2898,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $ext_params = safe_get_value($channel_row, COLUMN_EXT_PARAMS);
         $dune_params = $this->generate_dune_params($channel_id, json_decode($ext_params, true));
         if (!empty($dune_params)) {
-            $info .= PHP_EOL;
-            $info .= "dune_params: $dune_params" . PHP_EOL;
+            Control_Factory::add_vgap($defs, 30);
+            self::format_smart_label($defs, "dune_params:", $dune_params);
         }
 
         if (!empty($live_url) && !is_limited_apk()) {
@@ -2911,31 +2922,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 fclose($pipes[1]);
                 proc_close($process);
 
-                $info .= "\n";
+                Control_Factory::add_vgap($defs, 30);
                 foreach (explode("\n", $output) as $line) {
                     $line = trim($line);
                     if (empty($line)) continue;
                     if (strpos($line, "Output") !== false) break;
                     if (strpos($line, "Stream") !== false) {
-                        $info .= preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line) . PHP_EOL;
+                        $line = substr($line, 7);
+                        $line = preg_replace("/ \(\[.*\)| \[.*]|, [0-9k.]+ tb[rcn]|, q=[0-9\-]+/", "", $line);
+                        self::format_smart_label($defs, TR::load('stream'), $line);
                     }
                 }
             }
         }
 
-        Control_Factory::add_multiline_label($defs, null, $info, 18);
-        Control_Factory::add_vgap($defs, 10);
-
-        $text = sprintf("<gap width=%s/><icon>%s</icon><gap width=10/><icon>%s</icon><text color=%s size=small>  %s</text>",
-            1200,
-            get_image_path('page_plus_btn.png'),
-            get_image_path('page_minus_btn.png'),
-            DEF_LABEL_TEXT_COLOR_SILVER,
-            TR::load('scroll_page')
-        );
-        Control_Factory::add_smart_label($defs, '', $text);
-        Control_Factory::add_vgap($defs, -80);
-
+        Control_Factory::add_vgap($defs, 20);
         Control_Factory::add_close_dialog_button($defs, TR::t('ok'), 250, true);
         Control_Factory::add_vgap($defs, 10);
 
@@ -3675,5 +3676,20 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         return null;
+    }
+
+    protected static function format_smart_label(&$defs, $name, $text)
+    {
+        if ($name === null) {
+            Control_Factory::add_smart_label($defs, null,
+                sprintf("<text color=%s size=small>%s</text>", DEF_LABEL_TEXT_COLOR_WHITE, $text),  -30);
+        } else {
+            Control_Factory::add_smart_label($defs, null,
+                sprintf("<gap width=0/><text color=%s size=small>%s</text><gap width=20/><text color=%s size=small>%s</text>",
+                    DEF_LABEL_TEXT_COLOR_GOLD, $name,
+                    DEF_LABEL_TEXT_COLOR_WHITE, $text),
+                -30
+            );
+        }
     }
 }

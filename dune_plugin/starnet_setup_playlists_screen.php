@@ -217,7 +217,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 break;
 
             case PARAM_PLAYLIST_CACHE_TIME:
-                $this->plugin->set_setting($control_id, $user_input->{$control_id});
+                $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
                 break;
 
             case ACTION_FILE_SELECTED:

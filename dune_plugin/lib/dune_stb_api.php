@@ -2463,16 +2463,17 @@ function pretty_json_format($content, $options = JSON_UNESCAPED_UNICODE)
  *
  * @param string $long_string
  * @param int $max_chars
+ * @param string $separator
  * @return string
  */
-function wrap_string_to_lines($long_string, $max_chars)
+function wrap_string_to_lines($long_string, $max_chars, $separator = PHP_EOL)
 {
     $lines = array_slice(
         explode(PHP_EOL,
             iconv('Windows-1251', 'UTF-8',
                 wordwrap(iconv('UTF-8', 'Windows-1251',
                     trim(preg_replace('/([!?])\.+\s*$/Uu', '$1', $long_string))),
-                    $max_chars, PHP_EOL, true))
+                    $max_chars, $separator, true))
         ),
         0, 2
     );

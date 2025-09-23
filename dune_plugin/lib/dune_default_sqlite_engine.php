@@ -721,13 +721,15 @@ class Dune_Default_Sqlite_Engine
     public function set_setting($name, $value)
     {
         hd_debug_print(null, true);
-        hd_debug_print("Set setting: $name => $value", true);
 
         $table_name = self::SETTINGS_TABLE;
         $q_value = Sql_Wrapper::sql_quote($value);
         $type = gettype($value);
+        hd_debug_print("Set setting: $name => $value ($type)", true);
         if ($this->sql_playlist) {
             $this->sql_playlist->exec("INSERT OR REPLACE INTO $table_name (name, value, type) VALUES ('$name', $q_value, '$type');");
+        } else {
+            hd_debug_print("Playlist db not set. Setting not saved", true);
         }
     }
 
