@@ -73,7 +73,9 @@ class Sql_Wrapper
         }
 
         $this->exec("ATTACH DATABASE '$db_filename' AS $name;");
-        return $this->is_database_attached($name, $db_filename);
+        $result = $this->is_database_attached($name, $db_filename);
+        hd_debug_print("Attach: " . ($result ? 'success' : 'fail'), true);
+        return $result;
     }
 
     /**
@@ -88,7 +90,9 @@ class Sql_Wrapper
         if ($this->is_database_attached($name) !== 0) {
             hd_debug_print("Trying to detach: '$name'", true);
             $this->exec("DETACH DATABASE '$name';");
-            return $this->is_database_attached($name) === 0;
+            $result = $this->is_database_attached($name) === 0;
+            hd_debug_print("Attach: " . ($result ? 'success' : 'fail'), true);
+            return $result;
         }
         return true;
     }
@@ -107,31 +111,30 @@ class Sql_Wrapper
     {
         if (!$this->is_valid()) {
             hd_debug_print("Sqlite wrapper db not inited!");
-        } else {
-            foreach ($this->fetch_array("PRAGMA database_list") as $database) {
-                if ($database['name'] !== $db_name) continue;
+            return 0;
+        }
 
-                if ($db_filename == null) {
-                    return 1;
-                }
+        $result = 0;
+        foreach ($this->fetch_array("PRAGMA database_list") as $database) {
+            if ($database['name'] !== $db_name) continue;
 
-                if ($db_filename == ':memory:' && empty($database['file'])) {
-                    return 2;
-                }
-
-                $used_db_file = basename($database['file']);
-                $checked_db_file = basename($db_filename);
-                if ($used_db_file === $checked_db_file) {
-                    return 2;
-                }
-
-                return 3;
+            if ($db_filename == null) {
+                $result = 1;
+                break;
             }
 
-            hd_debug_print(null, true);
-            hd_debug_print("Not attached: '$db_name', with filename: '$db_filename'", true);
+            if ($db_filename == ':memory:' && empty($database['file'])) {
+                $result = 2;
+                break;
+            }
+
+            $used_db_file = basename($database['file']);
+            $checked_db_file = basename($db_filename);
+            $result = ($used_db_file === $checked_db_file) ? 2 : 3;
+            break;
         }
-        return 0;
+
+        return $result;
     }
 
     /**
