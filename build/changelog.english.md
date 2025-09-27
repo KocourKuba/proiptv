@@ -1,4 +1,17 @@
-﻿### Version 6.2.1334
+﻿### Version 6.2.1356
+- Clicking the 'Play' button starts processing the XMLTV source in the XLMLV source list
+- Added connection and download timeout settings in the advanced plugin settings
+- Cache of Internet sources moved to the plugin folder from a temporary folder so that they do not disappear after the plugin is reloaded
+- Playlist cache moved to the plugin folder from a temporary folder so that they don't disappear after the plugin is reloaded
+- Information about hidden channels on the category screen is updated after changes
+- Added an additional script to hide channels 'Hide SD channels if HD is present'
+- Reworked the download mechanism to improve error handling. Now timeout errors do not lead to incorrect processing of partially downloaded playlist
+- Fixed a bug with incorrect clearing of the EPG cache for XMLTV and Internet sources
+- Updated API for IPTV Online provider. To solve blocking problems
+- Improved the window for displaying channel information
+- Due to frequent problems with downloading a playlist template from epg.one, a playlist mirror selection setting has been added. Look into provider settings
+
+### Version 6.2.1334
 - Added the ability to configure the playlist caching time. From 1 hour to 7 days. Look into Playlist settings
 - Added the ability to configure the caching time of the Internet EPG source (for provider templates). From 1 to 12 hours. Look into EPG Settings
 - Configuration: Added additional domains for Sharavoz
