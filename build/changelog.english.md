@@ -1,4 +1,7 @@
-﻿### Version 6.2.1356
+﻿### Version 6.2.1358
+- Fixed a bug with caching links to regular playlists
+
+### Version 6.2.1356
 - Clicking the 'Play' button starts processing the XMLTV source in the XLMLV source list
 - Added connection and download timeout settings in the advanced plugin settings
 - Cache of Internet sources moved to the plugin folder from a temporary folder so that they do not disappear after the plugin is reloaded
