@@ -59,7 +59,6 @@ class api_default
     const CONTROL_DOMAIN = 'domain';
     const CONTROL_QUALITY = 'quality';
     const CONTROL_STREAM = 'stream';
-    const CONTROL_REPLACE_ICONS = 'replace_icons';
 
     /**
      * @var string
@@ -452,6 +451,13 @@ class api_default
             array(MACRO_API, MACRO_PLAYLIST, MACRO_EPG_DOMAIN),
             array($this->getApiUrl(), $this->GetParameter(MACRO_PLAYLIST), $this->GetParameter(MACRO_EPG_DOMAIN)),
             $string);
+
+        $mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
+        if (!empty($mirrors)) {
+            reset($mirrors);
+            $selected = $this->GetParameter(PARAM_SELECTED_MIRROR, key($mirrors));
+            $macroses[MACRO_MIRROR] = $mirrors[$selected];
+        }
 
         foreach ($macroses as $macro => $default) {
             if (strpos($string, $macro) !== false) {
@@ -1021,8 +1027,21 @@ class api_default
         $icon_replacements = $this->getConfigValue(CONFIG_ICON_REPLACE);
         if (!empty($icon_replacements)) {
             $val = $this->GetParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
-            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_REPLACE_ICONS,
+            Control_Factory::add_combobox($defs, $handler, null, PARAM_REPLACE_ICON,
                 TR::t('setup_channels_square_icons'), $val, SwitchOnOff::$translated,
+                Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
+        }
+
+        $playlist_mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
+        if (!empty($playlist_mirrors)) {
+            reset($playlist_mirrors);
+            $val = $this->GetParameter(PARAM_SELECTED_MIRROR, key($playlist_mirrors));
+            $pairs = array();
+            foreach ($playlist_mirrors as $key => $value) {
+                $pairs[$key] = $key;
+            }
+            Control_Factory::add_combobox($defs, $handler, null, PARAM_SELECTED_MIRROR,
+                TR::t('setup_channels_using_mirror'), $val, $pairs,
                 Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -1076,8 +1095,12 @@ class api_default
             $this->SetQuality($user_input->{self::CONTROL_QUALITY});
         }
 
-        if (isset($user_input->{self::CONTROL_REPLACE_ICONS})) {
-            $this->SetParameter(PARAM_REPLACE_ICON, $user_input->{self::CONTROL_REPLACE_ICONS});
+        if (isset($user_input->{PARAM_REPLACE_ICON})) {
+            $this->SetParameter(PARAM_REPLACE_ICON, $user_input->{PARAM_REPLACE_ICON});
+        }
+
+        if (isset($user_input->{PARAM_SELECTED_MIRROR})) {
+            $this->SetParameter(PARAM_SELECTED_MIRROR, $user_input->{PARAM_SELECTED_MIRROR});
         }
 
         $this->plugin->clear_playlist_cache($this->playlist_id);

@@ -252,6 +252,7 @@ setup_channels_enable_dune_params = Aktivieren Sie dune_params
 setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Dune zwingen, den Stream zu erkennen
 setup_channels_info__4 = "Vorname:|%s||Verknüpfung:|%s||Typ:|%s||Kanal-ID:|%s"
+setup_channels_using_mirror = Wiedergabelistenspiegel verwenden
 
 entry_send_log = Protokoll an den Entwickler senden
 entry_log_sent__3 = Protokoll erfolgreich gesendet!\nBitte informieren Sie den Entwickler über den Grund für das Senden des Protokolls im Telegram-Kanal t.me/dunehd_iptv_chat\n oder in den Foren forum.hdtv.ru und forum.mydune.ru\nTyp der Dune HD: %s (%s) und Uhrzeit des Versands: %s

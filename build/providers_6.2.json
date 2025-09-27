@@ -446,18 +446,22 @@
             "replace": "/img2/"
           }
         ],
+        "playlist_mirrors": {
+          "epg.one": "http://epg.one",
+          "github": "https://raw.githubusercontent.com/KocourKuba/epgone_mirror/master/playlists"
+        },
         "playlists": {
           "thematic": {
             "name": "Thematic",
-            "url": "http://epg.one/edem_epg_ico2.m3u8"
+            "url": "{MIRROR}/edem_epg_ico2.m3u8"
           },
           "thematic_sort": {
             "name": "Thematic Sorted",
-            "url": "http://epg.one/edem_epg_ico3.m3u8"
+            "url": "{MIRROR}/edem_epg_ico3.m3u8"
           },
           "standard": {
             "name": "Standard",
-            "url": "http://epg.one/edem_epg_ico.m3u8"
+            "url": "{MIRROR}/edem_epg_ico.m3u8"
           },
           "custom": {
             "name": "Custom",

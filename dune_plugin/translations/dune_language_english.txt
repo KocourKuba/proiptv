@@ -252,6 +252,7 @@ setup_channels_enable_dune_params = Enable dune_params
 setup_channels_dune_params = dune_params
 setup_channels_dune_force_ts = Force Dune to detect stream
 setup_channels_info__4 = "Name:|%s||Link:|%s||Type:|%s||Channel ID:|%s"
+setup_channels_using_mirror = Use playlist mirror
 
 entry_send_log = Send log to the developer
 entry_log_sent__3 = Log sent successfully!\nPlease inform the developer of the reason for sending the log in the Telegram channel t.me/dunehd_iptv_chat\n or on the forums forum.hdtv.ru and forum.mydune.ru\nType of Dune HD: %s (%s) and time when it sent: %s

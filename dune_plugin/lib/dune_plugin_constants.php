@@ -309,6 +309,7 @@ const PARAM_INDEXING_FLAG = 'index_all';
 const PARAM_FIX_PALETTE = 'fix_palette';
 const PARAM_CURL_CONNECT_TIMEOUT = 'curl_connect_timeout';
 const PARAM_CURL_DOWNLOAD_TIMEOUT = 'curl_download_timeout';
+const PARAM_SELECTED_MIRROR = 'selected_mirror';
 
 const PARAM_GROUP_ORDINARY = 0;
 const PARAM_GROUP_SPECIAL = 1;
@@ -365,6 +366,7 @@ const MACRO_SCHEME = '{SCHEME}';
 const MACRO_DOMAIN = '{DOMAIN}';
 const MACRO_EXPIRE_DATA = '{EXPIRE_DATA}';
 const MACRO_ID = '{ID}';
+const MACRO_MIRROR = '{MIRROR}';
 
 const MACRO_TIMESTAMP = '{TIMESTAMP}';
 const MACRO_YEAR = '{YEAR}';
@@ -423,6 +425,7 @@ const CONFIG_PLAYLISTS = 'playlists';
 const CONFIG_VOD_PARSER = 'vod_parser';
 const CONFIG_URL_SUBST = 'url_subst';
 const CONFIG_ICON_REPLACE = 'replace_icon_patterns';
+const CONFIG_PLAYLIST_MIRRORS = 'playlist_mirrors';
 
 const API_COMMAND_GET_PLAYLIST = 'get_playlist';
 const API_COMMAND_GET_VOD = 'get_vod';
