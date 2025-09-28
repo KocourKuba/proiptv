@@ -578,27 +578,6 @@
     },
     {
       "enable": true,
-      "id": "hnmedia",
-      "name": "HN Media",
-      "type": "pin",
-      "logo": "http://iptv.esalecrm.net/res/logo_hnmedia.png",
-      "provider_url": "https://hnmedia.pro/",
-      "api_commands": {
-        "get_playlist": "https://hnmedia.pro/playlist/{STREAM_ID}/{PASSWORD}.m3u"
-      },
-      "config": {
-        "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/(?<id>.+)\\/.+\\?token=.+$/",
-        "ext_params": true,
-        "streams": {
-          "hls": "HLS",
-          "hls2": "HLS2",
-          "siptv": "MPEG-TS"
-        },
-        "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
-      }
-    },
-    {
-      "enable": true,
       "id": "ipstream",
       "vod": "ipstream",
       "name": "IPStream/iShara",

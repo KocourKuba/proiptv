@@ -59,10 +59,9 @@ For old devices (Sigma chipset based, non-Android), the latest version is [5.1.1
 46. [Pik TV](http://pa.piktv.top/)
 47. [Velestore](http://velestore.su/)
 48. [IPTV Play](http://iptv-play.ru/)
-49. [HN Media](https://hnmedia.pro/)
-50. [Shurik TV](https://schuriktv.nethouse.ru/)
-51. [2TV](https://2tv.biz/)
-52. [Skaz TV](https://skaz.tv/)
+49. [Shurik TV](https://schuriktv.nethouse.ru/)
+50. [2TV](https://2tv.biz/)
+51. [Skaz TV](https://skaz.tv/)
 </details>
 
 ## Donate
