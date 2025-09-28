@@ -1167,6 +1167,13 @@
       "config": {
         "id_parser": "/^(?<scheme>https?:\\/\\/)(?<domain>.+)\\/(?<id>.+)\\/(?<token>.+)\\/.+$/",
         "ext_params": true,
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "iptvx.one"
+          }
+        ],
         "url_subst": {
           "regex": "/^(.+\\/\\/).+(\\/[^\\/]+\\/[^\\/]+\\/.+)$/",
           "replace": "$1{SERVER_ID}$2"
