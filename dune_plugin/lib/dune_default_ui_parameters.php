@@ -378,7 +378,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             Control_Factory::add_smart_label($defs, null, $percent_text);
 
             // EPG description
-            Control_Factory::add_multiline_label($defs, null, $prog_info[PluginTvEpgProgram::description], 18);
+            Control_Factory::add_multiline_label($defs, null, $prog_info[PluginTvEpgProgram::description], 14);
             Control_Factory::add_vgap($defs, 30);
 
             // help line if description more than dialog height
@@ -486,6 +486,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         return $zoom_ops_translated;
     }
+
     /**
      * @param MediaURL $media_url
      * @return Screen

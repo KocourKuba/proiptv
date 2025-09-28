@@ -2847,7 +2847,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $defs = array();
-        $icon = $this->get_channel_picon($channel_row, $is_classic);
 
         Control_Factory::add_vgap($defs, -20);
         self::format_smart_label($defs, TR::load('number'), $channel_row[COLUMN_CH_NUMBER]);
@@ -2867,6 +2866,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
         Control_Factory::add_vgap($defs, 30);
 
+        $icon = $this->get_channel_picon($channel_row, $is_classic);
         self::format_smart_label($defs, TR::load('icon'), wrap_string_to_lines($icon, 120, "<br/>"));
 
         $provider = $this->get_active_provider();

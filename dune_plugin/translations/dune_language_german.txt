@@ -28,7 +28,7 @@ select = Auswählen
 time = Zeit:
 export_list = Liste exportieren
 enter_name = Name eingeben
-hours = (Stunden)
+hours = Stunden
 
 add_to_favorite = Zu Favortien hinzufügen
 delete_from_favorite = Von Favoriten entfernen
