@@ -1521,7 +1521,7 @@
       "type": "login",
       "logo": "http://iptv.esalecrm.net/res/logo_tvizi.png",
       "provider_url": "https://tvizi.net/",
-      "api_url": "https://iptv.online/api/v4",
+      "api_url": "https://see24.eu/api/v4",
       "api_commands": {
         "get_playlist": "{API}/playlist/m3u8",
         "request_token": "{API}/auth",
