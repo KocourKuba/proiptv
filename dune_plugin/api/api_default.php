@@ -939,6 +939,54 @@ class api_default
         return true;
     }
 
+    public function has_ext_params()
+    {
+        hd_debug_print(null, true);
+
+        $has_ext_params = false;
+        $streams = $this->GetStreams();
+        if (!empty($streams) && count($streams) > 1) {
+            $has_ext_params |= true;
+        }
+
+        $domains = $this->GetDomains();
+        if (!empty($domains) && count($domains) > 1) {
+            $has_ext_params |= true;
+        }
+
+        $servers = $this->GetServers();
+        if (!empty($servers) && count($servers) > 1) {
+            $has_ext_params |= true;
+        }
+
+        $devices = $this->GetDevices();
+        if (!empty($devices) && count($devices) > 1) {
+            $has_ext_params |= true;
+        }
+
+        $qualities = $this->GetQualities();
+        if (!empty($qualities) && count($qualities) > 1) {
+            $has_ext_params |= true;
+        }
+
+        $playlists = $this->GetPlaylists();
+        if (!empty($playlists) && count($playlists) > 1) {
+            $has_ext_params |= true;
+        }
+
+        $icon_replacements = $this->getConfigValue(CONFIG_ICON_REPLACE);
+        if (!empty($icon_replacements)) {
+            $has_ext_params |= true;
+        }
+
+        $playlist_mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
+        if (!empty($playlist_mirrors)) {
+            $has_ext_params |= true;
+        }
+
+        return $has_ext_params;
+    }
+
     /**
      * @param User_Input_Handler $handler
      * @return array|null

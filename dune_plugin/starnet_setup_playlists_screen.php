@@ -94,7 +94,7 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_DLG,
                     TR::t('edit_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), self::CONTROLS_WIDTH);
 
-                if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
+                if ($provider->has_ext_params()) {
                     Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_EXT_DLG,
                         TR::t('edit_ext_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), self::CONTROLS_WIDTH);
                 }

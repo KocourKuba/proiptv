@@ -2692,7 +2692,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
             }
 
-            if ($provider->getConfigValue(PROVIDER_EXT_PARAMS) === true) {
+            if ($provider->has_ext_params()) {
                 $menu_items[] = $this->create_menu_item($handler,
                     ACTION_EDIT_PROVIDER_EXT_DLG,
                     TR::t('edit_ext_account'),

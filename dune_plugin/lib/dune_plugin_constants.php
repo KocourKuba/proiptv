@@ -382,7 +382,6 @@ const MACRO_EPG_ID = '{EPG_ID}';
 // provider type access
 const PROVIDER_TYPE_PIN = 'pin';
 const PROVIDER_TYPE_LOGIN = 'login';
-const PROVIDER_EXT_PARAMS = 'ext_params';
 
 const ENGINE_JSON = 'json';
 const ENGINE_XMLTV = 'xmltv';
