@@ -146,7 +146,7 @@ class vod_cbilling extends vod_standard
         if ($jsonItems === false) {
             $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
             hd_debug_print($exception_msg);
-            HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
+            Default_Dune_Plugin::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
             return false;
         }
 

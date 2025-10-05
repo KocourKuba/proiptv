@@ -472,7 +472,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 $fileData[self::SELECTED_TYPE_FOLDER][self::SELECTED_TYPE_INTERNAL][PARAM_FILEPATH] = $dir . '/';
             } else if ($dir === self::IMAGELIB_PATH) {
                 $fileData[self::SELECTED_TYPE_FOLDER][self::SELECTED_TYPE_IMAGE_LIB][PARAM_FILEPATH] = get_temp_path('imagelib/');
-            } else if ($handle = opendir($dir)) {
+            } else if ($handle = @opendir($dir)) {
                 hd_debug_print("opendir: $dir", true);
                 if (basename(dirname($dir)) === self::SELECTED_TYPE_IMAGE_LIB) {
                     foreach ($this->plugin->get_image_libs()->get_values() as $lib) {

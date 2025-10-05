@@ -121,27 +121,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     User_Input_Handler_Registry::create_screen_action(Starnet_Tv_Groups_Screen::ID,ACTION_INVALIDATE));
 
             case GUI_EVENT_TIMER:
-                $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager === null) {
-                    return null;
-                }
-
                 clearstatcache();
-
-                $selected_xmltv_ids = $this->plugin->get_selected_xmltv_ids();
-                $res = $epg_manager->import_indexing_log($selected_xmltv_ids);
-                if ($res === 1) {
-                    hd_debug_print("Logs imported. Timer stopped");
-                    return Action_Factory::invalidate_all_folders($plugin_cookies);
-                }
-
-                if ($res === 2) {
-                    hd_debug_print("No imports. Timer stopped");
-                    return null;
-                }
-
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions, 1000);
+                return $this->plugin->get_import_xmltv_logs_actions(
+                    $this->plugin->get_selected_xmltv_ids(),
+                    $this->get_action_map($parent_media_url, $plugin_cookies),
+                    $plugin_cookies);
 
             case GUI_EVENT_KEY_INFO:
                 return $this->plugin->do_show_channel_info($channel_id, true);

@@ -339,7 +339,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                         null,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                             null,
-                            HD::get_last_error($this->plugin->get_pl_error_name())
+                            Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST)
                         )
                     );
                 }

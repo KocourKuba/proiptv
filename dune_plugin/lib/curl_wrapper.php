@@ -111,12 +111,7 @@ class Curl_Wrapper
     {
         hd_debug_print(null, true);
 
-        if (!$this->exec_php_curl($url, $save_file, $use_cache)) {
-            hd_debug_print("Can't download to $save_file");
-            return false;
-        }
-
-        return true;
+        return $this->exec_php_curl($url, $save_file, $use_cache);
     }
 
     /**
@@ -429,7 +424,8 @@ class Curl_Wrapper
         file_put_contents(get_data_path(self::CACHE_TAG_FILE), json_encode($cache_db));
     }
 
-    public static function http_headerfunction($curl, $header)
+    /** @noinspection PhpUnusedParameterInspection */
+    public static function http_header_function($curl, $header)
     {
         $len = strlen($header);
         $header = explode(':', $header, 2);
@@ -503,7 +499,7 @@ class Curl_Wrapper
         }
 
         self::$http_response_headers = null;
-        $opts[CURLOPT_HEADERFUNCTION] = 'Curl_Wrapper::http_headerfunction';
+        $opts[CURLOPT_HEADERFUNCTION] = 'Curl_Wrapper::http_header_function';
 
         $ch = curl_init();
         foreach ($opts as $k => $v) {

@@ -127,37 +127,19 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case GUI_EVENT_TIMER:
-                $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager === null) {
-                    return null;
-                }
-
                 clearstatcache();
 
                 if (!isset($plugin_cookies->ticker)) {
                     $plugin_cookies->ticker = 0;
                 }
 
-                $playlist_id = $this->plugin->get_active_playlist_id();
-                $res = $epg_manager->import_indexing_log($this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $playlist_id));
                 $post_action = Action_Factory::update_regular_folder($this->get_folder_range($parent_media_url, 0, $plugin_cookies),true);
 
-                if ($res === 1) {
-                    hd_debug_print("Logs imported. Timer stopped");
-                    return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
-                }
-
-                if ($res === 2) {
-                    hd_debug_print("No imports. Timer stopped");
-                    $last_error = HD::get_last_error($this->plugin->get_xmltv_error_name());
-                    if (!empty($last_error)) {
-                        return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'), null, $last_error);
-                    }
-                    return null;
-                }
-
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions, 1000, $post_action);
+                return $this->plugin->get_import_xmltv_logs_actions(
+                    $this->plugin->get_xmltv_sources_hash(XMLTV_SOURCE_ALL, $this->plugin->get_active_playlist_id()),
+                    $this->get_action_map($parent_media_url, $plugin_cookies),
+                    $plugin_cookies,
+                    $post_action);
 
             case GUI_EVENT_KEY_INFO:
                 return $this->do_show_xmltv_info($selected_id);
@@ -569,7 +551,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
 
             $cached_xmltv_file = $this->plugin->get_cache_dir() . '/' . "$key.xmltv";
-            $locked = $epg_manager->is_index_locked($key, INDEXING_ALL);
+            $locked = Epg_Manager_Xmltv::is_index_locked($key, INDEXING_ALL);
             if ($locked) {
                 $title = file_exists($cached_xmltv_file) ? TR::t('edit_list_title_info__1', $title) : TR::t('edit_list_title_info_download__1', $title);
             } else if (file_exists($cached_xmltv_file)) {
@@ -679,13 +661,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function do_show_xmltv_info($id)
     {
-        $epg_manager = $this->plugin->get_epg_manager();
-        if ($epg_manager === null) {
-            return null;
-        }
-
         $cached_xmltv_file = $this->plugin->get_cache_dir() . '/' . "$id.xmltv";
-        $locked = $epg_manager->is_index_locked($id, INDEXING_ALL);
+        $locked = Epg_Manager_Xmltv::is_index_locked($id, INDEXING_ALL);
         if ($locked || !file_exists($cached_xmltv_file)) {
             return Action_Factory::show_error(false, TR::t('edit_list_xmltv_not_ready'));
         }
@@ -766,7 +743,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             Control_Factory::add_vgap($defs, 30);
         }
 
-        $indexes = $epg_manager->get_indexes_info($params);
+        $indexes = Epg_Manager_Xmltv::get_indexes_info($params);
         foreach ($indexes as $index => $cnt) {
             $cnt = ($cnt !== -1) ? $cnt : TR::t('err_error_no_data');
             Control_Factory::add_smart_label($defs, null,

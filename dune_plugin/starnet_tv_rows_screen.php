@@ -139,32 +139,18 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 // rising after playback end + 100 ms
                 $this->plugin->update_tv_history(null);
 
-                $error_msg = trim(HD::get_last_error($this->plugin->get_pl_error_name()));
+                $error_msg = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
                 if (!empty($error_msg)) {
                     hd_debug_print("Playlist loading error: $error_msg");
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
                 }
 
-                $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager === null) {
-                    return null;
-                }
-
                 clearstatcache();
 
-                $res = $epg_manager->import_indexing_log($this->plugin->get_selected_xmltv_ids());
-                if ($res === 1) {
-                    hd_debug_print("Logs imported. Timer stopped");
-                    return Action_Factory::invalidate_all_folders($plugin_cookies);
-                }
-
-                if ($res === 2) {
-                    hd_debug_print("No imports. Timer stopped");
-                    return null;
-                }
-
-                $actions = $this->get_action_map($media_url, $plugin_cookies);
-                return Action_Factory::change_behaviour($actions, 1000);
+                return $this->plugin->get_import_xmltv_logs_actions(
+                    $this->plugin->get_selected_xmltv_ids(),
+                    $this->get_action_map($media_url, $plugin_cookies),
+                    $plugin_cookies);
 
             case GUI_EVENT_KEY_PLAY:
             case GUI_EVENT_KEY_ENTER:

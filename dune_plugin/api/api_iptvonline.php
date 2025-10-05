@@ -54,21 +54,20 @@ class api_iptvonline extends api_default
         $token = $this->plugin->get_cookie(PARAM_TOKEN, true);
         $expired = empty($token);
 
-        $rq_last_error_name = $this->plugin->get_request_error_name();
         if (!$force) {
             if (!$expired) {
                 hd_debug_print("request not required", true);
                 return true;
             }
 
-            $error = HD::check_last_error($rq_last_error_name);
+            Default_Dune_Plugin::get_last_error(LAST_ERROR_REQUEST, false);
             if (!empty($error)) {
                 hd_debug_print("Previous token request failed!");
                 return false;
             }
         }
 
-        HD::set_last_error($rq_last_error_name, null);
+        Default_Dune_Plugin::clear_last_error(LAST_ERROR_REQUEST);
 
         $refresh_token = $this->plugin->get_cookie(PARAM_REFRESH_TOKEN);
         $can_refresh = $expired && !empty($refresh_token);
@@ -108,7 +107,7 @@ class api_iptvonline extends api_default
         }
 
         hd_debug_print("token not received: " . pretty_json_format($data), true);
-        HD::set_last_error($rq_last_error_name, TR::load('err_cant_get_token') . "\n" . pretty_json_format($data));
+        Default_Dune_Plugin::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n" . pretty_json_format($data));
         return false;
     }
 

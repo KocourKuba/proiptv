@@ -40,15 +40,14 @@ class api_1ott extends api_default
             return true;
         }
 
-        $rq_last_error_name = $this->plugin->get_request_error_name();
         $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
         if (isset($response->token)) {
             $this->plugin->set_cookie(PARAM_SESSION_ID, $response->token,time() + 86400);
-            HD::set_last_error($rq_last_error_name, null);
+            Default_Dune_Plugin::clear_last_error(LAST_ERROR_REQUEST);
             return true;
         }
 
-        HD::set_last_error($rq_last_error_name, TR::load('err_cant_get_token'));
+        Default_Dune_Plugin::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
         return false;
     }
 

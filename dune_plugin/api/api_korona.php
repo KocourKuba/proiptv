@@ -91,9 +91,8 @@ class api_korona extends api_default
             return $this->request_provider_token(true);
         }
 
-        $rq_last_error_name = $this->plugin->get_request_error_name();
         hd_debug_print("token not received: " . pretty_json_format($data), true);
-        HD::set_last_error($rq_last_error_name, TR::load('err_cant_get_token') . "\n\n" . pretty_json_format($data));
+        Default_Dune_Plugin::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n\n" . pretty_json_format($data));
         return false;
     }
 

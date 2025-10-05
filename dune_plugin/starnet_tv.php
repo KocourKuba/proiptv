@@ -86,39 +86,49 @@ class Starnet_Tv implements User_Input_Handler
 
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
-                $post_action = null;
-                $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager === null) {
-                    return null;
-                }
-
                 clearstatcache();
-                $selected_xmltv_ids = $this->plugin->get_selected_xmltv_ids();
-                $res = $epg_manager->import_indexing_log($selected_xmltv_ids);
-                if ($res === 2) {
+                $res = Epg_Manager_Xmltv::import_indexing_log($this->plugin->get_selected_xmltv_ids());
+
+                if ($res === 0) {
                     hd_debug_print("No imports. Timer stopped");
                     return null;
                 }
 
-                if ($res === 0) {
+                if ($res === -1) {
+                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'),
+                        null,
+                        Default_Dune_Plugin::get_last_error(LAST_ERROR_XMLTV));
+                }
+
+                $post_action = null;
+                if ($res === 1 || $res === -2) {
+                    if ($this->plugin->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)) {
+                        $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+                    }
+
+                    $epg_manager = $this->plugin->get_epg_manager();
+                    if ($epg_manager === null) {
+                        return null;
+                    }
+
+                    $delayed_queue = $epg_manager->get_delayed_epg();
+                    $epg_manager->clear_delayed_epg();
+                    foreach ($delayed_queue as $channel_id) {
+                        hd_debug_print("Refresh EPG for channel ID: $channel_id");
+                        $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
+                        $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
+                        $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg,
+                            $post_action, $this->plugin->is_ext_epg_enabled() && !empty($day_epg));
+                    }
+
+                    return $post_action;
+                }
+
+                if ($res === 2) {
                     return Action_Factory::change_behaviour($this->get_action_map(), 1000);
                 }
 
-                if ($this->plugin->get_bool_setting(PARAM_PICONS_DELAY_LOAD, false)) {
-                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
-                }
-
-                $delayed_queue = $epg_manager->get_delayed_epg();
-                $epg_manager->clear_delayed_epg();
-                foreach ($delayed_queue as $channel_id) {
-                    hd_debug_print("Refresh EPG for channel ID: $channel_id");
-                    $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
-                    $day_epg = $this->plugin->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
-                    $post_action = Action_Factory::update_epg($channel_id, true, $day_start_ts, $day_epg,
-                        $post_action, $this->plugin->is_ext_epg_enabled() && !empty($day_epg));
-                }
-
-                return $post_action;
+                break;
 
             case GUI_EVENT_PLAYBACK_STOP:
                 $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id, true);

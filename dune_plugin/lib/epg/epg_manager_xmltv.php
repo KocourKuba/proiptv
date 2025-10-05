@@ -51,9 +51,24 @@ class Epg_Manager_Xmltv
     protected static $epg_cache = array();
 
     /**
-     * @var Default_Dune_Plugin
+     * @var Sql_Wrapper[]
      */
-    protected $plugin;
+    protected static $epg_db = array();
+
+    /**
+     * @var Hashed_Array
+     */
+    protected static $xmltv_sources;
+
+    /**
+     * @var int
+     */
+    protected static $flags = 0;
+
+    /**
+     * @var bool
+     */
+    protected static $ext_epg_enabled;
 
     /**
      * @var array
@@ -61,46 +76,15 @@ class Epg_Manager_Xmltv
     protected $delayed_epg = array();
 
     /**
-     * @var int
+     * @param Default_Dune_Plugin $plugin
      */
-    protected $flags = 0;
-
-    /**
-     * @var Hashed_Array
-     */
-    protected $xmltv_sources;
-
-    /**
-     * @var Sql_Wrapper[]
-     */
-    protected static $epg_db = array();
-
-    /**
-     * @var Sql_Wrapper[]
-     */
-    protected $picons_db = array();
-
-    /**
-     * Set and create cache dir
-     *
-     * @param string $cache_dir
-     */
-    public function set_cache_dir($cache_dir)
+    public function __construct($plugin)
     {
-        self::$cache_dir = get_slash_trailed_path($cache_dir);
-        create_path(self::$cache_dir);
-
-        hd_debug_print("Indexer engine: " . get_class($this));
-        hd_debug_print("Cache dir:      " . self::$cache_dir);
-        hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
-    }
-
-    /**
-     * @return Hashed_Array
-     */
-    public function get_sources()
-    {
-        return $this->xmltv_sources;
+        self::$ext_epg_enabled = is_ext_epg_supported() && $plugin->get_bool_setting(PARAM_SHOW_EXT_EPG);
+        self::$flags = $plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
+        self::$xmltv_sources = $plugin->get_active_sources();
+        self::set_cache_dir($plugin->get_cache_dir());
+        self::clear_epg_memory_cache();
     }
 
     /**
@@ -119,86 +103,6 @@ class Epg_Manager_Xmltv
     public function clear_delayed_epg()
     {
         $this->delayed_epg = array();
-    }
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     */
-    public function init($plugin)
-    {
-        $this->plugin = $plugin;
-        $this->xmltv_sources = $this->plugin->get_active_sources();
-        $this->flags = $this->plugin->get_bool_setting(PARAM_FAKE_EPG, false) ? EPG_FAKE_EPG : 0;
-        $this->set_cache_dir($this->plugin->get_cache_dir());
-        self::clear_epg_memory_cache();
-    }
-
-    /**
-     * Function to parse xmltv source in separate process
-     * Only one XMLTV source must be sent via config
-     *
-     * @param $config_file
-     * @return bool
-     */
-    public function index_by_config($config_file)
-    {
-        global $LOG_FILE;
-
-        if (!file_exists($config_file)) {
-            HD::set_last_error("xmltv_last_error", "Config file for indexing not exist");
-            return false;
-        }
-
-        $config = json_decode(file_get_contents($config_file), true);
-        if (!LogSeverity::$is_debug) {
-            unlink($config_file);
-        }
-        if ($config === false) {
-            HD::set_last_error("xmltv_last_error", "Invalid config file for indexing");
-            return false;
-        }
-
-        if (empty($config[PARAMS_XMLTV])) {
-            return false;
-        }
-
-        $LOG_FILE = get_temp_path("{$config[PARAMS_XMLTV][PARAM_HASH]}_indexing.log");
-        if (file_exists($LOG_FILE) && !LogSeverity::$is_debug) {
-            unlink($LOG_FILE);
-        }
-
-        date_default_timezone_set('UTC');
-
-        set_debug_log($config[PARAM_ENABLE_DEBUG]);
-
-        $this->set_cache_dir($config[PARAM_CACHE_DIR]);
-
-        hd_print("Script config");
-        hd_print("Log:         " . $LOG_FILE);
-        hd_print("Cache dir:   " . self::$cache_dir);
-        hd_print("Index flag:  " . $config[PARAM_INDEXING_FLAG]);
-        hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
-
-        $this->reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
-
-        return true;
-    }
-
-    /**
-     * Set active sources (Hashed_Array of url params)
-     *
-     * @param Hashed_Array<array> $sources
-     * @return void
-     */
-    public function set_xmltv_sources($sources)
-    {
-        if ($sources->size() === 0) {
-            hd_debug_print("No XMLTV source selected");
-        } else {
-            hd_debug_print("XMLTV sources selected: $sources");
-        }
-
-        $this->xmltv_sources = $sources;
     }
 
     /**
@@ -231,17 +135,16 @@ class Epg_Manager_Xmltv
 
         $cached = false;
         if (isset(static::$epg_cache[$channel_id][$day_start_ts])) {
-            hd_debug_print("Load day Channel ID $channel_id from day start: ($day_start_ts) " . format_datetime("Y-m-d H:i", $day_start_ts) . " from memory cache ");
+            hd_debug_print("Load day Channel ID $channel_id from day start: ($day_start_ts) "
+                . format_datetime("Y-m-d H:i", $day_start_ts) . " from memory cache ");
             $cached = true;
             return static::$epg_cache[$channel_id][$day_start_ts];
         }
 
         $day_epg = array();
-        $ext_epg = $this->plugin->is_ext_epg_enabled();
-
-        foreach ($this->xmltv_sources as $key => $params) {
+        foreach (self::$xmltv_sources as $key => $params) {
             hd_debug_print("Looking in XMLTV source: {$params[PARAM_URI]}");
-            if ($this->is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES)) {
+            if (self::is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES)) {
                 hd_debug_print("EPG {$params[PARAM_URI]} still indexing, append to delayed queue channel id: $channel_id");
                 $this->delayed_epg[] = $channel_id;
                 continue;
@@ -289,7 +192,7 @@ class Epg_Manager_Xmltv
                                 $day_epg[$program_start][PluginTvEpgProgram::description] = HD::unescape_entity_string(self::get_node_value($tag, 'desc'));
                                 $day_epg[$program_start][PluginTvEpgProgram::icon_url] = self::get_node_attribute($tag, 'icon', 'src');
 
-                                if (!$ext_epg) continue;
+                                if (!self::$ext_epg_enabled) continue;
 
                                 $day_epg[$program_start][PluginTvExtEpgProgram::sub_title] = self::get_node_value($tag, 'sub-title');
                                 $day_epg[$program_start][PluginTvExtEpgProgram::main_category] = self::get_node_value($tag, 'category');
@@ -320,8 +223,8 @@ class Epg_Manager_Xmltv
         $this->delayed_epg = array_unique($this->delayed_epg);
 
         if (empty($day_epg)) {
-            if ($this->xmltv_sources->size() === 0) {
-                $day_epg = $this->getFakeEpg($channel_row, $day_start_ts, $day_epg);
+            if (self::$xmltv_sources->size() === 0) {
+                $day_epg = self::getFakeEpg($channel_row, $day_start_ts, $day_epg);
                 if (!empty($day_epg)) {
                     return $day_epg;
                 }
@@ -333,7 +236,7 @@ class Epg_Manager_Xmltv
                 );
             }
 
-            if (!empty($this->delayed_epg) && $this->get_any_index_locked() !== false) {
+            if (!empty($this->delayed_epg) && self::get_any_index_locked() !== false) {
                 hd_debug_print("Delayed epg: " . json_encode($this->delayed_epg));
                 return array($day_start_ts => array(
                     PluginTvEpgProgram::end_tm_sec => $day_start_ts + 86400,
@@ -341,7 +244,7 @@ class Epg_Manager_Xmltv
                     PluginTvEpgProgram::description => TR::load('epg_not_ready_desc'))
                 );
             }
-            return $this->getFakeEpg($channel_row, $day_start_ts, $day_epg);
+            return self::getFakeEpg($channel_row, $day_start_ts, $day_epg);
         }
 
         hd_debug_print("Store day epg to memory cache");
@@ -351,6 +254,34 @@ class Epg_Manager_Xmltv
         return $day_epg;
     }
 
+    ///////////////////////////////////////////////////////////////////////////////
+    /// public static methods
+
+    /**
+     * @return Hashed_Array
+     */
+    public static function get_sources()
+    {
+        return self::$xmltv_sources;
+    }
+
+    /**
+     * Set active sources (Hashed_Array of url params)
+     *
+     * @param Hashed_Array<array> $sources
+     * @return void
+     */
+    public static function set_xmltv_sources($sources)
+    {
+        if ($sources->size() === 0) {
+            hd_debug_print("No XMLTV source selected");
+        } else {
+            hd_debug_print("XMLTV sources selected: $sources");
+        }
+
+        self::$xmltv_sources = $sources;
+    }
+
     /**
      * Get picon for channel
      *
@@ -358,9 +289,9 @@ class Epg_Manager_Xmltv
      * @param string $placeHolders
      * @return string
      */
-    public function get_picon($db_name, $placeHolders)
+    public static function get_picon($db_name, $placeHolders)
     {
-        if ($this->is_index_locked($db_name, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) {
+        if (self::is_index_locked($db_name, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) {
             hd_debug_print("File is indexing or downloading, skipped");
             return false;
         }
@@ -372,7 +303,7 @@ class Epg_Manager_Xmltv
                     INNER JOIN $ch_table_name ON $picons_table_name.picon_hash=$ch_table_name.picon_hash
                     WHERE alias IN ($placeHolders);";
 
-        $db = $this->open_sqlite_db($db_name, self::TABLE_CHANNELS, true);
+        $db = self::open_sqlite_db($db_name, self::TABLE_CHANNELS, true);
         if ($db === false) {
             return false;
         }
@@ -381,57 +312,72 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * Import indexing log to plugin logs
+     * Function to parse xmltv source in separate process
+     * Only one XMLTV source must be sent via config
+     * Plugin not available at this time!
      *
-     * @param array $sources_hash
-     * @return int 0 - if any active source is locked, 1 - if import successful and no other active locks, 2 - if no locks and no imports
+     * @param $config_file
+     * @return bool
      */
-    public function import_indexing_log($sources_hash)
+    public static function index_by_config($config_file)
     {
-        $has_locks = false;
-        if (empty($sources_hash)) {
-            return 2;
+        global $LOG_FILE;
+
+        if (!file_exists($config_file)) {
+            Default_Dune_Plugin::set_last_error(LAST_ERROR_XMLTV, "Config file for indexing not exist");
+            return false;
         }
 
-        $has_imports = false;
-        foreach ($sources_hash as $hash) {
-            if ($this->is_index_locked($hash, INDEXING_ALL)) {
-                $has_locks = true;
-                continue;
-            }
-
-            $index_log = get_temp_path("{$hash}_indexing.log");
-            if (file_exists($index_log)) {
-                hd_debug_print("Read epg indexing log $index_log...");
-                hd_debug_print_separator();
-                $logfile = @file_get_contents($index_log);
-                foreach (explode(PHP_EOL, $logfile) as $l) {
-                    hd_print(preg_replace("|^\[[\d:-]+\s(.*)$|", "[$1", rtrim($l)));
-                }
-                hd_debug_print_separator();
-                hd_debug_print("Read finished");
-                unlink($index_log);
-                $has_imports = true;
-            }
+        $config = json_decode(file_get_contents($config_file), true);
+        if (!LogSeverity::$is_debug) {
+            unlink($config_file);
+        }
+        if ($config === false) {
+            Default_Dune_Plugin::set_last_error(LAST_ERROR_XMLTV, "Invalid config file for indexing");
+            return false;
         }
 
-        return $has_locks ? 0 : ($has_imports ? 1 : 2);
+        if (empty($config[PARAMS_XMLTV])) {
+            return false;
+        }
+
+        $LOG_FILE = get_temp_path("{$config[PARAMS_XMLTV][PARAM_HASH]}_indexing.log");
+        if (file_exists($LOG_FILE) && !LogSeverity::$is_debug) {
+            unlink($LOG_FILE);
+        }
+
+        date_default_timezone_set('UTC');
+
+        set_debug_log($config[PARAM_ENABLE_DEBUG]);
+
+        self::set_cache_dir($config[PARAM_CACHE_DIR]);
+
+        hd_print("Script config");
+        hd_print("Log:         " . $LOG_FILE);
+        hd_print("Cache dir:   " . self::$cache_dir);
+        hd_print("Index flag:  " . $config[PARAM_INDEXING_FLAG]);
+        hd_print("XMLTV param: " . json_encode($config[PARAMS_XMLTV]));
+
+        self::reindex_xmltv($config[PARAMS_XMLTV], $config[PARAM_INDEXING_FLAG]);
+
+        return true;
     }
 
     /**
      * check xmltv source and return required flags for indexing
      *
+     * @param Default_Dune_Plugin $plugin
      * @param array $params
      * @param int $index_flag
      * @return int
      */
-    public function check_xmltv_source($params, $index_flag)
+    public static function check_xmltv_source($plugin, $params, $index_flag)
     {
         hd_debug_print(null, true);
 
         if (empty($params[PARAM_URI]) || empty($params[PARAM_HASH])) {
             $exception_msg = "XMTLV EPG url not set";
-            HD::set_last_error("xmltv_last_error", $exception_msg);
+            Default_Dune_Plugin::set_last_error(LAST_ERROR_XMLTV, $exception_msg);
             $index_log = get_temp_path("{$params[PARAM_HASH]}_indexing.log");
             if (file_exists($index_log)) {
                 unlink($index_log);
@@ -444,7 +390,7 @@ class Epg_Manager_Xmltv
 
         $cache_ttl = !isset($params[PARAM_CACHE]) ? XMLTV_CACHE_AUTO : $params[PARAM_CACHE];
 
-        HD::set_last_error("xmltv_last_error", null);
+        Default_Dune_Plugin::clear_last_error(LAST_ERROR_XMLTV);
 
         $cached_file = self::$cache_dir . $hash . ".xmltv";
         $cached_db = self::$cache_dir . $hash . ".db";
@@ -458,7 +404,7 @@ class Epg_Manager_Xmltv
 
             if ($cache_ttl === XMLTV_CACHE_AUTO) {
                 $curl_wrapper = Curl_Wrapper::getInstance();
-                $this->plugin->set_curl_timeouts($curl_wrapper);
+                $plugin->set_curl_timeouts($curl_wrapper);
                 if (!$curl_wrapper->check_is_expired($url)) {
                     $expired = false;
                 } else if (Curl_Wrapper::is_cached_etag($url)) {
@@ -482,7 +428,7 @@ class Epg_Manager_Xmltv
             $entries_valid = false;
         } else {
             hd_debug_print("Cached file: $cached_file is not expired");
-            $indexed = $this->get_indexes_info($params);
+            $indexed = self::get_indexes_info($params);
             // index for picons has not verified because it always exist if channels index is present
             $channels_valid = ($indexed[self::TABLE_CHANNELS] !== -1);
             $entries_valid = ($indexed[self::TABLE_ENTRIES] !== -1);
@@ -519,132 +465,12 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * Check if lock for specified cache is exist
-     *
-     * @param string $hash
-     * @param int $index_flag
-     * @return bool
-     */
-    public function is_index_locked($hash, $index_flag)
-    {
-        $locked = false;
-        foreach (self::$index_flags as $flag) {
-            if ($index_flag & $flag) {
-                $dirs = glob(self::get_lock_name($hash, $flag, '*'), GLOB_ONLYDIR);
-                $locked |= !empty($dirs);
-            }
-        }
-
-        return $locked;
-    }
-
-    /**
-     * Check if any locks for all sources and return name of locks
-     *
-     * @return bool|array
-     */
-    public function get_any_index_locked()
-    {
-        $dirs = glob(self::get_lock_name('', 0), GLOB_ONLYDIR);
-
-        foreach ($dirs as $dir) {
-            $locks[] = basename($dir);
-        }
-
-        return empty($locks) ? false : $locks;
-    }
-
-    /**
-     * @param string $hash
-     * @param int $index_flag
-     */
-    public function lock_index($hash, $index_flag)
-    {
-        foreach (self::$index_flags as $flag) {
-            if ($index_flag & $flag) {
-                $this->set_lock(self::get_lock_name($hash, $flag), true);
-            }
-        }
-    }
-
-    /**
-     * @param string $hash
-     * @param int $index_flag
-     */
-    public function unlock_index($hash, $index_flag)
-    {
-        foreach (self::$index_flags as $flag) {
-            if ($index_flag & $flag) {
-                $this->set_lock(self::get_lock_name($hash, $flag), false);
-            }
-        }
-    }
-
-    public static function clear_epg_memory_cache()
-    {
-        self::$epg_cache = array();
-    }
-
-    /**
-     * clear cache for selected filename (hash) mask
-     *
-     * @param string|null $hash
-     * @return void
-     */
-    public static function clear_epg_files($hash = '')
-    {
-        hd_debug_print(null, true);
-
-        self::clear_epg_memory_cache();
-
-        if (empty(self::$cache_dir)) {
-            hd_debug_print("Cache directory not set");
-            return;
-        }
-
-        if (empty($hash)) {
-            self::$epg_db = array();
-        } else if (isset(self::$epg_db[$hash])) {
-            unset(self::$epg_db[$hash]);
-        }
-
-        Curl_Wrapper::clear_cached_etag_by_hash($hash);
-
-        $dirs = glob(self::get_lock_name($hash, 0, '*'), GLOB_ONLYDIR);
-        $locks = array();
-        foreach ($dirs as $dir) {
-            hd_debug_print("Found locks: $dir");
-            $locks[] = $dir;
-        }
-
-        if (!empty($locks)) {
-            foreach ($locks as $lock) {
-                $ar = explode('_', basename($lock));
-                $pid = (int)end($ar);
-
-                if ($pid !== 0 && send_process_signal($pid, 0)) {
-                    hd_debug_print("Kill process $pid");
-                    send_process_signal($pid, -9);
-                }
-                hd_debug_print("Remove lock: $lock");
-                rmdir($lock);
-            }
-        }
-
-        $files = self::$cache_dir . $hash . "*";
-        hd_debug_print("clear epg files: $files");
-        array_map('unlink', glob($files));
-        clearstatcache();
-        hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
-    }
-
-    /**
      * Get information about indexes
      *
      * @param array $params
      * @return array
      */
-    public function get_indexes_info($params)
+    public static function get_indexes_info($params)
     {
         hd_debug_print(null, true);
         $result = array(self::TABLE_CHANNELS => -1, self::TABLE_PICONS => -1, self::TABLE_ENTRIES => -1, 'epg_ids' => -1);
@@ -654,7 +480,7 @@ class Epg_Manager_Xmltv
         foreach ($result as $key => $name) {
             if ($key === 'epg_ids') continue;
 
-            $db = $this->open_sqlite_db($db_name, $key, true);
+            $db = self::open_sqlite_db($db_name, $key, true);
             if (empty($db) || !$db->is_table_exists($key)) continue;
 
             if ($key === self::TABLE_CHANNELS) {
@@ -678,7 +504,7 @@ class Epg_Manager_Xmltv
      * @param int $indexing_flag
      * @return void
      */
-    public function reindex_xmltv($params, $indexing_flag)
+    public static function reindex_xmltv($params, $indexing_flag)
     {
         hd_debug_print("Indexing xmltv");
 
@@ -700,14 +526,14 @@ class Epg_Manager_Xmltv
         if ($indexing_flag & INDEXING_DOWNLOAD) {
             hd_debug_print("Download xmltv");
             // download xmtv is denied if download or any indexing in process
-            if ($this->is_index_locked($url_hash, INDEXING_ALL)) {
+            if (self::is_index_locked($url_hash, INDEXING_ALL)) {
                 hd_debug_print("File is indexing or downloading, skipped");
                 return;
             }
 
-            HD::set_last_error("xmltv_last_error", null);
+            Default_Dune_Plugin::clear_last_error(LAST_ERROR_XMLTV);
 
-            $this->lock_index($url_hash, INDEXING_DOWNLOAD);
+            self::lock_index($url_hash, INDEXING_DOWNLOAD);
             $success = false;
 
             try {
@@ -717,12 +543,12 @@ class Epg_Manager_Xmltv
                 }
 
                 $perf->setLabel('start_download');
-                $this->download_xmltv($params);
+                self::download_xmltv($params);
                 $perf->setLabel('start_unpack');
-                $this->unpack_xmltv($params);
+                self::unpack_xmltv($params);
                 $success = true;
             } catch (Exception $ex) {
-                HD::set_last_error("xmltv_last_error", $ex->getMessage());
+                Default_Dune_Plugin::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
                 print_backtrace_exception($ex);
                 $tmp_filename = $cached_file . ".tmp";
                 if (!empty($tmp_filename) && file_exists($tmp_filename)) {
@@ -734,7 +560,7 @@ class Epg_Manager_Xmltv
                 }
             }
 
-            $this->unlock_index($url_hash, INDEXING_DOWNLOAD);
+            self::unlock_index($url_hash, INDEXING_DOWNLOAD);
 
             if (!$success) {
                 return;
@@ -744,7 +570,7 @@ class Epg_Manager_Xmltv
         /// Reindex channels and picons
         if ($indexing_flag & INDEXING_CHANNELS) {
             hd_debug_print("Start index channels and picons...");
-            $this->lock_index($url_hash, INDEXING_CHANNELS);
+            self::lock_index($url_hash, INDEXING_CHANNELS);
 
             $success = false;
             $file = false;
@@ -758,7 +584,7 @@ class Epg_Manager_Xmltv
                     throw new Exception("reindex_xmltv_channels: Can't open file: $cached_file");
                 }
 
-                $db = $this->open_sqlite_db($url_hash, self::TABLE_CHANNELS, false);
+                $db = self::open_sqlite_db($url_hash, self::TABLE_CHANNELS, false);
                 if ($db === false) {
                     throw new Exception("reindex_xmltv_channels: Can't open db: $url_hash");
                 }
@@ -845,7 +671,7 @@ class Epg_Manager_Xmltv
                 fclose($file);
             }
 
-            $this->unlock_index($url_hash, INDEXING_CHANNELS);
+            self::unlock_index($url_hash, INDEXING_CHANNELS);
             if (!$success) {
                 return;
             }
@@ -854,7 +680,7 @@ class Epg_Manager_Xmltv
         /// Reindex positions
         if ($indexing_flag & INDEXING_ENTRIES) {
             hd_debug_print("Start indexing entries...");
-            $this->lock_index($url_hash, INDEXING_ENTRIES);
+            self::lock_index($url_hash, INDEXING_ENTRIES);
 
             $file = false;
             try {
@@ -867,7 +693,7 @@ class Epg_Manager_Xmltv
                     throw new Exception("reindex_xmltv_entries: Can't open file: $cached_file");
                 }
 
-                $db = $this->open_sqlite_db($url_hash, self::TABLE_ENTRIES, false);
+                $db = self::open_sqlite_db($url_hash, self::TABLE_ENTRIES, false);
                 if ($db === false) {
                     throw new Exception("reindex_xmltv_entries: Can't open db: $url_hash");
                 }
@@ -907,6 +733,7 @@ class Epg_Manager_Xmltv
                         // check if end
                         $end_tv = strpos($line, "</tv>");
                         if ($end_tv !== false) {
+                            /** @noinspection PhpUnusedLocalVariableInspection */
                             $tag_end_pos = $end_tv + $tag_start_pos;
                             $stm->execute();
                             break;
@@ -973,7 +800,7 @@ class Epg_Manager_Xmltv
                 fclose($file);
             }
 
-            $this->unlock_index($url_hash, INDEXING_ENTRIES);
+            self::unlock_index($url_hash, INDEXING_ENTRIES);
         }
 
         if ($perf->getLabelsCount() > 1) {
@@ -983,8 +810,250 @@ class Epg_Manager_Xmltv
         }
     }
 
+    /**
+     * Import indexing log to plugin logs
+     *
+     * @param array $sources_hash
+     * @return int  0 - if no locks and no imports,
+     *              1 - if all import successful and no other active locks,
+     *              2 - if any active source is locked
+     *             -1 - if no locks and no imports but has error
+     *             -2 - if import successful and no other active locks but some error occurred
+     */
+    public static function import_indexing_log($sources_hash)
+    {
+        $has_locks = false;
+        if (empty($sources_hash)) {
+            return 1;
+        }
+
+        $has_imports = false;
+        foreach ($sources_hash as $hash) {
+            if (self::is_index_locked($hash, INDEXING_ALL)) {
+                $has_locks = true;
+                continue;
+            }
+
+            $index_log = get_temp_path("{$hash}_indexing.log");
+            if (file_exists($index_log)) {
+                hd_debug_print("Read epg indexing log $index_log...");
+                hd_debug_print_separator();
+                $logfile = @file_get_contents($index_log);
+                foreach (explode(PHP_EOL, $logfile) as $l) {
+                    hd_print(preg_replace("|^\[[\d:-]+\s(.*)$|", "[$1", rtrim($l)));
+                }
+                hd_debug_print_separator();
+                hd_debug_print("Read finished");
+                unlink($index_log);
+                $has_imports = true;
+            }
+        }
+
+        if ($has_locks) {
+            return 2;
+        }
+
+        $last_error = Default_Dune_Plugin::get_last_error(LAST_ERROR_XMLTV, false);
+
+        if ($has_imports) {
+            return empty($last_error) ? 1 : -1;
+        }
+
+        return empty($last_error) ? 0 : -2;
+    }
+
+    public static function get_stat($cached_file)
+    {
+        $stat = array();
+        $stat_file = $cached_file . '.stat';
+        if (file_exists($stat_file)) {
+            $stat = json_decode(file_get_contents($stat_file), true);
+        }
+        return $stat;
+    }
+
+    /**
+     * Check if lock for specified cache is exist
+     *
+     * @param string $hash
+     * @param int $index_flag
+     * @return bool
+     */
+    public static function is_index_locked($hash, $index_flag)
+    {
+        $locked = false;
+        foreach (self::$index_flags as $flag) {
+            if ($index_flag & $flag) {
+                $dirs = glob(self::get_lock_name($hash, $flag, '*'), GLOB_ONLYDIR);
+                $locked |= !empty($dirs);
+            }
+        }
+
+        return $locked;
+    }
+
+    /**
+     * Check if any locks for all sources and return name of locks
+     *
+     * @return bool|array
+     */
+    public static function get_any_index_locked()
+    {
+        $dirs = glob(self::get_lock_name('', 0), GLOB_ONLYDIR);
+
+        foreach ($dirs as $dir) {
+            $locks[] = basename($dir);
+        }
+
+        return empty($locks) ? false : $locks;
+    }
+
+    /**
+     * clear cache for selected filename (hash) mask
+     *
+     * @param string|null $hash
+     * @return void
+     */
+    public static function clear_epg_files($hash = '')
+    {
+        hd_debug_print(null, true);
+
+        self::clear_epg_memory_cache();
+
+        if (empty(self::$cache_dir)) {
+            hd_debug_print("Cache directory not set");
+            return;
+        }
+
+        if (empty($hash)) {
+            self::$epg_db = array();
+        } else if (isset(self::$epg_db[$hash])) {
+            unset(self::$epg_db[$hash]);
+        }
+
+        Curl_Wrapper::clear_cached_etag_by_hash($hash);
+
+        $dirs = glob(self::get_lock_name($hash, 0, '*'), GLOB_ONLYDIR);
+        $locks = array();
+        foreach ($dirs as $dir) {
+            hd_debug_print("Found locks: $dir");
+            $locks[] = $dir;
+        }
+
+        if (!empty($locks)) {
+            foreach ($locks as $lock) {
+                $ar = explode('_', basename($lock));
+                $pid = (int)end($ar);
+
+                if ($pid !== 0 && send_process_signal($pid, 0)) {
+                    hd_debug_print("Kill process $pid");
+                    send_process_signal($pid, -9);
+                }
+                hd_debug_print("Remove lock: $lock");
+                rmdir($lock);
+            }
+        }
+
+        $files = self::$cache_dir . $hash . "*";
+        hd_debug_print("clear epg files: $files");
+        array_map('unlink', glob($files));
+        clearstatcache();
+        hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
-    /// protected methods
+    /// protected static methods
+
+    /**
+     * Set and create cache dir
+     *
+     * @param string $cache_dir
+     */
+    protected static function set_cache_dir($cache_dir)
+    {
+        self::$cache_dir = get_slash_trailed_path($cache_dir);
+        create_path(self::$cache_dir);
+
+        hd_debug_print("Cache dir:      " . self::$cache_dir);
+        hd_debug_print("Storage space:  " . HD::get_storage_size(self::$cache_dir));
+    }
+
+    /**
+     * Clear memory cache
+     * @return void
+     */
+    protected static function clear_epg_memory_cache()
+    {
+        self::$epg_cache = array();
+    }
+
+    /**
+     * @param string $hash
+     * @param int $index_flag
+     */
+    protected static function lock_index($hash, $index_flag)
+    {
+        foreach (self::$index_flags as $flag) {
+            if ($index_flag & $flag) {
+                self::set_lock(self::get_lock_name($hash, $flag), true);
+            }
+        }
+    }
+
+    /**
+     * @param string $hash
+     * @param int $index_flag
+     */
+    protected static function unlock_index($hash, $index_flag)
+    {
+        foreach (self::$index_flags as $flag) {
+            if ($index_flag & $flag) {
+                self::set_lock(self::get_lock_name($hash, $flag), false);
+            }
+        }
+    }
+
+    protected static function set_lock($name, $lock)
+    {
+        if ($lock) {
+            if (!create_path($name, 0644)) {
+                hd_debug_print("Directory '$name' was not created");
+            } else {
+                hd_debug_print("Lock $name");
+            }
+        } else if (is_dir($name)) {
+            hd_debug_print("Unlock $name");
+            rmdir($name);
+            clearstatcache();
+        }
+    }
+
+    /**
+     * If $hash is empty return glob mask for all locks in cache dir *.?lock
+     * If $index_flag == 0 return glob mask for any lock for $hash and $pid .?lock
+     * @param string $hash
+     * @param int $index_flag
+     * @param string $pid
+     * @return string
+     */
+    protected static function get_lock_name($hash, $index_flag, $pid = '')
+    {
+        $pid = empty($pid) ? getmypid() : $pid;
+
+        if ($index_flag === INDEXING_DOWNLOAD) {
+            $ext = self::$cache_dir . $hash . "_$pid.dlock";
+        } else if ($index_flag === INDEXING_CHANNELS) {
+            $ext = self::$cache_dir . $hash . "_$pid.clock";
+        } else if ($index_flag === INDEXING_ENTRIES) {
+            $ext = self::$cache_dir . $hash . "_$pid.elock";
+        } else if (empty($hash)) {
+            $ext = self::$cache_dir . "*.?lock";
+        } else {
+            $ext = self::$cache_dir . $hash . "_$pid.?lock";
+        }
+
+        return $ext;
+    }
 
     /**
      * @param array $params
@@ -1015,7 +1084,7 @@ class Epg_Manager_Xmltv
 
         hd_debug_print("Search for aliases: $aliases", true);
 
-        $db_channels = $this->open_sqlite_db($params[PARAM_HASH], self::TABLE_CHANNELS, true);
+        $db_channels = self::open_sqlite_db($params[PARAM_HASH], self::TABLE_CHANNELS, true);
         if ($db_channels === false) {
             hd_debug_print("Problem with open SQLite channels db! Possible database not exist");
             return $channel_positions;
@@ -1030,7 +1099,7 @@ class Epg_Manager_Xmltv
         }
 
         hd_debug_print("Load position indexes for: $channel_id ($channel_title)", true);
-        $db_entries = $this->open_sqlite_db($params[PARAM_HASH], self::TABLE_ENTRIES, true);
+        $db_entries = self::open_sqlite_db($params[PARAM_HASH], self::TABLE_ENTRIES, true);
         if ($db_entries === false) {
             hd_debug_print("Problem with open SQLite channels db! Possible database not exist");
             return $channel_positions;
@@ -1051,28 +1120,6 @@ class Epg_Manager_Xmltv
     }
 
     /**
-     * @param array $channel_row
-     * @param int $day_start_ts
-     * @param array $day_epg
-     * @return array
-     */
-    protected function getFakeEpg($channel_row, $day_start_ts, $day_epg)
-    {
-        if (($this->flags & EPG_FAKE_EPG) && $channel_row[COLUMN_ARCHIVE] !== 0) {
-            hd_debug_print("Create fake data for non existing EPG data");
-            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
-                $day_epg[$start][PluginTvEpgProgram::end_tm_sec] = $start + 3600;
-                $day_epg[$start][PluginTvEpgProgram::name] = TR::load('fake_epg_program') . " $n";
-                $day_epg[$start][PluginTvEpgProgram::description] = '';
-            }
-        } else {
-            hd_debug_print("No EPG for channel: {$channel_row[COLUMN_CHANNEL_ID]}");
-        }
-
-        return $day_epg;
-    }
-
-    /**
      * Check is all indexes is valid
      *
      * @param array $params
@@ -1084,7 +1131,7 @@ class Epg_Manager_Xmltv
         hd_debug_print(null, true);
 
         foreach ($names as $name) {
-            $db = $this->open_sqlite_db($params[PARAM_HASH], $name, true);
+            $db = self::open_sqlite_db($params[PARAM_HASH], $name, true);
             if ($db === false) {
                 hd_debug_print("Database not exist");
                 return false;
@@ -1097,9 +1144,6 @@ class Epg_Manager_Xmltv
         }
         return true;
     }
-
-    ///////////////////////////////////////////////////////////////////////////////
-    /// static methods
 
     protected static function get_node_value($node, $name)
     {
@@ -1125,33 +1169,6 @@ class Epg_Manager_Xmltv
         return $value;
     }
 
-    /**
-     * If $hash is empty return glob mask for all locks in cache dir *.?lock
-     * If $index_flag == 0 return glob mask for any lock for $hash and $pid .?lock
-     * @param string $hash
-     * @param int $index_flag
-     * @param string $pid
-     * @return string
-     */
-    protected static function get_lock_name($hash, $index_flag, $pid = '')
-    {
-        $pid = empty($pid) ? getmypid() : $pid;
-
-        if ($index_flag === INDEXING_DOWNLOAD) {
-            $ext = self::$cache_dir . $hash . "_$pid.dlock";
-        } else if ($index_flag === INDEXING_CHANNELS) {
-            $ext = self::$cache_dir . $hash . "_$pid.clock";
-        } else if ($index_flag === INDEXING_ENTRIES) {
-            $ext = self::$cache_dir . $hash . "_$pid.elock";
-        } else if (empty($hash)) {
-            $ext = self::$cache_dir . "*.?lock";
-        } else {
-            $ext = self::$cache_dir . $hash . "_$pid.?lock";
-        }
-
-        return $ext;
-    }
-
     protected static function clear_log($hash)
     {
         $index_log = get_temp_path("{$hash}_indexing.log");
@@ -1160,22 +1177,26 @@ class Epg_Manager_Xmltv
         }
     }
 
-    ///////////////////////////////////////////////////////////////////////////////
-    /// private methods
-
-    private function set_lock($name, $lock)
+    /**
+     * @param array $channel_row
+     * @param int $day_start_ts
+     * @param array $day_epg
+     * @return array
+     */
+    protected static function getFakeEpg($channel_row, $day_start_ts, $day_epg)
     {
-        if ($lock) {
-            if (!create_path($name, 0644)) {
-                hd_debug_print("Directory '$name' was not created");
-            } else {
-                hd_debug_print("Lock $name");
+        if ((self::$flags & EPG_FAKE_EPG) && $channel_row[COLUMN_ARCHIVE] !== 0) {
+            hd_debug_print("Create fake data for non existing EPG data");
+            for ($start = $day_start_ts, $n = 1; $start <= $day_start_ts + 86400; $start += 3600, $n++) {
+                $day_epg[$start][PluginTvEpgProgram::end_tm_sec] = $start + 3600;
+                $day_epg[$start][PluginTvEpgProgram::name] = TR::load('fake_epg_program') . " $n";
+                $day_epg[$start][PluginTvEpgProgram::description] = '';
             }
-        } else if (is_dir($name)) {
-            hd_debug_print("Unlock $name");
-            rmdir($name);
-            clearstatcache();
+        } else {
+            hd_debug_print("No EPG for channel: {$channel_row[COLUMN_CHANNEL_ID]}");
         }
+
+        return $day_epg;
     }
 
     /**
@@ -1185,7 +1206,7 @@ class Epg_Manager_Xmltv
      * @param bool $readonly
      * @return Sql_Wrapper|bool
      */
-    private function open_sqlite_db($db_name, $table_name, $readonly)
+    protected static function open_sqlite_db($db_name, $table_name, $readonly)
     {
         if ($table_name === self::TABLE_ENTRIES) {
             $db_name = $db_name . "_entries";
@@ -1215,7 +1236,7 @@ class Epg_Manager_Xmltv
      * @param array $params
      * @throws Exception
      */
-    private function download_xmltv($params)
+    protected static function download_xmltv($params)
     {
         $url = $params[PARAM_URI];
         $cached_file = $params[PARAM_CACHE_PATH];
@@ -1272,7 +1293,7 @@ class Epg_Manager_Xmltv
      * @param array $params
      * @throws Exception
      */
-    private function unpack_xmltv($params)
+    protected static function unpack_xmltv($params)
     {
         $cached_file = $params[PARAM_CACHE_PATH];
         if (file_exists($cached_file)) {
@@ -1357,15 +1378,5 @@ class Epg_Manager_Xmltv
         }
         $stat[$tag] = $time;
         file_put_contents($stat_file, json_encode($stat));
-    }
-
-    public static function get_stat($cached_file)
-    {
-        $stat = array();
-        $stat_file = $cached_file . '.stat';
-        if (file_exists($stat_file)) {
-            $stat = json_decode(file_get_contents($stat_file), true);
-        }
-        return $stat;
     }
 }

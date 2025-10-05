@@ -119,6 +119,7 @@ function IP2Country($ip)
 
 $url_params = parse_url(getenv("REQUEST_URI"));
 if (isset($url_params['query'])) {
+    /** @noinspection PhpUndefinedVariableInspection */
     parse_str($url_params['query'], $params);
 }
 

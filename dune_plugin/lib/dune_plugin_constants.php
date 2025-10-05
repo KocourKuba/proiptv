@@ -332,6 +332,11 @@ const XMLTV_SOURCE_PLAYLIST = 1;
 const XMLTV_SOURCE_EXTERNAL = 2;
 const XMLTV_SOURCE_ALL = 3;
 
+const LAST_ERROR_PLAYLIST = 0;
+const LAST_ERROR_VOD_LIST = 1;
+const LAST_ERROR_REQUEST = 2;
+const LAST_ERROR_XMLTV = 3;
+
 const GROUPS_INFO = 'groups_info';
 const GROUPS_ORDER = 'groups_order';
 const CHANNELS_INFO = 'channels_info';

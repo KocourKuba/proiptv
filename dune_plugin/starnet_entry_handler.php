@@ -133,10 +133,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 if (!$this->plugin->is_vod_playlist()) {
                     if (!$this->plugin->init_playlist_parser()
                         || ($this->plugin->is_playlist_cache_expired(true)
-                            && !$this->plugin->parse_m3u_playlist(true))) {
+                            && !$this->plugin->load_and_parse_m3u_playlist(true))) {
                         return Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                             null,
-                            HD::get_last_error($this->plugin->get_pl_error_name()));
+                            Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST));
                     }
                 }
 
@@ -282,7 +282,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                     null,
                                     Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                                         null,
-                                        HD::get_last_error($this->plugin->get_pl_error_name()))
+                                        Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST)
+                                    )
                                 );
                             }
 
@@ -350,7 +351,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             if (!$this->plugin->load_channels($plugin_cookies)) {
                                 $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                                     null,
-                                    HD::get_last_error($this->plugin->get_pl_error_name()));
+                                    Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST)
+                                );
                                 return Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
                                     $this->plugin->get_plugin_title(),

@@ -968,20 +968,7 @@ class HD
      * @param string $source
      * @return string
      */
-    public static function check_last_error($source)
-    {
-        $error_file = get_temp_path($source);
-        $msg = '';
-        if (file_exists($error_file)) {
-            $msg = file_get_contents($error_file);
-        }
-        return $msg;
-    }
-
-    /**
-     * @param string $source
-     * @return string
-     */
+  /*
     public static function get_last_error($source)
     {
         $error_file = get_temp_path($source);
@@ -992,11 +979,12 @@ class HD
         }
         return $msg;
     }
-
+*/
     /**
      * @param string $source
      * @param string|null $error
      */
+/*
     public static function set_last_error($source, $error)
     {
         $error_file = get_temp_path($source);
@@ -1006,7 +994,7 @@ class HD
             file_put_contents($error_file, $error);
         }
     }
-
+*/
     /**
      * @param string $sourcePath absoulute path where files will be searched
      * @param string $source_pattern regex pattern to match files

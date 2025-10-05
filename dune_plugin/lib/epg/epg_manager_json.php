@@ -34,10 +34,21 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     const EPG_URL = 'epg_url';
 
     /**
+     * @var Default_Dune_Plugin
+     */
+    protected $plugin;
+
+    /**
      * contains current dune IP
      * @var string
      */
     protected $dune_ip;
+
+    public function __construct($plugin)
+    {
+        parent::__construct($plugin);
+        $this->plugin = $plugin;
+    }
 
     /**
      * @inheritDoc
@@ -181,7 +192,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             hd_debug_print("Total $counts EPG entries loaded");
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
-            return $this->getFakeEpg($channel_row, $day_start_ts, $day_epg);
+            return static::getFakeEpg($channel_row, $day_start_ts, $day_epg);
         }
 
         // filter out epg only for selected day
@@ -294,7 +305,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
      * @inheritDoc
      * @override
      */
-    public static function clear_epg_files($hash = null)
+    public static function clear_epg_files($hash = '')
     {
         hd_debug_print(null, true);
 

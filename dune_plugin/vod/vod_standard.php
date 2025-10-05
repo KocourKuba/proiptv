@@ -793,7 +793,7 @@ class vod_standard extends Abstract_Vod
             $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($response === false) {
                 $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
-                HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
+                Default_Dune_Plugin::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
                 if (file_exists($tmp_file)) {
                     unlink($tmp_file);
                 }
@@ -801,7 +801,7 @@ class vod_standard extends Abstract_Vod
                 $this->vod_items = Curl_Wrapper::decodeJsonResponse(true, $tmp_file, $assoc);
                 if ($this->vod_items === false) {
                     $exception_msg = TR::load('err_decoding_vod');
-                    HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
+                    Default_Dune_Plugin::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);
                     }
@@ -942,10 +942,10 @@ class vod_standard extends Abstract_Vod
                     hd_debug_print("download provider vod");
                     $res = $provider->execApiCommand(API_COMMAND_GET_VOD, $m3u_file);
                     if ($res === false) {
-                        $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
-                        $exception_msg = TR::load('err_load_vod') . "\n$logfile";
-                        HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
-                        throw new Exception($exception_msg);
+                        $curl_wrapper = $provider->getCurlWrapper();
+                        $msg = sprintf("%s\nError code: %s\n%s",
+                            TR::load('err_load_vod'), $curl_wrapper->get_error_no(), $curl_wrapper->get_error_desc());
+                        throw new Exception($msg);
                     }
                 } else if ($type === PARAM_FILE) {
                     hd_debug_print("m3u copy local file: $uri to $m3u_file");
@@ -956,10 +956,9 @@ class vod_standard extends Abstract_Vod
                     $res = copy($uri, $m3u_file);
                     if ($res === false) {
                         $errors = error_get_last();
-                        $logfile = "Copy error: " . $errors['type'] . "\n" .$errors['message'];
-                        $exception_msg = TR::load('err_load_vod') . PHP_EOL . PHP_EOL .
-                            "m3u copy local file: $uri to $m3u_file\n$logfile";
-                        throw new Exception($exception_msg);
+                        $msg = sprintf("%s\nm3u copy local file: %s to %s\nCopy error: %s\n%s",
+                            TR::load('err_load_vod'), $uri, $m3u_file, $errors['type'], $errors['message']);
+                        throw new Exception($msg);
                     }
                 } else if ($type === PARAM_LINK || $type === PARAM_CONF) {
                     hd_debug_print("m3u download link: $uri");
@@ -970,9 +969,9 @@ class vod_standard extends Abstract_Vod
                     $this->plugin->set_curl_timeouts($curl_wrapper);
                     $res = $curl_wrapper->download_file($uri, $m3u_file, true);
                     if ($res === false) {
-                        $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
-                        $exception_msg = TR::load('err_load_vod') . "\n$logfile";
-                        throw new Exception($exception_msg);
+                        $msg = sprintf("%s\nError code: %s\n%s",
+                            TR::load('err_load_vod'), $curl_wrapper->get_error_no(), $curl_wrapper->get_error_desc());
+                        throw new Exception($msg);
                     }
                 } else {
                     throw new Exception("Unknown playlist type");
@@ -980,9 +979,8 @@ class vod_standard extends Abstract_Vod
 
                 $playlist_file = file_get_contents($m3u_file);
                 if (strpos($playlist_file, TAG_EXTM3U) === false && strpos($playlist_file, TAG_EXTINF) === false) {
-                    $exception_msg = TR::load('err_load_vod') . "\n\nPlaylist is not a M3U file\n\n$playlist_file";
-                    HD::set_last_error($this->plugin->get_vod_error_name(), $exception_msg);
-                    throw new Exception($exception_msg);
+                    $msg = sprintf("%s\nPlaylist is not a M3U file\n%s", TR::load('err_load_vod'), $playlist_file);
+                    throw new Exception($msg);
                 }
 
                 $mtime = filemtime($m3u_file);
@@ -991,6 +989,7 @@ class vod_standard extends Abstract_Vod
             }
         } catch (Exception $ex) {
             hd_debug_print("Unable to load VOD playlist");
+            Default_Dune_Plugin::set_last_error(LAST_ERROR_VOD_LIST, $ex->getMessage());
             print_backtrace_exception($ex);
             if (file_exists($m3u_file)) {
                 unlink($m3u_file);

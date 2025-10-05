@@ -99,37 +99,22 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, ACTION_CONFIRM_EXIT_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
-                $error_msg = trim(HD::get_last_error($this->plugin->get_pl_error_name()));
+                $error_msg = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
                 if (!empty($error_msg)) {
                     hd_debug_print("Playlist loading error: $error_msg");
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
                 }
 
-                $epg_manager = $this->plugin->get_epg_manager();
-                if ($epg_manager === null) {
-                    return null;
-                }
-
                 clearstatcache();
 
-                $actions = $this->get_action_map($parent_media_url, $plugin_cookies);
-                $selected_xmltv_ids = $this->plugin->get_selected_xmltv_ids();
-                $res = $epg_manager->import_indexing_log($selected_xmltv_ids);
-                if ($res === 1) {
-                    hd_debug_print("Logs imported. Timer stopped");
-                    return Action_Factory::invalidate_all_folders($plugin_cookies);
-                }
-
-                if ($res === 2) {
-                    hd_debug_print("No imports. Timer stopped");
-                    return null;
-                }
-
-                return Action_Factory::change_behaviour($actions, 1000);
+                return $this->plugin->get_import_xmltv_logs_actions(
+                    $this->plugin->get_selected_xmltv_ids(),
+                    $this->get_action_map($parent_media_url, $plugin_cookies),
+                    $plugin_cookies);
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                $has_error = HD::get_last_error($this->plugin->get_pl_error_name());
+                $has_error = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
                 if (empty($has_error)) {
                     if ($sel_media_url->group_id !== VOD_GROUP_ID) {
                         return Action_Factory::open_folder();
@@ -141,7 +126,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return Action_Factory::open_folder();
                     }
 
-                    $has_error = HD::get_last_error($this->plugin->get_vod_error_name());
+                    $has_error = Default_Dune_Plugin::get_last_error(LAST_ERROR_VOD_LIST);
                 }
 
                 return Action_Factory::show_title_dialog(TR::t('err_load_any'), null, $has_error);

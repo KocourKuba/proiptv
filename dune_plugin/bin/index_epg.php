@@ -63,5 +63,4 @@ require_once 'lib/epg/epg_manager_xmltv.php';
 
 list(, $config) = $argv;
 
-$epg_manager = new Epg_Manager_Xmltv();
-$epg_manager->index_by_config($config);
+Epg_Manager_Xmltv::index_by_config($config);

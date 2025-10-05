@@ -119,6 +119,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     protected $iptv_m3u_parser;
 
+    /**
+     * @var array
+     */
+    protected static $last_error;
+
     private $plugin_cookies;
     private $internet_status = -2;
     private $opexec_id = -1;
@@ -590,18 +595,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $preset = $provider->getConfigValue(EPG_JSON_PRESETS);
             if (!empty($preset)) {
                 hd_debug_print("Using 'Epg_Manager_Json' cache engine");
-                $this->epg_manager = new Epg_Manager_Json();
+                $this->epg_manager = new Epg_Manager_Json($this);
                 $this->use_xmltv = false;
             }
         }
 
         if (is_null($this->epg_manager)) {
             hd_debug_print("Using 'Epg_Manager_Xmltv' cache engine");
-            $this->epg_manager = new Epg_Manager_Xmltv();
+            $this->epg_manager = new Epg_Manager_Xmltv($this);
             $this->use_xmltv = true;
         }
-
-        $this->epg_manager->init($this);
     }
 
     /**
@@ -672,12 +675,18 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $ret = true;
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
-            $err = HD::get_last_error($this->get_pl_error_name());
-            if (!empty($err)) {
-                $err .= "\n\n";
+            $err = $ex->getMessage();
+            $rq_err = Default_Dune_Plugin::get_last_error(LAST_ERROR_REQUEST);
+            if (!empty($rq_err)) {
+                $err .= "\n\n" . $rq_err;
             }
-            $err .= $ex->getMessage();
-            HD::set_last_error($this->get_pl_error_name(), $err);
+
+            $pl_err = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
+            if (!empty($pl_err)) {
+                $err .= "\n\n" . $pl_err;
+            }
+
+            Default_Dune_Plugin::set_last_error(LAST_ERROR_PLAYLIST, $err);
             print_backtrace_exception($ex);
             if (empty($type) && file_exists($tmp_file)) {
                 unlink($tmp_file);
@@ -726,7 +735,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param bool $only_headers
      * @return bool
      */
-    public function parse_m3u_playlist($only_headers)
+    public function load_and_parse_m3u_playlist($only_headers)
     {
         $m3u_file = $this->get_playlist_cache();
         $db_file = $m3u_file . '.db';
@@ -887,16 +896,23 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $ret = true;
         } catch (Exception $ex) {
             $ret = false;
-            $err = HD::get_last_error($this->get_pl_error_name());
-            if (!empty($err)) {
-                $err .= "\n\n";
+            hd_debug_print($ex->getMessage());
+            $err = $ex->getMessage();
+            $rq_err = Default_Dune_Plugin::get_last_error(LAST_ERROR_REQUEST);
+            if (!empty($rq_err)) {
+                $err .= "\n\n" . $rq_err;
             }
-            $err .= $ex->getMessage();
-            HD::set_last_error($this->get_pl_error_name(), $err);
+
+            $pl_err = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
+            if (!empty($pl_err)) {
+                $err .= "\n\n" . $pl_err;
+            }
+
+            Default_Dune_Plugin::set_last_error(LAST_ERROR_PLAYLIST, $err);
             print_backtrace_exception($ex);
             if (file_exists($m3u_file)) {
                 hd_debug_print("Clear playlist: $m3u_file");
-                //unlink($m3u_file);
+                unlink($m3u_file);
             }
             $this->sql_playlist->detachDatabase(M3uParser::IPTV_DB);
             if (file_exists($db_file)) {
@@ -950,8 +966,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        HD::set_last_error($this->get_pl_error_name(), null);
-        HD::set_last_error($this->get_request_error_name(), null);
+        Default_Dune_Plugin::clear_last_error(LAST_ERROR_PLAYLIST);
+        Default_Dune_Plugin::clear_last_error(LAST_ERROR_REQUEST);
 
         // create settings table
         $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, self::SETTINGS_TABLE);
@@ -1125,6 +1141,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * Return true if channels loaded successful
      *
      * @param object $plugin_cookies
+     * @param bool $reload_playlist
      * @return bool
      */
     public function load_channels(&$plugin_cookies, $reload_playlist = false)
@@ -1142,7 +1159,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        HD::set_last_error($this->get_pl_error_name(), null);
+        Default_Dune_Plugin::clear_last_error(LAST_ERROR_PLAYLIST);
 
         $playlist_id = $this->get_active_playlist_id();
         $perf = new Perf_Collector();
@@ -1205,13 +1222,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // if playlist is expired it will downloaded
         // in case of download or parse error returns false
         // if parse success database with playlist is attached
-        if ($reload_playlist) {
-            $result = $this->parse_m3u_playlist(false);
-            if (!$result) {
-                hd_debug_print("Can't download playlist: $playlist_id");
-                return false;
-            }
-        } else {
+        if (!$reload_playlist) {
             $db_file = $this->get_playlist_cache() . ".db";
             $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
             if ($database_attached === 0) {
@@ -1221,6 +1232,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if ($database_attached === 2) {
                 $this->channels_loaded = true;
             }
+        } else if (!$this->load_and_parse_m3u_playlist(false)) {
+            hd_debug_print("Can't download playlist: $playlist_id");
+            return false;
         }
 
         $this->init_epg_manager();
@@ -1228,7 +1242,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->cleanup_active_xmltv_source();
 
         if ($this->use_xmltv || $this->picons_source !== PLAYLIST_PICONS) {
-            $this->epg_manager->set_xmltv_sources($this->get_active_sources());
+            Epg_Manager_Xmltv::set_xmltv_sources($this->get_active_sources());
         }
 
         $delay_load = false;
@@ -1242,11 +1256,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $bg_indexing_runs = $this->check_and_run_bg_indexing($all_sources, INDEXING_CHANNELS | INDEXING_ENTRIES);
             } else {
                 foreach ($all_sources as $params) {
-                    $flag = $this->epg_manager->check_xmltv_source($params, INDEXING_CHANNELS);
+                    $flag = Epg_Manager_Xmltv::check_xmltv_source($this, $params, INDEXING_CHANNELS);
                     if ($flag !== 0) {
                         $params[PARAM_CURL_CONNECT_TIMEOUT] = $this->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30);
                         $params[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
-                        $this->epg_manager->reindex_xmltv($params, $flag);
+                        Epg_Manager_Xmltv::reindex_xmltv($params, $flag);
                     }
                 }
             }
@@ -1517,8 +1531,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function init_user_agent()
     {
         $user_agent = $this->get_playlist_parameter($this->get_active_playlist_id(), PARAM_USER_AGENT);
-        hd_debug_print("Init user agent: $user_agent");
         if (!empty($user_agent) && $user_agent !== HD::get_default_user_agent()) {
+            hd_debug_print("Set user agent: $user_agent");
             HD::set_dune_user_agent($user_agent);
         }
     }
@@ -1543,7 +1557,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $indexing_run = false;
         $to_index = array();
         foreach ($sources as $source_id => $params) {
-            $indexing_flag = $this->epg_manager->check_xmltv_source($params, $indexing_flag);
+            $indexing_flag = Epg_Manager_Xmltv::check_xmltv_source($this, $params, $indexing_flag);
             if ($indexing_flag !== 0) {
                 $to_index[$source_id] = array('flag' => $indexing_flag, 'params' => $params);
             }
@@ -1727,14 +1741,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function get_epg_presets()
     {
         return $this->epg_presets;
-    }
-
-    /**
-     * @return M3uParser
-     */
-    public function get_iptv_m3u_parser()
-    {
-        return $this->iptv_m3u_parser;
     }
 
     /**
@@ -1987,9 +1993,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         if ((int)$archive_ts !== -1) {
-            $m3u_info = $this->get_iptv_m3u_parser()->getM3uInfo();
+            $m3u_info = $this->iptv_m3u_parser->getM3uInfo();
             if (!empty($m3u_info)) {
-                $catchup = $this->get_iptv_m3u_parser()->getM3uInfo()->getCatchupType();
+                $catchup = $this->iptv_m3u_parser->getM3uInfo()->getCatchupType();
             }
 
             if (empty($catchup) && !is_null($provider)) {
@@ -2441,10 +2447,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if (empty($picon_ids)) break;
 
             $placeHolders = Sql_Wrapper::sql_make_list_from_values(array_unique($picon_ids));
-            foreach ($this->epg_manager->get_sources() as $key => $params) {
-                if ($this->epg_manager->is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) continue;
+            foreach (Epg_Manager_Xmltv::get_sources() as $key => $params) {
+                if (Epg_Manager_Xmltv::is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_CHANNELS)) continue;
 
-                $icon_url = $this->epg_manager->get_picon($key, $placeHolders);
+                $icon_url = Epg_Manager_Xmltv::get_picon($key, $placeHolders);
                 if (!empty($icon_url)) break;
             }
         } while (false);
@@ -3000,7 +3006,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function cleanup_stalled_locks()
     {
         hd_debug_print(null, true);
-        $locks = $this->epg_manager->get_any_index_locked();
+        $locks = Epg_Manager_Xmltv::get_any_index_locked();
         if ($locks === false) {
             return;
         }
@@ -3191,29 +3197,47 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
     }
 
-    public function get_pl_error_name()
+    public static function get_last_error($entity, $clear_after = true)
     {
-        return $this->get_custom_error_name("pl_last_error");
+        if ($entity === LAST_ERROR_XMLTV) {
+            $error_file = get_temp_path($entity);
+            $last_error = file_exists($error_file) ? file_get_contents($error_file) : '';
+        } else {
+            $last_error = self::$last_error[$entity];
+        }
+
+        if ($clear_after) {
+            self::clear_last_error($entity);
+        }
+
+        return $last_error;
     }
 
-    public function get_xmltv_error_name()
+    public static function set_last_error($entity, $value)
     {
-        return "xmltv_last_error";
+        $value = trim($value);
+        if ($entity === LAST_ERROR_XMLTV) {
+            $error_file = get_temp_path($entity);
+            if (empty($error) && file_exists($error_file)) {
+                unlink($error_file);
+            } else {
+                file_put_contents($error_file, $value);
+            }
+        } else {
+            self::$last_error[$entity] = $value;
+        }
     }
 
-    public function get_vod_error_name()
+    public static function clear_last_error($entity)
     {
-        return $this->get_custom_error_name("vod_last_error");
-    }
-
-    public function get_request_error_name()
-    {
-        return $this->get_custom_error_name("request_last_error");
-    }
-
-    public function get_custom_error_name($source)
-    {
-        return $this->get_active_playlist_id() . "_$source";
+        if ($entity === LAST_ERROR_XMLTV) {
+            $error_file = get_temp_path($entity);
+            if (file_exists($error_file)) {
+                unlink($error_file);
+            }
+        } else {
+            self::$last_error[$entity] = '';
+        }
     }
 
     public function is_full_size_remote()
@@ -3302,6 +3326,33 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             || $group_id === TV_HISTORY_GROUP_ID
             || $group_id === TV_CHANGED_CHANNELS_GROUP_ID
             || $group_id === VOD_GROUP_ID);
+    }
+
+    public function get_import_xmltv_logs_actions($xmltv_ids, $actions, $plugin_cookies, $post_action = null)
+    {
+        $res = Epg_Manager_Xmltv::import_indexing_log($xmltv_ids);
+
+        if ($res === -1 || $res === -2) {
+            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'),
+                null,
+                Default_Dune_Plugin::get_last_error(LAST_ERROR_XMLTV));
+        }
+
+        if ($res === 0) {
+            hd_debug_print("No imports. Timer stopped");
+            return null;
+        }
+
+        if ($res === 1) {
+            hd_debug_print("Logs imported. Timer stopped");
+            return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
+        }
+
+        if ($res === 2) {
+            return Action_Factory::change_behaviour($actions, 1000, $post_action);
+        }
+
+        return null;
     }
 
     //////////////////////////////////////////////////////////////////
