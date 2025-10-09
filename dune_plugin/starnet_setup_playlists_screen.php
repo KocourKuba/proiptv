@@ -155,12 +155,15 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
         //////////////////////////////////////
         // Cache time
 
+        $caching_range[PHP_INT_MAX] = TR::t('setup_cache_time_never');
+
         foreach (array(1, 6, 12) as $hour) {
             $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
         }
         foreach (array(24, 48, 96, 168) as $hour) {
             $caching_range[$hour] = TR::t('setup_cache_time_d__1', $hour / 24);
         }
+
         $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME, 1);
         Control_Factory::add_combobox($defs, $this, null,
             PARAM_PLAYLIST_CACHE_TIME, TR::t('setup_cache_time'),

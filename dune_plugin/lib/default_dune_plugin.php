@@ -3072,6 +3072,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function is_playlist_cache_expired($is_tv)
     {
+        if ($this->get_setting(PARAM_PLAYLIST_CACHE_TIME, 1) === PHP_INT_MAX) {
+            return false;
+        }
+
         $base_name = self::get_playlist_cache_path() . $this->get_playlist_cache_name($is_tv);
         $m3u_file = $base_name . '.m3u8';
         $db_file = $base_name . '.db';

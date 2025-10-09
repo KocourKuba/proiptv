@@ -236,6 +236,7 @@ setup_patch_success = Vorgang abgeschlossen!\nZum Anwenden der geänderten Palet
 setup_restore_patch = Die Systempalette wurde geändert!\nPalette auf die Standardwerte zurücksetzen?
 setup_provider_info__3 = Verknüpfung: %s||ID: %s||Zugriff: %s
 setup_cache_time = Cache-Zeit
+setup_cache_time_never = Cache niemals überprüfen
 setup_cache_time_h__1 = %s Stunde(n)
 setup_cache_time_d__1 = %s Tag(e)
 setup_connect_timeout = Zeitlimit für die Verbindung (sec)
