@@ -43,16 +43,15 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $source_id
+     * @param string $parent_id
      * @param array $add_params
-     * @return MediaURL
+     * @return string
      */
-    public static function make_media_url($source_id, $add_params = array())
+    public static function make_custom_media_url_str($parent_id, $add_params = array())
     {
-        return MediaURL::make(array_merge(
+        return MediaURL::encode(array_merge(
             array(PARAM_SCREEN_ID => self::ID,
-                PARAM_SOURCE_WINDOW_ID => $source_id,
-                PARAM_SOURCE_MEDIA_URL_STR => $source_id,
+                PARAM_SOURCE_WINDOW_ID => $parent_id,
                 PARAM_WINDOW_COUNTER => 1),
             $add_params));
     }
@@ -234,20 +233,20 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->plugin->show_export_dialog($this, 'xmltv_sources_list.txt');
 
             case ACTION_EXPORT_APPLY_DLG:
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
                         Starnet_Folder_Screen::PARAM_ADD_PARAMS => $user_input->{CONTROL_EDIT_NAME},
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_folder'));
+                return Action_Factory::open_folder($media_url, TR::t('select_folder'));
 
             case ACTION_FOLDER_SELECTED:
                 return $this->do_export_xmltv_sources($user_input);
 
             case ACTION_CHOOSE_FILE:
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
                         Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
@@ -256,7 +255,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     )
                 );
 
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_file'));
+                return Action_Factory::open_folder($media_url, TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
                 hd_debug_print(null, true);
@@ -599,7 +598,7 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $key)),
+                PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $key)),
                 PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_sticker => ($order_key === false ? null : $sticker),

@@ -36,6 +36,7 @@ require_once 'starnet_setup_category_screen.php';
 require_once 'starnet_setup_epg_screen.php';
 require_once 'starnet_setup_history_screen.php';
 require_once 'starnet_setup_playback_screen.php';
+require_once 'starnet_setup_provider_screen.php';
 require_once 'starnet_setup_ext_screen.php';
 require_once 'starnet_setup_ext_playlists_screen.php';
 require_once 'starnet_tv_changed_channels_screen.php';
@@ -82,6 +83,7 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Playback_Screen($this));
         $this->create_screen(new Starnet_Setup_Ext_Screen($this));
         $this->create_screen(new Starnet_Setup_Ext_Playlists_Screen($this));
+        $this->create_screen(new Starnet_Setup_Provider_Screen($this));
         $this->create_screen(new Starnet_Setup_Backup_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));
@@ -190,6 +192,15 @@ class Starnet_Plugin extends Default_Dune_Plugin
                     hd_debug_print("Unknown method $setter", true);
                 }
             }
+
+            // add hidden api commands
+            $commands = $provider->getApiCommands();
+            $commands[API_COMMAND_GET_PLAYLIST] = MACRO_PLAYLIST_IPTV;
+            $vod_playlists = $provider->GetPlaylistsVod();
+            if (!empty($vod_playlists)) {
+                $commands[API_COMMAND_GET_VOD] = MACRO_PLAYLIST_VOD;
+            }
+            $provider->setApiCommands($commands);
 
             // cache provider logo
             $logo = $provider->getLogo();

@@ -41,9 +41,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      * @param string $group_id
      * @return false|string
      */
-    public static function get_media_url_string($group_id)
+    public static function make_custom_media_url_str($group_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -171,10 +171,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_SETTINGS:
-                return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
-
-            case ACTION_DO_SETTINGS:
-                return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
+                return $this->plugin->show_protect_settings_dialog($this,
+                    Action_Factory::open_folder(Starnet_Setup_Screen::make_custom_media_url_str(self::ID), TR::t('entry_setup'))
+                );
 
             case self::ACTION_CREATE_SEARCH:
                 $defs = array();

@@ -47,16 +47,15 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $source_id
+     * @param string $parent_id
      * @param array $add_params
-     * @return MediaURL
+     * @return string
      */
-    public static function make_media_url($source_id, $add_params = array())
+    public static function make_custom_media_url_str($parent_id, $add_params = array())
     {
-        return MediaURL::make(array_merge(
+        return MediaURL::encode(array_merge(
             array(PARAM_SCREEN_ID => self::ID,
-                PARAM_SOURCE_WINDOW_ID => $source_id,
-                PARAM_SOURCE_MEDIA_URL_STR => $source_id,
+                PARAM_SOURCE_WINDOW_ID => $parent_id,
                 PARAM_WINDOW_COUNTER => 1),
             $add_params));
     }
@@ -134,7 +133,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             case ACTION_SETTINGS:
                 if ($this->plugin->is_playlist_exist($selected_id)) {
                     return Action_Factory::open_folder(
-                        Starnet_Setup_Playlists_Screen::get_media_url_string($selected_id, self::ID), TR::t('tv_screen_playlists_setup')
+                        Starnet_Setup_Playlists_Screen::make_custom_media_url_str(self::ID, $user_input->sel_idx, $selected_id),
+                        TR::t('tv_screen_playlists_setup')
                     );
                 }
 
@@ -215,14 +215,14 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 return $this->plugin->show_export_dialog($this, 'playlists_export.txt');
 
             case ACTION_EXPORT_APPLY_DLG:
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_EXPORT_FOLDER_SELECTED,
                         Starnet_Folder_Screen::PARAM_ADD_PARAMS => $user_input->{CONTROL_EDIT_NAME},
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_folder'));
+                return Action_Factory::open_folder($media_url, TR::t('select_folder'));
 
             case self::ACTION_EXPORT_FOLDER_SELECTED:
                 return $this->do_export_playlist($user_input);
@@ -238,7 +238,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
             case ACTION_CHOOSE_FILE:
                 $allow_network = ($user_input->{PARAM_SELECTED_ACTION} === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk();
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
                         Starnet_Folder_Screen::PARAM_CHOOSE_FILE => $user_input->{PARAM_SELECTED_ACTION},
@@ -247,7 +247,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                     )
                 );
 
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_file'));
+                return Action_Factory::open_folder($media_url, TR::t('select_file'));
 
             case self::ACTION_FILE_TEXT_LIST:
                 return $this->selected_text_file($user_input);
@@ -256,7 +256,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 return $this->selected_m3u_file($user_input);
 
             case self::ACTION_CHOOSE_FOLDER:
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
                         Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
@@ -264,14 +264,13 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                     )
                 );
 
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('edit_list_src_folder'));
+                return Action_Factory::open_folder($media_url, TR::t('edit_list_src_folder'));
 
             case self::ACTION_ADD_PROVIDER:
                 $params = array(
                     PARAM_SCREEN_ID => Starnet_Edit_Providers_List_Screen::ID,
                     PARAM_SOURCE_WINDOW_ID => static::ID,
                     PARAM_WINDOW_COUNTER => 1,
-                    PARAM_SOURCE_MEDIA_URL_STR => static::ID,
                     PARAM_END_ACTION => ACTION_EDIT_PROVIDER_DLG,
                     PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID
                 );
@@ -366,8 +365,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 break;
 
             case ACTION_INVALIDATE:
-                if (isset($user_input->playlist_id)) {
-                    $sel_idx = array_search($user_input->playlist_id, $this->plugin->get_all_playlists_ids());
+                if (isset($user_input->{PARAM_PLAYLIST_ID})) {
+                    $sel_idx = array_search($user_input->{PARAM_PLAYLIST_ID}, $this->plugin->get_all_playlists_ids());
                 }
                 break;
         }
@@ -845,7 +844,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             throw new Exception(TR::load('err_bad_m3u_file') . " '$uri'\n\n$contents");
         }
 
-        $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array('playlist_id' => $playlist_id));
+        $post_action = User_Input_Handler_Registry::create_action($this,ACTION_INVALIDATE, null, array(PARAM_PLAYLIST_ID => $playlist_id));
         if ($pl_type === CONTROL_PLAYLIST_IPTV  && $detect_id === CONTROL_DETECT_ID) {
             hd_debug_print("Detect playlist id: $detect_id");
             list($detect_id, $detect_info) = $this->plugin->collect_detect_info($tmp_file);
@@ -956,7 +955,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $playlist_id)),
+                PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $playlist_id)),
                 PluginRegularFolderItem::caption => $title,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::item_sticker => ($starred ? $sel_sticker : ($missed ? $del_sticker : null)),

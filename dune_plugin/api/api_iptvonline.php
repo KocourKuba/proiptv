@@ -126,7 +126,7 @@ class api_iptvonline extends api_default
             return $curl_wrapper->download_file($response->data, $tmp_file, true);
         }
 
-        return array(false, '');
+        return false;
     }
 
     /**
@@ -254,8 +254,11 @@ class api_iptvonline extends api_default
         }
 
         hd_debug_print("Can't set device: " . json_encode($response));
-
-        $error_msg = '';
+        if (isset($response->message)) {
+            $error_msg = $response->message;
+        } else {
+            $error_msg = pretty_json_format($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
 
         return false;
     }
@@ -288,7 +291,7 @@ class api_iptvonline extends api_default
     /**
      * collect playlists information
      * @param string &$selected
-     * @return array
+     * @return void
      */
     protected function collect_playlists(&$selected = "-1")
     {
@@ -304,7 +307,8 @@ class api_iptvonline extends api_default
             }
         }
 
-        return $this->playlists;
+        $this->playlists[DIRECT_PLAYLIST_ID][COLUMN_NAME] = TR::load('setup_native_url');
+        $this->playlists[DIRECT_PLAYLIST_ID][COLUMN_URL] = '';
     }
 
     /**
@@ -347,6 +351,14 @@ class api_iptvonline extends api_default
             $idx = $this->GetParameter(MACRO_PLAYLIST_ID);
             if (empty($idx)) {
                 $this->SetParameter(MACRO_PLAYLIST_ID, (string)key($playlists));
+            }
+        }
+
+        $playlists_vod = $this->GetPlaylistsVod();
+        if (!empty($playlists_vod)) {
+            $idx = $this->GetParameter(MACRO_PLAYLIST_VOD_ID);
+            if (empty($idx)) {
+                $this->SetParameter(MACRO_PLAYLIST_VOD_ID, (string)key($playlists_vod));
             }
         }
     }

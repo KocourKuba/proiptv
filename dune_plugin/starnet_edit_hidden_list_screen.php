@@ -36,16 +36,15 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $source_id
+     * @param string $parent_id
      * @param array $add_params
-     * @return MediaURL
+     * @return string
      */
-    public static function make_media_url($source_id, $add_params = array())
+    public static function make_custom_media_url_str($parent_id, $add_params = array())
     {
-        return MediaURL::make(array_merge(
+        return MediaURL::encode(array_merge(
             array(PARAM_SCREEN_ID => self::ID,
-                PARAM_SOURCE_WINDOW_ID => $source_id,
-                PARAM_SOURCE_MEDIA_URL_STR => $source_id,
+                PARAM_SOURCE_WINDOW_ID => $parent_id,
                 PARAM_WINDOW_COUNTER => 1),
             $add_params));
     }
@@ -209,7 +208,7 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
     protected static function add_item($id, $title, $starred, $icon_file, $detailed_info)
     {
         return array(
-            PluginRegularFolderItem::media_url => MediaURL::encode(array('screen_id' => static::ID, 'id' => $id)),
+            PluginRegularFolderItem::media_url => MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'id' => $id)),
             PluginRegularFolderItem::caption => $title,
             PluginRegularFolderItem::view_item_params => array(
                 ViewItemParams::item_sticker => ($starred ? Control_Factory::create_sticker(get_image_path('star_small.png'), -55, -2) : null),

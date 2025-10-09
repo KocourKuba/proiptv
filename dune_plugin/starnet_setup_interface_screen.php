@@ -130,15 +130,8 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-
-            return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                return self::make_return_action($parent_media_url);
 
             case self::CONTROL_SHOW_TV:
                 if (!is_limited_apk()) {
@@ -164,7 +157,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
                 break;
 
             case ACTION_CHANGE_BACKGROUND:
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => 'png|jpg|jpeg',
                         Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
@@ -174,7 +167,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_file'));
+                return Action_Factory::open_folder($media_url, TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});

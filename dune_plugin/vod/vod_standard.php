@@ -932,7 +932,7 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        $m3u_file = $this->plugin->get_vod_playlist_cache();
+        $m3u_file = $this->plugin->get_playlist_cache_name(false) . '.m3u8';
 
         try {
             $reload_playlist = $this->plugin->is_playlist_cache_expired(false);

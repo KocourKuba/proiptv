@@ -248,9 +248,9 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
      * @param string|null $episode_id
      * @return false|string
      */
-    public static function get_media_url_string($movie_id, $season_id = null, $episode_id = null)
+    public static function make_custom_media_url_str($movie_id, $season_id = null, $episode_id = null)
     {
-        $arr = array('screen_id' => self::ID, 'movie_id' => $movie_id);
+        $arr = array(PARAM_SCREEN_ID => self::ID, 'movie_id' => $movie_id);
         if (!empty($season_id)) {
             $arr['season_id'] = $season_id;
         }
@@ -314,7 +314,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => self::get_media_url_string($movie->id, $episode->season_id, $episode->id),
+                PluginRegularFolderItem::media_url => self::make_custom_media_url_str($movie->id, $episode->season_id, $episode->id),
                 PluginRegularFolderItem::caption => $info,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => 'gui_skin://small_icons/movie.aai',

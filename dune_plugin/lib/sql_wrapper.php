@@ -15,7 +15,6 @@ class Sql_Wrapper
     // Default flags SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE
     public function __construct($db_name, $flags = 6)
     {
-        hd_debug_print("Open db: $db_name with create mode: $flags", true);
         try {
             $this->db = new SQLite3($db_name, $flags, '');
             $this->db->exec("PRAGMA journal_mode=MEMORY;");
@@ -91,7 +90,7 @@ class Sql_Wrapper
             hd_debug_print("Trying to detach: '$name'", true);
             $this->exec("DETACH DATABASE '$name';");
             $result = $this->is_database_attached($name) === 0;
-            hd_debug_print("Attach: " . ($result ? 'success' : 'fail'), true);
+            hd_debug_print("Detach: " . ($result ? 'success' : 'fail'), true);
             return $result;
         }
         return true;

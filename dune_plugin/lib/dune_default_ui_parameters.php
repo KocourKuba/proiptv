@@ -96,19 +96,6 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
     }
 
     /**
-     * @param string $id
-     * @param int $idx
-     * @return void
-     */
-    public function set_return_index($id, $idx)
-    {
-        $object = $this->screens[$id];
-        if ($object instanceof Abstract_Controls_Screen) {
-            $object->set_return_index($idx);
-        }
-    }
-
-    /**
      * @return array
      */
     public function get_screens()
@@ -187,16 +174,21 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     /**
      * @param User_Input_Handler $handler
-     * @param string $param_action
-     * @param array|null $add_params
+     * @param string|array $param_action
      * @return array
      */
     public function show_protect_settings_dialog($handler, $param_action, $add_params = null)
     {
         $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
         if (empty($pass_settings)) {
+            if (is_array($param_action)) {
+                return $param_action;
+            }
             return User_Input_Handler_Registry::create_action($handler, $param_action, null, $add_params);
         }
+
+        $new_params['param_action'] = $param_action;
+        $new_params['add_params'] = $add_params;
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
@@ -206,14 +198,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         Control_Factory::add_vgap($defs, 50);
 
-        if ($add_params !== null) {
-            $add_params['params_action'] = $param_action;
-        } else {
-            $add_params = array('param_action' => $param_action);
-        }
-
-        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PASSWORD_APPLY, TR::t('ok'), 300, $add_params);
-
+        Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PASSWORD_APPLY, TR::t('ok'), 300, $new_params);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
 
@@ -225,7 +210,9 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         if ($this->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
             return null;
         }
-        return User_Input_Handler_Registry::create_action($handler, $user_input->param_action);
+        return User_Input_Handler_Registry::create_action($handler,
+            $user_input->param_action,
+            isset($user_input->add_params) ? $user_input->add_params : null);
     }
 
     /**
@@ -494,7 +481,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
      */
     protected function get_screen_by_url(MediaURL $media_url)
     {
-        $screen_id = safe_get_member($media_url, 'screen_id', $media_url->get_raw_string());
+        $screen_id = safe_get_member($media_url, PARAM_SCREEN_ID, $media_url->get_raw_string());
 
         return $this->get_screen_by_id($screen_id);
     }

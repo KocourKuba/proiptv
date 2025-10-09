@@ -300,7 +300,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     hd_debug_print("Hide channel: " . $media_url->channel_id);
                     $this->plugin->set_channel_visible($media_url->channel_id, false);
                 } else {
-                    if ($media_url->group_id === TV_CHANGED_CHANNELS_GROUP_ID) {
+                    if ($media_url->group_id === TV_CHANGED_CHANNELS_GROUP_ID || $media_url->group_id === TV_HISTORY_GROUP_ID) {
                         return User_Input_Handler_Registry::create_action($this, ACTION_ITEMS_CLEAR);
                     }
                     hd_debug_print("Hide group: " . $media_url->group_id);
@@ -339,29 +339,28 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $media_url);
 
             case ACTION_SETTINGS:
-                return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
-
-            case CONTROL_CATEGORY_SCREEN:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    ACTION_DO_SETTINGS,
-                    array(ACTION_SETUP_SCREEN => CONTROL_CATEGORY_SCREEN));
+                    Action_Factory::open_folder(Starnet_Setup_Screen::make_custom_media_url_str(self::ID), TR::t('entry_setup'))
+                );
 
-            case CONTROL_INTERFACE_NEWUI_SCREEN:
+            case ACTION_EDIT_CATEGORY_SCREEN:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    ACTION_DO_SETTINGS,
-                    array(ACTION_SETUP_SCREEN => CONTROL_INTERFACE_NEWUI_SCREEN));
+                    Action_Factory::open_folder(Starnet_Setup_Category_Screen::make_custom_media_url_str(self::ID), TR::t('setup_category_title'))
+                );
 
-            case ACTION_DO_SETTINGS:
-                if (isset($user_input->{ACTION_SETUP_SCREEN}) && $user_input->{ACTION_SETUP_SCREEN} === CONTROL_CATEGORY_SCREEN) {
-                    return Action_Factory::open_folder(Starnet_Setup_Category_Screen::get_media_url_str(), TR::t('setup_category_title'));
-                }
+            case ACTION_EDIT_PLAYLIST_SETTINGS:
+                return $this->plugin->show_protect_settings_dialog($this,
+                    Action_Factory::open_folder(Starnet_Setup_Playlists_Screen::make_custom_media_url_str(self::ID), TR::t('setup_category_title'))
+                );
 
-                if (isset($user_input->{ACTION_SETUP_SCREEN}) && $user_input->{ACTION_SETUP_SCREEN} === CONTROL_INTERFACE_NEWUI_SCREEN) {
-                    return Action_Factory::open_folder(Starnet_Setup_Interface_NewUI_Screen::get_media_url_string(self::ID),
-                        TR::t('setup_interface_newui_title'));
-                }
+            case ACTION_EDIT_NEWUI_SETTINGS:
+                return $this->plugin->show_protect_settings_dialog($this,
+                    Action_Factory::open_folder(Starnet_Setup_Interface_NewUI_Screen::make_custom_media_url_str(self::ID),
+                        TR::t('setup_interface_newui_title'))
+                    );
 
-                return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
+            case ACTION_PASSWORD_APPLY:
+                return $this->plugin->apply_protect_settings_dialog($this, $user_input);
 
             case ACTION_EDIT_CHANNEL_DLG:
                 return $this->plugin->do_edit_channel_parameters($this, $media_url->channel_id);
@@ -375,76 +374,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
             case ACTION_ADD_MONEY_DLG:
                 return $this->plugin->do_show_add_money();
-
-            case ACTION_EDIT_PROVIDER_DLG:
-            case ACTION_EDIT_PROVIDER_EXT_DLG:
-                return $this->plugin->show_protect_settings_dialog(
-                    $this,
-                    ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
-                        ? ACTION_DO_EDIT_PROVIDER
-                        : ACTION_DO_EDIT_PROVIDER_EXT);
-
-            case ACTION_DO_EDIT_PROVIDER:
-                $provider = $this->plugin->get_active_provider();
-                if (is_null($provider)) {
-                    return null;
-                }
-
-                $defs = array();
-                Control_Factory::add_vgap($defs, 20);
-
-                if (empty($name)) {
-                    $name = $provider->getName();
-                }
-
-                $defs = $provider->GetSetupUI($name, $provider->get_provider_playlist_id(), $this);
-                if (empty($defs)) {
-                    return null;
-                }
-
-                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
-
-            case ACTION_DO_EDIT_PROVIDER_EXT:
-                $provider = $this->plugin->get_active_provider();
-                if (is_null($provider)) {
-                    return null;
-                }
-
-                if (!$provider->request_provider_token()) {
-                    hd_debug_print("Can't get provider token");
-                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
-                }
-
-                $defs = $provider->GetExtSetupUI($this);
-                if (empty($defs)) {
-                    return null;
-                }
-
-                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
-
-            case ACTION_EDIT_PROVIDER_DLG_APPLY:
-            case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
-                $provider = $this->plugin->get_active_provider();
-                if ($provider === null) {
-                    return null;
-                }
-
-                $err_msg = '';
-                if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
-                    $res = $provider->ApplySetupUI($user_input);
-                } else {
-                    $res = $provider->ApplyExtSetupUI($user_input, $err_msg);
-                }
-
-                if ($res === false || $res === null) {
-                    return null;
-                }
-
-                if (is_array($res)) {
-                    return $res;
-                }
-
-                return $reload_action;
 
             case GUI_EVENT_KEY_INFO:
                 if (isset($media_url->channel_id)) {
@@ -1500,7 +1429,9 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         $vars = array();
         foreach(explode(';', $item_id) as $part) {
             $ar = explode(':', $part);
-            $vars[$ar[0]] = $ar[1];
+            if (count($ar) == 2) {
+                $vars[$ar[0]] = $ar[1];
+            }
         }
 
         return $assoc ? $vars : MediaURL::make($vars);

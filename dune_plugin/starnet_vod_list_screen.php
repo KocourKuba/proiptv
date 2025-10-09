@@ -172,12 +172,12 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
     }
 
     /**
-     * @param string|null $movie_id
+     * @param string $movie_id
      * @return false|string
      */
-    public static function get_media_url_string($movie_id)
+    public static function make_custom_media_url_str($movie_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => VOD_LIST_GROUP_ID, 'movie_id' => VOD_LIST_GROUP_ID, 'episode_id' => $movie_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => VOD_LIST_GROUP_ID, 'movie_id' => VOD_LIST_GROUP_ID, 'episode_id' => $movie_id));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -217,7 +217,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => self::get_media_url_string($movie_id),
+                PluginRegularFolderItem::media_url => self::make_custom_media_url_str($movie_id),
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $movie->movie_info[PluginMovie::poster_url],

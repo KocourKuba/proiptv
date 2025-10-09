@@ -262,17 +262,17 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         foreach ($category_list as $category) {
             $category_id = $category->get_id();
             if (!is_null($category->get_sub_categories())) {
-                $media_url_str = self::get_media_url_string($category_id);
+                $media_url_str = self::make_custom_media_url_str($category_id);
             } else if ($category_id === Vod_Category::FLAG_ALL_MOVIES
                 || $category_id === Vod_Category::FLAG_ALL_SERIALS
                 || $category_id === Vod_Category::FLAG_SEARCH
                 || $category_id === Vod_Category::FLAG_FILTER) {
                 // special category id's
-                $media_url_str = Starnet_Vod_Movie_List_Screen::get_media_url_string($category_id, null);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::make_custom_media_url_str($category_id, null);
             } else if ($category->get_parent() !== null) {
-                $media_url_str = Starnet_Vod_Movie_List_Screen::get_media_url_string($category->get_parent()->get_id(), $category_id);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::make_custom_media_url_str($category->get_parent()->get_id(), $category_id);
             } else {
-                $media_url_str = Starnet_Vod_Movie_List_Screen::get_media_url_string($category_id, null);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::make_custom_media_url_str($category_id, null);
             }
 
             $items[] = array(
@@ -295,9 +295,9 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
      * @param string $category_id
      * @return false|string
      */
-    public static function get_media_url_string($category_id)
+    public static function make_custom_media_url_str($category_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => VOD_GROUP_ID, 'category_id' => $category_id,));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => VOD_GROUP_ID, 'category_id' => $category_id,));
     }
 
     /**

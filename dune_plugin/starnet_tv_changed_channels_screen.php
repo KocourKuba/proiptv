@@ -35,9 +35,9 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
      * @param string $group_id
      * @return false|string
      */
-    public static function get_media_url_string($group_id)
+    public static function make_custom_media_url_str($group_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
     }
 
     ///////////////////////////////////////////////////////////////////////

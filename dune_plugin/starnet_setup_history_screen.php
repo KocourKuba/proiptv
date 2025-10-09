@@ -96,24 +96,18 @@ class Starnet_Setup_History_Screen extends Abstract_Controls_Screen implements U
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                return self::make_return_action($parent_media_url);
 
             case self::CONTROL_HISTORY_CHANGE_FOLDER:
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
                         Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_history_folder_path'));
+                return Action_Factory::open_folder($media_url, TR::t('setup_history_folder_path'));
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});

@@ -82,7 +82,7 @@ class Starnet_Vod_Seasons_List_Screen extends Abstract_Preloaded_Regular_Screen 
 
                 $poster = empty($season->poster) ? 'gui_skin://large_icons/folder.aai' : $season->poster;
                 $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_Vod_Series_List_Screen::get_media_url_string($movie->id, $season->id),
+                    PluginRegularFolderItem::media_url => Starnet_Vod_Series_List_Screen::make_custom_media_url_str($movie->id, $season->id),
                     PluginRegularFolderItem::caption => $season->name,
                     PluginRegularFolderItem::view_item_params => array(
                         ViewItemParams::icon_path => 'gui_skin://small_icons/folder.aai',
@@ -105,9 +105,9 @@ class Starnet_Vod_Seasons_List_Screen extends Abstract_Preloaded_Regular_Screen 
      * @param string|null $season_id
      * @return false|string
      */
-    public static function get_media_url_string($movie_id, $season_id = null)
+    public static function make_custom_media_url_str($movie_id, $season_id = null)
     {
-        $arr = array('screen_id' => self::ID, 'movie_id' => $movie_id);
+        $arr = array(PARAM_SCREEN_ID => self::ID, 'movie_id' => $movie_id);
         if ($season_id !== null) {
             $arr['season_id'] = $season_id;
         }

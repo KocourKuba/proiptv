@@ -160,20 +160,15 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         hd_debug_print(null, true);
 
         $control_id = $user_input->control_id;
+
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 $reload = $this->force_parent_reload;
                 $this->force_parent_reload = false;
                 hd_debug_print("Force parent reload", true);
-                $post_action = Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                $post_action = self::make_return_action($parent_media_url);
 
                 if ($reload) {
                     return Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);

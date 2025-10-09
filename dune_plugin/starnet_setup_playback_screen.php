@@ -170,14 +170,8 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements 
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                return self::make_return_action($parent_media_url);
 
             case self::CONTROL_AUTO_PLAY:
             case self::CONTROL_AUTO_RESUME:

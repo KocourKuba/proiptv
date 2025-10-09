@@ -212,7 +212,7 @@ class api_edem extends api_default
 
         // Set default playlist settings for new provider
         hd_debug_print("Set default values for id: $this->playlist_id", true);
-        $values = $this->getConfigValue(CONFIG_PLAYLISTS);
+        $values = $this->getConfigValue(CONFIG_PLAYLISTS_IPTV);
         if (!empty($values)) {
             $idx = $this->GetParameter(MACRO_PLAYLIST_ID);
             if (empty($idx)) {

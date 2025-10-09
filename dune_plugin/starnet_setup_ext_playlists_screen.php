@@ -38,11 +38,21 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
     /**
      * Get MediaURL string representation (json encoded)
      *
+     * @param string $parent_id
+     * @param int $return_index
+     * @param string $playlist_id
      * @return false|string
      */
-    public static function get_media_url_string($playlist_id)
+    public static function make_custom_media_url_str($parent_id, $return_index = -1, $playlist_id = null)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'playlist_id' => $playlist_id));
+        return MediaURL::encode(
+            array(
+                PARAM_SCREEN_ID => static::ID,
+                PARAM_SOURCE_WINDOW_ID => $parent_id,
+                PARAM_PLAYLIST_ID => $playlist_id,
+                PARAM_RETURN_INDEX => $return_index
+            )
+        );
     }
 
     /**
@@ -71,7 +81,7 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
         $this->plugin->create_setup_header($defs);
 
         $parent_media_url = MediaURL::decode($media_url);
-        $playlist_id = isset($parent_media_url->playlist_id) ? $parent_media_url->playlist_id : $this->plugin->get_active_playlist_id();
+        $playlist_id = isset($parent_media_url->{PARAM_PLAYLIST_ID}) ? $parent_media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
         $params = $this->plugin->get_playlist_parameters($playlist_id);
 
         //////////////////////////////////////
@@ -131,14 +141,8 @@ class Starnet_Setup_Ext_Playlists_Screen extends Abstract_Controls_Screen implem
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Playlists_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                return self::make_return_action($parent_media_url);
 
             case PARAM_USER_CATCHUP:
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{PARAM_USER_CATCHUP});

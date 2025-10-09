@@ -36,6 +36,37 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * Get MediaURL string representation (json encoded)
+     *
+     * @param string $parent_id
+     * @param int $return_index
+     * @return false|string
+     */
+    public static function make_custom_media_url_str($parent_id, $return_index = -1)
+    {
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_SOURCE_WINDOW_ID => $parent_id, PARAM_RETURN_INDEX => $return_index));
+    }
+
+    /**
+     * Generate action with remembered initial_sel_idx
+     *
+     * @param object $parent_media_url
+     * @param string $action
+     * @return array
+     */
+    protected static function make_return_action($parent_media_url, $action = ACTION_REFRESH_SCREEN)
+    {
+        return Action_Factory::close_and_run(
+            User_Input_Handler_Registry::create_screen_action(
+                $parent_media_url->{PARAM_SOURCE_WINDOW_ID},
+                $action,
+                null,
+                array('initial_sel_ndx' => $parent_media_url->{PARAM_RETURN_INDEX})
+            )
+        );
+    }
+
+    /**
      * @param object $plugin_cookies
      * @param string $param
      * @param bool $default
@@ -67,13 +98,11 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     }
 
     /**
-     * @param int $return_index
-     * @return void
+     * @param MediaURL $media_url
+     * @param object $plugin_cookies
+     * @return array
      */
-    public function set_return_index($return_index)
-    {
-        $this->return_index = $return_index;
-    }
+    abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);
 
     /**
      * @inheritDoc
@@ -103,11 +132,4 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
             PluginFolderView::data => $folder_view,
         );
     }
-
-    /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
-     * @return array
-     */
-    abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);
 }

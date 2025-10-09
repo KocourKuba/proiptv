@@ -150,17 +150,11 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                return self::make_return_action($parent_media_url);
 
             case self::CONTROL_CHANGE_CACHE_PATH:
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         PARAM_END_ACTION => ACTION_RELOAD,
                         Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
@@ -168,7 +162,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_epg_xmltv_cache_caption'));
+                return Action_Factory::open_folder($media_url, TR::t('setup_epg_xmltv_cache_caption'));
 
             case PARAM_EPG_CACHE_ENGINE:
             case PARAM_EPG_JSON_PRESET:

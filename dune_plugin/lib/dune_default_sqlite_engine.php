@@ -362,6 +362,8 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * Get all parameters associated with playlist id
+     *
      * @param string $playlist_id
      * @return array
      */
@@ -393,8 +395,9 @@ class Dune_Default_Sqlite_Engine
     public function set_playlist_parameter($playlist_id, $name, $value)
     {
         hd_debug_print(null, true);
-
+        hd_debug_print("Playlist ID: $playlist_id, Name: $name, Value: $value", true);
         // save parameter
+
         $parameters_table = self::PLAYLIST_PARAMETERS_TABLE;
         $q_name = Sql_Wrapper::sql_quote($name);
         $q_value = Sql_Wrapper::sql_quote($value);
@@ -2147,17 +2150,16 @@ class Dune_Default_Sqlite_Engine
                 $db = self::VOD_HISTORY_DB;
                 break;
 
+            case TV_FAV_GROUP_ID:
             case VOD_FAV_GROUP_ID:
             case VOD_LIST_GROUP_ID:
             case VOD_FILTER_LIST:
             case VOD_SEARCH_LIST:
                 $db = '';
                 break;
-
             case GROUPS_INFO:
             case CHANNELS_INFO:
             case GROUPS_ORDER:
-            case TV_FAV_GROUP_ID:
             default:
                 $db = self::PLAYLIST_ORDERS_DB;
                 break;

@@ -74,7 +74,7 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
                 hd_debug_print("Force parent reload", true);
                 return Action_Factory::invalidate_folders(
                     array(
-                        self::get_media_url_string(VOD_HISTORY_GROUP_ID),
+                        self::make_custom_media_url_str(VOD_HISTORY_GROUP_ID),
                         Default_Dune_Plugin::get_group_mediaurl_str(VOD_FAV_GROUP_ID),
                         Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID)
                     ),
@@ -116,9 +116,9 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
      * @param string $group_id
      * @return false|string
      */
-    public static function get_media_url_string($group_id)
+    public static function make_custom_media_url_str($group_id)
     {
-        return MediaURL::encode(array('screen_id' => static::ID, 'group_id' => $group_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
     }
 
     /**
@@ -181,9 +181,9 @@ class Starnet_Vod_History_Screen extends Abstract_Preloaded_Regular_Screen imple
             }
 
             if ($movie->has_seasons()) {
-                $screen_media_url = Starnet_Vod_Seasons_List_Screen::get_media_url_string($movie->id);
+                $screen_media_url = Starnet_Vod_Seasons_List_Screen::make_custom_media_url_str($movie->id);
             } else {
-                $screen_media_url = Starnet_Vod_Series_List_Screen::get_media_url_string($movie->id);
+                $screen_media_url = Starnet_Vod_Series_List_Screen::make_custom_media_url_str($movie->id);
             }
 
             $items[] = array(

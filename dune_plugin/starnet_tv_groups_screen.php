@@ -242,18 +242,19 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $sel_media_url, $post_action);
 
             case ACTION_SETTINGS:
-                return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
-
-            case CONTROL_CATEGORY_SCREEN:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    ACTION_DO_SETTINGS,
-                    array(ACTION_SETUP_SCREEN => CONTROL_CATEGORY_SCREEN));
+                    Action_Factory::open_folder(Starnet_Setup_Screen::make_custom_media_url_str(self::ID), TR::t('entry_setup'))
+                );
 
-            case ACTION_DO_SETTINGS:
-                if (isset($user_input->{ACTION_SETUP_SCREEN}) && $user_input->{ACTION_SETUP_SCREEN} === CONTROL_CATEGORY_SCREEN) {
-                    return Action_Factory::open_folder(Starnet_Setup_Category_Screen::get_media_url_str(), TR::t('setup_category_title'));
-                }
-                return Action_Factory::open_folder(Starnet_Setup_Screen::get_media_url_str(), TR::t('entry_setup'));
+            case ACTION_EDIT_CATEGORY_SCREEN:
+                return $this->plugin->show_protect_settings_dialog($this,
+                    Action_Factory::open_folder(Starnet_Setup_Category_Screen::make_custom_media_url_str(self::ID), TR::t('setup_category_title'))
+                );
+
+            case ACTION_EDIT_PLAYLIST_SETTINGS:
+                return $this->plugin->show_protect_settings_dialog($this,
+                    Action_Factory::open_folder(Starnet_Setup_Playlists_Screen::make_custom_media_url_str(self::ID), TR::t('tv_screen_playlists_setup'))
+                );
 
             case ACTION_PASSWORD_APPLY:
                 return $this->plugin->apply_protect_settings_dialog($this, $user_input);
@@ -321,75 +322,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 }
                 break;
 
-            case ACTION_EDIT_PROVIDER_DLG:
-            case ACTION_EDIT_PROVIDER_EXT_DLG:
-                return $this->plugin->show_protect_settings_dialog($this,
-                    ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG)
-                        ? ACTION_DO_EDIT_PROVIDER
-                        : ACTION_DO_EDIT_PROVIDER_EXT);
-
-            case ACTION_DO_EDIT_PROVIDER:
-                $provider = $this->plugin->get_active_provider();
-                if (is_null($provider)) {
-                    return null;
-                }
-
-                $defs = array();
-                Control_Factory::add_vgap($defs, 20);
-
-                if (empty($name)) {
-                    $name = $provider->getName();
-                }
-
-                $defs = $provider->GetSetupUI($name, $provider->get_provider_playlist_id(), $this);
-                if (empty($defs)) {
-                    return null;
-                }
-
-                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
-
-            case ACTION_DO_EDIT_PROVIDER_EXT:
-                $provider = $this->plugin->get_active_provider();
-                if (is_null($provider)) {
-                    return null;
-                }
-
-                if (!$provider->request_provider_token()) {
-                    hd_debug_print("Can't get provider token");
-                    return Action_Factory::show_error(false, TR::t('err_incorrect_access_data'), array(TR::t('err_cant_get_token')));
-                }
-
-                $defs = $provider->GetExtSetupUI($this);
-                if (empty($defs)) {
-                    return null;
-                }
-
-                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
-
-            case ACTION_EDIT_PROVIDER_DLG_APPLY:
-            case ACTION_EDIT_PROVIDER_EXT_DLG_APPLY:
-                $provider = $this->plugin->get_active_provider();
-                if ($provider === null) {
-                    return null;
-                }
-
-                $err_msg = '';
-                if ($user_input->control_id === ACTION_EDIT_PROVIDER_DLG_APPLY) {
-                    $res = $provider->ApplySetupUI($user_input);
-                } else {
-                    $res = $provider->ApplyExtSetupUI($user_input, $err_msg);
-                }
-
-                if ($res === false || $res === null) {
-                    return null;
-                }
-
-                if (is_array($res)) {
-                    return $res;
-                }
-
-                return User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-
             case ACTION_SORT_POPUP:
                 hd_debug_print("Start event popup menu for playlist", true);
                 return User_Input_Handler_Registry::create_action(
@@ -400,7 +332,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
 
             case ACTION_CHANGE_GROUP_ICON:
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => IMAGE_PREVIEW_PATTERN,
                         Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
@@ -410,7 +342,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('select_file'));
+                return Action_Factory::open_folder($media_url, TR::t('select_file'));
 
             case ACTION_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
@@ -490,36 +422,6 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_ADD_MONEY_DLG:
                 return $this->plugin->do_show_add_money();
-
-            case CONTROL_PLAYLIST:
-                if ($user_input->action_type !== 'confirm' || $user_input->{CONTROL_PLAYLIST} !== CUSTOM_PLAYLIST_ID) {
-                    return null;
-                }
-
-                $provider = $this->plugin->get_active_provider();
-                if (is_null($provider)) {
-                    return null;
-                }
-
-                $url = $provider->GetParameter(MACRO_CUSTOM_PLAYLIST);
-
-                Control_Factory::add_vgap($defs, 20);
-                Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
-                    $url, false, false, false, true, self::DLG_CONTROLS_WIDTH);
-                Control_Factory::add_vgap($defs, 50);
-                Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_URL_DLG_APPLY, TR::t('ok'), 300);
-                Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-                Control_Factory::add_vgap($defs, 10);
-
-                return Action_Factory::show_dialog(TR::t('edit_list_add_url'), $defs, true);
-
-            case ACTION_URL_DLG_APPLY:
-                $provider = $this->plugin->get_active_provider();
-                if (!is_null($provider)) {
-                    hd_debug_print("set custom playlist $user_input->url_path");
-                    $provider->SetParameter(MACRO_CUSTOM_PLAYLIST, $user_input->url_path);
-                }
-                return null;
 
             case ACTION_SHORTCUT:
                 if (!isset($user_input->{COLUMN_PLAYLIST_ID}) || $this->plugin->get_active_playlist_id() === $user_input->{COLUMN_PLAYLIST_ID}) {

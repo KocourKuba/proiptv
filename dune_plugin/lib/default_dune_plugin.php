@@ -737,8 +737,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function load_and_parse_m3u_playlist($only_headers)
     {
-        $m3u_file = $this->get_playlist_cache();
-        $db_file = $m3u_file . '.db';
+        $base_name = $this->get_playlist_cache_name(true);
+        $m3u_file = $base_name . '.m3u8';
+        $db_file = $base_name . '.db';
         try {
             // clear playlist
             if (file_exists($m3u_file)) {
@@ -934,9 +935,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /// init database
 
     /**
+     * @param bool $force
      * @return bool
      */
-    public function init_playlist_db()
+    public function init_playlist_db($force = false)
     {
         hd_debug_print(null, true);
 
@@ -953,7 +955,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         if ($this->sql_playlist) {
             // attach to playlist db. if db not exist it will be created
-            if ($this->sql_playlist->is_database_attached('main', $db_file) === 2) {
+            if (!$force && $this->sql_playlist->is_database_attached('main', $db_file) === 2) {
                 hd_debug_print("Database already inited!", true);
                 return true;
             }
@@ -988,9 +990,10 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $this->sql_playlist->exec($query);
         }
 
-        $db_file = get_data_path($this->get_playlist_order_id($playlist_id) . '.db');
+        $db_file = get_data_path($this->make_base_name(PLUGIN_ORDERS) . '.db');
+        hd_debug_print("Orders database path: $db_file", true);
         if ($this->sql_playlist->attachDatabase($db_file, self::PLAYLIST_ORDERS_DB) === 0) {
-            hd_debug_print("Can't attach to database: $db_file with name: " . self::PLAYLIST_ORDERS_DB);
+            hd_debug_print("Can't attach to database with name: " . self::PLAYLIST_ORDERS_DB);
         }
 
         // create group table
@@ -1030,8 +1033,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->sql_playlist->exec_transaction($query);
 
         $history_path = $this->get_history_path();
-        $provider_playlist_id = $this->get_playlist_parameter($playlist_id, MACRO_PLAYLIST_ID);
-        $tv_history_db = $history_path . $this->make_name(TV_HISTORY, $provider_playlist_id) . ".db";
+        $tv_history_db = $history_path . $this->make_base_name(TV_HISTORY) . ".db";
         // attach to tv_history db. if db not exist it will be created
         if ($this->sql_playlist->attachDatabase($tv_history_db, self::TV_HISTORY_DB) === 0) {
             hd_debug_print("Can't attach to database: $tv_history_db with name: " . self::TV_HISTORY_DB);
@@ -1115,7 +1117,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // create vod history table
         if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
-            $vod_history_db = $this->get_history_path() . $this->make_name(VOD_HISTORY) . ".db";
+            $vod_history_db = $this->get_history_path() . $this->make_base_name(VOD_HISTORY) . ".db";
             if ($this->sql_playlist->attachDatabase($vod_history_db, self::VOD_HISTORY_DB) === 0) {
                 hd_debug_print("Can't attach to database: $vod_history_db with name: " . self::VOD_HISTORY_DB);
             } else {
@@ -1223,7 +1225,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         // in case of download or parse error returns false
         // if parse success database with playlist is attached
         if (!$reload_playlist) {
-            $db_file = $this->get_playlist_cache() . ".db";
+            $db_file = self::get_playlist_cache_path() . $this->get_playlist_cache_name(true) . '.db';
             $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
             if ($database_attached === 0) {
                 hd_debug_print("Can't attach to database: $db_file with name: " . M3uParser::IPTV_DB);
@@ -1822,6 +1824,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $params = $this->get_playlist_parameters($playlist_id);
         if (safe_get_value($params, PARAM_TYPE) !== PARAM_PROVIDER) {
+            hd_debug_print("Playlist $playlist_id is not a provider");
             return null;
         }
 
@@ -1972,7 +1975,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $force_detect = false;
         $provider = $this->get_active_provider();
         if (!is_null($provider)) {
-            if ($provider->GetParameter(MACRO_PLAYLIST_ID) !== CUSTOM_PLAYLIST_ID) {
+            $idx = $provider->GetParameter(MACRO_PLAYLIST_ID);
+            if ($idx !== DIRECT_PLAYLIST_ID) {
                 $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
                 if (!empty($url_subst)) {
                     $stream_url = preg_replace($url_subst['regex'], $url_subst['replace'], $stream_url);
@@ -2343,17 +2347,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @return string
      */
-    public function get_playlist_cache()
+    public function get_playlist_cache_name($is_tv)
     {
-        return self::get_playlist_cache_path() . $this->get_active_playlist_id() . '_playlist.m3u8';
-    }
+        if ($is_tv) {
+            $base_name = self::get_playlist_cache_path() . $this->make_base_name(IPTV_PLAYLIST);
+        } else {
+            $base_name = self::get_playlist_cache_path() . $this->make_base_name(VOD_PLAYLIST, null, false);
+        }
 
-    /**
-     * @return string
-     */
-    public function get_vod_playlist_cache()
-    {
-        return self::get_playlist_cache_path() . $this->get_active_playlist_id() . '_vod_playlist.m3u8';
+        return $base_name;
     }
 
     /**
@@ -2463,50 +2465,68 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return Default_Archive::get_image_archive(self::ARCHIVE_ID, self::ARCHIVE_URL_PREFIX);
     }
 
-    public function make_name($storage, $id = '')
+    /**
+     * Generate base name like 'edem_a1bde_orders_custom' or edem_a1bde_tv_history
+     * where edem_a1bde - is playlist id, orders/tv_history - storage name,
+     * custom - provider playlist id. for default provider playlist id value is omitted
+     *
+     * @param string $storage_name
+     * @param string|null $playlist_id
+     * @param bool $use_provider_playlist
+     * @return string
+     */
+    public function make_base_name($storage_name, $playlist_id = null, $use_provider_playlist = true)
     {
-        if (!empty($id)) {
-            $id = "_$id";
+        if (!empty($storage_name)) {
+            $storage_name = "_$storage_name";
         }
 
-        return $this->get_active_playlist_id() . "_$storage$id";
+        if (empty($playlist_id)) {
+            $playlist_id = $this->get_active_playlist_id();
+        }
+
+        $provider_playlist_id = $use_provider_playlist ? $this->get_playlist_parameter($playlist_id, MACRO_PLAYLIST_ID) : '';
+        $provider_playlist_id = empty($provider_playlist_id) || $provider_playlist_id === PARAM_DEFAULT_CONFIG_PLAYLIST_ID ? '' : "_$provider_playlist_id";
+
+        return $playlist_id . $storage_name . $provider_playlist_id;
     }
 
     /**
      * @param string $id
+     * @return string
      */
     public static function get_group_mediaurl_str($id)
     {
         switch ($id) {
             case TV_FAV_GROUP_ID:
-                return Starnet_Tv_Favorites_Screen::get_media_url_string(TV_FAV_GROUP_ID);
+                return Starnet_Tv_Favorites_Screen::make_custom_media_url_str(TV_FAV_GROUP_ID);
 
             case TV_HISTORY_GROUP_ID:
-                return Starnet_Tv_History_Screen::get_media_url_string(TV_HISTORY_GROUP_ID);
+                return Starnet_Tv_History_Screen::make_custom_media_url_str(TV_HISTORY_GROUP_ID);
 
             case TV_CHANGED_CHANNELS_GROUP_ID:
-                return Starnet_Tv_Changed_Channels_Screen::get_media_url_string(TV_CHANGED_CHANNELS_GROUP_ID);
+                return Starnet_Tv_Changed_Channels_Screen::make_custom_media_url_str(TV_CHANGED_CHANNELS_GROUP_ID);
 
             case VOD_GROUP_ID:
-                return Starnet_Vod_Category_List_Screen::get_media_url_string(VOD_GROUP_ID);
+                return Starnet_Vod_Category_List_Screen::make_custom_media_url_str(VOD_GROUP_ID);
 
             case VOD_FAV_GROUP_ID:
-                return Starnet_Vod_Favorites_Screen::get_media_url_string(VOD_FAV_GROUP_ID);
+                return Starnet_Vod_Favorites_Screen::make_custom_media_url_str(VOD_FAV_GROUP_ID);
 
             case VOD_HISTORY_GROUP_ID:
-                return Starnet_Vod_History_Screen::get_media_url_string(VOD_HISTORY_GROUP_ID);
+                return Starnet_Vod_History_Screen::make_custom_media_url_str(VOD_HISTORY_GROUP_ID);
 
             case VOD_SEARCH_GROUP_ID:
-                return Starnet_Vod_Search_Screen::get_media_url_string(VOD_SEARCH_GROUP_ID);
+                return Starnet_Vod_Search_Screen::make_custom_media_url_str(VOD_SEARCH_GROUP_ID);
 
             case VOD_FILTER_GROUP_ID:
-                return Starnet_Vod_Filter_Screen::get_media_url_string();
+                return Starnet_Vod_Filter_Screen::make_custom_media_url_str();
 
             case VOD_LIST_GROUP_ID:
-                return Starnet_Vod_List_Screen::get_media_url_string(VOD_LIST_GROUP_ID);
+                return Starnet_Vod_List_Screen::make_custom_media_url_str(VOD_LIST_GROUP_ID);
         }
 
-        return Starnet_Tv_Channel_List_Screen::get_media_url_string($id);
+        return Starnet_Tv_Channel_List_Screen::make_custom_media_url_str($id);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -2600,15 +2620,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public function refresh_playlist_menu($handler)
     {
         $icon_file = "refresh.png";
-        $params = $this->get_playlist_parameters($this->get_active_playlist_id());
-        $title = safe_get_value($params, PARAM_NAME);
-        if (safe_get_value($params, PARAM_TYPE) === PARAM_PROVIDER) {
-            $provider = $this->create_provider_class(safe_get_value($params, PARAM_PROVIDER));
+        $playlist_parameters = $this->get_playlist_parameters($this->get_active_playlist_id());
+        $title = safe_get_value($playlist_parameters, PARAM_NAME);
+        if (safe_get_value($playlist_parameters, PARAM_TYPE) === PARAM_PROVIDER) {
+            $provider = $this->create_provider_class(safe_get_value($playlist_parameters, PARAM_PROVIDER));
             if (!is_null($provider)) {
                 if ($title !== $provider->getName()) {
                     $title .= " ({$provider->getName()})";
                 }
                 $icon_file = $provider->getLogo();
+            }
+
+            $playlists = $provider->GetPlaylists();
+            $provider_playlist_id = safe_get_value($playlist_parameters,    MACRO_PLAYLIST_ID);
+            if ($provider_playlist_id !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
+                $title .= " - {$playlists[$provider_playlist_id][COLUMN_NAME]}";
             }
         }
 
@@ -2658,7 +2684,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($is_classic) {
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
         }
-        $menu_items[] = $this->create_menu_item($handler, CONTROL_CATEGORY_SCREEN, TR::t('setup_category_title'), "settings.png");
+        $menu_items[] = $this->create_menu_item($handler, ACTION_EDIT_CATEGORY_SCREEN, TR::t('setup_category_title'), "settings.png");
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
         $menu_items[] = $this->create_menu_item($handler,
@@ -2691,24 +2717,19 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if ($provider->hasApiCommand(API_COMMAND_ACCOUNT_INFO)) {
                 $menu_items[] = $this->create_menu_item($handler, ACTION_INFO_DLG, TR::t('subscription'), "info.png");
             }
-
-            if ($provider->has_ext_params()) {
-                $menu_items[] = $this->create_menu_item($handler,
-                    ACTION_EDIT_PROVIDER_EXT_DLG,
-                    TR::t('edit_ext_account'),
-                    "settings.png",
-                    array(PARAM_PROVIDER => $provider->getId(), COLUMN_PLAYLIST_ID => $provider->get_provider_playlist_id())
-                );
-            }
         }
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
         if (!$is_classic) {
             $menu_items[] = $this->create_menu_item($handler,
-                CONTROL_INTERFACE_NEWUI_SCREEN,
+                ACTION_EDIT_NEWUI_SETTINGS,
                 TR::t('setup_interface_newui_title'),
                 "settings.png");
         }
+        $menu_items[] = $this->create_menu_item($handler,
+            ACTION_EDIT_PLAYLIST_SETTINGS,
+            TR::t('tv_screen_playlists_setup'),
+            "playlist_settings.png");
         $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS, TR::t('entry_setup'), "settings.png");
 
         return $menu_items;
@@ -2788,21 +2809,21 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         switch ($action_edit) {
             case Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_CHANNELS:
-                $new_media_url = Starnet_Edit_Hidden_List_Screen::make_media_url($source_screen_id,
-                    array(
-                        PARAM_END_ACTION => ACTION_INVALIDATE,
-                        PARAM_CANCEL_ACTION => ACTION_EMPTY,
-                        Starnet_Edit_Hidden_List_Screen::PARAM_EDIT_LIST => $action_edit
-                    )
+                $params = array(
+                    PARAM_END_ACTION => ACTION_INVALIDATE,
+                    PARAM_CANCEL_ACTION => ACTION_EMPTY,
+                    Starnet_Edit_Hidden_List_Screen::PARAM_EDIT_LIST => $action_edit
                 );
+
                 if (!is_null($media_url) && isset($media_url->group_id)) {
-                    $new_media_url->group_id = $media_url->group_id;
+                    $params['group_id'] = $media_url->group_id;
                 }
+                $new_media_url_str = Starnet_Edit_Hidden_List_Screen::make_custom_media_url_str($source_screen_id, $params);
                 $title = TR::t('tv_screen_edit_hidden_channels');
                 break;
 
             case Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_GROUPS:
-                $new_media_url = Starnet_Edit_Hidden_List_Screen::make_media_url($source_screen_id,
+                $new_media_url_str = Starnet_Edit_Hidden_List_Screen::make_custom_media_url_str($source_screen_id,
                     array(
                         PARAM_END_ACTION => ACTION_INVALIDATE,
                         PARAM_CANCEL_ACTION => ACTION_EMPTY,
@@ -2813,7 +2834,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 break;
 
             case Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST:
-                $new_media_url = Starnet_Edit_Playlists_Screen::make_media_url($source_screen_id,
+                $new_media_url_str = Starnet_Edit_Playlists_Screen::make_custom_media_url_str($source_screen_id,
                     array(
                         PARAM_END_ACTION => ACTION_RELOAD,
                         PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
@@ -2824,7 +2845,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 break;
 
             case Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST:
-                $new_media_url = Starnet_Edit_Xmltv_List_Screen::make_media_url($source_screen_id,
+                $new_media_url_str = Starnet_Edit_Xmltv_List_Screen::make_custom_media_url_str($source_screen_id,
                     array(
                         PARAM_END_ACTION => ACTION_RELOAD,
                         PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
@@ -2837,7 +2858,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 return null;
         }
 
-        return Action_Factory::open_folder($new_media_url->get_media_url_str(), $title, null, null, $post_action);
+        return Action_Factory::open_folder($new_media_url_str, $title, null, null, $post_action);
     }
 
     /**
@@ -3051,29 +3072,28 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function is_playlist_cache_expired($is_tv)
     {
-        if ($is_tv) {
-            $filename = $this->get_playlist_cache();
-        } else {
-            $filename = $this->get_vod_playlist_cache();
-        }
-        if (!file_exists($filename)) {
-            hd_debug_print("Playlist cache '$filename' for current is not exist");
+        $base_name = self::get_playlist_cache_path() . $this->get_playlist_cache_name($is_tv);
+        $m3u_file = $base_name . '.m3u8';
+        $db_file = $base_name . '.db';
+
+        if (!file_exists($m3u_file)) {
+            hd_debug_print("Playlist cache '$m3u_file' for current is not exist");
             return true;
         }
 
-        if (!file_exists($filename . ".db")) {
-            hd_debug_print("Database '$filename.db' for current is not exist");
+        if (!file_exists($db_file)) {
+            hd_debug_print("Database '$db_file' for current is not exist");
             return true;
         }
 
         $now = time();
-        $mtime = filemtime($filename);
+        $mtime = filemtime($m3u_file);
         $cache_expired = $mtime + $this->get_setting(PARAM_PLAYLIST_CACHE_TIME, 1) * 3600;
         if ($cache_expired > $now) {
             return false;
         }
 
-        hd_debug_print("Playlist cache $filename expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Forcing reload");
+        hd_debug_print("Playlist cache $m3u_file expired " . ($now - $cache_expired) . " sec ago. Timestamp $mtime. Forcing reload");
         return true;
     }
 
@@ -3251,12 +3271,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     public static function get_id_detect_mapper()
     {
         return array(
-            CONTROL_DETECT_ID => TR::t('detect'),
-            ATTR_CUID => TR::t('attribute_name__1', ATTR_CHANNEL_ID),
-            ATTR_TVG_ID => TR::t('attribute_name__1', ATTR_TVG_ID),
-            ATTR_TVG_NAME => TR::t('attribute_name__1', ATTR_TVG_NAME),
-            ATTR_CHANNEL_NAME => TR::t('channel_name'),
-            ATTR_CHANNEL_HASH => TR::t('hash_url')
+            CONTROL_DETECT_ID => TR::load('detect'),
+            ATTR_CUID => TR::load('attribute_name__1', ATTR_CHANNEL_ID),
+            ATTR_TVG_ID => TR::load('attribute_name__1', ATTR_TVG_ID),
+            ATTR_TVG_NAME => TR::load('attribute_name__1', ATTR_TVG_NAME),
+            ATTR_CHANNEL_NAME => TR::load('channel_name'),
+            ATTR_CHANNEL_HASH => TR::load('hash_url')
         );
     }
 
@@ -3357,26 +3377,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     //////////////////////////////////////////////////////////////////
     /// protected methods
-
-    protected function get_playlist_order_id($playlist_id)
-    {
-        $plugin_orders_name = $playlist_id . '_' . PLUGIN_ORDERS;
-        $provider_class = $this->get_playlist_parameter($playlist_id, PARAM_PROVIDER);
-        if (empty($provider_class)) {
-            hd_debug_print("Playlist is not a IPTV provider");
-        } else {
-            $provider = $this->get_provider($playlist_id);
-            if ($provider !== null) {
-                hd_debug_print("Using provider {$provider->getId()} ({$provider->getName()}) playlist id: $playlist_id");
-
-                $provider_playlist_id = $this->get_playlist_parameter($playlist_id, MACRO_PLAYLIST_ID);
-                $provider_id = empty($provider_playlist_id) ? '' : "_$provider_playlist_id";
-                $plugin_orders_name = $playlist_id . '_' . PLUGIN_ORDERS . $provider_id;
-            }
-        }
-
-        return $plugin_orders_name;
-    }
 
     /**
      * @param $playlist_id
@@ -3534,7 +3534,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     protected function upgrade_orders($playlist_id, $group_icons)
     {
-        $plugin_orders_name = $this->get_playlist_order_id($playlist_id);
+        $plugin_orders_name = $this->make_base_name(PLUGIN_ORDERS, $playlist_id);
         $orders_file = get_data_path("$plugin_orders_name.settings");
         if (!file_exists($orders_file)) {
             return;
@@ -3637,7 +3637,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     protected function upgrade_tv_history()
     {
-        $tv_history_name = $this->get_history_path() . $this->make_name(PARAM_TV_HISTORY_ITEMS);
+        $tv_history_name = $this->get_history_path() . $this->make_base_name(PARAM_TV_HISTORY_ITEMS);
         if (!file_exists($tv_history_name)) {
             return;
         }
@@ -3662,7 +3662,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     protected function upgrade_vod_history()
     {
         // vod history is only one per playlist
-        $vod_history_filename = $this->get_history_path() . $this->make_name('history') . ".settings";
+        $vod_history_filename = $this->get_history_path() . $this->make_base_name('history') . ".settings";
         if (!file_exists($vod_history_filename)) {
             return;
         }

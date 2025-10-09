@@ -76,16 +76,16 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
     const PARAM_SIZE = 'size';
 
     /**
-     * @param string $source_id
+     * @param string $parent_id
      * @param array $add_params
-     * @return MediaURL
+     * @return string
      */
-    public static function make_media_url($source_id, $add_params = array())
+    public static function make_custom_media_url_str($parent_id, $add_params = array())
     {
-        return MediaURL::make(array_merge(
+        return MediaURL::encode(array_merge(
             array(
                 PARAM_SCREEN_ID => self::ID,
-                PARAM_SOURCE_WINDOW_ID => $source_id,
+                PARAM_SOURCE_WINDOW_ID => $parent_id,
                 PARAM_WINDOW_COUNTER => 1),
             $add_params)
         );

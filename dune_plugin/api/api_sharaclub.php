@@ -59,7 +59,7 @@ class api_sharaclub extends api_default
         parent::get_provider_info($force);
 
         if (isset($this->account_info->data->listdomain)) {
-            $this->SetParameter(MACRO_PLAYLIST, $this->account_info->data->listdomain);
+            $this->SetParameter(MACRO_DOMAIN_ID, $this->account_info->data->listdomain);
         }
 
         if (isset($this->account_info->data->jsonEpgDomain)) {

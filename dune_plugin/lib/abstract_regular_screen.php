@@ -30,6 +30,16 @@ require_once 'archive.php';
 abstract class Abstract_Regular_Screen extends Abstract_Screen
 {
     /**
+     * Get MediaURL string representation (json encoded)
+     *
+     * @return false|string
+     */
+    public static function get_media_url_str()
+    {
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID));
+    }
+
+    /**
      * @inheritDoc
      */
     public function get_next_folder_view(MediaURL $media_url, &$plugin_cookies)

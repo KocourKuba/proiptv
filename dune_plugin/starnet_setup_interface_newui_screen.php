@@ -35,16 +35,6 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * Get MediaURL string representation (json encoded)
-     *
-     * @return false|string
-     */
-    public static function get_media_url_string($parent_id = null)
-    {
-        return MediaURL::encode(array('screen_id' => static::ID, 'source_window_id' => $parent_id));
-    }
-
-    /**
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
@@ -142,22 +132,15 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                if (isset($parent_media_url->source_window_id)) {
-                    $target_action = User_Input_Handler_Registry::create_screen_action($parent_media_url->source_window_id, ACTION_REFRESH_SCREEN);
-                } else {
-                    $target_action = User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index));
-                }
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                $post_action = self::make_return_action($parent_media_url);
 
                 if ($this->force_parent_reload) {
                     $this->force_parent_reload = false;
                     hd_debug_print("Force parent reload", true);
-                    $target_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $target_action);
+                    $post_action = Action_Factory::invalidate_all_folders($plugin_cookies, null, $post_action);
                 }
-                return Action_Factory::close_and_run($target_action);
+                return $post_action;
 
             case PARAM_NEWUI_CHANNEL_POSITION:
             case PARAM_NEWUI_ICONS_IN_ROW:

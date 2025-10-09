@@ -84,9 +84,9 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
         $right_button_action = User_Input_Handler_Registry::create_action($this, PARAM_FAVORITES, null, array('movie_id' => $movie->id));
 
         if ($movie->has_seasons()) {
-            $screen_media_url = Starnet_Vod_Seasons_List_Screen::get_media_url_string($movie->id);
+            $screen_media_url = Starnet_Vod_Seasons_List_Screen::make_custom_media_url_str($movie->id);
         } else {
-            $screen_media_url = Starnet_Vod_Series_List_Screen::get_media_url_string($movie->id);
+            $screen_media_url = Starnet_Vod_Series_List_Screen::make_custom_media_url_str($movie->id);
         }
 
         $movie_folder_view = array(
@@ -122,9 +122,9 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
      * @param string|false $info
      * @return false|string
      */
-    public static function get_media_url_string($movie_id, $name = false, $poster_url = false, $info = false)
+    public static function make_custom_media_url_str($movie_id, $name = false, $poster_url = false, $info = false)
     {
-        $arr = array('screen_id' => self::ID, 'movie_id' => $movie_id);
+        $arr = array(PARAM_SCREEN_ID => self::ID, 'movie_id' => $movie_id);
         if ($name !== false) {
             $arr['name'] = $name;
         }
@@ -157,7 +157,7 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen implements User_
                 $in_order ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite'),
                 Action_Factory::invalidate_folders(
                     array(
-                        self::get_media_url_string(VOD_FAV_GROUP_ID),
+                        self::make_custom_media_url_str(VOD_FAV_GROUP_ID),
                         Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID),
                         Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID)
                     ),

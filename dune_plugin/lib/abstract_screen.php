@@ -26,7 +26,7 @@
 
 require_once 'screen.php';
 
-class Abstract_Screen implements Screen
+abstract class Abstract_Screen implements Screen
 {
     const ID = 'abstract_screen';
 
@@ -42,16 +42,6 @@ class Abstract_Screen implements Screen
 
     ///////////////////////////////////////////////////////////////////////
     // static methods
-
-    /**
-     * Get MediaURL string representation (json encoded)
-     *
-     * @return false|string
-     */
-    public static function get_media_url_str()
-    {
-        return MediaURL::encode(array('screen_id' => static::ID));
-    }
 
     /**
      * This is not override of User_Input_Handler interface!

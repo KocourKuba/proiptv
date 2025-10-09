@@ -144,6 +144,30 @@ class Control_Factory
     }
 
     /**
+     * @param array &$defs
+     * @param string $name
+     * @param string $title
+     * @param string $caption
+     * @param int $width
+     * @param array $push_action
+     * @param bool $caption_centered
+     */
+    public static function add_custom_action_button(&$defs, $name, $title, $caption, $width, $push_action, $caption_centered = false)
+    {
+        $defs[] = array(
+            GuiControlDef::name => $name,
+            GuiControlDef::title => $title,
+            GuiControlDef::kind => GUI_CONTROL_BUTTON,
+            GuiControlDef::params => array('button_caption_centered' => $caption_centered),
+            GuiControlDef::specific_def => array(
+                GuiButtonDef::caption => $caption,
+                GuiButtonDef::width => $width,
+                GuiButtonDef::push_action => $push_action
+            ),
+        );
+    }
+
+    /**
      * @param $defs
      * @param $button_defs
      * @param $viewport_width

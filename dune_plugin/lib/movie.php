@@ -119,7 +119,7 @@ class Movie implements User_Input_Handler
             $invalidate[] = Default_Dune_Plugin::get_group_mediaurl_str(VOD_LIST_GROUP_ID);
         } else {
             $movie_id = $user_input->plugin_vod_id;
-            $invalidate[] = Starnet_Vod_Series_List_Screen::get_media_url_string($user_input->plugin_vod_id, $episode->season_id);
+            $invalidate[] = Starnet_Vod_Series_List_Screen::make_custom_media_url_str($user_input->plugin_vod_id, $episode->season_id);
         }
 
         $this->plugin->set_vod_history(

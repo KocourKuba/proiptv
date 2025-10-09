@@ -54,11 +54,6 @@ class api_default
 {
     const CONTROL_LOGIN = 'login';
     const CONTROL_PASSWORD = 'password';
-    const CONTROL_DEVICE = 'device';
-    const CONTROL_SERVER = 'server';
-    const CONTROL_DOMAIN = 'domain';
-    const CONTROL_QUALITY = 'quality';
-    const CONTROL_STREAM = 'stream';
 
     /**
      * @var string
@@ -444,12 +439,16 @@ class api_default
             MACRO_SERVER_ID => '',
             MACRO_QUALITY_ID => '',
             MACRO_PLAYLIST_ID => '',
+            MACRO_PLAYLIST_VOD_ID => '',
         );
 
         hd_debug_print("template: $string", true);
         $string = str_replace(
-            array(MACRO_API, MACRO_PLAYLIST, MACRO_EPG_DOMAIN),
-            array($this->getApiUrl(), $this->GetParameter(MACRO_PLAYLIST), $this->GetParameter(MACRO_EPG_DOMAIN)),
+            array(MACRO_API, MACRO_PLAYLIST_IPTV, MACRO_PLAYLIST_VOD, MACRO_EPG_DOMAIN),
+            array($this->getApiUrl(),
+                $this->GetParameter(MACRO_PLAYLIST_IPTV),
+                $this->GetParameter(MACRO_PLAYLIST_VOD),
+                $this->GetParameter(MACRO_EPG_DOMAIN)),
             $string);
 
         $mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
@@ -494,6 +493,7 @@ class api_default
     public function getRawApiCommand($command)
     {
         hd_debug_print(null, true);
+        hd_debug_print(json_encode($this->api_commands), true);
 
         return $this->hasApiCommand($command) ? $this->api_commands[$command] : '';
     }
@@ -570,7 +570,23 @@ class api_default
     {
         hd_debug_print(null, true);
 
-        return $this->getConfigValue(CONFIG_PLAYLISTS);
+        $config_playlist = $this->getConfigValue(CONFIG_PLAYLISTS_IPTV);
+        if (!isset($config_playlist[DIRECT_PLAYLIST_ID])) {
+            $config_playlist[DIRECT_PLAYLIST_ID][COLUMN_NAME] = TR::load('setup_native_url');
+        }
+
+        return $config_playlist;
+    }
+
+    /**
+     * returns list of account playlists
+     * @return array|null
+     */
+    public function GetPlaylistsVod()
+    {
+        hd_debug_print(null, true);
+
+        return $this->getConfigValue(CONFIG_PLAYLISTS_VOD);
     }
 
     /**
@@ -721,17 +737,29 @@ class api_default
         hd_debug_print(null, true);
 
         $playlists = $this->GetPlaylists();
-        if (!empty($playlists)) {
-            $params = $this->plugin->get_playlist_parameters($this->playlist_id);
-            $idx = safe_get_value($params, MACRO_PLAYLIST_ID);
-            $playlist = '';
-            if ($idx === CUSTOM_PLAYLIST_ID) {
-                $playlist = safe_get_value($params, MACRO_CUSTOM_PLAYLIST);
-            } else if (!empty($playlists[$idx]['url'])) {
-                $playlist = $playlists[$idx]['url'];
-            }
+        if (empty($playlists)) {
+            return false;
+        }
 
-            $this->SetParameter(MACRO_PLAYLIST, $playlist);
+        $playlist_id = $this->GetParameter(MACRO_PLAYLIST_ID);
+        if (empty($playlist_id)) {
+            // playlist id not set. Take first in list and remember it
+            $playlist_id = (string)key($playlists);
+            $this->SetParameter(MACRO_PLAYLIST_ID, $playlist_id);
+        }
+
+        if ($playlist_id === DIRECT_PLAYLIST_ID) {
+            $playlist = $this->GetParameter(MACRO_CUSTOM_PLAYLIST);
+        } else if (!empty($playlists[$playlist_id][COLUMN_URL])) {
+            $playlist = $playlists[$playlist_id][COLUMN_URL];
+        }
+
+        if (empty($playlist)) {
+            return false;
+        }
+
+        if ($playlist !== $this->GetParameter(MACRO_PLAYLIST_IPTV)) {
+            $this->SetParameter(MACRO_PLAYLIST_IPTV, $playlist);
         }
 
         return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
@@ -869,7 +897,8 @@ class api_default
             CONFIG_SERVERS => MACRO_SERVER_ID,
             CONFIG_DEVICES => MACRO_DEVICE_ID,
             CONFIG_QUALITIES => MACRO_QUALITY_ID,
-            CONFIG_PLAYLISTS => MACRO_PLAYLIST_ID,
+            CONFIG_PLAYLISTS_IPTV => MACRO_PLAYLIST_ID,
+            CONFIG_PLAYLISTS_VOD => MACRO_PLAYLIST_VOD_ID,
         );
 
         foreach ($config_items as $name => $param) {
@@ -970,7 +999,7 @@ class api_default
         }
 
         $playlists = $this->GetPlaylists();
-        if (!empty($playlists) && count($playlists) > 1) {
+        if (!empty($playlists)) {
             $has_ext_params |= true;
         }
 
@@ -985,175 +1014,6 @@ class api_default
         }
 
         return $has_ext_params;
-    }
-
-    /**
-     * @param User_Input_Handler $handler
-     * @return array|null
-     */
-    public function GetExtSetupUI($handler)
-    {
-        hd_debug_print(null, true);
-
-        $defs = array();
-
-        $streams = $this->GetStreams();
-        if (!empty($streams) && count($streams) > 1) {
-            $idx = $this->GetParameter(MACRO_STREAM_ID);
-            if (empty($idx)) {
-                $idx = key($streams);
-            }
-            hd_debug_print("streams ($idx): " . json_encode($streams), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_STREAM,
-                TR::t('stream'), $idx, $streams, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-        }
-
-        $domains = $this->GetDomains();
-        if (!empty($domains) && count($domains) > 1) {
-            $idx = $this->GetParameter(MACRO_DOMAIN_ID);
-            if (empty($idx)) {
-                $idx = key($domains);
-            }
-            hd_debug_print("domains ($idx): " . json_encode($domains), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_DOMAIN,
-                TR::t('domain'), $idx, $domains, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-        }
-
-        $servers = $this->GetServers();
-        if (!empty($servers) && count($servers) > 1) {
-            $idx = $this->GetParameter(MACRO_SERVER_ID);
-            if (empty($idx)) {
-                $idx = key($servers);
-            }
-            hd_debug_print("servers ($idx): " . json_encode($servers), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_SERVER,
-                TR::t('server'), $idx, $servers, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-        }
-
-        $devices = $this->GetDevices();
-        if (!empty($devices) && count($devices) > 1) {
-            $idx = $this->GetParameter(MACRO_DEVICE_ID);
-            if (empty($idx)) {
-                $idx = key($devices);
-            }
-            hd_debug_print("devices ($idx): " . json_encode($devices), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_DEVICE,
-                TR::t('device'), $idx, $devices, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-        }
-
-        $qualities = $this->GetQualities();
-        if (!empty($qualities) && count($qualities) > 1) {
-            $idx = $this->GetParameter(MACRO_QUALITY_ID);
-            if (empty($idx)) {
-                $idx = key($qualities);
-            }
-            hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, self::CONTROL_QUALITY,
-                TR::t('quality'), $idx, $qualities, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-        }
-
-        $playlists = $this->GetPlaylists();
-        if (!empty($playlists) && count($playlists) > 1) {
-            $pl_names = extract_column($playlists, COLUMN_NAME);
-            $idx = $this->GetParameter(MACRO_PLAYLIST_ID);
-            if (empty($idx)) {
-                $idx = key($pl_names);
-                $this->SetParameter(MACRO_PLAYLIST_ID, $idx);
-            }
-
-            hd_debug_print("playlist ($idx): " . json_encode($playlists), true);
-
-            Control_Factory::add_combobox($defs, $handler, null, CONTROL_PLAYLIST,
-                TR::t('playlist'), $idx, $pl_names, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH, true);
-        }
-
-        $icon_replacements = $this->getConfigValue(CONFIG_ICON_REPLACE);
-        if (!empty($icon_replacements)) {
-            $val = $this->GetParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
-            Control_Factory::add_combobox($defs, $handler, null, PARAM_REPLACE_ICON,
-                TR::t('setup_channels_square_icons'), $val, SwitchOnOff::$translated,
-                Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-        }
-
-        $playlist_mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
-        if (!empty($playlist_mirrors)) {
-            reset($playlist_mirrors);
-            $val = $this->GetParameter(PARAM_SELECTED_MIRROR, key($playlist_mirrors));
-            $pairs = array();
-            foreach ($playlist_mirrors as $key => $value) {
-                $pairs[$key] = $key;
-            }
-            Control_Factory::add_combobox($defs, $handler, null, PARAM_SELECTED_MIRROR,
-                TR::t('setup_channels_using_mirror'), $val, $pairs,
-                Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
-        }
-
-        if (!empty($defs)) {
-            Control_Factory::add_vgap($defs, 50);
-
-            Control_Factory::add_close_dialog_and_apply_button($defs, $handler,
-                ACTION_EDIT_PROVIDER_EXT_DLG_APPLY,
-                TR::t('ok'),
-                300,
-                array(PARAM_PROVIDER => $this->getId())
-            );
-
-            Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
-            Control_Factory::add_vgap($defs, 10);
-        }
-
-        return $defs;
-    }
-
-    /**
-     * @param object $user_input
-     * @param string $err_msg
-     * @return bool
-     */
-    public function ApplyExtSetupUI($user_input, &$err_msg)
-    {
-        hd_debug_print(null, true);
-
-        if (isset($user_input->{self::CONTROL_SERVER})) {
-            $this->SetServer($user_input->{self::CONTROL_SERVER}, $err_msg);
-        }
-
-        if (isset($user_input->{CONTROL_PLAYLIST})) {
-            $this->SetPlaylist($user_input->{CONTROL_PLAYLIST});
-        }
-
-        if (isset($user_input->{self::CONTROL_DEVICE})) {
-            $this->SetDevice($user_input->{self::CONTROL_DEVICE});
-        }
-
-        if (isset($user_input->{self::CONTROL_STREAM})) {
-            $this->SetStream($user_input->{self::CONTROL_STREAM});
-        }
-
-        if (isset($user_input->{self::CONTROL_DOMAIN})) {
-            $this->SetDomain($user_input->{self::CONTROL_DOMAIN});
-        }
-
-        if (isset($user_input->{self::CONTROL_QUALITY})) {
-            $this->SetQuality($user_input->{self::CONTROL_QUALITY});
-        }
-
-        if (isset($user_input->{PARAM_REPLACE_ICON})) {
-            $this->SetParameter(PARAM_REPLACE_ICON, $user_input->{PARAM_REPLACE_ICON});
-        }
-
-        if (isset($user_input->{PARAM_SELECTED_MIRROR})) {
-            $this->SetParameter(PARAM_SELECTED_MIRROR, $user_input->{PARAM_SELECTED_MIRROR});
-        }
-
-        $this->plugin->clear_playlist_cache($this->playlist_id);
-
-        return true;
     }
 
     /**

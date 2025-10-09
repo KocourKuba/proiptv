@@ -457,10 +457,6 @@
           "standard": {
             "name": "Standard",
             "url": "{MIRROR}/edem_epg_ico.m3u8"
-          },
-          "custom": {
-            "name": "Custom",
-            "url": ""
           }
         },
         "url_subst": {
@@ -583,7 +579,7 @@
       },
       "config": {
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/live\\/.+\\/(?<id>.+)(?:\\/.+\\.m3u8|\\.ts)$/",
-        "ignore_groups": ["Video on Demand","РЎРµСЂРёР°Р»С‹"],
+        "ignore_groups": ["Video on Demand","Сериалы"],
         "epg_presets": [
           {
             "name": "sharaclub"
@@ -1450,7 +1446,7 @@
         "request_token": "{API}/?userLogin={LOGIN}&userPasswd={HASH_PASSWORD}"
       },
       "config": {
-        "id_map": "tvg-name",
+        "id_map": "tvg-id",
         "epg_presets": [
           {
             "name": "tvteam"

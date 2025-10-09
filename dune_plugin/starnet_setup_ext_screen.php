@@ -108,7 +108,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
 
         //////////////////////////////////////
         // debugging
-
         $debug_state = safe_get_member($plugin_cookies, PARAM_ENABLE_DEBUG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SwitchOnOff::translate($debug_state),
@@ -129,14 +128,8 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                return Action_Factory::close_and_run(
-                    User_Input_Handler_Registry::create_screen_action(
-                        Starnet_Setup_Screen::ID,
-                        RESET_CONTROLS_ACTION_ID,
-                        null,
-                        array('initial_sel_ndx' => $this->return_index)
-                    )
-                );
+                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+                return self::make_return_action($parent_media_url);
 
             case self::CONTROL_ADULT_PASS_DLG: // show pass dialog
                 return $this->do_get_pass_control_defs($user_input->adult);

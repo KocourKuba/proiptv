@@ -39,16 +39,15 @@ class Starnet_Entry_Handler implements User_Input_Handler
     const ACTION_UNINSTALL = 'uninstall';
     const ACTION_CONTINUE_UNINSTALL = 'continue_uninstall';
     const ACTION_UPDATE = 'update';
-    const ACTION_CALL_PLUGIN_SETTINGS = 'call_setup';
-    const ACTION_CALL_PLAYLIST_SETTINGS = 'call_playlist_setup';
-    const ACTION_CALL_BACKUP_SETTINGS = 'call_backup';
-    const ACTION_CALL_XMLTV_SOURCES_SETTINGS = 'call_xmltv_setup';
-    const ACTION_PLAYLIST_SETTINGS = 'playlist_settings';
-    const ACTION_XMLTV_SOURCES_SETTINGS = 'xmltv_settings';
-    const ACTION_CALL_REBOOT = 'call_reboot';
-    const ACTION_CALL_SEND_LOG = 'call_send_log';
-    const ACTION_CALL_CLEAR_EPG = 'call_clear_epg';
+    const ACTION_CALL_PLUGIN_SETTINGS = 'call_setup'; // this action coded in manifest
+    const ACTION_CALL_PLAYLIST_SCREEN = 'call_playlist_setup'; // this action coded in manifest
+    const ACTION_CALL_BACKUP_SETTINGS = 'call_backup'; // this action coded in manifest
+    const ACTION_CALL_XMLTV_SOURCES_SETTINGS = 'call_xmltv_setup'; // this action coded in manifest
+    const ACTION_CALL_REBOOT = 'call_reboot'; // this action coded in manifest
+    const ACTION_CALL_SEND_LOG = 'call_send_log'; // this action coded in manifest
+    const ACTION_CALL_CLEAR_EPG = 'call_clear_epg'; // this action coded in manifest
     const ACTION_CONFIRM_BACKUP_DLG = 'create_backup';
+    const ACTION_RUN_PLAYLIST_SCREEN = 'playlist_screen';
     const OLD_LINK = "aHR0cHM6Ly9naXRodWIuY29tL0tvY291ckt1YmEvcHJvaXB0di9yZWxlYXNlcy9kb3dubG9hZC81LjEuOTYyL2R1bmVfcGx1Z2luX3Byb2lwdHYuNS4xLjk2Mi56aXA=";
 
     private $plugin;
@@ -98,32 +97,28 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_PLUGIN_SETTINGS:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_protect_settings_dialog($this, ACTION_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_SETTINGS);
 
-            case ACTION_SETTINGS:
+            case ACTION_DO_SETTINGS:
                 $this->plugin->init_playlist_db();
-                return Action_Factory::open_folder(Starnet_Setup_Screen::ID, TR::t('entry_setup'));
+                return Action_Factory::open_folder(Starnet_Setup_Screen::make_custom_media_url_str(self::ID), TR::t('entry_setup'));
 
             case ACTION_PASSWORD_APPLY:
                 return $this->plugin->apply_protect_settings_dialog($this, $user_input);
 
-            case self::ACTION_CALL_PLAYLIST_SETTINGS:
+            case self::ACTION_CALL_PLAYLIST_SCREEN:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_PLAYLIST_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_RUN_PLAYLIST_SCREEN);
 
-            case self::ACTION_CALL_BACKUP_SETTINGS:
-                $this->plugin->init_plugin();
-                return Action_Factory::open_folder(Starnet_Setup_Backup_Screen::ID, TR::t('entry_backup'));
-
-            case self::ACTION_PLAYLIST_SETTINGS:
+            case self::ACTION_RUN_PLAYLIST_SCREEN:
                 $this->plugin->init_plugin();
                 return $this->open_playlist_screen();
 
             case self::ACTION_CALL_XMLTV_SOURCES_SETTINGS:
                 $this->plugin->init_plugin();
-                return $this->plugin->show_protect_settings_dialog($this, self::ACTION_XMLTV_SOURCES_SETTINGS);
+                return $this->plugin->show_protect_settings_dialog($this, ACTION_DO_EDIT_XMLTV_SETTINGS);
 
-            case self::ACTION_XMLTV_SOURCES_SETTINGS:
+            case ACTION_DO_EDIT_XMLTV_SETTINGS:
                 if (!$this->plugin->init_playlist_db()) {
                     return Action_Factory::show_title_dialog(TR::t('err_init_database'));
                 }
@@ -143,6 +138,10 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $this->plugin->init_epg_manager();
 
                 return $this->open_xmltv_screen();
+
+            case self::ACTION_CALL_BACKUP_SETTINGS:
+                $this->plugin->init_plugin();
+                return Action_Factory::open_folder(Starnet_Setup_Backup_Screen::ID, TR::t('entry_backup'));
 
             case self::ACTION_CALL_SEND_LOG:
                 if (!is_r22_or_higher()) {
@@ -191,7 +190,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CONFIRM_BACKUP_DLG:
                 hd_debug_print("Call select backup folder");
-                $media_url = Starnet_Folder_Screen::make_media_url(static::ID,
+                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
                     array(
                         PARAM_END_ACTION => self::ACTION_PLUGIN_ENTRY,
                         PARAM_ACTION_ID => $user_input->action_id,
@@ -200,7 +199,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
-                return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_backup_folder_path'));
+                return Action_Factory::open_folder($media_url, TR::t('setup_backup_folder_path'));
 
             case ACTION_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
@@ -434,7 +433,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
     private function open_playlist_screen()
     {
-        $media_url = Starnet_Edit_Playlists_Screen::make_media_url(Starnet_Entry_Handler::ID,
+        $media_url = Starnet_Edit_Playlists_Screen::make_custom_media_url_str(Starnet_Entry_Handler::ID,
             array(
                 PARAM_END_ACTION => ACTION_FORCE_OPEN,
                 PARAM_CANCEL_ACTION => ACTION_EMPTY,
@@ -443,18 +442,18 @@ class Starnet_Entry_Handler implements User_Input_Handler
             )
         );
 
-        return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_channels_src_edit_playlists'));
+        return Action_Factory::open_folder($media_url, TR::t('setup_channels_src_edit_playlists'));
     }
 
     private function open_xmltv_screen()
     {
-        $media_url = Starnet_Edit_Xmltv_List_Screen::make_media_url(Starnet_Entry_Handler::ID,
+        $media_url = Starnet_Edit_Xmltv_List_Screen::make_custom_media_url_str(Starnet_Entry_Handler::ID,
             array(
                 PARAM_END_ACTION => ACTION_RELOAD,
                 PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
             )
         );
 
-        return Action_Factory::open_folder($media_url->get_media_url_str(), TR::t('setup_edit_xmltv_list'));
+        return Action_Factory::open_folder($media_url, TR::t('setup_edit_xmltv_list'));
     }
 }
