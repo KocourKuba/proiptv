@@ -2151,7 +2151,6 @@ class Dune_Default_Sqlite_Engine
                 $db = self::VOD_HISTORY_DB;
                 break;
 
-            case TV_FAV_GROUP_ID:
             case VOD_FAV_GROUP_ID:
             case VOD_LIST_GROUP_ID:
             case VOD_FILTER_LIST:
@@ -2161,6 +2160,7 @@ class Dune_Default_Sqlite_Engine
             case GROUPS_INFO:
             case CHANNELS_INFO:
             case GROUPS_ORDER:
+            case TV_FAV_GROUP_ID:
             default:
                 $db = self::PLAYLIST_ORDERS_DB;
                 break;
