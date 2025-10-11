@@ -510,6 +510,14 @@ class vod_standard extends Abstract_Vod
             $category_list[] = $cat;
         }
 
+        // Cleanup VOD play list if movie not exist
+        foreach ($this->plugin->get_channels_order(VOD_LIST_GROUP_ID) as $movie_id) {
+            $movie = $this->get_loaded_movie($movie_id);
+            if (is_null($movie)) {
+                $this->plugin->change_channels_order(VOD_LIST_GROUP_ID, $movie_id, true);
+            }
+        }
+
         $perf->setLabel('end');
         $report = $perf->getFullReport();
 
