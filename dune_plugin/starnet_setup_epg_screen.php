@@ -124,7 +124,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen implements User_
             }
             $cache_time = $this->plugin->get_setting(PARAM_EPG_CACHE_TIME, 1);
             Control_Factory::add_combobox($defs, $this, null,
-                PARAM_EPG_CACHE_TIME, TR::t('setup_cache_time'),
+                PARAM_EPG_CACHE_TIME, TR::t('setup_cache_time_epg'),
                 $cache_time, $caching_range, self::CONTROLS_WIDTH, true);
         }
 
