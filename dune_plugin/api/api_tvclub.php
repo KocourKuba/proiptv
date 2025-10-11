@@ -89,7 +89,7 @@ class api_tvclub extends api_default
      */
     public function replace_macros($string)
     {
-        $token = md5($this->GetParameter(MACRO_LOGIN) . md5($this->GetParameter(MACRO_PASSWORD)));
+        $token = md5($this->GetProviderParameter(MACRO_LOGIN) . md5($this->GetProviderParameter(MACRO_PASSWORD)));
         $string = str_replace(MACRO_SESSION_ID, $token, $string);
 
         return parent::replace_macros($string);
@@ -165,7 +165,7 @@ class api_tvclub extends api_default
                 }
 
                 if (isset($this->account_info->account->settings->server_id)) {
-                    $this->SetParameter(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
+                    $this->SetProviderParameter(MACRO_SERVER_ID, (int)$this->account_info->account->settings->server_id);
                 }
             }
         }
@@ -192,19 +192,5 @@ class api_tvclub extends api_default
         }
 
         return false;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function set_provider_defaults()
-    {
-        $servers = $this->GetServers();
-        if (!empty($servers)) {
-            $idx = $this->GetParameter(MACRO_SERVER_ID);
-            if (empty($idx)) {
-                $this->SetParameter(MACRO_SERVER_ID, key($servers));
-            }
-        }
     }
 }

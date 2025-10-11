@@ -100,22 +100,29 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
             $name, false, false, false, true, self::CONTROLS_WIDTH, true);
         $ret_index += 1;
 
+        $has_vod_cache = false;
         if ($type === PARAM_PROVIDER) {
-            if ($provider !== null && $provider->GetPlaylists() !== null ) {
+            if ($provider !== null) {
+                if ($provider->GetPlaylistsIptv() !== null) {
+                    //////////////////////////////////////
+                    // Account
 
-                //////////////////////////////////////
-                // Account
+                    Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_DLG,
+                        TR::t('edit_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), self::CONTROLS_WIDTH);
+                    $ret_index += 2;
 
-                Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_DLG,
-                    TR::t('edit_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), self::CONTROLS_WIDTH);
-                $ret_index += 2;
+                    //////////////////////////////////////
+                    // Provider settings
 
-                //////////////////////////////////////
-                // Provider settings
+                    Control_Factory::add_image_button($defs, $this, array('return_index' => $ret_index), ACTION_SETUP_PROVIDER,
+                        TR::t('edit_ext_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), self::CONTROLS_WIDTH);
+                    $ret_index += 2;
+                }
 
-                Control_Factory::add_image_button($defs, $this, array('return_index' => $ret_index), ACTION_SETUP_PROVIDER,
-                    TR::t('edit_ext_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), self::CONTROLS_WIDTH);
-                $ret_index += 2;
+                if ($provider->hasApiCommand(API_COMMAND_GET_VOD) !== null
+                    && $provider->getConfigValue(CONFIG_VOD_PARSER) !== null) {
+                    $has_vod_cache = true;
+                }
             }
         } else {
             //////////////////////////////////////
@@ -135,9 +142,11 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
             //////////////////////////////////////
             // Type
 
+            $playlist_type = safe_get_value($params, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
+            $has_vod_cache = $playlist_type === CONTROL_PLAYLIST_VOD;
+
             $opts[CONTROL_PLAYLIST_IPTV] = TR::t('edit_list_playlist_iptv');
             $opts[CONTROL_PLAYLIST_VOD] = TR::t('edit_list_playlist_vod');
-            $playlist_type = safe_get_value($params, PARAM_PL_TYPE, CONTROL_PLAYLIST_IPTV);
             Control_Factory::add_combobox($defs, $this, null, CONTROL_EDIT_TYPE,
                 TR::t('edit_list_playlist_type'), $playlist_type, $opts, self::CONTROLS_WIDTH, true);
             $ret_index += 1;
@@ -164,12 +173,19 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
             $caching_range[$hour] = TR::t('setup_cache_time_d__1', $hour / 24);
         }
 
-        $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME, 1);
+        $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_IPTV, 1);
         Control_Factory::add_combobox($defs, $this, null,
-            PARAM_PLAYLIST_CACHE_TIME, TR::t('setup_cache_time'),
+            PARAM_PLAYLIST_CACHE_TIME_IPTV, TR::t('setup_cache_time_iptv'),
             $cache_time, $caching_range, self::CONTROLS_WIDTH, true);
         $ret_index += 1;
 
+        if ($has_vod_cache) {
+            $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_VOD, 1);
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_PLAYLIST_CACHE_TIME_VOD, TR::t('setup_cache_time_vod'),
+                $cache_time, $caching_range, self::CONTROLS_WIDTH, true);
+            $ret_index += 1;
+        }
         //////////////////////////////////////
         // Ext playlist settings
 
@@ -270,7 +286,8 @@ class Starnet_Setup_Playlists_Screen extends Abstract_Controls_Screen implements
                 $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{CONTROL_URL_PATH});
                 break;
 
-            case PARAM_PLAYLIST_CACHE_TIME:
+            case PARAM_PLAYLIST_CACHE_TIME_IPTV:
+            case PARAM_PLAYLIST_CACHE_TIME_VOD:
                 $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
                 break;
 

@@ -126,9 +126,9 @@ class api_cbilling extends api_default
                     $this->servers[$server->name] = $server->country;
                 }
 
-                $cur_server = $this->GetParameter(MACRO_SERVER_ID);
+                $cur_server = $this->GetProviderParameter(MACRO_SERVER_ID);
                 if (empty($cur_server) && isset($this->account_info->data->server)) {
-                    $this->SetParameter(MACRO_SERVER_ID, $this->account_info->data->server);
+                    $this->SetProviderParameter(MACRO_SERVER_ID, $this->account_info->data->server);
                 }
             }
         }
@@ -146,19 +146,5 @@ class api_cbilling extends api_default
         }
 
         return array();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function set_provider_defaults()
-    {
-        $servers = $this->GetServers();
-        if (!empty($servers)) {
-            $idx = $this->GetParameter(MACRO_SERVER_ID);
-            if (empty($idx)) {
-                $this->SetParameter(MACRO_SERVER_ID, key($servers));
-            }
-        }
     }
 }

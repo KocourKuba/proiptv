@@ -95,8 +95,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
 
         $streams = $provider->GetStreams();
         if (!empty($streams) && count($streams) > 1) {
-            $idx = $provider->GetParameter(MACRO_STREAM_ID);
-            if (empty($idx)) {
+            $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
+            if (empty($idx) || !isset($streams[$idx])) {
                 $idx = key($streams);
             }
             hd_debug_print("streams ($idx): " . json_encode($streams), true);
@@ -110,7 +110,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
 
         $domains = $provider->GetDomains();
         if (!empty($domains) && count($domains) > 1) {
-            $idx = $provider->GetParameter(MACRO_DOMAIN_ID);
+            $idx = $provider->GetProviderParameter(MACRO_DOMAIN_ID);
             if (empty($idx)) {
                 $idx = key($domains);
             }
@@ -125,7 +125,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
 
         $servers = $provider->GetServers();
         if (!empty($servers) && count($servers) > 1) {
-            $idx = $provider->GetParameter(MACRO_SERVER_ID);
+            $idx = $provider->GetProviderParameter(MACRO_SERVER_ID);
             if (empty($idx)) {
                 $idx = key($servers);
             }
@@ -140,7 +140,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
 
         $devices = $provider->GetDevices();
         if (!empty($devices) && count($devices) > 1) {
-            $idx = $provider->GetParameter(MACRO_DEVICE_ID);
+            $idx = $provider->GetProviderParameter(MACRO_DEVICE_ID);
             if (empty($idx)) {
                 $idx = key($devices);
             }
@@ -155,7 +155,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
 
         $qualities = $provider->GetQualities();
         if (!empty($qualities) && count($qualities) > 1) {
-            $idx = $provider->GetParameter(MACRO_QUALITY_ID);
+            $idx = $provider->GetProviderParameter(MACRO_QUALITY_ID);
             if (empty($idx)) {
                 $idx = key($qualities);
             }
@@ -168,13 +168,9 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
         //////////////////////////////////////
         // Playlists settings
 
-        $playlists = $provider->GetPlaylists();
+        $playlists = $provider->GetPlaylistsIptv();
         $pl_names = extract_column($playlists, COLUMN_NAME);
-        $idx = $provider->GetParameter(MACRO_PLAYLIST_ID);
-        if (empty($idx)) {
-            $idx = (string)key($pl_names);
-            $provider->SetParameter(MACRO_PLAYLIST_ID, $idx);
-        }
+        $idx = $provider->GetPlaylistIptvId();
 
         Control_Factory::add_combobox($defs, $this, null, CONTROL_SELECTED_PLAYLIST,
             TR::t('playlist'), $idx, $pl_names, self::CONTROLS_WIDTH, true);
@@ -182,7 +178,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
         if ($idx === DIRECT_PLAYLIST_ID) {
             //////////////////////////////////////
             // Direct playlist url
-            $url = $provider->GetParameter(MACRO_CUSTOM_PLAYLIST);
+            $url = $provider->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
             Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
                 $url, false, false, false, true, self::CONTROLS_WIDTH);
         } else {
@@ -191,9 +187,9 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
 
             $icon_replacements = $provider->getConfigValue(CONFIG_ICON_REPLACE);
             if (!empty($icon_replacements)) {
-                $val = $provider->GetParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
+                $idx = $provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
                 Control_Factory::add_combobox($defs, $this, null, PARAM_REPLACE_ICON,
-                    TR::t('setup_channels_square_icons'), $val, SwitchOnOff::$translated,
+                    TR::t('setup_channels_square_icons'), $idx, SwitchOnOff::$translated,
                     self::CONTROLS_WIDTH, true);
             }
 
@@ -202,14 +198,17 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
 
             $playlist_mirrors = $provider->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
             if (!empty($playlist_mirrors)) {
-                reset($playlist_mirrors);
-                $val = $provider->GetParameter(PARAM_SELECTED_MIRROR, key($playlist_mirrors));
+                $idx = $provider->GetProviderParameter(PARAM_SELECTED_MIRROR);
+                if (empty($idx) || !isset($playlist_mirrors[$idx])) {
+                    $idx =  key($playlist_mirrors);
+                    $provider->SetProviderParameter(PARAM_SELECTED_MIRROR, $idx);
+                }
                 $pairs = array();
                 foreach ($playlist_mirrors as $key => $value) {
                     $pairs[$key] = $key;
                 }
                 Control_Factory::add_combobox($defs, $this, null, PARAM_SELECTED_MIRROR,
-                    TR::t('setup_channels_using_mirror'), $val, $pairs,
+                    TR::t('setup_channels_using_mirror'), $idx, $pairs,
                     self::CONTROLS_WIDTH, true);
             }
         }
@@ -266,22 +265,22 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
                 break;
 
             case CONTROL_SELECTED_PLAYLIST:
-                $provider->SetPlaylist($user_input->{CONTROL_SELECTED_PLAYLIST});
+                $provider->SetProviderParameter(PARAM_PLAYLIST_IPTV_ID, $user_input->{CONTROL_SELECTED_PLAYLIST});
                 $this->force_parent_reload = true;
                 break;
 
             case CONTROL_URL_PATH:
-                $provider->SetParameter(MACRO_CUSTOM_PLAYLIST, $user_input->url_path);
+                $provider->SetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV, $user_input->url_path);
                 $this->force_parent_reload = true;
                 break;
 
             case PARAM_REPLACE_ICON:
-                $provider->SetParameter(PARAM_REPLACE_ICON, $user_input->{PARAM_REPLACE_ICON});
+                $provider->SetProviderParameter(PARAM_REPLACE_ICON, $user_input->{PARAM_REPLACE_ICON});
                 $this->force_parent_reload = true;
                 break;
 
             case PARAM_SELECTED_MIRROR:
-                $provider->SetParameter(PARAM_SELECTED_MIRROR, $user_input->{PARAM_SELECTED_MIRROR});
+                $provider->SetProviderParameter(PARAM_SELECTED_MIRROR, $user_input->{PARAM_SELECTED_MIRROR});
                 $this->force_parent_reload = true;
                 break;
         }

@@ -92,7 +92,7 @@ class api_edem extends api_default
 
         foreach ($macroses as $macro => $default) {
             if (strpos($string, $macro) !== false) {
-                $string = str_replace($macro, trim($this->GetParameter($macro, $default)), $string);
+                $string = str_replace($macro, trim($this->GetProviderParameter($macro, $default)), $string);
             }
         }
         hd_debug_print("result: $string", true);
@@ -130,19 +130,19 @@ class api_edem extends api_default
             CONTROL_EDIT_NAME, TR::t('name'), $name,
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
-        $subdomain = $this->GetParameter(MACRO_SUBDOMAIN);
+        $subdomain = $this->GetProviderParameter(MACRO_SUBDOMAIN);
         if (!empty($subdomain) && $subdomain !== $this->getConfigValue(CONFIG_SUBDOMAIN)) {
             Control_Factory::add_text_field($defs, $handler, null,
-                self::CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $this->GetParameter(MACRO_SUBDOMAIN),
+                self::CONTROL_OTT_SUBDOMAIN, TR::t('domain'), $this->GetProviderParameter(MACRO_SUBDOMAIN),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         Control_Factory::add_text_field($defs, $handler, null,
-            self::CONTROL_OTT_KEY, TR::t('ottkey'), $this->GetParameter(MACRO_OTTKEY),
+            self::CONTROL_OTT_KEY, TR::t('ottkey'), $this->GetProviderParameter(MACRO_OTTKEY),
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_text_field($defs, $handler, null,
-            self::CONTROL_VPORTAL, TR::t('vportal'), $this->GetParameter(MACRO_VPORTAL),
+            self::CONTROL_VPORTAL, TR::t('vportal'), $this->GetProviderParameter(MACRO_VPORTAL),
             false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
 
         Control_Factory::add_vgap($defs, 50);
@@ -211,14 +211,8 @@ class api_edem extends api_default
         $this->plugin->set_playlist_parameters($this->playlist_id, $params);
 
         // Set default playlist settings for new provider
-        hd_debug_print("Set default values for id: $this->playlist_id", true);
-        $values = $this->getConfigValue(CONFIG_PLAYLISTS_IPTV);
-        if (!empty($values)) {
-            $idx = $this->GetParameter(MACRO_PLAYLIST_ID);
-            if (empty($idx)) {
-                $this->SetParameter(MACRO_PLAYLIST_ID, (string)key($values));
-            }
-        }
+        $provider_playlist_id = $this->GetPlaylistIptvId();
+        hd_debug_print("Set default provider playlist id: $provider_playlist_id", true);
 
         // set provider parameters if they not set in the playlist parameters
         // parameters obtain from user account (edem does not have it but maybe in future it will be changed)

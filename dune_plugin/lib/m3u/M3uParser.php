@@ -50,8 +50,8 @@ class M3uParser extends Json_Serializer
         ATTR_CUID           => COLUMN_CUID,      // attributes "CUID", "channel-id", "ch-id", "tvg-chno", "ch-number",
         ATTR_TVG_ID         => COLUMN_EPG_ID,    // attribute tvg-id
         ATTR_TVG_NAME       => COLUMN_TVG_NAME,  // attribute tvg-name
-        ATTR_CHANNEL_NAME   => COLUMN_TITLE,           // channel title
-        ATTR_CHANNEL_HASH   => COLUMN_HASH,            // url hash
+        ATTR_CHANNEL_NAME   => COLUMN_TITLE,     // channel title
+        ATTR_CHANNEL_HASH   => COLUMN_HASH,      // url hash
     );
 
     public static $mapper_ops = array();

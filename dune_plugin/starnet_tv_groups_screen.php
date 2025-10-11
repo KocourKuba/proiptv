@@ -64,10 +64,10 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, ACTION_INFO_DLG);
 
-        if ($this->plugin->is_plugin_inited()) {
+        if (!$this->plugin->is_plugin_inited()) {
             $this->plugin->init_plugin();
-            $this->plugin->add_shortcuts_handlers($this, $actions);
         }
+        $this->plugin->add_shortcuts_handlers($this, $actions);
 
         return $actions;
     }

@@ -125,14 +125,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 $this->plugin->init_user_agent();
 
-                if (!$this->plugin->is_vod_playlist()) {
-                    if (!$this->plugin->init_playlist_parser()
-                        || ($this->plugin->is_playlist_cache_expired(true)
-                            && !$this->plugin->load_and_parse_m3u_playlist(true))) {
-                        return Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                            null,
-                            Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST));
-                    }
+                if (!$this->plugin->is_vod_playlist()
+                    && (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true))) {
+                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
+                        null,
+                        Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST));
                 }
 
                 $this->plugin->init_epg_manager();

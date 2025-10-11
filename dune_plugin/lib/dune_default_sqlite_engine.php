@@ -135,6 +135,7 @@ class Dune_Default_Sqlite_Engine
                 $query .= "DROP TABLE IF EXISTS $old_parameters_table;";
             }
         }
+        $query .= "UPDATE playlist_parameters SET name = '" . PARAM_CUSTOM_PLAYLIST_IPTV . "' WHERE name = '{CUSTOM_PLAYLIST}';";
         $this->sql_params->exec_transaction($query);
 
         $query = '';

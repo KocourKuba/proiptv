@@ -60,8 +60,8 @@ class api_korona extends api_default
             hd_debug_print("need to request token", true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
             $pairs['grant_type'] = 'password';
-            $pairs['username'] = $this->GetParameter(MACRO_LOGIN);
-            $pairs['password'] = $this->GetParameter(MACRO_PASSWORD);
+            $pairs['username'] = $this->GetProviderParameter(MACRO_LOGIN);
+            $pairs['password'] = $this->GetProviderParameter(MACRO_PASSWORD);
         }
 
         $data = '';
@@ -153,20 +153,6 @@ class api_korona extends api_default
         }
 
         return $this->servers;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function set_provider_defaults()
-    {
-        $servers = $this->GetServers();
-        if (!empty($servers)) {
-            $idx = $this->GetParameter(MACRO_SERVER_ID);
-            if (empty($idx)) {
-                $this->SetParameter(MACRO_SERVER_ID, key($servers));
-            }
-        }
     }
 
     /**

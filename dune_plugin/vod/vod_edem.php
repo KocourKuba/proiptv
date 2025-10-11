@@ -42,7 +42,7 @@ class vod_edem extends vod_standard
 
         $this->vod_filters = array("years", "genre");
         $this->vod_quality = true;
-        $vportal = $this->provider->GetParameter(MACRO_VPORTAL);
+        $vportal = $this->provider->GetProviderParameter(MACRO_VPORTAL);
         /** @var array $matches */
         if (empty($vportal) || !preg_match(VPORTAL_PATTERN, $vportal, $matches)) {
             hd_debug_print("Incorrect or empty VPortal data: $vportal");

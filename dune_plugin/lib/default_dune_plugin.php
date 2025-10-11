@@ -644,7 +644,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $id_parser = $provider->getConfigValue(CONFIG_ID_PARSER);
                 $id_map = $provider->getConfigValue(CONFIG_ID_MAP);
 
-                $replace = SwitchOnOff::to_bool($provider->GetParameter(PARAM_REPLACE_ICON, SwitchOnOff::on));
+                $replace = SwitchOnOff::to_bool($provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on));
                 if (!$replace) {
                     $icon_replace_pattern = $provider->getConfigValue(CONFIG_ICON_REPLACE);
                 }
@@ -665,7 +665,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             if (empty($id_parser) && empty($id_map)) {
-                hd_debug_print("No specific mmapping set using HASH", true);
+                hd_debug_print("No specific mapping set using HASH", true);
                 $this->channel_id_map = ATTR_CHANNEL_HASH;
             }
 
@@ -733,20 +733,37 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @param bool $only_headers
+     * @param bool $force
      * @return bool
      */
-    public function load_and_parse_m3u_playlist($only_headers)
+    public function load_and_parse_m3u_iptv_playlist($only_headers, $force = false)
     {
         $base_name = $this->get_playlist_cache_name(true);
         $m3u_file = $base_name . '.m3u8';
         $db_file = $base_name . '.db';
         try {
+            if (!$force) {
+                $is_expired = $this->is_playlist_cache_expired(true);
+                if (!$is_expired) {
+                    $db_file = self::get_playlist_cache_path() . $this->get_playlist_cache_name(true) . '.db';
+                    $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
+                    if ($database_attached === 0) {
+                        hd_debug_print("Can't attach to database: $db_file with name: " . M3uParser::IPTV_DB);
+                    } else if ($database_attached === 2) {
+                        $this->channels_loaded = true;
+                        return true;
+                    }
+                }
+            }
+
+            hd_debug_print("Playlist cache is not valid or database not exist. Reload playlist.");
             // clear playlist
             if (file_exists($m3u_file)) {
                 unlink($m3u_file);
             }
 
             // clear playlist db
+            $this->sql_playlist->detachDatabase($db_file);
             if (file_exists($db_file)) {
                 unlink($db_file);
             }
@@ -770,9 +787,22 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     throw new Exception("Unable to get provider info to download: " . json_encode($params));
                 }
 
+                $playlist = $provider->GetPlaylistIptvUrl();
+                if (empty($playlist)) {
+                    hd_debug_print("playlist url is empty");
+                    throw new Exception("playlist url is empty");
+                }
+
+                hd_debug_print("Provider playlist url: $playlist", true);
                 hd_debug_print("Load provider playlist to: $m3u_file");
-                $res = $provider->load_playlist($m3u_file);
-                $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
+
+                $cmd = API_COMMAND_GET_PLAYLIST;
+                $curl_opts = $provider->getCurlOpts($cmd);
+                $exec_result = $provider->execApiCommand($cmd, $m3u_file, false, $curl_opts);
+                $res = $provider->postExecAction($cmd, $exec_result, $m3u_file);
+                if ($res === false) {
+                    $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
+                }
             } else {
                 $uri = safe_get_value($params, PARAM_URI);
                 if ($type === PARAM_FILE) {
@@ -896,6 +926,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             hd_debug_print_separator();
             $ret = true;
         } catch (Exception $ex) {
+            print_backtrace_exception($ex);
             $ret = false;
             hd_debug_print($ex->getMessage());
             $err = $ex->getMessage();
@@ -910,7 +941,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             Default_Dune_Plugin::set_last_error(LAST_ERROR_PLAYLIST, $err);
-            print_backtrace_exception($ex);
             if (file_exists($m3u_file)) {
                 hd_debug_print("Clear playlist: $m3u_file");
                 unlink($m3u_file);
@@ -988,6 +1018,40 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $table_name = self::get_table_name($list);
             $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
             $this->sql_playlist->exec($query);
+        }
+
+        $provider_class = $this->get_playlist_parameter($playlist_id, PARAM_PROVIDER);
+        if (!empty($provider_class)) {
+            $provider = $this->get_provider($playlist_id);
+            if ($provider !== null) {
+                // update xmltv playlist sources from config
+                $config_sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
+                if (!empty($config_sources)) {
+                    $playlist_xmltv = self::PLAYLIST_XMLTV_TABLE;
+                    $query = '';
+                    $q_type = Sql_Wrapper::sql_quote(PARAM_CONF);
+                    $q_cache = Sql_Wrapper::sql_quote(XMLTV_CACHE_AUTO);
+                    $known_sources = array();
+                    foreach ($config_sources as $source) {
+                        $hash = Hashed_Array::hash($source);
+                        $q_source = Sql_Wrapper::sql_quote($source);
+                        $q_name = Sql_Wrapper::sql_quote(basename($source));
+                        $known_sources[] = $hash;
+
+                        $query .= "INSERT OR IGNORE INTO $playlist_xmltv
+                        (playlist_id, hash, type, name, uri, cache) VALUES ('$playlist_id', '$hash', $q_type, $q_name, $q_source, $q_cache);";
+                    }
+
+                    if (!empty($known_sources)) {
+                        $where = Sql_Wrapper::sql_make_where_clause($known_sources, COLUMN_HASH, true);
+                        $query .= "DELETE FROM $playlist_xmltv WHERE $where AND type = $q_type;";
+                    }
+                    $this->sql_params->exec_transaction($query);
+                }
+
+                $provider_playlist_id = $provider->GetPlaylistIptvId();
+                hd_debug_print("Provider playlist: $provider_playlist_id", true);
+            }
         }
 
         $db_file = get_data_path($this->make_base_name(PLUGIN_ORDERS) . '.db');
@@ -1070,37 +1134,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
             $this->sql_params->exec_transaction($query);
             $this->sql_playlist->exec("DROP TABLE $table_name;");
-        }
-
-        // update xmltv playlist sources from config
-        $provider_class = $this->get_playlist_parameter($playlist_id, PARAM_PROVIDER);
-        if (!empty($provider_class)) {
-            $provider = $this->get_provider($playlist_id);
-            if ($provider !== null) {
-                $config_sources = $provider->getConfigValue(CONFIG_XMLTV_SOURCES);
-                if (!empty($config_sources)) {
-                    $playlist_xmltv = self::PLAYLIST_XMLTV_TABLE;
-                    $query = '';
-                    $q_type = Sql_Wrapper::sql_quote(PARAM_CONF);
-                    $q_cache = Sql_Wrapper::sql_quote(XMLTV_CACHE_AUTO);
-                    $known_sources = array();
-                    foreach ($config_sources as $source) {
-                        $hash = Hashed_Array::hash($source);
-                        $q_source = Sql_Wrapper::sql_quote($source);
-                        $q_name = Sql_Wrapper::sql_quote(basename($source));
-                        $known_sources[] = $hash;
-
-                        $query .= "INSERT OR IGNORE INTO $playlist_xmltv
-                                (playlist_id, hash, type, name, uri, cache) VALUES ('$playlist_id', '$hash', $q_type, $q_name, $q_source, $q_cache);";
-                    }
-
-                    if (!empty($known_sources)) {
-                        $where = Sql_Wrapper::sql_make_where_clause($known_sources, COLUMN_HASH, true);
-                        $query .= "DELETE FROM $playlist_xmltv WHERE $where AND type = $q_type;";
-                    }
-                    $this->sql_params->exec_transaction($query);
-                }
-            }
         }
 
         // remove unused settings from db
@@ -1203,38 +1236,22 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $plugin_cookies->{PARAM_SHOW_VOD_ICON} = $enable_vod_icon;
         hd_debug_print("Show VOD icon: $enable_vod_icon", true);
 
-        // init playlist parser
-        if (false === $this->init_playlist_parser($reload_playlist)) {
-            return false;
-        }
-
-        if ($reload_playlist) {
-            $this->clear_playlist_cache($playlist_id);
-        } else {
-            $reload_playlist = $this->is_playlist_cache_expired(true);
-        }
-
         // clear ext epg
         $ext_epg_channels = get_temp_path("channel_ids.txt");
         if (file_exists($ext_epg_channels)) {
             unlink($ext_epg_channels);
         }
 
+        // init playlist parser
+        if (false === $this->init_playlist_parser($reload_playlist)) {
+            return false;
+        }
+
         // Parse playlist.
         // if playlist is expired it will downloaded
         // in case of download or parse error returns false
         // if parse success database with playlist is attached
-        if (!$reload_playlist) {
-            $db_file = self::get_playlist_cache_path() . $this->get_playlist_cache_name(true) . '.db';
-            $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
-            if ($database_attached === 0) {
-                hd_debug_print("Can't attach to database: $db_file with name: " . M3uParser::IPTV_DB);
-                return false;
-            }
-            if ($database_attached === 2) {
-                $this->channels_loaded = true;
-            }
-        } else if (!$this->load_and_parse_m3u_playlist(false)) {
+        if (!$this->load_and_parse_m3u_iptv_playlist(false, $reload_playlist)) {
             hd_debug_print("Can't download playlist: $playlist_id");
             return false;
         }
@@ -1975,7 +1992,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $force_detect = false;
         $provider = $this->get_active_provider();
         if (!is_null($provider)) {
-            $idx = $provider->GetParameter(MACRO_PLAYLIST_ID);
+            $idx = $provider->GetPlaylistIptvId();
             if ($idx !== DIRECT_PLAYLIST_ID) {
                 $url_subst = $provider->getConfigValue(CONFIG_URL_SUBST);
                 if (!empty($url_subst)) {
@@ -1986,7 +2003,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
             $streams = $provider->GetStreams();
             if (!empty($streams)) {
-                $idx = $provider->GetParameter(MACRO_STREAM_ID);
+                $idx = $provider->GetProviderParameter(MACRO_STREAM_ID);
                 $force_detect = ($streams[$idx] === 'MPEG-TS');
             }
 
@@ -2485,7 +2502,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $playlist_id = $this->get_active_playlist_id();
         }
 
-        $provider_playlist_id = $use_provider_playlist ? $this->get_playlist_parameter($playlist_id, MACRO_PLAYLIST_ID) : '';
+        $provider_playlist_id = $use_provider_playlist ? $this->get_playlist_parameter($playlist_id, PARAM_PLAYLIST_IPTV_ID) : '';
         $provider_playlist_id = empty($provider_playlist_id) || $provider_playlist_id === PARAM_DEFAULT_CONFIG_PLAYLIST_ID ? '' : "_$provider_playlist_id";
 
         return $playlist_id . $storage_name . $provider_playlist_id;
@@ -2631,8 +2648,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 $icon_file = $provider->getLogo();
             }
 
-            $playlists = $provider->GetPlaylists();
-            $provider_playlist_id = safe_get_value($playlist_parameters,    MACRO_PLAYLIST_ID);
+            $playlists = $provider->GetPlaylistsIptv();
+            $provider_playlist_id = safe_get_value($playlist_parameters, PARAM_PLAYLIST_IPTV_ID);
             if ($provider_playlist_id !== PARAM_DEFAULT_CONFIG_PLAYLIST_ID) {
                 $title .= " - {$playlists[$provider_playlist_id][COLUMN_NAME]}";
             }
@@ -3072,7 +3089,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function is_playlist_cache_expired($is_tv)
     {
-        if ($this->get_setting(PARAM_PLAYLIST_CACHE_TIME, 1) === PHP_INT_MAX) {
+        $cache_time = $is_tv ? PARAM_PLAYLIST_CACHE_TIME_IPTV : PARAM_PLAYLIST_CACHE_TIME_VOD;
+        if ($this->get_setting($cache_time, 1) === PHP_INT_MAX) {
             return false;
         }
 
@@ -3092,7 +3110,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $now = time();
         $mtime = filemtime($m3u_file);
-        $cache_expired = $mtime + $this->get_setting(PARAM_PLAYLIST_CACHE_TIME, 1) * 3600;
+        $cache_expired = $mtime + $this->get_setting($cache_time, 1) * 3600;
         if ($cache_expired > $now) {
             return false;
         }

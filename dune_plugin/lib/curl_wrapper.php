@@ -86,6 +86,7 @@ class Curl_Wrapper
     public function reset()
     {
         hd_debug_print(null, true);
+        self::$http_response_headers = null;
         $this->send_headers = array();
         $this->is_post = false;
         $this->post_data = null;
@@ -193,7 +194,7 @@ class Curl_Wrapper
      */
     public function get_raw_response_headers()
     {
-        return implode('\n', $this->get_response_headers());
+        return implode(PHP_EOL, $this->get_response_headers());
     }
 
     /**

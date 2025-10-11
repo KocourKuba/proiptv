@@ -824,7 +824,7 @@ class Epg_Manager_Xmltv
     {
         $has_locks = false;
         if (empty($sources_hash)) {
-            return 1;
+            return 0;
         }
 
         $has_imports = false;

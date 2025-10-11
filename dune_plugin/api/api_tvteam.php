@@ -38,7 +38,7 @@ class api_tvteam extends api_default
      */
     public function replace_macros($string)
     {
-        $hash_password = md5($this->GetParameter(MACRO_PASSWORD));
+        $hash_password = md5($this->GetProviderParameter(MACRO_PASSWORD));
         $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID);
         $token = $this->plugin->get_cookie(PARAM_TOKEN);
         $string = str_replace(
@@ -127,7 +127,7 @@ class api_tvteam extends api_default
             }
 
             if (isset($this->account_info->data->userData->groupId)) {
-                $this->SetParameter(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
+                $this->SetProviderParameter(MACRO_SERVER_ID, $this->account_info->data->userData->groupId);
             }
 
             if (isset($this->account_info->data->serversGroupsList)) {

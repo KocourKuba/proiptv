@@ -149,6 +149,25 @@ class api_default
         return (string)pretty_json_format(get_object_vars($this));
     }
 
+    /**
+     * @return string|null
+     */
+    public function get_vod_class()
+    {
+        if ($this->hasApiCommand(API_COMMAND_GET_VOD)) {
+            $vod_class = "vod_" . $this->getVod();
+            if ($vod_class !== 'vod_' && class_exists($vod_class)) {
+                hd_debug_print("Used VOD class: $vod_class");
+                return $vod_class;
+            }
+
+            hd_debug_print("Used VOD class: vod_standard");
+            return "vod_standard";
+        }
+
+        return null;
+    }
+
     ////////////////////////////////////////////////////////////////////////
     /// Getters/Setters
 
@@ -182,6 +201,86 @@ class api_default
     public function setProviderUrl($provider_url)
     {
         $this->provider_url = $provider_url;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @param string $type
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+    }
+
+    /**
+     * @return string
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param string $id
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClass()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @param string $class
+     */
+    public function setClass($class)
+    {
+        $this->class = $class;
+    }
+
+    /**
+     * @return string
+     */
+    public function getVod()
+    {
+        return $this->vod;
+    }
+
+    /**
+     * @param string $vod
+     */
+    public function setVod($vod)
+    {
+        $this->vod = $vod;
     }
 
     /**
@@ -294,6 +393,13 @@ class api_default
      */
     public function set_provider_defaults()
     {
+        $servers = $this->GetServers();
+        if (!empty($servers)) {
+            $idx = $this->GetProviderParameter(MACRO_SERVER_ID);
+            if (empty($idx) || !isset($servers[$idx])) {
+                $this->SetProviderParameter(MACRO_SERVER_ID, key($servers));
+            }
+        }
     }
 
     /**
@@ -319,9 +425,9 @@ class api_default
             } else {
                 hd_debug_print("get_provider_info: " . pretty_json_format($account_info), true);
                 $this->account_info = $account_info;
-                $this->set_provider_defaults();
             }
         }
+        $this->set_provider_defaults();
 
         return $this->account_info;
     }
@@ -333,6 +439,28 @@ class api_default
     public function hasApiCommand($command)
     {
         return isset($this->api_commands[$command]);
+    }
+
+    /**
+     * @param string|null $command
+     * @param array|null $params
+     * @return array|null
+     */
+    public function getCurlOpts($command = null, $params = null)
+    {
+        return null;
+    }
+
+    /**
+     * @param string $command
+     * @param object|bool $execResult
+     * @param string|null $file
+     * @param string|null $error_msg
+     * @return bool|object
+     */
+    public function postExecAction($command, $execResult, $file = null, &$error_msg = null)
+    {
+        return $execResult;
     }
 
     /**
@@ -348,8 +476,11 @@ class api_default
         hd_debug_print("execApiCommand: $command", true);
         hd_debug_print("curl options: " . pretty_json_format($curl_opt), true);
 
+        $this->curl_wrapper->reset();
+
         $command_url = $this->getApiCommand($command);
         if (empty($command_url)) {
+            hd_debug_print("Command not found: $command or return empty value", true);
             return false;
         }
 
@@ -360,7 +491,6 @@ class api_default
 
         $command_url = $this->replace_macros($command_url);
         hd_debug_print("ApiCommandUrl: $command_url", true);
-        $this->curl_wrapper->reset();
         $this->plugin->set_curl_timeouts($this->curl_wrapper);
 
         $add_headers = $this->get_additional_headers($command);
@@ -429,38 +559,40 @@ class api_default
      */
     public function replace_macros($string)
     {
-        $macroses = array(
+        hd_debug_print("template: $string", true);
+        $string = str_replace(
+            array(
+                MACRO_API,
+                MACRO_PLAYLIST_IPTV,
+                MACRO_PLAYLIST_VOD,
+                MACRO_MIRROR,
+                MACRO_EPG_DOMAIN,
+            ),
+            array(
+                $this->getApiUrl(),
+                $this->GetPlaylistIptvUrl(),
+                $this->GetPlaylistVodUrl(),
+                $this->GetPlaylistMirror(),
+                $this->GetProviderParameter(MACRO_EPG_DOMAIN),
+            ),
+            $string);
+
+        hd_debug_print("after replace base macroses: $string", true);
+
+        static $macroses = array(
             MACRO_LOGIN => '',
             MACRO_PASSWORD => '',
-            MACRO_STREAM_ID => '',
             MACRO_SESSION_ID => '',
+            MACRO_STREAM_ID => '',
             MACRO_DOMAIN_ID => '',
             MACRO_DEVICE_ID => '',
             MACRO_SERVER_ID => '',
             MACRO_QUALITY_ID => '',
-            MACRO_PLAYLIST_ID => '',
-            MACRO_PLAYLIST_VOD_ID => '',
         );
-
-        hd_debug_print("template: $string", true);
-        $string = str_replace(
-            array(MACRO_API, MACRO_PLAYLIST_IPTV, MACRO_PLAYLIST_VOD, MACRO_EPG_DOMAIN),
-            array($this->getApiUrl(),
-                $this->GetParameter(MACRO_PLAYLIST_IPTV),
-                $this->GetParameter(MACRO_PLAYLIST_VOD),
-                $this->GetParameter(MACRO_EPG_DOMAIN)),
-            $string);
-
-        $mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
-        if (!empty($mirrors)) {
-            reset($mirrors);
-            $selected = $this->GetParameter(PARAM_SELECTED_MIRROR, key($mirrors));
-            $macroses[MACRO_MIRROR] = $mirrors[$selected];
-        }
 
         foreach ($macroses as $macro => $default) {
             if (strpos($string, $macro) !== false) {
-                $string = str_replace($macro, trim($this->GetParameter($macro, $default)), $string);
+                $string = str_replace($macro, trim($this->GetProviderParameter($macro, $default)), $string);
             }
         }
         hd_debug_print("result: $string", true);
@@ -470,6 +602,42 @@ class api_default
 
     ////////////////////////////////////////////////////////////////////////
     /// Methods
+
+    /**
+     * @param string $name
+     * @param array|string $value
+     * @return void
+     */
+    public function SetProviderParameter($name, $value)
+    {
+        if (!empty($this->playlist_id)) {
+            $this->plugin->set_playlist_parameter($this->playlist_id, $name, $value);
+        }
+    }
+
+    /**
+     * @param string $name
+     * @param string $default
+     * @return string
+     */
+    public function GetProviderParameter($name, $default = '')
+    {
+        if (empty($this->playlist_id)) {
+            return $default;
+        }
+
+        return $this->plugin->get_playlist_parameter($this->playlist_id, $name, $default);
+    }
+
+    /**
+     * @param string $name
+     */
+    public function removeProviderParameter($name)
+    {
+        if (!empty($this->playlist_id)) {
+            $this->plugin->remove_playlist_parameter($this->playlist_id, $name);
+        }
+    }
 
     /**
      * @return string
@@ -566,7 +734,7 @@ class api_default
      * returns list of account playlists
      * @return array|null
      */
-    public function GetPlaylists()
+    public function GetPlaylistsIptv()
     {
         hd_debug_print(null, true);
 
@@ -579,6 +747,51 @@ class api_default
     }
 
     /**
+     * returns playlist url for current playlist id
+     *
+     * @return string
+     */
+    public function GetPlaylistIptvUrl()
+    {
+        $playlist_iptv_id = $this->GetPlaylistIptvId();
+        hd_debug_print("Current playlist iptv id: $playlist_iptv_id", true);
+
+        if ($playlist_iptv_id === DIRECT_PLAYLIST_ID) {
+            $playlist = $this->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
+        } else {
+            $provider_playlists_iptv = $this->GetPlaylistsIptv();
+            if (empty($provider_playlists_iptv[$playlist_iptv_id][COLUMN_URL])) {
+                hd_debug_print("No iptv playlist url configured for: $playlist_iptv_id");
+                $playlist = '';
+            } else {
+                $playlist = $provider_playlists_iptv[$playlist_iptv_id][COLUMN_URL];
+            }
+        }
+
+        return $playlist;
+    }
+
+    /**
+     * returns current playlist id
+     *
+     * @return string
+     */
+    public function GetPlaylistIptvId()
+    {
+        hd_debug_print(null, true);
+
+        $playlists = $this->GetPlaylistsIptv();
+        $playlist_id = $this->GetProviderParameter(PARAM_PLAYLIST_IPTV_ID);
+        if (empty($playlist_id) || !isset($playlists[$playlist_id])) {
+            // playlist id is not set. Take first in list and remember it
+            $playlist_id = (string)key($playlists);
+            $this->SetProviderParameter(PARAM_PLAYLIST_IPTV_ID, $playlist_id);
+        }
+
+        return $playlist_id;
+    }
+
+    /**
      * returns list of account playlists
      * @return array|null
      */
@@ -587,6 +800,124 @@ class api_default
         hd_debug_print(null, true);
 
         return $this->getConfigValue(CONFIG_PLAYLISTS_VOD);
+    }
+
+    /**
+     * returns playlist url for current playlist id
+     *
+     * @return string
+     */
+    public function GetPlaylistVodUrl()
+    {
+        $playlist_vod_id = $this->GetPlaylistVodId();
+        hd_debug_print("Current playlist vod id: $playlist_vod_id", true);
+
+        if ($playlist_vod_id === DIRECT_PLAYLIST_ID) {
+            $playlist = $this->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_VOD);
+        } else {
+            $provider_playlists_vod = $this->GetPlaylistsVod();
+            if (empty($provider_playlists_vod[$playlist_vod_id][COLUMN_URL])) {
+                hd_debug_print("No vod playlist url configured for: $playlist_vod_id");
+                $playlist = '';
+            } else {
+                $playlist = $provider_playlists_vod[$playlist_vod_id][COLUMN_URL];
+            }
+        }
+
+        return $playlist;
+    }
+    public function GetPlaylistVodId()
+    {
+        hd_debug_print(null, true);
+
+        $playlists = $this->GetPlaylistsVod();
+        $playlist_id = $this->GetProviderParameter(PARAM_PLAYLIST_VOD_ID);
+        if (empty($playlist_id) || !isset($playlists[$playlist_id])) {
+            // playlist id is not set. Take first in list and remember it
+            $playlist_id = (string)key($playlists);
+            $this->SetProviderParameter(PARAM_PLAYLIST_VOD_ID, $playlist_id);
+        }
+
+        return $playlist_id;
+    }
+
+    public function GetPlaylistMirror()
+    {
+        hd_debug_print(null, true);
+
+        $mirror = '';
+        $mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
+        if (!empty($mirrors)) {
+            $idx = $this->GetProviderParameter(PARAM_SELECTED_MIRROR);
+            if (empty($idx) || !isset($mirrors[$idx])) {
+                $idx = key($mirrors);
+                $this->SetProviderParameter(PARAM_SELECTED_MIRROR, $idx);
+            }
+            $mirror = $mirrors[$idx];
+        }
+
+        return $mirror;
+    }
+
+    /**
+     * set server
+     *
+     * @param string $server
+     * @param string $error_msg
+     * @return bool
+     */
+    public function SetServer($server, &$error_msg)
+    {
+        hd_debug_print(null, true);
+        $this->SetProviderParameter(MACRO_SERVER_ID, $server);
+        $error_msg = '';
+
+        return true;
+    }
+
+    /**
+     * set server
+     *
+     * @param string $device
+     * @return void
+     */
+    public function SetDevice($device)
+    {
+        hd_debug_print(null, true);
+        $this->SetProviderParameter(MACRO_DEVICE_ID, $device);
+    }
+
+    /**
+     * set stream
+     * @param string $stream
+     * @return void
+     */
+    public function SetStream($stream)
+    {
+        hd_debug_print(null, true);
+        $this->SetProviderParameter(MACRO_STREAM_ID, $stream);
+    }
+
+    /**
+     * set domain
+     * @param string $domain
+     * @return void
+     */
+    public function SetDomain($domain)
+    {
+        hd_debug_print(null, true);
+        $this->SetProviderParameter(MACRO_DOMAIN_ID, $domain);
+    }
+
+    /**
+     * set quality
+     * @param string $quality
+     * @return void
+     */
+    public function SetQuality($quality)
+    {
+        hd_debug_print(null, true);
+        $this->SetProviderParameter(MACRO_QUALITY_ID, $quality);
     }
 
     /**
@@ -630,142 +961,6 @@ class api_default
     }
 
     /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * @param string $name
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-    }
-
-    /**
-     * @return string
-     */
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    /**
-     * @param string $type
-     */
-    public function setType($type)
-    {
-        $this->type = $type;
-    }
-
-    /**
-     * @return string|null
-     */
-    public function get_vod_class()
-    {
-        if ($this->hasApiCommand(API_COMMAND_GET_VOD)) {
-            $vod_class = "vod_" . $this->getVod();
-            if ($vod_class !== 'vod_' && class_exists($vod_class)) {
-                hd_debug_print("Used VOD class: $vod_class");
-                return $vod_class;
-            }
-
-            hd_debug_print("Used VOD class: vod_standard");
-            return "vod_standard";
-        }
-
-        return null;
-    }
-
-    /**
-     * @return string
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param string $id
-     */
-    public function setId($id)
-    {
-        $this->id = $id;
-    }
-
-    /**
-     * @return string
-     */
-    public function getClass()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param string $class
-     */
-    public function setClass($class)
-    {
-        $this->class = $class;
-    }
-
-    /**
-     * @return string
-     */
-    public function getVod()
-    {
-        return $this->vod;
-    }
-
-    /**
-     * @param string $vod
-     */
-    public function setVod($vod)
-    {
-        $this->vod = $vod;
-    }
-
-    /**
-     * @param string $tmp_file
-     * @return bool
-     */
-    public function load_playlist($tmp_file)
-    {
-        hd_debug_print(null, true);
-
-        $playlists = $this->GetPlaylists();
-        if (empty($playlists)) {
-            return false;
-        }
-
-        $playlist_id = $this->GetParameter(MACRO_PLAYLIST_ID);
-        if (empty($playlist_id)) {
-            // playlist id not set. Take first in list and remember it
-            $playlist_id = (string)key($playlists);
-            $this->SetParameter(MACRO_PLAYLIST_ID, $playlist_id);
-        }
-
-        if ($playlist_id === DIRECT_PLAYLIST_ID) {
-            $playlist = $this->GetParameter(MACRO_CUSTOM_PLAYLIST);
-        } else if (!empty($playlists[$playlist_id][COLUMN_URL])) {
-            $playlist = $playlists[$playlist_id][COLUMN_URL];
-        }
-
-        if (empty($playlist)) {
-            return false;
-        }
-
-        if ($playlist !== $this->GetParameter(MACRO_PLAYLIST_IPTV)) {
-            $this->SetParameter(MACRO_PLAYLIST_IPTV, $playlist);
-        }
-
-        return $this->execApiCommand(API_COMMAND_GET_PLAYLIST, $tmp_file);
-    }
-
-    /**
      * @param User_Input_Handler $handler
      * @return array|null
      */
@@ -805,16 +1000,16 @@ class api_default
 
         if ($type === PROVIDER_TYPE_PIN) {
             Control_Factory::add_text_field($defs, $handler, null,
-                self::CONTROL_PASSWORD, TR::t('token'), $this->GetParameter(MACRO_PASSWORD),
+                self::CONTROL_PASSWORD, TR::t('token'), $this->GetProviderParameter(MACRO_PASSWORD),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
         if ($type === PROVIDER_TYPE_LOGIN) {
             Control_Factory::add_text_field($defs, $handler, null,
-                self::CONTROL_LOGIN, TR::t('login'), $this->GetParameter(MACRO_LOGIN),
+                self::CONTROL_LOGIN, TR::t('login'), $this->GetProviderParameter(MACRO_LOGIN),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
             Control_Factory::add_text_field($defs, $handler, null,
-                self::CONTROL_PASSWORD, TR::t('password'), $this->GetParameter(MACRO_PASSWORD),
+                self::CONTROL_PASSWORD, TR::t('password'), $this->GetProviderParameter(MACRO_PASSWORD),
                 false, false, false, true, Abstract_Preloaded_Regular_Screen::DLG_CONTROLS_WIDTH);
         }
 
@@ -897,16 +1092,16 @@ class api_default
             CONFIG_SERVERS => MACRO_SERVER_ID,
             CONFIG_DEVICES => MACRO_DEVICE_ID,
             CONFIG_QUALITIES => MACRO_QUALITY_ID,
-            CONFIG_PLAYLISTS_IPTV => MACRO_PLAYLIST_ID,
-            CONFIG_PLAYLISTS_VOD => MACRO_PLAYLIST_VOD_ID,
+            CONFIG_PLAYLISTS_IPTV => PARAM_PLAYLIST_IPTV_ID,
+            CONFIG_PLAYLISTS_VOD => PARAM_PLAYLIST_VOD_ID,
         );
 
         foreach ($config_items as $name => $param) {
             $values = $this->getConfigValue($name);
             if (!empty($values)) {
-                $idx = $this->GetParameter($param);
+                $idx = $this->GetProviderParameter($param);
                 if (empty($idx)) {
-                    $this->SetParameter($param, (string)key($values));
+                    $this->SetProviderParameter($param, (string)key($values));
                 }
             }
         }
@@ -940,7 +1135,7 @@ class api_default
      */
     protected function IsParameterChanged($user_input, $param, $param_settings)
     {
-        return isset($user_input->{$param}) && $user_input->{$param} != $this->GetParameter($param_settings);
+        return isset($user_input->{$param}) && $user_input->{$param} != $this->GetProviderParameter($param_settings);
     }
 
     /**
@@ -998,7 +1193,7 @@ class api_default
             $has_ext_params |= true;
         }
 
-        $playlists = $this->GetPlaylists();
+        $playlists = $this->GetPlaylistsIptv();
         if (!empty($playlists)) {
             $has_ext_params |= true;
         }
@@ -1014,115 +1209,6 @@ class api_default
         }
 
         return $has_ext_params;
-    }
-
-    /**
-     * set server
-     *
-     * @param string $server
-     * @param string $error_msg
-     * @return bool
-     */
-    public function SetServer($server, &$error_msg)
-    {
-        hd_debug_print(null, true);
-        $this->SetParameter(MACRO_SERVER_ID, $server);
-        $error_msg = '';
-
-        return true;
-    }
-
-    /**
-     * set playlist
-     *
-     * @param string $id
-     * @return void
-     */
-    public function SetPlaylist($id)
-    {
-        hd_debug_print(null, true);
-        $this->SetParameter(MACRO_PLAYLIST_ID, $id);
-    }
-
-    /**
-     * set server
-     *
-     * @param string $device
-     * @return void
-     */
-    public function SetDevice($device)
-    {
-        hd_debug_print(null, true);
-        $this->SetParameter(MACRO_DEVICE_ID, $device);
-    }
-
-    /**
-     * set stream
-     * @param string $stream
-     * @return void
-     */
-    public function SetStream($stream)
-    {
-        hd_debug_print(null, true);
-        $this->SetParameter(MACRO_STREAM_ID, $stream);
-    }
-
-    /**
-     * set domain
-     * @param string $domain
-     * @return void
-     */
-    public function SetDomain($domain)
-    {
-        hd_debug_print(null, true);
-        $this->SetParameter(MACRO_DOMAIN_ID, $domain);
-    }
-
-    /**
-     * set quality
-     * @param string $quality
-     * @return void
-     */
-    public function SetQuality($quality)
-    {
-        hd_debug_print(null, true);
-        $this->SetParameter(MACRO_QUALITY_ID, $quality);
-    }
-
-    /**
-     * @param string $name
-     * @param array|string $value
-     * @return void
-     */
-    public function SetParameter($name, $value)
-    {
-        if (!empty($this->playlist_id)) {
-            $this->plugin->set_playlist_parameter($this->playlist_id, $name, $value);
-        }
-    }
-
-    /**
-     * @param string $name
-     * @param string $default
-     * @return string
-     */
-    public function GetParameter($name, $default = '')
-    {
-        if (empty($this->playlist_id)) {
-            return $default;
-        }
-
-        return $this->plugin->get_playlist_parameter($this->playlist_id, $name, $default);
-    }
-
-    /**
-     * @param string $name
-     */
-    public function removeParameter($name)
-    {
-        if (!empty($this->playlist_id)) {
-            $this->plugin->remove_playlist_parameter($this->playlist_id, $name);
-        }
     }
 
     /**

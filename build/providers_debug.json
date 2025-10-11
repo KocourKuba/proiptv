@@ -571,6 +571,7 @@
       "provider_url": "http://info.fox-tv.fun/",
       "api_url": "http://pl.fox-tv.fun",
       "config": {
+        "id_map": "CUID",
         "epg_presets": [
           {
             "name": "drm",

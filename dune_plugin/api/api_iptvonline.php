@@ -79,8 +79,8 @@ class api_iptvonline extends api_default
         } else {
             hd_debug_print("need to request token", true);
             $cmd = API_COMMAND_REQUEST_TOKEN;
-            $pairs['login'] = $this->GetParameter(MACRO_LOGIN);
-            $pairs['password'] = $this->GetParameter(MACRO_PASSWORD);
+            $pairs['login'] = $this->GetProviderParameter(MACRO_LOGIN);
+            $pairs['password'] = $this->GetProviderParameter(MACRO_PASSWORD);
         }
 
         $pairs['client_id'] = "TestAndroidAppV0";
@@ -114,16 +114,57 @@ class api_iptvonline extends api_default
     /**
      * @inheritDoc
      */
-    public function load_playlist($tmp_file)
+    public function postExecAction($command, $execResult, $file = null, &$error_msg = null)
     {
         hd_debug_print(null, true);
 
-        $response = $this->make_json_request(API_COMMAND_GET_PLAYLIST);
+        if ($execResult === false) {
+            return false;
+        }
 
-        if (isset($response->success, $response->data)) {
-            $curl_wrapper = Curl_Wrapper::getInstance();
-            $this->plugin->set_curl_timeouts($curl_wrapper);
-            return $curl_wrapper->download_file($response->data, $tmp_file, true);
+        $response = Curl_Wrapper::decodeJsonResponse(true, $file);
+        if ($response === false || $response === null) {
+            hd_debug_print("Can't decode response on request: " . $command, true);
+        }
+
+        switch ($command) {
+            case API_COMMAND_GET_PLAYLIST:
+
+                if (!isset($response->success, $response->data)) break;
+
+                $curl_wrapper = Curl_Wrapper::getInstance();
+                $this->plugin->set_curl_timeouts($curl_wrapper);
+                return $curl_wrapper->download_file($response->data, $file, true);
+
+            case API_COMMAND_GET_DEVICE:
+                hd_debug_print("GetServers: " . pretty_json_format($response), true);
+                if (!isset($response->status) || $response->status !== 200) break;
+
+                $this->device = $response;
+                if (empty($this->servers)) {
+                    $this->collect_servers($selected);
+                    if ($selected !== $this->GetProviderParameter(MACRO_SERVER_ID)) {
+                        $this->SetProviderParameter(MACRO_SERVER_ID, $selected);
+                    }
+                }
+                return true;
+
+            case API_COMMAND_SET_DEVICE:
+                if (isset($response->status) && $response->status === 200) {
+                    $this->device = $response;
+                    $this->collect_servers($selected);
+                    $this->account_info = null;
+                    parent::SetServer($selected, $error_msg);
+                    return true;
+                }
+
+                hd_debug_print("Can't set device: " . json_encode($response));
+                if (isset($response->message)) {
+                    $error_msg = $response->message;
+                } else {
+                    $error_msg = pretty_json_format($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+                break;
         }
 
         return false;
@@ -197,18 +238,12 @@ class api_iptvonline extends api_default
     {
         hd_debug_print(null, true);
 
+        $cmd = API_COMMAND_GET_DEVICE;
         if (empty($this->device)) {
-            $response = $this->make_json_request(API_COMMAND_GET_DEVICE);
-            hd_debug_print("GetServers: " . pretty_json_format($response), true);
-            if (isset($response->status) && $response->status === 200) {
-                $this->device = $response;
-            }
-        }
-
-        if (empty($this->servers)) {
-            $this->collect_servers($selected);
-            if ($selected !== $this->GetParameter(MACRO_SERVER_ID)) {
-                $this->SetParameter(MACRO_SERVER_ID, $selected);
+            $curl_opts = $this->getCurlOpts($cmd);
+            $response = $this->execApiCommand($cmd, null, true, $curl_opts);
+            if ($this->postExecAction($cmd, $response) === false) {
+                return array();
             }
         }
 
@@ -243,132 +278,16 @@ class api_iptvonline extends api_default
     {
         $curl_params[CURLOPT_POST] = true;
         $curl_params[CURLOPT_POSTFIELDS] = array("server_location" => $server);
-
-        $response = $this->make_json_request(API_COMMAND_SET_DEVICE, $curl_params);
-        if (isset($response->status) && $response->status === 200) {
-            $this->device = $response;
-            $this->collect_servers($selected);
-            $this->account_info = null;
-            parent::SetServer($selected, $error_msg);
-            return true;
-        }
-
-        hd_debug_print("Can't set device: " . json_encode($response));
-        if (isset($response->message)) {
-            $error_msg = $response->message;
-        } else {
-            $error_msg = pretty_json_format($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        }
-
-        return false;
-    }
-
-    /**
-     * returns list of account playlists
-     * @return array|null
-     */
-    public function GetPlaylists()
-    {
-        hd_debug_print(null, true);
-
-        if (empty($this->device)) {
-            $response = $this->make_json_request(API_COMMAND_GET_DEVICE);
-            if (isset($response->status) && $response->status === 200) {
-                $this->device = $response;
-            }
-        }
-
-        if (empty($this->playlists)) {
-            $this->collect_playlists($selected);
-            if ($selected !== $this->GetParameter(MACRO_PLAYLIST_ID)) {
-                $this->SetParameter(MACRO_PLAYLIST_ID, $selected);
-            }
-        }
-
-        return $this->playlists;
-    }
-
-    /**
-     * collect playlists information
-     * @param string &$selected
-     * @return void
-     */
-    protected function collect_playlists(&$selected = "-1")
-    {
-        $this->playlists = array();
-
-        if (isset($this->device->device->settings->user_playlists->value)) {
-            foreach ($this->device->device->settings->user_playlists->value as $playlist) {
-                $idx = (string)$playlist->id;
-                $this->playlists[$idx]['name'] = $playlist->label;
-                if ($playlist->selected) {
-                    $selected = $idx;
-                }
-            }
-        }
-
-        $this->playlists[DIRECT_PLAYLIST_ID][COLUMN_NAME] = TR::load('setup_native_url');
-        $this->playlists[DIRECT_PLAYLIST_ID][COLUMN_URL] = '';
+        $cmd = API_COMMAND_SET_DEVICE;
+        $curl_opts = $this->getCurlOpts($cmd, $curl_params);
+        $response = $this->execApiCommand($cmd, null, true, $curl_opts);
+        return $this->postExecAction($cmd, $response, $error_msg);
     }
 
     /**
      * @inheritDoc
      */
-    public function SetPlaylist($id)
-    {
-        hd_debug_print(null, true);
-        hd_debug_print("SetPlaylist: $id");
-
-        $curl_params[CURLOPT_POST] = true;
-        $curl_params[CURLOPT_POSTFIELDS] = array("user_playlists" => $id);
-
-        $response = $this->make_json_request(API_COMMAND_SET_DEVICE, $curl_params);
-        if (isset($response->status) && $response->status === 200) {
-            $this->device = $response;
-            $this->collect_playlists($selected);
-            parent::SetPlaylist($selected);
-            $this->account_info = null;
-        } else {
-            hd_debug_print("Can't set playlist: " . json_encode($response));
-        }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function set_provider_defaults()
-    {
-        $servers = $this->GetServers();
-        if (!empty($servers)) {
-            $idx = $this->GetParameter(MACRO_SERVER_ID);
-            if (empty($idx)) {
-                $this->SetParameter(MACRO_SERVER_ID, key($servers));
-            }
-        }
-
-        $playlists = $this->GetPlaylists();
-        if (!empty($playlists)) {
-            $idx = $this->GetParameter(MACRO_PLAYLIST_ID);
-            if (empty($idx)) {
-                $this->SetParameter(MACRO_PLAYLIST_ID, (string)key($playlists));
-            }
-        }
-
-        $playlists_vod = $this->GetPlaylistsVod();
-        if (!empty($playlists_vod)) {
-            $idx = $this->GetParameter(MACRO_PLAYLIST_VOD_ID);
-            if (empty($idx)) {
-                $this->SetParameter(MACRO_PLAYLIST_VOD_ID, (string)key($playlists_vod));
-            }
-        }
-    }
-
-    /**
-     * @param string $cmd
-     * @param array|null $params
-     * @return bool|object
-     */
-    protected function make_json_request($cmd, $params = null)
+    public function getCurlOpts($command = null, $params = null)
     {
         $curl_opt = array();
 
@@ -381,7 +300,7 @@ class api_iptvonline extends api_default
             $curl_opt[CURLOPT_POSTFIELDS] = json_encode($params[CURLOPT_POSTFIELDS]);
         }
 
-        return $this->execApiCommand($cmd, null, true, $curl_opt);
+        return $curl_opt;
     }
 
     /**
