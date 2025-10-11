@@ -522,6 +522,7 @@
         "get_vod": "{API}/{LOGIN}/{PASSWORD}/vodall.m3u"
       },
       "config": {
+        "id_map": "CUID",
         "epg_presets": [
           {
             "name": "drm",
