@@ -445,6 +445,7 @@ class api_default
      * @param string|null $command
      * @param array|null $params
      * @return array|null
+     * @noinspection PhpUnusedParameterInspection
      */
     public function getCurlOpts($command = null, $params = null)
     {
@@ -474,7 +475,9 @@ class api_default
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
-        hd_debug_print("curl options: " . pretty_json_format($curl_opt), true);
+        if (!empty($curl_opt)) {
+            hd_debug_print("curl options: " . pretty_json_format($curl_opt), true);
+        }
 
         $this->curl_wrapper->reset();
 
@@ -486,10 +489,10 @@ class api_default
 
         if (isset($curl_opt[CURLOPT_CUSTOMREQUEST])) {
             $command_url .= $curl_opt[CURLOPT_CUSTOMREQUEST];
+            $command_url = $this->replace_macros($command_url);
             unset($curl_opt[CURLOPT_CUSTOMREQUEST]);
         }
 
-        $command_url = $this->replace_macros($command_url);
         hd_debug_print("ApiCommandUrl: $command_url", true);
         $this->plugin->set_curl_timeouts($this->curl_wrapper);
 
@@ -554,30 +557,41 @@ class api_default
     }
 
     /**
+     * Recursive replace config macroses because they can contain other config macroses
+     *
+     * @param string $string
+     * @return string
+     */
+    protected function replace_by_func(&$string)
+    {
+        static $config_macroses = array(
+            MACRO_PLAYLIST_IPTV => 'GetPlaylistIptvUrl',
+            MACRO_PLAYLIST_VOD => 'GetPlaylistVodUrl',
+            MACRO_API => 'getApiUrl',
+            MACRO_MIRROR => 'GetPlaylistMirror',
+            MACRO_EPG_DOMAIN => 'GetEpgDomain',
+        );
+
+        foreach ($config_macroses as $macro => $function) {
+            if (strpos($string, $macro) !== false) {
+                $string = str_replace($macro, trim($this->$function()), $string);
+                hd_debug_print("Replace $macro: $string", true);
+                $this->replace_by_func($string);
+            }
+        }
+
+        return $string;
+    }
+
+    /**
      * @param string $string
      * @return string
      */
     public function replace_macros($string)
     {
         hd_debug_print("template: $string", true);
-        $string = str_replace(
-            array(
-                MACRO_API,
-                MACRO_PLAYLIST_IPTV,
-                MACRO_PLAYLIST_VOD,
-                MACRO_MIRROR,
-                MACRO_EPG_DOMAIN,
-            ),
-            array(
-                $this->getApiUrl(),
-                $this->GetPlaylistIptvUrl(),
-                $this->GetPlaylistVodUrl(),
-                $this->GetPlaylistMirror(),
-                $this->GetProviderParameter(MACRO_EPG_DOMAIN),
-            ),
-            $string);
 
-        hd_debug_print("after replace base macroses: $string", true);
+        $string = $this->replace_by_func($string);
 
         static $macroses = array(
             MACRO_LOGIN => '',
@@ -661,7 +675,6 @@ class api_default
     public function getRawApiCommand($command)
     {
         hd_debug_print(null, true);
-        hd_debug_print(json_encode($this->api_commands), true);
 
         return $this->hasApiCommand($command) ? $this->api_commands[$command] : '';
     }
@@ -736,8 +749,6 @@ class api_default
      */
     public function GetPlaylistsIptv()
     {
-        hd_debug_print(null, true);
-
         $config_playlist = $this->getConfigValue(CONFIG_PLAYLISTS_IPTV);
         if (!isset($config_playlist[DIRECT_PLAYLIST_ID])) {
             $config_playlist[DIRECT_PLAYLIST_ID][COLUMN_NAME] = TR::load('setup_native_url');
@@ -778,8 +789,6 @@ class api_default
      */
     public function GetPlaylistIptvId()
     {
-        hd_debug_print(null, true);
-
         $playlists = $this->GetPlaylistsIptv();
         $playlist_id = $this->GetProviderParameter(PARAM_PLAYLIST_IPTV_ID);
         if (empty($playlist_id) || !isset($playlists[$playlist_id])) {
@@ -797,8 +806,6 @@ class api_default
      */
     public function GetPlaylistsVod()
     {
-        hd_debug_print(null, true);
-
         return $this->getConfigValue(CONFIG_PLAYLISTS_VOD);
     }
 
@@ -828,8 +835,6 @@ class api_default
     }
     public function GetPlaylistVodId()
     {
-        hd_debug_print(null, true);
-
         $playlists = $this->GetPlaylistsVod();
         $playlist_id = $this->GetProviderParameter(PARAM_PLAYLIST_VOD_ID);
         if (empty($playlist_id) || !isset($playlists[$playlist_id])) {
@@ -843,8 +848,6 @@ class api_default
 
     public function GetPlaylistMirror()
     {
-        hd_debug_print(null, true);
-
         $mirror = '';
         $mirrors = $this->getConfigValue(CONFIG_PLAYLIST_MIRRORS);
         if (!empty($mirrors)) {
@@ -857,6 +860,11 @@ class api_default
         }
 
         return $mirror;
+    }
+
+    public function GetEpgDomain()
+    {
+        return $this->GetProviderParameter(MACRO_EPG_DOMAIN);
     }
 
     /**
