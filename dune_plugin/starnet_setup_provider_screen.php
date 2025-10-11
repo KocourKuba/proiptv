@@ -102,7 +102,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
             hd_debug_print("streams ($idx): " . json_encode($streams), true);
 
             Control_Factory::add_combobox($defs, $this, null, self::CONTROL_STREAM,
-                TR::t('stream'), $idx, $streams, self::CONTROLS_WIDTH);
+                TR::t('stream'), $idx, $streams, self::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -180,7 +180,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
             // Direct playlist url
             $url = $provider->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
             Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
-                $url, false, false, false, true, self::CONTROLS_WIDTH);
+                $url, false, false, false, true, self::CONTROLS_WIDTH, true);
         } else {
             //////////////////////////////////////
             // Icon replacements settings
@@ -270,7 +270,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
                 break;
 
             case CONTROL_URL_PATH:
-                $provider->SetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV, $user_input->url_path);
+                $provider->SetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV, $user_input->{CONTROL_URL_PATH});
                 $this->force_parent_reload = true;
                 break;
 
