@@ -181,6 +181,9 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
         $playlists = $provider->GetPlaylistsIptv();
         $pl_names = extract_column($playlists, COLUMN_NAME);
+        if (isset($pl_names['default'])) {
+            $pl_names['default'] = TR::t('by_default');
+        }
         $idx = $provider->GetPlaylistIptvId();
 
         Control_Factory::add_combobox($defs, $this, null, self::CONTROL_SELECTED_PLAYLIST,
