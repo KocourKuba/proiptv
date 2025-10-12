@@ -100,27 +100,6 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen
     {
         hd_debug_print(null, true);
 
-        static $history_txt;
-
-        $lang = strtolower(TR::get_current_language());
-        if (empty($history_txt)) {
-            if ($lang !== 'russian' && $lang !== 'english') {
-                $lang = 'english';
-            }
-
-            $doc = Curl_Wrapper::simple_download_content(Dune_Default_UI_Parameters::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
-            if ($doc === false) {
-                hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
-                $path = get_install_path("changelog.$lang.md");
-                if (!file_exists($path)) {
-                    $path = get_install_path("changelog.english.md");
-                }
-                $doc = file_get_contents($path);
-            }
-
-            $history_txt = str_replace(array("###", "##"), '', $doc);
-        }
-
         $control_id = $user_input->control_id;
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
