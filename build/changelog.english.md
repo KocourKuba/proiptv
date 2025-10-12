@@ -12,7 +12,7 @@
 - Fixed a bug with incorrect clearing of the EPG cache for XMLTV and Internet sources
 - Updated API for IPTV Online provider. To solve blocking problems
 - Improved the window for displaying channel information
-- Due to frequent problems with downloading a playlist template from epg.one, a playlist mirror selection setting has been added. Look into provider settings
+- Due to frequent problems with downloading a playlist template from epg.one (for Edem and his clones), a playlist mirror selection setting has been added. Look into provider settings
 
 ### Version 6.2.1334
 - Added the ability to configure the playlist caching time. From 1 hour to 7 days. Look into Playlist settings
