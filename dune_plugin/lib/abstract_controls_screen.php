@@ -26,7 +26,7 @@
 
 require_once 'abstract_screen.php';
 
-abstract class Abstract_Controls_Screen extends Abstract_Screen
+abstract class Abstract_Controls_Screen extends Abstract_Screen implements User_Input_Handler
 {
     const CONTROLS_WIDTH = 850;
 
@@ -36,13 +36,20 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
     ///////////////////////////////////////////////////////////////////////
 
     /**
+     * @param MediaURL $media_url
+     * @param object $plugin_cookies
+     * @return array
+     */
+    abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);
+
+    /**
      * Get MediaURL string representation (json encoded)
      *
      * @param string $parent_id
      * @param int $return_index
      * @return false|string
      */
-    public static function make_custom_media_url_str($parent_id, $return_index = -1)
+    public static function make_controls_media_url_str($parent_id, $return_index = -1)
     {
         return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, PARAM_SOURCE_WINDOW_ID => $parent_id, PARAM_RETURN_INDEX => $return_index));
     }
@@ -81,8 +88,6 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
         return $plugin_cookies->{$param};
     }
 
-    ///////////////////////////////////////////////////////////////////////
-
     /**
      * @param object $plugin_cookies
      * @param string $param
@@ -97,12 +102,18 @@ abstract class Abstract_Controls_Screen extends Abstract_Screen
         return $new;
     }
 
+    ///////////////////////////////////////////////////////////////////////
+
     /**
-     * @param MediaURL $media_url
-     * @param object $plugin_cookies
-     * @return array
+     * @inheritDoc
      */
-    abstract public function get_control_defs(MediaURL $media_url, &$plugin_cookies);
+    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    {
+        hd_debug_print(null, true);
+        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
+        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
+        return $actions;
+    }
 
     /**
      * @inheritDoc

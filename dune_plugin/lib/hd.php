@@ -314,7 +314,7 @@ class HD
     {
         $folder_path = get_paved_path($folder_path);
 
-        hd_debug_print(ACTION_FOLDER_SELECTED . " $folder_path");
+        hd_debug_print("Backup path: $folder_path");
         if ($complete) {
             $timestamp = format_datetime('Y-m-d_H-i', time());
             $zip_file_name = "proiptv_backup_{$plugin->plugin_info['app_version']}_$timestamp.zip";

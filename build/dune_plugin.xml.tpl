@@ -90,12 +90,23 @@
                 <menu_items>
                     <menu_item>
                         <caption>%tr%entry_setup</caption>
-                        <icon_url>gui_skin://small_icons/setup.aai</icon_url>
+                        <icon_url>gui_skin://small_icons/general_settings.aai</icon_url>
                         <action>
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>call_setup</control_id>
+                                <control_id>call_plugin_setup</control_id>
+                            </params>
+                        </action>
+                    </menu_item>
+                    <menu_item>
+                        <caption>%tr%setup_playlist</caption>
+                        <icon_url>gui_skin://small_icons/advanced_settings.aai</icon_url>
+                        <action>
+                            <type>plugin_handle_user_input</type>
+                            <params>
+                                <handler_id>entry_handler</handler_id>
+                                <control_id>call_playlist_settings</control_id>
                             </params>
                         </action>
                     </menu_item>
@@ -112,7 +123,7 @@
                     </menu_item>
                     <menu_item>
                         <caption>%tr%entry_force_open</caption>
-                        <icon_url>gui_skin://small_icons/iptv.aai</icon_url>
+                        <icon_url>gui_skin://small_icons/tv.aai</icon_url>
                         <action>
                             <type>plugin_handle_user_input</type>
                             <params>
@@ -128,7 +139,7 @@
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>call_playlist_setup</control_id>
+                                <control_id>call_playlists_setup</control_id>
                             </params>
                         </action>
                     </menu_item>
@@ -150,7 +161,7 @@
                             <type>plugin_handle_user_input</type>
                             <params>
                                 <handler_id>entry_handler</handler_id>
-                                <control_id>call_clear_epg</control_id>
+                                <control_id>call_clear_all_epg</control_id>
                             </params>
                         </action>
                     </menu_item>

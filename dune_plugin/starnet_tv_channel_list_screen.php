@@ -41,7 +41,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      * @param string $group_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($group_id)
+    public static function make_group_media_url_str($group_id)
     {
         return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
     }
@@ -64,7 +64,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
-        $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_SETTINGS);
+        $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
         $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
@@ -170,9 +170,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
                 break;
 
-            case ACTION_SETTINGS:
+            case ACTION_PLUGIN_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Screen::make_custom_media_url_str(self::ID), TR::t('entry_setup'))
+                    Action_Factory::open_folder(Starnet_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
                 );
 
             case self::ACTION_CREATE_SEARCH:
@@ -251,7 +251,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEMS_EDIT:
-                return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $parent_media_url);
+                return $this->plugin->do_edit_list_screen(static::ID, $user_input->action_edit, $parent_media_url);
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if ($parent_group === TV_ALL_CHANNELS_GROUP_ID) {
@@ -292,7 +292,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     "info.png");
 
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_SETTINGS,
+                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_PLUGIN_SETTINGS,
                     TR::t('entry_setup'), "settings.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
@@ -372,7 +372,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::close_and_run(
                         Action_Factory::close_and_run(
-                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::get_media_url_str())
+                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title())
                         )
                     )
                 );

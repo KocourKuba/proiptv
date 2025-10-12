@@ -28,7 +28,7 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 {
     const ID = 'ext_setup';
 
@@ -41,20 +41,17 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
+        return $this->do_get_control_defs($plugin_cookies);
     }
 
     /**
-     * @inheritDoc
+     * @param object $plugin_cookies
+     * @return array
      */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    protected function do_get_control_defs(&$plugin_cookies)
     {
-        hd_debug_print(null, true);
         hd_debug_print(null, true);
 
         $defs = array();
@@ -66,12 +63,12 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         //////////////////////////////////////
         // adult channel password
         Control_Factory::add_image_button($defs, $this, array('adult' => true), self::CONTROL_ADULT_PASS_DLG,
-            TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
+            TR::t('setup_adult_title'), TR::t('setup_adult_change'), get_image_path('text.png'), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Settings protection
         Control_Factory::add_image_button($defs, $this, array('adult' => false), self::CONTROL_ADULT_PASS_DLG,
-            TR::t('setup_settings_protection_title'), TR::t('setup_adult_change'), get_image_path('text.png'), self::CONTROLS_WIDTH);
+            TR::t('setup_settings_protection_title'), TR::t('setup_adult_change'), get_image_path('text.png'), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Curl connect timeout
@@ -79,12 +76,12 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
             $range[$sec] = $sec;
         }
         Control_Factory::add_combobox($defs, $this, null, PARAM_CURL_CONNECT_TIMEOUT, TR::t('setup_connect_timeout'),
-            $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30), $range, self::CONTROLS_WIDTH, true);
+            $this->plugin->get_parameter(PARAM_CURL_CONNECT_TIMEOUT, 30), $range, static::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // Curl download timeout
         Control_Factory::add_combobox($defs, $this, null, PARAM_CURL_DOWNLOAD_TIMEOUT, TR::t('setup_download_timeout'),
-            $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120), $range, self::CONTROLS_WIDTH, true);
+            $this->plugin->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120), $range, static::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // Settings full size remote
@@ -92,7 +89,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
             $remote = $this->plugin->get_parameter(PARAM_FULL_SIZE_REMOTE, SwitchOnOff::off);
             Control_Factory::add_image_button($defs, $this, null,
                 PARAM_FULL_SIZE_REMOTE, TR::t('setup_settings_full_remote'), SwitchOnOff::translate($remote),
-                SwitchOnOff::to_image($remote), self::CONTROLS_WIDTH);
+                SwitchOnOff::to_image($remote), static::CONTROLS_WIDTH);
         }
 
         //////////////////////////////////////
@@ -104,14 +101,14 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
         }
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_FIX_PALETTE, TR::t('setup_settings_patch_palette'), SwitchOnOff::translate($fix_palette),
-            SwitchOnOff::to_image($fix_palette), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($fix_palette), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // debugging
         $debug_state = safe_get_member($plugin_cookies, PARAM_ENABLE_DEBUG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SwitchOnOff::translate($debug_state),
-            SwitchOnOff::to_image($debug_state), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($debug_state), static::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -201,10 +198,7 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen implements User_
                 break;
         }
 
-        return Action_Factory::reset_controls(
-            $this->get_control_defs(MediaURL::decode($user_input->parent_media_url), $plugin_cookies),
-            $post_action
-        );
+        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies), $post_action);
     }
 
     /**

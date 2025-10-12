@@ -158,61 +158,61 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     /**
      * @override DunePlugin
-     * @param string $media_url
+     * @param string $media_url_str
      * @param object $plugin_cookies
      * @return array|null
      * @throws Exception
      */
-    public function get_folder_view($media_url, &$plugin_cookies)
+    public function get_folder_view($media_url_str, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print($media_url, true);
+        hd_debug_print($media_url_str, true);
 
-        $decoded_media_url = MediaURL::decode($media_url);
-        return $this->get_screen_by_url($decoded_media_url)->get_folder_view($decoded_media_url, $plugin_cookies);
+        $media_url = MediaURL::decode($media_url_str);
+        return $this->get_screen_by_url($media_url)->get_folder_view($media_url, $plugin_cookies);
     }
 
     /**
      * @override DunePlugin
-     * @param string $media_url
+     * @param string $media_url_str
      * @param object $plugin_cookies
      * @return array|null
      * @throws Exception
      */
-    public function get_next_folder_view($media_url, &$plugin_cookies)
+    public function get_next_folder_view($media_url_str, &$plugin_cookies)
     {
         hd_debug_print(null, true);
 
-        $decoded_media_url = MediaURL::decode($media_url);
+        $media_url = MediaURL::decode($media_url_str);
 
-        return $this->get_screen_by_url($decoded_media_url)->get_next_folder_view($decoded_media_url, $plugin_cookies);
+        return $this->get_screen_by_url($media_url)->get_next_folder_view($media_url, $plugin_cookies);
     }
 
     /**
      * @override DunePlugin
-     * @param string $media_url
+     * @param string $media_url_str
      * @param int $from_ndx
      * @param object $plugin_cookies
      * @return array
      * @throws Exception
      */
-    public function get_regular_folder_items($media_url, $from_ndx, &$plugin_cookies)
+    public function get_regular_folder_items($media_url_str, $from_ndx, &$plugin_cookies)
     {
         hd_debug_print(null, true);
 
-        $decoded_media_url = MediaURL::decode($media_url);
+        $media_url = MediaURL::decode($media_url_str);
 
-        return $this->get_screen_by_url($decoded_media_url)->get_folder_range($decoded_media_url, $from_ndx, $plugin_cookies);
+        return $this->get_screen_by_url($media_url)->get_folder_range($media_url, $from_ndx, $plugin_cookies);
     }
 
     /**
      * @override DunePlugin
-     * @param string $media_url
+     * @param string $media_url_str
      * @param object $plugin_cookies
      * @return array
      * @throws Exception
      */
-    public function get_tv_info($media_url, &$plugin_cookies)
+    public function get_tv_info($media_url_str, &$plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -222,7 +222,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             throw new Exception('TV is not supported');
         }
 
-        return $this->iptv->get_tv_info(MediaURL::decode($media_url), $plugin_cookies);
+        return $this->iptv->get_tv_info(MediaURL::decode($media_url_str), $plugin_cookies);
     }
 
     /**
@@ -2512,38 +2512,38 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      * @param string $id
      * @return string
      */
-    public static function get_group_mediaurl_str($id)
+    public static function get_group_media_url_str($id)
     {
         switch ($id) {
             case TV_FAV_GROUP_ID:
-                return Starnet_Tv_Favorites_Screen::make_custom_media_url_str(TV_FAV_GROUP_ID);
+                return Starnet_Tv_Favorites_Screen::make_group_media_url_str(TV_FAV_GROUP_ID);
 
             case TV_HISTORY_GROUP_ID:
-                return Starnet_Tv_History_Screen::make_custom_media_url_str(TV_HISTORY_GROUP_ID);
+                return Starnet_Tv_History_Screen::make_group_media_url_str(TV_HISTORY_GROUP_ID);
 
             case TV_CHANGED_CHANNELS_GROUP_ID:
-                return Starnet_Tv_Changed_Channels_Screen::make_custom_media_url_str(TV_CHANGED_CHANNELS_GROUP_ID);
+                return Starnet_Tv_Changed_Channels_Screen::make_group_media_url_str(TV_CHANGED_CHANNELS_GROUP_ID);
 
             case VOD_GROUP_ID:
-                return Starnet_Vod_Category_List_Screen::make_custom_media_url_str(VOD_GROUP_ID);
+                return Starnet_Vod_Category_List_Screen::make_group_media_url_str(VOD_GROUP_ID);
 
             case VOD_FAV_GROUP_ID:
-                return Starnet_Vod_Favorites_Screen::make_custom_media_url_str(VOD_FAV_GROUP_ID);
+                return Starnet_Vod_Favorites_Screen::make_group_media_url_str(VOD_FAV_GROUP_ID);
 
             case VOD_HISTORY_GROUP_ID:
-                return Starnet_Vod_History_Screen::make_custom_media_url_str(VOD_HISTORY_GROUP_ID);
+                return Starnet_Vod_History_Screen::make_group_media_url_str(VOD_HISTORY_GROUP_ID);
 
             case VOD_SEARCH_GROUP_ID:
-                return Starnet_Vod_Search_Screen::make_custom_media_url_str(VOD_SEARCH_GROUP_ID);
+                return Starnet_Vod_Search_Screen::make_group_media_url_str(VOD_SEARCH_GROUP_ID);
 
             case VOD_FILTER_GROUP_ID:
-                return Starnet_Vod_Filter_Screen::make_custom_media_url_str();
+                return Starnet_Vod_Filter_Screen::make_group_media_url_str();
 
             case VOD_LIST_GROUP_ID:
-                return Starnet_Vod_List_Screen::make_custom_media_url_str(VOD_LIST_GROUP_ID);
+                return Starnet_Vod_List_Screen::make_group_media_url_str(VOD_LIST_GROUP_ID);
         }
 
-        return Starnet_Tv_Channel_List_Screen::make_custom_media_url_str($id);
+        return Starnet_Tv_Channel_List_Screen::make_group_media_url_str($id);
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -2701,7 +2701,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($is_classic) {
             $menu_items[] = $this->create_menu_item($handler, ACTION_CHANGE_GROUP_ICON, TR::t('change_group_icon'), "image.png");
         }
-        $menu_items[] = $this->create_menu_item($handler, ACTION_EDIT_CATEGORY_SCREEN, TR::t('setup_category_title'), "settings.png");
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
         $menu_items[] = $this->create_menu_item($handler,
@@ -2737,17 +2736,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
 
         $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
-        if (!$is_classic) {
-            $menu_items[] = $this->create_menu_item($handler,
-                ACTION_EDIT_NEWUI_SETTINGS,
-                TR::t('setup_interface_newui_title'),
-                "settings.png");
-        }
         $menu_items[] = $this->create_menu_item($handler,
             ACTION_EDIT_PLAYLIST_SETTINGS,
-            TR::t('tv_screen_playlists_setup'),
+            TR::t('setup_playlist'),
             "playlist_settings.png");
-        $menu_items[] = $this->create_menu_item($handler, ACTION_SETTINGS, TR::t('entry_setup'), "settings.png");
+        $menu_items[] = $this->create_menu_item($handler, ACTION_PLUGIN_SETTINGS, TR::t('entry_setup'), "settings.png");
 
         return $menu_items;
     }
@@ -2835,12 +2828,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 if (!is_null($media_url) && isset($media_url->group_id)) {
                     $params['group_id'] = $media_url->group_id;
                 }
-                $new_media_url_str = Starnet_Edit_Hidden_List_Screen::make_custom_media_url_str($source_screen_id, $params);
+                $new_media_url_str = Starnet_Edit_Hidden_List_Screen::make_callback_media_url_str($source_screen_id, $params);
                 $title = TR::t('tv_screen_edit_hidden_channels');
                 break;
 
             case Starnet_Edit_Hidden_List_Screen::PARAM_HIDDEN_GROUPS:
-                $new_media_url_str = Starnet_Edit_Hidden_List_Screen::make_custom_media_url_str($source_screen_id,
+                $new_media_url_str = Starnet_Edit_Hidden_List_Screen::make_callback_media_url_str($source_screen_id,
                     array(
                         PARAM_END_ACTION => ACTION_INVALIDATE,
                         PARAM_CANCEL_ACTION => ACTION_EMPTY,
@@ -2851,7 +2844,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 break;
 
             case Starnet_Edit_Playlists_Screen::SCREEN_EDIT_PLAYLIST:
-                $new_media_url_str = Starnet_Edit_Playlists_Screen::make_custom_media_url_str($source_screen_id,
+                $new_media_url_str = Starnet_Edit_Playlists_Screen::make_callback_media_url_str($source_screen_id,
                     array(
                         PARAM_END_ACTION => ACTION_RELOAD,
                         PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,
@@ -2862,7 +2855,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 break;
 
             case Starnet_Edit_Xmltv_List_Screen::SCREEN_EDIT_XMLTV_LIST:
-                $new_media_url_str = Starnet_Edit_Xmltv_List_Screen::make_custom_media_url_str($source_screen_id,
+                $new_media_url_str = Starnet_Edit_Xmltv_List_Screen::make_callback_media_url_str($source_screen_id,
                     array(
                         PARAM_END_ACTION => ACTION_RELOAD,
                         PARAM_CANCEL_ACTION => RESET_CONTROLS_ACTION_ID,

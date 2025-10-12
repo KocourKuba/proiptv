@@ -176,7 +176,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 $info_children = $this->do_get_info_children($media_url, $plugin_cookies);
                 $pass_sex = $this->plugin->get_parameter(PARAM_ADULT_PASSWORD);
                 if (!$info_children['adult'] || empty($pass_sex)) {
-                    $urls[] = sprintf("plugin_tv://%s/%s", get_plugin_name(), self::row_id_decoder($user_input->item_id)->get_media_url_str());
+                    $urls[] = sprintf("plugin_tv://%s/%s", get_plugin_name(), self::row_id_decoder($user_input->item_id)->get_media_url_string());
                 }
 
                 return Action_Factory::update_rows_info(
@@ -336,28 +336,17 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 return $reload_action;
 
             case ACTION_ITEMS_EDIT:
-                return $this->plugin->do_edit_list_screen(self::ID, $user_input->action_edit, $media_url);
+                return $this->plugin->do_edit_list_screen(static::ID, $user_input->action_edit, $media_url);
 
-            case ACTION_SETTINGS:
+            case ACTION_PLUGIN_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Screen::make_custom_media_url_str(self::ID), TR::t('entry_setup'))
-                );
-
-            case ACTION_EDIT_CATEGORY_SCREEN:
-                return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Category_Screen::make_custom_media_url_str(self::ID), TR::t('setup_category_title'))
+                    Action_Factory::open_folder(Starnet_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
                 );
 
             case ACTION_EDIT_PLAYLIST_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Playlists_Screen::make_custom_media_url_str(self::ID), TR::t('setup_category_title'))
+                    Action_Factory::open_folder(Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID), TR::t('setup_category_title'))
                 );
-
-            case ACTION_EDIT_NEWUI_SETTINGS:
-                return $this->plugin->show_protect_settings_dialog($this,
-                    Action_Factory::open_folder(Starnet_Setup_Interface_NewUI_Screen::make_custom_media_url_str(self::ID),
-                        TR::t('setup_interface_newui_title'))
-                    );
 
             case ACTION_PASSWORD_APPLY:
                 return $this->plugin->apply_protect_settings_dialog($this, $user_input);

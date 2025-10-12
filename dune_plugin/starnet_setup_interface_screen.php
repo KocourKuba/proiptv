@@ -28,40 +28,29 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen
 {
     const ID = 'interface_setup';
 
     const CONTROL_SHOW_TV = 'show_tv';
+    const CONTROL_AUTO_RESUME = 'auto_resume';
+    const CONTROL_AUTO_PLAY = 'auto_play';
 
     ///////////////////////////////////////////////////////////////////////
 
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
         return $this->do_get_control_defs($plugin_cookies);
     }
 
     /**
-     * interface dialog defs
      * @param object $plugin_cookies
      * @return array
      */
-    public function do_get_control_defs(&$plugin_cookies)
+    protected function do_get_control_defs(&$plugin_cookies)
     {
         hd_debug_print(null, true);
 
@@ -78,14 +67,28 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
             hd_debug_print(self::CONTROL_SHOW_TV . ": $show_tv", true);
             Control_Factory::add_image_button($defs, $this, null,
                 self::CONTROL_SHOW_TV, TR::t('setup_show_in_main'), SwitchOnOff::translate($show_tv),
-                SwitchOnOff::to_image($show_tv), self::CONTROLS_WIDTH);
+                SwitchOnOff::to_image($show_tv), static::CONTROLS_WIDTH);
         }
+
+        //////////////////////////////////////
+        // auto play
+        $auto_play = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
+        Control_Factory::add_image_button($defs, $this, null,
+            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::translate($auto_play),
+            SwitchOnOff::to_image($auto_play), static::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
+        // auto resume
+        $auto_resume = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
+        Control_Factory::add_image_button($defs, $this, null,
+            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::translate($auto_resume),
+            SwitchOnOff::to_image($auto_resume), static::CONTROLS_WIDTH);
 
         $ask_exit = $this->plugin->get_parameter(PARAM_ASK_EXIT, SwitchOnOff::on);
         hd_debug_print(PARAM_ASK_EXIT . ": $ask_exit", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_ASK_EXIT, TR::t('setup_ask_exit'), SwitchOnOff::translate($ask_exit),
-            SwitchOnOff::to_image($ask_exit), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($ask_exit), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show separate VOD icon
@@ -93,7 +96,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
         hd_debug_print(PARAM_SHOW_VOD_ICON . ": $show_vod_icon", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_VOD_ICON, TR::t('setup_show_vod_icon'), SwitchOnOff::translate($show_vod_icon),
-            SwitchOnOff::to_image($show_vod_icon), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_vod_icon), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // epg font size
@@ -102,19 +105,7 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
         $font_ops_translated = array(SwitchOnOff::on => TR::t('setup_small'), SwitchOnOff::off => TR::t('setup_normal'));
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_EPG_FONT_SIZE, TR::t('setup_epg_font'), SwitchOnOff::translate_from($font_ops_translated, $font_size),
-            SwitchOnOff::to_image($font_size), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
-        // change background
-        if ($this->plugin->is_background_image_default()) {
-            $button = TR::t('by_default');
-        } else {
-            $button = substr(basename($this->plugin->get_background_image()), strlen($this->plugin->get_active_playlist_id()) + 1);
-        }
-
-        Control_Factory::add_image_button($defs, $this, null,
-            ACTION_CHANGE_BACKGROUND, TR::t('change_background'), $button,
-            get_image_path('image.png'), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($font_size), static::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -134,9 +125,9 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
                 return self::make_return_action($parent_media_url);
 
             case self::CONTROL_SHOW_TV:
-                if (!is_limited_apk()) {
-                    self::toggle_cookie_param($plugin_cookies, $control_id);
-                }
+            case self::CONTROL_AUTO_PLAY:
+            case self::CONTROL_AUTO_RESUME:
+                self::toggle_cookie_param($plugin_cookies, $control_id);
                 break;
 
             case PARAM_SHOW_VOD_ICON:
@@ -155,55 +146,6 @@ class Starnet_Setup_Interface_Screen extends Abstract_Controls_Screen implements
             case PARAM_EPG_FONT_SIZE:
                 $this->plugin->toggle_parameter($control_id, false);
                 break;
-
-            case ACTION_CHANGE_BACKGROUND:
-                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
-                    array(
-                        PARAM_EXTENSION => 'png|jpg|jpeg',
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
-                        Starnet_Folder_Screen::PARAM_RESET_ACTION => ACTION_RESET_DEFAULT,
-                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
-                        Starnet_Folder_Screen::PARAM_ALLOW_IMAGE_LIB => true,
-                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
-                    )
-                );
-                return Action_Factory::open_folder($media_url, TR::t('select_file'));
-
-            case ACTION_FILE_SELECTED:
-                $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                $old_image = $this->plugin->get_background_image();
-                $is_old_default = $this->plugin->is_background_image_default();
-                $cached_image = get_cached_image_path($this->plugin->get_active_playlist_id() . '_' . $data->{Starnet_Folder_Screen::PARAM_CAPTION});
-
-                hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image");
-                if (!copy($data->{PARAM_FILEPATH}, $cached_image)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
-                }
-
-                if (!$is_old_default && $old_image !== $cached_image) {
-                    unlink($old_image);
-                }
-
-                hd_debug_print("Set image $cached_image as background");
-                $this->plugin->set_background_image($cached_image);
-                $this->plugin->init_screen_view_parameters($cached_image);
-
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    null,
-                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
-                );
-
-            case ACTION_RESET_DEFAULT:
-                hd_debug_print("Background set to default");
-                $this->plugin->set_background_image(null);
-                $this->plugin->init_screen_view_parameters($this->plugin->plugin_info['app_background']);
-
-                return Action_Factory::invalidate_all_folders(
-                    $plugin_cookies,
-                    null,
-                    Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies))
-                );
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));

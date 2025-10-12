@@ -191,7 +191,7 @@ class MediaURL extends Json_Serializer
      * @param bool $raw_encode
      * @return string
      */
-    public function get_media_url_str($raw_encode = false)
+    public function get_media_url_string($raw_encode = false)
     {
         return MediaURL::encode($this->map, $raw_encode);
     }

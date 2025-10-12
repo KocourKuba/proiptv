@@ -84,9 +84,9 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
                 $search_string = $user_input->{ACTION_NEW_SEARCH};
                 $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $search_string, Ordered_Array::TOP);
                 return Action_Factory::invalidate_folders(
-                    array(Default_Dune_Plugin::get_group_mediaurl_str(VOD_SEARCH_GROUP_ID)),
+                    array(Default_Dune_Plugin::get_group_media_url_str(VOD_SEARCH_GROUP_ID)),
                     Action_Factory::open_folder(
-                        static::make_custom_media_url_str(Vod_Category::FLAG_SEARCH, $search_string),
+                        static::make_vod_media_url_str(Vod_Category::FLAG_SEARCH, $search_string),
                         TR::t('search') . ": $search_string"));
 
             case ACTION_ADD_FAV:
@@ -96,9 +96,9 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
                 return Action_Factory::invalidate_folders(
                     array(
                         $user_input->parent_media_url,
-                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_FAV_GROUP_ID),
-                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID),
-                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID)
+                        Default_Dune_Plugin::get_group_media_url_str(VOD_FAV_GROUP_ID),
+                        Default_Dune_Plugin::get_group_media_url_str(VOD_HISTORY_GROUP_ID),
+                        Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID)
                     )
                 );
 
@@ -110,8 +110,8 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
                 return Action_Factory::invalidate_folders(
                     array(
                         $user_input->parent_media_url,
-                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_LIST_GROUP_ID),
-                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID),
+                        Default_Dune_Plugin::get_group_media_url_str(VOD_LIST_GROUP_ID),
+                        Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID),
                     )
                 );
         }
@@ -126,9 +126,9 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
      * @param string $genre_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($category_id, $genre_id)
+    public static function make_vod_media_url_str($category_id, $genre_id)
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => self::ID, 'category_id' => $category_id, 'genre_id' => $genre_id));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'category_id' => $category_id, 'genre_id' => $genre_id));
     }
 
     /**
@@ -140,7 +140,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
         hd_debug_print(null, true);
-        hd_debug_print("from_ndx: $from_ndx, MediaURL: " . $media_url->get_media_url_str(true), true);
+        hd_debug_print("from_ndx: $from_ndx, MediaURL: " . $media_url->get_media_url_string(true), true);
 
         $this->plugin->vod->try_reset_pages();
         if (empty($media_url->genre_id)
@@ -184,7 +184,7 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
             /** @var Short_Movie $movie */
             foreach ($movie_range->short_movies as $movie) {
                 $items[] = array(
-                    PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_custom_media_url_str($movie->id, $movie->name, $movie->poster_url, $movie->info),
+                    PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie->id, $movie->name, $movie->poster_url, $movie->info),
                     PluginRegularFolderItem::caption => $movie->name,
                     PluginRegularFolderItem::starred => in_array($movie->id, $fav_ids),
                     PluginRegularFolderItem::view_item_params => array(

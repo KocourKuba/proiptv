@@ -28,7 +28,7 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen
 {
     const ID = 'interface_newui_setup';
 
@@ -37,20 +37,8 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
         return $this->do_get_control_defs();
     }
 
@@ -58,7 +46,7 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
      * interface dialog defs
      * @return array
      */
-    public function do_get_control_defs()
+    protected function do_get_control_defs()
     {
         hd_debug_print(null, true);
 
@@ -73,7 +61,7 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
         $square_icon = $this->plugin->get_setting(PARAM_NEWUI_SQUARE_ICONS, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_NEWUI_SQUARE_ICONS, TR::t('tv_screen_toggle_icons_aspect'), SwitchOnOff::translate($square_icon),
-            SwitchOnOff::to_image($square_icon), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($square_icon), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Channel position in NewUI
@@ -84,7 +72,7 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
         $ch_pos = $this->plugin->get_setting(PARAM_NEWUI_CHANNEL_POSITION, 0);
         Control_Factory::add_combobox($defs, $this, null,
             PARAM_NEWUI_CHANNEL_POSITION, TR::t('setup_channel_position'),
-            $ch_pos, $channel_position, self::CONTROLS_WIDTH, true);
+            $ch_pos, $channel_position, static::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // Channels in rows in NewUI
@@ -94,28 +82,28 @@ class Starnet_Setup_Interface_NewUI_Screen extends Abstract_Controls_Screen impl
         $icon_idx = $this->plugin->get_setting(PARAM_NEWUI_ICONS_IN_ROW, 7);
         Control_Factory::add_combobox($defs, $this, null,
             PARAM_NEWUI_ICONS_IN_ROW, TR::t('setup_icons_in_row'),
-            $icon_idx, $icons_in_row, self::CONTROLS_WIDTH, true);
+            $icon_idx, $icons_in_row, static::CONTROLS_WIDTH, true);
 
         //////////////////////////////////////
         // Show caption
         $show_caption = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CHANNEL_CAPTION, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_NEWUI_SHOW_CHANNEL_CAPTION, TR::t('setup_show_caption'), SwitchOnOff::translate($show_caption),
-            SwitchOnOff::to_image($show_caption), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_caption), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Show channel count
         $show_count = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CHANNEL_COUNT, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_NEWUI_SHOW_CHANNEL_COUNT, TR::t('setup_show_channel_count'), SwitchOnOff::translate($show_count),
-            SwitchOnOff::to_image($show_count), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_count), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Clusters
         $continues = $this->plugin->get_setting(PARAM_NEWUI_SHOW_CONTINUES, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_NEWUI_SHOW_CONTINUES, TR::t('setup_show_continues'), SwitchOnOff::translate($continues),
-            SwitchOnOff::to_image($continues), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($continues), static::CONTROLS_WIDTH);
 
         return $defs;
     }

@@ -28,7 +28,7 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
 {
     const ID = 'category_setup';
 
@@ -47,20 +47,8 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
         return $this->do_get_control_defs();
     }
 
@@ -68,7 +56,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
      * interface dialog defs
      * @return array
      */
-    public function do_get_control_defs()
+    protected function do_get_control_defs()
     {
         hd_debug_print(null, true);
 
@@ -88,7 +76,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
             $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
             $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
             Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
-                TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, self::CONTROLS_WIDTH, true);
+                TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, static::CONTROLS_WIDTH, true);
 /*
             //////////////////////////////////////
             // Delayed picons indexing
@@ -96,7 +84,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
                 $delay_load = $this->plugin->get_setting(PARAM_PICONS_DELAY_LOAD, SwitchOnOff::off);
                 Control_Factory::add_image_button($defs, $this, null,
                     PARAM_PICONS_DELAY_LOAD, TR::t('setup_channels_delay_picons_load'), SwitchOnOff::translate($delay_load),
-                    SwitchOnOff::to_image($delay_load), self::CONTROLS_WIDTH);
+                    SwitchOnOff::to_image($delay_load), static::CONTROLS_WIDTH);
             }
 */
         }
@@ -107,7 +95,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         hd_debug_print("All channels group: $show_all", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_ALL, TR::t('setup_show_all_channels'), SwitchOnOff::translate($show_all),
-            SwitchOnOff::to_image($show_all), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_all), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show favorites category
@@ -115,7 +103,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         hd_debug_print("Favorites group: $show_fav", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_FAVORITES, TR::t('setup_show_favorites'), SwitchOnOff::translate($show_fav),
-            SwitchOnOff::to_image($show_fav), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_fav), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show history category
@@ -123,7 +111,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         hd_debug_print("History group: $show_history", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_HISTORY, TR::t('setup_show_history'), SwitchOnOff::translate($show_history),
-            SwitchOnOff::to_image($show_history), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_history), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show changed channels category
@@ -131,7 +119,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         hd_debug_print("Changed group: $show_changed", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_CHANGED_CHANNELS, TR::t('setup_show_changed_channels'), SwitchOnOff::translate($show_changed),
-            SwitchOnOff::to_image($show_changed), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_changed), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show VOD
@@ -139,7 +127,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         hd_debug_print("VOD group: $show_mediateka", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_VOD, TR::t('setup_show_vod'), SwitchOnOff::translate($show_mediateka),
-            SwitchOnOff::to_image($show_mediateka), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_mediateka), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // show adult
@@ -147,7 +135,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen implements 
         hd_debug_print("Adult group: $show_adult", true);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_SHOW_ADULT, TR::t('setup_show_adult'), SwitchOnOff::translate($show_adult),
-            SwitchOnOff::to_image($show_adult), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($show_adult), static::CONTROLS_WIDTH);
 
         return $defs;
     }

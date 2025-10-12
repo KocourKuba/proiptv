@@ -156,8 +156,8 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
 
                 return Action_Factory::invalidate_folders(array(
                         $user_input->parent_media_url,
-                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID),
-                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID)
+                        Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID),
+                        Default_Dune_Plugin::get_group_media_url_str(VOD_HISTORY_GROUP_ID)
                     )
                 );
 
@@ -175,7 +175,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
      * @param string $movie_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($movie_id)
+    public static function make_group_media_url_str($movie_id)
     {
         return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => VOD_LIST_GROUP_ID, 'movie_id' => VOD_LIST_GROUP_ID, 'episode_id' => $movie_id));
     }
@@ -217,7 +217,7 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => self::make_custom_media_url_str($movie_id),
+                PluginRegularFolderItem::media_url => self::make_group_media_url_str($movie_id),
                 PluginRegularFolderItem::caption => $caption,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $movie->movie_info[PluginMovie::poster_url],

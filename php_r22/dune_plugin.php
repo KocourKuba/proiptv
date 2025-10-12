@@ -5,18 +5,18 @@ interface DunePlugin
 {
     // PluginFolderView
     public function get_folder_view(
-        /* [in]     String                      */  $media_url,
-        /* [inout]  Map: Key -> Value           */  &$plugin_cookies);
+        /* [in]     String                      */ $media_url_str,
+        /* [inout]  Map: Key -> Value           */ &$plugin_cookies);
 
     // PluginFolderView
     public function get_next_folder_view(
-        /* [in]     String                      */  $media_url,
-        /* [inout]  Map: Key -> Value           */  &$plugin_cookies);
+        /* [in]     String                      */ $media_url_str,
+        /* [inout]  Map: Key -> Value           */ &$plugin_cookies);
 
     // PluginTvInfo
     public function get_tv_info(
-        /* [in]     String                      */  $media_url,
-        /* [inout]  Map: Key -> Value           */  &$plugin_cookies);
+        /* [in]     String                      */ $media_url_str,
+        /* [inout]  Map: Key -> Value           */ &$plugin_cookies);
 
     // String
     public function get_tv_stream_url(
@@ -35,9 +35,9 @@ interface DunePlugin
 
     // PluginRegularFolderRange 
     public function get_regular_folder_items(
-        /* [in]     String                      */  $media_url,
-        /* [in]     int                         */  $from_ndx,
-        /* [inout]  Map: Key -> Value           */  &$plugin_cookies);
+        /* [in]     String                      */ $media_url_str,
+        /* [in]     int                         */ $from_ndx,
+        /* [inout]  Map: Key -> Value           */ &$plugin_cookies);
 
     // List<PluginTvEpgProgram>
     public function get_day_epg(

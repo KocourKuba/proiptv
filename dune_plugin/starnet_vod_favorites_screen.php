@@ -134,7 +134,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
      * @param string $group_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($group_id)
+    public static function make_group_media_url_str($group_id)
     {
         return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
     }
@@ -154,7 +154,7 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
             if (is_null($movie)) continue;
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_custom_media_url_str($movie_id),
+                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_Screen::make_vod_media_url_str($movie_id),
                 PluginRegularFolderItem::caption => $movie->movie_info[PluginMovie::name],
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => $movie->movie_info[PluginMovie::poster_url],

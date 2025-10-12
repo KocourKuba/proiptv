@@ -29,7 +29,7 @@ require_once 'lib/m3u/KnownCatchupSourceTags.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 {
     const ID = 'setup_provider_screen';
 
@@ -38,6 +38,8 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
     const CONTROL_DOMAIN = 'domain';
     const CONTROL_QUALITY = 'quality';
     const CONTROL_STREAM = 'stream';
+    const CONTROL_CUSTOM_URL = 'custom_url';
+    const CONTROL_SELECTED_PLAYLIST = 'selected_playlist';
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -49,7 +51,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
      * @param string $playlist_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($parent_id, $return_index = -1, $playlist_id = null)
+    public static function make_controls_media_url_str($parent_id, $return_index = -1, $playlist_id = null)
     {
         return MediaURL::encode(
             array(
@@ -64,21 +66,21 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
+    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
+        return $this->do_get_control_defs($media_url);
     }
 
     /**
-     * @inheritDoc
+     * @param MediaURL $media_url
+     * @return array
      */
-    public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
+    protected function do_get_control_defs($media_url)
     {
         hd_debug_print(null, true);
         hd_debug_print($media_url, true);
+
+        $playlist_id = isset($media_url->{PARAM_PLAYLIST_ID}) ? $media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
 
         $defs = array();
 
@@ -86,9 +88,18 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
-        $parent_media_url = MediaURL::decode($media_url);
-        $playlist_id = isset($parent_media_url->{PARAM_PLAYLIST_ID}) ? $parent_media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
+        $has_vod_cache = false;
         $provider = $this->plugin->get_provider($playlist_id);
+        //////////////////////////////////////
+        // Account
+
+        Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_DLG,
+            TR::t('edit_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), static::CONTROLS_WIDTH);
+
+        if ($provider->hasApiCommand(API_COMMAND_GET_VOD) !== null
+            && $provider->getConfigValue(CONFIG_VOD_PARSER) !== null) {
+            $has_vod_cache = true;
+        }
 
         //////////////////////////////////////
         // Streams settings
@@ -102,7 +113,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
             hd_debug_print("streams ($idx): " . json_encode($streams), true);
 
             Control_Factory::add_combobox($defs, $this, null, self::CONTROL_STREAM,
-                TR::t('stream'), $idx, $streams, self::CONTROLS_WIDTH, true);
+                TR::t('stream'), $idx, $streams, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -117,7 +128,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
             hd_debug_print("domains ($idx): " . json_encode($domains), true);
 
             Control_Factory::add_combobox($defs, $this, null, self::CONTROL_DOMAIN,
-                TR::t('domain'), $idx, $domains, self::CONTROLS_WIDTH, true);
+                TR::t('domain'), $idx, $domains, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -132,7 +143,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
             hd_debug_print("servers ($idx): " . json_encode($servers), true);
 
             Control_Factory::add_combobox($defs, $this, null, self::CONTROL_SERVER,
-                TR::t('server'), $idx, $servers, self::CONTROLS_WIDTH, true);
+                TR::t('server'), $idx, $servers, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -147,7 +158,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
             hd_debug_print("devices ($idx): " . json_encode($devices), true);
 
             Control_Factory::add_combobox($defs, $this, null, self::CONTROL_DEVICE,
-                TR::t('device'), $idx, $devices, self::CONTROLS_WIDTH, true);
+                TR::t('device'), $idx, $devices, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -162,7 +173,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
             hd_debug_print("qualities ($idx): " . json_encode($qualities), true);
 
             Control_Factory::add_combobox($defs, $this, null, self::CONTROL_QUALITY,
-                TR::t('quality'), $idx, $qualities, self::CONTROLS_WIDTH, true);
+                TR::t('quality'), $idx, $qualities, static::CONTROLS_WIDTH, true);
         }
 
         //////////////////////////////////////
@@ -172,15 +183,15 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
         $pl_names = extract_column($playlists, COLUMN_NAME);
         $idx = $provider->GetPlaylistIptvId();
 
-        Control_Factory::add_combobox($defs, $this, null, CONTROL_SELECTED_PLAYLIST,
-            TR::t('playlist'), $idx, $pl_names, self::CONTROLS_WIDTH, true);
+        Control_Factory::add_combobox($defs, $this, null, self::CONTROL_SELECTED_PLAYLIST,
+            TR::t('playlist'), $idx, $pl_names, static::CONTROLS_WIDTH, true);
 
         if ($idx === DIRECT_PLAYLIST_ID) {
             //////////////////////////////////////
             // Direct playlist url
             $url = $provider->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
-            Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('url'),
-                $url, false, false, false, true, self::CONTROLS_WIDTH, true);
+            Control_Factory::add_text_field($defs, $this, null, self::CONTROL_CUSTOM_URL, TR::t('url'),
+                $url, false, false, false, true, static::CONTROLS_WIDTH, true);
         } else {
             //////////////////////////////////////
             // Icon replacements settings
@@ -190,7 +201,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
                 $idx = $provider->GetProviderParameter(PARAM_REPLACE_ICON, SwitchOnOff::on);
                 Control_Factory::add_combobox($defs, $this, null, PARAM_REPLACE_ICON,
                     TR::t('setup_channels_square_icons'), $idx, SwitchOnOff::$translated,
-                    self::CONTROLS_WIDTH, true);
+                    static::CONTROLS_WIDTH, true);
             }
 
             //////////////////////////////////////
@@ -209,8 +220,32 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
                 }
                 Control_Factory::add_combobox($defs, $this, null, PARAM_SELECTED_MIRROR,
                     TR::t('setup_channels_using_mirror'), $idx, $pairs,
-                    self::CONTROLS_WIDTH, true);
+                    static::CONTROLS_WIDTH, true);
             }
+        }
+
+        //////////////////////////////////////
+        // Cache time
+
+        $caching_range[PHP_INT_MAX] = TR::t('setup_cache_time_never');
+
+        foreach (array(1, 6, 12) as $hour) {
+            $caching_range[$hour] = TR::t('setup_cache_time_h__1', $hour);
+        }
+        foreach (array(24, 48, 96, 168) as $hour) {
+            $caching_range[$hour] = TR::t('setup_cache_time_d__1', $hour / 24);
+        }
+
+        $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_IPTV, 1);
+        Control_Factory::add_combobox($defs, $this, null,
+            PARAM_PLAYLIST_CACHE_TIME_IPTV, TR::t('setup_cache_time_iptv'),
+            $cache_time, $caching_range, static::CONTROLS_WIDTH, true);
+
+        if ($has_vod_cache) {
+            $cache_time = $this->plugin->get_setting(PARAM_PLAYLIST_CACHE_TIME_VOD, 1);
+            Control_Factory::add_combobox($defs, $this, null,
+                PARAM_PLAYLIST_CACHE_TIME_VOD, TR::t('setup_cache_time_vod'),
+                $cache_time, $caching_range, static::CONTROLS_WIDTH, true);
         }
 
         return $defs;
@@ -227,13 +262,41 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $playlist_id = isset($parent_media_url->playlist_id) ? $parent_media_url->playlist_id : $this->plugin->get_active_playlist_id();
         $provider = $this->plugin->get_provider($playlist_id);
-        hd_debug_print("Setup provider: {$provider->getName()}");
+
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $this->plugin->reset_channels_loaded();
-                $this->plugin->clear_playlist_cache($playlist_id);
-                return self::make_return_action($parent_media_url, ACTION_RELOAD);
+                $ret_action = ACTION_REFRESH_SCREEN;
+                if ($this->force_parent_reload) {
+                    $this->plugin->reset_channels_loaded();
+                    $this->plugin->clear_playlist_cache($playlist_id);
+                    $ret_action = ACTION_RELOAD;
+                }
+                return self::make_return_action($parent_media_url, $ret_action);
+
+            case ACTION_EDIT_PROVIDER_DLG:
+                $defs = array();
+                Control_Factory::add_vgap($defs, 20);
+
+                $provider = $this->plugin->get_provider($playlist_id);
+                if (empty($name)) {
+                    $name = $provider->getName();
+                }
+
+                $defs = $provider->GetSetupUI($name, $playlist_id, $this);
+                if (empty($defs)) {
+                    return null;
+                }
+
+                return Action_Factory::show_dialog("{$provider->getName()} ({$provider->getId()})", $defs, true);
+
+            case ACTION_EDIT_PROVIDER_DLG_APPLY:
+                $res = $this->plugin->get_provider($playlist_id)->ApplySetupUI($user_input);
+                if (is_array($res)) {
+                    return $res;
+                }
+                $this->force_parent_reload = true;
+                break;
 
             case self::CONTROL_STREAM:
                 $provider->SetStream($user_input->{self::CONTROL_STREAM});
@@ -264,12 +327,12 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
                 $this->force_parent_reload = true;
                 break;
 
-            case CONTROL_SELECTED_PLAYLIST:
-                $provider->SetProviderParameter(PARAM_PLAYLIST_IPTV_ID, $user_input->{CONTROL_SELECTED_PLAYLIST});
+            case self::CONTROL_SELECTED_PLAYLIST:
+                $provider->SetProviderParameter(PARAM_PLAYLIST_IPTV_ID, $user_input->{self::CONTROL_SELECTED_PLAYLIST});
                 $this->force_parent_reload = true;
                 break;
 
-            case CONTROL_URL_PATH:
+            case self::CONTROL_CUSTOM_URL:
                 $provider->SetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV, $user_input->{CONTROL_URL_PATH});
                 $this->force_parent_reload = true;
                 break;
@@ -285,6 +348,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen implements 
                 break;
         }
 
-        return Action_Factory::reset_controls($this->get_control_defs($parent_media_url, $plugin_cookies), $post_action);
+        return Action_Factory::reset_controls($this->do_get_control_defs($parent_media_url), $post_action);
     }
 }

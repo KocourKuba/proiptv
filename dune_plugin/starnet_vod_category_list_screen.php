@@ -69,9 +69,9 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
             return null;
         }
 
-        $parent_media_url = MediaURL::decode(safe_get_member($user_input, 'parent_media_url', ''));
-        $sel_media_url = MediaURL::decode(safe_get_member($user_input, 'selected_media_url', ''));
-        $group_id = safe_get_member($sel_media_url, COLUMN_GROUP_ID);
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $group_id = safe_get_member($selected_media_url, COLUMN_GROUP_ID);
 
         switch ($user_input->control_id) {
             case ACTION_RELOAD:
@@ -239,10 +239,10 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
 
                     if ($skip) continue;
 
-                    hd_debug_print("special group: " . Default_Dune_Plugin::get_group_mediaurl_str($group[COLUMN_GROUP_ID]), true);
+                    hd_debug_print("special group: " . Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]), true);
 
                     $items[] = array(
-                        PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_mediaurl_str($group[COLUMN_GROUP_ID]),
+                        PluginRegularFolderItem::media_url => Default_Dune_Plugin::get_group_media_url_str($group[COLUMN_GROUP_ID]),
                         PluginRegularFolderItem::caption => TR::t($group[COLUMN_TITLE]),
                         PluginRegularFolderItem::view_item_params => array(
                             ViewItemParams::item_caption_color => $color,
@@ -262,17 +262,17 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
         foreach ($category_list as $category) {
             $category_id = $category->get_id();
             if (!is_null($category->get_sub_categories())) {
-                $media_url_str = self::make_custom_media_url_str($category_id);
+                $media_url_str = self::make_group_media_url_str($category_id);
             } else if ($category_id === Vod_Category::FLAG_ALL_MOVIES
                 || $category_id === Vod_Category::FLAG_ALL_SERIALS
                 || $category_id === Vod_Category::FLAG_SEARCH
                 || $category_id === Vod_Category::FLAG_FILTER) {
                 // special category id's
-                $media_url_str = Starnet_Vod_Movie_List_Screen::make_custom_media_url_str($category_id, null);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::make_vod_media_url_str($category_id, null);
             } else if ($category->get_parent() !== null) {
-                $media_url_str = Starnet_Vod_Movie_List_Screen::make_custom_media_url_str($category->get_parent()->get_id(), $category_id);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::make_vod_media_url_str($category->get_parent()->get_id(), $category_id);
             } else {
-                $media_url_str = Starnet_Vod_Movie_List_Screen::make_custom_media_url_str($category_id, null);
+                $media_url_str = Starnet_Vod_Movie_List_Screen::make_vod_media_url_str($category_id, null);
             }
 
             $items[] = array(
@@ -295,7 +295,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
      * @param string $category_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($category_id)
+    public static function make_group_media_url_str($category_id)
     {
         return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => VOD_GROUP_ID, 'category_id' => $category_id,));
     }

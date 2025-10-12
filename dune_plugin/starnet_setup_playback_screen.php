@@ -28,12 +28,10 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen
 {
     const ID = 'playback_setup';
 
-    const CONTROL_AUTO_RESUME = 'auto_resume';
-    const CONTROL_AUTO_PLAY = 'auto_play';
     const CONTROL_DUNE_FORCE_TS = 'dune_force_ts';
 
     ///////////////////////////////////////////////////////////////////////
@@ -41,74 +39,42 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements 
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        return $this->do_get_control_defs($plugin_cookies);
+        return $this->do_get_control_defs($media_url);
     }
 
     /**
-     * streaming parameters dialog defs
-     * @param object $plugin_cookies
+     * @param MediaURL $media_url
      * @return array
      */
-    public function do_get_control_defs(&$plugin_cookies)
+    protected function do_get_control_defs($media_url)
     {
         hd_debug_print(null, true);
+        hd_debug_print($media_url, true);
 
         $defs = array();
+
+        $playlist_id = isset($media_url->{PARAM_PLAYLIST_ID}) ? $media_url->{PARAM_PLAYLIST_ID} : $this->plugin->get_active_playlist_id();
+        $params = $this->plugin->get_playlist_parameters($playlist_id);
 
         //////////////////////////////////////
         // Plugin name
         $this->plugin->create_setup_header($defs);
 
         //////////////////////////////////////
-        // ext epg
-        if (is_ext_epg_supported()) {
-            $ext_epg = $this->plugin->get_setting(PARAM_SHOW_EXT_EPG, SwitchOnOff::on);
-            Control_Factory::add_image_button($defs, $this, null,
-                PARAM_SHOW_EXT_EPG, TR::t('setup_ext_epg'), SwitchOnOff::translate($ext_epg),
-                SwitchOnOff::to_image($ext_epg), self::CONTROLS_WIDTH);
-        }
-
-        //////////////////////////////////////
-        // auto play
-        $auto_play = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_PLAY, false);
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_PLAY, TR::t('setup_autostart'), SwitchOnOff::translate($auto_play),
-            SwitchOnOff::to_image($auto_play), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
-        // auto resume
-        $auto_resume = self::get_cookie_bool_param($plugin_cookies, self::CONTROL_AUTO_RESUME);
-        Control_Factory::add_image_button($defs, $this, null,
-            self::CONTROL_AUTO_RESUME, TR::t('setup_continue_play'), SwitchOnOff::translate($auto_resume),
-            SwitchOnOff::to_image($auto_resume), self::CONTROLS_WIDTH);
-
-        //////////////////////////////////////
         // Per channel zoom
         $per_channel_zoom = $this->plugin->get_setting(PARAM_PER_CHANNELS_ZOOM, SwitchOnOff::on);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_PER_CHANNELS_ZOOM, TR::t('setup_per_channel_zoom'), SwitchOnOff::translate($per_channel_zoom),
-            SwitchOnOff::to_image($per_channel_zoom), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($per_channel_zoom), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // Force detection stream
         $force_detection = $this->plugin->get_setting(PARAM_DUNE_FORCE_TS, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
             PARAM_DUNE_FORCE_TS, TR::t('setup_channels_dune_force_ts'), SwitchOnOff::translate($force_detection),
-            SwitchOnOff::to_image($force_detection), self::CONTROLS_WIDTH);
+            SwitchOnOff::to_image($force_detection), static::CONTROLS_WIDTH);
 
         //////////////////////////////////////
         // buffering time
@@ -130,7 +96,7 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements 
             TR::t('setup_buffer_time'),
             $buffering,
             $show_buf_time_ops,
-            self::CONTROLS_WIDTH,
+            static::CONTROLS_WIDTH,
             true);
 
         //////////////////////////////////////
@@ -153,8 +119,48 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements 
             TR::t('setup_delay_time'),
             $delay,
             $show_delay_time_ops,
-            self::CONTROLS_WIDTH,
+            static::CONTROLS_WIDTH,
             true);
+
+        //////////////////////////////////////
+        // catchup settings
+
+        $catchup_ops[ATTR_CATCHUP_UNKNOWN] = TR::t('by_default');
+        $catchup_ops[ATTR_CATCHUP_SHIFT] = ATTR_CATCHUP_SHIFT;
+        $catchup_ops[ATTR_CATCHUP_FLUSSONIC] = ATTR_CATCHUP_FLUSSONIC;
+        $catchup_idx = safe_get_value($params, PARAM_USER_CATCHUP, ATTR_CATCHUP_UNKNOWN);
+        Control_Factory::add_combobox($defs, $this, null, PARAM_USER_CATCHUP,
+            TR::t('setup_channels_archive_type'), $catchup_idx, $catchup_ops, static::CONTROLS_WIDTH, true);
+
+        //////////////////////////////////////
+        // UserAgent
+
+        $user_agent = safe_get_value($params, PARAM_USER_AGENT, '');
+        Control_Factory::add_text_field($defs, $this, null, PARAM_USER_AGENT, TR::t('setup_channels_user_agent'),
+            $user_agent, false, false, false, true, static::CONTROLS_WIDTH, true);
+
+        //////////////////////////////////////
+        // enable/disable dune_params
+
+        $enable_dune_params = safe_get_value($params, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_USE_DUNE_PARAMS, TR::t('setup_channels_enable_dune_params'), SwitchOnOff::translate($enable_dune_params),
+            SwitchOnOff::to_image($enable_dune_params), static::CONTROLS_WIDTH);
+
+        //////////////////////////////////////
+        // dune_params
+
+        $dune_params_str = safe_get_value($params, PARAM_DUNE_PARAMS, '');
+        if ($dune_params_str === '[]') {
+            $dune_params_str = '';
+        }
+        $provider = $this->plugin->get_active_provider();
+        if (empty($dune_params_str) && safe_get_value($params, PARAM_TYPE) === PARAM_PROVIDER) {
+            $dune_params_str = $provider->getConfigValue(PARAM_DUNE_PARAMS);
+        }
+
+        Control_Factory::add_text_field($defs, $this, null, PARAM_DUNE_PARAMS, TR::t('setup_channels_dune_params'),
+            $dune_params_str, false, false, false, true, static::CONTROLS_WIDTH, true);
 
         return $defs;
     }
@@ -166,17 +172,14 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements 
     {
         hd_debug_print(null, true);
 
+        $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $playlist_id = isset($parent_media_url->playlist_id) ? $parent_media_url->playlist_id : $this->plugin->get_active_playlist_id();
+
         $control_id = $user_input->control_id;
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
-                $parent_media_url = MediaURL::decode($user_input->parent_media_url);
                 return self::make_return_action($parent_media_url);
-
-            case self::CONTROL_AUTO_PLAY:
-            case self::CONTROL_AUTO_RESUME:
-                self::toggle_cookie_param($plugin_cookies, $control_id);
-                break;
 
             case PARAM_BUFFERING_TIME:
             case PARAM_ARCHIVE_DELAY_TIME:
@@ -185,11 +188,45 @@ class Starnet_Setup_Playback_Screen extends Abstract_Controls_Screen implements 
 
             case PARAM_DUNE_FORCE_TS:
             case PARAM_PER_CHANNELS_ZOOM:
-            case PARAM_SHOW_EXT_EPG:
                 $this->plugin->toggle_setting($control_id);
+                break;
+
+            case PARAM_USER_CATCHUP:
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{PARAM_USER_CATCHUP});
+                break;
+
+            case PARAM_USER_AGENT:
+                $user_agent = $user_input->{PARAM_USER_AGENT};
+                if (empty($user_agent)) {
+                    hd_debug_print("Clear user agent parameter");
+                    $this->plugin->set_playlist_parameter($playlist_id, PARAM_USER_AGENT, $user_agent);
+                } else if ($user_agent !== HD::get_default_user_agent()) {
+                    hd_debug_print("Set user agent parameter: $user_agent");
+                    $this->plugin->set_playlist_parameter($playlist_id, PARAM_USER_AGENT, $user_agent);
+                }
+                $this->plugin->init_user_agent();
+                break;
+
+            case PARAM_USE_DUNE_PARAMS:
+                $old_value = $this->plugin->get_playlist_parameter($playlist_id, PARAM_USE_DUNE_PARAMS, SwitchOnOff::on);
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_USE_DUNE_PARAMS, SwitchOnOff::toggle($old_value));
+                break;
+
+            case PARAM_DUNE_PARAMS:
+                $dune_params = $user_input->{PARAM_DUNE_PARAMS};
+                $provider = $this->plugin->get_active_provider();
+                if (!is_null($provider)) {
+                    // do not update dune_params if they the same as config value
+                    $config_dune_params = $provider->getConfigValue(PARAM_DUNE_PARAMS);
+                    if ($dune_params === $config_dune_params) {
+                        $dune_params = '';
+                    }
+                }
+
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_DUNE_PARAMS, $dune_params);
                 break;
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs($plugin_cookies));
+        return Action_Factory::reset_controls($this->do_get_control_defs($parent_media_url));
     }
 }

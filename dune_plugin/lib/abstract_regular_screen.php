@@ -30,13 +30,17 @@ require_once 'archive.php';
 abstract class Abstract_Regular_Screen extends Abstract_Screen
 {
     /**
-     * Get MediaURL string representation (json encoded)
-     *
-     * @return false|string
+     * @param string $parent_id
+     * @param array $add_params
+     * @return string
      */
-    public static function get_media_url_str()
+    public static function make_callback_media_url_str($parent_id, $add_params = array())
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID));
+        return MediaURL::encode(array_merge(
+            array(PARAM_SCREEN_ID => static::ID,
+                PARAM_SOURCE_WINDOW_ID => $parent_id,
+                PARAM_WINDOW_COUNTER => 1),
+            $add_params));
     }
 
     /**

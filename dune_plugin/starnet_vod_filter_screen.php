@@ -97,7 +97,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return Action_Factory::invalidate_folders(
                     array($user_input->parent_media_url),
                     Action_Factory::open_folder(
-                        Starnet_Vod_Movie_List_Screen::make_custom_media_url_str(Vod_Category::FLAG_FILTER, $filter_string),
+                        Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(Vod_Category::FLAG_FILTER, $filter_string),
                         TR::t('filter')
                     )
                 );
@@ -150,9 +150,9 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
      * @param string $category
      * @return false|string
      */
-    public static function make_custom_media_url_str($category = '')
+    public static function make_group_media_url_str($category = '')
     {
-        return MediaURL::encode(array(PARAM_SCREEN_ID => self::ID, 'group_id' => VOD_FILTER_GROUP_ID, 'category' => $category));
+        return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => VOD_FILTER_GROUP_ID, 'category' => $category));
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -166,7 +166,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
         hd_debug_print($media_url, true);
 
         $items[] = array(
-            PluginRegularFolderItem::media_url => Starnet_Vod_Movie_List_Screen::make_custom_media_url_str(
+            PluginRegularFolderItem::media_url => Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(
                 Vod_Category::FLAG_FILTER, Vod_Category::FLAG_FILTER),
             PluginRegularFolderItem::caption => TR::t('vod_screen_new_filter'),
             PluginRegularFolderItem::view_item_params => array(
@@ -179,7 +179,7 @@ class Starnet_Vod_Filter_Screen extends Abstract_Preloaded_Regular_Screen implem
             if (empty($item_row)) continue;
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_List_Screen::make_custom_media_url_str(
+                PluginRegularFolderItem::media_url => Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(
                     Vod_Category::FLAG_FILTER, $item_row['item']),
                 PluginRegularFolderItem::caption => TR::t('filter__1', $item_row['item']),
                 PluginRegularFolderItem::view_item_params => array(

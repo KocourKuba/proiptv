@@ -175,7 +175,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 return Action_Factory::invalidate_folders(array(
                         $user_input->parent_media_url,
-                        Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID)
+                        Default_Dune_Plugin::get_group_media_url_str(VOD_HISTORY_GROUP_ID)
                     )
                 );
 
@@ -248,9 +248,9 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
      * @param string|null $episode_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($movie_id, $season_id = null, $episode_id = null)
+    public static function make_vod_media_url_str($movie_id, $season_id = null, $episode_id = null)
     {
-        $arr = array(PARAM_SCREEN_ID => self::ID, 'movie_id' => $movie_id);
+        $arr = array(PARAM_SCREEN_ID => static::ID, 'movie_id' => $movie_id);
         if (!empty($season_id)) {
             $arr['season_id'] = $season_id;
         }
@@ -314,7 +314,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
             }
 
             $items[] = array(
-                PluginRegularFolderItem::media_url => self::make_custom_media_url_str($movie->id, $episode->season_id, $episode->id),
+                PluginRegularFolderItem::media_url => self::make_vod_media_url_str($movie->id, $episode->season_id, $episode->id),
                 PluginRegularFolderItem::caption => $info,
                 PluginRegularFolderItem::view_item_params => array(
                     ViewItemParams::icon_path => 'gui_skin://small_icons/movie.aai',

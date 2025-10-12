@@ -35,7 +35,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
      * @param string $group_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($group_id)
+    public static function make_group_media_url_str($group_id)
     {
         return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
     }
@@ -156,7 +156,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::close_and_run(
                         Action_Factory::close_and_run(
-                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::get_media_url_str())
+                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title())
                         )
                     )
                 );

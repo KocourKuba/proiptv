@@ -29,16 +29,16 @@ require_once 'lib/default_dune_plugin.php';
 
 require_once 'starnet_entry_handler.php';
 require_once 'starnet_tv_groups_screen.php';
-require_once 'starnet_setup_playlists_screen.php';
+require_once 'starnet_setup_playlist_screen.php';
 require_once 'starnet_setup_interface_screen.php';
 require_once 'starnet_setup_interface_newui_screen.php';
 require_once 'starnet_setup_category_screen.php';
 require_once 'starnet_setup_epg_screen.php';
-require_once 'starnet_setup_history_screen.php';
+require_once 'starnet_setup_folders_screen.php';
 require_once 'starnet_setup_playback_screen.php';
 require_once 'starnet_setup_provider_screen.php';
+require_once 'starnet_setup_simple_iptv_screen.php';
 require_once 'starnet_setup_ext_screen.php';
-require_once 'starnet_setup_ext_playlists_screen.php';
 require_once 'starnet_tv_changed_channels_screen.php';
 require_once 'starnet_folder_screen.php';
 require_once 'starnet_tv.php';
@@ -77,13 +77,13 @@ class Starnet_Plugin extends Default_Dune_Plugin
         $this->create_screen(new Starnet_Setup_Interface_Screen($this));
         $this->create_screen(new Starnet_Setup_Interface_NewUI_Screen($this));
         $this->create_screen(new Starnet_Setup_Category_Screen($this));
-        $this->create_screen(new Starnet_Setup_Playlists_Screen($this));
+        $this->create_screen(new Starnet_Setup_Playlist_Screen($this));
         $this->create_screen(new Starnet_Setup_Epg_Screen($this));
-        $this->create_screen(new Starnet_Setup_History_Screen($this));
+        $this->create_screen(new Starnet_Setup_Folders_Screen($this));
         $this->create_screen(new Starnet_Setup_Playback_Screen($this));
         $this->create_screen(new Starnet_Setup_Ext_Screen($this));
-        $this->create_screen(new Starnet_Setup_Ext_Playlists_Screen($this));
         $this->create_screen(new Starnet_Setup_Provider_Screen($this));
+        $this->create_screen(new Starnet_Setup_Simple_IPTV_Screen($this));
         $this->create_screen(new Starnet_Setup_Backup_Screen($this));
 
         $this->create_screen(new Starnet_Folder_Screen($this));

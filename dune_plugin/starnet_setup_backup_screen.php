@@ -28,27 +28,25 @@ require_once 'lib/user_input_handler.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 {
     const ID = 'backup_setup';
 
-    /**
-     * @inheritDoc
-     */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
+    const ACTION_RESTORE_FILE_SELECTED = 'restore_file_selected';
+    const ACTION_BACKUP_FOLDER_SELECTED = 'backup_folder_selected';
+    const CONTROL_BACKUP = 'backup';
+    const CONTROL_RESTORE = 'restore';
 
     /**
      * @inheritDoc
      */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
+        return $this->do_get_control_defs();
+    }
+
+    protected function do_get_control_defs()
+    {
         hd_debug_print(null, true);
 
         $defs = array();
@@ -63,10 +61,10 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements Us
         // backup
 
         Control_Factory::add_image_button($defs, $this, null,
-            CONTROL_BACKUP, TR::t('setup_backup_settings'), TR::t('select_folder'), $folder_icon, self::CONTROLS_WIDTH);
+            self::CONTROL_BACKUP, TR::t('setup_backup_settings'), TR::t('select_folder'), $folder_icon, static::CONTROLS_WIDTH);
 
         Control_Factory::add_image_button($defs, $this, null,
-            CONTROL_RESTORE, TR::t('setup_restore_settings'), TR::t('select_file'), $folder_icon, self::CONTROLS_WIDTH);
+            self::CONTROL_RESTORE, TR::t('setup_restore_settings'), TR::t('select_file'), $folder_icon, static::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -92,42 +90,39 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen implements Us
             case GUI_EVENT_KEY_RETURN:
                 return Action_Factory::close_and_run();
 
-            case CONTROL_BACKUP:
-                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
+            case self::CONTROL_BACKUP:
+                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => 'zip',
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => ACTION_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_BACKUP_FOLDER_SELECTED,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                     )
                 );
                 return Action_Factory::open_folder($media_url, TR::t('setup_backup_folder_path'));
 
-            case CONTROL_RESTORE:
-                $media_url = Starnet_Folder_Screen::make_custom_media_url_str(static::ID,
+            case self::CONTROL_RESTORE:
+                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => 'zip',
-                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_SELECTED,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => self::ACTION_RESTORE_FILE_SELECTED,
                         Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
                 return Action_Factory::open_folder($media_url, TR::t('select_file'));
 
-            case ACTION_FOLDER_SELECTED:
+            case self::ACTION_BACKUP_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 $msg = HD::do_backup_settings($this->plugin, $data->{PARAM_FILEPATH}) ? TR::t('setup_copy_done') : TR::t('err_backup');
                 $post_action = Action_Factory::show_title_dialog($msg);
                 break;
 
-            case ACTION_FILE_SELECTED:
+            case self::ACTION_RESTORE_FILE_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 return $this->do_restore_settings($data->{Starnet_Folder_Screen::PARAM_CAPTION}, $data->{PARAM_FILEPATH});
         }
 
-        return Action_Factory::reset_controls(
-            $this->get_control_defs(MediaURL::decode($user_input->parent_media_url), $plugin_cookies),
-            $post_action
-        );
+        return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);
     }
 
     /**

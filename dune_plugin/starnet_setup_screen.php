@@ -29,15 +29,13 @@ require_once 'lib/curl_wrapper.php';
 
 ///////////////////////////////////////////////////////////////////////////
 
-class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Input_Handler
+class Starnet_Setup_Screen extends Abstract_Controls_Screen
 {
     const ID = 'setup';
 
     const CONTROL_INTERFACE_SCREEN = 'interface_screen';
     const CONTROL_PLAYLISTS_SCREEN = 'playlists_screen';
-    const CONTROL_EPG_SCREEN = 'epg_screen';
-    const CONTROL_HISTORY_SCREEN = 'history_screen';
-    const CONTROL_PLAYBACK_SCREEN = 'playback_screen';
+    const CONTROL_FOLDERS_SCREEN = 'folders_screen';
     const CONTROL_EXT_SETUP_SCREEN = 'extended_setup_screen';
 
     ///////////////////////////////////////////////////////////////////////
@@ -45,28 +43,15 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        hd_debug_print(null, true);
-        $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
-        $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
-        return $actions;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function get_control_defs(MediaURL $media_url, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
         return $this->do_get_control_defs();
     }
 
     /**
-     * defs for all controls on screen
      * @return array
      */
-    public function do_get_control_defs()
+    protected function do_get_control_defs()
     {
         hd_debug_print(null, true);
 
@@ -91,43 +76,19 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
         //////////////////////////////////////
         // Interface settings
         Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_INTERFACE_SCREEN,
-            TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+            TR::t('setup_interface_title'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
         $ret_index += 2;
 
         //////////////////////////////////////
-        // Interface NewUI settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), ACTION_EDIT_NEWUI_SETTINGS,
-            TR::t('setup_interface_newui_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
-        $ret_index += 2;
-
-        //////////////////////////////////////
-        // Category settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), ACTION_EDIT_CATEGORY_SCREEN,
-            TR::t('setup_category_title'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
-        $ret_index += 2;
-
-        //////////////////////////////////////
-        // EPG settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_EPG_SCREEN,
-            TR::t('setup_epg_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
-        $ret_index += 2;
-
-        //////////////////////////////////////
-        // History settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_HISTORY_SCREEN,
-            TR::t('setup_history_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
-        $ret_index += 2;
-
-        //////////////////////////////////////
-        // Streaming settings
-        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_PLAYBACK_SCREEN,
-            TR::t('setup_playback_settings'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+        // Folders settings
+        Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_FOLDERS_SCREEN,
+            TR::t('setup_folder_settings'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
         $ret_index += 2;
 
         //////////////////////////////////////
         // Extended settings
         Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::CONTROL_EXT_SETUP_SCREEN,
-            TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, self::CONTROLS_WIDTH);
+            TR::t('setup_extended_setup'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
 
         return $defs;
     }
@@ -174,37 +135,17 @@ class Starnet_Setup_Screen extends Abstract_Controls_Screen implements User_Inpu
 
             case self::CONTROL_INTERFACE_SCREEN: // show interface settings dialog
                 return Action_Factory::open_folder(
-                    Starnet_Setup_Interface_Screen::make_custom_media_url_str(self::ID, $user_input->return_index),
+                    Starnet_Setup_Interface_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_interface_title'));
 
-            case ACTION_EDIT_NEWUI_SETTINGS: // show interface NewUI settings dialog
+            case self::CONTROL_FOLDERS_SCREEN: // show folders settings dialog
                 return Action_Factory::open_folder(
-                    Starnet_Setup_Interface_NewUI_Screen::make_custom_media_url_str(self::ID, $user_input->return_index),
-                    TR::t('setup_interface_newui_title'));
-
-            case ACTION_EDIT_CATEGORY_SCREEN: // show category settings dialog
-                return Action_Factory::open_folder(
-                    Starnet_Setup_Category_Screen::make_custom_media_url_str(self::ID, $user_input->return_index),
-                    TR::t('setup_category_title'));
-
-            case self::CONTROL_EPG_SCREEN: // show epg settings dialog
-                return Action_Factory::open_folder(
-                    Starnet_Setup_Epg_Screen::make_custom_media_url_str(self::ID, $user_input->return_index),
-                    TR::t('setup_epg_settings'));
-
-            case self::CONTROL_HISTORY_SCREEN: // show epg settings dialog
-                return Action_Factory::open_folder(
-                    Starnet_Setup_History_Screen::make_custom_media_url_str(self::ID, $user_input->return_index),
-                    TR::t('setup_history_settings'));
-
-            case self::CONTROL_PLAYBACK_SCREEN: // show streaming settings dialog
-                return Action_Factory::open_folder(
-                    Starnet_Setup_Playback_Screen::make_custom_media_url_str(self::ID, $user_input->return_index),
-                    TR::t('setup_playback_settings'));
+                    Starnet_Setup_Folders_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
+                    TR::t('setup_folder_settings'));
 
             case self::CONTROL_EXT_SETUP_SCREEN: // show additional settings dialog
                 return Action_Factory::open_folder(
-                    Starnet_Setup_Ext_Screen::make_custom_media_url_str(self::ID, $user_input->return_index),
+                    Starnet_Setup_Ext_Screen::make_controls_media_url_str(static::ID, $user_input->return_index),
                     TR::t('setup_extended_setup'));
 
             case ACTION_REFRESH_SCREEN:

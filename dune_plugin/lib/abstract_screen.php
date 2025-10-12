@@ -80,14 +80,6 @@ abstract class Abstract_Screen implements Screen
     /**
      * @inheritDoc
      */
-    public function get_action_map(MediaURL $media_url, &$plugin_cookies)
-    {
-        return null;
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function get_folder_range(MediaURL $media_url, $from_ndx, &$plugin_cookies)
     {
         return null;

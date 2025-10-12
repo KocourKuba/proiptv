@@ -65,7 +65,7 @@ class Movie implements User_Input_Handler
      */
     public function get_handler_id()
     {
-        return self::ID;
+        return static::ID;
     }
 
     public function __sleep()
@@ -111,15 +111,15 @@ class Movie implements User_Input_Handler
         $series_idx = empty($episode->id) ? $user_input->plugin_vod_series_ndx : $episode->id;
         hd_debug_print("add movie to history: id: $user_input->plugin_vod_id, series: $series_idx", true);
 
-        $invalidate[] = Default_Dune_Plugin::get_group_mediaurl_str(VOD_GROUP_ID);
-        $invalidate[] = Default_Dune_Plugin::get_group_mediaurl_str(VOD_HISTORY_GROUP_ID);
+        $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID);
+        $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_HISTORY_GROUP_ID);
 
         if ($user_input->plugin_vod_id === VOD_LIST_GROUP_ID) {
             $movie_id = $episode->id;
-            $invalidate[] = Default_Dune_Plugin::get_group_mediaurl_str(VOD_LIST_GROUP_ID);
+            $invalidate[] = Default_Dune_Plugin::get_group_media_url_str(VOD_LIST_GROUP_ID);
         } else {
             $movie_id = $user_input->plugin_vod_id;
-            $invalidate[] = Starnet_Vod_Series_List_Screen::make_custom_media_url_str($user_input->plugin_vod_id, $episode->season_id);
+            $invalidate[] = Starnet_Vod_Series_List_Screen::make_vod_media_url_str($user_input->plugin_vod_id, $episode->season_id);
         }
 
         $this->plugin->set_vod_history(

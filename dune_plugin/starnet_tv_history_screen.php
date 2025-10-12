@@ -37,7 +37,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
      * @param string $group_id
      * @return false|string
      */
-    public static function make_custom_media_url_str($group_id)
+    public static function make_group_media_url_str($group_id)
     {
         return MediaURL::encode(array(PARAM_SCREEN_ID => static::ID, 'group_id' => $group_id));
     }
@@ -81,8 +81,8 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
             return null;
         }
 
-        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
+        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
 
         switch ($user_input->control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -165,7 +165,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     array(Starnet_Tv_Groups_Screen::ID),
                     Action_Factory::close_and_run(
                         Action_Factory::close_and_run(
-                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::get_media_url_str())
+                            Action_Factory::open_folder(Starnet_Tv_Groups_Screen::ID, $this->plugin->get_plugin_title())
                         )
                     )
                 );

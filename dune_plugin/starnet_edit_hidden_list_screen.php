@@ -36,20 +36,6 @@ class Starnet_Edit_Hidden_List_Screen extends Abstract_Preloaded_Regular_Screen 
     ///////////////////////////////////////////////////////////////////////
 
     /**
-     * @param string $parent_id
-     * @param array $add_params
-     * @return string
-     */
-    public static function make_custom_media_url_str($parent_id, $add_params = array())
-    {
-        return MediaURL::encode(array_merge(
-            array(PARAM_SCREEN_ID => self::ID,
-                PARAM_SOURCE_WINDOW_ID => $parent_id,
-                PARAM_WINDOW_COUNTER => 1),
-            $add_params));
-    }
-
-    /**
      * @inheritDoc
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
