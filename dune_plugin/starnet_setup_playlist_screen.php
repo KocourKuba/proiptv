@@ -99,7 +99,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
 
         $uri = $this->plugin->get_playlist_parameter($playlist_id, PARAM_URI);
         $name = $this->plugin->get_playlist_parameter($playlist_id, PARAM_NAME, basename($uri));
-        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, TR::t('name'),
+        Control_Factory::add_text_field($defs, $this, null, CONTROL_EDIT_NAME, TR::t('playlist_name'),
             $name, false, false, false, true, static::CONTROLS_WIDTH, true);
         $ret_index += 1;
 
