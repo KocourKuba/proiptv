@@ -915,7 +915,7 @@ class vod_standard extends Abstract_Vod
         hd_debug_print(null, true);
 
         $playlist_id = $this->plugin->get_active_playlist_id();
-        if (!$this->plugin->is_playlist_exist($playlist_id)) {
+        if (!$this->plugin->is_playlist_entry_exist($playlist_id)) {
             hd_debug_print("Playlist not defined");
             return false;
         }
@@ -940,7 +940,7 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        $m3u_file = $this->plugin->get_playlist_cache_name(false) . '.m3u8';
+        $m3u_file = $this->plugin->get_playlist_cache_filepath(false) . '.m3u8';
 
         try {
             $reload_playlist = $this->plugin->is_playlist_cache_expired(false);

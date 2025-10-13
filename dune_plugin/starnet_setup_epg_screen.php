@@ -164,7 +164,8 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
             case ACTION_RELOAD:
                 hd_debug_print(ACTION_RELOAD);
-                if (!$this->plugin->reload_channels($plugin_cookies)) {
+                $this->plugin->reset_channels();
+                if (!$this->plugin->load_channels($plugin_cookies)) {
                     return Action_Factory::invalidate_all_folders(
                         $plugin_cookies,
                         null,

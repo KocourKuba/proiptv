@@ -149,33 +149,33 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
         $playlist_id = isset($parent_media_url->playlist_id) ? $parent_media_url->playlist_id : $this->plugin->get_active_playlist_id();
         $params = $this->plugin->get_playlist_parameters($playlist_id);
         $type = safe_get_value($params, PARAM_TYPE);
+        $control_id = $user_input->control_id;
 
-        switch ($user_input->control_id) {
+        switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 $ret_action = ACTION_REFRESH_SCREEN;
                 if ($this->force_parent_reload) {
                     $this->plugin->reset_channels_loaded();
-                    $this->plugin->clear_playlist_cache($playlist_id);
                     $ret_action = ACTION_RELOAD;
                 }
                 return self::make_return_action($parent_media_url, $ret_action);
 
             case CONTROL_URL_PATH:
                 $this->force_parent_reload = true;
-                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{CONTROL_URL_PATH});
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $user_input->{$control_id});
                 break;
 
             case CONTROL_PLAYLIST_IPTV:
                 $this->force_parent_reload = true;
                 $this->plugin->set_playlist_parameter($playlist_id,
                     PARAM_PL_TYPE,
-                    safe_get_member($user_input, CONTROL_EDIT_TYPE, CONTROL_PLAYLIST_IPTV));
+                    safe_get_member($user_input, CONTROL_EDIT_TYPE, $control_id));
                 break;
 
             case PARAM_PLAYLIST_CACHE_TIME_IPTV:
             case PARAM_PLAYLIST_CACHE_TIME_VOD:
-                $this->plugin->set_setting($user_input->control_id, (int)$user_input->{$control_id});
+                $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
                 break;
 
             case CONTROL_DETECT_ID:

@@ -158,7 +158,8 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_RELOAD:
                 hd_debug_print("Action reload", true);
-                $this->plugin->reload_channels($plugin_cookies);
+                $this->plugin->reset_channels();
+                $this->plugin->load_channels($plugin_cookies);
                 return Action_Factory::invalidate_all_folders(
                     $plugin_cookies,
                     array(Starnet_Tv_Groups_Screen::ID),

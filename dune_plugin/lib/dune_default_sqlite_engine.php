@@ -1481,7 +1481,7 @@ class Dune_Default_Sqlite_Engine
      * @param string $id
      * @return bool
      */
-    public function is_playlist_exist($id)
+    public function is_playlist_entry_exist($id)
     {
         if (empty($id)) {
             return false;

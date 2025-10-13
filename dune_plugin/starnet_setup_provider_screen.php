@@ -263,14 +263,14 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $playlist_id = isset($parent_media_url->playlist_id) ? $parent_media_url->playlist_id : $this->plugin->get_active_playlist_id();
         $provider = $this->plugin->get_provider($playlist_id);
+        $control_id = $user_input->control_id;
 
-        switch ($user_input->control_id) {
+        switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
             case GUI_EVENT_KEY_RETURN:
                 $ret_action = ACTION_REFRESH_SCREEN;
                 if ($this->force_parent_reload) {
                     $this->plugin->reset_channels_loaded();
-                    $this->plugin->clear_playlist_cache($playlist_id);
                     $ret_action = ACTION_RELOAD;
                 }
                 return self::make_return_action($parent_media_url, $ret_action);
@@ -299,18 +299,23 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 $this->force_parent_reload = true;
                 break;
 
+            case PARAM_PLAYLIST_CACHE_TIME_IPTV:
+            case PARAM_PLAYLIST_CACHE_TIME_VOD:
+                $this->plugin->set_setting($control_id, (int)$user_input->{$control_id});
+                break;
+
             case self::CONTROL_STREAM:
-                $provider->SetStream($user_input->{self::CONTROL_STREAM});
+                $provider->SetStream($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
             case self::CONTROL_DOMAIN:
-                $provider->SetDomain($user_input->{self::CONTROL_DOMAIN});
+                $provider->SetDomain($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
             case self::CONTROL_SERVER:
-                $provider->SetServer($user_input->{self::CONTROL_SERVER}, $msg);
+                $provider->SetServer($user_input->{$control_id}, $msg);
                 if (!empty($msg)) {
                     return Action_Factory::show_error(false, TR::t('err_error'), explode(PHP_EOL, $msg));
                 }
@@ -319,32 +324,28 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
                 break;
 
             case self::CONTROL_DEVICE:
-                $provider->SetDevice($user_input->{self::CONTROL_DEVICE});
+                $provider->SetDevice($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
             case self::CONTROL_QUALITY:
-                $provider->SetQuality($user_input->{self::CONTROL_QUALITY});
+                $provider->SetQuality($user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
             case self::CONTROL_SELECTED_PLAYLIST:
-                $provider->SetProviderParameter(PARAM_PLAYLIST_IPTV_ID, $user_input->{self::CONTROL_SELECTED_PLAYLIST});
+                $provider->SetProviderParameter(PARAM_PLAYLIST_IPTV_ID, $user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
             case self::CONTROL_CUSTOM_URL:
-                $provider->SetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV, $user_input->{CONTROL_URL_PATH});
+                $provider->SetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV, $user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
 
             case PARAM_REPLACE_ICON:
-                $provider->SetProviderParameter(PARAM_REPLACE_ICON, $user_input->{PARAM_REPLACE_ICON});
-                $this->force_parent_reload = true;
-                break;
-
             case PARAM_SELECTED_MIRROR:
-                $provider->SetProviderParameter(PARAM_SELECTED_MIRROR, $user_input->{PARAM_SELECTED_MIRROR});
+                $provider->SetProviderParameter($control_id, $user_input->{$control_id});
                 $this->force_parent_reload = true;
                 break;
         }

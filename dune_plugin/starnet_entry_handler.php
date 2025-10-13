@@ -221,8 +221,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 );
 
             case ACTION_RELOAD:
-                $this->plugin->init_plugin();
-                $this->plugin->reload_channels($plugin_cookies);
+                $this->plugin->reset_channels();
+                $this->plugin->load_channels($plugin_cookies);
                 return Action_Factory::refresh_entry_points(Starnet_Epfs_Handler::update_epfs_file($plugin_cookies,
                     isset($user_input->first_run_after_boot) || isset($user_input->restore_from_sleep)));
 

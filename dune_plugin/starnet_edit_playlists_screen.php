@@ -116,7 +116,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 return User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
 
             case ACTION_PLUGIN_SETTINGS:
-                if ($this->plugin->is_playlist_exist($selected_id)) {
+                if ($this->plugin->is_playlist_entry_exist($selected_id)) {
                     return $this->plugin->show_protect_settings_dialog($this,
                         Action_Factory::open_folder(
                             Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID, $user_input->sel_idx, $selected_id),
@@ -360,7 +360,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         $sel_idx = array_search($res, $this->plugin->get_all_playlists_ids());
         $this->force_parent_reload = $this->plugin->get_active_playlist_id() === $res;
-        if ($this->plugin->reload_channels($plugin_cookies)) {
+        $this->plugin->reset_channels();
+        if ($this->plugin->load_channels($plugin_cookies)) {
             return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_idx);
         }
 
@@ -673,7 +674,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
 
             $playlist_id = Hashed_Array::hash($uri);
-            if ($this->plugin->is_playlist_exist($playlist_id)) {
+            if ($this->plugin->is_playlist_entry_exist($playlist_id)) {
                 hd_debug_print("already exist: $playlist_id", true);
                 continue;
             }
@@ -701,7 +702,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
 
         $hash = Hashed_Array::hash($selected_media_url->{PARAM_FILEPATH});
-        if ($this->plugin->is_playlist_exist($hash)) {
+        if ($this->plugin->is_playlist_entry_exist($hash)) {
             return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
         }
 
@@ -725,7 +726,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         $old_count = $this->plugin->get_all_playlists_count();
         foreach ($files as $file) {
-            if ($this->plugin->is_playlist_exist(Hashed_Array::hash($file))) continue;
+            if ($this->plugin->is_playlist_entry_exist(Hashed_Array::hash($file))) continue;
             try {
                 $this->add_playlist($file, PARAM_FILE, '', CONTROL_DETECT_ID, CONTROL_PLAYLIST_IPTV);
             } catch (Exception $ex) {
@@ -808,7 +809,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
     protected function add_playlist($uri, $type, $name, $detect_id, $pl_type)
     {
         $playlist_id = Hashed_Array::hash($uri);
-        if ($this->plugin->is_playlist_exist($playlist_id)) {
+        if ($this->plugin->is_playlist_entry_exist($playlist_id)) {
             hd_debug_print("already exist: $playlist_id", true);
             throw new Exception(TR::load('err_file_exist'));
         }
