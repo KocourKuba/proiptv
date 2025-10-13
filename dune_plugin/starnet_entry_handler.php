@@ -74,9 +74,8 @@ class Starnet_Entry_Handler implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         if (!isset($user_input->control_id)) {
+            hd_debug_print("user input control id not set", true);
             return null;
         }
 
@@ -258,7 +257,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                         }
 
                         $mandatory_playback = (int)safe_get_member($user_input,'mandatory_playback');
-                        $auto_play = safe_get_member($plugin_cookies,'auto_play');
+                        $auto_play = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_PLAY);
                         hd_debug_print("Play button used: $mandatory_playback");
                         hd_debug_print("Auto play:        $auto_play");
                         if ($mandatory_playback === 1 || SwitchOnOff::to_bool($auto_play)) {
@@ -335,7 +334,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             return $this->open_playlist_screen();
                         }
 
-                        $auto_resume = safe_get_member($plugin_cookies,'auto_resume');
+                        $auto_resume = safe_get_member($plugin_cookies,PARAM_COOKIE_AUTO_RESUME);
                         hd_debug_print("Auto resume:      $auto_resume");
                         if (!SwitchOnOff::to_bool($auto_resume)) break;
 

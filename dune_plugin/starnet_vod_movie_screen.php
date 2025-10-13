@@ -153,8 +153,6 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         if ($user_input->control_id === PARAM_FAVORITES) {
             $movie_id = $user_input->movie_id;
 

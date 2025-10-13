@@ -58,8 +58,6 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         $selected_id = isset($user_input->selected_media_url) ? MediaURL::decode($user_input->selected_media_url)->id : 0;
 
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);

@@ -74,13 +74,12 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         if (isset($user_input->control_id)) {
             $control_id = $user_input->control_id;
         } else if (isset($user_input->selected_control_id)) {
             $control_id = $user_input->selected_control_id;
         } else {
+            hd_debug_print("user input control id or selected control id not set", true);
             return null;
         }
 

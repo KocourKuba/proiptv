@@ -145,8 +145,6 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         $control_id = $user_input->control_id;
 
         switch ($control_id) {

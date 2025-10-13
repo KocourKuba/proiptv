@@ -93,8 +93,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         // Dump handled possible $user_input message for NewUI.
 
         //control_id => plugin_rows_info_update

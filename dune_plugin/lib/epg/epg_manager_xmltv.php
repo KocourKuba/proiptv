@@ -348,7 +348,7 @@ class Epg_Manager_Xmltv
 
         date_default_timezone_set('UTC');
 
-        set_debug_log($config[PARAM_ENABLE_DEBUG]);
+        set_debug_log($config[PARAM_COOKIE_ENABLE_DEBUG]);
 
         self::set_cache_dir($config[PARAM_CACHE_DIR]);
 

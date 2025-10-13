@@ -51,7 +51,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
     {
         return array(
             GUI_EVENT_KEY_ENTER => User_Input_Handler_Registry::create_action($this,
-                ACTION_CREATE_SEARCH, null, array(ACTION_SEARCH => ACTION_OPEN_FOLDER)),
+                ACTION_SHOW_SEARCH_DLG, null, array(ACTION_SEARCH => ACTION_OPEN_FOLDER)),
             GUI_EVENT_KEY_B_GREEN => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_UP, TR::t('up')),
             GUI_EVENT_KEY_C_YELLOW => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DOWN, TR::t('down')),
             GUI_EVENT_KEY_D_BLUE => User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE, TR::t('delete')),
@@ -65,12 +65,10 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $sel_ndx = $user_input->sel_ndx;
         switch ($user_input->control_id) {
-            case ACTION_CREATE_SEARCH:
+            case ACTION_SHOW_SEARCH_DLG:
                 if (!isset($user_input->parent_media_url)) break;
 
                 $media_url = MediaURL::decode($user_input->selected_media_url);
@@ -95,10 +93,6 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                 return Action_Factory::show_dialog(TR::t('search'), $defs, true);
 
             case ACTION_NEW_SEARCH:
-                return Action_Factory::close_dialog_and_run(
-                    User_Input_Handler_Registry::create_action($this, ACTION_RUN_SEARCH));
-
-            case ACTION_RUN_SEARCH:
                 $search_string = $user_input->{ACTION_NEW_SEARCH};
                 if (isset($user_input->{ACTION_ITEMS_EDIT})) {
                     $idx = (int)$user_input->{ACTION_ITEMS_EDIT};
@@ -111,7 +105,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
                     Starnet_Vod_Movie_List_Screen::make_vod_media_url_str(Vod_Category::FLAG_SEARCH, $search_string),
                     TR::t('search__1', ": $search_string"));
 
-                return Action_Factory::invalidate_folders(array($user_input->parent_media_url), $action);
+                return Action_Factory::close_dialog_and_run(Action_Factory::invalidate_folders(array($user_input->parent_media_url), $action));
 
             case GUI_EVENT_KEY_POPUP_MENU:
                 if (isset($user_input->selected_media_url)
@@ -125,7 +119,7 @@ class Starnet_Vod_Search_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_ITEMS_EDIT:
                 return User_Input_Handler_Registry::create_action($this,
-                    ACTION_CREATE_SEARCH,
+                    ACTION_SHOW_SEARCH_DLG,
                     null,
                     array(ACTION_SEARCH => ACTION_ITEMS_EDIT)
                 );

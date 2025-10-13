@@ -259,8 +259,6 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         $post_action = null;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $playlist_id = isset($parent_media_url->playlist_id) ? $parent_media_url->playlist_id : $this->plugin->get_active_playlist_id();

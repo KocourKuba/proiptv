@@ -79,10 +79,10 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
-        if (!isset($user_input->control_id))
+        if (!isset($user_input->control_id)) {
+            hd_debug_print("user input control id not set", true);
             return null;
+        }
 
         switch ($user_input->control_id) {
             case GUI_EVENT_TIMER:
@@ -279,25 +279,26 @@ class Starnet_Tv implements User_Input_Handler
      */
     public function jump_to_channel($channel_id)
     {
+        hd_debug_print(null, true);
+
         $channel = $this->plugin->get_channel_info($channel_id, true);
         if (empty($channel)) {
+            hd_debug_print("Unknown channel id: $channel_id", true);
             return null;
         }
 
         $group_id = $channel[COLUMN_GROUP_ID];
         $pos = array_search($channel_id, $this->plugin->get_channels_order($group_id));
-        return Action_Factory::close_and_run(
-            Action_Factory::open_folder(
-                Default_Dune_Plugin::get_group_media_url_str($group_id),
-                $group_id,
+        return Action_Factory::open_folder(
+            Default_Dune_Plugin::get_group_media_url_str($group_id),
+            $group_id,
+            null,
+            null,
+            User_Input_Handler_Registry::create_screen_action(
+                Starnet_Tv_Channel_List_Screen::ID,
+                ACTION_JUMP_TO_CHANNEL,
                 null,
-                null,
-                User_Input_Handler_Registry::create_screen_action(
-                    Starnet_Tv_Channel_List_Screen::ID,
-                    ACTION_JUMP_TO_CHANNEL,
-                    null,
-                    array('number' => $pos)
-                )
+                array('number' => $pos)
             )
         );
     }

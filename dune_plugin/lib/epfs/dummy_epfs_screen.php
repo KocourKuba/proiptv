@@ -70,8 +70,6 @@ class Dummy_Epfs_Screen extends Abstract_Rows_Screen implements User_Input_Handl
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         return null;
     }
 

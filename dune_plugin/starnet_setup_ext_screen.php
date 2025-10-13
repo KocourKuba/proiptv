@@ -105,9 +105,9 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 
         //////////////////////////////////////
         // debugging
-        $debug_state = safe_get_member($plugin_cookies, PARAM_ENABLE_DEBUG, SwitchOnOff::off);
+        $debug_state = safe_get_member($plugin_cookies, PARAM_COOKIE_ENABLE_DEBUG, SwitchOnOff::off);
         Control_Factory::add_image_button($defs, $this, null,
-            PARAM_ENABLE_DEBUG, TR::t('setup_debug'), SwitchOnOff::translate($debug_state),
+            PARAM_COOKIE_ENABLE_DEBUG, TR::t('setup_debug'), SwitchOnOff::translate($debug_state),
             SwitchOnOff::to_image($debug_state), static::CONTROLS_WIDTH);
 
         return $defs;
@@ -118,8 +118,6 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         $control_id = $user_input->control_id;
         $post_action = null;
         switch ($control_id) {
@@ -191,8 +189,8 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
 
                 break;
 
-            case PARAM_ENABLE_DEBUG:
-                $debug = SwitchOnOff::to_bool(self::toggle_cookie_param($plugin_cookies,PARAM_ENABLE_DEBUG));
+            case PARAM_COOKIE_ENABLE_DEBUG:
+                $debug = SwitchOnOff::to_bool(self::toggle_cookie_param($plugin_cookies,PARAM_COOKIE_ENABLE_DEBUG));
                 set_debug_log($debug);
                 hd_debug_print("Debug logging: " . var_export($debug, true));
                 break;

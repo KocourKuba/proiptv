@@ -39,11 +39,8 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
      */
     public function get_action_map(MediaURL $media_url, &$plugin_cookies)
     {
-        $add_action = User_Input_Handler_Registry::create_action($this, ACTION_CREATE_SEARCH, TR::t('search'));
-
         $actions[GUI_EVENT_KEY_ENTER] = Action_Factory::open_folder();
-        $actions[GUI_EVENT_KEY_SEARCH] = $add_action;
-        $actions[GUI_EVENT_KEY_C_YELLOW] = $add_action;
+        $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_SEARCH_DLG, TR::t('search'));
         $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
         $actions[GUI_EVENT_KEY_STOP] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_STOP);
 
@@ -59,9 +56,8 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         if (!isset($user_input->selected_media_url)) {
+            hd_debug_print("user input selected media url not set", true);
             return null;
         }
 
@@ -69,25 +65,25 @@ class Starnet_Vod_Movie_List_Screen extends Abstract_Regular_Screen implements U
         $movie_id = $media_url->movie_id;
 
         switch ($user_input->control_id) {
-            case ACTION_CREATE_SEARCH:
+            case ACTION_SHOW_SEARCH_DLG:
                 $defs = array();
-                Control_Factory::add_text_field($defs,
-                    $this, null, ACTION_NEW_SEARCH, '',
+                Control_Factory::add_text_field($defs, $this, null, ACTION_NEW_SEARCH, '',
                     $media_url->name, false, false, true, true, 1300, false, true);
                 Control_Factory::add_vgap($defs, 500);
                 return Action_Factory::show_dialog(TR::t('search'), $defs, true);
 
             case ACTION_NEW_SEARCH:
-                return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, ACTION_RUN_SEARCH));
-
-            case ACTION_RUN_SEARCH:
                 $search_string = $user_input->{ACTION_NEW_SEARCH};
                 $this->plugin->arrange_table_values(VOD_SEARCH_LIST, $search_string, Ordered_Array::TOP);
-                return Action_Factory::invalidate_folders(
-                    array(Default_Dune_Plugin::get_group_media_url_str(VOD_SEARCH_GROUP_ID)),
-                    Action_Factory::open_folder(
-                        static::make_vod_media_url_str(Vod_Category::FLAG_SEARCH, $search_string),
-                        TR::t('search') . ": $search_string"));
+                return Action_Factory::close_dialog_and_run(
+                    Action_Factory::invalidate_folders(
+                        array(Default_Dune_Plugin::get_group_media_url_str(VOD_SEARCH_GROUP_ID)),
+                        Action_Factory::open_folder(
+                            static::make_vod_media_url_str(Vod_Category::FLAG_SEARCH, $search_string),
+                            TR::t('search') . ": $search_string"
+                        )
+                    )
+                );
 
             case ACTION_ADD_FAV:
                 $is_in_favorites = $this->plugin->is_channel_in_order(VOD_FAV_GROUP_ID, $movie_id);

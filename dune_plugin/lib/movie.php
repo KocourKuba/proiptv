@@ -95,8 +95,6 @@ class Movie implements User_Input_Handler
         // playback_browser_activated => 0
         // playback_stop_pressed => 1
 
-        hd_debug_print(null, true);
-
         if (!isset($user_input->control_id) || $user_input->control_id !== GUI_EVENT_PLAYBACK_STOP) {
             return null;
         }

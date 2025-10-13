@@ -29,9 +29,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 {
     const ID = 'tv_channel_list';
 
-    const ACTION_NEW_SEARCH = 'new_search';
-    const ACTION_CREATE_SEARCH = 'create_search';
-    const ACTION_RUN_SEARCH = 'run_search';
     const ACTION_CUSTOM_DELETE = 'custom_delete';
     const ACTION_CUSTOM_STRING_DLG_APPLY = 'apply_custom_string_dlg';
 
@@ -56,11 +53,9 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         hd_debug_print(null, true);
 
         $action_play = User_Input_Handler_Registry::create_action($this, ACTION_PLAY_ITEM);
-        $search_action = User_Input_Handler_Registry::create_action($this, self::ACTION_CREATE_SEARCH, TR::t('search'));
 
         $actions[GUI_EVENT_KEY_ENTER] = $action_play;
         $actions[GUI_EVENT_KEY_PLAY] = $action_play;
-        $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
         $actions[GUI_EVENT_KEY_RETURN] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_RETURN);
         $actions[GUI_EVENT_KEY_TOP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_TOP_MENU);
         $actions[GUI_EVENT_KEY_POPUP_MENU] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_POPUP_MENU);
@@ -72,8 +67,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
         if ((string)$media_url->group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $actions[GUI_EVENT_KEY_C_YELLOW] = $search_action;
-            $actions[GUI_EVENT_KEY_SEARCH] = $search_action;
+            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_SEARCH_DLG, TR::t('search'));
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
         } else if ($this->plugin->get_order_count($media_url->group_id)) {
             $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
@@ -96,9 +90,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         if (!isset($user_input->selected_media_url)) {
+            hd_debug_print("user input selected media url not set", true);
             return null;
         }
 
@@ -175,31 +168,21 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     Action_Factory::open_folder(Starnet_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
                 );
 
-            case self::ACTION_CREATE_SEARCH:
-                $defs = array();
-                $row = $this->plugin->get_channel_info($channel_id);
-                if (empty($row)) {
-                    return null;
-                }
+            case ACTION_SHOW_SEARCH_DLG:
+                return $this->plugin->new_search($this, $plugin_cookies);
 
-                Control_Factory::add_text_field($defs, $this, null, self::ACTION_NEW_SEARCH, '',
-                    $row[COLUMN_TITLE], false, false, true, true, 1300, false, true);
-                Control_Factory::add_vgap($defs, 500);
-                return Action_Factory::show_dialog(TR::t('tv_screen_search_channel'), $defs, true, 1300);
-
-            case self::ACTION_NEW_SEARCH:
-                return Action_Factory::close_dialog_and_run(User_Input_Handler_Registry::create_action($this, self::ACTION_RUN_SEARCH));
-
-            case self::ACTION_RUN_SEARCH:
-                $find_text = $user_input->{self::ACTION_NEW_SEARCH};
-                hd_debug_print("Search in group: $parent_group", true);
-                return $this->do_search($parent_group, $find_text);
+            case ACTION_NEW_SEARCH:
+                return Action_Factory::close_dialog_and_run($this->plugin->do_search($this, $user_input->{ACTION_NEW_SEARCH}, $plugin_cookies));
 
             case ACTION_JUMP_TO_CHANNEL:
                 return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $user_input->number);
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
-                return $this->plugin->iptv->jump_to_channel($channel_id);
+                $ch_id = $channel_id;
+                if (isset($user_input->{COLUMN_CHANNEL_ID})) {
+                    $ch_id = $user_input->{COLUMN_CHANNEL_ID};
+                }
+                return Action_Factory::close_and_run($this->plugin->iptv->jump_to_channel($ch_id));
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
@@ -254,6 +237,11 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 return $this->plugin->do_edit_list_screen(static::ID, $user_input->action_edit, $parent_media_url);
 
             case GUI_EVENT_KEY_POPUP_MENU:
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    ACTION_SHOW_SEARCH_DLG,
+                    TR::t('search'),
+                    "search.png");
+
                 if ($parent_group === TV_ALL_CHANNELS_GROUP_ID) {
                     $menu_items[] = $this->plugin->create_menu_item($this,
                         ACTION_JUMP_TO_CHANNEL_IN_GROUP,
@@ -262,11 +250,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                     $menu_items = array_merge($menu_items, $this->plugin->edit_hidden_menu($this, $parent_group, false));
                 } else {
-                    $menu_items[] = $this->plugin->create_menu_item($this,
-                        self::ACTION_CREATE_SEARCH,
-                        TR::t('search'),
-                        "search.png");
-
                     $special_group = $this->plugin->get_group($parent_group, PARAM_GROUP_SPECIAL);
                     if (empty($special_group)) {
                         $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
@@ -387,56 +370,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         return $this->invalidate_current_folder($parent_media_url, $plugin_cookies, $sel_ndx);
-    }
-
-    /**
-     * @param string $group_id
-     * @param string $find_text
-     * @return array
-     */
-    protected function do_search($group_id, $find_text)
-    {
-        hd_debug_print("Do search in group: $group_id", true);
-
-        if ($group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $groups_order = $this->plugin->get_groups_by_order();
-        } else {
-            $groups_order[] = $this->plugin->get_group($group_id, PARAM_GROUP_ORDINARY);
-        }
-
-        $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
-
-        $defs = array();
-        $q_result = false;
-        $idx = 0;
-        foreach ($groups_order as $group_row) {
-            if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
-
-            $channels_rows = $this->plugin->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
-            foreach ($channels_rows as $channel_row) {
-                if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
-
-                $ch_title = $channel_row[COLUMN_TITLE];
-                $s = mb_stripos($ch_title, $find_text, 0, "UTF-8");
-                if ($s !== false) {
-                    $q_result = true;
-                    hd_debug_print("found channel: $ch_title, idx: $idx", true);
-                    $add_params['number'] = $idx;
-                    Control_Factory::add_close_dialog_and_apply_button($defs, $this, ACTION_JUMP_TO_CHANNEL,
-                        $ch_title, 900, $add_params);
-                }
-                ++$idx;
-            }
-        }
-
-        if ($q_result === false) {
-            Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
-            Control_Factory::add_vgap($defs, 20);
-            Control_Factory::add_close_dialog_and_apply_button($defs, $this, self::ACTION_CREATE_SEARCH,
-                '', TR::t('new_search'), 300);
-        }
-
-        return Action_Factory::show_dialog(TR::t('search'), $defs, true);
     }
 
     /**

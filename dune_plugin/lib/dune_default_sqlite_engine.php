@@ -148,7 +148,7 @@ class Dune_Default_Sqlite_Engine
 
         // remove unused parameters
         $parameters_table = self::PARAMETERS_TABLE;
-        $where = Sql_Wrapper::sql_make_where_clause(array(PARAM_ENABLE_DEBUG, 'xmltv_source_names'), COLUMN_NAME);
+        $where = Sql_Wrapper::sql_make_where_clause(array(PARAM_COOKIE_ENABLE_DEBUG, 'xmltv_source_names'), COLUMN_NAME);
         $this->sql_params->exec("DELETE FROM $parameters_table WHERE $where;");
 
         $parameters = HD::get_data_items('common.settings', true, false);
@@ -156,7 +156,7 @@ class Dune_Default_Sqlite_Engine
             hd_debug_print("Move 'common.settings' to common.db");
             $removed_parameters = array(
                 'config_version', 'cur_xmltv_source', 'cur_xmltv_key', 'fuzzy_search_epg', 'force_http', 'xmltv_source_names',
-                PARAM_ENABLE_DEBUG, PARAM_EPG_JSON_PRESET, PARAM_BUFFERING_TIME, PARAM_NEWUI_ICONS_IN_ROW, PARAM_NEWUI_CHANNEL_POSITION,
+                PARAM_COOKIE_ENABLE_DEBUG, PARAM_EPG_JSON_PRESET, PARAM_BUFFERING_TIME, PARAM_NEWUI_ICONS_IN_ROW, PARAM_NEWUI_CHANNEL_POSITION,
                 PARAM_EPG_CACHE_ENGINE, PARAM_PER_CHANNELS_ZOOM, PARAM_SHOW_FAVORITES, PARAM_SHOW_HISTORY, PARAM_SHOW_ALL,
                 PARAM_SHOW_CHANGED_CHANNELS, PARAM_FAKE_EPG, PARAM_SHOW_VOD, TV_ALL_CHANNELS_GROUP_ID,
             );

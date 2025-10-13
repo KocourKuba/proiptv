@@ -57,9 +57,8 @@ class Starnet_Vod_Favorites_Screen extends Abstract_Preloaded_Regular_Screen imp
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         if (!isset($user_input->selected_media_url)) {
+            hd_debug_print("user input selected media url not set", true);
             return null;
         }
 

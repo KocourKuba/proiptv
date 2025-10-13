@@ -168,8 +168,6 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         $post_action = null;
         $control_id = $user_input->control_id;
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);

@@ -81,9 +81,8 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         if (!isset($user_input->parent_media_url)) {
+            hd_debug_print("user input parent media url not set", true);
             return null;
         }
 
@@ -245,6 +244,18 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 return $this->plugin->do_edit_list_screen(static::ID, $user_input->action_edit, $selected_media_url, $post_action);
 
+            case ACTION_SHOW_SEARCH_DLG:
+                return $this->plugin->new_search($this, $plugin_cookies);
+
+            case ACTION_NEW_SEARCH:
+                return Action_Factory::close_dialog_and_run($this->plugin->do_search($this, $user_input->{ACTION_NEW_SEARCH}, $plugin_cookies));
+
+            case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
+                if (isset($user_input->{COLUMN_CHANNEL_ID})) {
+                    return $this->plugin->iptv->jump_to_channel($user_input->{COLUMN_CHANNEL_ID});
+                }
+                break;
+
             case ACTION_PLUGIN_SETTINGS:
                 return $this->plugin->show_protect_settings_dialog($this,
                     Action_Factory::open_folder(Starnet_Setup_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup'))
@@ -283,6 +294,11 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                 } else {
                     $refresh_menu = $this->plugin->refresh_playlist_menu($this);
+                    $refresh_menu[] = $this->plugin->create_menu_item($this,
+                        ACTION_SHOW_SEARCH_DLG,
+                        TR::t('search'),
+                        "search.png");
+                    $refresh_menu[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
                     $group_id = safe_get_member($selected_media_url, COLUMN_GROUP_ID);
                     $menu_items = array_merge($refresh_menu, $this->plugin->common_categories_menu($this, $group_id));
                 }

@@ -131,11 +131,13 @@ class User_Input_Handler_Registry
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-        dump_input_handler($user_input);
-
         if (isset($user_input->handler_id, $this->handlers[$user_input->handler_id])) {
+            hd_debug_print("Call User Input handler: $user_input->handler_id", true);
+            dump_input_handler($user_input);
             return $this->handlers[$user_input->handler_id]->handle_user_input($user_input, $plugin_cookies);
+        } else {
+            hd_debug_print("Unknown handler: $user_input->handler_id", true);
+            dump_input_handler($user_input);
         }
 
         return null;

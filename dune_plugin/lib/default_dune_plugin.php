@@ -151,8 +151,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         return User_Input_Handler_Registry::get_instance()->handle_user_input($user_input, $plugin_cookies);
     }
 
@@ -1622,7 +1620,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $item[PARAM_CURL_DOWNLOAD_TIMEOUT] = $this->get_parameter(PARAM_CURL_DOWNLOAD_TIMEOUT, 120);
 
         $config = array(
-            PARAM_ENABLE_DEBUG => LogSeverity::$is_debug,
+            PARAM_COOKIE_ENABLE_DEBUG => LogSeverity::$is_debug,
             PARAM_CACHE_DIR => $this->get_cache_dir(),
             PARAMS_XMLTV => $item,
             PARAM_INDEXING_FLAG => $indexing_flag,
@@ -3114,6 +3112,71 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param $plugin_cookies
+     * @return array
+     */
+    public function new_search($handler, $plugin_cookies)
+    {
+        $search_text = safe_get_member($plugin_cookies, PARAM_COOKIE_LAST_TV_SEARCH, '');
+
+        $defs = array();
+        Control_Factory::add_text_field($defs, $handler, null, ACTION_NEW_SEARCH, '', $search_text,
+            false, false, true, true, 1300, false, true);
+        Control_Factory::add_vgap($defs, 500);
+        return Action_Factory::show_dialog(TR::t('tv_screen_search_channel'), $defs, true, 1300);
+    }
+
+    /**
+     * @param User_Input_Handler $handler
+     * @param string $search_text
+     * @return array
+     */
+    public function do_search($handler, $search_text, &$plugin_cookies)
+    {
+        if (empty($search_text)) {
+            return null;
+        }
+
+        hd_debug_print("Do search channel name : '$search_text'", true);
+        $plugin_cookies->{PARAM_COOKIE_LAST_TV_SEARCH} = $search_text;
+
+        $groups_order = $this->get_groups_by_order();
+        $show_adult = $this->get_bool_setting(PARAM_SHOW_ADULT);
+
+        $defs = array();
+        $q_result = false;
+        foreach ($groups_order as $group_row) {
+            if ($group_row[COLUMN_ADULT] && !$show_adult) continue;
+
+            $channels_rows = $this->get_channels_by_order($group_row[COLUMN_GROUP_ID]);
+            foreach ($channels_rows as $channel_row) {
+                if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
+
+                $ch_title = $channel_row[COLUMN_TITLE];
+                $s = mb_stripos($ch_title, $search_text, 0, "UTF-8");
+                if ($s !== false) {
+                    $ch_id = $channel_row[COLUMN_CHANNEL_ID];
+                    $q_result = true;
+                    hd_debug_print("found channel: '$ch_title', id: $ch_id in group: '{$group_row[COLUMN_GROUP_ID]}'", true);
+                    $add_params[COLUMN_CHANNEL_ID] = $ch_id;
+                    Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_JUMP_TO_CHANNEL_IN_GROUP,
+                        $ch_title, 900, $add_params);
+                }
+            }
+        }
+
+        if ($q_result === false) {
+            Control_Factory::add_multiline_label($defs, '', TR::t('tv_screen_not_found'), 6);
+            Control_Factory::add_vgap($defs, 20);
+            Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_SHOW_SEARCH_DLG,
+                '', TR::t('new_search'), 300);
+        }
+
+        return Action_Factory::show_dialog(TR::t('search'), $defs, true);
+    }
 
     /**
      * disable channels by pattern and remove it from order

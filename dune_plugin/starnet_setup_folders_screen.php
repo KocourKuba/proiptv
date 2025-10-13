@@ -95,8 +95,6 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
      */
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
-        hd_debug_print(null, true);
-
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $control_id = $user_input->control_id;
         $post_action = null;
