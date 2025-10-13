@@ -143,6 +143,16 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 break;
 
             case PARAM_EPG_CACHE_ENGINE:
+                $post_action = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
+                $val = $user_input->{$control_id};
+                $active_sources = $this->plugin->get_selected_xmltv_ids();
+                if (empty($active_sources) && $val !== ENGINE_XMLTV) {
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_no_xmltv_sources'), $post_action);
+                }
+                $this->plugin->set_setting($control_id, $val);
+                $this->plugin->init_epg_manager();
+                return $post_action;
+
             case PARAM_EPG_JSON_PRESET:
                 $this->plugin->set_setting($control_id, $user_input->{$control_id});
                 $this->plugin->init_epg_manager();

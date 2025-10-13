@@ -69,25 +69,22 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
         //////////////////////////////////////
         // picon settings
 
-        $active_sources = $this->plugin->get_selected_xmltv_ids();
-        if (count($active_sources)) {
-            $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
-            $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
-            $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
-            $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
-            Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
-                TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, static::CONTROLS_WIDTH, true);
+        $picons_ops[PLAYLIST_PICONS] = TR::t('playlist_picons');
+        $picons_ops[XMLTV_PICONS] = TR::t('xmltv_picons');
+        $picons_ops[COMBINED_PICONS] = TR::t('combined_picons');
+        $picons_idx = $this->plugin->get_setting(PARAM_USE_PICONS, PLAYLIST_PICONS);
+        Control_Factory::add_combobox($defs, $this, null, PARAM_USE_PICONS,
+            TR::t('setup_channels_picons_source'), $picons_idx, $picons_ops, static::CONTROLS_WIDTH, true);
 /*
-            //////////////////////////////////////
-            // Delayed picons indexing
-            if (defined('PluginUpdateEpgActionData::ext_epg_enabled') && $picons_idx !== PLAYLIST_PICONS) {
-                $delay_load = $this->plugin->get_setting(PARAM_PICONS_DELAY_LOAD, SwitchOnOff::off);
-                Control_Factory::add_image_button($defs, $this, null,
-                    PARAM_PICONS_DELAY_LOAD, TR::t('setup_channels_delay_picons_load'), SwitchOnOff::translate($delay_load),
-                    SwitchOnOff::to_image($delay_load), static::CONTROLS_WIDTH);
-            }
-*/
+        //////////////////////////////////////
+        // Delayed picons indexing
+        if (defined('PluginUpdateEpgActionData::ext_epg_enabled') && $picons_idx !== PLAYLIST_PICONS) {
+            $delay_load = $this->plugin->get_setting(PARAM_PICONS_DELAY_LOAD, SwitchOnOff::off);
+            Control_Factory::add_image_button($defs, $this, null,
+                PARAM_PICONS_DELAY_LOAD, TR::t('setup_channels_delay_picons_load'), SwitchOnOff::translate($delay_load),
+                SwitchOnOff::to_image($delay_load), static::CONTROLS_WIDTH);
         }
+*/
 
         //////////////////////////////////////
         // show all channels category
@@ -146,6 +143,7 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
     public function handle_user_input(&$user_input, &$plugin_cookies)
     {
         $control_id = $user_input->control_id;
+        $post_action = null;
 
         switch ($control_id) {
             case GUI_EVENT_KEY_TOP_MENU:
@@ -175,11 +173,17 @@ class Starnet_Setup_Category_Screen extends Abstract_Controls_Screen
 
             case PARAM_USE_PICONS:
                 $this->force_parent_reload = true;
-                $this->plugin->set_setting($user_input->control_id, $user_input->{$user_input->control_id});
+                $active_sources = $this->plugin->get_selected_xmltv_ids();
+                $val = $user_input->{$control_id};
+                if (empty($active_sources) && $val !== PLAYLIST_PICONS) {
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_no_xmltv_sources'));
+                }
+
+                $this->plugin->set_setting($user_input->control_id, $val);
                 $this->plugin->update_ui_settings();
                 break;
         }
 
-        return Action_Factory::reset_controls($this->do_get_control_defs());
+        return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);
     }
 }

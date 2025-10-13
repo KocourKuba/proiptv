@@ -439,3 +439,4 @@ err_patch = Palette patch failed!
 err_restore_patch = Palette restore failed!\nThe palette file has not been modified or there is no backup.
 err_no_need_patch = No palette fixing required!
 err_load_xmltv_source = Can't load XMLTV source!
+err_no_xmltv_sources = No XMLTV source selected!
