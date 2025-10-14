@@ -173,18 +173,6 @@ class api_iptvonline extends api_default
     /**
      * @inheritDoc
      */
-    public function replace_macros($string)
-    {
-        hd_debug_print("current api template: $string", true);
-        $string = str_replace(MACRO_TOKEN, $this->plugin->get_cookie(PARAM_TOKEN), $string);
-        hd_debug_print("current api result: $string", true);
-
-        return parent::replace_macros($string);
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function GetInfoUI($handler)
     {
         $account_info = $this->get_provider_info();

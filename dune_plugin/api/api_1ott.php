@@ -50,16 +50,4 @@ class api_1ott extends api_default
         Default_Dune_Plugin::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token'));
         return false;
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function replace_macros($string)
-    {
-        hd_debug_print("current api template: $string", true);
-        $string = str_replace(MACRO_SESSION_ID, $this->plugin->get_cookie(PARAM_SESSION_ID), $string);
-        hd_debug_print("current api result: $string", true);
-
-        return parent::replace_macros($string);
-    }
 }

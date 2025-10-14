@@ -75,12 +75,9 @@ class api_vidok extends api_default
     /**
      * @inheritDoc
      */
-    public function replace_macros($string)
+    public function GetSessionId()
     {
-        $token = md5(strtolower($this->GetProviderParameter(MACRO_LOGIN)) . md5($this->GetProviderParameter(MACRO_PASSWORD)));
-        $string = str_replace(MACRO_SESSION_ID, $token, $string);
-
-        return parent::replace_macros($string);
+        return md5(strtolower($this->GetProviderParameter(MACRO_LOGIN)) . md5($this->GetProviderParameter(MACRO_PASSWORD)));
     }
 
     public function GetInfoUI($handler)

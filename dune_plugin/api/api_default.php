@@ -570,6 +570,7 @@ class api_default
             MACRO_API => 'getApiUrl',
             MACRO_MIRROR => 'GetPlaylistMirror',
             MACRO_EPG_DOMAIN => 'GetEpgDomain',
+            MACRO_SESSION_ID => 'GetSessionId',
         );
 
         foreach ($config_macroses as $macro => $function) {
@@ -593,10 +594,9 @@ class api_default
 
         $string = $this->replace_by_func($string);
 
-        static $macroses = array(
+        static $params_macroses = array(
             MACRO_LOGIN => '',
             MACRO_PASSWORD => '',
-            MACRO_SESSION_ID => '',
             MACRO_STREAM_ID => '',
             MACRO_DOMAIN_ID => '',
             MACRO_DEVICE_ID => '',
@@ -604,11 +604,14 @@ class api_default
             MACRO_QUALITY_ID => '',
         );
 
-        foreach ($macroses as $macro => $default) {
+        foreach ($params_macroses as $macro => $default) {
             if (strpos($string, $macro) !== false) {
                 $string = str_replace($macro, trim($this->GetProviderParameter($macro, $default)), $string);
             }
         }
+
+        $string = str_replace(MACRO_TOKEN, $this->plugin->get_cookie(PARAM_TOKEN), $string);
+
         hd_debug_print("result: $string", true);
 
         return $string;
@@ -744,7 +747,8 @@ class api_default
     }
 
     /**
-     * returns list of account playlists
+     * returns account playlists
+     *
      * @return array|null
      */
     public function GetPlaylistsIptv()
@@ -758,7 +762,7 @@ class api_default
     }
 
     /**
-     * returns playlist url for current playlist id
+     * returns iptv playlist url for current playlist id
      *
      * @return string
      */
@@ -783,7 +787,7 @@ class api_default
     }
 
     /**
-     * returns current playlist id
+     * returns current iptv playlist id
      *
      * @return string
      */
@@ -801,7 +805,8 @@ class api_default
     }
 
     /**
-     * returns list of account playlists
+     * returns account vod playlists
+     *
      * @return array|null
      */
     public function GetPlaylistsVod()
@@ -810,7 +815,7 @@ class api_default
     }
 
     /**
-     * returns playlist url for current playlist id
+     * returns vod playlist url for current playlist id
      *
      * @return string
      */
@@ -833,6 +838,12 @@ class api_default
 
         return $playlist;
     }
+
+    /**
+     * returns vod playlist id for current playlist id
+     *
+     * @return string
+     */
     public function GetPlaylistVodId()
     {
         $playlists = $this->GetPlaylistsVod();
@@ -846,6 +857,9 @@ class api_default
         return $playlist_id;
     }
 
+    /**
+     * @return string
+     */
     public function GetPlaylistMirror()
     {
         $mirror = '';
@@ -862,9 +876,20 @@ class api_default
         return $mirror;
     }
 
+    /**
+     * @return string
+     */
     public function GetEpgDomain()
     {
         return $this->GetProviderParameter(MACRO_EPG_DOMAIN);
+    }
+
+    /**
+     * @return string
+     */
+    public function GetSessionId()
+    {
+        return $this->plugin->get_cookie(PARAM_SESSION_ID);
     }
 
     /**

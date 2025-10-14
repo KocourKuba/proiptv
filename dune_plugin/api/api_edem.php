@@ -84,6 +84,9 @@ class api_edem extends api_default
     public function replace_macros($string)
     {
         $string = parent::replace_macros($string);
+
+        hd_debug_print("current api template: $string", true);
+
         $macroses = array(
             MACRO_OTTKEY => '',
             MACRO_VPORTAL => '',
@@ -95,8 +98,8 @@ class api_edem extends api_default
                 $string = str_replace($macro, trim($this->GetProviderParameter($macro, $default)), $string);
             }
         }
-        hd_debug_print("result: $string", true);
 
+        hd_debug_print("current api result: $string", true);
         return $string;
     }
 

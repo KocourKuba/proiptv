@@ -38,15 +38,14 @@ class api_tvteam extends api_default
      */
     public function replace_macros($string)
     {
-        $hash_password = md5($this->GetProviderParameter(MACRO_PASSWORD));
-        $session_id = $this->plugin->get_cookie(PARAM_SESSION_ID);
-        $token = $this->plugin->get_cookie(PARAM_TOKEN);
-        $string = str_replace(
-            array(MACRO_SESSION_ID, MACRO_HASH_PASSWORD, MACRO_TOKEN),
-            array($session_id, $hash_password, $token),
-            $string);
+        $string = parent::replace_macros($string);
 
-        return parent::replace_macros($string);
+        hd_debug_print("current api template: $string", true);
+        $hash_password = md5($this->GetProviderParameter(MACRO_PASSWORD));
+        $string = str_replace(MACRO_HASH_PASSWORD, $hash_password, $string);
+        hd_debug_print("current api result: $string", true);
+
+        return $string;
     }
 
     /**
