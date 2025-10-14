@@ -80,6 +80,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
             return null;
         }
 
+        $fav_id = $this->plugin->get_fav_id();
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
 
@@ -131,10 +132,10 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
 
             case ACTION_ADD_FAV:
                 $this->force_parent_reload = true;
-                $is_favorite = $this->plugin->is_channel_in_order(TV_FAV_GROUP_ID, $selected_media_url->channel_id);
+                $is_favorite = $this->plugin->is_channel_in_order($fav_id, $selected_media_url->channel_id);
                 $opt_type = $is_favorite ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
-                $this->plugin->change_channels_order(TV_FAV_GROUP_ID, $selected_media_url->channel_id, $is_favorite);
+                $this->plugin->change_channels_order($fav_id, $selected_media_url->channel_id, $is_favorite);
                 return Action_Factory::show_title_dialog($message,
                     $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 

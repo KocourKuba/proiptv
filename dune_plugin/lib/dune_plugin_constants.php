@@ -113,6 +113,7 @@ const TV_ALL_CHANNELS_GROUP_CAPTION = 'plugin_all_channels';
 const TV_ALL_CHANNELS_GROUP_ICON = 'plugin_file://icons/all_folder.png';
 
 const TV_FAV_GROUP_ID = '##favorites##';
+const TV_FAV_COMMON_GROUP_ID = '##common_favorites##';
 const TV_FAV_GROUP_CAPTION = 'plugin_favorites';
 const TV_FAV_GROUP_ICON = 'plugin_file://icons/favorite_folder.png';
 
@@ -166,6 +167,7 @@ const COLUMN_HASH = 'hash';
 const COLUMN_CHANNEL_ID = 'channel_id';
 const COLUMN_GROUP_ID = 'group_id';
 const COLUMN_GROUP_ORDER = 'group_order';
+const COLUMN_DISABLED = 'disabled';
 const COLUMN_ICON = 'icon';
 const COLUMN_TITLE = 'title';
 const COLUMN_NAME = 'name';
@@ -310,6 +312,7 @@ const PARAM_CUSTOM_PLAYLIST_IPTV = 'custom_playlist_iptv_url';
 const PARAM_CUSTOM_PLAYLIST_VOD = 'custom_playlist_vod_url';
 const PARAM_PLAYLIST_IPTV_ID = 'playlist_id';
 const PARAM_PLAYLIST_VOD_ID = 'playlist_vod_id';
+const PARAM_USE_COMMON_FAV = 'use_common_fav';
 
 const PARAM_GROUP_ORDINARY = 0;
 const PARAM_GROUP_SPECIAL = 1;

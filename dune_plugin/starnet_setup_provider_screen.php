@@ -40,7 +40,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
     const CONTROL_STREAM = 'stream';
     const CONTROL_CUSTOM_URL = 'custom_url';
     const CONTROL_SELECTED_PLAYLIST = 'selected_playlist';
-
+    const ACTION_COPY_FAVORITE = 'copy_favorite';
     ///////////////////////////////////////////////////////////////////////
 
     /**
@@ -227,6 +227,11 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             }
         }
 
+        $fav_id = $this->plugin->get_setting(PARAM_USE_COMMON_FAV, SwitchOnOff::off);
+        Control_Factory::add_image_button($defs, $this, null,
+            PARAM_USE_COMMON_FAV, TR::t('setup_use_common_fav'), SwitchOnOff::translate($fav_id),
+            SwitchOnOff::to_image($fav_id), static::CONTROLS_WIDTH);
+
         //////////////////////////////////////
         // Cache time
 
@@ -347,6 +352,30 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             case PARAM_SELECTED_MIRROR:
                 $provider->SetProviderParameter($control_id, $user_input->{$control_id});
                 $this->force_parent_reload = true;
+                break;
+
+            case PARAM_USE_COMMON_FAV:
+                $this->plugin->toggle_setting($control_id, false);
+                $msg = $this->plugin->get_bool_setting(PARAM_USE_COMMON_FAV)
+                    ? TR::t('yes_no_confirm_to_cmn_msg')
+                    : TR::t('yes_no_confirm_to_pl_msg');
+                $post_action = Action_Factory::show_confirmation_dialog($msg, $this, self::ACTION_COPY_FAVORITE);
+                break;
+
+            case self::ACTION_COPY_FAVORITE:
+                $cmn_fav_ids = $this->plugin->get_channels_order(TV_FAV_COMMON_GROUP_ID);
+                $pl_fav_ids = $this->plugin->get_channels_order(TV_FAV_GROUP_ID);
+                $target = $this->plugin->get_fav_id();
+                if ($target === TV_FAV_COMMON_GROUP_ID) {
+                    $add_fav_ids = array_diff($pl_fav_ids, $cmn_fav_ids);
+                } else {
+                    $add_fav_ids = array_diff($cmn_fav_ids, $pl_fav_ids);
+                }
+
+                if (!empty($add_fav_ids)) {
+                    $this->plugin->bulk_change_channels_order($target, $add_fav_ids, false);
+                    $this->force_parent_reload = true;
+                }
                 break;
         }
 

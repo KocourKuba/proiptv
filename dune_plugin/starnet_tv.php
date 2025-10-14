@@ -131,7 +131,7 @@ class Starnet_Tv implements User_Input_Handler
                 break;
 
             case GUI_EVENT_PLAYBACK_STOP:
-                $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id, true);
+                $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id);
                 if (safe_get_value($channel, COLUMN_ADULT, 0) != 0) break;
 
                 $this->plugin->update_tv_history($user_input->plugin_tv_channel_id);
@@ -172,6 +172,7 @@ class Starnet_Tv implements User_Input_Handler
             );
         }
 
+        $fav_id = $this->plugin->get_fav_id();
         $all_channels = array();
         foreach ($this->plugin->get_groups_by_order() as $group_row) {
             $group_id = $group_row[COLUMN_GROUP_ID];
@@ -244,7 +245,7 @@ class Starnet_Tv implements User_Input_Handler
             PluginTvInfo::initial_group_id => $initial_group_id,
 
             PluginTvInfo::initial_is_favorite => $initial_is_favorite,
-            PluginTvInfo::favorite_channel_ids => $this->plugin->get_channels_order(TV_FAV_GROUP_ID),
+            PluginTvInfo::favorite_channel_ids => $this->plugin->get_channels_order($fav_id),
 
             PluginTvInfo::initial_archive_tm => isset($media_url->archive_tm) ? (int)$media_url->archive_tm : -1,
 
@@ -281,7 +282,7 @@ class Starnet_Tv implements User_Input_Handler
     {
         hd_debug_print(null, true);
 
-        $channel = $this->plugin->get_channel_info($channel_id, true);
+        $channel = $this->plugin->get_channel_info($channel_id);
         if (empty($channel)) {
             hd_debug_print("Unknown channel id: $channel_id", true);
             return null;

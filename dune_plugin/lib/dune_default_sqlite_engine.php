@@ -1188,6 +1188,7 @@ class Dune_Default_Sqlite_Engine
     {
         $groups_info_table = self::get_table_name(GROUPS_INFO);
         $groups_order_table = self::get_table_name(GROUPS_ORDER);
+        /** @noinspection SqlCheckUsingColumns */
         $query = "SELECT grp.group_id, grp.title, grp.icon, grp.adult
                     FROM $groups_info_table AS grp
                     INNER JOIN $groups_order_table as ord USING(group_id) ORDER BY ord.ROWID;";
@@ -1262,6 +1263,7 @@ class Dune_Default_Sqlite_Engine
     /**
      * return is channel in group order
      * @param string $group_id
+     * @param string $channel_id
      * @return int
      */
     public function is_channel_in_order($group_id, $channel_id)
@@ -1270,6 +1272,19 @@ class Dune_Default_Sqlite_Engine
         $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
         $query = "SELECT COUNT(*) FROM $table_name WHERE channel_id = $q_channel_id;";
         return (int)$this->sql_playlist->query_value($query);
+    }
+
+    /**
+     * return is channel in group order
+     * @param string $channel_id
+     * @return bool
+     */
+    public function is_channel_visible($channel_id)
+    {
+        $table_name = self::get_table_name(CHANNELS_INFO);
+        $q_channel_id = Sql_Wrapper::sql_quote($channel_id);
+        $query = "SELECT disabled FROM $table_name WHERE channel_id = $q_channel_id;";
+        return $this->sql_playlist->query_value($query) === 0;
     }
 
     /**
@@ -1298,6 +1313,27 @@ class Dune_Default_Sqlite_Engine
             $qry = "DELETE FROM $table_name WHERE channel_id = $q_channel_id;";
         } else {
             $qry = "INSERT OR IGNORE INTO $table_name (channel_id) VALUES ($q_channel_id);";
+        }
+        return $this->sql_playlist->exec($qry);
+    }
+
+    /**
+     * @param string $group_id
+     * @param array $channel_ids
+     * @param bool $remove
+     * @return bool
+     */
+    public function bulk_change_channels_order($group_id, $channel_ids, $remove)
+    {
+        $table_name = self::get_table_name($group_id);
+        if ($remove) {
+            $q_channel_ids = Sql_Wrapper::sql_make_list_from_values($channel_ids);
+            $qry = "DELETE FROM $table_name WHERE channel_id IN ($q_channel_ids);";
+        } else {
+            $qry = '';
+            foreach ($channel_ids as $channel_id) {
+                $qry .= "INSERT OR IGNORE INTO $table_name (channel_id) VALUES ('$channel_id');";
+            }
         }
         return $this->sql_playlist->exec($qry);
     }
@@ -1768,6 +1804,7 @@ class Dune_Default_Sqlite_Engine
         $q_series_id = Sql_Wrapper::sql_quote($series_id);
         $q_params = Sql_Wrapper::sql_make_list_from_keys($values);
         $q_values = Sql_Wrapper::sql_make_list_from_values($values);
+        /** @noinspection SqlInsertValues */
         $query = "INSERT OR REPLACE INTO $table_name (movie_id, series_id, $q_params) VALUES ($q_movie_id, $q_series_id, $q_values);";
         $this->sql_playlist->exec($query);
     }
@@ -1859,14 +1896,17 @@ class Dune_Default_Sqlite_Engine
     }
 
     /**
+     * @param string $group_id
+     * @param bool $include_hidden
      * @return array
      */
-    public function get_channels_by_order($group_id)
+    public function get_channels_by_order($group_id, $include_hidden = false)
     {
         if (!$this->sql_playlist->is_database_attached(M3uParser::IPTV_DB)) {
             return array();
         }
 
+        $hidden = $include_hidden ? "" : "AND ch.disabled = 0";
         $iptv_channels = M3uParser::CHANNELS_TABLE;
         $order_table = self::get_table_name($group_id);
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
@@ -1874,7 +1914,7 @@ class Dune_Default_Sqlite_Engine
         $query = "SELECT ord.channel_id, ch.*, pl.*, pl.ROWID as ch_number
                     FROM $iptv_channels AS pl
                     JOIN $order_table AS ord ON pl.$column = ord.channel_id
-                    JOIN $channels_info_table as ch ON ch.channel_id = ord.channel_id AND ch.disabled = 0
+                    JOIN $channels_info_table as ch ON ch.channel_id = ord.channel_id $hidden
                     ORDER BY ord.ROWID;";
         return $this->sql_playlist->fetch_array($query);
     }
@@ -1882,13 +1922,14 @@ class Dune_Default_Sqlite_Engine
     /**
      * @return int
      */
-    public function get_channels_by_order_cnt($group_id)
+    public function get_channels_by_order_cnt($group_id, $include_hidden = false)
     {
         if (!$this->sql_playlist->is_database_attached(M3uParser::IPTV_DB)) {
             hd_debug_print("Database iptv not attached");
             return 0;
         }
 
+        $hidden = $include_hidden ? "" : "AND ch.disabled = 0";
         $iptv_channels = M3uParser::CHANNELS_TABLE;
         $order_table = self::get_table_name($group_id);
         $channels_info_table = self::get_table_name(CHANNELS_INFO);
@@ -1896,7 +1937,7 @@ class Dune_Default_Sqlite_Engine
         $query = "SELECT COUNT(ord.channel_id)
                     FROM $iptv_channels AS pl
                     JOIN $order_table AS ord ON pl.$column = ord.channel_id
-                    JOIN $channels_info_table as ch ON ch.channel_id = ord.channel_id AND ch.disabled = 0
+                    JOIN $channels_info_table as ch ON ch.channel_id = ord.channel_id $hidden
                     ORDER BY ord.ROWID;";
         return $this->sql_playlist->query_value($query);
     }
@@ -1939,7 +1980,7 @@ class Dune_Default_Sqlite_Engine
      * @param bool $full
      * @return array
      */
-    public function get_channel_info($channel_id, $full = false)
+    public function get_channel_info($channel_id, $full = true)
     {
         $channel_id = Sql_Wrapper::sql_quote($channel_id);
         $table_name = self::get_table_name(CHANNELS_INFO);
@@ -2088,6 +2129,7 @@ class Dune_Default_Sqlite_Engine
                 break;
 
             case TV_FAV_GROUP_ID:
+            case TV_FAV_COMMON_GROUP_ID:
                 $table_name = self::FAV_TV_ORDERS_TABLE;
                 break;
 
@@ -2155,6 +2197,7 @@ class Dune_Default_Sqlite_Engine
             case VOD_LIST_GROUP_ID:
             case VOD_FILTER_LIST:
             case VOD_SEARCH_LIST:
+            case TV_FAV_COMMON_GROUP_ID:
                 $db = '';
                 break;
             case GROUPS_INFO:

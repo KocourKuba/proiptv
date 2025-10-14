@@ -95,6 +95,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
             return null;
         }
 
+        $fav_id = $this->plugin->get_fav_id();
         $selected_media_url = MediaURL::decode($user_input->selected_media_url);
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
         $parent_group = $parent_media_url->group_id;
@@ -158,7 +159,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
             case ACTION_ADD_FAV:
                 $this->force_parent_reload = true;
-                $in_order = $this->plugin->is_channel_in_order(TV_FAV_GROUP_ID, $channel_id);
+                $in_order = $this->plugin->is_channel_in_order($fav_id, $channel_id);
                 $opt_type = $in_order ? PLUGIN_FAVORITES_OP_REMOVE : PLUGIN_FAVORITES_OP_ADD;
                 $this->plugin->change_tv_favorites($opt_type, $channel_id, $plugin_cookies);
                 break;
@@ -219,7 +220,7 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 break;
 
             case ACTION_ITEM_BOTTOM:
-                $max_sel = $this->plugin->get_order_count(TV_FAV_GROUP_ID) - 1;
+                $max_sel = $this->plugin->get_order_count($fav_id) - 1;
                 if ($sel_ndx === $max_sel) {
                     return null;
                 }
@@ -394,7 +395,8 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 $groups_order[] = $this->plugin->get_group($media_url->group_id, PARAM_GROUP_ORDINARY);
             }
 
-            $fav_ids = $this->plugin->get_channels_order(TV_FAV_GROUP_ID);
+            $fav_id = $this->plugin->get_fav_id();
+            $fav_ids = $this->plugin->get_channels_order($fav_id);
             $show_adult = $this->plugin->get_bool_setting(PARAM_SHOW_ADULT);
 
             foreach ($groups_order as $group_row) {

@@ -268,7 +268,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             $pass_sex = $this->get_parameter(PARAM_ADULT_PASSWORD);
-            $channel_row = $this->get_channel_info($channel_id, true);
+            $channel_row = $this->get_channel_info($channel_id);
             if (empty($channel_row)) {
                 throw new Exception("Unknown channel");
             }
@@ -315,7 +315,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             }
 
             // get channel by hash
-            $channel_row = $this->get_channel_info($channel_id, true);
+            $channel_row = $this->get_channel_info($channel_id);
             if (empty($channel_row)) {
                 throw new Exception('Unknown channel');
             }
@@ -452,40 +452,41 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return array();
         }
 
+        $fav_id = $this->get_fav_id();
         hd_debug_print(null, true);
 
         switch ($op_type) {
             case PLUGIN_FAVORITES_OP_ADD:
                 hd_debug_print("Add channel $channel_id to favorites", true);
-                $this->change_channels_order(TV_FAV_GROUP_ID, $channel_id, false);
+                $this->change_channels_order($fav_id, $channel_id, false);
                 break;
 
             case PLUGIN_FAVORITES_OP_REMOVE:
                 hd_debug_print("Remove channel $channel_id from favorites", true);
-                $this->change_channels_order(TV_FAV_GROUP_ID, $channel_id, true);
+                $this->change_channels_order($fav_id, $channel_id, true);
                 break;
 
             case ACTION_ITEM_UP:
             case PLUGIN_FAVORITES_OP_MOVE_UP:
-                $this->arrange_channels_order_rows(TV_FAV_GROUP_ID, $channel_id, Ordered_Array::UP);
+                $this->arrange_channels_order_rows($fav_id, $channel_id, Ordered_Array::UP);
                 break;
 
             case ACTION_ITEM_DOWN:
             case PLUGIN_FAVORITES_OP_MOVE_DOWN:
-                $this->arrange_channels_order_rows(TV_FAV_GROUP_ID, $channel_id, Ordered_Array::DOWN);
+                $this->arrange_channels_order_rows($fav_id, $channel_id, Ordered_Array::DOWN);
                 break;
 
             case ACTION_ITEM_TOP:
-                $this->arrange_channels_order_rows(TV_FAV_GROUP_ID, $channel_id, Ordered_Array::TOP);
+                $this->arrange_channels_order_rows($fav_id, $channel_id, Ordered_Array::TOP);
                 break;
 
             case ACTION_ITEM_BOTTOM:
-                $this->arrange_channels_order_rows(TV_FAV_GROUP_ID, $channel_id, Ordered_Array::BOTTOM);
+                $this->arrange_channels_order_rows($fav_id, $channel_id, Ordered_Array::BOTTOM);
                 break;
 
             case ACTION_ITEMS_CLEAR:
                 hd_debug_print("Clear favorites", true);
-                $this->remove_channels_order(TV_FAV_GROUP_ID);
+                $this->remove_channels_order($fav_id);
                 break;
         }
 
@@ -970,6 +971,9 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
+        Default_Dune_Plugin::clear_last_error(LAST_ERROR_PLAYLIST);
+        Default_Dune_Plugin::clear_last_error(LAST_ERROR_REQUEST);
+
         $playlist_id = $this->get_active_playlist_id();
         if (!$this->is_playlist_entry_exist($playlist_id)) {
             hd_debug_print("Playlist info for ID: $playlist_id is not exist!");
@@ -996,26 +1000,34 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        Default_Dune_Plugin::clear_last_error(LAST_ERROR_PLAYLIST);
-        Default_Dune_Plugin::clear_last_error(LAST_ERROR_REQUEST);
-
         // create settings table
         $query = sprintf(self::CREATE_PLAYLIST_SETTINGS_TABLE, self::SETTINGS_TABLE);
         $this->sql_playlist->exec($query);
 
+        // create cookies table
         $query = sprintf(self::CREATE_COOKIES_TABLE, self::COOKIES_TABLE);
         $this->sql_playlist->exec($query);
 
-        // create tables for vod search, vod filters, vod favorites
-        $tables = array(VOD_FILTER_LIST => 'item', VOD_SEARCH_LIST => 'item', VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID);
-        if ($this->get_vod_class() === 'vod_standard') {
-            $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
-        }
+        // create common TV Favorites table
+        $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_COMMON_GROUP_ID), COLUMN_CHANNEL_ID);
+        $this->sql_playlist->exec($query);
 
-        foreach ($tables as $list => $column) {
-            $table_name = self::get_table_name($list);
-            $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
-            $this->sql_playlist->exec($query);
+        // create tables for vod search, vod filters, vod favorites
+        if ($this->is_vod_enabled()) {
+            $tables = array(
+                VOD_FILTER_LIST => 'item',
+                VOD_SEARCH_LIST => 'item',
+                VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
+            );
+            if ($this->get_vod_class() === 'vod_standard') {
+                $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
+            }
+
+            foreach ($tables as $list => $column) {
+                $table_name = self::get_table_name($list);
+                $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
+                $this->sql_playlist->exec($query);
+            }
         }
 
         $provider_class = $this->get_playlist_parameter($playlist_id, PARAM_PROVIDER);
@@ -2253,7 +2265,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return Action_Factory::tv_play($media_url);
         }
 
-        $channel_row = $this->get_channel_info($media_url->channel_id, true);
+        $channel_row = $this->get_channel_info($media_url->channel_id);
         if (empty($channel_row)) {
             throw new Exception("Unknown channel");
         }
@@ -2265,6 +2277,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         exec($cmd, $output);
         hd_debug_print("external player exec result code" . HD::ArrayToStr($output));
         return null;
+    }
+
+    public function get_fav_id()
+    {
+        return $this->get_bool_setting(PARAM_USE_COMMON_FAV, false) ? TV_FAV_COMMON_GROUP_ID : TV_FAV_GROUP_ID;
     }
 
     /**
@@ -2670,6 +2687,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print(null, true);
         hd_debug_print("group: $group_id, is classic: " . var_export($is_classic, true), true);
 
+        $fav_id = $this->get_fav_id();
         $menu_items = array();
         if ($group_id !== null) {
             $menu_items[] = $this->create_menu_item($handler, ACTION_ITEM_TOGGLE_MOVE, TR::t('tv_screen_toggle_move'), "move.png");
@@ -2677,7 +2695,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $menu_items[] = $this->create_menu_item($handler, GuiMenuItemDef::is_separator);
 
             if (!$is_classic) {
-                if ($group_id === TV_FAV_GROUP_ID && $this->get_order_count(TV_FAV_GROUP_ID)) {
+                if ($group_id === $fav_id && $this->get_order_count($fav_id)) {
                     $menu_items[] = $this->create_menu_item($handler, ACTION_ITEMS_CLEAR, TR::t('clear_favorites'), "brush.png");
                 }
             }
@@ -2871,7 +2889,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     public function do_show_channel_info($channel_id, $is_classic)
     {
-        $channel_row = $this->get_channel_info($channel_id, true);
+        $channel_row = $this->get_channel_info($channel_id);
         if (empty($channel_row)) {
             return null;
         }
@@ -3416,6 +3434,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         return ($group_id === TV_ALL_CHANNELS_GROUP_ID
             || $group_id === TV_FAV_GROUP_ID
+            || $group_id === TV_FAV_COMMON_GROUP_ID
             || $group_id === TV_HISTORY_GROUP_ID
             || $group_id === TV_CHANGED_CHANNELS_GROUP_ID
             || $group_id === VOD_GROUP_ID);

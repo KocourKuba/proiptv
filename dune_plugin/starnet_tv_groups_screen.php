@@ -86,8 +86,9 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
             return null;
         }
 
+        $fav_id = $this->plugin->get_fav_id();
         $parent_media_url = MediaURL::decode($user_input->parent_media_url);
-        $selected_media_url = MediaURL::decode($user_input->selected_media_url);
+        $selected_media_url = MediaURL::decode(safe_get_member($user_input, 'selected_media_url'));
         $sel_ndx = safe_get_member($user_input, 'sel_ndx', 0);
 
         switch ($user_input->control_id) {
@@ -386,7 +387,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
 
-                if ($group_id === TV_FAV_GROUP_ID) {
+                if ($group_id === $fav_id) {
                     $this->plugin->change_tv_favorites(ACTION_ITEMS_CLEAR, null, $plugin_cookies);
                     return User_Input_Handler_Registry::create_action($this, ACTION_REFRESH_SCREEN);
                 }
@@ -404,7 +405,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         $icon = TV_ALL_CHANNELS_GROUP_ICON;
                         break;
 
-                    case TV_FAV_GROUP_ID:
+                    case $fav_id:
                         $icon = TV_FAV_GROUP_ICON;
                         break;
 
@@ -541,11 +542,12 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 case TV_FAV_GROUP_ID:
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) break;
+                    $fav_id = $this->plugin->get_fav_id();
 
-                    $channels_cnt = $this->plugin->get_order_count($group_id);
+                    $channels_cnt = $this->plugin->get_order_count($fav_id);
                     if (!$channels_cnt) break;
 
-                    $caption = TR::t('plugin_favorites');
+                    $caption = $fav_id === TV_FAV_COMMON_GROUP_ID ? TR::t('plugin_common_favorites') : TR::t('plugin_favorites');
                     $detailed_info = TR::t('tv_screen_group_info__2', $caption, $channels_cnt);
                     $special_items[] = $this->add_item($group_row, $caption, DEF_LABEL_TEXT_COLOR_GOLD, $detailed_info);
                     break;
@@ -658,7 +660,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
                 case TV_FAV_GROUP_ID:
                     if ($this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) {
-                        $channels_cnt = $this->plugin->get_order_count($group_id);
+                        $channels_cnt = $this->plugin->get_channels_by_order_cnt($this->plugin->get_fav_id());
                         if ($channels_cnt) {
                             $visible++;
                         }
