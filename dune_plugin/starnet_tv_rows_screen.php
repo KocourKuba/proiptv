@@ -456,7 +456,6 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             return $this->get_empty_rows_pane();
         }
 
-        $fav_id = $this->plugin->get_fav_id();
         $all_channels_rows = array();
         $all_channels_headers = array();
         $fav_headers = array();
@@ -474,7 +473,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $this->get_all_channels_row($all_channels_rows, $all_channels_headers);
                     break;
 
-                case $fav_id:
+                case TV_FAV_GROUP_ID:
                     $this->get_favorites_rows($favorites_rows,$fav_headers);
                     break;
 

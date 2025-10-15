@@ -245,7 +245,7 @@ setup_cache_time_h__1 = %s ч.
 setup_cache_time_d__1 = %s дн.
 setup_connect_timeout = Таймаут соединения (сек)
 setup_download_timeout = Таймаут скачивания (сек)
-setup_native_url = URL из кабинета
+setup_native_url = Ссылка из кабинета
 setup_native_file = Файл плейлиста
 setup_use_common_fav = Использовать общее "Избранное"
 

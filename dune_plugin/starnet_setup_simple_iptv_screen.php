@@ -87,7 +87,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
 
         $uri = safe_get_value($params, PARAM_URI);
         if ($type === PARAM_FILE) {
-            $uri_str = HD::string_ellipsis($uri, 30);
+            $uri_str = HD::string_ellipsis($uri);
             Control_Factory::add_image_button($defs, $this, null, ACTION_CHOOSE_FILE,
                 TR::t('playlist'), $uri_str, get_image_path('m3u_file.png'), static::CONTROLS_WIDTH);
         } else if ($type === PARAM_LINK) {

@@ -199,7 +199,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
             //////////////////////////////////////
             // Direct playlist file
             $file_path = $provider->GetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV);
-            $path_str = HD::string_ellipsis($file_path, 30);
+            $path_str = HD::string_ellipsis($file_path);
             Control_Factory::add_image_button($defs, $this, null, ACTION_CHOOSE_FILE,
                 TR::t('select_file'), $path_str, get_image_path('m3u_file.png'), static::CONTROLS_WIDTH);
         } else {
