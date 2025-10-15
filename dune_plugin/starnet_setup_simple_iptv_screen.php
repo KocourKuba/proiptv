@@ -88,7 +88,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
         $uri = safe_get_value($params, PARAM_URI);
         if ($type === PARAM_FILE) {
             $uri_str = HD::string_ellipsis($uri, 30);
-            Control_Factory::add_image_button($defs, $this, null, CONTROL_URL_PATH,
+            Control_Factory::add_image_button($defs, $this, null, ACTION_CHOOSE_FILE,
                 TR::t('playlist'), $uri_str, get_image_path('folder.png'), static::CONTROLS_WIDTH);
         } else if ($type === PARAM_LINK) {
             Control_Factory::add_text_field($defs, $this, null, CONTROL_URL_PATH, TR::t('playlist'),
@@ -171,6 +171,23 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                 $this->plugin->set_playlist_parameter($playlist_id,
                     PARAM_PL_TYPE,
                     safe_get_member($user_input, CONTROL_EDIT_TYPE, $control_id));
+                break;
+
+            case ACTION_CHOOSE_FILE:
+                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
+                    array(
+                        PARAM_EXTENSION => PLAYLIST_PATTERN,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_PLAYLIST,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
+                    )
+                );
+
+                return Action_Factory::open_folder($media_url, TR::t('select_file'));
+
+            case ACTION_FILE_PLAYLIST:
+                $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $this->plugin->set_playlist_parameter($playlist_id, PARAM_URI, $selected_media_url->{PARAM_FILEPATH});
                 break;
 
             case PARAM_PLAYLIST_CACHE_TIME_IPTV:

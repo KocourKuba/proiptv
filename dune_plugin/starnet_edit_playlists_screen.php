@@ -31,7 +31,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
     const SCREEN_EDIT_PLAYLIST = 'playlist';
 
-    const ACTION_FILE_PLAYLIST = 'play_list_file';
     const ACTION_FILE_TEXT_LIST = 'text_list_file';
 
     const ACTION_REMOVE_ITEM_DLG_APPLY = 'remove_item_apply';
@@ -119,7 +118,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 if ($this->plugin->is_playlist_entry_exist($selected_id)) {
                     return $this->plugin->show_protect_settings_dialog($this,
                         Action_Factory::open_folder(
-                            Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID, $user_input->sel_idx, $selected_id),
+                            Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID, $user_input->sel_ndx, $selected_id),
                             TR::t('setup_playlist')
                         )
                     );
@@ -224,12 +223,12 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 return $this->apply_add_m3u_type($user_input);
 
             case ACTION_CHOOSE_FILE:
-                $allow_network = ($user_input->{PARAM_SELECTED_ACTION} === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk();
+                //$allow_network = ($user_input->{PARAM_SELECTED_ACTION} === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk();
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
                         Starnet_Folder_Screen::PARAM_CHOOSE_FILE => $user_input->{PARAM_SELECTED_ACTION},
-                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => $allow_network,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
@@ -239,7 +238,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             case self::ACTION_FILE_TEXT_LIST:
                 return $this->selected_text_file($user_input);
 
-            case self::ACTION_FILE_PLAYLIST:
+            case ACTION_FILE_PLAYLIST:
                 return $this->selected_m3u_file($user_input);
 
             case self::ACTION_CHOOSE_FOLDER:
@@ -397,7 +396,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             ACTION_ADD_URL_DLG,
             TR::t('edit_list_add_url'),
             "link.png",
-            array(PARAM_SELECTED_ACTION => self::ACTION_FILE_PLAYLIST)
+            array(PARAM_SELECTED_ACTION => ACTION_FILE_PLAYLIST)
         );
 
         // Add File
@@ -406,7 +405,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             TR::t('select_file'),
             "m3u_file.png",
             array(
-                PARAM_SELECTED_ACTION => self::ACTION_FILE_PLAYLIST,
+                PARAM_SELECTED_ACTION => ACTION_FILE_PLAYLIST,
                 PARAM_EXTENSION => PLAYLIST_PATTERN
             )
         );

@@ -782,36 +782,40 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                     throw new Exception("Unable to init provider to download: " . json_encode($params));
                 }
 
-                if ($provider->get_provider_info() === false) {
-                    throw new Exception("Unable to get provider info to download: " . json_encode($params));
-                }
-
-                $playlist = $provider->GetPlaylistIptvUrl();
-                if (empty($playlist)) {
-                    hd_debug_print("playlist url is empty");
-                    throw new Exception("playlist url is empty");
-                }
-
-                hd_debug_print("Provider playlist url: $playlist", true);
                 hd_debug_print("Load provider playlist to: $m3u_file");
 
-                $cmd = API_COMMAND_GET_PLAYLIST;
-                $curl_opts = $provider->getCurlOpts($cmd);
-                $exec_result = $provider->execApiCommand($cmd, $m3u_file, false, $curl_opts);
-                $res = $provider->postExecAction($cmd, $exec_result, $m3u_file);
-                if ($res === false) {
-                    $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
+                if ($provider->GetPlaylistIptvId() === DIRECT_FILE_PLAYLIST_ID) {
+                    $file_path = $provider->GetPlaylistIptvUrl();
+                    hd_debug_print("copy file: $file_path to $m3u_file");
+                    $res = copy($file_path, $m3u_file);
+                    if ($res === false) {
+                        $errors = error_get_last();
+                        $logfile = "Copy error: " . $errors['type'] . "\n" . $errors['message'];
+                    }
+                } else {
+                    if ($provider->get_provider_info() === false) {
+                        throw new Exception("Unable to get provider info to download: " . json_encode($params));
+                    }
+                    $cmd = API_COMMAND_GET_PLAYLIST;
+                    $curl_opts = $provider->getCurlOpts($cmd);
+                    $exec_result = $provider->execApiCommand($cmd, $m3u_file, false, $curl_opts);
+                    $res = $provider->postExecAction($cmd, $exec_result, $m3u_file);
+                    if ($res === false) {
+                        $logfile = "Error code: " . $provider->getCurlWrapper()->get_error_no() . "\n" . $provider->getCurlWrapper()->get_error_desc();
+                    }
                 }
             } else {
                 $uri = safe_get_value($params, PARAM_URI);
+                if (empty($uri)) {
+                    throw new Exception("Empty url: $uri");
+                }
                 if ($type === PARAM_FILE) {
-                    if (empty($uri)) {
-                        throw new Exception("Empty url: $uri");
-                    }
                     hd_debug_print("m3u copy local file: $uri to $m3u_file");
                     $res = copy($uri, $m3u_file);
-                    $errors = error_get_last();
-                    $logfile = "Copy error: " . $errors['type'] . "\n" .$errors['message'];
+                    if ($res === false) {
+                        $errors = error_get_last();
+                        $logfile = "Copy error: " . $errors['type'] . "\n" .$errors['message'];
+                    }
                 } else if ($type === PARAM_LINK || $type === PARAM_CONF) {
                     hd_debug_print("m3u download link: $uri");
                     if (!is_proto_http($uri)) {
@@ -820,7 +824,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                     $curl_wrapper = Curl_Wrapper::getInstance();
                     $this->set_curl_timeouts($curl_wrapper);
-                    $res = $curl_wrapper->download_file($uri, $m3u_file, false);
+                    $res = $curl_wrapper->download_file($uri, $m3u_file, true);
                     $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
                 } else {
                     throw new Exception("Unknown playlist type");

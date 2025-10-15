@@ -97,6 +97,7 @@ const ACTION_DISABLED = 'disabled';
 const ACTION_ORDER_SUPPORT = 'order_support';
 const ACTION_EXPORT = 'export';
 const ACTION_EXPORT_APPLY_DLG = 'apply_export';
+const ACTION_FILE_PLAYLIST = 'play_list_file';
 
 const CONTROL_ACTION_EDIT = 'action_edit';
 const CONTROL_EDIT_NAME = 'set_item_name';
@@ -398,6 +399,7 @@ const EPG_JSON_PRESET_ALIAS = 'alias';
 const EPG_JSON_AUTH = 'json_auth';
 const EPG_JSON_EPG_MAP = 'epg_map';
 const DIRECT_PLAYLIST_ID = 'custom';
+const DIRECT_FILE_PLAYLIST_ID = 'custom_file';
 
 # Media types patterns
 const AUDIO_PATTERN = 'mp3|ac3|wma|ogg|ogm|m4a|aif|iff|mid|mpa|ra|wav|flac|ape|vorbis|aac|a52';
