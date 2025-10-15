@@ -223,7 +223,6 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 return $this->apply_add_m3u_type($user_input);
 
             case ACTION_CHOOSE_FILE:
-                //$allow_network = ($user_input->{PARAM_SELECTED_ACTION} === self::ACTION_FILE_TEXT_LIST) && !is_limited_apk();
                 $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
                     array(
                         PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
@@ -246,6 +245,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                     array(
                         PARAM_EXTENSION => $user_input->{PARAM_EXTENSION},
                         Starnet_Folder_Screen::PARAM_CHOOSE_FOLDER => self::ACTION_IMPORT_FOLDER_SELECTED,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
                         Starnet_Folder_Screen::PARAM_READ_ONLY => true,
                     )
                 );
