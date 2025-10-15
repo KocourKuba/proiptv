@@ -94,7 +94,7 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         // Account
 
         Control_Factory::add_image_button($defs, $this, null, ACTION_EDIT_PROVIDER_DLG,
-            TR::t('edit_account'), TR::t('setup_change_settings'), get_image_path('folder.png'), static::CONTROLS_WIDTH);
+            TR::t('edit_account'), TR::t('setup_change_settings'), get_image_path('info.png'), static::CONTROLS_WIDTH);
 
         if ($provider->hasApiCommand(API_COMMAND_GET_VOD) !== null
             && $provider->getConfigValue(CONFIG_VOD_PARSER) !== null) {
@@ -187,14 +187,21 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
         $pl_idx = $provider->GetPlaylistIptvId();
 
         Control_Factory::add_combobox($defs, $this, null, self::CONTROL_SELECTED_PLAYLIST,
-            TR::t('playlist'), $pl_idx, $pl_names, static::CONTROLS_WIDTH, true);
+            TR::t('provider_playlist'), $pl_idx, $pl_names, static::CONTROLS_WIDTH, true);
 
         if ($pl_idx === DIRECT_PLAYLIST_ID) {
             //////////////////////////////////////
             // Direct playlist url
             $url = $provider->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
-            Control_Factory::add_text_field($defs, $this, null, self::CONTROL_CUSTOM_URL, TR::t('url'),
+            Control_Factory::add_text_field($defs, $this, null, self::CONTROL_CUSTOM_URL, TR::t('direct_url'),
                 $url, false, false, false, true, static::CONTROLS_WIDTH, true);
+        } else if ($pl_idx === DIRECT_FILE_PLAYLIST_ID) {
+            //////////////////////////////////////
+            // Direct playlist file
+            $file_path = $provider->GetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV);
+            $path_str = HD::string_ellipsis($file_path, 30);
+            Control_Factory::add_image_button($defs, $this, null, ACTION_CHOOSE_FILE,
+                TR::t('select_file'), $path_str, get_image_path('m3u_file.png'), static::CONTROLS_WIDTH);
         } else {
             //////////////////////////////////////
             // Icon replacements settings
@@ -352,6 +359,24 @@ class Starnet_Setup_Provider_Screen extends Abstract_Controls_Screen
 
             case self::CONTROL_CUSTOM_URL:
                 $provider->SetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV, $user_input->{$control_id});
+                $this->force_parent_reload = true;
+                break;
+
+            case ACTION_CHOOSE_FILE:
+                $media_url = Starnet_Folder_Screen::make_callback_media_url_str(static::ID,
+                    array(
+                        PARAM_EXTENSION => PLAYLIST_PATTERN,
+                        Starnet_Folder_Screen::PARAM_CHOOSE_FILE => ACTION_FILE_PLAYLIST,
+                        Starnet_Folder_Screen::PARAM_ALLOW_NETWORK => !is_limited_apk(),
+                        Starnet_Folder_Screen::PARAM_READ_ONLY => true,
+                    )
+                );
+
+                return Action_Factory::open_folder($media_url, TR::t('select_file'));
+
+            case ACTION_FILE_PLAYLIST:
+                $selected_media_url = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
+                $provider->SetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV, $selected_media_url->{PARAM_FILEPATH});
                 $this->force_parent_reload = true;
                 break;
 

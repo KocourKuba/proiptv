@@ -757,6 +757,9 @@ class api_default
         if (!isset($config_playlist[DIRECT_PLAYLIST_ID])) {
             $config_playlist[DIRECT_PLAYLIST_ID][COLUMN_NAME] = TR::load('setup_native_url');
         }
+        if (!isset($config_playlist[DIRECT_FILE_PLAYLIST_ID])) {
+            $config_playlist[DIRECT_FILE_PLAYLIST_ID][COLUMN_NAME] = TR::load('setup_native_file');
+        }
 
         return $config_playlist;
     }
@@ -773,6 +776,8 @@ class api_default
 
         if ($playlist_iptv_id === DIRECT_PLAYLIST_ID) {
             $playlist = $this->GetProviderParameter(PARAM_CUSTOM_PLAYLIST_IPTV);
+        } else if ($playlist_iptv_id === DIRECT_FILE_PLAYLIST_ID) {
+            $playlist = $this->GetProviderParameter(PARAM_CUSTOM_FILE_PLAYLIST_IPTV);
         } else {
             $provider_playlists_iptv = $this->GetPlaylistsIptv();
             if (empty($provider_playlists_iptv[$playlist_iptv_id][COLUMN_URL])) {

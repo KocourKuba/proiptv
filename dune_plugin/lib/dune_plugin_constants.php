@@ -310,6 +310,7 @@ const PARAM_CURL_CONNECT_TIMEOUT = 'curl_connect_timeout';
 const PARAM_CURL_DOWNLOAD_TIMEOUT = 'curl_download_timeout';
 const PARAM_SELECTED_MIRROR = 'selected_mirror';
 const PARAM_CUSTOM_PLAYLIST_IPTV = 'custom_playlist_iptv_url';
+const PARAM_CUSTOM_FILE_PLAYLIST_IPTV = 'custom_playlist_iptv_file';
 const PARAM_CUSTOM_PLAYLIST_VOD = 'custom_playlist_vod_url';
 const PARAM_PLAYLIST_IPTV_ID = 'playlist_id';
 const PARAM_PLAYLIST_VOD_ID = 'playlist_vod_id';

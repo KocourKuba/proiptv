@@ -85,7 +85,6 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
         $defs = array();
 
         $setting_icon = get_image_path('settings.png');
-        $folder_icon = get_image_path('folder.png');
 
         //////////////////////////////////////
         // Plugin name
@@ -108,10 +107,10 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
 
         if ($this->plugin->get_playlist_parameter($playlist_id, PARAM_TYPE) === PARAM_PROVIDER) {
             Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::ACTION_EDIT_PROVIDER_SETTINGS,
-                TR::t('edit_provider_settings'), TR::t('setup_change_settings'), $folder_icon, static::CONTROLS_WIDTH);
+                TR::t('edit_provider_settings'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
         } else {
             Control_Factory::add_image_button($defs, $this, array(PARAM_RETURN_INDEX => $ret_index), self::ACTION_EDIT_IPTV_SETTINGS,
-                TR::t('edit_iptv_settings'), TR::t('setup_change_settings'), $folder_icon, static::CONTROLS_WIDTH);
+                TR::t('edit_iptv_settings'), TR::t('setup_change_settings'), $setting_icon, static::CONTROLS_WIDTH);
         }
         $ret_index += 2;
 
