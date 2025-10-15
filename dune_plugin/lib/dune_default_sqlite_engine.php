@@ -69,7 +69,9 @@ class Dune_Default_Sqlite_Engine
     const CREATE_COOKIES_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                     (param TEXT PRIMARY KEY NOT NULL, value TEXT DEFAULT '', time_stamp INTEGER DEFAULT 0);";
 
-    const CREATE_TV_HISTORY_TABLE = "CREATE TABLE IF NOT EXISTS %s (channel_id TEXT PRIMARY KEY NOT NULL, time_stamp INTEGER DEFAULT 0);";
+    const CREATE_TV_HISTORY_TABLE = "CREATE TABLE IF NOT EXISTS %s
+                                        (channel_id TEXT PRIMARY KEY NOT NULL, time_stamp INTEGER DEFAULT 0,
+                                        time_start INTEGER DEFAULT 0, time_end INTEGER DEFAULT 0);";
     const CREATE_VOD_HISTORY_TABLE = "CREATE TABLE IF NOT EXISTS %s
                                         (movie_id TEXT, series_id TEXT, watched INTEGER DEFAULT 0, position INTEGER DEFAULT 0,
                                         duration INTEGER DEFAULT 0, time_stamp INTEGER DEFAULT 0, UNIQUE(movie_id, series_id));";
@@ -90,9 +92,9 @@ class Dune_Default_Sqlite_Engine
     protected $channel_id_map = '';
 
     /**
-     * @var string
+     * @var array
      */
-    protected $current_playback_channel_id;
+    protected $playback_points = array();
 
     public function get_sql_playlist()
     {
@@ -616,7 +618,7 @@ class Dune_Default_Sqlite_Engine
 
         $q_hash = Sql_Wrapper::sql_quote($value[COLUMN_HASH]);
         $q_update = Sql_Wrapper::sql_make_set_list($value);
-        $this->sql_params->exec("UPDATE $table_name $q_update WHERE hash = $q_hash;");
+        $this->sql_params->exec("UPDATE $table_name SET $q_update WHERE hash = $q_hash;");
     }
 
     /**
@@ -1680,53 +1682,6 @@ class Dune_Default_Sqlite_Engine
     {
         $table_name = self::get_table_name(TV_HISTORY);
         return (int)$this->sql_playlist->query_value("SELECT COUNT(*) FROM $table_name;");
-    }
-
-    /**
-     * @param string|null $id
-     */
-    public function update_tv_history($id)
-    {
-        if ($this->current_playback_channel_id === null && $id === null)
-            return;
-
-        // update point for selected channel
-        $id = ($id !== null) ? $id : $this->current_playback_channel_id;
-
-        if (isset($this->playback_points[$id])) {
-            $player_state = get_player_state_assoc();
-            $state = safe_get_value($player_state, PLAYBACK_STATE);
-            if ($state === PLAYBACK_PLAYING || $state === PLAYBACK_STOPPED) {
-
-                // if channel does support archive do not update current point
-                $this->playback_points[$id] += ($this->playback_points[$id] !== 0) ? safe_get_value($player_state, PLAYBACK_POSITION, 0) : 0;
-                hd_debug_print("channel_id $id at time mark: {$this->playback_points[$id]}", true);
-            }
-        }
-    }
-
-    /**
-     * @param string $channel_id
-     * @param int $archive_ts
-     */
-    public function push_tv_history($channel_id, $archive_ts)
-    {
-        $player_state = get_player_state_assoc();
-        if (isset($player_state[PLAYER_STATE]) && $player_state[PLAYER_STATE] !== PLAYER_STATE_NAVIGATOR) {
-            if (!isset($player_state[LAST_PLAYBACK_EVENT]) || ($player_state[LAST_PLAYBACK_EVENT] !== PLAYBACK_PCR_DISCONTINUITY)) {
-                $list = array(COLUMN_CHANNEL_ID => $channel_id, COLUMN_TIMESTAMP => $archive_ts);
-                $table_name = self::get_table_name(TV_HISTORY);
-                $this->current_playback_channel_id = $channel_id;
-
-                $q_id = Sql_Wrapper::sql_quote($channel_id);
-                $insert = Sql_Wrapper::sql_make_insert_list($list);
-                $query = "INSERT OR IGNORE INTO $table_name $insert;";
-                $query .= "UPDATE $table_name SET time_stamp = $archive_ts WHERE channel_id = $q_id;";
-                $query .= "DELETE FROM $table_name WHERE ROWID NOT IN (SELECT rowid FROM $table_name ORDER BY time_stamp DESC LIMIT 7);";
-                $this->sql_playlist->exec_transaction($query);
-
-            }
-        }
     }
 
     /**

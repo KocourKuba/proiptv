@@ -273,13 +273,12 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
                 throw new Exception("Unknown channel");
             }
 
-            if ($channel_row[COLUMN_ADULT] && !empty($pass_sex)) {
-                if ($protect_code !== $pass_sex) {
-                    throw new Exception("Wrong adult password: $protect_code");
-                }
-            } else {
+            // do not store adult channels to history
+            if (!$channel_row[COLUMN_ADULT]) {
                 $now = $channel_row[COLUMN_ARCHIVE] > 0 ? time() : 0;
                 $this->push_tv_history($channel_id, ($archive_tm_sec !== -1 ? $archive_tm_sec : $now));
+            } else if (!empty($pass_sex) && $protect_code !== $pass_sex) {
+                throw new Exception("Wrong adult password: $protect_code");
             }
 
             $url = $this->generate_stream_url($channel_row, $archive_tm_sec);
@@ -326,11 +325,11 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $utc_day_start_tm_sec = from_local_time_zone_offset($day_start_tm_sec + $time_shift);
 
             if (LogSeverity::$is_debug) {
-                hd_debug_print("day_start: $day_start_tm_sec ("
+                hd_debug_print("Day_start: $day_start_tm_sec ("
                     . format_datetime("Y-m-d H:i", $day_start_tm_sec) . ") TZ offset: "
                     . get_local_time_zone_offset() / 3600);
 
-                hd_debug_print("shifted day_start: $utc_day_start_tm_sec ("
+                hd_debug_print("Shifted day_start: $utc_day_start_tm_sec ("
                     . format_datetime("Y-m-d H:i", $utc_day_start_tm_sec) . ") TZ offset: "
                     . get_local_time_zone_offset() / 3600);
             }
@@ -698,17 +697,16 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     /**
      * @param string $channel_id
      * @param int $program_ts
-     * @param object $plugin_cookies
      * @return mixed|null
      */
-    public function get_epg_info($channel_id, $program_ts, $plugin_cookies)
+    public function get_epg_info($channel_id, $program_ts)
     {
         hd_debug_print(null, true);
 
         $program_ts = ($program_ts > 0 ? $program_ts : time());
+        $program_ts_str = format_datetime("Y-m-d H:i", $program_ts);
+        hd_debug_print("channel ID: $channel_id at time $program_ts_str ($program_ts)", true);
         $day_start_ts = strtotime(format_datetime("Y-m-d", $program_ts) . " UTC");
-        $program_ts_str = format_datetime("Y-m-d H:i", $day_start_ts);
-        hd_debug_print("channel ID: $channel_id at time $program_ts_str ($day_start_ts)", true);
         $day_epg = $this->get_day_epg($channel_id, $day_start_ts, $plugin_cookies);
         if (empty($day_epg)) {
             hd_debug_print("No entries found for channel $channel_id");
@@ -1111,7 +1109,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $this->sql_playlist->exec_transaction($query);
 
         $history_path = $this->get_history_path();
-        $tv_history_db = $history_path . $this->make_base_name(TV_HISTORY) . ".db";
+        $tv_history_db = $history_path . $this->make_base_name(TV_HISTORY, null, false) . ".db";
         // attach to tv_history db. if db not exist it will be created
         if ($this->sql_playlist->attachDatabase($tv_history_db, self::TV_HISTORY_DB) === 0) {
             hd_debug_print("Can't attach to database: $tv_history_db with name: " . self::TV_HISTORY_DB);
@@ -1120,6 +1118,13 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $tv_history_table = self::get_table_name(TV_HISTORY);
             $query = sprintf(self::CREATE_TV_HISTORY_TABLE, $tv_history_table);
             $this->sql_playlist->exec($query);
+            if (!$this->sql_playlist->is_column_exists( self::TV_HISTORY_TABLE, COLUMN_TIME_START, self::TV_HISTORY_DB)) {
+                $query = "BEGIN TRANSACTION;";
+                $query .= sprintf("ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;", $tv_history_table, COLUMN_TIME_START);
+                $query .= sprintf("ALTER TABLE %s ADD COLUMN %s INTEGER DEFAULT 0;", $tv_history_table, COLUMN_TIME_END);
+                $query .= "COMMIT;";
+                $this->sql_playlist->exec($query);
+            }
         }
 
         // move playlist xmltv sources to new database table
@@ -1164,7 +1169,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         // create vod history table
         if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
-            $vod_history_db = $this->get_history_path() . $this->make_base_name(VOD_HISTORY) . ".db";
+            $vod_history_db = $this->get_history_path() . $this->make_base_name(VOD_HISTORY, null, false) . ".db";
             if ($this->sql_playlist->attachDatabase($vod_history_db, self::VOD_HISTORY_DB) === 0) {
                 hd_debug_print("Can't attach to database: $vod_history_db with name: " . self::VOD_HISTORY_DB);
             } else {
@@ -3471,6 +3476,74 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         return null;
     }
 
+    /**
+     * Called when first start url
+     *
+     * @param string $channel_id
+     * @param int $archive_ts
+     */
+    public function push_tv_history($channel_id, $archive_ts)
+    {
+        hd_debug_print(null, true);
+        $player_state = get_player_state_assoc();
+        $state = safe_get_value($player_state, PLAYER_STATE);
+        $event = safe_get_value($player_state, LAST_PLAYBACK_EVENT);
+        if ($state !== null && $state !== PLAYER_STATE_NAVIGATOR && $event !== PLAYBACK_PCR_DISCONTINUITY) {
+            hd_debug_print("Push history for channel_id $channel_id at time mark: $archive_ts", true);
+            $this->playback_points[$channel_id] = $archive_ts;
+        }
+    }
+
+    /**
+     * Called when playing stop
+     *
+     * @param string|null $id
+     */
+    public function update_tv_history($id)
+    {
+        hd_debug_print(null, true);
+        if ($id === null || !isset($this->playback_points[$id])) {
+            return;
+        }
+
+        // update point for selected channel
+        $player_state = get_player_state_assoc();
+        $state = safe_get_value($player_state, PLAYBACK_STATE);
+        $position = safe_get_value($player_state, PLAYBACK_POSITION, 0);
+        if ($state !== PLAYBACK_PLAYING && $state !== PLAYBACK_STOPPED) {
+            return;
+        }
+
+        if ($this->playback_points[$id] !== 0) {
+            $archive_ts = $this->playback_points[$id] + $position;
+        } else {
+            $archive_ts = 0;
+        }
+
+        $list = array(COLUMN_CHANNEL_ID => $id, COLUMN_TIMESTAMP => $archive_ts, COLUMN_TIME_START => -1, COLUMN_TIME_END => -1);
+
+        if ($archive_ts !== 0) {
+            $prog_info = $this->get_epg_info($id, $archive_ts);
+            if (isset($prog_info[PluginTvEpgProgram::start_tm_sec])) {
+                $list[COLUMN_TIME_START] = $prog_info[PluginTvEpgProgram::start_tm_sec];
+                $list[COLUMN_TIME_END] = $prog_info[PluginTvEpgProgram::end_tm_sec];
+            }
+        }
+
+        $table_name = self::get_table_name(TV_HISTORY);
+        $q_id = Sql_Wrapper::sql_quote($id);
+        $insert = Sql_Wrapper::sql_make_insert_list($list);
+        $q_update = Sql_Wrapper::sql_make_set_list($list);
+        $query = "INSERT OR IGNORE INTO $table_name $insert;";
+        $query .= "UPDATE $table_name SET $q_update WHERE channel_id = $q_id;";
+        $query .= "DELETE FROM $table_name WHERE ROWID NOT IN (SELECT rowid FROM $table_name ORDER BY time_stamp DESC LIMIT 7);";
+        $this->sql_playlist->exec_transaction($query);
+
+        unset($this->playback_points[$id]);
+
+        hd_debug_print("Save history for channel_id $id at time mark: $archive_ts", true);
+    }
+
     //////////////////////////////////////////////////////////////////
     /// protected methods
 
@@ -3744,7 +3817,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         foreach ($points as $key => $item) {
             $q_key = Sql_Wrapper::sql_quote($key);
             $item = (int)$item;
-            $query .= "INSERT OR IGNORE INTO $tv_history_table (channel_id, time_stamp) VALUES ($q_key, $item);";
+            $query .= "INSERT OR IGNORE INTO $tv_history_table (channel_id, time_stamp, program_title) VALUES ($q_key, $item, '');";
         }
         $query .= "DELETE FROM $tv_history_table WHERE rowid NOT IN (SELECT rowid FROM $tv_history_table ORDER BY time_stamp DESC LIMIT 7);";
         $this->sql_playlist->exec_transaction($query);

@@ -131,9 +131,6 @@ class Starnet_Tv implements User_Input_Handler
                 break;
 
             case GUI_EVENT_PLAYBACK_STOP:
-                $channel = $this->plugin->get_channel_info($user_input->plugin_tv_channel_id);
-                if (safe_get_value($channel, COLUMN_ADULT, 0) != 0) break;
-
                 $this->plugin->update_tv_history($user_input->plugin_tv_channel_id);
 
                 if (isset($user_input->playback_stop_pressed) || isset($user_input->playback_power_off_needed)) {

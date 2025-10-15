@@ -193,6 +193,9 @@ const COLUMN_WATCHED = 'watched';
 const COLUMN_POSITION = 'position';
 const COLUMN_DURATION = 'duration';
 const COLUMN_TIMESTAMP = 'time_stamp';
+const COLUMN_PROGRAM_TITLE = 'program_title';
+const COLUMN_TIME_START = 'time_start';
+const COLUMN_TIME_END = 'time_end';
 const COLUMN_ZOOM = 'zoom';
 const COLUMN_EPG_SHIFT = 'epg_shift';
 

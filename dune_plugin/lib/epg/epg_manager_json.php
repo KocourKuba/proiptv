@@ -148,8 +148,9 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 throw new Exception('EPG url is not generated');
             }
 
+            $day_start_ts_str = format_datetime("Y-m-d H:i", $day_start_ts);
             if (isset(static::$epg_cache[$epg_id][$day_start_ts])) {
-                hd_debug_print("Load day EPG ID $epg_id from day start: ($day_start_ts) " . format_datetime("Y-m-d H:i", $day_start_ts) . " from memory cache ");
+                hd_debug_print("Memory cache: Load EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
                 $cached = true;
                 return static::$epg_cache[$epg_id][$day_start_ts];
             }
@@ -212,7 +213,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         }
 
         if (!empty($day_epg)) {
-            hd_debug_print("Store day epg to memory cache");
+            hd_debug_print("Memory cache: Store EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
             self::$epg_cache[$epg_id][$day_start_ts] = $day_epg;
         }
 

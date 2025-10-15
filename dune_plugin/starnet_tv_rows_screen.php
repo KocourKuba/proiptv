@@ -136,7 +136,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 }
 
                 // rising after playback end + 100 ms
-                $this->plugin->update_tv_history(null);
+                // $this->plugin->update_tv_history(null);
 
                 $error_msg = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
                 if (!empty($error_msg)) {
@@ -478,7 +478,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     break;
 
                 case TV_HISTORY_GROUP_ID:
-                    $this->get_history_rows($history_rows,$history_headers, $plugin_cookies);
+                    $this->get_history_rows($history_rows,$history_headers);
                     break;
 
                 case TV_CHANGED_CHANNELS_GROUP_ID:
@@ -649,9 +649,8 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
     /**
      * @param array $rows
      * @param array $headers
-     * @param object $plugin_cookies
      */
-    private function get_history_rows(&$rows, &$headers, $plugin_cookies)
+    private function get_history_rows(&$rows, &$headers)
     {
         hd_debug_print(null, true);
         if ($this->clear_playback_points) {
@@ -669,20 +668,22 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
         foreach ($this->plugin->get_tv_history() as $channel_row) {
             $channel_id = $channel_row[COLUMN_CHANNEL_ID];
             $channel_ts = $channel_row[COLUMN_TIMESTAMP];
-            $prog_info = $this->plugin->get_epg_info($channel_id, $channel_ts, $plugin_cookies);
+            $start_tm = $channel_row[COLUMN_TIME_START];
+            $end_tm = $channel_row[COLUMN_TIME_END];
+            $epg_len = $end_tm - $start_tm;
             $progress = 0;
 
-            if (!isset($prog_info[PluginTvEpgProgram::start_tm_sec])) {
-                $title = $channel_row[COLUMN_TITLE];
-            } else {
-                // program epg available
-                $title = $prog_info[PluginTvEpgProgram::name];
-                if ($channel_ts > 0) {
+            $title = $channel_row[COLUMN_TITLE];
+            // program epg available
+            if ($channel_ts > 0) {
+                if ($start_tm === 0 || $end_tm === 0) {
+                    $prog_info = $this->plugin->get_epg_info($channel_id, $channel_ts);
                     $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
                     $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
-                    if ($channel_ts >= $now - $channel_row[COLUMN_ARCHIVE] * 86400 - 60) {
-                        $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
-                    }
+                }
+
+                if ($channel_ts >= $now - $channel_row[COLUMN_ARCHIVE] * 86400 - 60) {
+                    $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
                 }
             }
 
@@ -1047,7 +1048,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
 
         ///////////// start_time, end_time, genre, country, person /////////////////
 
-        $epg_data = $this->plugin->get_epg_info($channel_id, $archive_tm, $plugin_cookies);
+        $epg_data = $this->plugin->get_epg_info($channel_id, $archive_tm);
         if (!isset($epg_data[PluginTvEpgProgram::start_tm_sec])) {
             hd_debug_print("no epg data");
             $channel_desc = $epg_data[PluginTvEpgProgram::description];

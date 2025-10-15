@@ -250,7 +250,7 @@ class Sql_Wrapper
      */
     public static function sql_make_set_list($arr)
     {
-        $str = "SET ";
+        $str = "";
         foreach ($arr as $col => $type) {
             $str .= "$col = " . self::sql_quote($type) . ",";
         }
