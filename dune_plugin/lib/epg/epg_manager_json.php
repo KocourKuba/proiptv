@@ -196,30 +196,42 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             }
 
             hd_debug_print("Total $counts EPG entries loaded");
+
+            $first_tm = key($all_epg);
+            $first = format_datetime("Y-m-d H:i", $first_tm);
+            $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
+            $last = format_datetime("Y-m-d H:i", $last_tm);
+            hd_debug_print("Entries time range: $first ($first_tm) - $last ($last_tm)");
+
+            // filter out epg only for selected day
+            $day_end_ts = $day_start_ts + 86400;
+
+            if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
+                throw new Exception("Selected time is out of range");
+            }
+
+            if (LogSeverity::$is_debug) {
+                $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
+                $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
+                hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
+            }
+
+            foreach ($all_epg as $program_start => $entry) {
+                if ($program_start < $day_start_ts && $entry[PluginTvEpgProgram::end_tm_sec] < $day_start_ts) continue;
+                if ($program_start >= $day_end_ts) break;
+
+                $day_epg[$program_start] = $entry;
+            }
+
+            if (empty($day_epg)) {
+                throw new Exception("No EPG entries for selected time in available range");
+            }
+
+            hd_debug_print("Memory cache: Store EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
+            self::$epg_cache[$epg_id][$day_start_ts] = $day_epg;
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
             return static::getFakeEpg($channel_row, $day_start_ts, $day_epg);
-        }
-
-        // filter out epg only for selected day
-        $day_end_ts = $day_start_ts + 86400;
-
-        if (LogSeverity::$is_debug) {
-            $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
-            $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
-            hd_debug_print("Fetch entries for from: $date_start_l to: $date_end_l");
-        }
-
-        foreach ($all_epg as $program_start => $entry) {
-            if ($program_start < $day_start_ts && $entry[PluginTvEpgProgram::end_tm_sec] < $day_start_ts) continue;
-            if ($program_start >= $day_end_ts) break;
-
-            $day_epg[$program_start] = $entry;
-        }
-
-        if (!empty($day_epg)) {
-            hd_debug_print("Memory cache: Store EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
-            self::$epg_cache[$epg_id][$day_start_ts] = $day_epg;
         }
 
         return $day_epg;

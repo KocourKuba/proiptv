@@ -1193,8 +1193,6 @@ class Epg_Manager_Xmltv
                 $day_epg[$start][PluginTvEpgProgram::name] = TR::load('fake_epg_program') . " $n";
                 $day_epg[$start][PluginTvEpgProgram::description] = '';
             }
-        } else {
-            hd_debug_print("No EPG for channel: {$channel_row[COLUMN_CHANNEL_ID]}");
         }
 
         return $day_epg;
