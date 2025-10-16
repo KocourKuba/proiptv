@@ -154,7 +154,7 @@ plugin_vod = Video On Demand
 plugin_vod__1 = Video On Demand%s
 plugin_info = Plugin-Informationen
 filters = Filters
-movie_list = Play VODs as list
+movie_list = Watchlist
 
 setup_small = Small
 setup_normal = Normal

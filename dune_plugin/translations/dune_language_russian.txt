@@ -154,7 +154,7 @@ plugin_vod = Медиатека
 plugin_vod__1 = Медиатека%s
 plugin_info = Информация о плагине
 filters = Фильтры
-movie_list = Список воспроизведения
+movie_list = Список просмотра
 
 setup_small = Мелкий
 setup_normal = Обычный

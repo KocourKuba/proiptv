@@ -154,7 +154,7 @@ plugin_vod = Video auf Nachfrage
 plugin_vod__1 = Video auf Nachfrage%s
 plugin_info = Plugin info
 filters = Filter
-movie_list = VODs als Liste abspielen
+movie_list = Merkliste
 
 setup_small = Klein
 setup_normal = Normal
