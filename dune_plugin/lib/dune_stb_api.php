@@ -2494,6 +2494,8 @@ function is_assoc_array($array)
 function register_all_known_events($handler, &$actions)
 {
     $all_events = array(
+        GUI_EVENT_KEY_V_PLUS,
+        GUI_EVENT_KEY_V_MINUS,
         GUI_EVENT_KEY_NEXT,
         GUI_EVENT_KEY_PREV,
         GUI_EVENT_KEY_FIP_NEXT,
@@ -2521,6 +2523,10 @@ function register_all_known_events($handler, &$actions)
         GUI_EVENT_KEY_DUNE,
         GUI_EVENT_KEY_URL,
         GUI_EVENT_UI_ACTION,
+        GUI_EVENT_KEY_RECENT,
+        GUI_EVENT_KEY_TV,
+        GUI_EVENT_KEY_MOVIES,
+        GUI_EVENT_KEY_MUSIC,
         GUI_EVENT_TIMER,
         GUI_EVENT_PLUGIN_ROWS_INFO_UPDATE,
         GUI_EVENT_FOLDER_LEAVE,

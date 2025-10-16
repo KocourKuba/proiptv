@@ -62,15 +62,14 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
         $actions[GUI_EVENT_KEY_SETUP] = User_Input_Handler_Registry::create_action($this, ACTION_PLUGIN_SETTINGS);
         $actions[GUI_EVENT_KEY_INFO] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_INFO);
         $actions[GUI_EVENT_KEY_CLEAR] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_DELETE);
-        $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
         $actions[GUI_EVENT_KEY_SUBTITLE] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_KEY_SUBTITLE);
         $actions[GUI_EVENT_TIMER] = User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER);
 
-        if ((string)$media_url->group_id === TV_ALL_CHANNELS_GROUP_ID) {
-            $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_SHOW_SEARCH_DLG, TR::t('search'));
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
-        } else if ($this->plugin->get_order_count($media_url->group_id)) {
-            $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+        $actions[GUI_EVENT_KEY_D_BLUE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+        $actions[GUI_EVENT_KEY_DUNE] = User_Input_Handler_Registry::create_action($this, ACTION_ADD_FAV, TR::t('add_to_favorite'));
+
+        if ((string)$media_url->group_id !== TV_ALL_CHANNELS_GROUP_ID && $this->plugin->get_order_count($media_url->group_id)) {
+            $actions[GUI_EVENT_KEY_SELECT] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOGGLE_MOVE);
             if (isset($plugin_cookies->toggle_move) && $plugin_cookies->toggle_move) {
                 $actions[GUI_EVENT_KEY_B_GREEN] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_TOP, TR::t('top'));
                 $actions[GUI_EVENT_KEY_C_YELLOW] = User_Input_Handler_Registry::create_action($this, ACTION_ITEM_BOTTOM, TR::t('bottom'));
@@ -263,9 +262,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 }
 
                 $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_EDIT_CHANNEL_DLG, TR::t('tv_screen_edit_channel'), "check.png");
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-
                 $menu_items[] = $this->plugin->create_menu_item($this,
                     GUI_EVENT_KEY_SUBTITLE,
                     TR::t('channel_epg_dlg'),
@@ -274,10 +270,10 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
                     GUI_EVENT_KEY_INFO,
                     TR::t('channel_info_dlg'),
                     "info.png");
-
-                $menu_items[] = $this->plugin->create_menu_item($this, GuiMenuItemDef::is_separator);
-                $menu_items[] = $this->plugin->create_menu_item($this, ACTION_PLUGIN_SETTINGS,
-                    TR::t('entry_setup'), "settings.png");
+                $menu_items[] = $this->plugin->create_menu_item($this,
+                    ACTION_EDIT_CHANNEL_DLG,
+                    TR::t('tv_screen_edit_channel'),
+                    "check.png");
 
                 return Action_Factory::show_popup_menu($menu_items);
 
