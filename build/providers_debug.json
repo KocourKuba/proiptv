@@ -117,7 +117,7 @@
       }
     },
     "tvteam": {
-      "json_source": "http://tv.team/{EPG_ID}.json",
+      "json_source": "http://tvteam.eu/{EPG_ID}.json",
       "parser": {
         "epg_root": "epg_data",
         "epg_name": "name",
@@ -241,13 +241,14 @@
         "id_map": "tvg-name",
         "epg_presets": [
           {
-            "name": "tvteam"
+            "name": "tvteam",
+            "epg_map": "tvg-id"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "tvteam",
-            "epg_map": "name"
+            "epg_map": "tvg-id"
           }
         ],
         "playlists": {
@@ -1552,13 +1553,13 @@
         "epg_presets": [
           {
             "name": "tvteam",
-            "epg_map": "id"
+            "epg_map": "tvg-id"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "tvteam",
-            "epg_map": "name"
+            "epg_map": "tvg-id"
           }
         ],
         "playlists": {
@@ -1683,13 +1684,14 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "tvteam"
+            "name": "tvteam",
+            "epg_map": "tvg-id"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
             "alias": "tvteam",
-            "epg_map": "name"
+            "epg_map": "tvg-id"
           }
         ],
         "playlists": {
