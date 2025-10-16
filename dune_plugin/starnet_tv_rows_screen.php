@@ -683,7 +683,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     $epg_len = $prog_info[PluginTvEpgProgram::end_tm_sec] - $start_tm;
                 }
 
-                if ($channel_ts >= $now - $channel_row[COLUMN_ARCHIVE] * 86400 - 60) {
+                if ($channel_ts >= $now - $channel_row[COLUMN_ARCHIVE] * 86400 - 60 && $epg_len !== 0) {
                     $progress = max(0.01, min(1.0, round(($channel_ts - $start_tm) / $epg_len, 2)));
                 }
             }

@@ -241,14 +241,12 @@
         "id_map": "tvg-name",
         "epg_presets": [
           {
-            "name": "tvteam",
-            "epg_map": "tvg-id"
+            "name": "tvteam"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "tvteam",
-            "epg_map": "tvg-id"
+            "alias": "tvteam"
           }
         ],
         "playlists": {
@@ -1277,6 +1275,14 @@
       "provider_url": "https://rutv.vip/",
       "api_url": "http://pl.ru-tv.site",
       "config": {
+        "id_map": "CUID",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "rutv"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
@@ -1551,14 +1557,12 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/(?<id>.+)\\/.+\\/.+\\.m3u8$/",
         "epg_presets": [
           {
-            "name": "tvteam",
-            "epg_map": "tvg-id"
+            "name": "tvteam"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "tvteam",
-            "epg_map": "tvg-id"
+            "alias": "tvteam"
           }
         ],
         "playlists": {
@@ -1683,14 +1687,12 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "tvteam",
-            "epg_map": "tvg-id"
+            "name": "tvteam"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "tvteam",
-            "epg_map": "tvg-id"
+            "alias": "tvteam"
           }
         ],
         "playlists": {

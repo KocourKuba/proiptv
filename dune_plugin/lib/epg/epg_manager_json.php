@@ -93,12 +93,17 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
         }
 
         $epg_ids = Default_Dune_Plugin::make_epg_ids($channel_row);
-        $epg_ids[ATTR_TVG_NAME] = $channel_row[COLUMN_TITLE];
-        $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
+        if (empty($epg_ids[ATTR_TVG_NAME])) {
+            $epg_ids[ATTR_TVG_NAME] = $channel_row[COLUMN_TITLE];
+        }
+
+        if (empty($epg_ids[ATTR_TVG_ID])) {
+            $epg_ids[ATTR_TVG_ID] = $channel_row[COLUMN_CHANNEL_ID];
+        }
 
         if (isset($selected_preset[EPG_JSON_EPG_MAP])) {
-            hd_debug_print("EPG ID map: {$selected_preset[EPG_JSON_EPG_MAP]}", true);
             $epg_id = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
+            hd_debug_print("EPG ID map: $epg_id", true);
         } else {
             $epg_id = '';
             foreach (array('epg_id', ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id') as $key) {
