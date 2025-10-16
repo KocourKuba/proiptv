@@ -400,7 +400,6 @@ class Starnet_Tv_Channel_List_Screen extends Abstract_Preloaded_Regular_Screen i
 
                 $group_id = $group_row[COLUMN_GROUP_ID];
                 $channels_rows = $this->plugin->get_channels_by_order($group_id);
-                hd_debug_print("channels: " . json_encode($channels_rows), true);
                 foreach ($channels_rows as $channel_row) {
                     if (!$show_adult && $channel_row[COLUMN_ADULT] !== 0) continue;
 

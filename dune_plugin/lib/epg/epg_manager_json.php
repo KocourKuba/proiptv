@@ -100,7 +100,6 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             hd_debug_print("EPG ID map: {$selected_preset[EPG_JSON_EPG_MAP]}", true);
             $epg_id = $epg_ids[$selected_preset[EPG_JSON_EPG_MAP]];
         } else {
-            hd_debug_print("Search epg id", true);
             $epg_id = '';
             foreach (array('epg_id', ATTR_TVG_ID, ATTR_TVG_NAME, 'name', 'id') as $key) {
                 if (!empty($epg_ids[$key])) {
@@ -108,6 +107,7 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                     break;
                 }
             }
+            hd_debug_print("Found epg id: '$epg_id'", true);
         }
 
         $cur_time = from_local_time_zone_offset($day_start_ts);
