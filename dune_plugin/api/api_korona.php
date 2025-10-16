@@ -92,7 +92,7 @@ class api_korona extends api_default
         }
 
         hd_debug_print("token not received: " . pretty_json_format($data), true);
-        Default_Dune_Plugin::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n\n" . pretty_json_format($data));
+        Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, TR::load('err_cant_get_token') . "\n\n" . pretty_json_format($data));
         return false;
     }
 

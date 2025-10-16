@@ -181,7 +181,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                         null,
                         Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
                             null,
-                            Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST)
+                            Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
                         )
                     );
                 }

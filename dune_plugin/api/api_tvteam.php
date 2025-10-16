@@ -155,18 +155,18 @@ class api_tvteam extends api_default
             return true;
         }
 
-        $error_msg = Default_Dune_Plugin::get_last_error(LAST_ERROR_REQUEST);
+        $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_REQUEST);
         if (!$force && !empty($error_msg)) {
             $info_msg = str_replace('|', PHP_EOL, TR::load('err_auth_no_spam'));
             hd_debug_print($info_msg);
-            Default_Dune_Plugin::set_last_error(LAST_ERROR_REQUEST, "$info_msg\n\n$error_msg");
+            Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "$info_msg\n\n$error_msg");
         } else {
             $response = $this->execApiCommand(API_COMMAND_REQUEST_TOKEN);
             hd_debug_print("request provider token response: " . pretty_json_format($response), true);
             if (!$response) {
-                Default_Dune_Plugin::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");
+                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, "Bad provider response");
             } else if ($response->status === 0 || !empty($response->error)) {
-                Default_Dune_Plugin::set_last_error(LAST_ERROR_REQUEST, $response->error);
+                Dune_Last_Error::set_last_error(LAST_ERROR_REQUEST, $response->error);
             } else if (isset($response->data->sessionId)) {
                 $this->plugin->set_cookie(PARAM_SESSION_ID, $response->data->sessionId, time() + 86400 * 7);
                 return true;

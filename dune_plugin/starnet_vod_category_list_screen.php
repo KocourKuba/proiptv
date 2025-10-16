@@ -80,7 +80,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 return Action_Factory::update_regular_folder($range, true, -1);
 
             case GUI_EVENT_TIMER:
-                $error = Default_Dune_Plugin::get_last_error(LAST_ERROR_VOD_LIST);
+                $error = Dune_Last_Error::get_last_error(LAST_ERROR_VOD_LIST);
                 if (empty($error)) break;
 
                 return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error);

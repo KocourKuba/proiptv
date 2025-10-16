@@ -801,7 +801,7 @@ class vod_standard extends Abstract_Vod
             $response = $this->provider->execApiCommand(API_COMMAND_GET_VOD, $tmp_file);
             if ($response === false) {
                 $exception_msg = TR::load('err_load_vod') . "\n\n" . $this->provider->getCurlWrapper()->get_raw_response_headers();
-                Default_Dune_Plugin::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
+                Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
                 if (file_exists($tmp_file)) {
                     unlink($tmp_file);
                 }
@@ -809,7 +809,7 @@ class vod_standard extends Abstract_Vod
                 $this->vod_items = Curl_Wrapper::decodeJsonResponse(true, $tmp_file, $assoc);
                 if ($this->vod_items === false) {
                     $exception_msg = TR::load('err_decoding_vod');
-                    Default_Dune_Plugin::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
+                    Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $exception_msg);
                     if (file_exists($tmp_file)) {
                         unlink($tmp_file);
                     }
@@ -997,7 +997,7 @@ class vod_standard extends Abstract_Vod
             }
         } catch (Exception $ex) {
             hd_debug_print("Unable to load VOD playlist");
-            Default_Dune_Plugin::set_last_error(LAST_ERROR_VOD_LIST, $ex->getMessage());
+            Dune_Last_Error::set_last_error(LAST_ERROR_VOD_LIST, $ex->getMessage());
             print_backtrace_exception($ex);
             if (file_exists($m3u_file)) {
                 unlink($m3u_file);

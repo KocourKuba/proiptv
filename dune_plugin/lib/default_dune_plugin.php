@@ -119,11 +119,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
      */
     protected $iptv_m3u_parser;
 
-    /**
-     * @var array
-     */
-    protected static $last_error;
-
     private $plugin_cookies;
     private $internet_status = -2;
     private $opexec_id = -1;
@@ -674,17 +669,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
             $err = $ex->getMessage();
-            $rq_err = Default_Dune_Plugin::get_last_error(LAST_ERROR_REQUEST);
+            $rq_err = Dune_Last_Error::get_last_error(LAST_ERROR_REQUEST);
             if (!empty($rq_err)) {
                 $err .= "\n\n" . $rq_err;
             }
 
-            $pl_err = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
+            $pl_err = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
             if (!empty($pl_err)) {
                 $err .= "\n\n" . $pl_err;
             }
 
-            Default_Dune_Plugin::set_last_error(LAST_ERROR_PLAYLIST, $err);
+            Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
             print_backtrace_exception($ex);
             if (empty($type) && file_exists($tmp_file)) {
                 unlink($tmp_file);
@@ -931,17 +926,17 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             $ret = false;
             hd_debug_print($ex->getMessage());
             $err = $ex->getMessage();
-            $rq_err = Default_Dune_Plugin::get_last_error(LAST_ERROR_REQUEST);
+            $rq_err = Dune_Last_Error::get_last_error(LAST_ERROR_REQUEST);
             if (!empty($rq_err)) {
                 $err .= "\n\n" . $rq_err;
             }
 
-            $pl_err = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
+            $pl_err = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
             if (!empty($pl_err)) {
                 $err .= "\n\n" . $pl_err;
             }
 
-            Default_Dune_Plugin::set_last_error(LAST_ERROR_PLAYLIST, $err);
+            Dune_Last_Error::set_last_error(LAST_ERROR_PLAYLIST, $err);
             if (file_exists($m3u_file)) {
                 hd_debug_print("Clear playlist: $m3u_file");
                 unlink($m3u_file);
@@ -973,8 +968,8 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
     {
         hd_debug_print(null, true);
 
-        Default_Dune_Plugin::clear_last_error(LAST_ERROR_PLAYLIST);
-        Default_Dune_Plugin::clear_last_error(LAST_ERROR_REQUEST);
+        Dune_Last_Error::clear_last_error(LAST_ERROR_PLAYLIST);
+        Dune_Last_Error::clear_last_error(LAST_ERROR_REQUEST);
 
         $playlist_id = $this->get_active_playlist_id();
         if (!$this->is_playlist_entry_exist($playlist_id)) {
@@ -1213,7 +1208,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return false;
         }
 
-        Default_Dune_Plugin::clear_last_error(LAST_ERROR_PLAYLIST);
+        Dune_Last_Error::clear_last_error(LAST_ERROR_PLAYLIST);
 
         $playlist_id = $this->get_active_playlist_id();
         $perf = new Perf_Collector();
@@ -3317,49 +3312,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         }
     }
 
-    public static function get_last_error($entity, $clear_after = true)
-    {
-        if ($entity === LAST_ERROR_XMLTV) {
-            $error_file = get_temp_path($entity);
-            $last_error = file_exists($error_file) ? file_get_contents($error_file) : '';
-        } else {
-            $last_error = self::$last_error[$entity];
-        }
-
-        if ($clear_after) {
-            self::clear_last_error($entity);
-        }
-
-        return $last_error;
-    }
-
-    public static function set_last_error($entity, $value)
-    {
-        $value = trim($value);
-        if ($entity === LAST_ERROR_XMLTV) {
-            $error_file = get_temp_path($entity);
-            if (empty($error) && file_exists($error_file)) {
-                unlink($error_file);
-            } else {
-                file_put_contents($error_file, $value);
-            }
-        } else {
-            self::$last_error[$entity] = $value;
-        }
-    }
-
-    public static function clear_last_error($entity)
-    {
-        if ($entity === LAST_ERROR_XMLTV) {
-            $error_file = get_temp_path($entity);
-            if (file_exists($error_file)) {
-                unlink($error_file);
-            }
-        } else {
-            self::$last_error[$entity] = '';
-        }
-    }
-
     public function is_full_size_remote()
     {
         return !is_limited_apk() || $this->get_bool_parameter(PARAM_FULL_SIZE_REMOTE, false);
@@ -3456,7 +3408,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($res === -1 || $res === -2) {
             return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'),
                 null,
-                Default_Dune_Plugin::get_last_error(LAST_ERROR_XMLTV));
+                Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV));
         }
 
         if ($res === 0) {

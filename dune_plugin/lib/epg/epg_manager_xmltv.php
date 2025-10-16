@@ -29,6 +29,7 @@ require_once 'lib/hashed_array.php';
 require_once 'lib/curl_wrapper.php';
 require_once 'lib/sql_wrapper.php';
 require_once 'lib/perf_collector.php';
+require_once 'lib/dune_last_error.php';
 
 class Epg_Manager_Xmltv
 {
@@ -324,7 +325,7 @@ class Epg_Manager_Xmltv
         global $LOG_FILE;
 
         if (!file_exists($config_file)) {
-            Default_Dune_Plugin::set_last_error(LAST_ERROR_XMLTV, "Config file for indexing not exist");
+            Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, "Config file for indexing not exist");
             return false;
         }
 
@@ -333,7 +334,7 @@ class Epg_Manager_Xmltv
             unlink($config_file);
         }
         if ($config === false) {
-            Default_Dune_Plugin::set_last_error(LAST_ERROR_XMLTV, "Invalid config file for indexing");
+            Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, "Invalid config file for indexing");
             return false;
         }
 
@@ -377,7 +378,7 @@ class Epg_Manager_Xmltv
 
         if (empty($params[PARAM_URI]) || empty($params[PARAM_HASH])) {
             $exception_msg = "XMTLV EPG url not set";
-            Default_Dune_Plugin::set_last_error(LAST_ERROR_XMLTV, $exception_msg);
+            Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $exception_msg);
             $index_log = get_temp_path("{$params[PARAM_HASH]}_indexing.log");
             if (file_exists($index_log)) {
                 unlink($index_log);
@@ -390,7 +391,7 @@ class Epg_Manager_Xmltv
 
         $cache_ttl = !isset($params[PARAM_CACHE]) ? XMLTV_CACHE_AUTO : $params[PARAM_CACHE];
 
-        Default_Dune_Plugin::clear_last_error(LAST_ERROR_XMLTV);
+        Dune_Last_Error::clear_last_error(LAST_ERROR_XMLTV);
 
         $cached_file = self::$cache_dir . $hash . ".xmltv";
         $cached_db = self::$cache_dir . $hash . ".db";
@@ -531,7 +532,7 @@ class Epg_Manager_Xmltv
                 return;
             }
 
-            Default_Dune_Plugin::clear_last_error(LAST_ERROR_XMLTV);
+            Dune_Last_Error::clear_last_error(LAST_ERROR_XMLTV);
 
             self::lock_index($url_hash, INDEXING_DOWNLOAD);
             $success = false;
@@ -548,7 +549,7 @@ class Epg_Manager_Xmltv
                 self::unpack_xmltv($params);
                 $success = true;
             } catch (Exception $ex) {
-                Default_Dune_Plugin::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
+                Dune_Last_Error::set_last_error(LAST_ERROR_XMLTV, $ex->getMessage());
                 print_backtrace_exception($ex);
                 $tmp_filename = $cached_file . ".tmp";
                 if (!empty($tmp_filename) && file_exists($tmp_filename)) {
@@ -853,7 +854,7 @@ class Epg_Manager_Xmltv
             return 2;
         }
 
-        $last_error = Default_Dune_Plugin::get_last_error(LAST_ERROR_XMLTV, false);
+        $last_error = Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV, false);
 
         if ($has_imports) {
             return empty($last_error) ? 1 : -1;

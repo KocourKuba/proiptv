@@ -26,6 +26,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 require_once 'lib/default_dune_plugin.php';
+require_once 'lib/dune_last_error.php';
 
 require_once 'starnet_entry_handler.php';
 require_once 'starnet_tv_groups_screen.php';

@@ -104,7 +104,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 return User_Input_Handler_Registry::create_action($this, self::ACTION_CONFIRM_EXIT_DLG_APPLY);
 
             case GUI_EVENT_TIMER:
-                $error_msg = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
+                $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
                 if (!empty($error_msg)) {
                     hd_debug_print("Playlist loading error: $error_msg");
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
@@ -119,7 +119,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
 
             case ACTION_OPEN_FOLDER:
             case ACTION_PLAY_FOLDER:
-                $has_error = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
+                $has_error = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
                 if (empty($has_error)) {
                     if ($selected_media_url->group_id !== VOD_GROUP_ID) {
                         return Action_Factory::open_folder();
@@ -131,7 +131,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                         return Action_Factory::open_folder();
                     }
 
-                    $has_error = Default_Dune_Plugin::get_last_error(LAST_ERROR_VOD_LIST);
+                    $has_error = Dune_Last_Error::get_last_error(LAST_ERROR_VOD_LIST);
                 }
 
                 return Action_Factory::show_title_dialog(TR::t('err_load_any'), null, $has_error);

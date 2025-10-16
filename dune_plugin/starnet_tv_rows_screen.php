@@ -138,7 +138,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 // rising after playback end + 100 ms
                 // $this->plugin->update_tv_history(null);
 
-                $error_msg = Default_Dune_Plugin::get_last_error(LAST_ERROR_PLAYLIST);
+                $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
                 if (!empty($error_msg)) {
                     hd_debug_print("Playlist loading error: $error_msg");
                     return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
