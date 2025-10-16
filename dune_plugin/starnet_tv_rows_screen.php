@@ -676,6 +676,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
             $title = $channel_row[COLUMN_TITLE];
             // program epg available
             if ($channel_ts > 0) {
+                $title = format_datetime("d.m H:i", $channel_ts);
                 if ($start_tm === 0 || $end_tm === 0) {
                     $prog_info = $this->plugin->get_epg_info($channel_id, $channel_ts);
                     $start_tm = $prog_info[PluginTvEpgProgram::start_tm_sec];
