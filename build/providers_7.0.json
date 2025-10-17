@@ -241,14 +241,12 @@
         "id_map": "tvg-name",
         "epg_presets": [
           {
-            "name": "tvteam",
-            "epg_map": "tvg-id"
+            "name": "tvteam"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "tvteam",
-            "epg_map": "tvg-id"
+            "alias": "tvteam"
           }
         ],
         "playlists": {
@@ -1277,6 +1275,14 @@
       "provider_url": "https://rutv.vip/",
       "api_url": "http://pl.ru-tv.site",
       "config": {
+        "id_map": "CUID",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "rutv"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
@@ -1551,14 +1557,12 @@
         "id_parser": "/^(?<scheme>https?):\\/\\/(?<domain>.+)\\/stream\\/(?<id>.+)\\/.+\\/.+\\.m3u8$/",
         "epg_presets": [
           {
-            "name": "tvteam",
-            "epg_map": "tvg-id"
+            "name": "tvteam"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "tvteam",
-            "epg_map": "tvg-id"
+            "alias": "tvteam"
           }
         ],
         "playlists": {
@@ -1683,14 +1687,12 @@
         "id_map": "tvg-id",
         "epg_presets": [
           {
-            "name": "tvteam",
-            "epg_map": "tvg-id"
+            "name": "tvteam"
           },
           {
             "name": "drm",
             "title": "epg.drm-play",
-            "alias": "tvteam",
-            "epg_map": "tvg-id"
+            "alias": "tvteam"
           }
         ],
         "playlists": {
@@ -1775,13 +1777,20 @@
       "provider_url": "https://uspeh.tv/",
       "api_url": "https://m3u.admuspeh.my",
       "config": {
+        "id_map": "tvg-id",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "uspeh"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
             "url": "{API}/hls/token={PASSWORD}"
           }
         },
-        "id_map": "tvg-id",
         "vod_parser": "/^(?<title>[^(]+)\\s\\((?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

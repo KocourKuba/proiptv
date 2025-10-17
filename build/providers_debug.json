@@ -1777,13 +1777,20 @@
       "provider_url": "https://uspeh.tv/",
       "api_url": "https://m3u.admuspeh.my",
       "config": {
+        "id_map": "tvg-id",
+        "epg_presets": [
+          {
+            "name": "drm",
+            "title": "epg.drm-play",
+            "alias": "uspeh"
+          }
+        ],
         "playlists": {
           "default": {
             "name": "Default",
             "url": "{API}/hls/token={PASSWORD}"
           }
         },
-        "id_map": "tvg-id",
         "vod_parser": "/^(?<title>[^(]+)\\s\\((?<year>\\d{4})\\)$/",
         "dune_params": "psi_opt:2,ss_for_http_ts:1,keep_pic:0"
       }

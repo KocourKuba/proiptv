@@ -136,11 +136,15 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
     public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
     {
         $cached = false;
+
         $day_epg = array();
+        $items = array();
         try {
             $provider = $this->plugin->get_active_provider();
             if (is_null($provider)) {
-                return null;
+                $day_epg['error'] = "No provider found";
+                $day_epg['items'] = array();
+                return $day_epg;
             }
 
             $epg_id = '';
@@ -157,7 +161,8 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             if (isset(static::$epg_cache[$epg_id][$day_start_ts])) {
                 hd_debug_print("Memory cache: Load EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
                 $cached = true;
-                return static::$epg_cache[$epg_id][$day_start_ts];
+                $day_epg['items'] = static::$epg_cache[$epg_id][$day_start_ts];
+                return $day_epg;
             }
 
             $epg_cache_file = self::$cache_dir . $provider->get_provider_playlist_id() . "_" . Hashed_Array::hash($epg_url) . ".cache";
@@ -202,12 +207,11 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
             $last_tm = $all_epg[key(array_slice($all_epg, -1, 1, true))][PluginTvEpgProgram::end_tm_sec];
             $last = format_datetime("Y-m-d H:i", $last_tm);
             hd_debug_print("Entries time range: $first ($first_tm) - $last ($last_tm)");
-
             // filter out epg only for selected day
             $day_end_ts = $day_start_ts + 86400;
 
             if ($day_start_ts > $last_tm || $day_end_ts < $first_tm) {
-                throw new Exception("Selected time is out of range");
+                throw new Exception("Selected time is out of range. Available EPG time range: $first - $last");
             }
 
             if (LogSeverity::$is_debug) {
@@ -220,20 +224,21 @@ class Epg_Manager_Json extends Epg_Manager_Xmltv
                 if ($program_start < $day_start_ts && $entry[PluginTvEpgProgram::end_tm_sec] < $day_start_ts) continue;
                 if ($program_start >= $day_end_ts) break;
 
-                $day_epg[$program_start] = $entry;
+                $items[$program_start] = $entry;
             }
 
-            if (empty($day_epg)) {
+            if (empty($items)) {
                 throw new Exception("No EPG entries for selected time in available range");
             }
 
             hd_debug_print("Memory cache: Store EPG ID: $epg_id for day start: $day_start_ts ($day_start_ts_str)");
-            self::$epg_cache[$epg_id][$day_start_ts] = $day_epg;
+            self::$epg_cache[$epg_id][$day_start_ts] = $items;
         } catch (Exception $ex) {
             hd_debug_print($ex->getMessage());
-            return static::getFakeEpg($channel_row, $day_start_ts, $day_epg);
+            $day_epg['error'] = $ex->getMessage();
+            $items = static::getFakeEpg($channel_row, $day_start_ts, $items);
         }
-
+        $day_epg['items'] = $items;
         return $day_epg;
     }
 

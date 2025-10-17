@@ -129,6 +129,7 @@ class Epg_Manager_Xmltv
      */
     public function get_day_epg_items($channel_row, $day_start_ts, &$cached)
     {
+        $day_epg = array();
         $channel_id = safe_get_value($channel_row, COLUMN_CHANNEL_ID);
         if (empty($channel_id)) {
             return array();
@@ -139,10 +140,13 @@ class Epg_Manager_Xmltv
             hd_debug_print("Load day Channel ID $channel_id from day start: ($day_start_ts) "
                 . format_datetime("Y-m-d H:i", $day_start_ts) . " from memory cache ");
             $cached = true;
-            return static::$epg_cache[$channel_id][$day_start_ts];
+            $day_epg['items'] = static::$epg_cache[$channel_id][$day_start_ts];
+            return $day_epg;
         }
 
-        $day_epg = array();
+        $day_end_ts = $day_start_ts + 86400;
+
+        $items = array();
         foreach (self::$xmltv_sources as $key => $params) {
             hd_debug_print("Looking in XMLTV source: {$params[PARAM_URI]}");
             if (self::is_index_locked($key, INDEXING_DOWNLOAD | INDEXING_ENTRIES)) {
@@ -152,7 +156,6 @@ class Epg_Manager_Xmltv
             }
 
             // filter out epg only for selected day
-            $day_end_ts = $day_start_ts + 86400;
             if (LogSeverity::$is_debug) {
                 $date_start_l = format_datetime("Y-m-d H:i", $day_start_ts);
                 $date_end_l = format_datetime("Y-m-d H:i", $day_end_ts);
@@ -188,32 +191,32 @@ class Epg_Manager_Xmltv
                                 if ($program_start < $day_start_ts && $program_end < $day_start_ts) continue;
                                 if ($program_start >= $day_end_ts) break;
 
-                                $day_epg[$program_start][PluginTvEpgProgram::end_tm_sec] = $program_end;
-                                $day_epg[$program_start][PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
-                                $day_epg[$program_start][PluginTvEpgProgram::description] = HD::unescape_entity_string(self::get_node_value($tag, 'desc'));
-                                $day_epg[$program_start][PluginTvEpgProgram::icon_url] = self::get_node_attribute($tag, 'icon', 'src');
+                                $items[$program_start][PluginTvEpgProgram::end_tm_sec] = $program_end;
+                                $items[$program_start][PluginTvEpgProgram::name] = self::get_node_value($tag, 'title');
+                                $items[$program_start][PluginTvEpgProgram::description] = HD::unescape_entity_string(self::get_node_value($tag, 'desc'));
+                                $items[$program_start][PluginTvEpgProgram::icon_url] = self::get_node_attribute($tag, 'icon', 'src');
 
                                 if (!self::$ext_epg_enabled) continue;
 
-                                $day_epg[$program_start][PluginTvExtEpgProgram::sub_title] = self::get_node_value($tag, 'sub-title');
-                                $day_epg[$program_start][PluginTvExtEpgProgram::main_category] = self::get_node_value($tag, 'category');
-                                $day_epg[$program_start][PluginTvExtEpgProgram::year] = self::get_node_value($tag, 'date');
-                                $day_epg[$program_start][PluginTvExtEpgProgram::country] = self::get_node_value($tag, 'country');
+                                $items[$program_start][PluginTvExtEpgProgram::sub_title] = self::get_node_value($tag, 'sub-title');
+                                $items[$program_start][PluginTvExtEpgProgram::main_category] = self::get_node_value($tag, 'category');
+                                $items[$program_start][PluginTvExtEpgProgram::year] = self::get_node_value($tag, 'date');
+                                $items[$program_start][PluginTvExtEpgProgram::country] = self::get_node_value($tag, 'country');
                                 foreach ($tag->getElementsByTagName('credits') as $sub_tag) {
-                                    $day_epg[$program_start][PluginTvExtEpgProgram::director] = self::get_node_value($sub_tag, 'director');
-                                    $day_epg[$program_start][PluginTvExtEpgProgram::producer] = self::get_node_value($sub_tag, 'producer');
-                                    $day_epg[$program_start][PluginTvExtEpgProgram::actor] = self::get_node_value($sub_tag, 'actor');
-                                    $day_epg[$program_start][PluginTvExtEpgProgram::presenter] = self::get_node_value($sub_tag, 'presenter'); //Ведущий
-                                    $day_epg[$program_start][PluginTvExtEpgProgram::writer] = self::get_node_value($sub_tag, 'writer');
-                                    $day_epg[$program_start][PluginTvExtEpgProgram::editor] = self::get_node_value($sub_tag, 'editor');
-                                    $day_epg[$program_start][PluginTvExtEpgProgram::composer] = self::get_node_value($sub_tag, 'composer');
+                                    $items[$program_start][PluginTvExtEpgProgram::director] = self::get_node_value($sub_tag, 'director');
+                                    $items[$program_start][PluginTvExtEpgProgram::producer] = self::get_node_value($sub_tag, 'producer');
+                                    $items[$program_start][PluginTvExtEpgProgram::actor] = self::get_node_value($sub_tag, 'actor');
+                                    $items[$program_start][PluginTvExtEpgProgram::presenter] = self::get_node_value($sub_tag, 'presenter'); //Ведущий
+                                    $items[$program_start][PluginTvExtEpgProgram::writer] = self::get_node_value($sub_tag, 'writer');
+                                    $items[$program_start][PluginTvExtEpgProgram::editor] = self::get_node_value($sub_tag, 'editor');
+                                    $items[$program_start][PluginTvExtEpgProgram::composer] = self::get_node_value($sub_tag, 'composer');
                                 }
                             }
                         }
 
                         fclose($handle);
 
-                        if (!empty($day_epg)) break;
+                        if (!empty($items)) break;
                     }
                 }
             } catch (Exception $ex) {
@@ -223,34 +226,32 @@ class Epg_Manager_Xmltv
 
         $this->delayed_epg = array_unique($this->delayed_epg);
 
-        if (empty($day_epg)) {
+        if (empty($items)) {
             if (self::$xmltv_sources->size() === 0) {
-                $day_epg = self::getFakeEpg($channel_row, $day_start_ts, $day_epg);
-                if (!empty($day_epg)) {
-                    return $day_epg;
+                $items = self::getFakeEpg($channel_row, $day_start_ts, $items);
+                if (empty($items)) {
+                    $items = array($day_start_ts => array(
+                        PluginTvEpgProgram::end_tm_sec => $day_end_ts,
+                        PluginTvEpgProgram::name => TR::load('epg_no_sources'),
+                        PluginTvEpgProgram::description => TR::load('epg_no_sources_desc'))
+                    );
                 }
-
-                return array($day_start_ts => array(
-                    PluginTvEpgProgram::end_tm_sec => $day_start_ts + 86400,
-                    PluginTvEpgProgram::name => TR::load('epg_no_sources'),
-                    PluginTvEpgProgram::description => TR::load('epg_no_sources_desc'))
-                );
-            }
-
-            if (!empty($this->delayed_epg) && self::get_any_index_locked() !== false) {
+            } else if (!empty($this->delayed_epg) && self::get_any_index_locked() !== false) {
                 hd_debug_print("Delayed epg: " . json_encode($this->delayed_epg));
-                return array($day_start_ts => array(
-                    PluginTvEpgProgram::end_tm_sec => $day_start_ts + 86400,
+                $items = array($day_start_ts => array(
+                    PluginTvEpgProgram::end_tm_sec => $day_end_ts,
                     PluginTvEpgProgram::name => TR::load('epg_not_ready'),
                     PluginTvEpgProgram::description => TR::load('epg_not_ready_desc'))
                 );
+            } else {
+                $items = self::getFakeEpg($channel_row, $day_start_ts, $items);
             }
-            return self::getFakeEpg($channel_row, $day_start_ts, $day_epg);
+        } else {
+            hd_debug_print("Store day epg to memory cache");
+            self::$epg_cache[$channel_id][$day_start_ts] = $items;
+            ksort($items);
         }
-
-        hd_debug_print("Store day epg to memory cache");
-        self::$epg_cache[$channel_id][$day_start_ts] = $day_epg;
-        ksort($day_epg);
+        $day_epg['items'] = $items;
 
         return $day_epg;
     }
