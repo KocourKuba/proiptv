@@ -147,7 +147,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                 $val = $user_input->{$control_id};
                 $active_sources = $this->plugin->get_selected_xmltv_ids();
                 if (empty($active_sources) && $val !== ENGINE_XMLTV) {
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_no_xmltv_sources'), $post_action);
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_no_xmltv_sources'), '', $post_action);
                 }
                 $this->plugin->set_setting($control_id, $val);
                 $this->plugin->init_epg_manager();
@@ -165,7 +165,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $this->plugin->clear_playlist_epg_cache();
                 return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
-                    Action_Factory::reset_controls($this->do_get_control_defs()));
+                    '', Action_Factory::reset_controls($this->do_get_control_defs()));
 
             case PARAM_FAKE_EPG:
                 $this->plugin->toggle_setting($control_id, false);
@@ -179,8 +179,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                     return Action_Factory::invalidate_all_folders(
                         $plugin_cookies,
                         null,
-                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                            null,
+                        Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
                             Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
                         )
                     );

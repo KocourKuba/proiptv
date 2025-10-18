@@ -83,7 +83,7 @@ class Starnet_Vod_Category_List_Screen extends Abstract_Preloaded_Regular_Screen
                 $error = Dune_Last_Error::get_last_error(LAST_ERROR_VOD_LIST);
                 if (empty($error)) break;
 
-                return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error);
+                return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error);
 
             case ACTION_INVALIDATE:
                 $range = $this->get_folder_range($parent_media_url, 0, $plugin_cookies);

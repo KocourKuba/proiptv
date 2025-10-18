@@ -107,7 +107,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $error_msg = Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST);
                 if (!empty($error_msg)) {
                     hd_debug_print("Playlist loading error: $error_msg");
-                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $error_msg);
+                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $error_msg);
                 }
 
                 clearstatcache();
@@ -134,7 +134,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     $has_error = Dune_Last_Error::get_last_error(LAST_ERROR_VOD_LIST);
                 }
 
-                return Action_Factory::show_title_dialog(TR::t('err_load_any'), null, $has_error);
+                return Action_Factory::show_title_dialog(TR::t('err_load_any'), $has_error);
 
             case ACTION_ITEM_TOGGLE_MOVE:
                 $plugin_cookies->toggle_move = !$plugin_cookies->toggle_move;
@@ -370,7 +370,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 $cached_image_path = get_cached_image_path($cached_image_name);
                 hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image_path");
                 if (!copy($data->{PARAM_FILEPATH}, $cached_image_path)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_copy'));
                 }
 
                 hd_debug_print("Assign icon: $cached_image_name to group: $selected_media_url->group_id");

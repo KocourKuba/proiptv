@@ -229,7 +229,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                     if ($pl_type === CONTROL_PLAYLIST_IPTV) {
                         if ($detect_id === CONTROL_DETECT_ID) {
                             list($detect_id, $detect_info) = $this->plugin->collect_detect_info($tmp_file);
-                            $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
+                            $post_action = Action_Factory::show_title_dialog(TR::t('info'), $detect_info, $post_action);
                         }
                         $this->plugin->set_playlist_parameter($playlist_id, PARAM_ID_MAPPER, $detect_id);
                         $this->force_parent_reload = true;
@@ -237,7 +237,7 @@ class Starnet_Setup_Simple_IPTV_Screen extends Abstract_Controls_Screen
                 } catch (Exception $ex) {
                     hd_debug_print("Problem with download playlist");
                     print_backtrace_exception($ex);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $ex->getMessage());
                 }
 
                 if ($tmp_file !== $uri && file_exists($tmp_file)) {

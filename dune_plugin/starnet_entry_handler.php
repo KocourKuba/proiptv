@@ -103,7 +103,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case self::ACTION_CALL_PLAYLIST_SETTINGS:
                 $this->plugin->init_plugin();
                 if (!$this->plugin->init_playlist_db()) {
-                    return Action_Factory::show_title_dialog(TR::t('err_init_database'));
+                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_init_database'));
                 }
                 return $this->plugin->show_protect_settings_dialog($this,
                     Action_Factory::open_folder(Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup')));
@@ -118,15 +118,14 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case self::ACTION_CALL_XMLTV_SOURCES_SCREEN:
                 $this->plugin->init_plugin();
                 if (!$this->plugin->init_playlist_db()) {
-                    return Action_Factory::show_title_dialog(TR::t('err_init_database'));
+                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_init_database'));
                 }
 
                 $this->plugin->init_user_agent();
 
                 if (!$this->plugin->is_vod_playlist()
                     && (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true))) {
-                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                        null,
+                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
                         Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
                 }
 
@@ -149,18 +148,18 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case self::ACTION_CALL_SEND_LOG:
                 if (!is_r22_or_higher()) {
-                    return Action_Factory::show_title_dialog(TR::t('entry_send_log'), null, TR::t('entry_log_not_sent_too_old'));
+                    return Action_Factory::show_title_dialog(TR::t('entry_send_log'), TR::t('entry_log_not_sent_too_old'));
                 }
 
                 if (!LogSeverity::$is_debug) {
-                    return Action_Factory::show_title_dialog(TR::t('entry_send_log'), null, TR::t('entry_log_not_enabled'));
+                    return Action_Factory::show_title_dialog(TR::t('entry_send_log'), TR::t('entry_log_not_enabled'));
                 }
 
                 $error_msg = '';
                 $msg = HD::send_log_to_developer($this->plugin, $error_msg)
                     ? TR::t('entry_log_sent__3', get_dune_model(), get_product_id(), format_datetime('Y-m-d H:i', time()))
                     : TR::t('entry_log_not_sent');
-                return Action_Factory::show_title_dialog(TR::t('entry_send_log'), null, $msg);
+                return Action_Factory::show_title_dialog(TR::t('entry_send_log'), $msg);
 
             case self::ACTION_CALL_CLEAR_ALL_EPG:
                 $this->plugin->init_plugin();
@@ -208,11 +207,11 @@ class Starnet_Entry_Handler implements User_Input_Handler
             case Starnet_Setup_Backup_Screen::ACTION_BACKUP_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
                 if (HD::do_backup_settings($this->plugin, $data->{PARAM_FILEPATH}) === false) {
-                    return Action_Factory::show_title_dialog(TR::t('err_backup'));
+                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_backup'));
                 }
 
                 return Action_Factory::show_title_dialog(TR::t('setup_copy_done'),
-                    User_Input_Handler_Registry::create_action(
+                    '', User_Input_Handler_Registry::create_action(
                         $this,
                         self::ACTION_PLUGIN_ENTRY,
                         null,
@@ -230,7 +229,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 $action = color_palette_restore();
                 if ($action !== null) {
                     hd_debug_print("Palette restored");
-                    return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), null, TR::t('setup_patch_success'));
+                    return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'));
                 }
                 break;
 
@@ -283,8 +282,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                     $this->plugin->get_plugin_title(),
                                     null,
                                     null,
-                                    Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                                        null,
+                                    Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
                                         Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
                                     )
                                 );
@@ -352,8 +350,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
 
                             if (!$this->plugin->load_channels($plugin_cookies)) {
-                                $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                                    null,
+                                $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
                                     Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
                                 );
                                 return Action_Factory::open_folder(

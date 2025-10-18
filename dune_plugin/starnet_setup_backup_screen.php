@@ -173,7 +173,7 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
             if (file_exists($tmp_filename)) {
                 unlink($tmp_filename);
             }
-            return Action_Factory::show_title_dialog(TR::t('err_restore'), null, $ex->getMessage());
+            return Action_Factory::show_title_dialog(TR::t('err_restore'), $ex->getMessage());
         }
 
         unlink($tmp_filename);
@@ -214,11 +214,11 @@ class Starnet_Setup_Backup_Screen extends Abstract_Controls_Screen
 
         return Action_Factory::show_title_dialog(
             TR::t('setup_restore_done'),
-            Action_Factory::close_and_run(
-                Action_Factory::refresh_entry_points(
-                    User_Input_Handler_Registry::create_screen_action(Starnet_Entry_Handler::ID, ACTION_RELOAD)
-                )
+            '', Action_Factory::close_and_run(
+            Action_Factory::refresh_entry_points(
+                User_Input_Handler_Registry::create_screen_action(Starnet_Entry_Handler::ID, ACTION_RELOAD)
             )
+        )
         );
     }
 }

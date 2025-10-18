@@ -242,7 +242,7 @@ class Starnet_Setup_Playlist_Screen extends Abstract_Controls_Screen
 
                 hd_print("copy from: " . $data->{PARAM_FILEPATH} . " to: $cached_image");
                 if (!copy($data->{PARAM_FILEPATH}, $cached_image)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_copy'));
+                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_copy'));
                 }
 
                 if (!$is_old_default && $old_image !== $cached_image) {

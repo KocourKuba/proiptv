@@ -448,3 +448,4 @@ err_restore_patch = Palette restore failed!\nThe palette file has not been modif
 err_no_need_patch = No palette fixing required!
 err_load_xmltv_source = Can't load XMLTV source!
 err_no_xmltv_sources = No XMLTV source selected!
+err_empty_export_list = Export list empty!

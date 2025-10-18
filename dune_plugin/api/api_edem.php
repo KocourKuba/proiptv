@@ -198,7 +198,7 @@ class api_edem extends api_default
         $params[MACRO_OTTKEY] = $user_input->{self::CONTROL_OTT_KEY};
 
         if (!empty($user_input->{self::CONTROL_VPORTAL}) && !preg_match(VPORTAL_PATTERN, $user_input->{self::CONTROL_VPORTAL})) {
-            return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), null, TR::t('edit_list_bad_vportal_fmt'));
+            return Action_Factory::show_title_dialog(TR::t('edit_list_bad_vportal'), TR::t('edit_list_bad_vportal_fmt'));
         }
 
         $params[MACRO_VPORTAL] = $user_input->{self::CONTROL_VPORTAL};

@@ -104,7 +104,6 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                     hd_debug_print("Channel can't played");
                     print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
-                        null,
                         TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
@@ -137,7 +136,7 @@ class Starnet_Tv_History_Screen extends Abstract_Preloaded_Regular_Screen implem
                 $message = $is_favorite ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite');
                 $this->plugin->change_channels_order($fav_id, $selected_media_url->channel_id, $is_favorite);
                 return Action_Factory::show_title_dialog($message,
-                    $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
+                    '', $this->plugin->change_tv_favorites($opt_type, $selected_media_url->channel_id));
 
             case ACTION_JUMP_TO_CHANNEL_IN_GROUP:
                 return $this->plugin->iptv->jump_to_channel($selected_media_url->channel_id);

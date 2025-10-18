@@ -105,7 +105,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
                 $type = $this->plugin->get_playlist_parameter($selected_id, PARAM_TYPE);
                 $uri = $this->plugin->get_playlist_parameter($selected_id, PARAM_URI);
                 if ($type === PARAM_FILE && !file_exists($uri)) {
-                    return Action_Factory::show_title_dialog(TR::t('err_error_file_not_found'));
+                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_error_file_not_found'));
                 }
 
                 if ($this->plugin->get_active_playlist_id() !== $selected_id) {
@@ -367,8 +367,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         return Action_Factory::invalidate_all_folders(
             $plugin_cookies,
             null,
-            Action_Factory::show_title_dialog(TR::t('err_load_playlist'),
-                null,
+            Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
                 Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
             )
         );
@@ -543,7 +542,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         $uri = safe_get_member($user_input, CONTROL_URL_PATH, '');
         if (!is_proto_http($uri)) {
-            return Action_Factory::show_title_dialog(TR::t('err_incorrect_url'));
+            return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_incorrect_url'));
         }
 
         try {
@@ -555,7 +554,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         } catch (Exception $ex) {
             hd_debug_print("Problem with download playlist");
             print_backtrace_exception($ex);
-            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
+            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $ex->getMessage());
         }
 
         return $post_action;
@@ -619,7 +618,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         } catch (Exception $ex) {
             hd_debug_print("Problem with download playlist");
             print_backtrace_exception($ex);
-            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), null, $ex->getMessage());
+            $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), $ex->getMessage());
         }
 
         return $post_action;
@@ -633,7 +632,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         hd_debug_print("Choosed file: " . $selected_media_url->{PARAM_FILEPATH}, true);
         $lines = file($selected_media_url->{PARAM_FILEPATH}, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         if ($lines === false || (count($lines) === 1 && trim($lines[0]) === '')) {
-            return Action_Factory::show_title_dialog(TR::t('edit_list_empty_file'));
+            return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('edit_list_empty_file'));
         }
 
         $old_count = $this->plugin->get_all_playlists_count();
@@ -688,7 +687,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         }
 
         return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $new_count - $old_count, count($lines)),
-            Action_Factory::close_and_run(
+            '', Action_Factory::close_and_run(
                 Action_Factory::open_folder(
                     $parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists')
                 )
@@ -702,7 +701,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
 
         $hash = Hashed_Array::hash($selected_media_url->{PARAM_FILEPATH});
         if ($this->plugin->is_playlist_entry_exist($hash)) {
-            return Action_Factory::show_title_dialog(TR::t('err_file_exist'));
+            return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_file_exist'));
         }
 
         return $this->do_add_m3u_type($selected_media_url->{PARAM_FILEPATH});
@@ -733,7 +732,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
         }
         return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $this->plugin->get_all_playlists_count() - $old_count, count($files)),
-            Action_Factory::close_and_run(
+            '', Action_Factory::close_and_run(
                 Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists')))
         );
     }
@@ -793,7 +792,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         }
 
         if (empty($list_playlists)) {
-            return Action_Factory::show_title_dialog(TR::t('err_error'));
+            return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_empty_export_list'));
         }
 
         $folder_screen = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
@@ -845,7 +844,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         if ($pl_type === CONTROL_PLAYLIST_IPTV  && $detect_id === CONTROL_DETECT_ID) {
             hd_debug_print("Detect playlist id: $detect_id");
             list($detect_id, $detect_info) = $this->plugin->collect_detect_info($tmp_file);
-            $post_action = Action_Factory::show_title_dialog(TR::t('info'), $post_action, $detect_info);
+            $post_action = Action_Factory::show_title_dialog(TR::t('info'), $detect_info, $post_action);
         }
         $params[PARAM_ID_MAPPER] = $detect_id;
 

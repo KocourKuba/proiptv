@@ -157,12 +157,12 @@ class Action_Factory
 
     /**
      * @param string $title
-     * @param array|null $post_action
      * @param array|string|null $multiline
+     * @param array|null $post_action
      * @param int $preferred_width
      * @return array
      */
-    public static function show_title_dialog($title, $post_action = null, $multiline = '', $preferred_width = 0)
+    public static function show_title_dialog($title, $multiline = '', $post_action = null, $preferred_width = 0)
     {
         $defs = array();
 

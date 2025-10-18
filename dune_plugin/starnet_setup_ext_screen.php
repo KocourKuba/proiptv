@@ -173,18 +173,18 @@ class Starnet_Setup_Ext_Screen extends Abstract_Controls_Screen
                         $error_msg = '';
                         $action = color_palette_patch($error_msg);
                         if ($action !== false) {
-                            return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), $action, TR::t('setup_patch_success'));
+                            return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'), $action);
                         }
                     }
                     $this->plugin->set_bool_parameter(PARAM_FIX_PALETTE, false);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_patch'), null, $error_msg);
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_patch'), $error_msg);
                 } else if (color_palette_check()) {
                     $action = color_palette_restore();
                     if ($action !== null) {
-                        return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), $action, TR::t('setup_patch_success'));
+                        return Action_Factory::show_title_dialog(TR::t('setup_settings_patch_palette'), TR::t('setup_patch_success'), $action);
                     }
 
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_patch'), null, TR::t('err_restore_patch'));
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_patch'), TR::t('err_restore_patch'));
                 }
 
                 break;

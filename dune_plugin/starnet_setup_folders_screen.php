@@ -120,8 +120,8 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
 
                 $post_action = Action_Factory::show_title_dialog(
                     TR::t('folder_screen_selected_folder__1', $data->{Starnet_Folder_Screen::PARAM_CAPTION}),
-                    null,
                     $data->{PARAM_FILEPATH},
+                    null,
                     static::CONTROLS_WIDTH
                 );
                 break;
@@ -140,7 +140,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                     $post_action = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), $ex->getMessage());
                 }
                 break;
 
@@ -151,7 +151,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                     $post_action = Action_Factory::show_title_dialog(TR::t('setup_copy_done'));
                 } catch (Exception $ex) {
                     print_backtrace_exception($ex);
-                    $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), null, $ex->getMessage());
+                    $post_action = Action_Factory::show_title_dialog(TR::t('err_copy'), $ex->getMessage());
                 }
                 break;
 
@@ -177,7 +177,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
 
                 $default_path = $this->plugin->get_cache_dir();
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $default_path),
-                    $action_reload, $default_path, static::CONTROLS_WIDTH);
+                    $default_path, $action_reload, static::CONTROLS_WIDTH);
 
             case self::ACTION_EPG_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
@@ -190,7 +190,7 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
 
                 $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
                 return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->{Starnet_Folder_Screen::PARAM_CAPTION}),
-                    $action_reload, $data->{PARAM_FILEPATH}, static::CONTROLS_WIDTH);
+                    $data->{PARAM_FILEPATH}, $action_reload, static::CONTROLS_WIDTH);
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);

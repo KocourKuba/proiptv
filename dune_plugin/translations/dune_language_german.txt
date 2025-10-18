@@ -448,3 +448,4 @@ err_restore_patch = Die Wiederherstellung der Palette ist fehlgeschlagen!\nDie P
 err_no_need_patch = Keine Palettenfixierung erforderlich!
 err_load_xmltv_source = XMLTV-Quelle kann nicht geladen werden!
 err_no_xmltv_sources = Keine XMLTV-Quelle ausgewählt!
+err_empty_export_list = Exportliste leer!

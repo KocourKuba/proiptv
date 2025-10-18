@@ -91,7 +91,6 @@ class Starnet_Vod_List_Screen extends Abstract_Preloaded_Regular_Screen implemen
                     print_backtrace_exception($ex);
                     return Action_Factory::show_title_dialog(
                         TR::t('err_channel_cant_start'),
-                        null,
                         TR::t('warn_msg2__1', $ex->getMessage())
                     );
                 }

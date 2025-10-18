@@ -161,14 +161,14 @@ class Starnet_Vod_Movie_Screen extends Abstract_Controls_Screen
             $this->plugin->change_vod_favorites($opt_type, $movie_id);
             return Action_Factory::show_title_dialog(
                 $in_order ? TR::t('deleted_from_favorite') : TR::t('added_to_favorite'),
-                Action_Factory::invalidate_folders(
-                    array(
-                        self::make_vod_media_url_str(VOD_FAV_GROUP_ID),
-                        Default_Dune_Plugin::get_group_media_url_str(VOD_HISTORY_GROUP_ID),
-                        Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID)
-                    ),
-                    Action_Factory::close_and_run()
-                )
+                '', Action_Factory::invalidate_folders(
+                array(
+                    self::make_vod_media_url_str(VOD_FAV_GROUP_ID),
+                    Default_Dune_Plugin::get_group_media_url_str(VOD_HISTORY_GROUP_ID),
+                    Default_Dune_Plugin::get_group_media_url_str(VOD_GROUP_ID)
+                ),
+                Action_Factory::close_and_run()
+            )
             );
         }
 
