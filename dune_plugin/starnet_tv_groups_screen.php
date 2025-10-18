@@ -545,7 +545,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                     if (!$this->plugin->get_bool_setting(PARAM_SHOW_FAVORITES)) break;
                     $fav_id = $this->plugin->get_fav_id();
 
-                    $channels_cnt = $this->plugin->get_order_count($fav_id);
+                    $channels_cnt = $this->plugin->get_channels_by_order_cnt($fav_id, true);
                     if (!$channels_cnt) break;
 
                     $caption = $fav_id === TV_FAV_COMMON_GROUP_ID ? TR::t('plugin_common_favorites') : TR::t('plugin_favorites');
