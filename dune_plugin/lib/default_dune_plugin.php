@@ -2905,6 +2905,14 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             return null;
         }
 
+        $provider = $this->get_active_provider();
+
+        if (!is_null($provider) && $this->get_setting(PARAM_EPG_CACHE_ENGINE, ENGINE_XMLTV) === ENGINE_JSON) {
+            $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
+            $epg_url = $this->get_epg_manager()->get_epg_url($provider, $channel_row, $day_start_ts, $epg_id, $preset);
+        } else {
+            $epg_id = implode(', ', array_unique(array_filter(self::make_epg_ids($channel_row))));
+        }
         $defs = array();
 
         Control_Factory::add_vgap($defs, -20);
@@ -2914,7 +2922,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         self::format_smart_label($defs, TR::load('group'), $channel_row[COLUMN_GROUP_ID]);
         self::format_smart_label($defs, TR::load('archive'), $channel_row[COLUMN_ARCHIVE] . ' ' . TR::load('days'));
         self::format_smart_label($defs, TR::load('adult'), $channel_row[COLUMN_ADULT] ? TR::load('yes') : TR::load('no'));
-        self::format_smart_label($defs, "EPG ID:", implode(', ', array_unique(array_filter(self::make_epg_ids($channel_row)))));
+        self::format_smart_label($defs, "EPG IDs:", $epg_id);
 
         if ($channel_row[COLUMN_TIMESHIFT] != 0) {
             self::format_smart_label($defs, TR::load('time_shift'), $channel_row[COLUMN_TIMESHIFT] . ' ' . TR::load('hours'));
@@ -2926,21 +2934,15 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         Control_Factory::add_vgap($defs, 30);
 
         $icon = $this->get_channel_picon($channel_row, $is_classic);
-        self::format_smart_label($defs, TR::load('icon'), wrap_string_to_lines($icon, 120, "<br/>"));
+        self::format_smart_label($defs, TR::load('icon'), $icon);
 
-        $provider = $this->get_active_provider();
-        if (!is_null($provider)) {
-            $day_start_ts = from_local_time_zone_offset(strtotime(date("Y-m-d")));
-            $epg_url = $this->get_epg_manager()->get_epg_url($provider, $channel_row, $day_start_ts, $epg_id, $preset);
-            if (!is_null($epg_url)) {
-                $epg_url = wrap_string_to_lines($epg_url, 120, "<br/>");
-                self::format_smart_label($defs, TR::load('epg_url'), $epg_url);
-            }
+        if (!empty($epg_url)) {
+            self::format_smart_label($defs, TR::load('epg_url'), $epg_url);
         }
 
         try {
             $live_url = $this->generate_stream_url($channel_row, -1, true);
-            $live_url = wrap_string_to_lines(htmlspecialchars($live_url), 120, "<br/>");
+            $live_url = htmlspecialchars($live_url);
             self::format_smart_label($defs, TR::load('live_url'), $live_url);
         } catch (Exception $ex) {
             print_backtrace_exception($ex);
@@ -2949,7 +2951,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         if ($channel_row[COLUMN_ARCHIVE] > 0) {
             try {
                 $archive_url = $this->generate_stream_url($channel_row, time() - 3600, true);
-                $archive_url = wrap_string_to_lines(htmlspecialchars($archive_url), 120, "<br/>");
+                $archive_url = htmlspecialchars($archive_url);
                 self::format_smart_label($defs, TR::load('archive_url'), $archive_url);
             } catch (Exception $ex) {
                 print_backtrace_exception($ex);
