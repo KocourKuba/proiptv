@@ -1419,7 +1419,7 @@
         "playlists_vod": {
           "default": {
             "name": "Default",
-            "url": "http://DOMAIN_ID/kino-full/{LOGIN}-{PASSWORD}"
+            "url": "http://{DOMAIN_ID}/kino-full/{LOGIN}-{PASSWORD}"
           }
         },
         "streams": {
