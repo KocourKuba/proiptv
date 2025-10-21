@@ -521,7 +521,7 @@ class api_default
         if (is_null($file)) {
             $response = $this->curl_wrapper->download_content($command_url);
         } else {
-            $response = $this->curl_wrapper->download_file($command_url, $file, false);
+            $response = $this->curl_wrapper->download_file($command_url, $file);
         }
 
         if ($response === false) {

@@ -248,7 +248,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         $lang = strtolower(TR::get_current_language());
         if (empty($history_txt)) {
-            $doc = Curl_Wrapper::simple_download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
+            $doc = Curl_Wrapper::getInstance()->download_content(self::CHANGELOG_URL_PREFIX . "changelog.$lang.md");
             if ($doc === false) {
                 hd_debug_print("Failed to get actual changelog.$lang.md, load local copy");
                 $path = get_install_path("changelog.$lang.md");
@@ -264,7 +264,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         $defs = array();
         $qr_code = get_temp_path('tg.jpg');
         if (!file_exists($qr_code)) {
-            $res = Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "TG.jpg", $qr_code);
+            $res = Curl_Wrapper::getInstance()->download_file(self::RESOURCE_URL . "TG.jpg", $qr_code);
             if ($res) {
                 Control_Factory::add_smart_label($defs, "", "<gap width=1400/><icon dy=-10 width=100 height=100>$qr_code</icon>");
                 Control_Factory::add_vgap($defs, 15);
@@ -297,8 +297,8 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
             hd_debug_print(null, true);
             $img_ym = get_temp_path('qr_ym.png');
             $img_pp = get_temp_path('qr_pp.png');
-            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym);
-            Curl_Wrapper::simple_download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp);
+            Curl_Wrapper::getInstance()->download_file(self::RESOURCE_URL . "QR_YM.png", $img_ym);
+            Curl_Wrapper::getInstance()->download_file(self::RESOURCE_URL . "QR_PP.png", $img_pp);
 
             Control_Factory::add_vgap($defs, 50);
             Control_Factory::add_smart_label($defs, "", "<text>YooMoney</text><gap width=400/><text>PayPal</text>");

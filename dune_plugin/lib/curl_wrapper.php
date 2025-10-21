@@ -108,7 +108,7 @@ class Curl_Wrapper
      * @param bool $use_cache use ETag caching
      * @return bool result of operation
      */
-    public function download_file($url, $save_file, $use_cache)
+    public function download_file($url, $save_file, $use_cache = false)
     {
         hd_debug_print(null, true);
 
@@ -271,45 +271,6 @@ class Curl_Wrapper
     public static function get_url_hash($url)
     {
         return hash('crc32', $url);
-    }
-
-    /**
-     * download file to selected path
-     *
-     * @param string $url url
-     * @param string $save_file path to file
-     * @return bool
-     */
-    public static function simple_download_file($url, $save_file)
-    {
-        hd_debug_print(null, true);
-
-        $content = self::simple_download_content($url);
-        if ($content === false) {
-            hd_debug_print("Can't download $url");
-            return false;
-        }
-
-        return file_put_contents($save_file, $content);
-    }
-
-    /**
-     * download and return contents
-     *
-     * @param string $url url
-     * @return string|bool content of the downloaded file or result of operation
-     */
-    public static function simple_download_content($url)
-    {
-        hd_debug_print(null, true);
-
-        $content = HD::get_http_document($url);
-        if ($content === false) {
-            hd_debug_print("Can't download $url");
-            return false;
-        }
-
-        return $content;
     }
 
     /**

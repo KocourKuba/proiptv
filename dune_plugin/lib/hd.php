@@ -284,8 +284,15 @@ class HD
 
             $handle = fopen($zip_file, 'rb');
             if (is_resource($handle)) {
-                self::http_put_document(base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name,
-                    $handle, filesize($zip_file));
+                self::get_http_document(base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name,
+                    array(
+                        CURLOPT_PUT => true,
+                        CURLOPT_CUSTOMREQUEST => "PUT",
+                        CURLOPT_INFILE => $handle,
+                        CURLOPT_INFILESIZE => filesize($zip_file),
+                        CURLOPT_HTTPHEADER => array("accept: */*", "Expect: 100-continue", "Content-Type: application/zip"),
+                    )
+                );
                 hd_debug_print("Log file sent");
                 $ret = true;
             }
@@ -402,25 +409,6 @@ class HD
             return $arr;
         }
         return $size[0] . ' (' . $size[1] . ')';
-    }
-
-    /**
-     * @param string $url
-     * @param resource $in_file
-     * @param int $in_file_size
-     * @return bool|string
-     * @throws Exception
-     */
-    public static function http_put_document($url, $in_file, $in_file_size)
-    {
-        return self::get_http_document($url,
-            array(
-                CURLOPT_PUT => true,
-                CURLOPT_CUSTOMREQUEST => "PUT",
-                CURLOPT_INFILE => $in_file,
-                CURLOPT_INFILESIZE => $in_file_size,
-                CURLOPT_HTTPHEADER => array("accept: */*", "Expect: 100-continue", "Content-Type: application/zip"),
-            ));
     }
 
     ///////////////////////////////////////////////////////////////////////

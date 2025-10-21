@@ -95,7 +95,7 @@ class Starnet_Edit_Providers_List_Screen extends Abstract_Preloaded_Regular_Scre
                 $qr_code = get_temp_path($provider->getId()) . ".jpg";
                 if (!file_exists($qr_code)) {
                     $url = "https://api.qrserver.com/v1/create-qr-code/?size=450x450&format=jpg&data=" . urlencode($provider->getProviderUrl());
-                    $res = Curl_Wrapper::simple_download_file($url, $qr_code);
+                    $res = Curl_Wrapper::getInstance()->download_file($url, $qr_code);
                     if (!$res) break;
                 }
 

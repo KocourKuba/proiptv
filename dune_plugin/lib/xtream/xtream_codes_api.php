@@ -67,6 +67,8 @@ class xtream_codes_api
      */
     public function init($base_url, $username, $password)
     {
+        hd_debug_print(null, true);
+        hd_debug_print("Base url: $base_url", true);
         $this->base_url = $base_url;
         $this->username = $username;
         $this->password = $password;
@@ -102,6 +104,8 @@ class xtream_codes_api
      */
     protected function get_cached_response($url)
     {
+        hd_debug_print(null, true);
+
         $url_hash = hash('crc32', $url);
         if (!is_null($this->cache) && isset($this->cache[$url_hash])) {
             return $this->cache[$url_hash];
@@ -120,7 +124,7 @@ class xtream_codes_api
             unlink($tmp_file);
         }
 
-        $cached_data = Curl_Wrapper::decodeJsonResponse(false, Curl_Wrapper::simple_download_content($url));
+        $cached_data = Curl_Wrapper::decodeJsonResponse(false, Curl_Wrapper::getInstance()->download_content($url));
         if ($cached_data !== false) {
             store_to_json_file($tmp_file, $cached_data);
         }
