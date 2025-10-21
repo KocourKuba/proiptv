@@ -1485,10 +1485,8 @@
           "mpegts": "MPEG-TS"
         },
         "xmltv_sources": [
-          "http://epg.team/tvteam.xml.gz",
-          "http://epg.team/tvteam.3.3.xml.tar.gz",
-          "http://epg.team/tvteam.5.5.xml.tar.gz",
-          "http://epg.team/tvteam.7.7.xml.tar.gz"
+          "http://epg.team/tvteam.1.1.xml.gz",
+          "http://epg.team/tvteam.3.1.xml.tar.gz"
         ]
       }
     },
