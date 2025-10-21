@@ -68,6 +68,11 @@ class M3uParser extends Json_Serializer
     protected $file_name;
 
     /**
+     * @var string
+     */
+    protected $db_name;
+
+    /**
      * @var Entry
      */
     protected $m3u_info;
@@ -139,10 +144,12 @@ class M3uParser extends Json_Serializer
 
     /**
      * @param string $file_name
+     * @param string $db_name
      */
-    public function setVodPlaylist($file_name)
+    public function setVodPlaylist($file_name, $db_name)
     {
         $this->clear_data();
+        $this->db_name = null;
         $this->file_name = null;
         try {
             if (empty($file_name)) {
@@ -153,6 +160,7 @@ class M3uParser extends Json_Serializer
                 throw new Exception("File not exists: $file_name");
             }
 
+            $this->db_name = $db_name;
             $this->file_name = $file_name;
         } catch (Exception $ex) {
             hd_debug_print("Can't read file: $file_name");
@@ -414,8 +422,7 @@ class M3uParser extends Json_Serializer
         );
         $vod_columns = Sql_Wrapper::make_table_columns($init_vod);
 
-        $db_name = LogSeverity::$is_debug ? "$this->file_name.db" : ":memory:";
-        $db->exec("ATTACH DATABASE '$db_name' AS " . self::VOD_DB);
+        $db->exec("ATTACH DATABASE '$this->db_name' AS " . self::VOD_DB);
 
         $query = "DROP TABLE IF EXISTS $this->vod_table;";
         $query .= "CREATE TABLE IF NOT EXISTS $this->vod_table ($vod_columns);";

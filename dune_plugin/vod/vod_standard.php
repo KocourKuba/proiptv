@@ -940,7 +940,9 @@ class vod_standard extends Abstract_Vod
             return false;
         }
 
-        $m3u_file = $this->plugin->get_playlist_cache_filepath(false) . '.m3u8';
+        $base_name = $this->plugin->get_playlist_cache_filepath(false);
+        $m3u_file = "$base_name.m3u8";
+        $db_file = "$base_name.db";
 
         try {
             $reload_playlist = $this->plugin->is_playlist_cache_expired(false);
@@ -993,7 +995,7 @@ class vod_standard extends Abstract_Vod
 
                 $mtime = filemtime($m3u_file);
                 hd_debug_print("Stored $m3u_file (timestamp: $mtime)");
-                $this->vod_m3u_parser->setVodPlaylist($m3u_file);
+                $this->vod_m3u_parser->setVodPlaylist($m3u_file, $db_file);
             }
         } catch (Exception $ex) {
             hd_debug_print("Unable to load VOD playlist");

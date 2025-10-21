@@ -744,7 +744,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
             if (!$force) {
                 $is_expired = $this->is_playlist_cache_expired(true);
                 if (!$is_expired) {
-                    $db_file = $this->get_playlist_cache_filepath(true) . '.db';
                     $database_attached = $this->sql_playlist->attachDatabase($db_file, M3uParser::IPTV_DB);
                     if ($database_attached === 0) {
                         hd_debug_print("Can't attach to database: $db_file with name: " . M3uParser::IPTV_DB);
@@ -1016,24 +1015,6 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $query = sprintf(self::CREATE_ORDERED_TABLE, self::get_table_name(TV_FAV_COMMON_GROUP_ID), COLUMN_CHANNEL_ID);
         $this->sql_playlist->exec($query);
 
-        // create tables for vod search, vod filters, vod favorites
-        if ($this->is_vod_enabled()) {
-            $tables = array(
-                VOD_FILTER_LIST => 'item',
-                VOD_SEARCH_LIST => 'item',
-                VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
-            );
-            if ($this->get_vod_class() === 'vod_standard') {
-                $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
-            }
-
-            foreach ($tables as $list => $column) {
-                $table_name = self::get_table_name($list);
-                $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
-                $this->sql_playlist->exec($query);
-            }
-        }
-
         $provider_class = $this->get_playlist_parameter($playlist_id, PARAM_PROVIDER);
         if (!empty($provider_class)) {
             $provider = $this->get_provider($playlist_id);
@@ -1072,6 +1053,25 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         hd_debug_print("Orders database path: $db_file", true);
         if ($this->sql_playlist->attachDatabase($db_file, self::PLAYLIST_ORDERS_DB) === 0) {
             hd_debug_print("Can't attach to database with name: " . self::PLAYLIST_ORDERS_DB);
+        }
+
+        // create tables for vod search, vod filters, vod favorites
+        if ($this->is_vod_playlist() || (!empty($provider) && $provider->hasApiCommand(API_COMMAND_GET_VOD))) {
+            hd_debug_print("Preparing tables for VOD", true);
+            $tables = array(
+                VOD_FILTER_LIST => 'item',
+                VOD_SEARCH_LIST => 'item',
+                VOD_FAV_GROUP_ID => COLUMN_CHANNEL_ID,
+            );
+            if ($this->get_vod_class() === 'vod_standard') {
+                $tables[VOD_LIST_GROUP_ID] = COLUMN_CHANNEL_ID;
+            }
+
+            foreach ($tables as $list => $column) {
+                $table_name = self::get_table_name($list);
+                $query = sprintf(self::CREATE_ORDERED_TABLE, $table_name, $column);
+                $this->sql_playlist->exec($query);
+            }
         }
 
         // create group table
@@ -1364,7 +1364,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $query_new_groups = "SELECT * FROM $iptv_groups WHERE group_id NOT IN (SELECT group_id FROM $groups_info_table);";
         $new_groups = $this->sql_playlist->fetch_array($query_new_groups);
         if (!empty($new_groups)) {
-            hd_debug_print("Adding new groups: " . json_encode(extract_column($new_groups, COLUMN_GROUP_ID)), true);
+            hd_debug_print("Adding new groups: " . pretty_json_format(extract_column($new_groups, COLUMN_GROUP_ID)), true);
             $query = '';
             foreach ($new_groups as $group_row) {
                 $group_id = $group_row[COLUMN_GROUP_ID];
