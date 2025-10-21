@@ -606,7 +606,9 @@ class api_default
 
         foreach ($params_macroses as $macro => $default) {
             if (strpos($string, $macro) !== false) {
-                $string = str_replace($macro, trim($this->GetProviderParameter($macro, $default)), $string);
+                $value = trim($this->GetProviderParameter($macro, $default));
+                hd_debug_print("Replace $macro: $string", true);
+                $string = str_replace($macro, $value, $string);
             }
         }
 
