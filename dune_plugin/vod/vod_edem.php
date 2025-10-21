@@ -158,7 +158,7 @@ class vod_edem extends vod_standard
         $pairs['mac'] = "000000000000"; // dummy
         $pairs['app'] = "ProIPTV_dune_plugin";
 
-        $curl_opt[CURLOPT_POST] = true;
+        $curl_opt[CURLOPT_POST] = 1;
         $curl_opt[CURLOPT_HTTPHEADER][] = CONTENT_TYPE_JSON;
         $curl_opt[CURLOPT_POSTFIELDS] = json_encode($pairs);
 
@@ -175,8 +175,8 @@ class vod_edem extends vod_standard
             return false;
         }
 
-        hd_debug_print("doc: " . pretty_json_format($doc, true), true);
         if (isset($doc->type) && $doc->type === 'error') {
+            hd_debug_print("doc: " . pretty_json_format($doc, true), true);
             hd_debug_print($doc->description, true);
         }
         $category_list = array();

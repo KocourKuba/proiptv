@@ -193,7 +193,7 @@ class Dune_Default_Sqlite_Engine
                             PARAM_TYPE => $stg->type,
                             PARAM_NAME => $stg->name,
                         );
-                        $values = array_merge($values, $stg->params);
+                        $values = safe_merge_array($values, $stg->params);
                         $this->set_playlist_parameters($playlist_id, $values);
                     }
                     unset($parameters[$key]);

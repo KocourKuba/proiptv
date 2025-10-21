@@ -2172,7 +2172,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
         $provider = $this->get_active_provider();
         if (!is_null($provider)) {
-            $dune_params = array_unique(array_merge($dune_params, dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS))));
+            $dune_params = array_unique(safe_merge_array($dune_params, dune_params_to_array($provider->getConfigValue(PARAM_DUNE_PARAMS))));
         }
 
         if (HD::get_dune_user_agent() !== HD::get_default_user_agent()) {
@@ -3502,6 +3502,189 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         unset($this->playback_points[$id]);
 
         hd_debug_print("Save history for channel_id $id at time mark: $archive_ts", true);
+    }
+
+    public static function send_log_to_developer($plugin, &$error = null)
+    {
+        $serial = get_serial_number();
+        if (empty($serial)) {
+            hd_debug_print("Unable to get DUNE serial.");
+            $serial = 'XX-XX-XX-XX-XX';
+        }
+        $ver = $plugin->plugin_info['app_version'];
+        $ver = str_replace('.', '_', $ver);
+        $timestamp = format_datetime('Ymd_His', time());
+        $model = get_product_id();
+        $zip_file_name = "proiptv_{$ver}_{$model}_{$serial}_$timestamp.zip";
+        hd_debug_print("Prepare archive $zip_file_name for send");
+        $zip_file = get_temp_path($zip_file_name);
+        $apk_subst = getenv('FS_PREFIX');
+        $plugin_name = get_plugin_name();
+
+        $paths = array(
+            get_temp_path("*.txt"),
+            get_temp_path("*.log"),
+            get_temp_path("*.m3u8"),
+            get_temp_path("*.m3u"),
+            "$apk_subst/tmp/run/shell.log",
+            "$apk_subst/tmp/run/shell.log.old",
+        );
+
+        if (file_exists("$apk_subst/D/dune_plugin_logs/$plugin_name.log")) {
+            $paths[] = "$apk_subst/D/dune_plugin_logs/$plugin_name.*";
+        }
+        if (file_exists("$apk_subst/tmp/mnt/D/dune_plugin_logs/$plugin_name.log")) {
+            $paths[] = "$apk_subst/tmp/mnt/D/dune_plugin_logs/$plugin_name.*";
+        }
+        if (file_exists("$apk_subst/tmp/run/$plugin_name.log")) {
+            $paths[] = "$apk_subst/tmp/run/$plugin_name.*";
+        }
+
+        $plugin_backup = self::do_backup_settings($plugin, get_temp_path(), false);
+        if ($plugin_backup === false) {
+            $paths[] = get_data_path("*.settings");
+        } else {
+            $paths[] = $plugin_backup;
+        }
+
+        $files = array();
+        foreach ($paths as $path) {
+            foreach (glob($path) as $file) {
+                if (is_file($file) && filesize($file) > 0) {
+                    $files[] = $file;
+                }
+            }
+        }
+
+        $handle = false;
+        $ret = false;
+        try {
+            $zip = new ZipArchive();
+            $zip->open($zip_file, ZipArchive::CREATE);
+            foreach ($files as $key => $file) {
+                $zip->addFile($file, "/$key." . basename($file));
+            }
+            $zip->close();
+
+            $url = base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name;
+            $handle = fopen($zip_file, 'rb');
+            if (is_resource($handle)) {
+                $wrapper = Curl_Wrapper::getInstance();
+                $wrapper->set_options(array(CURLOPT_INFILE => $handle, CURLOPT_INFILESIZE => filesize($zip_file)));
+                $wrapper->set_send_headers(array("accept: */*", "Expect: 100-continue", "Content-Type: application/zip"));
+                $content = $wrapper->download_content($url);
+
+                $http_code = $wrapper->get_http_code();
+                if ($content === false) {
+                    $err_msg = "Fetch $url failed. HTTP error: $http_code ({$wrapper->get_error_no()})";
+                    hd_debug_print($err_msg);
+                    return false;
+                }
+
+                $http_code_str = HD::http_status_code_to_string($http_code);
+                if ($http_code >= 400) {
+                    $err_msg = "Fetch $url failed. HTTP request failed ($http_code): $http_code_str";
+                    hd_debug_print($err_msg);
+                    return false;
+                }
+
+                if ($http_code >= 300) {
+                    $err_msg = "Fetch $url completed, but ignored. HTTP request ($http_code): $http_code_str";
+                    hd_debug_print($err_msg);
+                }
+
+                hd_debug_print("Log file sent");
+                $ret = true;
+            }
+        } catch (Exception $ex) {
+            print_backtrace_exception($ex);
+            $msg = ": Unable to upload log: " . $ex->getMessage();
+            if ($error !== null) {
+                $error = $msg;
+            }
+        }
+
+        if (is_resource($handle)) {
+            @fclose($handle);
+        }
+        @unlink($zip_file);
+
+        return $ret;
+    }
+
+    /**
+     * @param Default_Dune_Plugin $plugin
+     * @param string $folder_path
+     * @return bool|string
+     */
+    public static function do_backup_settings($plugin, $folder_path, $complete = true)
+    {
+        $folder_path = get_paved_path($folder_path);
+
+        hd_debug_print("Backup path: $folder_path");
+        if ($complete) {
+            $timestamp = format_datetime('Y-m-d_H-i', time());
+            $zip_file_name = "proiptv_backup_{$plugin->plugin_info['app_version']}_$timestamp.zip";
+        } else {
+            $zip_file_name = "proiptv_backup.zip";
+        }
+        $zip_file = get_temp_path($zip_file_name);
+
+        try {
+            $zip = new ZipArchive();
+            if (!$zip->open($zip_file, ZipArchive::CREATE)) {
+                throw new Exception(TR::t("err_create_zip__1", $zip_file));
+            }
+
+            $rootPath = get_data_path();
+            foreach (array("\.settings", "\.db") as $ext) {
+                foreach (glob_dir($rootPath, "/$ext/i") as $full_path) {
+                    if (file_exists($full_path)) {
+                        $zip->addFile($full_path, basename($full_path));
+                    }
+                }
+            }
+
+            if ($complete) {
+                $added_folders = array($rootPath . CACHED_IMAGE_SUBDIR, $rootPath . 'skin_backup');
+                /** @var SplFileInfo[] $files */
+                $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath),
+                    RecursiveIteratorIterator::SELF_FIRST);
+
+                foreach ($files as $file) {
+                    if ($file->isDir()) continue;
+
+                    $filePath = $file->getRealPath();
+                    foreach ($added_folders as $folder) {
+                        if (0 === strncmp($filePath, $folder, strlen($folder))) {
+                            $relativePath = substr($filePath, strlen($rootPath));
+                            $zip->addFile($filePath, $relativePath);
+                        }
+                    }
+                }
+            }
+
+            if (!$zip->close()) {
+                throw new Exception("Error create zip file: $zip_file " . $zip->getStatusString());
+            }
+
+            $backup_path = "$folder_path/$zip_file_name";
+            if ($zip_file !== $backup_path && false === copy($zip_file, $backup_path)) {
+                throw new Exception(TR::t('err_copy__2', $zip_file, $backup_path));
+            }
+        } catch (Exception $ex) {
+            hd_debug_print(HD::get_storage_size(get_temp_path()));
+            print_backtrace_exception($ex);
+            return false;
+        }
+
+        clearstatcache();
+        if ($zip_file !== $backup_path) {
+            hd_print("unlink $zip_file");
+            unlink($zip_file);
+        }
+
+        return $backup_path;
     }
 
     //////////////////////////////////////////////////////////////////

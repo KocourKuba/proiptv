@@ -54,6 +54,11 @@ class Curl_Wrapper
     private $send_headers;
 
     /**
+     * @var array
+     */
+    private $options;
+
+    /**
      * @var string
      */
     private $post_data;
@@ -126,19 +131,7 @@ class Curl_Wrapper
     {
         hd_debug_print(null, true);
 
-        $save_file = get_temp_path(self::get_url_hash($url));
-        if ($this->exec_php_curl($url, $save_file, $use_cache)) {
-            if (!file_exists($save_file)) {
-                hd_debug_print("Can't download to $save_file");
-                return false;
-            }
-
-            $content = file_get_contents($save_file);
-            unlink($save_file);
-            return $content;
-        }
-
-        return false;
+        return $this->exec_php_curl($url, null, $use_cache);
     }
 
     /**
@@ -171,6 +164,14 @@ class Curl_Wrapper
     public function set_send_headers($headers)
     {
         $this->send_headers = $headers;
+    }
+
+    /**
+     * @param array $opts
+     */
+    public function set_options($opts)
+    {
+        $this->options = $opts;
     }
 
     /**
@@ -227,7 +228,7 @@ class Curl_Wrapper
         if (empty($etag)) {
             hd_debug_print("No ETag value");
         } else {
-            if ($this->exec_php_curl($url, null, true)) {
+            if ($this->exec_php_curl($url, false, true)) {
                 $code = $this->get_http_code();
                 hd_debug_print("http code: $code", true);
                 return !($code === 304 || ($code === 200 && $this->get_etag_header() === $etag));
@@ -403,19 +404,18 @@ class Curl_Wrapper
 
 
     /**
+     * if $save_file == null return content of request
+     * if $save_file == false return only result of request
+     *
      * @param string $url
-     * @param string $save_file
+     * @param string|null|bool $save_file
      * @param bool $use_cache
-     * @return bool
+     * @return bool|string
      */
     private function exec_php_curl($url, $save_file, $use_cache = false)
     {
-        hd_debug_print("HTTP fetching '$url'...", true);
-        if (!empty($save_file)) {
-            hd_debug_print("Save to file: '$save_file'", true);
-        }
-
         $this->http_code = 0;
+        self::$http_response_headers = null;
 
         $opts[CURLOPT_URL] = $url;
         $opts[CURLOPT_SSL_VERIFYPEER] = 0;
@@ -427,14 +427,30 @@ class Curl_Wrapper
         $opts[CURLOPT_MAXREDIRS] = 5;
         $opts[CURLOPT_FILETIME] = 1;
         $opts[CURLOPT_USERAGENT] = HD::get_dune_user_agent();
-        $opts[CURLOPT_ENCODING] = 1;
+        $opts[CURLOPT_HEADERFUNCTION] = 'Curl_Wrapper::http_header_function';
+        $opts[CURLOPT_ENCODING] = "";
+
+        if (!empty($this->options)) {
+            $opts = safe_merge_array($opts, $this->options);
+        }
 
         $fp = null;
-        if (is_null($save_file)) {
+        if (isset($opts[CURLOPT_INFILE]) || isset($opts[CURLOPT_INFILESIZE])) {
+            $opts[CURLOPT_PUT] = 1;
+        } else if ($save_file === false) {
             $opts[CURLOPT_NOBODY] = 1;
-        } else {
+        } else if ($save_file !== null){
+            hd_debug_print("Save to file: '$save_file'", true);
             $fp = fopen($save_file, "w+");
             $opts[CURLOPT_FILE] = $fp;
+        }
+
+        if ($this->is_post) {
+            $opts[CURLOPT_POST] = $this->is_post;
+        }
+
+        if (!empty($this->post_data)) {
+            $opts[CURLOPT_POSTFIELDS] = $this->post_data;
         }
 
         if ($use_cache) {
@@ -445,37 +461,32 @@ class Curl_Wrapper
         }
 
         if (!empty($this->send_headers)) {
-            hd_debug_print("Sending headers...", true);
-            foreach ($this->send_headers as $header) {
-                hd_debug_print($header, true);
-            }
             $opts[CURLOPT_HTTPHEADER] = $this->send_headers;
         }
 
-        $opts[CURLOPT_POST] = $this->is_post;
-        hd_debug_print("Use POST: " . var_export($this->is_post, true), true);
-
-        if (!empty($this->post_data)) {
-            hd_debug_print("Sending POST fields '$this->post_data'", true);
-            $opts[CURLOPT_POSTFIELDS] = $this->post_data;
-        }
-
-        self::$http_response_headers = null;
-        $opts[CURLOPT_HEADERFUNCTION] = 'Curl_Wrapper::http_header_function';
-
         $ch = curl_init();
+
         foreach ($opts as $k => $v) {
+            if (LogSeverity::$is_debug) {
+                if (is_bool($v)) {
+                    hd_debug_print(HD::curlopt_to_string($k) . " ($k) = " . var_export($v, true));
+                } else if (is_array($v)) {
+                    hd_debug_print(HD::curlopt_to_string($k) . " ($k) = " . json_encode($v));
+                } else {
+                    hd_debug_print(HD::curlopt_to_string($k) . " ($k) = $v");
+                }
+            }
             curl_setopt($ch, $k, $v);
         }
 
         $start_tm = microtime(true);
-        curl_exec($ch);
+        $content = curl_exec($ch);
         $execution_tm = microtime(true) - $start_tm;
         $this->error_no = curl_errno($ch);
         $this->error_desc = curl_error($ch);
         $this->http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-        if (!is_null($save_file) && !is_null($fp)) {
+        if (!is_null($fp)) {
             fclose($fp);
         }
 
@@ -484,7 +495,7 @@ class Curl_Wrapper
             return false;
         }
 
-        if ($this->http_code != 200 && $this->http_code != 304) {
+        if ($this->http_code < 200 || ($this->http_code >= 300 && $this->http_code != 304)) {
             hd_debug_print("HTTP request failed ($this->http_code)");
             return false;
         }
@@ -499,18 +510,14 @@ class Curl_Wrapper
             hd_debug_print(sprintf("HTTP OK (%d, %d bytes) in %.3fs", $this->http_code, filesize($save_file), $execution_tm), true);
         }
 
-        if (!empty(self::$http_response_headers)) {
-            if (LogSeverity::$is_debug) {
-                hd_debug_print("---------  Response headers start ---------");
-            }
+        if (!empty(self::$http_response_headers) && LogSeverity::$is_debug) {
+            hd_debug_print("---------  Response headers start ---------");
             foreach (self::$http_response_headers as $key => $header) {
-                hd_debug_print("$key: $header", true);
+                hd_debug_print("$key: $header");
             }
-            if (LogSeverity::$is_debug) {
-                hd_debug_print("---------   Response headers end  ---------");
-            }
+            hd_debug_print("---------   Response headers end  ---------");
         }
 
-        return true;
+        return $save_file === null ? $content : true;
     }
 }

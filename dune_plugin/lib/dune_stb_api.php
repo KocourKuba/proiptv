@@ -437,7 +437,7 @@ function backtrace_exception($ex, $as_string = false, $seen = null)
             $result .= PHP_EOL . backtrace_exception($prev, $as_string, $seen);
         }
     } else if ($prev) {
-        $result = array_merge($result, backtrace_exception($prev, $as_string, $seen));
+        $result = safe_merge_array($result, backtrace_exception($prev, $as_string, $seen));
     }
 
     return $result;
@@ -1959,7 +1959,7 @@ function print_sysinfo()
         $table['SQLite3 Version'] = $sqlite_ver['versionString'];
     }
 
-    $table = array_merge($table, DuneSystem::$properties);
+    $table = safe_merge_array($table, DuneSystem::$properties);
 
     $max = 0;
     foreach (array_keys($table) as $key) {

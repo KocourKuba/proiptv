@@ -124,7 +124,7 @@ class xtream_codes_api
             unlink($tmp_file);
         }
 
-        $cached_data = Curl_Wrapper::decodeJsonResponse(false, Curl_Wrapper::getInstance()->download_content($url));
+        $cached_data = Curl_Wrapper::decodeJsonResponse(false, Curl_Wrapper::getInstance()->download_content($url, true));
         if ($cached_data !== false) {
             store_to_json_file($tmp_file, $cached_data);
         }

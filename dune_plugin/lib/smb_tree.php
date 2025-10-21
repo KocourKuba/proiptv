@@ -371,7 +371,7 @@ class smb_tree
                 break;
             case 2:
                 // network folders and network folders + SMB search
-                $ip = array_merge($this->get_ip_server_shares_smb(), self::get_ip_network_folder_smb());
+                $ip = safe_merge_array($this->get_ip_server_shares_smb(), self::get_ip_network_folder_smb());
                 break;
             case 3:
                 // only SMB search

@@ -36,7 +36,7 @@ abstract class Abstract_Regular_Screen extends Abstract_Screen
      */
     public static function make_callback_media_url_str($parent_id, $add_params = array())
     {
-        return MediaURL::encode(array_merge(
+        return MediaURL::encode(safe_merge_array(
             array(PARAM_SCREEN_ID => static::ID,
                 PARAM_SOURCE_WINDOW_ID => $parent_id,
                 PARAM_WINDOW_COUNTER => 1),

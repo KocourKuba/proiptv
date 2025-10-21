@@ -475,9 +475,6 @@ class api_default
     {
         hd_debug_print(null, true);
         hd_debug_print("execApiCommand: $command", true);
-        if (!empty($curl_opt)) {
-            hd_debug_print("curl options: " . pretty_json_format($curl_opt), true);
-        }
 
         $this->curl_wrapper->reset();
 
@@ -502,7 +499,7 @@ class api_default
             if (empty($curl_opt[CURLOPT_HTTPHEADER])) {
                 $curl_opt[CURLOPT_HTTPHEADER] = $add_headers;
             } else {
-                $curl_opt[CURLOPT_HTTPHEADER] = array_merge($curl_opt[CURLOPT_HTTPHEADER], $add_headers);
+                $curl_opt[CURLOPT_HTTPHEADER] = safe_merge_array($curl_opt[CURLOPT_HTTPHEADER], $add_headers);
             }
         }
 

@@ -161,7 +161,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                     );
                 }
 
-                $new_actions = array_merge(
+                $new_actions = safe_merge_array(
                     $this->get_action_map($media_url, $plugin_cookies),
                     array(GUI_EVENT_TIMER => User_Input_Handler_Registry::create_action($this, GUI_EVENT_TIMER)));
 

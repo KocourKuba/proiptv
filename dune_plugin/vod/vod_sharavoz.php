@@ -237,7 +237,7 @@ class vod_sharavoz extends vod_standard
             $gen_arr = array();
             foreach ($value as $sub_cat_name) {
                 $sub_pair = explode("_", $sub_cat_name);
-                hd_debug_print("Sub Category ($sub_pair[2]): $sub_pair[0] ($sub_pair[1])", true);
+                //hd_debug_print("Sub Category ($sub_pair[2]): $sub_pair[0] ($sub_pair[1])", true);
                 $gen_arr[] = new Vod_Category($sub_pair[1] . "_" . $sub_pair[2], $sub_pair[0], $category);
             }
 
@@ -262,7 +262,7 @@ class vod_sharavoz extends vod_standard
         $categories = $this->xtream->get_categories($stream_type);
         if ($categories !== false) {
             foreach ($categories as $item) {
-                hd_debug_print("$item->category_id ($item->category_name)", true);
+                //hd_debug_print("$item->category_id ($item->category_name)", true);
                 $pair = explode("|", $item->category_name);
 
                 $parent_id = trim($pair[0]);

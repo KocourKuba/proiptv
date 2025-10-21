@@ -105,7 +105,7 @@ class ExtTagDefault extends Json_Serializer implements ExtTag
     public function addAttributes($attributes)
     {
         if (is_array($this->attributes)) {
-            $this->attributes = array_merge($this->attributes, $attributes);
+            $this->attributes = safe_merge_array($this->attributes, $attributes);
         } else {
             $this->attributes = $attributes;
         }

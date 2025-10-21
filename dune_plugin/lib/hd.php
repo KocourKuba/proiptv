@@ -220,173 +220,6 @@ class HD
         self::$plugin_user_agent = $user_agent;
     }
 
-    public static function send_log_to_developer($plugin, &$error = null)
-    {
-        $serial = get_serial_number();
-        if (empty($serial)) {
-            hd_debug_print("Unable to get DUNE serial.");
-            $serial = 'XX-XX-XX-XX-XX';
-        }
-        $ver = $plugin->plugin_info['app_version'];
-        $ver = str_replace('.', '_', $ver);
-        $timestamp = format_datetime('Ymd_His', time());
-        $model = get_product_id();
-        $zip_file_name = "proiptv_{$ver}_{$model}_{$serial}_$timestamp.zip";
-        hd_debug_print("Prepare archive $zip_file_name for send");
-        $zip_file = get_temp_path($zip_file_name);
-        $apk_subst = getenv('FS_PREFIX');
-        $plugin_name = get_plugin_name();
-
-        $paths = array(
-            get_temp_path("*.txt"),
-            get_temp_path("*.log"),
-            get_temp_path("*.m3u8"),
-            get_temp_path("*.m3u"),
-            "$apk_subst/tmp/run/shell.log",
-            "$apk_subst/tmp/run/shell.log.old",
-        );
-
-        if (file_exists("$apk_subst/D/dune_plugin_logs/$plugin_name.log")) {
-            $paths[] = "$apk_subst/D/dune_plugin_logs/$plugin_name.*";
-        }
-        if (file_exists("$apk_subst/tmp/mnt/D/dune_plugin_logs/$plugin_name.log")) {
-            $paths[] = "$apk_subst/tmp/mnt/D/dune_plugin_logs/$plugin_name.*";
-        }
-        if (file_exists("$apk_subst/tmp/run/$plugin_name.log")) {
-            $paths[] = "$apk_subst/tmp/run/$plugin_name.*";
-        }
-
-        $plugin_backup = self::do_backup_settings($plugin, get_temp_path(), false);
-        if ($plugin_backup === false) {
-            $paths[] = get_data_path("*.settings");
-        } else {
-            $paths[] = $plugin_backup;
-        }
-
-        $files = array();
-        foreach ($paths as $path) {
-            foreach (glob($path) as $file) {
-                if (is_file($file) && filesize($file) > 0) {
-                    $files[] = $file;
-                }
-            }
-        }
-
-        $handle = false;
-        $ret = false;
-        try {
-            $zip = new ZipArchive();
-            $zip->open($zip_file, ZipArchive::CREATE);
-            foreach ($files as $key => $file) {
-                $zip->addFile($file, "/$key." . basename($file));
-            }
-            $zip->close();
-
-            $handle = fopen($zip_file, 'rb');
-            if (is_resource($handle)) {
-                self::get_http_document(base64_decode("aHR0cDovL2lwdHYuZXNhbGVjcm0ubmV0L3VwbG9hZC8", true) . $zip_file_name,
-                    array(
-                        CURLOPT_PUT => true,
-                        CURLOPT_CUSTOMREQUEST => "PUT",
-                        CURLOPT_INFILE => $handle,
-                        CURLOPT_INFILESIZE => filesize($zip_file),
-                        CURLOPT_HTTPHEADER => array("accept: */*", "Expect: 100-continue", "Content-Type: application/zip"),
-                    )
-                );
-                hd_debug_print("Log file sent");
-                $ret = true;
-            }
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
-            $msg = ": Unable to upload log: " . $ex->getMessage();
-            if ($error !== null) {
-                $error = $msg;
-            }
-        }
-
-        if (is_resource($handle)) {
-            @fclose($handle);
-        }
-        @unlink($zip_file);
-
-        return $ret;
-    }
-
-    /**
-     * @param Default_Dune_Plugin $plugin
-     * @param string $folder_path
-     * @return bool|string
-     */
-    public static function do_backup_settings($plugin, $folder_path, $complete = true)
-    {
-        $folder_path = get_paved_path($folder_path);
-
-        hd_debug_print("Backup path: $folder_path");
-        if ($complete) {
-            $timestamp = format_datetime('Y-m-d_H-i', time());
-            $zip_file_name = "proiptv_backup_{$plugin->plugin_info['app_version']}_$timestamp.zip";
-        } else {
-            $zip_file_name = "proiptv_backup.zip";
-        }
-        $zip_file = get_temp_path($zip_file_name);
-
-        try {
-            $zip = new ZipArchive();
-            if (!$zip->open($zip_file, ZipArchive::CREATE)) {
-                throw new Exception(TR::t("err_create_zip__1", $zip_file));
-            }
-
-            $rootPath = get_data_path();
-            foreach (array("\.settings", "\.db") as $ext) {
-                foreach (glob_dir($rootPath, "/$ext/i") as $full_path) {
-                    if (file_exists($full_path)) {
-                        $zip->addFile($full_path, basename($full_path));
-                    }
-                }
-            }
-
-            if ($complete) {
-                $added_folders = array($rootPath . CACHED_IMAGE_SUBDIR, $rootPath . 'skin_backup');
-                /** @var SplFileInfo[] $files */
-                $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($rootPath),
-                    RecursiveIteratorIterator::SELF_FIRST);
-
-                foreach ($files as $file) {
-                    if ($file->isDir()) continue;
-
-                    $filePath = $file->getRealPath();
-                    foreach ($added_folders as $folder) {
-                        if (0 === strncmp($filePath, $folder, strlen($folder))) {
-                            $relativePath = substr($filePath, strlen($rootPath));
-                            $zip->addFile($filePath, $relativePath);
-                        }
-                    }
-                }
-            }
-
-            if (!$zip->close()) {
-                throw new Exception("Error create zip file: $zip_file " . $zip->getStatusString());
-            }
-
-            $backup_path = "$folder_path/$zip_file_name";
-            if ($zip_file !== $backup_path && false === copy($zip_file, $backup_path)) {
-                throw new Exception(TR::t('err_copy__2', $zip_file, $backup_path));
-            }
-        } catch (Exception $ex) {
-            hd_debug_print(self::get_storage_size(get_temp_path()));
-            print_backtrace_exception($ex);
-            return false;
-        }
-
-        clearstatcache();
-        if ($zip_file !== $backup_path) {
-            hd_print("unlink $zip_file");
-            unlink($zip_file);
-        }
-
-        return $backup_path;
-    }
-
     /**
      * @param string $path
      * @param array|null $arg
@@ -409,63 +242,6 @@ class HD
             return $arr;
         }
         return $size[0] . ' (' . $size[1] . ')';
-    }
-
-    ///////////////////////////////////////////////////////////////////////
-
-    /**
-     * @param string $url
-     * @param array $opts
-     * @return bool|string
-     */
-    public static function get_http_document($url, $opts = null)
-    {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 90);
-        curl_setopt($ch, CURLOPT_FILETIME, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, self::get_dune_user_agent());
-        curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
-        curl_setopt($ch, CURLOPT_URL, $url);
-
-        if (isset($opts)) {
-            foreach ($opts as $k => $v) {
-                curl_setopt($ch, $k, $v);
-            }
-        }
-
-        hd_debug_print("HTTP fetching '$url'");
-
-        $content = curl_exec($ch);
-        $info = curl_getinfo($ch);
-        $http_code = $info['http_code'];
-
-        if ($content === false) {
-            $err_msg = "Fetch $url failed. HTTP error: $http_code (" . curl_error($ch) . ')';
-            hd_debug_print($err_msg);
-            return false;
-        }
-
-        if ($http_code >= 400) {
-            $err_msg = "Fetch $url failed. HTTP request failed ($http_code): " . self::http_status_code_to_string($http_code);
-            hd_debug_print($err_msg);
-            return false;
-        }
-
-        if ($http_code >= 300) {
-            $err_msg = "Fetch $url completed, but ignored. HTTP request ($http_code): " . self::http_status_code_to_string($http_code);
-            hd_debug_print($err_msg);
-            $content = '';
-        }
-
-        curl_close($ch);
-
-        return $content;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -668,6 +444,201 @@ class HD
                 break;
         }
         return $string;
+    }
+
+    public static function curlopt_to_string($opt)
+    {
+        static $opts = array(
+            -1 => 'CURLOPT_MUTE',
+            1 => 'CURLOPT_DEBUGFUNCTION',
+            3 => 'CURLOPT_PORT',
+            13 => 'CURLOPT_TIMEOUT',
+            14 => 'CURLOPT_INFILESIZE',
+            19 => 'CURLOPT_LOW_SPEED_LIMIT',
+            20 => 'CURLOPT_LOW_SPEED_TIME',
+            21 => 'CURLOPT_RESUME_FROM',
+            27 => 'CURLOPT_CRLF',
+            32 => 'CURLOPT_SSLVERSION',
+            33 => 'CURLOPT_TIMECONDITION',
+            34 => 'CURLOPT_TIMEVALUE',
+            41 => 'CURLOPT_VERBOSE',
+            42 => 'CURLOPT_HEADER',
+            43 => 'CURLOPT_NOPROGRESS',
+            44 => 'CURLOPT_NOBODY',
+            45 => 'CURLOPT_FAILONERROR',
+            46 => 'CURLOPT_UPLOAD',
+            47 => 'CURLOPT_POST',
+            48 => 'CURLOPT_FTPLISTONLY',
+            50 => 'CURLOPT_FTPAPPEND',
+            51 => 'CURLOPT_NETRC',
+            52 => 'CURLOPT_FOLLOWLOCATION',
+            53 => 'CURLOPT_TRANSFERTEXT',
+            54 => 'CURLOPT_PUT',
+            58 => 'CURLOPT_AUTOREFERER',
+            59 => 'CURLOPT_PROXYPORT',
+            61 => 'CURLOPT_HTTPPROXYTUNNEL',
+            64 => 'CURLOPT_SSL_VERIFYPEER',
+            68 => 'CURLOPT_MAXREDIRS',
+            69 => 'CURLOPT_FILETIME',
+            71 => 'CURLOPT_MAXCONNECTS',
+            72 => 'CURLOPT_CLOSEPOLICY',
+            74 => 'CURLOPT_FRESH_CONNECT',
+            75 => 'CURLOPT_FORBID_REUSE',
+            78 => 'CURLOPT_CONNECTTIMEOUT',
+            80 => 'CURLOPT_HTTPGET',
+            81 => 'CURLOPT_SSL_VERIFYHOST',
+            84 => 'CURLOPT_HTTP_VERSION',
+            85 => 'CURLOPT_FTP_USE_EPSV',
+            90 => 'CURLOPT_SSLENGINE_DEFAULT',
+            91 => 'CURLOPT_DNS_USE_GLOBAL_CACHE',
+            92 => 'CURLOPT_DNS_CACHE_TIMEOUT',
+            96 => 'CURLOPT_COOKIESESSION',
+            98 => 'CURLOPT_BUFFERSIZE',
+            99 => 'CURLOPT_NOSIGNAL',
+            101 => 'CURLOPT_PROXYTYPE',
+            105 => 'CURLOPT_UNRESTRICTED_AUTH',
+            106 => 'CURLOPT_FTP_USE_EPRT',
+            107 => 'CURLOPT_HTTPAUTH',
+            110 => 'CURLOPT_FTP_CREATE_MISSING_DIRS',
+            111 => 'CURLOPT_PROXYAUTH',
+            112 => 'CURLOPT_SERVER_RESPONSE_TIMEOUT',
+            113 => 'CURLOPT_IPRESOLVE',
+            114 => 'CURLOPT_MAXFILESIZE',
+            119 => 'CURLOPT_USE_SSL',
+            121 => 'CURLOPT_TCP_NODELAY',
+            129 => 'CURLOPT_FTPSSLAUTH',
+            136 => 'CURLOPT_IGNORE_CONTENT_LENGTH',
+            137 => 'CURLOPT_FTP_SKIP_PASV_IP',
+            138 => 'CURLOPT_FTP_FILEMETHOD',
+            139 => 'CURLOPT_LOCALPORT',
+            140 => 'CURLOPT_LOCALPORTRANGE',
+            141 => 'CURLOPT_CONNECT_ONLY',
+            150 => 'CURLOPT_SSL_SESSIONID_CACHE',
+            151 => 'CURLOPT_SSH_AUTH_TYPES',
+            154 => 'CURLOPT_FTP_SSL_CCC',
+            155 => 'CURLOPT_TIMEOUT_MS',
+            156 => 'CURLOPT_CONNECTTIMEOUT_MS',
+            157 => 'CURLOPT_HTTP_TRANSFER_DECODING',
+            158 => 'CURLOPT_HTTP_CONTENT_DECODING',
+            159 => 'CURLOPT_NEW_FILE_PERMS',
+            160 => 'CURLOPT_NEW_DIRECTORY_PERMS',
+            161 => 'CURLOPT_POSTREDIR',
+            166 => 'CURLOPT_PROXY_TRANSFER_MODE',
+            171 => 'CURLOPT_ADDRESS_SCOPE',
+            172 => 'CURLOPT_CERTINFO',
+            178 => 'CURLOPT_TFTP_BLKSIZE',
+            180 => 'CURLOPT_SOCKS5_GSSAPI_NEC',
+            181 => 'CURLOPT_PROTOCOLS',
+            182 => 'CURLOPT_REDIR_PROTOCOLS',
+            188 => 'CURLOPT_FTP_USE_PRET',
+            189 => 'CURLOPT_RTSP_REQUEST',
+            193 => 'CURLOPT_RTSP_CLIENT_CSEQ',
+            194 => 'CURLOPT_RTSP_SERVER_CSEQ',
+            207 => 'CURLOPT_TRANSFER_ENCODING',
+            218 => 'CURLOPT_SASL_IR',
+            225 => 'CURLOPT_SSL_ENABLE_NPN',
+            226 => 'CURLOPT_SSL_ENABLE_ALPN',
+            227 => 'CURLOPT_EXPECT_100_TIMEOUT_MS',
+            229 => 'CURLOPT_HEADEROPT',
+            232 => 'CURLOPT_SSL_VERIFYSTATUS',
+            245 => 'CURLOPT_KEEP_SENDING_ON_ERROR',
+            248 => 'CURLOPT_PROXY_SSL_VERIFYPEER',
+            249 => 'CURLOPT_PROXY_SSL_VERIFYHOST',
+            250 => 'CURLOPT_PROXY_SSLVERSION',
+            261 => 'CURLOPT_PROXY_SSL_OPTIONS',
+            265 => 'CURLOPT_SUPPRESS_CONNECT_HEADERS',
+            267 => 'CURLOPT_SOCKS5_AUTH',
+            268 => 'CURLOPT_SSH_COMPRESSION',
+            271 => 'CURLOPT_HAPPY_EYEBALLS_TIMEOUT_MS',
+            274 => 'CURLOPT_HAPROXYPROTOCOL',
+            275 => 'CURLOPT_DNS_SHUFFLE_ADDRESSES',
+            278 => 'CURLOPT_DISALLOW_USERNAME_IN_URL',
+            280 => 'CURLOPT_UPLOAD_BUFFERSIZE',
+            281 => 'CURLOPT_UPKEEP_INTERVAL_MS',
+            285 => 'CURLOPT_HTTP09_ALLOWED',
+            286 => 'CURLOPT_ALTSVC_CTRL',
+            288 => 'CURLOPT_MAXAGE_CONN',
+            290 => 'CURLOPT_MAIL_RCPT_ALLLOWFAILS',
+            299 => 'CURLOPT_HSTS_CTRL',
+            306 => 'CURLOPT_DOH_SSL_VERIFYPEER',
+            307 => 'CURLOPT_DOH_SSL_VERIFYHOST',
+            308 => 'CURLOPT_DOH_SSL_VERIFYSTATUS',
+            314 => 'CURLOPT_MAXLIFETIME_CONN',
+            315 => 'CURLOPT_MIME_OPTIONS',
+            320 => 'CURLOPT_WS_OPTIONS',
+            321 => 'CURLOPT_CA_CACHE_TIMEOUT',
+            322 => 'CURLOPT_QUICK_EXIT',
+            326 => 'CURLOPT_TCP_KEEPCNT',
+            10001 => 'CURLOPT_FILE',
+            10002 => 'CURLOPT_URL',
+            10004 => 'CURLOPT_PROXY',
+            10005 => 'CURLOPT_USERPWD',
+            10006 => 'CURLOPT_PROXYUSERPWD',
+            10007 => 'CURLOPT_RANGE',
+            10009 => 'CURLOPT_INFILE',
+            10015 => 'CURLOPT_POSTFIELDS',
+            10017 => 'CURLOPT_FTPPORT',
+            10018 => 'CURLOPT_USERAGENT',
+            10022 => 'CURLOPT_COOKIE',
+            10023 => 'CURLOPT_HTTPHEADER',
+            10025 => 'CURLOPT_SSLCERT',
+            10026 => 'CURLOPT_SSLCERTPASSWD',
+            10028 => 'CURLOPT_QUOTE',
+            10029 => 'CURLOPT_WRITEHEADER',
+            10031 => 'CURLOPT_COOKIEFILE',
+            10036 => 'CURLOPT_CUSTOMREQUEST',
+            10037 => 'CURLOPT_STDERR',
+            10039 => 'CURLOPT_POSTQUOTE',
+            10062 => 'CURLOPT_INTERFACE',
+            10063 => 'CURLOPT_KRBLEVEL',
+            10065 => 'CURLOPT_CAINFO',
+            10076 => 'CURLOPT_RANDOM_FILE',
+            10077 => 'CURLOPT_EGDSOCKET',
+            10082 => 'CURLOPT_COOKIEJAR',
+            10083 => 'CURLOPT_SSL_CIPHER_LIST',
+            10086 => 'CURLOPT_SSLCERTTYPE',
+            10087 => 'CURLOPT_SSLKEY',
+            10088 => 'CURLOPT_SSLKEYTYPE',
+            10089 => 'CURLOPT_SSLENGINE',
+            10093 => 'CURLOPT_PREQUOTE',
+            10097 => 'CURLOPT_CAPATH',
+            10100 => 'CURLOPT_SHARE',
+            10102 => 'CURLOPT_ENCODING',
+            10103 => 'CURLOPT_PRIVATE',
+            10104 => 'CURLOPT_HTTP200ALIASES',
+            10118 => 'CURLOPT_NETRC_FILE',
+            10134 => 'CURLOPT_FTP_ACCOUNT',
+            10135 => 'CURLOPT_COOKIELIST',
+            10147 => 'CURLOPT_FTP_ALTERNATIVE_TO_USER',
+            10152 => 'CURLOPT_SSH_PUBLIC_KEYFILE',
+            10153 => 'CURLOPT_SSH_PRIVATE_KEYFILE',
+            10162 => 'CURLOPT_SSH_HOST_PUBLIC_KEY_MD5',
+            10169 => 'CURLOPT_CRLFILE',
+            10170 => 'CURLOPT_ISSUERCERT',
+            10173 => 'CURLOPT_USERNAME',
+            10174 => 'CURLOPT_PASSWORD',
+            10175 => 'CURLOPT_PROXYUSERNAME',
+            10176 => 'CURLOPT_PROXYPASSWORD',
+            10177 => 'CURLOPT_NOPROXY',
+            10179 => 'CURLOPT_SOCKS5_GSSAPI_SERVICE',
+            10183 => 'CURLOPT_SSH_KNOWNHOSTS',
+            10186 => 'CURLOPT_MAIL_FROM',
+            10187 => 'CURLOPT_MAIL_RCPT',
+            10190 => 'CURLOPT_RTSP_SESSION_ID',
+            10191 => 'CURLOPT_RTSP_STREAM_URI',
+            10192 => 'CURLOPT_RTSP_TRANSPORT',
+            10203 => 'CURLOPT_RESOLVE',
+            10211 => 'CURLOPT_DNS_SERVERS',
+            10328 => 'CURLOPT_SSL_SIGNATURE_ALGORITHMS',
+            19913 => 'CURLOPT_RETURNTRANSFER',
+            19914 => 'CURLOPT_BINARYTRANSFER',
+            20011 => 'CURLOPT_WRITEFUNCTION',
+            20012 => 'CURLOPT_READFUNCTION',
+            20056 => 'CURLOPT_PROGRESSFUNCTION',
+            20079 => 'CURLOPT_HEADERFUNCTION',
+        );
+
+        return isset($opts[$opt]) ? $opts[$opt] : 'unknown';
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -876,30 +847,6 @@ class HD
             $url = substr($url, 0, $pos);
 
         return preg_replace("#(https?://)((mp4|ts)://)#", '\1', $url);
-    }
-
-    /**
-     * @param string $url
-     * @param bool $to_array
-     * @param array|null $opts
-     * @return false|mixed
-     */
-    public static function DownloadJson($url, $to_array = true, $opts = null)
-    {
-        try {
-            $doc = self::get_http_document($url, $opts);
-            $contents = json_decode($doc, $to_array);
-            if ($contents === null || $contents === false) {
-                hd_debug_print("failed to decode json");
-                hd_debug_print("doc: $doc", true);
-                return false;
-            }
-        } catch (Exception $ex) {
-            print_backtrace_exception($ex);
-            return false;
-        }
-
-        return $contents;
     }
 
     public static function array_unshift_assoc(&$arr, $key, $val)

@@ -156,7 +156,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                 }
 
                 $error_msg = '';
-                $msg = HD::send_log_to_developer($this->plugin, $error_msg)
+                $msg = Default_Dune_Plugin::send_log_to_developer($this->plugin, $error_msg)
                     ? TR::t('entry_log_sent__3', get_dune_model(), get_product_id(), format_datetime('Y-m-d H:i', time()))
                     : TR::t('entry_log_not_sent');
                 return Action_Factory::show_title_dialog(TR::t('entry_send_log'), $msg);

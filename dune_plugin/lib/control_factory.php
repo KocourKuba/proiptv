@@ -32,7 +32,7 @@ class Control_Factory
     {
         $params = array('action_type' => 'apply');
         if (isset($add_params)) {
-            $params = array_merge($params, $add_params);
+            $params = safe_merge_array($params, $add_params);
         }
 
         return User_Input_Handler_Registry::create_action($handler, $name, null, $params);
@@ -42,7 +42,7 @@ class Control_Factory
     {
         $params = array('action_type' => 'confirm');
         if (isset($add_params)) {
-            $params = array_merge($params, $add_params);
+            $params = safe_merge_array($params, $add_params);
         }
 
         return User_Input_Handler_Registry::create_action($handler, $name, null, $params);

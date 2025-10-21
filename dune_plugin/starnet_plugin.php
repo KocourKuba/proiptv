@@ -27,6 +27,7 @@
 
 require_once 'lib/default_dune_plugin.php';
 require_once 'lib/dune_last_error.php';
+require_once "lib/curl_wrapper.php";
 
 require_once 'starnet_entry_handler.php';
 require_once 'starnet_tv_groups_screen.php';
@@ -142,8 +143,9 @@ class Starnet_Plugin extends Default_Dune_Plugin
             $ver = $this->plugin_info['app_version'];
             $model = get_product_id();
             $firmware = get_raw_firmware_version();
-            $jsonArray = HD::DownloadJson(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial");
-            if ($jsonArray === false || !isset($jsonArray['providers'])) {
+            $doc = Curl_Wrapper::getInstance()->download_content(self::CONFIG_URL . "?ver=$ver&model=$model&firmware=$firmware&serial=$serial");
+            $jsonArray = json_decode($doc, true);
+            if (empty($jsonArray) || !isset($jsonArray['providers'])) {
                 if (file_exists($tmp_file)) {
                     hd_debug_print("Load actual providers configuration");
                     $jsonArray = parse_json_file($tmp_file);
