@@ -1,4 +1,7 @@
-﻿### Version 7.0.1416
+﻿### Version 7.0.1418
+- Fixed a bug that caused the plugin to crash in case displaying an error message
+
+### Version 7.0.1416
 - Changed the organization of settings. Now they are all grouped by the settings of the plugin itself and separately the playlist. Access to the settings is also available from the context menu on the plugin icon
 - Added the ability to use links or a file from the account for provider templates (Playlist Settings -> Provider Settings). The correctness of the playlist format is not checked. Since many providers have a "zoo" of playlists of varying degrees of information. As a rule, the most suitable is m3u8 for Ott Navigator
 - For provider templates, it is now possible to have a common "Favorites" for all provider playlists. When changing the settings, the option to copy favorites to/from the general from/to the current one is requested
