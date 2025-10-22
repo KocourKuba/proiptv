@@ -245,7 +245,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
             }
 
             foreach ($item as $k => $v) {
-                hd_debug_print("folder key: $k, value: " . json_encode($v), true);
+                //hd_debug_print("folder key: $k, value: " . json_encode($v), true);
                 $detailed_icon = '';
                 if ($item_type === self::SELECTED_TYPE_SMB) {
                     $caption = $v[smb_tree::PARAM_FOLDERNAME];
@@ -337,7 +337,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                     continue;
                 }
 
-                hd_debug_print("folder type: $item_type folder caption: $caption, path: $filepath, icon: $icon_file", true);
+                //hd_debug_print("folder type: $item_type folder caption: $caption, path: $filepath, icon: $icon_file", true);
                 if (empty($detailed_icon)) {
                     $detailed_icon = str_replace('small_icons', 'large_icons', $icon_file);
                 }
@@ -345,7 +345,7 @@ class Starnet_Folder_Screen extends Abstract_Regular_Screen implements User_Inpu
                 $new_media_url->{self::PARAM_CAPTION} = $caption;
                 $new_media_url->{PARAM_FILEPATH} = $filepath;
                 $new_media_url->{PARAM_TYPE} = $type;
-                hd_debug_print("detailed icon: $detailed_icon", true);
+                //hd_debug_print("detailed icon: $detailed_icon", true);
                 $items[] = array(
                     PluginRegularFolderItem::caption => $caption,
                     PluginRegularFolderItem::media_url => $new_media_url->get_media_url_string(),
