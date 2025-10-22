@@ -164,8 +164,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
 
             case self::CONTROL_ITEMS_CLEAR_EPG_CACHE:
                 $this->plugin->clear_playlist_epg_cache();
-                return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'),
-                    '', Action_Factory::reset_controls($this->do_get_control_defs()));
+                return Action_Factory::show_title_dialog(TR::t('entry_epg_cache_cleared'), '', Action_Factory::reset_controls($this->do_get_control_defs()));
 
             case PARAM_FAKE_EPG:
                 $this->plugin->toggle_setting($control_id, false);
@@ -179,9 +178,7 @@ class Starnet_Setup_Epg_Screen extends Abstract_Controls_Screen
                     return Action_Factory::invalidate_all_folders(
                         $plugin_cookies,
                         null,
-                        Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
-                            Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
-                        )
+                        Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
                     );
                 }
 

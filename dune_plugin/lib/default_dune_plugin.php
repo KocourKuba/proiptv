@@ -3415,8 +3415,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
         $res = Epg_Manager_Xmltv::import_indexing_log($xmltv_ids);
 
         if ($res === -1 || $res === -2) {
-            return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_xmltv_source'),
-                Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV));
+            return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'), Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV));
         }
 
         if ($res === 0) {

@@ -100,8 +100,7 @@ class Starnet_Tv_Changed_Channels_Screen extends Abstract_Preloaded_Regular_Scre
                 } catch (Exception $ex) {
                     hd_debug_print("Channel can't be played, exception info");
                     print_backtrace_exception($ex);
-                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'),
-                        TR::t('warn_msg2__1', $ex->getMessage()));
+                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'), TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
                 Starnet_Epfs_Handler::update_epfs_file($plugin_cookies);

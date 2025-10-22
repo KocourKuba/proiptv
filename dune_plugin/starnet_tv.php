@@ -95,8 +95,7 @@ class Starnet_Tv implements User_Input_Handler
                 }
 
                 if ($res === -1) {
-                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_xmltv_source'),
-                        Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV));
+                    return Action_Factory::show_title_dialog(TR::t('err_load_xmltv_source'), Dune_Last_Error::get_last_error(LAST_ERROR_XMLTV));
                 }
 
                 $post_action = null;

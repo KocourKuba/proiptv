@@ -125,8 +125,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
                 if (!$this->plugin->is_vod_playlist()
                     && (!$this->plugin->init_playlist_parser() || !$this->plugin->load_and_parse_m3u_iptv_playlist(true))) {
-                    return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
-                        Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
+                    return Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
                 }
 
                 $this->plugin->init_epg_manager();
@@ -206,7 +205,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
 
             case Starnet_Setup_Backup_Screen::ACTION_BACKUP_FOLDER_SELECTED:
                 $data = MediaURL::decode($user_input->{Starnet_Folder_Screen::PARAM_SELECTED_DATA});
-                if (HD::do_backup_settings($this->plugin, $data->{PARAM_FILEPATH}) === false) {
+                if (Default_Dune_Plugin::do_backup_settings($this->plugin, $data->{PARAM_FILEPATH}) === false) {
                     return Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_backup'));
                 }
 
@@ -282,9 +281,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                                     $this->plugin->get_plugin_title(),
                                     null,
                                     null,
-                                    Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
-                                        Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
-                                    )
+                                    Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
                                 );
                             }
 
@@ -350,9 +347,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                             }
 
                             if (!$this->plugin->load_channels($plugin_cookies)) {
-                                $post_action = Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
-                                    Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
-                                );
+                                $post_action = Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST));
                                 return Action_Factory::open_folder(
                                     Starnet_Tv_Groups_Screen::ID,
                                     $this->plugin->get_plugin_title(),

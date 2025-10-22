@@ -466,7 +466,8 @@ class Starnet_Edit_Xmltv_List_Screen extends Abstract_Preloaded_Regular_Screen i
         }
 
         return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $new_count - $old_count, count($lines)),
-            '', Action_Factory::close_and_run(
+            '',
+            Action_Factory::close_and_run(
                 Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_edit_xmltv_list'))
             )
         );

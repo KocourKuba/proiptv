@@ -189,8 +189,11 @@ class Starnet_Setup_Folders_Screen extends Abstract_Controls_Screen
                 $this->plugin->init_epg_manager();
 
                 $action_reload = User_Input_Handler_Registry::create_action($this, ACTION_RELOAD);
-                return Action_Factory::show_title_dialog(TR::t('folder_screen_selected_folder__1', $data->{Starnet_Folder_Screen::PARAM_CAPTION}),
-                    $data->{PARAM_FILEPATH}, $action_reload, static::CONTROLS_WIDTH);
+                return Action_Factory::show_title_dialog(
+                    TR::t('folder_screen_selected_folder__1', $data->{Starnet_Folder_Screen::PARAM_CAPTION}),
+                    $data->{PARAM_FILEPATH},
+                    $action_reload,
+                    static::CONTROLS_WIDTH);
         }
 
         return Action_Factory::reset_controls($this->do_get_control_defs(), $post_action);

@@ -367,9 +367,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         return Action_Factory::invalidate_all_folders(
             $plugin_cookies,
             null,
-            Action_Factory::show_title_dialog(TR::t('err_error'), TR::t('err_load_playlist'),
-                Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST)
-            )
+            Action_Factory::show_title_dialog(TR::t('err_load_playlist'), Dune_Last_Error::get_last_error(LAST_ERROR_PLAYLIST))
         );
     }
 
@@ -687,7 +685,8 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         }
 
         return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $new_count - $old_count, count($lines)),
-            '', Action_Factory::close_and_run(
+            '',
+            Action_Factory::close_and_run(
                 Action_Factory::open_folder(
                     $parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists')
                 )
@@ -732,8 +731,10 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
             }
         }
         return Action_Factory::show_title_dialog(TR::t('edit_list_added__2', $this->plugin->get_all_playlists_count() - $old_count, count($files)),
-            '', Action_Factory::close_and_run(
-                Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists')))
+            '',
+            Action_Factory::close_and_run(
+                Action_Factory::open_folder($parent_media_url->get_media_url_string(), TR::t('setup_channels_src_edit_playlists'))
+            )
         );
     }
 

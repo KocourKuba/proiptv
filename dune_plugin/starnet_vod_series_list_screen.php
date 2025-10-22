@@ -64,10 +64,7 @@ class Starnet_Vod_Series_List_Screen extends Abstract_Preloaded_Regular_Screen i
                 } catch (Exception $ex) {
                     hd_debug_print("Movie can't played");
                     print_backtrace_exception($ex);
-                    return Action_Factory::show_title_dialog(
-                        TR::t('err_channel_cant_start'),
-                        TR::t('warn_msg2__1', $ex->getMessage())
-                    );
+                    return Action_Factory::show_title_dialog(TR::t('err_channel_cant_start'), TR::t('warn_msg2__1', $ex->getMessage()));
                 }
 
                 return $post_action;
