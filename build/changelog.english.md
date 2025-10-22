@@ -1,4 +1,26 @@
-﻿### Version 6.2.1358
+﻿### Version 7.0.1416
+- Changed the organization of settings. Now they are all grouped by the settings of the plugin itself and separately the playlist. Access to the settings is also available from the context menu on the plugin icon
+- Added the ability to use links or a file from the account for provider templates (Playlist Settings -> Provider Settings). The correctness of the playlist format is not checked. Since many providers have a "zoo" of playlists of varying degrees of information. As a rule, the most suitable is m3u8 for Ott Navigator
+- For provider templates, it is now possible to have a common "Favorites" for all provider playlists. When changing the settings, the option to copy favorites to/from the general from/to the current one is requested
+- Personalized caching settings for each playlist of the provider template
+- Returned the ability to add a playlist that is located on a network drive for all consoles except "certified"
+- Added the ability to "Do not check cache" of the playlist. That is, it can only be updated forcibly from the "Update playlist" context menu
+- Added caching setting for VOD m3u playlists
+- Slightly changed the mechanism of the "Watch History", now the plugin will not try to update the EPG for all channels in the history at startup (when updating NewUI files).
+- In NewUI, channels in the "Watch History" are signed with the date and time when watching the program ended (if there is an archive)
+- Hidden channels that have been added to "Favorites" before are marked with a special icon.
+- Made a global channel search by name, not just in one specific category
+- The last value of the search is now remembered
+- Added clearing of VOD "Playlist" from movies that have disappeared from the media library
+- Added display of information about the availability of a VOD for a playlist or when adding a new provider template
+- Changed some translation strings
+- Fixed a bug that caused the playlist cache to be cleared when quickly switching by hot buttons
+- Configuration: Updated template settings for TVIZI, TV Team, SatQ, Skaz, 1USD, FoxTV
+- Configuration: Added online EPG sources for RU. TV and Uspeh
+- Configuration: Removed HNMedia provider, now KLI Media
+- Configuration: Removed unsupported XMLTV sources from tv.team
+
+### Version 6.2.1358
 - Fixed a bug with caching links to regular playlists
 
 ### Version 6.2.1356
