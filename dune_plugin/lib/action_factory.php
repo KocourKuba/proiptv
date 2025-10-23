@@ -771,4 +771,16 @@ class Action_Factory
             ),
         );
     }
+
+    public static function bt_command($name, $params = null, $callback_action = null)
+    {
+        return array(
+            GuiAction::handler_string_id => BT_COMMAND_ACTION_ID,
+            GuiAction::data => array(
+                BtCommandActionData::name => $name,
+                BtCommandActionData::params => $params,
+                BtCommandActionData::callback_action => $callback_action
+            ),
+        );
+    }
 }

@@ -827,7 +827,7 @@ class Starnet_Edit_Playlists_Screen extends Abstract_Preloaded_Regular_Screen im
         } else {
             $curl_wrapper = Curl_Wrapper::getInstance();
             $this->plugin->set_curl_timeouts($curl_wrapper);
-            $res = $curl_wrapper->download_file($uri, $tmp_file, true);
+            $res = $curl_wrapper->download_file($uri, $tmp_file);
             $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
         }
 

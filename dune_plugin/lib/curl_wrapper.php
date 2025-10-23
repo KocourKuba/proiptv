@@ -458,6 +458,8 @@ class Curl_Wrapper
             if (!empty($etag)) {
                 $this->send_headers[] = "If-None-Match: $etag";
             }
+        } else {
+            self::clear_cached_etag($url);
         }
 
         if (!empty($this->send_headers)) {

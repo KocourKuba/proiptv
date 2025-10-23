@@ -134,7 +134,7 @@ class api_iptvonline extends api_default
 
                 $curl_wrapper = Curl_Wrapper::getInstance();
                 $this->plugin->set_curl_timeouts($curl_wrapper);
-                return $curl_wrapper->download_file($response->data, $file, true);
+                return $curl_wrapper->download_file($response->data, $file);
 
             case API_COMMAND_GET_DEVICE:
                 hd_debug_print("GetServers: " . pretty_json_format($response), true);

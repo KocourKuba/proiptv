@@ -823,7 +823,7 @@ class Default_Dune_Plugin extends Dune_Default_UI_Parameters implements DunePlug
 
                     $curl_wrapper = Curl_Wrapper::getInstance();
                     $this->set_curl_timeouts($curl_wrapper);
-                    $res = $curl_wrapper->download_file($uri, $m3u_file, true);
+                    $res = $curl_wrapper->download_file($uri, $m3u_file);
                     $logfile = "Error code: " . $curl_wrapper->get_error_no() . "\n" . $curl_wrapper->get_error_desc();
                 } else {
                     throw new Exception("Unknown playlist type");

@@ -977,7 +977,7 @@ class vod_standard extends Abstract_Vod
                     }
                     $curl_wrapper = Curl_Wrapper::getInstance();
                     $this->plugin->set_curl_timeouts($curl_wrapper);
-                    $res = $curl_wrapper->download_file($uri, $m3u_file, true);
+                    $res = $curl_wrapper->download_file($uri, $m3u_file);
                     if ($res === false) {
                         $msg = sprintf("%s\nError code: %s\n%s",
                             TR::load('err_load_vod'), $curl_wrapper->get_error_no(), $curl_wrapper->get_error_desc());
