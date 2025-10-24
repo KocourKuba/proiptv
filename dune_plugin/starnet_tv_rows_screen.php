@@ -348,7 +348,7 @@ class Starnet_Tv_Rows_Screen extends Abstract_Rows_Screen implements User_Input_
                 );
 
             case ACTION_PASSWORD_APPLY:
-                return $this->plugin->apply_protect_settings_dialog($this, $user_input);
+                return $this->plugin->apply_protect_settings_dialog($user_input);
 
             case ACTION_EDIT_CHANNEL_DLG:
                 return $this->plugin->do_edit_channel_parameters($this, $media_url->channel_id);

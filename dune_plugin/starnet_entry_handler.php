@@ -109,7 +109,7 @@ class Starnet_Entry_Handler implements User_Input_Handler
                     Action_Factory::open_folder(Starnet_Setup_Playlist_Screen::make_controls_media_url_str(static::ID), TR::t('entry_setup')));
 
             case ACTION_PASSWORD_APPLY:
-                return $this->plugin->apply_protect_settings_dialog($this, $user_input);
+                return $this->plugin->apply_protect_settings_dialog($user_input);
 
             case self::ACTION_CALL_PLAYLIST_SCREEN:
                 $this->plugin->init_plugin();

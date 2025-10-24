@@ -174,21 +174,15 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
     /**
      * @param User_Input_Handler $handler
-     * @param string|array $param_action
+     * @param array $param_action
      * @return array
      */
-    public function show_protect_settings_dialog($handler, $param_action, $add_params = null)
+    public function show_protect_settings_dialog($handler, $param_action)
     {
         $pass_settings = $this->get_parameter(PARAM_SETTINGS_PASSWORD);
         if (empty($pass_settings)) {
-            if (is_array($param_action)) {
-                return $param_action;
-            }
-            return User_Input_Handler_Registry::create_action($handler, $param_action, null, $add_params);
+            return $param_action;
         }
-
-        $new_params['param_action'] = $param_action;
-        $new_params['add_params'] = $add_params;
 
         $defs = array();
         Control_Factory::add_vgap($defs, 20);
@@ -198,6 +192,7 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
 
         Control_Factory::add_vgap($defs, 50);
 
+        $new_params['param_action'] = json_encode($param_action);
         Control_Factory::add_close_dialog_and_apply_button($defs, $handler, ACTION_PASSWORD_APPLY, TR::t('ok'), 300, $new_params);
         Control_Factory::add_close_dialog_button($defs, TR::t('cancel'), 300);
         Control_Factory::add_vgap($defs, 10);
@@ -205,14 +200,21 @@ class Dune_Default_UI_Parameters extends Dune_Default_Sqlite_Engine
         return Action_Factory::show_dialog(TR::t('setup_enter_pass'), $defs, true);
     }
 
-    public function apply_protect_settings_dialog($handler, $user_input)
+    /**
+     * @param object $user_input
+     * @return array|null
+     */
+    public function apply_protect_settings_dialog($user_input)
     {
         if ($this->get_parameter(PARAM_SETTINGS_PASSWORD) !== $user_input->pass) {
             return null;
         }
-        return User_Input_Handler_Registry::create_action($handler,
-            $user_input->param_action,
-            isset($user_input->add_params) ? $user_input->add_params : null);
+
+        if (isset($user_input->param_action)) {
+            return json_decode($user_input->param_action, true);
+        }
+
+        return null;
     }
 
     /**

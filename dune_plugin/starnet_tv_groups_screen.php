@@ -269,7 +269,7 @@ class Starnet_Tv_Groups_Screen extends Abstract_Preloaded_Regular_Screen impleme
                 );
 
             case ACTION_PASSWORD_APPLY:
-                return $this->plugin->apply_protect_settings_dialog($this, $user_input);
+                return $this->plugin->apply_protect_settings_dialog($user_input);
 
             case self::ACTION_CONFIRM_EXIT_DLG_APPLY:
                 $this->force_parent_reload = false;
