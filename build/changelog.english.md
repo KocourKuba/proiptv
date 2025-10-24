@@ -1,5 +1,6 @@
-﻿### Version 7.0.1420
+﻿### Version 7.0.1422
 - Fixed a bug that caused the plugin to crash if an error message was displayed
+- Fixed a bug that caused the plugin to crash when calling the settings password dialog
 - Removed support for caching playlists at the web server level. Link shorteners have problems with it
 
 ### Version 7.0.1416
